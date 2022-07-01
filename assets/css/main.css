@@ -1714,14 +1714,14 @@ button,
         margin: 0 0 1.5em 0;
         width: 6em; }
         .features article .icon:before {
-          font-size: 3rem; }
+          font-size: 2.75rem; }
         .features article .icon:after {
           height: 4em;
           margin: -2em 0 0 -2em;
           width: 4em; } }
   @media screen and (max-width: 480px) {
     .features article .icon:before {
-      font-size: 3rem; } }
+      font-size: 2.75rem; } }
 
 /* Posts */
 .posts {
