@@ -1709,19 +1709,19 @@ button,
       -ms-align-items: -ms-flex-start;
       align-items: flex-start; }
       .features article .icon {
-        height: 6em;
-        line-height: 6em;
-        margin: 0 0 1.5em 0;
-        width: 6em; }
+        height: 0em;
+        line-height: 0em;
+        margin: 0 0 0em 0;
+        width: 0em; }
         .features article .icon:before {
-          font-size: 2.75rem; }
+          font-size: 0rem; }
         .features article .icon:after {
-          height: 4em;
-          margin: -2em 0 0 -2em;
-          width: 4em; } }
+          height: 0em;
+          margin: 0em 0 0 0em;
+          width: 0em; } }
   @media screen and (max-width: 480px) {
     .features article .icon:before {
-      font-size: 2.75rem; } }
+      font-size: 0rem; } }
 
 /* Posts */
 .posts {
