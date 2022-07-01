@@ -1520,7 +1520,7 @@ button,
   input[type="button"]:active,
   button:active,
   .button:active {
-    background-color: #ff0000; }
+    background-color: #ff9d9d; }
   input[type="submit"].icon:before,
   input[type="reset"].icon:before,
   input[type="button"].icon:before,
