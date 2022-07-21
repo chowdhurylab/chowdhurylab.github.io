@@ -1987,7 +1987,7 @@ button,
       font-family: 'Font Awesome 5 Free';
       font-weight: 900; }
     #sidebar .toggle:before {
-      content: '\f0c9';
+      content: '\f0d9';
       font-size: 2rem;
       height: inherit;
       left: 0;
