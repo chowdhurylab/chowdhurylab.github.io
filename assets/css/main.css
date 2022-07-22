@@ -1641,7 +1641,7 @@ button,
       text-align: center;
       width: 10em; }
       .features article .icon:before {
-        color: #0080ff;
+        color: #d3d3d3;
         font-size: 3rem;
         position: relative;
         top: 0.05em; }
