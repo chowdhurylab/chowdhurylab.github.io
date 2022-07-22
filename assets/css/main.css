@@ -2088,17 +2088,17 @@ button,
     border-bottom: 0;
     color: inherit;
     font-family: "Helvetica Neue", sans-serif;
-    font-size: 1.125em; }
+    font-size: 1.1em; }
   #header .icons {
     text-align: right; }
   @media screen and (max-width: 1680px) {
     #header {
-      padding-top: 5em; } }
+      padding-top: 2em; } }
   @media screen and (max-width: 736px) {
     #header {
-      padding-top: 6.5em; }
+      padding-top: 3em; }
       #header .logo {
-        font-size: 1.25em;
+        font-size: 1em;
         margin: 0; }
       #header .icons {
         height: 5em;
