@@ -1800,9 +1800,9 @@ button,
       .posts2 article .image img {
         display: block;
         width: 70%; }
-  @media screen and (min-width: 1681px) {
+  @media screen and (min-width: 1000px) {
     .posts2 article:nth-child(3n + 1):before {
-      display: none; }
+      display: none; }since 
     .posts2 article:nth-child(3n + 1):after {
       width: 100%; }
     .posts2 article:nth-last-child(1), .posts2 article:nth-last-child(2), .posts2 article:nth-last-child(3) {
