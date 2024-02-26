@@ -39,7 +39,7 @@ img{
   vertical-align: baseline; 
   object-fit: cover;
   float: left; }
-  @media screen and (max-width: 736px) { /* small - medium Phone */
+  @media screen and (max-width: 1290px) { /* <-- Iphone 15 pro max width */
     .ratul-img {
       margin: 0;
       padding: 0;
