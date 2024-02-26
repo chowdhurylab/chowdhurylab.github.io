@@ -1612,7 +1612,7 @@ button,
     border-top: 0;
     margin-top: 0;
     padding-top: 0; }
-  @media screen and (min-width: 480px) {
+  @media screen and (min-width: 480px) { /* <-- allow text to go below Ratul's image.*/
     .mini-posts article img {
       float: left;} }
 
