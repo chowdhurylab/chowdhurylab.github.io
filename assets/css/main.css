@@ -30,26 +30,6 @@ img{
   vertical-align: baseline; 
   object-fit: cover;
 }
-.ratul-img {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
-  vertical-align: baseline; 
-  object-fit: cover;
-  float: left; }
-  @media screen and (max-width: 1290px) { /* <-- Iphone 15 promax width */
-    .ratul-img {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      font-size: 100%;
-      font: inherit;
-      vertical-align: baseline; 
-      object-fit: cover;
-      float: center;
-  } }
 
 article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
@@ -1620,10 +1600,21 @@ button,
     .mini-posts article .image img {
       display: block;
       width: 100%; }
+    .mini-posts article img {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 100%;
+      font: inherit;
+      vertical-align: baseline; 
+      object-fit: cover;}
   .mini-posts article:first-child {
     border-top: 0;
     margin-top: 0;
     padding-top: 0; }
+  @media screen and (min-width: 480px) {
+    .mini-posts article img {
+      float: left;} }
 
 /* Mini Posts2 */
 .mini-posts2 article {
