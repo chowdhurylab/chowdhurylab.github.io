@@ -1600,10 +1600,21 @@ button,
     .mini-posts article .image img {
       display: block;
       width: 100%; }
+    .mini-posts article img {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 100%;
+      font: inherit;
+      vertical-align: baseline; 
+      object-fit: cover;}
   .mini-posts article:first-child {
     border-top: 0;
     margin-top: 0;
     padding-top: 0; }
+  @media screen and (min-width: 480px) { /* <-- allow text to go below Ratul's image.*/
+    .mini-posts article img {
+      float: left;} }
 
 /* Mini Posts2 */
 .mini-posts2 article {
