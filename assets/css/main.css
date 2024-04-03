@@ -1880,8 +1880,7 @@ button,
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
   margin: 0 0 2em -6em;
-  width: calc(100% + 6em);
-  margin-bottom: 1em;  }
+  width: calc(100% + 6em); }
   .posts3 article {
     -moz-flex-grow: 0;
     -webkit-flex-grow: 0;
