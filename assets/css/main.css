@@ -2572,6 +2572,7 @@ button,
   width: 100%;
   object-fit: cover;
   object-position: center;
+  padding: 0rem 3rem 0rem 3rem;
 }
 
 /* Carousel button styling*/
@@ -2585,10 +2586,11 @@ button,
   transform: translateY(-50%);
   padding: 1px;
   cursor: pointer;
-  background-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.2) !important;
 }
 .carousel-button:hover{
-  background-color: rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.4) !important;
+  background-color: rgba(0, 0, 0, 0);
 }
 .carousel-button.prev {
   left: 1rem;
@@ -2604,4 +2606,5 @@ button,
   background-color: rgba(0, 0, 0, 0.05);
   padding: 6px;
   border-radius: 1rem;
+  margin: 0rem 3rem 0rem 3rem;
 }
