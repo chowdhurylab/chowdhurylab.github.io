@@ -3532,11 +3532,13 @@ button:disabled,
 
 /* Carousel thumbnail styling */
 .carousel-thumbnail {
-  display: flex;
+  /* display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 20px; */
+
+  text-align: center;
   padding: 10px;
 
   width: 100%;
@@ -3545,15 +3547,26 @@ button:disabled,
   position: absolute;
   bottom: 0;
   z-index: 1;
+
+  overflow-x: scroll;
+  white-space: nowrap;
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.carousel-thumbnail::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
 }
 
 .carousel-thumbnail-item {
   height: 10vh;
-  width: 100%;
+  width: 10vh;
   border: 2px solid black;
   opacity: 50%;
   border-radius: 5px;
   overflow: hidden;
+
+  display: inline-block;
 }
 .carousel-thumbnail-item:hover {
   cursor: pointer;
