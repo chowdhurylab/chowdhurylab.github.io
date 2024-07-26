@@ -1,11 +1,38 @@
+/* pagination update here 7/25/2024*/
+// Pagination click
+
+const pages = document.querySelectorAll(".carousel-page");
+pages.forEach((page, i) => {
+  page.addEventListener("click", () => {
+    const slidesContainer = document.querySelector(".carousel-slides");
+    const paginationContainer = document.querySelector(".carousel-pagination");
+
+    const activeSlides = document.querySelectorAll("[slide-active]");
+    activeSlides.forEach((activeSlide) =>
+      activeSlide.removeAttribute("slide-active")
+    );
+
+    slidesContainer.children[i].setAttribute("slide-active", "");
+    paginationContainer.children[i].setAttribute("slide-active", "");
+  });
+});
+
 // JS to handle auto carousel
 window.onload = function () {
   const slides = document.querySelector(".carousel-slides").children;
-  const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
-  const thumbnails = thumbnailsContainer.children;
+  // const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
+  // const thumbnails = thumbnailsContainer.children;
 
-  if (slides.length !== thumbnails.length)
-    throw Error("Mismatch number of slides and thumbnails.");
+  /* pagination update here 7/25/2024*/
+  const paginationContainer = document.querySelector(".carousel-pagination");
+  const pages = paginationContainer.children;
+
+  /* pagination update here 7/25/2024*/
+  /*  removed
+        slides.length !== thumbnails.length || 
+  */
+  if (slides.length !== pages.length)
+    throw Error("Mismatch number of slides and thumbnails/pages.");
 
   function addActive(itemElem) {
     itemElem.setAttribute("slide-active", "");
@@ -21,25 +48,34 @@ window.onload = function () {
         if (i + 1 >= slides.length) {
           // when slide is the last
           setTimeout(removeActive(slides[i]), 350);
-          setTimeout(removeActive(thumbnails[i]), 350);
+          // setTimeout(removeActive(thumbnails[i]), 350);
           addActive(slides[0]);
-          addActive(thumbnails[0]);
+          // addActive(thumbnails[0]);
 
-          const distance =
-          thumbnails[i].getBoundingClientRect().left -
-          thumbnails[0].getBoundingClientRect().left;
-          thumbnailsContainer.scrollLeft -= Math.abs(distance);
+          // const distance =
+          // thumbnails[i].getBoundingClientRect().left -
+          // thumbnails[0].getBoundingClientRect().left;
+          // thumbnailsContainer.scrollLeft -= Math.abs(distance);
+
+          /* pagination update here 7/25/2024*/
+          setTimeout(removeActive(pages[i]), 350);
+          addActive(pages[0]);
+
           break;
         } else {
           setTimeout(removeActive(slides[i]), 350);
-          setTimeout(removeActive(thumbnails[i]), 350);
+          // setTimeout(removeActive(thumbnails[i]), 350);
           addActive(slides[i + 1]);
-          addActive(thumbnails[i + 1]);
+          // addActive(thumbnails[i + 1]);
 
-          const distance =
-          thumbnails[i].getBoundingClientRect().left -
-          thumbnails[i + 1].getBoundingClientRect().left;
-          thumbnailsContainer.scrollLeft += Math.abs(distance);
+          // const distance =
+          // thumbnails[i].getBoundingClientRect().left -
+          // thumbnails[i + 1].getBoundingClientRect().left;
+          // thumbnailsContainer.scrollLeft += Math.abs(distance);
+          
+          /* pagination update here 7/25/2024*/
+          setTimeout(removeActive(pages[i]), 350);
+          addActive(pages[i + 1]);
           break;
         }
       }
@@ -55,7 +91,11 @@ buttons.forEach((button) => {
     const offset = button.classList[1] === "next" ? 1 : -1;
 
     const slidesContainer = document.querySelector(".carousel-slides");
-    const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
+    // const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
+    
+    /* pagination update here 7/25/2024*/
+    const paginationContainer = document.querySelector(".carousel-pagination");
+
     const activeSlides = document.querySelectorAll("[slide-active]");
 
     const oldIndex = [...slidesContainer.children].indexOf(activeSlides[0]);
@@ -69,33 +109,38 @@ buttons.forEach((button) => {
 
     // activeSlide.removeAttribute("slide-active");
     slidesContainer.children[newIndex].setAttribute("slide-active", "");
-    thumbnailsContainer.children[newIndex].setAttribute("slide-active", "");
+    // thumbnailsContainer.children[newIndex].setAttribute("slide-active", "");
 
-    const distance =
-      thumbnailsContainer.children[newIndex].getBoundingClientRect().left -
-      thumbnailsContainer.children[oldIndex].getBoundingClientRect().left;
+    // const distance =
+    //   thumbnailsContainer.children[newIndex].getBoundingClientRect().left -
+    //   thumbnailsContainer.children[oldIndex].getBoundingClientRect().left;
 
-    if (button.classList[1] === "next") {
-      thumbnailsContainer.scrollLeft += Math.abs(distance);
-    } else {
-      thumbnailsContainer.scrollLeft -= Math.abs(distance);
-    }
+    // if (button.classList[1] === "next") {
+    //   thumbnailsContainer.scrollLeft += Math.abs(distance);
+    // } else {
+    //   thumbnailsContainer.scrollLeft -= Math.abs(distance);
+    // }
+
+    /* pagination update here 7/25/2024*/
+    paginationContainer.children[newIndex].setAttribute("slide-active", "");
   });
 });
 
 // thumbnail onclick
-const thumbnails = document.querySelectorAll(".carousel-thumbnail-item");
-thumbnails.forEach((thumbnail, i) => {
-  thumbnail.addEventListener("click", () => {
-    const slidesContainer = document.querySelector(".carousel-slides");
-    const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
+// const thumbnails = document.querySelectorAll(".carousel-thumbnail-item");
+// thumbnails.forEach((thumbnail, i) => {
+//   thumbnail.addEventListener("click", () => {
+//     const slidesContainer = document.querySelector(".carousel-slides");
+//     const thumbnailsContainer = document.querySelector(".carousel-thumbnail");
 
-    const activeSlides = document.querySelectorAll("[slide-active]");
-    activeSlides.forEach((activeSlide) =>
-      activeSlide.removeAttribute("slide-active")
-    );
+//     const activeSlides = document.querySelectorAll("[slide-active]");
+//     activeSlides.forEach((activeSlide) =>
+//       activeSlide.removeAttribute("slide-active")
+//     );
 
-    slidesContainer.children[i].setAttribute("slide-active", "");
-    thumbnailsContainer.children[i].setAttribute("slide-active", "");
-  });
-});
+//     slidesContainer.children[i].setAttribute("slide-active", "");
+//     thumbnailsContainer.children[i].setAttribute("slide-active", "");
+//   });
+// });
+
+
