@@ -2936,12 +2936,13 @@ button:disabled,
   -webkit-flex-shrink: 1;
   -ms-flex-shrink: 1;
   flex-shrink: 1;
-  width: 100%;
+  width: 50%; /* this fix download issue where the table causes side menu to hide, previously 100% , changed to 50% on 9/12/2024 */
 }
 #main > .inner {
   padding: 0 6em 0.1em 6em;
   margin: 0 auto;
-  max-width: 110em;
+  /* max-width: 110em;  *//* Update 9/12/2024, this change to 100% */
+  max-width: 100%;
 }
 #main > .inner > section {
   padding: 6em 0 4em 0;
