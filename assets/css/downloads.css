@@ -1,0 +1,46 @@
+.db--posts {
+    width: 100%;
+
+    border-top: 1px solid rgb(0,0,0,0.1);
+    padding-top: 24px;
+}
+.db--posts > h3 {
+    margin-bottom: 12px;
+}
+
+.table-wrapper {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+}
+
+.table-wrapper table {
+    margin-bottom: 0px;
+    margin-right: 12px;
+    /* table-layout: fixed; */
+
+}
+
+.table-wrapper table td,
+.table-wrapper table th {
+    max-width: 200px;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    border: 1px solid #ddd;
+    padding: 8px;
+
+    
+}
+  
+
+.db--forms {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    /* justify-content: center; */
+    align-items: center;
+    gap: 24px;
+}
