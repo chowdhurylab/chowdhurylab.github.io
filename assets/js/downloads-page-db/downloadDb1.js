@@ -6,14 +6,14 @@ const maxCol = 20
 const db1 = document.querySelector("#db_1");
 
 // get no of downloads for statistic
-const noDownloads = db1.querySelector(".db--forms").querySelector("#stats");
+// const noDownloads = db1.querySelector(".db--forms").querySelector("#stats");
 // console.log(noDownloads.innerHTML) // <-- TODO: show google analytics
 
 // button for google analytics
-const db1Btn = db1.querySelector(".db--forms").querySelector("button");
-db1Btn.addEventListener("click", () => {
-  console.log("download"); // <-- TODO: add google analytics
-});
+// const db1Btn = db1.querySelector(".db--forms").querySelector("button");
+// db1Btn.addEventListener("click", () => {
+//   console.log("download"); // <-- TODO: add google analytics
+// });
 
 
 
