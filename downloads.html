@@ -57,52 +57,38 @@
                                     </p></br>
 
 									<!-- Dataset post -->
+
+									<!-- Dataset 1: upload date: 9/13/2024 -->
 									<div id="db_1" class="db--posts">
                                         <h3>
-                                            Filtered Enzyme Parameter Dataset 
+                                            KinHub-1.0 (Largest, Trustable, Manually-curated Enzyme Parameter Database; verified from 2158 papers) 
                                         </h3>
                                         <p>
                                             The enzyme kinetic parameters kcat and Km were systematically curated from BRENDA (release 2023_1) and SABIO-RK (as of May 2024) using custom Python scripts, resulting in a initial dataset of 30,442 kcat and 44,615 Km entries. After filtering for maximum kcat and minimum Km values, the dataset was further cleaned and merged with substrate SMILES from PubChem and sequence data from UniProt and BRENDA. This process yielded 26,244 entries with both kcat and Km values, including 10,244 mutant entries, sourced from 2,158 scientific articles with PubMed IDs. A thorough and manual curation resolved inconsistencies, expanding the mutant dataset to 11,178 entries and ensuring data accuracy. The final dataset, comprising 16,000 wild-type and 11,178 mutant entries, serves as a high-quality, error-free resource for training machine learning models to predict kinetic parameters for novel enzymes.
                                         </p>
                                         <div
 										class="table-wrapper"
-                                        style="
-										/* background-color: rgba(255, 0, 0, 0.252); */
-										/* height: 50px; */
-										"
-                                        >
-										<!-- <p
-										style="text-wrap: nowrap;"
-										>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p> -->
-										<table >
+                                        ><table >
 											<thead>
 											</thead>
 											<tbody>
 											</tbody>
 										</table>
                                         </div>
-
-                                        <!-- <form id="db_1--forms" class="db--forms"  method="get" action="./assets/database/WT_MD_database/WT_MD_database_v1.xlsx"> 
-                                            <div
-											style="display: none;"
-											>
-                                                Total downloads: <span id="stats">0</span>
-                                            </div>
-                                            <button id="db_1--forms-btn" type="submit">Download</button>
-                                        </form> -->
-
 										<div class="db--download--container">
-											<div
-											style="display: none;"
-											>
-                                                Total downloads: <span id="stats">0</span>
-                                            </div>
 											<a
 											href="./assets/database/WT_MD_database/WT_MD_database_v1.xlsx"
 											download=""
 											>
 												<button>Download</button>
 											</a>
+											<div>
+											Downloads = 
+											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
+												9
+											</b>	 
+											; as of: Sep 2024
+                                            </div>
 										</div>
 
 									</div>
