@@ -46,3 +46,9 @@
     align-items: center;
     gap: 24px;
 }
+
+.db--button--flexbox {
+    display: flex;
+    flex-direction: column;
+    
+}
