@@ -58,6 +58,91 @@
 
 									<!-- Dataset post -->
 
+									<!-- Dataset 1: KinHub database, upload date: 9/13/2024 -->
+									<div id="db_1" class="db--posts">
+                                        <h3>
+                                            RealKcat - Catalytically Aware Enzyme Kcat predictor, trained on KinHub-27k (Manually-curated Enzyme Parameter Database)
+                                        </h3>
+                                        <p>
+                                            The enzyme kinetic parameters kcat and Km were systematically curated from BRENDA and SABIO-RK (as of May 2024), resulting in a initial dataset of 30,442 kcat and 44,615 Km entries. It is annotated with substrate SMILES from PubChem. 
+											<br/>
+											KinHub-27k has:
+										</p>
+										<ul style="padding-left: 4rem;">
+											<li>26,244 entries with both kcat and Km values</li>
+											<li>16,000 wild-type, 11,178 mutant entries</li>
+											<li>1:1 negative to positive data</li>
+											<li>Manually curated from 2,158 scientific PMIDs</li>
+											<li>A thorough and manual curation resolved >10k inconsistencies in BRENDA and SABIO-RK</li>
+										</ul>
+                                        <p>
+                                            RealKcat (trained on KinHub-27k) is the first-of-its kind catalytically aware kinetic predictor of enzymatic reactions, which is sensitive to mutations at the active center - and the first model to be able to predict zero kcat value if the catalytic apparatus of an enzyme is mutated.
+										</p>
+										<div
+										style="display: flex; justify-content: center; align-items: center;"
+										>
+											<img style="object-fit: contain; width: 100%;" src="images/kinhub_db.jpg" alt="">
+										</div>
+                                        <div
+										class="table-wrapper"
+                                        ><table >
+											<thead>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+                                        </div>
+										<div class="db--button--flexbox">
+											<div class="db--button--container">
+												<a
+												href="./assets/database/WT_MD_database/kcat_training_data.zip"
+												download=""
+												>
+													<button>Training Data</button>
+												</a>
+												<div>
+												Downloads = 
+												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
+													9
+												</b>	 
+												; as of: Nov 2024
+												</div>
+											</div>
+											<div class="db--button--container">
+												<a
+												href="./assets/database/WT_MD_database/model_weights.zip"
+												download=""
+												>
+													<button>Model/weights</button>
+												</a>
+												<div>
+												Downloads = 
+												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
+													9
+												</b>	 
+												; as of: Nov 2024
+												</div>
+											</div>
+											<!-- TODO: link to actual google colab -->
+											<div class="db--button--container">
+												<a
+												href="https://github.com/TKAI-LAB-Mali/RealKcat"
+												target="_blank"
+												rel="noopener"
+												>
+													<button>Run RealKcat</button>
+												</a>
+												<div>
+												views = 
+												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
+													9
+												</b>	 
+												; as of: Nov 2024
+												</div>
+											</div>
+										</div>
+									</div>
+
 									<!-- Dataset 3: RC-Hydrolase database, upload date: 11/7/2024 -->
 									<div id="db_rc-hydrolase" class="db--posts">
 										<h3>
@@ -79,16 +164,17 @@
 										>
 											<img style="object-fit: contain; width: 100%; max-width: 500px;" src="images/rc-hydrolase-piechart.png" alt="">
 										</div>
-										<div
+                                        <div
 										class="table-wrapper"
-										><table >
+                                        ><table >
 											<thead>
 											</thead>
 											<tbody>
 											</tbody>
 										</table>
 										</div>
-										<!-- RC-Hydrolase button link to GitHub page instead of download -->
+										<!-- RC-Hydrolase button link to website instead of download -->
+										<!-- Not plug in with GTM -->
 										<div class="db--button--container">
 											<a
 											href="https://rc-hydrolase.onrender.com/"
@@ -98,7 +184,7 @@
 												<button>Website</button>
 											</a>
 											<div>
-											Downloads = 
+											Views = 
 											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
 												6
 											</b>	 
@@ -121,42 +207,6 @@
 										>
 											<img style="object-fit: contain; width: 100%;" src="images/humenz-image.png" alt="">
 										</div>
-										<div
-										class="table-wrapper"
-										><table >
-											<thead>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										</div>
-										<!-- HuMEnz button link to GitHub page instead of download -->
-										<div class="db--button--container">
-											<a
-											href="https://github.com/ChowdhuryRatul"
-											target="_blank"
-											rel="noopener"
-											>
-												<button>Github</button>
-											</a>
-											<div>
-											Downloads = 
-											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-												5
-											</b>	 
-											; as of: Nov 2024
-											</div>
-										</div>
-									</div>
-
-									<!-- Dataset 1: KinHub database, upload date: 9/13/2024 -->
-									<div id="db_1" class="db--posts">
-                                        <h3>
-                                            KinHub-1.0 (Manually-curated Enzyme Parameter Database; verified from 2158 papers)
-                                        </h3>
-                                        <p>
-                                            The enzyme kinetic parameters kcat and Km were systematically curated from BRENDA (release 2023_1) and SABIO-RK (as of May 2024) using custom Python scripts, resulting in a initial dataset of 30,442 kcat and 44,615 Km entries. After filtering for maximum kcat and minimum Km values, the dataset was further cleaned and merged with substrate SMILES from PubChem and sequence data from UniProt and BRENDA. This process yielded 26,244 entries with both kcat and Km values, including 10,244 mutant entries, sourced from 2,158 scientific articles with PubMed IDs. A thorough and manual curation resolved inconsistencies, expanding the mutant dataset to 11,178 entries and ensuring data accuracy. The final dataset, comprising 16,000 wild-type and 11,178 mutant entries, serves as a high-quality, error-free resource for training machine learning models to predict kinetic parameters for novel enzymes.
-                                        </p>
                                         <div
 										class="table-wrapper"
                                         ><table >
@@ -166,20 +216,23 @@
 											</tbody>
 										</table>
                                         </div>
+										<!-- HuMEnz button link to GitHub page instead of download -->
+										<!-- Not plug in with GTM -->
 										<div class="db--button--container">
 											<a
-											href="./assets/database/WT_MD_database/WT_MD_database_v1.xlsx"
-											download=""
+											href="https://github.com/chowdhurylab/chowdhurylab.github.io/tree/main/assets/database/Human-linked_MetalloEnzyme_database(HuMEnz-1.0)"
+											target="_blank"
+											rel="noopener"
 											>
-												<button>Download</button>
+												<button>Github</button>
 											</a>
 											<div>
-											Downloads = 
+											Views = 
 											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-												9
+												5
 											</b>	 
 											; as of: Nov 2024
-                                            </div>
+											</div>
 										</div>
 									</div>
 
@@ -319,6 +372,6 @@
 			<script src="assets/js/main.js"></script>
 
 			<!-- Downloads script for each dataset 9/12/2024 -->
-			<script src="assets/js/downloads-page-db/downloadDb1.js"></script>
+			<!-- <script src="assets/js/downloads-page-db/downloadDb1.js"></script> -->
 	</body>
 </html>
