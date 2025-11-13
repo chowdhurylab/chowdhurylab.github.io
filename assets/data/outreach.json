@@ -1,0 +1,104 @@
+{
+  "teaching": [
+    {
+      "term": "Fall '25",
+      "course": "CHE 4400/5400 // Biomedical Applications in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?search=che+4400&search-submit=Submit"
+    },
+    {
+      "term": "Fall '25",
+      "course": "CHE 6010 // Chemical Engineering Graduate Seminar",
+      "link": "https://catalog.iastate.edu/azcourses/ch_e/"
+    },
+    {
+      "term": "Spring '25",
+      "course": "CHE 3100 // Computational Methods in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?search=CHE+3100&search-submit=Submit"
+    },
+    {
+      "term": "Fall '24",
+      "course": "CHE 4400/5400 // Biomedical Applications in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?P=CH%20E%20440"
+    },
+    {
+      "term": "Fall '24",
+      "course": "HONS 3210-4 // Machine Learning in Protein Biology (Seminar)",
+      "link": "https://catalog.iastate.edu/azcourses/hon/"
+    },
+    {
+      "term": "Spring '24",
+      "course": "CHE 3100 // Computational Methods in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?P=CH%20E%20310"
+    },
+    {
+      "term": "Fall '23",
+      "course": "CHE 4400/5400 // Biomedical Applications in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?P=CH%20E%20440"
+    },
+    {
+      "term": "Fall '22",
+      "course": "CHE 3100 // Computational Methods in Chemical Engineering",
+      "link": "https://catalog.iastate.edu/search/?P=CH%20E%20310"
+    }
+  ],
+
+  "training": [
+    {
+      "year": "Summer 2025",
+      "program": "Research Experience for Teachers",
+      "participants": [
+        {
+          "name": "Matt Cain",
+          "role": "STEM Instructor, West Branch Community Schools",
+          "image": "images/Matt.jpg"
+        }
+      ]
+    },
+    {
+      "year": "Immune Invaders Edu-Game",
+      "description": [
+        "Interactive gameplay to defeat flu variants by taking command of the human immune system.",
+        "15 levels of gameplay on the web.",
+        "For K–12 education about biology of the body."
+      ]
+    }
+  ],
+
+  "immuneInvadersTeam": [
+    {
+      "name": "Riza Danurdoro",
+      "field": "COM S",
+      "years": "2024 -",
+      "image": "images/riza.jpg",
+      "contribution": "All Aspect"
+    },
+    {
+      "name": "Dylan Topic",
+      "field": "COM S",
+      "years": "2024",
+      "image": "images/Dylan.png",
+      "contribution": "Logic Flow, Buttons"
+    },
+    {
+      "name": "Davis Schmidt",
+      "field": "CBE",
+      "years": "2024",
+      "image": "images/Davis.jpg",
+      "contribution": "Design, Illustration"
+    },
+    {
+      "name": "Adam Lee",
+      "field": "COM S",
+      "years": "2024",
+      "image": "images/Adam.jpg",
+      "contribution": "Scoring, Leaderboard"
+    },
+    {
+      "name": "Tanisha Magikar",
+      "field": "COM S",
+      "years": "2024",
+      "image": "images/Tanisha.png",
+      "contribution": "Ideation, User Score & Leaderboard"
+    }
+  ]
+}
