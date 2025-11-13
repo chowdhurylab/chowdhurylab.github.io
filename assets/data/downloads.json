@@ -1,0 +1,85 @@
+{
+  "downloads": [
+    {
+      "id": "db_1",
+      "title": "RealKcat - Catalytically Aware Enzyme Kcat predictor, trained on KinHub-27k (Manually-curated Enzyme Parameter Database)",
+      "description": [
+        "The enzyme kinetic parameters kcat and Km were systematically curated from BRENDA and SABIO-RK (as of May 2024), resulting in a initial dataset of 30,442 kcat and 44,615 Km entries.",
+        "KinHub-27k has:"
+      ],
+      "bulletPoints": [
+        "26,244 entries with both kcat and Km values",
+        "16,000 wild-type, 11,178 mutant entries",
+        "1:1 negative to positive data",
+        "Manually curated from 2,158 scientific PMIDs",
+        "Resolved >10k inconsistencies in BRENDA & SABIO-RK"
+      ],
+      "image": "images/RealKcatDB.jpeg",
+      "buttons": [
+        {
+          "label": "Training Data",
+          "url": "",
+          "downloads": 9,
+          "date": "Nov 2024"
+        },
+        {
+          "label": "Model/weights",
+          "url": "./assets/database/WT_MD_database/model_weights.zip",
+          "downloads": 9,
+          "date": "Nov 2024"
+        },
+        {
+          "label": "Training Split",
+          "url": "./assets/database/WT_MD_database/training_split.zip",
+          "downloads": 9,
+          "date": "Nov 2024"
+        },
+        {
+          "label": "Run RealKcat",
+          "url": "https://github.com/TKAI-LAB-Mali/RealKcat",
+          "views": 9,
+          "date": "Nov 2024"
+        }
+      ]
+    },
+    {
+      "id": "db_rc-hydrolase",
+      "title": "RC-Hydrolase",
+      "description": [
+        "RC-Hydrolase is the first reactive center database for 3D structural data of catalytic/active sites and allosterically regulated regions within PDB-listed enzyme molecules.",
+        "It enables comparison and visualization of structurally similar yet functionally distinct active pockets."
+      ],
+      "bulletPoints": [
+        "11859 Reactive Centers",
+        "10 EC Classes",
+        "643 Organisms",
+        "2841 Ligands"
+      ],
+      "image": "images/rc-hydrolase-piechart.png",
+      "buttons": [
+        {
+          "label": "Website",
+          "url": "https://rc-hydrolase.onrender.com/",
+          "views": 6,
+          "date": "Nov 2024"
+        }
+      ]
+    },
+    {
+      "id": "db_humenz",
+      "title": "HuMEnz",
+      "description": [
+        "Human disease-linked metalloenzyme/metalloprotein database (HumEnz-1.0) containing sequence, structure, and function data."
+      ],
+      "image": "images/humenz-image.png",
+      "buttons": [
+        {
+          "label": "GitHub",
+          "url": "https://github.com/chowdhurylab/chowdhurylab.github.io/tree/main/assets/database/Human-linked_MetalloEnzyme_database(HuMEnz-1.0)",
+          "views": 5,
+          "date": "Nov 2024"
+        }
+      ]
+    }
+  ]
+}
