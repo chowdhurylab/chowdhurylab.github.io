@@ -10,9 +10,7 @@ async function loadMembers() {
     renderAlumni(data.alumni);
 }
 
-/* -------------------------
-   Render Principal Investigator
--------------------------- */
+// Render Principal Investigator
 function renderPI(piList) {
     const container = document.getElementById("pi-container");
     if (!container) return;
@@ -44,9 +42,7 @@ function renderPI(piList) {
     container.innerHTML = html;
 }
 
-/* -------------------------
-   Render Postdocs/Grads/Undergrads/Interns
--------------------------- */
+// Render Postdocs/Grads/Undergrads/Interns
 function renderSection(list, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -80,9 +76,7 @@ function renderSection(list, containerId) {
     container.innerHTML = html;
 }
 
-/* -------------------------
-   Helpers for formatting fields
--------------------------- */
+// Helpers for formatting fields
 function formatRoleEmail(m) {
     let part = "";
 
@@ -109,9 +103,7 @@ function formatLoves(m) {
     return m.loves ? `<b style="color:#000000; font-weight:normal">Loves // </b> ${m.loves}<br/>` : "";
 }
 
-/* -------------------------
-   Render Alumni
--------------------------- */
+// Render Alumni
 function renderAlumni(list) {
     const container = document.getElementById("alumni-container");
     if (!container) return;
@@ -142,7 +134,5 @@ function descriptionNow(a) {
     return "";
 }
 
-/* -------------------------
-   INIT
--------------------------- */
+// INIT
 document.addEventListener("DOMContentLoaded", loadMembers);
