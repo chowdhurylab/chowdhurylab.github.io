@@ -1,25 +1,19 @@
 <!DOCTYPE HTML>
-<!--
-	Author: @mrprotein24 x chowdhurylab
--->
 <html>
-	<head><!-- Google tag (gtag.js) -->
+	<head>
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"></script>
 		<script>
 		  window.dataLayer = window.dataLayer || [];
 		  function gtag(){dataLayer.push(arguments);}
 		  gtag('js', new Date());
-		
 		  gtag('config', 'G-6ZBBP2VTVZ');
 		</script>
 
-	<!-- Google Tag Manager -->
-	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-	})(window,document,'script','dataLayer','GTM-536G93B5');</script>
-	<!-- End Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','GTM-536G93B5');</script>
 
 		<title>Research — ChowdhuryLab</title>
 		<meta charset="utf-8" />
@@ -27,256 +21,82 @@
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<link rel="icon" href="images/rz.png">
 	</head>
+
 	<body class="is-preload">
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
-	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-	<!-- End Google Tag Manager (noscript) -->
-		<!-- Wrapper -->
-			<div id="wrapper">
 
-				<!-- Main -->
-					<div id="main">
-						<div class="inner">
+		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
+		height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-							<!-- Header -->
-								<header id="header">
-									<a href="index.html" class="logo"><b style="color:#ff8300;font-weight:normal">ChowdhuryLab</b></a>
-									<ul class="icons">
-								</header>
+		<div id="wrapper">
 
-							<!-- Content -->
-								<section>
-									<header class="main">
-										<h1 style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Research</h1>
-										<p style="color:#939393;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"> What we do</p></br>
-									</header>
+			<div id="main">
+				<div class="inner">
 
-									<p>Natural proteins are linear, unidirectional biopolymers constructed by strategically adding one of the twenty possible amino acids after another such that they fold into a precise, non-clashing 3D-structure. Proteins come in various lengths, compositions, geometries, and functions. The structure of a protein offers grooves/ patches to fit/ attract small molecules (drugs, ions, etc.) or other proteins. The amino acid sequence dictates the structure and consequently the function that a protein can execute. While experiments can help us discern what the sequence, structure, and function of any protein are, predicting causal sequence-structure-function maps have largely remained elusive. We use a combination of deep-learning networks, physics-based molecular-mechanical models, and integer-optimization to predict amino acid transitions (mutations, insertions, or deletions) that will endow a protein with a desired functionality (with/ without significant structural change). We also predict protein activity given the pH, dielectric constant, polarity, and temperature of the surrounding solvent.</p> </br > 
-									<p>We modify known natural/ synthetic proteins or design from scratch proteins for - (a) enhanced/ altered <b>catalysis</b>, (b) precise <b>molecular sieving</b> of ions or solutes, (c) <b>DNA/RNA</b>-sequencing, (d) bio-based <b>fuel cells</b>, (e) <b>biomedical</b> applications and drug discovery, (f) structure-guided <b>metabolic modeling</b>, and (g) extracting specific <b>rare-earth elements</b> from electronic waste.</p></br> 
-									<p>We are a <i>computational group</i> but we collaborate with experimental collegues for each of our projects. We also utilize tools from other established domains of quantitative science for analogous modeling of biological systems. </p></br></br>
+					<header id="header">
+						<a href="index.html" class="logo">
+							<b style="color:#ff8300;font-weight:normal">ChowdhuryLab</b>
+						</a>
+					</header>
 
+					<section>
+						<header class="main">
+							<h1 style="color:#7e7e7e;">Research</h1>
+							<p style="color:#939393;">What we do</p><br>
+						</header>
 
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/enz1.gif" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Enzymes (biocatalysis)</h3>
-											<p>We use deep-learning-derived encoding of both enzymatic protein sequences and their shape to predict mutations to functionalize them for intended biochemistry. We identify/ build-on stable proteins and predict mutations to activate them at given pH and temperature.<br/><b style="color:#5680e9">Applications</b> : biosensor design, production of precursors for biofuel and drugs</p>
-										</br>
-										</article>
-									</div>
+						<!-- Dynamic research intro -->
+						<div id="research-intro"></div>
+						
+						<!-- Dynamic research areas -->
+						<div id="research-areas"></div>
 
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/enz3.gif" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Protein pores (separations)</h3>
-											<p>We use pore-containing proteins as chassis to design precise molecular separation systems. Mutations on the exterior of the pore permit incorporation in polymeric membranes while mutating inner pore walls controls ionic selectivity. <br/><b style="color:#5680e9">Applications</b> : molecular separation, bio-based fuel cell, nanopore sequencing</p>
-										</br>
-										</article>
-									</div>
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/enz4.gif" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Antibodies (immunology)</h3>
-											<p>We design libraries of humanized proteins with complementary shape and electrostatics to neutralize disease-causing antigenic proteins. We also model antigenic protein mutation to understand escape from human antibodies and infectivity. <br/><b style="color:#5680e9">Applications</b> : antibody design, CDR3 loop engineering</p>
-										</br>
-										</article>
-									</div>
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/enz2.gif" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Strain design (metabolism)</h3>
-											<p>We predict enzyme structures that participate in metabolic and signaling pathways. We estimate substrate binding and product leaving kinetics using protein-ligand simulations. Structure-aware metabolic models provide molecular bases to whole-cell behavior. <br/><b style="color:#5680e9">Applications</b> : microbial engineering, temperature-aware metabolic models</p>
-										</br>
-										</article>
-									</div>
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/material.png" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Bio-based surfaces (materials)</h3>
-											<p>We discern biochemical principles that guide designing and deploying functional protein-non-protein ensembles. Non-protein materials of interest include but are not limited to silica-derivatives, lignin, and synthetic block copolymers.  <br/><b style="color:#5680e9">Applications</b> : novel functional nano-materials, green chemistry, energy</p>
-										</br>
-										</article>
-									</div>
-									<div class="posts">
-										<article>
-											<a class="image"><img src="images/aiml.png" alt="" /></a>
-											</br>
-										</article>
-										<article>
-											<h3 style="color:#7e7e7e" align="left">⇠ Analogous biology (AI/ ML)</h3>
-											<p>We pursue certain audacious projects where we first identify and employ analogous ideas from non-biological domains to throw light into open questions in biology. We design experiments for uncertainty minimization while parametrizing biological processes. <br/><b style="color:#5680e9">Applications</b> : abiotic protein design, peptide therapeutics</p>
-										</article>
+					</section>
 
-									</div>
-								</section>
-
-						</div>
-					</div>
-
-				<!-- Sidebar -->
-					<div id="sidebar">
-						<div class="inner">
-
-							<!-- Menu -->
-								<nav id="menu">
-									<header class="major">
-									</header>
-									<ul>
-										<li><a href="index.html">Home</a></li>
-										<li><a href="members.html">Members</a></li>
-										<li><a href="research.html">Research</a></li>
-										<li><a href="publications.html">Publications</a></li>
-										<li><a href="downloads.html">Downloads</a></li>
-										<li><a href="moments.html">Moments</a></li>
-										<li><a href="outreach.html">Outreach+</a></li>
-										<li><a href="joinus.html">Join Us</a></li>
-									</ul>
-								</nav>
-
-								<section>
-									<header class="major">
-											<h2 style="color:#818589">Latest in Lab</h2>
-									</header>
-									<div class = "mini-posts" style="height:70em;width:20em;overflow:auto;background-color:#dcdcdc;color:black;scrollbar-base-color:gray;font-family:Helvetica Neue;">
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Apr' 25</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Dr. Karuna Anna Sajeevan for making it to the finals in Biosolveit scientific challenge. You can read about it <a href="https://www.biosolveit.de/scientific-challenge/project/?projectId=17397481065984" target="_blank" style="color: blue; text-decoration: none;">here</a>.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Feb' 25</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Dr. Sakib Ferdous for successfully defending his PhD! We wish him all the best.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Md. Sakib Noor for passing qualification exam with flying colors.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Sep' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Bibek for defending his MS thesis in CBE.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Jul' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Prof. Chowdhury has been awarded the endowed chair position - 'Building A World of Difference Faculty Fellow'. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Jun' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Brisa Lopez Calderon joins as a <a href="https://www.iinspirelsamp.org/" style="color: black; text-decoration: none;">IINSPIRE-LSAMP</a> Summer REU from DMACC. Welcome Brisa!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Mar' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Yee Chuen Teoh passed his MS thesis defense with flying colors. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										<img src="images/Yee_MS_Thesis.jpg" width="100%" alt="" id="hp"/><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Feb' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Hannah Gates, first year PhD student, is awarded the prestigious NSF Dependable Data Driven Discovery (D4) Research Fellowship for 2025 for her work on designing lanthanide binding proteins. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Md. Sakib Noor, CBE PhD Candidate and Rahil Salehi, CBE PhB Candidate, joins the lab. Welcome Md. Sakib Noor and Rahil Salehi!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congrats to Julia for receiving the Malcolm Family Scholarship, the Edward Henry Ohlsen Scholarship, and the Roderick Seward, Flossie Ratcliff, and Helen M. Galloway Foundation Scholarship. 
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span>
-										<img src="images/awards_banquet_jyoung.jpg" width="100%" alt="" id="hp"/><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Aug' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Bibek Acharya's work on structural analysis of protein pores for sensing, sequencing, and separations is now out in 
-											<a style="color:#5680e9;" href="https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471223002119%3Fshowall%3Dtrue">
-												Cell Systems</a>.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											May' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Sakib Ferdous successfully defended his MS in AI thesis. Congratulations!</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											May' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congrats to Yee Chuen Teoh for bagging summer internship at Apple in the health team.</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton is selected to present his research on Molecular Modeling of Nanovaccine Release for Colon Cancer at the National Conference for Undergraduate Research 2023 to be held at University of Wisconsin. Congratulations Jack!</span> <span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton wins the prestigious Griswold Undergraduate Fellowship. Congratulations Jack!</span> <span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">CBE Junior, Kaelie Hainlin joins the lab as a researcher. Welcome Kaelie!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">First Year Honors students, Sophie, Naomi, and Julia join the lab as undergraduate researchers, We are excited to have you all.</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Oct' 22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Yee Chuen Teoh, MS Candidate, Computer Science, joins the lab. Welcome Yee!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Oct' 22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Adele Haghighat Hoseini, PhD Candidate, Computer Science, joins the lab. Welcome Adele!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton, CBE Sophomore joins the lab. Welcome Jack! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Bibek Acharya, CBE PhD student, joins the lab. Welcome Bibek! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Sakib Ferdous, Senior CBE PhD student, joins the lab. Welcome Sakib! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Apr '22</b>	<span style="color: #7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Iowa State will be home to the Chowdhury Lab from Fall 2022!</span> <span style="color:#818589" class="icon solid fa-star"></span><br \><br />
-									</div>
-								</section>
-
-						</div>
-					</div>
+				</div>
 			</div>
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+			<!-- SIDEBAR -->
+			<div id="sidebar">
+				<div class="inner">
+
+					<nav id="menu">
+						<ul>
+							<li><a href="index.html">Home</a></li>
+							<li><a href="members.html">Members</a></li>
+							<li><a href="research.html">Research</a></li>
+							<li><a href="publications.html">Publications</a></li>
+							<li><a href="downloads.html">Downloads</a></li>
+							<li><a href="moments.html">Moments</a></li>
+							<li><a href="outreach.html">Outreach+</a></li>
+							<li><a href="joinus.html">Join Us</a></li>
+						</ul>
+					</nav>
+
+					<section>
+						<header class="major">
+							<h2 style="color:#818589">Latest in Lab</h2>
+						</header>
+
+						<div class="mini-posts"
+							id="sidebar-latest"
+							style="height:70em;width:20em;overflow:auto;background-color:#dcdcdc;
+								   color:black;scrollbar-base-color:gray;font-family:Helvetica Neue;">
+						</div>
+					</section>
+
+				</div>
+			</div>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script src="scripts/research.js"></script>
+		<script src="scripts/sidebar.js"></script>
 
 	</body>
 </html>
