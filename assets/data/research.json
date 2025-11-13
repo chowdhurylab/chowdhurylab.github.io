@@ -1,0 +1,46 @@
+{
+  "introParagraphs": [
+    "Natural proteins are linear, unidirectional biopolymers constructed by strategically adding one of the twenty possible amino acids after another such that they fold into a precise, non-clashing 3D-structure. Proteins come in various lengths, compositions, geometries, and functions. The structure of a protein offers grooves/ patches to fit/ attract small molecules (drugs, ions, etc.) or other proteins. The amino acid sequence dictates the structure and consequently the function that a protein can execute. While experiments can help us discern what the sequence, structure, and function of any protein are, predicting causal sequence-structure-function maps have largely remained elusive. We use a combination of deep-learning networks, physics-based molecular-mechanical models, and integer-optimization to predict amino acid transitions (mutations, insertions, or deletions) that will endow a protein with a desired functionality (with/ without significant structural change). We also predict protein activity given the pH, dielectric constant, polarity, and temperature of the surrounding solvent.",
+    "We modify known natural/ synthetic proteins or design from scratch proteins for - (a) enhanced/ altered catalysis, (b) precise molecular sieving of ions or solutes, (c) DNA/RNA-sequencing, (d) bio-based fuel cells, (e) biomedical applications and drug discovery, (f) structure-guided metabolic modeling, and (g) extracting specific rare-earth elements from electronic waste.",
+    "We are a computational group but we collaborate with experimental collegues for each of our projects. We also utilize tools from other established domains of quantitative science for analogous modeling of biological systems."
+  ],
+
+  "researchAreas": [
+    {
+      "title": "⇠ Enzymes (biocatalysis)",
+      "image": "images/enz1.gif",
+      "text": "We use deep-learning-derived encoding of both enzymatic protein sequences and their shape to predict mutations to functionalize them for intended biochemistry. We identify/ build-on stable proteins and predict mutations to activate them at given pH and temperature.",
+      "applications": "biosensor design, production of precursors for biofuel and drugs"
+    },
+    {
+      "title": "⇠ Protein pores (separations)",
+      "image": "images/enz3.gif",
+      "text": "We use pore-containing proteins as chassis to design precise molecular separation systems. Mutations on the exterior of the pore permit incorporation in polymeric membranes while mutating inner pore walls controls ionic selectivity.",
+      "applications": "molecular separation, bio-based fuel cell, nanopore sequencing"
+    },
+    {
+      "title": "⇠ Antibodies (immunology)",
+      "image": "images/enz4.gif",
+      "text": "We design libraries of humanized proteins with complementary shape and electrostatics to neutralize disease-causing antigenic proteins. We also model antigenic protein mutation to understand escape from human antibodies and infectivity.",
+      "applications": "antibody design, CDR3 loop engineering"
+    },
+    {
+      "title": "⇠ Strain design (metabolism)",
+      "image": "images/enz2.gif",
+      "text": "We predict enzyme structures that participate in metabolic and signaling pathways. We estimate substrate binding and product leaving kinetics using protein-ligand simulations. Structure-aware metabolic models provide molecular bases to whole-cell behavior.",
+      "applications": "microbial engineering, temperature-aware metabolic models"
+    },
+    {
+      "title": "⇠ Bio-based surfaces (materials)",
+      "image": "images/material.png",
+      "text": "We discern biochemical principles that guide designing and deploying functional protein-non-protein ensembles. Non-protein materials of interest include but are not limited to silica-derivatives, lignin, and synthetic block copolymers.",
+      "applications": "novel functional nano-materials, green chemistry, energy"
+    },
+    {
+      "title": "⇠ Analogous biology (AI/ ML)",
+      "image": "images/aiml.png",
+      "text": "We pursue certain audacious projects where we first identify and employ analogous ideas from non-biological domains to throw light into open questions in biology. We design experiments for uncertainty minimization while parametrizing biological processes.",
+      "applications": "abiotic protein design, peptide therapeutics"
+    }
+  ]
+}
