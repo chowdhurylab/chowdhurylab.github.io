@@ -1,0 +1,370 @@
+{
+  "publications": [
+    {
+      "year": 2025,
+      "journal": "Current Opinion in Biotechnology",
+      "authors": "Noor, M. S. et al.",
+      "title": "Next-generation metabolic models informed by biomolecular simulations",
+      "link": "https://www.sciencedirect.com/science/article/pii/S0958166925000035?via%3Dihub",
+      "articleType": "Review Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Computational and Structural Biotechnology Journal",
+      "authors": "Sajeevan, K. A. et al.",
+      "title": "Computationally derived structural insights into Rare Earth selectivity in lanmodulin and its variants",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Plant Physiology",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Fermi calculations enable quick downselection of target genes and process optimization in photosynthetic systems",
+      "link": "https://academic.oup.com/plphys/advance-article/doi/10.1093/plphys/kiaf103/8088342",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Animal Frontiers",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Computational approaches for enteric methane mitigation research: from fermi calculations to artificial intelligence paradigms",
+      "link": "https://academic.oup.com/af/article/14/6/33/7942668",
+      "articleType": "Article"
+    },
+    {
+      "year": 2024,
+      "journal": "Scientific Reports",
+      "authors": "Malla, S. et al.",
+      "title": "Dissecting metabolic landscape of alveolar macrophage",
+      "link": "https://www.nature.com/articles/s41598-024-81253-w",
+      "articleType": "Article"
+    },
+    {
+      "year": 2024,
+      "journal": "Chemical Reviews",
+      "authors": "Peng, H. et al.",
+      "title": "Biomimetic Materials to Fabricate Artificial Cells",
+      "link": "https://pubs.acs.org/doi/10.1021/acs.chemrev.4c00241",
+      "articleType": "Review Article"
+    },
+    {
+      "year": 2024,
+      "journal": "Computational and Structural Biotechnology Journal",
+      "authors": "Dey, S. et al.",
+      "title": "Identification and biophysical characterization of epitope atlas of Porcine Reproductive and Respiratory Syndrome Virus",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037024002885",
+      "articleType": "Article"
+    },
+    {
+      "year": 2024,
+      "journal": "Biotechnology and Bioengineering",
+      "authors": "Ferdous, S. et al.",
+      "title": "Reinforcement learning-guided control strategies for CAR T-cell activation and expansion",
+      "link": "https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/abs/10.1002/bit.28753",
+      "articleType": "Article"
+    },
+    {
+      "year": 2024,
+      "journal": "ACS Nano",
+      "authors": "Uthaman, S. et al.",
+      "title": "Inhibiting the cGAS-STING Pathway in Ulcerative Colitis with Programmable Micelles",
+      "link": "https://pubs.acs.org/doi/10.1021/acsnano.3c11257",
+      "articleType": "Article"
+    },
+    {
+      "year": 2024,
+      "journal": "ICASSP 2024",
+      "authors": "Lin, J. et al.",
+      "title": "Distributed Stochastic Contextual Bandits for Protein Drug Interaction",
+      "link": "https://ieeexplore.ieee.org/document/10447230",
+      "articleType": "Article"
+    },
+    {
+      "year": 2023,
+      "journal": "iScience",
+      "authors": "Chowdhury, N. B. et al.",
+      "title": "A multi-organ maize metabolic model connects temperature stress with energy production and reducing power generation",
+      "link": "https://www.sciencedirect.com/science/article/pii/S258900422302477X",
+      "articleType": "Article"
+    },
+    {
+      "year": 2023,
+      "journal": "Cell Systems",
+      "authors": "Samineni, L. et al.",
+      "title": "Protein engineering of pores for separation, sensing, and sequencing",
+      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471223002119%3Fshowall%3Dtrue",
+      "articleType": "Article"
+    },
+    {
+      "year": 2023,
+      "journal": "Journal of Experimental Botany",
+      "authors": "Choi, S. et al.",
+      "title": "A single amino acid change led to structural and functional differentiation of PvHd1 to control flowering in switchgrass",
+      "link": "https://academic.oup.com/jxb/advance-article/doi/10.1093/jxb/erad255/7218976",
+      "articleType": "Article"
+    },
+    {
+      "year": 2023,
+      "journal": "Metabolic Engineering",
+      "authors": "Jindra, M. et al.",
+      "title": "Evaluation of strategies to narrow the product chain-length distribution of microbially synthesized free fatty acids",
+      "link": "https://www.sciencedirect.com/science/article/abs/pii/S1096717623000320?via%3Dihub",
+      "articleType": "Article"
+    },
+    {
+      "year": 2023,
+      "journal": "Frontiers in Bioengineering and Biotechnology",
+      "authors": "Chowdhury, R.",
+      "title": "Advances in protein structure, function, and design",
+      "link": "https://www.frontiersin.org/articles/10.3389/fbioe.2022.1108962/full",
+      "articleType": "Article"
+    },
+    {
+      "year": 2021,
+      "journal": "Nature Biotechnology",
+      "authors": "Chowdhury, R., Bouatta, N., Biswas, S. et al.",
+      "title": "Single-sequence protein structure prediction using language models from deep learning",
+      "link": "https://www.nature.com/articles/s41587-022-01432-w",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "Nature News", "url": "https://www.nature.com/articles/s41587-022-01466-0" },
+        { "label": "ScienceMag", "url": "https://www.science.org/content/blog-post/another-way-do-protein-structure-prediction" },
+        { "label": "Forbes AI", "url": "https://www.forbes.com/sites/robtoews/2021/10/03/alphafold-is-the-most-important-achievement-in-ai-ever/?sh=4c8e4b466e0a" }
+      ]
+    },
+    {
+      "year": 2022,
+      "journal": "Proteins",
+      "authors": "Boorla, V. S., Chowdhury, R. et al.",
+      "title": "De novo design and Rosetta-based assessment of high-affinity antibody variable regions (Fv) against the SARS-CoV-2 spike RBD",
+      "link": "https://onlinelibrary.wiley.com/doi/10.1002/prot.26422",
+      "articleType": "Article"
+    },
+    {
+      "year": 2022,
+      "journal": "NPJ Clean Water",
+      "authors": "Samineni, L. et al.",
+      "title": "Effective pathogen removal in sustainable natural fiber Moringa filters",
+      "link": "https://www.nature.com/articles/s41545-022-00170-5",
+      "articleType": "Article"
+    },
+    {
+      "year": 2022,
+      "journal": "Applied & Environmental Microbiology",
+      "authors": "Oh, C., Chowdhury, R. et al.",
+      "title": "Inactivation mechanism and efficacy of grape seed extract for Human Norovirus surrogate",
+      "link": "https://journals.asm.org/doi/abs/10.1128/aem.02247-21",
+      "articleType": "Article"
+    },
+    {
+      "year": 2021,
+      "journal": "Genome Medicine",
+      "authors": "Patiño-Galindo, J. et al.",
+      "title": "Recombination and lineage-specific mutations linked to the emergence of SARS-CoV-2",
+      "link": "https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-021-00943-6",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "The Scientist", "url": "https://www.the-scientist.com/news-opinion/plenty-of-evidence-for-recombination-in-sars-cov-2-69156" }
+      ]
+    },
+    {
+      "year": 2021,
+      "journal": "Nature Nanotechnology",
+      "authors": "Zeng, H. et al.",
+      "title": "Foldamer-based ultrapermeable and highly selective artificial water channels that exclude protons",
+      "link": "https://www.nature.com/articles/s41565-021-00915-2/metrics",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "ScienMag", "url": "https://scienmag.com/solving-a-natural-riddle-of-water-filtration/" },
+        { "label": "SciTech Daily", "url": "https://scitechdaily.com/solving-a-natural-riddle-of-water-filtration-to-create-clean-water-while-consuming-less-energy/" }
+      ]
+    },
+    {
+      "year": 2021,
+      "journal": "PNAS",
+      "authors": "Chen, C. et al.",
+      "title": "Computational prediction of the effect of amino acid changes on the binding affinity between SARS-CoV-2 spike RBD and human ACE2",
+      "link": "https://www.pnas.org/doi/10.1073/pnas.2106480118",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "News18", "url": "https://www.news18.com/news/india/new-tool-predicts-changes-that-may-make-covid-variants-more-infectious-4266134.html" },
+        { "label": "LabRoots", "url": "https://www.labroots.com/trending/clinical-and-molecular-dx/21397/computational-crystal-ball-predicts-covid-variants-dangerous" }
+      ]
+    },
+    {
+      "year": 2020,
+      "journal": "Computational and Structural Biotechnology Journal",
+      "authors": "Chowdhury, R., Boorla, V. S. et al.",
+      "title": "Computational biophysical characterization of the SARS-CoV-2 spike protein binding with the ACE2 receptor and implications for infectivity",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037020304037",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "ScienceDaily", "url": "https://www.sciencedaily.com/releases/2020/12/201208163007.htm" }
+      ]
+    },
+    {
+      "year": 2020,
+      "journal": "Structure",
+      "authors": "Chowdhury, R. et al.",
+      "title": "IPRO+/−: Computational Protein Design Tool Allowing for Insertions and Deletions",
+      "link": "https://doi.org/10.1016/j.str.2020.08.003",
+      "articleType": "Article"
+    },
+    {
+      "year": 2020,
+      "journal": "Nature Nanotechnology",
+      "authors": "Song, W. et al.",
+      "title": "Artificial water channels enable fast and selective water permeation through water-wire networks",
+      "link": "https://www.nature.com/articles/s41565-019-0586-8",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "Nature", "url": "https://www.nature.com/articles/s41565-019-0617-5" },
+        { "label": "UT Austin", "url": "https://cockrell.utexas.edu/news/archive/8886-how-we-transport-water-in-our-bodies-inspires-new-water-filtration-method" },
+        { "label": "Water Canada", "url": "https://www.watercanada.net/how-we-transport-water-in-our-bodies-inspires-new-water-filtration-method/" }
+      ]
+    },
+    {
+      "year": 2020,
+      "journal": "Protein Engineering, Design and Selection",
+      "authors": "Wang, Z. et al.",
+      "title": "Engineering sensitivity and specificity of AraC-based biosensors responsive to triacetic acid lactone and orsellinic acid",
+      "link": "https://academic.oup.com/peds/article/doi/10.1093/protein/gzaa027/5993570",
+      "articleType": "Article"
+    },
+    {
+      "year": 2020,
+      "journal": "Nature Materials",
+      "authors": "Tu, Y. M. et al.",
+      "title": "Rapid fabrication of precise high-throughput filters from membrane protein nanosheets",
+      "link": "https://www.nature.com/articles/s41563-019-0577-z",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "Technology Networks", "url": "https://www.technologynetworks.com/tn/news/super-efficient-filtration-membranes-created-329984" },
+        { "label": "Science Daily", "url": "https://www.sciencedaily.com/releases/2020/01/200129091525.htm" }
+      ]
+    },
+    {
+      "year": 2019,
+      "journal": "ACS Chemical Biology",
+      "authors": "Throckmorton, K. et al.",
+      "title": "Directed Evolution Reveals the Functional Sequence Space of an Adenylation Domain Specificity Code",
+      "link": "https://pubs.acs.org/doi/10.1021/acschembio.9b00532",
+      "articleType": "Article"
+    },
+    {
+      "year": 2019,
+      "journal": "AIChE Journal",
+      "authors": "Chowdhury, R. & Maranas, C. D.",
+      "title": "From directed evolution to computational enzyme engineering—A review",
+      "link": "https://aiche.onlinelibrary.wiley.com/doi/abs/10.1002/aic.16847",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "EU Policy Document", "url": "https://op.europa.eu/en/publication-detail/-/publication/df6b2239-9b3e-11eb-b85c-01aa75ed71a1/language-en/format-PDF/source-199341291" }
+      ]
+    },
+    {
+      "year": 2019,
+      "journal": "Environmental Science & Technology",
+      "authors": "Samineni, L. et al.",
+      "title": "7 log virus removal in a simple functionalized sand filter",
+      "link": "https://pubs.acs.org/doi/10.1021/acs.est.9b03734",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "c&en", "url": "https://cen.acs.org/environment/water/Filter-made-tropical-tree-seeds/97/web/2019/11" }
+      ]
+    },
+    {
+      "year": 2019,
+      "journal": "US Patent App. 16/397,416",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Angstrom-scale separations by design using precision biomimetic membrane",
+      "link": "https://patents.google.com/patent/US20190329189A1",
+      "articleType": "Patent"
+    },
+    {
+      "year": 2018,
+      "journal": "Antibodies",
+      "authors": "Chowdhury, R., Alan, M. F. et al.",
+      "title": "OptMAVEn-2.0: De novo Design of Variable Antibody Regions Against Targeted Antigen Epitopes",
+      "link": "https://www.mdpi.com/2073-4468/7/3/23",
+      "articleType": "Article"
+    },
+    {
+      "year": 2018,
+      "journal": "Biophysical Journal",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Biomimetic Membrane Design Principles for Angstrom Scale Separation",
+      "link": "https://www.cell.com/biophysj/pdf/S0006-3495(17)33237-X.pdf",
+      "articleType": "Article"
+    },
+    {
+      "year": 2018,
+      "journal": "ACS Synthetic Biology",
+      "authors": "Hernández Lozada, N. et al.",
+      "title": "Highly Active C8-Acyl-ACP Thioesterase Variant Isolated by a Synthetic Selection Strategy",
+      "link": "https://pubs.acs.org/doi/10.1021/acssynbio.8b00215",
+      "articleType": "Article"
+    },
+    {
+      "year": 2018,
+      "journal": "Nature Communications",
+      "authors": "Chowdhury, R. et al.",
+      "title": "PoreDesigner for tuning solute selectivity in a robust and highly permeable outer membrane pore",
+      "link": "https://www.nature.com/articles/s41467-018-06097-1",
+      "articleType": "Article",
+      "extraLinks": [
+        { "label": "Penn State", "url": "https://www.psu.edu/news/research/story/poredesigner-improves-protein-channel-design-water-treatment-bioseparations/" },
+        { "label": "Phys.org", "url": "https://phys.org/news/2019-03-poredesigner-protein-channel-treatment-bioseparations.html" }
+      ]
+    },
+    {
+      "year": 2017,
+      "journal": "Frontiers in Immunology",
+      "authors": "Tiller, K. E. et al.",
+      "title": "Facile affinity maturation of antibody variable domains using natural diversity mutagenesis",
+      "link": "https://www.frontiersin.org/articles/10.3389/fimmu.2017.00986/full",
+      "articleType": "Article"
+    },
+    {
+      "year": 2015,
+      "journal": "Metabolites",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Using gene essentiality and synthetic lethality information to correct yeast and CHO cell genome-scale models",
+      "link": "https://www.mdpi.com/2218-1989/5/4/536",
+      "articleType": "Article"
+    },
+    {
+      "year": 2014,
+      "journal": "RSC Advances",
+      "authors": "Sarkar, S. et al.",
+      "title": "Application of ANFIS model to optimise the photocatalytic degradation of chlorhexidine digluconate",
+      "link": "https://pubs.rsc.org/en/content/articlelanding/2014/ra/c4ra00389f",
+      "articleType": "Article"
+    },
+    {
+      "year": 2014,
+      "journal": "Renewable and Sustainable Energy Reviews",
+      "authors": "Chakraborty, R. et al.",
+      "title": "Conversion of slaughterhouse and poultry farm animal fats and wastes to biodiesel: Parametric sensitivity and fuel quality assessment",
+      "link": "https://doi.org/10.1016/j.rser.2013.08.082",
+      "articleType": "Article"
+    },
+    {
+      "year": 2013,
+      "journal": "International Journal of Theoretical Physics",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Interacting Generalized Cosmic Chaplygin gas in Loop quantum cosmology: A singularity free universe",
+      "link": "https://link.springer.com/article/10.1007/s10773-012-1353-x",
+      "articleType": "Article"
+    },
+    {
+      "year": 2011,
+      "journal": "International Journal of Theoretical Physics",
+      "authors": "Chowdhury, R. et al.",
+      "title": "Influence of Gauss-Bonnet Coupling Parameter on the Thermodynamic Properties of Einstein-Gauss-Bonnet and Einstein–Yang-Mills–Gauss-Bonnet Black Holes",
+      "link": "https://link.springer.com/article/10.1007/s10773-011-0672-7",
+      "articleType": "Article"
+    }
+  ]
+}
