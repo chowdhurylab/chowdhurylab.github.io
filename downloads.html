@@ -1,25 +1,19 @@
 <!DOCTYPE HTML>
-<!--
-	Author: @mrprotein24 x chowdhurylab
--->
 <html>
-	<head><!-- Google tag (gtag.js) -->
+	<head>
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"></script>
 		<script>
 		  window.dataLayer = window.dataLayer || [];
 		  function gtag(){dataLayer.push(arguments);}
 		  gtag('js', new Date());
-		
 		  gtag('config', 'G-6ZBBP2VTVZ');
 		</script>
 
-	<!-- Google Tag Manager -->
-	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-	})(window,document,'script','dataLayer','GTM-536G93B5');</script>
-	<!-- End Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','GTM-536G93B5');</script>
 
 		<title>Downloads — ChowdhuryLab</title>
 		<meta charset="utf-8" />
@@ -28,399 +22,83 @@
 		<link rel="stylesheet" href="assets/css/downloads.css" />
 		<link rel="icon" href="images/rz.png">
 	</head>
+
 	<body class="is-preload">
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
-	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-	<!-- End Google Tag Manager (noscript) -->
-		<!-- Wrapper -->
-			<div id="wrapper">
 
-				<!-- Main -->
-					<div id="main">
-						<div class="inner">
+		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
+		height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-							<!-- Header -->
-								<header id="header">
-									<a href="index.html" class="logo"><b style="color:#ff8300;font-weight:normal">ChowdhuryLab</b></a>
-									<ul class="icons">
-								</header>
+		<div id="wrapper">
 
-							<!-- Content -->
-								<section>
-									<header class="main">
-										<h1 style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;">Downloads</h1>
-										<p style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Shared for science</p></br>
-									</header>
-									<p>
-										This is a repository of downloadable datasets, GitHub links to code repositories, executable Colab Notebooks, and other research write-ups from the Chowdhury Lab. All software is licensed under a Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.
-                                    </p></br>
+			<div id="main">
+				<div class="inner">
 
-									<!-- Dataset post -->
+					<header id="header">
+						<a href="index.html" class="logo">
+							<b style="color:#ff8300;font-weight:normal">ChowdhuryLab</b>
+						</a>
+					</header>
 
-									<!-- Dataset 1: KinHub database, upload date: 9/13/2024 -->
-									<div id="db_1" class="db--posts">
-                                        <h3>
-                                            RealKcat - Catalytically Aware Enzyme Kcat predictor, trained on KinHub-27k (Manually-curated Enzyme Parameter Database)
-                                        </h3>
-                                        <p>
-                                            The enzyme kinetic parameters kcat and Km were systematically curated from BRENDA and SABIO-RK (as of May 2024), resulting in a initial dataset of 30,442 kcat and 44,615 Km entries. It is annotated with substrate SMILES from PubChem. 
-											<br/>
-											KinHub-27k has:
-										</p>
-										<ul style="padding-left: 4rem;">
-											<li>26,244 entries with both kcat and Km values</li>
-											<li>16,000 wild-type, 11,178 mutant entries</li>
-											<li>1:1 negative to positive data</li>
-											<li>Manually curated from 2,158 scientific PMIDs</li>
-											<li>A thorough and manual curation resolved >10k inconsistencies in BRENDA and SABIO-RK</li>
-										</ul>
-                                        <p>
-                                            RealKcat (trained on KinHub-27k) is the first-of-its kind catalytically aware kinetic predictor of enzymatic reactions, which is sensitive to mutations at the active center - and the first model to be able to predict zero kcat value if the catalytic apparatus of an enzyme is mutated.
-										</p>
-										<div
-										style="display: flex; justify-content: center; align-items: center;"
-										>
-											<img style="object-fit: contain; width: 100%;" src="images/RealKcatDB.jpeg" alt="">
-										</div>
-                                        <div
-										class="table-wrapper"
-                                        ><table >
-											<thead>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-                                        </div>
-										<div class="db--button--flexbox">
-											<!-- Zip training data -->
-											<!-- Used to be plugged in, might not be working after update
-											 	Double check it again -->
-											<div class="db--button--container">
-												<a
-												href=""
-												download=""
-												>
-													<button>Training Data</button>
-												</a>
-												<div>
-												Downloads = 
-												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-													9
-												</b>	 
-												; as of: Nov 2024
-												</div>
-											</div>
-											<!-- Zip button weights -->
-											<!-- Not plug in with GTM -->
-											<div class="db--button--container">
-												<a
-												href="./assets/database/WT_MD_database/model_weights.zip"
-												download=""
-												>
-													<button>Model/weights</button>
-												</a>
-												<div>
-												Downloads = 
-												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-													9
-												</b>	 
-												; as of: Nov 2024
-												</div>
-											</div>
-											<!-- Linked to Box web for training set  -->
-											<!-- Not plug in with GTM -->
-											<div class="db--button--container">
-												<a
-												href="./assets/database/WT_MD_database/training_split.zip"
-												download=""
-												>
-													<button>Training Split</button>
-												</a>
-												<div>
-												Downloads = 
-												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-													9
-												</b>	 
-												; as of: Nov 2024
-												</div>
-											</div>
-											<!-- Linked to Github instead  -->
-											<!-- Not plug in with GTM -->
-											<div class="db--button--container">
-												<a
-												href="https://github.com/TKAI-LAB-Mali/RealKcat"
-												target="_blank"
-												rel="noopener"
-												>
-													<button>Run RealKcat</button>
-												</a>
-												<div>
-												Views = 
-												<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-													9
-												</b>	 
-												; as of: Nov 2024
-												</div>
-											</div>
-										</div>
-									</div>
+					<section>
+						<header class="main">
+							<h1 style="color:#7e7e7e;font-family:Helvetica Neue;">Downloads</h1>
+							<p style="color:#7e7e7e;font-family:Helvetica Neue;">Shared for science</p><br>
+						</header>
 
-									<!-- Dataset 3: RC-Hydrolase database, upload date: 11/7/2024 -->
-									<div id="db_rc-hydrolase" class="db--posts">
-										<h3>
-											RC-Hydrolase
-										</h3>
-										<p>
-											<span style="font-weight: bold;">RC-Hydrolase</span> is the first <span style="font-weight: bold;">reactive center</span> database for three-dimensional structural data of catalytic/active sites and neighboring allosterically regulated regions of single and multi-chain enzyme molecules listed in the Protein Data Bank (<a style="text-decoration: underline; color:#5680e9" href="https://www.rcsb.org/stats/explore/enzyme_classification_name" target="_blank"	rel="noopener">PDB</a>). This database enables comparison and visualizing structurally similar, yet functionally different active pockets, from desired host organisms thereby offering versatile starting scaffolds to design multi-functional enzymes for industrial biotechnology.
-											<br />
-											RC-Hydrolase contains:
-										</p>
-										<ul style="padding-left: 4rem;">
-											<li>11859 Reactive Centers</li>
-											<li>10 EC Classes</li>
-											<li>643 Organisms</li>
-											<li>2841 Ligands</li>
-										</ul>
-										<div
-										style="display: flex; justify-content: center; align-items: center;"
-										>
-											<img style="object-fit: contain; width: 100%; max-width: 500px;" src="images/rc-hydrolase-piechart.png" alt="">
-										</div>
-                                        <div
-										class="table-wrapper"
-                                        ><table >
-											<thead>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										</div>
-										<!-- RC-Hydrolase button link to website instead of download -->
-										<!-- Not plug in with GTM -->
-										<div class="db--button--container">
-											<a
-											href="https://rc-hydrolase.onrender.com/"
-											target="_blank"
-											rel="noopener"
-											>
-												<button>Website</button>
-											</a>
-											<div>
-											Views = 
-											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-												6
-											</b>	 
-											; as of: Nov 2024
-											</div>
-										</div>
-									</div>
+						<p>
+							This is a repository of downloadable datasets, GitHub links to code repositories, executable Colab Notebooks, and other research write-ups.
+						</p><br>
 
+						<!-- Dynamic Downloads -->
+						<div id="downloads-container"></div>
 
-									<!-- Dataset 2: HuMEnz database, upload date: 11/7/2024 -->
-									<div id="db_humenz" class="db--posts">
-										<h3>
-											HuMEnz
-										</h3>
-										<p>
-											Human disease-linked metalloenzyme/ metalloprotein database (HumEnz-1.0) contains sequence, structure, and function information.
-										</p>
-										<div
-										style="display: flex; justify-content: center; align-items: center; "
-										>
-											<img style="object-fit: contain; width: 100%;" src="images/humenz-image.png" alt="">
-										</div>
-                                        <div
-										class="table-wrapper"
-                                        ><table >
-											<thead>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-                                        </div>
-										<!-- HuMEnz button link to GitHub page instead of download -->
-										<!-- Not plug in with GTM -->
-										<div class="db--button--container">
-											<a
-											href="https://github.com/chowdhurylab/chowdhurylab.github.io/tree/main/assets/database/Human-linked_MetalloEnzyme_database(HuMEnz-1.0)"
-											target="_blank"
-											rel="noopener"
-											>
-												<button>Github</button>
-											</a>
-											<div>
-											Views = 
-											<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-												5
-											</b>	 
-											; as of: Nov 2024
-											</div>
-										</div>
-									</div>
+					</section>
 
-								</section>
-
-							</div>
-						</div>
-
-				<!-- Sidebar -->
-					<div id="sidebar">
-						<div class="inner">
-
-							<!-- Menu -->
-								<nav id="menu">
-									<header class="major">
-									</header>
-									<ul>
-										<li><a href="index.html">Home</a></li>
-										<li><a href="members.html">Members</a></li>
-										<li><a href="research.html">Research</a></li>
-										<li><a href="publications.html">Publications</a></li>
-										<li><a href="downloads.html">Downloads</a></li>
-										<li><a href="moments.html">Moments</a></li>
-										<li><a href="outreach.html">Outreach+</a></li>
-										<li><a href="joinus.html">Join Us</a></li>
-									</ul>
-								</nav>
-
-								<section>
-									<header class="major">
-											<h2 style="color:#818589">Latest in Lab</h2>
-									</header>
-									<div class = "mini-posts" style="height:70em;width:20em;overflow:auto;background-color:#dcdcdc;color:black;scrollbar-base-color:gray;font-family:Helvetica Neue;">
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Apr' 25</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Dr. Karuna Anna Sajeevan for making it to the finals in Biosolveit scientific challenge. You can read about it <a href="https://www.biosolveit.de/scientific-challenge/project/?projectId=17397481065984" target="_blank" style="color: blue; text-decoration: none;">here</a>.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Feb' 25</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Dr. Sakib Ferdous for successfully defending his PhD! We wish him all the best.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Ella Salehi for passing qualification exam with flying colors.
-										</span> 
-
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Md. Sakib Noor for passing qualification exam with flying colors.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Sep' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congratulation to Bibek for defending his MS thesis in CBE.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Jul' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Prof. Chowdhury has been awarded the endowed chair position - 'Building A World of Difference Faculty Fellow'. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Jun' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Brisa Lopez Calderon joins as a <a href="https://www.iinspirelsamp.org/" style="color: black; text-decoration: none;">IINSPIRE-LSAMP</a> Summer REU from DMACC. Welcome Brisa!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Mar' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Yee Chuen Teoh passed his MS thesis defense with flying colors. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										<img src="images/Yee_MS_Thesis.jpg" width="100%" alt="" id="hp"/><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Feb' 24</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Hannah Gates, first year PhD student, is awarded the prestigious NSF Dependable Data Driven Discovery (D4) Research Fellowship for 2025 for her work on designing lanthanide binding proteins. Congratulations!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Md. Sakib Noor, CBE PhD Candidate and Rahil Salehi, CBE PhB Candidate, joins the lab. Welcome Md. Sakib Noor and Rahil Salehi!
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Oct' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congrats to Julia for receiving the Malcolm Family Scholarship, the Edward Henry Ohlsen Scholarship, and the Roderick Seward, Flossie Ratcliff, and Helen M. Galloway Foundation Scholarship. 
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span>
-										<img src="images/awards_banquet_jyoung.jpg" width="100%" alt="" id="hp"/><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Aug' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Bibek Acharya's work on structural analysis of protein pores for sensing, sequencing, and separations is now out in 
-											<a style="color:#5680e9;" href="https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471223002119%3Fshowall%3Dtrue">
-												Cell Systems</a>.
-										</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											May' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Sakib Ferdous successfully defended his MS in AI thesis. Congratulations!</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											May' 23</b>	
-										<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">
-											Congrats to Yee Chuen Teoh for bagging summer internship at Apple in the health team.</span> 
-										<span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton is selected to present his research on Molecular Modeling of Nanovaccine Release for Colon Cancer at the National Conference for Undergraduate Research 2023 to be held at University of Wisconsin. Congratulations Jack!</span> <span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton wins the prestigious Griswold Undergraduate Fellowship. Congratulations Jack!</span> <span style="color:#818589" class="icon fa solid fa-star"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">CBE Junior, Kaelie Hainlin joins the lab as a researcher. Welcome Kaelie!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jan' 23</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">First Year Honors students, Sophie, Naomi, and Julia join the lab as undergraduate researchers, We are excited to have you all.</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Oct' 22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Yee Chuen Teoh, MS Candidate, Computer Science, joins the lab. Welcome Yee!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Oct' 22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Adele Haghighat Hoseini, PhD Candidate, Computer Science, joins the lab. Welcome Adele!</span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-										
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jack Girton, CBE Sophomore joins the lab. Welcome Jack! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Bibek Acharya, CBE PhD student, joins the lab. Welcome Bibek! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Jul '22</b>	<span style="color:#7e7e7e; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Sakib Ferdous, Senior CBE PhD student, joins the lab. Welcome Sakib! </span> <span style="color:#818589" class="icon fa solid fa-user-plus"></span><br \><br />
-
-										<b style="color:#5680e9;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Apr '22</b>	<span style="color: #7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Iowa State will be home to the Chowdhury Lab from Fall 2022!</span> <span style="color:#818589" class="icon solid fa-star"></span><br \><br />
-									</div>
-								</section>
-								
-						</div>
-					</div>
+				</div>
 			</div>
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+			<div id="sidebar">
+				<div class="inner">
 
-			<!-- Downloads script for each dataset 9/12/2024 -->
-			<!-- <script src="assets/js/downloads-page-db/downloadDb1.js"></script> -->
+					<nav id="menu">
+						<ul>
+							<li><a href="index.html">Home</a></li>
+							<li><a href="members.html">Members</a></li>
+							<li><a href="research.html">Research</a></li>
+							<li><a href="publications.html">Publications</a></li>
+							<li><a href="downloads.html">Downloads</a></li>
+							<li><a href="moments.html">Moments</a></li>
+							<li><a href="outreach.html">Outreach+</a></li>
+							<li><a href="joinus.html">Join Us</a></li>
+						</ul>
+					</nav>
+
+					<section>
+						<header class="major">
+							<h2 style="color:#818589">Latest in Lab</h2>
+						</header>
+
+						<div class="mini-posts"
+							id="sidebar-latest"
+							style="height:70em;width:20em;overflow:auto;background-color:#dcdcdc;
+								   color:black;font-family:Helvetica Neue;">
+						</div>
+
+					</section>
+
+				</div>
+			</div>
+
+		</div>
+
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script src="scripts/downloads.js"></script>
+		<script src="scripts/sidebar.js"></script>
+
 	</body>
 </html>
