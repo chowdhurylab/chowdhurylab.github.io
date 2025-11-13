@@ -1,0 +1,444 @@
+{
+  "pi": [
+    {
+      "name": "Ratul Chowdhury, PhD",
+      "image": "images/DP_RC.png",
+      "email": "ratul@iastate.edu",
+      "positionLines": [
+        "Assistant Professor",
+        "Building a World of Difference Faculty Fellow",
+        "Chemical & Biological Engineering (CBE)",
+        "Biomedical Engineering (BME)",
+        "Bioinformatics and Computational Biology (BCB)",
+        "Ames National Laboratory (ALAB)"
+      ],
+      "links": {
+        "twitter": "https://twitter.com/mrprotein24",
+        "scholar": "https://scholar.google.com/citations?user=3lQ1SSsAAAAJ&hl=en&oi=ao",
+        "linkedin": "https://www.linkedin.com/in/mrprotein/"
+      }
+    }
+  ],
+
+  "postdocs": [
+    {
+      "name": "Karuna Anna Sajeevan, PhD",
+      "image": "images/karuna.jpeg",
+      "email": "karunanna91@gmail.com",
+      "role": "Postdoctoral Fellow",
+      "affiliation": "PhD, BITS Pilani, India. Postdoc, IIT Bombay, India",
+      "research": "MD simulations, enzyme kinetics",
+      "loves": "traveling, reading novels, gardening",
+      "links": {
+        "scholar": "https://scholar.google.co.in/citations?user=ISrBDGgAAAAJ&hl=en",
+        "linkedin": "https://www.linkedin.com/in/karuna-anna-sajeevan-34693887/"
+      }
+    },
+    {
+      "name": "Arunraj B, PhD",
+      "image": "images/Arunraj B.JPG",
+      "email": "arunrajtpr19@gmail.com",
+      "role": "Postdoctoral Fellow (co a/f: Oden Institute)",
+      "affiliation": "PhD, BITS Pilani. India",
+      "research": "Ammonium Protein Channels",
+      "loves": "cricket, photography",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/arunraj-b-phd-796b64218/"
+      }
+    },
+    {
+      "name": "Sean Yang",
+      "image": "images/sean.jpg",
+      "email": "seanyang@iastate.edu",
+      "role": "Graduate Research Assistant",
+      "affiliation": "",
+      "research": "MD simulations, biomolecular condensates",
+      "loves": "reading, hiking",
+      "links": {}
+    }
+  ],
+
+  "graduates": [
+    {
+      "name": "Avishek Bhattacharya",
+      "image": "images/avishek.jpg",
+      "email": "avibhatt@iastate.edu",
+      "role": "Graduate Research Assistant (MS), COMS",
+      "affiliation": "",
+      "research": "Transformers for MD trajectories",
+      "loves": "",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/avishek-bhattacharya-a7b51397"
+      }
+    },
+    {
+      "name": "Randy Aryee",
+      "image": "images/Randy.jpeg",
+      "email": "raryee5@iastate.edu",
+      "role": "PhD candidate, CBE",
+      "affiliation": "",
+      "research": "Enzyme engineering, Generative AI",
+      "loves": "",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/randy-aryee-074a88114/"
+      }
+    },
+    {
+      "name": "Biswaroop Maiti",
+      "image": "images/Biswaroop.jpeg",
+      "email": "",
+      "role": "Visiting Researcher, Computer Science - Northeastern University",
+      "affiliation": "",
+      "research": "Structural Bioinformatics",
+      "loves": "",
+      "links": {}
+    },
+    {
+      "name": "Priyanshu Gupta",
+      "image": "images/Priyangshu.png",
+      "email": "",
+      "role": "Visiting Researcher, Environmental Engineering - University of Texas at Austin",
+      "affiliation": "",
+      "research": "protein design, ion-ion separations",
+      "loves": "soccer, biking",
+      "links": {}
+    },
+    {
+      "name": "Mohammed Sakib Noor",
+      "image": "images/Sakib Noor.jpg",
+      "email": "msnoor23@iastate.edu",
+      "role": "Graduate Research Assistant, CBE",
+      "affiliation": "BS, Chemical Engineering, Bangladesh University of Engineering and Technology (BUET), Bangladesh",
+      "research": "Design of therapeutic proteins",
+      "loves": "soccer, movies, lord of the rings",
+      "links": {}
+    },
+    {
+      "name": "Ella Salehi",
+      "image": "images/Rahil2.png",
+      "email": "rsalehi@iastate.edu",
+      "role": "Graduate Research Assistant, CBE",
+      "affiliation": "BSc: Chemical Engineering, University of Shiraz, Iran. MSc: Chemical/Biomedical engineering, University of Tehran, Iran.",
+      "research": "Computational Protein Design and REE Separation",
+      "loves": "cooking, movies",
+      "links": {}
+    },
+    {
+      "name": "Hannah Gates",
+      "image": "images/Hannah.png",
+      "email": "hgates@iastate.edu",
+      "role": "Graduate Research Assistant, BCB",
+      "affiliation": "",
+      "research": "protein design, rare-earth separation",
+      "loves": "rock climbing, hiking, biking, working out, softball, hockey, music",
+      "links": {
+        "linkedin": "http://www.linkedin.com/in/hannah-gates-80736a245"
+      }
+    },
+    {
+      "name": "Supantha Dey",
+      "image": "images/supantha.jpg",
+      "email": "supantha@iastate.edu",
+      "role": "Graduate Research Assistant, IGG",
+      "affiliation": "BS & MS: Genetic Engineering and Biotechnology, University of Dhaka, Bangladesh.",
+      "research": "Vaccine Design",
+      "loves": "Blade Runner, Pearl Jam, Sunil",
+      "links": {}
+    },
+    {
+      "name": "Vaishnavey SR",
+      "image": "images/Vaishnevay.jpg",
+      "email": "vaish@iastate.edu",
+      "role": "Graduate Research Assistant, CBE",
+      "affiliation": "B.Tech: Chemical and Electrochemical Engineering, CSIR-Central Electrochemical Research Institute, Karaikudi, India.",
+      "research": "Metabolic modeling and molecular modeling of membrane transport",
+      "loves": "Carnatic Music, Cooking, Non-Fiction",
+      "links": {
+        "linkedin": "https://in.linkedin.com/in/vaishnavey-s-r"
+      }
+    },
+    {
+      "name": "Mohammad Reza Zargar",
+      "image": "images/Reza.jpg",
+      "email": "zargar@iastate.edu",
+      "role": "Graduate Research Assistant, CBE",
+      "affiliation": "BSc: Chemical and petroleum Engineering, Sharif University of Technology, Tehran, Iran.",
+      "research": "Metabolic modeling and de novo enzyme activity engineering",
+      "loves": "Cooking, Volleyball, Soccer",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/mohammadrezazargar12"
+      }
+    }
+  ],
+
+  "undergraduates": [
+    {
+      "name": "Julia Young",
+      "image": "images/juliayoung.jpeg",
+      "email": "youngj@iastate.edu",
+      "role": "Major: Software Engineering",
+      "affiliation": "First Year Honor's Research Program",
+      "research": "Designing proteins for rare-earth separation",
+      "loves": "Playing guitar, knitting, going on walks outside with my friends",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/julia-young-a601b2237/"
+      }
+    },
+    {
+      "name": "Shashank Koneru",
+      "image": "images/Shashank.jpg",
+      "email": "skoneru@iastate.edu",
+      "role": "Major: Computer Science",
+      "affiliation": "",
+      "research": "Lanthanide Binding Computation on Proteins from Extreme Organisms; Targeting Drug-Kinase Interactions: Computational Strategies for Drug Discovery",
+      "loves": "Basketball, football, traveling, hanging out with friends",
+      "links": {
+        "linkedin": "http://www.linkedin.com/in/shashank-koneru-721870301"
+      }
+    },
+    {
+      "name": "Curwen Pei Hong Tan",
+      "image": "images/curwen.jpg",
+      "email": "curwen@iastate.edu",
+      "role": "Major: Computer Science",
+      "affiliation": "",
+      "research": "Image Processing, Front-end Developer",
+      "loves": "Listen to music/songs, baking",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/curwen-tan-8227a2300/"
+      }
+    },
+    {
+      "name": "Laura Mariana Correa",
+      "image": "images/Laura.jpg",
+      "email": "lamarri@iastate.edu",
+      "role": "Major: Chemical Engineering",
+      "affiliation": "",
+      "research": "Biological Imaging, Enzyme Kinetics",
+      "loves": "Music, working out, sudoku",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/lauramari"
+      }
+    },
+    {
+      "name": "Casey Zielinski",
+      "image": "images/casey.jpg",
+      "email": "czie@iastate.edu",
+      "role": "Major: Chemical Engineering",
+      "affiliation": "",
+      "research": "Machine learning, Protein interactions, and image based recognition",
+      "loves": "Snowboarding, coding my own games, hiking, and baking with fruit",
+      "links": {}
+    },
+    {
+      "name": "Riza Danurdoro",
+      "image": "images/riza.jpg",
+      "email": "rizapd@iastate.edu",
+      "role": "Major: Computer Science",
+      "affiliation": "",
+      "research": "Machine Learning, Backend Services",
+      "loves": "Gym, Hanging out, Games",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/riza-danurdoro/"
+      }
+    },
+    {
+      "name": "Nathan Thomas",
+      "image": "images/nathan.jpg",
+      "email": "natethom@iastate.edu",
+      "role": "Major: Software Engineering",
+      "affiliation": "",
+      "research": "Software/web development",
+      "loves": "All things sports, meeting new people, and learning anything about anything",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/nathaniel-thomas-21300a272"
+      }
+    }
+  ],
+
+  "remoteInterns": [
+    {
+      "name": "Rohan Ghosh Dastidar",
+      "image": "images/Rohan.jpg",
+      "email": "rgdastidar2069@kgpian.iitkgp.ac.in",
+      "role": "Summer Internship",
+      "affiliation": "Major: Chemical Engineering, Minor: Biotechnology",
+      "research": "Computational Protein Engineering, Computational Oncology, Structural Bioinformatics, ML",
+      "loves": "",
+      "links": {
+        "linkedin": "https://www.linkedin.com/in/rohan-ghosh-dastidar-984577255/"
+      }
+    }
+  ],
+
+  "alumni": [
+    {
+      "name": "Sakib Ferdous",
+      "category": "graduate",
+      "period": "Fall 25",
+      "description": "",
+      "now": "Bioinformatics Scientist, Corteva"
+    },
+    {
+      "name": "Adele Haghighat Hoseini",
+      "category": "graduate",
+      "period": "Summer 23",
+      "description": "Research Assistant, PhD in CS",
+      "now": "Boehringer Ingelheim (Data Scientist)"
+    },
+    {
+      "name": "Yee Chuen Teoh",
+      "category": "graduate",
+      "period": "Spring 24",
+      "description": "MS in Computer Science",
+      "now": "Software Engineer at Amazon"
+    },
+    {
+      "name": "Bibek Acharya",
+      "category": "graduate",
+      "period": "Fall 24",
+      "description": "MS in CBE",
+      "now": "PhD Student at Lehigh University"
+    },
+    {
+      "name": "Naimisha Venkatesh",
+      "category": "graduate",
+      "period": "Spring 24",
+      "description": "MS in BCB",
+      "now": "MS Bioinformatics, Northeastern University"
+    },
+    {
+      "name": "Rachana Krishnamurthy",
+      "category": "graduate",
+      "period": "Spring 24",
+      "description": "BCB",
+      "now": "MS Bioinformatics, Johns Hopkins University"
+    },
+    {
+      "name": "Jack Girton",
+      "category": "reu",
+      "period": "Spring 23 - Spring 25",
+      "description": "CBE Griswold Fellow in Alumni",
+      "now": "PhD student, UMinnesota - Twin Cities"
+    },
+    {
+      "name": "Maria Brown",
+      "category": "reu",
+      "period": "Spring 24",
+      "description": "CBE",
+      "now": "FIRE Rotational Program Engineer at HWI"
+    },
+    {
+      "name": "Jennifer Bruner",
+      "category": "reu",
+      "period": "Spring 24",
+      "description": "CBE",
+      "now": ""
+    },
+    {
+      "name": "Zachary L Wallace",
+      "category": "reu",
+      "period": "Spring 24",
+      "description": "CBE",
+      "now": ""
+    },
+    {
+      "name": "Brisa Lopez Calderon",
+      "category": "reu",
+      "period": "Fall 24",
+      "description": "REU IINSPIRE-LSAMP",
+      "now": ""
+    },
+    {
+      "name": "Aaron Kammlah",
+      "category": "reu",
+      "period": "Fall 24",
+      "description": "FHP Iowa State, CPRE",
+      "now": ""
+    },
+    {
+      "name": "Nikhita Nallu",
+      "category": "reu",
+      "period": "Fall 24",
+      "description": "FHP Iowa State, COM S",
+      "now": ""
+    },
+    {
+      "name": "Cris Matthews",
+      "category": "reu",
+      "period": "Fall 24",
+      "description": "FHP Iowa State, BCB",
+      "now": ""
+    },
+    {
+      "name": "Andrew Slaughter",
+      "category": "reu",
+      "period": "Fall 24",
+      "description": "FHP Iowa State, ME",
+      "now": ""
+    },
+    {
+      "name": "Naomi Mauss",
+      "category": "reu",
+      "period": "Summer 23",
+      "description": "Research Intern, CBE",
+      "now": ""
+    },
+    {
+      "name": "Jack Sloyan",
+      "category": "reu",
+      "period": "Summer 23",
+      "description": "Research Intern, CBE",
+      "now": ""
+    },
+    {
+      "name": "Brooklyn Mills",
+      "category": "reu",
+      "period": "Summer 23",
+      "description": "BioMAP REU",
+      "now": "PhD Biochemistry, Washington Univ. St. Louis"
+    },
+    {
+      "name": "Jerome Chow",
+      "category": "reu",
+      "period": "Fall 22",
+      "description": "Research Intern, CBE",
+      "now": "BS, National University of Singapore"
+    },
+    {
+      "name": "Sophie Faga",
+      "category": "reu",
+      "period": "Spring 22",
+      "description": "FHP Iowa State, CBE",
+      "now": ""
+    },
+    {
+      "name": "Kaelie Hainlin",
+      "category": "reu",
+      "period": "Spring 22",
+      "description": "CHE 490",
+      "now": ""
+    },
+    {
+      "name": "Evan Ingmire",
+      "category": "reu",
+      "period": "2025",
+      "description": "TrACE REU, University of Alabama",
+      "now": ""
+    },
+    {
+      "name": "Ali Zahedi",
+      "category": "reu",
+      "period": "2025",
+      "description": "BioMAP REU, University of California, Irvine",
+      "now": ""
+    },
+    {
+      "name": "Joel",
+      "category": "reu",
+      "period": "2025",
+      "description": "IIINSPIRE LSAMP REU, DMACC",
+      "now": ""
+    }
+  ]
+}
