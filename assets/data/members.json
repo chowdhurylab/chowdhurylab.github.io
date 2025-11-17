@@ -168,6 +168,18 @@
       "links": {
         "linkedin": "https://www.linkedin.com/in/mohammadrezazargar12"
       }
+    },
+    {
+      "name": "Madison Ellis",
+      "image": "images/madison.jpg",
+      "email": "mellis10@iastate.edu",
+      "role": "Graduate Research Assistant (BCB)",
+      "affiliation": "BS, Horticulture and Biochemistry, Texas A&M University",
+      "research": "Protein Complexes",
+      "loves": "Knitting, reading, cooking",
+      "links": {
+        "linkedin": ""
+      }
     }
   ],
 
