@@ -3097,7 +3097,7 @@ button:disabled,
   font-weight: 900;
 }
 #sidebar .toggle:before {
-  content: "\f0d9";
+  content: "☰";
   font-size: 2rem;
   height: inherit;
   left: 0;
