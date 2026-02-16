@@ -1,102 +1,123 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
-	<head>
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-		  gtag('config', 'G-6ZBBP2VTVZ');
-		</script>
+  <head>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-6ZBBP2VTVZ");
+    </script>
 
-		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-		})(window,document,'script','dataLayer','GTM-536G93B5');</script>
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-536G93B5");
+    </script>
 
-		<title>Research — ChowdhuryLab</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<link rel="icon" href="images/rz.png">
-	</head>
+    <title>Research — ChowdhuryLab</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="icon" href="images/rz.png" />
+  </head>
 
-	<body class="is-preload">
+  <body class="is-preload">
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
 
-		<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
-		height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <div id="wrapper">
+      <div id="main">
+        <div class="inner">
+          <header id="header">
+            <a href="index.html" class="logo">
+              <b style="color: #ff8300; font-weight: normal">ChowdhuryLab</b>
+            </a>
+          </header>
 
-		<div id="wrapper">
+          <section>
+            <header class="main">
+              <h1 style="color: #7e7e7e">Research</h1>
+              <p style="color: #939393">What we do</p>
+              <br />
+            </header>
 
-			<div id="main">
-				<div class="inner">
+            <!-- Dynamic research intro -->
+            <div id="research-intro"></div>
 
-					<header id="header">
-						<a href="index.html" class="logo">
-							<b style="color:#ff8300;font-weight:normal">ChowdhuryLab</b>
-						</a>
-					</header>
+            <!-- Dynamic research areas -->
+            <div id="research-areas"></div>
+          </section>
+        </div>
+      </div>
 
-					<section>
-						<header class="main">
-							<h1 style="color:#7e7e7e;">Research</h1>
-							<p style="color:#939393;">What we do</p><br>
-						</header>
+      <!-- SIDEBAR -->
+      <div id="sidebar">
+        <div class="inner">
+          <nav id="menu">
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="members.html">Members</a></li>
+              <li><a href="research.html">Research</a></li>
+              <li><a href="publications.html">Publications</a></li>
+              <li><a href="downloads.html">Software</a></li>
+              <li><a href="moments.html">Moments</a></li>
+              <li><a href="outreach.html">Outreach+</a></li>
+              <!-- <li><a href="joinus.html">Join Us</a></li> -->
+            </ul>
+          </nav>
 
-						<!-- Dynamic research intro -->
-						<div id="research-intro"></div>
-						
-						<!-- Dynamic research areas -->
-						<div id="research-areas"></div>
+          <section>
+            <header class="major">
+              <h2 style="color: #818589">Latest in Lab</h2>
+            </header>
 
-					</section>
+            <div
+              class="mini-posts"
+              id="sidebar-latest"
+              style="
+                height: 70em;
+                width: 20em;
+                overflow: auto;
+                background-color: #dcdcdc;
+                color: black;
+                scrollbar-base-color: gray;
+                font-family: Helvetica Neue;
+              "
+            ></div>
+          </section>
+        </div>
+      </div>
+    </div>
 
-				</div>
-			</div>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
 
-			<!-- SIDEBAR -->
-			<div id="sidebar">
-				<div class="inner">
-
-					<nav id="menu">
-						<ul>
-							<li><a href="index.html">Home</a></li>
-							<li><a href="members.html">Members</a></li>
-							<li><a href="research.html">Research</a></li>
-							<li><a href="publications.html">Publications</a></li>
-							<li><a href="downloads.html">Downloads</a></li>
-							<li><a href="moments.html">Moments</a></li>
-							<li><a href="outreach.html">Outreach+</a></li>
-							<!-- <li><a href="joinus.html">Join Us</a></li> -->
-						</ul>
-					</nav>
-
-					<section>
-						<header class="major">
-							<h2 style="color:#818589">Latest in Lab</h2>
-						</header>
-
-						<div class="mini-posts"
-							id="sidebar-latest"
-							style="height:70em;width:20em;overflow:auto;background-color:#dcdcdc;
-								   color:black;scrollbar-base-color:gray;font-family:Helvetica Neue;">
-						</div>
-					</section>
-
-				</div>
-			</div>
-
-		</div>
-
-		<script src="assets/js/jquery.min.js"></script>
-		<script src="assets/js/browser.min.js"></script>
-		<script src="assets/js/breakpoints.min.js"></script>
-		<script src="assets/js/util.js"></script>
-		<script src="assets/js/main.js"></script>
-
-		<script src="scripts/research.js"></script>
-		<script src="scripts/sidebar.js"></script>
-
-	</body>
+    <script src="scripts/research.js"></script>
+    <script src="scripts/sidebar.js"></script>
+  </body>
 </html>
