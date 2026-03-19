@@ -246,11 +246,18 @@ textarea {
 }
 
 a {
-  -moz-transition: color 0.2s ease-in-out, border-bottom-color 0.2s ease-in-out;
-  -webkit-transition: color 0.2s ease-in-out,
+  -moz-transition:
+    color 0.2s ease-in-out,
     border-bottom-color 0.2s ease-in-out;
-  -ms-transition: color 0.2s ease-in-out, border-bottom-color 0.2s ease-in-out;
-  transition: color 0.2s ease-in-out, border-bottom-color 0.2s ease-in-out;
+  -webkit-transition:
+    color 0.2s ease-in-out,
+    border-bottom-color 0.2s ease-in-out;
+  -ms-transition:
+    color 0.2s ease-in-out,
+    border-bottom-color 0.2s ease-in-out;
+  transition:
+    color 0.2s ease-in-out,
+    border-bottom-color 0.2s ease-in-out;
   border-bottom: dotted 0px;
   color: #7e7e7e;
   text-decoration: none;
@@ -2030,10 +2037,18 @@ ul.pagination li {
   vertical-align: middle;
 }
 ul.pagination li > .page {
-  -moz-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  -webkit-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  -ms-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  -moz-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  -webkit-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  -ms-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
   border-bottom: 0;
   border-radius: 0.375em;
   display: inline-block;
@@ -2136,10 +2151,18 @@ button,
   -webkit-appearance: none;
   -ms-appearance: none;
   appearance: none;
-  -moz-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  -webkit-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  -ms-transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  -moz-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  -webkit-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  -ms-transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
   background-color: #dcdcdc;
   border-radius: 0.375em;
   border: 0;
@@ -2941,7 +2964,7 @@ button:disabled,
 #main > .inner {
   padding: 0 6em 0.1em 6em;
   margin: 0 auto;
-  /* max-width: 110em;  *//* Update 9/12/2024, this change to 100% */
+  /* max-width: 110em;  */ /* Update 9/12/2024, this change to 100% */
   max-width: 100%;
 }
 #main > .inner > section {
@@ -3025,10 +3048,18 @@ button:disabled,
   -webkit-flex-shrink: 0;
   -ms-flex-shrink: 0;
   flex-shrink: 0;
-  -moz-transition: margin-left 0.5s ease, box-shadow 0.5s ease;
-  -webkit-transition: margin-left 0.5s ease, box-shadow 0.5s ease;
-  -ms-transition: margin-left 0.5s ease, box-shadow 0.5s ease;
-  transition: margin-left 0.5s ease, box-shadow 0.5s ease;
+  -moz-transition:
+    margin-left 0.5s ease,
+    box-shadow 0.5s ease;
+  -webkit-transition:
+    margin-left 0.5s ease,
+    box-shadow 0.5s ease;
+  -ms-transition:
+    margin-left 0.5s ease,
+    box-shadow 0.5s ease;
+  transition:
+    margin-left 0.5s ease,
+    box-shadow 0.5s ease;
   background-color: #dcdcdc;
   font-size: 0.9em;
   position: relative;
@@ -3400,10 +3431,18 @@ button:disabled,
 }
 #menu ul a.opener:before,
 #menu ul span.opener:before {
-  -moz-transition: color 0.2s ease-in-out, -moz-transform 0.2s ease-in-out;
-  -webkit-transition: color 0.2s ease-in-out, -webkit-transform 0.2s ease-in-out;
-  -ms-transition: color 0.2s ease-in-out, -ms-transform 0.2s ease-in-out;
-  transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+  -moz-transition:
+    color 0.2s ease-in-out,
+    -moz-transform 0.2s ease-in-out;
+  -webkit-transition:
+    color 0.2s ease-in-out,
+    -webkit-transform 0.2s ease-in-out;
+  -ms-transition:
+    color 0.2s ease-in-out,
+    -ms-transform 0.2s ease-in-out;
+  transition:
+    color 0.2s ease-in-out,
+    transform 0.2s ease-in-out;
   color: #9fa3a6;
   content: "\f078";
   position: absolute;
@@ -3551,12 +3590,12 @@ button:disabled,
 
   overflow-x: scroll;
   white-space: nowrap;
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
 .carousel-thumbnail::-webkit-scrollbar {
-  display: none;  /* Safari and Chrome */
+  display: none; /* Safari and Chrome */
 }
 
 .carousel-thumbnail-item {
@@ -3614,4 +3653,70 @@ button:disabled,
 .carousel-page:hover {
   opacity: 50%;
   transition: all 0.5s ease;
+}
+
+/* Research Carousel */
+.carousel-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.carousel-track-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.4s ease;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+.carousel-btn {
+  background: white;
+  color: white;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-btn:hover {
+  background: #f0f0f0;
+}
+
+/* Dot indicators */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.carousel-dot.active {
+  background: #ff8300;
 }
