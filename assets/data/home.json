@@ -1,0 +1,67 @@
+{
+  "hero": {
+    "title": "Chowdhury Lab",
+    "subtitle": "Designing the new",
+    "description": "We design novel proteins using structure-aware AI/optimization models. Our designed proteins find application in energy, environment, therapeutics, and critical ionic separations.",
+    "affiliationsText": "We are located within the",
+    "affiliations": [
+      {
+        "label": "Nanovaccine Institute",
+        "href": "https://nanovaccine.iastate.edu/"
+      },
+      {
+        "label": "Chemical & Biological Engineering",
+        "href": "https://www.cbe.iastate.edu/the-department/facultystaff/"
+      },
+      {
+        "label": "Iowa State",
+        "href": "https://www.iastate.edu/"
+      }
+    ],
+    "affiliationsSuffix": ".",
+    "cta": {
+      "label": "Research",
+      "href": "research.html"
+    },
+    "image": {
+      "src": "images/protein2.gif",
+      "alt": "Protein animation"
+    }
+  },
+  "researchAreas": [
+    {
+      "icon": "fa-tree",
+      "title": "Enzyme and biosensor engineering",
+      "items": [
+        "Environmental engineering",
+        "Human health",
+        "Room-temperature chemistry"
+      ]
+    },
+    {
+      "icon": "fa-tint",
+      "title": "Designing membrane proteins/ transporters",
+      "items": [
+        "Selective transport of molecules/ ions",
+        "Bio-based fuel cell"
+      ]
+    },
+    {
+      "icon": "fa-bacteria",
+      "title": "Structure-guided metabolic engineering",
+      "items": [
+        "Kinetics of biomolecular conversions",
+        "Non-model organism pathway design"
+      ]
+    },
+    {
+      "icon": "fa-chart-line",
+      "title": "Activity engineering",
+      "items": [
+        "Pushing activity limits of proteins",
+        "Property tailoring at given activity",
+        "pH/ temperature dependency"
+      ]
+    }
+  ]
+}
