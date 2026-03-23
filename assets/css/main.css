@@ -3921,6 +3921,17 @@ body.sidebar-panel-open #sidebar > .inner {
   border-bottom: 0;
 }
 
+.latest-lab-image-wrap {
+  margin-top: 0.55rem;
+}
+
+.latest-lab-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}
+
 .latest-lab-date {
   color: #5680e9;
   font-weight: 700;
@@ -3931,6 +3942,16 @@ body.sidebar-panel-open #sidebar > .inner {
   color: #475569;
   font-size: 0.92rem;
   line-height: 1.35;
+}
+
+.latest-lab-text a {
+  color: #5680e9;
+}
+
+.latest-lab-text a:hover,
+.latest-lab-text a:focus,
+.latest-lab-text a:visited {
+  color: #5680e9;
 }
 
 @media screen and (max-width: 736px) {
