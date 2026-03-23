@@ -545,6 +545,32 @@
 		<script src="assets/js/carousel.js"></script>
 
 		<script src="scripts/sidebar.js"></script>
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				var sidebar = document.getElementById('sidebar');
+				if (!sidebar) return;
+
+				function bindToggle() {
+					var toggle = sidebar.querySelector('a.toggle');
+					if (!toggle) {
+						requestAnimationFrame(bindToggle);
+						return;
+					}
+
+					var forceToggle = function (event) {
+						event.preventDefault();
+						event.stopPropagation();
+						event.stopImmediatePropagation();
+						sidebar.classList.toggle('inactive');
+					};
+
+					toggle.addEventListener('pointerdown', forceToggle, true);
+					toggle.addEventListener('click', forceToggle, true);
+				}
+
+				bindToggle();
+			});
+		</script>
 
 	</body>
 </html>
