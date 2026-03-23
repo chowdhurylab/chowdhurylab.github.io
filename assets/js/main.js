@@ -73,14 +73,8 @@
 		var $sidebar = $('#sidebar'),
 			$sidebar_inner = $sidebar.children('.inner');
 
-		// Inactive by default on <= large.
-			breakpoints.on('<=large', function() {
-				$sidebar.addClass('inactive');
-			});
-
-			breakpoints.on('>large', function() {
-				$sidebar.removeClass('inactive');
-			});
+		// Inactive by default (all sizes).
+			$sidebar.addClass('inactive');
 
 		// Hack: Workaround for Chrome/Android scrollbar position bug.
 			if (browser.os == 'android'
@@ -102,14 +96,56 @@
 
 				});
 
+		// Hover-to-open (desktop): when cursor reaches top edge, drop nav down.
+			var edgeThreshold = 8,
+				closeDelayMs = 300,
+				hoverOpened = false,
+				closeTimer = null;
+
+			function openSidebarFromEdge() {
+				hoverOpened = true;
+				$sidebar.removeClass('inactive');
+			}
+
+			function scheduleSidebarClose() {
+				if (!hoverOpened)
+					return;
+
+				clearTimeout(closeTimer);
+				closeTimer = setTimeout(function() {
+					if (!$sidebar.is(':hover')) {
+						hoverOpened = false;
+						$sidebar.addClass('inactive');
+					}
+				}, closeDelayMs);
+			}
+
+			$(document).on('mousemove.sidebar-edge', function(event) {
+
+				// Keep tap-to-toggle behavior on smaller/touch layouts.
+				if (breakpoints.active('<=medium'))
+					return;
+
+				if (event.clientY <= edgeThreshold) {
+					clearTimeout(closeTimer);
+					openSidebarFromEdge();
+				}
+				else if (hoverOpened && !$sidebar.is(':hover'))
+					scheduleSidebarClose();
+			});
+
+			$sidebar.on('mouseenter', function() {
+				clearTimeout(closeTimer);
+			});
+
+			$sidebar.on('mouseleave', function() {
+				scheduleSidebarClose();
+			});
+
 		// Events.
 
 			// Link clicks.
 				$sidebar.on('click', 'a', function(event) {
-
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
 
 					// Vars.
 						var $a = $(this),
@@ -125,6 +161,7 @@
 							return;
 
 					// Hide sidebar.
+						hoverOpened = false;
 						$sidebar.addClass('inactive');
 
 					// Redirect to href.
@@ -142,10 +179,6 @@
 			// Prevent certain events inside the panel from bubbling.
 				$sidebar.on('click touchend touchstart touchmove', function(event) {
 
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
-
 					// Prevent propagation.
 						event.stopPropagation();
 
@@ -154,11 +187,8 @@
 			// Hide panel on body click/tap.
 				$body.on('click touchend', function(event) {
 
-					// >large? Bail.
-						if (breakpoints.active('>large'))
-							return;
-
 					// Deactivate.
+						hoverOpened = false;
 						$sidebar.addClass('inactive');
 
 				});
@@ -257,6 +287,20 @@
 
 				});
 
+			});
+
+		// Active page indicator.
+			var currentPath = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+			$menu.find('a[href]').each(function() {
+				var $a = $(this),
+					href = ($a.attr('href') || '').toLowerCase();
+
+				if (!href || href === '#' || href.indexOf('http') === 0)
+					return;
+
+				if (href === currentPath) {
+					$a.addClass('active').attr('aria-current', 'page');
+				}
 			});
 
 })(jQuery);
