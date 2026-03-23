@@ -3954,6 +3954,11 @@ body.sidebar-panel-open #sidebar > .inner {
   color: #5680e9;
 }
 
+.latest-lab-icon {
+  color: #818589;
+  margin-left: 0.35rem;
+}
+
 @media screen and (max-width: 736px) {
   .latest-lab-toggle {
     writing-mode: horizontal-tb;
