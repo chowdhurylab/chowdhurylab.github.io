@@ -2,10 +2,7 @@
 <html>
   <head>
     <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"
-    ></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZBBP2VTVZ"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
@@ -31,81 +28,45 @@
 
     <title>Publications — ChowdhuryLab</title>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="stylesheet" href="assets/css/main.css" />
     <link rel="icon" href="images/rz.png" />
   </head>
 
   <body class="is-preload">
-    <noscript
-      ><iframe
-        src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5"
-        height="0"
-        width="0"
-        style="display: none; visibility: hidden"
-      ></iframe
-    ></noscript>
+    <noscript>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-536G93B5" height="0" width="0" style="display: none; visibility: hidden"></iframe>
+    </noscript>
 
     <div id="wrapper">
-      <!-- Main -->
       <div id="main">
         <div class="inner">
           <header id="header">
             <a href="index.html" class="logo">
-              <b style="color: #ff8300; font-weight: normal">ChowdhuryLab</b>
+              <b class="publications-logo-text">ChowdhuryLab</b>
             </a>
           </header>
 
           <section>
             <header class="main">
-              <h1
-                style="
-                  color: #7e7e7e;
-                  font-family:
-                    Helvetica Neue,
-                    Helvetica,
-                    Arial,
-                    sans-serif;
-                "
-              >
-                Publications
-              </h1>
-              <p
-                style="
-                  color: #7e7e7e;
-                  font-family:
-                    Helvetica Neue,
-                    Helvetica,
-                    Arial,
-                    sans-serif;
-                "
-              >
-                What we know
-              </p>
-              <br />
+              <h1 class="publications-page-title">Publications</h1>
+              <p class="publications-page-subtitle">What we know</p>
             </header>
           </section>
 
-          <!-- Dynamic Publications -->
-          <div id="publications-container"></div>
+          <div id="publications-container" class="publications-container">
+            <p class="publications-loading">Loading publications…</p>
+          </div>
         </div>
       </div>
+    </div>
 
-		</div>
-
-		<!-- Scripts -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/browser.min.js"></script>
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
-    
     <script src="assets/js/navbar-component.js"></script>
-<script src="assets/js/main.js"></script>
-
-    <!-- Dynamic Renderers -->
-    <script src="scripts/publications.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/publications-component.js"></script>
   </body>
 </html>
