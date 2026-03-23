@@ -4886,6 +4886,93 @@ body.top-navbar-open #top-navbar {
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
+.publications-filters {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 0.8rem;
+  row-gap: 0.35rem;
+  align-items: center;
+  margin: 0.2rem 0 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.publications-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+
+.publications-filter-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.publications-filter-select,
+.publications-filter-input {
+  border: 1px solid #c9d1dc;
+  border-radius: 10px;
+  padding: 0.46rem 0.72rem;
+  font-size: 0.9rem;
+  background: #fff;
+  min-height: 2.35rem;
+}
+
+.publications-type-chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: center;
+  gap: 0.4rem;
+}
+
+.pub-type-chip {
+  border: 1px solid #bcc6d4;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #111827;
+  padding: 0.4rem 0.78rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+
+.pub-type-chip.is-active {
+  background: #5f86e8;
+  border-color: #5f86e8;
+  color: #fff;
+}
+
+.publications-search-wrap {
+  min-width: 300px;
+}
+
+.publications-media-only {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  color: #111827;
+  margin: 0;
+}
+
+.publications-media-only label {
+  margin: 0;
+  padding-right: 0;
+  font-weight: 500;
+}
+
 .publications-container {
   display: grid;
   gap: 1rem;
@@ -4998,4 +5085,20 @@ body.top-navbar-open #top-navbar {
 .publications-loading,
 .publications-empty {
   color: #6b7280;
+}
+
+@media (max-width: 980px) {
+  .publications-filters {
+    grid-template-columns: 1fr;
+    row-gap: 0.45rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .publications-search-wrap {
+    min-width: 100%;
+  }
+
+  .publications-media-only {
+    margin-bottom: 0;
+  }
 }

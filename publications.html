@@ -54,6 +54,32 @@
             </header>
           </section>
 
+          <div class="publications-filters" id="publications-filters" aria-label="Publication filters">
+            <label class="publications-filter-item">
+              <span class="publications-filter-label">Year</span>
+              <select id="pub-filter-year" class="publications-filter-select">
+                <option value="all">All years</option>
+              </select>
+            </label>
+
+            <label class="publications-filter-item publications-search-wrap">
+              <span class="publications-filter-label">Search</span>
+              <input id="pub-filter-search" class="publications-filter-input" type="search" placeholder="Title, author, journal…" />
+            </label>
+
+            <div class="publications-filter-item publications-media-only">
+              <input id="pub-filter-media" type="checkbox" />
+              <label for="pub-filter-media">Has media links only</label>
+            </div>
+
+            <div class="publications-filter-item publications-type-chips" id="pub-filter-type" role="group" aria-label="Publication type filter">
+              <button type="button" class="pub-type-chip is-active" data-type="all">All</button>
+              <button type="button" class="pub-type-chip" data-type="Article">Article</button>
+              <button type="button" class="pub-type-chip" data-type="Review Article">Review</button>
+              <button type="button" class="pub-type-chip" data-type="Patent">Patent</button>
+            </div>
+          </div>
+
           <div id="publications-container" class="publications-container">
             <p class="publications-loading">Loading publications…</p>
           </div>
