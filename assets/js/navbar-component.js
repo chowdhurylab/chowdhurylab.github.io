@@ -57,10 +57,14 @@
       var link = (item.link && item.linkText)
         ? ` <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.linkText}</a>`
         : '';
+      var image = item.image
+        ? `<div class="latest-lab-image-wrap"><img class="latest-lab-image" src="${item.image}" alt="Latest in Lab update image" loading="lazy"></div>`
+        : '';
       return `
         <article class="latest-lab-row">
           <div class="latest-lab-date">${item.date || ''}</div>
           <div class="latest-lab-text">${item.text || ''}${link}</div>
+          ${image}
         </article>
       `;
     }).join('');
