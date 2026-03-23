@@ -4455,7 +4455,11 @@ body.top-navbar-open #top-navbar {
 }
 
 .carousel-card-link {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
   padding: 8px 16px;
   background-color: #007aff;
   color: #fff;
@@ -4464,6 +4468,39 @@ body.top-navbar-open #top-navbar {
   font-weight: 500;
   font-size: 0.9rem;
   margin-top: auto;
+  border-bottom: 0;
+  overflow: hidden;
+}
+
+.carousel-card-link:hover,
+.carousel-card-link:focus,
+.carousel-card-link:visited {
+  color: #fff !important;
+  background-color: #007aff;
+  border-bottom: 0;
+}
+
+.carousel-card-link-label {
+  transition: transform 0.22s ease;
+}
+
+.carousel-card-link-arrow {
+  position: absolute;
+  right: 24px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.carousel-card-link:hover .carousel-card-link-label,
+.carousel-card-link:focus .carousel-card-link-label {
+  transform: translateX(-5px);
+}
+
+.carousel-card-link:hover .carousel-card-link-arrow,
+.carousel-card-link:focus .carousel-card-link-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .carousel-empty {

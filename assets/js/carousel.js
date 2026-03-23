@@ -25,7 +25,7 @@
             <div class="carousel-card-body">
               <p class="card-title">${card.title || ''}</p>
               <p class="carousel-card-description">${card.description || ''}</p>
-              <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" class="carousel-card-link">Read ⟶</a>
+              <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" class="carousel-card-link"><span class="carousel-card-link-label">Read</span><span class="carousel-card-link-arrow" aria-hidden="true">→</span></a>
             </div>
           </article>
         </div>
