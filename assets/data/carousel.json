@@ -1,0 +1,58 @@
+{
+  "cards": [
+    {
+      "journal": "Cell Systems",
+      "category": "REVIEW",
+      "image": "images/carousel/PoreProteins.png",
+      "imageAlt": "engineering rationale",
+      "title": "Pore Proteins",
+      "description": "Structural basis of separations, sensing, and sequencing.",
+      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
+    },
+    {
+      "journal": "Current Opinion",
+      "category": "REVIEW",
+      "image": "images/carousel/Struct-GEMs.png",
+      "imageAlt": "RGN2",
+      "title": "Struct-GEMs",
+      "description": "Structure-guided genome scale metabolic models.",
+      "link": "https://www.sciencedirect.com/science/article/pii/S0958166925000035?casa_token=JARr_p7OHC8AAAAA:M98k9RkFsPKLBbA40YY-Vju-UMOqVsSLJsu-8MW25KLi2yQToywVGuyfiizo1z1jGzeRrwgU"
+    },
+    {
+      "journal": "PLoS Comp. Bio",
+      "category": "RESEARCH",
+      "image": "images/carousel/CTRL-V.png",
+      "imageAlt": "PRRSV",
+      "title": "CTRL-V",
+      "description": "Dual-bait biosensor design inspired by viral escape.",
+      "link": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012964"
+    },
+    {
+      "journal": "Comp. Str. Bio. J",
+      "category": "RESEARCH",
+      "image": "images/carousel/PorcineVaccine.png",
+      "imageAlt": "engineering rationale",
+      "title": "Porcine Vaccine",
+      "description": "Immunogenic vaccine peptide design against PRRS virus.",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037024002885"
+    },
+    {
+      "journal": "Comp. Str. Bio. J",
+      "category": "RESEARCH",
+      "image": "images/carousel/RareEarthRecovery.png",
+      "imageAlt": "RGN2",
+      "title": "Rare Earth Recovery",
+      "description": "Biophysical underpinnings of Lanmodulin protein.",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315"
+    },
+    {
+      "journal": "Nature Biotech.",
+      "category": "RESEARCH",
+      "image": "images/carousel/ProteinStructure.png",
+      "imageAlt": "PRRSV",
+      "title": "Protein Structure",
+      "description": "Predicting protein structures directly from sequences (no MSA).",
+      "link": "https://www.nature.com/articles/s41587-022-01432-w"
+    }
+  ]
+}
