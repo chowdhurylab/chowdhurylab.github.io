@@ -82,17 +82,15 @@
 				$('<style>#sidebar .inner::-webkit-scrollbar { display: none; }</style>')
 					.appendTo($head);
 
-		// Toggle.
-			$('<a href="#sidebar" class="toggle">Toggle</a>')
+		// Toggle icon (display only; click should not open navbar).
+			$('<a href="#sidebar" class="toggle" aria-hidden="true" tabindex="-1">Toggle</a>')
 				.appendTo($sidebar)
 				.on('click', function(event) {
 
-					// Prevent default.
+					// Prevent default and intentionally do nothing.
 						event.preventDefault();
 						event.stopPropagation();
-
-					// Toggle.
-						$sidebar.toggleClass('inactive');
+						return false;
 
 				});
 
