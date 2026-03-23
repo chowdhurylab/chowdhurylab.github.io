@@ -25,4 +25,82 @@
     top.innerHTML = `<nav id="top-menu"><header class="major"></header>${links}</nav>`;
     document.body.appendChild(top);
   }
+
+  // Global right floating "Latest in Lab" mini-panel.
+  if (!document.getElementById('latest-lab-panel')) {
+    var panel = document.createElement('aside');
+    panel.id = 'latest-lab-panel';
+    panel.className = 'latest-lab-panel is-collapsed';
+    panel.innerHTML = `
+      <button type="button" id="latest-lab-toggle" class="latest-lab-toggle" aria-expanded="false" aria-controls="latest-lab-panel-body">Latest in Lab</button>
+      <div id="latest-lab-panel-body" class="latest-lab-panel-body">
+        <div class="latest-lab-panel-head">
+          <h3>Latest in Lab</h3>
+          <button type="button" class="latest-lab-close" id="latest-lab-close" aria-label="Close">✕</button>
+        </div>
+        <div id="latest-lab-list" class="latest-lab-list">Loading updates…</div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+  }
+
+  function renderLatestList(data) {
+    var container = document.getElementById('latest-lab-list');
+    if (!container) return;
+    var items = (data && data.latestInLab) || [];
+    if (!items.length) {
+      container.innerHTML = '<p>No updates found.</p>';
+      return;
+    }
+
+    container.innerHTML = items.map(function (item) {
+      var link = (item.link && item.linkText)
+        ? ` <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.linkText}</a>`
+        : '';
+      return `
+        <article class="latest-lab-row">
+          <div class="latest-lab-date">${item.date || ''}</div>
+          <div class="latest-lab-text">${item.text || ''}${link}</div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  var latestLoaded = false;
+  async function loadLatest() {
+    if (latestLoaded) return;
+    try {
+      var res = await fetch('assets/data/sidebar.json');
+      var data = await res.json();
+      renderLatestList(data);
+      latestLoaded = true;
+    } catch (e) {
+      var c = document.getElementById('latest-lab-list');
+      if (c) c.innerHTML = '<p>Could not load updates.</p>';
+      console.error('Latest in Lab load error:', e);
+    }
+  }
+
+  function setPanelOpen(open) {
+    var panel = document.getElementById('latest-lab-panel');
+    var toggle = document.getElementById('latest-lab-toggle');
+    if (!panel || !toggle) return;
+
+    panel.classList.toggle('is-collapsed', !open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) loadLatest();
+  }
+
+  document.addEventListener('click', function (event) {
+    if (event.target.closest('#latest-lab-toggle')) {
+      var panel = document.getElementById('latest-lab-panel');
+      var willOpen = panel && panel.classList.contains('is-collapsed');
+      setPanelOpen(!!willOpen);
+      return;
+    }
+
+    if (event.target.closest('#latest-lab-close')) {
+      setPanelOpen(false);
+    }
+  });
 })();
