@@ -10,12 +10,31 @@
     }
 
     wrapper.innerHTML = cards.map(function (card) {
+      var date = card.date ? `<div class="carousel-card-date">${card.date}</div>` : '';
+      var github = card.github
+        ? `<a href="${card.github}" target="_blank" rel="noopener noreferrer" class="carousel-card-meta-link"><span class="icon brands fa-github" aria-hidden="true"></span><span>GitHub</span></a>`
+        : '';
+      var media = card.media
+        ? `<a href="${card.media}" target="_blank" rel="noopener noreferrer" class="carousel-card-meta-link"><span class="icon solid fa-photo-video" aria-hidden="true"></span><span>Media</span></a>`
+        : '';
+      var hasMeta = !!(github || media);
+      var metaLinks = hasMeta
+        ? `<div class="carousel-card-meta-links">${github}${media}</div>`
+        : '';
+      var headerClass = hasMeta ? 'carousel-card-header has-meta' : 'carousel-card-header';
+
       return `
         <div class="card-wrapper">
           <article class="card-inner">
-            <header class="carousel-card-header">
-              <div class="journal-header">${card.journal || ''}</div>
-              <div class="journal-category">${card.category || ''}</div>
+            <header class="${headerClass}">
+              <div class="carousel-card-header-left">
+                ${metaLinks}
+              </div>
+              <div class="carousel-card-header-main">
+                <div class="journal-header">${card.journal || ''}</div>
+                <div class="journal-category">${card.category || ''}</div>
+              </div>
+              ${date}
             </header>
 
             <div class="carousel-card-media">
@@ -25,7 +44,9 @@
             <div class="carousel-card-body">
               <p class="card-title">${card.title || ''}</p>
               <p class="carousel-card-description">${card.description || ''}</p>
-              <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" class="carousel-card-link"><span class="carousel-card-link-label">Read</span><span class="carousel-card-link-arrow" aria-hidden="true">→</span></a>
+              <div class="carousel-card-actions">
+                <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" class="carousel-card-link"><span class="carousel-card-link-label">Read</span><span class="carousel-card-link-arrow" aria-hidden="true">→</span></a>
+              </div>
             </div>
           </article>
         </div>

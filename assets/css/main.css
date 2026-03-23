@@ -4390,8 +4390,36 @@ body.top-navbar-open #top-navbar {
   width: 100%;
   background-color: #fff;
   padding: 10px 14px 3px;
-  text-align: center;
+  position: relative;
   box-sizing: border-box;
+}
+
+.carousel-card-header-left {
+  display: none;
+}
+
+.carousel-card-header.has-meta .carousel-card-header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: absolute;
+  left: 14px;
+  top: 10px;
+}
+
+.carousel-card-header-main {
+  text-align: center;
+  width: 100%;
+}
+
+.carousel-card-date {
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  position: absolute;
+  right: 14px;
+  top: 10px;
 }
 
 .journal-header {
@@ -4454,12 +4482,22 @@ body.top-navbar-open #top-navbar {
   min-height: calc(0.92rem * 1.45 * 2);
 }
 
+.carousel-card-actions {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+
 .carousel-card-link {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
+  min-width: 104px;
   padding: 8px 16px;
   background-color: #007aff;
   color: #fff;
@@ -4467,7 +4505,6 @@ body.top-navbar-open #top-navbar {
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.9rem;
-  margin-top: auto;
   border-bottom: 0;
   overflow: hidden;
 }
@@ -4501,6 +4538,38 @@ body.top-navbar-open #top-navbar {
 .carousel-card-link:focus .carousel-card-link-arrow {
   opacity: 1;
   transform: translateX(0);
+}
+
+.carousel-card-meta-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.carousel-card-meta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.66rem;
+  color: #475569 !important;
+  border: 1px solid #d7dde5;
+  border-radius: 999px;
+  padding: 0.16rem 0.42rem;
+  line-height: 1;
+  border-bottom: 0;
+}
+
+.carousel-card-meta-link:hover,
+.carousel-card-meta-link:focus,
+.carousel-card-meta-link:visited {
+  color: #475569 !important;
+  border-bottom: 0;
+}
+
+.carousel-card-meta-link .icon {
+  font-size: 0.72rem;
 }
 
 .carousel-empty {
@@ -4537,5 +4606,19 @@ body.top-navbar-open #top-navbar {
 
   .carousel-card-body {
     padding: 12px;
+  }
+
+  .carousel-card-link {
+    width: 100%;
+  }
+
+  .carousel-card-header.has-meta .carousel-card-header-left {
+    left: 10px;
+    top: 8px;
+  }
+
+  .carousel-card-date {
+    right: 10px;
+    top: 8px;
   }
 }
