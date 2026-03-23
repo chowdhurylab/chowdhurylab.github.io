@@ -1,4 +1,7 @@
 (function () {
+  var allPublications = [];
+  var activeType = 'all';
+
   function escapeHtml(text) {
     return String(text || '')
       .replace(/&/g, '&amp;')
@@ -45,19 +48,23 @@
     );
   }
 
-  function renderPublications(publications, container) {
-    if (!publications || !publications.length) {
-      container.innerHTML = '<p class="publications-empty">No publications found.</p>';
-      return;
-    }
-
+  function groupByYear(publications) {
     var grouped = {};
     publications.forEach(function (pub) {
       var year = pub.year || 'Unknown';
       if (!grouped[year]) grouped[year] = [];
       grouped[year].push(pub);
     });
+    return grouped;
+  }
 
+  function renderPublications(publications, container) {
+    if (!publications || !publications.length) {
+      container.innerHTML = '<p class="publications-empty">No publications match the current filters.</p>';
+      return;
+    }
+
+    var grouped = groupByYear(publications);
     var years = Object.keys(grouped).sort(function (a, b) {
       return Number(b) - Number(a);
     });
@@ -75,6 +82,83 @@
       .join('');
   }
 
+  function populateYearFilter(publications) {
+    var select = document.getElementById('pub-filter-year');
+    if (!select) return;
+
+    var years = Array.from(
+      new Set(
+        publications
+          .map(function (p) { return p.year; })
+          .filter(function (y) { return y !== undefined && y !== null && y !== ''; })
+      )
+    ).sort(function (a, b) {
+      return Number(b) - Number(a);
+    });
+
+    select.innerHTML = '<option value="all">All years</option>' +
+      years.map(function (y) {
+        return '<option value="' + escapeHtml(String(y)) + '">' + escapeHtml(String(y)) + '</option>';
+      }).join('');
+  }
+
+  function applyFilters() {
+    var container = document.getElementById('publications-container');
+    var yearSelect = document.getElementById('pub-filter-year');
+    var searchInput = document.getElementById('pub-filter-search');
+    var mediaOnly = document.getElementById('pub-filter-media');
+
+    if (!container) return;
+
+    var yearValue = yearSelect ? yearSelect.value : 'all';
+    var query = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
+    var mediaOnlyChecked = !!(mediaOnly && mediaOnly.checked);
+
+    var filtered = allPublications.filter(function (pub) {
+      if (yearValue !== 'all' && String(pub.year) !== yearValue) return false;
+      if (activeType !== 'all' && (pub.articleType || '') !== activeType) return false;
+      if (mediaOnlyChecked && !(pub.extraLinks && pub.extraLinks.length)) return false;
+
+      if (query) {
+        var haystack = [pub.title, pub.authors, pub.journal, pub.articleType]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (haystack.indexOf(query) === -1) return false;
+      }
+
+      return true;
+    });
+
+    renderPublications(filtered, container);
+  }
+
+  function bindFilters() {
+    var yearSelect = document.getElementById('pub-filter-year');
+    var searchInput = document.getElementById('pub-filter-search');
+    var mediaOnly = document.getElementById('pub-filter-media');
+    var typeWrap = document.getElementById('pub-filter-type');
+
+    if (yearSelect) yearSelect.addEventListener('change', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (mediaOnly) mediaOnly.addEventListener('change', applyFilters);
+
+    if (typeWrap) {
+      typeWrap.addEventListener('click', function (event) {
+        var btn = event.target.closest('[data-type]');
+        if (!btn) return;
+
+        activeType = btn.getAttribute('data-type') || 'all';
+        var chips = typeWrap.querySelectorAll('[data-type]');
+        chips.forEach(function (chip) {
+          chip.classList.toggle('is-active', chip === btn);
+        });
+
+        applyFilters();
+      });
+    }
+  }
+
   async function loadPublications() {
     var container = document.getElementById('publications-container');
     if (!container) return;
@@ -82,7 +166,11 @@
     try {
       var res = await fetch('assets/data/publications.json');
       var data = await res.json();
-      renderPublications(data.publications || [], container);
+      allPublications = data.publications || [];
+
+      populateYearFilter(allPublications);
+      bindFilters();
+      applyFilters();
     } catch (err) {
       console.error('Publications load error:', err);
       container.innerHTML = '<p class="publications-empty">Could not load publications.</p>';
