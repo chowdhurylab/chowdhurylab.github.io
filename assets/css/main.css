@@ -3893,6 +3893,32 @@ body.sidebar-panel-open #sidebar > .inner {
   border-bottom: 1px solid #eceff1;
 }
 
+.latest-lab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #eceff1;
+  background: #fafafa;
+}
+
+.latest-lab-filter {
+  border: 1px solid #d6dce3;
+  background: #fff;
+  color: #4b5563;
+  border-radius: 999px;
+  padding: 0.18rem 0.58rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.latest-lab-filter.is-active {
+  background: #5680e9;
+  border-color: #5680e9;
+  color: #fff;
+}
+
 .latest-lab-panel-head h3 {
   margin: 0;
   font-size: 1rem;

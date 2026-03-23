@@ -38,22 +38,67 @@
           <h3>Latest in Lab</h3>
           <button type="button" class="latest-lab-close" id="latest-lab-close" aria-label="Close">✕</button>
         </div>
+        <div class="latest-lab-filters" id="latest-lab-filters" role="group" aria-label="Filter latest updates">
+          <button type="button" class="latest-lab-filter is-active" data-filter="all">All</button>
+          <button type="button" class="latest-lab-filter" data-filter="achievements">Achievements</button>
+          <button type="button" class="latest-lab-filter" data-filter="members">New Members</button>
+          <button type="button" class="latest-lab-filter" data-filter="publications">Publications</button>
+        </div>
         <div id="latest-lab-list" class="latest-lab-list">Loading updates…</div>
       </div>
     `;
     document.body.appendChild(panel);
   }
 
+  var latestLoaded = false;
+  var latestData = null;
+  var activeFilter = 'all';
+
+  function inferCategory(item) {
+    if (item && item.category) return String(item.category).toLowerCase();
+
+    var icon = (item && item.icon) || '';
+    if (icon.indexOf('fa-user-plus') !== -1) return 'members';
+
+    var text = ((item && item.text) || '').toLowerCase();
+    var publicationHints = [
+      'now out in',
+      'published',
+      'publication',
+      'journal',
+      'cell systems'
+    ];
+    for (var i = 0; i < publicationHints.length; i++) {
+      if (text.indexOf(publicationHints[i]) !== -1) return 'publications';
+    }
+
+    return 'achievements';
+  }
+
+  function getFilteredItems(items, filter) {
+    if (filter === 'all') return items;
+    return items.filter(function (item) {
+      return inferCategory(item) === filter;
+    });
+  }
+
   function renderLatestList(data) {
     var container = document.getElementById('latest-lab-list');
     if (!container) return;
     var items = (data && data.latestInLab) || [];
+    var filtered = getFilteredItems(items, activeFilter);
+
     if (!items.length) {
       container.innerHTML = '<p>No updates found.</p>';
       return;
     }
 
-    container.innerHTML = items.map(function (item) {
+    if (!filtered.length) {
+      container.innerHTML = '<p>No updates in this filter yet.</p>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(function (item) {
       var link = (item.link && item.linkText)
         ? ` <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.linkText}</a>`
         : '';
@@ -73,13 +118,25 @@
     }).join('');
   }
 
-  var latestLoaded = false;
+  function setActiveFilter(filter) {
+    activeFilter = filter || 'all';
+
+    var buttons = document.querySelectorAll('.latest-lab-filter');
+    buttons.forEach(function (btn) {
+      var isActive = btn.getAttribute('data-filter') === activeFilter;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    if (latestData) renderLatestList(latestData);
+  }
+
   async function loadLatest() {
     if (latestLoaded) return;
     try {
       var res = await fetch('assets/data/sidebar.json');
-      var data = await res.json();
-      renderLatestList(data);
+      latestData = await res.json();
+      renderLatestList(latestData);
       latestLoaded = true;
     } catch (e) {
       var c = document.getElementById('latest-lab-list');
@@ -108,6 +165,12 @@
 
     if (event.target.closest('#latest-lab-close')) {
       setPanelOpen(false);
+      return;
+    }
+
+    var filterBtn = event.target.closest('.latest-lab-filter');
+    if (filterBtn) {
+      setActiveFilter(filterBtn.getAttribute('data-filter') || 'all');
     }
   });
 })();
