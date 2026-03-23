@@ -48,16 +48,12 @@
 
   window.scrollCarousel = function (direction) {
     if (!wrapper) return;
-    var isDesktop = window.innerWidth >= 1024;
-
-    if (isDesktop) {
-      wrapper.scrollBy({ left: direction * 424, behavior: 'smooth' });
-      return;
-    }
 
     var card = wrapper.querySelector('.card-wrapper');
     if (!card) return;
-    var cardWidth = card.offsetWidth + 24;
+    var style = window.getComputedStyle(wrapper);
+    var gap = parseFloat(style.columnGap || style.gap || '0') || 0;
+    var cardWidth = card.offsetWidth + gap;
     wrapper.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
   };
 
