@@ -46,165 +46,32 @@
 								</header>
 
 							<!-- Banner -->
-								<section id="banner">
-									<div class="content">
-										<header>
-											<h1 style="color: #FF8300;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Chowdhury Lab</h1>
-											<p style=" font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Designing the new</p>
-										</header>
-										<p style="color:#000000; font-family: Helvetica Neue, Helvetica, Arial, sans-serif">We design novel proteins using structure-aware AI/optimization models. Our designed proteins find application in energy, environment, therapeutics, and critical ionic separations.</p>
-
-										<p style="color:#000000; font-family: Helvetica Neue, Helvetica, Arial, sans-serif"><br>We are located within the <a href="https://nanovaccine.iastate.edu/" target="_blank" rel="noopener noreferrer"><b style="color:#5680e9">Nanovaccine Institute</b></a> and affiliated to the <a href="https://www.cbe.iastate.edu/the-department/facultystaff/" target="_blank" rel="noopener noreferrer"><b style="color:#5680e9">Chemical & Biological Engineering</b></a> department at <a href="https://www.iastate.edu/" target="_blank" rel="noopener noreferrer"><b style="color:#5680e9">Iowa State</b></a>.<br></p></br>
-										<ul class="actions">
-											<li><a href="research.html" class="button big">Research</a></li>
-										</ul>
-										<!-- <ul class="actions">
-											<li><a href="joinus.html" class="button">We are hiring</a></li>
-										</ul> -->
+								<section id="banner" class="home-banner">
+									<div class="content" id="home-hero-content">
+										<p>Loading home content…</p>
 									</div>
-									<span class="image object">
-										<img src="images/protein2.gif" alt="" />
-									</span>
+									<span class="image object" id="home-hero-image"></span>
 								</section>
 
 							<!-- Section -->
 
 								<section>
 									<header class="major">
-										<h2 style="color:#7e7e7e";>Latest Research Highlights</h2>
+										<h2 class="home-section-title">Latest Research Highlights</h2>
 									</header>
 
-									<!-- Carousel update 6-25-2025 -->
-									<div style="position: relative; padding: 0 60px 48px 60px; overflow: hidden;">
+									<div class="carousel-shell">
+										<button type="button" class="carousel-nav carousel-nav-left" data-carousel-direction="-1" aria-label="Previous highlight">←</button>
+										<button type="button" class="carousel-nav carousel-nav-right" data-carousel-direction="1" aria-label="Next highlight">→</button>
 
-										<!-- Left Navigation Button -->
-										<button onclick="scrollCarousel(-1)" style="
-											position: absolute;
-											left: 10px;
-											top: 50%;
-											transform: translateY(-50%);
-											z-index: 10;
-											width: 40px;
-											height: 40px;
-											border: none;
-											border-radius: 50%;
-											background-color: rgba(255, 255, 255, 0.95);
-											box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-											cursor: pointer;
-											display: flex;
-											align-items: center;
-											justify-content: center;
-											transition: all 0.3s ease;
-											backdrop-filter: blur(10px);
-											font-size: 20px;
-											font-weight: bold;
-											color: #333;
-											line-height: 1;
-											padding: 0;
-											min-width: 40px;
-											min-height: 40px;
-										" onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 1)'; this.style.transform='translateY(-50%) scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.2)';" onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.95)'; this.style.transform='translateY(-50%) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)';">←</button>
-
-										<!-- Right Navigation Button -->
-										<button onclick="scrollCarousel(1)" style="
-											position: absolute;
-											right: 10px;
-											top: 50%;
-											transform: translateY(-50%);
-											z-index: 10;
-											width: 40px;
-											height: 40px;
-											border: none;
-											border-radius: 50%;
-											background-color: rgba(255, 255, 255, 0.95);
-											box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-											cursor: pointer;
-											display: flex;
-											align-items: center;
-											justify-content: center;
-											transition: all 0.3s ease;
-											backdrop-filter: blur(10px);
-											font-size: 20px;
-											font-weight: bold;
-											color: #333;
-											line-height: 1;
-											padding: 0;
-											min-width: 40px;
-											min-height: 40px;
-										" onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 1)'; this.style.transform='translateY(-50%) scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.2)';" onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.95)'; this.style.transform='translateY(-50%) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)';">→</button>
-
-										<!-- Scrollable Wrapper -->
-										<div id="carouselWrapper" style="
-											display: flex;
-											overflow-x: auto;
-											scroll-snap-type: x mandatory;
-											-webkit-overflow-scrolling: touch;
-											gap: 24px;
-											padding-bottom: 4px;
-											scrollbar-width: none;
-											scroll-behavior: smooth;
-											-ms-overflow-style: none;
-										" onwheel="event.preventDefault(); this.scrollLeft += event.deltaY;">
-											<p style="color:#666; margin: 0;">Loading highlights…</p>
+										<div id="carouselWrapper" class="carousel-wrapper">
+											<p class="carousel-empty">Loading highlights…</p>
 										</div>
 									</div>
 
-									<style>
-									#carouselWrapper::-webkit-scrollbar {
-										display: none;
-									}
-
-									@media (min-width: 1024px) {
-										.card-wrapper {
-											flex: 0 0 550px !important;
-										}
-										.card-inner {
-											max-width: 550px !important;
-										}
-									}
-
-									@media (max-width: 767px) {
-										.journal-header {
-											font-size: 1.3rem !important;
-										}
-										.journal-category {
-											font-size: 0.75rem !important;
-										}
-										.card-title {
-											font-size: 1.3rem !important;
-										}
-									}
-									</style>
-
-									<header class="major">
-										<h2 style="color:#7e7e7e";></br></h2>
-									</header>
-									<div class="features">
-										<article>
-											<span class="icon solid fa-tree"></span>
-											<div class="content">
-												<h3 style="color:#7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Enzyme and biosensor engineering</h3><p><li>Environmental engineering</li><li>Human health</li><li>Room-temperature chemistry</li></p></br>
-											</div>
-										</article>
-										<article>
-											<span class="icon solid fa-tint"></span>
-											<div class="content">
-												<h3 style="color:#7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Designing membrane proteins/ transporters</h3><p><li>Selective transport of molecules/ ions</li><li>Bio-based fuel cell</li></p></br>
-											</div>
-										</article>
-										<article>
-											<span class="icon solid fa-bacteria"></span>
-											<div class="content">
-												<h3 style="color:#7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Structure-guided metabolic engineering</h3><p><li>Kinetics of biomolecular conversions</li><li>Non-model organism pathway design</li></p></br>
-											</div>
-										</article>
-										<article>
-											<span class="icon solid fa-chart-line"></span>
-											<div class="content">
-												<h3 style="color:#7e7e7e;font-family: Helvetica Neue, Helvetica, Arial, sans-serif">Activity engineering</h3><p><li>Pushing activity limits of proteins</li><li>Property tailoring at given activity</li><li>pH/ temeperature dependancy</li></p></br>
-											</div>
-										</article>
-									</div></br>
+									<div class="features" id="home-research-areas">
+										<p>Loading research areas…</p>
+									</div>
 								</section>
 
 								
@@ -220,6 +87,7 @@
 		<script src="assets/js/breakpoints.min.js"></script>
 		<script src="assets/js/util.js"></script>
 		<script src="assets/js/navbar-component.js"></script>
+		<script src="assets/js/home-component.js"></script>
 		<script src="assets/js/main.js"></script>
 		<script src="assets/js/carousel.js"></script>
 

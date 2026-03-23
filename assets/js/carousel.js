@@ -5,50 +5,29 @@
     if (!wrapper) return;
 
     if (!cards || !cards.length) {
-      wrapper.innerHTML = '<p style="color:#666; margin: 0;">No highlights available.</p>';
+      wrapper.innerHTML = '<p class="carousel-empty">No highlights available.</p>';
       return;
     }
 
     wrapper.innerHTML = cards.map(function (card) {
       return `
-        <div class="card-wrapper" style="flex: 0 0 calc(100% - 1px);">
-          <div class="card-inner" style="
-            scroll-snap-align: start;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            background-color: #fff;
-            overflow: hidden;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-sizing: border-box;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-          ">
-            <div style="width: 100%; background-color: #fff; padding: 12px 16px 4px 16px; text-align: center; box-sizing: border-box;">
-              <div class="journal-header" style="font-size: 2rem; font-weight: bold; color: #000;">${card.journal || ''}</div>
-              <div class="journal-category" style="font-size: 1.25rem; font-weight: normal; color: #000; letter-spacing: 0.5px;">${card.category || ''}</div>
+        <div class="card-wrapper">
+          <article class="card-inner">
+            <header class="carousel-card-header">
+              <div class="journal-header">${card.journal || ''}</div>
+              <div class="journal-category">${card.category || ''}</div>
+            </header>
+
+            <div class="carousel-card-media">
+              <img src="${card.image || ''}" alt="${card.imageAlt || card.title || 'carousel image'}">
             </div>
-            <div style="width: 100%; aspect-ratio: 3 / 2; position: relative; background-color: #FFFFFF; overflow: hidden;">
-              <img src="${card.image || ''}" alt="${card.imageAlt || card.title || 'carousel image'}" style="
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                object-position: center;
-                position: absolute;
-                top: 0;
-                left: 0;
-              ">
+
+            <div class="carousel-card-body">
+              <p class="card-title">${card.title || ''}</p>
+              <p class="carousel-card-description">${card.description || ''}</p>
+              <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" class="carousel-card-link">Read ⟶</a>
             </div>
-            <div style="padding: 24px; text-align: center;">
-              <p class="card-title" style="color: #000; font-weight: bold; margin-bottom: 12px; font-size: 2rem;">${card.title || ''}</p>
-              <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">${card.description || ''}</p>
-              <a href="${card.link || '#'}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 10px 24px; background-color: #007AFF; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: 500; transition: background-color 0.3s ease;">Read ⟶</a>
-            </div>
-          </div>
+          </article>
         </div>
       `;
     }).join('');
@@ -61,7 +40,7 @@
       renderCards((data && data.cards) || []);
     } catch (err) {
       if (wrapper) {
-        wrapper.innerHTML = '<p style="color:#666; margin: 0;">Could not load highlights.</p>';
+        wrapper.innerHTML = '<p class="carousel-empty">Could not load highlights.</p>';
       }
       console.error('Carousel load error:', err);
     }
@@ -82,9 +61,27 @@
     wrapper.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
   };
 
+  function bindControls() {
+    var controls = document.querySelectorAll('[data-carousel-direction]');
+    controls.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var dir = Number(btn.getAttribute('data-carousel-direction') || '0');
+        if (dir) window.scrollCarousel(dir);
+      });
+    });
+
+    if (wrapper) {
+      wrapper.addEventListener('wheel', function (event) {
+        event.preventDefault();
+        wrapper.scrollLeft += event.deltaY;
+      }, { passive: false });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     wrapper = document.getElementById('carouselWrapper');
     if (!wrapper) return;
+    bindControls();
     loadCarouselData();
   });
 })();
