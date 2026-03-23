@@ -3,6 +3,7 @@
     {
       "journal": "Cell Systems",
       "category": "REVIEW",
+      "date": "2023",
       "image": "images/carousel/PoreProteins.png",
       "imageAlt": "engineering rationale",
       "title": "Pore Proteins",
@@ -12,6 +13,7 @@
     {
       "journal": "Current Opinion",
       "category": "REVIEW",
+      "date": "2025",
       "image": "images/carousel/Struct-GEMs.png",
       "imageAlt": "RGN2",
       "title": "Struct-GEMs",
@@ -21,6 +23,7 @@
     {
       "journal": "PLoS Comp. Bio",
       "category": "RESEARCH",
+      "date": "2024",
       "image": "images/carousel/CTRL-V.png",
       "imageAlt": "PRRSV",
       "title": "CTRL-V",
@@ -30,6 +33,7 @@
     {
       "journal": "Comp. Str. Bio. J",
       "category": "RESEARCH",
+      "date": "2024",
       "image": "images/carousel/PorcineVaccine.png",
       "imageAlt": "engineering rationale",
       "title": "Porcine Vaccine",
@@ -39,6 +43,7 @@
     {
       "journal": "Comp. Str. Bio. J",
       "category": "RESEARCH",
+      "date": "2025",
       "image": "images/carousel/RareEarthRecovery.png",
       "imageAlt": "RGN2",
       "title": "Rare Earth Recovery",
@@ -48,6 +53,7 @@
     {
       "journal": "Nature Biotech.",
       "category": "RESEARCH",
+      "date": "2022",
       "image": "images/carousel/ProteinStructure.png",
       "imageAlt": "PRRSV",
       "title": "Protein Structure",
