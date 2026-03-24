@@ -1,0 +1,40 @@
+/* Research page component styles */
+.research-logo-text {
+  color: #ff8300;
+  font-weight: normal;
+}
+
+.research-page-title {
+  color: #7e7e7e;
+}
+
+.research-page-subtitle {
+  color: #939393;
+}
+
+.research-intro {
+  margin-bottom: 1.2rem;
+}
+
+.research-intro-paragraph {
+  margin-bottom: 0.95rem;
+}
+
+.research-area-title {
+  color: #7e7e7e;
+  text-align: left;
+  margin-bottom: 0.8rem;
+}
+
+.research-area-text,
+.research-area-applications {
+  margin-bottom: 0.75rem;
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+.research-area-app-label {
+  color: #5680e9;
+  font-weight: 700;
+}
+
