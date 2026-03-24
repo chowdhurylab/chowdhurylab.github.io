@@ -1,0 +1,80 @@
+/* Restore independent sidebar panel component */
+#sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 26em !important;
+  height: 100vh !important;
+  margin-left: 0 !important;
+  z-index: 10001 !important;
+  box-shadow: none !important;
+}
+
+#sidebar > .inner {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 26em !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  padding: 1.75em !important;
+  overflow-y: auto !important;
+  background: #dcdcdc !important;
+  box-shadow: 0 0 2.5em rgba(0,0,0,0.2) !important;
+  transform: translateX(-110%) !important;
+  transition: transform 0.3s ease !important;
+}
+
+body.sidebar-panel-open #sidebar > .inner {
+  transform: translateX(0) !important;
+}
+
+#sidebar #menu {
+  display: none !important;
+}
+
+#sidebar > .inner > section {
+  display: block !important;
+}
+
+#sidebar .toggle {
+  position: fixed !important;
+  top: 1rem !important;
+  left: 1rem !important;
+  width: 2.8rem !important;
+  height: 2.8rem !important;
+  line-height: 2.8rem !important;
+  text-indent: 6rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  z-index: 10020 !important;
+}
+
+#sidebar .toggle:before {
+  content: "☰" !important;
+  color: #7f888f !important;
+  font-size: 1.3rem !important;
+}
+
+@media screen and (max-width: 736px) {
+  #sidebar,
+  #sidebar > .inner {
+    width: 85vw !important;
+    max-width: 24em !important;
+  }
+
+  #sidebar .toggle {
+    top: 0.8rem !important;
+    left: 0.8rem !important;
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    line-height: 2.4rem !important;
+  }
+
+  #sidebar .toggle:before {
+    font-size: 1.15rem !important;
+  }
+}
+

@@ -1,0 +1,21 @@
+/* Force sidebar open/close behavior to Backup model (margin-left only) */
+#sidebar > .inner,
+#sidebar.inactive > .inner,
+#sidebar:not(.inactive) > .inner {
+  transform: none !important;
+}
+
+#sidebar {
+  transition: margin-left 0.5s ease, box-shadow 0.5s ease !important;
+}
+
+#sidebar.inactive {
+  margin-left: -26em !important;
+}
+
+@media screen and (max-width: 1680px) {
+  #sidebar.inactive {
+    margin-left: -24em !important;
+  }
+}
+
