@@ -1,0 +1,349 @@
+/* Home page componentized content */
+.home-hero-title {
+  color: #ff8300;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.home-hero-subtitle,
+.home-hero-description,
+.home-hero-affiliations {
+  color: #000;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.home-hero-affiliations a b {
+  color: #5680e9;
+}
+
+.home-section-title,
+.home-research-title {
+  color: #7e7e7e;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.home-research-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.carousel-shell {
+  position: relative;
+  padding: 0 46px 28px;
+  overflow: hidden;
+}
+
+.carousel-wrapper {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 14px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;
+}
+
+.carousel-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  line-height: 1;
+  padding: 0;
+  min-width: 40px;
+  min-height: 40px;
+  transform: translateY(-50%);
+}
+
+.carousel-nav:hover {
+  background-color: rgba(255, 255, 255, 1);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-nav-left {
+  left: 10px;
+}
+
+.carousel-nav-right {
+  right: 10px;
+}
+
+.card-wrapper {
+  flex: 0 0 calc(100% - 1px);
+  display: flex;
+}
+
+.card-inner {
+  scroll-snap-align: start;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.07);
+  min-height: 100%;
+}
+
+.carousel-card-header {
+  width: 100%;
+  background-color: #fff;
+  padding: 10px 14px 3px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.carousel-card-header-left {
+  display: none;
+}
+
+.carousel-card-header.has-meta .carousel-card-header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: absolute;
+  left: 14px;
+  top: 10px;
+}
+
+.carousel-card-header-main {
+  text-align: center;
+  width: 100%;
+}
+
+.carousel-card-date {
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  position: absolute;
+  right: 14px;
+  top: 10px;
+}
+
+.journal-header {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #000;
+}
+
+.journal-category {
+  font-size: 0.92rem;
+  font-weight: normal;
+  color: #000;
+  letter-spacing: 0.4px;
+}
+
+.carousel-card-media {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  position: relative;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.carousel-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.carousel-card-body {
+  padding: 14px;
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.card-title {
+  color: #000;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.42rem;
+}
+
+.carousel-card-description {
+  color: #666;
+  line-height: 1.45;
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(0.92rem * 1.45 * 2);
+}
+
+.carousel-card-actions {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+
+.carousel-card-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  padding: 8px 16px;
+  background-color: #007aff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border-bottom: 0;
+  overflow: hidden;
+}
+
+.carousel-card-link:hover,
+.carousel-card-link:focus,
+.carousel-card-link:visited {
+  color: #fff !important;
+  background-color: #007aff;
+  border-bottom: 0;
+}
+
+.carousel-card-link-label {
+  transition: transform 0.22s ease;
+}
+
+.carousel-card-link-arrow {
+  position: absolute;
+  right: 24px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.carousel-card-link:hover .carousel-card-link-label,
+.carousel-card-link:focus .carousel-card-link-label {
+  transform: translateX(-5px);
+}
+
+.carousel-card-link:hover .carousel-card-link-arrow,
+.carousel-card-link:focus .carousel-card-link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.carousel-card-meta-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.carousel-card-meta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.66rem;
+  color: #475569 !important;
+  border: 1px solid #d7dde5;
+  border-radius: 999px;
+  padding: 0.16rem 0.42rem;
+  line-height: 1;
+  border-bottom: 0;
+}
+
+.carousel-card-meta-link:hover,
+.carousel-card-meta-link:focus,
+.carousel-card-meta-link:visited {
+  color: #475569 !important;
+  border-bottom: 0;
+}
+
+.carousel-card-meta-link .icon {
+  font-size: 0.72rem;
+}
+
+.carousel-empty {
+  color: #666;
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .card-wrapper {
+    flex: 0 0 390px !important;
+  }
+
+  .card-inner {
+    max-width: 390px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .carousel-shell {
+    padding: 0 36px 22px;
+  }
+
+  .journal-header {
+    font-size: 1.05rem !important;
+  }
+
+  .journal-category {
+    font-size: 0.66rem !important;
+  }
+
+  .card-title {
+    font-size: 1.08rem !important;
+  }
+
+  .carousel-card-body {
+    padding: 12px;
+  }
+
+  .carousel-card-link {
+    width: 100%;
+  }
+
+  .carousel-card-header.has-meta .carousel-card-header-left {
+    left: 10px;
+    top: 8px;
+  }
+
+  .carousel-card-date {
+    right: 10px;
+    top: 8px;
+  }
+}
+
