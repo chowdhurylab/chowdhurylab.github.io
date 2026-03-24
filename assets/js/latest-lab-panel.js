@@ -72,7 +72,7 @@
   async function loadLatest() {
     if (latestLoaded) return;
     try {
-      var res = await fetch('assets/data/sidebar.json');
+      var res = await fetch('assets/data/latest.json');
       latestData = await res.json();
       renderLatestList(latestData);
       latestLoaded = true;
