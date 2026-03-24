@@ -98,11 +98,11 @@
     var bullets = item.bullets || [];
 
     if (!bullets.length) {
-      return '<p class="moment-card-summary">No details available yet.</p>';
+      return "";
     }
 
     return (
-      '<ul class="moment-card-bullets">' +
+      '<ul class="timeline-card-bullets">' +
       bullets
         .map(function (bullet) {
           return '<li>' + escapeHtml(bullet) + '</li>';
@@ -112,12 +112,10 @@
     );
   }
 
-  function buildMedia(item, isFeature) {
-    var mediaClass = isFeature ? "moment-card-media feature-media" : "moment-card-media";
-
+  function buildTimelineMedia(item) {
     if (item.type === "video") {
       return (
-        '<div class="' + mediaClass + '">' +
+        '<div class="timeline-card-media timeline-card-media-video">' +
         '  <iframe src="' +
         escapeHtml(item.src) +
         '" title="' +
@@ -128,7 +126,7 @@
     }
 
     return (
-      '<div class="' + mediaClass + '">' +
+      '<div class="timeline-card-media">' +
       '  <img src="' +
       escapeHtml(item.src) +
       '" alt="' +
@@ -138,32 +136,28 @@
     );
   }
 
-  function buildMomentCard(item, options) {
-    var opts = options || {};
-    var isFeature = !!opts.feature;
-    var cardClass = isFeature ? "moment-card feature-card" : "moment-card";
-    var yearBadge = item.year ? '<span class="moment-card-year">' + escapeHtml(item.year) + '</span>' : "";
-    var tag = item.tag ? '<span class="moment-card-tag">' + escapeHtml(item.tag) + '</span>' : "";
-    var eyebrow = yearBadge || tag ? '<div class="moment-card-meta">' + yearBadge + tag + '</div>' : "";
-    var titleTag = isFeature ? "h2" : "h3";
-    var subtitle = item.summary ? '<p class="moment-card-summary">' + escapeHtml(item.summary) + '</p>' : "";
+  function buildTimelineItem(item, index) {
+    var alignment = index % 2 === 0 ? "timeline-item-left" : "timeline-item-right";
+    var year = item.year ? '<div class="timeline-year">' + escapeHtml(item.year) + '</div>' : '<div class="timeline-year timeline-year-empty"></div>';
+    var tag = item.tag ? '<span class="timeline-tag">' + escapeHtml(item.tag) + '</span>' : "";
+    var summary = item.summary ? '<p class="timeline-summary">' + escapeHtml(item.summary) + '</p>' : "";
 
     return (
-      '<article class="' + cardClass + '">' +
-      buildMedia(item, isFeature) +
-      '<div class="moment-card-copy">' +
-      eyebrow +
-      '<' +
-      titleTag +
-      ' class="moment-card-title">' +
-      escapeHtml(item.heading || "") +
-      '</' +
-      titleTag +
-      '>' +
-      subtitle +
+      '<article class="timeline-item ' + alignment + '">' +
+      '  <div class="timeline-item-rail">' +
+      year +
+      '    <span class="timeline-dot" aria-hidden="true"></span>' +
+      '  </div>' +
+      '  <div class="timeline-card">' +
+      buildTimelineMedia(item) +
+      '    <div class="timeline-card-copy">' +
+      tag +
+      '      <h3 class="timeline-card-title">' + escapeHtml(item.heading || "") + '</h3>' +
+      summary +
       buildBulletList(item) +
-      "</div>" +
-      "</article>"
+      '    </div>' +
+      '  </div>' +
+      '</article>'
     );
   }
 
@@ -173,35 +167,37 @@
     }, []);
   }
 
+  function sortTimelineItems(items) {
+    return items.slice().sort(function (a, b) {
+      var yearA = Number(a.year) || 0;
+      var yearB = Number(b.year) || 0;
+      return yearB - yearA;
+    });
+  }
+
   function renderPosts(groups, mount) {
     if (!mount) return;
 
-    var items = flattenPostItems(groups);
+    var items = sortTimelineItems(flattenPostItems(groups));
     if (!items.length) {
       mount.innerHTML = '<p class="moments-empty">No moments available yet.</p>';
       return;
     }
 
-    var feature = items[0];
-    var supporting = items.slice(1);
-
-    var supportingMarkup = supporting.length
-      ? '<div class="moments-supporting-grid">' +
-        supporting
-          .map(function (item) {
-            return buildMomentCard(item, { feature: false });
-          })
-          .join("") +
-        "</div>"
-      : "";
-
     mount.innerHTML =
-      '<div class="moments-editorial-layout">' +
-      '  <div class="moments-feature-wrap">' +
-      buildMomentCard(feature, { feature: true }) +
-      "  </div>" +
-      supportingMarkup +
-      "</div>";
+      '<div class="moments-timeline-gallery">' +
+      '  <div class="moments-timeline-intro">' +
+      '    <p class="moments-timeline-kicker">A lab story in moments</p>' +
+      '    <h2 class="moments-timeline-title">Milestones, talks, and snapshots over time</h2>' +
+      '  </div>' +
+      '  <div class="moments-timeline-track">' +
+      items
+        .map(function (item, index) {
+          return buildTimelineItem(item, index);
+        })
+        .join("") +
+      '  </div>' +
+      '</div>';
   }
 
   function bindCarouselEvents() {
