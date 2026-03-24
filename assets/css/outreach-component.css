@@ -1,0 +1,336 @@
+.outreach-intro {
+  max-width: 56rem;
+  margin-bottom: 3rem;
+}
+
+.outreach-intro-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 0;
+}
+
+.outreach-highlight {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.35rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.outreach-highlight-teach {
+  background: #fad02c;
+  color: #111827;
+}
+
+.outreach-highlight-train {
+  background: #ff4500;
+  color: #ffffff;
+}
+
+.outreach-section-block,
+.immune-section {
+  margin-top: 0;
+  margin-bottom: 3.5rem;
+}
+
+.outreach-section-heading {
+  margin-bottom: 1.5rem;
+}
+
+.outreach-section-kicker {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.teaching-heading .outreach-section-kicker {
+  color: #8a6700;
+}
+
+.training-heading .outreach-section-kicker,
+.immune-kicker {
+  color: #d9480f;
+}
+
+.outreach-section-heading h2 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.teaching-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.teaching-card {
+  display: block;
+  padding: 1.4rem 1.5rem;
+  border: 1px solid rgba(126, 126, 126, 0.14);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #fffdf2 0%, #ffffff 100%);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.teaching-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 32px rgba(17, 24, 39, 0.1);
+}
+
+.teaching-card-term {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  color: #8a6700;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.teaching-card-course {
+  margin: 0 0 0.9rem;
+  color: #111827;
+  line-height: 1.35;
+}
+
+.teaching-card-link {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.outreach-training-sections {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.training-card {
+  padding: 1.5rem;
+  border: 1px solid rgba(126, 126, 126, 0.14);
+  border-radius: 1.1rem;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.06);
+}
+
+.training-card-header {
+  margin-bottom: 1rem;
+}
+
+.training-card-year {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: #d9480f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.training-card-title {
+  margin: 0;
+  color: #111827;
+}
+
+.training-participants {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.training-participant {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: #f8fafc;
+}
+
+.training-participant-image {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.training-participant-copy h4 {
+  margin: 0 0 0.3rem;
+  color: #111827;
+}
+
+.training-participant-copy p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.immune-section-header {
+  max-width: 42rem;
+  margin-bottom: 1.75rem;
+}
+
+.immune-section-title {
+  margin: 0 0 0.5rem;
+  color: #1f2937;
+}
+
+.immune-section-subtitle {
+  margin: 0;
+  color: #4b5563;
+}
+
+.immune-section-shell {
+  border: 1px solid rgba(126, 126, 126, 0.14);
+  border-radius: 1.35rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.07);
+}
+
+.immune-hero {
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 1px solid rgba(217, 72, 15, 0.12);
+}
+
+.immune-hero-copy {
+  max-width: 52rem;
+}
+
+.immune-eyebrow {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  color: #d9480f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.immune-hero-title,
+.immune-team-title {
+  margin: 0 0 1rem;
+  color: #111827;
+}
+
+.immune-hero-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #374151;
+}
+
+.immune-hero-list li {
+  margin-bottom: 0.6rem;
+}
+
+.immune-hero-list li:last-child {
+  margin-bottom: 0;
+}
+
+.immune-team-block {
+  padding: 1.75rem 2rem 2rem;
+}
+
+.immune-team-header {
+  margin-bottom: 1.25rem;
+}
+
+.immune-team-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.immune-team-card {
+  border: 1px solid rgba(126, 126, 126, 0.14);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+}
+
+.immune-team-image {
+  width: calc(100% - 1.5rem);
+  max-width: 150px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+  margin: 0.85rem auto 0;
+}
+
+.immune-team-copy {
+  padding: 0.75rem 0.8rem 0.85rem;
+}
+
+.immune-team-name {
+  margin: 0 0 0.25rem;
+  color: #111827;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.immune-team-meta {
+  margin: 0 0 0.45rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.immune-team-role {
+  margin: 0;
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.outreach-loading,
+.outreach-empty {
+  color: #7e7e7e;
+}
+
+@media screen and (max-width: 1280px) {
+  .immune-team-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 980px) {
+  .teaching-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .immune-team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .immune-hero,
+  .immune-team-block {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 736px) {
+  .training-participant {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .training-participant-image {
+    margin: 0 auto;
+  }
+
+  .immune-team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .immune-hero,
+  .immune-team-block {
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+}
