@@ -1,0 +1,521 @@
+/* Restore independent sidebar panel component */
+#sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 26em !important;
+  height: 100vh !important;
+  margin-left: 0 !important;
+  z-index: 10001 !important;
+  box-shadow: none !important;
+}
+
+#sidebar > .inner {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 26em !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  padding: 1.75em !important;
+  overflow-y: auto !important;
+  background: #dcdcdc !important;
+  box-shadow: 0 0 2.5em rgba(0,0,0,0.2) !important;
+  transform: translateX(-110%) !important;
+  transition: transform 0.3s ease !important;
+}
+
+body.sidebar-panel-open #sidebar > .inner {
+  transform: translateX(0) !important;
+}
+
+#sidebar #menu {
+  display: none !important;
+}
+
+#sidebar > .inner > section {
+  display: block !important;
+}
+
+#sidebar .toggle {
+  position: fixed !important;
+  top: 1rem !important;
+  left: 1rem !important;
+  width: 2.8rem !important;
+  height: 2.8rem !important;
+  line-height: 2.8rem !important;
+  text-indent: 6rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  z-index: 10020 !important;
+}
+
+#sidebar .toggle:before {
+  content: "☰" !important;
+  color: #7f888f !important;
+  font-size: 1.3rem !important;
+}
+
+@media screen and (max-width: 736px) {
+  #sidebar,
+  #sidebar > .inner {
+    width: 85vw !important;
+    max-width: 24em !important;
+  }
+
+  #sidebar .toggle {
+    top: 0.8rem !important;
+    left: 0.8rem !important;
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    line-height: 2.4rem !important;
+  }
+
+  #sidebar .toggle:before {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* Global right floating Latest in Lab mini-panel */
+.latest-lab-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10030;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+  max-width: min(420px, 86vw);
+}
+
+.latest-lab-toggle {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: none;
+  border: 0;
+  background: #ff8300;
+  color: #fff;
+  padding: 1rem 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  min-width: 2.8rem;
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.latest-lab-panel-body {
+  width: min(380px, 74vw);
+  height: 100vh;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 0;
+  box-shadow: 8px 12px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.latest-lab-panel.is-collapsed .latest-lab-panel-body {
+  display: none;
+}
+
+.latest-lab-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid #eceff1;
+}
+
+.latest-lab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #eceff1;
+  background: #fafafa;
+}
+
+.latest-lab-filter {
+  border: 1px solid #d6dce3;
+  background: #fff;
+  color: #4b5563;
+  border-radius: 999px;
+  padding: 0.18rem 0.58rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.latest-lab-filter.is-active {
+  background: #5680e9;
+  border-color: #5680e9;
+  color: #fff;
+}
+
+.latest-lab-panel-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #4b5563;
+}
+
+.latest-lab-close {
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.latest-lab-list {
+  overflow: auto;
+  padding: 0.75rem 0.9rem;
+}
+
+.latest-lab-row {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0.55rem 0;
+}
+
+.latest-lab-row:last-child {
+  border-bottom: 0;
+}
+
+.latest-lab-image-wrap {
+  margin-top: 0.55rem;
+}
+
+.latest-lab-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}
+
+.latest-lab-date {
+  color: #5680e9;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.latest-lab-text {
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.latest-lab-text a {
+  color: #5680e9;
+}
+
+.latest-lab-text a:hover,
+.latest-lab-text a:focus,
+.latest-lab-text a:visited {
+  color: #5680e9;
+}
+
+.latest-lab-icon {
+  color: #818589;
+  margin-left: 0.35rem;
+}
+
+@media screen and (max-width: 736px) {
+  .latest-lab-toggle {
+    writing-mode: horizontal-tb;
+    transform: none;
+    border-radius: 0 10px 10px 0;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .latest-lab-panel-body {
+    width: min(330px, 82vw);
+    height: 100vh;
+  }
+}
+
+/* Restore independent top-navbar component */
+#top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10010;
+  transform: translateY(-115%);
+  transition: transform 0.32s ease;
+  pointer-events: none;
+}
+
+body.top-navbar-open #top-navbar {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#top-navbar #top-menu {
+  background: #dcdcdc;
+  box-shadow: 0 0.75rem 2.5rem rgba(0,0,0,0.22);
+  padding: 0.9rem 1.2rem 1.15rem 1.2rem;
+}
+
+#top-navbar #top-menu > ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.2rem 0.4rem 0 4.2rem;
+}
+
+#top-navbar #top-menu > ul > li {
+  list-style: none;
+  border-top: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#top-navbar #top-menu > ul > li > a {
+  border: 1px solid #b7bcc0;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  background: #f2f3f3;
+  transition: all 0.2s ease;
+}
+
+#top-navbar #top-menu > ul > li > a.active,
+#top-navbar #top-menu > ul > li > a[aria-current="page"] {
+  background: #ffffff;
+  border-color: #7f888f;
+  color: #111;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 #f56a6a;
+}
+
+@media screen and (max-width: 736px) {
+  #top-navbar #top-menu > ul {
+    justify-content: flex-start;
+    padding-left: 4rem;
+  }
+}
+
+/* Remove gray sidebar panel background (keep sidebar behavior) */
+#sidebar {
+  background: transparent !important;
+}
+
+#sidebar > .inner {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Sidebar restore from Backup (independent from top navbar) */
+#sidebar {
+  -moz-flex-grow: 0 !important;
+  -webkit-flex-grow: 0 !important;
+  -ms-flex-grow: 0 !important;
+  flex-grow: 0 !important;
+  -moz-flex-shrink: 0 !important;
+  -webkit-flex-shrink: 0 !important;
+  -ms-flex-shrink: 0 !important;
+  flex-shrink: 0 !important;
+  transition: margin-left 0.5s ease, box-shadow 0.5s ease !important;
+  background-color: #dcdcdc !important;
+  font-size: 0.9em !important;
+  position: relative !important;
+  width: 26em !important;
+  height: auto !important;
+  top: auto !important;
+  left: auto !important;
+  z-index: auto !important;
+  box-shadow: none !important;
+  margin-left: 0 !important;
+}
+
+#sidebar > .inner {
+  padding: 2.22222em 2.22222em 2.44444em 2.22222em !important;
+  position: relative !important;
+  width: 26em !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#sidebar > .inner > * {
+  border-bottom: solid 0.5px #ced4da !important;
+  margin: 0 0 3.5em 0 !important;
+  padding: 0 0 3.5em 0 !important;
+}
+
+#sidebar > .inner > *:last-child {
+  border-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#sidebar .toggle {
+  text-decoration: none !important;
+  transition: left 0.5s ease !important;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0) !important;
+  border: 0 !important;
+  display: block !important;
+  height: 7.5em !important;
+  left: 26em !important;
+  line-height: 7.5em !important;
+  outline: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  text-align: center !important;
+  text-indent: -15em !important;
+  white-space: nowrap !important;
+  top: 0 !important;
+  width: 6em !important;
+  z-index: 10000 !important;
+  cursor: pointer !important;
+  background: transparent !important;
+}
+
+#sidebar .toggle:before {
+  content: "☰" !important;
+  font-size: 2rem !important;
+  height: inherit !important;
+  left: 0 !important;
+  line-height: inherit !important;
+  position: absolute !important;
+  text-indent: 0 !important;
+  top: 0 !important;
+  width: inherit !important;
+  color: #7f888f !important;
+}
+
+#sidebar #menu {
+  display: block !important;
+}
+
+#sidebar > .inner > section {
+  display: block !important;
+}
+
+#sidebar.inactive {
+  margin-left: -26em !important;
+}
+
+@media screen and (max-width: 1680px) {
+  #sidebar {
+    width: 24em !important;
+  }
+  #sidebar > .inner {
+    padding: 1.66667em 1.66667em 1.33333em 1.66667em !important;
+    width: 24em !important;
+  }
+  #sidebar .toggle {
+    height: 6.25em !important;
+    left: 24em !important;
+    line-height: 6.25em !important;
+    text-indent: 5em !important;
+    width: 5em !important;
+  }
+  #sidebar .toggle:before {
+    font-size: 1.5rem !important;
+  }
+  #sidebar.inactive {
+    margin-left: -24em !important;
+  }
+}
+
+@media screen and (max-width: 1280px) {
+  #sidebar {
+    box-shadow: 0 0 5em 0 rgba(0, 0, 0, 0.175) !important;
+    height: 100% !important;
+    left: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    z-index: 10000 !important;
+  }
+  #sidebar.inactive {
+    box-shadow: none !important;
+  }
+  #sidebar > .inner {
+    -webkit-overflow-scrolling: touch !important;
+    height: 100% !important;
+    left: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    position: absolute !important;
+    top: 0 !important;
+  }
+  #sidebar > .inner:after {
+    content: "" !important;
+    display: block !important;
+    height: 4em !important;
+    width: 100% !important;
+  }
+  #sidebar .toggle {
+    text-indent: 6em !important;
+    width: 6em !important;
+  }
+  #sidebar .toggle:before {
+    font-size: 1.5rem !important;
+    margin-left: -0.4375em !important;
+  }
+}
+
+@media screen and (max-width: 736px) {
+  #sidebar .toggle {
+    text-indent: 7.25em !important;
+    width: 7.25em !important;
+  }
+  #sidebar .toggle:before {
+    color: #7f888f !important;
+    margin-left: -0.0625em !important;
+    margin-top: -0.25em !important;
+    font-size: 1.1rem !important;
+    z-index: 1 !important;
+  }
+  #sidebar .toggle:after {
+    background: rgba(222, 225, 226, 0.75) !important;
+    border-radius: 0.375em !important;
+    content: "" !important;
+    height: 3.5em !important;
+    left: 1em !important;
+    position: absolute !important;
+    top: 1em !important;
+    width: 5em !important;
+  }
+}
+
+/* Force sidebar open/close behavior to Backup model (margin-left only) */
+#sidebar > .inner,
+#sidebar.inactive > .inner,
+#sidebar:not(.inactive) > .inner {
+  transform: none !important;
+}
+
+#sidebar {
+  transition: margin-left 0.5s ease, box-shadow 0.5s ease !important;
+}
+
+#sidebar.inactive {
+  margin-left: -26em !important;
+}
+
+@media screen and (max-width: 1680px) {
+  #sidebar.inactive {
+    margin-left: -24em !important;
+  }
+}
+
