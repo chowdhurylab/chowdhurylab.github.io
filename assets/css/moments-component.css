@@ -1,0 +1,34 @@
+#moments-posts .posts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-left: 0;
+  width: 100%;
+}
+
+#moments-posts .posts article {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: left;
+  margin: 0;
+  width: 320px;
+}
+
+#moments-posts .posts article:before,
+#moments-posts .posts article:after {
+  display: none;
+}
+
+#moments-posts .posts article img,
+#moments-posts .posts article iframe {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#moments-posts .posts article figcaption {
+  width: 320px;
+  margin: 0.75rem auto 0;
+}
