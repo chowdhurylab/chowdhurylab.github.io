@@ -11,14 +11,29 @@
     navCloseDelay = 180,
     navTimer = null;
 
+  var mobileToggle = document.getElementById('mobile-nav-toggle');
+
+  function syncToggleState() {
+    if (!mobileToggle) return;
+    var isOpen = $body.hasClass('top-navbar-open');
+    mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    mobileToggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+  }
+
   function openTopNav() {
     $body.addClass('top-navbar-open');
+    syncToggleState();
+  }
+
+  function closeTopNav() {
+    $body.removeClass('top-navbar-open');
+    syncToggleState();
   }
 
   function closeTopNavSoon() {
     clearTimeout(navTimer);
     navTimer = setTimeout(function () {
-      if (!$topNavbar.is(':hover')) $body.removeClass('top-navbar-open');
+      if (!$topNavbar.is(':hover')) closeTopNav();
     }, navCloseDelay);
   }
 
@@ -33,7 +48,22 @@
   });
 
   $topNavbar.on('mouseleave', function () {
+    if (breakpoints.active('<=medium')) return;
     closeTopNavSoon();
+  });
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', function () {
+      if ($body.hasClass('top-navbar-open')) closeTopNav();
+      else openTopNav();
+    });
+  }
+
+  $(document).on('click.topnav-mobile', function (event) {
+    if (!breakpoints.active('<=medium')) return;
+    var target = event.target;
+    if (target.closest('#mobile-nav-toggle') || target.closest('#top-navbar')) return;
+    if ($body.hasClass('top-navbar-open')) closeTopNav();
   });
 
   var $menu = $('#top-menu'),
@@ -47,6 +77,8 @@
       $this.toggleClass('active');
     });
   });
+
+  syncToggleState();
 
   var currentPath = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
   $menu.find('a[href]').each(function () {

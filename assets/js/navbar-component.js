@@ -27,6 +27,18 @@
     document.body.appendChild(top);
   }
 
+  if (!document.getElementById('mobile-nav-toggle')) {
+    var mobileToggle = document.createElement('button');
+    mobileToggle.type = 'button';
+    mobileToggle.id = 'mobile-nav-toggle';
+    mobileToggle.className = 'mobile-nav-toggle';
+    mobileToggle.setAttribute('aria-expanded', 'false');
+    mobileToggle.setAttribute('aria-controls', 'top-navbar');
+    mobileToggle.setAttribute('aria-label', 'Open menu');
+    mobileToggle.innerHTML = '&#9776;';
+    document.body.appendChild(mobileToggle);
+  }
+
   if (!document.getElementById('latest-lab-panel')) {
     var panel = document.createElement('aside');
     panel.id = 'latest-lab-panel';
