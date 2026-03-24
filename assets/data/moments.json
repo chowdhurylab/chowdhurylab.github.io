@@ -1,0 +1,82 @@
+{
+  "introText": "Featuring images and videos of lab members participating in activities beyond the lab, such as delivering impactful talks, celebrating successful defenses, published papers, and other joyful milestones. Together we cherish both our scientific achievements and the moments of happiness that come from shared successes and teamwork.",
+  "carousel": [
+    {
+      "image": "images/carouselThumbnail/fall24.png",
+      "alt": "chowdhury lab event image 7"
+    },
+    {
+      "image": "images/carouselThumbnail/dublin.png",
+      "alt": "chowdhury lab event image 6"
+    },
+    {
+      "image": "images/carouselThumbnail/bibek.jpeg",
+      "alt": "Thesis_Defense"
+    },
+    {
+      "image": "images/carouselThumbnail/perfect1.jpeg",
+      "alt": "chowdhury lab event image 1"
+    },
+    {
+      "image": "images/carouselThumbnail/perfect2.jpeg",
+      "alt": "chowdhury lab event image 2"
+    },
+    {
+      "image": "images/carouselThumbnail/perfect3.jpeg",
+      "alt": "chowdhury lab event image 3"
+    },
+    {
+      "image": "images/carouselThumbnail/Priyanshu_lunch.jpg",
+      "alt": "chowdhury lab event image 4"
+    }
+  ],
+  "postGroups": [
+    {
+      "items": [
+        {
+          "type": "image",
+          "src": "images/ScholarsDay2.jpg",
+          "alt": "Scholar's Day 2",
+          "heading": "Scholar's Day 2 BME (2023)",
+          "bullets": [
+            "Proteins are really like origami, one wrong fold and they don't work"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "images/ScholarsDay1.jpg",
+          "alt": "Scholar's Day 1",
+          "heading": "Scholar's Day 1 BME (2023)",
+          "bullets": [
+            "Prof. Chowdhury addressing incoming BME freshmen students about research in Chowdhury Lab and Nanovaccine Institute"
+          ]
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "type": "video",
+          "src": "https://www.youtube.com/embed/uobf7rA4iNE",
+          "title": "CASP14 + NeurIPS Dec 2020",
+          "heading": "CASP14 & NeurIPS Talk: AI-guided protein structure prediction (2020)",
+          "bullets": [
+            "Predicting protein structures from amino acid sequences",
+            "Language models in biological sequences"
+          ]
+        },
+        {
+          "type": "video",
+          "src": "https://www.youtube.com/embed/4MbZtG7qeIs",
+          "title": "Chowdhury Thesis Defense",
+          "heading": "Chowdhury, PhD defense (Penn State) (2019)",
+          "bullets": [
+            "Integer optimization to design proteins",
+            "Design of porins, enzymes, and antibodies",
+            "Synthetic channels mimicking biological ones"
+          ]
+        }
+      ]
+    }
+  ]
+}
