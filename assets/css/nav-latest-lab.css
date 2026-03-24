@@ -1,37 +1,39 @@
 /* Global right floating Latest in Lab mini-panel */
 .latest-lab-panel {
   position: fixed;
-  left: 0;
+  right: 0;
   top: 0;
   bottom: 0;
   z-index: 10030;
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: stretch;
   max-width: min(420px, 86vw);
 }
 
 .latest-lab-toggle {
-  writing-mode: vertical-rl;
+  writing-mode: vertical-lr;
   text-orientation: mixed;
   transform: none;
   border: 0;
   background: #ff8300;
   color: #fff;
-  padding: 1rem 0.7rem;
+  padding: 1rem 0.55rem;
   font: inherit;
   font-size: 0.9rem;
   letter-spacing: 0.06em;
-  line-height: 1;
+  line-height: 1.1;
   cursor: pointer;
-  border-radius: 0 12px 12px 0;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  border-radius: 12px 0 0 12px;
+  box-shadow: -6px 6px 18px rgba(0, 0, 0, 0.2);
   min-width: 2.8rem;
   min-height: 12rem;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .latest-lab-panel-body {
@@ -39,8 +41,8 @@
   height: 100vh;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-left: 0;
-  box-shadow: 8px 12px 30px rgba(0, 0, 0, 0.2);
+  border-right: 0;
+  box-shadow: -8px 12px 30px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -154,7 +156,7 @@
   .latest-lab-toggle {
     writing-mode: horizontal-tb;
     transform: none;
-    border-radius: 0 10px 10px 0;
+    border-radius: 10px 0 0 10px;
     padding: 0.6rem 0.7rem;
   }
 

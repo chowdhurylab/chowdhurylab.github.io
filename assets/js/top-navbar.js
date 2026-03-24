@@ -7,8 +7,8 @@
 
   if (!$topNavbar.length) return;
 
-  var edgeThreshold = 8,
-    navCloseDelay = 250,
+  var edgeThreshold = 4,
+    navCloseDelay = 180,
     navTimer = null;
 
   function openTopNav() {
@@ -24,7 +24,7 @@
 
   $(document).on('mousemove.topnav-edge', function (event) {
     if (breakpoints.active('<=medium')) return;
-    if (event.clientY <= edgeThreshold) openTopNav();
+    if (event.clientY <= edgeThreshold && event.clientX > 72) openTopNav();
     else if ($body.hasClass('top-navbar-open') && !$topNavbar.is(':hover')) closeTopNavSoon();
   });
 

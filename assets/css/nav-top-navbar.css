@@ -6,7 +6,7 @@
   width: 100%;
   z-index: 10010;
   transform: translateY(-115%);
-  transition: transform 0.32s ease;
+  transition: transform 0.24s ease;
   pointer-events: none;
 }
 
@@ -16,9 +16,10 @@ body.top-navbar-open #top-navbar {
 }
 
 #top-navbar #top-menu {
-  background: #dcdcdc;
-  box-shadow: 0 0.75rem 2.5rem rgba(0,0,0,0.22);
+  background: rgba(220, 220, 220, 0.96);
+  box-shadow: 0 0.75rem 2.5rem rgba(0,0,0,0.18);
   padding: 0.9rem 1.2rem 1.15rem 1.2rem;
+  backdrop-filter: blur(8px);
 }
 
 #top-navbar #top-menu > ul {
