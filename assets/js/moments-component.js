@@ -81,7 +81,7 @@
       .join("");
 
     return (
-      '<div class="carousel" style="margin-bottom: 20px;">' +
+      '<div class="carousel moments-carousel" style="margin-bottom: 20px;">' +
       '  <button type="button" class="carousel-button prev" aria-label="Previous slide">' +
       '    <a class="icon solid fa-chevron-circle-left" style="color:#007cff;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"></a>' +
       "  </button>" +
@@ -94,63 +94,114 @@
     );
   }
 
-  function buildPostCard(item) {
-    var media = "";
+  function buildBulletList(item) {
+    var bullets = item.bullets || [];
+
+    if (!bullets.length) {
+      return '<p class="moment-card-summary">No details available yet.</p>';
+    }
+
+    return (
+      '<ul class="moment-card-bullets">' +
+      bullets
+        .map(function (bullet) {
+          return '<li>' + escapeHtml(bullet) + '</li>';
+        })
+        .join("") +
+      "</ul>"
+    );
+  }
+
+  function buildMedia(item, isFeature) {
+    var mediaClass = isFeature ? "moment-card-media feature-media" : "moment-card-media";
 
     if (item.type === "video") {
-      media =
-        '<iframe width="320" height="200" src="' +
+      return (
+        '<div class="' + mediaClass + '">' +
+        '  <iframe src="' +
         escapeHtml(item.src) +
         '" title="' +
         escapeHtml(item.title || "video") +
-        '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-    } else {
-      media =
-        '<img src="' +
-        escapeHtml(item.src) +
-        '" width="320" height="200" alt="' +
-        escapeHtml(item.alt || "moment image") +
-        '">';
+        '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>' +
+        "</div>"
+      );
     }
 
-    var bullets = (item.bullets || [])
-      .map(function (bullet) {
-        return "- " + escapeHtml(bullet);
-      })
-      .join("<br/>");
+    return (
+      '<div class="' + mediaClass + '">' +
+      '  <img src="' +
+      escapeHtml(item.src) +
+      '" alt="' +
+      escapeHtml(item.alt || "moment image") +
+      '">' +
+      "</div>"
+    );
+  }
+
+  function buildMomentCard(item, options) {
+    var opts = options || {};
+    var isFeature = !!opts.feature;
+    var cardClass = isFeature ? "moment-card feature-card" : "moment-card";
+    var yearBadge = item.year ? '<span class="moment-card-year">' + escapeHtml(item.year) + '</span>' : "";
+    var tag = item.tag ? '<span class="moment-card-tag">' + escapeHtml(item.tag) + '</span>' : "";
+    var eyebrow = yearBadge || tag ? '<div class="moment-card-meta">' + yearBadge + tag + '</div>' : "";
+    var titleTag = isFeature ? "h2" : "h3";
+    var subtitle = item.summary ? '<p class="moment-card-summary">' + escapeHtml(item.summary) + '</p>' : "";
 
     return (
-      "<article>" +
-      media +
-      "<figcaption>" +
-      '  <div style="width: 320">' +
-      '    <h5 style="color:#5680e9">▲ ' +
+      '<article class="' + cardClass + '">' +
+      buildMedia(item, isFeature) +
+      '<div class="moment-card-copy">' +
+      eyebrow +
+      '<' +
+      titleTag +
+      ' class="moment-card-title">' +
       escapeHtml(item.heading || "") +
-      "</h5>" +
-      '    <h5 style="color:#000000">' +
-      '      <p style="width: 320">' +
-      bullets +
-      "</p>" +
-      "    </h5>" +
-      "  </div>" +
-      "</figcaption>" +
+      '</' +
+      titleTag +
+      '>' +
+      subtitle +
+      buildBulletList(item) +
+      "</div>" +
       "</article>"
     );
   }
 
+  function flattenPostItems(groups) {
+    return (groups || []).reduce(function (all, group) {
+      return all.concat(group.items || []);
+    }, []);
+  }
+
   function renderPosts(groups, mount) {
     if (!mount) return;
-    if (!groups || !groups.length) {
+
+    var items = flattenPostItems(groups);
+    if (!items.length) {
       mount.innerHTML = '<p class="moments-empty">No moments available yet.</p>';
       return;
     }
 
-    mount.innerHTML = groups
-      .map(function (group) {
-        var cards = (group.items || []).map(buildPostCard).join("");
-        return '<div class="posts">' + cards + "</div>";
-      })
-      .join("");
+    var feature = items[0];
+    var supporting = items.slice(1);
+
+    var supportingMarkup = supporting.length
+      ? '<div class="moments-supporting-grid">' +
+        supporting
+          .map(function (item) {
+            return buildMomentCard(item, { feature: false });
+          })
+          .join("") +
+        "</div>"
+      : "";
+
+    mount.innerHTML =
+      '<div class="moments-editorial-layout">' +
+      '  <div class="moments-feature-wrap">' +
+      buildMomentCard(feature, { feature: true }) +
+      "  </div>" +
+      supportingMarkup +
+      "</div>";
   }
 
   function bindCarouselEvents() {
