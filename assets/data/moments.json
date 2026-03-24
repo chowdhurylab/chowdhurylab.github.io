@@ -37,7 +37,10 @@
           "type": "image",
           "src": "images/ScholarsDay2.jpg",
           "alt": "Scholar's Day 2",
-          "heading": "Scholar's Day 2 BME (2023)",
+          "heading": "Scholar's Day 2 BME",
+          "summary": "Sharing protein science through a simple origami analogy that made the idea instantly accessible.",
+          "year": "2023",
+          "tag": "Outreach",
           "bullets": [
             "Proteins are really like origami, one wrong fold and they don't work"
           ]
@@ -46,20 +49,22 @@
           "type": "image",
           "src": "images/ScholarsDay1.jpg",
           "alt": "Scholar's Day 1",
-          "heading": "Scholar's Day 1 BME (2023)",
+          "heading": "Scholar's Day 1 BME",
+          "summary": "Introducing incoming BME students to research in Chowdhury Lab and the Nanovaccine Institute.",
+          "year": "2023",
+          "tag": "Talk",
           "bullets": [
             "Prof. Chowdhury addressing incoming BME freshmen students about research in Chowdhury Lab and Nanovaccine Institute"
           ]
-        }
-      ]
-    },
-    {
-      "items": [
+        },
         {
           "type": "video",
           "src": "https://www.youtube.com/embed/uobf7rA4iNE",
           "title": "CASP14 + NeurIPS Dec 2020",
-          "heading": "CASP14 & NeurIPS Talk: AI-guided protein structure prediction (2020)",
+          "heading": "CASP14 & NeurIPS Talk",
+          "summary": "A snapshot of AI-guided protein structure prediction during a major moment for the field.",
+          "year": "2020",
+          "tag": "Research Talk",
           "bullets": [
             "Predicting protein structures from amino acid sequences",
             "Language models in biological sequences"
@@ -69,7 +74,10 @@
           "type": "video",
           "src": "https://www.youtube.com/embed/4MbZtG7qeIs",
           "title": "Chowdhury Thesis Defense",
-          "heading": "Chowdhury, PhD defense (Penn State) (2019)",
+          "heading": "Chowdhury PhD Defense",
+          "summary": "A milestone presentation spanning protein design, optimization, and synthetic channels.",
+          "year": "2019",
+          "tag": "Milestone",
           "bullets": [
             "Integer optimization to design proteins",
             "Design of porins, enzymes, and antibodies",
