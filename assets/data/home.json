@@ -2,7 +2,7 @@
   "hero": {
     "title": "Chowdhury Lab",
     "subtitle": "Designing the new",
-    "description": "We design novel proteins using structure-aware AI/optimization models. Our designed proteins find application in energy, environment, therapeutics, and critical ionic separations.",
+    "description": "We design novel selective metal-binding proteins/ peptides/ other ligands using structural biology and AI/optimization models. We are invested in projects on: critical mineral recovery, metalloenzyme engineering, and understanding viral infections (animals, humans, plants).",
     "affiliationsText": "We are located within the",
     "affiliations": [
       {
@@ -16,6 +16,14 @@
       {
         "label": "Iowa State",
         "href": "https://www.iastate.edu/"
+      },
+      {
+        "label": "Ames National Laboratory",
+        "href": "https://www.ameslab.gov/"
+      },
+      {
+        "label": "Critical Mineral Innovation Hub",
+        "href": "https://criticalmineralsinstitute.com/"
       }
     ],
     "affiliationsSuffix": ".",
