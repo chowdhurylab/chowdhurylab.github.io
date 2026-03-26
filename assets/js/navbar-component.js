@@ -54,7 +54,6 @@
           <button type="button" class="latest-lab-filter is-active" data-filter="all">All</button>
           <button type="button" class="latest-lab-filter" data-filter="achievements">Achievements</button>
           <button type="button" class="latest-lab-filter" data-filter="members">New Members</button>
-          <button type="button" class="latest-lab-filter" data-filter="publications">Publications</button>
         </div>
         <div id="latest-lab-list" class="latest-lab-list">Loading updates…</div>
       </div>
