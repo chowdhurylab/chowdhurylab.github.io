@@ -35,7 +35,7 @@
     mobileToggle.setAttribute('aria-expanded', 'false');
     mobileToggle.setAttribute('aria-controls', 'top-navbar');
     mobileToggle.setAttribute('aria-label', 'Open menu');
-    mobileToggle.innerHTML = '&#9776;';
+    mobileToggle.innerHTML = '<span class="mobile-nav-toggle-lines" aria-hidden="true"><span></span><span></span></span>';
     document.body.appendChild(mobileToggle);
   }
 

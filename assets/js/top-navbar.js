@@ -1,5 +1,5 @@
 /*
-  Top hover navbar behavior isolated from main.js
+  Top navbar behavior: always visible on desktop, collapses to hamburger on smaller screens.
 */
 (function ($) {
   var $body = $('body'),
@@ -7,11 +7,12 @@
 
   if (!$topNavbar.length) return;
 
-  var edgeThreshold = 4,
-    navCloseDelay = 180,
-    navTimer = null;
-
   var mobileToggle = document.getElementById('mobile-nav-toggle');
+  var mobileQuery = window.matchMedia('(max-width: 900px)');
+
+  function isMobileNav() {
+    return mobileQuery.matches;
+  }
 
   function syncToggleState() {
     if (!mobileToggle) return;
@@ -21,6 +22,7 @@
   }
 
   function openTopNav() {
+    if (!isMobileNav()) return;
     $body.addClass('top-navbar-open');
     syncToggleState();
   }
@@ -30,41 +32,33 @@
     syncToggleState();
   }
 
-  function closeTopNavSoon() {
-    clearTimeout(navTimer);
-    navTimer = setTimeout(function () {
-      if (!$topNavbar.is(':hover')) closeTopNav();
-    }, navCloseDelay);
+  function syncViewportMode() {
+    if (!isMobileNav()) {
+      $body.removeClass('top-navbar-open');
+    }
+    syncToggleState();
   }
-
-  $(document).on('mousemove.topnav-edge', function (event) {
-    if (breakpoints.active('<=medium')) return;
-    if (event.clientY <= edgeThreshold && event.clientX > 72) openTopNav();
-    else if ($body.hasClass('top-navbar-open') && !$topNavbar.is(':hover')) closeTopNavSoon();
-  });
-
-  $topNavbar.on('mouseenter', function () {
-    clearTimeout(navTimer);
-  });
-
-  $topNavbar.on('mouseleave', function () {
-    if (breakpoints.active('<=medium')) return;
-    closeTopNavSoon();
-  });
 
   if (mobileToggle) {
     mobileToggle.addEventListener('click', function () {
+      if (!isMobileNav()) return;
       if ($body.hasClass('top-navbar-open')) closeTopNav();
       else openTopNav();
     });
   }
 
   $(document).on('click.topnav-mobile', function (event) {
-    if (!breakpoints.active('<=medium')) return;
+    if (!isMobileNav()) return;
     var target = event.target;
     if (target.closest('#mobile-nav-toggle') || target.closest('#top-navbar')) return;
     if ($body.hasClass('top-navbar-open')) closeTopNav();
   });
+
+  if (typeof mobileQuery.addEventListener === 'function') {
+    mobileQuery.addEventListener('change', syncViewportMode);
+  } else if (typeof mobileQuery.addListener === 'function') {
+    mobileQuery.addListener(syncViewportMode);
+  }
 
   var $menu = $('#top-menu'),
     $menuOpeners = $menu.children('ul').find('.opener');
@@ -78,7 +72,7 @@
     });
   });
 
-  syncToggleState();
+  syncViewportMode();
 
   var currentPath = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
   $menu.find('a[href]').each(function () {

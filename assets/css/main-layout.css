@@ -24,7 +24,7 @@
   width: 50%; /* this fix download issue where the table causes side menu to hide, previously 100% , changed to 50% on 9/12/2024 */
 }
 #main > .inner {
-  padding: 0 6em 0.1em 6em;
+  padding: 2.75rem 6em 0.1em 6em;
   margin: 0 auto;
   /* max-width: 110em;  *//* Update 9/12/2024, this change to 100% */
   max-width: 100%;
@@ -38,7 +38,7 @@
 }
 @media screen and (max-width: 1680px) {
   #main > .inner {
-    padding: 0 5em 0.1em 5em;
+    padding: 2.75rem 5em 0.1em 5em;
   }
   #main > .inner > section {
     padding: 5em 0 3em 0;
@@ -46,7 +46,7 @@
 }
 @media screen and (max-width: 1280px) {
   #main > .inner {
-    padding: 0 4em 0.1em 4em;
+    padding: 2.5rem 4em 0.1em 4em;
   }
   #main > .inner > section {
     padding: 4em 0 2em 0;
@@ -54,7 +54,7 @@
 }
 @media screen and (max-width: 736px) {
   #main > .inner {
-    padding: 0 2em 0.1em 2em;
+    padding: 4.75rem 2em 0.1em 2em;
   }
   #main > .inner > section {
     padding: 3em 0 1em 0;
