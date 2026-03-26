@@ -16,8 +16,8 @@
   text-orientation: mixed;
   transform: none;
   border: 0;
-  background: #ff8300;
-  color: #fff;
+  background: #ffffff;
+  color: #111111;
   padding: 1rem 0.55rem;
   font: inherit;
   font-size: 0.9rem;
@@ -26,6 +26,8 @@
   cursor: pointer;
   border-radius: 12px 0 0 12px;
   box-shadow: -6px 6px 18px rgba(0, 0, 0, 0.2);
+  border: 1px solid #111111;
+  border-right: 0;
   min-width: 2.8rem;
   min-height: 12rem;
   display: flex;
