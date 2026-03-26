@@ -1,14 +1,36 @@
 (function () {
   function buildAffiliations(hero) {
-    var links = (hero.affiliations || []).map(function (item) {
+    var affiliations = hero.affiliations || [];
+    if (!affiliations.length) return '';
+
+    var findLink = function (label) {
+      var item = affiliations.find(function (entry) { return entry.label === label; });
+      if (!item) return '';
+      return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer"><b>' + item.label + '</b></a>';
+    };
+
+    var nanovaccine = findLink('Nanovaccine Institute');
+    var cbe = findLink('Chemical & Biological Engineering');
+    var iastate = findLink('Iowa State');
+    var ames = findLink('Ames National Laboratory');
+    var cmi = findLink('Critical Mineral Innovation Hub');
+
+    if (nanovaccine && cbe && iastate && ames && cmi) {
+      return nanovaccine +
+        ' and affiliated to the ' + cbe +
+        ' department at ' + iastate +
+        ', and ' + ames + ' (' + cmi + ')';
+    }
+
+    var links = affiliations.map(function (item) {
       return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer"><b>' + item.label + '</b></a>';
     });
 
-    if (!links.length) return '';
     if (links.length === 1) return links[0];
     if (links.length === 2) return links[0] + ' and affiliated to the ' + links[1];
+    if (links.length === 3) return links[0] + ' and affiliated to the ' + links[1] + ' department at ' + links[2];
 
-    return links[0] + ' and affiliated to the ' + links[1] + ' department at ' + links[2];
+    return links.join(', ');
   }
 
   function renderHero(data) {
