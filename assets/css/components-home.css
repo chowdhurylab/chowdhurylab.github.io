@@ -6,13 +6,51 @@
 
 .home-hero-subtitle,
 .home-hero-description,
-.home-hero-affiliations {
+.home-hero-affiliations,
+.home-hero-external {
   color: #000;
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
 .home-hero-affiliations a b {
   color: #5680e9;
+}
+
+.home-hero-external {
+  margin: 1rem 0 0.9rem;
+}
+
+.home-hero-external-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.home-hero-external-logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.home-external-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0;
+}
+
+.home-external-logo-link:hover,
+.home-external-logo-link:focus,
+.home-external-logo-link:visited {
+  border-bottom: 0;
+}
+
+.home-external-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .home-section-title,
