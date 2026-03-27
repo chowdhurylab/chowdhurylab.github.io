@@ -1,0 +1,42 @@
+.back-to-top-button {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #111111;
+  box-shadow: 0 0.5rem 1.4rem rgba(0, 0, 0, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 10020;
+}
+
+.back-to-top-button.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top-button:hover,
+.back-to-top-button:focus {
+  background: #ffffff;
+}
+
+.back-to-top-button .icon {
+  font-size: 1rem;
+}
+
+@media screen and (max-width: 900px) {
+  .back-to-top-button {
+    display: none !important;
+  }
+}
