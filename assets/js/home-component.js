@@ -56,9 +56,8 @@
     }).join('');
 
     mount.innerHTML = '' +
-      '<header>' +
-      '  <h1 class="home-hero-title">' + (hero.title || '') + '</h1>' +
-      '  <p class="home-hero-subtitle">' + (hero.subtitle || '') + '</p>' +
+      '<header class="home-hero-branding">' +
+      '  <img class="home-hero-wordmark" src="images/chowdhury-lab-wordmark.png" alt="Chowdhury Lab" />' +
       '</header>' +
       '<p class="home-hero-description">' + (hero.description || '') + '</p>' +
       '<p class="home-hero-affiliations">' + affiliationPrefix + affiliationBody + affiliationSuffix + '</p>' +
