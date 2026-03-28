@@ -83,10 +83,10 @@
     return (
       '<div class="carousel moments-carousel" style="margin-bottom: 20px;">' +
       '  <button type="button" class="carousel-button prev" aria-label="Previous slide">' +
-      '    <a class="icon solid fa-chevron-circle-left" style="color:#007cff;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"></a>' +
+      '    <a class="icon solid fa-chevron-circle-left" style="color:#ff8300;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"></a>' +
       "  </button>" +
       '  <button type="button" class="carousel-button next" aria-label="Next slide">' +
-      '    <a class="icon solid fa-chevron-circle-right" style="color:#007cff;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"></a>' +
+      '    <a class="icon solid fa-chevron-circle-right" style="color:#ff8300;font-family: Helvetica Neue, Helvetica, Arial, sans-serif"></a>' +
       "  </button>" +
       '  <div class="carousel-slides">' + slideHTML + "</div>" +
       '  <div class="carousel-pagination">' + pageHTML + "</div>" +
