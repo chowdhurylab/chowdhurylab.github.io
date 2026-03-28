@@ -70,16 +70,20 @@
   display: flex !important;
   flex-wrap: wrap !important;
   justify-content: center !important;
+  align-items: center !important;
   gap: 0.65rem !important;
   padding: 0.25rem 0.5rem 0 0.5rem !important;
   max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
 }
 
 #top-navbar #top-menu > ul > li {
   border-top: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  display: flex;
+  justify-content: center;
 }
 
 #top-navbar #top-menu > ul > li > a {
@@ -88,6 +92,7 @@
   padding: 0.25rem 0.35rem;
   background: transparent;
   transition: color 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
 }
 
 #top-navbar #top-menu > ul > li > a.active,
