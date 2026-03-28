@@ -8,7 +8,14 @@
       <li><a href="members.html">Members</a></li>
       <li><a href="research.html">Research</a></li>
       <li><a href="publications.html">Publications</a></li>
-      <li><a href="downloads.html">Software</a></li>
+      <li class="top-nav-dropdown">
+        <button type="button" class="top-nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Software</button>
+        <div class="top-nav-dropdown-menu" role="menu" aria-label="Software links">
+          <a href="https://github.com/chowdhurylab" target="_blank" rel="noopener noreferrer" role="menuitem">GitHub</a>
+          <a href="https://huggingface.co/" target="_blank" rel="noopener noreferrer" role="menuitem">HuggingFace</a>
+          <a href="https://agrivax.studio/" target="_blank" rel="noopener noreferrer" role="menuitem">agrivax.studio</a>
+        </div>
+      </li>
       <li><a href="moments.html">Moments</a></li>
       <li><a href="outreach.html">Outreach+</a></li>
       <li><a href="joinus.html">Join Us</a></li>
