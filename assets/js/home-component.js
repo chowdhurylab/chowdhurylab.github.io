@@ -62,7 +62,7 @@
       '<p class="home-hero-description">' + (hero.description || '') + '</p>' +
       '<p class="home-hero-affiliations">' + affiliationPrefix + affiliationBody + affiliationSuffix + '</p>' +
       '<ul class="actions">' +
-      '  <li><a href="' + (cta.href || '#') + '" class="button big">' + (cta.label || 'Learn more') + '</a></li>' +
+      '  <li><a href="' + (cta.href || '#') + '" class="button big" target="_blank" rel="noopener noreferrer">' + (cta.label || 'Learn more') + '</a></li>' +
       '</ul>' +
       '<div class="home-hero-external"><span class="home-hero-external-label">External Funding:</span><div class="home-hero-external-logos">' + externalLogosMarkup + '</div></div>';
 
