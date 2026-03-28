@@ -1,16 +1,66 @@
 {
   "hero": {
-    "title": "Join Us",
-    "subtitle": "Be part of the team",
+    "eyebrow": "Join the Chowdhury Lab",
+    "title": "Build biology with us",
+    "subtitle": "Protein design, AI-driven optimization, and biological discovery in one collaborative lab.",
     "heading": "We are hiring graduate students, postdoc candidates, and undergrads",
     "intro": [
-      "We are building a team of motivated engineers and scientists who are interested in pursuing fundamentally innovative ideas in biology in a multidisciplinary and collaborative research environment. Talented and self-driven individuals at all stages of their academic careers are welcome to get in touch.",
-      "Lab members will be expected to develop strong understanding of biochemistry/biophysics, ML/non-ML-based optimization, and good computing skills. Projects are likely to have student development opportunities with collaborating groups in other universities, national labs, and industry, and conference participation."
+      "We are building a team of motivated engineers and scientists who want to pursue fundamentally innovative ideas in biology in a multidisciplinary and collaborative research environment.",
+      "Lab members develop strong foundations in biochemistry and biophysics, ML and non-ML optimization, and practical computing. Projects often connect with collaborating groups in other universities, national labs, and industry, with room for conference participation and scientific ownership."
+    ],
+    "actions": [
+      {
+        "label": "Email Prof. Chowdhury",
+        "href": "mailto:ratul@iastate.edu",
+        "variant": "primary"
+      },
+      {
+        "label": "See Research",
+        "href": "research.html",
+        "variant": "secondary"
+      }
+    ],
+    "highlights": [
+      "Interdisciplinary mentoring",
+      "AI + biology + protein design",
+      "Collaborations across academia, national labs, and industry"
+    ]
+  },
+  "whyJoin": {
+    "title": "Why join this lab?",
+    "items": [
+      {
+        "title": "Own meaningful problems",
+        "text": "Work on questions with real scientific and translational relevance, from molecular design to environmental and health applications."
+      },
+      {
+        "title": "Learn across disciplines",
+        "text": "Build skills spanning structural biology, biochemistry, modeling, optimization, and scientific programming."
+      },
+      {
+        "title": "Grow through collaboration",
+        "text": "Projects can connect you with collaborators at other universities, national labs, and industry partners."
+      },
+      {
+        "title": "Present and publish",
+        "text": "Strong projects can open opportunities for conference participation, scientific communication, and long-term research growth."
+      }
+    ]
+  },
+  "researchPreview": {
+    "title": "What you could work on",
+    "items": [
+      "Critical mineral recovery",
+      "Metalloenzyme engineering",
+      "Viral infection systems",
+      "Image processing and biological data workflows"
     ]
   },
   "opportunities": [
     {
       "title": "Graduate students",
+      "tag": "PhD / MS",
+      "summary": "Great for students who want depth in biological engineering, computational design, and quantitative research.",
       "body": "If you are already in a graduate program (PhD/MS) at {iastate}, feel free to {email} Prof. Chowdhury directly. If you are planning to apply for a PhD program at Iowa State, we recommend the {cbe} / {microbiology} / {cs} PhD tracks.",
       "links": {
         "iastate": {
@@ -37,6 +87,8 @@
     },
     {
       "title": "Postdoctoral fellows",
+      "tag": "Independent researchers",
+      "summary": "Ideal for candidates ready to drive projects in structural protein biology, biochemistry, or molecular simulations.",
       "body": "Candidates with experience in either structural protein biology and biochemistry, or molecular simulations are encouraged to apply. Please {email} your CV, research interests, references, and career plans after the postdoc.",
       "links": {
         "email": {
@@ -47,6 +99,8 @@
     },
     {
       "title": "Undergraduate students",
+      "tag": "Early research training",
+      "summary": "A strong fit for motivated students interested in coding, ML frameworks, and biological data-driven work.",
       "body": "Motivated individuals familiar with programming with ML frameworks and interest in biological data are highly encouraged to apply. Please {email} us with your short CV, research interests, and coding experience.",
       "links": {
         "email": {
@@ -55,5 +109,15 @@
         }
       }
     }
-  ]
+  ],
+  "apply": {
+    "title": "How to reach out",
+    "steps": [
+      "Send a short email introducing yourself and the role you are interested in.",
+      "Attach your CV and include your research interests or technical background.",
+      "If relevant, mention programming experience, modeling experience, or coursework aligned with the lab’s work.",
+      "For graduate applicants, indicate the Iowa State program or track you are considering."
+    ],
+    "email": "ratul@iastate.edu"
+  }
 }
