@@ -267,7 +267,7 @@
   justify-content: center;
   min-width: 104px;
   padding: 8px 16px;
-  background-color: #007aff;
+  background-color: #ff8300;
   color: #fff;
   text-decoration: none;
   border-radius: 6px;
@@ -281,7 +281,7 @@
 .carousel-card-link:focus,
 .carousel-card-link:visited {
   color: #fff !important;
-  background-color: #007aff;
+  background-color: #ff8300;
   border-bottom: 0;
 }
 
