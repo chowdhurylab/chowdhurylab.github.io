@@ -15,9 +15,11 @@
   writing-mode: vertical-lr;
   text-orientation: mixed;
   transform: none;
+  transition: none !important;
+  animation: none !important;
   border: 0;
-  background: #ffffff;
-  color: #111111;
+  background: #000000;
+  color: #ffffff !important;
   padding: 1rem 0.55rem;
   font: inherit;
   font-size: 0.9rem;
@@ -26,7 +28,7 @@
   cursor: pointer;
   border-radius: 12px 0 0 12px;
   box-shadow: -6px 6px 18px rgba(0, 0, 0, 0.2);
-  border: 1px solid #111111;
+  border: 1px solid #000000;
   border-right: 0;
   min-width: 2.8rem;
   min-height: 12rem;
@@ -38,11 +40,20 @@
   text-transform: uppercase;
 }
 
+.latest-lab-toggle:hover,
+.latest-lab-toggle:focus,
+.latest-lab-toggle:active,
+.latest-lab-toggle:visited {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
 .latest-lab-panel-body {
   width: min(380px, 74vw);
   height: 100vh;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: #000000;
+  border: 1px solid #1f2937;
   border-right: 0;
   box-shadow: -8px 12px 30px rgba(0, 0, 0, 0.2);
   overflow: hidden;
@@ -59,7 +70,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.8rem 0.9rem;
-  border-bottom: 1px solid #eceff1;
+  border-bottom: 1px solid #374151;
 }
 
 .latest-lab-filters {
@@ -67,8 +78,8 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0.65rem 0.9rem;
-  border-bottom: 1px solid #eceff1;
-  background: #fafafa;
+  border-bottom: 1px solid #374151;
+  background: #000000;
 }
 
 .latest-lab-filter {
@@ -83,22 +94,22 @@
 }
 
 .latest-lab-filter.is-active {
-  background: #5680e9;
-  border-color: #5680e9;
+  background: #BE531C;
+  border-color: #BE531C;
   color: #fff;
 }
 
 .latest-lab-panel-head h3 {
   margin: 0;
   font-size: 1rem;
-  color: #4b5563;
+  color: #ffffff;
 }
 
 .latest-lab-close {
   border: 0;
   background: transparent;
   font-size: 1rem;
-  color: #6b7280;
+  color: #ffffff;
   cursor: pointer;
 }
 
@@ -108,7 +119,7 @@
 }
 
 .latest-lab-row {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #374151;
   padding: 0.55rem 0;
 }
 
@@ -128,25 +139,25 @@
 }
 
 .latest-lab-date {
-  color: #5680e9;
+  color: #ffffff;
   font-weight: 700;
   margin-bottom: 0.1rem;
 }
 
 .latest-lab-text {
-  color: #475569;
+  color: #ffffff;
   font-size: 0.92rem;
   line-height: 1.35;
 }
 
 .latest-lab-text a {
-  color: #5680e9;
+  color: #BE531C;
 }
 
 .latest-lab-text a:hover,
 .latest-lab-text a:focus,
 .latest-lab-text a:visited {
-  color: #5680e9;
+  color: #BE531C;
 }
 
 .latest-lab-icon {
