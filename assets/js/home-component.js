@@ -64,7 +64,7 @@
       '<ul class="actions">' +
       '  <li><a href="' + (cta.href || '#') + '" class="button big">' + (cta.label || 'Learn more') + '</a></li>' +
       '</ul>' +
-      '<div class="home-hero-external"><span class="home-hero-external-label">External:</span><div class="home-hero-external-logos">' + externalLogosMarkup + '</div></div>';
+      '<div class="home-hero-external"><span class="home-hero-external-label">External Funding:</span><div class="home-hero-external-logos">' + externalLogosMarkup + '</div></div>';
 
     imageMount.innerHTML = '<img src="' + (image.src || '') + '" alt="' + (image.alt || '') + '" />';
   }
