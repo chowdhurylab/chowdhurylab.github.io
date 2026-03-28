@@ -1,0 +1,59 @@
+{
+  "hero": {
+    "title": "Join Us",
+    "subtitle": "Be part of the team",
+    "heading": "We are hiring graduate students, postdoc candidates, and undergrads",
+    "intro": [
+      "We are building a team of motivated engineers and scientists who are interested in pursuing fundamentally innovative ideas in biology in a multidisciplinary and collaborative research environment. Talented and self-driven individuals at all stages of their academic careers are welcome to get in touch.",
+      "Lab members will be expected to develop strong understanding of biochemistry/biophysics, ML/non-ML-based optimization, and good computing skills. Projects are likely to have student development opportunities with collaborating groups in other universities, national labs, and industry, and conference participation."
+    ]
+  },
+  "opportunities": [
+    {
+      "title": "Graduate students",
+      "body": "If you are already in a graduate program (PhD/MS) at {iastate}, feel free to {email} Prof. Chowdhury directly. If you are planning to apply for a PhD program at Iowa State, we recommend the {cbe} / {microbiology} / {cs} PhD tracks.",
+      "links": {
+        "iastate": {
+          "label": "Iowa State",
+          "href": "https://www.grad-college.iastate.edu/academics/programs/apprograms.php"
+        },
+        "email": {
+          "label": "email",
+          "href": "mailto:ratul@iastate.edu"
+        },
+        "cbe": {
+          "label": "Chemical & Biological Engineering",
+          "href": "https://www.cbe.iastate.edu/prospective-students/graduate-programs/"
+        },
+        "microbiology": {
+          "label": "Microbiology",
+          "href": "https://www.micrograd.iastate.edu/"
+        },
+        "cs": {
+          "label": "Computer Science",
+          "href": "https://www.cs.iastate.edu/graduate-program"
+        }
+      }
+    },
+    {
+      "title": "Postdoctoral fellows",
+      "body": "Candidates with experience in either structural protein biology and biochemistry, or molecular simulations are encouraged to apply. Please {email} your CV, research interests, references, and career plans after the postdoc.",
+      "links": {
+        "email": {
+          "label": "email",
+          "href": "mailto:ratul@iastate.edu"
+        }
+      }
+    },
+    {
+      "title": "Undergraduate students",
+      "body": "Motivated individuals familiar with programming with ML frameworks and interest in biological data are highly encouraged to apply. Please {email} us with your short CV, research interests, and coding experience.",
+      "links": {
+        "email": {
+          "label": "email",
+          "href": "mailto:ratul@iastate.edu"
+        }
+      }
+    }
+  ]
+}

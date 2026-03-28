@@ -1,0 +1,106 @@
+/* Join Us page styles */
+.joinus-shell {
+  position: relative;
+  padding: 0;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.78)), url('../../images/isucampus2.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.joinus-content {
+  padding: 2rem 2rem 2.25rem;
+}
+
+.joinus-page-title,
+.joinus-page-subtitle,
+.joinus-section-title,
+.joinus-card,
+.joinus-intro,
+.joinus-empty {
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.joinus-page-title,
+.joinus-page-subtitle,
+.joinus-section-title {
+  color: #111111;
+}
+
+.joinus-section-title {
+  margin-bottom: 1rem;
+  line-height: 1.35;
+}
+
+.joinus-intro,
+.joinus-card {
+  color: #111111;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 1rem;
+  padding: 1.1rem 1.2rem;
+  margin: 0;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.joinus-intro {
+  margin-bottom: 1.4rem;
+}
+
+.joinus-intro-paragraph {
+  margin: 0 0 1rem;
+  line-height: 1.7;
+}
+
+.joinus-intro-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.joinus-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.joinus-card-title {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #111111;
+  font-weight: 700;
+}
+
+.joinus-card p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.joinus-card a,
+.joinus-card a:hover,
+.joinus-card a:focus,
+.joinus-card a:visited {
+  color: #BE531C !important;
+  border-bottom: 0;
+}
+
+.joinus-card strong,
+.joinus-card b,
+.joinus-intro strong,
+.joinus-intro b {
+  color: #ff8300;
+}
+
+.joinus-empty {
+  color: #6b7280;
+}
+
+@media screen and (max-width: 736px) {
+  .joinus-content {
+    padding: 1.2rem 1rem 1.4rem;
+  }
+
+  .joinus-intro,
+  .joinus-card {
+    padding: 1rem;
+  }
+}
