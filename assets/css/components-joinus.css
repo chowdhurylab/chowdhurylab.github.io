@@ -2,55 +2,96 @@
 .joinus-shell {
   position: relative;
   padding: 0;
-  border-radius: 1.25rem;
+  border-radius: 1.4rem;
   overflow: hidden;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.78)), url('../../images/isucampus2.jpg');
+  background-image: linear-gradient(rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.82)), url('../../images/isucampus2.jpg');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.1);
 }
 
 .joinus-content {
-  padding: 2rem 2rem 2.25rem;
+  padding: 2.2rem 2.2rem 2.4rem;
 }
 
 .joinus-page-title,
 .joinus-page-subtitle,
 .joinus-section-title,
+.joinus-block-title,
 .joinus-card,
 .joinus-intro,
-.joinus-empty {
+.joinus-empty,
+.joinus-value-card,
+.joinus-apply-card {
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
-.joinus-page-title,
-.joinus-page-subtitle,
-.joinus-section-title {
+.joinus-hero-panel,
+.joinus-section-block,
+.joinus-value-card,
+.joinus-card,
+.joinus-apply-card {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 1.15rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.joinus-hero-panel,
+.joinus-section-block {
+  padding: 1.35rem 1.4rem;
+}
+
+.joinus-hero-panel {
+  max-width: 54rem;
+  margin-bottom: 1.2rem;
+}
+
+.joinus-eyebrow {
+  margin: 0 0 0.55rem;
+  color: #ff8300;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.joinus-page-title {
+  color: #111111;
+  margin-bottom: 0.25rem;
+}
+
+.joinus-page-subtitle {
+  color: #374151;
+  font-size: 1.08rem;
+}
+
+.joinus-section-title,
+.joinus-block-title {
   color: #111111;
 }
 
 .joinus-section-title {
   margin-bottom: 1rem;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
-.joinus-intro,
-.joinus-card {
-  color: #111111;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(17, 17, 17, 0.08);
-  border-radius: 1rem;
-  padding: 1.1rem 1.2rem;
-  margin: 0;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+.joinus-block-title {
+  margin-bottom: 1rem;
+  font-size: 1.35rem;
 }
 
 .joinus-intro {
-  margin-bottom: 1.4rem;
+  color: #111111;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 1rem;
+  padding: 1rem 1.05rem;
+  margin-bottom: 1rem;
 }
 
 .joinus-intro-paragraph {
-  margin: 0 0 1rem;
+  margin: 0 0 0.95rem;
   line-height: 1.7;
 }
 
@@ -58,29 +99,189 @@
   margin-bottom: 0;
 }
 
+.joinus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.joinus-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.7rem 1.05rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border-bottom: 0;
+}
+
+.joinus-action-primary,
+.joinus-action-primary:hover,
+.joinus-action-primary:focus,
+.joinus-action-primary:visited {
+  background: #ff8300;
+  color: #ffffff !important;
+}
+
+.joinus-action-secondary,
+.joinus-action-secondary:hover,
+.joinus-action-secondary:focus,
+.joinus-action-secondary:visited {
+  background: #ffffff;
+  color: #BE531C !important;
+  border: 1px solid rgba(190, 83, 28, 0.22);
+}
+
+.joinus-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.joinus-highlights li {
+  background: rgba(255, 131, 0, 0.1);
+  color: #6b3d10;
+  border-radius: 0.9rem;
+  padding: 0.85rem 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.joinus-section-block {
+  margin-bottom: 1.2rem;
+}
+
+.joinus-section-block-accent {
+  background: linear-gradient(135deg, rgba(255, 131, 0, 0.1), rgba(255, 255, 255, 0.88));
+}
+
+.joinus-value-grid,
 .joinus-grid {
   display: grid;
   gap: 1rem;
 }
 
-.joinus-card-title {
-  display: block;
-  margin-bottom: 0.45rem;
-  color: #111111;
-  font-weight: 700;
+.joinus-value-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.joinus-card p {
+.joinus-value-card,
+.joinus-card {
+  padding: 1.15rem 1.15rem 1.2rem;
+}
+
+.joinus-value-card h3,
+.joinus-card-title {
+  color: #111111;
+  margin-bottom: 0.5rem;
+}
+
+.joinus-value-card p,
+.joinus-card p,
+.joinus-card-summary {
   margin: 0;
   line-height: 1.7;
+  color: #374151;
 }
 
+.joinus-card-top {
+  margin-bottom: 0.65rem;
+}
+
+.joinus-card-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  padding: 0.26rem 0.75rem;
+  background: rgba(255, 131, 0, 0.12);
+  color: #c45b00;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.joinus-card-summary {
+  margin-bottom: 0.8rem;
+}
+
+.joinus-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.joinus-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: #ffffff;
+  border: 1px solid rgba(255, 131, 0, 0.2);
+  color: #6b3d10;
+  font-weight: 600;
+}
+
+.joinus-apply-block {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.joinus-apply-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #374151;
+}
+
+.joinus-apply-steps li {
+  margin-bottom: 0.7rem;
+  line-height: 1.65;
+}
+
+.joinus-apply-card {
+  padding: 1.15rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 240, 224, 0.96));
+}
+
+.joinus-apply-label {
+  margin: 0 0 0.4rem;
+  color: #6b7280;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.joinus-apply-email,
+.joinus-apply-email:hover,
+.joinus-apply-email:focus,
+.joinus-apply-email:visited,
 .joinus-card a,
 .joinus-card a:hover,
 .joinus-card a:focus,
 .joinus-card a:visited {
   color: #BE531C !important;
   border-bottom: 0;
+}
+
+.joinus-apply-email {
+  display: inline-block;
+  margin-bottom: 0.65rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.joinus-apply-note {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
 }
 
 .joinus-card strong,
@@ -94,13 +295,29 @@
   color: #6b7280;
 }
 
+@media screen and (max-width: 980px) {
+  .joinus-highlights,
+  .joinus-value-grid,
+  .joinus-apply-block {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media screen and (max-width: 736px) {
   .joinus-content {
     padding: 1.2rem 1rem 1.4rem;
   }
 
-  .joinus-intro,
-  .joinus-card {
+  .joinus-hero-panel,
+  .joinus-section-block,
+  .joinus-value-card,
+  .joinus-card,
+  .joinus-apply-card,
+  .joinus-intro {
     padding: 1rem;
+  }
+
+  .joinus-action {
+    width: 100%;
   }
 }
