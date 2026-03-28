@@ -180,8 +180,8 @@
 
 .db-button:hover,
 .db-button:focus {
-  background: #eef4ff;
-  border-color: #9ab7ff;
+  background: #fff0e0;
+  border-color: #ff8300;
 }
 
 .db-button.is-disabled {
