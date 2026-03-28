@@ -11,7 +11,7 @@
       <li><a href="downloads.html">Software</a></li>
       <li><a href="moments.html">Moments</a></li>
       <li><a href="outreach.html">Outreach+</a></li>
-      <!-- <li><a href="joinus.html">Join Us</a></li> -->
+      <li><a href="joinus.html">Join Us</a></li>
     </ul>
   `;
 

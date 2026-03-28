@@ -71,7 +71,7 @@
   flex-wrap: wrap !important;
   justify-content: center !important;
   gap: 0.65rem !important;
-  padding: 0.25rem 0.5rem 0 4.5rem !important;
+  padding: 0.25rem 0.5rem 0 0.5rem !important;
   max-width: 1200px;
   margin: 0 auto;
 }
