@@ -252,6 +252,7 @@
       '  <div class="author-stat-card"><span class="author-stat-label">First-author</span><div class="author-stat-value">' + papers.firstAuthor.length + '</div></div>' +
       '  <div class="author-stat-card"><span class="author-stat-label">Co-author</span><div class="author-stat-value">' + papers.coAuthor.length + '</div></div>' +
       '</div>' +
+      '<p class="author-note">These stats use full author metadata behind the scenes, while the Publications page keeps its abbreviated citation style.</p>' +
       '<div class="author-charts-grid">' +
       '  <section class="author-panel">' +
       '    <h2 class="author-panel-title">Publication role summary</h2>' +
@@ -336,7 +337,7 @@
 
       var memberLookup = buildMemberLookup(members);
       var authorLookup = buildAuthorRegistryLookup(authorRegistry);
-      var authorEntry = authorLookup[authorId] || authorLookup['pub:' + normalizeCitationName(authorId)] || {
+      var authorEntry = authorLookup[authorId] || authorLookup['pub:' + normalizeCitationName(authorId)] || authorLookup['full:' + normalizeCitationName(authorId)] || {
         id: authorId,
         displayName: authorId.replace(/-/g, ' '),
         publicationNames: [authorId],
