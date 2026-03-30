@@ -1,10 +1,14 @@
 .moments-intro {
-  max-width: 58rem;
+  max-width: 100%;
+  width: 100%;
   margin-bottom: 2.5rem;
 }
 
 .moments-intro-paragraph {
+  display: block;
+  width: 100%;
   margin-bottom: 0;
+  text-align: justify;
 }
 
 .moments-carousel-shell {
