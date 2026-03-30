@@ -48,6 +48,9 @@
       (author.publicationNames || []).forEach(function (name) {
         map['pub:' + normalizeCitationName(name)] = author;
       });
+      (author.fullNameVariants || []).forEach(function (name) {
+        map['full:' + normalizeCitationName(name)] = author;
+      });
     });
     return map;
   }
@@ -216,11 +219,14 @@
     if (!list.length) return '<p class="author-empty">No papers in this category yet.</p>';
 
     return '<div class="author-paper-group">' + list.map(function (pub) {
+      var authorLine = (pub.fullAuthors && pub.fullAuthors.length) ? pub.fullAuthors.join(', ') : pub.authors;
+      var labLine = (pub.labMemberAuthors && pub.labMemberAuthors.length) ? '<div class="author-paper-meta"><b>Lab members:</b> ' + escapeHtml(pub.labMemberAuthors.join(', ')) + '</div>' : '';
       return '' +
         '<article class="author-paper-card">' +
         '  <div class="author-paper-meta">' + escapeHtml(pub.year) + ' · ' + escapeHtml(pub.journal) + '</div>' +
         '  <h3 class="author-paper-title">' + escapeHtml(pub.title) + '</h3>' +
-        '  <div class="author-paper-meta">' + escapeHtml(pub.authors) + '</div>' +
+        '  <div class="author-paper-meta">' + escapeHtml(authorLine) + '</div>' +
+        labLine +
         '  <a class="author-paper-link" href="' + escapeHtml(pub.link) + '" target="_blank" rel="noopener noreferrer">View publication ↗</a>' +
         '</article>';
     }).join('') + '</div>';
@@ -271,24 +277,35 @@
   function computeAuthorPapers(authorEntry, publications) {
     var firstAuthor = [];
     var coAuthor = [];
-    var names = (authorEntry.publicationNames || []).map(normalizeCitationName);
+    var citationNames = (authorEntry.publicationNames || []).map(normalizeCitationName);
+    var fullNames = (authorEntry.fullNameVariants || []).map(normalizeCitationName);
+    var memberName = normalizeCitationName(authorEntry.memberName || '');
 
     publications.forEach(function (pub) {
       var citation = normalizeCitationName(pub.authors || '');
-      var isFirstAuthor = names.some(function (name) {
+      var fullAuthors = (pub.fullAuthors || []).map(normalizeCitationName);
+      var labMembers = (pub.labMemberAuthors || []).map(normalizeCitationName);
+
+      var isFirstAuthor = (citationNames.length && citationNames.some(function (name) {
         return citation.indexOf(name) === 0;
-      });
+      })) || (fullNames.length && fullAuthors.length && fullNames.indexOf(fullAuthors[0]) !== -1);
 
       if (isFirstAuthor) {
         firstAuthor.push(pub);
         return;
       }
 
-      var appearsAnywhere = names.some(function (name) {
+      var appearsAsFullAuthor = fullNames.some(function (name) {
+        return fullAuthors.indexOf(name) !== -1;
+      });
+      var appearsAsLabMember = memberName && labMembers.indexOf(memberName) !== -1;
+      var appearsInCitation = citationNames.some(function (name) {
         return citation.indexOf(name) !== -1;
       });
 
-      if (appearsAnywhere) coAuthor.push(pub);
+      if (appearsAsFullAuthor || appearsAsLabMember || appearsInCitation) {
+        coAuthor.push(pub);
+      }
     });
 
     return { firstAuthor: firstAuthor, coAuthor: coAuthor };
@@ -330,6 +347,13 @@
       author.slug = authorEntry.id || author.slug;
       author.fullName = author.fullName || authorEntry.displayName;
       author.name = author.name || authorEntry.displayName;
+
+      if ((!authorEntry.fullNameVariants || !authorEntry.fullNameVariants.length) && author.fullName) {
+        authorEntry.fullNameVariants = [author.fullName.replace(/,?\s*PhD/gi, '').trim()];
+      }
+      if (!authorEntry.memberName && author.fullName) {
+        authorEntry.memberName = author.fullName;
+      }
 
       var papers = computeAuthorPapers(authorEntry, publications);
       var expertise = summarizeExpertise(author, expertiseData);
