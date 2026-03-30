@@ -28,13 +28,44 @@
     );
   }
 
+  function slugify(text) {
+    return String(text || '')
+      .toLowerCase()
+      .replace(/phd/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function renderAuthors(authorsText) {
+    var text = String(authorsText || '').trim();
+    if (!text) return '';
+
+    var cleaned = text.replace(/\s+et al\.?$/i, '');
+    var parts = cleaned.split(',').map(function (part) {
+      return part.trim();
+    }).filter(Boolean);
+
+    if (!parts.length) return escapeHtml(text);
+
+    if (parts.length >= 2) {
+      var surname = parts[0];
+      var initials = parts.slice(1).join(', ');
+      var display = surname + ', ' + initials;
+      var html = '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(slugify(display)) + '">' + escapeHtml(display) + '</a>';
+      if (/et al\.?$/i.test(text)) html += ', et al.';
+      return html;
+    }
+
+    return '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(slugify(parts[0])) + '">' + escapeHtml(parts[0]) + '</a>' + (/et al\.?$/i.test(text) ? ', et al.' : '');
+  }
+
   function renderPublication(pub) {
     return (
       '<article class="publication-item">' +
       '  <div class="publication-meta">' +
       '    <span class="publication-journal">' + escapeHtml(pub.journal) + '</span>' +
       '    <span class="publication-meta-sep">—</span>' +
-      '    <span class="publication-authors">' + escapeHtml(pub.authors) + '</span>' +
+      '    <span class="publication-authors">' + renderAuthors(pub.authors) + '</span>' +
       '  </div>' +
       '  <h3 class="publication-title">' + escapeHtml(pub.title) + '</h3>' +
       '  <div class="publication-links-row">' +
