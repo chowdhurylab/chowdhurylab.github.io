@@ -1,0 +1,41 @@
+{
+  "authors": {
+    "ratul-chowdhury": {
+      "expertise": [
+        { "label": "Protein design", "value": 30 },
+        { "label": "Structural bioinformatics", "value": 22 },
+        { "label": "Membrane engineering", "value": 18 },
+        { "label": "AI for proteins", "value": 18 },
+        { "label": "Metabolic modeling", "value": 12 }
+      ],
+      "notes": "Starter curated profile. Replace with contribution-derived categories when author-contribution metadata is available."
+    },
+    "karuna-anna-sajeevan": {
+      "expertise": [
+        { "label": "MD simulations", "value": 36 },
+        { "label": "Enzyme kinetics", "value": 26 },
+        { "label": "Rare-earth selectivity", "value": 16 },
+        { "label": "Biophysical modeling", "value": 12 },
+        { "label": "Protein channels", "value": 10 }
+      ]
+    },
+    "supantha-dey": {
+      "expertise": [
+        { "label": "Vaccine design", "value": 38 },
+        { "label": "Epitope mapping", "value": 24 },
+        { "label": "Biophysical characterization", "value": 16 },
+        { "label": "Structural bioinformatics", "value": 12 },
+        { "label": "Protein modeling", "value": 10 }
+      ]
+    },
+    "mohammed-sakib-noor": {
+      "expertise": [
+        { "label": "Metabolic modeling", "value": 34 },
+        { "label": "Biomolecular simulations", "value": 24 },
+        { "label": "Therapeutic proteins", "value": 18 },
+        { "label": "Systems biology", "value": 14 },
+        { "label": "AI for biology", "value": 10 }
+      ]
+    }
+  }
+}
