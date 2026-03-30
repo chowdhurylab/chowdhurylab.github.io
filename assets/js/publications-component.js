@@ -34,7 +34,7 @@
       });
     });
 
-    return match ? match.id : slugify(citation);
+    return match ? match.id : '';
   }
 
   function renderExtraLinks(pub) {
@@ -70,13 +70,17 @@
       var initials = parts.slice(1).join(', ');
       var display = surname + ', ' + initials;
       var authorId = lookupAuthorId(display);
-      var html = '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(authorId) + '">' + escapeHtml(display) + '</a>';
+      var html = authorId
+        ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(authorId) + '">' + escapeHtml(display) + '</a>'
+        : escapeHtml(display);
       if (/et al\.?$/i.test(text)) html += ', et al.';
       return html;
     }
 
     var singleId = lookupAuthorId(parts[0]);
-    return '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(singleId) + '">' + escapeHtml(parts[0]) + '</a>' + (/et al\.?$/i.test(text) ? ', et al.' : '');
+    return (singleId
+      ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(singleId) + '">' + escapeHtml(parts[0]) + '</a>'
+      : escapeHtml(parts[0])) + (/et al\.?$/i.test(text) ? ', et al.' : '');
   }
 
   function renderPublication(pub) {
