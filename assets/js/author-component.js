@@ -13,7 +13,7 @@
   function slugify(text) {
     return String(text || '')
       .toLowerCase()
-      .replace(/phd/g, '')
+      .replace(/,?\s*ph\.?d\.?/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
@@ -23,85 +23,57 @@
     return params.get(name) || '';
   }
 
-  function normalizeName(text) {
+  function normalizeCitationName(text) {
     return String(text || '')
-      .toLowerCase()
-      .replace(/,?\s*ph\.?d\.?/g, '')
-      .replace(/\bet al\.?/g, '')
-      .replace(/[^a-z\s,.-]/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/\s+et al\.?$/i, '')
       .trim();
   }
 
-  function surnameFromName(name) {
-    var normalized = normalizeName(name);
-    var commaParts = normalized.split(',').map(function (part) {
-      return part.trim();
-    }).filter(Boolean);
-
-    if (commaParts.length > 1) return commaParts[0];
-
-    var parts = normalized.split(' ').filter(Boolean);
-    return parts.length ? parts[parts.length - 1] : normalized;
-  }
-
-  function firstInitialFromName(name) {
-    var normalized = normalizeName(name);
-    var commaParts = normalized.split(',').map(function (part) {
-      return part.trim();
-    }).filter(Boolean);
-
-    if (commaParts.length > 1) {
-      return commaParts.slice(1).join(' ').replace(/[^a-z]/g, '').charAt(0);
-    }
-
-    var parts = normalized.split(' ').filter(Boolean);
-    return parts.length ? parts[0].charAt(0) : '';
-  }
-
-  function extractAuthors(authorsText) {
-    return String(authorsText || '')
-      .replace(/\bet al\.?/gi, '')
-      .split(',')
-      .map(function (name) { return name.trim(); })
-      .filter(Boolean);
-  }
-
-  function authorMatchesPublication(author, publicationAuthor) {
-    var authorSurname = surnameFromName(author.name || author.fullName || '');
-    var authorInitial = firstInitialFromName(author.name || author.fullName || '');
-    var candidate = normalizeName(publicationAuthor);
-    var candidateSurname = surnameFromName(candidate);
-    var candidateInitial = firstInitialFromName(candidate);
-
-    if (!authorSurname || !candidateSurname) return false;
-    if (authorSurname !== candidateSurname) return false;
-    if (!authorInitial || !candidateInitial) return true;
-    return authorInitial === candidateInitial;
-  }
-
-  function buildMemberAliases(member) {
-    var aliases = [];
-    var fullName = String(member.name || '').replace(/,?\s*PhD/gi, '').trim();
-    var parts = fullName.split(/\s+/).filter(Boolean);
-
-    aliases.push(slugify(fullName));
-
-    if (parts.length >= 2) {
-      var surname = parts[parts.length - 1];
-      var given = parts[0];
-      aliases.push(slugify(surname + ' ' + given.charAt(0)));
-      aliases.push(slugify(surname + ', ' + given.charAt(0) + '.'));
-    }
-
-    return aliases.filter(Boolean).filter(function (value, index, array) {
-      return array.indexOf(value) === index;
+  function buildMemberLookup(members) {
+    var map = {};
+    members.forEach(function (member) {
+      map[member.fullName] = member;
+      map[slugify(member.fullName)] = member;
+      (member.aliases || []).forEach(function (alias) {
+        map[alias] = member;
+      });
     });
+    return map;
+  }
+
+  function buildAuthorRegistryLookup(authorRegistry) {
+    var map = {};
+    (authorRegistry || []).forEach(function (author) {
+      map[author.id] = author;
+      (author.publicationNames || []).forEach(function (name) {
+        map['pub:' + normalizeCitationName(name)] = author;
+      });
+    });
+    return map;
   }
 
   function flattenMembers(membersData) {
     var buckets = ['pi', 'postdocs', 'graduates', 'undergraduates', 'remoteInterns'];
     var flat = [];
+
+    function buildMemberAliases(member) {
+      var aliases = [];
+      var fullName = String(member.name || '').replace(/,?\s*PhD/gi, '').trim();
+      var parts = fullName.split(/\s+/).filter(Boolean);
+
+      aliases.push(slugify(fullName));
+
+      if (parts.length >= 2) {
+        var surname = parts[parts.length - 1];
+        var given = parts[0];
+        aliases.push(slugify(surname + ' ' + given.charAt(0)));
+        aliases.push(slugify(surname + ', ' + given.charAt(0) + '.'));
+      }
+
+      return aliases.filter(Boolean).filter(function (value, index, array) {
+        return array.indexOf(value) === index;
+      });
+    }
 
     buckets.forEach(function (bucket) {
       (membersData[bucket] || []).forEach(function (member) {
@@ -126,56 +98,20 @@
     return flat;
   }
 
-  function buildFallbackAuthorProfile(slug, publications) {
-    var matchedNames = [];
-    publications.forEach(function (pub) {
-      extractAuthors(pub.authors).forEach(function (name) {
-        var candidateSlug = slugify(name);
-        if (candidateSlug === slug && matchedNames.indexOf(name) === -1) matchedNames.push(name);
-      });
-    });
-
-    var displayName = matchedNames[0] || slug.replace(/-/g, ' ');
+  function buildFallbackAuthorProfile(authorEntry) {
     return {
-      fullName: displayName,
-      name: displayName,
-      slug: slug,
+      fullName: authorEntry.displayName || authorEntry.id,
+      name: authorEntry.displayName || authorEntry.id,
+      slug: authorEntry.id,
       image: 'images/rz.png',
       email: '',
       role: 'Author profile',
       affiliation: '',
-      bio: 'This profile was generated from the publications list because no matching member profile was found on the Members page.',
+      bio: 'This profile was generated from the author registry because no matching member profile was found on the Members page.',
       research: '',
       loves: '',
       links: {}
     };
-  }
-
-  function computeAuthorPapers(author, publications) {
-    var firstAuthor = [];
-    var coAuthor = [];
-    var authorSurname = surnameFromName(author.name || author.fullName || '');
-    var authorInitial = firstInitialFromName(author.name || author.fullName || '');
-
-    publications.forEach(function (pub) {
-      var text = String(pub.authors || '');
-      var firstToken = text.split(/et al\.?/i)[0].trim().replace(/,\s*$/, '');
-      var firstSurname = surnameFromName(firstToken);
-      var firstInitial = firstInitialFromName(firstToken);
-
-      if (!authorSurname || !firstSurname || authorSurname !== firstSurname) return;
-
-      if (!authorInitial || !firstInitial || authorInitial === firstInitial) {
-        firstAuthor.push(pub);
-        return;
-      }
-
-      if (text.toLowerCase().indexOf(authorSurname.toLowerCase()) !== -1) {
-        coAuthor.push(pub);
-      }
-    });
-
-    return { firstAuthor: firstAuthor, coAuthor: coAuthor };
   }
 
   function summarizeExpertise(author, expertiseData) {
@@ -332,12 +268,38 @@
       '</div>';
   }
 
+  function computeAuthorPapers(authorEntry, publications) {
+    var firstAuthor = [];
+    var coAuthor = [];
+    var names = (authorEntry.publicationNames || []).map(normalizeCitationName);
+
+    publications.forEach(function (pub) {
+      var citation = normalizeCitationName(pub.authors || '');
+      var isFirstAuthor = names.some(function (name) {
+        return citation.indexOf(name) === 0;
+      });
+
+      if (isFirstAuthor) {
+        firstAuthor.push(pub);
+        return;
+      }
+
+      var appearsAnywhere = names.some(function (name) {
+        return citation.indexOf(name) !== -1;
+      });
+
+      if (appearsAnywhere) coAuthor.push(pub);
+    });
+
+    return { firstAuthor: firstAuthor, coAuthor: coAuthor };
+  }
+
   async function loadAuthorPage() {
     var mount = document.getElementById('author-profile-root');
     if (!mount) return;
 
-    var slug = slugify(getQueryParam('author'));
-    if (!slug) {
+    var authorId = getQueryParam('author');
+    if (!authorId) {
       mount.innerHTML = '<p class="author-empty">No author selected.</p>';
       return;
     }
@@ -346,17 +308,30 @@
       var results = await Promise.all([
         fetch('assets/data/members.json').then(function (res) { return res.json(); }),
         fetch('assets/data/publications.json').then(function (res) { return res.json(); }),
-        fetch('assets/data/author-expertise.json').then(function (res) { return res.json(); }).catch(function () { return {}; })
+        fetch('assets/data/author-expertise.json').then(function (res) { return res.json(); }).catch(function () { return {}; }),
+        fetch('assets/data/authors.json').then(function (res) { return res.json(); }).catch(function () { return { authors: [] }; })
       ]);
 
       var members = flattenMembers(results[0]);
       var publications = results[1].publications || [];
       var expertiseData = results[2] || {};
+      var authorRegistry = results[3].authors || [];
 
-      var author = members.find(function (member) {
-        return member.slug === slug || (member.aliases || []).indexOf(slug) !== -1;
-      }) || buildFallbackAuthorProfile(slug, publications);
-      var papers = computeAuthorPapers(author, publications);
+      var memberLookup = buildMemberLookup(members);
+      var authorLookup = buildAuthorRegistryLookup(authorRegistry);
+      var authorEntry = authorLookup[authorId] || authorLookup['pub:' + normalizeCitationName(authorId)] || {
+        id: authorId,
+        displayName: authorId.replace(/-/g, ' '),
+        publicationNames: [authorId],
+        memberName: ''
+      };
+
+      var author = (authorEntry.memberName && memberLookup[authorEntry.memberName]) || memberLookup[authorId] || buildFallbackAuthorProfile(authorEntry);
+      author.slug = authorEntry.id || author.slug;
+      author.fullName = author.fullName || authorEntry.displayName;
+      author.name = author.name || authorEntry.displayName;
+
+      var papers = computeAuthorPapers(authorEntry, publications);
       var expertise = summarizeExpertise(author, expertiseData);
 
       renderAuthorPage(author, papers, expertise, mount);
