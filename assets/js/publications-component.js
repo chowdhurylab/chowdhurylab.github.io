@@ -1,6 +1,7 @@
 (function () {
   var allPublications = [];
   var activeType = 'all';
+  var authorRegistry = [];
 
   function escapeHtml(text) {
     return String(text || '')
@@ -9,6 +10,31 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function slugify(text) {
+    return String(text || '')
+      .toLowerCase()
+      .replace(/,?\s*ph\.?d\.?/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function normalizeCitationName(text) {
+    return String(text || '')
+      .replace(/\s+et al\.?$/i, '')
+      .trim();
+  }
+
+  function lookupAuthorId(display) {
+    var citation = normalizeCitationName(display);
+    var match = authorRegistry.find(function (author) {
+      return (author.publicationNames || []).some(function (name) {
+        return normalizeCitationName(name) === citation;
+      });
+    });
+
+    return match ? match.id : slugify(citation);
   }
 
   function renderExtraLinks(pub) {
@@ -28,19 +54,11 @@
     );
   }
 
-  function slugify(text) {
-    return String(text || '')
-      .toLowerCase()
-      .replace(/phd/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
   function renderAuthors(authorsText) {
     var text = String(authorsText || '').trim();
     if (!text) return '';
 
-    var cleaned = text.replace(/\s+et al\.?$/i, '');
+    var cleaned = normalizeCitationName(text);
     var parts = cleaned.split(',').map(function (part) {
       return part.trim();
     }).filter(Boolean);
@@ -51,12 +69,14 @@
       var surname = parts[0];
       var initials = parts.slice(1).join(', ');
       var display = surname + ', ' + initials;
-      var html = '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(slugify(display)) + '">' + escapeHtml(display) + '</a>';
+      var authorId = lookupAuthorId(display);
+      var html = '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(authorId) + '">' + escapeHtml(display) + '</a>';
       if (/et al\.?$/i.test(text)) html += ', et al.';
       return html;
     }
 
-    return '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(slugify(parts[0])) + '">' + escapeHtml(parts[0]) + '</a>' + (/et al\.?$/i.test(text) ? ', et al.' : '');
+    var singleId = lookupAuthorId(parts[0]);
+    return '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(singleId) + '">' + escapeHtml(parts[0]) + '</a>' + (/et al\.?$/i.test(text) ? ', et al.' : '');
   }
 
   function renderPublication(pub) {
@@ -195,9 +215,13 @@
     if (!container) return;
 
     try {
-      var res = await fetch('assets/data/publications.json');
-      var data = await res.json();
-      allPublications = data.publications || [];
+      var results = await Promise.all([
+        fetch('assets/data/publications.json').then(function (res) { return res.json(); }),
+        fetch('assets/data/authors.json').then(function (res) { return res.json(); }).catch(function () { return { authors: [] }; })
+      ]);
+
+      allPublications = results[0].publications || [];
+      authorRegistry = results[1].authors || [];
 
       populateYearFilter(allPublications);
       bindFilters();

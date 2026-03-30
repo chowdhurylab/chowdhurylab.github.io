@@ -1,0 +1,148 @@
+{
+  "authors": [
+    {
+      "id": "ratul-chowdhury",
+      "displayName": "Ratul Chowdhury, PhD",
+      "publicationNames": ["Chowdhury, R.", "Chowdhury, R", "Chowdhury, R. & Maranas, C. D."],
+      "memberName": "Ratul Chowdhury, PhD"
+    },
+    {
+      "id": "karuna-anna-sajeevan",
+      "displayName": "Karuna Anna Sajeevan, PhD",
+      "publicationNames": ["Sajeevan, K. A.", "Sajeevan, K. A"],
+      "memberName": "Karuna Anna Sajeevan, PhD"
+    },
+    {
+      "id": "mohammed-sakib-noor",
+      "displayName": "Mohammed Sakib Noor",
+      "publicationNames": ["Noor, M. S.", "Noor, M. S"],
+      "memberName": "Mohammed Sakib Noor"
+    },
+    {
+      "id": "supantha-dey",
+      "displayName": "Supantha Dey",
+      "publicationNames": ["Dey, S.", "Dey, S"],
+      "memberName": "Supantha Dey"
+    },
+    {
+      "id": "sakib-ferdous",
+      "displayName": "Sakib Ferdous",
+      "publicationNames": ["Ferdous, S.", "Ferdous, S"],
+      "memberName": "Sakib Ferdous"
+    },
+    {
+      "id": "lydia-samineni",
+      "displayName": "Lydia Samineni",
+      "publicationNames": ["Samineni, L.", "Samineni, L"],
+      "memberName": ""
+    },
+    {
+      "id": "harini-peng",
+      "displayName": "H. Peng",
+      "publicationNames": ["Peng, H.", "Peng, H"],
+      "memberName": ""
+    },
+    {
+      "id": "sanjib-malla",
+      "displayName": "S. Malla",
+      "publicationNames": ["Malla, S.", "Malla, S"],
+      "memberName": ""
+    },
+    {
+      "id": "jiayi-lin",
+      "displayName": "J. Lin",
+      "publicationNames": ["Lin, J.", "Lin, J"],
+      "memberName": ""
+    },
+    {
+      "id": "shyamali-uthaman",
+      "displayName": "S. Uthaman",
+      "publicationNames": ["Uthaman, S.", "Uthaman, S"],
+      "memberName": ""
+    },
+    {
+      "id": "sanghoon-choi",
+      "displayName": "S. Choi",
+      "publicationNames": ["Choi, S.", "Choi, S"],
+      "memberName": ""
+    },
+    {
+      "id": "m-jindra",
+      "displayName": "M. Jindra",
+      "publicationNames": ["Jindra, M.", "Jindra, M"],
+      "memberName": ""
+    },
+    {
+      "id": "v-s-boorla",
+      "displayName": "V. S. Boorla",
+      "publicationNames": ["Boorla, V. S.", "Boorla, V. S"],
+      "memberName": ""
+    },
+    {
+      "id": "c-oh",
+      "displayName": "C. Oh",
+      "publicationNames": ["Oh, C.", "Oh, C"],
+      "memberName": ""
+    },
+    {
+      "id": "j-patino-galindo",
+      "displayName": "J. Patiño-Galindo",
+      "publicationNames": ["Patiño-Galindo, J.", "Patiño-Galindo, J"],
+      "memberName": ""
+    },
+    {
+      "id": "h-zeng",
+      "displayName": "H. Zeng",
+      "publicationNames": ["Zeng, H.", "Zeng, H"],
+      "memberName": ""
+    },
+    {
+      "id": "c-chen",
+      "displayName": "C. Chen",
+      "publicationNames": ["Chen, C.", "Chen, C"],
+      "memberName": ""
+    },
+    {
+      "id": "w-song",
+      "displayName": "W. Song",
+      "publicationNames": ["Song, W.", "Song, W"],
+      "memberName": ""
+    },
+    {
+      "id": "z-wang",
+      "displayName": "Z. Wang",
+      "publicationNames": ["Wang, Z.", "Wang, Z"],
+      "memberName": ""
+    },
+    {
+      "id": "k-throckmorton",
+      "displayName": "K. Throckmorton",
+      "publicationNames": ["Throckmorton, K.", "Throckmorton, K"],
+      "memberName": ""
+    },
+    {
+      "id": "n-hernandez-lozada",
+      "displayName": "N. Hernández Lozada",
+      "publicationNames": ["Hernández Lozada, N.", "Hernández Lozada, N"],
+      "memberName": ""
+    },
+    {
+      "id": "k-e-tiller",
+      "displayName": "K. E. Tiller",
+      "publicationNames": ["Tiller, K. E.", "Tiller, K. E"],
+      "memberName": ""
+    },
+    {
+      "id": "s-sarkar",
+      "displayName": "S. Sarkar",
+      "publicationNames": ["Sarkar, S.", "Sarkar, S"],
+      "memberName": ""
+    },
+    {
+      "id": "r-chakraborty",
+      "displayName": "R. Chakraborty",
+      "publicationNames": ["Chakraborty, R.", "Chakraborty, R"],
+      "memberName": ""
+    }
+  ]
+}
