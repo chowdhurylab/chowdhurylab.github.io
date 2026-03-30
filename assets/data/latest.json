@@ -1,6 +1,46 @@
 {
   "latestInLab": [
     {
+      "date": "Jan' 26",
+      "text": "Hannah Gates won the Best 3-Minute Oral Presentation at the CMI Winter Meeting 2026. Congratulations Hannah!",
+      "image": "images/Hanna_3M_CMI.jpg",
+      "icon": "fa-star"
+    },
+    {
+      "date": "Dec' 25",
+      "text": "Vaishnavey SR and Supantha Dey presented their AstraMEV work at the Conference of Research Workers in Animal Diseases (CRWAD). Check out the paper",
+      "linkText": "here",
+      "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809",
+      "icon": "fa-star"
+    },
+    {
+      "date": "Nov' 25",
+      "text": "Md. Sakib Noor presented his CTRL-V work at the Annual Meeting of the American Institute of Chemical Engineers (AIChE) 2025. Check out the talk details",
+      "linkText": "here",
+      "link": "https://aiche.confex.com/aiche/2025/meetingapp.cgi/Paper/718164",
+      "icon": "fa-star"
+    },
+    {
+      "date": "Oct' 25",
+      "text": "Congratulation to Vaishnavey SR and Mohammad Reza Zargar for passing their qualification exams with flying colors.",
+      "icon": "fa-star"
+    },    
+    {
+      "date": "Aug' 25",
+      "text": "Casey Zielinski, Chemical Engineering, joins the lab as a research intern. Welcome Casey!",
+      "icon": "fa-user-plus"
+    },
+    {
+      "date": "Aug' 25",
+      "text": "Laura Mariana Correa, Chemical Engineering, joins the lab as a Griswold Undergraduate Fellow. Welcome Laura Mariana!",
+      "icon": "fa-user-plus"
+    },
+    {
+      "date": "May' 25",
+      "text": "Matt Cain joins the lab as a Research Experience for Teachers (RET) fellow. Welcome Matt!",
+      "icon": "fa-user-plus"
+    },    
+    {
       "date": "Apr' 25",
       "text": "Congratulation to Dr. Karuna Anna Sajeevan for making it to the finals in Biosolveit scientific challenge. You can read about it",
       "linkText": "here",
@@ -12,6 +52,21 @@
       "text": "Congratulation to Dr. Sakib Ferdous for successfully defending his PhD! We wish him all the best.",
       "icon": "fa-star"
     },
+    {
+      "date": "Jan' 25",
+      "text": "Curwen Pei Hong Tan, Computer Science, joins the lab as a Software Developer. Welcome Curwen!",
+      "icon": "fa-user-plus"
+    },
+    {
+      "date": "Nov' 24",
+      "text": "Riza Danurdoro, Computer Science, joins the lab as a Software Developer. Welcome Riza!",
+      "icon": "fa-user-plus"
+    },
+    {
+      "date": "Oct' 24",
+      "text": "Mohammad Reza Zargar, CBE PhD Candidate, and Vaishnavey SR, CBE PhD Candidate, join the lab. Welcome Reza and Vaishnavey!",
+      "icon": "fa-user-plus"
+    },    
     {
       "date": "Oct' 24",
       "text": "Congratulation to Ella Salehi for passing qualification exam with flying colors.",
@@ -52,13 +107,12 @@
     },
     {
       "date": "Oct' 23",
-      "text": "Md. Sakib Noor, CBE PhD Candidate and Rahil Salehi, CBE PhB Candidate, joins the lab. Welcome Md. Sakib Noor and Rahil Salehi!",
+      "text": "Md. Sakib Noor, CBE PhD Candidate, Rahil Salehi, CBE PhD Candidate, and Supantha Dey, IGG PhD Candidate, join the lab. Welcome Noor, Rahil Salehi, and Supantha!",
       "icon": "fa-user-plus"
     },
     {
       "date": "Oct' 23",
       "text": "Congrats to Julia for receiving the Malcolm Family Scholarship, the Edward Henry Ohlsen Scholarship, and the Roderick Seward, Flossie Ratcliff, and Helen M. Galloway Foundation Scholarship.",
-      "image": "images/awards_banquet_jyoung.jpg",
       "icon": "fa-star"
     },
     {
