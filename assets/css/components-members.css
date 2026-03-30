@@ -50,9 +50,28 @@
 
 .members-name {
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-  margin: 0 0 0.5em 0;
+  margin: 0 0 0.3em 0;
   font-weight: normal;
   color: #000;
+}
+
+.members-stats-link-wrap {
+  margin: 0 0 0.5rem 0;
+}
+
+.members-stats-link {
+  display: inline-block;
+  color: #BE531C !important;
+  border-bottom: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.members-stats-link:hover,
+.members-stats-link:focus,
+.members-stats-link:visited {
+  color: #BE531C !important;
+  border-bottom: 0;
 }
 
 .members-pi-content .members-name {
