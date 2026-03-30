@@ -1,20 +1,76 @@
 {
   "publications": [
     {
+      "year": 2026,
+      "journal": "bioRxiv",
+      "authors": "Mills, C. E. et al.",
+      "title": "Polypharmacology of an Optimal Kinase Library",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.17.711623.abstract",
+      "articleType": "Article"
+    },
+    {
+      "year": 2026,
+      "journal": "bioRxiv",
+      "authors": "Aryee, R. et al.",
+      "title": "Structural and Metabolic Characterization of Ni(I)-inhibitors Provide a Robust Anti-Methanogenicity Scoring System",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.02.25.708075.abstract",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Scientific Reports",
+      "authors": "Twu, N. et al.",
+      "title": "Spatial mapping of influenza and coronavirus receptors in the respiratory and intestinal tract epithelium of beef cattle using advanced PixF image analysis",
+      "link": "https://www.nature.com/articles/s41598-025-28429-0",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "NAR Genomics and Bioinformatics",
+      "authors": "Ma, X. et al.",
+      "title": "Seq2Bind webserver for binding site prediction from sequences using fine-tuned protein language models",
+      "link": "https://academic.oup.com/nargab/article-abstract/7/4/lqaf154/8340159",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Journal of Chemical Information and Modeling",
+      "authors": "Dey, S. et al.",
+      "title": "AstraMEV (AI-Guided Structural Assembly of Multi-Epitope Vaccines) Against Infectious Bronchitis Virus",
+      "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "bioRxiv",
+      "authors": "Dey, S. et al.",
+      "title": "Structurally Informed Fitness Landscapes for Surveillance of Emerging PRRSV Variants",
+      "link": "https://www.biorxiv.org/content/10.1101/2025.10.06.680729.abstract",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "arXiv",
+      "authors": "Dey, S. et al.",
+      "title": "Twin peaks: Dual-head architecture for structure-free prediction of protein-protein binding affinity and mutation effects",
+      "link": "https://arxiv.org/abs/2509.22950",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "PLOS Computational Biology",
+      "authors": "Teoh, Y. C. et al.",
+      "title": "Viral escape-inspired framework for structure-guided dual bait protein biosensor design",
+      "link": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012964",
+      "articleType": "Article"
+    },    
+    {
       "year": 2025,
       "journal": "Current Opinion in Biotechnology",
       "authors": "Noor, M. S. et al.",
       "title": "Next-generation metabolic models informed by biomolecular simulations",
       "link": "https://www.sciencedirect.com/science/article/pii/S0958166925000035?via%3Dihub",
       "articleType": "Review Article"
-    },
-    {
-      "year": 2025,
-      "journal": "Computational and Structural Biotechnology Journal",
-      "authors": "Sajeevan, K. A. et al.",
-      "title": "Computationally derived structural insights into Rare Earth selectivity in lanmodulin and its variants",
-      "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315",
-      "articleType": "Article"
     },
     {
       "year": 2025,
@@ -26,10 +82,34 @@
     },
     {
       "year": 2025,
+      "journal": "bioRxiv",
+      "authors": "Sajeevan, K. A. et al.",
+      "title": "Robust prediction of enzyme variant kinetics with RealKcat",
+      "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11844551/",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "bioRxiv",
+      "authors": "Ferdous, S. et al.",
+      "title": "Improved functional classification of hydrolases through pairwise structural similarity of reaction cores",
+      "link": "https://www.biorxiv.org/content/10.1101/2025.01.09.632218.abstract",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
       "journal": "Animal Frontiers",
       "authors": "Chowdhury, R. et al.",
       "title": "Computational approaches for enteric methane mitigation research: from fermi calculations to artificial intelligence paradigms",
       "link": "https://academic.oup.com/af/article/14/6/33/7942668",
+      "articleType": "Article"
+    },
+    {
+      "year": 2025,
+      "journal": "Computational and Structural Biotechnology Journal",
+      "authors": "Sajeevan, K. A. et al.",
+      "title": "Computationally derived structural insights into Rare Earth selectivity in lanmodulin and its variants",
+      "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315",
       "articleType": "Article"
     },
     {

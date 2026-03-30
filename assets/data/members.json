@@ -173,13 +173,23 @@
       "name": "Madison Ellis",
       "image": "images/madison.jpg",
       "email": "mellis10@iastate.edu",
-      "role": "Graduate Research Assistant (BCB)",
+      "role": "Graduate Research Assistant, BCB",
       "affiliation": "BS, Horticulture and Biochemistry, Texas A&M University",
       "research": "Protein Complexes",
       "loves": "Knitting, reading, cooking",
       "links": {
         "linkedin": ""
       }
+    },
+    {
+      "name": "Mahbuba Ferdaous",
+      "image": "",
+      "email": "mahbuba@iastate.edu",
+      "role": "Graduate Research Assistant, CBE",
+      "affiliation": "BS, Biomedical Engineering, Bangladesh University of Engineering and Technology (BUET), Bangladesh",
+      "research": "",
+      "loves": "",
+      "links": {}
     }
   ],
 
