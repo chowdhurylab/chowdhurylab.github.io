@@ -92,8 +92,6 @@
     },
     {
       "year": 2025,
-<<<<<<< HEAD
-=======
       "journal": "Computational and Structural Biotechnology Journal",
       "authors": "Sajeevan, K. A. et al.",
       "title": "Computationally derived structural insights into Rare Earth selectivity in lanmodulin and its variants",
@@ -115,7 +113,6 @@
     },
     {
       "year": 2025,
->>>>>>> f96541d (Enrich author stats with full coauthor metadata)
       "journal": "Plant Physiology",
       "authors": "Chowdhury, R. et al.",
       "title": "Fermi calculations enable quick downselection of target genes and process optimization in photosynthetic systems",
