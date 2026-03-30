@@ -227,6 +227,10 @@
   margin-top: 0.7rem;
 }
 
+.author-paper-card .author-note {
+  margin-top: 0.4rem;
+}
+
 .publication-author-link {
   color: #BE531C !important;
   border-bottom: 0;
