@@ -220,7 +220,7 @@
 
     return '<div class="author-paper-group">' + list.map(function (pub) {
       var authorLine = (pub.fullAuthors && pub.fullAuthors.length) ? pub.fullAuthors.join(', ') : pub.authors;
-      var labLine = (pub.labMemberAuthors && pub.labMemberAuthors.length) ? '<div class="author-paper-meta">Lab members: ' + escapeHtml(pub.labMemberAuthors.join(', ')) + '</div>' : '';
+      var labLine = (pub.labMemberAuthors && pub.labMemberAuthors.length) ? '<div class="author-paper-meta"><b>Lab members:</b> ' + escapeHtml(pub.labMemberAuthors.join(', ')) + '</div>' : '';
       return '' +
         '<article class="author-paper-card">' +
         '  <div class="author-paper-meta">' + escapeHtml(pub.year) + ' · ' + escapeHtml(pub.journal) + '</div>' +

@@ -15,7 +15,7 @@
       var token = '{' + key + '}';
       var anchor = '<a href="' + escapeHtml(item.href) + '"' +
         (item.href.indexOf('mailto:') === 0 ? '' : ' target="_blank" rel="noopener noreferrer"') +
-        '>' + escapeHtml(item.label) + '</a>';
+        '><b>' + escapeHtml(item.label) + '</b></a>';
       html = html.replace(token, anchor);
     });
     return html;

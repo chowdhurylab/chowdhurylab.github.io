@@ -18,7 +18,6 @@
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
-.home-hero-affiliations a,
 .home-hero-affiliations a b {
   color: #BE531C;
 }
@@ -463,7 +462,7 @@
 .linkedin-loop-content a:visited {
   color: #BE531C;
   border-bottom: 0;
-  font-weight: 400;
+  font-weight: 700;
 }
 
 @keyframes linkedin-loop-scroll {
