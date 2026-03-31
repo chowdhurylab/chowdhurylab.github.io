@@ -104,7 +104,11 @@
 .members-links a,
 .members-links a:hover,
 .members-links a:focus,
-.members-links a:visited {
+.members-links a:visited,
+.members-details a,
+.members-details a:hover,
+.members-details a:focus,
+.members-details a:visited {
   color: #ff8300 !important;
   border-bottom: 0;
 }
@@ -112,7 +116,11 @@
 .members-links a[href^="mailto:"],
 .members-links a[href^="mailto:"]:hover,
 .members-links a[href^="mailto:"]:focus,
-.members-links a[href^="mailto:"]:visited {
+.members-links a[href^="mailto:"]:visited,
+.members-details a[href^="mailto:"],
+.members-details a[href^="mailto:"]:hover,
+.members-details a[href^="mailto:"]:focus,
+.members-details a[href^="mailto:"]:visited {
   font-weight: 700;
 }
 
