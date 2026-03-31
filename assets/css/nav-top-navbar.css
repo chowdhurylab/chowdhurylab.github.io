@@ -149,16 +149,18 @@
 }
 
 .top-nav-dropdown-menu a {
-  color: #BE531C !important;
+  color: #ff8300 !important;
   border-bottom: 0;
   padding: 0.15rem 0;
   white-space: nowrap;
+  font-weight: 700;
 }
 
 .top-nav-dropdown-menu a:hover,
 .top-nav-dropdown-menu a:focus,
 .top-nav-dropdown-menu a:visited {
-  color: #BE531C !important;
+  color: #ff8300 !important;
+  font-weight: 700;
 }
 
 @media screen and (max-width: 900px) {
