@@ -71,12 +71,76 @@
         var widthClass = index % 6 === 0 ? ' is-wide' : index % 5 === 0 ? ' is-tall' : '';
         return (
           '<figure class="justified-grid-item' + widthClass + '">' +
-          '  <img src="' + escapeHtml(item.src) + '" alt="' + escapeHtml(item.alt || 'moment image') + '">' +
+          '  <button type="button" class="moments-lightbox-trigger" data-full-src="' + escapeHtml(item.src) + '" data-full-alt="' + escapeHtml(item.alt || 'moment image') + '" aria-label="Open full image">' +
+          '    <img src="' + escapeHtml(item.src) + '" alt="' + escapeHtml(item.alt || 'moment image') + '">' +
+          '  </button>' +
           '</figure>'
         );
       }).join('') +
       '</div>'
     );
+  }
+
+  function ensureLightbox() {
+    var existing = document.getElementById('moments-lightbox');
+    if (existing) return existing;
+
+    var lightbox = document.createElement('div');
+    lightbox.id = 'moments-lightbox';
+    lightbox.className = 'moments-lightbox';
+    lightbox.setAttribute('hidden', 'hidden');
+    lightbox.innerHTML = '' +
+      '<div class="moments-lightbox-backdrop" data-close-lightbox="true"></div>' +
+      '<div class="moments-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Full image preview">' +
+      '  <button type="button" class="moments-lightbox-close" aria-label="Close image">×</button>' +
+      '  <img class="moments-lightbox-image" src="" alt="" />' +
+      '</div>';
+
+    document.body.appendChild(lightbox);
+    return lightbox;
+  }
+
+  function bindLightbox() {
+    var collageMount = document.getElementById('moments-collage');
+    if (!collageMount) return;
+
+    var lightbox = ensureLightbox();
+    var lightboxImage = lightbox.querySelector('.moments-lightbox-image');
+    var closeBtn = lightbox.querySelector('.moments-lightbox-close');
+
+    function closeLightbox() {
+      lightbox.setAttribute('hidden', 'hidden');
+      document.body.classList.remove('moments-lightbox-open');
+      lightboxImage.src = '';
+      lightboxImage.alt = '';
+    }
+
+    function openLightbox(src, alt) {
+      lightboxImage.src = src;
+      lightboxImage.alt = alt || 'moment image';
+      lightbox.removeAttribute('hidden');
+      document.body.classList.add('moments-lightbox-open');
+    }
+
+    collageMount.addEventListener('click', function (event) {
+      var trigger = event.target.closest('.moments-lightbox-trigger');
+      if (!trigger) return;
+      openLightbox(trigger.getAttribute('data-full-src') || '', trigger.getAttribute('data-full-alt') || '');
+    });
+
+    lightbox.addEventListener('click', function (event) {
+      if (event.target.closest('[data-close-lightbox="true"]') || event.target.closest('.moments-lightbox-close')) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !lightbox.hasAttribute('hidden')) {
+        closeLightbox();
+      }
+    });
+
+    closeBtn.addEventListener('click', closeLightbox);
   }
 
   async function loadMoments() {
@@ -91,6 +155,7 @@
 
       renderIntro(data.introText || '', introMount);
       collageMount.innerHTML = buildCollage(collectCollageImages(data));
+      bindLightbox();
     } catch (err) {
       console.error('Moments load error:', err);
       introMount.innerHTML = '<p class="moments-empty">Could not load moments intro.</p>';

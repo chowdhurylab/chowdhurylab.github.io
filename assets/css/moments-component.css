@@ -187,6 +187,79 @@
   color: #7e7e7e;
 }
 
+.moments-lightbox-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.moments-lightbox-trigger img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.moments-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.moments-lightbox[hidden] {
+  display: none;
+}
+
+.moments-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.82);
+}
+
+.moments-lightbox-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 1100px);
+  max-height: 90vh;
+  margin: 4vh auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moments-lightbox-image {
+  display: block;
+  max-width: 100%;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  background: #fff;
+}
+
+.moments-lightbox-close {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+body.moments-lightbox-open {
+  overflow: hidden;
+}
+
 @media screen and (max-width: 980px) {
   .moments-timeline-track::before {
     left: 1rem;
