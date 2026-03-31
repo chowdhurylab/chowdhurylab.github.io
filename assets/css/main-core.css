@@ -259,14 +259,22 @@ a:hover {
   border-bottom-color: #BE531C;
   color: #BE531C !important;
 }
-a:hover strong {
+a strong,
+a b,
+a:hover strong,
+a:hover b,
+a:focus strong,
+a:focus b,
+a:visited strong,
+a:visited b {
   color: inherit;
+  font-weight: inherit;
 }
 
 strong,
 b {
-  color: #ff8300;
-  font-weight: 600;
+  color: inherit;
+  font-weight: 400;
 }
 
 em,
