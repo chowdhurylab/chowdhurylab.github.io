@@ -36,8 +36,8 @@
 .home-hero-cta:hover,
 .home-hero-cta:focus,
 .home-hero-cta:visited {
-  background: #000 !important;
-  color: #fff !important;
+  background: #fff !important;
+  color: #000 !important;
   border-color: #000 !important;
   box-shadow: none;
 }
