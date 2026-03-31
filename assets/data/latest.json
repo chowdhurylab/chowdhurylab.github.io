@@ -1,21 +1,32 @@
 {
   "latestInLab": [
     {
+      "date": "Mar' 26",
+      "text": "Mohammad Reza Zargar, Hanna Gates, and Rahil Salehi presented their talks at the ACS BIOT Spring 2026 Conference. Great job everyone!",
+      "personal_link": [
+        {
+          "name": "Mohammad Reza Zargar",
+          "url": "https://acs.digitellinc.com/live/36/session/572173?via=speaker_profile_osl"
+        }
+      ],
+      "icon": "fa-star"
+    },    
+    {
       "date": "Jan' 26",
-      "text": "Hannah Gates won the Best 3-Minute Oral Presentation at the CMI Winter Meeting 2026. Congratulations Hannah!",
+      "text": "Hannah won the Best 3-Minute Oral Presentation at the CMI Winter Meeting 2026. Congratulations Hannah!",
       "image": "images/Hanna_3M_CMI.jpg",
       "icon": "fa-star"
     },
     {
       "date": "Dec' 25",
-      "text": "Vaishnavey SR and Supantha Dey presented their AstraMEV work at the Conference of Research Workers in Animal Diseases (CRWAD). Check out the paper",
+      "text": "Vaishnavey and Supantha presented their AstraMEV work at the Conference of Research Workers in Animal Diseases (CRWAD). Check out the paper",
       "linkText": "here",
       "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809",
       "icon": "fa-star"
     },
     {
       "date": "Nov' 25",
-      "text": "Md. Sakib Noor presented his CTRL-V work at the Annual Meeting of the American Institute of Chemical Engineers (AIChE) 2025. Check out the talk details",
+      "text": "Noor presented his CTRL-V work at the Annual Meeting of the American Institute of Chemical Engineers (AIChE) 2025. Check out the talk details",
       "linkText": "here",
       "link": "https://aiche.confex.com/aiche/2025/meetingapp.cgi/Paper/718164",
       "icon": "fa-star"
