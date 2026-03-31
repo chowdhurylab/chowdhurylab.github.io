@@ -18,8 +18,14 @@
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
+.home-hero-highlight {
+  color: #ff8300;
+  font-weight: 500;
+}
+
 .home-hero-affiliations a b {
   color: #ff8300;
+  font-weight: 600;
 }
 
 .home-hero-external {

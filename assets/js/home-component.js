@@ -41,6 +41,7 @@
     var hero = (data && data.hero) || {};
     var cta = hero.cta || {};
     var image = hero.image || {};
+    var description = String(hero.description || '').replace(/<(strong|b)>(.*?)<\/\1>/gi, '<span class="home-hero-highlight">$2</span>');
 
     var affiliationBody = buildAffiliations(hero);
     var affiliationPrefix = hero.affiliationsText ? hero.affiliationsText + ' ' : '';
@@ -59,7 +60,7 @@
       '<header class="home-hero-branding">' +
       '  <img class="home-hero-wordmark" src="images/chowdhury-lab-wordmark.png" alt="Chowdhury Lab" />' +
       '</header>' +
-      '<p class="home-hero-description">' + (hero.description || '') + '</p>' +
+      '<p class="home-hero-description">' + description + '</p>' +
       '<p class="home-hero-affiliations">' + affiliationPrefix + affiliationBody + affiliationSuffix + '</p>' +
       '<ul class="actions">' +
       '  <li><a href="' + (cta.href || '#') + '" class="button big home-hero-cta" target="_blank" rel="noopener noreferrer">' + (cta.label || 'Learn more') + '</a></li>' +
