@@ -6,7 +6,7 @@
     var findLink = function (label) {
       var item = affiliations.find(function (entry) { return entry.label === label; });
       if (!item) return '';
-      return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer"><b>' + item.label + '</b></a>';
+      return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer">' + item.label + '</a>';
     };
 
     var nanovaccine = findLink('Nanovaccine Institute');
@@ -23,7 +23,7 @@
     }
 
     var links = affiliations.map(function (item) {
-      return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer"><b>' + item.label + '</b></a>';
+      return '<a href="' + item.href + '" target="_blank" rel="noopener noreferrer">' + item.label + '</a>';
     });
 
     if (links.length === 1) return links[0];

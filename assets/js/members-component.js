@@ -65,7 +65,7 @@
           .join('');
 
         var contact = [
-          '<a href="mailto:' + escapeHtml(pi.email || '') + '"><b>Email</b></a>',
+          '<a href="mailto:' + escapeHtml(pi.email || '') + '">Email</a>',
           renderProfileLinks(pi.links)
         ]
           .filter(Boolean)
@@ -92,15 +92,15 @@
     if (member.role || member.email || member.links) {
       var top = [];
       if (member.role) top.push(escapeHtml(member.role));
-      if (member.email) top.push('<a href="mailto:' + escapeHtml(member.email) + '"><b>Email</b></a>');
+      if (member.email) top.push('<a href="mailto:' + escapeHtml(member.email) + '">Email</a>');
       var linkIcons = renderProfileLinks(member.links);
       if (linkIcons) top.push(linkIcons);
       lines.push(top.join(' <span class="members-sep">|</span> '));
     }
 
     if (member.affiliation) lines.push(escapeHtml(member.affiliation));
-    if (member.research) lines.push('<b>Research</b> // ' + escapeHtml(member.research));
-    if (member.loves) lines.push('<b>Loves</b> // ' + escapeHtml(member.loves));
+    if (member.research) lines.push('Research // ' + escapeHtml(member.research));
+    if (member.loves) lines.push('Loves // ' + escapeHtml(member.loves));
 
     return (
       '<article class="members-card">' +
