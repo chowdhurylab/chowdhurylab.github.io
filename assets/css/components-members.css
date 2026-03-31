@@ -96,6 +96,18 @@
   display: inline-block;
 }
 
+.members-links .icon,
+.members-links .icon:hover,
+.members-links .icon:focus,
+.members-links .icon:visited,
+.members-details .icon,
+.members-details .icon:hover,
+.members-details .icon:focus,
+.members-details .icon:visited {
+  color: #ff8300 !important;
+  border-bottom: 0;
+}
+
 .members-sep {
   color: #8b8b8b;
 }
