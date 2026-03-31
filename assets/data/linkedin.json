@@ -1,51 +1,45 @@
 {
   "items": [
     {
-      "category": "IowaBio",
       "title": "IowaBio panel discussion",
       "description": "Ratul Chowdhury joins an Iowa Biotechnology Association panel discussion alongside Erin Rollenhagen, Reid Forgrave, and Matthew Smalley.",
       "image": "images/linkedin-update-1.jpeg",
-      "imageAlt": "IowaBio panel discussion update",
+      "imageAlt": "LinkedIn update 1 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7442736401181409280/?originTrackingId=fh56%2FsGaz%2BJDSVNkxmctkw%3D%3D"
     },
     {
-      "category": "Anionic hairy nanocellulose",
-      "title": "Functionalized cellulose for Critical Minerals",
-      "description": "Anionic hairy nanocellulose when optimally functionalized helps selective recovery of lanthanides.",
+      "title": "Anionic hairy cellulose nanocrystals",
+      "description": "Research highlight on cellulose nanocrystal engineering, showing the pathway from cellulose fibrils to anionic hairy cellulose nanocrystals and related characterization results.",
       "image": "images/linkedin-update-2.png",
-      "imageAlt": "Functionalized cellulose for Critical Minerals update",
+      "imageAlt": "LinkedIn update 2 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7429938690996568064/?originTrackingId=P%2FHccSe9elYOX%2FYRGOiQKw%3D%3D"
     },
     {
-      "category": "Seq2Bind",
-      "title": "Seq2Bind for structure-free docking",
-      "description": "Seq2Bind machine learning model enables binding energy prediction and hotspot recovery from single sequences without losing structural awareness.",
+      "title": "Seq2Bind feature extraction",
+      "description": "Research overview of the Seq2Bind framework, highlighting protein language model embeddings and feature extraction for protein-protein binding affinity prediction.",
       "image": "images/linkedin-update-3.jpeg",
-      "imageAlt": "Seq2Bind for structure-free docking update",
+      "imageAlt": "LinkedIn update 3 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7420495547104620546/?originTrackingId=L77iP2esPy6d70EoqYaGEQ%3D%3D"
     },
     {
-      "category": "PixF",
-      "title": "PixF fluorescent pixel analytics",
-      "description": "Agrivax.studio releases PixF for rapid, web-based image analytics and segmentation on H5N1 virus.",
+      "title": "PixF fluorescence analytics suite",
+      "description": "Software and methods highlight for PixF, a pixel-based fluorescence analytics suite for image segmentation, color picking, and analyzer workflows in microscopy data.",
       "image": "images/linkedin-update-4.png",
-      "imageAlt": "PixF fluorescent pixel analytics update",
+      "imageAlt": "LinkedIn update 4 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7407486932428980224/?originTrackingId=LQIThQDFEPOIsADDWPesMQ%3D%3D"
     },
     {
-      "category": "Dep of Energy",
-      "title": "DOE Supercomputing Conference SC25",
-      "description": "Chowdhury represents Ames Lab to talk about OpenREEpo+ database of simulations on critical minerals.",
+      "title": "Department of Energy showcase visit",
+      "description": "Conference and networking update featuring a visit to the U.S. Department of Energy National Laboratories showcase floor.",
       "image": "images/linkedin-update-5.jpeg",
-      "imageAlt": "DOE Supercomputing Conference SC25 update",
+      "imageAlt": "LinkedIn update 5 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7396625030203305984/?originTrackingId=%2B0u4TEWJo3qW8ZisPf7Akg%3D%3D"
     },
     {
-      "category": "Protein structure modeling",
-      "title": "AstraMEV for multi-epitope vaccines",
-      "description": "We build a structural-biology workflow for multi-epitope vaccine design against livestock viruses.",
+      "title": "Protein structure modeling preview",
+      "description": "Computational protein design and structural biology update featuring a dynamic molecular structure visualization.",
       "image": "images/linkedin-update-6.gif",
-      "imageAlt": "AstraMEV for multi-epitope vaccines update",
+      "imageAlt": "LinkedIn update 6 image",
       "href": "https://www.linkedin.com/feed/update/urn:li:activity:7387597317190742016/?originTrackingId=X2acPuB8lI%2F1Nt0I92Dhfw%3D%3D"
     }
   ]
