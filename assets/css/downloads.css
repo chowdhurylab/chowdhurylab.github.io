@@ -195,8 +195,9 @@
 }
 
 .db-button-meta b {
-  color: #BE531C;
+  color: inherit;
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-weight: 400;
 }
 
 .db-meta-sep {
