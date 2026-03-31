@@ -19,13 +19,12 @@
       }
     }
   ],
-
   "postdocs": [
     {
       "name": "Karuna Anna Sajeevan, PhD",
       "image": "images/karuna.jpeg",
       "email": "karunanna91@gmail.com",
-      "role": "Postdoctoral Fellow",
+      "role": "Senior Research Scientist (w/ Ames Lab)",
       "affiliation": "PhD, BITS Pilani, India. Postdoc, IIT Bombay, India",
       "research": "MD simulations, enzyme kinetics",
       "loves": "traveling, reading novels, gardening",
@@ -38,7 +37,7 @@
       "name": "Arunraj B, PhD",
       "image": "images/Arunraj B.JPG",
       "email": "arunrajtpr19@gmail.com",
-      "role": "Postdoctoral Fellow (co a/f: Oden Institute)",
+      "role": "Postdoc",
       "affiliation": "PhD, BITS Pilani. India",
       "research": "Ammonium Protein Channels",
       "loves": "cricket, photography",
@@ -50,14 +49,13 @@
       "name": "Sean Yang",
       "image": "images/sean.jpg",
       "email": "seanyang@iastate.edu",
-      "role": "Graduate Research Assistant",
+      "role": "Postdoc",
       "affiliation": "",
       "research": "MD simulations, biomolecular condensates",
       "loves": "reading, hiking",
       "links": {}
     }
   ],
-
   "graduates": [
     {
       "name": "Avishek Bhattacharya",
@@ -192,32 +190,7 @@
       "links": {}
     }
   ],
-
   "undergraduates": [
-    {
-      "name": "Julia Young",
-      "image": "images/juliayoung.jpeg",
-      "email": "youngj@iastate.edu",
-      "role": "Major: Software Engineering",
-      "affiliation": "First Year Honor's Research Program",
-      "research": "Designing proteins for rare-earth separation",
-      "loves": "Playing guitar, knitting, going on walks outside with my friends",
-      "links": {
-        "linkedin": "https://www.linkedin.com/in/julia-young-a601b2237/"
-      }
-    },
-    {
-      "name": "Shashank Koneru",
-      "image": "images/Shashank.jpg",
-      "email": "skoneru@iastate.edu",
-      "role": "Major: Computer Science",
-      "affiliation": "",
-      "research": "Lanthanide Binding Computation on Proteins from Extreme Organisms; Targeting Drug-Kinase Interactions: Computational Strategies for Drug Discovery",
-      "loves": "Basketball, football, traveling, hanging out with friends",
-      "links": {
-        "linkedin": "http://www.linkedin.com/in/shashank-koneru-721870301"
-      }
-    },
     {
       "name": "Curwen Pei Hong Tan",
       "image": "images/curwen.jpg",
@@ -268,23 +241,20 @@
       "name": "Nathan Thomas",
       "image": "images/nathan.jpg",
       "email": "natethom@iastate.edu",
-      "role": "Major: Software Engineering",
+      "role": "Boeing Fellow",
       "affiliation": "",
       "research": "Software/web development",
       "loves": "All things sports, meeting new people, and learning anything about anything",
       "links": {
         "linkedin": "https://www.linkedin.com/in/nathaniel-thomas-21300a272"
       }
-    }
-  ],
-
-  "remoteInterns": [
+    },
     {
       "name": "Rohan Ghosh Dastidar",
       "image": "images/Rohan.jpg",
       "email": "rgdastidar2069@kgpian.iitkgp.ac.in",
-      "role": "Summer Internship",
-      "affiliation": "Major: Chemical Engineering, Minor: Biotechnology",
+      "role": "IIT Kharagpur (Remote)",
+      "affiliation": "",
       "research": "Computational Protein Engineering, Computational Oncology, Structural Bioinformatics, ML",
       "loves": "",
       "links": {
@@ -292,7 +262,7 @@
       }
     }
   ],
-
+  "remoteInterns": [],
   "alumni": [
     {
       "name": "Sakib Ferdous",
@@ -460,6 +430,20 @@
       "category": "reu",
       "period": "2025",
       "description": "IIINSPIRE LSAMP REU, DMACC",
+      "now": ""
+    },
+    {
+      "name": "Julia Young",
+      "category": "reu",
+      "period": "Spring 26",
+      "description": "Major: Software Engineering",
+      "now": ""
+    },
+    {
+      "name": "Shashank Koneru",
+      "category": "reu",
+      "period": "Spring 26",
+      "description": "Major: Computer Science",
       "now": ""
     }
   ]
