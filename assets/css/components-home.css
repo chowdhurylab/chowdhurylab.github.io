@@ -283,12 +283,13 @@
   justify-content: center;
   min-width: 104px;
   padding: 8px 16px;
-  background-color: #ff8300;
-  color: #fff;
+  background-color: #fff;
+  color: #000;
   text-decoration: none;
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.9rem;
+  border: 1px solid #000;
   border-bottom: 0;
   overflow: hidden;
 }
@@ -296,8 +297,9 @@
 .carousel-card-link:hover,
 .carousel-card-link:focus,
 .carousel-card-link:visited {
-  color: #fff !important;
-  background-color: #ff8300;
+  color: #000 !important;
+  background-color: #fff;
+  border: 1px solid #000;
   border-bottom: 0;
 }
 
