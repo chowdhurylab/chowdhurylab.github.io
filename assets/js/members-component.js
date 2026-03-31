@@ -99,8 +99,8 @@
     }
 
     if (member.affiliation) lines.push(escapeHtml(member.affiliation));
-    if (member.research) lines.push('Research // ' + escapeHtml(member.research));
-    if (member.loves) lines.push('Loves // ' + escapeHtml(member.loves));
+    if (member.research) lines.push('<span class="members-accent-label">Research</span> // ' + escapeHtml(member.research));
+    if (member.loves) lines.push('<span class="members-accent-label">Loves</span> // ' + escapeHtml(member.loves));
 
     return (
       '<article class="members-card">' +
