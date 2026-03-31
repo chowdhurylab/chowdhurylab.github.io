@@ -6,20 +6,30 @@
   var startScrollLeft = 0;
   var singleBatchWidth = 0;
 
+  function escapeHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function renderCard(item, hidden) {
     var hiddenAttr = hidden ? ' aria-hidden="true"' : '';
     return '' +
       '<article class="linkedin-loop-card"' + hiddenAttr + '>' +
-      '  <a class="linkedin-loop-media-link" href="' + (item.href || '#') + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + (item.title || 'LinkedIn update') + '">' +
+      '  <div class="linkedin-loop-content">' +
+      '    <p class="linkedin-loop-kicker">' + escapeHtml(item.category || 'LinkedIn update') + '</p>' +
+      '    <h3>' + escapeHtml(item.title || '') + '</h3>' +
+      '    <p>' + escapeHtml(item.description || '') + '</p>' +
+      '    <a href="' + escapeHtml(item.href || '#') + '" target="_blank" rel="noopener noreferrer">View post</a>' +
+      '  </div>' +
+      '  <a class="linkedin-loop-media-link" href="' + escapeHtml(item.href || '#') + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + escapeHtml(item.title || 'LinkedIn update') + '">' +
       '    <div class="linkedin-loop-media">' +
-      '      <img src="' + (item.image || '') + '" alt="' + (item.imageAlt || item.title || 'LinkedIn update image') + '" />' +
+      '      <img src="' + escapeHtml(item.image || '') + '" alt="' + escapeHtml(item.imageAlt || item.title || 'LinkedIn update image') + '" />' +
       '    </div>' +
       '  </a>' +
-      '  <div class="linkedin-loop-content">' +
-      '    <h3>' + (item.title || '') + '</h3>' +
-      '    <p>' + (item.description || '') + '</p>' +
-      '    <a href="' + (item.href || '#') + '" target="_blank" rel="noopener noreferrer">View post</a>' +
-      '  </div>' +
       '</article>';
   }
 
