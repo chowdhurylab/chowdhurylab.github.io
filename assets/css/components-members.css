@@ -61,7 +61,7 @@
 
 .members-stats-link {
   display: inline-block;
-  color: #BE531C !important;
+  color: #ff8300 !important;
   border-bottom: 0;
   font-size: 0.95rem;
   font-weight: 600;
@@ -70,7 +70,7 @@
 .members-stats-link:hover,
 .members-stats-link:focus,
 .members-stats-link:visited {
-  color: #BE531C !important;
+  color: #ff8300 !important;
   border-bottom: 0;
 }
 

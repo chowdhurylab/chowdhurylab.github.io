@@ -130,8 +130,8 @@
 .joinus-action-secondary:focus,
 .joinus-action-secondary:visited {
   background: #ffffff;
-  color: #BE531C !important;
-  border: 1px solid rgba(190, 83, 28, 0.22);
+  color: #ff8300 !important;
+  border: 1px solid rgba(255, 131, 0, 0.22);
 }
 
 .joinus-highlights {
@@ -267,7 +267,7 @@
 .joinus-card a:hover,
 .joinus-card a:focus,
 .joinus-card a:visited {
-  color: #BE531C !important;
+  color: #ff8300 !important;
   border-bottom: 0;
 }
 

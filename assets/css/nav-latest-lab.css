@@ -151,13 +151,13 @@
 }
 
 .latest-lab-text a {
-  color: #BE531C;
+  color: #ff8300;
 }
 
 .latest-lab-text a:hover,
 .latest-lab-text a:focus,
 .latest-lab-text a:visited {
-  color: #BE531C;
+  color: #ff8300;
 }
 
 .latest-lab-icon {
