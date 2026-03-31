@@ -101,6 +101,21 @@
   font-weight: 400;
 }
 
+.members-links a,
+.members-links a:hover,
+.members-links a:focus,
+.members-links a:visited {
+  color: #ff8300 !important;
+  border-bottom: 0;
+}
+
+.members-links a[href^="mailto:"],
+.members-links a[href^="mailto:"]:hover,
+.members-links a[href^="mailto:"]:focus,
+.members-links a[href^="mailto:"]:visited {
+  font-weight: 700;
+}
+
 .members-links .icon,
 .members-links .icon:hover,
 .members-links .icon:focus,
