@@ -96,6 +96,11 @@
   display: inline-block;
 }
 
+.members-accent-label {
+  color: #ff8300;
+  font-weight: 400;
+}
+
 .members-links .icon,
 .members-links .icon:hover,
 .members-links .icon:focus,
