@@ -6,6 +6,8 @@
     { key: 'remoteInterns', containerId: 'remoteinterns-container' }
   ];
 
+  var authorRegistry = [];
+
   function escapeHtml(text) {
     return String(text || '')
       .replace(/&/g, '&amp;')
@@ -13,6 +15,20 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function lookupAuthorId(memberName) {
+    var match = authorRegistry.find(function (author) {
+      return author.memberName && author.memberName === memberName;
+    });
+    return match ? match.id : '';
+  }
+
+  function renderResearchStatsLink(memberName) {
+    if (memberName === 'Ratul Chowdhury, PhD') return '';
+    var authorId = lookupAuthorId(memberName);
+    if (!authorId) return '';
+    return '<p class="members-stats-link-wrap"><a class="members-stats-link" href="author.html?author=' + encodeURIComponent(authorId) + '">Research Stats</a></p>';
   }
 
   function renderProfileLinks(links) {
@@ -60,6 +76,7 @@
           '  <img class="members-pi-avatar" src="' + escapeHtml(pi.image) + '" alt="' + escapeHtml(pi.name) + '" />' +
           '  <div class="members-pi-content">' +
           '    <h2 class="members-name">' + escapeHtml(pi.name) + '</h2>' +
+          renderResearchStatsLink(pi.name) +
           '    <div class="members-details">' + positionLines + '</div>' +
           '    <p class="members-links">' + contact + '</p>' +
           '  </div>' +
@@ -90,6 +107,7 @@
       '  <img class="members-avatar" src="' + escapeHtml(member.image) + '" alt="' + escapeHtml(member.name) + '" />' +
       '  <figcaption>' +
       '    <h2 class="members-name">' + escapeHtml(member.name) + '</h2>' +
+      renderResearchStatsLink(member.name) +
       '    <div class="members-details">' + lines.map(function (line) { return '<div>' + line + '</div>'; }).join('') + '</div>' +
       '  </figcaption>' +
       '</article>'
@@ -149,8 +167,13 @@
 
   async function loadMembers() {
     try {
-      var res = await fetch('assets/data/members.json');
-      var data = await res.json();
+      var results = await Promise.all([
+        fetch('assets/data/members.json').then(function (res) { return res.json(); }),
+        fetch('assets/data/authors.json').then(function (res) { return res.json(); }).catch(function () { return { authors: [] }; })
+      ]);
+
+      var data = results[0];
+      authorRegistry = results[1].authors || [];
 
       renderPI(data.pi || []);
       sectionConfig.forEach(function (section) {
