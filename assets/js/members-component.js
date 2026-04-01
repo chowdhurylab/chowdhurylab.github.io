@@ -28,7 +28,7 @@
     if (memberName === 'Ratul Chowdhury, PhD') return '';
     var authorId = lookupAuthorId(memberName);
     if (!authorId) return '';
-    return '<p class="members-stats-link-wrap"><a class="members-stats-link" href="author.html?author=' + encodeURIComponent(authorId) + '">Research Stats</a></p>';
+    return '<p class="members-stats-link-wrap"><a class="members-stats-link" href="author.html?author=' + encodeURIComponent(authorId) + '&from=members">Research Stats</a></p>';
   }
 
   function renderProfileLinks(links) {

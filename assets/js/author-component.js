@@ -233,10 +233,12 @@
   }
 
   function renderAuthorPage(author, papers, expertise, mount) {
-    var totalPapers = papers.firstAuthor.length + papers.coAuthor.length;
+    var from = getQueryParam('from');
+    var backHref = from === 'members' ? 'members.html' : 'publications.html';
+    var backLabel = from === 'members' ? 'Back to Members' : 'Back to Publications';
 
     mount.innerHTML = '' +
-      '<a class="author-back-link" href="publications.html"><span class="icon solid fa-arrow-left"></span><span>Back to Publications</span></a>' +
+      '<a class="author-back-link" href="' + backHref + '"><span class="icon solid fa-arrow-left"></span><span>' + backLabel + '</span></a>' +
       '<div class="author-hero">' +
       '  <img class="author-hero-image" src="' + escapeHtml(author.image || 'images/rz.png') + '" alt="' + escapeHtml(author.fullName || author.name) + '">' +
       '  <div class="author-hero-copy">' +
@@ -246,11 +248,6 @@
       '    <p class="author-bio">' + escapeHtml(author.bio || '') + '</p>' +
       '    <div class="author-links">' + renderLinks(author) + '</div>' +
       '  </div>' +
-      '</div>' +
-      '<div class="author-stats-grid">' +
-      '  <div class="author-stat-card"><span class="author-stat-label">Total papers</span><div class="author-stat-value">' + totalPapers + '</div></div>' +
-      '  <div class="author-stat-card"><span class="author-stat-label">First-author</span><div class="author-stat-value">' + papers.firstAuthor.length + '</div></div>' +
-      '  <div class="author-stat-card"><span class="author-stat-label">Co-author</span><div class="author-stat-value">' + papers.coAuthor.length + '</div></div>' +
       '</div>' +
       '<p class="author-note">These stats use full author metadata behind the scenes, while the Publications page keeps its abbreviated citation style.</p>' +
       '<div class="author-charts-grid">' +
