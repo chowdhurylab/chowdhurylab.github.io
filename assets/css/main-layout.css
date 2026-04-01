@@ -417,7 +417,7 @@
   grid-row: span 2;
   overflow: hidden;
   border-radius: 0.75rem;
-  background: #f4f4f4;
+  background: transparent;
 }
 
 .justified-grid-item.is-wide {
