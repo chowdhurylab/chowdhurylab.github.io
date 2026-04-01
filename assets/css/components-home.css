@@ -281,47 +281,49 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 220px;
-  padding: 1rem 1.5rem;
-  background-color: #f3f4f6;
-  color: #111 !important;
+  min-width: 104px;
+  padding: 8px 16px;
+  background-color: #fff;
+  color: #000;
   text-decoration: none;
-  border-radius: 12px;
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 0;
-  box-shadow: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1px solid #000;
+  border-bottom: 1px solid #000;
   overflow: hidden;
 }
 
 .carousel-card-link:hover,
 .carousel-card-link:focus,
 .carousel-card-link:visited {
-  color: #111 !important;
-  background-color: #f3f4f6;
-  border: 0;
-  box-shadow: none;
+  color: #000 !important;
+  background-color: #fff;
+  border: 1px solid #000;
+  border-bottom: 1px solid #000;
 }
 
 .carousel-card-link-label {
-  transition: none;
+  transition: transform 0.22s ease;
 }
 
 .carousel-card-link-arrow {
-  display: none;
+  position: absolute;
+  right: 24px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
 .carousel-card-link:hover .carousel-card-link-label,
 .carousel-card-link:focus .carousel-card-link-label {
-  transform: none;
+  transform: translateX(-5px);
 }
 
 .carousel-card-link:hover .carousel-card-link-arrow,
 .carousel-card-link:focus .carousel-card-link-arrow {
-  opacity: 0;
-  transform: none;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .carousel-card-meta-links {
