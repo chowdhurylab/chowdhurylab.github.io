@@ -206,6 +206,9 @@
   position: fixed;
   inset: 0;
   z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 4vh 2vw;
 }
 
 .moments-lightbox[hidden] {
@@ -223,7 +226,7 @@
   z-index: 1;
   width: min(92vw, 1100px);
   max-height: 90vh;
-  margin: 4vh auto;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
