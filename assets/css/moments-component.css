@@ -247,17 +247,45 @@
 
 .moments-lightbox-close {
   position: absolute;
-  top: -0.75rem;
-  right: -0.75rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 0;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 1.6rem;
-  line-height: 1;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #111827 !important;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
   cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.moments-lightbox-close-icon {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-0.06em);
+}
+
+.moments-lightbox-close:hover,
+.moments-lightbox-close:focus,
+.moments-lightbox-close:visited {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #111827 !important;
+  border: 0 !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 

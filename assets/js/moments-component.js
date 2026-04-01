@@ -92,7 +92,7 @@
     lightbox.innerHTML = '' +
       '<div class="moments-lightbox-backdrop" data-close-lightbox="true"></div>' +
       '<div class="moments-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Full image preview">' +
-      '  <button type="button" class="moments-lightbox-close" aria-label="Close image">×</button>' +
+      '  <button type="button" class="moments-lightbox-close" aria-label="Close image"><span class="moments-lightbox-close-icon" aria-hidden="true">×</span></button>' +
       '  <img class="moments-lightbox-image" src="" alt="" />' +
       '</div>';
 
