@@ -71,7 +71,7 @@
       var display = surname + ', ' + initials;
       var authorId = lookupAuthorId(display);
       var html = authorId
-        ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(authorId) + '">' + escapeHtml(display) + '</a>'
+        ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(authorId) + '&from=publications">' + escapeHtml(display) + '</a>'
         : escapeHtml(display);
       if (/et al\.?$/i.test(text)) html += ', et al.';
       return html;
@@ -79,7 +79,7 @@
 
     var singleId = lookupAuthorId(parts[0]);
     return (singleId
-      ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(singleId) + '">' + escapeHtml(parts[0]) + '</a>'
+      ? '<a class="publication-author-link" href="author.html?author=' + encodeURIComponent(singleId) + '&from=publications">' + escapeHtml(parts[0]) + '</a>'
       : escapeHtml(parts[0])) + (/et al\.?$/i.test(text) ? ', et al.' : '');
   }
 
