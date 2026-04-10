@@ -1,6 +1,125 @@
 {
   "authors": [
     {
+      "id": "bibek-acharya",
+      "displayName": "Bibek Acharya",
+      "publicationNames": [
+        "Acharya, B",
+        "Acharya, B."
+      ],
+      "memberName": "Bibek Acharya",
+      "fullNameVariants": [
+        "Bibek Acharya",
+        "Bibek Acharya"
+      ]
+    },
+    {
+      "id": "c-chen",
+      "displayName": "C. Chen",
+      "publicationNames": [
+        "Chen, C",
+        "Chen, C."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "c-oh",
+      "displayName": "C. Oh",
+      "publicationNames": [
+        "Oh, C",
+        "Oh, C."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "ella-salehi",
+      "displayName": "Ella Salehi",
+      "publicationNames": [],
+      "memberName": "Ella Salehi",
+      "fullNameVariants": [
+        "Rahil Salehi"
+      ]
+    },
+    {
+      "id": "harini-peng",
+      "displayName": "H. Peng",
+      "publicationNames": [
+        "Peng, H",
+        "Peng, H."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "h-zeng",
+      "displayName": "H. Zeng",
+      "publicationNames": [
+        "Zeng, H",
+        "Zeng, H."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "hannah-gates",
+      "displayName": "Hannah Gates",
+      "publicationNames": [
+        "Gates, H",
+        "Gates, H."
+      ],
+      "memberName": "Hannah Gates",
+      "fullNameVariants": [
+        "Hannah Gates"
+      ]
+    },
+    {
+      "id": "jiayi-lin",
+      "displayName": "J. Lin",
+      "publicationNames": [
+        "Lin, J",
+        "Lin, J."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "j-patino-galindo",
+      "displayName": "J. Patiño-Galindo",
+      "publicationNames": [
+        "Patiño-Galindo, J",
+        "Patiño-Galindo, J."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "jennifer-bruner",
+      "displayName": "Jennifer Bruner",
+      "publicationNames": [
+        "Bruner, J",
+        "Bruner, J."
+      ],
+      "memberName": "Jennifer Bruner",
+      "fullNameVariants": [
+        "Jennifer Bruner",
+        "Jennifer Bruner"
+      ]
+    },
+    {
+      "id": "k-e-tiller",
+      "displayName": "K. E. Tiller",
+      "publicationNames": [
+        "Tiller, K. E",
+        "Tiller, K. E."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "k-throckmorton",
+      "displayName": "K. Throckmorton",
+      "publicationNames": [
+        "Throckmorton, K",
+        "Throckmorton, K."
+      ],
+      "memberName": ""
+    },
+    {
       "id": "karuna-anna-sajeevan",
       "displayName": "Karuna Anna Sajeevan, PhD",
       "publicationNames": [
@@ -9,7 +128,48 @@
       ],
       "memberName": "Karuna Anna Sajeevan, PhD",
       "fullNameVariants": [
-        "Karuna Anna Sajeevan"
+        "Karuna Anna Sajeevan",
+        "Saji Uthaman"
+      ]
+    },
+    {
+      "id": "lydia-samineni",
+      "displayName": "Lydia Samineni",
+      "publicationNames": [
+        "Samineni, L",
+        "Samineni, L."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "m-jindra",
+      "displayName": "M. Jindra",
+      "publicationNames": [
+        "Jindra, M",
+        "Jindra, M."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "maria-brown",
+      "displayName": "Maria Brown",
+      "publicationNames": [
+        "Brown, M",
+        "Brown, M."
+      ],
+      "memberName": "Maria Brown",
+      "fullNameVariants": [
+        "Maria Brown",
+        "Maria Brown"
+      ]
+    },
+    {
+      "id": "mohammad-reza-zargar",
+      "displayName": "Mohammad Reza Zargar",
+      "publicationNames": [],
+      "memberName": "Mohammad Reza Zargar",
+      "fullNameVariants": [
+        "Mohammad R Zargar"
       ]
     },
     {
@@ -21,7 +181,101 @@
       ],
       "memberName": "Mohammed Sakib Noor",
       "fullNameVariants": [
-        "Mohammed S Noor"
+        "Mohammed S Noor",
+        "Mohammed Sakib Noor"
+      ]
+    },
+    {
+      "id": "n-hernandez-lozada",
+      "displayName": "N. Hernández Lozada",
+      "publicationNames": [
+        "Hernández Lozada, N",
+        "Hernández Lozada, N."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "r-chakraborty",
+      "displayName": "R. Chakraborty",
+      "publicationNames": [
+        "Chakraborty, R",
+        "Chakraborty, R."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "ratul-chowdhury",
+      "displayName": "Ratul Chowdhury, PhD",
+      "publicationNames": [
+        "Chowdhury, R",
+        "Chowdhury, R."
+      ],
+      "memberName": "",
+      "fullNameVariants": [
+        "Ratul Chowdhury"
+      ]
+    },
+    {
+      "id": "riza-danurdoro",
+      "displayName": "Riza Danurdoro",
+      "publicationNames": [
+        "Danurdoro, R",
+        "Danurdoro, R.",
+        "Danudoro, R",
+        "Danudoro, R."
+      ],
+      "memberName": "Riza Danurdoro",
+      "fullNameVariants": [
+        "Riza Danurdoro",
+        "Riza Danudoro"
+      ]
+    },
+    {
+      "id": "sanghoon-choi",
+      "displayName": "S. Choi",
+      "publicationNames": [
+        "Choi, S",
+        "Choi, S."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "sanjib-malla",
+      "displayName": "S. Malla",
+      "publicationNames": [
+        "Malla, S",
+        "Malla, S."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "s-sarkar",
+      "displayName": "S. Sarkar",
+      "publicationNames": [
+        "Sarkar, S",
+        "Sarkar, S."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "shyamali-uthaman",
+      "displayName": "S. Uthaman",
+      "publicationNames": [
+        "Uthaman, S",
+        "Uthaman, S."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "sakib-ferdous",
+      "displayName": "Sakib Ferdous",
+      "publicationNames": [
+        "Ferdous, S",
+        "Ferdous, S."
+      ],
+      "memberName": "Sakib Ferdous",
+      "fullNameVariants": [
+        "Sakib Ferdous"
       ]
     },
     {
@@ -37,78 +291,6 @@
       ]
     },
     {
-      "id": "sakib-ferdous",
-      "displayName": "Sakib Ferdous",
-      "publicationNames": [
-        "Ferdous, S",
-        "Ferdous, S."
-      ],
-      "memberName": "Sakib Ferdous"
-    },
-    {
-      "id": "lydia-samineni",
-      "displayName": "Lydia Samineni",
-      "publicationNames": [
-        "Samineni, L",
-        "Samineni, L."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "harini-peng",
-      "displayName": "H. Peng",
-      "publicationNames": [
-        "Peng, H",
-        "Peng, H."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "sanjib-malla",
-      "displayName": "S. Malla",
-      "publicationNames": [
-        "Malla, S",
-        "Malla, S."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "jiayi-lin",
-      "displayName": "J. Lin",
-      "publicationNames": [
-        "Lin, J",
-        "Lin, J."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "shyamali-uthaman",
-      "displayName": "S. Uthaman",
-      "publicationNames": [
-        "Uthaman, S",
-        "Uthaman, S."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "sanghoon-choi",
-      "displayName": "S. Choi",
-      "publicationNames": [
-        "Choi, S",
-        "Choi, S."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "m-jindra",
-      "displayName": "M. Jindra",
-      "publicationNames": [
-        "Jindra, M",
-        "Jindra, M."
-      ],
-      "memberName": ""
-    },
-    {
       "id": "v-s-boorla",
       "displayName": "V. S. Boorla",
       "publicationNames": [
@@ -118,40 +300,15 @@
       "memberName": ""
     },
     {
-      "id": "c-oh",
-      "displayName": "C. Oh",
-      "publicationNames": [
-        "Oh, C",
-        "Oh, C."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "j-patino-galindo",
-      "displayName": "J. Pati\u00f1o-Galindo",
-      "publicationNames": [
-        "Pati\u00f1o-Galindo, J",
-        "Pati\u00f1o-Galindo, J."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "h-zeng",
-      "displayName": "H. Zeng",
-      "publicationNames": [
-        "Zeng, H",
-        "Zeng, H."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "c-chen",
-      "displayName": "C. Chen",
-      "publicationNames": [
-        "Chen, C",
-        "Chen, C."
-      ],
-      "memberName": ""
+      "id": "vaishnavey-sr",
+      "displayName": "Vaishnavey SR",
+      "publicationNames": [],
+      "memberName": "Vaishnavey SR",
+      "fullNameVariants": [
+        "Vaishnavey S Raghunath",
+        "Vaishnavey SR",
+        "SR Vaishnavey"
+      ]
     },
     {
       "id": "w-song",
@@ -172,93 +329,12 @@
       "memberName": ""
     },
     {
-      "id": "k-throckmorton",
-      "displayName": "K. Throckmorton",
-      "publicationNames": [
-        "Throckmorton, K",
-        "Throckmorton, K."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "n-hernandez-lozada",
-      "displayName": "N. Hern\u00e1ndez Lozada",
-      "publicationNames": [
-        "Hern\u00e1ndez Lozada, N",
-        "Hern\u00e1ndez Lozada, N."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "k-e-tiller",
-      "displayName": "K. E. Tiller",
-      "publicationNames": [
-        "Tiller, K. E",
-        "Tiller, K. E."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "s-sarkar",
-      "displayName": "S. Sarkar",
-      "publicationNames": [
-        "Sarkar, S",
-        "Sarkar, S."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "r-chakraborty",
-      "displayName": "R. Chakraborty",
-      "publicationNames": [
-        "Chakraborty, R",
-        "Chakraborty, R."
-      ],
-      "memberName": ""
-    },
-    {
-      "id": "hannah-gates",
-      "displayName": "Hannah Gates",
+      "id": "curwen-pei-hong-tan",
+      "displayName": "Curwen Pei Hong Tan",
       "publicationNames": [],
-      "memberName": "Hannah Gates",
+      "memberName": "Curwen Pei Hong Tan",
       "fullNameVariants": [
-        "Hannah Gates"
-      ]
-    },
-    {
-      "id": "mohammad-reza-zargar",
-      "displayName": "Mohammad Reza Zargar",
-      "publicationNames": [],
-      "memberName": "Mohammad Reza Zargar",
-      "fullNameVariants": [
-        "Mohammad R Zargar"
-      ]
-    },
-    {
-      "id": "ella-salehi",
-      "displayName": "Ella Salehi",
-      "publicationNames": [],
-      "memberName": "Ella Salehi",
-      "fullNameVariants": [
-        "Rahil Salehi"
-      ]
-    },
-    {
-      "id": "vaishnavey-sr",
-      "displayName": "Vaishnavey SR",
-      "publicationNames": [],
-      "memberName": "Vaishnavey SR",
-      "fullNameVariants": [
-        "Vaishnavey S Raghunath"
-      ]
-    },
-    {
-      "id": "ratul-chowdhury",
-      "displayName": "Ratul Chowdhury, PhD",
-      "publicationNames": [],
-      "memberName": "Ratul Chowdhury, PhD",
-      "fullNameVariants": [
-        "Ratul Chowdhury"
+        "Curwen Pei Hong Tan"
       ]
     }
   ]
