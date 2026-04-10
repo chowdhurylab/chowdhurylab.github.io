@@ -99,15 +99,16 @@
 }
 
 .carousel-wrapper {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  gap: 14px;
+  overflow: hidden;
   padding-bottom: 4px;
   scrollbar-width: none;
-  scroll-behavior: smooth;
   -ms-overflow-style: none;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 14px;
+  will-change: transform;
 }
 
 .carousel-wrapper::-webkit-scrollbar {
@@ -160,7 +161,6 @@
 }
 
 .card-inner {
-  scroll-snap-align: start;
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
