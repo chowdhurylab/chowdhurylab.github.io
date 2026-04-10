@@ -1,6 +1,60 @@
 {
   "authors": [
     {
+      "id": "aaron-kammlah",
+      "displayName": "Aaron Kammlah",
+      "publicationNames": [],
+      "memberName": "Aaron Kammlah",
+      "fullNameVariants": [
+        "Aaron Kammlah"
+      ]
+    },
+    {
+      "id": "adele-haghighat-hoseini",
+      "displayName": "Adele Haghighat Hoseini",
+      "publicationNames": [],
+      "memberName": "Adele Haghighat Hoseini",
+      "fullNameVariants": [
+        "Adele Haghighat Hoseini"
+      ]
+    },
+    {
+      "id": "ali-zahedi",
+      "displayName": "Ali Zahedi",
+      "publicationNames": [],
+      "memberName": "Ali Zahedi",
+      "fullNameVariants": [
+        "Ali Zahedi"
+      ]
+    },
+    {
+      "id": "andrew-slaughter",
+      "displayName": "Andrew Slaughter",
+      "publicationNames": [],
+      "memberName": "Andrew Slaughter",
+      "fullNameVariants": [
+        "Andrew Slaughter"
+      ]
+    },
+    {
+      "id": "arunraj-b",
+      "displayName": "Arunraj B, PhD",
+      "publicationNames": [],
+      "memberName": "Arunraj B, PhD",
+      "fullNameVariants": [
+        "Arunraj B"
+      ]
+    },
+    {
+      "id": "avishek-bhattacharya",
+      "displayName": "Avishek Bhattacharya",
+      "publicationNames": [],
+      "memberName": "Avishek Bhattacharya",
+      "fullNameVariants": [
+        "Avishek Bhattacharya"
+      ]
+    },
+    {
       "id": "bibek-acharya",
       "displayName": "Bibek Acharya",
       "publicationNames": [
@@ -11,6 +65,33 @@
       "fullNameVariants": [
         "Bibek Acharya",
         "Bibek Acharya"
+      ]
+    },
+    {
+      "id": "biswaroop-maiti",
+      "displayName": "Biswaroop Maiti",
+      "publicationNames": [],
+      "memberName": "Biswaroop Maiti",
+      "fullNameVariants": [
+        "Biswaroop Maiti"
+      ]
+    },
+    {
+      "id": "brisa-lopez-calderon",
+      "displayName": "Brisa Lopez Calderon",
+      "publicationNames": [],
+      "memberName": "Brisa Lopez Calderon",
+      "fullNameVariants": [
+        "Brisa Lopez Calderon"
+      ]
+    },
+    {
+      "id": "brooklyn-mills",
+      "displayName": "Brooklyn Mills",
+      "publicationNames": [],
+      "memberName": "Brooklyn Mills",
+      "fullNameVariants": [
+        "Brooklyn Mills"
       ]
     },
     {
@@ -32,6 +113,33 @@
       "memberName": ""
     },
     {
+      "id": "casey-zielinski",
+      "displayName": "Casey Zielinski",
+      "publicationNames": [],
+      "memberName": "Casey Zielinski",
+      "fullNameVariants": [
+        "Casey Zielinski"
+      ]
+    },
+    {
+      "id": "cris-matthews",
+      "displayName": "Cris Matthews",
+      "publicationNames": [],
+      "memberName": "Cris Matthews",
+      "fullNameVariants": [
+        "Cris Matthews"
+      ]
+    },
+    {
+      "id": "curwen-pei-hong-tan",
+      "displayName": "Curwen Pei Hong Tan",
+      "publicationNames": [],
+      "memberName": "Curwen Pei Hong Tan",
+      "fullNameVariants": [
+        "Curwen Pei Hong Tan"
+      ]
+    },
+    {
       "id": "ella-salehi",
       "displayName": "Ella Salehi",
       "publicationNames": [],
@@ -41,13 +149,13 @@
       ]
     },
     {
-      "id": "harini-peng",
-      "displayName": "H. Peng",
-      "publicationNames": [
-        "Peng, H",
-        "Peng, H."
-      ],
-      "memberName": ""
+      "id": "evan-ingmire",
+      "displayName": "Evan Ingmire",
+      "publicationNames": [],
+      "memberName": "Evan Ingmire",
+      "fullNameVariants": [
+        "Evan Ingmire"
+      ]
     },
     {
       "id": "h-zeng",
@@ -71,11 +179,11 @@
       ]
     },
     {
-      "id": "jiayi-lin",
-      "displayName": "J. Lin",
+      "id": "harini-peng",
+      "displayName": "H. Peng",
       "publicationNames": [
-        "Lin, J",
-        "Lin, J."
+        "Peng, H",
+        "Peng, H."
       ],
       "memberName": ""
     },
@@ -89,6 +197,24 @@
       "memberName": ""
     },
     {
+      "id": "jack-girton",
+      "displayName": "Jack Girton",
+      "publicationNames": [],
+      "memberName": "Jack Girton",
+      "fullNameVariants": [
+        "Jack Girton"
+      ]
+    },
+    {
+      "id": "jack-sloyan",
+      "displayName": "Jack Sloyan",
+      "publicationNames": [],
+      "memberName": "Jack Sloyan",
+      "fullNameVariants": [
+        "Jack Sloyan"
+      ]
+    },
+    {
       "id": "jennifer-bruner",
       "displayName": "Jennifer Bruner",
       "publicationNames": [
@@ -99,6 +225,42 @@
       "fullNameVariants": [
         "Jennifer Bruner",
         "Jennifer Bruner"
+      ]
+    },
+    {
+      "id": "jerome-chow",
+      "displayName": "Jerome Chow",
+      "publicationNames": [],
+      "memberName": "Jerome Chow",
+      "fullNameVariants": [
+        "Jerome Chow"
+      ]
+    },
+    {
+      "id": "jiayi-lin",
+      "displayName": "J. Lin",
+      "publicationNames": [
+        "Lin, J",
+        "Lin, J."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "joel",
+      "displayName": "Joel",
+      "publicationNames": [],
+      "memberName": "Joel",
+      "fullNameVariants": [
+        "Joel"
+      ]
+    },
+    {
+      "id": "julia-young",
+      "displayName": "Julia Young",
+      "publicationNames": [],
+      "memberName": "Julia Young",
+      "fullNameVariants": [
+        "Julia Young"
       ]
     },
     {
@@ -120,6 +282,15 @@
       "memberName": ""
     },
     {
+      "id": "kaelie-hainlin",
+      "displayName": "Kaelie Hainlin",
+      "publicationNames": [],
+      "memberName": "Kaelie Hainlin",
+      "fullNameVariants": [
+        "Kaelie Hainlin"
+      ]
+    },
+    {
       "id": "karuna-anna-sajeevan",
       "displayName": "Karuna Anna Sajeevan, PhD",
       "publicationNames": [
@@ -130,6 +301,15 @@
       "fullNameVariants": [
         "Karuna Anna Sajeevan",
         "Saji Uthaman"
+      ]
+    },
+    {
+      "id": "laura-mariana-correa",
+      "displayName": "Laura Mariana Correa",
+      "publicationNames": [],
+      "memberName": "Laura Mariana Correa",
+      "fullNameVariants": [
+        "Laura Mariana Correa"
       ]
     },
     {
@@ -149,6 +329,24 @@
         "Jindra, M."
       ],
       "memberName": ""
+    },
+    {
+      "id": "madison-ellis",
+      "displayName": "Madison Ellis",
+      "publicationNames": [],
+      "memberName": "Madison Ellis",
+      "fullNameVariants": [
+        "Madison Ellis"
+      ]
+    },
+    {
+      "id": "mahbuba-ferdaous",
+      "displayName": "Mahbuba Ferdaous",
+      "publicationNames": [],
+      "memberName": "Mahbuba Ferdaous",
+      "fullNameVariants": [
+        "Mahbuba Ferdaous"
+      ]
     },
     {
       "id": "maria-brown",
@@ -195,6 +393,51 @@
       "memberName": ""
     },
     {
+      "id": "naimisha-venkatesh",
+      "displayName": "Naimisha Venkatesh",
+      "publicationNames": [],
+      "memberName": "Naimisha Venkatesh",
+      "fullNameVariants": [
+        "Naimisha Venkatesh"
+      ]
+    },
+    {
+      "id": "naomi-mauss",
+      "displayName": "Naomi Mauss",
+      "publicationNames": [],
+      "memberName": "Naomi Mauss",
+      "fullNameVariants": [
+        "Naomi Mauss"
+      ]
+    },
+    {
+      "id": "nathan-thomas",
+      "displayName": "Nathan Thomas",
+      "publicationNames": [],
+      "memberName": "Nathan Thomas",
+      "fullNameVariants": [
+        "Nathan Thomas"
+      ]
+    },
+    {
+      "id": "nikhita-nallu",
+      "displayName": "Nikhita Nallu",
+      "publicationNames": [],
+      "memberName": "Nikhita Nallu",
+      "fullNameVariants": [
+        "Nikhita Nallu"
+      ]
+    },
+    {
+      "id": "priyanshu-gupta",
+      "displayName": "Priyanshu Gupta",
+      "publicationNames": [],
+      "memberName": "Priyanshu Gupta",
+      "fullNameVariants": [
+        "Priyanshu Gupta"
+      ]
+    },
+    {
       "id": "r-chakraborty",
       "displayName": "R. Chakraborty",
       "publicationNames": [
@@ -202,6 +445,24 @@
         "Chakraborty, R."
       ],
       "memberName": ""
+    },
+    {
+      "id": "rachana-krishnamurthy",
+      "displayName": "Rachana Krishnamurthy",
+      "publicationNames": [],
+      "memberName": "Rachana Krishnamurthy",
+      "fullNameVariants": [
+        "Rachana Krishnamurthy"
+      ]
+    },
+    {
+      "id": "randy-aryee",
+      "displayName": "Randy Aryee",
+      "publicationNames": [],
+      "memberName": "Randy Aryee",
+      "fullNameVariants": [
+        "Randy Aryee"
+      ]
     },
     {
       "id": "ratul-chowdhury",
@@ -231,6 +492,36 @@
       ]
     },
     {
+      "id": "rohan-ghosh-dastidar",
+      "displayName": "Rohan Ghosh Dastidar",
+      "publicationNames": [],
+      "memberName": "Rohan Ghosh Dastidar",
+      "fullNameVariants": [
+        "Rohan Ghosh Dastidar"
+      ]
+    },
+    {
+      "id": "s-sarkar",
+      "displayName": "S. Sarkar",
+      "publicationNames": [
+        "Sarkar, S",
+        "Sarkar, S."
+      ],
+      "memberName": ""
+    },
+    {
+      "id": "sakib-ferdous",
+      "displayName": "Sakib Ferdous",
+      "publicationNames": [
+        "Ferdous, S",
+        "Ferdous, S."
+      ],
+      "memberName": "Sakib Ferdous",
+      "fullNameVariants": [
+        "Sakib Ferdous"
+      ]
+    },
+    {
       "id": "sanghoon-choi",
       "displayName": "S. Choi",
       "publicationNames": [
@@ -249,13 +540,22 @@
       "memberName": ""
     },
     {
-      "id": "s-sarkar",
-      "displayName": "S. Sarkar",
-      "publicationNames": [
-        "Sarkar, S",
-        "Sarkar, S."
-      ],
-      "memberName": ""
+      "id": "sean-yang",
+      "displayName": "Sean Yang",
+      "publicationNames": [],
+      "memberName": "Sean Yang",
+      "fullNameVariants": [
+        "Sean Yang"
+      ]
+    },
+    {
+      "id": "shashank-koneru",
+      "displayName": "Shashank Koneru",
+      "publicationNames": [],
+      "memberName": "Shashank Koneru",
+      "fullNameVariants": [
+        "Shashank Koneru"
+      ]
     },
     {
       "id": "shyamali-uthaman",
@@ -267,15 +567,12 @@
       "memberName": ""
     },
     {
-      "id": "sakib-ferdous",
-      "displayName": "Sakib Ferdous",
-      "publicationNames": [
-        "Ferdous, S",
-        "Ferdous, S."
-      ],
-      "memberName": "Sakib Ferdous",
+      "id": "sophie-faga",
+      "displayName": "Sophie Faga",
+      "publicationNames": [],
+      "memberName": "Sophie Faga",
       "fullNameVariants": [
-        "Sakib Ferdous"
+        "Sophie Faga"
       ]
     },
     {
@@ -320,6 +617,15 @@
       "memberName": ""
     },
     {
+      "id": "yee-chuen-teoh",
+      "displayName": "Yee Chuen Teoh",
+      "publicationNames": [],
+      "memberName": "Yee Chuen Teoh",
+      "fullNameVariants": [
+        "Yee Chuen Teoh"
+      ]
+    },
+    {
       "id": "z-wang",
       "displayName": "Z. Wang",
       "publicationNames": [
@@ -329,12 +635,12 @@
       "memberName": ""
     },
     {
-      "id": "curwen-pei-hong-tan",
-      "displayName": "Curwen Pei Hong Tan",
+      "id": "zachary-l-wallace",
+      "displayName": "Zachary L Wallace",
       "publicationNames": [],
-      "memberName": "Curwen Pei Hong Tan",
+      "memberName": "Zachary L Wallace",
       "fullNameVariants": [
-        "Curwen Pei Hong Tan"
+        "Zachary L Wallace"
       ]
     }
   ]
