@@ -28,6 +28,14 @@
     {
       "image": "images/carouselThumbnail/Priyanshu_lunch.jpg",
       "alt": "chowdhury lab event image 4"
+    },
+    {
+      "image": "images/moments-2026-01.jpg",
+      "alt": "Chowdhury Lab moment 2026 1"
+    },
+    {
+      "image": "images/moments-2026-02.jpg",
+      "alt": "Chowdhury Lab moment 2026 2"
     }
   ],
   "postGroups": [
@@ -68,6 +76,30 @@
           "bullets": [
             "Predicting protein structures from amino acid sequences",
             "Language models in biological sequences"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "images/moments-2026-01.jpg",
+          "alt": "Chowdhury Lab moment 2026 1",
+          "heading": "Lab Moment",
+          "summary": "A new snapshot added to the lab moments page.",
+          "year": "2026",
+          "tag": "Moment",
+          "bullets": [
+            "Added from the latest photo drop"
+          ]
+        },
+        {
+          "type": "image",
+          "src": "images/moments-2026-02.jpg",
+          "alt": "Chowdhury Lab moment 2026 2",
+          "heading": "Lab Moment",
+          "summary": "Another fresh memory added to the moments collage.",
+          "year": "2026",
+          "tag": "Moment",
+          "bullets": [
+            "Added from the latest photo drop"
           ]
         },
         {

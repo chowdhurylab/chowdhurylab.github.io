@@ -67,10 +67,9 @@
 
     return (
       '<div class="moments-justified-grid">' +
-      images.map(function (item, index) {
-        var widthClass = index % 6 === 0 ? ' is-wide' : index % 5 === 0 ? ' is-tall' : '';
+      images.map(function (item) {
         return (
-          '<figure class="justified-grid-item' + widthClass + '">' +
+          '<figure class="justified-grid-item">' +
           '  <button type="button" class="moments-lightbox-trigger" data-full-src="' + escapeHtml(item.src) + '" data-full-alt="' + escapeHtml(item.alt || 'moment image') + '" aria-label="Open full image">' +
           '    <img src="' + escapeHtml(item.src) + '" alt="' + escapeHtml(item.alt || 'moment image') + '">' +
           '  </button>' +
