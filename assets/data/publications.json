@@ -6,7 +6,25 @@
       "authors": "Mills, C. E. et al.",
       "title": "Polypharmacology of an Optimal Kinase Library",
       "link": "https://www.biorxiv.org/content/10.64898/2026.03.17.711623.abstract",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Caitlin E. Mills",
+        "Clemens Hug",
+        "Karuna Anna Sajeevan",
+        "Nicholas Clark",
+        "Chiara Victor",
+        "Mirra Chung",
+        "Sameer Rawat",
+        "Bree Aldridge",
+        "Mark W. Albers",
+        "Ratul Chowdhury",
+        "Benjamin M. Gyori",
+        "Peter K. Sorger"
+      ],
+      "labMemberAuthors": [
+        "Karuna Anna Sajeevan",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2026,
@@ -14,7 +32,28 @@
       "authors": "Aryee, R. et al.",
       "title": "Structural and Metabolic Characterization of Ni(I)-inhibitors Provide a Robust Anti-Methanogenicity Scoring System",
       "link": "https://www.biorxiv.org/content/10.64898/2026.02.25.708075.abstract",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "R. Aryee",
+        "M. R. Zargar",
+        "SR Vaishnavey",
+        "B. Arunraj",
+        "N. S. Mohammed",
+        "Supantha Dey",
+        "Karuna Anna Sajeevan",
+        "A. N. Frazier",
+        "J.A. Koziel",
+        "Matthew R. Beck",
+        "Thomas J. Mansell",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "SR Vaishnavey",
+        "B. Arunraj",
+        "Supantha Dey",
+        "Karuna Anna Sajeevan",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -22,7 +61,25 @@
       "authors": "Twu, N. et al.",
       "title": "Spatial mapping of influenza and coronavirus receptors in the respiratory and intestinal tract epithelium of beef cattle using advanced PixF image analysis",
       "link": "https://www.nature.com/articles/s41598-025-28429-0",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Ning-Chieh Twu",
+        "Yee Chuen Teoh",
+        "Curwen Pei Hong Tan",
+        "Riza Danudoro",
+        "Xiaoyi Cheng",
+        "Raquel Espin-Palazon",
+        "Todd Bell",
+        "Luis Giménez-Lirola",
+        "Ratul Chowdhury",
+        "Rahul Kumar Nelli"
+      ],
+      "labMemberAuthors": [
+        "Yee Chuen Teoh",
+        "Curwen Pei Hong Tan",
+        "Riza Danudoro",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -30,7 +87,20 @@
       "authors": "Ma, X. et al.",
       "title": "Seq2Bind webserver for binding site prediction from sequences using fine-tuned protein language models",
       "link": "https://academic.oup.com/nargab/article-abstract/7/4/lqaf154/8340159",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Xiang Ma",
+        "Supantha Dey",
+        "Vaishnavey SR",
+        "Casey Zelinski",
+        "Qi Li",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Supantha Dey",
+        "Vaishnavey SR",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -38,7 +108,22 @@
       "authors": "Dey, S. et al.",
       "title": "AstraMEV (AI-Guided Structural Assembly of Multi-Epitope Vaccines) Against Infectious Bronchitis Virus",
       "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Supantha Dey",
+        "Hannah Gates",
+        "Rahil Salehi",
+        "Riza Danurdoro",
+        "Sakib Ferdous",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Supantha Dey",
+        "Rahil Salehi",
+        "Riza Danurdoro",
+        "Sakib Ferdous",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -46,7 +131,22 @@
       "authors": "Dey, S. et al.",
       "title": "Structurally Informed Fitness Landscapes for Surveillance of Emerging PRRSV Variants",
       "link": "https://www.biorxiv.org/content/10.1101/2025.10.06.680729.abstract",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Vaishnavey SR",
+        "Supantha Dey",
+        "Sakib Ferdous",
+        "Riza Danurdoro",
+        "Michael A Zeller",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Vaishnavey SR",
+        "Supantha Dey",
+        "Sakib Ferdous",
+        "Riza Danurdoro",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -54,7 +154,15 @@
       "authors": "Dey, S. et al.",
       "title": "Twin peaks: Dual-head architecture for structure-free prediction of protein-protein binding affinity and mutation effects",
       "link": "https://arxiv.org/abs/2509.22950",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Supantha Dey",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Supantha Dey",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -62,8 +170,22 @@
       "authors": "Teoh, Y. C. et al.",
       "title": "Viral escape-inspired framework for structure-guided dual bait protein biosensor design",
       "link": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012964",
-      "articleType": "Article"
-    },    
+      "articleType": "Article",
+      "fullAuthors": [
+        "Yee Chuen Teoh",
+        "Mohammed Sakib Noor",
+        "Sina Aghakhani",
+        "Jack Girton",
+        "Guiping Hu",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Yee Chuen Teoh",
+        "Mohammed Sakib Noor",
+        "Jack Girton",
+        "Ratul Chowdhury"
+      ]
+    },
     {
       "year": 2025,
       "journal": "Current Opinion in Biotechnology",
@@ -102,12 +224,14 @@
         "Bibek Acharya",
         "Sakib Ferdous",
         "Dan M. Park",
-        "Joseph A. Cotruvo",
+        "Joseph A. Cotruvo Jr.",
         "Ratul Chowdhury"
       ],
       "labMemberAuthors": [
-        "Karuna Anna Sajeevan, PhD",
-        "Ratul Chowdhury, PhD"
+        "Karuna Anna Sajeevan",
+        "Bibek Acharya",
+        "Sakib Ferdous",
+        "Ratul Chowdhury"
       ],
       "doi": "10.1016/j.csbj.2025.02.005"
     },
@@ -138,7 +262,34 @@
       "authors": "Sajeevan, K. A. et al.",
       "title": "Robust prediction of enzyme variant kinetics with RealKcat",
       "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11844551/",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Karuna Anna Sajeevan",
+        "Abraham Osinuga",
+        "Arunraj B",
+        "Sakib Ferdous",
+        "Nabia Shahreen",
+        "Mohammed Sakib Noor",
+        "Shashank Koneru",
+        "Laura Mariana Santos-Correa",
+        "Rahil Salehi",
+        "Niaz Bahar Chowdhury",
+        "Brisa Calderon-Lopez",
+        "Ankur Mali",
+        "Rajib Saha",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Karuna Anna Sajeevan",
+        "Arunraj B",
+        "Sakib Ferdous",
+        "Mohammed Sakib Noor",
+        "Shashank Koneru",
+        "Laura Mariana Santos-Correa",
+        "Rahil Salehi",
+        "Brisa Calderon-Lopez",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -146,7 +297,25 @@
       "authors": "Ferdous, S. et al.",
       "title": "Improved functional classification of hydrolases through pairwise structural similarity of reaction cores",
       "link": "https://www.biorxiv.org/content/10.1101/2025.01.09.632218.abstract",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Sakib Ferdous",
+        "Priyanshu Gupta",
+        "Yee Chuen Teoh",
+        "Karuna Anna Sajeevan",
+        "SR Vaishnavey",
+        "Kaelie Hainlin",
+        "Nigel Reuel",
+        "Abir Qamhiyah",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Sakib Ferdous",
+        "Yee Chuen Teoh",
+        "Karuna Anna Sajeevan",
+        "SR Vaishnavey",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2025,
@@ -173,7 +342,21 @@
       "authors": "Sajeevan, K. A. et al.",
       "title": "Computationally derived structural insights into Rare Earth selectivity in lanmodulin and its variants",
       "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315",
-      "articleType": "Article"
+      "articleType": "Article",
+      "fullAuthors": [
+        "Karuna Anna Sajeevan",
+        "Bibek Acharya",
+        "Sakib Ferdous",
+        "Dan M. Park",
+        "Joseph A. Cotruvo Jr.",
+        "Ratul Chowdhury"
+      ],
+      "labMemberAuthors": [
+        "Karuna Anna Sajeevan",
+        "Bibek Acharya",
+        "Sakib Ferdous",
+        "Ratul Chowdhury"
+      ]
     },
     {
       "year": 2024,
@@ -257,8 +440,26 @@
       "title": "Inhibiting the cGAS-STING Pathway in Ulcerative Colitis with Programmable Micelles",
       "link": "https://pubs.acs.org/doi/10.1021/acsnano.3c11257",
       "articleType": "Article",
-      "fullAuthors": [],
-      "labMemberAuthors": [],
+      "fullAuthors": [
+        "Saji Uthaman",
+        "Shadi Parvinroo",
+        "Ansuja Pulickal Mathew",
+        "Xinglin Jia",
+        "Belen Hernandez",
+        "Alexandra Proctor",
+        "Karuna Anna Sajeevan",
+        "Ariel Nenninger",
+        "Mary-Jane Long",
+        "In-Kyu Park",
+        "Ratul Chowdhury",
+        "Gregory J. Phillips",
+        "Michael J. Wannemuehler",
+        "Rizia Bardhan"
+      ],
+      "labMemberAuthors": [
+        "Karuna Anna Sajeevan",
+        "Ratul Chowdhury"
+      ],
       "doi": "10.1021/acsnano.3c11257.s001"
     },
     {
@@ -494,7 +695,7 @@
     {
       "year": 2021,
       "journal": "Genome Medicine",
-      "authors": "Pati\u00f1o-Galindo, J. et al.",
+      "authors": "Patiño-Galindo, J. et al.",
       "title": "Recombination and lineage-specific mutations linked to the emergence of SARS-CoV-2",
       "link": "https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-021-00943-6",
       "articleType": "Article",
@@ -505,7 +706,7 @@
         }
       ],
       "fullAuthors": [
-        "Juan \u00c1ngel Pati\u00f1o-Galindo",
+        "Juan Ángel Patiño-Galindo",
         "Ioan Filip",
         "Ratul Chowdhury",
         "Costas D. Maranas",
@@ -617,7 +818,7 @@
       "year": 2020,
       "journal": "Structure",
       "authors": "Chowdhury, R. et al.",
-      "title": "IPRO+/\u2212: Computational Protein Design Tool Allowing for Insertions and Deletions",
+      "title": "IPRO+/−: Computational Protein Design Tool Allowing for Insertions and Deletions",
       "link": "https://doi.org/10.1016/j.str.2020.08.003",
       "articleType": "Article",
       "fullAuthors": [
@@ -772,7 +973,7 @@
       "year": 2019,
       "journal": "AIChE Journal",
       "authors": "Chowdhury, R. & Maranas, C. D.",
-      "title": "From directed evolution to computational enzyme engineering\u2014A review",
+      "title": "From directed evolution to computational enzyme engineering—A review",
       "link": "https://aiche.onlinelibrary.wiley.com/doi/abs/10.1002/aic.16847",
       "articleType": "Article",
       "extraLinks": [
@@ -803,8 +1004,23 @@
           "url": "https://cen.acs.org/environment/water/Filter-made-tropical-tree-seeds/97/web/2019/11"
         }
       ],
-      "fullAuthors": [],
-      "labMemberAuthors": [],
+      "fullAuthors": [
+        "Laxmicharan Samineni",
+        "Boya Xiong",
+        "Ratul Chowdhury",
+        "Andrew Pei",
+        "Louise Kuehster",
+        "Huiran Wang",
+        "Roman Dickey",
+        "Paula Espinoza Soto",
+        "Lynnicia Massenburg",
+        "Thanh H. Nguyen",
+        "Costas D. Maranas",
+        "Darrell Velegol"
+      ],
+      "labMemberAuthors": [
+        "Ratul Chowdhury"
+      ],
       "doi": "10.1021/acs.est.9b03734.s004"
     },
     {
@@ -865,12 +1081,22 @@
     {
       "year": 2018,
       "journal": "ACS Synthetic Biology",
-      "authors": "Hern\u00e1ndez Lozada, N. et al.",
+      "authors": "Hernández Lozada, N. et al.",
       "title": "Highly Active C8-Acyl-ACP Thioesterase Variant Isolated by a Synthetic Selection Strategy",
       "link": "https://pubs.acs.org/doi/10.1021/acssynbio.8b00215",
       "articleType": "Article",
-      "fullAuthors": [],
-      "labMemberAuthors": [],
+      "fullAuthors": [
+        "Néstor J. Hernández Lozada",
+        "Rung-Yi Lai",
+        "Trevor R. Simmons",
+        "Kelsey A. Thomas",
+        "Ratul Chowdhury",
+        "Costas D. Maranas",
+        "Brian F. Pfleger"
+      ],
+      "labMemberAuthors": [
+        "Ratul Chowdhury"
+      ],
       "doi": "10.1021/acssynbio.8b00215.s001"
     },
     {
@@ -1003,7 +1229,7 @@
       "year": 2011,
       "journal": "International Journal of Theoretical Physics",
       "authors": "Chowdhury, R. et al.",
-      "title": "Influence of Gauss-Bonnet Coupling Parameter on the Thermodynamic Properties of Einstein-Gauss-Bonnet and Einstein\u2013Yang-Mills\u2013Gauss-Bonnet Black Holes",
+      "title": "Influence of Gauss-Bonnet Coupling Parameter on the Thermodynamic Properties of Einstein-Gauss-Bonnet and Einstein–Yang-Mills–Gauss-Bonnet Black Holes",
       "link": "https://link.springer.com/article/10.1007/s10773-011-0672-7",
       "articleType": "Article",
       "fullAuthors": [

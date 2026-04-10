@@ -17,9 +17,18 @@
       .replace(/'/g, '&#39;');
   }
 
+  function normalizeMemberName(text) {
+    return String(text || '')
+      .toLowerCase()
+      .replace(/,?\s*ph\.?d\.?/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function lookupAuthorId(memberName) {
+    var normalized = normalizeMemberName(memberName);
     var match = authorRegistry.find(function (author) {
-      return author.memberName && author.memberName === memberName;
+      return author.memberName && normalizeMemberName(author.memberName) === normalized;
     });
     return match ? match.id : '';
   }
