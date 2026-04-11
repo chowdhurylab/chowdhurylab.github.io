@@ -26,6 +26,40 @@
       .trim();
   }
 
+  function normalizeSearchText(text) {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/,?\s*ph\.?d\.?/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  function buildSearchVariants(name) {
+    var normalized = normalizeSearchText(name);
+    if (!normalized) return [];
+
+    var parts = normalized.split(/\s+/).filter(Boolean);
+    var variants = [normalized];
+    var shortParts = parts.filter(function (part) {
+      return part.length > 1;
+    });
+
+    if (parts.length >= 2) {
+      variants.push(parts[0] + ' ' + parts[parts.length - 1]);
+      variants.push(parts[parts.length - 1] + ' ' + parts[0]);
+    }
+
+    if (shortParts.length >= 2) {
+      variants.push(shortParts.join(' '));
+    }
+
+    return variants.filter(function (value, index, arr) {
+      return value && arr.indexOf(value) === index;
+    });
+  }
+
   function lookupAuthorId(display) {
     var citation = normalizeCitationName(display);
     var match = authorRegistry.find(function (author) {
@@ -35,6 +69,30 @@
     });
 
     return match ? match.id : '';
+  }
+
+  function publicationMatchesAuthorQuery(pub, normalizedQuery) {
+    if (!normalizedQuery) return false;
+
+    var authorVariants = [];
+
+    (pub.fullAuthors || []).forEach(function (name) {
+      buildSearchVariants(name).forEach(function (variant) {
+        if (authorVariants.indexOf(variant) === -1) authorVariants.push(variant);
+      });
+    });
+
+    (pub.labMemberAuthors || []).forEach(function (name) {
+      buildSearchVariants(name).forEach(function (variant) {
+        if (authorVariants.indexOf(variant) === -1) authorVariants.push(variant);
+      });
+    });
+
+    return authorVariants.some(function (variant) {
+      if (variant === normalizedQuery) return true;
+      if (normalizedQuery.length < 3) return false;
+      return variant.indexOf(normalizedQuery) === 0;
+    });
   }
 
   function renderExtraLinks(pub) {
@@ -167,6 +225,7 @@
 
     var yearValue = yearSelect ? yearSelect.value : 'all';
     var query = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
+    var normalizedQuery = normalizeSearchText(query);
     var mediaOnlyChecked = !!(mediaOnly && mediaOnly.checked);
 
     var filtered = allPublications.filter(function (pub) {
@@ -179,7 +238,9 @@
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
-        if (haystack.indexOf(query) === -1) return false;
+        var textMatch = haystack.indexOf(query) !== -1;
+        var authorMatch = publicationMatchesAuthorQuery(pub, normalizedQuery);
+        if (!textMatch && !authorMatch) return false;
       }
 
       return true;
