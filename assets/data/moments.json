@@ -1,5 +1,5 @@
 {
-  "introText": "Featuring images and videos of lab members participating in activities beyond the lab, such as delivering impactful talks, celebrating successful defenses, published papers, and other joyful milestones. Together we cherish both our scientific achievements and the moments of happiness that come from shared successes and teamwork.",
+  "introText": " ",
   "carousel": [
     {
       "image": "images/carouselThumbnail/fall24.png",
@@ -86,9 +86,7 @@
           "summary": "A new snapshot added to the lab moments page.",
           "year": "2026",
           "tag": "Moment",
-          "bullets": [
-            "Added from the latest photo drop"
-          ]
+          "bullets": ["Added from the latest photo drop"]
         },
         {
           "type": "image",
@@ -98,9 +96,7 @@
           "summary": "Another fresh memory added to the moments collage.",
           "year": "2026",
           "tag": "Moment",
-          "bullets": [
-            "Added from the latest photo drop"
-          ]
+          "bullets": ["Added from the latest photo drop"]
         },
         {
           "type": "video",
