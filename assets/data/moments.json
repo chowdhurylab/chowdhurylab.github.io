@@ -2,6 +2,14 @@
   "introText": " ",
   "carousel": [
     {
+      "image": "images/IMG_0681.jpg",
+      "alt": "Chowdhury Lab moment photo"
+    },
+    {
+      "image": "images/IMG_0684.jpg",
+      "alt": "Chowdhury Lab group moment"
+    },
+    {
       "image": "images/carouselThumbnail/fall24.png",
       "alt": "chowdhury lab event image 7"
     },
@@ -41,6 +49,26 @@
   "postGroups": [
     {
       "items": [
+        {
+          "type": "image",
+          "src": "images/IMG_0681.jpg",
+          "alt": "Chowdhury Lab moment photo",
+          "heading": "Lab Moment",
+          "summary": "A new photo added to the Chowdhury Lab moments collection.",
+          "year": "2026",
+          "tag": "Moment",
+          "bullets": ["Added from the latest photo drop"]
+        },
+        {
+          "type": "image",
+          "src": "images/IMG_0684.jpg",
+          "alt": "Chowdhury Lab group moment",
+          "heading": "Lab Moment",
+          "summary": "Another snapshot added to the lab moments collage.",
+          "year": "2026",
+          "tag": "Moment",
+          "bullets": ["Added from the latest photo drop"]
+        },
         {
           "type": "image",
           "src": "images/ScholarsDay2.jpg",
