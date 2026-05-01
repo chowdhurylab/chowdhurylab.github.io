@@ -11,6 +11,7 @@
       <li class="top-nav-dropdown">
         <button type="button" class="top-nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Software</button>
         <div class="top-nav-dropdown-menu" role="menu" aria-label="Software links">
+          <a href="tools/catlog-static/index.html" role="menuitem">CatLog</a>
           <a href="https://github.com/chowdhurylab" target="_blank" rel="noopener noreferrer" role="menuitem">GitHub</a>
           <a href="https://huggingface.co/chowdhury-lab/protein-binding-affinity" target="_blank" rel="noopener noreferrer" role="menuitem">HuggingFace</a>
           <a href="https://agrivax.studio/" target="_blank" rel="noopener noreferrer" role="menuitem">agrivax.studio</a>
