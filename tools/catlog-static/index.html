@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CatLog Static Snapshot</title>
+    <link rel="stylesheet" href="assets/catlog-static.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CatLog Static Snapshot</p>
+          <h1>Enzyme catalysis logbook</h1>
+          <p class="subhead">Search, filter, and inspect evidence in this frozen local snapshot without a server.</p>
+        </div>
+        <div class="snapshot-meta">
+          <span id="snapshotLabel">Loading snapshot</span>
+          <span id="rowCountLabel">- rows</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="summary-grid" id="summaryGrid" aria-live="polite"></section>
+
+        <section class="toolbar" aria-label="Catalog filters">
+          <label class="field search-field">
+            <span>Search</span>
+            <input id="searchInput" type="search" placeholder="enzyme, EC, UniProt, PMID/DOI" />
+          </label>
+          <label class="field">
+            <span>Status</span>
+            <select id="statusSelect"></select>
+          </label>
+          <label class="field">
+            <span>Paper evidence</span>
+            <select id="tierSelect"></select>
+          </label>
+          <label class="field">
+            <span>Source</span>
+            <select id="sourceSelect"></select>
+          </label>
+          <label class="field">
+            <span>Identity</span>
+            <select id="identitySelect"></select>
+          </label>
+          <label class="field">
+            <span>Sort</span>
+            <select id="sortSelect">
+              <option value="evidence">Evidence first</option>
+              <option value="ec_number">EC number</option>
+              <option value="enzyme">Enzyme</option>
+              <option value="organism">Organism</option>
+              <option value="substrate">Substrate</option>
+              <option value="kcat">kcat</option>
+              <option value="km">Km</option>
+              <option value="ki">Ki</option>
+              <option value="source">Source</option>
+            </select>
+          </label>
+          <button id="clearButton" class="button secondary" type="button">Reset</button>
+        </section>
+
+        <section class="utility-row">
+          <div id="activeSummary">Loading records...</div>
+        </section>
+
+        <section class="content-grid">
+          <section class="table-panel">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Enzyme / EC</th>
+                    <th>Context</th>
+                    <th>Kinetics</th>
+                    <th>Claim status</th>
+                    <th>Paper evidence</th>
+                    <th>Literature</th>
+                  </tr>
+                </thead>
+                <tbody id="recordsBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="prevButton" class="button secondary" type="button">Previous</button>
+              <span id="pageLabel">Page 1</span>
+              <button id="nextButton" class="button secondary" type="button">Next</button>
+            </div>
+          </section>
+
+          <aside class="detail-panel" aria-live="polite">
+            <div id="detailEmpty" class="detail-empty">Select a row to inspect evidence and traceability.</div>
+            <div id="detailContent" class="hidden"></div>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="data/manifest.js"></script>
+    <script src="assets/catlog-static.js"></script>
+  </body>
+</html>
