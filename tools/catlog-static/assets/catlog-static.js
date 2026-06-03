@@ -6,6 +6,7 @@
     page: 1,
     pageSize: 50,
     selectedKey: "",
+    downloadInProgress: false,
     loadedScripts: new Set(["data/manifest.js"]),
   };
 
@@ -39,6 +40,18 @@
     sequence_resolved_no_accession: "sequence only",
     candidate_pool: "candidate pool",
     identity_unresolved: "identity unresolved",
+  };
+
+  const sourceLabels = {
+    source_record: "source record",
+    explicit_enzyme_name: "explicit name",
+    brenda_recommended_name: "BRENDA recommended name",
+    protein_name_fallback: "preserved protein name",
+    uniprot_name_fallback: "UniProt protein name",
+    ec_accepted_name_fallback: "EC accepted name",
+    ec_name_fallback: "EC canonical name",
+    uniprot_fallback: "inferred from UniProt",
+    name_not_preserved: "name not preserved",
   };
 
   const $ = (id) => document.getElementById(id);
@@ -133,6 +146,49 @@
     });
   }
 
+  function triggerBlobDownload(filename, payload) {
+    const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function handleJsonDownload() {
+    if (state.downloadInProgress) return;
+    state.downloadInProgress = true;
+    renderUtilityActions();
+    try {
+      const payload = {
+        metadata: {
+          name: "CatLog Static Snapshot Small JSON Download",
+          generated_at: new Date().toISOString(),
+          snapshot_generated_at: manifest.generated_at || null,
+          source_file: manifest.source_file || null,
+          source_size_bytes: manifest.source_size_bytes || null,
+          source_sha256: manifest.source_sha256 || null,
+          summary: manifest.summary || {},
+          total_rows: manifest.total_rows || state.records.length,
+          record_chunks: manifest.record_chunks || [],
+          export_scope: "record_summaries_only",
+        },
+        records: state.records,
+      };
+      const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
+      triggerBlobDownload(`catlog-static-snapshot-small-${filenameDate}.json`, JSON.stringify(payload, null, 2));
+      $("activeSummary").textContent = `Downloaded small JSON for ${formatInteger(state.records.length)} row summary${state.records.length === 1 ? "" : "ies"}.`;
+    } catch (error) {
+      $("activeSummary").innerHTML = `<span class="badge warn">${escapeHtml(error.message || error)}</span>`;
+    } finally {
+      state.downloadInProgress = false;
+      renderUtilityActions();
+    }
+  }
+
   function uniqueValues(field) {
     return [...new Set(state.records.map((row) => row[field]).filter(Boolean))]
       .sort((a, b) => String(a).localeCompare(String(b)));
@@ -164,6 +220,24 @@
         <span>${escapeHtml(note)}</span>
       </article>
     `).join("");
+    renderUtilityActions();
+  }
+
+  function renderUtilityActions() {
+    const actions = [];
+    const downloadLabel = state.downloadInProgress ? "Preparing small JSON..." : "Download JSON";
+    actions.push(`<button id="downloadJsonButton" class="button secondary" type="button">${escapeHtml(downloadLabel)}</button>`);
+    const fullData = manifest.full_data_download || {};
+    if (fullData.path) {
+      actions.push(`<a class="button secondary" href="${escapeHtml(fullData.path)}" download>Download full data</a>`);
+    }
+    actions.push('<a class="button secondary" href="README_FIRST.txt" download>Download README</a>');
+    $("utilityActions").innerHTML = actions.join("");
+    const downloadButton = $("downloadJsonButton");
+    if (downloadButton) {
+      downloadButton.disabled = state.downloadInProgress;
+      downloadButton.addEventListener("click", handleJsonDownload);
+    }
   }
 
   function setupFilters() {
@@ -193,6 +267,17 @@
     return true;
   }
 
+  function ecSort(a, b) {
+    const parse = (value) => String(value || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
+    const left = parse(a.ec_number);
+    const right = parse(b.ec_number);
+    for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+      const delta = (left[index] ?? -1) - (right[index] ?? -1);
+      if (delta !== 0) return delta;
+    }
+    return String(a.ec_number || "").localeCompare(String(b.ec_number || ""));
+  }
+
   function sortRows(rows, sort) {
     const textKey = (field) => (a, b) => String(a[field] || "").localeCompare(String(b[field] || ""));
     const numericDesc = (field) => (a, b) => {
@@ -201,7 +286,7 @@
       return bv - av;
     };
     const sorters = {
-      ec_number: textKey("ec_number"),
+      ec_number: ecSort,
       enzyme: textKey("enzyme_display_name"),
       organism: textKey("organism"),
       substrate: textKey("substrate_name"),
@@ -213,7 +298,7 @@
         const tierDelta = (tierOrder[a.evidence_confidence_tier] ?? 99) - (tierOrder[b.evidence_confidence_tier] ?? 99);
         if (tierDelta !== 0) return tierDelta;
         return (Number(b.source_record_count || 0) - Number(a.source_record_count || 0))
-          || String(a.ec_number || "").localeCompare(String(b.ec_number || ""));
+          || ecSort(a, b);
       },
     };
     rows.sort(sorters[sort] || sorters.evidence);
@@ -247,6 +332,7 @@
         <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}">
           <td class="primary-cell">
             <strong>${escapeHtml(row.enzyme_display_name || "Name not preserved")}</strong>
+            <span class="muted">${escapeHtml(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || "name source unknown")}</span>
             <span class="muted">${escapeHtml(row.ec_number || "n/a")}</span>
           </td>
           <td class="context-cell">
@@ -404,6 +490,8 @@
           ${kv("measurement key", summary.measurement_key)}
           ${kv("review key", summary.review_key)}
           ${kv("source", summary.source_db)}
+          ${kv("enzyme label source", sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source)}
+          ${kv("preserved name source", summary.enzyme_name_source || detail.enzyme_name_source)}
           ${kv("claim status", statusLabels[summary.verification_status] || summary.verification_status)}
           ${kv("paper evidence", tierLabels[summary.evidence_confidence_tier] || summary.evidence_confidence_tier)}
           ${kv("identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state)}

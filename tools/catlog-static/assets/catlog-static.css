@@ -26,6 +26,7 @@ body {
 }
 
 button,
+a.button,
 input,
 select {
   font: inherit;
@@ -141,6 +142,9 @@ h1 {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   border: 1px solid var(--accent);
   border-radius: 6px;
@@ -150,6 +154,7 @@ h1 {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .button.secondary {
@@ -171,6 +176,13 @@ h1 {
   padding: 12px 14px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .content-grid {
@@ -439,5 +451,9 @@ pre {
   .detail-panel {
     position: static;
     max-height: none;
+  }
+
+  .utility-actions {
+    justify-content: flex-start;
   }
 }
