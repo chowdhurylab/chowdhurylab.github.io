@@ -1,16 +1,6 @@
 {
   "cards": [
     {
-      "journal": "Cell Systems",
-      "category": "REVIEW",
-      "date": "2023",
-      "image": "images/carousel/PoreProteins.png",
-      "imageAlt": "engineering rationale",
-      "title": "Pore Proteins",
-      "description": "Structural basis of separations, sensing, and sequencing.",
-      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
-    },
-    {
       "journal": "Current Opinion",
       "category": "REVIEW",
       "date": "2025",
@@ -21,42 +11,49 @@
       "link": "https://www.sciencedirect.com/science/article/pii/S0958166925000035?casa_token=JARr_p7OHC8AAAAA:M98k9RkFsPKLBbA40YY-Vju-UMOqVsSLJsu-8MW25KLi2yQToywVGuyfiizo1z1jGzeRrwgU"
     },
     {
-      "journal": "PLoS Comp. Bio",
-      "category": "RESEARCH",
-      "date": "2024",
-      "image": "images/carousel/CTRL-V.png",
-      "imageAlt": "PRRSV",
-      "title": "CTRL-V",
-      "description": "Dual-bait biosensor design inspired by viral escape.",
-      "link": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012964"
-    },
-    {
-      "journal": "Comp. Str. Bio. J",
-      "category": "RESEARCH",
-      "date": "2024",
-      "image": "images/carousel/PorcineVaccine.png",
-      "imageAlt": "engineering rationale",
-      "title": "Porcine Vaccine",
-      "description": "Immunogenic vaccine peptide design against PRRS virus.",
-      "link": "https://www.sciencedirect.com/science/article/pii/S2001037024002885"
-    },
-    {
       "journal": "Comp. Str. Bio. J",
       "category": "RESEARCH",
       "date": "2025",
       "image": "images/carousel/RareEarthRecovery.png",
-      "imageAlt": "RGN2",
+      "imageAlt": "rare earth recovery",
       "title": "Rare Earth Recovery",
       "description": "Biophysical underpinnings of Lanmodulin protein.",
       "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315"
     },
     {
+      "journal": "bioRxiv",
+      "category": "RESEARCH",
+      "date": "2025",
+      "image": "images/carousel/PRRSV.JPG",
+      "imageAlt": "PRRSV",
+      "title": "PRRSV Variants",
+      "description": "Fitness landscapes for surveillance of emerging PRRSV variants.",
+      "link": "https://www.biorxiv.org/content/10.1101/2025.10.06.680729.abstract"
+    },
+    {
+      "journal": "Cell Systems",
+      "category": "REVIEW",
+      "image": "images/carousel/EngineeringRationale.JPG",
+      "imageAlt": "engineering rationale",
+      "title": "Engineering Rationale",
+      "description": "Structural rationale for engineering pore protein function.",
+      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
+    },
+    {
+      "journal": "Cell Systems",
+      "category": "REVIEW",
+      "image": "images/carousel/PoreDesigner.JPG",
+      "imageAlt": "pore designer",
+      "title": "Pore Designer",
+      "description": "Design rules for pore proteins in separations and sensing.",
+      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
+    },
+    {
       "journal": "Nature Biotech.",
       "category": "RESEARCH",
-      "date": "2022",
-      "image": "images/carousel/ProteinStructure.png",
-      "imageAlt": "PRRSV",
-      "title": "Protein Structure",
+      "image": "images/carousel/RGN2.JPG",
+      "imageAlt": "RGN2",
+      "title": "RGN2",
       "description": "Predicting protein structures directly from sequences (no MSA).",
       "link": "https://www.nature.com/articles/s41587-022-01432-w"
     }
