@@ -11,7 +11,6 @@
 
   function renderCard(card, hidden) {
     var hiddenAttr = hidden ? ' aria-hidden="true"' : '';
-    var date = card.date ? `<div class="carousel-card-date">${card.date}</div>` : '';
     var github = card.github
       ? `<a href="${card.github}" target="_blank" rel="noopener noreferrer" class="carousel-card-meta-link"><span class="icon brands fa-github" aria-hidden="true"></span><span>GitHub</span></a>`
       : '';
@@ -35,7 +34,6 @@
               <div class="journal-header">${card.journal || ''}</div>
               <div class="journal-category">${card.category || ''}</div>
             </div>
-            ${date}
           </header>
 
           <div class="carousel-card-media">
