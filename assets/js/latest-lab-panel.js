@@ -50,7 +50,7 @@
         var media = item.media && item.media.url
           ? ' <a class="latest-lab-play" href="' + item.media.url + '" target="_blank" rel="noopener noreferrer" aria-label="' + (item.media.label || 'Play media') + '"><span class="icon solid fa-play" aria-hidden="true"></span></a>'
           : '';
-        var icon = item.icon ? ' <span class="latest-lab-icon icon fa solid ' + item.icon + '" aria-hidden="true"></span>' : '';
+        var icon = item.icon && !media ? ' <span class="latest-lab-icon icon fa solid ' + item.icon + '" aria-hidden="true"></span>' : '';
         var image = item.image
           ? '<div class="latest-lab-image-wrap"><img class="latest-lab-image" src="' + item.image + '" alt="Latest in Lab update image" loading="lazy"></div>'
           : '';
