@@ -44,11 +44,13 @@
       return;
     }
 
+    stopCurrentAudio();
+
     container.innerHTML = filtered
-      .map(function (item) {
+      .map(function (item, index) {
         var link = item.link && item.linkText ? ' <a href="' + item.link + '" target="_blank" rel="noopener noreferrer">' + item.linkText + '</a>' : '';
         var media = item.media && item.media.url
-          ? ' <a class="latest-lab-play" href="' + item.media.url + '" target="_blank" rel="noopener noreferrer" aria-label="' + (item.media.label || 'Play media') + '"><span class="icon solid fa-play" aria-hidden="true"></span></a>'
+          ? renderAudioControl(item.media, index)
           : '';
         var icon = item.icon && !media ? ' <span class="latest-lab-icon icon fa solid ' + item.icon + '" aria-hidden="true"></span>' : '';
         var image = item.image
@@ -57,6 +59,21 @@
         return '<article class="latest-lab-row"><div class="latest-lab-date">' + (item.date || '') + '</div><div class="latest-lab-text">' + (item.text || '') + link + media + icon + '</div>' + image + '</article>';
       })
       .join('');
+
+    if (window.InlineAudioControl) window.InlineAudioControl.init(container);
+  }
+
+  function renderAudioControl(media, index) {
+    if (!window.InlineAudioControl) return '';
+    return window.InlineAudioControl.render({
+      id: 'latest-lab-audio-' + index,
+      label: media.label || 'Play media',
+      src: media.url
+    });
+  }
+
+  function stopCurrentAudio() {
+    if (window.InlineAudioControl) window.InlineAudioControl.stopCurrent();
   }
 
   function setActiveFilter(filter) {
@@ -93,6 +110,7 @@
 
     panel.classList.toggle('is-collapsed', !open);
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!open) stopCurrentAudio();
     if (open) loadLatest();
   }
 
