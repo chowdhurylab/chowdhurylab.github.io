@@ -8,6 +8,10 @@
     {
       "date": "Jun' 26",
       "text": "Ratul spoke at Iowa Public Radio about our work on PRRS virus in pigs.",
+      "media": {
+        "label": "Play Ratul's Iowa Public Radio audio",
+        "url": "assets/media/latest/ratul-prrs-ipr-2026.mp3"
+      },
       "icon": "fa-play-circle"
     },
     {
