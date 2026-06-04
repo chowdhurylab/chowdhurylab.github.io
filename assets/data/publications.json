@@ -109,6 +109,20 @@
       "title": "AstraMEV (AI-Guided Structural Assembly of Multi-Epitope Vaccines) Against Infectious Bronchitis Virus",
       "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809",
       "articleType": "Article",
+      "extraLinks": [
+        {
+          "label": "ISU News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "Local 5 ABC News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "KWWL News",
+          "url": "https://www.kwwl.com/news/ai-helps-iowa-state-team-predict-livestock-disease-evolution/article_62e6cb2d-f9a1-4981-b2f9-9a8287267f77.html"
+        }
+      ],
       "fullAuthors": [
         "Supantha Dey",
         "Hannah Gates",
@@ -132,6 +146,20 @@
       "title": "Structurally Informed Fitness Landscapes for Surveillance of Emerging PRRSV Variants",
       "link": "https://www.biorxiv.org/content/10.1101/2025.10.06.680729.abstract",
       "articleType": "Article",
+      "extraLinks": [
+        {
+          "label": "ISU News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "Local 5 ABC News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "KWWL News",
+          "url": "https://www.kwwl.com/news/ai-helps-iowa-state-team-predict-livestock-disease-evolution/article_62e6cb2d-f9a1-4981-b2f9-9a8287267f77.html"
+        }
+      ],
       "fullAuthors": [
         "Vaishnavey SR",
         "Supantha Dey",
@@ -171,6 +199,20 @@
       "title": "Viral escape-inspired framework for structure-guided dual bait protein biosensor design",
       "link": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012964",
       "articleType": "Article",
+      "extraLinks": [
+        {
+          "label": "ISU News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "Local 5 ABC News",
+          "url": "https://www.news.iastate.edu/news/future-proofing-livestock-vaccines-anticipating-viruses-next-moves"
+        },
+        {
+          "label": "KWWL News",
+          "url": "https://www.kwwl.com/news/ai-helps-iowa-state-team-predict-livestock-disease-evolution/article_62e6cb2d-f9a1-4981-b2f9-9a8287267f77.html"
+        }
+      ],
       "fullAuthors": [
         "Yee Chuen Teoh",
         "Mohammed Sakib Noor",
