@@ -149,16 +149,24 @@
 }
 
 .top-nav-dropdown-menu a {
-  color: #ff8300 !important;
+  color: #111111 !important;
   border-bottom: 0;
   padding: 0.15rem 0;
   white-space: nowrap;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .top-nav-dropdown-menu a:hover,
 .top-nav-dropdown-menu a:focus,
 .top-nav-dropdown-menu a:visited {
+  color: #111111 !important;
+  font-weight: 400;
+}
+
+.top-nav-dropdown-menu a.top-nav-dropdown-featured,
+.top-nav-dropdown-menu a.top-nav-dropdown-featured:hover,
+.top-nav-dropdown-menu a.top-nav-dropdown-featured:focus,
+.top-nav-dropdown-menu a.top-nav-dropdown-featured:visited {
   color: #ff8300 !important;
   font-weight: 700;
 }
