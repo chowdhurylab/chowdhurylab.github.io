@@ -169,13 +169,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  margin-left: 0.4rem;
+  width: 1.08rem;
+  height: 1.08rem;
+  margin-left: 0.32rem;
   border: 1px solid #ff8300;
   border-radius: 50%;
   color: #ff8300 !important;
-  font-size: 0.62rem;
+  font-size: 0.5rem;
   line-height: 1;
   vertical-align: middle;
 }
