@@ -2,6 +2,34 @@
   "publications": [
     {
       "year": 2026,
+      "journal": "Advanced Functional Materials",
+      "authors": "Koshani, R. et al.",
+      "title": "Selective Separation of the Rare Earth Elements Dysprosium and Neodymium via Tailoring Nanocellulose Chemical Structure",
+      "link": "https://advanced.onlinelibrary.wiley.com/doi/10.1002/adfm.202526281",
+      "articleType": "Article",
+      "extraLinks": [
+        {
+          "label": "Interesting Engineering",
+          "url": "https://interestingengineering.com/energy/cellulose-dysprosium-rare-earth-separation"
+        }
+      ],
+      "fullAuthors": [
+        "Roya Koshani",
+        "Shang Lin Yeh",
+        "Karuna Anna Sajeevan",
+        "Mica L. Pitcher",
+        "Dawson Alexander",
+        "Ratul Chowdhury",
+        "Amir Sheikhi"
+      ],
+      "labMemberAuthors": [
+        "Karuna Anna Sajeevan",
+        "Ratul Chowdhury"
+      ],
+      "doi": "10.1002/adfm.202526281"
+    },
+    {
+      "year": 2026,
       "journal": "bioRxiv",
       "authors": "Mills, C. E. et al.",
       "title": "Polypharmacology of an Optimal Kinase Library",
