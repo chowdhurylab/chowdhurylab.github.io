@@ -11,11 +11,12 @@
       <li class="top-nav-dropdown">
         <button type="button" class="top-nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Software</button>
         <div class="top-nav-dropdown-menu" role="menu" aria-label="Software links">
-          <a href="tools/catlog-static/index.html" role="menuitem">CatLog</a>
           <a href="https://github.com/chowdhurylab" target="_blank" rel="noopener noreferrer" role="menuitem">GitHub</a>
           <a href="https://huggingface.co/chowdhury-lab/protein-binding-affinity" target="_blank" rel="noopener noreferrer" role="menuitem">HuggingFace</a>
-          <a href="https://agrivax.studio/" target="_blank" rel="noopener noreferrer" role="menuitem">agrivax.studio</a>
-          <a href="http://cyclome930.studio/" target="_blank" rel="noopener noreferrer" role="menuitem">cyclome930</a>
+          <a href="https://agrivax.studio/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">agrivax.studio</a>
+          <a href="tools/catlog-static/index.html" role="menuitem" class="top-nav-dropdown-featured">CatLog</a>
+          <a href="http://cyclome930.studio/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">cyclome930</a>
+          <a href="https://bertose.structf.studio/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">BERTOse</a>
         </div>
       </li>
       <li><a href="moments.html">Moments</a></li>
