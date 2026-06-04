@@ -1,61 +1,40 @@
 {
   "cards": [
     {
-      "journal": "Current Opinion",
-      "category": "REVIEW",
-      "date": "2025",
-      "image": "images/carousel/Struct-GEMs.png",
-      "imageAlt": "RGN2",
-      "title": "Struct-GEMs",
-      "description": "Structure-guided genome scale metabolic models.",
-      "link": "https://www.sciencedirect.com/science/article/pii/S0958166925000035?casa_token=JARr_p7OHC8AAAAA:M98k9RkFsPKLBbA40YY-Vju-UMOqVsSLJsu-8MW25KLi2yQToywVGuyfiizo1z1jGzeRrwgU"
+      "journal": "JCIM",
+      "category": "RESEARCH",
+      "image": "images/carousel/publication-cards/astra-mev.png",
+      "imageAlt": "AstraMEV protein design graphic",
+      "title": "AstraMEV",
+      "description": "Multi-epitope vaccine design platform",
+      "link": "https://pubs.acs.org/doi/abs/10.1021/acs.jcim.5c01809"
     },
     {
-      "journal": "Comp. Str. Bio. J",
+      "journal": "NAR Gen. & Bioinf.",
       "category": "RESEARCH",
-      "date": "2025",
-      "image": "images/carousel/RareEarthRecovery.png",
-      "imageAlt": "rare earth recovery",
+      "image": "images/carousel/publication-cards/seq2bind.png",
+      "imageAlt": "Seq2Bind protein language model workflow",
+      "title": "Seq2Bind",
+      "description": "Predict binding affinity and hotspots from protein sequences",
+      "link": "https://academic.oup.com/nargab/article-abstract/7/4/lqaf154/8340159"
+    },
+    {
+      "journal": "Adv. Func Mater",
+      "category": "RESEARCH",
+      "image": "images/carousel/publication-cards/rare-earth-recovery.png",
+      "imageAlt": "Advanced Functional Materials cover for rare earth recovery",
       "title": "Rare Earth Recovery",
-      "description": "Biophysical underpinnings of Lanmodulin protein.",
-      "link": "https://www.sciencedirect.com/science/article/pii/S2001037025000315"
+      "description": "Functionalize nanocellulose for lanthanide selectivity",
+      "link": "https://advanced.onlinelibrary.wiley.com/doi/10.1002/adfm.202526281"
     },
     {
-      "journal": "bioRxiv",
-      "category": "RESEARCH",
-      "date": "2025",
-      "image": "images/carousel/PRRSV.JPG",
-      "imageAlt": "PRRSV",
-      "title": "PRRSV Variants",
-      "description": "Fitness landscapes for surveillance of emerging PRRSV variants.",
-      "link": "https://www.biorxiv.org/content/10.1101/2025.10.06.680729.abstract"
-    },
-    {
-      "journal": "Cell Systems",
-      "category": "REVIEW",
-      "image": "images/carousel/EngineeringRationale.JPG",
-      "imageAlt": "engineering rationale",
-      "title": "Engineering Rationale",
-      "description": "Structural rationale for engineering pore protein function.",
-      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
-    },
-    {
-      "journal": "Cell Systems",
-      "category": "REVIEW",
-      "image": "images/carousel/PoreDesigner.JPG",
-      "imageAlt": "pore designer",
-      "title": "Pore Designer",
-      "description": "Design rules for pore proteins in separations and sensing.",
-      "link": "https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00211-9"
-    },
-    {
-      "journal": "Nature Biotech.",
-      "category": "RESEARCH",
-      "image": "images/carousel/RGN2.JPG",
-      "imageAlt": "RGN2",
-      "title": "RGN2",
-      "description": "Predicting protein structures directly from sequences (no MSA).",
-      "link": "https://www.nature.com/articles/s41587-022-01432-w"
+      "journal": "Cyclome930",
+      "category": "DATABASE",
+      "image": "images/carousel/publication-cards/cyclome930.png",
+      "imageAlt": "Cyclome930 peptide structure logo",
+      "title": "Cyclome930.studio",
+      "description": "REMD simulations on all known cyclic peptides",
+      "link": "https://cyclome930.studio/"
     }
   ]
 }
