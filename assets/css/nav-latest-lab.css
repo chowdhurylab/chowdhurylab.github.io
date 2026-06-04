@@ -165,28 +165,6 @@
   margin-left: 0.35rem;
 }
 
-.latest-lab-play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.08rem;
-  height: 1.08rem;
-  margin-left: 0.32rem;
-  border: 1px solid #ff8300;
-  border-radius: 50%;
-  color: #ff8300 !important;
-  font-size: 0.5rem;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-.latest-lab-play:hover,
-.latest-lab-play:focus,
-.latest-lab-play:visited {
-  color: #ff8300 !important;
-  border-bottom: 1px solid #ff8300;
-}
-
 @media screen and (max-width: 736px) {
   .latest-lab-toggle {
     writing-mode: vertical-lr;
@@ -205,4 +183,5 @@
     width: min(330px, 82vw);
     height: 100vh;
   }
+
 }
