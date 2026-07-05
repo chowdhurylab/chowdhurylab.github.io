@@ -90,10 +90,8 @@
       }
 
       .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
-        align-items: stretch;
-        gap: clamp(1.5rem, 4vw, 4rem);
+        max-width: 960px;
+        margin: 0 auto;
         padding: clamp(2.4rem, 6vw, 6rem) clamp(1rem, 5vw, 5rem) clamp(2rem, 5vw, 4rem);
         background: #ffffff;
       }
@@ -162,71 +160,6 @@
         border-color: var(--accent);
       }
 
-      .hero-visual {
-        min-height: 26rem;
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        gap: 1rem;
-        padding: clamp(1rem, 2.4vw, 1.6rem);
-        border: 1px solid var(--line);
-        background:
-          linear-gradient(135deg, rgba(255, 131, 0, 0.12), rgba(47, 127, 95, 0.12)),
-          #ffffff;
-      }
-
-      .tool-mark {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-      }
-
-      .tool-mark strong {
-        font-size: 1.05rem;
-      }
-
-      .tool-mark span {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      .cluster-field {
-        position: relative;
-        min-height: 17rem;
-        border: 1px solid rgba(22, 22, 22, 0.12);
-        background:
-          radial-gradient(circle at 24% 30%, rgba(255, 131, 0, 0.92) 0 0.58rem, transparent 0.62rem),
-          radial-gradient(circle at 34% 42%, rgba(255, 131, 0, 0.75) 0 0.42rem, transparent 0.46rem),
-          radial-gradient(circle at 45% 28%, rgba(255, 131, 0, 0.7) 0 0.5rem, transparent 0.54rem),
-          radial-gradient(circle at 68% 35%, rgba(47, 127, 95, 0.82) 0 0.6rem, transparent 0.64rem),
-          radial-gradient(circle at 78% 48%, rgba(47, 127, 95, 0.74) 0 0.46rem, transparent 0.5rem),
-          radial-gradient(circle at 58% 66%, rgba(37, 99, 235, 0.72) 0 0.52rem, transparent 0.56rem),
-          radial-gradient(circle at 38% 72%, rgba(37, 99, 235, 0.62) 0 0.4rem, transparent 0.44rem),
-          linear-gradient(135deg, #fdfefe, #edf2f6);
-        overflow: hidden;
-      }
-
-      .cluster-field::before,
-      .cluster-field::after {
-        content: "";
-        position: absolute;
-        inset: 16% 10% auto;
-        height: 1px;
-        background: rgba(22, 22, 22, 0.12);
-        transform: rotate(18deg);
-      }
-
-      .cluster-field::after {
-        inset: auto 9% 26%;
-        transform: rotate(-12deg);
-      }
-
-      .visual-caption {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-
       .content-band {
         padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 5vw, 5rem);
       }
@@ -283,11 +216,6 @@
         background: #fafbfc;
       }
 
-      code {
-        overflow-wrap: anywhere;
-        font-size: 0.86rem;
-      }
-
       footer {
         padding: 1.5rem clamp(1rem, 5vw, 5rem);
         color: var(--muted);
@@ -297,7 +225,6 @@
       }
 
       @media (max-width: 900px) {
-        .hero,
         .download-panel {
           grid-template-columns: 1fr;
         }
@@ -319,10 +246,6 @@
 
         .nav-actions {
           justify-content: flex-start;
-        }
-
-        .hero-visual {
-          min-height: 22rem;
         }
       }
     </style>
@@ -352,15 +275,6 @@
               <a class="button button-secondary" href="https://agrivax.studio/">Open AgriVax.studio</a>
             </div>
           </div>
-
-          <aside class="hero-visual" aria-label="PixF-OsteoClust clustering preview">
-            <div class="tool-mark">
-              <strong>PixF-OsteoClust</strong>
-              <span>local build</span>
-            </div>
-            <div class="cluster-field" aria-hidden="true"></div>
-            <p class="visual-caption">Desktop installer for Windows systems. Public download is served as a GitHub Release asset with a workstation backup.</p>
-          </aside>
         </section>
 
         <section class="content-band">
@@ -386,7 +300,6 @@
               <div class="file-meta" aria-label="Download metadata">
                 <span>656 MB</span>
                 <span>Windows .exe</span>
-                <span><code>SHA-256 128437cfefe18f9ac101f4e9f47695c2c6cda17c620037f70f4ab61702cd5c91</code></span>
               </div>
             </div>
             <a class="button button-primary" href="https://github.com/chowdhurylab/chowdhurylab.github.io/releases/download/pixf-osteoclust/OsteoClustLocal_full.exe" download>Download</a>
