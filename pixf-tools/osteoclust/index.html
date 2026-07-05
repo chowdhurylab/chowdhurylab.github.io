@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="PixF-OsteoClust Windows desktop download from Chowdhury Lab." />
+    <title>PixF-OsteoClust | Chowdhury Lab</title>
+    <link rel="icon" href="https://agrivax.studio/pixf-logo.png" />
+    <style>
+      :root {
+        --ink: #161616;
+        --muted: #5c6570;
+        --line: #d9dee5;
+        --panel: #ffffff;
+        --wash: #f6f8f9;
+        --accent: #ff8300;
+        --accent-dark: #cc6800;
+        --green: #2f7f5f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--wash);
+        font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .site-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem clamp(1rem, 4vw, 3rem);
+        background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        text-decoration: none;
+        border: 0;
+      }
+
+      .brand img {
+        width: min(260px, 55vw);
+        height: auto;
+        display: block;
+      }
+
+      .nav-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
+
+      .text-link {
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        font-size: 0.95rem;
+      }
+
+      .text-link:hover,
+      .text-link:focus {
+        color: var(--ink);
+        border-bottom-color: var(--accent);
+      }
+
+      main {
+        flex: 1;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+        align-items: stretch;
+        gap: clamp(1.5rem, 4vw, 4rem);
+        padding: clamp(2.4rem, 6vw, 6rem) clamp(1rem, 5vw, 5rem) clamp(2rem, 5vw, 4rem);
+        background: #ffffff;
+      }
+
+      .eyebrow {
+        margin: 0 0 0.8rem;
+        color: var(--accent-dark);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.35rem, 7vw, 5.8rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+        color: #111111;
+      }
+
+      .lede {
+        max-width: 54rem;
+        margin: 1.25rem 0 0;
+        color: #333b43;
+        font-size: clamp(1.02rem, 2vw, 1.28rem);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        margin-top: 1.6rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3rem;
+        padding: 0.78rem 1.2rem;
+        border: 1px solid var(--ink);
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .button-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #111111;
+      }
+
+      .button-primary:hover,
+      .button-primary:focus {
+        background: #ff9a2e;
+      }
+
+      .button-secondary {
+        background: #ffffff;
+      }
+
+      .button-secondary:hover,
+      .button-secondary:focus {
+        border-color: var(--accent);
+      }
+
+      .hero-visual {
+        min-height: 26rem;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 1rem;
+        padding: clamp(1rem, 2.4vw, 1.6rem);
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, rgba(255, 131, 0, 0.12), rgba(47, 127, 95, 0.12)),
+          #ffffff;
+      }
+
+      .tool-mark {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .tool-mark strong {
+        font-size: 1.05rem;
+      }
+
+      .tool-mark span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .cluster-field {
+        position: relative;
+        min-height: 17rem;
+        border: 1px solid rgba(22, 22, 22, 0.12);
+        background:
+          radial-gradient(circle at 24% 30%, rgba(255, 131, 0, 0.92) 0 0.58rem, transparent 0.62rem),
+          radial-gradient(circle at 34% 42%, rgba(255, 131, 0, 0.75) 0 0.42rem, transparent 0.46rem),
+          radial-gradient(circle at 45% 28%, rgba(255, 131, 0, 0.7) 0 0.5rem, transparent 0.54rem),
+          radial-gradient(circle at 68% 35%, rgba(47, 127, 95, 0.82) 0 0.6rem, transparent 0.64rem),
+          radial-gradient(circle at 78% 48%, rgba(47, 127, 95, 0.74) 0 0.46rem, transparent 0.5rem),
+          radial-gradient(circle at 58% 66%, rgba(37, 99, 235, 0.72) 0 0.52rem, transparent 0.56rem),
+          radial-gradient(circle at 38% 72%, rgba(37, 99, 235, 0.62) 0 0.4rem, transparent 0.44rem),
+          linear-gradient(135deg, #fdfefe, #edf2f6);
+        overflow: hidden;
+      }
+
+      .cluster-field::before,
+      .cluster-field::after {
+        content: "";
+        position: absolute;
+        inset: 16% 10% auto;
+        height: 1px;
+        background: rgba(22, 22, 22, 0.12);
+        transform: rotate(18deg);
+      }
+
+      .cluster-field::after {
+        inset: auto 9% 26%;
+        transform: rotate(-12deg);
+      }
+
+      .visual-caption {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .content-band {
+        padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 5vw, 5rem);
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .info-item,
+      .download-panel {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        padding: 1.25rem;
+      }
+
+      .info-item h2,
+      .download-panel h2 {
+        margin: 0 0 0.6rem;
+        font-size: 1.15rem;
+        line-height: 1.25;
+      }
+
+      .info-item p,
+      .download-panel p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .download-panel {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .file-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.8rem;
+      }
+
+      .file-meta span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0.35rem 0.55rem;
+        border: 1px solid var(--line);
+        color: #303842;
+        font-size: 0.88rem;
+        background: #fafbfc;
+      }
+
+      code {
+        overflow-wrap: anywhere;
+        font-size: 0.86rem;
+      }
+
+      footer {
+        padding: 1.5rem clamp(1rem, 5vw, 5rem);
+        color: var(--muted);
+        background: #ffffff;
+        border-top: 1px solid var(--line);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .download-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .download-panel .button {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav-actions {
+          justify-content: flex-start;
+        }
+
+        .hero-visual {
+          min-height: 22rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="https://chowdhurylab.github.io/" aria-label="Chowdhury Lab home">
+          <img src="https://agrivax.studio/chowdhury-lab-wordmark.png" alt="Chowdhury Lab" />
+        </a>
+        <nav class="nav-actions" aria-label="Page links">
+          <a class="text-link" href="https://agrivax.studio/">AgriVax.studio</a>
+          <a class="text-link" href="https://chowdhurylab.github.io/">Chowdhury Lab</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">PixF desktop tool</p>
+            <h1>PixF-OsteoClust</h1>
+            <p class="lede">
+              A Windows desktop build for local osteoclast image clustering workflows from the Chowdhury Lab PixF toolset.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://github.com/chowdhurylab/chowdhurylab.github.io/releases/download/pixf-osteoclust/OsteoClustLocal_full.exe" download>Download for Windows</a>
+              <a class="button button-secondary" href="https://agrivax.studio/">Open AgriVax.studio</a>
+            </div>
+          </div>
+
+          <aside class="hero-visual" aria-label="PixF-OsteoClust clustering preview">
+            <div class="tool-mark">
+              <strong>PixF-OsteoClust</strong>
+              <span>local build</span>
+            </div>
+            <div class="cluster-field" aria-hidden="true"></div>
+            <p class="visual-caption">Desktop installer for Windows systems. Public download is served as a GitHub Release asset with a workstation backup.</p>
+          </aside>
+        </section>
+
+        <section class="content-band">
+          <div class="info-grid">
+            <article class="info-item">
+              <h2>Local execution</h2>
+              <p>Use the downloadable Windows build when browser-based processing is not the right fit for the workflow.</p>
+            </article>
+            <article class="info-item">
+              <h2>PixF toolset</h2>
+              <p>Published under the PixF tools path requested for submission: agrivax.studio/pixf-tools/osteoclust.</p>
+            </article>
+            <article class="info-item">
+              <h2>Current package</h2>
+              <p>Installer file: OsteoClustLocal_full.exe. Keep the filename intact when sharing or archiving the build.</p>
+            </article>
+          </div>
+
+          <article class="download-panel">
+            <div>
+              <h2>Windows installer</h2>
+              <p>Download the current PixF-OsteoClust local build.</p>
+              <div class="file-meta" aria-label="Download metadata">
+                <span>656 MB</span>
+                <span>Windows .exe</span>
+                <span><code>SHA-256 128437cfefe18f9ac101f4e9f47695c2c6cda17c620037f70f4ab61702cd5c91</code></span>
+              </div>
+            </div>
+            <a class="button button-primary" href="https://github.com/chowdhurylab/chowdhurylab.github.io/releases/download/pixf-osteoclust/OsteoClustLocal_full.exe" download>Download</a>
+          </article>
+        </section>
+      </main>
+
+      <footer>
+        Chowdhury Lab, Iowa State University. PixF-OsteoClust is distributed as a Windows desktop installer.
+      </footer>
+    </div>
+  </body>
+</html>
