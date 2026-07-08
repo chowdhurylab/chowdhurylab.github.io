@@ -4,35 +4,65 @@
     records: [],
     filtered: [],
     page: 1,
-    pageSize: 50,
+    pageSize: 25,
     selectedKey: "",
+    selectedDetail: null,
     downloadInProgress: false,
     loadedScripts: new Set(["data/manifest.js"]),
+    suggestionHideTimer: null,
   };
+
+  const recordStates = [
+    {
+      value: "paper_backed",
+      label: "Literature support",
+      shortLabel: "Literature support",
+      className: "paper",
+    },
+    {
+      value: "needs_review",
+      label: "Needs curation",
+      shortLabel: "Needs curation",
+      className: "review",
+    },
+    {
+      value: "unresolved_issues",
+      label: "Unverified",
+      shortLabel: "Unverified",
+      className: "unresolved",
+    },
+  ];
+
+  const stateDescriptions = {
+    paper_backed: "Accepted, corrected, or backed by preserved paper evidence.",
+    needs_review: "Evidence is present, but this measurement is not accepted yet.",
+    unresolved_issues: "No public evidence strong enough for acceptance in this snapshot.",
+  };
+
+  const measurementFilters = [
+    { value: "kcat", label: "Has kcat", field: "kcat" },
+    { value: "km", label: "Has Km", field: "km" },
+    { value: "kcat_over_km", label: "Has kcat/Km", field: "kcat_over_km" },
+  ];
 
   const tierOrder = {
     paper_grounded_high_confidence: 0,
     paper_grounded: 1,
-    literature_linked: 2,
-    cross_source_supported: 3,
+    cross_source_supported: 2,
+    literature_linked: 3,
     candidate_only: 4,
   };
 
-  const statusLabels = {
-    corrected: "accepted (corrected)",
-    verified: "accepted",
-    mathematically_inferred: "pending draft",
-    manual_review_required: "manual follow-up",
-    unverified: "final check missing",
-    disputed: "disputed",
-  };
-
-  const tierLabels = {
-    paper_grounded_high_confidence: "paper-backed (full-text verified)",
-    paper_grounded: "paper-backed",
-    literature_linked: "paper linked",
-    cross_source_supported: "multi-source",
-    candidate_only: "single-source draft",
+  const sourceLabels = {
+    source_record: "source record",
+    explicit_enzyme_name: "explicit name",
+    brenda_recommended_name: "BRENDA recommended",
+    protein_name_fallback: "preserved protein name",
+    uniprot_name_fallback: "UniProt name",
+    ec_accepted_name_fallback: "EC accepted name",
+    ec_name_fallback: "EC canonical name",
+    uniprot_fallback: "UniProt fallback",
+    name_not_preserved: "name not preserved",
   };
 
   const identityLabels = {
@@ -42,16 +72,29 @@
     identity_unresolved: "identity unresolved",
   };
 
-  const sourceLabels = {
-    source_record: "source record",
-    explicit_enzyme_name: "explicit name",
-    brenda_recommended_name: "BRENDA recommended name",
-    protein_name_fallback: "preserved protein name",
-    uniprot_name_fallback: "UniProt protein name",
-    ec_accepted_name_fallback: "EC accepted name",
-    ec_name_fallback: "EC canonical name",
-    uniprot_fallback: "inferred from UniProt",
-    name_not_preserved: "name not preserved",
+  const tierLabels = {
+    paper_grounded_high_confidence: "full-text literature support",
+    paper_grounded: "literature-supported",
+    literature_linked: "literature-linked",
+    cross_source_supported: "multi-source support",
+    candidate_only: "single-source entry",
+  };
+
+  const suggestionInputs = {
+    globalSearchInput: "mixed",
+    searchInput: "mixed",
+    ecFilterInput: "ec_number",
+    enzymeFilterInput: "enzyme_display_name",
+    organismFilterInput: "organism",
+    substrateFilterInput: "substrate_name",
+  };
+
+  const suggestionTitles = {
+    mixed: "Try a catalog search",
+    ec_number: "Try an EC number",
+    enzyme_display_name: "Try an enzyme",
+    organism: "Try an organism",
+    substrate_name: "Try a substrate",
   };
 
   const $ = (id) => document.getElementById(id);
@@ -66,51 +109,149 @@
     })[char]);
   }
 
+  function publicText(value) {
+    return String(value == null ? "" : value)
+      .replace(/\bpaper[- ]backed\b/gi, "literature-supported")
+      .replace(/\bclaim\s+status\b/gi, "record state")
+      .replace(/\bclaim[- ]verified\b/gi, "accepted")
+      .replace(/\bverified\s+or\s+corrected\b/gi, "accepted or corrected")
+      .replace(/\baccepted\s+as[- ]is\b/gi, "accepted")
+      .replace(/\bnot[_ ]labeled\b/gi, "not labeled");
+  }
+
+  function escapePublic(value) {
+    return escapeHtml(publicText(value));
+  }
+
   function formatInteger(value) {
     return new Intl.NumberFormat().format(Number(value || 0));
   }
 
+  function formatNumber(value, options = {}) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "n/a";
+    if (Math.abs(number) >= 1000) {
+      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(number);
+    }
+    if (Math.abs(number) >= 10) {
+      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(number);
+    }
+    return new Intl.NumberFormat(undefined, {
+      maximumFractionDigits: options.maximumFractionDigits ?? 2,
+      minimumFractionDigits: options.minimumFractionDigits ?? 0,
+    }).format(number);
+  }
+
   function compactValue(value) {
     if (value === null || value === undefined || value === "") return "n/a";
-    if (Array.isArray(value)) return value.length ? value.join(", ") : "n/a";
+    if (Array.isArray(value)) return value.length ? value.map(evidenceText).join(", ") : "n/a";
+    if (typeof value === "object") return evidenceText(value);
     return String(value);
   }
 
-  function normalizeSequence(value) {
-    return String(value || "").replace(/\s+/g, "").trim();
+  function evidenceText(value) {
+    if (value === null || value === undefined || value === "") return "";
+    if (typeof value !== "object") return String(value);
+    const parts = [
+      value.table_label,
+      value.row_label,
+      value.column_label,
+      value.raw_value_unit_evidence,
+      value.normalized_value_unit_evidence,
+      value.retrieval_route,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" | ") : JSON.stringify(value);
   }
 
-  function sequenceLengthLabel(sequence) {
-    return sequence ? `${formatInteger(sequence.length)} aa` : "not preserved";
+  function formatDate(value) {
+    if (!value) return "Static snapshot";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   }
 
-  function formatSequenceForDisplay(sequence) {
-    const chunks = String(sequence || "").match(/.{1,60}/g) || [];
-    return chunks.map((line) => (line.match(/.{1,10}/g) || [line]).join(" ")).join("\n");
-  }
-
-  function labelFromToken(value, fallback = "not preserved") {
-    const text = String(value || "").trim();
-    if (!text) return fallback;
-    return text.replaceAll("_", " ").replace(/\b([a-z])/g, (match) => match.toUpperCase());
-  }
-
-  function displayKinetic(row, field, label) {
+  function metricDisplay(row, field) {
     const display = row[`${field}_display`];
-    if (!display || display === "n/a") return "";
-    return `<span class="metric-line">${label}: ${escapeHtml(display)}</span>`;
+    return display && display !== "n/a" ? display : "n/a";
   }
 
-  function badgeClassForStatus(status) {
-    if (status === "verified" || status === "corrected") return "ok";
-    if (status === "manual_review_required" || status === "disputed") return "warn";
-    return "";
+  function formatTemperature(row) {
+    const display = row.temperature_display;
+    if (display && display !== "n/a") return display;
+    const kelvin = Number(row.temperature_k);
+    if (!Number.isFinite(kelvin)) return "n/a";
+    const celsius = kelvin > 170 ? kelvin - 273.15 : kelvin;
+    return formatNumber(celsius, { maximumFractionDigits: 1 });
   }
 
-  function badgeClassForTier(tier) {
-    if (tier === "paper_grounded" || tier === "paper_grounded_high_confidence") return "paper";
-    if (tier === "candidate_only") return "warn";
-    return "";
+  function formatPh(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "n/a";
+    return formatNumber(number, { maximumFractionDigits: 1 });
+  }
+
+  function stateConfig(value) {
+    return recordStates.find((item) => item.value === value) || recordStates[2];
+  }
+
+  function recordStateForRow(row) {
+    const status = row.verification_status;
+    const tier = row.evidence_confidence_tier;
+    if (
+      status === "verified"
+      || status === "corrected"
+      || tier === "paper_grounded"
+      || tier === "paper_grounded_high_confidence"
+    ) {
+      return "paper_backed";
+    }
+    if (
+      status === "manual_review_required"
+      || status === "mathematically_inferred"
+      || tier === "literature_linked"
+      || tier === "cross_source_supported"
+      || row.has_literature_id
+    ) {
+      return "needs_review";
+    }
+    return "unresolved_issues";
+  }
+
+  function evidenceLevel(row) {
+    const tier = row.evidence_confidence_tier;
+    const derivedState = row._recordState || recordStateForRow(row);
+    if (tier === "paper_grounded_high_confidence") return 5;
+    if (tier === "paper_grounded") return 4;
+    if (tier === "cross_source_supported") return 4;
+    if (tier === "literature_linked") return 3;
+    if (derivedState === "needs_review") return 3;
+    return 2;
+  }
+
+  function confidenceLabel(score) {
+    if (score >= 5) return "Strong support";
+    if (score >= 4) return "Literature support";
+    if (score >= 3) return "Needs curation";
+    return "Unverified";
+  }
+
+  function evidenceBars(row, label = "") {
+    const derivedState = row._recordState || recordStateForRow(row);
+    const config = stateConfig(derivedState);
+    const score = Number(row._evidenceScore || evidenceLevel(row));
+    const bars = [1, 2, 3, 4, 5].map((index) => (
+      `<span class="${index <= score ? "filled" : ""}"></span>`
+    )).join("");
+    return `<span class="evidence-bars ${config.className}" aria-label="${escapeHtml(label || confidenceLabel(score))}">${bars}</span>`;
+  }
+
+  function statusBadge(row) {
+    const config = stateConfig(row._recordState || recordStateForRow(row));
+    return `<span class="state-badge ${config.className}" title="${escapeHtml(stateDescriptions[config.value] || config.label)}">${escapeHtml(config.shortLabel)}</span>`;
   }
 
   function loadScript(src) {
@@ -133,6 +274,8 @@
     await Promise.all(chunks.map(loadScript));
     state.records = (window.CATLOG_RECORD_CHUNKS || []).flat();
     state.records.forEach((row) => {
+      row._recordState = recordStateForRow(row);
+      row._evidenceScore = evidenceLevel(row);
       row._search = String(row._search_text || [
         row.measurement_key,
         row.review_key,
@@ -158,112 +301,253 @@
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  async function handleJsonDownload() {
+  async function handleSnapshotDownload() {
     if (state.downloadInProgress) return;
     state.downloadInProgress = true;
-    renderUtilityActions();
+    const button = $("exportSnapshotButton");
+    if (button) button.textContent = "Preparing...";
     try {
       const payload = {
         metadata: {
-          name: "CatLog Static Snapshot Small JSON Download",
+          name: "CatLog static row index",
           generated_at: new Date().toISOString(),
           snapshot_generated_at: manifest.generated_at || null,
           source_file: manifest.source_file || null,
           source_size_bytes: manifest.source_size_bytes || null,
           source_sha256: manifest.source_sha256 || null,
-          summary: manifest.summary || {},
           total_rows: manifest.total_rows || state.records.length,
-          record_chunks: manifest.record_chunks || [],
-          export_scope: "record_summaries_only",
+          export_scope: "compact_visible_row_index",
         },
         records: state.records,
       };
       const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
-      triggerBlobDownload(`catlog-static-snapshot-small-${filenameDate}.json`, JSON.stringify(payload, null, 2));
-      $("activeSummary").textContent = `Downloaded small JSON for ${formatInteger(state.records.length)} row summary${state.records.length === 1 ? "" : "ies"}.`;
-    } catch (error) {
-      $("activeSummary").innerHTML = `<span class="badge warn">${escapeHtml(error.message || error)}</span>`;
+      triggerBlobDownload(`catlog-static-row-index-${filenameDate}.json`, JSON.stringify(payload, null, 2));
     } finally {
       state.downloadInProgress = false;
-      renderUtilityActions();
+      if (button) button.textContent = "Export snapshot";
     }
   }
 
-  function uniqueValues(field) {
-    return [...new Set(state.records.map((row) => row[field]).filter(Boolean))]
-      .sort((a, b) => String(a).localeCompare(String(b)));
+  function uniqueCount(rows, field) {
+    return new Set(rows.map((row) => String(row[field] || "").trim()).filter(Boolean)).size;
   }
 
-  function fillSelect(id, values, labels = {}) {
-    const select = $(id);
-    select.innerHTML = '<option value="">All</option>' + values.map((value) => (
-      `<option value="${escapeHtml(value)}">${escapeHtml(labels[value] || value)}</option>`
-    )).join("");
+  function metricCoverage(rows, field) {
+    return rows.reduce((count, row) => count + (row[field] != null ? 1 : 0), 0);
+  }
+
+  function rowsForSummary() {
+    return state.records.length ? state.filtered : [];
   }
 
   function renderSummary() {
     const summary = manifest.summary || {};
     const totals = summary.totals || {};
-    const coverage = summary.coverage || {};
     const trust = summary.trust_snapshot || {};
-    $("snapshotLabel").textContent = manifest.generated_at ? `Generated ${manifest.generated_at}` : "Static snapshot";
-    $("rowCountLabel").textContent = `${formatInteger(manifest.total_rows || state.records.length)} rows`;
-    $("summaryGrid").innerHTML = [
-      ["Rows", totals.records || manifest.total_rows || state.records.length, "records in this snapshot"],
-      ["EC numbers", totals.unique_ec_numbers || 0, "distinct catalytic classes"],
-      ["Claim-verified", trust.claim_verified_rows || 0, "accepted or corrected rows"],
-      ["Sequence-resolved", coverage.sequence_resolved || 0, "rows with sequence context"],
-    ].map(([label, value, note]) => `
-      <article class="summary-card">
+    const rows = Array.isArray(rowsForSummary()) ? rowsForSummary() : [];
+    const totalRows = state.records.length ? rows.length : (manifest.total_rows || 0);
+    const acceptedRows = Number(
+      trust.accepted_rows
+      || ((Number(trust.accepted_as_is_rows) || 0) + (Number(trust.corrected_rows) || 0))
+      || 0
+    );
+    const cards = [
+      ["Current view", totalRows, "records", ""],
+      ["Accepted records", acceptedRows, "accepted or corrected", "accepted-card"],
+      ["Enzymes", uniqueCount(rows, "enzyme_display_name") || totals.unique_enzymes || 0, "", ""],
+      ["EC numbers", uniqueCount(rows, "ec_number") || totals.unique_ec_numbers || 0, "", ""],
+      ["Organisms", uniqueCount(rows, "organism") || totals.unique_organisms || 0, "", ""],
+    ];
+    $("summaryGrid").innerHTML = cards.map(([label, value, note, className]) => `
+      <article class="summary-card ${escapeHtml(className || "")}">
         <span>${escapeHtml(label)}</span>
         <strong>${formatInteger(value)}</strong>
-        <span>${escapeHtml(note)}</span>
+        ${note ? `<span>${escapeHtml(note)}</span>` : ""}
       </article>
     `).join("");
-    renderUtilityActions();
+    renderEvidenceSummary(rows);
+    const kcatRows = metricCoverage(rows, "kcat");
+    const kmRows = metricCoverage(rows, "km");
+    const efficiencyRows = metricCoverage(rows, "kcat_over_km");
+    $("snapshotMeta").innerHTML = `
+      <span class="snapshot-title">Measured rows</span>
+      <span class="snapshot-line"><strong>${formatInteger(kcatRows)}</strong><span>kcat</span></span>
+      <span class="snapshot-line"><strong>${formatInteger(kmRows)}</strong><span>Km</span></span>
+      <span class="snapshot-line"><strong>${formatInteger(efficiencyRows)}</strong><span>kcat/Km</span></span>
+    `;
+    $("footerVersion").textContent = manifest.generated_at ? `Version ${formatDate(manifest.generated_at)}` : "Static snapshot";
   }
 
-  function renderUtilityActions() {
-    const actions = [];
-    const downloadLabel = state.downloadInProgress ? "Preparing small JSON..." : "Download JSON";
-    actions.push(`<button id="downloadJsonButton" class="button secondary" type="button">${escapeHtml(downloadLabel)}</button>`);
-    const fullData = manifest.full_data_download || {};
-    if (fullData.path) {
-      actions.push(`<a class="button secondary" href="${escapeHtml(fullData.path)}" download>Download full data</a>`);
+  function renderEvidenceSummary(rows) {
+    const total = Math.max(1, rows.length || 0);
+    const counts = Object.fromEntries(recordStates.map((item) => [item.value, 0]));
+    rows.forEach((row) => {
+      counts[row._recordState || recordStateForRow(row)] += 1;
+    });
+    $("evidenceSummary").innerHTML = `
+      <div class="evidence-summary-title">Evidence support</div>
+      <div class="evidence-segment-row">
+        ${recordStates.map((item) => {
+          const count = counts[item.value] || 0;
+          const pct = rows.length ? ((count / total) * 100).toFixed(1) : "0.0";
+          return `
+            <div class="evidence-segment">
+              <span class="evidence-dot ${item.className}"></span>
+              <span>${escapeHtml(item.shortLabel)}</span>
+              <strong>${pct}% <span>(${formatInteger(count)})</span></strong>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function countsByState() {
+    const counts = Object.fromEntries(recordStates.map((item) => [item.value, 0]));
+    state.records.forEach((row) => {
+      counts[row._recordState || recordStateForRow(row)] += 1;
+    });
+    return counts;
+  }
+
+  function countMetric(field) {
+    return state.records.reduce((count, row) => count + (row[field] != null ? 1 : 0), 0);
+  }
+
+  function valueFromRow(row, field) {
+    return String(row[field] || "").trim();
+  }
+
+  function isSuggestibleValue(value) {
+    const key = value.toLowerCase();
+    return Boolean(value)
+      && key !== "n/a"
+      && key !== "unknown"
+      && key !== "not reported"
+      && key !== "not_reported";
+  }
+
+  function randomSuggestions(kind, limit = 5) {
+    if (!state.records.length) return [];
+    const fields = kind === "mixed"
+      ? ["enzyme_display_name", "ec_number", "organism", "substrate_name"]
+      : [kind];
+    const seen = new Set();
+    const values = [];
+    const maxAttempts = Math.min(state.records.length * fields.length, limit * 80);
+    for (let attempt = 0; attempt < maxAttempts && values.length < limit; attempt += 1) {
+      const row = state.records[Math.floor(Math.random() * state.records.length)];
+      const field = fields[Math.floor(Math.random() * fields.length)];
+      const value = valueFromRow(row, field);
+      const key = value.toLowerCase();
+      if (!isSuggestibleValue(value) || seen.has(key)) continue;
+      seen.add(key);
+      values.push(value);
     }
-    actions.push('<a class="button secondary" href="README_FIRST.txt" download>Download README</a>');
-    $("utilityActions").innerHTML = actions.join("");
-    const downloadButton = $("downloadJsonButton");
-    if (downloadButton) {
-      downloadButton.disabled = state.downloadInProgress;
-      downloadButton.addEventListener("click", handleJsonDownload);
-    }
+    return values;
+  }
+
+  function hideSuggestions() {
+    const box = $("searchSuggestions");
+    if (!box) return;
+    box.classList.add("hidden");
+    box.innerHTML = "";
+  }
+
+  function showSuggestions(input) {
+    const kind = suggestionInputs[input.id];
+    const box = $("searchSuggestions");
+    if (!kind || !box || !state.records.length) return;
+    window.clearTimeout(state.suggestionHideTimer);
+    const suggestions = randomSuggestions(kind);
+    if (!suggestions.length) return;
+    const rect = input.getBoundingClientRect();
+    box.style.left = `${Math.round(rect.left)}px`;
+    box.style.top = `${Math.round(rect.bottom + 6)}px`;
+    box.style.width = `${Math.max(240, Math.round(rect.width))}px`;
+    box.innerHTML = `
+      <div class="suggestion-title">${escapeHtml(suggestionTitles[kind] || "Try a search")}</div>
+      ${suggestions.map((value) => (
+        `<button type="button" role="option" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
+      )).join("")}
+    `;
+    box.classList.remove("hidden");
+    [...box.querySelectorAll("button[data-value]")].forEach((button) => {
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        input.value = button.dataset.value || "";
+        hideSuggestions();
+        input.focus();
+        applyFilters();
+      });
+    });
   }
 
   function setupFilters() {
-    fillSelect("statusSelect", uniqueValues("verification_status"), statusLabels);
-    fillSelect("tierSelect", uniqueValues("evidence_confidence_tier"), tierLabels);
-    fillSelect("sourceSelect", uniqueValues("source_db"));
-    fillSelect("identitySelect", uniqueValues("identity_resolution_state"), identityLabels);
+    const stateCounts = countsByState();
+    $("statusChecklist").innerHTML = recordStates.map((item) => `
+      <label class="check-row ${item.className}" title="${escapeHtml(stateDescriptions[item.value])}">
+        <input type="checkbox" name="recordState" value="${escapeHtml(item.value)}" checked />
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${formatInteger(stateCounts[item.value] || 0)}</strong>
+      </label>
+    `).join("") + `
+      <div class="status-help" aria-label="Record state definitions">
+        <p><strong>Literature support:</strong> Accepted, corrected, or backed by preserved paper evidence.</p>
+        <p><strong>Needs curation:</strong> Evidence is present, but the measurement is not accepted yet.</p>
+        <p><strong>Unverified:</strong> No public evidence strong enough for acceptance here.</p>
+      </div>
+    `;
+    $("measurementChecklist").innerHTML = measurementFilters.map((item) => `
+      <label class="check-row">
+        <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" />
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${formatInteger(countMetric(item.field))}</strong>
+      </label>
+    `).join("");
+  }
+
+  function selectedCheckboxes(name) {
+    return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((item) => item.value);
   }
 
   function currentFilters() {
     return {
-      q: $("searchInput").value.trim().toLowerCase(),
-      status: $("statusSelect").value,
-      tier: $("tierSelect").value,
-      source: $("sourceSelect").value,
-      identity: $("identitySelect").value,
+      q: [
+        $("globalSearchInput").value,
+        $("searchInput").value,
+      ].join(" ").trim().toLowerCase(),
+      ec: $("ecFilterInput").value.trim().toLowerCase(),
+      enzyme: $("enzymeFilterInput").value.trim().toLowerCase(),
+      organism: $("organismFilterInput").value.trim().toLowerCase(),
+      substrate: $("substrateFilterInput").value.trim().toLowerCase(),
+      recordStates: selectedCheckboxes("recordState"),
+      metrics: selectedCheckboxes("measurement"),
       sort: $("sortSelect").value,
     };
   }
 
+  function fieldContains(row, field, value) {
+    if (!value) return true;
+    return String(row[field] || "").toLowerCase().includes(value);
+  }
+
   function rowMatches(row, filters) {
     if (filters.q && !row._search.includes(filters.q)) return false;
-    if (filters.status && row.verification_status !== filters.status) return false;
-    if (filters.tier && row.evidence_confidence_tier !== filters.tier) return false;
-    if (filters.source && row.source_db !== filters.source) return false;
-    if (filters.identity && row.identity_resolution_state !== filters.identity) return false;
+    if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
+    if (!fieldContains(row, "ec_number", filters.ec)) return false;
+    if (!fieldContains(row, "enzyme_display_name", filters.enzyme)) return false;
+    if (!fieldContains(row, "organism", filters.organism)) return false;
+    if (!fieldContains(row, "substrate_name", filters.substrate)) return false;
+    if (filters.metrics.length) {
+      const metricFields = {
+        kcat: "kcat",
+        km: "km",
+        ki: "ki",
+        kcat_over_km: "kcat_over_km",
+      };
+      if (!filters.metrics.some((metric) => row[metricFields[metric]] != null)) return false;
+    }
     return true;
   }
 
@@ -293,12 +577,14 @@
       source: textKey("source_db"),
       kcat: numericDesc("kcat"),
       km: numericDesc("km"),
-      ki: numericDesc("ki"),
+      kcat_over_km: numericDesc("kcat_over_km"),
       evidence: (a, b) => {
+        const stateDelta = recordStates.findIndex((item) => item.value === a._recordState)
+          - recordStates.findIndex((item) => item.value === b._recordState);
+        if (stateDelta !== 0) return stateDelta;
         const tierDelta = (tierOrder[a.evidence_confidence_tier] ?? 99) - (tierOrder[b.evidence_confidence_tier] ?? 99);
         if (tierDelta !== 0) return tierDelta;
-        return (Number(b.source_record_count || 0) - Number(a.source_record_count || 0))
-          || ecSort(a, b);
+        return (Number(b.source_record_count || 0) - Number(a.source_record_count || 0)) || ecSort(a, b);
       },
     };
     rows.sort(sorters[sort] || sorters.evidence);
@@ -309,6 +595,10 @@
     state.filtered = state.records.filter((row) => rowMatches(row, filters));
     sortRows(state.filtered, filters.sort);
     if (resetPage) state.page = 1;
+    if (state.selectedKey && !state.filtered.some((row) => row.record_key === state.selectedKey)) {
+      resetDetail();
+    }
+    renderSummary();
     renderRows();
   }
 
@@ -317,240 +607,262 @@
     state.page = Math.min(Math.max(1, state.page), totalPages);
     const start = (state.page - 1) * state.pageSize;
     const pageRows = state.filtered.slice(start, start + state.pageSize);
-    $("activeSummary").textContent = `${formatInteger(state.filtered.length)} matching rows, showing ${formatInteger(start + 1)}-${formatInteger(Math.min(start + pageRows.length, state.filtered.length))}`;
-    $("pageLabel").textContent = `Page ${formatInteger(state.page)} of ${formatInteger(totalPages)}`;
+    $("activeSummary").textContent = `${formatInteger(state.filtered.length)} records`;
+    $("pageSummary").textContent = pageRows.length
+      ? `${formatInteger(start + 1)}-${formatInteger(Math.min(start + pageRows.length, state.filtered.length))} of ${formatInteger(state.filtered.length)}`
+      : "No rows match the selected filters";
+    $("pageLabel").textContent = pageRows.length
+      ? `${formatInteger(start + 1)}-${formatInteger(Math.min(start + pageRows.length, state.filtered.length))} of ${formatInteger(state.filtered.length)}`
+      : "No records";
     $("prevButton").disabled = state.page <= 1;
     $("nextButton").disabled = state.page >= totalPages;
-    $("recordsBody").innerHTML = pageRows.map((row) => {
-      const kineticLines = [
-        displayKinetic(row, "kcat", "kcat"),
-        displayKinetic(row, "km", "Km"),
-        displayKinetic(row, "ki", "Ki"),
-        displayKinetic(row, "kcat_over_km", "kcat/Km"),
-      ].filter(Boolean).join("<br>");
-      return `
-        <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}">
-          <td class="primary-cell">
-            <strong>${escapeHtml(row.enzyme_display_name || "Name not preserved")}</strong>
-            <span class="muted">${escapeHtml(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || "name source unknown")}</span>
-            <span class="muted">${escapeHtml(row.ec_number || "n/a")}</span>
-          </td>
-          <td class="context-cell">
-            <strong>${escapeHtml(row.organism || "n/a")}</strong>
-            <span class="muted">${escapeHtml(row.substrate_name || "n/a")}</span>
-          </td>
-          <td>${kineticLines || '<span class="muted">No kinetic value shown</span>'}</td>
-          <td><span class="badge ${badgeClassForStatus(row.verification_status)}">${escapeHtml(statusLabels[row.verification_status] || row.verification_status || "n/a")}</span></td>
-          <td><span class="badge ${badgeClassForTier(row.evidence_confidence_tier)}">${escapeHtml(tierLabels[row.evidence_confidence_tier] || row.evidence_confidence_tier || "n/a")}</span></td>
-          <td class="muted">${formatInteger(row.literature_id_count || 0)} ids<br>${escapeHtml(row.source_db || "unknown")}</td>
-        </tr>
-      `;
-    }).join("");
+    $("recordsBody").innerHTML = pageRows.map((row) => `
+      <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}">
+        <td class="primary-cell">
+          <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
+          <span>${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || row.source_db || "source")}</span>
+        </td>
+        <td>${escapeHtml(row.ec_number || "n/a")}</td>
+        <td class="organism-cell">${escapePublic(row.organism || "n/a")}</td>
+        <td class="substrate-cell">${escapePublic(row.substrate_name || "n/a")}</td>
+        <td class="metric-cell"><strong>${escapeHtml(metricDisplay(row, "kcat"))}</strong></td>
+        <td class="metric-cell">${escapeHtml(metricDisplay(row, "km"))}</td>
+        <td class="metric-cell">${escapeHtml(metricDisplay(row, "kcat_over_km"))}</td>
+        <td>${escapeHtml(formatTemperature(row))}</td>
+        <td>${escapeHtml(formatPh(row.ph))}</td>
+        <td>${evidenceBars(row)}</td>
+        <td>${statusBadge(row)}</td>
+        <td class="row-arrow" aria-hidden="true">&rsaquo;</td>
+      </tr>
+    `).join("");
     [...$("recordsBody").querySelectorAll("tr")].forEach((rowElement) => {
       rowElement.addEventListener("click", () => selectRecord(rowElement.dataset.key));
     });
   }
 
+  function setDetailOpen(isOpen) {
+    document.body.classList.toggle("detail-open", Boolean(isOpen));
+  }
+
+  function resetDetail() {
+    state.selectedKey = "";
+    state.selectedDetail = null;
+    $("detailContent").classList.add("hidden");
+    $("detailEmpty").classList.remove("hidden");
+    setDetailOpen(false);
+  }
+
+  function usesEmbeddedDetailPanel() {
+    return window.matchMedia("(min-width: 1501px)").matches;
+  }
+
   async function selectRecord(key) {
-    state.selectedKey = key;
-    renderRows();
     const row = state.records.find((item) => item.record_key === key);
-    if (!row) return;
+    if (!row) {
+      resetDetail();
+      renderRows();
+      return;
+    }
+    state.selectedKey = key;
+    setDetailOpen(true);
+    renderRows();
     $("detailEmpty").classList.add("hidden");
     $("detailContent").classList.remove("hidden");
     $("detailContent").innerHTML = '<p class="muted">Loading row details...</p>';
     await loadScript(row.detail_shard);
     const shard = (window.CATLOG_DETAIL_SHARDS || {})[row.detail_shard] || {};
-    renderDetail(row, shard[key] || {});
+    state.selectedDetail = shard[key] || {};
+    renderDetail(row, state.selectedDetail);
   }
 
   function kv(label, value) {
-    return `<article class="kv"><span>${escapeHtml(label)}</span><strong>${escapeHtml(compactValue(value))}</strong></article>`;
+    return `<div class="kv-line"><span>${escapePublic(label)}</span><strong>${escapePublic(compactValue(value))}</strong></div>`;
   }
 
-  function listItems(values, fallback) {
+  function doiLink(value) {
+    const doi = String(value || "").trim();
+    if (!doi) return "n/a";
+    const href = doi.startsWith("http") ? doi : `https://doi.org/${encodeURI(doi)}`;
+    return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(doi)}</a>`;
+  }
+
+  function pmidLink(value) {
+    const pmid = String(value || "").trim();
+    if (!pmid) return "n/a";
+    return `<a href="https://pubmed.ncbi.nlm.nih.gov/${escapeHtml(pmid)}/" target="_blank" rel="noreferrer">${escapeHtml(pmid)}</a>`;
+  }
+
+  function listText(values, limit = 2) {
     const items = Array.isArray(values) ? values.filter(Boolean) : [];
-    if (!items.length) return `<p class="muted">${escapeHtml(fallback)}</p>`;
-    return `<ul class="proof-list">${items.slice(0, 12).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+    return items.slice(0, limit).map((item) => escapePublic(evidenceText(item))).join("<br>") || "n/a";
   }
 
-  function sequenceCard(label, sequence, note) {
-    if (!sequence) {
-      return `
-        <article class="sequence-card">
-          <div class="sequence-card-head">
-            <strong>${escapeHtml(label)}</strong>
-            <span>not preserved</span>
-          </div>
-          <p class="muted">${escapeHtml(note || "No sequence string was preserved for this row.")}</p>
-        </article>
-      `;
-    }
-    return `
-      <article class="sequence-card">
-        <div class="sequence-card-head">
-          <strong>${escapeHtml(label)}</strong>
-          <span>${sequenceLengthLabel(sequence)}</span>
-        </div>
-        ${note ? `<p class="muted">${escapeHtml(note)}</p>` : ""}
-        <pre class="sequence-text">${escapeHtml(formatSequenceForDisplay(sequence))}</pre>
-      </article>
-    `;
-  }
-
-  function renderSequenceSection(summary, detail) {
-    const preservedSequence = normalizeSequence(detail.sequence);
-    const canonicalSequence = normalizeSequence(detail.canonical_sequence);
-    const confirmation = detail.sequence_confirmation || {};
-    const variantLabel = confirmation.variant_label || labelFromToken(detail.sequence_variant_status);
-    const sourceLabel = confirmation.sequence_source_label || labelFromToken(detail.sequence_source);
-    const confidenceLabel = confirmation.sequence_confidence_label || compactValue(detail.sequence_source_confidence);
-    const connectionLabel = confirmation.connection_label || detail.sequence_variant_note || "No sequence interpretation note was preserved.";
-    const mutationLabel = confirmation.mutation_label || detail.mutation_signature || (detail.wild_type === true ? "wild type" : "n/a");
-    const alignmentLabel = confirmation.alignment_label || "independent BLAST/alignment not stored in this row";
+  function detailSection(title, rows) {
     return `
       <section class="detail-section">
-        <h3>Sequence check</h3>
-        <div class="kv-grid">
-          ${kv("primary UniProt", summary.primary_uniprot_id || detail.uniprot_id)}
-          ${kv("variant state", variantLabel)}
-          ${kv("sequence source", sourceLabel)}
-          ${kv("source confidence", confidenceLabel)}
-          ${kv("mutation", mutationLabel)}
-          ${kv("sequence link", connectionLabel)}
-          ${kv("preserved length", sequenceLengthLabel(preservedSequence))}
-          ${kv("canonical length", sequenceLengthLabel(canonicalSequence))}
-        </div>
-        <p class="detail-note">${escapeHtml(alignmentLabel)}</p>
-        <div class="sequence-stack">
-          ${sequenceCard("Preserved sequence", preservedSequence, connectionLabel)}
-          ${canonicalSequence && canonicalSequence !== preservedSequence ? sequenceCard("Canonical reference", canonicalSequence, "Reference sequence preserved separately for comparison.") : ""}
-        </div>
-      </section>
-    `;
-  }
-
-  function traceBlock(title, values) {
-    const items = Array.isArray(values) ? values.filter(Boolean) : [];
-    if (!items.length) return "";
-    return `
-      <article class="trace-card">
-        <h4>${escapeHtml(title)}</h4>
-        <ul class="proof-list">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      </article>
-    `;
-  }
-
-  function renderTraceabilitySection(summary, detail) {
-    const trace = detail.decision_trace || {};
-    const traceBlocks = [
-      traceBlock("Context", trace.context),
-      traceBlock("Identity", trace.identity),
-      traceBlock("Literature", trace.literature),
-      traceBlock("Review", trace.review),
-      traceBlock("Preserved snapshot", trace.preserved_snapshot),
-      traceBlock("Notes", trace.notes_summary),
-    ].filter(Boolean).join("");
-    const fallbackTrace = `
-      <div class="kv-grid">
-        ${kv("measurement key", summary.measurement_key || detail.measurement_key)}
-        ${kv("review key", summary.review_key || detail.review_key)}
-        ${kv("source", summary.source_db || detail.source_db)}
-        ${kv("source rows", detail.source_record_count)}
-        ${kv("next action", detail.next_best_action)}
-        ${kv("why", detail.next_best_action_reason)}
-      </div>
-    `;
-    return `
-      <section class="detail-section">
-        <h3>Traceability</h3>
-        <div class="trace-stack">
-          <h4>Decision trace</h4>
-          ${traceBlocks || fallbackTrace}
-        </div>
-        <details class="raw-json">
-          <summary>Raw row JSON</summary>
-          <pre>${escapeHtml(JSON.stringify(detail, null, 2))}</pre>
-        </details>
+        <h3>${escapeHtml(title)}</h3>
+        <div class="detail-kv">${rows.join("")}</div>
       </section>
     `;
   }
 
   function renderDetail(summary, detail) {
+    const stateValue = summary._recordState || recordStateForRow(summary);
+    const config = stateConfig(stateValue);
+    const score = Number(summary._evidenceScore || evidenceLevel(summary));
     const pmids = detail.supporting_pmids || (detail.pubmed_id ? [detail.pubmed_id] : []);
     const dois = detail.supporting_dois || (detail.doi ? [detail.doi] : []);
     const proofLines = detail.proof_lines || detail.paper_mentions || [];
+    const firstPmid = Array.isArray(pmids) ? pmids[0] : "";
+    const firstDoi = Array.isArray(dois) ? dois[0] : "";
     $("detailContent").innerHTML = `
-      <h2 class="detail-title">${escapeHtml(summary.enzyme_display_name || "Name not preserved")}</h2>
-      <p class="detail-subtitle">${escapeHtml(summary.ec_number || "n/a")} / ${escapeHtml(summary.organism || "n/a")} / ${escapeHtml(summary.substrate_name || "n/a")}</p>
+      <div class="detail-top">
+        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
+        <h2>${escapePublic(summary.enzyme_display_name || "Name not preserved")}</h2>
+        <p>${escapeHtml(summary.ec_number || "n/a")} &middot; ${escapePublic(summary.organism || "n/a")}</p>
+        <div class="detail-confidence">
+          <span class="state-badge ${config.className}">${escapeHtml(config.shortLabel)}</span>
+          ${evidenceBars(summary, confidenceLabel(score))}
+          <span>${escapeHtml(confidenceLabel(score))}</span>
+        </div>
+      </div>
+
+      ${detailSection("Source", [
+        kv("Source ID", summary.measurement_key || detail.measurement_key),
+        kv("Catalog", "CatLog"),
+        kv("Source", summary.source_db || detail.source_db),
+        kv("Source rows", detail.source_record_count || summary.source_record_count),
+      ])}
+
+      ${detailSection("Literature", [
+        `<div class="kv-line"><span>DOI</span><strong>${doiLink(firstDoi)}</strong></div>`,
+        `<div class="kv-line"><span>PMID</span><strong>${pmidLink(firstPmid)}</strong></div>`,
+        kv("Paper IDs", [
+          ...(Array.isArray(pmids) ? pmids : []),
+          ...(Array.isArray(dois) ? dois : []),
+        ].join(", ")),
+      ])}
+
+      ${detailSection("Measurement", [
+        kv("Substrate", summary.substrate_name),
+        kv("Assay type", metricDisplay(summary, "kcat") !== "n/a" ? "steady-state kcat" : "kinetic measurement"),
+        kv("Temperature", `${formatTemperature(summary)} C`),
+        kv("pH", formatPh(summary.ph)),
+        kv("Condition", detail.assay_conditions_summary),
+        kv("kcat", metricDisplay(summary, "kcat")),
+        kv("Km", metricDisplay(summary, "km")),
+        kv("kcat/Km", metricDisplay(summary, "kcat_over_km")),
+      ])}
+
+      ${detailSection("Evidence support", [
+        kv("State meaning", stateDescriptions[stateValue] || config.label),
+        kv("Evidence tier", tierLabels[summary.evidence_confidence_tier] || summary.evidence_confidence_tier),
+        kv("Identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state),
+        kv("Record state", config.label),
+      ])}
 
       <section class="detail-section">
-        <h3>Core fields</h3>
-        <div class="kv-grid">
-          ${kv("measurement key", summary.measurement_key)}
-          ${kv("review key", summary.review_key)}
-          ${kv("source", summary.source_db)}
-          ${kv("enzyme label source", sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source)}
-          ${kv("preserved name source", summary.enzyme_name_source || detail.enzyme_name_source)}
-          ${kv("claim status", statusLabels[summary.verification_status] || summary.verification_status)}
-          ${kv("paper evidence", tierLabels[summary.evidence_confidence_tier] || summary.evidence_confidence_tier)}
-          ${kv("identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state)}
-          ${kv("UniProt", summary.primary_uniprot_id)}
-          ${kv("mutation", detail.mutation_signature)}
-        </div>
+        <h3>Notes</h3>
+        <p class="detail-note">${listText(proofLines, 3)}</p>
       </section>
 
-      <section class="detail-section">
-        <h3>Kinetics</h3>
-        <div class="kv-grid">
-          ${kv("kcat", summary.kcat_display)}
-          ${kv("Km", summary.km_display)}
-          ${kv("Ki", summary.ki_display)}
-          ${kv("kcat/Km", summary.kcat_over_km_display)}
-        </div>
-      </section>
-
-      ${renderSequenceSection(summary, detail)}
-
-      <section class="detail-section">
-        <h3>Literature and evidence</h3>
-        <div class="kv-grid">
-          ${kv("PMIDs", pmids.join(", "))}
-          ${kv("DOIs", dois.join(", "))}
-          ${kv("literature linkage", detail.literature_linkage)}
-          ${kv("next action", detail.next_best_action)}
-        </div>
-        ${listItems(proofLines, "No proof excerpt preserved in this row.")}
-      </section>
-
-      ${renderTraceabilitySection(summary, detail)}
+      <div class="detail-actions">
+        <button id="downloadSelectedJson" class="button secondary" type="button">Download JSON</button>
+      </div>
     `;
+    $("closeDetailButton").addEventListener("click", () => {
+      resetDetail();
+      renderRows();
+    });
+    $("downloadSelectedJson").addEventListener("click", () => {
+      const payload = { summary, detail };
+      triggerBlobDownload(`${summary.record_key || "catlog-row"}.json`, JSON.stringify(payload, null, 2));
+    });
+  }
+
+  function clearFilters() {
+    [
+      "globalSearchInput",
+      "searchInput",
+      "ecFilterInput",
+      "enzymeFilterInput",
+      "organismFilterInput",
+      "substrateFilterInput",
+    ].forEach((id) => {
+      $(id).value = "";
+    });
+    document.querySelectorAll('input[name="recordState"]').forEach((input) => {
+      input.checked = true;
+    });
+    document.querySelectorAll('input[name="measurement"]').forEach((input) => {
+      input.checked = false;
+    });
+    $("sortSelect").value = "evidence";
+    resetDetail();
+    applyFilters();
   }
 
   function bindControls() {
-    ["searchInput", "statusSelect", "tierSelect", "sourceSelect", "identitySelect", "sortSelect"].forEach((id) => {
+    [
+      "globalSearchInput",
+      "searchInput",
+      "ecFilterInput",
+      "enzymeFilterInput",
+      "organismFilterInput",
+      "substrateFilterInput",
+      "sortSelect",
+    ].forEach((id) => {
       $(id).addEventListener("input", () => applyFilters());
       $(id).addEventListener("change", () => applyFilters());
     });
-    $("clearButton").addEventListener("click", () => {
-      $("searchInput").value = "";
-      $("statusSelect").value = "";
-      $("tierSelect").value = "";
-      $("sourceSelect").value = "";
-      $("identitySelect").value = "";
-      $("sortSelect").value = "evidence";
-      state.selectedKey = "";
-      $("detailContent").classList.add("hidden");
-      $("detailEmpty").classList.remove("hidden");
+    Object.keys(suggestionInputs).forEach((id) => {
+      const input = $(id);
+      if (!input) return;
+      input.addEventListener("focus", () => showSuggestions(input));
+      input.addEventListener("click", () => showSuggestions(input));
+      input.addEventListener("blur", () => {
+        state.suggestionHideTimer = window.setTimeout(hideSuggestions, 140);
+      });
+    });
+    document.querySelectorAll(".filter-section-title").forEach((button) => {
+      button.addEventListener("click", () => {
+        const section = button.closest(".filter-section");
+        const isOpen = !section.classList.contains("open");
+        section.classList.toggle("open", isOpen);
+        button.setAttribute("aria-expanded", String(isOpen));
+        const marker = button.querySelector("span");
+        if (marker) marker.textContent = isOpen ? "⌃" : "⌄";
+      });
+    });
+    $("browseButton").addEventListener("click", () => {
+      document.querySelector(".table-panel")?.scrollIntoView({ block: "start" });
+    });
+    window.addEventListener("scroll", hideSuggestions, { passive: true });
+    window.addEventListener("resize", hideSuggestions);
+    $("statusChecklist").addEventListener("change", () => applyFilters());
+    $("measurementChecklist").addEventListener("change", () => applyFilters());
+    $("clearButton").addEventListener("click", clearFilters);
+    $("pageSizeSelect").addEventListener("change", () => {
+      resetDetail();
+      state.pageSize = Number($("pageSizeSelect").value) || 25;
       applyFilters();
     });
     $("prevButton").addEventListener("click", () => {
+      resetDetail();
       state.page -= 1;
       renderRows();
     });
     $("nextButton").addEventListener("click", () => {
+      resetDetail();
       state.page += 1;
       renderRows();
+    });
+    $("exportSnapshotButton").addEventListener("click", handleSnapshotDownload);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
+        event.preventDefault();
+        $("globalSearchInput").focus();
+      }
     });
   }
 
@@ -559,11 +871,13 @@
       renderSummary();
       bindControls();
       await loadRecordChunks();
-      renderSummary();
       setupFilters();
       applyFilters();
+      if (state.filtered.length && usesEmbeddedDetailPanel()) {
+        await selectRecord(state.filtered[0].record_key);
+      }
     } catch (error) {
-      $("activeSummary").innerHTML = `<span class="badge warn">${escapeHtml(error.message || error)}</span>`;
+      $("activeSummary").innerHTML = `<span class="state-badge review">${escapeHtml(error.message || error)}</span>`;
     }
   }
 
