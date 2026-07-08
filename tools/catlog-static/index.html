@@ -4,89 +4,146 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CatLog Static Snapshot</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="assets/catlog-static.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">CatLog Static Snapshot</p>
-          <h1>Enzyme catalysis logbook</h1>
-          <p class="subhead">Search, filter, and inspect evidence in this frozen local snapshot without a server.</p>
+    <div class="static-app">
+      <header class="app-header">
+        <div class="brand-lockup">
+          <strong>CatLog</strong>
+          <span>enzyme kinetics catalog</span>
         </div>
-        <div class="snapshot-meta">
-          <span id="snapshotLabel">Loading snapshot</span>
-          <span id="rowCountLabel">- rows</span>
+        <nav class="top-nav" aria-label="Catalog sections">
+          <button id="browseButton" class="nav-tab active" type="button">Browse</button>
+          <a
+            class="nav-tab"
+            href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"
+            target="_blank"
+            rel="noreferrer"
+          >About</a>
+        </nav>
+        <label class="global-search" aria-label="Search catalog">
+          <input id="globalSearchInput" type="search" placeholder="Search by enzyme, EC, organism..." />
+          <kbd>/</kbd>
+        </label>
+        <div class="header-actions">
+          <button id="exportSnapshotButton" class="button secondary" type="button">Export snapshot</button>
         </div>
       </header>
+      <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
       <main>
-        <section class="summary-grid" id="summaryGrid" aria-live="polite"></section>
-
-        <section class="toolbar" aria-label="CatLog filters">
-          <label class="field search-field">
-            <span>Search</span>
-            <input id="searchInput" type="search" placeholder="enzyme, EC, UniProt, PMID/DOI" />
-          </label>
-          <label class="field">
-            <span>Status</span>
-            <select id="statusSelect"></select>
-          </label>
-          <label class="field">
-            <span>Paper evidence</span>
-            <select id="tierSelect"></select>
-          </label>
-          <label class="field">
-            <span>Source</span>
-            <select id="sourceSelect"></select>
-          </label>
-          <label class="field">
-            <span>Identity</span>
-            <select id="identitySelect"></select>
-          </label>
-          <label class="field">
-            <span>Sort</span>
-            <select id="sortSelect">
-              <option value="evidence">Evidence first</option>
-              <option value="ec_number">EC number</option>
-              <option value="enzyme">Enzyme</option>
-              <option value="organism">Organism</option>
-              <option value="substrate">Substrate</option>
-              <option value="kcat">kcat</option>
-              <option value="km">Km</option>
-              <option value="ki">Ki</option>
-              <option value="source">Source</option>
-            </select>
-          </label>
-          <button id="clearButton" class="button secondary" type="button">Reset</button>
+        <section class="snapshot-band" aria-live="polite">
+          <div class="summary-grid" id="summaryGrid"></div>
+          <div class="evidence-summary" id="evidenceSummary"></div>
+          <div class="snapshot-meta" id="snapshotMeta">
+            <span id="snapshotLabel">Loading snapshot</span>
+            <span id="rowCountLabel">- rows</span>
+          </div>
         </section>
 
-        <section class="utility-row">
-          <div id="activeSummary">Loading records...</div>
-          <div class="utility-actions" id="utilityActions"></div>
-        </section>
+        <section class="workbench">
+          <aside class="filter-rail" aria-label="CatLog filters">
+            <div class="rail-heading">
+              <strong>Filters</strong>
+              <button id="clearButton" class="text-button" type="button">Clear all</button>
+            </div>
+            <label class="field search-field">
+              <input id="searchInput" type="search" placeholder="Search filters" />
+            </label>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Record state <span>⌃</span></button>
+              <div class="check-stack" id="statusChecklist"></div>
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">EC number <span>⌃</span></button>
+              <input id="ecFilterInput" type="search" placeholder="Search EC number" />
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Enzyme <span>⌃</span></button>
+              <input id="enzymeFilterInput" type="search" placeholder="Search enzyme" />
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Organism <span>⌃</span></button>
+              <input id="organismFilterInput" type="search" placeholder="Search organism" />
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Substrate <span>⌃</span></button>
+              <input id="substrateFilterInput" type="search" placeholder="Search substrate" />
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Measurement type <span>⌃</span></button>
+              <div class="check-stack" id="measurementChecklist"></div>
+            </div>
+          </aside>
 
-        <section class="content-grid">
           <section class="table-panel">
+            <div class="records-header">
+              <div class="records-title">
+                <strong id="activeSummary">Loading records...</strong>
+                <span id="pageSummary">Preparing frozen index</span>
+              </div>
+              <div class="records-tools">
+                <span>Sort by</span>
+                <select id="sortSelect">
+                  <option value="evidence">Evidence</option>
+                  <option value="ec_number">EC number</option>
+                  <option value="enzyme">Enzyme</option>
+                  <option value="organism">Organism</option>
+                  <option value="substrate">Substrate</option>
+                  <option value="kcat">kcat</option>
+                  <option value="km">Km</option>
+                  <option value="kcat_over_km">kcat/Km</option>
+                  <option value="source">Source</option>
+                </select>
+              </div>
+            </div>
             <div class="table-wrap">
               <table>
+                <colgroup>
+                  <col class="col-enzyme" />
+                  <col class="col-ec" />
+                  <col class="col-organism" />
+                  <col class="col-substrate" />
+                  <col class="col-kcat" />
+                  <col class="col-km" />
+                  <col class="col-efficiency" />
+                  <col class="col-temp" />
+                  <col class="col-ph" />
+                  <col class="col-evidence" />
+                  <col class="col-state" />
+                  <col class="col-open" />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>Enzyme / EC</th>
-                    <th>Context</th>
-                    <th>Kinetics</th>
-                    <th>Claim status</th>
-                    <th>Paper evidence</th>
-                    <th>Literature</th>
+                    <th>Enzyme</th>
+                    <th>EC number</th>
+                    <th>Organism</th>
+                    <th>Substrate</th>
+                    <th>k<sub>cat</sub> (s<sup>-1</sup>)</th>
+                    <th>K<sub>m</sub></th>
+                    <th>k<sub>cat</sub>/K<sub>m</sub></th>
+                    <th>T (°C)</th>
+                    <th>pH</th>
+                    <th>Evidence</th>
+                    <th>Record state</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="recordsBody"></tbody>
               </table>
             </div>
             <div class="pagination">
-              <button id="prevButton" class="button secondary" type="button">Previous</button>
+              <span>Rows per page:</span>
+              <select id="pageSizeSelect">
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
               <span id="pageLabel">Page 1</span>
-              <button id="nextButton" class="button secondary" type="button">Next</button>
+              <button id="prevButton" class="icon-button" type="button" aria-label="Previous page">‹</button>
+              <button id="nextButton" class="icon-button" type="button" aria-label="Next page">›</button>
             </div>
           </section>
 
@@ -96,6 +153,11 @@
           </aside>
         </section>
       </main>
+      <footer class="app-footer">
+        <a href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2" target="_blank" rel="noreferrer">Research paper</a>
+        <span>Portable static snapshot</span>
+        <span id="footerVersion">Static snapshot</span>
+      </footer>
     </div>
 
     <script src="data/manifest.js"></script>
