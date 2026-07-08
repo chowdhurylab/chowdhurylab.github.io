@@ -1027,28 +1027,6 @@ tbody tr.selected {
   display: none !important;
 }
 
-.app-footer {
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  gap: 28px;
-  border-top: 1px solid var(--line);
-  background: var(--panel);
-  padding: 0 24px;
-  color: #3e4a59;
-  font-size: 12px;
-}
-
-.app-footer a {
-  color: #245d56;
-  font-weight: 600;
-}
-
-.app-footer span:last-child {
-  margin-left: auto;
-  color: var(--muted);
-}
-
 @media (max-width: 1500px) and (min-width: 1181px) {
   .workbench {
     grid-template-columns: 236px minmax(0, 1fr);

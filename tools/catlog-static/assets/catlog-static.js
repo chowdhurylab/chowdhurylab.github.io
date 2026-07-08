@@ -1,5 +1,8 @@
 (function () {
   const manifest = window.CATLOG_STATIC_MANIFEST || {};
+  const assetVersion = String(manifest.source_sha256 || manifest.generated_at || "20260707")
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 16) || "20260707";
   const state = {
     records: [],
     filtered: [],
@@ -163,17 +166,6 @@
     return parts.length ? parts.join(" | ") : JSON.stringify(value);
   }
 
-  function formatDate(value) {
-    if (!value) return "Static snapshot";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  }
-
   function metricDisplay(row, field) {
     const display = row[`${field}_display`];
     return display && display !== "n/a" ? display : "n/a";
@@ -254,11 +246,17 @@
     return `<span class="state-badge ${config.className}" title="${escapeHtml(stateDescriptions[config.value] || config.label)}">${escapeHtml(config.shortLabel)}</span>`;
   }
 
+  function versionedAssetUrl(src) {
+    if (!src || /^(?:https?:)?\/\//.test(src) || src.startsWith("data:")) return src;
+    const separator = src.includes("?") ? "&" : "?";
+    return `${src}${separator}v=${encodeURIComponent(assetVersion)}`;
+  }
+
   function loadScript(src) {
     if (state.loadedScripts.has(src)) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = src;
+      script.src = versionedAssetUrl(src);
       script.onload = () => {
         state.loadedScripts.add(src);
         resolve();
@@ -375,7 +373,6 @@
       <span class="snapshot-line"><strong>${formatInteger(kmRows)}</strong><span>Km</span></span>
       <span class="snapshot-line"><strong>${formatInteger(efficiencyRows)}</strong><span>kcat/Km</span></span>
     `;
-    $("footerVersion").textContent = manifest.generated_at ? `Version ${formatDate(manifest.generated_at)}` : "Static snapshot";
   }
 
   function renderEvidenceSummary(rows) {
