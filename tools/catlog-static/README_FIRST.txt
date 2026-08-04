@@ -10,9 +10,9 @@ Publish on a website
 
 Snapshot details
 - Rows: 145442
-- Generated (UTC): 2026-08-04T10:28:29+00:00
+- Generated (UTC): 2026-08-04T12:48:36+00:00
 - Source: verified_catlog.jsonl
-- Source SHA-256: e1d8426f0d3743d890cead6a02ed6604208ad0c4a70376ee89c87f7702b9e033
+- Source SHA-256: 2183ceeca989c66f1dd7668a68916e0bd0b40f61a2b93c2f9674a6d1f6d111b9
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
 - Download table: exports the compact all-row index without sequences or source records
