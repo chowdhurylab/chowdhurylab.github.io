@@ -787,6 +787,15 @@ th {
   white-space: normal;
 }
 
+.header-unit {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 th:nth-child(n+5):nth-child(-n+9),
 td:nth-child(n+5):nth-child(-n+9) {
   text-align: right;
@@ -1160,6 +1169,15 @@ tbody tr.selected .row-arrow {
   color: var(--muted);
   font-size: 10.5px;
   white-space: nowrap;
+}
+
+.measurement-value small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 500;
 }
 
 .measurement-value strong {

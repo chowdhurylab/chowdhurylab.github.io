@@ -401,7 +401,7 @@
         records: state.records.map(publicSummaryRecord),
       };
       const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
-      triggerBlobDownload(`catlog-table-index-${filenameDate}.json`, JSON.stringify(payload, null, 2));
+      triggerBlobDownload(`catlog-table-index-${filenameDate}.json`, JSON.stringify(payload));
     } finally {
       state.downloadInProgress = false;
       if (button) button.textContent = "Download table";
@@ -922,17 +922,17 @@
   function measurementSection(summary, detail) {
     const temperature = formatTemperature(summary);
     const metrics = [
-      ["<i>k</i><sub>cat</sub>", metricDisplay(summary, "kcat")],
-      ["<i>K</i><sub>m</sub>", metricDisplay(summary, "km")],
-      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", metricDisplay(summary, "kcat_over_km")],
+      ["<i>k</i><sub>cat</sub>", "s<sup>-1</sup>", metricDisplay(summary, "kcat")],
+      ["<i>K</i><sub>m</sub>", "mM", metricDisplay(summary, "km")],
+      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "s<sup>-1</sup> mM<sup>-1</sup>", metricDisplay(summary, "kcat_over_km")],
     ];
     return `
       <section class="detail-section measurement-section">
         <h3>Kinetic measurement</h3>
         <div class="measurement-strip">
-          ${metrics.map(([label, value]) => `
+          ${metrics.map(([label, unit, value]) => `
             <div class="measurement-value">
-              <span>${label}</span>
+              <span>${label}<small>${unit}</small></span>
               <strong>${scientificValueHtml(value)}</strong>
             </div>
           `).join("")}
