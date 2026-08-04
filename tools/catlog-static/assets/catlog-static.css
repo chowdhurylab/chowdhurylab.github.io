@@ -1065,6 +1065,13 @@ tbody tr.selected .row-arrow {
   font-weight: 600;
 }
 
+.review-outcome-section p {
+  margin: 0;
+  color: #34434f;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
 .detail-kv {
   display: grid;
   gap: 6px;
