@@ -78,14 +78,6 @@
     identity_unresolved: "Unresolved",
   };
 
-  const tierLabels = {
-    paper_grounded_high_confidence: "Full-text source",
-    paper_grounded: "Paper excerpt",
-    literature_linked: "Publication linked",
-    cross_source_supported: "Cross-source match",
-    candidate_only: "Source record",
-  };
-
   const suggestionInputs = {
     globalSearchInput: "mixed",
     ecFilterInput: "ec_number",
@@ -292,10 +284,37 @@
     return "unresolved_issues";
   }
 
-  function evidenceLabel(row) {
-    const tier = row.evidence_confidence_tier;
-    if (tierLabels[tier]) return tierLabels[tier];
-    return row.has_literature_id ? "Publication linked" : "Source record";
+  function evidenceLabel(row, proofLines = []) {
+    if (proofLines.length) return "Source values";
+    if (row.evidence_confidence_tier === "cross_source_supported") {
+      return "Cross-source match";
+    }
+    return row.has_literature_id ? "Reference listed" : "Database record";
+  }
+
+  function reviewOutcome(summary, hasSourceEvidence) {
+    switch (summary.verification_status) {
+      case "corrected":
+        return hasSourceEvidence
+          ? "Accepted with a recorded correction. Source values are shown below."
+          : "Accepted with a recorded correction. Source values are not included in this snapshot.";
+      case "verified":
+        return hasSourceEvidence
+          ? "Accepted after review. Source values are shown below."
+          : "Accepted after review. Source values are not included in this snapshot.";
+      case "manual_review_required":
+        return hasSourceEvidence
+          ? "Review pending. Source values are shown below."
+          : "Review pending.";
+      case "mathematically_inferred":
+        return "Calculated from reported values; not directly reported.";
+      case "disputed":
+        return "Sources do not yet support a single accepted value.";
+      default:
+        return hasSourceEvidence
+          ? "Not accepted. Source values are shown below."
+          : "Not accepted through CatLog review.";
+    }
   }
 
   function rowStatusLabel(row) {
@@ -375,6 +394,10 @@
       _recordState,
       _search,
       _search_text,
+      next_best_action,
+      next_best_action_reason,
+      status_conflict_warning,
+      anomaly_count,
       ...record
     } = row;
     return record;
@@ -429,9 +452,9 @@
     }
     try {
       const details = await Promise.all(rows.map(detailForRow));
-      const records = rows.map((row, index) => ({
+      const records = rows.map((row, index) => publicSummaryRecord({
         ...details[index],
-        ...publicSummaryRecord(row),
+        ...row,
       }));
       const payload = {
         metadata: {
@@ -1026,6 +1049,7 @@
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
     const firstPmid = pmids[0] || "";
     const firstDoi = dois[0] || "";
+    const hasSourceEvidence = proofLines.length > 0;
     const referenceRows = firstPmid || firstDoi
       ? [
           dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
@@ -1039,16 +1063,20 @@
         <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
         <div class="detail-status-line">
           ${statusBadge(summary)}
-          <span class="evidence-source">${escapeHtml(evidenceLabel(summary))}</span>
+          <span class="evidence-source">${escapeHtml(evidenceLabel(summary, proofLines))}</span>
         </div>
       </div>
 
       ${measurementSection(summary, detail)}
+      <section class="detail-section review-outcome-section">
+        <h3>Review outcome</h3>
+        <p>${escapeHtml(reviewOutcome(summary, hasSourceEvidence))}</p>
+      </section>
       ${molecularIdentitySection(summary, detail)}
       ${detailSection("Reference", referenceRows)}
       ${proofLines.length ? `
         <section class="detail-section evidence-note-section">
-          <h3>Source evidence</h3>
+          <h3>Values in source</h3>
           <div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div>
         </section>
       ` : ""}
@@ -1058,7 +1086,6 @@
         kv("Source records", detail.source_record_count || summary.source_record_count),
         detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.join(", ")) : "",
         detail.data_origin ? kv("Data origin", detail.data_origin) : "",
-        detail.verification_method ? kv("Review method", detail.verification_method) : "",
         kv("Protein identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state),
       ])}
 
@@ -1071,7 +1098,10 @@
       button.addEventListener("click", () => copyDetailValue(button));
     });
     $("downloadSelectedJson").addEventListener("click", () => {
-      const payload = { summary, detail };
+      const payload = {
+        summary: publicSummaryRecord(summary),
+        detail: publicSummaryRecord(detail),
+      };
       triggerBlobDownload(`${summary.record_key || "catlog-row"}.json`, JSON.stringify(payload, null, 2));
     });
     if (narrowFilterMedia.matches) focusAfterPanelTransition("closeDetailButton");
