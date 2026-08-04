@@ -6,32 +6,39 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>CatLog Static Snapshot</title>
+    <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=20260707-645417b1" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=20260804-ui2" />
   </head>
   <body>
     <div class="static-app">
       <header class="app-header">
         <div class="brand-lockup">
-          <strong>CatLog</strong>
-          <span>enzyme kinetics catalog</span>
+          <span class="visually-hidden">Catalog, enzyme kinetics catalog</span>
+          <strong aria-hidden="true">CatLog</strong>
+          <span aria-hidden="true">enzyme kinetics catalog</span>
         </div>
         <nav class="top-nav" aria-label="Catalog sections">
-          <button id="browseButton" class="nav-tab active" type="button">Browse</button>
+          <button id="browseButton" class="nav-tab active" type="button" aria-current="page">Browse</button>
           <a
             class="nav-tab"
             href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"
             target="_blank"
             rel="noreferrer"
-          >About</a>
+            aria-label="Open the CatLog research paper"
+          >Paper</a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
-          <input id="globalSearchInput" type="search" placeholder="Search by enzyme, EC, organism..." />
+          <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" />
           <kbd>/</kbd>
         </label>
         <div class="header-actions">
-          <button id="exportSnapshotButton" class="button secondary" type="button">Export snapshot</button>
+          <button
+            id="exportSnapshotButton"
+            class="button secondary"
+            type="button"
+            title="Download the compact all-row table index. Molecular details are available from Download page or an individual record."
+          >Download table</button>
         </div>
       </header>
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
@@ -47,33 +54,34 @@
         </section>
 
         <section class="workbench">
-          <aside class="filter-rail" aria-label="CatLog filters">
+          <button id="filterBackdrop" class="filter-backdrop" type="button" aria-label="Close filters" tabindex="-1"></button>
+          <aside id="catalogFilters" class="filter-rail" aria-label="Catalog filters">
             <div class="rail-heading">
               <strong>Filters</strong>
-              <button id="clearButton" class="text-button" type="button">Clear all</button>
+              <div class="rail-actions">
+                <button id="clearButton" class="text-button" type="button">Clear all</button>
+                <button id="closeFiltersButton" class="icon-button close-filters" type="button" aria-label="Close filters">&times;</button>
+              </div>
             </div>
-            <label class="field search-field">
-              <input id="searchInput" type="search" placeholder="Search filters" />
-            </label>
             <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Record state <span>⌃</span></button>
+              <button class="filter-section-title" type="button" aria-expanded="true">Review status <span>⌃</span></button>
               <div class="check-stack" id="statusChecklist"></div>
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">EC number <span>⌃</span></button>
-              <input id="ecFilterInput" type="search" placeholder="Search EC number" />
+              <input id="ecFilterInput" type="search" placeholder="Filter by EC number" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Enzyme <span>⌃</span></button>
-              <input id="enzymeFilterInput" type="search" placeholder="Search enzyme" />
+              <input id="enzymeFilterInput" type="search" placeholder="Filter by enzyme" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Organism <span>⌃</span></button>
-              <input id="organismFilterInput" type="search" placeholder="Search organism" />
+              <input id="organismFilterInput" type="search" placeholder="Filter by organism" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Substrate <span>⌃</span></button>
-              <input id="substrateFilterInput" type="search" placeholder="Search substrate" />
+              <input id="substrateFilterInput" type="search" placeholder="Filter by substrate" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Measurement type <span>⌃</span></button>
@@ -84,13 +92,22 @@
           <section class="table-panel">
             <div class="records-header">
               <div class="records-title">
+                <button id="openFiltersButton" class="button filter-toggle" type="button" aria-controls="catalogFilters" aria-expanded="false">
+                  Filters <span id="activeFilterCount" class="filter-count hidden"></span>
+                </button>
                 <strong id="activeSummary">Loading records...</strong>
                 <span id="pageSummary">Preparing frozen index</span>
               </div>
               <div class="records-tools">
+                <button
+                  id="downloadPageButton"
+                  class="button secondary"
+                  type="button"
+                  title="Download the rows shown on this page with available molecular identity, references, and public provenance."
+                >Download page</button>
                 <span>Sort by</span>
                 <select id="sortSelect">
-                  <option value="evidence">Evidence</option>
+                  <option value="evidence">Review status</option>
                   <option value="ec_number">EC number</option>
                   <option value="enzyme">Enzyme</option>
                   <option value="organism">Organism</option>
@@ -98,7 +115,6 @@
                   <option value="kcat">kcat</option>
                   <option value="km">Km</option>
                   <option value="kcat_over_km">kcat/Km</option>
-                  <option value="source">Source</option>
                 </select>
               </div>
             </div>
@@ -114,27 +130,29 @@
                   <col class="col-efficiency" />
                   <col class="col-temp" />
                   <col class="col-ph" />
-                  <col class="col-evidence" />
                   <col class="col-state" />
                   <col class="col-open" />
                 </colgroup>
                 <thead>
                   <tr>
-                    <th>Enzyme</th>
-                    <th>EC number</th>
-                    <th>Organism</th>
-                    <th>Substrate</th>
-                    <th>k<sub>cat</sub> (s<sup>-1</sup>)</th>
-                    <th>K<sub>m</sub></th>
-                    <th>k<sub>cat</sub>/K<sub>m</sub></th>
-                    <th>T (°C)</th>
-                    <th>pH</th>
-                    <th>Evidence</th>
-                    <th>Record state</th>
-                    <th></th>
+                    <th scope="col">Enzyme</th>
+                    <th scope="col">EC number</th>
+                    <th scope="col">Organism</th>
+                    <th scope="col">Substrate</th>
+                    <th scope="col"><i>k</i><sub>cat</sub> (s<sup>-1</sup>)</th>
+                    <th scope="col"><i>K</i><sub>m</sub></th>
+                    <th scope="col"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></th>
+                    <th scope="col">T (°C)</th>
+                    <th scope="col">pH</th>
+                    <th scope="col">Status</th>
+                    <th scope="col"><span class="visually-hidden">Open record</span></th>
                   </tr>
                 </thead>
-                <tbody id="recordsBody"></tbody>
+                <tbody id="recordsBody">
+                  <tr class="loading-row">
+                    <td colspan="11"><span class="loading-indicator">Loading catalog rows...</span></td>
+                  </tr>
+                </tbody>
               </table>
             </div>
             <div class="pagination">
@@ -150,15 +168,15 @@
             </div>
           </section>
 
-          <aside class="detail-panel" aria-live="polite">
-            <div id="detailEmpty" class="detail-empty">Select a row to inspect evidence and traceability.</div>
+          <aside class="detail-panel" aria-label="Record details" aria-live="polite">
+            <div id="detailEmpty" class="detail-empty">Select a row to view its measurement and sources.</div>
             <div id="detailContent" class="hidden"></div>
           </aside>
         </section>
       </main>
     </div>
 
-    <script src="data/manifest.js?v=20260707-645417b1"></script>
-    <script src="assets/catlog-static.js?v=20260707-645417b1"></script>
+    <script src="data/manifest.js?v=20260804-ui2"></script>
+    <script src="assets/catlog-static.js?v=20260804-ui2"></script>
   </body>
 </html>
