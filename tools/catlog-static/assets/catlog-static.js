@@ -10,7 +10,11 @@
     pageSize: 25,
     selectedKey: "",
     selectedDetail: null,
-    downloadInProgress: false,
+    recordChunksLoaded: 0,
+    recordChunksTotal: 0,
+    recordsReady: false,
+    recordsReadyPromise: null,
+    filterTimer: null,
     loadedScripts: new Set(["data/manifest.js"]),
     loadingScripts: new Map(),
     suggestionHideTimer: null,
@@ -26,24 +30,30 @@
       className: "accepted",
     },
     {
-      value: "needs_review",
-      label: "Needs review",
-      shortLabel: "Needs review",
+      value: "curation_pending",
+      label: "Pending curation",
+      shortLabel: "Pending curation",
       className: "review",
     },
     {
-      value: "unresolved_issues",
-      label: "Unverified",
-      shortLabel: "Unverified",
+      value: "not_verified",
+      label: "Provisional",
+      shortLabel: "Provisional",
       className: "unresolved",
     },
   ];
 
   const stateDescriptions = {
-    accepted: "Reviewed and accepted as reported, or retained with a documented correction.",
-    needs_review: "Source data are present, but at least one identity, measurement, or provenance field still requires curator review.",
-    unresolved_issues: "The record does not yet meet the evidence requirements for the accepted set.",
+    accepted: "Curator-accepted as reported or after a documented correction.",
+    curation_pending: "Awaiting a curator decision because one or more row-specific checks remain open.",
+    not_verified: "Outside the accepted set; includes records not yet fully assessed, calculated-only values, and disputed rows.",
   };
+
+  const evidenceGroups = [
+    { value: "paper_evidence", label: "Paper evidence", className: "paper" },
+    { value: "literature_id", label: "Literature ID", className: "linked" },
+    { value: "source_records", label: "Source records", className: "source" },
+  ];
 
   const measurementFilters = [
     { value: "kcat", label: "Has kcat", field: "kcat" },
@@ -109,7 +119,7 @@
   function publicText(value) {
     return String(value == null ? "" : value)
       .replace(/\bpaper[- ]backed\b/gi, "paper linked")
-      .replace(/\bclaim\s+status\b/gi, "review status")
+      .replace(/\bclaim\s+status\b/gi, "curation status")
       .replace(/\bclaim[- ]verified\b/gi, "accepted")
       .replace(/\bverified\s+or\s+corrected\b/gi, "accepted or corrected")
       .replace(/\baccepted\s+as[- ]is\b/gi, "accepted")
@@ -268,20 +278,57 @@
 
   function recordStateForRow(row) {
     const status = row.verification_status;
-    const tier = row.evidence_confidence_tier;
     if (status === "verified" || status === "corrected") return "accepted";
-    if (
-      status === "manual_review_required"
-      || status === "mathematically_inferred"
-      || tier === "paper_grounded"
-      || tier === "paper_grounded_high_confidence"
-      || tier === "literature_linked"
-      || tier === "cross_source_supported"
-      || row.has_literature_id
-    ) {
-      return "needs_review";
+    if (status === "manual_review_required") return "curation_pending";
+    return "not_verified";
+  }
+
+  function manifestDistribution(key) {
+    const rows = (((manifest.summary || {}).distributions || {})[key] || []);
+    return Object.fromEntries(rows.map((row) => [row.label, Number(row.count || 0)]));
+  }
+
+  function recordStateCounts(rows) {
+    const counts = Object.fromEntries(recordStates.map((item) => [item.value, 0]));
+    if (!state.recordsReady) {
+      const statuses = manifestDistribution("verification_status");
+      counts.accepted = (statuses.verified || 0) + (statuses.corrected || 0);
+      counts.curation_pending = statuses.manual_review_required || 0;
+      counts.not_verified = Object.entries(statuses).reduce(
+        (total, [status, count]) => total + (["verified", "corrected", "manual_review_required"].includes(status) ? 0 : count),
+        0,
+      );
+      return counts;
     }
-    return "unresolved_issues";
+    rows.forEach((row) => {
+      counts[row._recordState || recordStateForRow(row)] += 1;
+    });
+    return counts;
+  }
+
+  function evidenceGroupForRow(row) {
+    const tier = row.evidence_confidence_tier;
+    if (tier === "paper_grounded" || tier === "paper_grounded_high_confidence") return "paper_evidence";
+    if (tier === "literature_linked") return "literature_id";
+    return "source_records";
+  }
+
+  function evidenceGroupCounts(rows) {
+    const counts = Object.fromEntries(evidenceGroups.map((item) => [item.value, 0]));
+    if (!state.recordsReady) {
+      const tiers = manifestDistribution("evidence_confidence_tier");
+      counts.paper_evidence = (tiers.paper_grounded || 0) + (tiers.paper_grounded_high_confidence || 0);
+      counts.literature_id = tiers.literature_linked || 0;
+      counts.source_records = Object.entries(tiers).reduce(
+        (total, [tier, count]) => total + (["paper_grounded", "paper_grounded_high_confidence", "literature_linked"].includes(tier) ? 0 : count),
+        0,
+      );
+      return counts;
+    }
+    rows.forEach((row) => {
+      counts[evidenceGroupForRow(row)] += 1;
+    });
+    return counts;
   }
 
   function evidenceLabel(row, proofLines = []) {
@@ -289,44 +336,43 @@
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Cross-source match";
     }
-    return row.has_literature_id ? "Reference listed" : "Database record";
+    return row.has_literature_id ? "Reference available" : "Database record";
   }
 
-  function reviewOutcome(summary, hasSourceEvidence) {
+  function reviewOutcome(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return hasSourceEvidence
-          ? "Accepted with a recorded correction. Source values are shown below."
-          : "Accepted with a recorded correction. Source values are not included in this snapshot.";
+        return "Accepted after a documented correction.";
       case "verified":
-        return hasSourceEvidence
-          ? "Accepted after review. Source values are shown below."
-          : "Accepted after review. Source values are not included in this snapshot.";
+        return "Accepted as reported.";
       case "manual_review_required":
-        return hasSourceEvidence
-          ? "Review pending. Source values are shown below."
-          : "Review pending.";
+        return "Awaiting curator review.";
       case "mathematically_inferred":
-        return "Calculated from reported values; not directly reported.";
+        return "Calculated from reported values rather than stated directly in the source.";
       case "disputed":
-        return "Sources do not yet support a single accepted value.";
+        return "Conflicting source values; no single value has been accepted.";
       default:
-        return hasSourceEvidence
-          ? "Not accepted. Source values are shown below."
-          : "Not accepted through CatLog review.";
+        return "Not yet accepted for the curated set.";
     }
   }
 
   function rowStatusLabel(row) {
-    if (row.verification_status === "corrected") return "Corrected";
+    if (row.verification_status === "disputed") return "Disputed";
+    if (row.verification_status === "corrected") return "Accepted";
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
 
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
-    const description = stateDescriptions[config.value] || config.label;
+    const isDisputed = row.verification_status === "disputed";
+    const description = isDisputed
+      ? "Conflicting source values; no single value has been accepted."
+      : (row.verification_status === "corrected"
+          ? "Accepted after a documented correction."
+          : (stateDescriptions[config.value] || config.label));
     const label = rowStatusLabel(row);
-    return `<span class="state-badge ${config.className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}">${escapeHtml(label)}</span>`;
+    const qualifier = row.verification_status === "corrected" ? "<small>corrected</small>" : "";
+    return `<span class="state-badge ${isDisputed ? "disputed" : config.className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(label)}${qualifier}</span></span>`;
   }
 
   function versionedAssetUrl(src) {
@@ -335,12 +381,13 @@
     return `${src}${separator}v=${encodeURIComponent(assetVersion)}`;
   }
 
-  function loadScript(src) {
+  function loadScript(src, ordered = false) {
     if (state.loadedScripts.has(src)) return Promise.resolve();
     if (state.loadingScripts.has(src)) return state.loadingScripts.get(src);
     const pending = new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = versionedAssetUrl(src);
+      script.async = !ordered;
       script.onload = () => {
         state.loadedScripts.add(src);
         state.loadingScripts.delete(src);
@@ -356,14 +403,11 @@
     return pending;
   }
 
-  async function loadRecordChunks() {
-    const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
-    $("activeSummary").textContent = `Loading ${formatInteger(chunks.length)} data chunk${chunks.length === 1 ? "" : "s"}...`;
-    for (const chunk of chunks) await loadScript(chunk);
+  function indexLoadedRecords() {
     state.records = (window.CATLOG_RECORD_CHUNKS || []).flat();
     state.records.forEach((row) => {
       row._recordState = recordStateForRow(row);
-      row._search = String(row._search_text || [
+      row._search = row._search || String(row._search_text || [
         row.measurement_key,
         row.review_key,
         row.ec_number,
@@ -374,6 +418,64 @@
         row.primary_uniprot_id,
       ].join(" ")).toLowerCase();
     });
+  }
+
+  function updateLoadProgress() {
+    const total = Math.max(1, state.recordChunksTotal);
+    const progress = state.recordsReady
+      ? 100
+      : Math.min(100, Math.round((state.recordChunksLoaded / total) * 100));
+    const rail = $("catalogLoadProgress");
+    if (!rail) return;
+    rail.style.setProperty("--load-progress", String(progress / 100));
+    rail.setAttribute("aria-valuenow", String(progress));
+    rail.setAttribute(
+      "aria-valuetext",
+      state.recordsReady
+        ? "Catalog ready"
+        : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} data chunks loaded`,
+    );
+    rail.classList.toggle("complete", state.recordsReady);
+  }
+
+  async function loadRecordChunks() {
+    const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
+    state.recordChunksTotal = chunks.length;
+    updateLoadProgress();
+
+    if (!chunks.length) {
+      state.recordsReady = true;
+      updateLoadProgress();
+      setupFilters();
+      applyFilters();
+      return;
+    }
+
+    await loadScript(chunks[0], true);
+    state.recordChunksLoaded = 1;
+    indexLoadedRecords();
+    updateLoadProgress();
+    setupFilters();
+    applyFilters();
+    updateTableScrollControls();
+
+    for (let index = 1; index < chunks.length; index += 3) {
+      const batch = chunks.slice(index, index + 3);
+      await Promise.all(batch.map((chunk) => loadScript(chunk, true)));
+      state.recordChunksLoaded += batch.length;
+      updateLoadProgress();
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+    }
+
+    indexLoadedRecords();
+    state.recordsReady = true;
+    updateLoadProgress();
+    setupFilters();
+    applyFilters({ resetPage: false });
+    updateTableScrollControls();
+    if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
+      await selectRecord(state.filtered[0].record_key);
+    }
   }
 
   function triggerBlobDownload(filename, payload) {
@@ -403,34 +505,6 @@
     return record;
   }
 
-  async function handleSnapshotDownload() {
-    if (state.downloadInProgress) return;
-    state.downloadInProgress = true;
-    const button = $("exportSnapshotButton");
-    if (button) button.textContent = "Preparing file...";
-    try {
-      const payload = {
-        metadata: {
-          name: "CatLog table index",
-          generated_at: new Date().toISOString(),
-          snapshot_generated_at: manifest.generated_at || null,
-          source_file: manifest.source_file || null,
-          source_size_bytes: manifest.source_size_bytes || null,
-          source_sha256: manifest.source_sha256 || null,
-          total_rows: manifest.total_rows || state.records.length,
-          export_scope: "compact_all_row_index",
-          excluded_fields: ["sequence", "smiles", "source_records"],
-        },
-        records: state.records.map(publicSummaryRecord),
-      };
-      const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
-      triggerBlobDownload(`catlog-table-index-${filenameDate}.json`, JSON.stringify(payload));
-    } finally {
-      state.downloadInProgress = false;
-      if (button) button.textContent = "Download table";
-    }
-  }
-
   function currentPageRows() {
     const start = (state.page - 1) * state.pageSize;
     return state.filtered.slice(start, start + state.pageSize);
@@ -444,12 +518,14 @@
 
   async function handlePageDownload() {
     const button = $("downloadPageButton");
+    const originalTitle = button?.title || "";
     const rows = currentPageRows();
     if (!rows.length || button?.disabled) return;
     if (button) {
       button.disabled = true;
       button.textContent = "Preparing...";
     }
+    let failed = false;
     try {
       const details = await Promise.all(rows.map(detailForRow));
       const records = rows.map((row, index) => publicSummaryRecord({
@@ -471,10 +547,22 @@
       };
       const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
       triggerBlobDownload(`catlog-page-${state.page}-${filenameDate}.json`, JSON.stringify(payload, null, 2));
+    } catch (error) {
+      failed = true;
+      if (button) {
+        button.textContent = "Download failed";
+        button.title = error?.message || "Could not prepare this page download.";
+      }
     } finally {
       if (button) {
         button.disabled = false;
-        button.textContent = "Download page";
+        if (!failed) button.textContent = "Download page";
+        if (failed) {
+          window.setTimeout(() => {
+            button.textContent = "Download page";
+            button.title = originalTitle;
+          }, 2500);
+        }
       }
     }
   }
@@ -496,7 +584,7 @@
     const totals = summary.totals || {};
     const coverage = summary.coverage || {};
     const rows = Array.isArray(rowsForSummary()) ? rowsForSummary() : [];
-    const isLoaded = state.records.length > 0;
+    const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
     const cards = [
       ["Records", totalRows],
@@ -525,39 +613,68 @@
   }
 
   function renderEvidenceSummary(rows) {
-    const isLoaded = state.records.length > 0;
-    const total = Math.max(1, rows.length || 0);
-    const counts = Object.fromEntries(recordStates.map((item) => [item.value, 0]));
-    rows.forEach((row) => {
-      counts[row._recordState || recordStateForRow(row)] += 1;
-    });
+    const isLoaded = state.recordsReady;
+    const totalRows = isLoaded ? rows.length : Number(manifest.total_rows || 0);
+    const total = Math.max(1, totalRows);
+    const counts = recordStateCounts(rows);
+    const evidenceCounts = evidenceGroupCounts(rows);
+    const statusLabel = recordStates.map((item) => {
+      const pct = totalRows ? (((counts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
+      return `${item.shortLabel} ${pct}%`;
+    }).join(", ");
+    const evidenceLabelText = evidenceGroups.map((item) => {
+      const pct = totalRows ? (((evidenceCounts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
+      return `${item.label} ${pct}%`;
+    }).join(", ");
     $("evidenceSummary").innerHTML = `
-      <div class="evidence-summary-title">Review status</div>
+      <div class="evidence-summary-title">Curation status</div>
       <div class="evidence-segment-row">
         ${recordStates.map((item) => {
           const count = counts[item.value] || 0;
-          const pct = rows.length ? ((count / total) * 100).toFixed(1) : "0.0";
+          const pct = totalRows ? ((count / total) * 100).toFixed(1) : "0.0";
           return `
             <div class="evidence-segment ${item.className}">
               <span class="evidence-dot ${item.className}"></span>
               <span>${escapeHtml(item.shortLabel)}</span>
               <div class="evidence-stat">
-                <strong>${isLoaded ? formatInteger(count) : EMPTY_VALUE}</strong>
-                <span>${isLoaded ? `${pct}%` : ""}</span>
+                <strong>${formatInteger(count)}</strong>
+                <span>${pct}%</span>
               </div>
             </div>
           `;
         }).join("")}
       </div>
+      ${totalRows ? `
+        <div class="summary-distribution review-distribution" role="img" aria-label="${escapeHtml(statusLabel)}">
+          ${recordStates.map((item) => {
+            const pct = ((counts[item.value] || 0) / total) * 100;
+            return `<span class="${item.className}" style="flex-basis:${pct.toFixed(3)}%"></span>`;
+          }).join("")}
+        </div>
+      ` : ""}
+      <div class="evidence-axis">
+        <div class="evidence-summary-title">Evidence available</div>
+        <div class="evidence-axis-items">
+          ${evidenceGroups.map((item) => {
+            const count = evidenceCounts[item.value] || 0;
+            const pct = totalRows ? ((count / total) * 100).toFixed(1) : "0.0";
+            return `<span><i class="${item.className}"></i>${escapeHtml(item.label)} <strong>${pct}%</strong></span>`;
+          }).join("")}
+        </div>
+        ${totalRows ? `
+          <div class="summary-distribution evidence-distribution" role="img" aria-label="${escapeHtml(evidenceLabelText)}">
+            ${evidenceGroups.map((item) => {
+              const pct = ((evidenceCounts[item.value] || 0) / total) * 100;
+              return `<span class="${item.className}" style="flex-basis:${pct.toFixed(3)}%"></span>`;
+            }).join("")}
+          </div>
+        ` : ""}
+      </div>
     `;
   }
 
   function countsByState() {
-    const counts = Object.fromEntries(recordStates.map((item) => [item.value, 0]));
-    state.records.forEach((row) => {
-      counts[row._recordState || recordStateForRow(row)] += 1;
-    });
-    return counts;
+    return recordStateCounts(state.records);
   }
 
   function countMetric(field) {
@@ -635,26 +752,51 @@
   }
 
   function setupFilters() {
+    const hadStateFilters = Boolean(document.querySelector('input[name="recordState"]'));
+    const hadMeasurementFilters = Boolean(document.querySelector('input[name="measurement"]'));
+    const selectedStates = new Set(selectedCheckboxes("recordState"));
+    const selectedMeasurements = new Set(selectedCheckboxes("measurement"));
     const stateCounts = countsByState();
+    const statusCounts = manifestDistribution("verification_status");
+    const statusBreakdown = [
+      ["Accepted as reported", statusCounts.verified],
+      ["Accepted after correction", statusCounts.corrected],
+      ["Pending curator decision", statusCounts.manual_review_required],
+      ["Not yet assessed", statusCounts.unverified],
+      ["Calculated from reported values", statusCounts.mathematically_inferred],
+      ["Disputed", statusCounts.disputed],
+    ].filter((item) => Number(item[1] || 0) > 0);
     $("statusChecklist").innerHTML = recordStates.map((item) => `
       <label class="check-row ${item.className}" title="${escapeHtml(stateDescriptions[item.value])}">
-        <input type="checkbox" name="recordState" value="${escapeHtml(item.value)}" checked />
+        <input type="checkbox" name="recordState" value="${escapeHtml(item.value)}" ${!hadStateFilters || selectedStates.has(item.value) ? "checked" : ""} />
         <span>${escapeHtml(item.label)}</span>
-        <strong>${formatInteger(stateCounts[item.value] || 0)}</strong>
+        <strong>${state.recordsReady ? formatInteger(stateCounts[item.value] || 0) : EMPTY_VALUE}</strong>
       </label>
     `).join("") + `
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
           ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>`).join("")}
+          ${statusBreakdown.length ? `
+            <div class="review-profile">
+              <span>Snapshot breakdown</span>
+              ${statusBreakdown.map(([label, count]) => `<p><span>${escapeHtml(label)}</span><strong>${formatInteger(count)}</strong></p>`).join("")}
+            </div>
+          ` : ""}
         </div>
       </details>
     `;
+    const coverage = (manifest.summary || {}).coverage || {};
+    const manifestMetricCounts = {
+      kcat: coverage.with_kcat,
+      km: coverage.with_km,
+      kcat_over_km: coverage.with_kcat_over_km,
+    };
     $("measurementChecklist").innerHTML = measurementFilters.map((item) => `
       <label class="check-row">
-        <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" />
+        <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" ${hadMeasurementFilters && selectedMeasurements.has(item.value) ? "checked" : ""} />
         <span>${escapeHtml(item.label)}</span>
-        <strong>${formatInteger(countMetric(item.field))}</strong>
+        <strong>${formatCount(state.recordsReady ? countMetric(item.field) : manifestMetricCounts[item.field])}</strong>
       </label>
     `).join("");
   }
@@ -765,6 +907,11 @@
     renderRows();
   }
 
+  function scheduleFilters() {
+    window.clearTimeout(state.filterTimer);
+    state.filterTimer = window.setTimeout(() => applyFilters(), 120);
+  }
+
   function renderRows() {
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
     state.page = Math.min(Math.max(1, state.page), totalPages);
@@ -773,10 +920,15 @@
     const range = pageRows.length
       ? `${formatInteger(start + 1)}–${formatInteger(Math.min(start + pageRows.length, state.filtered.length))} of ${formatInteger(state.filtered.length)}`
       : "";
-    $("activeSummary").textContent = `${formatInteger(state.filtered.length)} records`;
+    const loadingNote = state.recordsReady
+      ? ""
+      : ` · Loading full index ${formatInteger(state.recordChunksLoaded)}/${formatInteger(state.recordChunksTotal)}`;
+    $("activeSummary").textContent = state.recordsReady
+      ? `${formatInteger(state.filtered.length)} records`
+      : `${formatInteger(state.filtered.length)} available`;
     $("pageSummary").textContent = pageRows.length
-      ? range
-      : "No rows match the selected filters";
+      ? `${range}${loadingNote}`
+      : (state.recordsReady ? "No rows match the selected filters" : "Loading first records...");
     $("pageLabel").textContent = pageRows.length
       ? range
       : "No records";
@@ -842,6 +994,32 @@
     }
     const isOpen = document.body.classList.contains("filters-open");
     $("catalogFilters")?.setAttribute("aria-hidden", String(!isOpen));
+  }
+
+  function updateTableScrollControls() {
+    const wrap = $("recordTableWrap");
+    if (!wrap) return;
+    const canScrollLeft = wrap.scrollLeft > 2;
+    const canScrollRight = wrap.scrollLeft + wrap.clientWidth < wrap.scrollWidth - 2;
+    $("scrollTableLeftButton").disabled = !canScrollLeft;
+    $("scrollTableRightButton").disabled = !canScrollRight;
+    wrap.classList.toggle("can-scroll-left", canScrollLeft);
+    wrap.classList.toggle("can-scroll-right", canScrollRight);
+  }
+
+  function scrollTableColumns(direction) {
+    const wrap = $("recordTableWrap");
+    const headers = [...wrap.querySelectorAll("thead th")];
+    const stickyWidth = headers[0]?.offsetWidth || 0;
+    const stops = headers.slice(1).map((header) => Math.max(0, header.offsetLeft - stickyWidth));
+    const ordered = direction > 0 ? stops : [...stops].reverse();
+    const target = ordered.find((stop) => direction > 0
+      ? stop > wrap.scrollLeft + 2
+      : stop < wrap.scrollLeft - 2) ?? (direction > 0 ? wrap.scrollWidth : 0);
+    wrap.scrollTo({
+      left: target,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
   }
 
   function resetDetail() {
@@ -1069,8 +1247,8 @@
 
       ${measurementSection(summary, detail)}
       <section class="detail-section review-outcome-section">
-        <h3>Review outcome</h3>
-        <p>${escapeHtml(reviewOutcome(summary, hasSourceEvidence))}</p>
+        <h3>Curation note</h3>
+        <p>${escapeHtml(reviewOutcome(summary))}</p>
       </section>
       ${molecularIdentitySection(summary, detail)}
       ${detailSection("Reference", referenceRows)}
@@ -1108,6 +1286,7 @@
   }
 
   function clearFilters() {
+    window.clearTimeout(state.filterTimer);
     [
       "globalSearchInput",
       "ecFilterInput",
@@ -1135,11 +1314,10 @@
       "enzymeFilterInput",
       "organismFilterInput",
       "substrateFilterInput",
-      "sortSelect",
     ].forEach((id) => {
-      $(id).addEventListener("input", () => applyFilters());
-      $(id).addEventListener("change", () => applyFilters());
+      $(id).addEventListener("input", scheduleFilters);
     });
+    $("sortSelect").addEventListener("change", () => applyFilters());
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);
       if (!input) return;
@@ -1166,6 +1344,7 @@
     window.addEventListener("resize", () => {
       hideSuggestions();
       syncFilterPanel();
+      updateTableScrollControls();
     });
     narrowFilterMedia.addEventListener?.("change", syncFilterPanel);
     $("statusChecklist").addEventListener("change", () => applyFilters());
@@ -1192,8 +1371,10 @@
       state.page += 1;
       renderRows();
     });
-    $("exportSnapshotButton").addEventListener("click", handleSnapshotDownload);
     $("downloadPageButton").addEventListener("click", handlePageDownload);
+    $("recordTableWrap").addEventListener("scroll", updateTableScrollControls, { passive: true });
+    $("scrollTableLeftButton").addEventListener("click", () => scrollTableColumns(-1));
+    $("scrollTableRightButton").addEventListener("click", () => scrollTableColumns(1));
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && document.body.classList.contains("filters-open")) {
         const activeElement = document.activeElement;
@@ -1218,12 +1399,8 @@
       renderSummary();
       bindControls();
       syncFilterPanel();
-      await loadRecordChunks();
-      setupFilters();
-      applyFilters();
-      if (state.filtered.length && usesEmbeddedDetailPanel()) {
-        await selectRecord(state.filtered[0].record_key);
-      }
+      state.recordsReadyPromise = loadRecordChunks();
+      await state.recordsReadyPromise;
     } catch (error) {
       $("activeSummary").innerHTML = `<span class="state-badge review">${escapeHtml(error.message || error)}</span>`;
     }
