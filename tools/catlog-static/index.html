@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=20260805-ui7" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=302c726151e44bb5" />
   </head>
   <body>
     <div class="static-app">
@@ -33,14 +33,24 @@
           <kbd>/</kbd>
         </label>
         <div class="header-actions">
-          <button
+          <a
             id="exportSnapshotButton"
             class="button secondary"
-            type="button"
-            title="Download the compact all-row table index. Molecular details are available from Download page or an individual record."
-          >Download table</button>
+            href="data/catlog-table.jsonl.gz?v=302c726151e44bb5"
+            download="catlog-table.jsonl.gz"
+            title="Download the compressed all-row table index. Molecular details are available from Download page or an individual record."
+          >Download table</a>
         </div>
       </header>
+      <div
+        id="catalogLoadProgress"
+        class="catalog-load-progress"
+        role="progressbar"
+        aria-label="Loading catalog"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      ><span></span></div>
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
       <main>
@@ -64,7 +74,7 @@
               </div>
             </div>
             <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Review status <span>⌃</span></button>
+              <button class="filter-section-title" type="button" aria-expanded="true">Curation status <span>⌃</span></button>
               <div class="check-stack" id="statusChecklist"></div>
             </div>
             <div class="filter-section open">
@@ -97,6 +107,11 @@
                 </button>
                 <strong id="activeSummary">Loading records...</strong>
                 <span id="pageSummary">Preparing frozen index</span>
+                <div class="table-scroll-controls" aria-label="Table columns">
+                  <span>More columns</span>
+                  <button id="scrollTableLeftButton" class="icon-button" type="button" aria-label="Show previous columns">‹</button>
+                  <button id="scrollTableRightButton" class="icon-button" type="button" aria-label="Show more columns">›</button>
+                </div>
               </div>
               <div class="records-tools">
                 <button
@@ -107,7 +122,7 @@
                 >Download page</button>
                 <span>Sort by</span>
                 <select id="sortSelect">
-                  <option value="evidence">Review status</option>
+                  <option value="evidence">Curation status</option>
                   <option value="ec_number">EC number</option>
                   <option value="enzyme">Enzyme</option>
                   <option value="organism">Organism</option>
@@ -118,7 +133,7 @@
                 </select>
               </div>
             </div>
-            <div class="table-wrap">
+            <div id="recordTableWrap" class="table-wrap">
               <table>
                 <colgroup>
                   <col class="col-enzyme" />
@@ -176,7 +191,7 @@
       </main>
     </div>
 
-    <script src="data/manifest.js?v=20260805-ui7"></script>
-    <script src="assets/catlog-static.js?v=20260805-ui7"></script>
+    <script src="data/manifest.js?v=302c726151e44bb5"></script>
+    <script src="assets/catlog-static.js?v=302c726151e44bb5"></script>
   </body>
 </html>
