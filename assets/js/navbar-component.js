@@ -15,7 +15,7 @@
           <a href="https://huggingface.co/chowdhury-lab/protein-binding-affinity" target="_blank" rel="noopener noreferrer" role="menuitem">HuggingFace</a>
           <a href="https://agrivax.studio/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">agrivax.studio</a>
           <a href="https://agrivax.studio/pixf-tools/osteoclust/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">PixF-OsteoClust</a>
-          <a href="tools/catlog-static/index.html" role="menuitem" class="top-nav-dropdown-featured">CatLog</a>
+          <a href="/tools/catlog-latest.html" role="menuitem" class="top-nav-dropdown-featured">CatLog</a>
           <a href="https://cyclome930.structf.studio" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">cyclome930</a>
           <a href="https://bertose.structf.studio/" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">BERTOse</a>
           <a href="https://anionpdb.structf.studio" target="_blank" rel="noopener noreferrer" role="menuitem" class="top-nav-dropdown-featured">anionPDB</a>
