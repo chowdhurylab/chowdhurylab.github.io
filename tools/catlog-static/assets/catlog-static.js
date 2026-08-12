@@ -1,4 +1,6 @@
 (function () {
+  const appScript = document.currentScript;
+  const catalogBaseUrl = new URL(appScript?.dataset.catalogBase || "./", document.baseURI);
   const manifest = window.CATLOG_STATIC_MANIFEST || {};
   const assetVersion = String(manifest.source_sha256 || manifest.generated_at || "20260709")
     .replace(/[^a-zA-Z0-9_-]/g, "")
@@ -105,6 +107,47 @@
   };
 
   const $ = (id) => document.getElementById(id);
+
+  function viewFromLocation() {
+    return window.location.hash === "#guide" ? "guide" : "browse";
+  }
+
+  function renderView(view, { scroll = false } = {}) {
+    const guideOpen = view === "guide";
+    $("catalogView").hidden = guideOpen;
+    $("guideView").hidden = !guideOpen;
+    document.body.classList.toggle("guide-open", guideOpen);
+    $("browseButton").classList.toggle("active", !guideOpen);
+    $("guideButton").classList.toggle("active", guideOpen);
+    $("browseButton").setAttribute("aria-current", guideOpen ? "false" : "page");
+    $("guideButton").setAttribute("aria-current", guideOpen ? "page" : "false");
+    document.title = guideOpen
+      ? "Guide | CatLog"
+      : "CatLog | Enzyme Kinetics Catalog";
+    if (guideOpen) {
+      setFiltersOpen(false);
+      resetDetail();
+      hideSuggestions();
+    } else {
+      window.requestAnimationFrame(updateTableScrollControls);
+    }
+    if (scroll) {
+      window.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    }
+  }
+
+  function navigateTo(view) {
+    const targetHash = view === "guide" ? "#guide" : "";
+    if (window.location.hash !== targetHash) {
+      const url = new URL(window.location.href);
+      url.hash = targetHash;
+      window.history.pushState({ catlogView: view }, "", url);
+    }
+    renderView(view, { scroll: true });
+  }
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
@@ -377,8 +420,9 @@
 
   function versionedAssetUrl(src) {
     if (!src || /^(?:https?:)?\/\//.test(src) || src.startsWith("data:")) return src;
-    const separator = src.includes("?") ? "&" : "?";
-    return `${src}${separator}v=${encodeURIComponent(assetVersion)}`;
+    const url = new URL(src, catalogBaseUrl);
+    url.searchParams.set("v", assetVersion);
+    return url.href;
   }
 
   function loadScript(src, ordered = false) {
@@ -1315,13 +1359,19 @@
       "organismFilterInput",
       "substrateFilterInput",
     ].forEach((id) => {
-      $(id).addEventListener("input", scheduleFilters);
+      $(id).addEventListener("input", () => {
+        if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
+        scheduleFilters();
+      });
     });
     $("sortSelect").addEventListener("change", () => applyFilters());
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);
       if (!input) return;
-      input.addEventListener("focus", () => showSuggestions(input));
+      input.addEventListener("focus", () => {
+        if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
+        showSuggestions(input);
+      });
       input.addEventListener("click", () => showSuggestions(input));
       input.addEventListener("blur", () => {
         state.suggestionHideTimer = window.setTimeout(hideSuggestions, 140);
@@ -1337,9 +1387,10 @@
         if (marker) marker.textContent = isOpen ? "⌃" : "⌄";
       });
     });
-    $("browseButton").addEventListener("click", () => {
-      document.querySelector(".table-panel")?.scrollIntoView({ block: "start" });
-    });
+    $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
+    $("browseButton").addEventListener("click", () => navigateTo("browse"));
+    $("guideButton").addEventListener("click", () => navigateTo("guide"));
+    window.addEventListener("popstate", () => renderView(viewFromLocation()));
     window.addEventListener("scroll", hideSuggestions, { passive: true });
     window.addEventListener("resize", () => {
       hideSuggestions();
@@ -1389,6 +1440,7 @@
       }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
+        navigateTo("browse");
         $("globalSearchInput").focus();
       }
     });
@@ -1398,6 +1450,7 @@
     try {
       renderSummary();
       bindControls();
+      renderView(viewFromLocation());
       syncFilterPanel();
       state.recordsReadyPromise = loadRecordChunks();
       await state.recordsReadyPromise;
