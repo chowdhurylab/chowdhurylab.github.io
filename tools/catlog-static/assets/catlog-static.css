@@ -1503,15 +1503,6 @@ tbody tr.selected .row-arrow {
   max-width: 760px;
 }
 
-.guide-eyebrow {
-  margin: 0 0 6px;
-  color: var(--teal-dark);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
 .guide-heading h1 {
   margin: 0;
   color: #0f172a;
@@ -1528,11 +1519,20 @@ tbody tr.selected .row-arrow {
   font-size: 16px;
 }
 
-.guide-figure {
-  margin: 34px 0 0;
+.guide-workflow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+  gap: 36px;
+  align-items: start;
+  margin-top: 34px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 22px 0 12px;
+  padding: 24px 0;
+}
+
+.guide-figure {
+  min-width: 0;
+  margin: 0;
 }
 
 .guide-figure img {
@@ -1542,34 +1542,27 @@ tbody tr.selected .row-arrow {
   object-fit: contain;
 }
 
-.guide-figure figcaption {
-  margin-top: 8px;
-  color: var(--quiet);
-  font-size: 12px;
-}
-
 .guide-step-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
+  grid-template-columns: 1fr;
+  align-self: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .guide-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-content: center;
   min-width: 0;
-  border-left: 1px solid var(--line);
-  padding: 24px 24px 28px;
+  border-top: 1px solid var(--line);
+  padding: 15px 0;
 }
 
 .guide-step:first-child {
-  border-left: 0;
-  padding-left: 0;
-}
-
-.guide-step:last-child {
-  padding-right: 0;
+  border-top: 0;
 }
 
 .guide-step > span {
@@ -1582,6 +1575,7 @@ tbody tr.selected .row-arrow {
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
+  margin-top: 2px;
 }
 
 .guide-step h2,
@@ -1591,8 +1585,8 @@ tbody tr.selected .row-arrow {
 }
 
 .guide-step h2 {
-  margin: 12px 0 5px;
-  font-size: 17px;
+  margin: 0 0 4px;
+  font-size: 15px;
   font-weight: 650;
 }
 
@@ -1603,10 +1597,16 @@ tbody tr.selected .row-arrow {
   line-height: 1.55;
 }
 
+.guide-step .guide-field-line {
+  margin-top: 5px;
+  color: #314a45;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
 .guide-reference-grid {
   display: grid;
   grid-template-columns: 1fr 1.15fr 1fr;
-  border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
@@ -2054,13 +2054,31 @@ tbody tr.selected .row-arrow {
     font-size: 28px;
   }
 
-  .guide-figure {
+  .guide-workflow {
+    grid-template-columns: 1fr;
+    gap: 0;
     margin-top: 26px;
-    padding-top: 16px;
+    padding: 18px 0 0;
+  }
+
+  .guide-figure {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
   }
 
   .guide-step-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-step,
+  .guide-step:first-child,
+  .guide-step:last-child {
+    border-top: 1px solid var(--line);
+    padding: 18px;
+  }
+
+  .guide-step:nth-child(-n + 2) {
+    border-top: 0;
   }
 
   .guide-step:nth-child(odd) {
@@ -2069,11 +2087,8 @@ tbody tr.selected .row-arrow {
   }
 
   .guide-step:nth-child(even) {
+    border-left: 1px solid var(--line);
     padding-right: 0;
-  }
-
-  .guide-step:nth-child(n + 3) {
-    border-top: 1px solid var(--line);
   }
 
   .guide-reference-grid {
