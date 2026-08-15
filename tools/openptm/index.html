@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="openPTM: the complete nine-sheet PTM family and database evidence workbook as a searchable, inspectable workbench. 111 operational families, 70 audited resources, evidence checked through 2026-08-14.">
-<title>openPTM | PTM evidence workbook explorer</title>
+<meta name="description" content="openPTM: the Chowdhury Lab audit of PTM families and their databases. 111 families, 70 resources, nine workbook sheets, searchable with sources. Evidence checked through 2026-08-14.">
+<title>openPTM | PTM evidence workbook</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2328736a'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='white' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='4' fill='white'/%3E%3C/svg%3E">
 <style>/* openPTM workbench — CatLog-sibling visual grammar (DESIGN.md v2.0.0) */
 
@@ -352,12 +352,23 @@ tbody td {
   vertical-align: top;
   font-size: 12.5px;
   max-width: 340px;
+  overflow-wrap: break-word;
 }
-td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 96px; }
 td .cell-primary { color: var(--accent); font-weight: 600; }
 td .cell-secondary, td .cell-unit {
   display: block; color: var(--quiet); font-size: 11.5px; margin-top: 1px;
   font-weight: 400; font-variant-numeric: tabular-nums;
+}
+/* Unit lines under counts: wrap inside their own cell instead of spilling sideways */
+td.num .cell-unit {
+  white-space: normal;
+  max-width: 230px;
+  margin-left: auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 td .clamp {
   display: -webkit-box;
@@ -609,8 +620,8 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
           </table>
         </div>
         <p class="empty-state" id="emptyState" hidden>
-          No rows match the current filters.
-          <button class="text-button" id="emptyClear" type="button">Clear all filters</button>
+          No rows match these filters.
+          <button class="text-button" id="emptyClear" type="button">Clear filters</button>
         </p>
         <div class="col-nav" id="colNav" hidden>
           <button class="button" id="colPrev" type="button" aria-label="Scroll table left">‹ Columns</button>
@@ -633,24 +644,24 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
   <main id="guideView" class="guide" hidden>
     <div class="guide-inner">
-      <h1>Guide to the openPTM workbench</h1>
+      <h1>About openPTM</h1>
       <p class="guide-lede" id="guideLede"></p>
 
       <section aria-labelledby="guideSheetsTitle">
-        <h2 id="guideSheetsTitle">What each sheet holds</h2>
+        <h2 id="guideSheetsTitle">The nine sheets</h2>
         <div class="guide-sheet-list" id="guideSheetList"></div>
       </section>
 
       <section aria-labelledby="guideStatesTitle">
-        <h2 id="guideStatesTitle">Coverage states and the freshness rule</h2>
-        <p>A family counts as covered only when a dedicated or chemically narrow resource with experimental residue-level evidence maps to it. The four states are mutually exclusive across the 111-family denominator:</p>
+        <h2 id="guideStatesTitle">Coverage states</h2>
+        <p>A family counts as covered only when a dedicated or chemically narrow database with experimental residue-level evidence maps to it. Each of the 111 families is in exactly one of four states:</p>
         <ul class="guide-states" id="guideStates"></ul>
-        <p>“Active, maintained” requires a substantive update on or after <strong>14 August 2021</strong> (a five-year window before the audit date). “No qualifying mapping found” is audit-scoped: it does not establish biological absence, lack of function, or lack of prior study.</p>
+        <p>“Active, maintained” requires a substantive update on or after 14 August 2021, five years before the audit date. “No qualifying mapping found” means no resource met this rule during the audit. It does not mean the chemistry is absent, unstudied, or unimportant.</p>
       </section>
 
       <section aria-labelledby="guideUnitsTitle">
-        <h2 id="guideUnitsTitle">Counts are not additive</h2>
-        <p>Sites, proteins, events, structures, records, entries, and associations use different denominators. Every count in the workbench keeps its original unit next to the value; nothing is summed across resources. Two examples of why this matters:</p>
+        <h2 id="guideUnitsTitle">Why counts can’t be added</h2>
+        <p>Different resources count different things: sites, proteins, events, structures, records. The workbench always shows the unit next to the number and never sums across resources. Two examples:</p>
         <ul>
           <li id="guideEpsd"></li>
           <li id="guideStrucPtm"></li>
@@ -659,7 +670,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
       <section aria-labelledby="guideLadderTitle">
         <h2 id="guideLadderTitle">Why published PTM totals differ</h2>
-        <p>Published inventories count different object types at different granularity. They are comparators, not a union:</p>
+        <p>Published inventories count different objects at different granularity, so their totals disagree with each other and with the 111 used here:</p>
         <div class="guide-ladder" id="guideLadder"></div>
       </section>
 
@@ -670,9 +681,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
       <section aria-labelledby="guideProvenanceTitle">
         <h2 id="guideProvenanceTitle">Provenance</h2>
-        <p>The workbench renders the canonical audit workbook without modification. Every headline number can be regenerated from the workbook’s own formulas. Canonical CSV inputs and their SHA-256 fingerprints:</p>
+        <p>This page is generated from the audit workbook below. Nothing is edited by hand, and every headline number can be recomputed from the workbook’s own formulas. To check a downloaded file, compare its SHA-256 against this list:</p>
         <div class="hash-list" id="hashList"></div>
-        <p class="license-note">This page redistributes the audit, not third-party database dumps. Linked external resources retain their own licenses and access terms.</p>
+        <p class="license-note">This page shares the audit itself, not copies of external databases. Linked resources keep their own licenses and terms of use.</p>
       </section>
     </div>
   </main>
@@ -800,7 +811,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
   const CONFIG = {
     "summary": {
-      blurb: "The workbook’s computed dashboard, flattened. Every value keeps its spreadsheet formula for lineage.",
+      blurb: "The workbook’s headline numbers. Each value keeps the formula behind it.",
       primary: "Item", secondary: "Group",
       display: [
         { col: "Item", kind: "primary" },
@@ -812,7 +823,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       formulaCol: "Formula",
     },
     "methods": {
-      blurb: "The audit’s rules: scope, normalization, evidence tiers, coverage definitions, and QA boundaries.",
+      blurb: "The rules the audit followed: scope, family merging, evidence tiers, coverage, and QA.",
       primary: "Topic",
       display: [
         { col: "Topic", kind: "primary" },
@@ -823,7 +834,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       facets: [],
     },
     "family-ledger": {
-      blurb: "All 111 operational PTM families with definitions, aliases, normalization decisions, and sources.",
+      blurb: "All 111 PTM families, with definitions, aliases, and source links.",
       primary: "PTM family", secondary: "Family ID",
       display: [
         { col: "PTM family", kind: "primary" },
@@ -840,7 +851,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "coverage-matrix": {
-      blurb: "Database coverage per family: the coverage decision, best current resource, counts with units, and snapshots.",
+      blurb: "Database coverage for each family: best current resource, counts, units, and dates.",
       primary: "PTM family", secondary: "Family ID",
       display: [
         { col: "PTM family", kind: "primary" },
@@ -856,7 +867,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "resource-roster": {
-      blurb: "The 70 audited resources: status with its basis, scope, primary counts with units, and official links.",
+      blurb: "The 70 databases, atlases, and datasets audited, with status and official links.",
       primary: "Resource", secondary: "Resource class",
       display: [
         { col: "Resource", kind: "primary" },
@@ -871,7 +882,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "verified-totals": {
-      blurb: "Source-verified counts with explicit units, access dates, and licenses. Units differ; never sum across rows.",
+      blurb: "Counts verified at the source, with units and licenses. Units differ between rows, so they cannot be added.",
       primary: "Resource", secondary: "Resource class",
       display: [
         { col: "Resource", kind: "primary" },
@@ -886,7 +897,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "rare-audit": {
-      blurb: "Rare and emerging family candidates cross-checked against dbPTM and ProteomeScout, with recommendations.",
+      blurb: "Rare and newly reported modifications, checked against dbPTM and ProteomeScout.",
       primary: "Candidate family", secondary: "Category",
       display: [
         { col: "Candidate family", kind: "primary" },
@@ -901,7 +912,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "gap-audit-a": {
-      blurb: "First coverage-gap pass: legacy families re-checked against the final taxonomy and current resources.",
+      blurb: "First recheck of families that lacked coverage, mapped to the final taxonomy.",
       primary: "Legacy family", secondary: "Legacy ID",
       display: [
         { col: "Legacy family", kind: "primary" },
@@ -913,7 +924,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       facets: [{ col: "Resource status", human: true }],
     },
     "gap-audit-b": {
-      blurb: "Second coverage-gap pass over legacy families: flags, statuses, counts, and per-row search scope.",
+      blurb: "Second recheck of legacy families, with per-family search notes and counts.",
       primary: "Legacy family", secondary: "Legacy family ID",
       display: [
         { col: "Legacy family", kind: "primary" },
@@ -1262,13 +1273,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
     const covSegs = [
       ["current", "Active, maintained", cov.active_maintained],
-      ["live", "Live, aging/static only", cov.live_not_active],
+      ["live", "Live but aging or static", cov.live_not_active],
       ["legacy", "Historical only", cov.older_only],
       ["none", "No qualifying mapping found", cov.none_found],
     ];
     const resSegs = [
       ["current", "Current or active", res.status_groups.current_or_active],
-      ["live", "Live, aging or static", res.status_groups.live_aging_or_static],
+      ["live", "Live but aging or static", res.status_groups.live_aging_or_static],
       ["legacy", "Legacy or unavailable", res.status_groups.legacy_or_unavailable],
     ];
     const toneColor = { current: "var(--accent)", live: "var(--warning)", legacy: "#8A9591", none: "var(--danger)" };
@@ -1289,7 +1300,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
         <span class="snap-sub">Evidence checked through <strong>${esc(DATA.meta.auditDate)}</strong></span>
       </div>
       <div class="snap-group">
-        <span class="snap-label">Dedicated-resource coverage <small>(of ${s.coverage.denominator} families)</small></span>
+        <span class="snap-label">Dedicated database coverage <small>${s.coverage.denominator} families</small></span>
         ${bar(covSegs, s.coverage.denominator, "coverage-matrix")}
         <ul class="dist-legend">
           ${covSegs.map(([tone, label, n]) => `
@@ -1312,17 +1323,17 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
         </ul>
       </div>
       <div class="snap-group">
-        <span class="snap-label">Functional-effect gap</span>
+        <span class="snap-label">Known sites vs. known effects</span>
         <span class="snap-value">${(gap.percent).toFixed(2)}%<small> of EPSD phosphosites</small></span>
-        <span class="snap-sub"><strong>${fmtNum(gap.effectAnnotatedSites)}</strong> of <strong>${fmtNum(gap.experimentalSites)}</strong> sites carry a literature-curated downstream effect.</span>
-        <span class="snap-caveat">${fmtNum(s.strucPtm.occurrences)} StrucPTM structural occurrences are a separate, non-functional denominator.</span>
+        <span class="snap-sub"><strong>${fmtNum(gap.effectAnnotatedSites)}</strong> of <strong>${fmtNum(gap.experimentalSites)}</strong> known sites have a curated downstream effect.</span>
+        <span class="snap-caveat">StrucPTM’s ${fmtNum(s.strucPtm.occurrences)} structural occurrences are a separate count, not functional evidence.</span>
       </div>`;
   }
 
   function coverageFacetLabel(bandLabel) {
     return {
       "Active, maintained": "Active, maintained",
-      "Live, aging/static only": "Live, not actively maintained",
+      "Live but aging or static": "Live, not actively maintained",
       "Historical only": "Historical only",
       "No qualifying mapping found": "No qualifying mapping found",
     }[bandLabel] || bandLabel;
@@ -1333,8 +1344,10 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   function renderGuide() {
     const s = DATA.stats;
     $("#guideLede").textContent =
-      `${DATA.meta.subtitle} This page renders the complete nine-sheet audit workbook — nothing is summarized away. ` +
-      `Open any sheet, filter its rows, and select a row for the full record with sources.`;
+      `openPTM is the Chowdhury Lab’s audit of post-translational modification families and the databases that cover them: ` +
+      `111 families, 70 resources, evidence checked through ${DATA.meta.auditDate}. ` +
+      `This page shows the audit workbook as it was built, all nine sheets. ` +
+      `Use the tabs to open a sheet, the filters to narrow it, and click any row to see the complete record with its sources.`;
 
     $("#guideSheetList").innerHTML = DATA.sheets.map((sh) => `
       <div class="guide-sheet">
@@ -1345,9 +1358,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
     const cov = s.coverage.states;
     const states = [
-      ["current", "Active, maintained", cov.active_maintained, "a dedicated or narrow resource with a substantive update inside the five-year window"],
-      ["live", "Live, aging or static only", cov.live_not_active, "the resource responds but its last substantive update is older than the window"],
-      ["legacy", "Historical only", cov.older_only, "a qualifying resource existed but is superseded or unavailable"],
+      ["current", "Active, maintained", cov.active_maintained, "a dedicated or narrow database updated within the five-year window"],
+      ["live", "Live but aging or static", cov.live_not_active, "the resource still responds, but its last real update is older than the window"],
+      ["legacy", "Historical only", cov.older_only, "a qualifying resource existed but is now superseded or offline"],
       ["none", "No qualifying mapping found", cov.none_found, "no dedicated or family-focused resource met the rule in this audit"],
     ];
     $("#guideStates").innerHTML = states.map(([tone, label, n, why]) => `
@@ -1357,13 +1370,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
     const gap = s.epsdGap;
     $("#guideEpsd").innerHTML =
-      `EPSD 2.0 reports <strong>${fmtNum(gap.experimentalSites)}</strong> experimentally identified phosphorylation sites, of which ` +
-      `<strong>${fmtNum(gap.effectAnnotatedSites)}</strong> (${gap.percent}%) have a literature-curated downstream effect. ` +
-      `Its <strong>${fmtNum(gap.functionalEvents)}</strong> functional events map onto those sites — events and sites are different units.`;
+      `EPSD 2.0 lists <strong>${fmtNum(gap.experimentalSites)}</strong> experimentally identified phosphorylation sites. ` +
+      `Only <strong>${fmtNum(gap.effectAnnotatedSites)}</strong> of them (${gap.percent}%) have a curated downstream effect. ` +
+      `The <strong>${fmtNum(gap.functionalEvents)}</strong> functional events in EPSD map onto those sites; events and sites are different units.`;
     $("#guideStrucPtm").innerHTML =
-      `StrucPTM reports <strong>${fmtNum(s.strucPtm.occurrences)}</strong> modified-residue occurrences across ` +
+      `StrucPTM lists <strong>${fmtNum(s.strucPtm.occurrences)}</strong> modified-residue occurrences across ` +
       `<strong>${fmtNum(s.strucPtm.structures)}</strong> PDB/mmCIF structures (${esc(s.strucPtm.snapshotDate)} snapshot). ` +
-      `These are structural observations, not unique biological sites or functional annotations.`;
+      `These are structural observations, not unique biological sites and not functional annotations.`;
 
     $("#guideLadder").innerHTML = s.referenceVocabularies.map((v) => `
       <div class="ladder-row">
@@ -1434,7 +1447,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
         ${esc(m.title || "(untitled row)")}
         <span class="sug-sheet">${esc(sheetsById[m.sheet].name)} · row ${m.i + 1}</span>
       </button>`).join("")
-      + `<div class="sug-note">Enter filters ${esc(activeSheet().name)} by “${esc(q.trim())}” · ${matches.length}${matches.length >= 40 ? "+" : ""} matches across the workbook</div>`;
+      + `<div class="sug-note">Press Enter to filter ${esc(activeSheet().name)} · ${matches.length}${matches.length >= 40 ? "+" : ""} matching rows across all sheets</div>`;
     box.hidden = top.length === 0;
     input.setAttribute("aria-expanded", String(!box.hidden));
   }
@@ -1720,7 +1733,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   /* ---------- Boot ---------- */
 
   $("#footerLeft").textContent =
-    `openPTM · ${DATA.meta.title} · evidence checked through ${DATA.meta.auditDate} · freshness cutoff ${DATA.meta.freshnessCutoff}`;
+    `openPTM · ${DATA.meta.title} · evidence checked through ${DATA.meta.auditDate} · Chowdhury Lab, Iowa State University`;
 
   renderSnapshot();
   renderGuide();
