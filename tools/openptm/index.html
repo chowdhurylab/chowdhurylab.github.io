@@ -181,6 +181,12 @@ a { color: var(--accent); }
 .snap-group:first-child { border-left: 0; padding-left: 0; }
 .snap-label { font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.25; }
 .snap-value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+button.snap-value {
+  appearance: none; background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; font-size: 22px; font-weight: 600; color: inherit;
+  text-align: left; cursor: pointer; align-self: flex-start;
+}
+button.snap-value:hover { color: var(--accent); }
 .snap-value small { font-size: 12px; font-weight: 400; color: var(--quiet); }
 .snap-sub { font-size: 11.5px; color: var(--quiet); }
 .snap-sub strong { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -1289,24 +1295,27 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     ];
     const toneColor = { current: "var(--accent)", live: "var(--warning)", legacy: "#8A9591", none: "var(--danger)" };
 
-    const bar = (segs, denom, targetSheet) => `
+    const bar = (segs, denom, targetSheet, extraAttr = () => "") => `
       <div class="dist-bar" role="img" aria-label="${esc(segs.map(([, l, n]) => `${n} ${l}`).join(", "))}">
         ${segs.map(([tone, label, n]) => `
           <button class="seg" type="button" style="flex:${n};background:${toneColor[tone]}"
-            data-goto="${targetSheet}" data-tone-label="${esc(label)}" title="${esc(`${n} · ${label}`)}"
-            aria-label="${esc(`${label}: ${n} of ${denom}. Open ${sheetsById[targetSheet].name}.`)}"></button>`).join("")}
+            data-goto="${targetSheet}" ${extraAttr(tone, label)} title="${esc(`${n} · ${label}`)}"
+            aria-label="${esc(`${label}: ${n} of ${denom}. Open ${sheetsById[targetSheet].name} filtered to this group.`)}"></button>`).join("")}
       </div>`;
+    const covAttr = (tone, label) => `data-coverage-state="${esc(coverageFacetLabel(label))}"`;
+    const resAttr = (tone) => `data-status-tones="${tone === "legacy" ? "legacy,none" : tone}"`;
 
     $("#snapshotBand").innerHTML = `
       <div class="snap-group">
         <span class="snap-label">Operational PTM families</span>
-        <span class="snap-value">${s.headline.operational_families}</span>
+        <button class="snap-value" type="button" data-goto="family-ledger"
+          aria-label="Open the Family Ledger sheet">${s.headline.operational_families}</button>
         <span class="snap-sub"><strong>${s.headline.strict_endogenous}</strong> strict endogenous · <strong>${s.headline.established_only}</strong> established-only</span>
         <span class="snap-sub">Evidence checked through <strong>${esc(DATA.meta.auditDate)}</strong></span>
       </div>
       <div class="snap-group">
         <span class="snap-label">Dedicated database coverage <small>${s.coverage.denominator} families</small></span>
-        ${bar(covSegs, s.coverage.denominator, "coverage-matrix")}
+        ${bar(covSegs, s.coverage.denominator, "coverage-matrix", covAttr)}
         <ul class="dist-legend">
           ${covSegs.map(([tone, label, n]) => `
             <li><button type="button" class="tone-${tone}" data-goto="coverage-matrix" data-coverage-state="${esc(coverageFacetLabel(label))}">
@@ -1317,11 +1326,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       </div>
       <div class="snap-group">
         <span class="snap-label">Evidence resources audited</span>
-        <span class="snap-value">${res.audited}</span>
-        ${bar(resSegs, res.audited, "resource-roster")}
+        <button class="snap-value" type="button" data-goto="resource-roster"
+          aria-label="Open the Resource Roster sheet">${res.audited}</button>
+        ${bar(resSegs, res.audited, "resource-roster", resAttr)}
         <ul class="dist-legend">
           ${resSegs.map(([tone, label, n]) => `
-            <li><button type="button" class="tone-${tone}" data-goto="resource-roster">
+            <li><button type="button" class="tone-${tone}" data-goto="resource-roster" ${resAttr(tone)}
+              aria-label="${esc(`Open Resource Roster filtered to ${label}`)}">
               <span class="status-dot" aria-hidden="true"></span>
               <strong>${n}</strong> ${esc(label)}
             </button></li>`).join("")}
@@ -1647,9 +1658,21 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       setView("workbench");
       activateSheet(goto.dataset.goto);
       const covState = goto.dataset.coverageState;
+      const statusTones = goto.dataset.statusTones;
       if (covState) {
         const st = sheetState();
         st.facets["Coverage state"] = new Set([covState]);
+        st.page = 1;
+        renderRail();
+        renderTable();
+      } else if (statusTones) {
+        const sheet = activeSheet();
+        const ci = sheet.colIndex["Status"];
+        const wanted = new Set(statusTones.split(","));
+        const st = sheetState();
+        st.facets["Status"] = new Set(
+          sheet.rows.map((r) => r[ci]).filter((v) => wanted.has(statusTone(v))).map((v) => humanStatus(v)));
+        st.page = 1;
         renderRail();
         renderTable();
       }
