@@ -87,8 +87,13 @@ a { color: var(--accent); }
   z-index: 40;
 }
 
-.brand-lockup { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.brand-lockup {
+  display: flex; align-items: baseline; gap: 8px; white-space: nowrap;
+  appearance: none; background: none; border: 0; padding: 0;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
 .brand-lockup strong { font-size: 20px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.brand-lockup:hover strong { color: var(--accent); }
 .brand-desc { color: var(--muted); font-size: 12px; }
 
 .top-nav { display: flex; align-items: stretch; gap: 4px; height: 100%; }
@@ -563,10 +568,10 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     <button id="menuButton" class="icon-button menu-button" type="button" aria-label="Open filters" aria-expanded="false">
       <span aria-hidden="true">☰</span>
     </button>
-    <div class="brand-lockup">
+    <button id="brandHome" class="brand-lockup" type="button" aria-label="openPTM home">
       <strong>openPTM</strong>
       <span class="brand-desc">PTM evidence workbook</span>
-    </div>
+    </button>
     <nav class="top-nav" aria-label="Views">
       <button id="navWorkbench" class="nav-tab active" type="button" aria-current="page">Workbench</button>
       <button id="navGuide" class="nav-tab" type="button">Guide</button>
@@ -1514,6 +1519,21 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   function initEvents() {
     $("#navWorkbench").addEventListener("click", () => setView("workbench"));
     $("#navGuide").addEventListener("click", () => setView("guide"));
+
+    // Brand lockup acts as a home button: back to the fresh-load state.
+    $("#brandHome").addEventListener("click", () => {
+      closeDetail(false);
+      setRail(false, false);
+      setView("workbench");
+      state.activeSheet = "family-ledger";
+      const st = sheetState();
+      st.q = ""; st.facets = {}; st.page = 1; st.sort = null; st.scopeCol = -1;
+      $("#globalSearch").value = "";
+      renderTabs();
+      renderRail();
+      renderTable();
+      $("#tableWrap").scrollTop = 0;
+    });
 
     $("#sheetTabs").addEventListener("click", (e) => {
       const tab = e.target.closest("[data-sheet]");
