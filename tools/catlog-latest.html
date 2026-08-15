@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=7cb95ec6f46861c5" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=01434129812a54b8" />
   </head>
   <body>
     <div class="static-app">
@@ -28,7 +28,7 @@
             rel="noreferrer"
             aria-label="Open the CatLog research paper"
           >Paper</a>
-          <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">Lab</a>
+          <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
           <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" />
@@ -38,7 +38,7 @@
           <a
             id="exportSnapshotButton"
             class="button secondary"
-            href="catlog-static/data/catlog-table.jsonl.gz?v=7cb95ec6f46861c5"
+            href="catlog-static/data/catlog-table.jsonl.gz?v=01434129812a54b8"
             download="catlog-table.jsonl.gz"
             title="Download the compressed all-row table index. Molecular details are available from Download page or an individual record."
           >Download table</a>
@@ -195,47 +195,59 @@
       <main id="guideView" class="guide-view" hidden>
         <div class="guide-shell">
           <header class="guide-heading">
-            <p class="guide-eyebrow">Quick guide</p>
             <h1>Using CatLog</h1>
-            <p>Find an enzyme measurement, compare its assay conditions, inspect the supporting record, and download the data you need.</p>
+            <p>Search by enzyme, EC number, organism, or substrate. Open any row to see its measurement, molecular identity, references, and provenance.</p>
           </header>
 
-          <figure class="guide-figure">
-            <img
-              src="catlog-static/assets/catlog-guide-workflow.png?v=7cb95ec6f46861c5"
-              alt="Four-step CatLog workflow: search, compare rows, inspect one record, and download data."
-              loading="lazy"
-              decoding="async"
-            />
-            <figcaption>Four actions cover the main CatLog workflow.</figcaption>
-          </figure>
+          <section class="guide-workflow" aria-label="How to use CatLog">
+            <figure class="guide-figure">
+              <img
+                src="catlog-static/assets/catlog-guide-workflow.png?v=01434129812a54b8"
+                alt="CatLog screen sequence showing search, the results table, a record panel, and a download."
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
 
-          <ol class="guide-step-grid" aria-label="CatLog workflow">
-            <li class="guide-step">
-              <span>1</span>
-              <h2>Search</h2>
-              <p>Use the top search for an enzyme, EC number, organism, or substrate. Filters narrow the result set further.</p>
-            </li>
-            <li class="guide-step">
-              <span>2</span>
-              <h2>Compare</h2>
-              <p>Scan kinetic values, assay temperature and pH, and curation status across rows.</p>
-            </li>
-            <li class="guide-step">
-              <span>3</span>
-              <h2>Inspect</h2>
-              <p>Select a row for its assay, sequence or SMILES when available, references, and source identifiers.</p>
-            </li>
-            <li class="guide-step">
-              <span>4</span>
-              <h2>Download</h2>
-              <p>Download the full table index, the visible page, or one selected record.</p>
-            </li>
-          </ol>
+            <ol class="guide-step-grid" aria-label="CatLog workflow">
+              <li class="guide-step">
+                <span>1</span>
+                <div>
+                  <h2>Search and filter</h2>
+                  <p>Enter one term, then combine filters if needed.</p>
+                  <p class="guide-field-line">enzyme · EC number · organism · substrate</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>2</span>
+                <div>
+                  <h2>Compare measurements</h2>
+                  <p>Read kinetic values and assay conditions across rows.</p>
+                  <p class="guide-field-line"><i>k</i><sub>cat</sub> · <i>K</i><sub>m</sub> · <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> · temperature · pH</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>3</span>
+                <div>
+                  <h2>Open the record</h2>
+                  <p>Check what supports the value and whether it was corrected.</p>
+                  <p class="guide-field-line">sequence · SMILES · DOI/PMID · source ID</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>4</span>
+                <div>
+                  <h2>Choose a download</h2>
+                  <p>Take the full index, the visible page, or one detailed record.</p>
+                  <p class="guide-field-line">all rows · current page · selected record</p>
+                </div>
+              </li>
+            </ol>
+          </section>
 
           <div class="guide-reference-grid">
             <section class="guide-reference">
-              <h2>Reading a row</h2>
+              <h2>Field meanings</h2>
               <dl>
                 <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover rate (s<sup>-1</sup>)</dd></div>
                 <div><dt><i>K</i><sub>m</sub></dt><dd>Substrate concentration at half-maximal rate (mM)</dd></div>
@@ -255,7 +267,7 @@
             </section>
 
             <section class="guide-reference">
-              <h2>Choosing a download</h2>
+              <h2>Download contents</h2>
               <dl>
                 <div><dt>Download table</dt><dd>Compressed index of every row; full sequences are not included.</dd></div>
                 <div><dt>Download page</dt><dd>The visible 25, 50, or 100 rows with available public identity and reference fields.</dd></div>
@@ -267,7 +279,7 @@
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=7cb95ec6f46861c5"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=7cb95ec6f46861c5"></script>
+    <script src="catlog-static/data/manifest.js?v=01434129812a54b8"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=01434129812a54b8"></script>
   </body>
 </html>
