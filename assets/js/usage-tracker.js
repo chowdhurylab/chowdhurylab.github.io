@@ -3,7 +3,8 @@
 
   if (
     window.location.protocol !== "https:" ||
-    window.location.hostname !== "chowdhurylab.github.io"
+    window.location.hostname !== "chowdhurylab.github.io" ||
+    /bot|crawler|spider|headless/i.test(window.navigator.userAgent)
   ) {
     return;
   }
