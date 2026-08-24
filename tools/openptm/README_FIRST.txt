@@ -15,5 +15,5 @@ Snapshot details
 - Generated (UTC): 2026-08-15T01:06:22+00:00
 - Source: PTM_family_database_audit_final_2026-08-14.xlsx
 - Source SHA-256: ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
-- Contents: the complete nine-sheet audit workbook rendered as a searchable, filterable workbench with row-level detail, per-sheet CSV export, and provenance fingerprints. No external scripts, fonts, or analytics.
+- Contents: the complete nine-sheet audit workbook rendered as a searchable, filterable workbench with row-level detail, per-sheet CSV export, provenance fingerprints, and anonymous session usage tracking. No external fonts.
 - Scope note: the 111 operational families are a rule-defined working set, not a universal count of all PTMs; counts keep their original units and are not additive across resources.
