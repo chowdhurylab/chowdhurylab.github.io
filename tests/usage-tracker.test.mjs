@@ -33,6 +33,7 @@ const context = {
       hostname: "chowdhurylab.github.io",
       protocol: "https:",
     },
+    navigator: { userAgent: "Mozilla/5.0 Chrome/140.0" },
   },
 };
 
