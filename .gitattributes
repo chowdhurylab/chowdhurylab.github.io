@@ -1,5 +1,6 @@
 assets/database/WT_MD_database/training_split.zip filter=lfs diff=lfs merge=lfs -text
 tools/catlog-static/data/*.gz filter=lfs diff=lfs merge=lfs -text
+tools/catlog-static/data/catlog-table.jsonl.gz -filter -diff -merge -text
 tools/catlog-static/data/details-*.js filter=lfs diff=lfs merge=lfs -text
 tools/catlog-static/data/verified_catlog.jsonl.gz filter=lfs diff=lfs merge=lfs -text
 tools/catlog-static/data/*.js !text !filter !merge !diff
