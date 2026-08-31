@@ -296,13 +296,69 @@
     return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times; 10<sup>${escapeHtml(exponent)}</sup></span></span>`;
   }
 
-  function metricDisplayHtml(row, field) {
-    return scientificValueHtml(metricDisplay(row, field));
+  const defaultMetricUnits = {
+    kcat: "s^(-1)",
+    km: "mM",
+    kcat_over_km: "s^(-1)*mM^(-1)",
+  };
+
+  const canonicalMetricUnitKeys = {
+    kcat: new Set(["s-1"]),
+    km: new Set(["mm"]),
+    kcat_over_km: new Set(["s-1mm-1", "mm-1s-1"]),
+  };
+
+  function normalizedUnitKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\u2212/g, "-")
+      .replace(/liters?/g, "l")
+      .replace(/[\s()*^\u00b7]/g, "");
+  }
+
+  function metricUnit(row, field) {
+    return String(row[`${field}_unit`] || defaultMetricUnits[field] || "").trim();
+  }
+
+  function unitHtml(value) {
+    return escapeHtml(value)
+      .replace(/\^?\(-1\)|\^-1/g, "<sup>-1</sup>")
+      .replace(/\*/g, " ");
+  }
+
+  function metricUnitHtml(row, field) {
+    return unitHtml(metricUnit(row, field));
+  }
+
+  function metricDisplayWithUnitHtml(row, field) {
+    const display = metricDisplay(row, field);
+    const displayHtml = scientificValueHtml(display);
+    if (display === EMPTY_VALUE) return displayHtml;
+    const storedUnit = String(row[`${field}_unit`] || "").trim();
+    if (!storedUnit || canonicalMetricUnitKeys[field]?.has(normalizedUnitKey(storedUnit))) {
+      return displayHtml;
+    }
+    return `${displayHtml}<small class="metric-inline-unit">${unitHtml(storedUnit)}</small>`;
+  }
+
+  function mutationSignature(row) {
+    const signature = String(row?.mutation_signature || "").trim();
+    const key = signature.toLowerCase().replace(/[\s_-]+/g, "");
+    if (!signature || ["unknown", "wt", "wildtype", "none", "na", "n/a"].includes(key)) return "";
+    return signature;
+  }
+
+  function enzymeFormHtml(row) {
+    const signature = mutationSignature(row);
+    if (!signature) return "";
+    return `<span class="enzyme-form" title="Measured enzyme variant">Variant: ${escapePublic(signature)}</span>`;
   }
 
   function formatTemperature(row) {
     const display = row.temperature_display;
     if (hasDisplayValue(display)) return display;
+    if (row.temperature_k == null || row.temperature_k === "") return EMPTY_VALUE;
     const kelvin = Number(row.temperature_k);
     if (!Number.isFinite(kelvin)) return EMPTY_VALUE;
     const celsius = kelvin > 170 ? kelvin - 273.15 : kelvin;
@@ -310,6 +366,7 @@
   }
 
   function formatPh(value) {
+    if (value == null || value === "") return EMPTY_VALUE;
     const number = Number(value);
     if (!Number.isFinite(number)) return EMPTY_VALUE;
     return formatNumber(number, { maximumFractionDigits: 1 });
@@ -458,6 +515,7 @@
         row.enzyme_display_name,
         row.organism,
         row.substrate_name,
+        row.mutation_signature,
         row.source_db,
         row.primary_uniprot_id,
       ].join(" ")).toLowerCase();
@@ -983,14 +1041,17 @@
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="0" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="primary-cell">
           <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
-          <span>${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || row.source_db || "source")}</span>
+          <span class="primary-meta">
+            <span class="name-source">${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || row.source_db || "source")}</span>
+            ${enzymeFormHtml(row)}
+          </span>
         </td>
         <td>${escapeHtml(row.ec_number || EMPTY_VALUE)}</td>
         <td class="organism-cell">${escapePublic(row.organism || EMPTY_VALUE)}</td>
         <td class="substrate-cell">${escapePublic(row.substrate_name || EMPTY_VALUE)}</td>
-        <td class="metric-cell"><strong>${metricDisplayHtml(row, "kcat")}</strong></td>
-        <td class="metric-cell">${metricDisplayHtml(row, "km")}</td>
-        <td class="metric-cell">${metricDisplayHtml(row, "kcat_over_km")}</td>
+        <td class="metric-cell"><strong>${metricDisplayWithUnitHtml(row, "kcat")}</strong></td>
+        <td class="metric-cell">${metricDisplayWithUnitHtml(row, "km")}</td>
+        <td class="metric-cell">${metricDisplayWithUnitHtml(row, "kcat_over_km")}</td>
         <td>${escapeHtml(formatTemperature(row))}</td>
         <td>${escapeHtml(formatPh(row.ph))}</td>
         <td>${statusBadge(row)}</td>
@@ -1167,24 +1228,23 @@
   function measurementSection(summary, detail) {
     const temperature = formatTemperature(summary);
     const metrics = [
-      ["<i>k</i><sub>cat</sub>", "s<sup>-1</sup>", metricDisplay(summary, "kcat")],
-      ["<i>K</i><sub>m</sub>", "mM", metricDisplay(summary, "km")],
-      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "s<sup>-1</sup> mM<sup>-1</sup>", metricDisplay(summary, "kcat_over_km")],
+      ["<i>k</i><sub>cat</sub>", "kcat", metricDisplay(summary, "kcat")],
+      ["<i>K</i><sub>m</sub>", "km", metricDisplay(summary, "km")],
+      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(summary, "kcat_over_km")],
     ];
     return `
       <section class="detail-section measurement-section">
         <h3>Kinetic measurement</h3>
         <div class="measurement-strip">
-          ${metrics.map(([label, unit, value]) => `
+          ${metrics.map(([label, field, value]) => `
             <div class="measurement-value">
-              <span>${label}<small>${unit}</small></span>
+              <span>${label}<small>${metricUnitHtml(summary, field)}</small></span>
               <strong>${scientificValueHtml(value)}</strong>
             </div>
           `).join("")}
         </div>
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
-          ${kv("Assay", metricDisplay(summary, "kcat") !== EMPTY_VALUE ? "steady-state kcat" : "kinetic measurement")}
           ${kv("Temperature", temperature === EMPTY_VALUE ? EMPTY_VALUE : `${temperature} °C`)}
           ${kv("pH", formatPh(summary.ph))}
           ${detail.assay_conditions_summary ? kv("Conditions", detail.assay_conditions_summary) : ""}
@@ -1197,11 +1257,13 @@
     const uniprot = detail.uniprot_id || summary.primary_uniprot_id || "";
     const smiles = String(detail.smiles || "").trim();
     const sequence = String(detail.sequence || detail.canonical_sequence || "").trim();
-    if (!uniprot && !smiles && !sequence) return "";
+    const variant = mutationSignature(detail) || mutationSignature(summary);
+    if (!uniprot && !smiles && !sequence && !variant) return "";
     return `
       <section class="detail-section identity-section">
         <h3>Molecular identity</h3>
         <div class="detail-kv">
+          ${variant ? kv("Enzyme form", `Variant: ${variant}`) : ""}
           ${uniprot ? linkedKv("UniProt", uniprotLink(uniprot)) : ""}
           ${smiles ? `
             <div class="copy-field">

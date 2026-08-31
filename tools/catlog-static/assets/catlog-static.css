@@ -1014,11 +1014,31 @@ tbody tr.selected .row-arrow {
   overflow-wrap: break-word;
 }
 
-.primary-cell span {
-  display: block;
+.primary-cell .primary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
   margin-top: 2px;
+}
+
+.primary-cell .name-source {
   color: #2f3b49;
   font-size: 11.5px;
+}
+
+.primary-cell .enzyme-form {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid #c6ddd7;
+  border-radius: 4px;
+  background: #edf6f3;
+  padding: 1px 5px;
+  color: #235e57;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .organism-cell {
@@ -1037,6 +1057,15 @@ tbody tr.selected .row-arrow {
 .metric-cell strong {
   color: #182235;
   font-weight: 600;
+}
+
+.metric-inline-unit {
+  display: inline;
+  margin-left: 4px;
+  color: #6a756f;
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .scientific-number {
