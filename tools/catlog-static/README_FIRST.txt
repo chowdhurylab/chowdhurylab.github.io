@@ -15,5 +15,12 @@ Snapshot details
 - Source SHA-256: 8bf527b2ebb2c015ace0b987968cfb4bf7051ce44e86a6833231d5b063dcc9f1
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
-- Download table: downloads a compressed compact all-row index without sequences or raw source records
+- All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
+- Analysis aliases: enzyme, substrate, uniprot, status, and source
+- Table index: downloads a smaller all-row index without protein or substrate structure strings
 - Download page: exports the displayed rows with public molecular identity, references, and provenance
+- All public data file: data/catlog-enriched.jsonl.gz
+- Rows with sequence: 75934
+- Rows with wild-type sequence: 26216
+- Rows with variant sequence: 20690
+- Rows with SMILES: 90395
