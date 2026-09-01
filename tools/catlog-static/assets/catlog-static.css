@@ -197,6 +197,75 @@ a.nav-tab:hover {
   gap: 12px;
 }
 
+.download-menu {
+  position: relative;
+}
+
+.download-menu summary {
+  gap: 8px;
+  border-color: rgba(40, 107, 98, 0.34);
+  color: var(--blue);
+  list-style: none;
+  user-select: none;
+}
+
+.download-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.download-menu[open] summary {
+  border-color: #8aa89f;
+  background: var(--blue-soft);
+}
+
+.download-options {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  width: 330px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 6px;
+}
+
+.download-options a {
+  display: grid;
+  gap: 2px;
+  border-radius: 4px;
+  color: var(--ink);
+  padding: 9px 10px;
+  text-decoration: none;
+}
+
+.download-options a:hover,
+.download-options a:focus-visible {
+  background: var(--blue-soft);
+  outline: 0;
+  text-decoration: none;
+}
+
+.download-options strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.download-options span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.download-options .corpus-request-link {
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 4px 4px;
+  padding-top: 11px;
+}
+
 .search-suggestions {
   position: fixed;
   z-index: 80;
@@ -262,11 +331,6 @@ a.nav-tab:hover {
   border-color: #a9bbb4;
   background: var(--blue-soft);
   text-decoration: none;
-}
-
-#exportSnapshotButton {
-  border-color: rgba(40, 107, 98, 0.34);
-  color: var(--blue);
 }
 
 .text-button,
@@ -1992,6 +2056,10 @@ tbody tr.selected .row-arrow {
   .header-actions,
   .top-nav {
     flex-wrap: wrap;
+  }
+
+  .download-options {
+    width: min(330px, calc(100vw - 32px));
   }
 
   .snapshot-band {
