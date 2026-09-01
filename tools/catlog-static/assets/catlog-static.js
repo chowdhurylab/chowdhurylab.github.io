@@ -14,6 +14,7 @@
     selectedDetail: null,
     recordChunksLoaded: 0,
     recordChunksTotal: 0,
+    loadProgressUnit: "chunks",
     recordsReady: false,
     recordsReadyPromise: null,
     filterTimer: null,
@@ -180,6 +181,33 @@
   function formatCount(value) {
     if (value === null || value === undefined || value === "") return EMPTY_VALUE;
     return formatInteger(value);
+  }
+
+  function formatFileSize(value) {
+    const bytes = Number(value);
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function renderDownloadMetadata() {
+    const total = formatCount(manifest.total_rows || 0);
+    const enrichedSize = formatFileSize(manifest.enriched_download?.size_bytes);
+    const tableSize = formatFileSize(manifest.table_download?.size_bytes);
+    if ($("enrichedDataDescription")) {
+      $("enrichedDataDescription").textContent = [
+        `${total} rows`,
+        "available sequences, SMILES, references, and provenance",
+        enrichedSize,
+      ].filter(Boolean).join(" · ");
+    }
+    if ($("tableIndexDescription")) {
+      $("tableIndexDescription").textContent = [
+        `${total} rows`,
+        "without protein or structure strings",
+        tableSize,
+      ].filter(Boolean).join(" · ");
+    }
   }
 
   function hasDisplayValue(value) {
@@ -504,8 +532,8 @@
     return pending;
   }
 
-  function indexLoadedRecords() {
-    state.records = (window.CATLOG_RECORD_CHUNKS || []).flat();
+  function indexLoadedRecords(records = null) {
+    state.records = records || (window.CATLOG_RECORD_CHUNKS || []).flat();
     state.records.forEach((row) => {
       row._recordState = recordStateForRow(row);
       row._search = row._search || String(row._search_text || [
@@ -534,14 +562,95 @@
     rail.setAttribute(
       "aria-valuetext",
       state.recordsReady
-        ? "Catalog ready"
-        : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} data chunks loaded`,
+        ? "CatLog ready"
+        : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "CatLog records" : "data chunks"} loaded`,
     );
     rail.classList.toggle("complete", state.recordsReady);
   }
 
+  async function streamCompressedRecordIndex() {
+    const tablePath = manifest.table_download?.path;
+    if (
+      window.location.protocol === "file:"
+      || !tablePath
+      || typeof window.DecompressionStream !== "function"
+    ) return null;
+
+    const response = await fetch(versionedAssetUrl(tablePath));
+    if (!response.ok || !response.body) throw new Error("Compressed CatLog index unavailable");
+
+    const totalRows = Number(manifest.total_rows || 0);
+    const detailsPerShard = Math.max(1, Number(manifest.details_per_shard || 1000));
+    const detailShards = Array.isArray(manifest.detail_shards) ? manifest.detail_shards : [];
+    const reader = response.body
+      .pipeThrough(new DecompressionStream("gzip"))
+      .getReader();
+    const decoder = new TextDecoder();
+    const records = [];
+    let buffer = "";
+    let lastProgress = 0;
+
+    state.loadProgressUnit = "records";
+    state.recordChunksLoaded = 0;
+    state.recordChunksTotal = totalRows || 1;
+    updateLoadProgress();
+
+    const consumeLines = (final = false) => {
+      const lines = buffer.split("\n");
+      buffer = final ? "" : (lines.pop() || "");
+      lines.forEach((line) => {
+        if (!line.trim()) return;
+        const row = JSON.parse(line);
+        row.detail_shard = detailShards[Math.floor(records.length / detailsPerShard)] || "";
+        records.push(row);
+      });
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      consumeLines();
+      if (records.length - lastProgress >= 2500) {
+        state.recordChunksLoaded = records.length;
+        lastProgress = records.length;
+        updateLoadProgress();
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+      }
+    }
+    buffer += decoder.decode();
+    consumeLines(true);
+
+    if (totalRows && records.length !== totalRows) {
+      throw new Error(`Expected ${totalRows} CatLog rows, received ${records.length}`);
+    }
+    state.recordChunksLoaded = records.length;
+    return records;
+  }
+
   async function loadRecordChunks() {
     const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
+    let streamedRecords = null;
+    try {
+      streamedRecords = await streamCompressedRecordIndex();
+    } catch (error) {
+      streamedRecords = null;
+    }
+    if (streamedRecords) {
+      indexLoadedRecords(streamedRecords);
+      state.recordsReady = true;
+      updateLoadProgress();
+      setupFilters();
+      applyFilters();
+      updateTableScrollControls();
+      if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
+        await selectRecord(state.filtered[0].record_key);
+      }
+      return;
+    }
+
+    state.loadProgressUnit = "chunks";
+    state.recordChunksLoaded = 0;
     state.recordChunksTotal = chunks.length;
     updateLoadProgress();
 
@@ -1253,12 +1362,46 @@
     `;
   }
 
+  function sequenceDisclosure(label, sequence, targetId) {
+    if (!sequence) return "";
+    return `
+      <details class="sequence-disclosure">
+        <summary>${escapeHtml(label)} <span>${formatInteger(sequence.length)} aa</span></summary>
+        <div class="copy-field sequence-field">
+          <div class="copy-field-heading">
+            <span>Amino-acid sequence</span>
+            <button class="copy-button" type="button" data-copy-target="${escapeHtml(targetId)}">Copy</button>
+          </div>
+          <code id="${escapeHtml(targetId)}">${escapeHtml(sequence)}</code>
+        </div>
+      </details>
+    `;
+  }
+
   function molecularIdentitySection(summary, detail) {
     const uniprot = detail.uniprot_id || summary.primary_uniprot_id || "";
     const smiles = String(detail.smiles || "").trim();
     const sequence = String(detail.sequence || detail.canonical_sequence || "").trim();
+    const variantStatus = String(detail.sequence_variant_status || "").trim();
+    const wildTypeSequence = String(
+      detail.wild_type_sequence
+      || detail.canonical_sequence
+      || ((detail.wild_type === true || [
+        "canonical_wild_type_sequence",
+        "canonical_wild_type",
+        "canonical_sequence_with_mutation_annotation",
+        "canonical_sequence_pending_mutation_application",
+      ].includes(variantStatus)) ? sequence : ""),
+    ).trim();
+    const variantSequence = String(
+      detail.variant_sequence
+      || (["reconstructed_variant_sequence", "source_provided_variant_sequence"].includes(variantStatus) ? sequence : ""),
+    ).trim();
     const variant = mutationSignature(detail) || mutationSignature(summary);
-    if (!uniprot && !smiles && !sequence && !variant) return "";
+    if (!uniprot && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
+    const sequenceHtml = variantSequence
+      ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
+      : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
     return `
       <section class="detail-section identity-section">
         <h3>Molecular identity</h3>
@@ -1275,18 +1418,7 @@
             </div>
           ` : ""}
         </div>
-        ${sequence ? `
-          <details class="sequence-disclosure">
-            <summary>Protein sequence <span>${formatInteger(sequence.length)} aa</span></summary>
-            <div class="copy-field sequence-field">
-              <div class="copy-field-heading">
-                <span>Amino-acid sequence</span>
-                <button class="copy-button" type="button" data-copy-target="detailSequence">Copy</button>
-              </div>
-              <code id="detailSequence">${escapeHtml(sequence)}</code>
-            </div>
-          </details>
-        ` : ""}
+        ${sequenceHtml}
       </section>
     `;
   }
@@ -1452,6 +1584,10 @@
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     $("browseButton").addEventListener("click", () => navigateTo("browse"));
     $("guideButton").addEventListener("click", () => navigateTo("guide"));
+    document.addEventListener("click", (event) => {
+      const menu = $("downloadMenu");
+      if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
+    });
     window.addEventListener("popstate", () => renderView(viewFromLocation()));
     window.addEventListener("scroll", hideSuggestions, { passive: true });
     window.addEventListener("resize", () => {
@@ -1489,6 +1625,11 @@
     $("scrollTableLeftButton").addEventListener("click", () => scrollTableColumns(-1));
     $("scrollTableRightButton").addEventListener("click", () => scrollTableColumns(1));
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && $("downloadMenu")?.open) {
+        $("downloadMenu").removeAttribute("open");
+        $("downloadMenu").querySelector("summary")?.focus();
+        return;
+      }
       if (event.key === "Escape" && document.body.classList.contains("filters-open")) {
         const activeElement = document.activeElement;
         if (activeElement?.matches?.('input[type="search"]') && activeElement.value) return;
@@ -1511,6 +1652,7 @@
   async function init() {
     try {
       renderSummary();
+      renderDownloadMetadata();
       bindControls();
       renderView(viewFromLocation());
       syncFilterPanel();

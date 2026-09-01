@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=45c5a67015e4b80e" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=644d525abf5cc2fc" />
   </head>
   <body>
     <div class="static-app">
@@ -35,20 +35,41 @@
           <kbd>/</kbd>
         </label>
         <div class="header-actions">
-          <a
-            id="exportSnapshotButton"
-            class="button secondary"
-            href="catlog-static/data/catlog-table.jsonl.gz?v=45c5a67015e4b80e"
-            download="catlog-table.jsonl.gz"
-            title="Download the compressed all-row table index. Molecular details are available from Download page or an individual record."
-          >Download table</a>
+          <details id="downloadMenu" class="download-menu">
+            <summary class="button secondary">Download data <span aria-hidden="true">⌄</span></summary>
+            <div class="download-options">
+              <a
+                id="enrichedDataButton"
+                href="catlog-static/data/catlog-enriched.jsonl.gz?v=644d525abf5cc2fc"
+                download="catlog-enriched.jsonl.gz"
+              >
+                <strong>All public data</strong>
+                <span id="enrichedDataDescription">All rows with available sequences, SMILES, references, and provenance</span>
+              </a>
+              <a
+                id="exportSnapshotButton"
+                href="catlog-static/data/catlog-table.jsonl.gz?v=644d525abf5cc2fc"
+                download="catlog-table.jsonl.gz"
+              >
+                <strong>Table index</strong>
+                <span id="tableIndexDescription">Smaller file without protein or structure strings</span>
+              </a>
+              <a
+                class="corpus-request-link"
+                href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20corpus%20request"
+              >
+                <strong>Full research corpus</strong>
+                <span>Raw source and review records by request: ratul@iastate.edu and supantha@iastate.edu</span>
+              </a>
+            </div>
+          </details>
         </div>
       </header>
       <div
         id="catalogLoadProgress"
         class="catalog-load-progress"
         role="progressbar"
-        aria-label="Loading catalog"
+        aria-label="Loading CatLog"
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow="0"
@@ -60,7 +81,7 @@
           <div class="summary-grid" id="summaryGrid"></div>
           <div class="evidence-summary" id="evidenceSummary"></div>
           <div class="snapshot-meta" id="snapshotMeta">
-            <span id="snapshotLabel">Loading snapshot</span>
+            <span id="snapshotLabel">Loading CatLog snapshot</span>
             <span id="rowCountLabel">- rows</span>
           </div>
         </section>
@@ -107,8 +128,8 @@
                 <button id="openFiltersButton" class="button filter-toggle" type="button" aria-controls="catalogFilters" aria-expanded="false">
                   Filters <span id="activeFilterCount" class="filter-count hidden"></span>
                 </button>
-                <strong id="activeSummary">Loading records...</strong>
-                <span id="pageSummary">Preparing frozen index</span>
+                <strong id="activeSummary">Loading CatLog records...</strong>
+                <span id="pageSummary">Preparing table</span>
                 <div class="table-scroll-controls" aria-label="Table columns">
                   <span>More columns</span>
                   <button id="scrollTableLeftButton" class="icon-button" type="button" aria-label="Show previous columns">‹</button>
@@ -167,7 +188,7 @@
                 </thead>
                 <tbody id="recordsBody">
                   <tr class="loading-row">
-                    <td colspan="11"><span class="loading-indicator">Loading catalog rows...</span></td>
+                    <td colspan="11"><span class="loading-indicator">Loading CatLog records...</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -202,7 +223,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.png?v=45c5a67015e4b80e"
+                src="catlog-static/assets/catlog-guide-workflow.png?v=644d525abf5cc2fc"
                 alt="CatLog screen sequence showing search, the results table, a record panel, and a download."
                 loading="lazy"
                 decoding="async"
@@ -238,8 +259,8 @@
                 <span>4</span>
                 <div>
                   <h2>Choose a download</h2>
-                  <p>Take the full index, the visible page, or one detailed record.</p>
-                  <p class="guide-field-line">all rows · current page · selected record</p>
+                  <p>Take all public data, the compact index, visible page, or one record.</p>
+                  <p class="guide-field-line">public data · table index · current page · selected record</p>
                 </div>
               </li>
             </ol>
@@ -269,17 +290,20 @@
             <section class="guide-reference">
               <h2>Download contents</h2>
               <dl>
-                <div><dt>Download table</dt><dd>Compressed index of every row; full sequences are not included.</dd></div>
+                <div><dt>All public data</dt><dd>Every row with available protein sequences, SMILES, references, and public provenance.</dd></div>
+                <div><dt>Table index</dt><dd>Smaller all-row file without protein or substrate structure strings.</dd></div>
                 <div><dt>Download page</dt><dd>The visible 25, 50, or 100 rows with available public identity and reference fields.</dd></div>
                 <div><dt>Download record</dt><dd>One selected record with its measurement, available sequence or SMILES, references, and provenance.</dd></div>
+                <div><dt>Full research corpus</dt><dd>Raw source and internal review records are available by request from ratul@iastate.edu and supantha@iastate.edu.</dd></div>
               </dl>
+              <p class="guide-note">Download files are fetched only when selected; they do not add to normal page loading.</p>
             </section>
           </div>
         </div>
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=45c5a67015e4b80e"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=45c5a67015e4b80e"></script>
+    <script src="catlog-static/data/manifest.js?v=644d525abf5cc2fc"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=644d525abf5cc2fc"></script>
   </body>
 </html>
