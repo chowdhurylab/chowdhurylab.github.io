@@ -1672,7 +1672,8 @@ tbody tr.selected .row-arrow {
 }
 
 .guide-step h2,
-.guide-reference h2 {
+.guide-reference h2,
+.guide-downloads h2 {
   color: #152321;
   letter-spacing: 0;
 }
@@ -1810,6 +1811,19 @@ tbody tr.selected .row-arrow {
   line-height: 1.55;
 }
 
+.guide-record-example figcaption > .guide-example-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.guide-example-source a {
+  font-weight: 600;
+}
+
 .guide-value-path {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
@@ -1860,14 +1874,14 @@ tbody tr.selected .row-arrow {
 
 .guide-reference-grid {
   display: grid;
-  grid-template-columns: 1fr 1.15fr 1fr;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   border-bottom: 1px solid var(--line);
 }
 
 .guide-reference {
   min-width: 0;
   border-left: 1px solid var(--line);
-  padding: 28px 28px 30px;
+  padding: 30px 36px 32px;
 }
 
 .guide-reference:first-child {
@@ -1912,6 +1926,70 @@ tbody tr.selected .row-arrow {
 
 .guide-note {
   margin-top: 16px;
+}
+
+.guide-downloads {
+  border-bottom: 1px solid var(--line);
+  padding: 30px 0 34px;
+}
+
+.guide-downloads-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 24px;
+  align-items: end;
+}
+
+.guide-downloads h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.guide-downloads-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.guide-request-link {
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.guide-download-list {
+  margin: 22px 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.guide-download-list > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.28fr) minmax(0, 1fr);
+  gap: 24px;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 12px 0;
+}
+
+.guide-download-list > div:last-child {
+  border-bottom: 0;
+}
+
+.guide-download-list dt {
+  color: #253330;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.guide-download-list dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.guide-download-list dd > span {
+  color: #314a45;
+  font-weight: 650;
 }
 
 .guide-status-list dt {
@@ -2208,6 +2286,45 @@ tbody tr.selected .row-arrow {
   }
 }
 
+@media (max-width: 900px) {
+  .guide-workflow {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: 26px;
+    padding: 18px 0 0;
+  }
+
+  .guide-figure {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+  }
+
+  .guide-step-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-step,
+  .guide-step:first-child,
+  .guide-step:last-child {
+    border-top: 1px solid var(--line);
+    padding: 18px;
+  }
+
+  .guide-step:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .guide-step:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .guide-step:nth-child(even) {
+    border-left: 1px solid var(--line);
+    padding-right: 0;
+  }
+}
+
 @media (max-width: 720px) {
   .app-header {
     grid-template-columns: minmax(0, 1fr) max-content;
@@ -2401,6 +2518,23 @@ tbody tr.selected .row-arrow {
 
   .guide-reference:first-child {
     border-top: 0;
+  }
+
+  .guide-downloads-heading {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .guide-request-link {
+    width: max-content;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .guide-download-list > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 14px 0;
   }
 
   .table-scroll-controls {
