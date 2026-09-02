@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=36b340a9bca0f37b" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=ed42b05de59c08c0" />
   </head>
   <body>
     <div class="static-app">
@@ -40,26 +40,26 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.jsonl.gz?v=36b340a9bca0f37b"
+                href="catlog-static/data/catlog-enriched.jsonl.gz?v=ed42b05de59c08c0"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
-                <span id="enrichedDataDescription">All rows with available sequences, SMILES, references, and source details</span>
+                <span id="enrichedDataDescription">All rows, with sequences and SMILES where available</span>
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.jsonl.gz?v=36b340a9bca0f37b"
+                href="catlog-static/data/catlog-table.jsonl.gz?v=ed42b05de59c08c0"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
-                <span id="tableIndexDescription">Smaller file without protein or structure strings</span>
+                <span id="tableIndexDescription">All rows without long sequence or SMILES fields</span>
               </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
                 <strong>Full research records</strong>
-                <span>Original database rows, paper evidence, unit conversions, and review notes. Request by email.</span>
+                <span>Source rows and review evidence. Request by email.</span>
               </a>
             </div>
           </details>
@@ -217,13 +217,13 @@
         <div class="guide-shell">
           <header class="guide-heading">
             <h1>Using CatLog</h1>
-            <p>Find a measurement, check its assay conditions and source, then download only the records you need.</p>
+            <p>Search the table, open a row, and download the data you need.</p>
           </header>
 
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.png?v=36b340a9bca0f37b"
+                src="catlog-static/assets/catlog-guide-workflow.png?v=ed42b05de59c08c0"
                 alt="CatLog screen sequence showing search, the results table, a record panel, and a download."
                 loading="lazy"
                 decoding="async"
@@ -234,33 +234,33 @@
               <li class="guide-step">
                 <span>1</span>
                 <div>
-                  <h2>Search and filter</h2>
-                  <p>Start with one term, then narrow the results if needed.</p>
-                  <p class="guide-field-line">enzyme · EC number · organism · substrate</p>
+                  <h2>Search</h2>
+                  <p>Enter an enzyme, EC number, organism, or substrate.</p>
+                  <p class="guide-field-line">enzyme · EC · organism · substrate</p>
                 </div>
               </li>
               <li class="guide-step">
                 <span>2</span>
                 <div>
-                  <h2>Compare measurements</h2>
-                  <p>Read kinetic values alongside their assay conditions.</p>
-                  <p class="guide-field-line"><i>k</i><sub>cat</sub> · <i>K</i><sub>m</sub> · <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> · temperature · pH</p>
+                  <h2>Compare</h2>
+                  <p>Read each value with its assay temperature and pH.</p>
+                  <p class="guide-field-line"><i>k</i><sub>cat</sub> · <i>K</i><sub>m</sub> · <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> · T · pH</p>
                 </div>
               </li>
               <li class="guide-step">
                 <span>3</span>
                 <div>
-                  <h2>Read one record</h2>
-                  <p>See its measurement, molecular identity, source, and curation note.</p>
-                  <p class="guide-field-line">sequence · SMILES · DOI/PMID · source database</p>
+                  <h2>Open a row</h2>
+                  <p>Check its protein, substrate, paper, and source.</p>
+                  <p class="guide-field-line">sequence · SMILES · paper · source</p>
                 </div>
               </li>
               <li class="guide-step">
                 <span>4</span>
                 <div>
-                  <h2>Choose a download</h2>
-                  <p>Download all rows, the compact index, the visible page, or one record.</p>
-                  <p class="guide-field-line">public data · table index · current page · selected record</p>
+                  <h2>Download</h2>
+                  <p>Save all rows, the current page, or one open record.</p>
+                  <p class="guide-field-line">all rows · current page · one record</p>
                 </div>
               </li>
             </ol>
@@ -268,58 +268,61 @@
 
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
             <header class="guide-record-depth-heading">
-              <h2 id="guide-record-depth-title">Public data and research records</h2>
-              <p>The public download includes every CatLog row and its curation status. Full research records add the source material and review history behind those fields. Some details are unavailable when they were not reported by the database or paper.</p>
+              <h2 id="guide-record-depth-title">One measurement, two views</h2>
+              <p>The public row is ready to use. The research record shows where it came from and what we checked.</p>
             </header>
-
-            <div class="guide-record-depth-grid">
-              <section>
-                <span class="guide-record-depth-label">Download now</span>
-                <h3>Published CatLog fields</h3>
-                <ul>
-                  <li>Displayed kinetic values, standardized units, temperature, and pH</li>
-                  <li>Enzyme, substrate, organism, and EC number</li>
-                  <li>Available protein sequences, variants, and substrate SMILES</li>
-                  <li>References, source database, protein match, and curation status</li>
-                </ul>
-              </section>
-              <section>
-                <span class="guide-record-depth-label">Available by request</span>
-                <h3>How each row was checked</h3>
-                <ul>
-                  <li>The database row or rows retained for review</li>
-                  <li>Paper table, row, column, and captured text when available</li>
-                  <li>Reported value and unit beside CatLog's standardized value</li>
-                  <li>Fields filled or changed, decision notes, and check history</li>
-                </ul>
-              </section>
-            </div>
 
             <figure class="guide-record-example">
               <figcaption>
-                <span>One real record</span>
+                <span>Example</span>
                 <strong>4-hydroxyacetophenone monooxygenase</strong>
-                <p>The public row gives a standardized measurement. The full record keeps the source behind it.</p>
                 <p class="guide-example-source">
                   <span>OED</span>
                   <a href="https://www.uniprot.org/uniprotkb/Q93TJ5/entry" target="_blank" rel="noreferrer">UniProt Q93TJ5</a>
                   <a href="https://pubmed.ncbi.nlm.nih.gov/12514023/" target="_blank" rel="noreferrer">PMID 12514023</a>
                 </p>
               </figcaption>
-              <div class="guide-value-path" aria-label="The paper value 0.82 micromolar was standardized to 0.00082 millimolar in CatLog">
-                <div>
-                  <span>As reported in Table 1</span>
-                  <strong>0.82 &micro;M</strong>
-                  <small><i>K</i><sub>m</sub> for 4-Aminoacetophenone</small>
-                </div>
-                <span class="guide-value-arrow" aria-hidden="true">&rarr;</span>
-                <div>
-                  <span>Standardized in CatLog</span>
-                  <strong>0.00082 mM</strong>
-                  <small>Same measurement, converted unit</small>
-                </div>
+              <div class="guide-example-compare">
+                <section class="guide-example-level public">
+                  <header>
+                    <span>Download now</span>
+                    <h3>Public row</h3>
+                  </header>
+                  <div class="guide-example-value">
+                    <strong>0.00082 mM</strong>
+                    <span><i>K</i><sub>m</sub> for 4-Aminoacetophenone</span>
+                  </div>
+                  <dl>
+                    <div><dt>Assay</dt><dd>30 °C · pH 7.5</dd></div>
+                    <div><dt>Protein</dt><dd>Q93TJ5 · wild type</dd></div>
+                    <div><dt>Paper</dt><dd>PMID 12514023</dd></div>
+                  </dl>
+                  <a
+                    class="button secondary guide-choice-link"
+                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=ed42b05de59c08c0"
+                    download="catlog-enriched.jsonl.gz"
+                  >Download public data</a>
+                </section>
+
+                <span class="guide-example-plus" aria-hidden="true">+</span>
+
+                <section class="guide-example-level research">
+                  <header>
+                    <span>By request</span>
+                    <h3>Research record</h3>
+                  </header>
+                  <dl>
+                    <div><dt>Paper location</dt><dd>Table 1</dd></div>
+                    <div><dt>Reported value</dt><dd>0.82 &micro;M</dd></div>
+                    <div><dt>Unit check</dt><dd>0.82 &micro;M = 0.00082 mM</dd></div>
+                    <div><dt>Review note</dt><dd>Wild-type sequence added; kinetic value unchanged</dd></div>
+                  </dl>
+                  <a
+                    class="button secondary guide-choice-link"
+                    href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
+                  >Request research records</a>
+                </section>
               </div>
-              <p class="guide-example-note">The full record keeps the table location, both units, and the checks used to attach the Q93TJ5 wild-type sequence. It also states that missing fields were added; no existing kinetic value was replaced.</p>
             </figure>
           </section>
 
@@ -338,38 +341,31 @@
             <section class="guide-reference">
               <h2>Curation status</h2>
               <dl class="guide-status-list">
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Required checks passed. The row may be accepted as reported or after a documented change.</dd></div>
-                <div><dt><span class="guide-status-dot review"></span>Pending curation</dt><dd>At least one check remains: source, value and unit, protein or substrate identity, or assay conditions.</dd></div>
-                <div><dt><span class="guide-status-dot provisional"></span>Provisional</dt><dd>Not in the accepted set. This includes rows not fully assessed, values calculated from other fields, and unresolved disagreements.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Checks are complete. This includes rows kept as reported and rows with documented corrections.</dd></div>
+                <div><dt><span class="guide-status-dot review"></span>Pending curation</dt><dd>A source, value and unit, identity, or assay check is still open.</dd></div>
+                <div><dt><span class="guide-status-dot provisional"></span>Provisional</dt><dd>Not accepted. The row is unreviewed, calculated from other fields, or disputed.</dd></div>
               </dl>
-              <p class="guide-note">These labels describe CatLog's review state, not the quality of the source paper.</p>
+              <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
 
           <section class="guide-downloads" aria-labelledby="guide-downloads-title">
             <header class="guide-downloads-heading">
               <div>
-                <h2 id="guide-downloads-title">Choose the right download</h2>
-                <p>Each option serves a different use. The larger files are fetched only when selected.</p>
+                <h2 id="guide-downloads-title">Downloads</h2>
               </div>
-              <a
-                class="button secondary guide-request-link"
-                href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
-              >Request full research records</a>
             </header>
             <dl class="guide-download-list">
-              <div><dt>All public data</dt><dd><span>For full analysis.</span> Every row with available sequences, SMILES, references, source details, and curation status.</dd></div>
-              <div><dt>Table index</dt><dd><span>For a lighter all-row file.</span> Every row without the long protein-sequence or SMILES fields.</dd></div>
-              <div><dt>Download page</dt><dd><span>For a small working sample.</span> The 25, 50, or 100 rows currently visible in the table.</dd></div>
-              <div><dt>Download record</dt><dd><span>For sharing one example.</span> The selected row and its available public details.</dd></div>
-              <div><dt>Full research records</dt><dd><span>For rechecking an extraction or change.</span> Original database rows, paper evidence, unit conversions, and review notes; available by email request.</dd></div>
+              <div><dt>All public data</dt><dd>All rows, with sequences and SMILES where available.</dd></div>
+              <div><dt>Table index</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
+              <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
             </dl>
           </section>
         </div>
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=36b340a9bca0f37b"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=36b340a9bca0f37b"></script>
+    <script src="catlog-static/data/manifest.js?v=ed42b05de59c08c0"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=ed42b05de59c08c0"></script>
   </body>
 </html>
