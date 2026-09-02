@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=fcb6147843c884aa" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=2afd2592bdffd049" />
   </head>
   <body>
     <div class="static-app">
@@ -40,15 +40,15 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="data/catlog-enriched.jsonl.gz?v=fcb6147843c884aa"
+                href="data/catlog-enriched.jsonl.gz?v=2afd2592bdffd049"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
-                <span id="enrichedDataDescription">All rows with available sequences, SMILES, references, and provenance</span>
+                <span id="enrichedDataDescription">All rows with available sequences, SMILES, references, and source details</span>
               </a>
               <a
                 id="exportSnapshotButton"
-                href="data/catlog-table.jsonl.gz?v=fcb6147843c884aa"
+                href="data/catlog-table.jsonl.gz?v=2afd2592bdffd049"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
@@ -56,10 +56,10 @@
               </a>
               <a
                 class="corpus-request-link"
-                href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20corpus%20request"
+                href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
-                <strong>Full research corpus</strong>
-                <span>Raw source and review records by request: ratul@iastate.edu and supantha@iastate.edu</span>
+                <strong>Full research records</strong>
+                <span>Original database rows, paper evidence, unit conversions, and review notes. Request by email.</span>
               </a>
             </div>
           </details>
@@ -141,7 +141,7 @@
                   id="downloadPageButton"
                   class="button secondary"
                   type="button"
-                  title="Download the rows shown on this page with available molecular identity, references, and public provenance."
+                  title="Download the rows shown on this page with available molecular identity, references, and source details."
                 >Download page</button>
                 <span>Sort by</span>
                 <select id="sortSelect">
@@ -217,13 +217,13 @@
         <div class="guide-shell">
           <header class="guide-heading">
             <h1>Using CatLog</h1>
-            <p>Search by enzyme, EC number, organism, or substrate. Open any row to see its measurement, molecular identity, references, and provenance.</p>
+            <p>Search by enzyme, EC number, organism, or substrate. Open any row to see its measurement, molecular identity, references, and where the record came from.</p>
           </header>
 
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="assets/catlog-guide-workflow.png?v=fcb6147843c884aa"
+                src="assets/catlog-guide-workflow.png?v=2afd2592bdffd049"
                 alt="CatLog screen sequence showing search, the results table, a record panel, and a download."
                 loading="lazy"
                 decoding="async"
@@ -266,6 +266,58 @@
             </ol>
           </section>
 
+          <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
+            <header class="guide-record-depth-heading">
+              <h2 id="guide-record-depth-title">What comes with the data</h2>
+              <p>The public download contains the finished rows used for search and analysis. The full research records preserve the work behind each row.</p>
+            </header>
+
+            <div class="guide-record-depth-grid">
+              <section>
+                <span class="guide-record-depth-label">All public data</span>
+                <h3>Ready-to-use records</h3>
+                <ul>
+                  <li>Final kinetic values, units, temperature, and pH</li>
+                  <li>Available protein sequences, variants, and substrate SMILES</li>
+                  <li>DOIs, PubMed IDs, source database, and protein match</li>
+                  <li>Curation status and how the protein identity was resolved</li>
+                </ul>
+              </section>
+              <section>
+                <span class="guide-record-depth-label">Full research records</span>
+                <h3>How each row was checked</h3>
+                <ul>
+                  <li>Original database row or rows used for the record</li>
+                  <li>Exact paper table, row, and column used as evidence</li>
+                  <li>Reported value and unit beside the standardized value</li>
+                  <li>Fields filled or changed, review notes, and checks performed</li>
+                </ul>
+              </section>
+            </div>
+
+            <figure class="guide-record-example">
+              <figcaption>
+                <span>Concrete example</span>
+                <strong>4-hydroxyacetophenone monooxygenase</strong>
+                <p>The public row gives the final measurement. The research record shows exactly how it was obtained.</p>
+              </figcaption>
+              <div class="guide-value-path" aria-label="The paper value 0.82 micromolar was standardized to 0.00082 millimolar in CatLog">
+                <div>
+                  <span>Paper, Table 1</span>
+                  <strong>0.82 &micro;M</strong>
+                  <small>Row: 4-Aminoacetophenone</small>
+                </div>
+                <span class="guide-value-arrow" aria-hidden="true">&rarr;</span>
+                <div>
+                  <span>CatLog public row</span>
+                  <strong>0.00082 mM</strong>
+                  <small>Same <i>K</i><sub>m</sub>, standardized unit</small>
+                </div>
+              </div>
+              <p class="guide-example-note">The research record also shows that UniProt Q93TJ5 was checked against the enzyme, organism, EC number, and wild-type state before its sequence was attached. For this row, missing fields were filled; an existing kinetic value was not overwritten.</p>
+            </figure>
+          </section>
+
           <div class="guide-reference-grid">
             <section class="guide-reference">
               <h2>Field meanings</h2>
@@ -290,11 +342,11 @@
             <section class="guide-reference">
               <h2>Download contents</h2>
               <dl>
-                <div><dt>All public data</dt><dd>Every row with available protein sequences, SMILES, references, and public provenance.</dd></div>
+                <div><dt>All public data</dt><dd>Every row with available protein sequences, SMILES, references, and source details.</dd></div>
                 <div><dt>Table index</dt><dd>Smaller all-row file without protein or substrate structure strings.</dd></div>
                 <div><dt>Download page</dt><dd>The visible 25, 50, or 100 rows with available public identity and reference fields.</dd></div>
-                <div><dt>Download record</dt><dd>One selected record with its measurement, available sequence or SMILES, references, and provenance.</dd></div>
-                <div><dt>Full research corpus</dt><dd>Raw source and internal review records are available by request from ratul@iastate.edu and supantha@iastate.edu.</dd></div>
+                <div><dt>Download record</dt><dd>One selected record with its measurement, available sequence or SMILES, references, and source details.</dd></div>
+                <div><dt>Full research records</dt><dd>Original database rows, paper evidence, unit conversions, changes, and review notes are available by request from ratul@iastate.edu and supantha@iastate.edu.</dd></div>
               </dl>
               <p class="guide-note">Download files are fetched only when selected; they do not add to normal page loading.</p>
             </section>
@@ -303,7 +355,7 @@
       </main>
     </div>
 
-    <script src="data/manifest.js?v=fcb6147843c884aa"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=fcb6147843c884aa"></script>
+    <script src="data/manifest.js?v=2afd2592bdffd049"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=2afd2592bdffd049"></script>
   </body>
 </html>

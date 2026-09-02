@@ -197,7 +197,7 @@
     if ($("enrichedDataDescription")) {
       $("enrichedDataDescription").textContent = [
         `${total} rows`,
-        "available sequences, SMILES, references, and provenance",
+        "available sequences, SMILES, references, and source details",
         enrichedSize,
       ].filter(Boolean).join(" · ");
     }
@@ -1520,7 +1520,7 @@
           <div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div>
         </section>
       ` : ""}
-      ${detailDisclosure("Provenance", [
+      ${detailDisclosure("Source details", [
         kv("Source", summary.source_db || detail.source_db),
         kv("Source ID", summary.measurement_key || detail.measurement_key),
         kv("Source records", detail.source_record_count || summary.source_record_count),

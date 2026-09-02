@@ -1697,6 +1697,167 @@ tbody tr.selected .row-arrow {
   font-weight: 600;
 }
 
+.guide-record-depth {
+  margin-top: 38px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 32px 0 36px;
+}
+
+.guide-record-depth-heading {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.guide-record-depth-heading h2 {
+  margin: 0;
+  color: #152321;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.guide-record-depth-heading p {
+  max-width: 700px;
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.guide-record-depth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 28px;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.guide-record-depth-grid > section {
+  min-width: 0;
+  padding: 24px 32px 24px 0;
+}
+
+.guide-record-depth-grid > section + section {
+  border-left: 1px solid var(--line-soft);
+  padding-right: 0;
+  padding-left: 32px;
+}
+
+.guide-record-depth-label {
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.guide-record-depth-grid h3 {
+  margin: 5px 0 13px;
+  color: #152321;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.guide-record-depth-grid ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 19px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.guide-record-depth-grid li::marker {
+  color: var(--teal);
+}
+
+.guide-record-example {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(420px, 1.28fr);
+  gap: 18px 44px;
+  align-items: start;
+  margin: 28px 0 0;
+}
+
+.guide-record-example figcaption {
+  min-width: 0;
+}
+
+.guide-record-example figcaption > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.guide-record-example figcaption > strong {
+  display: block;
+  color: #152321;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.guide-record-example figcaption > p,
+.guide-example-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.guide-value-path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-muted);
+  padding: 18px 20px;
+}
+
+.guide-value-path > div {
+  display: grid;
+  min-width: 0;
+}
+
+.guide-value-path > div > span {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.guide-value-path > div > strong {
+  margin-top: 2px;
+  color: #12201e;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.guide-value-path > div > small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.guide-value-arrow {
+  color: var(--teal);
+  font-size: 22px;
+  text-align: center;
+}
+
+.guide-example-note {
+  grid-column: 2;
+  margin-top: 0;
+}
+
 .guide-reference-grid {
   display: grid;
   grid-template-columns: 1fr 1.15fr 1fr;
@@ -2035,6 +2196,16 @@ tbody tr.selected .row-arrow {
   .detail-empty {
     display: none;
   }
+
+  .guide-record-depth-heading,
+  .guide-record-example {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .guide-example-note {
+    grid-column: 1;
+  }
 }
 
 @media (max-width: 720px) {
@@ -2186,6 +2357,34 @@ tbody tr.selected .row-arrow {
   .guide-step:nth-child(even) {
     border-left: 1px solid var(--line);
     padding-right: 0;
+  }
+
+  .guide-record-depth {
+    margin-top: 28px;
+    padding: 26px 0 30px;
+  }
+
+  .guide-record-depth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-record-depth-grid > section,
+  .guide-record-depth-grid > section + section {
+    border-left: 0;
+    padding: 22px 0;
+  }
+
+  .guide-record-depth-grid > section + section {
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .guide-value-path {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-value-arrow {
+    justify-self: start;
+    transform: rotate(90deg);
   }
 
   .guide-reference-grid {
