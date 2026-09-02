@@ -546,6 +546,7 @@
         row.mutation_signature,
         row.source_db,
         row.primary_uniprot_id,
+        row.protein_accession,
       ].join(" ")).toLowerCase();
     });
   }
@@ -1316,6 +1317,16 @@
     return `<a class="reference-link" href="https://www.uniprot.org/uniprotkb/${encodeURIComponent(accession)}/entry" target="_blank" rel="noreferrer" aria-label="Open UniProt entry ${escapeHtml(accession)}">${escapeHtml(accession)}</a>`;
   }
 
+  function proteinAccessionLink(value, database) {
+    const accession = String(value || "").trim();
+    if (!accession) return EMPTY_VALUE;
+    if (database === "UniProt") return uniprotLink(accession);
+    if (database === "NCBI Protein") {
+      return `<a class="reference-link" href="https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(accession)}" target="_blank" rel="noreferrer" aria-label="Open NCBI Protein entry ${escapeHtml(accession)}">${escapeHtml(accession)}</a>`;
+    }
+    return escapeHtml(accession);
+  }
+
   function referenceList(values, linkBuilder) {
     return `<div class="reference-list">${values.map((value) => linkBuilder(value)).join("")}</div>`;
   }
@@ -1380,6 +1391,15 @@
 
   function molecularIdentitySection(summary, detail) {
     const uniprot = detail.uniprot_id || summary.primary_uniprot_id || "";
+    const proteinAccession = detail.protein_accession || summary.protein_accession || uniprot;
+    const proteinAccessionDatabase = detail.protein_accession_database
+      || summary.protein_accession_database
+      || (uniprot ? "UniProt" : "");
+    const accessionCandidates = [...new Set(
+      (detail.uniprot_candidate_ids || summary.uniprot_candidate_ids || [])
+        .map((value) => String(value || "").trim())
+        .filter(Boolean),
+    )];
     const smiles = String(detail.smiles || "").trim();
     const sequence = String(detail.sequence || detail.canonical_sequence || "").trim();
     const variantStatus = String(detail.sequence_variant_status || "").trim();
@@ -1398,7 +1418,10 @@
       || (["reconstructed_variant_sequence", "source_provided_variant_sequence"].includes(variantStatus) ? sequence : ""),
     ).trim();
     const variant = mutationSignature(detail) || mutationSignature(summary);
-    if (!uniprot && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
+    if (!proteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
+    const accessionLabel = proteinAccessionDatabase === "UniProt"
+      ? "UniProt"
+      : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
     const sequenceHtml = variantSequence
       ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
@@ -1407,7 +1430,8 @@
         <h3>Molecular identity</h3>
         <div class="detail-kv">
           ${variant ? kv("Enzyme form", `Variant: ${variant}`) : ""}
-          ${uniprot ? linkedKv("UniProt", uniprotLink(uniprot)) : ""}
+          ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
+          ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
           ${smiles ? `
             <div class="copy-field">
               <div class="copy-field-heading">
