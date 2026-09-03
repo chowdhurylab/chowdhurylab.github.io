@@ -171,7 +171,7 @@
       );
     }
 
-    container.innerHTML = renderCategory('graduate', 'Graduate Students') + renderCategory('reu', 'REUs');
+    container.innerHTML = renderCategory('postdoc', 'Postdoctoral Scholars') + renderCategory('graduate', 'Graduate Students') + renderCategory('reu', 'REUs');
   }
 
   async function loadMembers() {
