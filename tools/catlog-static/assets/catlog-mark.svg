@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CatLog">
+  <rect width="64" height="64" rx="12" fill="#1f6f66" />
+  <path d="M45 19c-3.5-3.5-7.8-5.2-13-5.2C21.9 13.8 14 21.7 14 32s7.9 18.2 18 18.2c5.2 0 9.5-1.7 13-5.2" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" />
+</svg>
