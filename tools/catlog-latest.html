@@ -14,8 +14,8 @@
     <meta property="og:description" content="A searchable enzyme kinetics catalog with review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
-    <link rel="icon" type="image/svg+xml" href="catlog-static/assets/catlog-mark.svg?v=fc5d57595d9021d3" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=fc5d57595d9021d3" />
+    <link rel="icon" type="image/svg+xml" href="catlog-static/assets/catlog-mark.svg?v=bd368e13488c1630" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=bd368e13488c1630" />
   </head>
   <body>
     <div class="static-app">
@@ -47,26 +47,26 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.jsonl.gz?v=fc5d57595d9021d3"
+                href="catlog-static/data/catlog-enriched.jsonl.gz?v=bd368e13488c1630"
                 download="catlog-enriched.jsonl.gz"
               >
-                <strong>Full data</strong>
+                <strong>All public data</strong>
                 <span id="enrichedDataDescription">All rows, with sequences and SMILES where available</span>
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.jsonl.gz?v=fc5d57595d9021d3"
+                href="catlog-static/data/catlog-table.jsonl.gz?v=bd368e13488c1630"
                 download="catlog-table.jsonl.gz"
               >
-                <strong>Table</strong>
+                <strong>Table index</strong>
                 <span id="tableIndexDescription">All rows without long sequence or SMILES fields</span>
               </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
-                <strong>Review files</strong>
-                <span>Paper excerpts and review notes. Request by email.</span>
+                <strong>Full research records</strong>
+                <span>Source rows and review evidence. Request by email.</span>
               </a>
               <a id="datasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
@@ -240,23 +240,52 @@
         <div class="guide-shell">
           <header class="guide-heading">
             <h1>Using CatLog</h1>
-            <p>Search, open a row, and download.</p>
+            <p>Search the table, open a row, and download the data you need.</p>
           </header>
 
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.svg?v=fc5d57595d9021d3"
-                alt="Four panels showing search, table, record details, and download options."
+                src="catlog-static/assets/catlog-guide-workflow.svg?v=bd368e13488c1630"
+                alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
               />
             </figure>
-            <ol class="guide-mobile-flow" aria-label="CatLog workflow">
-              <li><span>1</span><strong>Search</strong><small>Enzyme, EC, organism, or substrate</small></li>
-              <li><span>2</span><strong>Choose a row</strong><small>Compare values and conditions</small></li>
-              <li><span>3</span><strong>Open details</strong><small>Check the protein and source</small></li>
-              <li><span>4</span><strong>Download</strong><small>Full data or the smaller table</small></li>
+
+            <ol class="guide-step-grid" aria-label="CatLog workflow">
+              <li class="guide-step">
+                <span>1</span>
+                <div>
+                  <h2>Search</h2>
+                  <p>Enter an enzyme, EC number, organism, or substrate.</p>
+                  <p class="guide-field-line">enzyme · EC · organism · substrate</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>2</span>
+                <div>
+                  <h2>Compare</h2>
+                  <p>Read each value with its assay temperature and pH.</p>
+                  <p class="guide-field-line"><i>k</i><sub>cat</sub> · <i>K</i><sub>m</sub> · <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> · T · pH</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>3</span>
+                <div>
+                  <h2>Open a row</h2>
+                  <p>Check its protein, substrate, paper, and source.</p>
+                  <p class="guide-field-line">sequence · SMILES · paper · source</p>
+                </div>
+              </li>
+              <li class="guide-step">
+                <span>4</span>
+                <div>
+                  <h2>Download</h2>
+                  <p>Save all rows, the current page, or one open record.</p>
+                  <p class="guide-field-line">all rows · current page · one record</p>
+                </div>
+              </li>
             </ol>
           </section>
 
@@ -287,13 +316,13 @@
                     <span><i>K</i><sub>m</sub> for 4-Aminoacetophenone</span>
                   </div>
                   <dl>
-                    <div><dt>Conditions</dt><dd>30 °C · pH 7.5</dd></div>
+                    <div><dt>Assay</dt><dd>30 °C · pH 7.5</dd></div>
                     <div><dt>Protein</dt><dd>Q93TJ5 · wild type</dd></div>
-                    <div><dt>Reference</dt><dd>PMID 12514023</dd></div>
+                    <div><dt>Paper</dt><dd>PMID 12514023</dd></div>
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=fc5d57595d9021d3"
+                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=bd368e13488c1630"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -322,27 +351,29 @@
 
           <div class="guide-reference-grid">
             <section class="guide-reference">
-              <h2>Values</h2>
+              <h2>Field meanings</h2>
               <dl>
-                <div><dt><i>k</i><sub>cat</sub></dt><dd>Reactions per enzyme per second (s<sup>-1</sup>).</dd></div>
-                <div><dt><i>K</i><sub>m</sub></dt><dd>Concentration at half the maximum rate (mM).</dd></div>
+                <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number (s<sup>-1</sup>)</dd></div>
+                <div><dt><i>K</i><sub>m</sub></dt><dd>Substrate concentration at half-maximal rate (mM)</dd></div>
                 <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency (s<sup>-1</sup> mM<sup>-1</sup>). Calculated values are marked.</dd></div>
-                <div><dt>T and pH</dt><dd>Measurement conditions.</dd></div>
-                <div><dt>Sequence</dt><dd>Wild type is the reference. Variants appear only when the mutation is clear.</dd></div>
+                <div><dt>T and pH</dt><dd>Temperature and pH stored for the assay. Unusual stored values are kept and flagged.</dd></div>
               </dl>
-              <p class="guide-note">A dash means missing. <em>Unit not recorded</em> means CatLog did not guess. A warning marks a value to check.</p>
+              <p class="guide-note">A dash means that the field is unavailable or cannot be shown safely in the table. Open the row to see unusual stored values.</p>
+              <p class="guide-note">A value marked <em>unit not recorded</em> came without a unit from its source; the column unit does not apply to it. A small warning beside a value means an automated check questioned it, for example a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that does not match <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; open the row for the reason.</p>
+              <p class="guide-note">For a variant, the wild-type sequence is the reference. A variant sequence is shown only when it was supplied or reconstructed.</p>
             </section>
 
             <section class="guide-reference">
-              <h2>Review labels</h2>
+              <h2>Review status</h2>
               <dl class="guide-status-list">
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Value and enzyme match checked; the value may be original or corrected.</dd></div>
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>Protein checked; no paper link for the kinetic value.</dd></div>
-                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Sequence, structure, or source link still needs checking.</dd></div>
-                <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>Not reviewed, calculated from other values, or disputed.</dd></div>
-                <div><dt><span class="guide-status-dot"></span>Saved source text</dt><dd>A paper excerpt or database note is linked to the row. This alone does not mean Accepted.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>CatLog checked the kinetic value and enzyme identity. The value was kept as reported or updated from a saved source.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>The protein identity and sequence were checked, but CatLog has no paper reference for the kinetic value.</dd></div>
+                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Review began, but a required check remains open, commonly the sequence, substrate structure, or source match.</dd></div>
+                <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>The row is unreviewed, was calculated from other reported values, or remains disputed.</dd></div>
               </dl>
-              <p class="guide-note">Labels describe CatLog's review, not the paper.</p>
+              <p class="guide-note">Automated checks compare source records, papers, and identity databases. A lab member resolves cases that still need a decision.</p>
+              <p class="guide-note"><strong>Saved source text</strong> means a paper passage, table reference, or source-database note is attached. It is evidence to inspect, not an acceptance label.</p>
+              <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
 
@@ -353,21 +384,21 @@
               </div>
             </header>
             <dl class="guide-download-list">
-              <div><dt>Full data</dt><dd>All rows; sequences and SMILES where available.</dd></div>
-              <div><dt>Table</dt><dd>All rows without long sequence or SMILES text.</dd></div>
-              <div><dt>Page or record</dt><dd>Only what is on screen or open.</dd></div>
+              <div><dt>All public data</dt><dd>All rows, with sequences and SMILES where available.</dd></div>
+              <div><dt>Table index</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
+              <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
             </dl>
           </section>
 
           <section class="guide-citation" aria-labelledby="guide-citation-title">
             <div>
-              <h2 id="guide-citation-title">Citing CatLog</h2>
-              <p>Use the paper, snapshot date, and data ID.</p>
+              <h2 id="guide-citation-title">Cite this snapshot</h2>
+              <p>Cite the CatLog paper and include the snapshot date and data ID in your methods or data statement.</p>
             </div>
             <dl class="guide-citation-meta">
               <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
               <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code></dd></div>
-              <div><dt>Site version</dt><dd><code id="guideExportId">—</code></dd></div>
+              <div><dt>Export code</dt><dd><code id="guideExportId">—</code></dd></div>
             </dl>
             <div class="guide-citation-links">
               <a href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2" target="_blank" rel="noopener noreferrer">CatLog paper</a>
@@ -378,10 +409,10 @@
           <section class="guide-sources" aria-labelledby="guide-sources-title">
             <header class="guide-downloads-heading">
               <div>
-                <h2 id="guide-sources-title">Sources</h2>
+                <h2 id="guide-sources-title">Data sources and licenses</h2>
               </div>
             </header>
-            <p class="guide-note">Source licenses apply when data is shared.</p>
+            <p class="guide-note">CatLog combines kinetic values and enzyme identities from the databases below. Each keeps its own license; check it before redistributing rows.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
               <div><dt><a href="https://www.brenda-enzymes.org/" target="_blank" rel="noreferrer">BRENDA</a></dt><dd>License: CC BY 4.0</dd></div>
               <div><dt><a href="https://sabiork.h-its.org/" target="_blank" rel="noreferrer">SABIO-RK</a></dt><dd>See the source site for license terms</dd></div>
@@ -389,13 +420,13 @@
               <div><dt>Open Enzyme Database (OED)</dt><dd>See the source site for license terms</dd></div>
               <div><dt><a href="https://www.uniprot.org/" target="_blank" rel="noreferrer">UniProt</a></dt><dd>License: CC BY 4.0</dd></div>
             </dl>
-            <p id="guideCurationLicense" class="guide-note guide-curation-license">Contact the Chowdhury Lab to reuse CatLog review notes or corrections.</p>
+            <p id="guideCurationLicense" class="guide-note guide-curation-license">For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.</p>
           </section>
         </div>
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=fc5d57595d9021d3"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=fc5d57595d9021d3"></script>
+    <script src="catlog-static/data/manifest.js?v=bd368e13488c1630"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=bd368e13488c1630"></script>
   </body>
 </html>
