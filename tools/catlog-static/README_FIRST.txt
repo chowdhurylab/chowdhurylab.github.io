@@ -9,11 +9,11 @@ This copy is for hosting only
 
 Snapshot details
 - Rows: 148289
-- Generated (UTC): 2026-09-03T12:23:39+00:00
-- Exporter commit: 217602267e99e42b541074118e87768cf2fc70bd
+- Generated (UTC): 2026-09-03T17:23:43+00:00
+- Exporter commit: 9d0af28d7a5b89c104a62a7bd0f17ab6850d7192
 - Source: verified_catlog.jsonl
-- Source SHA-256: 81cd66566946d24ddf3e91155b3d37228ece25ec70981025eb9d9f6da69bb863
-- Public content SHA-256 (decompressed all-public-data JSONL): 37e98444dcdd690052791543ec05cf60fd65576ed4d8292d75dad3f2b71b5806
+- Source SHA-256: 21a06ef0d26f2a7f0b0dc8e53b46da06983b3a966a48a51fd147ebf1d9fc7ed9
+- Public content SHA-256 (decompressed all-public-data JSONL): 8a7090a9d30399ed189965c2a292caa2b68e264b39f1a5f72a769cb4ab7899df
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
 - All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
@@ -22,9 +22,9 @@ Snapshot details
 - Download page: exports the displayed rows with public molecular identity, references, and provenance
 - All public data file: data/catlog-enriched.jsonl.gz
 - Rows with sequence: 75936
-- Rows with wild-type sequence: 49455
+- Rows with wild-type sequence: 49461
 - Rows with variant sequence: 20795
-- Rows with SMILES: 90444
+- Rows with SMILES: 90453
 
 Data sources, licenses and attribution
 - BRENDA (brenda): 88440 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
