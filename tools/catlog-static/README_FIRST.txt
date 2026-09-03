@@ -9,11 +9,11 @@ This copy is for hosting only
 
 Snapshot details
 - Rows: 148289
-- Generated (UTC): 2026-09-03T10:33:04+00:00
-- Exporter commit: 688dec9a874cbb3cfff860abd12f298f27345d4b
+- Generated (UTC): 2026-09-03T11:00:07+00:00
+- Exporter commit: 8e43ff631e973815da3a1597aa1ddd87e84fddc5
 - Source: verified_catlog.jsonl
-- Source SHA-256: 2cb397a016bdaec08934ed5e6285a6dc39f19c123d88aad9ec5d15a0d2658487
-- Public content SHA-256 (decompressed all-public-data JSONL): 8b4fa4b20300f5d867ea95f66e37f7e29678e55cbfe5d9ba59efd1cc5da968fd
+- Source SHA-256: 90adc875fe5c57b3bcea38193cb30a66351cc0418dd009bafa91463cfa58417e
+- Public content SHA-256 (decompressed all-public-data JSONL): d73d5682af88d2ea86b7c092fe5d92d6002eea66212c04c108c6f1afebca642f
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
 - All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
