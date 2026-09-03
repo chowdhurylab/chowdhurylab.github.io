@@ -7,8 +7,15 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=beddf8242c640647" />
+    <meta name="description" content="Browse, inspect, and download CatLog enzyme kinetics measurements with review status, references, protein sequences, and substrate structures." />
+    <meta name="theme-color" content="#1f6f66" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
+    <meta property="og:description" content="A searchable enzyme kinetics catalog with review status, source links, protein sequences, and substrate structures." />
+    <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
+    <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
+    <link rel="icon" type="image/svg+xml" href="assets/catlog-mark.svg?v=ee10df4666b035a3" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=ee10df4666b035a3" />
   </head>
   <body>
     <div class="static-app">
@@ -25,13 +32,13 @@
             class="nav-tab"
             href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             aria-label="Open the CatLog research paper"
           >Paper</a>
           <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
-          <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" />
+          <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
           <kbd>/</kbd>
         </label>
         <div class="header-actions">
@@ -40,7 +47,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="data/catlog-enriched.jsonl.gz?v=beddf8242c640647"
+                href="data/catlog-enriched.jsonl.gz?v=ee10df4666b035a3"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
@@ -48,7 +55,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="data/catlog-table.jsonl.gz?v=beddf8242c640647"
+                href="data/catlog-table.jsonl.gz?v=ee10df4666b035a3"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
@@ -60,6 +67,10 @@
               >
                 <strong>Full research records</strong>
                 <span>Source rows and review evidence. Request by email.</span>
+              </a>
+              <a id="datasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener">
+                <strong>Dataset notes</strong>
+                <span>Snapshot IDs, field coverage, sources, and licenses</span>
               </a>
             </div>
           </details>
@@ -130,8 +141,8 @@
                 </button>
                 <strong id="activeSummary">Loading CatLog records...</strong>
                 <span id="pageSummary">Preparing table</span>
-                <div class="table-scroll-controls" aria-label="Table columns">
-                  <span>More columns</span>
+                <div class="table-scroll-controls hidden" aria-label="Table columns">
+                  <span>Columns</span>
                   <button id="scrollTableLeftButton" class="icon-button" type="button" aria-label="Show previous columns">‹</button>
                   <button id="scrollTableRightButton" class="icon-button" type="button" aria-label="Show more columns">›</button>
                 </div>
@@ -235,7 +246,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="assets/catlog-guide-workflow.svg?v=beddf8242c640647"
+                src="assets/catlog-guide-workflow.svg?v=ee10df4666b035a3"
                 alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
@@ -311,7 +322,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="data/catlog-enriched.jsonl.gz?v=beddf8242c640647"
+                    href="data/catlog-enriched.jsonl.gz?v=ee10df4666b035a3"
                     download="catlog-enriched.jsonl.gz"
                   >Download public data</a>
                 </section>
@@ -355,13 +366,13 @@
             <section class="guide-reference">
               <h2>Review status</h2>
               <dl class="guide-status-list">
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Required CatLog checks are complete: the kinetic value was kept as reported or corrected from a recorded source, and the enzyme identity was resolved. Not every accepted row was checked against a paper.</dd></div>
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>Sequence and identity were verified; the kinetic value has no literature reference in CatLog.</dd></div>
-                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>At least one required check is open, often a protein sequence, substrate structure, or source match.</dd></div>
-                <div><dt><span class="guide-status-dot provisional"></span>Not accepted</dt><dd>The row is unreviewed, calculated only, disputed, or otherwise outside the accepted set.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>CatLog checked the kinetic value and enzyme identity. The value was kept as reported or updated from a saved source.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>The protein identity and sequence were checked, but CatLog has no paper reference for the kinetic value.</dd></div>
+                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Review began, but a required check remains open, commonly the sequence, substrate structure, or source match.</dd></div>
+                <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>The row is unreviewed, was calculated from other reported values, or remains disputed.</dd></div>
               </dl>
-              <p class="guide-note">Automated checks compare database rows with papers and identity sources. Lab members make the final call when a decision is still needed.</p>
-              <p class="guide-note">Paper excerpt means a saved passage or table reference is attached. It does not mean that the row is accepted.</p>
+              <p class="guide-note">Automated checks compare source records, papers, and identity databases. A lab member resolves cases that still need a decision.</p>
+              <p class="guide-note"><strong>Saved source text</strong> means a paper passage, table reference, or source-database note is attached. It is evidence to inspect, not an acceptance label.</p>
               <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
@@ -377,6 +388,22 @@
               <div><dt>Table index</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
               <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
             </dl>
+          </section>
+
+          <section class="guide-citation" aria-labelledby="guide-citation-title">
+            <div>
+              <h2 id="guide-citation-title">Cite this snapshot</h2>
+              <p>Cite the CatLog paper and include the snapshot date and data ID in your methods or data statement.</p>
+            </div>
+            <dl class="guide-citation-meta">
+              <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
+              <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code></dd></div>
+              <div><dt>Export code</dt><dd><code id="guideExportId">—</code></dd></div>
+            </dl>
+            <div class="guide-citation-links">
+              <a href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2" target="_blank" rel="noopener noreferrer">CatLog paper</a>
+              <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>
+            </div>
           </section>
 
           <section class="guide-sources" aria-labelledby="guide-sources-title">
@@ -399,7 +426,7 @@
       </main>
     </div>
 
-    <script src="data/manifest.js?v=beddf8242c640647"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=beddf8242c640647"></script>
+    <script src="data/manifest.js?v=ee10df4666b035a3"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=ee10df4666b035a3"></script>
   </body>
 </html>
