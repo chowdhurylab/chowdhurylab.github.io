@@ -21,28 +21,15 @@
   ],
   "postdocs": [
     {
-      "name": "Karuna Anna Sajeevan, PhD",
-      "image": "images/karuna.jpeg",
-      "email": "karunanna91@gmail.com",
-      "role": "Senior Research Scientist (w/ Ames Lab)",
-      "affiliation": "PhD, BITS Pilani, India. Postdoc, IIT Bombay, India",
-      "research": "MD simulations, enzyme kinetics",
-      "loves": "traveling, reading novels, gardening",
+      "name": "Nilusha Kariyawasam, PhD",
+      "image": "images/Nilusha.png",
+      "email": "",
+      "role": "Postdoctoral Scholar",
+      "affiliation": "PhD, Chemistry, Kansas State University",
+      "research": "Molecular dynamics simulations, computational biophysics",
+      "loves": "",
       "links": {
-        "scholar": "https://scholar.google.co.in/citations?user=ISrBDGgAAAAJ&hl=en",
-        "linkedin": "https://www.linkedin.com/in/karuna-anna-sajeevan-34693887/"
-      }
-    },
-    {
-      "name": "Arunraj B, PhD",
-      "image": "images/Arunraj B.JPG",
-      "email": "arunrajtpr19@gmail.com",
-      "role": "Postdoc",
-      "affiliation": "PhD, BITS Pilani. India",
-      "research": "Ammonium Protein Channels",
-      "loves": "cricket, photography",
-      "links": {
-        "linkedin": "https://www.linkedin.com/in/arunraj-b-phd-796b64218/"
+        "linkedin": "https://www.linkedin.com/in/nilusha-kariyawasam-a1750a138"
       }
     },
     {
@@ -80,16 +67,6 @@
       "links": {
         "linkedin": "https://www.linkedin.com/in/randy-aryee-074a88114/"
       }
-    },
-    {
-      "name": "Biswaroop Maiti",
-      "image": "images/Biswaroop.jpeg",
-      "email": "",
-      "role": "Visiting Researcher, Computer Science - Northeastern University",
-      "affiliation": "",
-      "research": "Structural Bioinformatics",
-      "loves": "",
-      "links": {}
     },
     {
       "name": "Priyanshu Gupta",
@@ -264,6 +241,27 @@
   ],
   "remoteInterns": [],
   "alumni": [
+    {
+      "name": "Karuna Anna Sajeevan, PhD",
+      "category": "postdoc",
+      "period": "Summer 26",
+      "description": "Senior Research Scientist",
+      "now": "Faculty Scientist, SRIBS Research, KSCSTE, India"
+    },
+    {
+      "name": "Arunraj B, PhD",
+      "category": "postdoc",
+      "period": "Summer 26",
+      "description": "Postdoctoral Scholar",
+      "now": "Faculty, SR University, Telangana, India"
+    },
+    {
+      "name": "Biswaroop Maiti",
+      "category": "graduate",
+      "period": "Fall 26",
+      "description": "Visiting Researcher",
+      "now": ""
+    },
     {
       "name": "Sakib Ferdous",
       "category": "graduate",
