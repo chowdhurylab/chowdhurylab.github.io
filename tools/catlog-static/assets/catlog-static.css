@@ -1639,7 +1639,7 @@ tbody tr.selected .row-arrow {
 .guide-shell {
   width: min(1280px, 100%);
   margin: 0 auto;
-  padding: 44px 32px 56px;
+  padding: 38px 32px 48px;
 }
 
 .guide-heading {
@@ -1657,20 +1657,16 @@ tbody tr.selected .row-arrow {
 
 .guide-heading > p:last-child {
   max-width: 680px;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 16px;
 }
 
 .guide-workflow {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
-  gap: 36px;
-  align-items: start;
-  margin-top: 34px;
+  margin-top: 24px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 24px 0;
+  padding: 20px 0;
 }
 
 .guide-figure {
@@ -1681,78 +1677,20 @@ tbody tr.selected .row-arrow {
 .guide-figure img {
   display: block;
   width: 100%;
-  aspect-ratio: 1746 / 901;
+  aspect-ratio: 4 / 1;
   object-fit: contain;
 }
-
-.guide-step-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-self: stretch;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.guide-step {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-content: center;
-  min-width: 0;
-  border-top: 1px solid var(--line);
-  padding: 15px 0;
-}
-
-.guide-step:first-child {
-  border-top: 0;
-}
-
-.guide-step > span {
-  display: inline-grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--teal-dark);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 2px;
-}
-
-.guide-step h2,
 .guide-reference h2,
 .guide-downloads h2 {
   color: #152321;
   letter-spacing: 0;
 }
 
-.guide-step h2 {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 650;
-}
-
-.guide-step p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.guide-step .guide-field-line {
-  margin-top: 5px;
-  color: #314a45;
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
 .guide-record-depth {
-  margin-top: 38px;
+  margin-top: 28px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 32px 0 36px;
+  padding: 26px 0 30px;
 }
 
 .guide-record-depth-heading {
@@ -1783,7 +1721,7 @@ tbody tr.selected .row-arrow {
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  margin: 28px 0 0;
+  margin: 22px 0 0;
 }
 
 .guide-record-example figcaption {
@@ -1962,7 +1900,7 @@ tbody tr.selected .row-arrow {
 .guide-reference {
   min-width: 0;
   border-left: 1px solid var(--line);
-  padding: 30px 36px 32px;
+  padding: 24px 32px 26px;
 }
 
 .guide-reference:first-child {
@@ -1982,7 +1920,7 @@ tbody tr.selected .row-arrow {
 
 .guide-reference dl {
   display: grid;
-  gap: 12px;
+  gap: 9px;
   margin: 0;
 }
 
@@ -2006,12 +1944,12 @@ tbody tr.selected .row-arrow {
 }
 
 .guide-note {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .guide-downloads {
   border-bottom: 1px solid var(--line);
-  padding: 30px 0 34px;
+  padding: 24px 0 26px;
 }
 
 .guide-downloads-heading {
@@ -2025,7 +1963,7 @@ tbody tr.selected .row-arrow {
 }
 
 .guide-download-list {
-  margin: 22px 0 0;
+  margin: 16px 0 0;
   border-top: 1px solid var(--line-soft);
 }
 
@@ -2034,7 +1972,7 @@ tbody tr.selected .row-arrow {
   grid-template-columns: minmax(150px, 0.28fr) minmax(0, 1fr);
   gap: 24px;
   border-bottom: 1px solid var(--line-soft);
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .guide-download-list > div:last-child {
@@ -2065,7 +2003,7 @@ tbody tr.selected .row-arrow {
   gap: 28px;
   align-items: start;
   border-bottom: 1px solid var(--line);
-  padding: 30px 0 34px;
+  padding: 24px 0 26px;
 }
 
 .guide-citation h2 {
@@ -2510,40 +2448,8 @@ tbody tr.selected .row-arrow {
 
 @media (max-width: 900px) {
   .guide-workflow {
-    grid-template-columns: 1fr;
-    gap: 0;
-    margin-top: 26px;
-    padding: 18px 0 0;
-  }
-
-  .guide-figure {
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
-  }
-
-  .guide-step-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .guide-step,
-  .guide-step:first-child,
-  .guide-step:last-child {
-    border-top: 1px solid var(--line);
-    padding: 18px;
-  }
-
-  .guide-step:nth-child(-n + 2) {
-    border-top: 0;
-  }
-
-  .guide-step:nth-child(odd) {
-    border-left: 0;
-    padding-left: 0;
-  }
-
-  .guide-step:nth-child(even) {
-    border-left: 1px solid var(--line);
-    padding-right: 0;
+    margin-top: 22px;
+    padding: 18px 0;
   }
 }
 
@@ -2643,46 +2549,9 @@ tbody tr.selected .row-arrow {
     font-size: 28px;
   }
 
-  .guide-workflow {
-    grid-template-columns: 1fr;
-    gap: 0;
-    margin-top: 26px;
-    padding: 18px 0 0;
-  }
-
-  .guide-figure {
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
-  }
-
-  .guide-step-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .guide-step,
-  .guide-step:first-child,
-  .guide-step:last-child {
-    border-top: 1px solid var(--line);
-    padding: 18px;
-  }
-
-  .guide-step:nth-child(-n + 2) {
-    border-top: 0;
-  }
-
-  .guide-step:nth-child(odd) {
-    border-left: 0;
-    padding-left: 0;
-  }
-
-  .guide-step:nth-child(even) {
-    border-left: 1px solid var(--line);
-    padding-right: 0;
-  }
-
   .guide-record-depth {
-    margin-top: 28px;
-    padding: 26px 0 30px;
+    margin-top: 24px;
+    padding: 22px 0 26px;
   }
 
   .guide-record-example figcaption {
@@ -2902,24 +2771,6 @@ tbody tr.selected .row-arrow {
 @media (max-width: 460px) {
   .brand-lockup span:not(.visually-hidden) {
     display: none;
-  }
-
-  .guide-step-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .guide-step,
-  .guide-step:first-child,
-  .guide-step:last-child,
-  .guide-step:nth-child(odd),
-  .guide-step:nth-child(even) {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-    padding: 20px 0;
-  }
-
-  .guide-step:first-child {
-    border-top: 0;
   }
 
   .guide-example-level {
@@ -3216,7 +3067,7 @@ tbody tr.selected .row-arrow {
 
 .guide-sources {
   border-bottom: 1px solid var(--line);
-  padding: 30px 0 34px;
+  padding: 24px 0 26px;
 }
 
 .guide-sources h2 {
