@@ -34,28 +34,28 @@
     },
     {
       value: "curation_pending",
-      label: "Pending curation",
-      shortLabel: "Pending curation",
+      label: "Further checks",
+      shortLabel: "Further checks",
       className: "review",
     },
     {
       value: "not_verified",
-      label: "Provisional",
-      shortLabel: "Provisional",
+      label: "Not accepted",
+      shortLabel: "Not accepted",
       className: "unresolved",
     },
   ];
 
   const stateDescriptions = {
-    accepted: "Curator-accepted as reported or after a documented correction.",
-    curation_pending: "Awaiting a curator decision because one or more row-specific checks remain open.",
+    accepted: "Required CatLog checks are complete: the kinetic value was kept as reported or corrected from a recorded source, and the enzyme identity was resolved. Not every accepted row was checked against a paper; rows marked identity only have no literature reference in CatLog.",
+    curation_pending: "At least one required check is still open, often a protein sequence, substrate structure, or source match.",
     not_verified: "Outside the accepted set; includes records not yet fully assessed, calculated-only values, and disputed rows.",
   };
 
   const evidenceGroups = [
-    { value: "paper_evidence", label: "Paper evidence", className: "paper" },
-    { value: "literature_id", label: "Literature ID", className: "linked" },
-    { value: "source_records", label: "Source records", className: "source" },
+    { value: "paper_evidence", label: "Paper excerpt", className: "paper" },
+    { value: "literature_id", label: "Paper ID", className: "linked" },
+    { value: "source_records", label: "Database record", className: "source" },
   ];
 
   const measurementFilters = [
@@ -84,12 +84,112 @@
     name_not_preserved: "Name unavailable",
   };
 
+  const sourceDatabaseLabels = {
+    oed: "Open Enzyme Database (OED)",
+    brenda: "BRENDA",
+    sabio_rk: "SABIO-RK",
+    sabio: "SABIO-RK",
+    skid: "SKiD",
+    uniprot: "UniProt",
+  };
+
+  function sourceDatabaseLabel(value) {
+    const text = String(value || "").trim();
+    const key = text.toLowerCase().replace(/[\s-]+/g, "_");
+    return sourceDatabaseLabels[key] || text || EMPTY_VALUE;
+  }
+
   const identityLabels = {
     accession_resolved: "Accession resolved",
     sequence_resolved_no_accession: "Sequence resolved; accession unavailable",
     candidate_pool: "Candidate match",
     identity_unresolved: "Unresolved",
   };
+
+  const identityOnlyTrustNote = "Sequence and identity were verified; the kinetic value has no literature reference in CatLog.";
+
+  const conditionFlagLabels = {
+    kcat_over_km_quotient_mismatch: "kcat/Km does not match kcat ÷ Km",
+    kcat_over_km_unit_mismatch: "kcat/Km unit mismatch (×1000 class)",
+    km_magnitude_needs_check: "Km above 10 M — check units",
+    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹ — check units",
+    efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
+    temperature_value_needs_check: "Temperature value needs check",
+    temperature_unit_needs_check: "Temperature unit needs check",
+    temperature_invalid: "Temperature value is not usable",
+    ph_outside_0_14: "pH outside 0–14",
+    ph_invalid: "pH value is not usable",
+    unit_not_recorded: "Unit not recorded",
+    unit_not_recorded_kcat: "kcat unit not recorded",
+    unit_not_recorded_km: "Km unit not recorded",
+    unit_not_recorded_kcat_over_km: "kcat/Km unit not recorded",
+    unit_not_recorded_ki: "Ki unit not recorded",
+  };
+
+  // Flags that question the value itself; each is surfaced beside the metric it concerns.
+  const valueIntegrityFlags = {
+    kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "ratio mismatch" },
+    kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "unit mismatch" },
+    efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above limit" },
+    km_magnitude_needs_check: { field: "km", short: "check units" },
+    kcat_magnitude_needs_check: { field: "kcat", short: "check units" },
+  };
+
+  function conditionFlags(...rows) {
+    const flags = new Set();
+    rows.forEach((row) => {
+      (Array.isArray(row?.condition_flags) ? row.condition_flags : []).forEach((flag) => {
+        const key = String(flag || "").trim();
+        if (key) flags.add(key);
+      });
+    });
+    return flags;
+  }
+
+  function conditionFlagLabel(flag) {
+    if (conditionFlagLabels[flag]) return conditionFlagLabels[flag];
+    if (String(flag || "").startsWith("unit_not_recorded")) return conditionFlagLabels.unit_not_recorded;
+    const text = String(flag || "").replace(/_/g, " ").trim();
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+  }
+
+  function valueFlagBadgeHtml(flags, field) {
+    const matched = [...flags].filter((flag) => valueIntegrityFlags[flag]?.field === field);
+    if (!matched.length) return "";
+    const labels = [...new Set(matched.map(conditionFlagLabel).filter(Boolean))];
+    const shortText = [...new Set(matched.map((flag) => valueIntegrityFlags[flag].short))].join(" · ");
+    const summary = `Check against source: ${labels.join("; ")}`;
+    return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}">${escapeHtml(shortText)}</span>`;
+  }
+
+  function conditionFlagsHtml(flags) {
+    const labels = [...new Set([...flags].map(conditionFlagLabel).filter(Boolean))];
+    if (!labels.length) return "";
+    return `<div class="kv-line condition-flag-line"><span>Check against source</span><ul class="condition-flag-list">${labels.map((label) => `<li>${escapeHtml(label)}</li>`).join("")}</ul></div>`;
+  }
+
+  // The exporter replaces internal file references with this marker; a string that still
+  // carries it is not fit to show, so the viewer renders nothing for it.
+  const INTERNAL_REFERENCE_PLACEHOLDER = "[internal reference removed]";
+
+  function hasInternalPlaceholder(value) {
+    return typeof value === "string" && value.includes(INTERNAL_REFERENCE_PLACEHOLDER);
+  }
+
+  function publicEvidenceString(value) {
+    if (value === null || value === undefined) return "";
+    return hasInternalPlaceholder(value) ? "" : value;
+  }
+
+  const CURATION_LICENSE_NOTE = "License of the CatLog curation layer: to be stated by the Chowdhury Lab";
+
+  const fallbackSourceDatabases = [
+    { key: "brenda", name: "BRENDA", license: "CC BY 4.0", citation_url: "https://www.brenda-enzymes.org/" },
+    { key: "sabio_rk", name: "SABIO-RK", license: "", citation_url: "https://sabiork.h-its.org/" },
+    { key: "skid", name: "SKiD", license: "CC BY-NC-ND 4.0", citation_url: "" },
+    { key: "oed", name: "Open Enzyme Database (OED)", license: "", citation_url: "" },
+    { key: "uniprot", name: "UniProt", license: "CC BY 4.0", citation_url: "https://www.uniprot.org/" },
+  ];
 
   const suggestionInputs = {
     globalSearchInput: "mixed",
@@ -163,9 +263,9 @@
   function publicText(value) {
     return String(value == null ? "" : value)
       .replace(/\bpaper[- ]backed\b/gi, "paper linked")
-      .replace(/\bclaim\s+status\b/gi, "curation status")
+      .replace(/\bclaim\s+status\b/gi, "review status")
       .replace(/\bclaim[- ]verified\b/gi, "accepted")
-      .replace(/\bverified\s+or\s+corrected\b/gi, "accepted or corrected")
+      .replace(/\bverified\s+or\s+corrected\b/gi, "accepted or updated")
       .replace(/\baccepted\s+as[- ]is\b/gi, "accepted")
       .replace(/\bnot[_ ]labeled\b/gi, "not labeled");
   }
@@ -239,15 +339,17 @@
 
   function evidenceText(value) {
     if (value === null || value === undefined || value === "") return "";
-    if (typeof value !== "object") return String(value);
-    const parts = [
+    if (typeof value !== "object") return publicEvidenceString(String(value));
+    const raw = [
       value.table_label,
       value.row_label,
       value.column_label,
       value.raw_value_unit_evidence,
       value.normalized_value_unit_evidence,
     ].filter(Boolean);
-    return parts.length ? parts.join(" | ") : "Evidence details unavailable";
+    const parts = raw.map(publicEvidenceString).filter(Boolean);
+    if (parts.length) return parts.join(" | ");
+    return raw.length ? "" : "Evidence details unavailable";
   }
 
   function cleanEvidenceValue(value) {
@@ -264,13 +366,14 @@
   function evidenceNoteHtml(value) {
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
-      return `<p class="evidence-note-plain">${escapePublic(value)}</p>`;
+      const text = publicEvidenceString(String(value));
+      return text ? `<p class="evidence-note-plain">${escapePublic(text)}</p>` : "";
     }
 
-    const location = [value.table_label, value.row_label].filter(Boolean).join(" · ");
-    const reported = value.raw_value_unit_evidence
-      || (!value.normalized_value_unit_evidence ? value.column_label : "");
-    const normalized = value.normalized_value_unit_evidence;
+    const location = [value.table_label, value.row_label].map(publicEvidenceString).filter(Boolean).join(" · ");
+    const reported = publicEvidenceString(value.raw_value_unit_evidence
+      || (!value.normalized_value_unit_evidence ? value.column_label : ""));
+    const normalized = publicEvidenceString(value.normalized_value_unit_evidence);
     const rows = [
       location ? ["Location", location] : null,
       reported ? ["Reported", cleanEvidenceValue(reported)] : null,
@@ -278,7 +381,8 @@
     ].filter(Boolean);
 
     if (!rows.length) {
-      return `<p class="evidence-note-plain">${escapePublic(evidenceText(value))}</p>`;
+      const fallback = evidenceText(value);
+      return fallback ? `<p class="evidence-note-plain">${escapePublic(fallback)}</p>` : "";
     }
     return `
       <div class="evidence-note-item">
@@ -293,8 +397,8 @@
   }
 
   function evidenceNotesHtml(values, limit = 3) {
-    const items = Array.isArray(values) ? values.filter(Boolean).slice(0, limit) : [];
-    return items.map(evidenceNoteHtml).join("");
+    const items = Array.isArray(values) ? values.filter(Boolean) : [];
+    return items.map(evidenceNoteHtml).filter(Boolean).slice(0, limit).join("");
   }
 
   function formatDate(value) {
@@ -324,11 +428,8 @@
     return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times; 10<sup>${escapeHtml(exponent)}</sup></span></span>`;
   }
 
-  const defaultMetricUnits = {
-    kcat: "s^(-1)",
-    km: "mM",
-    kcat_over_km: "s^(-1)*mM^(-1)",
-  };
+  const UNIT_NOT_RECORDED_LABEL = "unit not recorded";
+  const UNIT_NOT_RECORDED_NOTE = "The source did not record a unit for this value, so the column unit does not apply.";
 
   const canonicalMetricUnitKeys = {
     kcat: new Set(["s-1"]),
@@ -346,7 +447,20 @@
   }
 
   function metricUnit(row, field) {
-    return String(row[`${field}_unit`] || defaultMetricUnits[field] || "").trim();
+    return String(row[`${field}_unit`] || "").trim();
+  }
+
+  function metricHasValue(row, field) {
+    return metricDisplay(row, field) !== EMPTY_VALUE;
+  }
+
+  function metricUnitMissing(row, field, flags = conditionFlags(row)) {
+    if (!metricHasValue(row, field)) return false;
+    return !metricUnit(row, field) || flags.has(`unit_not_recorded_${field}`);
+  }
+
+  function unitMissingHtml() {
+    return `<small class="metric-unit-missing" title="${escapeHtml(UNIT_NOT_RECORDED_NOTE)}">${escapeHtml(UNIT_NOT_RECORDED_LABEL)}</small>`;
   }
 
   function unitHtml(value) {
@@ -356,6 +470,7 @@
   }
 
   function metricUnitHtml(row, field) {
+    if (!metricHasValue(row, field) || metricUnitMissing(row, field)) return "";
     return unitHtml(metricUnit(row, field));
   }
 
@@ -363,11 +478,18 @@
     const display = metricDisplay(row, field);
     const displayHtml = scientificValueHtml(display);
     if (display === EMPTY_VALUE) return displayHtml;
-    const storedUnit = String(row[`${field}_unit`] || "").trim();
-    if (!storedUnit || canonicalMetricUnitKeys[field]?.has(normalizedUnitKey(storedUnit))) {
+    if (metricUnitMissing(row, field)) return `${displayHtml}${unitMissingHtml()}`;
+    const storedUnit = metricUnit(row, field);
+    if (canonicalMetricUnitKeys[field]?.has(normalizedUnitKey(storedUnit))) {
       return displayHtml;
     }
     return `${displayHtml}<small class="metric-inline-unit">${unitHtml(storedUnit)}</small>`;
+  }
+
+  function efficiencyOriginHtml(row) {
+    return row.kcat_over_km_origin === "calculated"
+      ? '<small class="metric-origin">calculated</small>'
+      : "";
   }
 
   function mutationSignature(row) {
@@ -388,15 +510,15 @@
     if (hasDisplayValue(display)) return display;
     if (row.temperature_k == null || row.temperature_k === "") return EMPTY_VALUE;
     const kelvin = Number(row.temperature_k);
-    if (!Number.isFinite(kelvin)) return EMPTY_VALUE;
-    const celsius = kelvin > 170 ? kelvin - 273.15 : kelvin;
-    return formatNumber(celsius, { maximumFractionDigits: 1 });
+    if (!Number.isFinite(kelvin) || kelvin <= 170 || kelvin > 1000) return EMPTY_VALUE;
+    return formatNumber(kelvin - 273.15, { maximumFractionDigits: 1 });
   }
 
-  function formatPh(value) {
+  function formatPh(row) {
+    const value = row.ph_display;
     if (value == null || value === "") return EMPTY_VALUE;
     const number = Number(value);
-    if (!Number.isFinite(number)) return EMPTY_VALUE;
+    if (!Number.isFinite(number) || number < 0 || number > 14) return EMPTY_VALUE;
     return formatNumber(number, { maximumFractionDigits: 1 });
   }
 
@@ -435,22 +557,18 @@
   }
 
   function evidenceGroupForRow(row) {
-    const tier = row.evidence_confidence_tier;
-    if (tier === "paper_grounded" || tier === "paper_grounded_high_confidence") return "paper_evidence";
-    if (tier === "literature_linked") return "literature_id";
+    if (row.has_proof_excerpt) return "paper_evidence";
+    if (row.has_literature_id) return "literature_id";
     return "source_records";
   }
 
   function evidenceGroupCounts(rows) {
     const counts = Object.fromEntries(evidenceGroups.map((item) => [item.value, 0]));
     if (!state.recordsReady) {
-      const tiers = manifestDistribution("evidence_confidence_tier");
-      counts.paper_evidence = (tiers.paper_grounded || 0) + (tiers.paper_grounded_high_confidence || 0);
-      counts.literature_id = tiers.literature_linked || 0;
-      counts.source_records = Object.entries(tiers).reduce(
-        (total, [tier, count]) => total + (["paper_grounded", "paper_grounded_high_confidence", "literature_linked"].includes(tier) ? 0 : count),
-        0,
-      );
+      const publicEvidence = manifestDistribution("public_evidence_group");
+      counts.paper_evidence = publicEvidence.paper_excerpt || 0;
+      counts.literature_id = publicEvidence.paper_id || 0;
+      counts.source_records = publicEvidence.database_record || 0;
       return counts;
     }
     rows.forEach((row) => {
@@ -460,21 +578,26 @@
   }
 
   function evidenceLabel(row, proofLines = []) {
-    if (proofLines.length) return "Source values";
+    if (proofLines.length) return "Saved source excerpt";
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Cross-source match";
     }
     return row.has_literature_id ? "Reference available" : "Database record";
   }
 
-  function reviewOutcome(summary) {
+  function isIdentityOnlyAccepted(row) {
+    return (row._recordState || recordStateForRow(row)) === "accepted"
+      && String(row.public_trust_basis || "").trim() === "identity_only";
+  }
+
+  function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Accepted after a documented correction.";
+        return "Accepted after a recorded update.";
       case "verified":
         return "Accepted as reported.";
       case "manual_review_required":
-        return "Awaiting curator review.";
+        return "One or more required checks are still open.";
       case "mathematically_inferred":
         return "Calculated from reported values rather than stated directly in the source.";
       case "disputed":
@@ -484,8 +607,14 @@
     }
   }
 
+  function reviewOutcome(summary) {
+    const outcome = reviewOutcomeBase(summary);
+    return isIdentityOnlyAccepted(summary) ? `${outcome} ${identityOnlyTrustNote}` : outcome;
+  }
+
   function rowStatusLabel(row) {
     if (row.verification_status === "disputed") return "Disputed";
+    if (isIdentityOnlyAccepted(row)) return "Accepted (identity only)";
     if (row.verification_status === "corrected") return "Accepted";
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
@@ -493,14 +622,23 @@
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isDisputed = row.verification_status === "disputed";
+    const isCorrected = row.verification_status === "corrected";
+    const identityOnly = isIdentityOnlyAccepted(row);
     const description = isDisputed
       ? "Conflicting source values; no single value has been accepted."
-      : (row.verification_status === "corrected"
-          ? "Accepted after a documented correction."
-          : (stateDescriptions[config.value] || config.label));
+      : (identityOnly
+          ? identityOnlyTrustNote
+          : (isCorrected
+              ? "Accepted after a recorded update."
+              : (stateDescriptions[config.value] || config.label)));
     const label = rowStatusLabel(row);
-    const qualifier = row.verification_status === "corrected" ? "<small>corrected</small>" : "";
-    return `<span class="state-badge ${isDisputed ? "disputed" : config.className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(label)}${qualifier}</span></span>`;
+    const visibleLabel = identityOnly ? "Accepted" : label;
+    const qualifierText = identityOnly
+      ? `(${isCorrected ? "updated, identity only" : "identity only"})`
+      : (isCorrected ? "updated" : "");
+    const qualifier = qualifierText ? `<small>${escapeHtml(qualifierText)}</small>` : "";
+    const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
+    return `<span class="state-badge ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
   }
 
   function versionedAssetUrl(src) {
@@ -569,13 +707,62 @@
     rail.classList.toggle("complete", state.recordsReady);
   }
 
+  function canStreamCompressedIndex() {
+    return window.location.protocol !== "file:"
+      && Boolean(manifest.table_download?.path)
+      && typeof window.DecompressionStream === "function";
+  }
+
+  // requestAnimationFrame never fires in a hidden tab, so the loader must not wait on it.
+  // While the document is hidden there is nothing to paint, so the loop continues without a pause.
+  function yieldToBrowser() {
+    if (document.hidden) return Promise.resolve();
+    if (window.scheduler && typeof window.scheduler.yield === "function") {
+      return window.scheduler.yield();
+    }
+    if (typeof window.MessageChannel === "function") {
+      return new Promise((resolve) => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => {
+          channel.port1.close();
+          resolve();
+        };
+        channel.port2.postMessage(null);
+      });
+    }
+    return new Promise((resolve) => window.setTimeout(resolve, 0));
+  }
+
+  function showLoadNotice(title, message) {
+    const body = $("recordsBody");
+    if (body) {
+      body.innerHTML = `
+        <tr class="loading-row notice-row">
+          <td colspan="11">
+            <div class="load-notice" role="alert">
+              <strong>${escapeHtml(title)}</strong>
+              <span>${escapeHtml(message)}</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    $("activeSummary").textContent = title;
+    $("pageSummary").textContent = message;
+    $("pageLabel").textContent = "No records";
+    $("prevButton").disabled = true;
+    $("nextButton").disabled = true;
+    $("downloadPageButton").disabled = true;
+    const rail = $("catalogLoadProgress");
+    if (rail) {
+      rail.classList.add("stalled");
+      rail.setAttribute("aria-valuetext", `${title}. ${message}`);
+    }
+  }
+
   async function streamCompressedRecordIndex() {
     const tablePath = manifest.table_download?.path;
-    if (
-      window.location.protocol === "file:"
-      || !tablePath
-      || typeof window.DecompressionStream !== "function"
-    ) return null;
+    if (!canStreamCompressedIndex()) return null;
 
     const response = await fetch(versionedAssetUrl(tablePath));
     if (!response.ok || !response.body) throw new Error("Compressed CatLog index unavailable");
@@ -616,7 +803,7 @@
         state.recordChunksLoaded = records.length;
         lastProgress = records.length;
         updateLoadProgress();
-        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+        await yieldToBrowser();
       }
     }
     buffer += decoder.decode();
@@ -632,10 +819,12 @@
   async function loadRecordChunks() {
     const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
     let streamedRecords = null;
+    let streamError = null;
     try {
       streamedRecords = await streamCompressedRecordIndex();
     } catch (error) {
       streamedRecords = null;
+      streamError = error;
     }
     if (streamedRecords) {
       indexLoadedRecords(streamedRecords);
@@ -656,10 +845,25 @@
     updateLoadProgress();
 
     if (!chunks.length) {
-      state.recordsReady = true;
-      updateLoadProgress();
-      setupFilters();
-      applyFilters();
+      if (!Number(manifest.total_rows || 0)) {
+        state.recordsReady = true;
+        updateLoadProgress();
+        setupFilters();
+        applyFilters();
+        return;
+      }
+      // A web-only bundle ships no records-*.js; without the streamed index there is nothing to show.
+      if (!canStreamCompressedIndex()) {
+        showLoadNotice(
+          "This copy is built for web hosting",
+          "Open it over http(s) or download the offline zip to browse the records.",
+        );
+      } else {
+        showLoadNotice(
+          "CatLog records could not be loaded",
+          `${streamError?.message || "The compressed index is unavailable"}. Reload the page to try again.`,
+        );
+      }
       return;
     }
 
@@ -676,7 +880,7 @@
       await Promise.all(batch.map((chunk) => loadScript(chunk, true)));
       state.recordChunksLoaded += batch.length;
       updateLoadProgress();
-      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+      await yieldToBrowser();
     }
 
     indexLoadedRecords();
@@ -839,7 +1043,7 @@
       return `${item.label} ${pct}%`;
     }).join(", ");
     $("evidenceSummary").innerHTML = `
-      <div class="evidence-summary-title">Curation status</div>
+      <div class="evidence-summary-title">Review status</div>
       <div class="evidence-segment-row">
         ${recordStates.map((item) => {
           const count = counts[item.value] || 0;
@@ -972,8 +1176,8 @@
     const statusCounts = manifestDistribution("verification_status");
     const statusBreakdown = [
       ["Accepted as reported", statusCounts.verified],
-      ["Accepted after correction", statusCounts.corrected],
-      ["Pending curator decision", statusCounts.manual_review_required],
+      ["Accepted after update", statusCounts.corrected],
+      ["Further checks", statusCounts.manual_review_required],
       ["Not yet assessed", statusCounts.unverified],
       ["Calculated from reported values", statusCounts.mathematically_inferred],
       ["Disputed", statusCounts.disputed],
@@ -988,7 +1192,7 @@
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted (identity only):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
           ${statusBreakdown.length ? `
             <div class="review-profile">
               <span>Snapshot breakdown</span>
@@ -1152,18 +1356,18 @@
         <td class="primary-cell">
           <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
           <span class="primary-meta">
-            <span class="name-source">${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || row.source_db || "source")}</span>
+            <span class="name-source">${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || sourceDatabaseLabel(row.source_db) || "source")}</span>
             ${enzymeFormHtml(row)}
           </span>
         </td>
         <td>${escapeHtml(row.ec_number || EMPTY_VALUE)}</td>
         <td class="organism-cell">${escapePublic(row.organism || EMPTY_VALUE)}</td>
         <td class="substrate-cell">${escapePublic(row.substrate_name || EMPTY_VALUE)}</td>
-        <td class="metric-cell"><strong>${metricDisplayWithUnitHtml(row, "kcat")}</strong></td>
-        <td class="metric-cell">${metricDisplayWithUnitHtml(row, "km")}</td>
-        <td class="metric-cell">${metricDisplayWithUnitHtml(row, "kcat_over_km")}</td>
+        <td class="metric-cell"><span class="metric-with-note"><strong>${metricDisplayWithUnitHtml(row, "kcat")}</strong>${valueFlagBadgeHtml(conditionFlags(row), "kcat")}</span></td>
+        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "km")}${valueFlagBadgeHtml(conditionFlags(row), "km")}</span></td>
+        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat_over_km")}${efficiencyOriginHtml(row)}${valueFlagBadgeHtml(conditionFlags(row), "kcat_over_km")}</span></td>
         <td>${escapeHtml(formatTemperature(row))}</td>
-        <td>${escapeHtml(formatPh(row.ph))}</td>
+        <td>${escapeHtml(formatPh(row))}</td>
         <td>${statusBadge(row)}</td>
         <td class="row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
@@ -1345,29 +1549,64 @@
     `;
   }
 
+  function sourceEfficiencyRow(summary, detail) {
+    if (!summary.kcat_over_km_source_differs && !detail.kcat_over_km_source_differs) return "";
+    const values = Array.isArray(detail.source_kcat_over_km_values)
+      ? detail.source_kcat_over_km_values.filter((item) => item && item.value != null)
+      : [];
+    if (!values.length) return "";
+    const valueHtml = values.map((item) => {
+      const unit = item.unit ? ` ${unitHtml(item.unit)}` : "";
+      const source = item.source_db ? ` <small>${escapePublic(sourceDatabaseLabel(item.source_db))}</small>` : "";
+      return `<span class="source-efficiency-value">${scientificValueHtml(item.value)}${unit}${source}</span>`;
+    }).join("");
+    return linkedKv("Source-listed kcat/Km", valueHtml);
+  }
+
   function measurementSection(summary, detail) {
     const temperature = formatTemperature(summary);
+    const flags = conditionFlags(summary, detail);
+    const hasTemperatureFlag = [...flags].some((flag) => flag.startsWith("temperature_"));
+    const hasPhFlag = [...flags].some((flag) => flag.startsWith("ph_"));
+    const temperatureValue = temperature !== EMPTY_VALUE
+      ? `${temperature} °C`
+      : (hasTemperatureFlag && (detail.temperature_k ?? summary.temperature_k) != null
+          ? `${compactValue(detail.temperature_k ?? summary.temperature_k)} K (stored)`
+          : EMPTY_VALUE);
+    const ph = formatPh(summary);
+    const phValue = ph !== EMPTY_VALUE
+      ? ph
+      : (hasPhFlag && (detail.ph ?? summary.ph) != null
+          ? `${compactValue(detail.ph ?? summary.ph)} (stored)`
+          : EMPTY_VALUE);
     const metrics = [
       ["<i>k</i><sub>cat</sub>", "kcat", metricDisplay(summary, "kcat")],
       ["<i>K</i><sub>m</sub>", "km", metricDisplay(summary, "km")],
       ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(summary, "kcat_over_km")],
     ];
+    const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
     return `
       <section class="detail-section measurement-section">
         <h3>Kinetic measurement</h3>
         <div class="measurement-strip">
-          ${metrics.map(([label, field, value]) => `
-            <div class="measurement-value">
-              <span>${label}<small>${metricUnitHtml(summary, field)}</small></span>
-              <strong>${scientificValueHtml(value)}</strong>
+          ${metrics.map(([label, field, value]) => {
+            const unitMissing = metricUnitMissing(summary, field, flags);
+            const unit = unitMissing ? "" : metricUnitHtml(summary, field);
+            return `
+            <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
+              <span>${label}${unitMissing ? unitMissingHtml() : (unit ? `<small>${unit}</small>` : "")}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
+              <strong>${scientificValueHtml(value)}${valueFlagBadgeHtml(flags, field)}</strong>
             </div>
-          `).join("")}
+          `;
+          }).join("")}
         </div>
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
-          ${kv("Temperature", temperature === EMPTY_VALUE ? EMPTY_VALUE : `${temperature} °C`)}
-          ${kv("pH", formatPh(summary.ph))}
-          ${detail.assay_conditions_summary ? kv("Conditions", detail.assay_conditions_summary) : ""}
+          ${kv("Temperature", temperatureValue)}
+          ${kv("pH", phValue)}
+          ${sourceEfficiencyRow(summary, detail)}
+          ${conditionFlagsHtml(flags)}
+          ${conditionsSummary ? kv("Conditions", conditionsSummary) : ""}
         </div>
       </section>
     `;
@@ -1418,7 +1657,8 @@
       || (["reconstructed_variant_sequence", "source_provided_variant_sequence"].includes(variantStatus) ? sequence : ""),
     ).trim();
     const variant = mutationSignature(detail) || mutationSignature(summary);
-    if (!proteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
+    const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
+    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
@@ -1431,6 +1671,7 @@
         <div class="detail-kv">
           ${variant ? kv("Enzyme form", `Variant: ${variant}`) : ""}
           ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
+          ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
           ${smiles ? `
             <div class="copy-field">
@@ -1484,9 +1725,10 @@
     const dois = Array.isArray(detail.supporting_dois)
       ? detail.supporting_dois.filter(Boolean)
       : (detail.doi ? [detail.doi] : []);
-    const proofLines = Array.isArray(detail.proof_lines)
+    const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
+    const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)));
     const firstPmid = pmids[0] || "";
     const firstDoi = dois[0] || "";
     const hasSourceEvidence = proofLines.length > 0;
@@ -1509,7 +1751,7 @@
 
       ${measurementSection(summary, detail)}
       <section class="detail-section review-outcome-section">
-        <h3>Curation note</h3>
+        <h3>Review status</h3>
         <p>${escapeHtml(reviewOutcome(summary))}</p>
       </section>
       ${molecularIdentitySection(summary, detail)}
@@ -1521,11 +1763,11 @@
         </section>
       ` : ""}
       ${detailDisclosure("Source details", [
-        kv("Source", summary.source_db || detail.source_db),
-        kv("Source ID", summary.measurement_key || detail.measurement_key),
-        kv("Source records", detail.source_record_count || summary.source_record_count),
-        detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.join(", ")) : "",
-        detail.data_origin ? kv("Data origin", detail.data_origin) : "",
+        kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
+        kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
+        kv("Database rows", detail.source_record_count || summary.source_record_count),
+        detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
+        publicEvidenceString(detail.data_origin) ? kv("Data origin", publicEvidenceString(detail.data_origin)) : "",
         kv("Protein identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state),
       ])}
 
@@ -1545,6 +1787,68 @@
       triggerBlobDownload(`${summary.record_key || "catlog-row"}.json`, JSON.stringify(payload, null, 2));
     });
     if (narrowFilterMedia.matches) focusAfterPanelTransition("closeDetailButton");
+  }
+
+  function sourceDatabases() {
+    const listed = Array.isArray(manifest.source_databases) ? manifest.source_databases : [];
+    const rows = listed
+      .filter((item) => item && typeof item === "object")
+      .map((item) => ({
+        key: String(item.key || "").trim(),
+        name: String(item.name || "").trim() || (item.key ? sourceDatabaseLabel(item.key) : ""),
+        license: String(item.license || "").trim(),
+        citation_url: String(item.citation_url || "").trim(),
+        row_count: item.row_count,
+      }))
+      .filter((item) => item.name && item.name !== EMPTY_VALUE);
+    return rows.length ? rows : fallbackSourceDatabases;
+  }
+
+  function safeHttpUrl(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(String(value), document.baseURI);
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function sourceNameHtml(item) {
+    const href = safeHttpUrl(item.citation_url);
+    const name = escapeHtml(item.name);
+    return href
+      ? `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${name}</a>`
+      : name;
+  }
+
+  function renderSourceAttribution() {
+    const sources = sourceDatabases();
+    const footer = $("catalogFooter");
+    if (footer) {
+      footer.innerHTML = `
+        <span class="footer-label">Data sources</span>
+        <span class="footer-sources">${sources.map((item) => (
+          `<span class="footer-source">${sourceNameHtml(item)}${item.license ? ` <small>${escapeHtml(item.license)}</small>` : ""}</span>`
+        )).join("")}</span>
+        <span class="footer-license">${escapeHtml(CURATION_LICENSE_NOTE)}</span>
+      `;
+    }
+    const guideList = $("guideSourceList");
+    if (guideList) {
+      guideList.innerHTML = sources.map((item) => {
+        const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} rows in this snapshot`;
+        const license = item.license ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms";
+        return `
+          <div>
+            <dt>${sourceNameHtml(item)}</dt>
+            <dd>${[license, escapeHtml(rowCount)].filter(Boolean).join(" · ")}</dd>
+          </div>
+        `;
+      }).join("");
+    }
+    const guideNote = $("guideCurationLicense");
+    if (guideNote) guideNote.textContent = CURATION_LICENSE_NOTE;
   }
 
   function clearFilters() {
@@ -1677,6 +1981,7 @@
     try {
       renderSummary();
       renderDownloadMetadata();
+      renderSourceAttribution();
       bindControls();
       renderView(viewFromLocation());
       syncFilterPanel();

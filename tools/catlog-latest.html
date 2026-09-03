@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=ed42b05de59c08c0" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=811a54c462ffdfa5" />
   </head>
   <body>
     <div class="static-app">
@@ -40,7 +40,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.jsonl.gz?v=ed42b05de59c08c0"
+                href="data/catlog-enriched.jsonl.gz?v=811a54c462ffdfa5"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
@@ -48,7 +48,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.jsonl.gz?v=ed42b05de59c08c0"
+                href="data/catlog-table.jsonl.gz?v=811a54c462ffdfa5"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
@@ -97,7 +97,7 @@
               </div>
             </div>
             <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Curation status <span>⌃</span></button>
+              <button class="filter-section-title" type="button" aria-expanded="true">Review status <span>⌃</span></button>
               <div class="check-stack" id="statusChecklist"></div>
             </div>
             <div class="filter-section open">
@@ -145,7 +145,7 @@
                 >Download page</button>
                 <span>Sort by</span>
                 <select id="sortSelect">
-                  <option value="evidence">Curation status</option>
+                  <option value="evidence">Review status</option>
                   <option value="ec_number">EC number</option>
                   <option value="enzyme">Enzyme</option>
                   <option value="organism">Organism</option>
@@ -211,6 +211,18 @@
             <div id="detailContent" class="hidden"></div>
           </aside>
         </section>
+
+        <footer id="catalogFooter" class="catalog-footer" aria-label="Data sources and licenses">
+          <span class="footer-label">Data sources</span>
+          <span class="footer-sources">
+            <span class="footer-source"><a href="https://www.brenda-enzymes.org/" target="_blank" rel="noreferrer">BRENDA</a> <small>CC BY 4.0</small></span>
+            <span class="footer-source"><a href="https://sabiork.h-its.org/" target="_blank" rel="noreferrer">SABIO-RK</a></span>
+            <span class="footer-source">SKiD <small>CC BY-NC-ND 4.0</small></span>
+            <span class="footer-source">Open Enzyme Database (OED)</span>
+            <span class="footer-source"><a href="https://www.uniprot.org/" target="_blank" rel="noreferrer">UniProt</a> <small>CC BY 4.0</small></span>
+          </span>
+          <span class="footer-license">License of the CatLog curation layer: to be stated by the Chowdhury Lab</span>
+        </footer>
       </main>
 
       <main id="guideView" class="guide-view" hidden>
@@ -223,7 +235,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.png?v=ed42b05de59c08c0"
+                src="assets/catlog-guide-workflow.png?v=811a54c462ffdfa5"
                 alt="CatLog screen sequence showing search, the results table, a record panel, and a download."
                 loading="lazy"
                 decoding="async"
@@ -269,7 +281,7 @@
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
             <header class="guide-record-depth-heading">
               <h2 id="guide-record-depth-title">One measurement, two views</h2>
-              <p>The public row is ready to use. The research record shows where it came from and what we checked.</p>
+              <p>The public row has the fields used in analysis. The research record keeps the source material and review history.</p>
             </header>
 
             <figure class="guide-record-example">
@@ -299,7 +311,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=ed42b05de59c08c0"
+                    href="data/catlog-enriched.jsonl.gz?v=811a54c462ffdfa5"
                     download="catlog-enriched.jsonl.gz"
                   >Download public data</a>
                 </section>
@@ -330,21 +342,26 @@
             <section class="guide-reference">
               <h2>Field meanings</h2>
               <dl>
-                <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover rate (s<sup>-1</sup>)</dd></div>
+                <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number (s<sup>-1</sup>)</dd></div>
                 <div><dt><i>K</i><sub>m</sub></dt><dd>Substrate concentration at half-maximal rate (mM)</dd></div>
-                <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency (s<sup>-1</sup> mM<sup>-1</sup>)</dd></div>
-                <div><dt>T and pH</dt><dd>Temperature and pH reported for the assay</dd></div>
+                <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency (s<sup>-1</sup> mM<sup>-1</sup>). Calculated values are marked.</dd></div>
+                <div><dt>T and pH</dt><dd>Temperature and pH stored for the assay. Unusual stored values are kept and flagged.</dd></div>
               </dl>
-              <p class="guide-note">A dash means that the field is not available for that row.</p>
+              <p class="guide-note">A dash means that the field is unavailable or cannot be shown safely in the table. Open the row to see unusual stored values.</p>
+              <p class="guide-note">A value marked <em>unit not recorded</em> came without a unit from its source; the column unit does not apply to it. A small warning beside a value means an automated check questioned it, for example a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that does not match <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; open the row for the reason.</p>
+              <p class="guide-note">For a variant, the wild-type sequence is the reference. A variant sequence is shown only when it was supplied or reconstructed.</p>
             </section>
 
             <section class="guide-reference">
-              <h2>Curation status</h2>
+              <h2>Review status</h2>
               <dl class="guide-status-list">
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Checks are complete. This includes rows kept as reported and rows with documented corrections.</dd></div>
-                <div><dt><span class="guide-status-dot review"></span>Pending curation</dt><dd>A source, value and unit, identity, or assay check is still open.</dd></div>
-                <div><dt><span class="guide-status-dot provisional"></span>Provisional</dt><dd>Not accepted. The row is unreviewed, calculated from other fields, or disputed.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>Required CatLog checks are complete: the kinetic value was kept as reported or corrected from a recorded source, and the enzyme identity was resolved. Not every accepted row was checked against a paper.</dd></div>
+                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>Sequence and identity were verified; the kinetic value has no literature reference in CatLog.</dd></div>
+                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>At least one required check is open, often a protein sequence, substrate structure, or source match.</dd></div>
+                <div><dt><span class="guide-status-dot provisional"></span>Not accepted</dt><dd>The row is unreviewed, calculated only, disputed, or otherwise outside the accepted set.</dd></div>
               </dl>
+              <p class="guide-note">Automated checks compare database rows with papers and identity sources. Lab members make the final call when a decision is still needed.</p>
+              <p class="guide-note">Paper excerpt means a saved passage or table reference is attached. It does not mean that the row is accepted.</p>
               <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
@@ -361,11 +378,28 @@
               <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
             </dl>
           </section>
+
+          <section class="guide-sources" aria-labelledby="guide-sources-title">
+            <header class="guide-downloads-heading">
+              <div>
+                <h2 id="guide-sources-title">Data sources and licenses</h2>
+              </div>
+            </header>
+            <p class="guide-note">CatLog combines kinetic values and enzyme identities from the databases below. Each keeps its own license; check it before redistributing rows.</p>
+            <dl id="guideSourceList" class="guide-download-list guide-source-list">
+              <div><dt><a href="https://www.brenda-enzymes.org/" target="_blank" rel="noreferrer">BRENDA</a></dt><dd>License: CC BY 4.0</dd></div>
+              <div><dt><a href="https://sabiork.h-its.org/" target="_blank" rel="noreferrer">SABIO-RK</a></dt><dd>See the source site for license terms</dd></div>
+              <div><dt>SKiD</dt><dd>License: CC BY-NC-ND 4.0</dd></div>
+              <div><dt>Open Enzyme Database (OED)</dt><dd>See the source site for license terms</dd></div>
+              <div><dt><a href="https://www.uniprot.org/" target="_blank" rel="noreferrer">UniProt</a></dt><dd>License: CC BY 4.0</dd></div>
+            </dl>
+            <p id="guideCurationLicense" class="guide-note guide-curation-license">License of the CatLog curation layer: to be stated by the Chowdhury Lab</p>
+          </section>
         </div>
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=ed42b05de59c08c0"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=ed42b05de59c08c0"></script>
+    <script src="data/manifest.js?v=811a54c462ffdfa5"></script>
+    <script data-catalog-base="" src="assets/catlog-static.js?v=811a54c462ffdfa5"></script>
   </body>
 </html>
