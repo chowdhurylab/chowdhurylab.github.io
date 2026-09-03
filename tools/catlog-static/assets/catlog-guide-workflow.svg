@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" role="img" aria-labelledby="t d">
+  <title id="t">How to use CatLog</title>
+  <desc id="d">Four steps: search the catalog, scan the results table, open a record panel, download the data.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5b6b64"/>
+    </marker>
+    <style>
+      .panel{fill:#ffffff;stroke:#c9d3ce;stroke-width:1.5;rx:14}
+      .head{fill:#eef4f1}
+      .lbl{font:600 15px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1f2a26}
+      .cap{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#5b6b64}
+      .step{font:700 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#ffffff}
+      .row{fill:#f4f7f5}
+      .acc{fill:#2f7d5b}
+      .chip{fill:#e6f3ec;stroke:#2f7d5b;stroke-width:1}
+      .warn{fill:#fff3df;stroke:#d99a2b;stroke-width:1}
+      .txt{fill:#d7ded9}
+      .arrow{stroke:#5b6b64;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <!-- Step 1: search -->
+  <g transform="translate(20,40)">
+    <rect class="panel" width="250" height="300"/>
+    <rect class="head" x="1" y="1" width="248" height="46" rx="13"/>
+    <circle class="acc" cx="28" cy="24" r="13"/><text class="step" x="23" y="29">1</text>
+    <text class="lbl" x="50" y="29">Search</text>
+    <rect x="20" y="70" width="210" height="34" rx="8" fill="#fff" stroke="#8fa39a"/>
+    <text class="cap" x="32" y="92">hexokinase  ·  2.7.1.1  ·  P11766</text>
+    <text class="cap" x="20" y="135">Type an enzyme name, EC number,</text>
+    <text class="cap" x="20" y="153">organism, substrate or accession.</text>
+    <rect class="chip" x="20" y="180" width="92" height="24" rx="12"/><text class="cap" x="30" y="197">Accepted</text>
+    <rect class="chip" x="120" y="180" width="110" height="24" rx="12"/><text class="cap" x="130" y="197">Has kcat/Km</text>
+    <text class="cap" x="20" y="235">Narrow with the review-status</text>
+    <text class="cap" x="20" y="253">and measurement filters.</text>
+  </g>
+  <path class="arrow" d="M275 190 L305 190"/>
+
+  <!-- Step 2: results table -->
+  <g transform="translate(310,40)">
+    <rect class="panel" width="300" height="300"/>
+    <rect class="head" x="1" y="1" width="298" height="46" rx="13"/>
+    <circle class="acc" cx="28" cy="24" r="13"/><text class="step" x="23" y="29">2</text>
+    <text class="lbl" x="50" y="29">Scan the results</text>
+    <g font-size="11" fill="#5b6b64" font-family="-apple-system,Helvetica,Arial,sans-serif">
+      <text x="20" y="72">Enzyme</text><text x="130" y="72">kcat</text><text x="175" y="72">Km</text><text x="215" y="72">kcat/Km</text>
+    </g>
+    <g>
+      <rect class="row" x="14" y="82" width="272" height="30" rx="6"/>
+      <rect class="txt" x="20" y="92" width="95" height="10" rx="3"/><rect class="txt" x="130" y="92" width="30" height="10" rx="3"/><rect class="txt" x="175" y="92" width="30" height="10" rx="3"/><rect class="txt" x="215" y="92" width="40" height="10" rx="3"/>
+      <rect class="row" x="14" y="118" width="272" height="30" rx="6"/>
+      <rect class="txt" x="20" y="128" width="80" height="10" rx="3"/><rect class="txt" x="130" y="128" width="30" height="10" rx="3"/><rect class="txt" x="175" y="128" width="30" height="10" rx="3"/>
+      <rect class="warn" x="213" y="124" width="66" height="18" rx="9"/><text class="cap" x="220" y="137" font-size="11">unit check</text>
+      <rect class="row" x="14" y="154" width="272" height="30" rx="6"/>
+      <rect class="txt" x="20" y="164" width="105" height="10" rx="3"/><rect class="txt" x="130" y="164" width="30" height="10" rx="3"/><rect class="txt" x="175" y="164" width="30" height="10" rx="3"/><rect class="txt" x="215" y="164" width="40" height="10" rx="3"/>
+    </g>
+    <text class="cap" x="20" y="215">Units sit in the column headers;</text>
+    <text class="cap" x="20" y="233">warning pills mark values to</text>
+    <text class="cap" x="20" y="251">check against the source.</text>
+    <text class="cap" x="20" y="280">Click a row to open it.</text>
+  </g>
+  <path class="arrow" d="M615 190 L645 190"/>
+
+  <!-- Step 3: record panel -->
+  <g transform="translate(650,40)">
+    <rect class="panel" width="270" height="300"/>
+    <rect class="head" x="1" y="1" width="268" height="46" rx="13"/>
+    <circle class="acc" cx="28" cy="24" r="13"/><text class="step" x="23" y="29">3</text>
+    <text class="lbl" x="50" y="29">Open the record</text>
+    <text class="cap" x="20" y="75">Kinetic measurement</text>
+    <rect class="txt" x="20" y="84" width="230" height="12" rx="3"/>
+    <text class="cap" x="20" y="120">Review status · evidence</text>
+    <rect class="txt" x="20" y="129" width="200" height="12" rx="3"/>
+    <text class="cap" x="20" y="165">Sequence · SMILES · UniProt</text>
+    <rect class="txt" x="20" y="174" width="230" height="12" rx="3"/>
+    <text class="cap" x="20" y="210">Reference · values in source</text>
+    <rect class="txt" x="20" y="219" width="170" height="12" rx="3"/>
+    <text class="cap" x="20" y="262">Every accepted value shows where</text>
+    <text class="cap" x="20" y="280">it came from and what was checked.</text>
+  </g>
+  <path class="arrow" d="M925 190 L955 190"/>
+
+  <!-- Step 4: download -->
+  <g transform="translate(960,40)">
+    <rect class="panel" width="220" height="300"/>
+    <rect class="head" x="1" y="1" width="218" height="46" rx="13"/>
+    <circle class="acc" cx="28" cy="24" r="13"/><text class="step" x="23" y="29">4</text>
+    <text class="lbl" x="50" y="29">Download</text>
+    <rect class="chip" x="20" y="72" width="180" height="30" rx="8"/><text class="cap" x="32" y="92">Current page (CSV)</text>
+    <rect class="chip" x="20" y="112" width="180" height="30" rx="8"/><text class="cap" x="32" y="132">Table index (JSONL)</text>
+    <rect class="chip" x="20" y="152" width="180" height="30" rx="8"/><text class="cap" x="32" y="172">All public data (JSONL)</text>
+    <text class="cap" x="20" y="215">Each row carries its source</text>
+    <text class="cap" x="20" y="233">database and license, so you</text>
+    <text class="cap" x="20" y="251">can cite and reuse it correctly.</text>
+  </g>
+</svg>
