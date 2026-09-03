@@ -1680,6 +1680,11 @@ tbody tr.selected .row-arrow {
   aspect-ratio: 4 / 1;
   object-fit: contain;
 }
+
+.guide-mobile-flow {
+  display: none;
+}
+
 .guide-reference h2,
 .guide-downloads h2 {
   color: #152321;
@@ -1687,8 +1692,7 @@ tbody tr.selected .row-arrow {
 }
 
 .guide-record-depth {
-  margin-top: 28px;
-  border-top: 1px solid var(--line);
+  margin-top: 0;
   border-bottom: 1px solid var(--line);
   padding: 26px 0 30px;
 }
@@ -2550,8 +2554,64 @@ tbody tr.selected .row-arrow {
   }
 
   .guide-record-depth {
-    margin-top: 24px;
     padding: 22px 0 26px;
+  }
+
+  .guide-figure {
+    display: none;
+  }
+
+  .guide-mobile-flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .guide-mobile-flow li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    column-gap: 9px;
+    row-gap: 2px;
+    min-height: 70px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .guide-mobile-flow li:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .guide-mobile-flow li:nth-child(even) {
+    border-left: 1px solid var(--line);
+  }
+
+  .guide-mobile-flow li > span {
+    display: grid;
+    grid-row: 1 / span 2;
+    place-items: center;
+    align-self: start;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--teal-dark);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .guide-mobile-flow strong {
+    color: #152321;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  .guide-mobile-flow small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.3;
   }
 
   .guide-record-example figcaption {
