@@ -1125,6 +1125,8 @@ tbody tr.selected .row-arrow {
 
 .metric-with-note,
 .source-efficiency-value {
+  white-space: nowrap;
+  display: inline-block;
   display: grid;
   gap: 2px;
 }

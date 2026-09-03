@@ -117,6 +117,7 @@
     temperature_value_needs_check: "Temperature value needs check",
     temperature_unit_needs_check: "Temperature unit needs check",
     temperature_invalid: "Temperature value is not usable",
+    temperature_zero_celsius_needs_check: "Temperature recorded as exactly 0 °C — check source",
     ph_outside_0_14: "pH outside 0–14",
     ph_invalid: "pH value is not usable",
     unit_not_recorded: "Unit not recorded",
@@ -181,7 +182,7 @@
     return hasInternalPlaceholder(value) ? "" : value;
   }
 
-  const CURATION_LICENSE_NOTE = "License of the CatLog curation layer: to be stated by the Chowdhury Lab";
+  const CURATION_LICENSE_NOTE = "For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.";
 
   const fallbackSourceDatabases = [
     { key: "brenda", name: "BRENDA", license: "CC BY 4.0", citation_url: "https://www.brenda-enzymes.org/" },
@@ -190,6 +191,15 @@
     { key: "oed", name: "Open Enzyme Database (OED)", license: "", citation_url: "" },
     { key: "uniprot", name: "UniProt", license: "CC BY 4.0", citation_url: "https://www.uniprot.org/" },
   ];
+  const displayedSourceDatabaseKeys = new Set([
+    "brenda",
+    "oed",
+    "uniprot",
+    "sabio_rk",
+    "skid",
+    "primary_paper_direct",
+    "strenda",
+  ]);
 
   const suggestionInputs = {
     globalSearchInput: "mixed",
@@ -1800,7 +1810,11 @@
         citation_url: String(item.citation_url || "").trim(),
         row_count: item.row_count,
       }))
-      .filter((item) => item.name && item.name !== EMPTY_VALUE);
+      .filter((item) => (
+        item.name
+        && item.name !== EMPTY_VALUE
+        && displayedSourceDatabaseKeys.has(item.key.toLowerCase())
+      ));
     return rows.length ? rows : fallbackSourceDatabases;
   }
 
