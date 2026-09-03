@@ -9,21 +9,21 @@ This copy is for hosting only
 
 Snapshot details
 - Rows: 148289
-- Generated (UTC): 2026-09-03T17:23:43+00:00
-- Exporter commit: 9d0af28d7a5b89c104a62a7bd0f17ab6850d7192
+- Generated (UTC): 2026-09-03T21:22:58+00:00
+- Exporter commit: 5bf5f47833fc8ad5b6d814d5fcffe707f8cbb062
 - Source: verified_catlog.jsonl
-- Source SHA-256: 21a06ef0d26f2a7f0b0dc8e53b46da06983b3a966a48a51fd147ebf1d9fc7ed9
-- Public content SHA-256 (decompressed all-public-data JSONL): 8a7090a9d30399ed189965c2a292caa2b68e264b39f1a5f72a769cb4ab7899df
+- Source SHA-256: 61239e5ae872fa8e122e3cf4a19fd93ce2b5409f393fb8b3b0f9b54238439090
+- Public content SHA-256 (decompressed all-public-data JSONL): 76fad10513e5dfd03ea0bf23c91f87ae763dac2a9c6f6eff6e1f26443610aa4e
 - Package: compact_public
-- Contents: Full row coverage with compact public-facing fields. Raw source snapshots and private review payloads are not bundled.
-- All public data: downloads all rows with available protein sequences, SMILES, references, and source details
+- Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
+- All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
-- Download page: exports the displayed rows with public molecular identity, references, and source details
+- Download page: exports the displayed rows with public molecular identity, references, and provenance
 - All public data file: data/catlog-enriched.jsonl.gz
 - Rows with sequence: 75936
-- Rows with wild-type sequence: 49461
-- Rows with variant sequence: 20795
+- Rows with wild-type sequence: 71414
+- Rows with variant sequence: 20798
 - Rows with SMILES: 90453
 
 Data sources, licenses and attribution
