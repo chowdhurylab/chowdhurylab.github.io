@@ -14,8 +14,8 @@
     <meta property="og:description" content="A searchable enzyme kinetics catalog with review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
-    <link rel="icon" type="image/svg+xml" href="assets/catlog-mark.svg?v=d6215da7ac46908e" />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=d6215da7ac46908e" />
+    <link rel="icon" type="image/svg+xml" href="assets/catlog-mark.svg?v=fc5d57595d9021d3" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=fc5d57595d9021d3" />
   </head>
   <body>
     <div class="static-app">
@@ -47,26 +47,26 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="data/catlog-enriched.jsonl.gz?v=d6215da7ac46908e"
+                href="data/catlog-enriched.jsonl.gz?v=fc5d57595d9021d3"
                 download="catlog-enriched.jsonl.gz"
               >
-                <strong>All public data</strong>
+                <strong>Full data</strong>
                 <span id="enrichedDataDescription">All rows, with sequences and SMILES where available</span>
               </a>
               <a
                 id="exportSnapshotButton"
-                href="data/catlog-table.jsonl.gz?v=d6215da7ac46908e"
+                href="data/catlog-table.jsonl.gz?v=fc5d57595d9021d3"
                 download="catlog-table.jsonl.gz"
               >
-                <strong>Table index</strong>
+                <strong>Table</strong>
                 <span id="tableIndexDescription">All rows without long sequence or SMILES fields</span>
               </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
-                <strong>Full research records</strong>
-                <span>Source rows and review evidence. Request by email.</span>
+                <strong>Review files</strong>
+                <span>Paper excerpts and review notes. Request by email.</span>
               </a>
               <a id="datasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
@@ -246,12 +246,18 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="assets/catlog-guide-workflow.svg?v=d6215da7ac46908e"
+                src="assets/catlog-guide-workflow.svg?v=fc5d57595d9021d3"
                 alt="Four panels showing search, table, record details, and download options."
                 loading="lazy"
                 decoding="async"
               />
             </figure>
+            <ol class="guide-mobile-flow" aria-label="CatLog workflow">
+              <li><span>1</span><strong>Search</strong><small>Enzyme, EC, organism, or substrate</small></li>
+              <li><span>2</span><strong>Choose a row</strong><small>Compare values and conditions</small></li>
+              <li><span>3</span><strong>Open details</strong><small>Check the protein and source</small></li>
+              <li><span>4</span><strong>Download</strong><small>Full data or the smaller table</small></li>
+            </ol>
           </section>
 
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
@@ -287,7 +293,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="data/catlog-enriched.jsonl.gz?v=d6215da7ac46908e"
+                    href="data/catlog-enriched.jsonl.gz?v=fc5d57595d9021d3"
                     download="catlog-enriched.jsonl.gz"
                   >Download public data</a>
                 </section>
@@ -389,7 +395,7 @@
       </main>
     </div>
 
-    <script src="data/manifest.js?v=d6215da7ac46908e"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=d6215da7ac46908e"></script>
+    <script src="data/manifest.js?v=fc5d57595d9021d3"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=fc5d57595d9021d3"></script>
   </body>
 </html>
