@@ -1,8 +1,10 @@
 (function () {
   const appScript = document.currentScript;
-  const catalogBaseUrl = new URL(appScript?.dataset.catalogBase || "./", document.baseURI);
+  const catalogBaseUrl = appScript?.src
+    ? new URL("../", appScript.src)
+    : new URL(appScript?.dataset.catalogBase || "./", document.baseURI);
   const manifest = window.CATLOG_STATIC_MANIFEST || {};
-  const assetVersion = String(manifest.source_sha256 || manifest.generated_at || "20260709")
+  const assetVersion = String(manifest.asset_version || manifest.source_sha256 || manifest.generated_at || "20260709")
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 16) || "20260709";
   const state = {
@@ -21,8 +23,11 @@
     loadedScripts: new Set(["data/manifest.js"]),
     loadingScripts: new Map(),
     suggestionHideTimer: null,
+    suggestionIndex: -1,
+    suggestionInputId: "",
   };
   const EMPTY_VALUE = "—";
+  const LOAD_RETRY_DELAYS = [2000, 5000, 10000];
   const narrowFilterMedia = window.matchMedia("(max-width: 1180px)");
 
   const recordStates = [
@@ -40,22 +45,22 @@
     },
     {
       value: "not_verified",
-      label: "Not accepted",
-      shortLabel: "Not accepted",
+      label: "Unreviewed or excluded",
+      shortLabel: "Other",
       className: "unresolved",
     },
   ];
 
   const stateDescriptions = {
-    accepted: "Required CatLog checks are complete: the kinetic value was kept as reported or corrected from a recorded source, and the enzyme identity was resolved. Not every accepted row was checked against a paper; rows marked identity only have no literature reference in CatLog.",
-    curation_pending: "At least one required check is still open, often a protein sequence, substrate structure, or source match.",
-    not_verified: "Outside the accepted set; includes records not yet fully assessed, calculated-only values, and disputed rows.",
+    accepted: "The kinetic value and enzyme identity passed the required CatLog checks. Some accepted rows rely on source-database evidence rather than a paper.",
+    curation_pending: "A specific check remains open, commonly the protein sequence, substrate structure, or match to the reported source.",
+    not_verified: "Includes unreviewed rows, values calculated from other reported measurements, and disputed rows.",
   };
 
   const evidenceGroups = [
-    { value: "paper_evidence", label: "Paper excerpt", className: "paper" },
-    { value: "literature_id", label: "Paper ID", className: "linked" },
-    { value: "source_records", label: "Database record", className: "source" },
+    { value: "paper_evidence", label: "Saved source text", className: "paper" },
+    { value: "literature_id", label: "Publication ID", className: "linked" },
+    { value: "source_records", label: "Source record", className: "source" },
   ];
 
   const measurementFilters = [
@@ -300,6 +305,10 @@
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  function shortHash(value) {
+    return String(value || "").trim().slice(0, 10) || EMPTY_VALUE;
+  }
+
   function renderDownloadMetadata() {
     const total = formatCount(manifest.total_rows || 0);
     const enrichedSize = formatFileSize(manifest.enriched_download?.size_bytes);
@@ -317,6 +326,21 @@
         "without protein or structure strings",
         tableSize,
       ].filter(Boolean).join(" · ");
+    }
+    if ($("datasetNotesLink")) {
+      $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
+    }
+    const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
+    const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);
+    const exportId = shortHash(manifest.exporter_commit);
+    if ($("guideSnapshotDate")) $("guideSnapshotDate").textContent = snapshotDate;
+    if ($("guideSourceId")) {
+      $("guideSourceId").textContent = sourceId;
+      $("guideSourceId").title = manifest.content_sha256 || manifest.source_sha256 || "";
+    }
+    if ($("guideExportId")) {
+      $("guideExportId").textContent = exportId;
+      $("guideExportId").title = manifest.exporter_commit || "";
     }
   }
 
@@ -509,10 +533,26 @@
     return signature;
   }
 
-  function enzymeFormHtml(row) {
+  function enzymeFormLabel(row, { showUnknown = false } = {}) {
     const signature = mutationSignature(row);
-    if (!signature) return "";
-    return `<span class="enzyme-form" title="Measured enzyme variant">Variant: ${escapePublic(signature)}</span>`;
+    if (signature) return `Variant: ${signature}`;
+    const mutationType = String(row?.mutation_type || "").trim().toLowerCase();
+    const variantStatus = String(row?.sequence_variant_status || "").trim().toLowerCase();
+    const isVariant = row?.wild_type === false
+      || /variant|mutant|mutation/.test(mutationType)
+      || /variant|mutation/.test(variantStatus);
+    if (isVariant) return "Variant; substitution not recorded";
+    const isWildType = row?.wild_type === true
+      || /wild[ _-]?type/.test(mutationType)
+      || /wild[ _-]?type/.test(variantStatus);
+    if (isWildType) return "Wild type";
+    return showUnknown ? "Not recorded" : "";
+  }
+
+  function enzymeFormHtml(row) {
+    const label = enzymeFormLabel(row);
+    if (!label || label === "Wild type") return "";
+    return `<span class="enzyme-form" title="Measured enzyme form">${escapePublic(label)}</span>`;
   }
 
   function formatTemperature(row) {
@@ -592,7 +632,7 @@
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Cross-source match";
     }
-    return row.has_literature_id ? "Reference available" : "Database record";
+    return row.has_literature_id ? "Reference available" : "Source record";
   }
 
   function isIdentityOnlyAccepted(row) {
@@ -603,7 +643,7 @@
   function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Accepted after a recorded update.";
+        return "Accepted after a recorded correction.";
       case "verified":
         return "Accepted as reported.";
       case "manual_review_required":
@@ -613,7 +653,7 @@
       case "disputed":
         return "Conflicting source values; no single value has been accepted.";
       default:
-        return "Not yet accepted for the curated set.";
+        return "Not reviewed or outside the accepted set.";
     }
   }
 
@@ -624,8 +664,12 @@
 
   function rowStatusLabel(row) {
     if (row.verification_status === "disputed") return "Disputed";
+    if (row.verification_status === "mathematically_inferred") return "Calculated";
+    if (row.verification_status === "unverified") return "Not reviewed";
     if (isIdentityOnlyAccepted(row)) return "Accepted (identity only)";
     if (row.verification_status === "corrected") return "Accepted";
+    if (row.verification_status === "verified") return "Accepted";
+    if (row.verification_status === "manual_review_required") return "Further checks";
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
 
@@ -639,42 +683,67 @@
       : (identityOnly
           ? identityOnlyTrustNote
           : (isCorrected
-              ? "Accepted after a recorded update."
+              ? "Accepted after a recorded correction."
               : (stateDescriptions[config.value] || config.label)));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
     const qualifierText = identityOnly
-      ? `(${isCorrected ? "updated, identity only" : "identity only"})`
-      : (isCorrected ? "updated" : "");
+      ? `(${isCorrected ? "corrected, identity only" : "identity only"})`
+      : (isCorrected ? "corrected" : "");
     const qualifier = qualifierText ? `<small>${escapeHtml(qualifierText)}</small>` : "";
     const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
     return `<span class="state-badge ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
   }
 
-  function versionedAssetUrl(src) {
+  function versionedAssetUrl(src, retryAttempt = 0) {
     if (!src || /^(?:https?:)?\/\//.test(src) || src.startsWith("data:")) return src;
     const url = new URL(src, catalogBaseUrl);
     url.searchParams.set("v", assetVersion);
+    if (retryAttempt > 0) url.searchParams.set("retry", String(retryAttempt));
     return url.href;
   }
 
-  function loadScript(src, ordered = false) {
-    if (state.loadedScripts.has(src)) return Promise.resolve();
-    if (state.loadingScripts.has(src)) return state.loadingScripts.get(src);
-    const pending = new Promise((resolve, reject) => {
+  function wait(milliseconds) {
+    return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+  }
+
+  function loadScriptAttempt(src, ordered, retryAttempt) {
+    return new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = versionedAssetUrl(src);
+      script.src = versionedAssetUrl(src, retryAttempt);
       script.async = !ordered;
       script.onload = () => {
-        state.loadedScripts.add(src);
-        state.loadingScripts.delete(src);
+        script.remove();
         resolve();
       };
       script.onerror = () => {
-        state.loadingScripts.delete(src);
+        script.remove();
         reject(new Error(`Could not load ${src}`));
       };
       document.body.appendChild(script);
+    });
+  }
+
+  function loadScript(src, ordered = false, { onRetry = null } = {}) {
+    if (state.loadedScripts.has(src)) return Promise.resolve();
+    if (state.loadingScripts.has(src)) return state.loadingScripts.get(src);
+    const pending = (async () => {
+      let lastError = null;
+      for (let attempt = 0; attempt <= LOAD_RETRY_DELAYS.length; attempt += 1) {
+        try {
+          await loadScriptAttempt(src, ordered, attempt);
+          state.loadedScripts.add(src);
+          return;
+        } catch (error) {
+          lastError = error;
+          if (attempt >= LOAD_RETRY_DELAYS.length) break;
+          if (typeof onRetry === "function") onRetry(attempt + 1, LOAD_RETRY_DELAYS[attempt]);
+          await wait(LOAD_RETRY_DELAYS[attempt]);
+        }
+      }
+      throw lastError || new Error(`Could not load ${src}`);
+    })().finally(() => {
+      state.loadingScripts.delete(src);
     });
     state.loadingScripts.set(src, pending);
     return pending;
@@ -684,6 +753,13 @@
     state.records = records || (window.CATLOG_RECORD_CHUNKS || []).flat();
     state.records.forEach((row) => {
       row._recordState = recordStateForRow(row);
+      row._stateRank = recordStates.findIndex((item) => item.value === row._recordState);
+      row._tierRank = tierOrder[row.evidence_confidence_tier] ?? 99;
+      row._sourceCount = Number(row.source_record_count || 0);
+      row._ecSort = String(row.ec_number || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
+      row._sortEnzyme = String(row.enzyme_display_name || "");
+      row._sortOrganism = String(row.organism || "");
+      row._sortSubstrate = String(row.substrate_name || "");
       row._search = row._search || String(row._search_text || [
         row.measurement_key,
         row.review_key,
@@ -715,6 +791,7 @@
         : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "CatLog records" : "data chunks"} loaded`,
     );
     rail.classList.toggle("complete", state.recordsReady);
+    if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
   }
 
   function canStreamCompressedIndex() {
@@ -743,7 +820,7 @@
     return new Promise((resolve) => window.setTimeout(resolve, 0));
   }
 
-  function showLoadNotice(title, message) {
+  function showLoadNotice(title, message, { actionLabel = "", onAction = null } = {}) {
     const body = $("recordsBody");
     if (body) {
       body.innerHTML = `
@@ -752,6 +829,7 @@
             <div class="load-notice" role="alert">
               <strong>${escapeHtml(title)}</strong>
               <span>${escapeHtml(message)}</span>
+              ${actionLabel ? `<button id="loadNoticeAction" class="button secondary" type="button">${escapeHtml(actionLabel)}</button>` : ""}
             </div>
           </td>
         </tr>
@@ -768,14 +846,24 @@
       rail.classList.add("stalled");
       rail.setAttribute("aria-valuetext", `${title}. ${message}`);
     }
+    const action = $("loadNoticeAction");
+    if (action && typeof onAction === "function") {
+      action.addEventListener("click", () => {
+        action.disabled = true;
+        action.textContent = "Trying again...";
+        onAction();
+      }, { once: true });
+    }
   }
 
-  async function streamCompressedRecordIndex() {
+  async function streamCompressedRecordIndexAttempt(retryAttempt = 0) {
     const tablePath = manifest.table_download?.path;
     if (!canStreamCompressedIndex()) return null;
 
-    const response = await fetch(versionedAssetUrl(tablePath));
-    if (!response.ok || !response.body) throw new Error("Compressed CatLog index unavailable");
+    const response = await fetch(versionedAssetUrl(tablePath, retryAttempt));
+    if (!response.ok || !response.body) {
+      throw new Error(`The table data could not be downloaded (HTTP ${response.status || "error"})`);
+    }
 
     const totalRows = Number(manifest.total_rows || 0);
     const detailsPerShard = Math.max(1, Number(manifest.details_per_shard || 1000));
@@ -826,6 +914,31 @@
     return records;
   }
 
+  async function streamCompressedRecordIndex() {
+    let lastError = null;
+    for (let attempt = 0; attempt <= LOAD_RETRY_DELAYS.length; attempt += 1) {
+      try {
+        return await streamCompressedRecordIndexAttempt(attempt);
+      } catch (error) {
+        lastError = error;
+        if (attempt >= LOAD_RETRY_DELAYS.length) break;
+        const delaySeconds = Math.round(LOAD_RETRY_DELAYS[attempt] / 1000);
+        showLoadNotice(
+          "CatLog is updating",
+          `The table index is not ready yet. Trying again in ${delaySeconds} seconds.`,
+        );
+        await wait(LOAD_RETRY_DELAYS[attempt]);
+      }
+    }
+    throw lastError || new Error("The table data could not be downloaded");
+  }
+
+  function reloadCatalogPage() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("retry", String(Date.now()));
+    window.location.replace(url.href);
+  }
+
   async function loadRecordChunks() {
     const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
     let streamedRecords = null;
@@ -864,14 +977,22 @@
       }
       // A web-only bundle ships no records-*.js; without the streamed index there is nothing to show.
       if (!canStreamCompressedIndex()) {
-        showLoadNotice(
-          "This copy is built for web hosting",
-          "Open it over http(s) or download the offline zip to browse the records.",
-        );
+        if (window.location.protocol === "file:") {
+          showLoadNotice(
+            "This copy needs a web server",
+            "Open the hosted CatLog site, or use the offline snapshot to browse from disk.",
+          );
+        } else {
+          showLoadNotice(
+            "This browser cannot open the CatLog index",
+            "Use a current version of Safari, Chrome, Edge, or Firefox, or download the table index.",
+          );
+        }
       } else {
         showLoadNotice(
-          "CatLog records could not be loaded",
-          `${streamError?.message || "The compressed index is unavailable"}. Reload the page to try again.`,
+          "CatLog records are temporarily unavailable",
+          `${streamError?.message || "The table data could not be downloaded"}.`,
+          { actionLabel: "Try again", onAction: reloadCatalogPage },
         );
       }
       return;
@@ -920,6 +1041,13 @@
     const {
       detail_shard,
       _recordState,
+      _stateRank,
+      _tierRank,
+      _sourceCount,
+      _ecSort,
+      _sortEnzyme,
+      _sortOrganism,
+      _sortSubstrate,
       _search,
       _search_text,
       next_best_action,
@@ -936,8 +1064,8 @@
     return state.filtered.slice(start, start + state.pageSize);
   }
 
-  async function detailForRow(row) {
-    await loadScript(row.detail_shard);
+  async function detailForRow(row, { onRetry = null } = {}) {
+    await loadScript(row.detail_shard, false, { onRetry });
     const shard = (window.CATLOG_DETAIL_SHARDS || {})[row.detail_shard] || {};
     return shard[row.record_key] || {};
   }
@@ -1034,7 +1162,7 @@
       <span class="snapshot-line"><strong>${formatCount(kcatRows)}</strong><span>kcat</span></span>
       <span class="snapshot-line"><strong>${formatCount(kmRows)}</strong><span>Km</span></span>
       <span class="snapshot-line"><strong>${formatCount(efficiencyRows)}</strong><span>kcat/Km</span></span>
-      ${manifest.generated_at ? `<span class="snapshot-date">Snapshot ${escapeHtml(formatDate(manifest.generated_at))}</span>` : ""}
+      ${manifest.generated_at ? `<span class="snapshot-date">Snapshot ${escapeHtml(formatDate(manifest.generated_at))}${manifest.content_sha256 || manifest.source_sha256 ? ` · ID <code title="${escapeHtml(manifest.content_sha256 || manifest.source_sha256)}">${escapeHtml(shortHash(manifest.content_sha256 || manifest.source_sha256))}</code>` : ""}</span>` : ""}
     `;
   }
 
@@ -1046,7 +1174,7 @@
     const evidenceCounts = evidenceGroupCounts(rows);
     const statusLabel = recordStates.map((item) => {
       const pct = totalRows ? (((counts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
-      return `${item.shortLabel} ${pct}%`;
+      return `${item.label} ${pct}%`;
     }).join(", ");
     const evidenceLabelText = evidenceGroups.map((item) => {
       const pct = totalRows ? (((evidenceCounts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
@@ -1061,7 +1189,7 @@
           return `
             <div class="evidence-segment ${item.className}">
               <span class="evidence-dot ${item.className}"></span>
-              <span>${escapeHtml(item.shortLabel)}</span>
+              <span>${escapeHtml(item.label)}</span>
               <div class="evidence-stat">
                 <strong>${formatInteger(count)}</strong>
                 <span>${pct}%</span>
@@ -1144,8 +1272,32 @@
   function hideSuggestions() {
     const box = $("searchSuggestions");
     if (!box) return;
+    const input = state.suggestionInputId ? $(state.suggestionInputId) : null;
+    input?.setAttribute("aria-expanded", "false");
+    input?.removeAttribute("aria-activedescendant");
     box.classList.add("hidden");
     box.innerHTML = "";
+    state.suggestionIndex = -1;
+    state.suggestionInputId = "";
+  }
+
+  function chooseSuggestion(input, value) {
+    input.value = value || "";
+    hideSuggestions();
+    input.focus();
+    applyFilters();
+  }
+
+  function moveSuggestionSelection(input, direction) {
+    const box = $("searchSuggestions");
+    if (!box || box.classList.contains("hidden")) showSuggestions(input);
+    const buttons = [...box.querySelectorAll("button[data-value]")];
+    if (!buttons.length) return;
+    state.suggestionIndex = (state.suggestionIndex + direction + buttons.length) % buttons.length;
+    buttons.forEach((button, index) => button.setAttribute("aria-selected", String(index === state.suggestionIndex)));
+    const selected = buttons[state.suggestionIndex];
+    input.setAttribute("aria-activedescendant", selected.id);
+    selected.scrollIntoView({ block: "nearest" });
   }
 
   function showSuggestions(input) {
@@ -1153,6 +1305,7 @@
     const box = $("searchSuggestions");
     if (!kind || !box || !state.records.length) return;
     window.clearTimeout(state.suggestionHideTimer);
+    if (state.suggestionInputId && state.suggestionInputId !== input.id) hideSuggestions();
     const suggestions = randomSuggestions(kind);
     if (!suggestions.length) return;
     const rect = input.getBoundingClientRect();
@@ -1161,19 +1314,17 @@
     box.style.width = `${Math.max(240, Math.round(rect.width))}px`;
     box.innerHTML = `
       <div class="suggestion-title">${escapeHtml(suggestionTitles[kind] || "Try a search")}</div>
-      ${suggestions.map((value) => (
-        `<button type="button" role="option" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
+      ${suggestions.map((value, index) => (
+        `<button id="catlog-suggestion-${index}" type="button" role="option" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
       )).join("")}
     `;
     box.classList.remove("hidden");
+    state.suggestionIndex = -1;
+    state.suggestionInputId = input.id;
+    input.setAttribute("aria-controls", "searchSuggestions");
+    input.setAttribute("aria-expanded", "true");
     [...box.querySelectorAll("button[data-value]")].forEach((button) => {
-      button.addEventListener("mousedown", (event) => {
-        event.preventDefault();
-        input.value = button.dataset.value || "";
-        hideSuggestions();
-        input.focus();
-        applyFilters();
-      });
+      button.addEventListener("click", () => chooseSuggestion(input, button.dataset.value));
     });
   }
 
@@ -1186,9 +1337,9 @@
     const statusCounts = manifestDistribution("verification_status");
     const statusBreakdown = [
       ["Accepted as reported", statusCounts.verified],
-      ["Accepted after update", statusCounts.corrected],
+      ["Accepted after correction", statusCounts.corrected],
       ["Further checks", statusCounts.manual_review_required],
-      ["Not yet assessed", statusCounts.unverified],
+      ["Not reviewed", statusCounts.unverified],
       ["Calculated from reported values", statusCounts.mathematically_inferred],
       ["Disputed", statusCounts.disputed],
     ].filter((item) => Number(item[1] || 0) > 0);
@@ -1283,9 +1434,8 @@
   }
 
   function ecSort(a, b) {
-    const parse = (value) => String(value || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
-    const left = parse(a.ec_number);
-    const right = parse(b.ec_number);
+    const left = a._ecSort || [];
+    const right = b._ecSort || [];
     for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
       const delta = (left[index] ?? -1) - (right[index] ?? -1);
       if (delta !== 0) return delta;
@@ -1294,7 +1444,7 @@
   }
 
   function sortRows(rows, sort) {
-    const textKey = (field) => (a, b) => String(a[field] || "").localeCompare(String(b[field] || ""));
+    const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
     const numericDesc = (field) => (a, b) => {
       const av = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
       const bv = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
@@ -1302,19 +1452,18 @@
     };
     const sorters = {
       ec_number: ecSort,
-      enzyme: textKey("enzyme_display_name"),
-      organism: textKey("organism"),
-      substrate: textKey("substrate_name"),
+      enzyme: textKey("_sortEnzyme"),
+      organism: textKey("_sortOrganism"),
+      substrate: textKey("_sortSubstrate"),
       kcat: numericDesc("kcat"),
       km: numericDesc("km"),
       kcat_over_km: numericDesc("kcat_over_km"),
       evidence: (a, b) => {
-        const stateDelta = recordStates.findIndex((item) => item.value === a._recordState)
-          - recordStates.findIndex((item) => item.value === b._recordState);
+        const stateDelta = a._stateRank - b._stateRank;
         if (stateDelta !== 0) return stateDelta;
-        const tierDelta = (tierOrder[a.evidence_confidence_tier] ?? 99) - (tierOrder[b.evidence_confidence_tier] ?? 99);
+        const tierDelta = a._tierRank - b._tierRank;
         if (tierDelta !== 0) return tierDelta;
-        return (Number(b.source_record_count || 0) - Number(a.source_record_count || 0)) || ecSort(a, b);
+        return (b._sourceCount - a._sourceCount) || ecSort(a, b);
       },
     };
     rows.sort(sorters[sort] || sorters.evidence);
@@ -1428,8 +1577,10 @@
   function updateTableScrollControls() {
     const wrap = $("recordTableWrap");
     if (!wrap) return;
+    const hasOverflow = wrap.scrollWidth > wrap.clientWidth + 2;
     const canScrollLeft = wrap.scrollLeft > 2;
     const canScrollRight = wrap.scrollLeft + wrap.clientWidth < wrap.scrollWidth - 2;
+    $("scrollTableLeftButton")?.closest(".table-scroll-controls")?.classList.toggle("hidden", !hasOverflow);
     $("scrollTableLeftButton").disabled = !canScrollLeft;
     $("scrollTableRightButton").disabled = !canScrollRight;
     wrap.classList.toggle("can-scroll-left", canScrollLeft);
@@ -1487,7 +1638,17 @@
     $("detailContent").classList.remove("hidden");
     $("detailContent").innerHTML = '<p class="muted">Loading row details...</p>';
     try {
-      state.selectedDetail = await detailForRow(row);
+      state.selectedDetail = await detailForRow(row, {
+        onRetry: (attempt, delay) => {
+          if (state.selectedKey !== key) return;
+          $("detailContent").innerHTML = `
+            <div class="detail-load-progress" role="status">
+              <strong>CatLog is updating</strong>
+              <span>Trying this record again in ${Math.round(delay / 1000)} seconds (${attempt} of ${LOAD_RETRY_DELAYS.length}).</span>
+            </div>
+          `;
+        },
+      });
       if (state.selectedKey !== key) return;
       renderDetail(row, state.selectedDetail);
     } catch (error) {
@@ -1501,9 +1662,11 @@
         <div class="detail-load-error" role="alert">
           <strong>Record details could not be loaded.</strong>
           <span>The summary row is still available in the table.</span>
+          <button id="retryDetailButton" class="button secondary" type="button">Try again</button>
         </div>
       `;
       $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+      $("retryDetailButton").addEventListener("click", () => selectRecord(key));
       if (narrowFilterMedia.matches) focusAfterPanelTransition("closeDetailButton");
     }
   }
@@ -1539,6 +1702,36 @@
       return `<a class="reference-link" href="https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(accession)}" target="_blank" rel="noreferrer" aria-label="Open NCBI Protein entry ${escapeHtml(accession)}">${escapeHtml(accession)}</a>`;
     }
     return escapeHtml(accession);
+  }
+
+  const sequenceSourceLabels = {
+    uniprot_accession: "UniProt accession",
+    source_record: "Source database",
+    uniprot_accession_inactive_uniparc: "UniProt / UniParc archive",
+    uniprot_ec_organism_mutation_ranked_match: "Ranked UniProt match from EC, organism, and variant",
+    unresolved_ec_organism: "No sequence match from EC and organism",
+    manual_literature_uniprot_resolution: "UniProt match from the cited paper",
+    uniprot_ec_organism_unique: "Unique UniProt match from EC and organism",
+    multiple: "Multiple sources",
+  };
+
+  function sequenceSourceLabel(value) {
+    const key = String(value || "").trim().toLowerCase();
+    if (!key) return "";
+    if (sequenceSourceLabels[key]) return sequenceSourceLabels[key];
+    return key.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
+  }
+
+  function uniqueReferenceValues(values, { caseInsensitive = false } = {}) {
+    const seen = new Set();
+    return values.filter((value) => {
+      const text = String(value || "").trim();
+      if (!text) return false;
+      const key = caseInsensitive ? text.toLowerCase() : text;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function referenceList(values, linkBuilder) {
@@ -1668,7 +1861,9 @@
     ).trim();
     const variant = mutationSignature(detail) || mutationSignature(summary);
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
-    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant) return "";
+    const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
+    const sequenceSource = sequenceSourceLabel(detail.sequence_source || summary.sequence_source);
+    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant && enzymeForm === "Not recorded") return "";
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
@@ -1679,10 +1874,11 @@
       <section class="detail-section identity-section">
         <h3>Molecular identity</h3>
         <div class="detail-kv">
-          ${variant ? kv("Enzyme form", `Variant: ${variant}`) : ""}
+          ${kv("Enzyme form", enzymeForm)}
           ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
+          ${sequenceSource ? kv("Sequence source", sequenceSource) : ""}
           ${smiles ? `
             <div class="copy-field">
               <div class="copy-field-heading">
@@ -1729,12 +1925,14 @@
   }
 
   function renderDetail(summary, detail) {
-    const pmids = Array.isArray(detail.supporting_pmids)
+    const pmidsRaw = Array.isArray(detail.supporting_pmids)
       ? detail.supporting_pmids.filter(Boolean)
       : (detail.pubmed_id ? [detail.pubmed_id] : []);
-    const dois = Array.isArray(detail.supporting_dois)
+    const doisRaw = Array.isArray(detail.supporting_dois)
       ? detail.supporting_dois.filter(Boolean)
       : (detail.doi ? [detail.doi] : []);
+    const pmids = uniqueReferenceValues(pmidsRaw);
+    const dois = uniqueReferenceValues(doisRaw, { caseInsensitive: true });
     const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
@@ -1774,6 +1972,7 @@
       ` : ""}
       ${detailDisclosure("Source details", [
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
+        kv("Source license", summary.source_license || detail.source_license),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         kv("Database rows", detail.source_record_count || summary.source_record_count),
         detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
@@ -1845,7 +2044,7 @@
         <span class="footer-sources">${sources.map((item) => (
           `<span class="footer-source">${sourceNameHtml(item)}${item.license ? ` <small>${escapeHtml(item.license)}</small>` : ""}</span>`
         )).join("")}</span>
-        <span class="footer-license">${escapeHtml(CURATION_LICENSE_NOTE)}</span>
+        <span class="footer-license">For reuse of CatLog review notes or corrections, <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20reuse%20question">contact the Chowdhury Lab</a>. <a class="footer-report" href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>.</span>
       `;
     }
     const guideList = $("guideSourceList");
@@ -1904,11 +2103,34 @@
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);
       if (!input) return;
+      input.setAttribute("role", "combobox");
+      input.setAttribute("aria-autocomplete", "list");
+      input.setAttribute("aria-expanded", "false");
       input.addEventListener("focus", () => {
         if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
         showSuggestions(input);
       });
       input.addEventListener("click", () => showSuggestions(input));
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          moveSuggestionSelection(input, event.key === "ArrowDown" ? 1 : -1);
+          return;
+        }
+        if (event.key === "Enter" && state.suggestionIndex >= 0) {
+          const option = $("searchSuggestions")?.querySelectorAll("button[data-value]")[state.suggestionIndex];
+          if (option) {
+            event.preventDefault();
+            chooseSuggestion(input, option.dataset.value);
+          }
+          return;
+        }
+        if (event.key === "Escape" && !$("searchSuggestions")?.classList.contains("hidden")) {
+          event.preventDefault();
+          event.stopPropagation();
+          hideSuggestions();
+        }
+      });
       input.addEventListener("blur", () => {
         state.suggestionHideTimer = window.setTimeout(hideSuggestions, 140);
       });
@@ -2002,7 +2224,11 @@
       state.recordsReadyPromise = loadRecordChunks();
       await state.recordsReadyPromise;
     } catch (error) {
-      $("activeSummary").innerHTML = `<span class="state-badge review">${escapeHtml(error.message || error)}</span>`;
+      showLoadNotice(
+        "CatLog could not start",
+        error?.message || String(error),
+        { actionLabel: "Try again", onAction: reloadCatalogPage },
+      );
     }
   }
 

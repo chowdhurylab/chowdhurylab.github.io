@@ -15,11 +15,11 @@ Snapshot details
 - Source SHA-256: 21a06ef0d26f2a7f0b0dc8e53b46da06983b3a966a48a51fd147ebf1d9fc7ed9
 - Public content SHA-256 (decompressed all-public-data JSONL): 8a7090a9d30399ed189965c2a292caa2b68e264b39f1a5f72a769cb4ab7899df
 - Package: compact_public
-- Contents: Full row coverage with compact public-facing fields. Raw source snapshots, private review payloads, and other large provenance blobs are not bundled.
-- All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
+- Contents: Full row coverage with compact public-facing fields. Raw source snapshots and private review payloads are not bundled.
+- All public data: downloads all rows with available protein sequences, SMILES, references, and source details
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
-- Download page: exports the displayed rows with public molecular identity, references, and provenance
+- Download page: exports the displayed rows with public molecular identity, references, and source details
 - All public data file: data/catlog-enriched.jsonl.gz
 - Rows with sequence: 75936
 - Rows with wild-type sequence: 49461
