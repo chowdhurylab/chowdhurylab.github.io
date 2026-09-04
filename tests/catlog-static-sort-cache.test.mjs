@@ -10,6 +10,32 @@ const indexHtml = await readFile(
   new URL("../tools/catlog-static/index.html", import.meta.url),
   "utf8",
 );
+const stableAliasHtml = await readFile(
+  new URL("../tools/catlog-latest.html", import.meta.url),
+  "utf8",
+);
+
+for (const pageHtml of [indexHtml, stableAliasHtml]) {
+  assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
+  assert.match(
+    pageHtml,
+    /<meta name="description" content="CatLog snapshot dated September 3, 2026: browse 148,289 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures\." \/>/,
+  );
+  assert.match(pageHtml, /<meta property="og:title" content="CatLog \| Enzyme Kinetics Catalog" \/>/);
+  assert.match(
+    pageHtml,
+    /<meta property="og:description" content="CatLog snapshot dated September 3, 2026 with 148,289 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures\." \/>/,
+  );
+  assert.match(
+    pageHtml,
+    /<meta property="og:url" content="https:\/\/chowdhurylab\.github\.io\/tools\/catlog-static\/" \/>/,
+  );
+  assert.match(
+    pageHtml,
+    /<link rel="canonical" href="https:\/\/chowdhurylab\.github\.io\/tools\/catlog-static\/" \/>/,
+  );
+  assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
+}
 
 assert.match(
   indexHtml,
