@@ -1360,6 +1360,10 @@
     const kind = suggestionInputs[input.id];
     const box = $("searchSuggestions");
     if (!kind || !box || !state.records.length) return;
+    if (String(input.value || "").trim()) {
+      hideSuggestions();
+      return;
+    }
     window.clearTimeout(state.suggestionHideTimer);
     if (state.suggestionInputId && state.suggestionInputId !== input.id) hideSuggestions();
     const suggestions = randomSuggestions(kind);
@@ -2396,6 +2400,7 @@
     ].forEach((id) => {
       $(id).addEventListener("input", () => {
         if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
+        if ($(id).value.trim()) hideSuggestions();
         scheduleFilters();
       });
     });
@@ -2557,6 +2562,7 @@
       enzymeFormLabel,
       enzymeFormHtml,
       molecularIdentitySection,
+      showSuggestions,
       activeTableRowKey,
       setActiveTableRow,
       moveTableRowFocus,
