@@ -19,13 +19,12 @@
     recordChunksTotal: 0,
     loadProgressUnit: "chunks",
     recordsReady: false,
-    recordsReadyPromise: null,
     recordsGeneration: 0,
     sortCache: new Map(),
     filterRunId: 0,
     filterFailure: "",
     filterTimer: null,
-    loadedScripts: new Set(["data/manifest.js"]),
+    loadedScripts: new Set(),
     loadingScripts: new Map(),
     suggestionHideTimer: null,
     suggestionIndex: -1,
@@ -1287,10 +1286,6 @@
     return recordStateCounts(state.records);
   }
 
-  function countMetric(field) {
-    return state.records.reduce((count, row) => count + (row[field] != null ? 1 : 0), 0);
-  }
-
   function valueFromRow(row, field) {
     return String(row[field] || "").trim();
   }
@@ -1433,7 +1428,7 @@
       <label class="check-row">
         <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" ${hadMeasurementFilters && selectedMeasurements.has(item.value) ? "checked" : ""} />
         <span>${escapeHtml(item.label)}</span>
-        <strong>${formatCount(state.recordsReady ? countMetric(item.field) : manifestMetricCounts[item.field])}</strong>
+        <strong>${formatCount(state.recordsReady ? metricCoverage(state.records, item.field) : manifestMetricCounts[item.field])}</strong>
       </label>
     `).join("");
   }
@@ -1485,7 +1480,6 @@
       const metricFields = {
         kcat: "kcat",
         km: "km",
-        ki: "ki",
         kcat_over_km: "kcat_over_km",
       };
       if (!filters.metrics.some((metric) => row[metricFields[metric]] != null)) return false;
@@ -2534,8 +2528,7 @@
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
-      state.recordsReadyPromise = loadRecordChunks();
-      await state.recordsReadyPromise;
+      await loadRecordChunks();
     } catch (error) {
       showLoadNotice(
         "CatLog could not start",
