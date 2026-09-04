@@ -13,6 +13,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = "tools/catlog-static/data"
 CANONICAL_PAGE = REPOSITORY_ROOT / "tools/catlog-static/index.html"
+STABLE_ALIAS_SYNC = REPOSITORY_ROOT / "scripts/sync-catlog-latest.py"
 USAGE_TRACKER_TAG = (
     '<script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>'
 )
@@ -152,11 +153,27 @@ def inspect_usage_tracker() -> list[str]:
     return []
 
 
+def inspect_stable_alias() -> list[str]:
+    result = subprocess.run(
+        [sys.executable, str(STABLE_ALIAS_SYNC), "--check"],
+        cwd=REPOSITORY_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return []
+    detail = result.stdout.strip() or "stable alias check failed"
+    return [detail]
+
+
 def main() -> int:
     paths_by_oid, failures = tracked_data_blobs()
     if paths_by_oid:
         failures.extend(inspect_git_blobs(paths_by_oid))
     failures.extend(inspect_usage_tracker())
+    failures.extend(inspect_stable_alias())
 
     if failures:
         print("CatLog publish check failed:", file=sys.stderr)
