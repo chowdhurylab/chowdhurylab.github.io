@@ -548,7 +548,7 @@
     const isVariant = row?.wild_type === false
       || /variant|mutant|mutation/.test(mutationType)
       || /variant|mutation/.test(variantStatus);
-    if (isVariant) return "Variant; substitution not recorded";
+    if (isVariant) return "Variant (unspecified)";
     const isWildType = row?.wild_type === true
       || /wild[ _-]?type/.test(mutationType)
       || /wild[ _-]?type/.test(variantStatus);
@@ -2040,8 +2040,9 @@
     const variant = mutationSignature(detail) || mutationSignature(summary);
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
     const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
+    const sequenceVariantNote = String(detail.sequence_variant_note || summary.sequence_variant_note || "").trim();
     const sequenceSource = sequenceSourceLabel(detail.sequence_source || summary.sequence_source);
-    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant && enzymeForm === "Not recorded") return "";
+    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant && !sequenceVariantNote && enzymeForm === "Not recorded") return "";
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
@@ -2053,6 +2054,7 @@
         <h3>Molecular identity</h3>
         <div class="detail-kv">
           ${kv("Enzyme form", enzymeForm)}
+          ${sequenceVariantNote ? kv("Form note", sequenceVariantNote) : ""}
           ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
@@ -2434,6 +2436,9 @@
       ensureCurrentFiltersAndSelectFirst,
       applyFiltersInBackground,
       applyPageSize,
+      enzymeFormLabel,
+      enzymeFormHtml,
+      molecularIdentitySection,
     };
   } else {
     init();
