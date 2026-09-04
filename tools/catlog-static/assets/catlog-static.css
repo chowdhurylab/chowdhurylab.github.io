@@ -1136,7 +1136,6 @@ tbody tr.selected .row-arrow {
 .metric-with-note,
 .source-efficiency-value {
   white-space: nowrap;
-  display: inline-block;
   display: grid;
   gap: 2px;
 }
@@ -2272,9 +2271,6 @@ tbody tr.selected .row-arrow {
 
   .global-search {
     grid-area: search;
-  }
-
-  .global-search {
     justify-self: stretch;
     width: 100%;
   }
@@ -2641,43 +2637,6 @@ tbody tr.selected .row-arrow {
 
   .guide-heading h1 {
     font-size: 28px;
-  }
-
-  .guide-workflow {
-    grid-template-columns: 1fr;
-    gap: 0;
-    margin-top: 26px;
-    padding: 18px 0 0;
-  }
-
-  .guide-figure {
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
-  }
-
-  .guide-step-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .guide-step,
-  .guide-step:first-child,
-  .guide-step:last-child {
-    border-top: 1px solid var(--line);
-    padding: 18px;
-  }
-
-  .guide-step:nth-child(-n + 2) {
-    border-top: 0;
-  }
-
-  .guide-step:nth-child(odd) {
-    border-left: 0;
-    padding-left: 0;
-  }
-
-  .guide-step:nth-child(even) {
-    border-left: 1px solid var(--line);
-    padding-right: 0;
   }
 
   .guide-record-depth {
