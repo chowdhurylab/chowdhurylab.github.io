@@ -14,6 +14,36 @@ const stableAliasHtml = await readFile(
   new URL("../tools/catlog-latest.html", import.meta.url),
   "utf8",
 );
+const manifestSource = await readFile(
+  new URL("../tools/catlog-static/data/manifest.js", import.meta.url),
+  "utf8",
+);
+const manifestPrefix = "window.CATLOG_STATIC_MANIFEST = ";
+const manifestLine = manifestSource.split("\n", 1)[0];
+assert.ok(manifestLine.startsWith(manifestPrefix) && manifestLine.endsWith(";"));
+const publishedManifest = JSON.parse(manifestLine.slice(manifestPrefix.length, -1));
+
+assert.equal(publishedManifest.details_per_shard, 250);
+assert.equal(
+  publishedManifest.detail_shards.length,
+  Math.ceil(publishedManifest.total_rows / publishedManifest.details_per_shard),
+);
+publishedManifest.detail_shards.forEach((shardPath, index) => {
+  assert.equal(shardPath, `data/details-${String(index).padStart(3, "0")}.js`);
+});
+for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), publishedManifest.detail_shards.length - 1]) {
+  const shardPath = publishedManifest.detail_shards[index];
+  const shardSource = await readFile(new URL(`../tools/catlog-static/${shardPath}`, import.meta.url), "utf8");
+  const assignment = `window.CATLOG_DETAIL_SHARDS[${JSON.stringify(shardPath)}] = `;
+  const assignmentStart = shardSource.indexOf(assignment);
+  assert.ok(assignmentStart > 0 && shardSource.endsWith(";\n"));
+  const shard = JSON.parse(shardSource.slice(assignmentStart + assignment.length, -2));
+  const expectedCount = index === publishedManifest.detail_shards.length - 1
+    ? ((publishedManifest.total_rows - 1) % publishedManifest.details_per_shard) + 1
+    : publishedManifest.details_per_shard;
+  assert.equal(Object.keys(shard).length, expectedCount);
+  assert.ok(Object.entries(shard).every(([key, detail]) => detail.ui_record_key === key));
+}
 
 for (const pageHtml of [indexHtml, stableAliasHtml]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
@@ -197,6 +227,103 @@ vm.runInNewContext(sourceCode, {
 
 const api = window.CATLOG_STATIC_TEST_API;
 assert.ok(api, "test API should be exposed without starting the application");
+
+const scriptedShardPayloads = new Map();
+let injectedScriptCount = 0;
+let removedScriptCount = 0;
+document.body.appendChild = (script) => {
+  injectedScriptCount += 1;
+  const relativePath = new URL(script.src).pathname.replace(/^\/catlog\//, "");
+  if (scriptedShardPayloads.has(relativePath)) {
+    window.CATLOG_DETAIL_SHARDS[relativePath] = scriptedShardPayloads.get(relativePath);
+  }
+  const remove = script.remove.bind(script);
+  script.remove = () => {
+    removedScriptCount += 1;
+    remove();
+  };
+  Promise.resolve().then(() => script.onload());
+};
+
+const concurrentShard = "data/details-concurrent.js";
+const firstConcurrentLoad = api.loadScript(concurrentShard);
+const secondConcurrentLoad = api.loadScript(concurrentShard);
+assert.strictEqual(firstConcurrentLoad, secondConcurrentLoad);
+await Promise.all([firstConcurrentLoad, secondConcurrentLoad]);
+assert.equal(injectedScriptCount, 1, "concurrent requests for one shard should inject one script");
+assert.equal(removedScriptCount, 1, "a loaded script element should be removed");
+
+api.state.loadedScripts.clear();
+api.state.loadingScripts.clear();
+api.state.detailShardLru.clear();
+window.CATLOG_DETAIL_SHARDS = {};
+assert.equal(api.DETAIL_SHARD_CACHE_LIMIT, 8);
+for (let index = 0; index < api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
+  const shard = `data/details-lru-${index}.js`;
+  window.CATLOG_DETAIL_SHARDS[shard] = { [`row-${index}`]: { value: index } };
+  api.state.loadedScripts.add(shard);
+  api.retainDetailShard(shard);
+}
+api.retainDetailShard("data/details-lru-0.js");
+window.CATLOG_DETAIL_SHARDS["data/details-lru-8.js"] = { "row-8": { value: 8 } };
+api.state.loadedScripts.add("data/details-lru-8.js");
+api.retainDetailShard("data/details-lru-8.js");
+assert.ok(window.CATLOG_DETAIL_SHARDS["data/details-lru-0.js"], "a cache hit should refresh recency");
+assert.equal(window.CATLOG_DETAIL_SHARDS["data/details-lru-1.js"], undefined, "the true least-recent shard should be evicted");
+assert.equal(api.state.loadedScripts.has("data/details-lru-1.js"), false, "an evicted shard must be reloadable");
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
+
+scriptedShardPayloads.set("data/details-lru-1.js", { "row-1": { value: 1 } });
+const scriptsBeforeReload = injectedScriptCount;
+assert.equal(
+  (await api.detailForRow({ detail_shard: "data/details-lru-1.js", record_key: "row-1" })).value,
+  1,
+);
+assert.equal(injectedScriptCount, scriptsBeforeReload + 1, "an evicted shard should load again");
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
+
+api.state.loadedScripts.clear();
+api.state.loadingScripts.clear();
+api.state.detailShardLru.clear();
+window.CATLOG_DETAIL_SHARDS = {};
+for (let index = 0; index < api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
+  const shard = `data/details-missing-${index}.js`;
+  window.CATLOG_DETAIL_SHARDS[shard] = { [`row-${index}`]: { value: index } };
+  api.state.loadedScripts.add(shard);
+  api.retainDetailShard(shard);
+}
+await assert.rejects(
+  api.detailForRow({ detail_shard: "data/details-missing-0.js", record_key: "not-present" }),
+  /does not contain not-present/,
+);
+assert.equal(api.state.loadedScripts.has("data/details-missing-0.js"), false, "a missing record should remain reloadable");
+assert.equal(Object.keys(window.CATLOG_DETAIL_SHARDS).length, api.DETAIL_SHARD_CACHE_LIMIT);
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
+scriptedShardPayloads.set("data/details-after-missing.js", { "after-missing": { value: 9 } });
+await api.detailForRow({ detail_shard: "data/details-after-missing.js", record_key: "after-missing" });
+assert.equal(Object.keys(window.CATLOG_DETAIL_SHARDS).length, api.DETAIL_SHARD_CACHE_LIMIT);
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
+
+api.state.loadedScripts.clear();
+api.state.loadingScripts.clear();
+api.state.detailShardLru.clear();
+window.CATLOG_DETAIL_SHARDS = {};
+const widePageRows = Array.from({ length: 12 }, (_, index) => {
+  const detail_shard = `data/details-wide-${index}.js`;
+  const record_key = `wide-${index}`;
+  scriptedShardPayloads.set(detail_shard, { [record_key]: { value: index } });
+  return { detail_shard, record_key };
+});
+const widePageDetails = await Promise.all(widePageRows.map((row) => api.detailForRow(row)));
+assert.deepEqual(widePageDetails.map((detail) => detail.value), Array.from({ length: 12 }, (_, index) => index));
+assert.equal(Object.keys(window.CATLOG_DETAIL_SHARDS).length, api.DETAIL_SHARD_CACHE_LIMIT);
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
+assert.equal(api.state.loadedScripts.size, api.DETAIL_SHARD_CACHE_LIMIT);
+
+api.state.loadedScripts.clear();
+api.state.loadingScripts.clear();
+api.state.detailShardLru.clear();
+window.CATLOG_DETAIL_SHARDS = {};
 
 const focusRows = [{ record_key: "first" }, { record_key: "second" }];
 api.state.activeRowKey = "";

@@ -26,6 +26,7 @@
     filterTimer: null,
     loadedScripts: new Set(),
     loadingScripts: new Map(),
+    detailShardLru: new Map(),
     suggestionHideTimer: null,
     suggestionIndex: -1,
     suggestionInputId: "",
@@ -34,6 +35,7 @@
   const LOAD_RETRY_DELAYS = [2000, 5000, 10000];
   const SORT_RUN_SIZE = 4096;
   const SORT_CACHE_LIMIT = 2;
+  const DETAIL_SHARD_CACHE_LIMIT = 8;
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowFilterMedia = window.matchMedia("(max-width: 1180px)");
   const DETAIL_INERT_SELECTOR = [
@@ -798,6 +800,19 @@
     return pending;
   }
 
+  function retainDetailShard(src) {
+    const shards = window.CATLOG_DETAIL_SHARDS || {};
+    if (!src || !Object.prototype.hasOwnProperty.call(shards, src)) return;
+    state.detailShardLru.delete(src);
+    state.detailShardLru.set(src, true);
+    while (state.detailShardLru.size > DETAIL_SHARD_CACHE_LIMIT) {
+      const oldest = state.detailShardLru.keys().next().value;
+      state.detailShardLru.delete(oldest);
+      delete shards[oldest];
+      state.loadedScripts.delete(oldest);
+    }
+  }
+
   function indexLoadedRecords(records = null) {
     state.sortCache.forEach((entry) => {
       entry.cancelled = true;
@@ -1117,6 +1132,7 @@
   async function detailForRow(row, { onRetry = null } = {}) {
     await loadScript(row.detail_shard, false, { onRetry });
     const shard = (window.CATLOG_DETAIL_SHARDS || {})[row.detail_shard] || {};
+    retainDetailShard(row.detail_shard);
     const detail = shard[row.record_key];
     if (!detail || typeof detail !== "object") {
       state.loadedScripts.delete(row.detail_shard);
@@ -2544,7 +2560,11 @@
   if (window.CATLOG_STATIC_TEST_MODE) {
     window.CATLOG_STATIC_TEST_API = {
       SORT_CACHE_LIMIT,
+      DETAIL_SHARD_CACHE_LIMIT,
       state,
+      loadScript,
+      retainDetailShard,
+      detailForRow,
       indexLoadedRecords,
       rowComparator,
       cooperativeStableSort,
