@@ -8,7 +8,7 @@ production checkout.
 
 - Private implementation: `SupanthaDey9/realkcat`
 - Source branch: `main`
-- Source commit: `c4c5cadb5b1acb5dfb563d6f00b7fbb7e830f53a`
+- Source commit: `ef3e02df3166e31b5e3957444fc96cc895486134`
 - Public-package refresh date: `2026-09-04`
 - Public location: `chowdhurylab/chowdhurylab.github.io`, path `tools/catlog/`
 - Public branch: `main`
