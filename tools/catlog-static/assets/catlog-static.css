@@ -916,8 +916,8 @@ button:disabled {
 
 .table-wrap {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
+  max-height: min(72vh, 760px);
+  overflow: auto;
   background: var(--panel);
 }
 
