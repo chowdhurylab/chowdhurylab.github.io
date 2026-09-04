@@ -1,25 +1,94 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://chowdhurylab.github.io/tools/catlog-static/data/human-review-schema.json",
-  "title": "CatLog public human-review decision",
+  "x-catlog-schema-version": "2.0.0",
+  "title": "CatLog public merged human-review record",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "measurement_key",
-    "original_human_review_status"
+    "human_review"
   ],
   "properties": {
     "measurement_key": {
-      "description": "Legacy CatLog measurement identifier copied from the reviewed public record.",
+      "description": "CatLog measurement identifier used to join this review to the public catalog.",
       "type": "string",
       "pattern": "^[0-9a-f]{16}$"
     },
-    "original_human_review_status": {
-      "description": "Latest recorded human decision before later adjudication or catalog import.",
-      "type": "string",
-      "enum": [
-        "human_approved",
-        "human_rejected"
+    "human_review": {
+      "description": "Merged submitted human-review states, separate from later agent adjudication and catalog import.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "final",
+        "submitted_decisions"
+      ],
+      "properties": {
+        "final": {
+          "$ref": "#/$defs/decision"
+        },
+        "submitted_decisions": {
+          "description": "Chronological semantic states after adjacent duplicate submissions were collapsed; timestamps are not published.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/decision"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "comment"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "human_approved",
+            "human_rejected"
+          ]
+        },
+        "comment": {
+          "description": "Verbatim note submitted through the review results format, or null when none was submitted.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "human_rejected"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "comment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
       ]
     }
   }

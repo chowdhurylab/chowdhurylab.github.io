@@ -1,17 +1,55 @@
 {
   "catalog_release_id": "sha256:76fad10513e5dfd03ea0bf23c91f87ae763dac2a9c6f6eff6e1f26443610aa4e",
+  "comment_semantics": "Verbatim notes submitted through the human-review results format; they are not independently authenticated authorship or guaranteed decision rationales.",
   "decided_records": 2084,
-  "decision_semantics": "Latest recorded human decision from the union of browser exports, before adjudication or catalog import.",
+  "decision_semantics": "Latest recorded human-review submission from the union of browser exports, before agent adjudication or catalog import.",
+  "final_comment_status_counts": {
+    "human_approved": 4,
+    "human_rejected": 227
+  },
+  "final_commented_denominator": 2084,
+  "final_commented_records": 231,
+  "history_semantics": "Chronological submitted human-review states with adjacent duplicate status/comment pairs collapsed and all activity timestamps removed.",
   "human_status_changed_denominator": 2084,
   "human_status_changed_records": 41,
+  "ledger_gzip_sha256": "529d4c91bdefffb46514f6a21c90f214754fbf16c521b4ed6bb8f0c55894ae00",
   "ledger_release_date": "2026-09-04",
-  "ledger_release_id": "human-review-20260904-eef637f91527",
-  "ledger_sha256": "eef637f9152717776df62786e44dab8ce2c68b58fcbe26bfd3ace4f3cf799648",
+  "ledger_release_id": "human-review-20260904-bd0dba03e30c",
+  "ledger_sha256": "bd0dba03e30cd51c6fb72082038e968d5d43c5883d002d952b265d9750969052",
   "public_catalog_manifest_sha256": "5cfc1aef7f80c908942248642bf31f2777447d6d3c7de44c58e11a45d570f805",
+  "public_catalog_table_sha256": "2241b314d20f5e9945e3c0d41457b4ce868a2e768edc817b8ff9181c07c46942",
+  "records_with_multiple_submitted_decisions": 55,
+  "records_with_submitted_comments": 278,
+  "review_pack_manifest_sha256": "9baef2ffcb861f3b08db1930cb20e64ab7578d9fd4b478f8238fc48a6c6188db",
   "review_pack_records": 5833,
-  "schema_version": "1.0.0",
+  "review_reference_catalog_snapshot": {
+    "snapshot_generated_at": "2026-06-29T16:58:58+00:00",
+    "source_sha256": "e871024cd02b4c81a169af41fc75e6131151c5798da613bab81d12500becda4d"
+  },
+  "review_source_records": 5833,
+  "review_source_semantics": "The retained review source pack validates reviewed measurement keys and the private overlay join. Its scientific fields are not republished in this ledger.",
+  "review_source_sha256": "31fd5a13dbec524f8342f04769c1b6d6b47607d919b842f0c50873c5448b5318",
+  "schema_sha256": "517df15da1443130a91891e223771c1d0c78bd31a7daa4563f2dfe44824485a6",
+  "schema_version": "2.0.0",
+  "source_catalog_snapshots": [
+    {
+      "snapshot_generated_at": "2026-06-29T15:40:44+00:00",
+      "source_sha256": "5b07ffb437a4145da0d5301612689770b7dd8a78717c68b2f99299257fa0c1ab",
+      "stored_export_count": 2
+    },
+    {
+      "snapshot_generated_at": "2026-06-29T16:58:58+00:00",
+      "source_sha256": "e871024cd02b4c81a169af41fc75e6131151c5798da613bab81d12500becda4d",
+      "stored_export_count": 13
+    }
+  ],
+  "source_export_count": 15,
+  "source_export_manifest_sha256": "8259f83d3f99ea13117c4a9bcac568d40c70517538c0dbf0d021e2fa369c2ea0",
+  "source_overlay_sha256": "766dc6f133330926f91207e1f1e8512eaba9640c4bbf6138d4aeb653b79ec181",
   "status_counts": {
     "human_approved": 1857,
     "human_rejected": 227
-  }
+  },
+  "submitted_decision_states": 2146,
+  "submitted_decision_states_with_comment": 279
 }
