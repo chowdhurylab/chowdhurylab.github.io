@@ -12,6 +12,10 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = "tools/catlog-static/data"
+CANONICAL_PAGE = REPOSITORY_ROOT / "tools/catlog-static/index.html"
+USAGE_TRACKER_TAG = (
+    '<script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>'
+)
 LFS_POINTER_HEADER = b"version https://git-lfs.github.com/spec/v1"
 MINIMUM_BLOB_SIZE = 200
 READ_CHUNK_SIZE = 1024 * 1024
@@ -136,10 +140,23 @@ def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
     return failures
 
 
+def inspect_usage_tracker() -> list[str]:
+    try:
+        page = CANONICAL_PAGE.read_text(encoding="utf-8")
+    except OSError as error:
+        return [f"cannot read canonical CatLog page: {error}"]
+
+    count = page.count(USAGE_TRACKER_TAG)
+    if count != 1:
+        return [f"canonical CatLog page has {count} usage tracker tags; expected exactly 1"]
+    return []
+
+
 def main() -> int:
     paths_by_oid, failures = tracked_data_blobs()
     if paths_by_oid:
         failures.extend(inspect_git_blobs(paths_by_oid))
+    failures.extend(inspect_usage_tracker())
 
     if failures:
         print("CatLog publish check failed:", file=sys.stderr)
