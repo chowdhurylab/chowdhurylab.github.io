@@ -19,6 +19,10 @@
     loadProgressUnit: "chunks",
     recordsReady: false,
     recordsReadyPromise: null,
+    recordsGeneration: 0,
+    sortCache: new Map(),
+    filterRunId: 0,
+    filterFailure: "",
     filterTimer: null,
     loadedScripts: new Set(["data/manifest.js"]),
     loadingScripts: new Map(),
@@ -28,6 +32,9 @@
   };
   const EMPTY_VALUE = "—";
   const LOAD_RETRY_DELAYS = [2000, 5000, 10000];
+  const SORT_RUN_SIZE = 4096;
+  const SORT_CACHE_LIMIT = 2;
+  const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowFilterMedia = window.matchMedia("(max-width: 1180px)");
 
   const recordStates = [
@@ -750,8 +757,15 @@
   }
 
   function indexLoadedRecords(records = null) {
+    state.sortCache.forEach((entry) => {
+      entry.cancelled = true;
+    });
     state.records = records || (window.CATLOG_RECORD_CHUNKS || []).flat();
-    state.records.forEach((row) => {
+    state.recordsGeneration += 1;
+    state.filterRunId += 1;
+    state.sortCache.clear();
+    state.records.forEach((row, index) => {
+      row._loadIndex = index;
       row._recordState = recordStateForRow(row);
       row._stateRank = recordStates.findIndex((item) => item.value === row._recordState);
       row._tierRank = tierOrder[row.evidence_confidence_tier] ?? 99;
@@ -954,11 +968,8 @@
       state.recordsReady = true;
       updateLoadProgress();
       setupFilters();
-      applyFilters();
+      await ensureCurrentFiltersAndSelectFirst();
       updateTableScrollControls();
-      if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
-        await selectRecord(state.filtered[0].record_key);
-      }
       return;
     }
 
@@ -972,7 +983,7 @@
         state.recordsReady = true;
         updateLoadProgress();
         setupFilters();
-        applyFilters();
+        await ensureCurrentFilters();
         return;
       }
       // A web-only bundle ships no records-*.js; without the streamed index there is nothing to show.
@@ -1003,7 +1014,7 @@
     indexLoadedRecords();
     updateLoadProgress();
     setupFilters();
-    applyFilters();
+    await ensureCurrentFilters();
     updateTableScrollControls();
 
     for (let index = 1; index < chunks.length; index += 3) {
@@ -1018,11 +1029,8 @@
     state.recordsReady = true;
     updateLoadProgress();
     setupFilters();
-    applyFilters({ resetPage: false });
+    await ensureCurrentFiltersAndSelectFirst({ resetPage: false });
     updateTableScrollControls();
-    if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
-      await selectRecord(state.filtered[0].record_key);
-    }
   }
 
   function triggerBlobDownload(filename, payload) {
@@ -1290,7 +1298,7 @@
     input.value = value || "";
     hideSuggestions();
     input.focus();
-    applyFilters();
+    applyFiltersInBackground();
   }
 
   function moveSuggestionSelection(input, direction) {
@@ -1448,7 +1456,7 @@
     return String(a.ec_number || "").localeCompare(String(b.ec_number || ""));
   }
 
-  function sortRows(rows, sort) {
+  function rowComparator(sort) {
     const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
     const numericDesc = (field) => (a, b) => {
       const av = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
@@ -1471,25 +1479,190 @@
         return (b._sourceCount - a._sourceCount) || ecSort(a, b);
       },
     };
-    rows.sort(sorters[sort] || sorters.evidence);
+    const primaryComparator = sorters[sort] || sorters.evidence;
+    return (a, b) => primaryComparator(a, b) || (a._loadIndex - b._loadIndex);
   }
 
-  function applyFilters({ resetPage = true } = {}) {
+  function isSortEntryCurrent(entry) {
+    return !entry.cancelled && entry.recordsGeneration === state.recordsGeneration;
+  }
+
+  async function yieldDuringSort(entry) {
+    if (!isSortEntryCurrent(entry)) return false;
+    await yieldToBrowser();
+    return isSortEntryCurrent(entry);
+  }
+
+  async function mergeSortedRuns(left, right, comparator, entry) {
+    if (!isSortEntryCurrent(entry)) return null;
+    const merged = new Array(left.length + right.length);
+    let leftIndex = 0;
+    let rightIndex = 0;
+    let mergedIndex = 0;
+
+    while (leftIndex < left.length || rightIndex < right.length) {
+      if (
+        rightIndex >= right.length
+        || (leftIndex < left.length && comparator(left[leftIndex], right[rightIndex]) <= 0)
+      ) {
+        merged[mergedIndex] = left[leftIndex];
+        leftIndex += 1;
+      } else {
+        merged[mergedIndex] = right[rightIndex];
+        rightIndex += 1;
+      }
+      mergedIndex += 1;
+      if (mergedIndex % SORT_RUN_SIZE === 0 && !(await yieldDuringSort(entry))) {
+        return null;
+      }
+    }
+    return isSortEntryCurrent(entry) ? merged : null;
+  }
+
+  async function cooperativeStableSort(rows, comparator, entry) {
+    if (!isSortEntryCurrent(entry)) return null;
+    let runs = [];
+    for (let start = 0; start < rows.length; start += SORT_RUN_SIZE) {
+      if (!isSortEntryCurrent(entry)) return null;
+      runs.push(rows.slice(start, start + SORT_RUN_SIZE).sort(comparator));
+      if (!(await yieldDuringSort(entry))) return null;
+    }
+
+    while (runs.length > 1) {
+      const mergedRuns = [];
+      for (let index = 0; index < runs.length; index += 2) {
+        if (index + 1 >= runs.length) {
+          mergedRuns.push(runs[index]);
+          continue;
+        }
+        const merged = await mergeSortedRuns(
+          runs[index],
+          runs[index + 1],
+          comparator,
+          entry,
+        );
+        if (!merged) return null;
+        mergedRuns.push(merged);
+      }
+      runs = mergedRuns;
+    }
+    return isSortEntryCurrent(entry) ? (runs[0] || []) : null;
+  }
+
+  function normalizedSortName(sort) {
+    return [
+      "evidence",
+      "ec_number",
+      "enzyme",
+      "organism",
+      "substrate",
+      "kcat",
+      "km",
+      "kcat_over_km",
+    ].includes(sort) ? sort : "evidence";
+  }
+
+  function retainSortEntry(sort, entry) {
+    state.sortCache.delete(sort);
+    state.sortCache.set(sort, entry);
+    while (state.sortCache.size > SORT_CACHE_LIMIT) {
+      const oldestSort = state.sortCache.keys().next().value;
+      const oldestEntry = state.sortCache.get(oldestSort);
+      if (oldestEntry) oldestEntry.cancelled = true;
+      state.sortCache.delete(oldestSort);
+    }
+  }
+
+  function orderedRecordsFor(sort) {
+    const sortName = normalizedSortName(sort);
+    const recordsGeneration = state.recordsGeneration;
+    const cached = state.sortCache.get(sortName);
+    if (cached?.recordsGeneration === recordsGeneration) {
+      retainSortEntry(sortName, cached);
+      return cached.promise;
+    }
+
+    const entry = { recordsGeneration, cancelled: false, promise: null };
+    entry.promise = cooperativeStableSort(
+      state.records,
+      rowComparator(sortName),
+      entry,
+    ).catch((error) => {
+      if (state.sortCache.get(sortName) === entry) state.sortCache.delete(sortName);
+      throw error;
+    });
+    retainSortEntry(sortName, entry);
+    return entry.promise;
+  }
+
+  async function applyFilters({ resetPage = true, runId = null } = {}) {
+    const filterRunId = runId == null ? ++state.filterRunId : runId;
+    const recordsGeneration = state.recordsGeneration;
     const filters = currentFilters();
+    const orderedRecords = await orderedRecordsFor(filters.sort);
+    if (
+      !orderedRecords
+      || filterRunId !== state.filterRunId
+      || recordsGeneration !== state.recordsGeneration
+    ) return false;
+
+    state.filterFailure = "";
     renderActiveFilterCount(filters);
-    state.filtered = state.records.filter((row) => rowMatches(row, filters));
-    sortRows(state.filtered, filters.sort);
+    state.filtered = orderedRecords.filter((row) => rowMatches(row, filters));
     if (resetPage) state.page = 1;
     if (state.selectedKey && !state.filtered.some((row) => row.record_key === state.selectedKey)) {
       resetDetail();
     }
     renderSummary();
     renderRows();
+    return true;
+  }
+
+  async function ensureCurrentFilters(options = {}) {
+    while (!(await applyFilters(options))) {
+      // A newer filter request or record generation won the race. Re-read the
+      // controls and full-order cache before load-time code uses state.filtered.
+    }
+    return true;
+  }
+
+  async function ensureCurrentFiltersAndSelectFirst(options = {}) {
+    await ensureCurrentFilters(options);
+    if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
+      await selectRecord(state.filtered[0].record_key);
+    }
+  }
+
+  function boundedFilterFailure(error) {
+    const detail = String(error?.message || error || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!detail) return "The current results could not be updated. Try again.";
+    if (detail.length <= FILTER_FAILURE_MAX_LENGTH) return detail;
+    return `${detail.slice(0, FILTER_FAILURE_MAX_LENGTH - 3)}...`;
+  }
+
+  async function applyFiltersInBackground(options = {}) {
+    try {
+      const applied = await applyFilters(options);
+      return applied;
+    } catch (error) {
+      state.filterFailure = boundedFilterFailure(error);
+      showLoadNotice(
+        "CatLog could not update results",
+        state.filterFailure,
+        { actionLabel: "Try again", onAction: () => applyFiltersInBackground() },
+      );
+      return false;
+    }
   }
 
   function scheduleFilters() {
     window.clearTimeout(state.filterTimer);
-    state.filterTimer = window.setTimeout(() => applyFilters(), 120);
+    const runId = ++state.filterRunId;
+    state.filterTimer = window.setTimeout(() => {
+      applyFiltersInBackground({ runId });
+    }, 120);
   }
 
   function renderRows() {
@@ -2088,7 +2261,14 @@
     });
     $("sortSelect").value = "evidence";
     resetDetail();
-    applyFilters();
+    applyFiltersInBackground();
+  }
+
+  function applyPageSize(value) {
+    resetDetail();
+    state.pageSize = Number(value) || 25;
+    state.page = 1;
+    renderRows();
   }
 
   function bindControls() {
@@ -2104,7 +2284,9 @@
         scheduleFilters();
       });
     });
-    $("sortSelect").addEventListener("change", () => applyFilters());
+    $("sortSelect").addEventListener("change", () => {
+      applyFiltersInBackground();
+    });
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);
       if (!input) return;
@@ -2165,8 +2347,12 @@
       updateTableScrollControls();
     });
     narrowFilterMedia.addEventListener?.("change", syncFilterPanel);
-    $("statusChecklist").addEventListener("change", () => applyFilters());
-    $("measurementChecklist").addEventListener("change", () => applyFilters());
+    $("statusChecklist").addEventListener("change", () => {
+      applyFiltersInBackground();
+    });
+    $("measurementChecklist").addEventListener("change", () => {
+      applyFiltersInBackground();
+    });
     $("clearButton").addEventListener("click", clearFilters);
     $("openFiltersButton").addEventListener("click", () => setFiltersOpen(true));
     $("closeFiltersButton").addEventListener("click", () => {
@@ -2175,9 +2361,7 @@
     });
     $("filterBackdrop").addEventListener("click", () => setFiltersOpen(false));
     $("pageSizeSelect").addEventListener("change", () => {
-      resetDetail();
-      state.pageSize = Number($("pageSizeSelect").value) || 25;
-      applyFilters();
+      applyPageSize($("pageSizeSelect").value);
     });
     $("prevButton").addEventListener("click", () => {
       resetDetail();
@@ -2237,5 +2421,21 @@
     }
   }
 
-  init();
+  if (window.CATLOG_STATIC_TEST_MODE) {
+    window.CATLOG_STATIC_TEST_API = {
+      SORT_CACHE_LIMIT,
+      state,
+      indexLoadedRecords,
+      rowComparator,
+      cooperativeStableSort,
+      orderedRecordsFor,
+      applyFilters,
+      ensureCurrentFilters,
+      ensureCurrentFiltersAndSelectFirst,
+      applyFiltersInBackground,
+      applyPageSize,
+    };
+  } else {
+    init();
+  }
 })();
