@@ -1,0 +1,17 @@
+{
+  "catalog_release_id": "sha256:76fad10513e5dfd03ea0bf23c91f87ae763dac2a9c6f6eff6e1f26443610aa4e",
+  "decided_records": 2084,
+  "decision_semantics": "Latest recorded human decision from the union of browser exports, before adjudication or catalog import.",
+  "human_status_changed_denominator": 2084,
+  "human_status_changed_records": 41,
+  "ledger_release_date": "2026-09-04",
+  "ledger_release_id": "human-review-20260904-eef637f91527",
+  "ledger_sha256": "eef637f9152717776df62786e44dab8ce2c68b58fcbe26bfd3ace4f3cf799648",
+  "public_catalog_manifest_sha256": "5cfc1aef7f80c908942248642bf31f2777447d6d3c7de44c58e11a45d570f805",
+  "review_pack_records": 5833,
+  "schema_version": "1.0.0",
+  "status_counts": {
+    "human_approved": 1857,
+    "human_rejected": 227
+  }
+}
