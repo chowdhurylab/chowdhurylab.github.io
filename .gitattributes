@@ -1,1 +1,5 @@
 tools/catlog-static/data/** -filter -diff -text
+tools/catlog-static/data/human-review.jsonl -filter diff text eol=lf
+tools/catlog-static/data/human-review-manifest.json -filter diff text eol=lf
+tools/catlog-static/data/human-review-schema.json -filter diff text eol=lf
+tools/catlog-static/data/human-review-README.md -filter diff text eol=lf

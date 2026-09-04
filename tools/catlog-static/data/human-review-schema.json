@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chowdhurylab.github.io/tools/catlog-static/data/human-review-schema.json",
+  "title": "CatLog public human-review decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "measurement_key",
+    "original_human_review_status"
+  ],
+  "properties": {
+    "measurement_key": {
+      "description": "Legacy CatLog measurement identifier copied from the reviewed public record.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "original_human_review_status": {
+      "description": "Latest recorded human decision before later adjudication or catalog import.",
+      "type": "string",
+      "enum": [
+        "human_approved",
+        "human_rejected"
+      ]
+    }
+  }
+}
