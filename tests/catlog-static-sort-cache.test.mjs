@@ -262,6 +262,25 @@ function row(overrides = {}) {
   };
 }
 
+api.indexLoadedRecords([row()]);
+const searchInput = element("globalSearchInput");
+const suggestions = element("searchSuggestions");
+searchInput.value = "enzyme";
+suggestions.classList.remove("hidden");
+api.state.suggestionInputId = searchInput.id;
+searchInput.setAttribute("aria-expanded", "true");
+api.showSuggestions(searchInput);
+assert.ok(suggestions.classList.contains("hidden"), "typed searches should not show unrelated samples");
+assert.equal(searchInput.getAttribute("aria-expanded"), "false");
+assert.match(
+  sourceCode,
+  /if \(\$\(id\)\.value\.trim\(\)\) hideSuggestions\(\);/,
+  "typing should close an already-open sample list",
+);
+searchInput.value = "";
+api.showSuggestions(searchInput);
+assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can still offer samples");
+
 assert.equal(
   api.conditionFlags(row({
     kcat: 1.4,
