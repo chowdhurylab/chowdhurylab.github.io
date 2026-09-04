@@ -139,6 +139,33 @@ vm.runInNewContext(sourceCode, {
 const api = window.CATLOG_STATIC_TEST_API;
 assert.ok(api, "test API should be exposed without starting the application");
 
+assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
+assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
+assert.equal(
+  api.enzymeFormLabel({ sequence_variant_status: "variant" }),
+  "Variant (unspecified)",
+);
+assert.match(
+  api.enzymeFormHtml({ sequence_variant_status: "variant" }),
+  />Variant \(unspecified\)</,
+  "the table marker should identify an unspecified variant",
+);
+assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
+const formNoteHtml = api.molecularIdentitySection(
+  { sequence_variant_note: "Source says <variant> & unresolved" },
+  {},
+);
+assert.match(formNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+assert.match(
+  formNoteHtml,
+  /<span>Form note<\/span><strong>Source says &lt;variant&gt; &amp; unresolved<\/strong>/,
+  "the form note should be visible and HTML-escaped",
+);
+assert.ok(
+  formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Form note"),
+  "the form note should follow the enzyme form",
+);
+
 function row(overrides = {}) {
   return {
     record_key: "row",
