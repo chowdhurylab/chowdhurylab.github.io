@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catlog-method"
+version = "0.1.0"
+description = "Data-free CatLog method and protocol package for agent-assisted enzyme kinetics curation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Supantha Chowdhury"}
+]
+dependencies = []
+
+[project.scripts]
+catlog-validate-review = "catlog_method.validate_review:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,46 @@
+[
+  {
+    "measurement_key": "synthetic-measurement-001",
+    "record_id": "synthetic-record-001",
+    "review_key": "batch-demo-001:synthetic-record-001",
+    "ec_number": "2.7.1.1",
+    "enzyme_name": "example kinase",
+    "organism": "Example organism",
+    "substrate": "example glucose",
+    "mutation_context": {
+      "wild_type": true,
+      "mutation_signature": null,
+      "mutation_note": "Synthetic example only."
+    },
+    "kinetic_claim": {
+      "field": "Km",
+      "value": 2.1,
+      "unit": "mM",
+      "source_native_value": "2.1 mM"
+    },
+    "source": {
+      "database": "SyntheticDB",
+      "source_record_id": "SYN-0001",
+      "source_snapshot": {
+        "enzyme": "example kinase",
+        "organism": "Example organism",
+        "substrate": "example glucose",
+        "Km": "2.1 mM"
+      }
+    },
+    "literature": {
+      "pmid": "00000000",
+      "pmcid": null,
+      "doi": "10.0000/synthetic.catlog.demo"
+    },
+    "evidence": [
+      {
+        "evidence_id": "synthetic-table-1",
+        "evidence_kind": "synthetic_table_excerpt",
+        "text": "Synthetic table reports Km = 2.1 mM for example kinase with example glucose in Example organism.",
+        "strength_hint": "strong"
+      }
+    ],
+    "automated_flags": []
+  }
+]

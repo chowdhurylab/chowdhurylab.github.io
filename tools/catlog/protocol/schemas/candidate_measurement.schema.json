@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CatLog candidate measurement",
+  "type": "object",
+  "required": [
+    "measurement_key",
+    "review_key",
+    "ec_number",
+    "enzyme_name",
+    "organism",
+    "substrate",
+    "kinetic_claim",
+    "source",
+    "evidence"
+  ],
+  "properties": {
+    "measurement_key": {"type": "string"},
+    "record_id": {"type": "string"},
+    "review_key": {"type": "string"},
+    "ec_number": {"type": "string"},
+    "enzyme_name": {"type": "string"},
+    "organism": {"type": "string"},
+    "substrate": {"type": "string"},
+    "mutation_context": {
+      "type": "object",
+      "properties": {
+        "wild_type": {"type": ["boolean", "null"]},
+        "mutation_signature": {"type": ["string", "null"]},
+        "mutation_note": {"type": ["string", "null"]}
+      }
+    },
+    "kinetic_claim": {
+      "type": "object",
+      "required": ["field", "value", "unit"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "enum": ["kcat", "Km", "Ki", "kcat_over_Km", "Vmax", "other"]
+        },
+        "value": {"type": ["number", "string"]},
+        "unit": {"type": "string"},
+        "source_native_value": {"type": ["string", "number", "null"]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["database", "source_record_id"],
+      "properties": {
+        "database": {"type": "string"},
+        "source_record_id": {"type": "string"},
+        "source_snapshot": {"type": ["object", "string", "null"]}
+      }
+    },
+    "literature": {
+      "type": "object",
+      "properties": {
+        "pmid": {"type": ["string", "null"]},
+        "pmcid": {"type": ["string", "null"]},
+        "doi": {"type": ["string", "null"]}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "automated_flags": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": true
+}

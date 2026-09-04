@@ -1,0 +1,30 @@
+[
+  {
+    "measurement_key": "synthetic-measurement-001",
+    "record_id": "synthetic-record-001",
+    "review_key": "batch-demo-001:synthetic-record-001",
+    "ec_number": "2.7.1.1",
+    "verification_status": "verified",
+    "review_loop_count": 3,
+    "review_summary": "The synthetic Km claim is supported by the included synthetic table excerpt.",
+    "review_understanding": "The candidate states a Km of 2.1 mM for example kinase acting on example glucose in Example organism. The preserved synthetic source snapshot and synthetic table excerpt describe the same enzyme, organism, substrate, and populated kinetic field.",
+    "critique_rationale": "No contradiction was present in the bounded synthetic evidence. The decision depends only on the included synthetic source and should not be generalized beyond this example.",
+    "audit_history": [
+      "Loop 1: Identified the candidate claim as Km = 2.1 mM for example kinase with example glucose.",
+      "Loop 2: Checked that enzyme, organism, substrate, and kinetic field matched the preserved synthetic source snapshot.",
+      "Loop 3: Verified the claim because the synthetic table excerpt directly supported the populated field."
+    ],
+    "evidence_used": [
+      {
+        "evidence_id": "synthetic-table-1",
+        "evidence_kind": "synthetic_table_excerpt",
+        "finding": "The excerpt directly states the same Km value for the same synthetic enzyme, organism, and substrate.",
+        "strength": "strong",
+        "direct_excerpt": "Synthetic table reports Km = 2.1 mM for example kinase with example glucose in Example organism."
+      }
+    ],
+    "field_corrections": {},
+    "remaining_blockers": [],
+    "verification_notes": "Synthetic demonstration only; no real database or paper evidence is included."
+  }
+]

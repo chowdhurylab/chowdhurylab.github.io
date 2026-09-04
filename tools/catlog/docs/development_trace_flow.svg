@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="520" viewBox="0 0 1240 520" role="img" aria-labelledby="title desc">
+  <title id="title">CatLog development trace flow</title>
+  <desc id="desc">A left-to-right flow showing source records, evidence-preserving schema, automated checks, structured review, conservative merge, follow-up holds, audit interface, and progress accounting.</desc>
+  <defs>
+    <style>
+      .box { fill: #f8fbfa; stroke: #2f5f5b; stroke-width: 2; rx: 8; }
+      .decision { fill: #fff8ee; stroke: #9a6a2f; stroke-width: 2; }
+      .hold { fill: #fff4f5; stroke: #9b4650; stroke-width: 2; rx: 8; }
+      .text { font-family: Arial, Helvetica, sans-serif; font-size: 17px; fill: #173331; }
+      .small { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #48605d; }
+      .arrow { stroke: #456a67; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .soft { stroke: #8a9d9a; stroke-width: 2; fill: none; marker-end: url(#arrowSoft); stroke-dasharray: 6 5; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#456a67"/>
+    </marker>
+    <marker id="arrowSoft" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8a9d9a"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="42" class="text" style="font-size:24px;font-weight:700">CatLog method development flow</text>
+  <text x="40" y="70" class="small">The development ledger resolves into a data-curation backbone: preserve evidence, gate automatically, review only unresolved cases, and merge conservatively.</text>
+
+  <rect class="box" x="40" y="130" width="150" height="76"/>
+  <text class="text" x="62" y="160">Source</text>
+  <text class="text" x="62" y="183">records</text>
+
+  <rect class="box" x="240" y="130" width="190" height="76"/>
+  <text class="text" x="263" y="158">Evidence-</text>
+  <text class="text" x="263" y="181">preserving schema</text>
+
+  <rect class="box" x="480" y="130" width="190" height="76"/>
+  <text class="text" x="506" y="158">Automated</text>
+  <text class="text" x="506" y="181">quality checks</text>
+
+  <polygon class="decision" points="760,118 850,168 760,218 670,168"/>
+  <text class="text" x="718" y="162">Resolved</text>
+  <text class="text" x="729" y="184">by checks?</text>
+
+  <rect class="box" x="935" y="70" width="190" height="76"/>
+  <text class="text" x="963" y="99">Curated</text>
+  <text class="text" x="963" y="122">record</text>
+
+  <rect class="box" x="935" y="235" width="190" height="76"/>
+  <text class="text" x="959" y="264">Structured</text>
+  <text class="text" x="959" y="287">evidence review</text>
+
+  <polygon class="decision" points="760,290 850,340 760,390 670,340"/>
+  <text class="text" x="719" y="334">Evidence</text>
+  <text class="text" x="723" y="356">sufficient?</text>
+
+  <rect class="box" x="480" y="302" width="190" height="76"/>
+  <text class="text" x="508" y="330">Conservative</text>
+  <text class="text" x="508" y="353">merge</text>
+
+  <rect class="hold" x="935" y="370" width="190" height="76"/>
+  <text class="text" x="965" y="399">Follow-up</text>
+  <text class="text" x="965" y="422">hold</text>
+
+  <rect class="box" x="240" y="302" width="190" height="76"/>
+  <text class="text" x="268" y="330">Audit</text>
+  <text class="text" x="268" y="353">interface</text>
+
+  <rect class="box" x="40" y="302" width="150" height="76"/>
+  <text class="text" x="63" y="330">Progress</text>
+  <text class="text" x="63" y="353">accounting</text>
+
+  <path class="arrow" d="M190 168 H240"/>
+  <path class="arrow" d="M430 168 H480"/>
+  <path class="arrow" d="M670 168 H690"/>
+  <path class="arrow" d="M850 150 C880 125 900 110 935 108"/>
+  <path class="arrow" d="M850 186 C890 215 905 247 935 265"/>
+  <path class="arrow" d="M935 273 C900 300 875 325 850 340"/>
+  <path class="arrow" d="M670 340 H480"/>
+  <path class="arrow" d="M850 360 C890 382 905 405 935 408"/>
+  <path class="arrow" d="M935 108 C860 68 735 68 670 130"/>
+  <path class="arrow" d="M480 340 H430"/>
+  <path class="arrow" d="M935 408 C760 480 470 446 430 370"/>
+  <path class="arrow" d="M240 340 H190"/>
+
+  <rect class="box" x="40" y="430" width="240" height="54"/>
+  <text class="small" x="62" y="455">Source-native count census</text>
+  <text class="small" x="62" y="475">separate from curated rows</text>
+  <path class="soft" d="M160 430 C145 410 125 390 115 378"/>
+
+  <rect class="box" x="310" y="430" width="240" height="54"/>
+  <text class="small" x="332" y="455">Localized review workload</text>
+  <text class="small" x="332" y="475">tracked as a separate layer</text>
+  <path class="soft" d="M350 430 C338 410 337 390 338 378"/>
+</svg>

@@ -1,0 +1,40 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+
+# Database and runtime artifacts
+data/
+logs/
+output/
+dist/
+*.jsonl
+*.sqlite
+*.db
+*.bak
+*.lock
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+
+# Catlog live-workspace artifacts that do not belong in the method package
+.catlog/
+.review_state/
+.runtime/
+.tmp/
+tmp/
+archive/*.zip
+
+# macOS
+.DS_Store

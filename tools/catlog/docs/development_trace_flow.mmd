@@ -1,0 +1,16 @@
+flowchart LR
+  A["Source records"] --> B["Evidence-preserving schema"]
+  B --> C["Automated quality checks"]
+  C --> D{"Resolved by checks?"}
+  D -->|yes| E["Curated record"]
+  D -->|no| F["Structured evidence review"]
+  F --> G{"Evidence sufficient?"}
+  G -->|verified or corrected| H["Conservative merge"]
+  G -->|ambiguous| I["Follow-up hold"]
+  H --> E
+  E --> J["Audit interface"]
+  I --> J
+  J --> K["Progress accounting"]
+
+  L["Source-native count census"] --> K
+  M["Localized review workload"] --> K

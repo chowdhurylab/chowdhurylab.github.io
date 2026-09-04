@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CatLog review verdict",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "measurement_key",
+      "review_key",
+      "ec_number",
+      "verification_status",
+      "review_loop_count",
+      "review_summary",
+      "review_understanding",
+      "critique_rationale",
+      "audit_history",
+      "evidence_used",
+      "verification_notes"
+    ],
+    "properties": {
+      "measurement_key": {"type": "string"},
+      "record_id": {"type": "string"},
+      "review_key": {"type": "string"},
+      "ec_number": {"type": "string"},
+      "verification_status": {
+        "type": "string",
+        "enum": [
+          "verified",
+          "corrected",
+          "rejected",
+          "manual_review_required"
+        ]
+      },
+      "review_loop_count": {"type": "integer", "minimum": 3},
+      "review_summary": {"type": "string"},
+      "review_understanding": {"type": "string"},
+      "critique_rationale": {"type": "string"},
+      "audit_history": {
+        "type": "array",
+        "minItems": 3,
+        "items": {"type": "string"}
+      },
+      "evidence_used": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["evidence_id", "evidence_kind", "finding", "strength"],
+          "properties": {
+            "evidence_id": {"type": "string"},
+            "evidence_kind": {"type": "string"},
+            "finding": {"type": "string"},
+            "strength": {
+              "type": "string",
+              "enum": ["strong", "medium", "weak", "contradictory"]
+            },
+            "direct_excerpt": {"type": ["string", "null"]}
+          },
+          "additionalProperties": true
+        }
+      },
+      "field_corrections": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "remaining_blockers": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
+      "verification_notes": {"type": "string"}
+    },
+    "additionalProperties": true
+  }
+}
