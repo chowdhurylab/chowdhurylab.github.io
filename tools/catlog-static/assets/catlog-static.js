@@ -686,6 +686,10 @@
     return row.has_literature_id ? "Reference available" : "Source record";
   }
 
+  function sourceLicense(summary, detail) {
+    return detail.source_license || summary.source_license;
+  }
+
   function isIdentityOnlyAccepted(row) {
     return (row._recordState || recordStateForRow(row)) === "accepted"
       && String(row.public_trust_basis || "").trim() === "identity_only";
@@ -865,9 +869,13 @@
     if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
   }
 
+  function recordIndexPath() {
+    return manifest.viewer_index?.path || manifest.table_download?.path || "";
+  }
+
   function canStreamCompressedIndex() {
     return window.location.protocol !== "file:"
-      && Boolean(manifest.table_download?.path)
+      && Boolean(recordIndexPath())
       && typeof window.DecompressionStream === "function";
   }
 
@@ -928,7 +936,7 @@
   }
 
   async function streamCompressedRecordIndexAttempt(retryAttempt = 0) {
-    const tablePath = manifest.table_download?.path;
+    const tablePath = recordIndexPath();
     if (!canStreamCompressedIndex()) return null;
 
     const response = await fetch(versionedAssetUrl(tablePath, retryAttempt));
@@ -2073,6 +2081,12 @@
   }
 
   function measurementSection(summary, detail) {
+    const metricSummary = {
+      ...summary,
+      has_ki: detail.has_ki ?? summary.has_ki,
+      ki_display: detail.ki_display ?? summary.ki_display,
+      ki_unit: detail.ki_unit ?? summary.ki_unit,
+    };
     const temperature = formatTemperature(summary);
     const flags = conditionFlags(summary, detail);
     const hasTemperatureFlag = [...flags].some((flag) => flag.startsWith("temperature_"));
@@ -2089,12 +2103,12 @@
           ? `${compactValue(detail.ph ?? summary.ph)} (stored)`
           : EMPTY_VALUE);
     const metrics = [
-      ["<i>k</i><sub>cat</sub>", "kcat", metricDisplay(summary, "kcat")],
-      ["<i>K</i><sub>m</sub>", "km", metricDisplay(summary, "km")],
-      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(summary, "kcat_over_km")],
+      ["<i>k</i><sub>cat</sub>", "kcat", metricDisplay(metricSummary, "kcat")],
+      ["<i>K</i><sub>m</sub>", "km", metricDisplay(metricSummary, "km")],
+      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(metricSummary, "kcat_over_km")],
     ];
-    if (summary.has_ki) {
-      metrics.push(["<i>K</i><sub>i</sub>", "ki", metricDisplay(summary, "ki")]);
+    if (metricSummary.has_ki) {
+      metrics.push(["<i>K</i><sub>i</sub>", "ki", metricDisplay(metricSummary, "ki")]);
     }
     const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
     return `
@@ -2102,8 +2116,8 @@
         <h3>Kinetic measurement</h3>
         <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
           ${metrics.map(([label, field, value]) => {
-            const unitMissing = metricUnitMissing(summary, field, flags);
-            const unit = unitMissing ? "" : metricUnitHtml(summary, field);
+            const unitMissing = metricUnitMissing(metricSummary, field, flags);
+            const unit = unitMissing ? "" : metricUnitHtml(metricSummary, field);
             return `
             <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
               <span>${label}${unitMissing ? unitMissingHtml() : (unit ? `<small>${unit}</small>` : "")}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
@@ -2283,7 +2297,7 @@
       ` : ""}
       ${detailDisclosure("Source details", [
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
-        kv("Source license", summary.source_license || detail.source_license),
+        kv("Source license", sourceLicense(summary, detail)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         kv("Database rows", detail.source_record_count || summary.source_record_count),
         detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
@@ -2565,6 +2579,9 @@
       loadScript,
       retainDetailShard,
       detailForRow,
+      recordIndexPath,
+      publicSummaryRecord,
+      sourceLicense,
       indexLoadedRecords,
       rowComparator,
       cooperativeStableSort,

@@ -19,6 +19,7 @@ Snapshot details
 - All public data: downloads all rows with available protein sequences, SMILES, references, and public provenance
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
+- Browser viewer index: loads a 41-field projection; the Table index above remains the complete public download
 - Download page: exports the displayed rows with public molecular identity, references, and provenance
 - All public data file: data/catlog-enriched.jsonl.gz
 - Rows with sequence: 75936
