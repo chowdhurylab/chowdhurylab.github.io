@@ -5,7 +5,7 @@
   --panel-muted: #f8faf9;
   --ink: #172120;
   --muted: #5f6b68;
-  --quiet: #7d8783;
+  --quiet: #69736d;
   --line: #d3dcd7;
   --line-soft: #e7ece9;
   --blue: #245f58;
@@ -546,7 +546,7 @@ button:disabled {
 
 .evidence-axis-items .source,
 .evidence-distribution .source {
-  background: #9ba5a0;
+  background: #7d8783;
 }
 
 .evidence-dot {
