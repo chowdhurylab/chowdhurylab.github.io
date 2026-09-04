@@ -263,6 +263,27 @@ function row(overrides = {}) {
 }
 
 assert.equal(
+  api.conditionFlags(row({
+    kcat: 1.4,
+    km: 13,
+    kcat_over_km: 0.1,
+    condition_flags: ["kcat_over_km_quotient_mismatch"],
+  })).has("kcat_over_km_quotient_mismatch"),
+  false,
+  "source rounding should not display a quotient warning",
+);
+assert.equal(
+  api.conditionFlags(row({
+    kcat: 0.00028,
+    km: 15.0,
+    kcat_over_km: 0.17,
+    condition_flags: ["kcat_over_km_quotient_mismatch"],
+  })).has("kcat_over_km_quotient_mismatch"),
+  true,
+  "a material quotient discrepancy should remain visible",
+);
+
+assert.equal(
   (sourceCode.match(/<h2 id="detailHeading" tabindex="-1">/g) || []).length,
   2,
   "success and error details should both expose a programmatically focusable heading",
