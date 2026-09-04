@@ -6,6 +6,20 @@ const sourceCode = await readFile(
   new URL("../tools/catlog-static/assets/catlog-static.js", import.meta.url),
   "utf8",
 );
+const indexHtml = await readFile(
+  new URL("../tools/catlog-static/index.html", import.meta.url),
+  "utf8",
+);
+
+assert.match(
+  indexHtml,
+  /<aside id="detailPanel" class="detail-panel" tabindex="-1" aria-label="Record details">/,
+);
+assert.doesNotMatch(indexHtml, /<aside[^>]*class="detail-panel"[^>]*aria-live=/);
+assert.match(
+  indexHtml,
+  /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
+);
 
 function makeClassList() {
   const values = new Set();
@@ -23,6 +37,7 @@ function makeClassList() {
 }
 
 function makeElement(id) {
+  const attributes = new Map();
   return {
     id,
     value: "",
@@ -32,19 +47,22 @@ function makeElement(id) {
     disabled: false,
     checked: false,
     open: false,
+    tabIndex: -1,
     dataset: {},
+    inert: false,
     style: { setProperty() {} },
     classList: makeClassList(),
     addEventListener() {},
     appendChild() {},
     remove() {},
-    setAttribute() {},
-    removeAttribute() {},
+    setAttribute(name, value) { attributes.set(name, String(value)); },
+    removeAttribute(name) { attributes.delete(name); },
+    getAttribute(name) { return attributes.get(name) ?? null; },
     querySelector: () => null,
     querySelectorAll: () => [],
     closest: () => null,
     contains: () => false,
-    focus() {},
+    focus() { document.activeElement = this; },
     scrollTo() {},
     getBoundingClientRect: () => ({ left: 0, bottom: 0, width: 200 }),
   };
@@ -63,6 +81,15 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
+const detailBackgroundSelector = [
+  ".app-header",
+  "#catalogLoadProgress",
+  "#searchSuggestions",
+  "#catalogView > .snapshot-band",
+  "#catalogFooter",
+  ".workbench > :not(.detail-panel)",
+].join(", ");
+const detailBackgroundElements = [makeElement("header"), makeElement("table")];
 const document = {
   baseURI: "https://example.test/catlog/",
   currentScript: {
@@ -83,6 +110,7 @@ const document = {
     }
     if (selector === 'input[name="recordState"]') return recordStateInputs;
     if (selector === 'input[name="measurement"]') return measurementInputs;
+    if (selector === detailBackgroundSelector) return detailBackgroundElements;
     return [];
   },
   addEventListener() {},
@@ -91,6 +119,7 @@ const document = {
 
 let yieldCount = 0;
 let embeddedDetailPanel = false;
+let narrowDetailPanel = false;
 const window = {
   CATLOG_STATIC_TEST_MODE: true,
   CATLOG_STATIC_MANIFEST: {},
@@ -111,7 +140,11 @@ const window = {
   },
   history: { pushState() {}, replaceState() {} },
   matchMedia: (query) => ({
-    matches: embeddedDetailPanel && query === "(min-width: 1681px)",
+    get matches() {
+      if (query === "(min-width: 1681px)") return embeddedDetailPanel;
+      if (query === "(max-width: 1180px)") return narrowDetailPanel;
+      return false;
+    },
     addEventListener() {},
   }),
   addEventListener() {},
@@ -138,6 +171,36 @@ vm.runInNewContext(sourceCode, {
 
 const api = window.CATLOG_STATIC_TEST_API;
 assert.ok(api, "test API should be exposed without starting the application");
+
+const focusRows = [{ record_key: "first" }, { record_key: "second" }];
+api.state.activeRowKey = "";
+api.state.selectedKey = "";
+assert.equal(api.activeTableRowKey(focusRows), "first");
+api.state.activeRowKey = "second";
+assert.equal(api.activeTableRowKey(focusRows), "second");
+api.state.activeRowKey = "missing";
+api.state.selectedKey = "first";
+assert.equal(api.activeTableRowKey(focusRows), "first");
+api.state.activeRowKey = "";
+api.state.selectedKey = "";
+assert.equal(api.openedRecordMessage({ enzyme_display_name: "Example enzyme" }), "Opened Example enzyme");
+assert.equal(api.openedRecordMessage({}), "Opened record");
+
+const detailPanel = element("detailPanel");
+narrowDetailPanel = true;
+document.body.classList.add("detail-open");
+document.activeElement = detailBackgroundElements[0];
+api.syncDetailPanelAccessibility();
+assert.equal(detailPanel.getAttribute("role"), "dialog");
+assert.equal(detailPanel.getAttribute("aria-modal"), "true");
+assert.ok(detailBackgroundElements.every((item) => item.inert));
+assert.equal(document.activeElement, detailPanel);
+narrowDetailPanel = false;
+api.syncDetailPanelAccessibility();
+assert.equal(detailPanel.getAttribute("role"), null);
+assert.equal(detailPanel.getAttribute("aria-modal"), null);
+assert.ok(detailBackgroundElements.every((item) => !item.inert));
+document.body.classList.remove("detail-open");
 
 assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
 assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
@@ -198,6 +261,61 @@ function row(overrides = {}) {
     ...overrides,
   };
 }
+
+assert.equal(
+  (sourceCode.match(/<h2 id="detailHeading" tabindex="-1">/g) || []).length,
+  2,
+  "success and error details should both expose a programmatically focusable heading",
+);
+assert.equal(
+  (sourceCode.match(/if \(focusDetail\) focusDetailHeading\(key\);/g) || []).length,
+  2,
+  "success and error details should both move explicit-selection focus",
+);
+
+const firstRowElement = makeElement("firstRow");
+firstRowElement.dataset.key = "first";
+const secondRowElement = makeElement("secondRow");
+secondRowElement.dataset.key = "second";
+const rovingRows = [firstRowElement, secondRowElement];
+api.setActiveTableRow(firstRowElement, rovingRows);
+assert.equal(firstRowElement.tabIndex, 0);
+assert.equal(secondRowElement.tabIndex, -1);
+assert.equal(rovingRows.filter((item) => item.tabIndex === 0).length, 1);
+api.moveTableRowFocus(firstRowElement, 1, rovingRows);
+assert.equal(firstRowElement.tabIndex, -1);
+assert.equal(secondRowElement.tabIndex, 0);
+assert.equal(document.activeElement, secondRowElement);
+assert.equal(api.state.activeRowKey, "second");
+api.moveTableRowFocus(secondRowElement, -1, rovingRows);
+assert.equal(document.activeElement, firstRowElement);
+assert.equal(rovingRows.filter((item) => item.tabIndex === 0).length, 1);
+
+api.announceOpenedRecord({ enzyme_display_name: "Example enzyme" });
+assert.equal(element("detailStatus").textContent, "Opened Example enzyme");
+
+element("recordsBody").querySelectorAll = (selector) => (
+  selector === "tr[data-key]" ? rovingRows : []
+);
+api.state.filtered = [
+  row({ record_key: "first" }),
+  row({ record_key: "second" }),
+];
+api.state.page = 1;
+api.state.pageSize = 25;
+api.state.recordsReady = true;
+api.state.selectedKey = "second";
+api.state.activeRowKey = "second";
+api.setActiveTableRow(secondRowElement, rovingRows);
+narrowDetailPanel = true;
+document.body.classList.add("detail-open");
+api.focusDetailHeading("second");
+api.closeDetailAndRestoreFocus();
+await new Promise((resolve) => setTimeout(resolve, 220));
+assert.equal(document.activeElement, secondRowElement, "close should win a pending heading-focus race");
+assert.equal(element("detailStatus").textContent, "");
+assert.equal(document.body.classList.contains("detail-open"), false);
+narrowDetailPanel = false;
 
 function referenceEcSort(a, b) {
   const left = a._ecSort || [];
@@ -465,4 +583,4 @@ assert.equal(
 assert.equal(api.state.selectedKey, expectedSelectedRow.record_key);
 embeddedDetailPanel = false;
 
-console.log("CatLog cooperative sort and cache checks passed.");
+console.log("CatLog viewer behavior checks passed.");

@@ -13,6 +13,7 @@
     page: 1,
     pageSize: 25,
     selectedKey: "",
+    activeRowKey: "",
     selectedDetail: null,
     recordChunksLoaded: 0,
     recordChunksTotal: 0,
@@ -36,6 +37,14 @@
   const SORT_CACHE_LIMIT = 2;
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowFilterMedia = window.matchMedia("(max-width: 1180px)");
+  const DETAIL_INERT_SELECTOR = [
+    ".app-header",
+    "#catalogLoadProgress",
+    "#searchSuggestions",
+    "#catalogView > .snapshot-band",
+    "#catalogFooter",
+    ".workbench > :not(.detail-panel)",
+  ].join(", ");
 
   const recordStates = [
     {
@@ -1629,7 +1638,7 @@
   async function ensureCurrentFiltersAndSelectFirst(options = {}) {
     await ensureCurrentFilters(options);
     if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
-      await selectRecord(state.filtered[0].record_key);
+      await selectRecord(state.filtered[0].record_key, { focusDetail: false });
     }
   }
 
@@ -1665,11 +1674,35 @@
     }, 120);
   }
 
+  function activeTableRowKey(pageRows) {
+    if (pageRows.some((row) => row.record_key === state.activeRowKey)) return state.activeRowKey;
+    if (pageRows.some((row) => row.record_key === state.selectedKey)) return state.selectedKey;
+    return pageRows[0]?.record_key || "";
+  }
+
+  function setActiveTableRow(rowElement, rowElements) {
+    state.activeRowKey = rowElement.dataset.key || "";
+    rowElements.forEach((candidate) => {
+      candidate.tabIndex = candidate === rowElement ? 0 : -1;
+    });
+  }
+
+  function moveTableRowFocus(rowElement, direction, rowElements) {
+    const currentIndex = rowElements.indexOf(rowElement);
+    const nextIndex = Math.min(Math.max(currentIndex + direction, 0), rowElements.length - 1);
+    const nextRow = rowElements[nextIndex];
+    if (!nextRow) return;
+    setActiveTableRow(nextRow, rowElements);
+    nextRow.focus();
+  }
+
   function renderRows() {
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
     state.page = Math.min(Math.max(1, state.page), totalPages);
     const start = (state.page - 1) * state.pageSize;
     const pageRows = currentPageRows();
+    const activeRowKey = activeTableRowKey(pageRows);
+    state.activeRowKey = activeRowKey;
     const range = pageRows.length
       ? `${formatInteger(start + 1)}–${formatInteger(Math.min(start + pageRows.length, state.filtered.length))} of ${formatInteger(state.filtered.length)}`
       : "";
@@ -1689,7 +1722,7 @@
     $("nextButton").disabled = state.page >= totalPages;
     $("downloadPageButton").disabled = !pageRows.length;
     $("recordsBody").innerHTML = pageRows.map((row) => `
-      <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="0" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
+      <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="primary-cell">
           <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
           <span class="primary-meta">
@@ -1709,9 +1742,16 @@
         <td class="row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
     `).join("");
-    [...$("recordsBody").querySelectorAll("tr")].forEach((rowElement) => {
+    const rowElements = [...$("recordsBody").querySelectorAll("tr[data-key]")];
+    rowElements.forEach((rowElement) => {
+      rowElement.addEventListener("focus", () => setActiveTableRow(rowElement, rowElements));
       rowElement.addEventListener("click", () => selectRecord(rowElement.dataset.key));
       rowElement.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          moveTableRowFocus(rowElement, event.key === "ArrowDown" ? 1 : -1, rowElements);
+          return;
+        }
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
         selectRecord(rowElement.dataset.key);
@@ -1721,10 +1761,46 @@
 
   function setDetailOpen(isOpen) {
     document.body.classList.toggle("detail-open", Boolean(isOpen));
+    syncDetailPanelAccessibility();
   }
 
   function focusAfterPanelTransition(id) {
     window.setTimeout(() => $(id)?.focus(), 180);
+  }
+
+  function syncDetailPanelAccessibility() {
+    const panel = $("detailPanel");
+    const isModal = Boolean(narrowFilterMedia.matches && document.body.classList.contains("detail-open"));
+    if (isModal) {
+      panel?.setAttribute("role", "dialog");
+      panel?.setAttribute("aria-modal", "true");
+    } else {
+      panel?.removeAttribute("role");
+      panel?.removeAttribute("aria-modal");
+    }
+    document.querySelectorAll(DETAIL_INERT_SELECTOR).forEach((element) => {
+      element.inert = isModal;
+    });
+    if (isModal && panel && !panel.contains(document.activeElement)) panel.focus();
+  }
+
+  function openedRecordMessage(row) {
+    const enzymeName = String(row?.enzyme_display_name || "").trim() || "record";
+    return `Opened ${enzymeName}`;
+  }
+
+  function announceOpenedRecord(row) {
+    const status = $("detailStatus");
+    if (status) status.textContent = openedRecordMessage(row);
+  }
+
+  function focusDetailHeading(key) {
+    const focusCurrentHeading = () => {
+      if (state.selectedKey !== key || !document.body.classList.contains("detail-open")) return;
+      $("detailHeading")?.focus();
+    };
+    if (narrowFilterMedia.matches) window.setTimeout(focusCurrentHeading, 180);
+    else focusCurrentHeading();
   }
 
   function setFiltersOpen(isOpen) {
@@ -1783,6 +1859,7 @@
   function resetDetail() {
     state.selectedKey = "";
     state.selectedDetail = null;
+    $("detailStatus").textContent = "";
     $("detailContent").classList.add("hidden");
     $("detailEmpty").classList.remove("hidden");
     setDetailOpen(false);
@@ -1801,7 +1878,7 @@
     return window.matchMedia("(min-width: 1681px)").matches;
   }
 
-  async function selectRecord(key) {
+  async function selectRecord(key, { focusDetail = true } = {}) {
     const row = state.records.find((item) => item.record_key === key);
     if (!row) {
       resetDetail();
@@ -1809,8 +1886,10 @@
       return;
     }
     state.selectedKey = key;
+    state.activeRowKey = key;
     setFiltersOpen(false);
     setDetailOpen(true);
+    if (focusDetail) announceOpenedRecord(row);
     renderRows();
     $("detailEmpty").classList.add("hidden");
     $("detailContent").classList.remove("hidden");
@@ -1829,12 +1908,13 @@
       });
       if (state.selectedKey !== key) return;
       renderDetail(row, state.selectedDetail);
+      if (focusDetail) focusDetailHeading(key);
     } catch (error) {
       if (state.selectedKey !== key) return;
       $("detailContent").innerHTML = `
         <div class="detail-top">
           <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
-          <h2>${escapePublic(row.enzyme_display_name || "Name not preserved")}</h2>
+          <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Name not preserved")}</h2>
           <p>${escapeHtml(row.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(row.organism || EMPTY_VALUE)}</p>
         </div>
         <div class="detail-load-error" role="alert">
@@ -1845,7 +1925,7 @@
       `;
       $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
       $("retryDetailButton").addEventListener("click", () => selectRecord(key));
-      if (narrowFilterMedia.matches) focusAfterPanelTransition("closeDetailButton");
+      if (focusDetail) focusDetailHeading(key);
     }
   }
 
@@ -2129,7 +2209,7 @@
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
-        <h2>${escapePublic(summary.enzyme_display_name || "Name not preserved")}</h2>
+        <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Name not preserved")}</h2>
         <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
         <div class="detail-status-line">
           ${statusBadge(summary)}
@@ -2175,7 +2255,6 @@
       };
       triggerBlobDownload(`${summary.record_key || "catlog-row"}.json`, JSON.stringify(payload, null, 2));
     });
-    if (narrowFilterMedia.matches) focusAfterPanelTransition("closeDetailButton");
   }
 
   function sourceDatabases() {
@@ -2348,7 +2427,10 @@
       syncFilterPanel();
       updateTableScrollControls();
     });
-    narrowFilterMedia.addEventListener?.("change", syncFilterPanel);
+    narrowFilterMedia.addEventListener?.("change", () => {
+      syncFilterPanel();
+      syncDetailPanelAccessibility();
+    });
     $("statusChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
     });
@@ -2412,6 +2494,7 @@
       bindControls();
       renderView(viewFromLocation());
       syncFilterPanel();
+      syncDetailPanelAccessibility();
       state.recordsReadyPromise = loadRecordChunks();
       await state.recordsReadyPromise;
     } catch (error) {
@@ -2439,6 +2522,14 @@
       enzymeFormLabel,
       enzymeFormHtml,
       molecularIdentitySection,
+      activeTableRowKey,
+      setActiveTableRow,
+      moveTableRowFocus,
+      openedRecordMessage,
+      announceOpenedRecord,
+      focusDetailHeading,
+      closeDetailAndRestoreFocus,
+      syncDetailPanelAccessibility,
     };
   } else {
     init();

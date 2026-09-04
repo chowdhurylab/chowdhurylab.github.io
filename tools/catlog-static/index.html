@@ -14,8 +14,8 @@
     <meta property="og:description" content="A searchable enzyme kinetics catalog with review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
-    <link rel="icon" type="image/svg+xml" href="assets/catlog-mark.svg?v=6c8874602944e5ea" />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=6c8874602944e5ea" />
+    <link rel="icon" type="image/svg+xml" href="assets/catlog-mark.svg?v=53808c62d2e226ec" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=53808c62d2e226ec" />
   </head>
   <body>
     <div class="static-app">
@@ -47,7 +47,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="data/catlog-enriched.jsonl.gz?v=6c8874602944e5ea"
+                href="data/catlog-enriched.jsonl.gz?v=53808c62d2e226ec"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
@@ -55,7 +55,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="data/catlog-table.jsonl.gz?v=6c8874602944e5ea"
+                href="data/catlog-table.jsonl.gz?v=53808c62d2e226ec"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
@@ -217,7 +217,8 @@
             </div>
           </section>
 
-          <aside class="detail-panel" aria-label="Record details" aria-live="polite">
+          <aside id="detailPanel" class="detail-panel" tabindex="-1" aria-label="Record details">
+            <p id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
             <div id="detailEmpty" class="detail-empty">Select a row to view its measurement and sources.</div>
             <div id="detailContent" class="hidden"></div>
           </aside>
@@ -246,7 +247,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="assets/catlog-guide-workflow.svg?v=6c8874602944e5ea"
+                src="assets/catlog-guide-workflow.svg?v=53808c62d2e226ec"
                 alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
@@ -322,7 +323,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="data/catlog-enriched.jsonl.gz?v=6c8874602944e5ea"
+                    href="data/catlog-enriched.jsonl.gz?v=53808c62d2e226ec"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -426,8 +427,8 @@
       </main>
     </div>
 
-    <script src="data/manifest.js?v=6c8874602944e5ea"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=6c8874602944e5ea"></script>
+    <script src="data/manifest.js?v=53808c62d2e226ec"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=53808c62d2e226ec"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>
