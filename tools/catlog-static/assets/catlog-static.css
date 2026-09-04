@@ -1430,6 +1430,10 @@ tbody tr.selected .row-arrow {
   border-bottom: 1px solid var(--line);
 }
 
+.measurement-strip.has-ki {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .measurement-value {
   display: grid;
   min-width: 0;
