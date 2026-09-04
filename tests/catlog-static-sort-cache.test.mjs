@@ -176,9 +176,13 @@ const document = {
 let yieldCount = 0;
 let embeddedDetailPanel = false;
 let narrowDetailPanel = false;
+const runtimeManifest = {
+  viewer_index: { path: "data/catlog-viewer-index.jsonl.gz" },
+  table_download: { path: "data/catlog-table.jsonl.gz" },
+};
 const window = {
   CATLOG_STATIC_TEST_MODE: true,
-  CATLOG_STATIC_MANIFEST: {},
+  CATLOG_STATIC_MANIFEST: runtimeManifest,
   CATLOG_RECORD_CHUNKS: [],
   CATLOG_DETAIL_SHARDS: {},
   scheduler: {
@@ -227,6 +231,10 @@ vm.runInNewContext(sourceCode, {
 
 const api = window.CATLOG_STATIC_TEST_API;
 assert.ok(api, "test API should be exposed without starting the application");
+assert.equal(api.recordIndexPath(), "data/catlog-viewer-index.jsonl.gz");
+delete runtimeManifest.viewer_index;
+assert.equal(api.recordIndexPath(), "data/catlog-table.jsonl.gz");
+runtimeManifest.viewer_index = { path: "data/catlog-viewer-index.jsonl.gz" };
 
 const scriptedShardPayloads = new Map();
 let injectedScriptCount = 0;
@@ -415,12 +423,11 @@ function row(overrides = {}) {
   };
 }
 
-const kiMeasurementHtml = api.measurementSection(row({
+const kiMeasurementHtml = api.measurementSection(row(), {
   has_ki: true,
-  ki: 0.25,
   ki_display: "0.25",
   ki_unit: "µM",
-}), {});
+});
 assert.match(kiMeasurementHtml, /class="measurement-strip has-ki"/);
 assert.match(kiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
 assert.match(kiMeasurementHtml, /<strong>0\.25<\/strong>/);
@@ -429,6 +436,25 @@ assert.match(kiMeasurementHtml, /<small>µM<\/small>/);
 const noKiMeasurementHtml = api.measurementSection(row({ has_ki: false }), {});
 assert.doesNotMatch(noKiMeasurementHtml, /class="measurement-strip has-ki"/);
 assert.doesNotMatch(noKiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
+
+const mergedPageRecord = api.publicSummaryRecord({
+  paper_grounding_status: "detail-only",
+  ki: 0.25,
+  source_license: "detail license",
+  ...row({ sequence_resolved: true }),
+});
+assert.equal(mergedPageRecord.paper_grounding_status, "detail-only");
+assert.equal(mergedPageRecord.ki, 0.25);
+assert.equal(mergedPageRecord.source_license, "detail license");
+assert.equal(mergedPageRecord.sequence_resolved, true);
+assert.equal(api.sourceLicense({}, { source_license: "detail license" }), "detail license");
+assert.equal(api.sourceLicense({ source_license: "summary license" }, {}), "summary license");
+const detailFalseKiHtml = api.measurementSection(row({
+  has_ki: true,
+  ki_display: "0.5",
+  ki_unit: "mM",
+}), { has_ki: false });
+assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
 
 api.indexLoadedRecords([row()]);
 const searchInput = element("globalSearchInput");
