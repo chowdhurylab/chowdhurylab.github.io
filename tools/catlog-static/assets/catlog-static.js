@@ -1067,7 +1067,12 @@
   async function detailForRow(row, { onRetry = null } = {}) {
     await loadScript(row.detail_shard, false, { onRetry });
     const shard = (window.CATLOG_DETAIL_SHARDS || {})[row.detail_shard] || {};
-    return shard[row.record_key] || {};
+    const detail = shard[row.record_key];
+    if (!detail || typeof detail !== "object") {
+      state.loadedScripts.delete(row.detail_shard);
+      throw new Error(`Detail shard ${row.detail_shard} does not contain ${row.record_key}`);
+    }
+    return detail;
   }
 
   async function handlePageDownload() {
