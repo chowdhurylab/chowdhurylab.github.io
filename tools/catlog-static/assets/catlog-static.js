@@ -130,7 +130,7 @@
   const identityOnlyTrustNote = "Sequence and identity were verified; the kinetic value has no literature reference in CatLog.";
 
   const conditionFlagLabels = {
-    kcat_over_km_quotient_mismatch: "kcat/Km does not match kcat ÷ Km",
+    kcat_over_km_quotient_mismatch: "Reported kcat/Km differs from kcat ÷ Km",
     kcat_over_km_unit_mismatch: "kcat/Km unit mismatch (×1000 class)",
     km_magnitude_needs_check: "Km above 10 M — check units",
     kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹ — check units",
@@ -150,7 +150,7 @@
 
   // Flags that question the value itself; each is surfaced beside the metric it concerns.
   const valueIntegrityFlags = {
-    kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "ratio mismatch" },
+    kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "values differ" },
     kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "unit mismatch" },
     efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above limit" },
     km_magnitude_needs_check: { field: "km", short: "check units" },
@@ -165,6 +165,12 @@
         if (key) flags.add(key);
       });
     });
+    if (
+      flags.has("kcat_over_km_quotient_mismatch")
+      && rows.some((row) => efficiencyMatchesReportedPrecision(row))
+    ) {
+      flags.delete("kcat_over_km_quotient_mismatch");
+    }
     return flags;
   }
 
@@ -494,6 +500,34 @@
       .replace(/\u2212/g, "-")
       .replace(/liters?/g, "l")
       .replace(/[\s()*^\u00b7]/g, "");
+  }
+
+  function reportedInterval(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    const text = String(value).trim().toLowerCase();
+    const [mantissa, exponentText] = text.split("e", 2);
+    const exponent = exponentText === undefined ? 0 : Number(exponentText);
+    if (!Number.isInteger(exponent)) return null;
+    const decimalPlaces = mantissa.includes(".") ? mantissa.split(".", 2)[1].length : 0;
+    const halfStep = 0.5 * (10 ** (exponent - decimalPlaces));
+    if (!Number.isFinite(halfStep)) return null;
+    return [numeric - halfStep, numeric + halfStep];
+  }
+
+  function efficiencyMatchesReportedPrecision(row) {
+    if (!row) return false;
+    const fields = ["kcat", "km", "kcat_over_km"];
+    if (!fields.every((field) => canonicalMetricUnitKeys[field].has(normalizedUnitKey(metricUnit(row, field))))) {
+      return false;
+    }
+    const intervals = fields.map((field) => reportedInterval(row[field]));
+    if (intervals.some((interval) => interval === null)) return false;
+    const [[kcatLow, kcatHigh], [kmLow, kmHigh], [ratioLow, ratioHigh]] = intervals;
+    if (kcatHigh <= 0 || kmHigh <= 0 || ratioHigh <= 0) return false;
+    const computedLow = Math.max(kcatLow, 0) / kmHigh;
+    const computedHigh = kmLow > 0 ? kcatHigh / kmLow : Number.POSITIVE_INFINITY;
+    return Math.max(ratioLow, 0) <= computedHigh && computedLow <= ratioHigh;
   }
 
   function metricUnit(row, field) {
@@ -2519,6 +2553,7 @@
       ensureCurrentFiltersAndSelectFirst,
       applyFiltersInBackground,
       applyPageSize,
+      conditionFlags,
       enzymeFormLabel,
       enzymeFormHtml,
       molecularIdentitySection,
