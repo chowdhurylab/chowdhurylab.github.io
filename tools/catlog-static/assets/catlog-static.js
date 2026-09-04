@@ -2077,11 +2077,14 @@
       ["<i>K</i><sub>m</sub>", "km", metricDisplay(summary, "km")],
       ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(summary, "kcat_over_km")],
     ];
+    if (summary.has_ki) {
+      metrics.push(["<i>K</i><sub>i</sub>", "ki", metricDisplay(summary, "ki")]);
+    }
     const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
     return `
       <section class="detail-section measurement-section">
         <h3>Kinetic measurement</h3>
-        <div class="measurement-strip">
+        <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
           ${metrics.map(([label, field, value]) => {
             const unitMissing = metricUnitMissing(summary, field, flags);
             const unit = unitMissing ? "" : metricUnitHtml(summary, field);
@@ -2554,6 +2557,7 @@
       conditionFlags,
       enzymeFormLabel,
       enzymeFormHtml,
+      measurementSection,
       molecularIdentitySection,
       showSuggestions,
       activeTableRowKey,

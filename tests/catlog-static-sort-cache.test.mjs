@@ -262,6 +262,21 @@ function row(overrides = {}) {
   };
 }
 
+const kiMeasurementHtml = api.measurementSection(row({
+  has_ki: true,
+  ki: 0.25,
+  ki_display: "0.25",
+  ki_unit: "µM",
+}), {});
+assert.match(kiMeasurementHtml, /class="measurement-strip has-ki"/);
+assert.match(kiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
+assert.match(kiMeasurementHtml, /<strong>0\.25<\/strong>/);
+assert.match(kiMeasurementHtml, /<small>µM<\/small>/);
+
+const noKiMeasurementHtml = api.measurementSection(row({ has_ki: false }), {});
+assert.doesNotMatch(noKiMeasurementHtml, /class="measurement-strip has-ki"/);
+assert.doesNotMatch(noKiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
+
 api.indexLoadedRecords([row()]);
 const searchInput = element("globalSearchInput");
 const suggestions = element("searchSuggestions");
