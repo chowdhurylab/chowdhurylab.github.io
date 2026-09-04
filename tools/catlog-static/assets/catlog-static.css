@@ -730,10 +730,10 @@ button:disabled {
   font-size: 12.5px;
 }
 
-.filter-section input:focus,
-.records-tools select:focus,
-.pagination select:focus {
-  outline: 2px solid rgba(40, 107, 98, 0.18);
+.filter-section input:focus-visible,
+.records-tools select:focus-visible,
+.pagination select:focus-visible {
+  outline: 3px solid var(--teal-dark);
   border-color: #7db4ab;
 }
 
