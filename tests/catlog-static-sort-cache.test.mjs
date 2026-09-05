@@ -22,6 +22,15 @@ const manifestPrefix = "window.CATLOG_STATIC_MANIFEST = ";
 const manifestLine = manifestSource.split("\n", 1)[0];
 assert.ok(manifestLine.startsWith(manifestPrefix) && manifestLine.endsWith(";"));
 const publishedManifest = JSON.parse(manifestLine.slice(manifestPrefix.length, -1));
+const publishedAt = new Date(publishedManifest.generated_at);
+assert.ok(!Number.isNaN(publishedAt.valueOf()));
+const expectedSnapshotDate = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+}).format(publishedAt);
+const expectedRowCount = new Intl.NumberFormat("en-US").format(publishedManifest.total_rows);
 
 assert.equal(publishedManifest.details_per_shard, 250);
 assert.equal(
@@ -47,14 +56,16 @@ for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), 
 
 for (const pageHtml of [indexHtml, stableAliasHtml]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.match(
-    pageHtml,
-    /<meta name="description" content="CatLog snapshot dated September 3, 2026: browse 148,289 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures\." \/>/,
+  assert.ok(
+    pageHtml.includes(
+      `<meta name="description" content="CatLog snapshot dated ${expectedSnapshotDate}: browse ${expectedRowCount} enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />`,
+    ),
   );
   assert.match(pageHtml, /<meta property="og:title" content="CatLog \| Enzyme Kinetics Catalog" \/>/);
-  assert.match(
-    pageHtml,
-    /<meta property="og:description" content="CatLog snapshot dated September 3, 2026 with 148,289 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures\." \/>/,
+  assert.ok(
+    pageHtml.includes(
+      `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />`,
+    ),
   );
   assert.match(
     pageHtml,
@@ -76,6 +87,22 @@ assert.match(
   indexHtml,
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
+assert.match(indexHtml, />Paper evidence<\/dt><dd>A structured paper value and its table or measurement excerpt are saved\./);
+assert.match(indexHtml, />Source note<\/dt><dd>A plain note from the source record is saved, but it is not a structured paper-value excerpt\./);
+assert.match(
+  sourceCode,
+  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "paper_evidence";\s+if \(row\.proof_kind === "source_note"\) return "source_note";/,
+);
+assert.match(sourceCode, /counts\.source_note = publicEvidence\.source_note \|\| 0;/);
+assert.match(
+  sourceCode,
+  /<span tabindex="0" title="\$\{escapeHtml\(item\.description\)\}" aria-label="\$\{escapeHtml\(accessibleLabel\)\}">/,
+);
+assert.match(
+  sourceCode,
+  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Source note"\s+: "Values in source";/,
+);
+assert.match(sourceCode, /<h3>\$\{escapeHtml\(proofHeading\)\}<\/h3>/);
 
 function makeClassList() {
   const values = new Set();
@@ -498,13 +525,13 @@ assert.equal(
 
 assert.equal(
   (sourceCode.match(/<h2 id="detailHeading" tabindex="-1">/g) || []).length,
-  2,
-  "success and error details should both expose a programmatically focusable heading",
+  3,
+  "loading, success, and error details should expose a programmatically focusable heading",
 );
 assert.equal(
   (sourceCode.match(/if \(focusDetail\) focusDetailHeading\(key\);/g) || []).length,
-  2,
-  "success and error details should both move explicit-selection focus",
+  3,
+  "loading, success, and error details should move explicit-selection focus",
 );
 
 const firstRowElement = makeElement("firstRow");
