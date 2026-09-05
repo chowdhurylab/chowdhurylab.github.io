@@ -15,6 +15,7 @@
     selectedKey: "",
     activeRowKey: "",
     selectedDetail: null,
+    pageDownloadPending: false,
     recordChunksLoaded: 0,
     recordChunksTotal: 0,
     loadProgressUnit: "chunks",
@@ -1117,6 +1118,7 @@
       _stateRank,
       _tierRank,
       _sourceCount,
+      _loadIndex,
       _ecSort,
       _sortEnzyme,
       _sortOrganism,
@@ -1153,7 +1155,9 @@
     const button = $("downloadPageButton");
     const originalTitle = button?.title || "";
     const rows = currentPageRows();
-    if (!rows.length || button?.disabled) return;
+    if (!rows.length || state.pageDownloadPending || button?.disabled) return;
+    const page = state.page;
+    state.pageDownloadPending = true;
     if (button) {
       button.disabled = true;
       button.textContent = "Preparing...";
@@ -1172,14 +1176,14 @@
           snapshot_generated_at: manifest.generated_at || null,
           source_sha256: manifest.source_sha256 || null,
           export_scope: "current_page_public_records",
-          page: state.page,
+          page,
           row_count: records.length,
           note: "Raw internal source-record payloads are not included in the public static package.",
         },
         records,
       };
       const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
-      triggerBlobDownload(`catlog-page-${state.page}-${filenameDate}.json`, JSON.stringify(payload, null, 2));
+      triggerBlobDownload(`catlog-page-${page}-${filenameDate}.json`, JSON.stringify(payload, null, 2));
     } catch (error) {
       failed = true;
       if (button) {
@@ -1187,8 +1191,9 @@
         button.title = error?.message || "Could not prepare this page download.";
       }
     } finally {
+      state.pageDownloadPending = false;
       if (button) {
-        button.disabled = false;
+        button.disabled = !state.recordsReady || !currentPageRows().length;
         if (!failed) button.textContent = "Download page";
         if (failed) {
           window.setTimeout(() => {
@@ -1776,7 +1781,7 @@
       : "No records";
     $("prevButton").disabled = state.page <= 1;
     $("nextButton").disabled = state.page >= totalPages;
-    $("downloadPageButton").disabled = !pageRows.length;
+    $("downloadPageButton").disabled = state.pageDownloadPending || !pageRows.length;
     $("recordsBody").innerHTML = pageRows.map((row) => `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="primary-cell">
@@ -1949,21 +1954,25 @@
     renderRows();
     $("detailEmpty").classList.add("hidden");
     $("detailContent").classList.remove("hidden");
-    $("detailContent").innerHTML = '<p class="muted">Loading row details...</p>';
+    $("detailContent").innerHTML = `
+      <div class="detail-top">
+        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
+        <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Name not preserved")}</h2>
+      </div>
+      <p id="detailLoadStatus" class="muted" role="status">Loading record...</p>
+    `;
+    $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+    if (focusDetail) focusDetailHeading(key);
     try {
-      state.selectedDetail = await detailForRow(row, {
+      const detail = await detailForRow(row, {
         onRetry: (attempt, delay) => {
           if (state.selectedKey !== key) return;
-          $("detailContent").innerHTML = `
-            <div class="detail-load-progress" role="status">
-              <strong>CatLog is updating</strong>
-              <span>Trying this record again in ${Math.round(delay / 1000)} seconds (${attempt} of ${LOAD_RETRY_DELAYS.length}).</span>
-            </div>
-          `;
+          $("detailLoadStatus").textContent = `Could not load this record. Retrying in ${Math.round(delay / 1000)} seconds (${attempt} of ${LOAD_RETRY_DELAYS.length}).`;
         },
       });
       if (state.selectedKey !== key) return;
-      renderDetail(row, state.selectedDetail);
+      state.selectedDetail = detail;
+      renderDetail(row, detail);
       if (focusDetail) focusDetailHeading(key);
     } catch (error) {
       if (state.selectedKey !== key) return;
