@@ -775,10 +775,35 @@
     return `<span class="state-badge ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
   }
 
+  function isContentHashedDataAsset(src) {
+    if (!src || src.startsWith("data:")) return false;
+    const pathname = new URL(src, catalogBaseUrl).pathname;
+    return /\/data\/(?:(?:details|records)-\d+\.[a-f0-9]{12}\.js|details-\d+\.[a-f0-9]{12}\.jsonl\.gz|catlog-(?:table|enriched|viewer-index)\.[a-f0-9]{12}\.jsonl\.gz)$/i.test(pathname);
+  }
+
+  function isContentHashedDetailShard(src) {
+    if (!src || src.startsWith("data:")) return false;
+    const pathname = new URL(src, catalogBaseUrl).pathname;
+    return /\/data\/details-\d+\.[a-f0-9]{12}\.js$/i.test(pathname);
+  }
+
+  function isCompressedDetailShard(src) {
+    if (!src || src.startsWith("data:")) return false;
+    const pathname = new URL(src, catalogBaseUrl).pathname;
+    return /\/data\/details-\d+\.[a-f0-9]{12}\.jsonl\.gz$/i.test(pathname);
+  }
+
+  function discardDetailShard(src) {
+    delete (window.CATLOG_DETAIL_SHARDS || {})[src];
+    delete (window.CATLOG_DETAIL_SHARD_GENERATIONS || {})[src];
+    state.loadedScripts.delete(src);
+    state.detailShardLru.delete(src);
+  }
+
   function versionedAssetUrl(src, retryAttempt = 0) {
     if (!src || /^(?:https?:)?\/\//.test(src) || src.startsWith("data:")) return src;
     const url = new URL(src, catalogBaseUrl);
-    url.searchParams.set("v", assetVersion);
+    if (!isContentHashedDataAsset(src)) url.searchParams.set("v", assetVersion);
     if (retryAttempt > 0) url.searchParams.set("retry", String(retryAttempt));
     return url.href;
   }
@@ -790,9 +815,22 @@
   function loadScriptAttempt(src, ordered, retryAttempt) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
+      script.dataset.catlogShard = src;
       script.src = versionedAssetUrl(src, retryAttempt);
       script.async = !ordered;
       script.onload = () => {
+        if (isContentHashedDetailShard(src)) {
+          const expectedGeneration = String(manifest.source_sha256 || "");
+          const actualGeneration = String(
+            (window.CATLOG_DETAIL_SHARD_GENERATIONS || {})[src] || "",
+          );
+          if (!expectedGeneration || actualGeneration !== expectedGeneration) {
+            discardDetailShard(src);
+            script.remove();
+            reject(new Error(`Detail shard ${src} does not match the CatLog source generation`));
+            return;
+          }
+        }
         script.remove();
         resolve();
       };
@@ -804,14 +842,118 @@
     });
   }
 
-  function loadScript(src, ordered = false, { onRetry = null } = {}) {
+  function parseCompressedDetailShard(payload, src) {
+    const lines = String(payload || "").split(/\r?\n/);
+    if (lines.at(-1) === "") lines.pop();
+    if (!lines.length || lines.some((line) => !line)) {
+      throw new Error(`Detail shard ${src} has an invalid JSONL layout`);
+    }
+
+    let header;
+    try {
+      header = JSON.parse(lines[0]);
+    } catch (_error) {
+      throw new Error(`Detail shard ${src} has an invalid JSON header`);
+    }
+    const headerKeys = header && typeof header === "object" && !Array.isArray(header)
+      ? Object.keys(header).sort()
+      : [];
+    const expectedHeaderKeys = ["kind", "record_count", "schema_version", "source_sha256"];
+    if (headerKeys.length !== expectedHeaderKeys.length
+        || headerKeys.some((key, index) => key !== expectedHeaderKeys[index])
+        || header.kind !== "catlog_detail_shard"
+        || header.schema_version !== 1
+        || !Number.isInteger(header.record_count)
+        || header.record_count < 0
+        || !/^[a-f0-9]{64}$/.test(header.source_sha256 || "")) {
+      throw new Error(`Detail shard ${src} has an invalid header`);
+    }
+    if (header.source_sha256 !== String(manifest.source_sha256 || "")) {
+      throw new Error(`Detail shard ${src} does not match the CatLog source generation`);
+    }
+
+    const shard = Object.create(null);
+    for (const line of lines.slice(1)) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch (_error) {
+        throw new Error(`Detail shard ${src} contains invalid JSON`);
+      }
+      if (!Array.isArray(entry)
+          || entry.length !== 2
+          || typeof entry[0] !== "string"
+          || !entry[0]
+          || !entry[1]
+          || typeof entry[1] !== "object"
+          || Array.isArray(entry[1])) {
+        throw new Error(`Detail shard ${src} contains an invalid record entry`);
+      }
+      if (Object.prototype.hasOwnProperty.call(shard, entry[0])) {
+        throw new Error(`Detail shard ${src} contains a duplicate record key`);
+      }
+      shard[entry[0]] = entry[1];
+    }
+    if (Object.keys(shard).length !== header.record_count) {
+      throw new Error(`Detail shard ${src} record count does not match its header`);
+    }
+    return { shard, sourceSha256: header.source_sha256 };
+  }
+
+  async function loadCompressedDetailShardAttempt(src, retryAttempt) {
+    if (typeof window.fetch !== "function"
+        || typeof window.DecompressionStream !== "function"
+        || typeof window.TextDecoder !== "function") {
+      throw new Error("This browser cannot read compressed CatLog detail shards");
+    }
+    discardDetailShard(src);
+    const response = await window.fetch(versionedAssetUrl(src, retryAttempt));
+    if (!response?.ok || !response.body) {
+      throw new Error(`Could not load ${src} (HTTP ${response?.status || "error"})`);
+    }
+
+    const reader = response.body
+      .pipeThrough(new window.DecompressionStream("gzip"))
+      .getReader();
+    let payload = "";
+    try {
+      const decoder = new window.TextDecoder("utf-8", { fatal: true });
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        payload += decoder.decode(value, { stream: true });
+      }
+      payload += decoder.decode();
+    } catch (_error) {
+      try {
+        await reader.cancel();
+      } catch (_cancelError) {
+        // The decompressor may already be in an errored state.
+      }
+      throw new Error(`Detail shard ${src} could not be decompressed or decoded`);
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch (_releaseError) {
+        // A failed reader still must not replace the original load error.
+      }
+    }
+
+    const parsed = parseCompressedDetailShard(payload, src);
+    window.CATLOG_DETAIL_SHARDS = window.CATLOG_DETAIL_SHARDS || {};
+    window.CATLOG_DETAIL_SHARD_GENERATIONS = window.CATLOG_DETAIL_SHARD_GENERATIONS || {};
+    window.CATLOG_DETAIL_SHARDS[src] = parsed.shard;
+    window.CATLOG_DETAIL_SHARD_GENERATIONS[src] = parsed.sourceSha256;
+  }
+
+  function loadWithRetries(src, attemptLoader, { onRetry = null } = {}) {
     if (state.loadedScripts.has(src)) return Promise.resolve();
     if (state.loadingScripts.has(src)) return state.loadingScripts.get(src);
     const pending = (async () => {
       let lastError = null;
       for (let attempt = 0; attempt <= LOAD_RETRY_DELAYS.length; attempt += 1) {
         try {
-          await loadScriptAttempt(src, ordered, attempt);
+          await attemptLoader(src, attempt);
           state.loadedScripts.add(src);
           return;
         } catch (error) {
@@ -829,6 +971,21 @@
     return pending;
   }
 
+  function loadScript(src, ordered = false, { onRetry = null } = {}) {
+    return loadWithRetries(
+      src,
+      (assetSrc, retryAttempt) => loadScriptAttempt(assetSrc, ordered, retryAttempt),
+      { onRetry },
+    );
+  }
+
+  function loadDetailShard(src, { onRetry = null } = {}) {
+    if (isCompressedDetailShard(src)) {
+      return loadWithRetries(src, loadCompressedDetailShardAttempt, { onRetry });
+    }
+    return loadScript(src, false, { onRetry });
+  }
+
   function retainDetailShard(src) {
     const shards = window.CATLOG_DETAIL_SHARDS || {};
     if (!src || !Object.prototype.hasOwnProperty.call(shards, src)) return;
@@ -837,8 +994,7 @@
     while (state.detailShardLru.size > DETAIL_SHARD_CACHE_LIMIT) {
       const oldest = state.detailShardLru.keys().next().value;
       state.detailShardLru.delete(oldest);
-      delete shards[oldest];
-      state.loadedScripts.delete(oldest);
+      discardDetailShard(oldest);
     }
   }
 
@@ -1164,7 +1320,7 @@
   }
 
   async function detailForRow(row, { onRetry = null } = {}) {
-    await loadScript(row.detail_shard, false, { onRetry });
+    await loadDetailShard(row.detail_shard, { onRetry });
     const shard = (window.CATLOG_DETAIL_SHARDS || {})[row.detail_shard] || {};
     retainDetailShard(row.detail_shard);
     const detail = shard[row.record_key];
@@ -2614,6 +2770,8 @@
       DETAIL_SHARD_CACHE_LIMIT,
       state,
       loadScript,
+      loadDetailShard,
+      parseCompressedDetailShard,
       retainDetailShard,
       detailForRow,
       recordIndexPath,
