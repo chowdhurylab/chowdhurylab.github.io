@@ -1,6 +1,6 @@
 # CatLog content-addressed transition
 
-Status: local implementation checkpoint, not a deployed data release.
+Status: validated release candidate; deployment and live checks are pending.
 
 The viewer accepts legacy snapshot-f JavaScript assets as well as new
 byte-hashed gzip JSONL details. Each compressed detail shard starts with a
@@ -63,8 +63,26 @@ Before this documentation update, the complete staged tree measured
 [GitHub Pages published-site limit](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits).
 Recheck final tree size before publication.
 
-Next: reproduce the real index with `--check`, rerun the viewer test against
-the activated manifest, finish privacy and human-review join checks, inspect
-both URLs locally on desktop and mobile, merge, and verify live with a
-cache-busting query. This local checkpoint is not a published release and
-does not close R6.
+The real index reproduced exactly with `--check`, and the viewer behavior test
+passed with the final manifest active. A streaming audit checked every one of
+the 151,404 public rows for ordered table/detail/enriched identity alignment,
+exact enriched projection, excluded internal fields and the exporter's internal
+reference pattern. No findings were reported. This checks the named publication
+contracts, not scientific certification or an unrestricted privacy guarantee.
+
+All 2,084 human-review keys join the new table exactly once. The four mirrored
+ledger files, schema, hashes, compressed bytes and comment-privacy validation
+pass. The ledger manifest remains the unchanged historical review release;
+this new join check does not rewrite its original provenance.
+
+Both local entry URLs show `1–25 of 151,404` and open a record at 1440px and
+390px widths, with no document overflow or page errors. Record and 25-row page
+downloads preserve the selected identities and omit runtime fields. Focus checks
+pass after drawer transitions settle. Browser fault injection verified an index
+503 retry, rejection of a wrong-generation compressed detail without cache
+publication, four-attempt terminal detail failure, and successful `Try again`
+recovery. Cached snapshot-f HTML also loads all 151,190 old rows and a legacy
+detail using the new compatible viewer. Screenshots were visually inspected.
+
+Next: publish this validated source, then verify both live URLs with a
+cache-busting query. R6 is not closed until live verification succeeds.
