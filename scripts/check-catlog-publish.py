@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import os
+import hashlib
+import json
+import re
 import subprocess
 import sys
 from collections import defaultdict
@@ -20,6 +23,14 @@ USAGE_TRACKER_TAG = (
 LFS_POINTER_HEADER = b"version https://git-lfs.github.com/spec/v1"
 MINIMUM_BLOB_SIZE = 200
 READ_CHUNK_SIZE = 1024 * 1024
+MANIFEST_PREFIX = "window.CATLOG_STATIC_MANIFEST = "
+IMMUTABLE_PATH = re.compile(
+    r"data/(?:details-\d+|records-\d+)\.([0-9a-f]{12})\.js$"
+    r"|data/(?:catlog-table|catlog-enriched|catlog-viewer-index)\.([0-9a-f]{12})\.jsonl\.gz$"
+)
+SHARD_GENERATION = re.compile(
+    rb'window\.CATLOG_DETAIL_SHARD_GENERATIONS\[document\.currentScript\.dataset\.catlogShard\]\s*=\s*"([0-9a-f]{64})";'
+)
 
 
 def git_environment() -> dict[str, str]:
@@ -65,7 +76,10 @@ def tracked_data_blobs() -> tuple[dict[str, list[str]], list[str]]:
     return dict(paths_by_oid), failures
 
 
-def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
+def inspect_git_blobs(
+    paths_by_oid: dict[str, list[str]],
+    metadata: dict[str, dict] | None = None,
+) -> list[str]:
     process = subprocess.Popen(
         ["git", "cat-file", "--batch"],
         cwd=REPOSITORY_ROOT,
@@ -103,6 +117,7 @@ def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
                 break
 
             prefix = b""
+            digest = hashlib.sha256()
             remaining = size
             while remaining:
                 chunk = process.stdout.read(min(READ_CHUNK_SIZE, remaining))
@@ -110,8 +125,9 @@ def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
                     failures.extend(f"truncated Git blob: {path} ({oid})" for path in paths)
                     remaining = 0
                     break
-                if len(prefix) < len(LFS_POINTER_HEADER):
-                    needed = len(LFS_POINTER_HEADER) - len(prefix)
+                digest.update(chunk)
+                if len(prefix) < 4096:
+                    needed = 4096 - len(prefix)
                     prefix += chunk[:needed]
                 remaining -= len(chunk)
             terminator = process.stdout.read(1)
@@ -131,6 +147,9 @@ def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
                     f"undersized ({size} bytes, minimum {MINIMUM_BLOB_SIZE}): {path}"
                     for path in paths
                 )
+            if metadata is not None and object_type == b"blob":
+                for path in paths:
+                    metadata[path] = {"sha256": digest.hexdigest(), "size_bytes": size, "prefix": prefix}
     finally:
         process.stdin.close()
 
@@ -138,6 +157,94 @@ def inspect_git_blobs(paths_by_oid: dict[str, list[str]]) -> list[str]:
     return_code = process.wait()
     if return_code != 0:
         failures.append(f"git cat-file failed with exit {return_code}: {stderr or 'no detail'}")
+    return failures
+
+
+def load_staged_manifest() -> dict:
+    result = subprocess.run(
+        ["git", "show", f":{DATA_PATH}/manifest.js"],
+        cwd=REPOSITORY_ROOT,
+        env=git_environment(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode:
+        raise ValueError("current CatLog manifest is not available in the Git index")
+    if len(result.stdout) > READ_CHUNK_SIZE:
+        raise ValueError("current CatLog manifest exceeds the expected metadata bound")
+    first_line = result.stdout.decode("utf-8").splitlines()[0]
+    if not first_line.startswith(MANIFEST_PREFIX) or not first_line.endswith(";"):
+        raise ValueError("current CatLog manifest wrapper is invalid")
+    manifest = json.loads(first_line[len(MANIFEST_PREFIX):-1])
+    if not isinstance(manifest, dict):
+        raise ValueError("current CatLog manifest is not an object")
+    return manifest
+
+
+def inspect_manifest_data(manifest: dict, metadata: dict[str, dict]) -> list[str]:
+    """Bind the current manifest to exact staged bytes, not working-tree files.
+
+    Unreferenced files may be the previous public generation, retained through
+    one deployment for cached manifests. The stable human-review ledger and
+    manifest itself are metadata, not immutable kinetic data assets.
+    """
+    failures: list[str] = []
+    source_sha = manifest.get("source_sha256")
+    if not isinstance(source_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", source_sha):
+        failures.append("manifest source_sha256 is missing or invalid")
+    references: list[tuple[str, dict | None, str]] = []
+    for field in ("detail_shards", "record_chunks"):
+        paths = manifest.get(field)
+        if not isinstance(paths, list) or any(not isinstance(path, str) for path in paths):
+            failures.append(f"manifest {field} must be a list of paths")
+            continue
+        references.extend((path, None, field) for path in paths)
+    for field in ("table_download", "enriched_download", "viewer_index"):
+        descriptor = manifest.get(field)
+        if not isinstance(descriptor, dict) or not isinstance(descriptor.get("path"), str):
+            failures.append(f"manifest {field} is missing its data descriptor")
+            continue
+        references.append((descriptor["path"], descriptor, field))
+    path_stems = {
+        "detail_shards": r"details-\d+",
+        "record_chunks": r"records-\d+",
+        "table_download": "catlog-table",
+        "enriched_download": "catlog-enriched",
+        "viewer_index": "catlog-viewer-index",
+    }
+    for path, descriptor, field in references:
+        match = IMMUTABLE_PATH.fullmatch(path)
+        if not match:
+            failures.append(f"current data path is not content-addressed: {path}")
+            continue
+        extension = r"js" if field in ("detail_shards", "record_chunks") else r"jsonl\.gz"
+        if not re.fullmatch(rf"data/{path_stems[field]}\.[0-9a-f]{{12}}\.{extension}", path):
+            failures.append(f"manifest {field} names the wrong data asset type: {path}")
+            continue
+        item = metadata.get(f"tools/catlog-static/{path}")
+        if item is None:
+            failures.append(f"manifest data file is not stage-0 tracked: {path}")
+            continue
+        suffix = next(value for value in match.groups() if value is not None)
+        if item["sha256"][:12] != suffix:
+            failures.append(f"data filename hash differs from staged bytes: {path}")
+        if descriptor is not None:
+            if descriptor.get("sha256") != item["sha256"]:
+                failures.append(f"manifest descriptor SHA-256 differs from staged bytes: {path}")
+            if descriptor.get("size_bytes") != item["size_bytes"]:
+                failures.append(f"manifest descriptor size differs from staged bytes: {path}")
+        if field == "detail_shards":
+            stamp = SHARD_GENERATION.search(item["prefix"])
+            if stamp is None or stamp.group(1).decode("ascii") != source_sha:
+                failures.append(f"detail shard source generation differs from manifest: {path}")
+    viewer = manifest.get("viewer_index") or {}
+    table = manifest.get("table_download") or {}
+    if isinstance(viewer, dict) and isinstance(table, dict):
+        if viewer.get("source_table_sha256") != table.get("sha256"):
+            failures.append("viewer index source-table hash differs from table descriptor")
+        if viewer.get("source_table_size_bytes") != table.get("size_bytes"):
+            failures.append("viewer index source-table size differs from table descriptor")
     return failures
 
 
@@ -170,8 +277,13 @@ def inspect_stable_alias() -> list[str]:
 
 def main() -> int:
     paths_by_oid, failures = tracked_data_blobs()
+    metadata: dict[str, dict] = {}
     if paths_by_oid:
-        failures.extend(inspect_git_blobs(paths_by_oid))
+        failures.extend(inspect_git_blobs(paths_by_oid, metadata))
+    try:
+        failures.extend(inspect_manifest_data(load_staged_manifest(), metadata))
+    except (ValueError, IndexError, UnicodeError) as error:
+        failures.append(str(error))
     failures.extend(inspect_usage_tracker())
     failures.extend(inspect_stable_alias())
 

@@ -775,10 +775,28 @@
     return `<span class="state-badge ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
   }
 
+  function isContentHashedDataAsset(src) {
+    if (!src || src.startsWith("data:")) return false;
+    const pathname = new URL(src, catalogBaseUrl).pathname;
+    return /\/data\/(?:(?:details|records)-\d+\.[a-f0-9]{12}\.js|catlog-(?:table|enriched|viewer-index)\.[a-f0-9]{12}\.jsonl\.gz)$/i.test(pathname);
+  }
+
+  function isContentHashedDetailShard(src) {
+    if (!src || src.startsWith("data:")) return false;
+    const pathname = new URL(src, catalogBaseUrl).pathname;
+    return /\/data\/details-\d+\.[a-f0-9]{12}\.js$/i.test(pathname);
+  }
+
+  function discardDetailShard(src) {
+    delete (window.CATLOG_DETAIL_SHARDS || {})[src];
+    delete (window.CATLOG_DETAIL_SHARD_GENERATIONS || {})[src];
+    state.loadedScripts.delete(src);
+  }
+
   function versionedAssetUrl(src, retryAttempt = 0) {
     if (!src || /^(?:https?:)?\/\//.test(src) || src.startsWith("data:")) return src;
     const url = new URL(src, catalogBaseUrl);
-    url.searchParams.set("v", assetVersion);
+    if (!isContentHashedDataAsset(src)) url.searchParams.set("v", assetVersion);
     if (retryAttempt > 0) url.searchParams.set("retry", String(retryAttempt));
     return url.href;
   }
@@ -790,9 +808,22 @@
   function loadScriptAttempt(src, ordered, retryAttempt) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
+      script.dataset.catlogShard = src;
       script.src = versionedAssetUrl(src, retryAttempt);
       script.async = !ordered;
       script.onload = () => {
+        if (isContentHashedDetailShard(src)) {
+          const expectedGeneration = String(manifest.source_sha256 || "");
+          const actualGeneration = String(
+            (window.CATLOG_DETAIL_SHARD_GENERATIONS || {})[src] || "",
+          );
+          if (!expectedGeneration || actualGeneration !== expectedGeneration) {
+            discardDetailShard(src);
+            script.remove();
+            reject(new Error(`Detail shard ${src} does not match the CatLog source generation`));
+            return;
+          }
+        }
         script.remove();
         resolve();
       };
@@ -837,8 +868,7 @@
     while (state.detailShardLru.size > DETAIL_SHARD_CACHE_LIMIT) {
       const oldest = state.detailShardLru.keys().next().value;
       state.detailShardLru.delete(oldest);
-      delete shards[oldest];
-      state.loadedScripts.delete(oldest);
+      discardDetailShard(oldest);
     }
   }
 

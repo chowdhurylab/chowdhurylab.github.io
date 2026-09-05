@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
@@ -32,18 +33,72 @@ const expectedSnapshotDate = new Intl.DateTimeFormat("en-US", {
 }).format(publishedAt);
 const expectedRowCount = new Intl.NumberFormat("en-US").format(publishedManifest.total_rows);
 
+function executePublishedShard(shardSource, shardPath, datasetKey) {
+  const currentScript = {
+    dataset: {},
+    src: `https://example.test/tools/catlog-static/${shardPath}?v=legacy-viewer`,
+  };
+  if (datasetKey !== undefined) currentScript.dataset.catlogShard = datasetKey;
+  const shardWindow = {};
+  vm.runInNewContext(shardSource, {
+    document: { currentScript },
+    URL,
+    window: shardWindow,
+  });
+  return { currentScript, shardWindow };
+}
+
 assert.equal(publishedManifest.details_per_shard, 250);
 assert.equal(
   publishedManifest.detail_shards.length,
   Math.ceil(publishedManifest.total_rows / publishedManifest.details_per_shard),
 );
-publishedManifest.detail_shards.forEach((shardPath, index) => {
-  assert.equal(shardPath, `data/details-${String(index).padStart(3, "0")}.js`);
-});
+const hasExactLegacyDetailPaths = publishedManifest.detail_shards.every(
+  (shardPath, index) => shardPath === `data/details-${String(index).padStart(3, "0")}.js`,
+);
+const hasExactHashedDetailPaths = publishedManifest.detail_shards.every(
+  (shardPath, index) => new RegExp(
+    `^data/details-${String(index).padStart(3, "0")}\\.[a-f0-9]{12}\\.js$`,
+  ).test(shardPath),
+);
+assert.notEqual(
+  hasExactLegacyDetailPaths,
+  hasExactHashedDetailPaths,
+  "detail shards must be entirely indexed legacy paths or entirely indexed content-addressed paths",
+);
+const usesContentAddressedData = hasExactHashedDetailPaths;
+for (const [key, basename] of [
+  ["table_download", "catlog-table"],
+  ["enriched_download", "catlog-enriched"],
+  ["viewer_index", "catlog-viewer-index"],
+]) {
+  const descriptor = publishedManifest[key];
+  assert.ok(descriptor, `${key} descriptor should be present`);
+  if (usesContentAddressedData) {
+    const match = descriptor.path.match(new RegExp(`^data/${basename}\\.([a-f0-9]{12})\\.jsonl\\.gz$`));
+    assert.ok(match, `${key} should use the content-addressed path class`);
+    assert.equal(match[1], descriptor.sha256.slice(0, 12));
+  } else {
+    assert.equal(descriptor.path, `data/${basename}.jsonl.gz`, `${key} should use the legacy path class`);
+  }
+}
 for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), publishedManifest.detail_shards.length - 1]) {
   const shardPath = publishedManifest.detail_shards[index];
-  const shardSource = await readFile(new URL(`../tools/catlog-static/${shardPath}`, import.meta.url), "utf8");
-  const assignment = `window.CATLOG_DETAIL_SHARDS[${JSON.stringify(shardPath)}] = `;
+  const shardBytes = await readFile(new URL(`../tools/catlog-static/${shardPath}`, import.meta.url));
+  const shardSource = shardBytes.toString("utf8");
+  let assignment;
+  if (usesContentAddressedData) {
+    const filenameHash = shardPath.match(/\.([a-f0-9]{12})\.js$/)?.[1];
+    assert.equal(filenameHash, createHash("sha256").update(shardBytes).digest("hex").slice(0, 12));
+    assert.ok(
+      shardSource.includes(
+        `window.CATLOG_DETAIL_SHARD_GENERATIONS[document.currentScript.dataset.catlogShard] = ${JSON.stringify(publishedManifest.source_sha256)};`,
+      ),
+    );
+    assignment = "window.CATLOG_DETAIL_SHARDS[document.currentScript.dataset.catlogShard] = ";
+  } else {
+    assignment = `window.CATLOG_DETAIL_SHARDS[${JSON.stringify(shardPath)}] = `;
+  }
   const assignmentStart = shardSource.indexOf(assignment);
   assert.ok(assignmentStart > 0 && shardSource.endsWith(";\n"));
   const shard = JSON.parse(shardSource.slice(assignmentStart + assignment.length, -2));
@@ -52,6 +107,41 @@ for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), 
     : publishedManifest.details_per_shard;
   assert.equal(Object.keys(shard).length, expectedCount);
   assert.ok(Object.entries(shard).every(([key, detail]) => detail.ui_record_key === key));
+
+  if (usesContentAddressedData) {
+    const legacyExecution = executePublishedShard(shardSource, shardPath, undefined);
+    assert.equal(legacyExecution.currentScript.dataset.catlogShard, shardPath);
+    assert.ok(legacyExecution.shardWindow.CATLOG_DETAIL_SHARDS[shardPath]);
+    assert.equal(
+      legacyExecution.shardWindow.CATLOG_DETAIL_SHARD_GENERATIONS[shardPath],
+      publishedManifest.source_sha256,
+    );
+    assert.equal(Object.hasOwn(legacyExecution.shardWindow.CATLOG_DETAIL_SHARDS, "undefined"), false);
+    assert.equal(Object.hasOwn(legacyExecution.shardWindow.CATLOG_DETAIL_SHARD_GENERATIONS, "undefined"), false);
+
+    const existingKey = `data/existing-${String(index).padStart(3, "0")}.js`;
+    const currentExecution = executePublishedShard(shardSource, shardPath, existingKey);
+    assert.equal(currentExecution.currentScript.dataset.catlogShard, existingKey);
+    assert.ok(currentExecution.shardWindow.CATLOG_DETAIL_SHARDS[existingKey]);
+    assert.equal(
+      currentExecution.shardWindow.CATLOG_DETAIL_SHARD_GENERATIONS[existingKey],
+      publishedManifest.source_sha256,
+    );
+    assert.equal(Object.hasOwn(currentExecution.shardWindow.CATLOG_DETAIL_SHARDS, shardPath), false);
+    assert.equal(Object.hasOwn(currentExecution.shardWindow.CATLOG_DETAIL_SHARD_GENERATIONS, shardPath), false);
+    assert.equal(Object.hasOwn(currentExecution.shardWindow.CATLOG_DETAIL_SHARDS, "undefined"), false);
+    assert.equal(Object.hasOwn(currentExecution.shardWindow.CATLOG_DETAIL_SHARD_GENERATIONS, "undefined"), false);
+  }
+}
+
+for (const descriptor of [publishedManifest.enriched_download, publishedManifest.table_download]) {
+  const versionSuffix = usesContentAddressedData ? "" : `?v=${publishedManifest.asset_version}`;
+  assert.ok(indexHtml.includes(`href="${descriptor.path}${versionSuffix}"`));
+  assert.ok(stableAliasHtml.includes(`href="catlog-static/${descriptor.path}${versionSuffix}"`));
+  if (usesContentAddressedData) {
+    assert.ok(!indexHtml.includes(`href="${descriptor.path}?v=`));
+    assert.ok(!stableAliasHtml.includes(`href="catlog-static/${descriptor.path}?v=`));
+  }
 }
 
 for (const pageHtml of [indexHtml, stableAliasHtml]) {
@@ -203,7 +293,9 @@ const document = {
 let yieldCount = 0;
 let embeddedDetailPanel = false;
 let narrowDetailPanel = false;
+const runtimeSourceSha256 = "a".repeat(64);
 const runtimeManifest = {
+  source_sha256: runtimeSourceSha256,
   viewer_index: { path: "data/catlog-viewer-index.jsonl.gz" },
   table_download: { path: "data/catlog-table.jsonl.gz" },
 };
@@ -212,6 +304,7 @@ const window = {
   CATLOG_STATIC_MANIFEST: runtimeManifest,
   CATLOG_RECORD_CHUNKS: [],
   CATLOG_DETAIL_SHARDS: {},
+  CATLOG_DETAIL_SHARD_GENERATIONS: {},
   scheduler: {
     yield: async () => {
       yieldCount += 1;
@@ -264,13 +357,19 @@ assert.equal(api.recordIndexPath(), "data/catlog-table.jsonl.gz");
 runtimeManifest.viewer_index = { path: "data/catlog-viewer-index.jsonl.gz" };
 
 const scriptedShardPayloads = new Map();
+const scriptedShardGenerations = new Map();
+const injectedScripts = [];
 let injectedScriptCount = 0;
 let removedScriptCount = 0;
 document.body.appendChild = (script) => {
   injectedScriptCount += 1;
   const relativePath = new URL(script.src).pathname.replace(/^\/catlog\//, "");
+  injectedScripts.push({ src: script.src, catlogShard: script.dataset.catlogShard });
   if (scriptedShardPayloads.has(relativePath)) {
     window.CATLOG_DETAIL_SHARDS[relativePath] = scriptedShardPayloads.get(relativePath);
+  }
+  if (scriptedShardGenerations.has(relativePath)) {
+    window.CATLOG_DETAIL_SHARD_GENERATIONS[relativePath] = scriptedShardGenerations.get(relativePath);
   }
   const remove = script.remove.bind(script);
   script.remove = () => {
@@ -287,24 +386,70 @@ assert.strictEqual(firstConcurrentLoad, secondConcurrentLoad);
 await Promise.all([firstConcurrentLoad, secondConcurrentLoad]);
 assert.equal(injectedScriptCount, 1, "concurrent requests for one shard should inject one script");
 assert.equal(removedScriptCount, 1, "a loaded script element should be removed");
+assert.equal(injectedScripts.at(-1).catlogShard, concurrentShard);
+assert.equal(new URL(injectedScripts.at(-1).src).searchParams.get("v"), runtimeSourceSha256.slice(0, 16));
+
+const hashedRecordChunk = "data/records-000.0123456789ab.js";
+await api.loadScript(hashedRecordChunk, true);
+const hashedRecordRequest = new URL(injectedScripts.at(-1).src);
+assert.equal(hashedRecordRequest.searchParams.has("v"), false, "content-addressed record chunks must not use the asset-version query");
+assert.equal(injectedScripts.at(-1).catlogShard, hashedRecordChunk);
+
+api.state.loadedScripts.clear();
+api.state.loadingScripts.clear();
+window.CATLOG_DETAIL_SHARDS = {};
+window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
+const generationCheckedShard = "data/details-999.0123456789ab.js";
+scriptedShardPayloads.set(generationCheckedShard, { checked: { value: 42 } });
+scriptedShardGenerations.set(generationCheckedShard, "b".repeat(64));
+const originalSetTimeout = window.setTimeout;
+window.setTimeout = (callback) => {
+  callback();
+  return 0;
+};
+const scriptsBeforeGenerationFailure = injectedScriptCount;
+await assert.rejects(
+  api.detailForRow({ detail_shard: generationCheckedShard, record_key: "checked" }),
+  /does not match the CatLog source generation/,
+);
+window.setTimeout = originalSetTimeout;
+assert.equal(injectedScriptCount, scriptsBeforeGenerationFailure + 4, "generation mismatch should use the existing retry budget");
+assert.equal(api.state.loadedScripts.has(generationCheckedShard), false, "a rejected generation must remain reloadable");
+assert.equal(window.CATLOG_DETAIL_SHARDS[generationCheckedShard], undefined);
+assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS[generationCheckedShard], undefined);
+
+scriptedShardGenerations.set(generationCheckedShard, runtimeSourceSha256);
+const scriptsBeforeGenerationReload = injectedScriptCount;
+assert.equal(
+  (await api.detailForRow({ detail_shard: generationCheckedShard, record_key: "checked" })).value,
+  42,
+);
+assert.equal(injectedScriptCount, scriptsBeforeGenerationReload + 1, "a corrected generation should load on retry");
+const generationRequest = new URL(injectedScripts.at(-1).src);
+assert.equal(generationRequest.searchParams.has("v"), false, "content-addressed data must not use the asset-version query");
+assert.equal(injectedScripts.at(-1).catlogShard, generationCheckedShard);
 
 api.state.loadedScripts.clear();
 api.state.loadingScripts.clear();
 api.state.detailShardLru.clear();
 window.CATLOG_DETAIL_SHARDS = {};
+window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
 assert.equal(api.DETAIL_SHARD_CACHE_LIMIT, 8);
 for (let index = 0; index < api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
   const shard = `data/details-lru-${index}.js`;
   window.CATLOG_DETAIL_SHARDS[shard] = { [`row-${index}`]: { value: index } };
+  window.CATLOG_DETAIL_SHARD_GENERATIONS[shard] = runtimeSourceSha256;
   api.state.loadedScripts.add(shard);
   api.retainDetailShard(shard);
 }
 api.retainDetailShard("data/details-lru-0.js");
 window.CATLOG_DETAIL_SHARDS["data/details-lru-8.js"] = { "row-8": { value: 8 } };
+window.CATLOG_DETAIL_SHARD_GENERATIONS["data/details-lru-8.js"] = runtimeSourceSha256;
 api.state.loadedScripts.add("data/details-lru-8.js");
 api.retainDetailShard("data/details-lru-8.js");
 assert.ok(window.CATLOG_DETAIL_SHARDS["data/details-lru-0.js"], "a cache hit should refresh recency");
 assert.equal(window.CATLOG_DETAIL_SHARDS["data/details-lru-1.js"], undefined, "the true least-recent shard should be evicted");
+assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS["data/details-lru-1.js"], undefined, "eviction should remove generation metadata");
 assert.equal(api.state.loadedScripts.has("data/details-lru-1.js"), false, "an evicted shard must be reloadable");
 assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
 
@@ -321,6 +466,7 @@ api.state.loadedScripts.clear();
 api.state.loadingScripts.clear();
 api.state.detailShardLru.clear();
 window.CATLOG_DETAIL_SHARDS = {};
+window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
 for (let index = 0; index < api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
   const shard = `data/details-missing-${index}.js`;
   window.CATLOG_DETAIL_SHARDS[shard] = { [`row-${index}`]: { value: index } };
@@ -343,6 +489,7 @@ api.state.loadedScripts.clear();
 api.state.loadingScripts.clear();
 api.state.detailShardLru.clear();
 window.CATLOG_DETAIL_SHARDS = {};
+window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
 const widePageRows = Array.from({ length: 12 }, (_, index) => {
   const detail_shard = `data/details-wide-${index}.js`;
   const record_key = `wide-${index}`;
@@ -359,6 +506,7 @@ api.state.loadedScripts.clear();
 api.state.loadingScripts.clear();
 api.state.detailShardLru.clear();
 window.CATLOG_DETAIL_SHARDS = {};
+window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
 
 const focusRows = [{ record_key: "first" }, { record_key: "second" }];
 api.state.activeRowKey = "";

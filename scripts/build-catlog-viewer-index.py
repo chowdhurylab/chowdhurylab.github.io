@@ -13,9 +13,9 @@ from pathlib import Path
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-SOURCE = REPOSITORY_ROOT / "tools" / "catlog-static" / "data" / "catlog-table.jsonl.gz"
-TARGET = REPOSITORY_ROOT / "tools" / "catlog-static" / "data" / "catlog-viewer-index.jsonl.gz"
-MANIFEST = REPOSITORY_ROOT / "tools" / "catlog-static" / "data" / "manifest.js"
+CATALOG_ROOT = REPOSITORY_ROOT / "tools" / "catlog-static"
+DATA_ROOT = CATALOG_ROOT / "data"
+MANIFEST = DATA_ROOT / "manifest.js"
 MANIFEST_PREFIX = "window.CATLOG_STATIC_MANIFEST = "
 
 # Keep this explicit: a changed source schema must trigger a review of what the
@@ -155,7 +155,7 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build(target: Path) -> dict[str, object]:
+def build(source_path: Path, target: Path) -> dict[str, object]:
     row_count = 0
     source_bytes = 0
     viewer_bytes = 0
@@ -172,7 +172,7 @@ def build(target: Path) -> dict[str, object]:
             compresslevel=9,
             mtime=0,
         ) as compressed_output:
-            with gzip.open(SOURCE, "rb") as source:
+            with gzip.open(source_path, "rb") as source:
                 for line_number, raw_line in enumerate(source, start=1):
                     if not raw_line.strip():
                         continue
@@ -208,11 +208,10 @@ def build(target: Path) -> dict[str, object]:
         "row_count": row_count,
         "first_record_key": first_record_key,
         "last_record_key": last_record_key,
-        "source_path": str(SOURCE.relative_to(REPOSITORY_ROOT)),
-        "source_sha256": sha256(SOURCE),
-        "source_compressed_bytes": SOURCE.stat().st_size,
+        "source_path": str(source_path.relative_to(REPOSITORY_ROOT)),
+        "source_sha256": sha256(source_path),
+        "source_compressed_bytes": source_path.stat().st_size,
         "source_uncompressed_bytes": source_bytes,
-        "viewer_path": str(TARGET.relative_to(REPOSITORY_ROOT)),
         "viewer_sha256": sha256(target),
         "viewer_content_sha256": viewer_content_digest.hexdigest(),
         "viewer_compressed_bytes": target.stat().st_size,
@@ -229,9 +228,16 @@ def load_manifest() -> dict[str, object]:
     return json.loads(first_line[len(MANIFEST_PREFIX) : -1])
 
 
+def manifest_data_path(value: object, *, field: str) -> Path:
+    relative = Path(str(value or ""))
+    if not value or relative.is_absolute() or relative.parent != Path("data"):
+        raise RuntimeError(f"manifest {field} must name one file under data/")
+    return CATALOG_ROOT / relative
+
+
 def viewer_descriptor(metadata: dict[str, object]) -> dict[str, object]:
     return {
-        "path": "data/catlog-viewer-index.jsonl.gz",
+        "path": metadata["viewer_path"],
         "sha256": metadata["viewer_sha256"],
         "content_sha256": metadata["viewer_content_sha256"],
         "size_bytes": metadata["viewer_compressed_bytes"],
@@ -258,38 +264,56 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    TARGET.parent.mkdir(parents=True, exist_ok=True)
+    manifest = load_manifest()
+    table_descriptor = manifest.get("table_download") or {}
+    if not isinstance(table_descriptor, dict):
+        raise SystemExit("manifest table_download descriptor is invalid")
+    source_path = manifest_data_path(
+        table_descriptor.get("path"),
+        field="table_download.path",
+    )
+
+    DATA_ROOT.mkdir(parents=True, exist_ok=True)
     temporary_name = ""
     try:
         with tempfile.NamedTemporaryFile(
-            prefix=f".{TARGET.name}.",
+            prefix=".catlog-viewer-index.",
             suffix=".tmp",
-            dir=TARGET.parent,
+            dir=DATA_ROOT,
             delete=False,
         ) as temporary:
             temporary_name = temporary.name
         temporary_path = Path(temporary_name)
-        metadata = build(temporary_path)
-        manifest = load_manifest()
-        table_descriptor = manifest.get("table_download") or {}
-        if table_descriptor.get("path") != "data/catlog-table.jsonl.gz":
-            raise SystemExit("manifest table_download path is not the projection source")
+        metadata = build(source_path, temporary_path)
         if table_descriptor.get("sha256") != metadata["source_sha256"]:
             raise SystemExit("manifest table_download hash does not match the projection source")
+        target = DATA_ROOT / f"catlog-viewer-index.{str(metadata['viewer_sha256'])[:12]}.jsonl.gz"
+        metadata["viewer_path"] = str(target.relative_to(CATALOG_ROOT))
         expected_descriptor = viewer_descriptor(metadata)
 
         if args.check:
-            if not TARGET.exists():
-                raise SystemExit(f"missing viewer index: {TARGET.relative_to(REPOSITORY_ROOT)}")
-            if sha256(TARGET) != metadata["viewer_sha256"]:
+            current_descriptor = manifest.get("viewer_index") or {}
+            if not isinstance(current_descriptor, dict):
+                raise SystemExit("manifest viewer_index descriptor is invalid")
+            if current_descriptor.get("path") != expected_descriptor["path"]:
+                raise SystemExit("manifest viewer_index path does not match its content hash")
+            current_target = manifest_data_path(
+                current_descriptor.get("path"),
+                field="viewer_index.path",
+            )
+            if not current_target.exists():
+                raise SystemExit(
+                    f"missing viewer index: {current_target.relative_to(REPOSITORY_ROOT)}"
+                )
+            if sha256(current_target) != metadata["viewer_sha256"]:
                 raise SystemExit("committed viewer index is not the deterministic projection")
-            if manifest.get("viewer_index") != expected_descriptor:
+            if current_descriptor != expected_descriptor:
                 raise SystemExit("manifest viewer_index metadata does not match the projection")
             outcome = "Viewer index is reproducible"
         else:
-            os.replace(temporary_path, TARGET)
+            os.replace(temporary_path, target)
             temporary_name = ""
-            outcome = f"Wrote {TARGET.relative_to(REPOSITORY_ROOT)}"
+            outcome = f"Wrote {target.relative_to(REPOSITORY_ROOT)}"
 
         print(outcome)
         print(json.dumps(metadata, indent=2, sort_keys=True))
