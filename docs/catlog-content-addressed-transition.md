@@ -49,11 +49,22 @@ SHA-256 is `7a088994b245d864e34552b654ab9b98416beaa1b98291eef8c372edb190da0c`.
 Compressed details occupy 30,180,421 bytes; the generated data directory is
 74,855,208 bytes before adding the viewer index. This resolves the earlier
 uncompressed-size constraint without dropping snapshot f or changing hosts.
-The final staged tree must still be measured against the
-[GitHub Pages 1 GB published-site limit](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits).
+Integration and index finalization are complete. Both pages now select
+`data/manifest.004cd02af661.js` (SHA-256
+`004cd02af6618900491f4d02d61aecd2608b016325684052fa21404ee94e4835`).
+The index is `catlog-viewer-index.a01f98cefb4d.jsonl.gz`, 10,819,926 bytes.
+All 611 data changes are additions; legacy snapshot-f data and its stable
+manifest are unchanged. The staged publication checker passed on 1,225
+tracked data blobs, with a clean tracked working tree/index comparison,
+synchronized alias and exact README match to the exporter output.
 
-Next: integrate only the fresh immutable public data, build the compact index,
-activate its final hashed manifest, synchronize both pages, run exact staged
-data/privacy/join/size checks, inspect both URLs locally, merge, and verify
-live with a cache-busting query. This checkpoint is not a published release
-and does not close R6.
+Before this documentation update, the complete staged tree measured
+871,592,209 bytes, below the conservative 1,000,000,000-byte ceiling for the
+[GitHub Pages published-site limit](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits).
+Recheck final tree size before publication.
+
+Next: reproduce the real index with `--check`, rerun the viewer test against
+the activated manifest, finish privacy and human-review join checks, inspect
+both URLs locally on desktop and mobile, merge, and verify live with a
+cache-busting query. This local checkpoint is not a published release and
+does not close R6.
