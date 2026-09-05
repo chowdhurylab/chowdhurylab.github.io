@@ -4,15 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
-    <meta name="description" content="CatLog snapshot dated September 3, 2026: browse 148,289 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
+    <meta name="description" content="CatLog snapshot dated September 5, 2026: browse 151,190 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
     <meta name="theme-color" content="#1f6f66" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
-    <meta property="og:description" content="CatLog snapshot dated September 3, 2026 with 148,289 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
+    <meta property="og:description" content="CatLog snapshot dated September 5, 2026 with 151,190 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=7b8a0cf1c1fb7f20" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=a95b80f808db20f4" />
   </head>
   <body>
     <div class="static-app">
@@ -44,7 +44,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.jsonl.gz?v=7b8a0cf1c1fb7f20"
+                href="catlog-static/data/catlog-enriched.jsonl.gz?v=a95b80f808db20f4"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>All public data</strong>
@@ -52,7 +52,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.jsonl.gz?v=7b8a0cf1c1fb7f20"
+                href="catlog-static/data/catlog-table.jsonl.gz?v=a95b80f808db20f4"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table index</strong>
@@ -244,7 +244,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.svg?v=7b8a0cf1c1fb7f20"
+                src="catlog-static/assets/catlog-guide-workflow.svg?v=a95b80f808db20f4"
                 alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
@@ -320,7 +320,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=7b8a0cf1c1fb7f20"
+                    href="catlog-static/data/catlog-enriched.jsonl.gz?v=a95b80f808db20f4"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -368,9 +368,10 @@
                 <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>The protein identity and sequence were checked, but CatLog has no paper reference for the kinetic value.</dd></div>
                 <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Review began, but a required check remains open, commonly the sequence, substrate structure, or source match.</dd></div>
                 <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>The row is unreviewed, was calculated from other reported values, or remains disputed.</dd></div>
+                <div><dt><span class="guide-status-dot"></span>Paper evidence</dt><dd>A structured paper value and its table or measurement excerpt are saved. This alone does not mean Accepted.</dd></div>
+                <div><dt><span class="guide-status-dot"></span>Source note</dt><dd>A plain note from the source record is saved, but it is not a structured paper-value excerpt.</dd></div>
               </dl>
               <p class="guide-note">Automated checks compare source records, papers, and identity databases. A lab member resolves cases that still need a decision.</p>
-              <p class="guide-note"><strong>Saved source text</strong> means a paper passage, table reference, or source-database note is attached. It is evidence to inspect, not an acceptance label.</p>
               <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
@@ -424,8 +425,8 @@
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.js?v=7b8a0cf1c1fb7f20"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=80ef7dfd21863615"></script>
+    <script src="catlog-static/data/manifest.js?v=a95b80f808db20f4"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=a95b80f808db20f4"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>

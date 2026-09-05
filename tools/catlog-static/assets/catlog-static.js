@@ -76,9 +76,30 @@
   };
 
   const evidenceGroups = [
-    { value: "paper_evidence", label: "Saved source text", className: "paper" },
-    { value: "literature_id", label: "Publication ID", className: "linked" },
-    { value: "source_records", label: "Source record", className: "source" },
+    {
+      value: "paper_evidence",
+      label: "Paper evidence",
+      className: "paper",
+      description: "Structured paper values with a saved table or measurement excerpt.",
+    },
+    {
+      value: "source_note",
+      label: "Source note",
+      className: "note",
+      description: "A plain source or database note, not a structured paper-value excerpt.",
+    },
+    {
+      value: "literature_id",
+      label: "Publication ID",
+      className: "linked",
+      description: "A publication identifier is linked, but no structured value excerpt is saved.",
+    },
+    {
+      value: "source_records",
+      label: "Source record",
+      className: "source",
+      description: "The public row is backed by its source-database record only.",
+    },
   ];
 
   const measurementFilters = [
@@ -659,7 +680,8 @@
   }
 
   function evidenceGroupForRow(row) {
-    if (row.has_proof_excerpt) return "paper_evidence";
+    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "paper_evidence";
+    if (row.proof_kind === "source_note") return "source_note";
     if (row.has_literature_id) return "literature_id";
     return "source_records";
   }
@@ -669,6 +691,7 @@
     if (!state.recordsReady) {
       const publicEvidence = manifestDistribution("public_evidence_group");
       counts.paper_evidence = publicEvidence.paper_excerpt || 0;
+      counts.source_note = publicEvidence.source_note || 0;
       counts.literature_id = publicEvidence.paper_id || 0;
       counts.source_records = publicEvidence.database_record || 0;
       return counts;
@@ -680,7 +703,8 @@
   }
 
   function evidenceLabel(row, proofLines = []) {
-    if (proofLines.length) return "Saved source excerpt";
+    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "Saved paper evidence";
+    if (row.proof_kind === "source_note" || proofLines.length) return "Source note";
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Cross-source match";
     }
@@ -1296,7 +1320,8 @@
           ${evidenceGroups.map((item) => {
             const count = evidenceCounts[item.value] || 0;
             const pct = totalRows ? ((count / total) * 100).toFixed(1) : "0.0";
-            return `<span><i class="${item.className}"></i>${escapeHtml(item.label)} <strong>${pct}%</strong></span>`;
+            const accessibleLabel = `${item.label}: ${item.description} ${pct}%`;
+            return `<span tabindex="0" title="${escapeHtml(item.description)}" aria-label="${escapeHtml(accessibleLabel)}"><i class="${item.className}"></i>${escapeHtml(item.label)} <strong>${pct}%</strong></span>`;
           }).join("")}
         </div>
         ${totalRows ? `
@@ -2271,6 +2296,9 @@
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
     const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)));
+    const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
+      ? "Source note"
+      : "Values in source";
     const firstPmid = pmids[0] || "";
     const firstDoi = dois[0] || "";
     const hasSourceEvidence = proofLines.length > 0;
@@ -2300,7 +2328,7 @@
       ${detailSection("Reference", referenceRows)}
       ${proofLines.length ? `
         <section class="detail-section evidence-note-section">
-          <h3>Values in source</h3>
+          <h3>${escapeHtml(proofHeading)}</h3>
           <div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div>
         </section>
       ` : ""}

@@ -509,7 +509,7 @@ button:disabled {
 
 .evidence-axis-items {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   color: #44504d;
   font-size: 11px;
@@ -521,6 +521,12 @@ button:disabled {
   align-items: center;
   gap: 5px;
   min-width: 0;
+  cursor: help;
+}
+
+.evidence-axis-items span:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
 }
 
 .evidence-axis-items i {
@@ -542,6 +548,11 @@ button:disabled {
 .evidence-axis-items .linked,
 .evidence-distribution .linked {
   background: #647d8a;
+}
+
+.evidence-axis-items .note,
+.evidence-distribution .note {
+  background: #8a5a14;
 }
 
 .evidence-axis-items .source,
@@ -2795,6 +2806,7 @@ tbody tr.selected .row-arrow {
   }
 
   .evidence-axis-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     font-size: 10px;
   }
