@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { DecompressionStream, ReadableStream } from "node:stream/web";
+import { TextDecoder } from "node:util";
 import vm from "node:vm";
+import { gzipSync } from "node:zlib";
 
 const sourceCode = await readFile(
   new URL("../tools/catlog-static/assets/catlog-static.js", import.meta.url),
@@ -15,8 +18,17 @@ const stableAliasHtml = await readFile(
   new URL("../tools/catlog-latest.html", import.meta.url),
   "utf8",
 );
+const manifestScriptMatch = indexHtml.match(
+  /<script src="(data\/manifest(?:\.[a-f0-9]{12})?\.js)(?:\?[^"]*)?"><\/script>/,
+);
+assert.ok(manifestScriptMatch, "the canonical page should reference one supported manifest script");
+const publishedManifestPath = manifestScriptMatch[1];
+assert.ok(
+  stableAliasHtml.includes(`src="catlog-static/${publishedManifestPath}`),
+  "the stable alias should reference the canonical page's active manifest",
+);
 const manifestSource = await readFile(
-  new URL("../tools/catlog-static/data/manifest.js", import.meta.url),
+  new URL(`../tools/catlog-static/${publishedManifestPath}`, import.meta.url),
   "utf8",
 );
 const manifestPrefix = "window.CATLOG_STATIC_MANIFEST = ";
@@ -56,17 +68,23 @@ assert.equal(
 const hasExactLegacyDetailPaths = publishedManifest.detail_shards.every(
   (shardPath, index) => shardPath === `data/details-${String(index).padStart(3, "0")}.js`,
 );
-const hasExactHashedDetailPaths = publishedManifest.detail_shards.every(
+const hasExactHashedJavaScriptDetailPaths = publishedManifest.detail_shards.every(
   (shardPath, index) => new RegExp(
     `^data/details-${String(index).padStart(3, "0")}\\.[a-f0-9]{12}\\.js$`,
   ).test(shardPath),
 );
-assert.notEqual(
-  hasExactLegacyDetailPaths,
-  hasExactHashedDetailPaths,
-  "detail shards must be entirely indexed legacy paths or entirely indexed content-addressed paths",
+const hasExactCompressedDetailPaths = publishedManifest.detail_shards.every(
+  (shardPath, index) => new RegExp(
+    `^data/details-${String(index).padStart(3, "0")}\\.[a-f0-9]{12}\\.jsonl\\.gz$`,
+  ).test(shardPath),
 );
-const usesContentAddressedData = hasExactHashedDetailPaths;
+assert.equal(
+  [hasExactLegacyDetailPaths, hasExactHashedJavaScriptDetailPaths, hasExactCompressedDetailPaths]
+    .filter(Boolean).length,
+  1,
+  "detail shards must use one complete indexed path class: legacy JS, hashed JS, or hashed JSONL gzip",
+);
+const usesContentAddressedData = !hasExactLegacyDetailPaths;
 for (const [key, basename] of [
   ["table_download", "catlog-table"],
   ["enriched_download", "catlog-enriched"],
@@ -85,9 +103,14 @@ for (const [key, basename] of [
 for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), publishedManifest.detail_shards.length - 1]) {
   const shardPath = publishedManifest.detail_shards[index];
   const shardBytes = await readFile(new URL(`../tools/catlog-static/${shardPath}`, import.meta.url));
+  if (hasExactCompressedDetailPaths) {
+    const filenameHash = shardPath.match(/\.([a-f0-9]{12})\.jsonl\.gz$/)?.[1];
+    assert.equal(filenameHash, createHash("sha256").update(shardBytes).digest("hex").slice(0, 12));
+    continue;
+  }
   const shardSource = shardBytes.toString("utf8");
   let assignment;
-  if (usesContentAddressedData) {
+  if (hasExactHashedJavaScriptDetailPaths) {
     const filenameHash = shardPath.match(/\.([a-f0-9]{12})\.js$/)?.[1];
     assert.equal(filenameHash, createHash("sha256").update(shardBytes).digest("hex").slice(0, 12));
     assert.ok(
@@ -108,7 +131,7 @@ for (const index of [0, Math.floor(publishedManifest.detail_shards.length / 2), 
   assert.equal(Object.keys(shard).length, expectedCount);
   assert.ok(Object.entries(shard).every(([key, detail]) => detail.ui_record_key === key));
 
-  if (usesContentAddressedData) {
+  if (hasExactHashedJavaScriptDetailPaths) {
     const legacyExecution = executePublishedShard(shardSource, shardPath, undefined);
     assert.equal(legacyExecution.currentScript.dataset.catlogShard, shardPath);
     assert.ok(legacyExecution.shardWindow.CATLOG_DETAIL_SHARDS[shardPath]);
@@ -299,12 +322,62 @@ const runtimeManifest = {
   viewer_index: { path: "data/catlog-viewer-index.jsonl.gz" },
   table_download: { path: "data/catlog-table.jsonl.gz" },
 };
+const compressedShardHandlers = new Map();
+const compressedShardRequests = [];
+
+function detailShardJsonl(entries, {
+  sourceSha256 = runtimeSourceSha256,
+  recordCount = entries.length,
+  headerOverrides = {},
+} = {}) {
+  const header = {
+    kind: "catlog_detail_shard",
+    schema_version: 1,
+    source_sha256: sourceSha256,
+    record_count: recordCount,
+    ...headerOverrides,
+  };
+  return `${[JSON.stringify(header), ...entries.map((entry) => JSON.stringify(entry))].join("\n")}\n`;
+}
+
+function compressedDetailShard(entries, options = {}) {
+  return gzipSync(detailShardJsonl(entries, options));
+}
+
+function compressedFetchResponse(body, status = 200) {
+  const bytes = body instanceof Uint8Array ? body : new Uint8Array();
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    }),
+  };
+}
+
+async function fetchCompressedShard(url) {
+  const request = new URL(url);
+  const relativePath = request.pathname.replace(/^\/catlog\//, "");
+  compressedShardRequests.push(request.href);
+  const handler = compressedShardHandlers.get(relativePath);
+  if (!handler) return compressedFetchResponse(undefined, 404);
+  const body = typeof handler === "function" ? handler(request) : handler;
+  if (body && typeof body === "object" && typeof body.ok === "boolean" && body.body) return body;
+  return compressedFetchResponse(body);
+}
+
 const window = {
   CATLOG_STATIC_TEST_MODE: true,
   CATLOG_STATIC_MANIFEST: runtimeManifest,
   CATLOG_RECORD_CHUNKS: [],
   CATLOG_DETAIL_SHARDS: {},
   CATLOG_DETAIL_SHARD_GENERATIONS: {},
+  fetch: fetchCompressedShard,
+  DecompressionStream,
+  TextDecoder,
   scheduler: {
     yield: async () => {
       yieldCount += 1;
@@ -428,6 +501,218 @@ assert.equal(injectedScriptCount, scriptsBeforeGenerationReload + 1, "a correcte
 const generationRequest = new URL(injectedScripts.at(-1).src);
 assert.equal(generationRequest.searchParams.has("v"), false, "content-addressed data must not use the asset-version query");
 assert.equal(injectedScripts.at(-1).catlogShard, generationCheckedShard);
+
+function resetDetailCaches() {
+  api.state.loadedScripts.clear();
+  api.state.loadingScripts.clear();
+  api.state.detailShardLru.clear();
+  window.CATLOG_DETAIL_SHARDS = {};
+  window.CATLOG_DETAIL_SHARD_GENERATIONS = {};
+}
+
+resetDetailCaches();
+const compressedSuccessShard = "data/details-900.111111111111.jsonl.gz";
+compressedShardHandlers.set(
+  compressedSuccessShard,
+  compressedDetailShard([["compressed-row", { value: 17 }]]),
+);
+const requestsBeforeCompressedSuccess = compressedShardRequests.length;
+const firstCompressedLoad = api.loadDetailShard(compressedSuccessShard);
+const secondCompressedLoad = api.loadDetailShard(compressedSuccessShard);
+assert.strictEqual(firstCompressedLoad, secondCompressedLoad, "compressed shard loads should share one in-flight request");
+await Promise.all([firstCompressedLoad, secondCompressedLoad]);
+assert.equal(compressedShardRequests.length, requestsBeforeCompressedSuccess + 1);
+assert.equal(
+  (await api.detailForRow({ detail_shard: compressedSuccessShard, record_key: "compressed-row" })).value,
+  17,
+);
+assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS[compressedSuccessShard], runtimeSourceSha256);
+const compressedSuccessRequest = new URL(compressedShardRequests.at(-1));
+assert.equal(compressedSuccessRequest.searchParams.has("v"), false, "hashed detail gzip must not use the asset-version query");
+assert.equal(compressedSuccessRequest.searchParams.has("retry"), false);
+
+const validationShard = "data/details-901.222222222222.jsonl.gz";
+const validHeader = detailShardJsonl([], { recordCount: 1 }).split("\n", 1)[0];
+assert.throws(
+  () => api.parseCompressedDetailShard(`${validHeader}\n[\"truncated\"\n`, validationShard),
+  /contains invalid JSON/,
+  "a truncated JSONL entry must be rejected",
+);
+assert.throws(
+  () => api.parseCompressedDetailShard(
+    detailShardJsonl([["duplicate", {}], ["duplicate", {}]]),
+    validationShard,
+  ),
+  /duplicate record key/,
+);
+assert.throws(
+  () => api.parseCompressedDetailShard(
+    detailShardJsonl([["counted", {}]], { recordCount: 2 }),
+    validationShard,
+  ),
+  /record count does not match/,
+);
+assert.throws(
+  () => api.parseCompressedDetailShard(detailShardJsonl([["missing-detail"]]), validationShard),
+  /invalid record entry/,
+);
+assert.throws(
+  () => api.parseCompressedDetailShard(
+    detailShardJsonl([], { headerOverrides: { extra: true } }),
+    validationShard,
+  ),
+  /invalid header/,
+  "the compressed envelope must contain only the specified header fields",
+);
+
+async function assertCompressedShardRejected(shard, body, expectedError = null) {
+  resetDetailCaches();
+  compressedShardHandlers.set(shard, body);
+  const requestsBefore = compressedShardRequests.length;
+  window.setTimeout = (callback) => {
+    callback();
+    return 0;
+  };
+  try {
+    if (expectedError) await assert.rejects(api.loadDetailShard(shard), expectedError);
+    else await assert.rejects(api.loadDetailShard(shard));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+  assert.equal(compressedShardRequests.length, requestsBefore + 4);
+  assert.equal(window.CATLOG_DETAIL_SHARDS[shard], undefined);
+  assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS[shard], undefined);
+  assert.equal(api.state.loadedScripts.has(shard), false);
+  assert.equal(api.state.detailShardLru.has(shard), false);
+}
+
+const invalidUtf8Shard = "data/details-904.555555555555.jsonl.gz";
+let invalidUtf8CancellationCount = 0;
+let invalidUtf8ReleaseCount = 0;
+await assertCompressedShardRejected(invalidUtf8Shard, () => {
+  const reader = {
+    async read() {
+      return { value: new Uint8Array([0xff]), done: false };
+    },
+    async cancel() {
+      invalidUtf8CancellationCount += 1;
+    },
+    releaseLock() {
+      invalidUtf8ReleaseCount += 1;
+    },
+  };
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      pipeThrough() {
+        return { getReader: () => reader };
+      },
+    },
+  };
+}, /could not be decompressed or decoded/);
+assert.equal(invalidUtf8CancellationCount, 4, "each malformed UTF-8 attempt should cancel its still-open stream");
+assert.equal(invalidUtf8ReleaseCount, 4, "each malformed UTF-8 attempt should release its reader lock");
+const truncatedGzipShard = "data/details-905.666666666666.jsonl.gz";
+const completeGzip = compressedDetailShard([["truncated-gzip", { value: 31 }]]);
+await assertCompressedShardRejected(
+  truncatedGzipShard,
+  completeGzip.subarray(0, Math.floor(completeGzip.length / 2)),
+);
+
+resetDetailCaches();
+const compressedRetryShard = "data/details-902.333333333333.jsonl.gz";
+let compressedRetryAttempt = 0;
+compressedShardHandlers.set(compressedRetryShard, () => {
+  compressedRetryAttempt += 1;
+  if (compressedRetryAttempt === 1) {
+    return gzipSync(`${detailShardJsonl([], { recordCount: 1 }).split("\n", 1)[0]}\n[\"retry-row\"\n`);
+  }
+  return compressedDetailShard([["retry-row", { value: 23 }]]);
+});
+const retryRequestsBefore = compressedShardRequests.length;
+const compressedRetryNotices = [];
+window.setTimeout = (callback) => {
+  callback();
+  return 0;
+};
+try {
+  const [firstRetryDetail, secondRetryDetail] = await Promise.all([
+    api.detailForRow(
+      { detail_shard: compressedRetryShard, record_key: "retry-row" },
+      { onRetry: (attempt, delay) => compressedRetryNotices.push([attempt, delay]) },
+    ),
+    api.detailForRow({ detail_shard: compressedRetryShard, record_key: "retry-row" }),
+  ]);
+  assert.equal(firstRetryDetail.value, 23);
+  assert.equal(secondRetryDetail.value, 23);
+} finally {
+  window.setTimeout = originalSetTimeout;
+}
+const compressedRetryRequests = compressedShardRequests.slice(retryRequestsBefore);
+assert.equal(compressedRetryRequests.length, 2, "a malformed first response should use one existing retry");
+assert.deepEqual(compressedRetryNotices, [[1, 2000]]);
+assert.equal(new URL(compressedRetryRequests[0]).searchParams.has("v"), false);
+assert.equal(new URL(compressedRetryRequests[1]).searchParams.has("v"), false);
+assert.equal(new URL(compressedRetryRequests[1]).searchParams.get("retry"), "1");
+
+resetDetailCaches();
+const compressedWrongGenerationShard = "data/details-903.444444444444.jsonl.gz";
+compressedShardHandlers.set(
+  compressedWrongGenerationShard,
+  compressedDetailShard([["wrong-generation", { value: 29 }]], { sourceSha256: "b".repeat(64) }),
+);
+const wrongGenerationRequestsBefore = compressedShardRequests.length;
+window.setTimeout = (callback) => {
+  callback();
+  return 0;
+};
+try {
+  await assert.rejects(
+    api.detailForRow({ detail_shard: compressedWrongGenerationShard, record_key: "wrong-generation" }),
+    /does not match the CatLog source generation/,
+  );
+} finally {
+  window.setTimeout = originalSetTimeout;
+}
+assert.equal(
+  compressedShardRequests.length,
+  wrongGenerationRequestsBefore + 4,
+  "a compressed generation mismatch should use the existing retry budget",
+);
+assert.equal(window.CATLOG_DETAIL_SHARDS[compressedWrongGenerationShard], undefined);
+assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS[compressedWrongGenerationShard], undefined);
+assert.equal(api.state.loadedScripts.has(compressedWrongGenerationShard), false);
+assert.equal(api.state.detailShardLru.has(compressedWrongGenerationShard), false);
+
+resetDetailCaches();
+const compressedLruShards = [];
+for (let index = 0; index <= api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
+  const shard = `data/details-${700 + index}.${index.toString(16).padStart(12, "0")}.jsonl.gz`;
+  const recordKey = `compressed-lru-${index}`;
+  compressedLruShards.push({ shard, recordKey });
+  compressedShardHandlers.set(shard, compressedDetailShard([[recordKey, { value: index }]]));
+  assert.equal((await api.detailForRow({ detail_shard: shard, record_key: recordKey })).value, index);
+}
+const compressedEvicted = compressedLruShards[0];
+assert.equal(window.CATLOG_DETAIL_SHARDS[compressedEvicted.shard], undefined);
+assert.equal(window.CATLOG_DETAIL_SHARD_GENERATIONS[compressedEvicted.shard], undefined);
+assert.equal(api.state.loadedScripts.has(compressedEvicted.shard), false);
+const evictedRequestCount = compressedShardRequests.filter(
+  (request) => new URL(request).pathname.endsWith(`/${compressedEvicted.shard}`),
+).length;
+assert.equal(
+  (await api.detailForRow({ detail_shard: compressedEvicted.shard, record_key: compressedEvicted.recordKey })).value,
+  0,
+);
+assert.equal(
+  compressedShardRequests.filter(
+    (request) => new URL(request).pathname.endsWith(`/${compressedEvicted.shard}`),
+  ).length,
+  evictedRequestCount + 1,
+  "an evicted compressed shard should be fetched again",
+);
+assert.equal(api.state.detailShardLru.size, api.DETAIL_SHARD_CACHE_LIMIT);
 
 api.state.loadedScripts.clear();
 api.state.loadingScripts.clear();

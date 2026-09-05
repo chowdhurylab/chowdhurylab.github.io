@@ -8,6 +8,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -221,11 +222,40 @@ def build(source_path: Path, target: Path) -> dict[str, object]:
     }
 
 
-def load_manifest() -> dict[str, object]:
-    first_line = MANIFEST.read_text(encoding="utf-8").splitlines()[0]
+def active_manifest_path() -> Path:
+    page = (CATALOG_ROOT / "index.html").read_text(encoding="utf-8")
+    paths = re.findall(
+        r'<script\b[^>]*\bsrc="(data/manifest(?:\.[0-9a-f]{12})?\.js)(?:\?v=[^"<>]*)?"',
+        page,
+    )
+    if len(paths) != 1:
+        raise RuntimeError("canonical CatLog page must load exactly one local manifest")
+    return manifest_data_path(paths[0], field="manifest")
+
+
+def load_manifest(path: Path | None = None) -> dict[str, object]:
+    path = path or active_manifest_path()
+    content = path.read_bytes()
+    if path.name != "manifest.js":
+        match = re.fullmatch(r"manifest\.([0-9a-f]{12})\.js", path.name)
+        if match is None or match.group(1) != hashlib.sha256(content).hexdigest()[:12]:
+            raise RuntimeError("manifest filename hash differs from its bytes")
+    first_line = content.decode("utf-8").splitlines()[0]
     if not first_line.startswith(MANIFEST_PREFIX) or not first_line.endswith(";"):
         raise RuntimeError("unexpected CatLog manifest wrapper")
     return json.loads(first_line[len(MANIFEST_PREFIX) : -1])
+
+
+def write_immutable_manifest(manifest: dict[str, object], template_path: Path) -> Path:
+    """Finalize the new generation without replacing the legacy stable manifest."""
+    _first_line, separator, suffix = template_path.read_text(encoding="utf-8").partition("\n")
+    content = (
+        MANIFEST_PREFIX + json.dumps(manifest, ensure_ascii=False, separators=(",", ":"))
+        + ";" + separator + suffix
+    ).encode("utf-8")
+    target = DATA_ROOT / f"manifest.{hashlib.sha256(content).hexdigest()[:12]}.js"
+    target.write_bytes(content)
+    return target
 
 
 def manifest_data_path(value: object, *, field: str) -> Path:
@@ -262,9 +292,20 @@ def main() -> int:
         action="store_true",
         help="fail unless the committed viewer index matches a fresh deterministic build",
     )
+    parser.add_argument("--manifest", help="use this data/manifest file instead of the page's active manifest")
+    parser.add_argument(
+        "--write-manifest", action="store_true",
+        help="write a new content-addressed manifest containing the viewer descriptor; preserve manifest.js",
+    )
     args = parser.parse_args()
+    if args.check and args.write_manifest:
+        parser.error("--check cannot be combined with --write-manifest")
 
-    manifest = load_manifest()
+    manifest_path = (
+        manifest_data_path(args.manifest, field="manifest")
+        if args.manifest else active_manifest_path()
+    )
+    manifest = load_manifest(manifest_path)
     table_descriptor = manifest.get("table_download") or {}
     if not isinstance(table_descriptor, dict):
         raise SystemExit("manifest table_download descriptor is invalid")
@@ -314,6 +355,10 @@ def main() -> int:
             os.replace(temporary_path, target)
             temporary_name = ""
             outcome = f"Wrote {target.relative_to(REPOSITORY_ROOT)}"
+            if args.write_manifest:
+                manifest["viewer_index"] = expected_descriptor
+                finalized_manifest = write_immutable_manifest(manifest, manifest_path)
+                print(f"Final manifest: {finalized_manifest.relative_to(CATALOG_ROOT)}")
 
         print(outcome)
         print(json.dumps(metadata, indent=2, sort_keys=True))
