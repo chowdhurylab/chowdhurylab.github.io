@@ -3114,6 +3114,25 @@ tbody tr.selected .row-arrow {
   line-height: 1.3;
 }
 
+.catalog-load-failed .records-title {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.catalog-load-failed .records-title > strong,
+.catalog-load-failed .records-title > span {
+  flex-basis: 100%;
+}
+
+.catalog-load-failed .table-wrap table {
+  min-width: 0;
+}
+
+.catalog-load-failed .table-wrap colgroup,
+.catalog-load-failed .table-wrap thead {
+  display: none;
+}
+
 .load-notice {
   display: grid;
   gap: 6px;

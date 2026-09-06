@@ -1081,6 +1081,7 @@
   }
 
   function showLoadNotice(title, message, { actionLabel = "", onAction = null } = {}) {
+    document.body.classList.add("catalog-load-failed");
     const body = $("recordsBody");
     if (body) {
       body.innerHTML = `
@@ -1237,7 +1238,7 @@
         if (window.location.protocol === "file:") {
           showLoadNotice(
             "This copy needs a web server",
-            "Open the hosted CatLog site, or use the offline snapshot to browse from disk.",
+            "Open the hosted CatLog site, or serve this folder over HTTP. This web-only copy does not include an offline snapshot.",
           );
         } else {
           showLoadNotice(
@@ -1939,6 +1940,7 @@
   }
 
   function renderRows() {
+    document.body.classList.remove("catalog-load-failed");
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
     state.page = Math.min(Math.max(1, state.page), totalPages);
     const start = (state.page - 1) * state.pageSize;
@@ -2212,18 +2214,41 @@
     uniprot_accession: "UniProt accession",
     source_record: "Source database",
     uniprot_accession_inactive_uniparc: "UniProt / UniParc archive",
-    uniprot_ec_organism_mutation_ranked_match: "Ranked UniProt match from EC, organism, and variant",
+    uniprot_ec_organism_mutation_ranked_match: "UniProt accession inferred from EC, organism, and variant",
     unresolved_ec_organism: "No sequence match from EC and organism",
     manual_literature_uniprot_resolution: "UniProt match from the cited paper",
-    uniprot_ec_organism_unique: "Unique UniProt match from EC and organism",
+    uniprot_ec_organism_unique: "UniProt accession inferred from EC and organism",
+    brenda_getsequence_unique_ec_organism: "UniProt accession inferred from BRENDA EC and organism",
     multiple: "Multiple sources",
   };
 
-  function sequenceSourceLabel(value) {
-    const key = String(value || "").trim().toLowerCase();
+  function sequenceSourceKey(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function isEcOrganismInferredSequenceSource(value) {
+    const key = sequenceSourceKey(value);
+    return key.startsWith("uniprot_ec_organism_")
+      || key === "brenda_getsequence_unique_ec_organism";
+  }
+
+  function sequenceSourceLabel(value, confidence) {
+    const key = sequenceSourceKey(value);
     if (!key) return "";
-    if (sequenceSourceLabels[key]) return sequenceSourceLabels[key];
-    return key.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
+    const label = sequenceSourceLabels[key]
+      || (key.startsWith("uniprot_ec_organism_") ? "UniProt accession inferred from EC and organism" : "")
+      || key.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
+    return typeof confidence === "number" && Number.isFinite(confidence)
+      ? `${label} · confidence ${confidence}`
+      : label;
+  }
+
+  function identityResolutionLabel(row) {
+    const state = String(row?.identity_resolution_state || "").trim();
+    if (state === "accession_resolved" && isEcOrganismInferredSequenceSource(row?.sequence_source)) {
+      return "Accession inferred (EC/organism)";
+    }
+    return identityLabels[state] || state;
   }
 
   function uniqueReferenceValues(values, { caseInsensitive = false } = {}) {
@@ -2376,7 +2401,8 @@
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
     const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
     const sequenceVariantNote = String(detail.sequence_variant_note || summary.sequence_variant_note || "").trim();
-    const sequenceSource = sequenceSourceLabel(detail.sequence_source || summary.sequence_source);
+    const sequenceSourceRecord = detail.sequence_source ? detail : summary;
+    const sequenceSource = sequenceSourceLabel(sequenceSourceRecord.sequence_source, sequenceSourceRecord.sequence_source_confidence);
     if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant && !sequenceVariantNote && enzymeForm === "Not recorded") return "";
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
@@ -2495,7 +2521,10 @@
         kv("Database rows", detail.source_record_count || summary.source_record_count),
         detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
         publicEvidenceString(detail.data_origin) ? kv("Data origin", publicEvidenceString(detail.data_origin)) : "",
-        kv("Protein identity", identityLabels[summary.identity_resolution_state] || summary.identity_resolution_state),
+        kv("Protein identity", identityResolutionLabel({
+          identity_resolution_state: detail.identity_resolution_state || summary.identity_resolution_state,
+          sequence_source: detail.sequence_source || summary.sequence_source,
+        })),
       ])}
 
       <div class="detail-actions">
@@ -2775,6 +2804,7 @@
       retainDetailShard,
       detailForRow,
       recordIndexPath,
+      loadRecordChunks,
       publicSummaryRecord,
       sourceLicense,
       indexLoadedRecords,
@@ -2789,6 +2819,8 @@
       conditionFlags,
       enzymeFormLabel,
       enzymeFormHtml,
+      sequenceSourceLabel,
+      identityResolutionLabel,
       measurementSection,
       molecularIdentitySection,
       showSuggestions,

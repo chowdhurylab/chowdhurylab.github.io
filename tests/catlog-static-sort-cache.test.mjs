@@ -429,6 +429,28 @@ delete runtimeManifest.viewer_index;
 assert.equal(api.recordIndexPath(), "data/catlog-table.jsonl.gz");
 runtimeManifest.viewer_index = { path: "data/catlog-viewer-index.jsonl.gz" };
 
+runtimeManifest.total_rows = 1;
+runtimeManifest.record_chunks = [];
+window.location.protocol = "file:";
+await api.loadRecordChunks();
+assert.equal(element("activeSummary").textContent, "This copy needs a web server");
+assert.ok(document.body.classList.contains("catalog-load-failed"), "load errors should enable the readable empty-table layout");
+assert.match(element("pageSummary").textContent, /serve this folder over HTTP/);
+assert.match(element("pageSummary").textContent, /does not include an offline snapshot/);
+assert.doesNotMatch(element("pageSummary").textContent, /use the offline snapshot|download.*(?:zip|snapshot)/);
+
+window.location.protocol = "https:";
+window.DecompressionStream = undefined;
+await api.loadRecordChunks();
+assert.equal(element("activeSummary").textContent, "This browser cannot open the CatLog index");
+assert.match(element("pageSummary").textContent, /current version of Safari, Chrome, Edge, or Firefox/);
+assert.doesNotMatch(element("pageSummary").textContent, /offline|zip|serve this folder/);
+await api.applyFilters();
+assert.equal(document.body.classList.contains("catalog-load-failed"), false, "rendering results should restore the normal table layout");
+window.DecompressionStream = DecompressionStream;
+delete runtimeManifest.total_rows;
+delete runtimeManifest.record_chunks;
+
 const scriptedShardPayloads = new Map();
 const scriptedShardGenerations = new Map();
 const injectedScripts = [];
@@ -849,6 +871,59 @@ assert.ok(
   formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Form note"),
   "the form note should follow the enzyme form",
 );
+assert.equal(
+  api.sequenceSourceLabel("uniprot_accession", 1),
+  "UniProt accession · confidence 1",
+);
+assert.equal(
+  api.sequenceSourceLabel("uniprot_ec_organism_unique", 0.6),
+  "UniProt accession inferred from EC and organism · confidence 0.6",
+);
+assert.equal(
+  api.sequenceSourceLabel("uniprot_ec_organism_unique", null),
+  "UniProt accession inferred from EC and organism",
+);
+assert.equal(
+  api.sequenceSourceLabel("brenda_getSequence_unique_ec_organism", 0),
+  "UniProt accession inferred from BRENDA EC and organism · confidence 0",
+);
+assert.equal(
+  api.sequenceSourceLabel("uniprot_ec_organism_future_method", null),
+  "UniProt accession inferred from EC and organism",
+);
+assert.equal(
+  api.identityResolutionLabel({
+    identity_resolution_state: "accession_resolved",
+    sequence_source: "uniprot_ec_organism_unique",
+  }),
+  "Accession inferred (EC/organism)",
+);
+assert.equal(
+  api.identityResolutionLabel({
+    identity_resolution_state: "accession_resolved",
+    sequence_source: "uniprot_accession",
+  }),
+  "Accession resolved",
+);
+assert.equal(
+  api.identityResolutionLabel({
+    identity_resolution_state: "identity_unresolved",
+    sequence_source: "uniprot_ec_organism_unique",
+  }),
+  "Unresolved",
+);
+const inferredIdentityHtml = api.molecularIdentitySection(
+  { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
+  { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: 0.6 },
+);
+assert.match(inferredIdentityHtml, /UniProt accession inferred from EC and organism · confidence 0\.6/);
+assert.doesNotMatch(inferredIdentityHtml, /confidence 1/);
+const missingDetailConfidenceHtml = api.molecularIdentitySection(
+  { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
+  { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: null },
+);
+assert.match(missingDetailConfidenceHtml, /UniProt accession inferred from EC and organism/);
+assert.doesNotMatch(missingDetailConfidenceHtml, /confidence/);
 
 function row(overrides = {}) {
   return {
