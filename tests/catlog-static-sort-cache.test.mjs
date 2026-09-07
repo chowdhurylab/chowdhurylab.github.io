@@ -232,10 +232,36 @@ function makeClassList() {
   };
 }
 
+const downloadBlobs = new Map();
+const capturedDownloads = [];
+let nextDownloadBlobId = 1;
+
+class DownloadBlob {
+  constructor(parts, options = {}) {
+    this.parts = parts;
+    this.type = options.type || "";
+  }
+
+  async text() {
+    return this.parts.map((part) => String(part)).join("");
+  }
+}
+
+class RuntimeURL extends URL {}
+RuntimeURL.createObjectURL = (blob) => {
+  const url = `blob:catlog-test/${nextDownloadBlobId}`;
+  nextDownloadBlobId += 1;
+  downloadBlobs.set(url, blob);
+  return url;
+};
+RuntimeURL.revokeObjectURL = (url) => downloadBlobs.delete(url);
+
 function makeElement(id) {
   const attributes = new Map();
+  const listeners = new Map();
   return {
     id,
+    tagName: String(id).toUpperCase(),
     value: "",
     textContent: "",
     innerHTML: "",
@@ -248,7 +274,22 @@ function makeElement(id) {
     inert: false,
     style: { setProperty() {} },
     classList: makeClassList(),
-    addEventListener() {},
+    addEventListener(type, listener, options = {}) {
+      const entries = listeners.get(type) || [];
+      entries.push({ listener, once: Boolean(options?.once) });
+      listeners.set(type, entries);
+    },
+    click() {
+      if (this.tagName === "A") {
+        capturedDownloads.push({
+          filename: this.download,
+          blob: downloadBlobs.get(this.href),
+        });
+      }
+      const entries = listeners.get("click") || [];
+      entries.forEach(({ listener }) => listener({ currentTarget: this, target: this }));
+      listeners.set("click", entries.filter(({ once }) => !once));
+    },
     appendChild() {},
     remove() {},
     setAttribute(name, value) { attributes.set(name, String(value)); },
@@ -406,10 +447,11 @@ const window = {
 };
 
 vm.runInNewContext(sourceCode, {
+  Blob: DownloadBlob,
   console,
   document,
   window,
-  URL,
+  URL: RuntimeURL,
   Intl,
   Date,
   Math,
@@ -457,6 +499,7 @@ const injectedScripts = [];
 let injectedScriptCount = 0;
 let removedScriptCount = 0;
 document.body.appendChild = (script) => {
+  if (script.tagName === "A") return;
   injectedScriptCount += 1;
   const relativePath = new URL(script.src).pathname.replace(/^\/catlog\//, "");
   injectedScripts.push({ src: script.src, catlogShard: script.dataset.catlogShard });
@@ -984,6 +1027,80 @@ assert.equal(mergedPageRecord.source_license, "detail license");
 assert.equal(mergedPageRecord.sequence_resolved, true);
 assert.equal(api.sourceLicense({}, { source_license: "detail license" }), "detail license");
 assert.equal(api.sourceLicense({ source_license: "summary license" }, {}), "summary license");
+
+const licenseNote = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
+const mixedSourceLicenses = "CC BY 4.0; CC BY-NC-ND 4.0";
+const pageLicenseShard = "data/details-page-license.js";
+const pageLicenseRows = [
+  row({ record_key: "page-mixed", detail_shard: pageLicenseShard, source_license: "CC BY 4.0" }),
+  row({ record_key: "page-summary-fallback", detail_shard: pageLicenseShard, source_license: "CC BY 4.0" }),
+  row({ record_key: "page-empty-summary", detail_shard: pageLicenseShard, source_license: "" }),
+  row({ record_key: "page-missing-license", detail_shard: pageLicenseShard }),
+];
+window.CATLOG_DETAIL_SHARDS[pageLicenseShard] = {
+  "page-mixed": { source_license: mixedSourceLicenses },
+  "page-summary-fallback": {},
+  "page-empty-summary": { source_license: "CC BY-NC-ND 4.0" },
+  "page-missing-license": {},
+};
+api.state.loadedScripts.add(pageLicenseShard);
+api.state.filtered = pageLicenseRows;
+api.state.page = 1;
+api.state.pageSize = 25;
+api.state.recordsReady = true;
+api.state.pageDownloadPending = false;
+element("downloadPageButton").disabled = false;
+const pageDownloadCount = capturedDownloads.length;
+await api.handlePageDownload();
+assert.equal(capturedDownloads.length, pageDownloadCount + 1);
+const pageDownload = capturedDownloads.at(-1);
+assert.ok(pageDownload.blob, "page download should create a JSON Blob");
+const pagePayload = JSON.parse(await pageDownload.blob.text());
+assert.equal(pagePayload.metadata.license_note, licenseNote);
+assert.equal(pagePayload.metadata.row_count, 4);
+const pageRecordsByKey = Object.fromEntries(
+  pagePayload.records.map((record) => [record.record_key, record]),
+);
+assert.equal(pageRecordsByKey["page-mixed"].source_license, mixedSourceLicenses);
+assert.equal(pageRecordsByKey["page-summary-fallback"].source_license, "CC BY 4.0");
+assert.equal(pageRecordsByKey["page-empty-summary"].source_license, "CC BY-NC-ND 4.0");
+assert.equal(pageRecordsByKey["page-missing-license"].source_license, null);
+
+async function recordDownloadPayload(summary, detail) {
+  elements.set("downloadSelectedJson", makeElement("downloadSelectedJson"));
+  api.renderDetail(summary, detail);
+  const recordDownloadCount = capturedDownloads.length;
+  element("downloadSelectedJson").click();
+  assert.equal(capturedDownloads.length, recordDownloadCount + 1);
+  const download = capturedDownloads.at(-1);
+  assert.ok(download.blob, "record download should create a JSON Blob");
+  return JSON.parse(await download.blob.text());
+}
+
+const detailPreferredPayload = await recordDownloadPayload(
+  row({ record_key: "record-detail-preferred", source_license: "CC BY 4.0", summary_marker: true }),
+  { source_license: mixedSourceLicenses, detail_marker: true },
+);
+assert.equal(detailPreferredPayload.metadata.license_note, licenseNote);
+assert.equal(detailPreferredPayload.metadata.source_license, mixedSourceLicenses);
+assert.equal(detailPreferredPayload.summary.source_license, "CC BY 4.0");
+assert.equal(detailPreferredPayload.summary.summary_marker, true);
+assert.equal(detailPreferredPayload.detail.source_license, mixedSourceLicenses);
+assert.equal(detailPreferredPayload.detail.detail_marker, true);
+
+const summaryFallbackPayload = await recordDownloadPayload(
+  row({ record_key: "record-summary-fallback", source_license: "CC BY 4.0" }),
+  { source_license: "" },
+);
+assert.equal(summaryFallbackPayload.metadata.source_license, "CC BY 4.0");
+assert.equal(summaryFallbackPayload.detail.source_license, "");
+
+const missingLicensePayload = await recordDownloadPayload(
+  row({ record_key: "record-missing-license", source_license: undefined }),
+  {},
+);
+assert.equal(missingLicensePayload.metadata.source_license, null);
+assert.equal(missingLicensePayload.summary.source_license, undefined);
 const detailFalseKiHtml = api.measurementSection(row({
   has_ki: true,
   ki_display: "0.5",

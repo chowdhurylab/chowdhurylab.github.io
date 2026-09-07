@@ -33,6 +33,7 @@
     suggestionInputId: "",
   };
   const EMPTY_VALUE = "—";
+  const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
   const LOAD_RETRY_DELAYS = [2000, 5000, 10000];
   const SORT_RUN_SIZE = 4096;
   const SORT_CACHE_LIMIT = 2;
@@ -1349,6 +1350,7 @@
       const records = rows.map((row, index) => publicSummaryRecord({
         ...details[index],
         ...row,
+        source_license: sourceLicense(row, details[index]) || null,
       }));
       const payload = {
         metadata: {
@@ -1360,6 +1362,7 @@
           page,
           row_count: records.length,
           note: "Raw internal source-record payloads are not included in the public static package.",
+          license_note: SOURCE_LICENSE_NOTE,
         },
         records,
       };
@@ -2537,6 +2540,10 @@
     });
     $("downloadSelectedJson").addEventListener("click", () => {
       const payload = {
+        metadata: {
+          source_license: sourceLicense(summary, detail) || null,
+          license_note: SOURCE_LICENSE_NOTE,
+        },
         summary: publicSummaryRecord(summary),
         detail: publicSummaryRecord(detail),
       };
@@ -2803,6 +2810,8 @@
       parseCompressedDetailShard,
       retainDetailShard,
       detailForRow,
+      handlePageDownload,
+      renderDetail,
       recordIndexPath,
       loadRecordChunks,
       publicSummaryRecord,
