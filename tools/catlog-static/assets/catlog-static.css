@@ -300,7 +300,8 @@ a.nav-tab:hover {
 }
 
 .search-suggestions button:hover,
-.search-suggestions button:focus {
+.search-suggestions button:focus,
+.search-suggestions button[aria-selected="true"] {
   background: #eef7f5;
   outline: 0;
 }

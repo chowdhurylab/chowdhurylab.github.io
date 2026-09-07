@@ -297,6 +297,19 @@ function makeElement(id) {
       entries.push({ listener, once: Boolean(options?.once) });
       listeners.set(type, entries);
     },
+    listenerCount(type) { return (listeners.get(type) || []).length; },
+    dispatch(type, fields = {}) {
+      const event = {
+        currentTarget: this, target: this, defaultPrevented: false, propagationStopped: false,
+        preventDefault() { this.defaultPrevented = true; },
+        stopPropagation() { this.propagationStopped = true; },
+        ...fields,
+      };
+      const entries = listeners.get(type) || [];
+      entries.forEach(({ listener }) => listener(event));
+      listeners.set(type, entries.filter(({ once }) => !once));
+      return event;
+    },
     click() {
       if (this.tagName === "A") {
         capturedDownloads.push({
@@ -1186,6 +1199,139 @@ assert.match(
 searchInput.value = "";
 api.showSuggestions(searchInput);
 assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can still offer samples");
+
+// R20: exercise the bound handlers with a controlled three-option DOM and clock.
+// Native button key-to-click synthesis remains a real-browser responsibility.
+{
+  const originalSetTimeout = window.setTimeout;
+  const originalClearTimeout = window.clearTimeout;
+  const originalQuerySelectorAll = suggestions.querySelectorAll;
+  const originalContains = suggestions.contains;
+  const originalFocus = searchInput.focus;
+  const originalActiveElement = document.activeElement;
+  const timers = new Map();
+  let nextTimer = 1;
+  let options = [];
+  let inputFocusCount = 0;
+  window.setTimeout = (callback, delay) => {
+    const id = nextTimer++;
+    timers.set(id, { callback, delay });
+    return id;
+  };
+  window.clearTimeout = (id) => timers.delete(id);
+  suggestions.querySelectorAll = (selector) => selector === "button[data-value]" ? options : [];
+  suggestions.contains = (target) => target === suggestions || options.includes(target);
+  searchInput.focus = function () {
+    inputFocusCount += 1;
+    document.activeElement = this;
+    this.dispatch("focus");
+  };
+  const openSuggestions = () => {
+    options = ["Enzyme", "Organism", "Substrate"].map((value, index) => {
+      const option = makeElement(`catlog-suggestion-${index}`);
+      option.tagName = "BUTTON";
+      option.dataset.value = value;
+      option.scrollIntoView = () => {};
+      return option;
+    });
+    searchInput.value = "";
+    document.activeElement = searchInput;
+    api.showSuggestions(searchInput);
+    assert.equal(options.length, 3);
+    assert.equal(api.state.suggestionIndex, -1);
+  };
+  const runHideTimer = () => {
+    const timerId = api.state.suggestionHideTimer;
+    const timer = timers.get(timerId);
+    assert.ok(timer, "leaving the suggestion widget should schedule its hide check");
+    assert.equal(timer.delay, 140);
+    timers.delete(timerId);
+    timer.callback();
+  };
+  try {
+    api.bindControls();
+    assert.equal(searchInput.getAttribute("role"), "combobox");
+    openSuggestions();
+    const firstUp = searchInput.dispatch("keydown", { key: "ArrowUp" });
+    assert.equal(firstUp.defaultPrevented, true);
+    assert.equal(api.state.suggestionIndex, 2, "initial ArrowUp selects the last, not penultimate, option");
+    assert.equal(searchInput.getAttribute("aria-activedescendant"), options[2].id);
+    assert.deepEqual(options.map((option) => option.getAttribute("aria-selected")), ["false", "false", "true"]);
+    searchInput.dispatch("keydown", { key: "ArrowDown" });
+    assert.equal(api.state.suggestionIndex, 0, "ArrowDown wraps from last to first");
+    searchInput.dispatch("keydown", { key: "ArrowUp" });
+    assert.equal(api.state.suggestionIndex, 2, "ArrowUp wraps from first to last");
+    openSuggestions();
+    const firstDown = searchInput.dispatch("keydown", { key: "ArrowDown" });
+    assert.equal(firstDown.defaultPrevented, true);
+    assert.equal(api.state.suggestionIndex, 0, "initial ArrowDown selects the first option");
+
+    searchInput.dispatch("blur");
+    options[1].focus();
+    runHideTimer();
+    assert.equal(suggestions.classList.contains("hidden"), false,
+      "the hide callback must preserve an option that has focus, even before focusin cancellation");
+    assert.equal(searchInput.getAttribute("aria-expanded"), "true");
+    assert.equal(document.activeElement, options[1]);
+
+    api.scheduleSuggestionHide();
+    document.activeElement = searchInput;
+    runHideTimer();
+    assert.equal(suggestions.classList.contains("hidden"), false,
+      "the hide callback must also preserve focus returned to the associated input");
+
+    searchInput.dispatch("blur");
+    const canceledTimer = api.state.suggestionHideTimer;
+    options[1].focus();
+    suggestions.dispatch("focusin", { target: options[1] });
+    assert.equal(timers.has(canceledTimer), false, "focusin within the box cancels pending hide");
+    suggestions.dispatch("focusout", { target: options[1], relatedTarget: options[2] });
+    options[2].focus();
+    runHideTimer();
+    assert.equal(suggestions.classList.contains("hidden"), false,
+      "moving between options must keep the list open");
+
+    const outside = element("downloadMenu");
+    suggestions.dispatch("focusout", { target: options[2], relatedTarget: outside });
+    outside.focus();
+    runHideTimer();
+    assert.equal(suggestions.classList.contains("hidden"), true, "focus leaving both input and box closes the list");
+    assert.equal(searchInput.getAttribute("aria-expanded"), "false");
+    assert.equal(searchInput.getAttribute("aria-activedescendant"), null);
+
+    openSuggestions();
+    options[0].focus();
+    const escape = suggestions.dispatch("keydown", { key: "Escape", target: options[0] });
+    assert.equal(escape.defaultPrevented, true);
+    assert.equal(escape.propagationStopped, true);
+    assert.equal(document.activeElement, searchInput, "Escape from an option returns focus to its input");
+    assert.equal(suggestions.classList.contains("hidden"), true,
+      "Escape closes after returning focus, so the input focus handler cannot reopen the list");
+    assert.equal(searchInput.getAttribute("aria-expanded"), "false");
+
+    openSuggestions();
+    const chosen = options[0];
+    assert.equal(chosen.listenerCount("click"), 1, "one click handler handles native button activation");
+    assert.equal(chosen.listenerCount("mousedown"), 0, "activation must not depend on pointer-only mousedown");
+    assert.equal(chosen.listenerCount("keydown"), 0, "native Enter/Space clicks must not be duplicated by custom activation");
+    const focusCountBeforeClick = inputFocusCount;
+    chosen.click();
+    assert.equal(searchInput.value, chosen.dataset.value);
+    assert.equal(inputFocusCount, focusCountBeforeClick + 1, "one click chooses exactly once");
+    assert.equal(document.activeElement, searchInput);
+    assert.equal(suggestions.classList.contains("hidden"), true);
+    await api.ensureCurrentFilters();
+  } finally {
+    api.hideSuggestions();
+    window.setTimeout = originalSetTimeout;
+    window.clearTimeout = originalClearTimeout;
+    suggestions.querySelectorAll = originalQuerySelectorAll;
+    suggestions.contains = originalContains;
+    searchInput.focus = originalFocus;
+    searchInput.value = "";
+    document.activeElement = originalActiveElement;
+  }
+}
 
 assert.equal(
   api.conditionFlags(row({
