@@ -169,6 +169,9 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const pageHtml of [indexHtml, stableAliasHtml]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
+  assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check. Open the row to see why."));
+  assert.ok(pageHtml.includes("A warning marks a value to check against its source. Open the row for the reason."));
+  assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   assert.ok(
     pageHtml.includes(
       `<meta name="description" content="CatLog snapshot dated ${expectedSnapshotDate}: browse ${expectedRowCount} enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />`,
@@ -1029,6 +1032,27 @@ assert.match(kiMeasurementHtml, /<small>µM<\/small>/);
 const noKiMeasurementHtml = api.measurementSection(row({ has_ki: false }), {});
 assert.doesNotMatch(noKiMeasurementHtml, /class="measurement-strip has-ki"/);
 assert.doesNotMatch(noKiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
+
+// Exporter-produced flagged conditions are withheld, with the reason still visible.
+const withheldConditions = row({
+  temperature_k: null,
+  temperature_display: "n/a",
+  ph: null,
+  ph_display: null,
+  condition_flags: ["temperature_zero_celsius_needs_check", "ph_outside_0_14"],
+});
+const withheldConditionsBefore = structuredClone(withheldConditions);
+const withheldMeasurementHtml = api.measurementSection(withheldConditions, {
+  temperature_k: null,
+  ph: null,
+  condition_flags: withheldConditions.condition_flags,
+});
+assert.match(withheldMeasurementHtml, /Temperature recorded as exactly 0 °C — check source/);
+assert.match(withheldMeasurementHtml, /pH outside 0–14/);
+assert.ok(withheldMeasurementHtml.includes("<span>Temperature</span><strong>—</strong>"));
+assert.ok(withheldMeasurementHtml.includes("<span>pH</span><strong>—</strong>"));
+assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
+assert.deepEqual(withheldConditions, withheldConditionsBefore);
 
 const mergedPageRecord = api.publicSummaryRecord({
   paper_grounding_status: "detail-only",
