@@ -1535,6 +1535,7 @@
   }
 
   function hideSuggestions() {
+    window.clearTimeout(state.suggestionHideTimer);
     const box = $("searchSuggestions");
     if (!box) return;
     const input = state.suggestionInputId ? $(state.suggestionInputId) : null;
@@ -1544,6 +1545,17 @@
     box.innerHTML = "";
     state.suggestionIndex = -1;
     state.suggestionInputId = "";
+  }
+
+  function scheduleSuggestionHide() {
+    window.clearTimeout(state.suggestionHideTimer);
+    state.suggestionHideTimer = window.setTimeout(() => {
+      const box = $("searchSuggestions");
+      const input = state.suggestionInputId ? $(state.suggestionInputId) : null;
+      if (document.activeElement !== input && !box?.contains(document.activeElement)) {
+        hideSuggestions();
+      }
+    }, 140);
   }
 
   function chooseSuggestion(input, value) {
@@ -1558,7 +1570,9 @@
     if (!box || box.classList.contains("hidden")) showSuggestions(input);
     const buttons = [...box.querySelectorAll("button[data-value]")];
     if (!buttons.length) return;
-    state.suggestionIndex = (state.suggestionIndex + direction + buttons.length) % buttons.length;
+    state.suggestionIndex = state.suggestionIndex < 0
+      ? (direction < 0 ? buttons.length - 1 : 0)
+      : (state.suggestionIndex + direction + buttons.length) % buttons.length;
     buttons.forEach((button, index) => button.setAttribute("aria-selected", String(index === state.suggestionIndex)));
     const selected = buttons[state.suggestionIndex];
     input.setAttribute("aria-activedescendant", selected.id);
@@ -2694,9 +2708,18 @@
           hideSuggestions();
         }
       });
-      input.addEventListener("blur", () => {
-        state.suggestionHideTimer = window.setTimeout(hideSuggestions, 140);
-      });
+      input.addEventListener("blur", scheduleSuggestionHide);
+    });
+    const suggestionBox = $("searchSuggestions");
+    suggestionBox?.addEventListener("focusin", () => window.clearTimeout(state.suggestionHideTimer));
+    suggestionBox?.addEventListener("focusout", scheduleSuggestionHide);
+    suggestionBox?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      const input = state.suggestionInputId ? $(state.suggestionInputId) : null;
+      input?.focus();
+      hideSuggestions();
     });
     document.querySelectorAll(".filter-section-title").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2833,6 +2856,10 @@
       measurementSection,
       molecularIdentitySection,
       showSuggestions,
+      hideSuggestions,
+      moveSuggestionSelection,
+      scheduleSuggestionHide,
+      bindControls,
       activeTableRowKey,
       setActiveTableRow,
       moveTableRowFocus,
