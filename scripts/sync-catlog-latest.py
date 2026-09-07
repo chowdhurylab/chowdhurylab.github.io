@@ -16,6 +16,25 @@ ASSET_REFERENCE = re.compile(
     r'(?P<head>\b(?:href|src)=")(?P<path>(?:assets|data)/)'
 )
 DATASET_NOTES_REFERENCE = re.compile(r'(?P<head>\bhref=")README_FIRST\.txt"')
+USAGE_TRACKER_TAG = (
+    '<script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>'
+)
+
+
+def prepare_canonical(source: str) -> str:
+    """Restore the site's tracker after importing a standalone export."""
+    tracker_count = source.count(USAGE_TRACKER_TAG)
+    marker_counts = (
+        source.lower().count("usage-tracker.js"),
+        source.lower().count("data-usage-source"),
+    )
+    if tracker_count == 1 and marker_counts == (1, 1):
+        return source
+    if tracker_count or any(marker_counts):
+        raise RuntimeError("Expected one canonical usage tracker tag, without duplicates")
+    if source.count("</body>") != 1:
+        raise RuntimeError("Expected one closing body tag for usage tracker insertion")
+    return source.replace("</body>", f"{USAGE_TRACKER_TAG}\n</body>")
 
 
 def build_alias(source: str) -> str:
@@ -54,18 +73,25 @@ def main() -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="fail if catlog-latest.html is not synchronized",
+        help="verify the canonical tracker and synchronized catlog-latest.html",
     )
     args = parser.parse_args()
 
-    expected = build_alias(SOURCE.read_text(encoding="utf-8"))
+    source = SOURCE.read_text(encoding="utf-8")
+    canonical = prepare_canonical(source)
+    expected = build_alias(canonical)
     current = TARGET.read_text(encoding="utf-8") if TARGET.exists() else None
     if args.check:
+        if canonical != source:
+            raise SystemExit("tools/catlog-static/index.html is missing its usage tracker")
         if current != expected:
             raise SystemExit("tools/catlog-latest.html is out of date")
         print("tools/catlog-latest.html is synchronized")
         return 0
 
+    if canonical != source:
+        SOURCE.write_text(canonical, encoding="utf-8")
+        print(f"Wrote {SOURCE.relative_to(ROOT)}")
     TARGET.write_text(expected, encoding="utf-8")
     print(f"Wrote {TARGET.relative_to(ROOT)}")
     return 0

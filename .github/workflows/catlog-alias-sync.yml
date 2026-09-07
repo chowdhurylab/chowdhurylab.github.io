@@ -21,7 +21,10 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /scripts/sync-catlog-latest.py
+            /tests/test_sync_catlog_latest.py
             /tools/catlog-static/index.html
             /tools/catlog-latest.html
+      - name: Test tracker preservation during regeneration
+        run: python3 tests/test_sync_catlog_latest.py
       - name: Verify the stable entry page matches the canonical page
         run: python3 scripts/sync-catlog-latest.py --check
