@@ -1,0 +1,27 @@
+name: CatLog alias synchronization
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  alias-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the synchronizer and both entry pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/sync-catlog-latest.py
+            /tools/catlog-static/index.html
+            /tools/catlog-latest.html
+      - name: Verify the stable entry page matches the canonical page
+        run: python3 scripts/sync-catlog-latest.py --check
