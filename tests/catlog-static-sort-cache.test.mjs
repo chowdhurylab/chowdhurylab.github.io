@@ -1081,6 +1081,27 @@ assert.equal(pageRecordsByKey["page-summary-fallback"].source_license, "CC BY 4.
 assert.equal(pageRecordsByKey["page-empty-summary"].source_license, "CC BY-NC-ND 4.0");
 assert.equal(pageRecordsByKey["page-missing-license"].source_license, null);
 
+// R15: keep the first DOI spelling, collapse case variants, and retain
+// genuinely different identifiers in their original order.
+const doiCaseVariants = ["10.1128/AEM.03151-20", "10.1128/aem.03151-20"];
+api.renderDetail(row({ record_key: "doi-case-duplicates" }), {
+  supporting_dois: doiCaseVariants,
+});
+let referenceHtml = element("detailContent").innerHTML;
+assert.equal((referenceHtml.match(/href="https:\/\/doi.org\//g) || []).length, 1);
+assert.ok(referenceHtml.includes('href="https://doi.org/10.1128/AEM.03151-20"'));
+assert.match(referenceHtml, /<span>DOI<\/span>/);
+assert.doesNotMatch(referenceHtml, /<span>DOIs<\/span>/);
+assert.deepEqual(doiCaseVariants, ["10.1128/AEM.03151-20", "10.1128/aem.03151-20"]);
+
+api.renderDetail(row({ record_key: "doi-distinct-references" }), {
+  supporting_dois: [...doiCaseVariants, "10.1000/Second", "10.1000/second"],
+});
+referenceHtml = element("detailContent").innerHTML;
+const doiHrefs = [...referenceHtml.matchAll(/href="(https:\/\/doi.org\/[^\"]+)"/g)].map(match => match[1]);
+assert.deepEqual(doiHrefs, ["https://doi.org/10.1128/AEM.03151-20", "https://doi.org/10.1000/Second"]);
+assert.match(referenceHtml, /<span>DOIs<\/span>/);
+
 async function recordDownloadPayload(summary, detail) {
   elements.set("downloadSelectedJson", makeElement("downloadSelectedJson"));
   api.renderDetail(summary, detail);
