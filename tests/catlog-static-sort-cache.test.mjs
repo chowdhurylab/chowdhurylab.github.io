@@ -189,6 +189,21 @@ for (const pageHtml of [indexHtml, stableAliasHtml]) {
     /<link rel="canonical" href="https:\/\/chowdhurylab\.github\.io\/tools\/catlog-static\/" \/>/,
   );
   assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
+  const citationSection = pageHtml.match(/<section class="guide-citation"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(citationSection, "Guide must keep its citation/version section");
+  assert.ok(citationSection.includes('id="guidePaperCitation"'));
+  assert.ok(citationSection.includes("Sajeevan, K. A., et al. (2025)."));
+  assert.ok(citationSection.includes("Robust Prediction of Enzyme Variant Kinetics with RealKcat."));
+  assert.ok(citationSection.includes("bioRxiv, version 2. doi: 10.1101/2025.02.10.637555."));
+  for (const id of ["guideSnapshotDate", "guideSourceId", "guideExportId"]) {
+    assert.ok(citationSection.includes(`id="${id}"`), `${id} must remain in Guide`);
+  }
+  assert.ok(citationSection.includes('href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"'));
+  assert.ok(citationSection.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
+  const notesPath = pageHtml === indexHtml ? "README_FIRST.txt" : "catlog-static/README_FIRST.txt";
+  assert.ok(citationSection.includes(`id="guideDatasetNotesLink" href="${notesPath}"`));
+  assert.equal(pageHtml.split(`href="${notesPath}"`).length - 1, 2,
+    "Download and Guide must both expose the correctly resolved README");
 }
 
 assert.match(

@@ -36,9 +36,9 @@ def build_alias(source: str) -> str:
         raise RuntimeError(
             f"Expected at least five static asset references, found {reference_count}"
         )
-    if notes_count != 1:
+    if notes_count != 2:
         raise RuntimeError(
-            f"Expected one dataset-notes reference, found {notes_count}"
+            f"Expected two dataset-notes references (Download and Guide), found {notes_count}"
         )
     if base_count != 1:
         raise RuntimeError(f"Expected one catalog base attribute, found {base_count}")
