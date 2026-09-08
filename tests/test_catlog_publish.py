@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -79,6 +80,131 @@ def fixture():
         "record_chunks": [], "detail_shards": [shard_path], "table_download": table,
         "enriched_download": enriched, "viewer_index": viewer,
     }, metadata
+
+
+class StagedTreeSizeTests(unittest.TestCase):
+    @staticmethod
+    def completed(stdout=b"", stderr=b"", returncode=0):
+        return mock.Mock(stdout=stdout, stderr=stderr, returncode=returncode)
+
+    def inspect(self, entries, responses, *, maximum_bytes):
+        with mock.patch.object(
+            CHECK.subprocess,
+            "run",
+            side_effect=[self.completed(entries), self.completed(responses)],
+        ):
+            return CHECK.inspect_staged_tree_size(maximum_bytes=maximum_bytes)
+
+    def test_below_exact_and_above_publication_ceiling(self):
+        oid = "a" * 40
+        entries = f"100644 {oid} 0\tindex.html\0".encode()
+        maximum = CHECK.MAXIMUM_STAGED_TREE_BYTES
+        for size, fails in (
+            (maximum - 1, False),
+            (maximum, False),
+            (maximum + 1, True),
+        ):
+            with self.subTest(size=size):
+                responses = f"{oid} blob {size}\n".encode()
+                total, failures = self.inspect(
+                    entries,
+                    responses,
+                    maximum_bytes=maximum,
+                )
+                self.assertEqual(total, size)
+                self.assertEqual(bool(failures), fails)
+                if fails:
+                    self.assertTrue(any("publication ceiling" in item for item in failures))
+
+    def test_duplicate_blob_paths_and_non_catlog_files_count_separately(self):
+        oid = "b" * 40
+        entries = (
+            f"100644 {oid} 0\tindex.html\0"
+            f"100644 {oid} 0\ttools/catlog-static/index.html\0"
+        ).encode()
+        responses = f"{oid} blob 11\n".encode()
+        total, failures = self.inspect(entries, responses, maximum_bytes=21)
+        self.assertEqual(total, 22)
+        self.assertTrue(any("publication ceiling" in item for item in failures))
+
+    def test_size_uses_staged_index_metadata_not_working_tree_files(self):
+        oid = "e" * 40
+        entries = f"100644 {oid} 0\tunstaged-large.bin\0".encode()
+        responses = f"{oid} blob 7\n".encode()
+        with mock.patch.object(
+            CHECK.subprocess,
+            "run",
+            side_effect=[self.completed(entries), self.completed(responses)],
+        ) as run:
+            total, failures = CHECK.inspect_staged_tree_size(maximum_bytes=10)
+        self.assertEqual((total, failures), (7, []))
+        self.assertEqual(
+            run.call_args_list[0].args[0],
+            ["git", "ls-files", "--stage", "-z"],
+        )
+
+    def test_unmerged_and_unsupported_entries_fail_before_size_lookup(self):
+        oid = "c" * 40
+        for mode, stage, expected in (
+            ("100644", "2", "unmerged Git index entry"),
+            ("120000", "0", "unsupported staged entry mode"),
+        ):
+            with self.subTest(mode=mode, stage=stage):
+                entries = f"{mode} {oid} {stage}\tpath\0".encode()
+                with mock.patch.object(
+                    CHECK.subprocess,
+                    "run",
+                    return_value=self.completed(entries),
+                ) as run:
+                    total, failures = CHECK.inspect_staged_tree_size()
+                self.assertEqual(total, 0)
+                self.assertTrue(any(expected in item for item in failures))
+                run.assert_called_once()
+
+    def test_real_git_index_ignores_unstaged_file_growth(self):
+        with tempfile.TemporaryDirectory(prefix="catlog-size-fixture-") as directory:
+            root = Path(directory)
+            target = root / "index.html"
+            target.write_bytes(b"1234567")
+            CHECK.subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            CHECK.subprocess.run(["git", "add", "--", "index.html"], cwd=root, check=True)
+            target.write_bytes(b"x" * 1000)
+            with mock.patch.object(CHECK, "REPOSITORY_ROOT", root):
+                self.assertEqual(CHECK.inspect_staged_tree_size(maximum_bytes=10), (7, []))
+
+    def test_missing_object_metadata_fails_closed(self):
+        oid = "d" * 40
+        entries = f"100644 {oid} 0\tassets/example.bin\0".encode()
+        total, failures = self.inspect(
+            entries,
+            f"{oid} missing\n".encode(),
+            maximum_bytes=1000,
+        )
+        self.assertEqual(total, 0)
+        self.assertTrue(any("metadata unavailable" in item for item in failures))
+
+    def test_main_stops_before_catalog_blob_scan_when_tree_is_oversized(self):
+        failure = "staged tracked tree exceeds the publication ceiling"
+        with (
+            mock.patch.object(
+                CHECK,
+                "inspect_staged_tree_size",
+                return_value=(CHECK.MAXIMUM_STAGED_TREE_BYTES + 1, [failure]),
+            ),
+            mock.patch.object(CHECK, "load_staged_manifest") as load_manifest,
+            mock.patch.object(CHECK, "tracked_data_blobs") as tracked_data,
+            mock.patch.object(CHECK, "inspect_usage_tracker") as usage_tracker,
+            mock.patch.object(CHECK, "inspect_stable_alias") as stable_alias,
+            mock.patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            mock.patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            self.assertEqual(CHECK.main(), 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn(failure, stderr.getvalue())
+        load_manifest.assert_not_called()
+        tracked_data.assert_not_called()
+        usage_tracker.assert_not_called()
+        stable_alias.assert_not_called()
 
 
 class ManifestDataTests(unittest.TestCase):
