@@ -30,6 +30,8 @@ READ_CHUNK_SIZE = 1024 * 1024
 MAXIMUM_PAGE_SIZE = 2 * READ_CHUNK_SIZE
 MAXIMUM_DETAIL_LINE_CHARS = 16 * READ_CHUNK_SIZE
 MAXIMUM_DETAIL_DECOMPRESSED_BYTES = 32 * READ_CHUNK_SIZE
+MAXIMUM_STAGED_TREE_BYTES = 1_000_000_000
+DEPLOYED_FILE_MODES = {"100644", "100755"}
 MANIFEST_PREFIX = "window.CATLOG_STATIC_MANIFEST = "
 MANIFEST_SCRIPT_SRC = re.compile(r"data/manifest\.([0-9a-f]{12})\.js$")
 DETAIL_MANIFEST_PATH = re.compile(
@@ -223,6 +225,107 @@ def git_environment() -> dict[str, str]:
     environment["GIT_NO_LAZY_FETCH"] = "1"
     environment["GIT_OPTIONAL_LOCKS"] = "0"
     return environment
+
+
+def inspect_staged_tree_size(
+    *, maximum_bytes: int = MAXIMUM_STAGED_TREE_BYTES
+) -> tuple[int, list[str]]:
+    """Return the staged tree's logical file-byte total without reading payloads."""
+    result = subprocess.run(
+        ["git", "ls-files", "--stage", "-z"],
+        cwd=REPOSITORY_ROOT,
+        env=git_environment(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", "replace").strip()
+        return 0, [f"cannot enumerate the staged tree: {detail or 'git ls-files failed'}"]
+
+    paths_by_oid: dict[str, list[str]] = defaultdict(list)
+    failures: list[str] = []
+    for entry in result.stdout.split(b"\0"):
+        if not entry:
+            continue
+        try:
+            metadata, raw_path = entry.split(b"\t", 1)
+            raw_mode, raw_oid, raw_stage = metadata.split()
+            mode = raw_mode.decode("ascii")
+            oid = raw_oid.decode("ascii")
+            stage = raw_stage.decode("ascii")
+        except (UnicodeDecodeError, ValueError):
+            failures.append(f"unparseable staged tree entry: {entry!r}")
+            continue
+        path = raw_path.decode("utf-8", "surrogateescape")
+        if stage != "0":
+            failures.append(f"unmerged Git index entry (stage {stage}): {path}")
+            continue
+        if mode not in DEPLOYED_FILE_MODES:
+            failures.append(f"unsupported staged entry mode {mode}: {path}")
+            continue
+        paths_by_oid[oid].append(path)
+
+    if failures:
+        return 0, failures
+    if not paths_by_oid:
+        return 0, ["staged tree contains no deployable files"]
+
+    oids = sorted(paths_by_oid)
+    result = subprocess.run(
+        ["git", "cat-file", "--batch-check=%(objectname) %(objecttype) %(objectsize)"],
+        cwd=REPOSITORY_ROOT,
+        env=git_environment(),
+        input="".join(f"{oid}\n" for oid in oids).encode("ascii"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", "replace").strip()
+        return 0, [f"cannot inspect staged tree sizes: {detail or 'git cat-file failed'}"]
+
+    responses = result.stdout.splitlines()
+    if len(responses) != len(oids):
+        return 0, ["Git object-size response count differs from the staged tree"]
+
+    total_bytes = 0
+    for oid, response in zip(oids, responses, strict=True):
+        fields = response.split()
+        if len(fields) == 2 and fields[1] == b"missing":
+            failures.extend(
+                f"Git object metadata unavailable: {path} ({oid})"
+                for path in paths_by_oid[oid]
+            )
+            continue
+        if len(fields) != 3:
+            failures.append(f"invalid Git object-size response for {oid}: {response!r}")
+            continue
+        raw_resolved_oid, object_type, raw_size = fields
+        try:
+            resolved_oid = raw_resolved_oid.decode("ascii")
+            size = int(raw_size)
+        except (UnicodeDecodeError, ValueError):
+            failures.append(f"invalid Git object-size metadata for {oid}: {response!r}")
+            continue
+        if resolved_oid != oid:
+            failures.append(f"Git object-size response names {resolved_oid}, expected {oid}")
+            continue
+        if object_type != b"blob" or size < 0:
+            failures.append(
+                f"unsupported Git object metadata for {oid}: "
+                f"{object_type.decode('ascii', 'replace')} {raw_size!r}"
+            )
+            continue
+        # Each staged path becomes a deployed file, even when paths share one blob.
+        total_bytes += size * len(paths_by_oid[oid])
+
+    if not failures and total_bytes > maximum_bytes:
+        failures.append(
+            f"staged tracked tree is {total_bytes} bytes, exceeding the "
+            f"{maximum_bytes}-byte publication ceiling"
+        )
+    return total_bytes, failures
 
 
 def tracked_data_blobs() -> tuple[dict[str, list[str]], list[str]]:
@@ -573,6 +676,19 @@ def inspect_stable_alias() -> list[str]:
 
 
 def main() -> int:
+    staged_tree_bytes, staged_tree_failures = inspect_staged_tree_size()
+    if staged_tree_failures:
+        print("CatLog publish check failed:", file=sys.stderr)
+        for failure in staged_tree_failures:
+            print(f"- {failure}", file=sys.stderr)
+        return 1
+    print(
+        "CatLog staged tracked-tree size: "
+        f"{staged_tree_bytes} bytes; headroom: "
+        f"{MAXIMUM_STAGED_TREE_BYTES - staged_tree_bytes} bytes "
+        "(logical file-byte upper-bound proxy; not measured deployment or historical Git size)"
+    )
+
     failures: list[str] = []
     manifest: dict | None = None
     try:
