@@ -2984,6 +2984,7 @@ tbody tr.selected .row-arrow {
   }
 
   .table-wrap {
+    max-height: none;
     overflow: visible;
   }
 
