@@ -2307,7 +2307,7 @@
     const valueHtml = values.map((item) => {
       const unit = item.unit ? ` ${unitHtml(item.unit)}` : "";
       const source = item.source_db ? ` <small>${escapePublic(sourceDatabaseLabel(item.source_db))}</small>` : "";
-      return `<span class="source-efficiency-value">${scientificValueHtml(item.value)}${unit}${source}</span>`;
+      return `<span class="source-efficiency-value"><span>${scientificValueHtml(item.value)}${unit}</span>${source}</span>`;
     }).join("");
     return linkedKv("Source-listed kcat/Km", valueHtml);
   }
