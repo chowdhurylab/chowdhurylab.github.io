@@ -2414,13 +2414,11 @@
       detail.variant_sequence
       || (["reconstructed_variant_sequence", "source_provided_variant_sequence"].includes(variantStatus) ? sequence : ""),
     ).trim();
-    const variant = mutationSignature(detail) || mutationSignature(summary);
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
     const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
     const sequenceVariantNote = String(detail.sequence_variant_note || summary.sequence_variant_note || "").trim();
     const sequenceSourceRecord = detail.sequence_source ? detail : summary;
     const sequenceSource = sequenceSourceLabel(sequenceSourceRecord.sequence_source, sequenceSourceRecord.sequence_source_confidence);
-    if (!proteinAccession && !sourceProteinAccession && !accessionCandidates.length && !smiles && !sequence && !wildTypeSequence && !variantSequence && !variant && !sequenceVariantNote && enzymeForm === "Not recorded") return "";
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");

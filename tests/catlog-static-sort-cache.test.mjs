@@ -931,6 +931,13 @@ assert.match(
   "the table marker should identify an unspecified variant",
 );
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
+const emptyIdentityHtml = api.molecularIdentitySection({}, {});
+assert.match(emptyIdentityHtml, /<h3>Molecular identity<\/h3>/);
+assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+assert.doesNotMatch(emptyIdentityHtml, /Form note/);
+const blankFormNoteHtml = api.molecularIdentitySection({}, { sequence_variant_note: "   " });
+assert.match(blankFormNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+assert.doesNotMatch(blankFormNoteHtml, /Form note/);
 const formNoteHtml = api.molecularIdentitySection(
   { sequence_variant_note: "Source says <variant> & unresolved" },
   {},
