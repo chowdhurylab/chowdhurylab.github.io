@@ -4,15 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
-    <meta name="description" content="CatLog snapshot dated September 5, 2026: browse 151,404 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
+    <meta name="description" content="CatLog snapshot dated September 10, 2026: browse 151,448 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
     <meta name="theme-color" content="#1f6f66" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
-    <meta property="og:description" content="CatLog snapshot dated September 5, 2026 with 151,404 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
+    <meta property="og:description" content="CatLog snapshot dated September 10, 2026 with 151,448 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=a4168f65f4ced645" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=7c6760ce585e0e34" />
   </head>
   <body>
     <div class="static-app">
@@ -44,26 +44,26 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.ec9ba98a13f8.jsonl.gz"
+                href="catlog-static/data/catlog-enriched.bc8a67ffdb08.jsonl.gz"
                 download="catlog-enriched.jsonl.gz"
               >
-                <strong>All public data</strong>
+                <strong>Full data</strong>
                 <span id="enrichedDataDescription">All rows, with sequences and SMILES where available</span>
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.ad4260f24a65.jsonl.gz"
+                href="catlog-static/data/catlog-table.1ce0674b7364.jsonl.gz"
                 download="catlog-table.jsonl.gz"
               >
-                <strong>Table index</strong>
+                <strong>Table</strong>
                 <span id="tableIndexDescription">All rows without long sequence or SMILES fields</span>
               </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
-                <strong>Full research records</strong>
-                <span>Source rows and review evidence. Request by email.</span>
+                <strong>Review files</strong>
+                <span>Source records and review notes. Request by email.</span>
               </a>
               <a id="datasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
@@ -233,7 +233,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="catlog-static/assets/catlog-guide-workflow.svg?v=1fc00ad8617e9c90"
+                src="catlog-static/assets/catlog-guide-workflow.svg?v=7c6760ce585e0e34"
                 alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
@@ -246,7 +246,6 @@
                 <div>
                   <h2>Search</h2>
                   <p>Enter an enzyme, EC number, organism, or substrate.</p>
-                  <p class="guide-field-line">enzyme · EC · organism · substrate</p>
                 </div>
               </li>
               <li class="guide-step">
@@ -254,7 +253,6 @@
                 <div>
                   <h2>Compare</h2>
                   <p>Read each value with its assay temperature and pH.</p>
-                  <p class="guide-field-line"><i>k</i><sub>cat</sub> · <i>K</i><sub>m</sub> · <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> · T · pH</p>
                 </div>
               </li>
               <li class="guide-step">
@@ -262,7 +260,6 @@
                 <div>
                   <h2>Open a row</h2>
                   <p>Check its protein, substrate, paper, and source.</p>
-                  <p class="guide-field-line">sequence · SMILES · paper · source</p>
                 </div>
               </li>
               <li class="guide-step">
@@ -270,7 +267,6 @@
                 <div>
                   <h2>Download</h2>
                   <p>Save all rows, the current page, or one open record.</p>
-                  <p class="guide-field-line">all rows · current page · one record</p>
                 </div>
               </li>
             </ol>
@@ -279,7 +275,7 @@
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
             <header class="guide-record-depth-heading">
               <h2 id="guide-record-depth-title">What one row includes</h2>
-              <p>Full data gives the catalog row. Review files add the paper excerpt and review notes.</p>
+              <p>Full data includes sequences and SMILES where available. Review files add source records and review notes.</p>
             </header>
 
             <figure class="guide-record-example">
@@ -309,7 +305,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.ec9ba98a13f8.jsonl.gz"
+                    href="catlog-static/data/catlog-enriched.bc8a67ffdb08.jsonl.gz"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -357,11 +353,10 @@
                 <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>The protein identity and sequence were checked, but CatLog has no paper reference for the kinetic value.</dd></div>
                 <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Review is unfinished. The sequence, substrate structure, or match to the original measurement still needs checking.</dd></div>
                 <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>The row is unreviewed, was calculated from other reported values, or remains disputed.</dd></div>
-                <div><dt><span class="guide-status-dot"></span>Paper evidence</dt><dd>A structured paper value and its table or measurement excerpt are saved. This alone does not mean Accepted.</dd></div>
-                <div><dt><span class="guide-status-dot"></span>Source note</dt><dd>A plain note from the source record is saved, but it is not a structured paper-value excerpt.</dd></div>
+                <div><dt><span class="guide-status-dot"></span>Paper evidence</dt><dd>A value and its table or measurement excerpt are saved from the paper. This alone does not mean Accepted.</dd></div>
+                <div><dt><span class="guide-status-dot"></span>Source note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
               </dl>
               <p class="guide-note">CatLog uses automated checks. A lab member reviews cases that need a decision.</p>
-              <p class="guide-note"><strong>Saved source text</strong> is a paper passage, table reference, or database note. Having it does not mean the row is accepted.</p>
               <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
@@ -373,8 +368,8 @@
               </div>
             </header>
             <dl class="guide-download-list">
-              <div><dt>All public data</dt><dd>All rows, with sequences and SMILES where available.</dd></div>
-              <div><dt>Table index</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
+              <div><dt>Full data</dt><dd>All rows, with sequences and SMILES where available.</dd></div>
+              <div><dt>Table</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
               <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
             </dl>
           </section>
@@ -417,8 +412,8 @@
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.004cd02af661.js"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=a28a8f7c7089d295"></script>
+    <script src="catlog-static/data/manifest.82abb1683b06.js"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=7c6760ce585e0e34"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>

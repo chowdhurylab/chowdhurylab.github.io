@@ -218,8 +218,8 @@ assert.match(
   indexHtml,
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
-assert.match(indexHtml, />Paper evidence<\/dt><dd>A structured paper value and its table or measurement excerpt are saved\./);
-assert.match(indexHtml, />Source note<\/dt><dd>A plain note from the source record is saved, but it is not a structured paper-value excerpt\./);
+assert.ok(indexHtml.includes(">Paper evidence</dt><dd>A value and its table or measurement excerpt are saved from the paper."));
+assert.ok(indexHtml.includes(">Source note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
   /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "paper_evidence";\s+if \(row\.proof_kind === "source_note"\) return "source_note";/,
@@ -496,6 +496,7 @@ vm.runInNewContext(sourceCode, {
 });
 
 const api = window.CATLOG_STATIC_TEST_API;
+assert.equal(api.state.pageSize, 25, "Browse defaults to 25 rows per page");
 assert.ok(api, "test API should be exposed without starting the application");
 assert.equal(api.recordIndexPath(), "data/catlog-viewer-index.jsonl.gz");
 delete runtimeManifest.viewer_index;
@@ -1638,6 +1639,13 @@ assert.equal(api.state.pageSize, 50);
 assert.equal(api.state.page, 1);
 assert.strictEqual(api.state.sortCache.get("evidence"), evidenceEntry);
 assert.equal(yieldCount, yieldsBeforePageSize, "changing page size should render without sorting");
+api.applyPageSize("25");
+assert.equal(api.state.pageSize, 25);
+assert.equal(
+  (element("recordsBody").innerHTML.match(/<tr\s/g) || []).length,
+  25,
+  "the 25-row option must render all 25 rows, not a short preview",
+);
 
 const detailShard = "details-test.js";
 const raceRows = largeRows.map((item) => ({ ...item, detail_shard: detailShard }));
