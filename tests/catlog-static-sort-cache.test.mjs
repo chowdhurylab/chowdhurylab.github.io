@@ -358,6 +358,7 @@ const detailBackgroundSelector = [
   ".workbench > :not(.detail-panel)",
 ].join(", ");
 const detailBackgroundElements = [makeElement("header"), makeElement("table")];
+const filterBackgroundSelector = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
 const document = {
   baseURI: "https://example.test/catlog/",
   currentScript: {
@@ -379,6 +380,7 @@ const document = {
     if (selector === 'input[name="recordState"]') return recordStateInputs;
     if (selector === 'input[name="measurement"]') return measurementInputs;
     if (selector === detailBackgroundSelector) return detailBackgroundElements;
+    if (selector === filterBackgroundSelector) return [...detailBackgroundElements, element("detailPanel")];
     return [];
   },
   addEventListener() {},
@@ -498,6 +500,24 @@ vm.runInNewContext(sourceCode, {
 const api = window.CATLOG_STATIC_TEST_API;
 assert.equal(api.state.pageSize, 25, "Browse defaults to 25 rows per page");
 assert.ok(api, "test API should be exposed without starting the application");
+{
+  const originalGetElement = document.getElementById;
+  const originalHref = window.location.href;
+  const originalReplace = window.location.replace;
+  const navigations = [];
+  document.getElementById = (id) => id === "snapshotBreakdown" ? null : originalGetElement(id);
+  window.location.replace = (href) => navigations.push(href);
+  await api.init();
+  assert.equal(navigations.length, 1, "Old cached HTML should refresh before binding new controls");
+  assert.equal(new URL(navigations[0]).searchParams.get("layout"), "compact");
+  window.location.href = navigations[0];
+  await api.init();
+  assert.equal(navigations.length, 1, "A failed refresh must not loop");
+  assert.match(element("pageSummary").textContent, /older CatLog page/);
+  document.getElementById = originalGetElement;
+  window.location.href = originalHref;
+  window.location.replace = originalReplace;
+}
 assert.equal(api.recordIndexPath(), "data/catlog-viewer-index.jsonl.gz");
 delete runtimeManifest.viewer_index;
 assert.equal(api.recordIndexPath(), "data/catlog-table.jsonl.gz");
@@ -920,6 +940,29 @@ assert.equal(detailPanel.getAttribute("aria-modal"), null);
 assert.ok(detailBackgroundElements.every((item) => !item.inert));
 document.body.classList.remove("detail-open");
 
+for (const narrow of [false, true]) {
+  narrowDetailPanel = narrow;
+  api.setFiltersOpen(true);
+  assert.equal(element("openFiltersButton").getAttribute("aria-expanded"), "true");
+  assert.equal(element("catalogFilters").getAttribute("role"), "dialog");
+  assert.equal(element("catalogFilters").getAttribute("aria-hidden"), "false");
+  assert.equal(element("catalogFilters").inert, false);
+  assert.ok(detailBackgroundElements.every((item) => item.inert));
+  assert.equal(detailPanel.inert, true);
+  api.setFiltersOpen(false);
+  assert.equal(element("catalogFilters").inert, true);
+  assert.equal(element("catalogFilters").getAttribute("aria-hidden"), "true");
+  assert.ok(detailBackgroundElements.every((item) => !item.inert));
+  assert.equal(detailPanel.inert, false);
+}
+narrowDetailPanel = false;
+api.setMoreCountsOpen(true);
+assert.equal(element("snapshotBreakdown").hidden, false);
+assert.equal(element("moreCountsButton").getAttribute("aria-expanded"), "true");
+api.setMoreCountsOpen(false);
+assert.equal(element("snapshotBreakdown").hidden, true);
+assert.equal(element("moreCountsButton").getAttribute("aria-expanded"), "false");
+
 assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
 assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
 assert.equal(
@@ -933,7 +976,7 @@ assert.match(
 );
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
 const emptyIdentityHtml = api.molecularIdentitySection({}, {});
-assert.match(emptyIdentityHtml, /<h3>Molecular identity<\/h3>/);
+assert.match(emptyIdentityHtml, /<h3>Protein and substrate<\/h3>/);
 assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
 assert.doesNotMatch(emptyIdentityHtml, /Form note/);
 const blankFormNoteHtml = api.molecularIdentitySection({}, { sequence_variant_note: "   " });
@@ -1038,6 +1081,30 @@ function row(overrides = {}) {
     has_literature_id: true,
     ...overrides,
   };
+}
+
+{
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady };
+  const summaryRows = [
+    row({ verification_status: "verified", kcat: 0, km: null, kcat_over_km: null }),
+    row({ verification_status: "corrected", kcat: null, km: 2, kcat_over_km: 3 }),
+    row({ verification_status: "manual_review_required", kcat: 4, km: 5, kcat_over_km: null }),
+  ];
+  api.state.records = summaryRows;
+  api.state.recordsReady = true;
+  const displayedCounts = (id) => [...element(id).innerHTML.matchAll(/<strong>([\d,]+)<\/strong>/g)]
+    .map((match) => Number(match[1].replaceAll(",", "")));
+  for (const [filtered, primary, metrics] of [
+    [summaryRows, [3, 2], [2, 2, 1]],
+    [summaryRows.slice(1), [2, 1], [1, 2, 1]],
+    [[], [0, 0], [0, 0, 0]],
+  ]) {
+    api.state.filtered = filtered;
+    api.renderSummary();
+    assert.deepEqual(displayedCounts("summaryGrid"), primary, "Record and accepted counts follow filters");
+    assert.deepEqual(displayedCounts("snapshotMeta"), metrics, "Coverage counts include zero but exclude missing values");
+  }
+  Object.assign(api.state, previous);
 }
 
 const kiMeasurementHtml = api.measurementSection(row(), {
@@ -1673,7 +1740,7 @@ window.scheduler.yield = () => {
     releaseLoadRace = resolve;
   });
 };
-const loadTimeFiltering = api.ensureCurrentFiltersAndSelectFirst();
+const loadTimeFiltering = api.ensureCurrentFilters();
 await loadRaceEnteredYield;
 element("globalSearchInput").value = "beta";
 element("sortSelect").value = "enzyme";
@@ -1684,10 +1751,9 @@ assert.ok(api.state.filtered.length > 0);
 assert.ok(api.state.filtered.every((item) => item._search.includes("beta")));
 assert.equal(
   api.state.selectedKey,
-  api.state.filtered[0].record_key,
-  "load-time auto-selection should use the newest filter state after a race",
+  "",
+  "load-time filtering must leave the detail pane closed until a row is selected",
 );
-assert.equal(api.state.selectedKey, expectedSelectedRow.record_key);
 embeddedDetailPanel = false;
 
 console.log("CatLog viewer behavior checks passed.");
