@@ -9,20 +9,24 @@ import { createGunzip } from "node:zlib";
 
 const relative = (path) => new URL(path, new URL("../", import.meta.url));
 
-const manifestSource = await readFile(relative("tools/catlog-static/data/manifest.js"), "utf8");
+const indexHtml = await readFile(relative("tools/catlog-static/index.html"), "utf8");
+const manifestPath = indexHtml.match(/<script src="(data\/manifest\.[a-f0-9]{12}\.js)"><\/script>/)?.[1];
+assert.ok(manifestPath, "check the manifest selected by the published page");
+const manifestSource = await readFile(relative(`tools/catlog-static/${manifestPath}`), "utf8");
+assert.equal(
+  manifestPath,
+  `data/manifest.${createHash("sha256").update(manifestSource).digest("hex").slice(0, 12)}.js`,
+);
 const manifestPrefix = "window.CATLOG_STATIC_MANIFEST = ";
 const manifestLine = manifestSource.split("\n", 1)[0];
 assert.ok(manifestLine.startsWith(manifestPrefix) && manifestLine.endsWith(";"));
 const manifest = JSON.parse(manifestLine.slice(manifestPrefix.length, -1));
-const assetVersionMatch = manifestSource.match(
-  /window\.CATLOG_STATIC_MANIFEST\.asset_version = "([a-f0-9]{16})";/,
-);
-assert.ok(assetVersionMatch);
-const assetVersion = assetVersionMatch[1];
+const assetVersion = manifest.asset_version;
+assert.match(assetVersion, /^[a-f0-9]{16}$/);
 
 const viewer = manifest.viewer_index;
 const table = manifest.table_download;
-assert.equal(viewer.path, "data/catlog-viewer-index.jsonl.gz");
+assert.equal(viewer.path, `data/catlog-viewer-index.${viewer.sha256.slice(0, 12)}.jsonl.gz`);
 assert.equal(viewer.format, "jsonl.gz");
 assert.equal(viewer.scope, "browser_runtime_row_index");
 assert.equal(viewer.schema_version, 1);
@@ -31,7 +35,7 @@ assert.equal(viewer.field_count, viewer.retained_fields.length);
 assert.equal(viewer.row_order, "identical_to_table_download");
 assert.equal(viewer.source_table_sha256, table.sha256);
 assert.equal(viewer.source_table_size_bytes, table.size_bytes);
-assert.equal(table.path, "data/catlog-table.jsonl.gz");
+assert.equal(table.path, `data/catlog-table.${table.sha256.slice(0, 12)}.jsonl.gz`);
 
 const viewerUrl = relative(`tools/catlog-static/${viewer.path}`);
 const tableUrl = relative(`tools/catlog-static/${table.path}`);
@@ -126,14 +130,14 @@ assert.ok(
   "viewer JSON should reduce the fixed snapshot by at least 15%",
 );
 
-const indexHtml = await readFile(relative("tools/catlog-static/index.html"), "utf8");
 const aliasHtml = await readFile(relative("tools/catlog-latest.html"), "utf8");
-assert.match(indexHtml, /href="data\/catlog-table\.jsonl\.gz\?v=[a-f0-9]{16}"/);
+assert.ok(indexHtml.includes(`href="${table.path}"`));
 assert.match(indexHtml, /download="catlog-table\.jsonl\.gz"/);
-assert.doesNotMatch(indexHtml, /href="data\/catlog-viewer-index\.jsonl\.gz/);
+assert.ok(!indexHtml.includes(`href="${viewer.path}"`));
+assert.ok(aliasHtml.includes(`src="catlog-static/${manifestPath}"`));
 for (const pageHtml of [indexHtml, aliasHtml]) {
   const versions = [...pageHtml.matchAll(/[?&]v=([a-f0-9]{16})/g)].map((match) => match[1]);
-  assert.ok(versions.length >= 7);
+  assert.equal(versions.length, 3);
   assert.deepEqual([...new Set(versions)], [assetVersion]);
 }
 

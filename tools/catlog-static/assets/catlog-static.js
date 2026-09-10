@@ -81,25 +81,25 @@
       value: "paper_evidence",
       label: "Paper evidence",
       className: "paper",
-      description: "Structured paper values with a saved table or measurement excerpt.",
+      description: "A value and unit saved with a table or measurement excerpt.",
     },
     {
       value: "source_note",
       label: "Source note",
       className: "note",
-      description: "A plain source or database note, not a structured paper-value excerpt.",
+      description: "A database note, without a paper-value excerpt.",
     },
     {
       value: "literature_id",
       label: "Publication ID",
       className: "linked",
-      description: "A publication identifier is linked, but no structured value excerpt is saved.",
+      description: "A PMID or DOI is linked; no paper-value excerpt is saved.",
     },
     {
       value: "source_records",
       label: "Source record",
       className: "source",
-      description: "The public row is backed by its source-database record only.",
+      description: "Only the source database record is available.",
     },
   ];
 
@@ -369,7 +369,7 @@
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
         `${total} rows`,
-        "without protein or structure strings",
+        "without sequences or SMILES",
         tableSize,
       ].filter(Boolean).join(" · ");
     }
