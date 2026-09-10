@@ -39,7 +39,7 @@
   const SORT_CACHE_LIMIT = 2;
   const DETAIL_SHARD_CACHE_LIMIT = 8;
   const FILTER_FAILURE_MAX_LENGTH = 160;
-  const narrowFilterMedia = window.matchMedia("(max-width: 1180px)");
+  const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
   const DETAIL_INERT_SELECTOR = [
     ".app-header",
     "#catalogLoadProgress",
@@ -48,6 +48,7 @@
     "#catalogFooter",
     ".workbench > :not(.detail-panel)",
   ].join(", ");
+  const FILTER_INERT_SELECTOR = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
 
   const recordStates = [
     {
@@ -294,6 +295,7 @@
       window.requestAnimationFrame(updateTableScrollControls);
     }
     if (scroll) {
+      if (guideOpen) $("guideView").scrollTop = 0;
       window.scrollTo({
         top: 0,
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
@@ -1216,7 +1218,7 @@
       state.recordsReady = true;
       updateLoadProgress();
       setupFilters();
-      await ensureCurrentFiltersAndSelectFirst();
+      await ensureCurrentFilters();
       updateTableScrollControls();
       return;
     }
@@ -1277,7 +1279,7 @@
     state.recordsReady = true;
     updateLoadProgress();
     setupFilters();
-    await ensureCurrentFiltersAndSelectFirst({ resetPage: false });
+    await ensureCurrentFilters({ resetPage: false });
     updateTableScrollControls();
   }
 
@@ -1410,28 +1412,38 @@
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
     const cards = [
       ["Records", totalRows],
+      ["Accepted", recordStateCounts(rows).accepted || 0],
+    ];
+    const taxonomy = [
       ["Enzymes", isLoaded ? uniqueCount(rows, "enzyme_display_name") : (totals.unique_enzymes ?? null), "", ""],
       ["EC numbers", isLoaded ? uniqueCount(rows, "ec_number") : (totals.unique_ec_numbers ?? null), "", ""],
       ["Organisms", isLoaded ? uniqueCount(rows, "organism") : (totals.unique_organisms ?? null), "", ""],
     ];
-    $("summaryGrid").innerHTML = cards.map(([label, value, note, className]) => `
-      <article class="summary-card ${escapeHtml(className || "")}">
+    const countHtml = ([label, value]) => `
+      <div class="summary-card">
         <span>${escapeHtml(label)}</span>
         <strong>${formatCount(value)}</strong>
-        ${note ? `<span>${escapeHtml(note)}</span>` : ""}
-      </article>
-    `).join("");
+      </div>
+    `;
+    $("summaryGrid").innerHTML = cards.map(countHtml).join("");
+    $("taxonomyGrid").innerHTML = taxonomy.map(countHtml).join("");
     renderEvidenceSummary(rows);
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
     $("snapshotMeta").innerHTML = `
       <span class="snapshot-title">Rows with values</span>
-      <span class="snapshot-line"><strong>${formatCount(kcatRows)}</strong><span>kcat</span></span>
-      <span class="snapshot-line"><strong>${formatCount(kmRows)}</strong><span>Km</span></span>
-      <span class="snapshot-line"><strong>${formatCount(efficiencyRows)}</strong><span>kcat/Km</span></span>
-      ${manifest.generated_at ? `<span class="snapshot-date">Snapshot ${escapeHtml(formatDate(manifest.generated_at))}${manifest.content_sha256 || manifest.source_sha256 ? ` · ID <code title="${escapeHtml(manifest.content_sha256 || manifest.source_sha256)}">${escapeHtml(shortHash(manifest.content_sha256 || manifest.source_sha256))}</code>` : ""}</span>` : ""}
+      <span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>
+      <span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>
+      <span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>
     `;
+    $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
+    $("snapshotDate").title = manifest.content_sha256 || manifest.source_sha256 || "";
+  }
+
+  function setMoreCountsOpen(isOpen) {
+    $("snapshotBreakdown").hidden = !isOpen;
+    $("moreCountsButton").setAttribute("aria-expanded", String(Boolean(isOpen)));
   }
 
   function renderEvidenceSummary(rows) {
@@ -1895,13 +1907,6 @@
     return true;
   }
 
-  async function ensureCurrentFiltersAndSelectFirst(options = {}) {
-    await ensureCurrentFilters(options);
-    if (!state.selectedKey && state.filtered.length && usesEmbeddedDetailPanel()) {
-      await selectRecord(state.filtered[0].record_key, { focusDetail: false });
-    }
-  }
-
   function boundedFilterFailure(error) {
     const detail = String(error?.message || error || "")
       .replace(/\s+/g, " ")
@@ -1986,15 +1991,12 @@
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="primary-cell">
           <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
-          <span class="primary-meta">
-            <span class="name-source">${escapePublic(sourceLabels[row.enzyme_label_source] || row.enzyme_label_source || sourceDatabaseLabel(row.source_db) || "source")}</span>
-            ${enzymeFormHtml(row)}
-          </span>
+          ${enzymeFormHtml(row) ? `<span class="primary-meta">${enzymeFormHtml(row)}</span>` : ""}
         </td>
         <td>${escapeHtml(row.ec_number || EMPTY_VALUE)}</td>
         <td class="organism-cell">${escapePublic(row.organism || EMPTY_VALUE)}</td>
         <td class="substrate-cell">${escapePublic(row.substrate_name || EMPTY_VALUE)}</td>
-        <td class="metric-cell"><span class="metric-with-note"><strong>${metricDisplayWithUnitHtml(row, "kcat")}</strong>${valueFlagBadgeHtml(conditionFlags(row), "kcat")}</span></td>
+        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat")}${valueFlagBadgeHtml(conditionFlags(row), "kcat")}</span></td>
         <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "km")}${valueFlagBadgeHtml(conditionFlags(row), "km")}</span></td>
         <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat_over_km")}${efficiencyOriginHtml(row)}${valueFlagBadgeHtml(conditionFlags(row), "kcat_over_km")}</span></td>
         <td>${escapeHtml(formatTemperature(row))}</td>
@@ -2021,17 +2023,15 @@
   }
 
   function setDetailOpen(isOpen) {
+    if (isOpen) setFiltersOpen(false);
     document.body.classList.toggle("detail-open", Boolean(isOpen));
     syncDetailPanelAccessibility();
   }
 
-  function focusAfterPanelTransition(id) {
-    window.setTimeout(() => $(id)?.focus(), 180);
-  }
-
   function syncDetailPanelAccessibility() {
     const panel = $("detailPanel");
-    const isModal = Boolean(narrowFilterMedia.matches && document.body.classList.contains("detail-open"));
+    const filtersOpen = document.body.classList.contains("filters-open");
+    const isModal = Boolean(!filtersOpen && narrowDetailMedia.matches && document.body.classList.contains("detail-open"));
     if (isModal) {
       panel?.setAttribute("role", "dialog");
       panel?.setAttribute("aria-modal", "true");
@@ -2042,6 +2042,11 @@
     document.querySelectorAll(DETAIL_INERT_SELECTOR).forEach((element) => {
       element.inert = isModal;
     });
+    document.querySelectorAll(FILTER_INERT_SELECTOR).forEach((element) => {
+      element.inert = filtersOpen || (element.id !== "detailPanel" && isModal);
+    });
+    const rail = $("catalogFilters");
+    if (rail) rail.inert = !filtersOpen;
     if (isModal && panel && !panel.contains(document.activeElement)) panel.focus();
   }
 
@@ -2060,33 +2065,38 @@
       if (state.selectedKey !== key || !document.body.classList.contains("detail-open")) return;
       $("detailHeading")?.focus();
     };
-    if (narrowFilterMedia.matches) window.setTimeout(focusCurrentHeading, 180);
+    if (narrowDetailMedia.matches) window.setTimeout(focusCurrentHeading, 180);
     else focusCurrentHeading();
   }
 
   function setFiltersOpen(isOpen) {
-    const shouldOpen = Boolean(isOpen) && narrowFilterMedia.matches;
+    const shouldOpen = Boolean(isOpen);
+    hideSuggestions();
     document.body.classList.toggle("filters-open", shouldOpen);
     $("openFiltersButton")?.setAttribute("aria-expanded", String(shouldOpen));
     const rail = $("catalogFilters");
     if (rail) {
-      if (narrowFilterMedia.matches) rail.setAttribute("aria-hidden", String(!shouldOpen));
-      else rail.removeAttribute("aria-hidden");
+      rail.setAttribute("aria-hidden", String(!shouldOpen));
+      if (shouldOpen) {
+        rail.setAttribute("role", "dialog");
+        rail.setAttribute("aria-modal", "true");
+      } else {
+        rail.removeAttribute("role");
+        rail.removeAttribute("aria-modal");
+      }
     }
+    syncDetailPanelAccessibility();
     if (shouldOpen) {
-      focusAfterPanelTransition("closeFiltersButton");
+      window.setTimeout(() => {
+        if (document.body.classList.contains("filters-open")) $("closeFiltersButton")?.focus();
+      }, 180);
     }
   }
 
   function syncFilterPanel() {
-    if (!narrowFilterMedia.matches) {
-      document.body.classList.remove("filters-open");
-      $("openFiltersButton")?.setAttribute("aria-expanded", "false");
-      $("catalogFilters")?.removeAttribute("aria-hidden");
-      return;
-    }
     const isOpen = document.body.classList.contains("filters-open");
     $("catalogFilters")?.setAttribute("aria-hidden", String(!isOpen));
+    syncDetailPanelAccessibility();
   }
 
   function updateTableScrollControls() {
@@ -2133,10 +2143,6 @@
     const selectedRow = [...$("recordsBody").querySelectorAll("tr[data-key]")]
       .find((row) => row.dataset.key === selectedKey);
     selectedRow?.focus();
-  }
-
-  function usesEmbeddedDetailPanel() {
-    return window.matchMedia("(min-width: 1681px)").matches;
   }
 
   async function selectRecord(key, { focusDetail = true } = {}) {
@@ -2345,7 +2351,7 @@
     const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
     return `
       <section class="detail-section measurement-section">
-        <h3>Kinetic measurement</h3>
+        <h3>Measurement</h3>
         <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
           ${metrics.map(([label, field, value]) => {
             const unitMissing = metricUnitMissing(metricSummary, field, flags);
@@ -2427,7 +2433,7 @@
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
     return `
       <section class="detail-section identity-section">
-        <h3>Molecular identity</h3>
+        <h3>Protein and substrate</h3>
         <div class="detail-kv">
           ${kv("Enzyme form", enzymeForm)}
           ${sequenceVariantNote ? kv("Form note", sequenceVariantNote) : ""}
@@ -2435,7 +2441,11 @@
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
           ${sequenceSource ? kv("Sequence source", sequenceSource) : ""}
-          ${smiles ? `
+        </div>
+        ${sequenceHtml}
+        ${smiles ? `
+          <details class="sequence-disclosure">
+            <summary>SMILES</summary>
             <div class="copy-field">
               <div class="copy-field-heading">
                 <span>SMILES</span>
@@ -2443,9 +2453,8 @@
               </div>
               <code id="detailSmiles">${escapeHtml(smiles)}</code>
             </div>
-          ` : ""}
-        </div>
-        ${sequenceHtml}
+          </details>
+        ` : ""}
       </section>
     `;
   }
@@ -2517,19 +2526,19 @@
       </div>
 
       ${measurementSection(summary, detail)}
-      <section class="detail-section review-outcome-section">
-        <h3>Review status</h3>
-        <p>${escapeHtml(reviewOutcome(summary))}</p>
-      </section>
       ${molecularIdentitySection(summary, detail)}
-      ${detailSection("Reference", referenceRows)}
-      ${proofLines.length ? `
-        <section class="detail-section evidence-note-section">
+      ${detailSection("Paper", referenceRows)}
+      <details class="detail-disclosure review-notes">
+        <summary>Review notes</summary>
+        <p>${escapeHtml(reviewOutcome(summary))}</p>
+        ${proofLines.length ? `
+        <div class="evidence-note-section">
           <h3>${escapeHtml(proofHeading)}</h3>
           <div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div>
-        </section>
-      ` : ""}
+        </div>` : ""}
+      </details>
       ${detailDisclosure("Source details", [
+        kv("Enzyme name", sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source || "Not recorded"),
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
         kv("Source license", sourceLicense(summary, detail)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
@@ -2732,6 +2741,7 @@
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     $("browseButton").addEventListener("click", () => navigateTo("browse"));
     $("guideButton").addEventListener("click", () => navigateTo("guide"));
+    $("moreCountsButton").addEventListener("click", () => setMoreCountsOpen($("snapshotBreakdown").hidden));
     document.addEventListener("click", (event) => {
       const menu = $("downloadMenu");
       if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
@@ -2743,7 +2753,7 @@
       syncFilterPanel();
       updateTableScrollControls();
     });
-    narrowFilterMedia.addEventListener?.("change", () => {
+    narrowDetailMedia.addEventListener?.("change", () => {
       syncFilterPanel();
       syncDetailPanelAccessibility();
     });
@@ -2759,7 +2769,10 @@
       setFiltersOpen(false);
       $("openFiltersButton")?.focus();
     });
-    $("filterBackdrop").addEventListener("click", () => setFiltersOpen(false));
+    $("filterBackdrop").addEventListener("click", () => {
+      setFiltersOpen(false);
+      $("openFiltersButton")?.focus();
+    });
     $("pageSizeSelect").addEventListener("change", () => {
       applyPageSize($("pageSizeSelect").value);
     });
@@ -2794,6 +2807,11 @@
         closeDetailAndRestoreFocus();
         return;
       }
+      if (event.key === "Escape" && !$("snapshotBreakdown").hidden) {
+        setMoreCountsOpen(false);
+        $("moreCountsButton").focus();
+        return;
+      }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
         navigateTo("browse");
@@ -2804,6 +2822,16 @@
 
   async function init() {
     try {
+      // An older cached page can request the current script after a deployment.
+      if (!$("snapshotBreakdown")) {
+        const url = new URL(window.location.href);
+        if (/^https?:$/.test(url.protocol) && url.searchParams.get("layout") !== "compact") {
+          url.searchParams.set("layout", "compact");
+          window.location.replace(url.href);
+          return;
+        }
+        throw new Error("This tab has an older CatLog page. Reload to get the current layout.");
+      }
       renderSummary();
       renderDownloadMetadata();
       renderSourceAttribution();
@@ -2826,6 +2854,7 @@
       SORT_CACHE_LIMIT,
       DETAIL_SHARD_CACHE_LIMIT,
       state,
+      init,
       loadScript,
       loadDetailShard,
       parseCompressedDetailShard,
@@ -2843,7 +2872,6 @@
       orderedRecordsFor,
       applyFilters,
       ensureCurrentFilters,
-      ensureCurrentFiltersAndSelectFirst,
       applyFiltersInBackground,
       applyPageSize,
       conditionFlags,
@@ -2866,6 +2894,9 @@
       focusDetailHeading,
       closeDetailAndRestoreFocus,
       syncDetailPanelAccessibility,
+      renderSummary,
+      setMoreCountsOpen,
+      setFiltersOpen,
     };
   } else {
     init();

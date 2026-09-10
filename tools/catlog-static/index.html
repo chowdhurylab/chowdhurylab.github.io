@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=7c6760ce585e0e34" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=0bd6173e26bcde81" />
   </head>
   <body>
     <div class="static-app">
@@ -85,18 +85,24 @@
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
       <main id="catalogView">
-        <section class="snapshot-band" aria-live="polite">
-          <div class="summary-grid" id="summaryGrid"></div>
-          <div class="evidence-summary" id="evidenceSummary"></div>
-          <div class="snapshot-meta" id="snapshotMeta">
-            <span id="snapshotLabel">Loading CatLog snapshot</span>
-            <span id="rowCountLabel">- rows</span>
+        <section class="snapshot-band" aria-label="Current results" aria-live="polite">
+          <div class="snapshot-overview">
+            <div class="summary-grid" id="summaryGrid"></div>
+            <div class="snapshot-meta" id="snapshotMeta"></div>
+            <div class="snapshot-controls">
+              <span id="snapshotDate" class="snapshot-date">Loading CatLog snapshot</span>
+              <button id="moreCountsButton" class="text-button counts-toggle" type="button" aria-expanded="false" aria-controls="snapshotBreakdown">More counts <span aria-hidden="true">⌄</span></button>
+            </div>
+          </div>
+          <div id="snapshotBreakdown" class="snapshot-breakdown" hidden>
+            <div class="summary-grid" id="taxonomyGrid"></div>
+            <div class="evidence-summary" id="evidenceSummary"></div>
           </div>
         </section>
 
         <section class="workbench">
           <button id="filterBackdrop" class="filter-backdrop" type="button" aria-label="Close filters" tabindex="-1"></button>
-          <aside id="catalogFilters" class="filter-rail" aria-label="Catalog filters">
+          <aside id="catalogFilters" class="filter-rail" aria-label="Catalog filters" aria-hidden="true" inert tabindex="-1">
             <div class="rail-heading">
               <strong>Filters</strong>
               <div class="rail-actions">
@@ -136,7 +142,7 @@
                 <button id="openFiltersButton" class="button filter-toggle" type="button" aria-controls="catalogFilters" aria-expanded="false">
                   Filters <span id="activeFilterCount" class="filter-count hidden"></span>
                 </button>
-                <strong id="activeSummary">Loading CatLog records...</strong>
+                <strong id="activeSummary" class="visually-hidden">Loading CatLog records...</strong>
                 <span id="pageSummary">Preparing table</span>
                 <div class="table-scroll-controls hidden" aria-label="Table columns">
                   <span>Columns</span>
@@ -202,7 +208,7 @@
               </table>
             </div>
             <div class="pagination">
-              <span>Rows per page:</span>
+              <label for="pageSizeSelect">Rows<span class="pagination-label-detail"> per page</span>:</label>
               <select id="pageSizeSelect">
                 <option value="25" selected>25</option>
                 <option value="50">50</option>
@@ -233,7 +239,7 @@
           <section class="guide-workflow" aria-label="How to use CatLog">
             <figure class="guide-figure">
               <img
-                src="assets/catlog-guide-workflow.svg?v=7c6760ce585e0e34"
+                src="assets/catlog-guide-workflow.svg?v=0bd6173e26bcde81"
                 alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                 loading="lazy"
                 decoding="async"
@@ -412,8 +418,8 @@
       </main>
     </div>
 
-    <script src="data/manifest.82abb1683b06.js"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=7c6760ce585e0e34"></script>
+    <script src="data/manifest.06046b2a15dd.js"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=0bd6173e26bcde81"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>
