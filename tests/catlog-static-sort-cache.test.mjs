@@ -956,6 +956,43 @@ for (const narrow of [false, true]) {
   assert.equal(detailPanel.inert, false);
 }
 narrowDetailPanel = false;
+{
+  const rail = element("catalogFilters");
+  const input = element("enzymeFilterInput");
+  const originalContains = rail.contains;
+  const originalSetTimeout = window.setTimeout;
+  const originalActiveElement = document.activeElement;
+  const timers = [];
+  window.setTimeout = (callback) => timers.push(callback);
+  rail.contains = (target) => target === input || target === element("closeFiltersButton");
+  try {
+    document.activeElement = element("openFiltersButton");
+    api.setFiltersOpen(true);
+    timers.shift()();
+    assert.equal(document.activeElement, element("closeFiltersButton"), "Opening Filters moves focus after its transition");
+    api.setFiltersOpen(false);
+    api.setFiltersOpen(true);
+    input.focus();
+    timers.shift()();
+    assert.equal(document.activeElement, input, "Opening Filters must not steal focus after the user tabs into a field");
+    api.setFiltersOpen(false);
+    document.activeElement = element("openFiltersButton");
+    api.setFiltersOpen(true);
+    timers.shift()();
+    assert.equal(document.activeElement, element("closeFiltersButton"), "Initial focus should still enter an opened panel");
+    api.setFiltersOpen(false);
+    api.setFiltersOpen(true);
+    api.setFiltersOpen(false);
+    document.activeElement = element("openFiltersButton");
+    timers.shift()();
+    assert.equal(document.activeElement, element("openFiltersButton"), "Closing before the transition must cancel deferred focus");
+    assert.equal(timers.length, 0, "Only one focus check is scheduled per opening");
+  } finally {
+    rail.contains = originalContains;
+    window.setTimeout = originalSetTimeout;
+    document.activeElement = originalActiveElement;
+  }
+}
 api.setMoreCountsOpen(true);
 assert.equal(element("snapshotBreakdown").hidden, false);
 assert.equal(element("moreCountsButton").getAttribute("aria-expanded"), "true");
@@ -1326,6 +1363,10 @@ assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can 
   try {
     api.bindControls();
     assert.equal(searchInput.getAttribute("role"), "combobox");
+    openSuggestions();
+    element("catalogFilters").dispatch("scroll");
+    assert.equal(suggestions.classList.contains("hidden"), true, "Scrolling Filters closes its detached suggestion popup");
+    assert.equal(searchInput.getAttribute("aria-expanded"), "false");
     openSuggestions();
     const firstUp = searchInput.dispatch("keydown", { key: "ArrowUp" });
     assert.equal(firstUp.defaultPrevented, true);

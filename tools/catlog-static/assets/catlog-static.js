@@ -2088,7 +2088,9 @@
     syncDetailPanelAccessibility();
     if (shouldOpen) {
       window.setTimeout(() => {
-        if (document.body.classList.contains("filters-open")) $("closeFiltersButton")?.focus();
+        if (document.body.classList.contains("filters-open") && !rail?.contains(document.activeElement)) {
+          $("closeFiltersButton")?.focus({ preventScroll: true });
+        }
       }, 180);
     }
   }
@@ -2748,6 +2750,7 @@
     });
     window.addEventListener("popstate", () => renderView(viewFromLocation()));
     window.addEventListener("scroll", hideSuggestions, { passive: true });
+    $("catalogFilters").addEventListener("scroll", hideSuggestions, { passive: true });
     window.addEventListener("resize", () => {
       hideSuggestions();
       syncFilterPanel();
