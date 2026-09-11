@@ -817,7 +817,7 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   flex: 1;
-  min-height: 0;
+  min-height: 340px;
 }
 
 body.detail-open .workbench {
