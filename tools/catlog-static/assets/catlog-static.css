@@ -1091,6 +1091,7 @@ body.filters-open .filter-backdrop {
 
 .records-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -1921,14 +1922,27 @@ body.detail-open .detail-panel {
 }
 
 .guide-workflow {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
-  gap: 36px;
-  align-items: start;
   margin-top: 34px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 24px 0;
+  padding: 20px 0 0;
+}
+
+.guide-visual {
+  border-top: 1px solid var(--line);
+}
+
+.guide-visual > summary {
+  width: fit-content;
+  padding: 12px 0;
+  color: var(--teal-dark);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.guide-visual[open] > .guide-figure {
+  display: block;
+  padding: 8px 0 20px;
 }
 
 .guide-figure {
@@ -1946,8 +1960,7 @@ body.detail-open .detail-panel {
 
 .guide-step-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  align-self: stretch;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1957,14 +1970,19 @@ body.detail-open .detail-panel {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 12px;
-  align-content: center;
+  align-content: start;
   min-width: 0;
-  border-top: 1px solid var(--line);
-  padding: 15px 0;
+  border-left: 1px solid var(--line);
+  padding: 0 18px 20px;
 }
 
 .guide-step:first-child {
-  border-top: 0;
+  border-left: 0;
+  padding-left: 0;
+}
+
+.guide-step:last-child {
+  padding-right: 0;
 }
 
 .guide-step > span {
@@ -2781,15 +2799,8 @@ body.detail-open .detail-panel {
 
 @media (max-width: 1100px) {
   .guide-workflow {
-    grid-template-columns: 1fr;
-    gap: 0;
     margin-top: 26px;
     padding: 18px 0 0;
-  }
-
-  .guide-figure {
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
   }
 
   .guide-step-grid {
@@ -2924,6 +2935,11 @@ body.detail-open .detail-panel {
   .records-title > span {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  #clearResultsButton {
+    grid-column: 2 / -1;
+    justify-self: start;
   }
 
   .pagination {
@@ -3185,22 +3201,14 @@ body.detail-open .detail-panel {
     display: none;
   }
 
-  .guide-step-grid {
-    grid-template-columns: 1fr;
+  .guide-step {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
   }
 
-  .guide-step,
-  .guide-step:first-child,
-  .guide-step:last-child,
-  .guide-step:nth-child(odd),
-  .guide-step:nth-child(even) {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-    padding: 20px 0;
-  }
-
-  .guide-step:first-child {
-    border-top: 0;
+  .guide-step > span {
+    width: 24px;
+    height: 24px;
   }
 
   .guide-example-level {
