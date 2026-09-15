@@ -386,6 +386,7 @@ const document = {
   addEventListener() {},
   createElement: (tagName) => makeElement(tagName),
 };
+const navigator = { clipboard: {} };
 
 let yieldCount = 0;
 let embeddedDetailPanel = false;
@@ -483,6 +484,7 @@ vm.runInNewContext(sourceCode, {
   Blob: DownloadBlob,
   console,
   document,
+  navigator,
   window,
   fetch: (...args) => window.fetch(...args),
   DecompressionStream,
@@ -1098,6 +1100,62 @@ assert.match(
   "the table marker should identify an unspecified variant",
 );
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
+{
+  const originalCreateElement = document.createElement;
+  const originalAppendChild = document.body.appendChild;
+  const originalSetTimeout = window.setTimeout;
+  const originalActiveElement = document.activeElement;
+  const target = element("copyTestSequence");
+  target.textContent = "MTESTSEQUENCE";
+  try {
+    document.body.appendChild = () => {};
+    for (const mode of ["clipboard", "denied", "fallback", "throws", "unavailable"]) {
+      const button = makeElement("copyTestButton");
+      button.dataset.copyTarget = target.id;
+      let appended = 0;
+      let removed = 0;
+      let fallbackCalls = 0;
+      const timers = [];
+      window.setTimeout = (callback) => timers.push(callback);
+      navigator.clipboard = mode === "unavailable" ? undefined : {
+        writeText: async (value) => {
+          assert.equal(value, target.textContent);
+          if (mode !== "clipboard") throw new Error("Clipboard blocked");
+        },
+      };
+      document.createElement = (tag) => {
+        assert.equal(tag, "textarea");
+        appended += 1;
+        const input = makeElement(tag);
+        input.select = () => { document.activeElement = input; };
+        input.remove = () => { removed += 1; };
+        return input;
+      };
+      document.execCommand = (command) => {
+        assert.equal(command, "copy");
+        fallbackCalls += 1;
+        if (mode === "throws") throw new Error("Copy command blocked");
+        return mode === "fallback";
+      };
+      button.focus();
+      await api.copyDetailValue(button);
+      const success = mode === "clipboard" || mode === "fallback";
+      assert.equal(button.textContent, success ? "Copied" : "Copy failed", `${mode}: report the actual clipboard result`);
+      assert.equal(fallbackCalls, mode === "clipboard" ? 0 : 1);
+      assert.equal(removed, appended, "remove the temporary field even if copying throws");
+      assert.equal(document.activeElement, button, "fallback copying should not lose keyboard focus");
+      timers.forEach((callback) => callback());
+      assert.equal(button.textContent, "Copy");
+    }
+  } finally {
+    document.createElement = originalCreateElement;
+    document.body.appendChild = originalAppendChild;
+    window.setTimeout = originalSetTimeout;
+    document.activeElement = originalActiveElement;
+    delete document.execCommand;
+    navigator.clipboard = {};
+  }
+}
 const emptyIdentityHtml = api.molecularIdentitySection({}, {});
 assert.match(emptyIdentityHtml, /<h3>Protein and substrate<\/h3>/);
 assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
@@ -1842,6 +1900,24 @@ assert.equal(
 );
 
 const detailShard = "details-test.js";
+{
+  element("globalSearchInput").value = "no_such_catlog_record_937461";
+  await api.applyFilters();
+  assert.equal(api.state.filtered.length, 0);
+  assert.equal(element("pageSummary").textContent, "No matching records");
+  assert.equal(element("clearResultsButton").hidden, false);
+  assert.equal(element("downloadPageButton").disabled, true);
+  assert.equal(element("nextButton").disabled, true);
+  assert.equal(element("prevButton").disabled, true);
+  element("clearResultsButton").click();
+  await api.ensureCurrentFilters();
+  assert.equal(element("globalSearchInput").value, "");
+  assert.equal(document.activeElement, element("globalSearchInput"));
+  assert.equal(api.state.filtered.length, largeRows.length);
+  assert.equal(element("clearResultsButton").hidden, true);
+  assert.equal(element("downloadPageButton").disabled, false);
+  assert.equal((element("recordsBody").innerHTML.match(/<tr\s/g) || []).length, 25);
+}
 const raceRows = largeRows.map((item) => ({ ...item, detail_shard: detailShard }));
 const expectedSelectedRow = raceRows.find((item) => item.enzyme_display_name === "Beta enzyme");
 window.CATLOG_DETAIL_SHARDS[detailShard] = { [expectedSelectedRow.record_key]: {} };

@@ -1101,6 +1101,7 @@
     }
     $("activeSummary").textContent = title;
     $("pageSummary").textContent = message;
+    if ($("clearResultsButton")) $("clearResultsButton").hidden = true;
     $("pageLabel").textContent = "No records";
     $("prevButton").disabled = true;
     $("nextButton").disabled = true;
@@ -1995,7 +1996,8 @@
       : `${formatInteger(state.filtered.length)} available`;
     $("pageSummary").textContent = pageRows.length
       ? `${range}${loadingNote}`
-      : (state.recordsReady ? "No rows match the selected filters" : "Loading first records...");
+      : (state.recordsReady ? "No matching records" : "Loading first records...");
+    if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0;
     $("pageLabel").textContent = pageRows.length
       ? range
       : "No records";
@@ -2401,7 +2403,7 @@
         <div class="copy-field sequence-field">
           <div class="copy-field-heading">
             <span>Amino-acid sequence</span>
-            <button class="copy-button" type="button" data-copy-target="${escapeHtml(targetId)}">Copy</button>
+            <button class="copy-button" type="button" aria-live="polite" data-copy-target="${escapeHtml(targetId)}">Copy</button>
           </div>
           <code id="${escapeHtml(targetId)}">${escapeHtml(sequence)}</code>
         </div>
@@ -2466,7 +2468,7 @@
             <div class="copy-field">
               <div class="copy-field-heading">
                 <span>SMILES</span>
-                <button class="copy-button" type="button" data-copy-target="detailSmiles">Copy</button>
+                <button class="copy-button" type="button" aria-live="polite" data-copy-target="detailSmiles">Copy</button>
               </div>
               <code id="detailSmiles">${escapeHtml(smiles)}</code>
             </div>
@@ -2480,8 +2482,10 @@
     const target = $(button.dataset.copyTarget);
     const value = target?.textContent || "";
     if (!value) return;
+    let copied = false;
     try {
       await navigator.clipboard.writeText(value);
+      copied = true;
     } catch (error) {
       const input = document.createElement("textarea");
       input.value = value;
@@ -2489,12 +2493,18 @@
       input.style.position = "fixed";
       input.style.opacity = "0";
       document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      input.remove();
+      try {
+        input.select();
+        copied = document.execCommand("copy");
+      } catch (fallbackError) {
+        copied = false;
+      } finally {
+        if (document.activeElement === input) button.focus({ preventScroll: true });
+        input.remove();
+      }
     }
-    button.textContent = "Copied";
-    window.setTimeout(() => { button.textContent = "Copy"; }, 1200);
+    button.textContent = copied ? "Copied" : "Copy failed";
+    window.setTimeout(() => { button.textContent = "Copy"; }, copied ? 1200 : 3000);
   }
 
   function detailDisclosure(title, rows) {
@@ -2782,6 +2792,10 @@
       applyFiltersInBackground();
     });
     $("clearButton").addEventListener("click", clearFilters);
+    $("clearResultsButton")?.addEventListener("click", () => {
+      clearFilters();
+      $("globalSearchInput").focus({ preventScroll: true });
+    });
     $("openFiltersButton").addEventListener("click", () => setFiltersOpen(true));
     $("closeFiltersButton").addEventListener("click", () => {
       setFiltersOpen(false);
@@ -2899,6 +2913,7 @@
       identityResolutionLabel,
       measurementSection,
       molecularIdentitySection,
+      copyDetailValue,
       showSuggestions,
       hideSuggestions,
       moveSuggestionSelection,

@@ -49,6 +49,13 @@ source text, hide scientific warnings, recompute measurements, or weaken review
 definitions to make the page shorter. Database attribution belongs in Guide and
 dataset notes, not the Browse footer.
 
+## Guide
+
+Show the four starting steps once, followed by the worked record example. Keep
+the optional diagram behind a native disclosure, usable at every viewport.
+Retain the field meanings, review definitions, download differences, and source
+licenses; shorten duplicate instructions rather than scientific qualifications.
+
 ## Verification
 
 Use the existing data loader, immutable manifest, downloads, and stable URL.
