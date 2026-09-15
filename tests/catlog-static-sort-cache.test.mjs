@@ -484,6 +484,9 @@ vm.runInNewContext(sourceCode, {
   console,
   document,
   window,
+  fetch: (...args) => window.fetch(...args),
+  DecompressionStream,
+  TextDecoder,
   URL: RuntimeURL,
   Intl,
   Date,
@@ -544,6 +547,89 @@ assert.equal(document.body.classList.contains("catalog-load-failed"), false, "re
 window.DecompressionStream = DecompressionStream;
 delete runtimeManifest.total_rows;
 delete runtimeManifest.record_chunks;
+
+{
+  const originalFetch = window.fetch;
+  const originalTimeout = window.setTimeout;
+  runtimeManifest.total_rows = 1;
+  runtimeManifest.record_chunks = [];
+  window.setTimeout = (callback) => { callback(); return 0; };
+  try {
+    for (const failure of ["invalid-json", "read-error"]) {
+      let requests = 0;
+      let cancellations = 0;
+      let releases = 0;
+      window.fetch = async () => {
+        requests += 1;
+        return {
+          ok: true,
+          body: {
+            pipeThrough: () => ({
+              getReader: () => ({
+                async read() {
+                  if (failure === "read-error") throw new Error("Connection interrupted");
+                  return { done: false, value: Buffer.from("{invalid json}\n") };
+                },
+                async cancel() { cancellations += 1; },
+                releaseLock() { releases += 1; },
+              }),
+            }),
+          },
+        };
+      };
+      await api.loadRecordChunks();
+      assert.equal(requests, 4, "the table loader must retain its bounded retry budget");
+      assert.equal(cancellations, 4, `${failure}: cancel each failed reader before retrying`);
+      assert.equal(releases, 4, `${failure}: release each failed reader lock`);
+      assert.equal(element("activeSummary").textContent, "CatLog records are temporarily unavailable");
+    }
+    let requests = 0;
+    let cancellations = 0;
+    let releases = 0;
+    const retryNotices = [];
+    window.setTimeout = (callback) => {
+      retryNotices.push(element("activeSummary").textContent);
+      callback();
+      return 0;
+    };
+    window.fetch = async () => {
+      const attempt = ++requests;
+      let consumed = false;
+      return {
+        ok: true,
+        body: {
+          pipeThrough: () => ({
+            getReader: () => ({
+              async read() {
+                if (attempt === 1) throw new Error("Connection interrupted");
+                if (consumed) return { done: true };
+                consumed = true;
+                return { done: false, value: Buffer.from('{"record_key":"recovered","claim_status":"verified"}\n') };
+              },
+              async cancel() { cancellations += 1; throw new Error("Reader already failed"); },
+              releaseLock() { releases += 1; },
+            }),
+          }),
+        },
+      };
+    };
+    await api.loadRecordChunks();
+    assert.equal(requests, 2, "a successful retry should stop further downloads");
+    assert.equal(cancellations, 1, "only the failed attempt should be cancelled");
+    assert.equal(releases, 2, "release failed and completed reader locks");
+    assert.ok(retryNotices.includes("Retrying table download"));
+    assert.equal(api.state.recordsReady, true);
+    assert.equal(api.state.records[0].record_key, "recovered");
+    assert.equal(document.body.classList.contains("catalog-load-failed"), false);
+  } finally {
+    window.fetch = originalFetch;
+    window.setTimeout = originalTimeout;
+    delete runtimeManifest.total_rows;
+    delete runtimeManifest.record_chunks;
+    api.indexLoadedRecords([]);
+    await api.applyFilters();
+  }
+}
 
 const scriptedShardPayloads = new Map();
 const scriptedShardGenerations = new Map();

@@ -1156,26 +1156,41 @@
       });
     };
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      consumeLines();
-      if (records.length - lastProgress >= 2500) {
-        state.recordChunksLoaded = records.length;
-        lastProgress = records.length;
-        updateLoadProgress();
-        await yieldToBrowser();
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        consumeLines();
+        if (records.length - lastProgress >= 2500) {
+          state.recordChunksLoaded = records.length;
+          lastProgress = records.length;
+          updateLoadProgress();
+          await yieldToBrowser();
+        }
+      }
+      buffer += decoder.decode();
+      consumeLines(true);
+
+      if (totalRows && records.length !== totalRows) {
+        throw new Error(`Expected ${totalRows} CatLog rows, received ${records.length}`);
+      }
+      state.recordChunksLoaded = records.length;
+      return records;
+    } catch (error) {
+      try {
+        await reader.cancel();
+      } catch (_cancelError) {
+        // The decompressor may already be in an errored state.
+      }
+      throw error;
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch (_releaseError) {
+        // Keep the original download or parse error.
       }
     }
-    buffer += decoder.decode();
-    consumeLines(true);
-
-    if (totalRows && records.length !== totalRows) {
-      throw new Error(`Expected ${totalRows} CatLog rows, received ${records.length}`);
-    }
-    state.recordChunksLoaded = records.length;
-    return records;
   }
 
   async function streamCompressedRecordIndex() {
@@ -1188,8 +1203,8 @@
         if (attempt >= LOAD_RETRY_DELAYS.length) break;
         const delaySeconds = Math.round(LOAD_RETRY_DELAYS[attempt] / 1000);
         showLoadNotice(
-          "CatLog is updating",
-          `The table index is not ready yet. Trying again in ${delaySeconds} seconds.`,
+          "Retrying table download",
+          `The download was interrupted. Trying again in ${delaySeconds} seconds.`,
         );
         await wait(LOAD_RETRY_DELAYS[attempt]);
       }
