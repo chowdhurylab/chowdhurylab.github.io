@@ -72,7 +72,7 @@
   ];
 
   const stateDescriptions = {
-    accepted: "The kinetic value and enzyme identity passed the required CatLog checks. Some accepted rows rely on source-database evidence rather than a paper.",
+    accepted: "Passed the required CatLog checks. Records accepted on identity checks alone are marked in their details.",
     curation_pending: "A specific check remains open, commonly the protein sequence, substrate structure, or match to the reported source.",
     not_verified: "Includes unreviewed rows, values calculated from other reported measurements, and disputed rows.",
   };
@@ -80,25 +80,25 @@
   const evidenceGroups = [
     {
       value: "paper_evidence",
-      label: "Paper evidence",
+      label: "Paper excerpt",
       className: "paper",
       description: "A value and unit saved with a table or measurement excerpt.",
     },
     {
       value: "source_note",
-      label: "Source note",
+      label: "Database note",
       className: "note",
       description: "A database note, without a paper-value excerpt.",
     },
     {
       value: "literature_id",
-      label: "Publication ID",
+      label: "Reference only",
       className: "linked",
       description: "A PMID or DOI is linked; no paper-value excerpt is saved.",
     },
     {
       value: "source_records",
-      label: "Source record",
+      label: "Database record only",
       className: "source",
       description: "Only the source database record is available.",
     },
@@ -1431,7 +1431,7 @@
       ["Accepted", recordStateCounts(rows).accepted || 0],
     ];
     const taxonomy = [
-      ["Enzymes", isLoaded ? uniqueCount(rows, "enzyme_display_name") : (totals.unique_enzymes ?? null), "", ""],
+      ["Enzyme names", isLoaded ? uniqueCount(rows, "enzyme_display_name") : (totals.unique_enzymes ?? null), "", ""],
       ["EC numbers", isLoaded ? uniqueCount(rows, "ec_number") : (totals.unique_ec_numbers ?? null), "", ""],
       ["Organisms", isLoaded ? uniqueCount(rows, "organism") : (totals.unique_organisms ?? null), "", ""],
     ];
@@ -1465,62 +1465,47 @@
   function renderEvidenceSummary(rows) {
     const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : Number(manifest.total_rows || 0);
-    const total = Math.max(1, totalRows);
     const counts = recordStateCounts(rows);
     const evidenceCounts = evidenceGroupCounts(rows);
-    const statusLabel = recordStates.map((item) => {
-      const pct = totalRows ? (((counts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
-      return `${item.label} ${pct}%`;
-    }).join(", ");
-    const evidenceLabelText = evidenceGroups.map((item) => {
-      const pct = totalRows ? (((evidenceCounts[item.value] || 0) / total) * 100).toFixed(1) : "0.0";
-      return `${item.label} ${pct}%`;
-    }).join(", ");
+    const isFiltered = isLoaded && rows.length !== state.records.length;
+    const scope = isFiltered ? "matching records" : "records in this snapshot";
+    const share = (count) => totalRows ? (count / totalRows) * 100 : 0;
+    const groupHtml = (title, items, groupCounts, kind) => `
+      <div class="count-group">
+        <table class="count-table" aria-label="${title}">
+          <thead><tr><th scope="col">${title}</th><th scope="col">Records</th><th scope="col">Share</th></tr></thead>
+          <tbody>${items.map((item) => {
+            const count = groupCounts[item.value] || 0;
+            return `<tr data-count-key="${item.value}">
+              <th scope="row"><span class="count-name"><i class="count-dot ${item.className}" aria-hidden="true"></i>${escapeHtml(item.label)}</span></th>
+              <td>${formatInteger(count)}</td><td>${totalRows ? `${share(count).toFixed(1)}%` : EMPTY_VALUE}</td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table>
+        ${totalRows ? `<div class="summary-distribution ${kind}-distribution" aria-hidden="true">
+          ${items.filter((item) => groupCounts[item.value] > 0).map((item) =>
+            `<span class="${item.className}" style="flex-basis:${share(groupCounts[item.value]).toFixed(3)}%"></span>`,
+          ).join("")}
+        </div>` : ""}
+      </div>`;
+    const definitionsOpen = $("countDefinitions")?.open;
     $("evidenceSummary").innerHTML = `
-      <div class="evidence-summary-title">Review status</div>
-      <div class="evidence-segment-row">
-        ${recordStates.map((item) => {
-          const count = counts[item.value] || 0;
-          const pct = totalRows ? ((count / total) * 100).toFixed(1) : "0.0";
-          return `
-            <div class="evidence-segment ${item.className}">
-              <span class="evidence-dot ${item.className}"></span>
-              <span>${escapeHtml(item.label)}</span>
-              <div class="evidence-stat">
-                <strong>${formatInteger(count)}</strong>
-                <span>${pct}%</span>
-              </div>
-            </div>
-          `;
-        }).join("")}
+      <p class="counts-scope">${formatInteger(totalRows)} ${scope}. Each record is counted once in each table below.</p>
+      <div class="counts-tables">
+        ${groupHtml("Review status", recordStates, counts, "review")}
+        ${groupHtml("Saved source material", evidenceGroups, evidenceCounts, "evidence")}
       </div>
-      ${totalRows ? `
-        <div class="summary-distribution review-distribution" role="img" aria-label="${escapeHtml(statusLabel)}">
-          ${recordStates.map((item) => {
-            const pct = ((counts[item.value] || 0) / total) * 100;
-            return `<span class="${item.className}" style="flex-basis:${pct.toFixed(3)}%"></span>`;
-          }).join("")}
-        </div>
-      ` : ""}
-      <div class="evidence-axis">
-        <div class="evidence-summary-title">Evidence available</div>
-        <div class="evidence-axis-items">
-          ${evidenceGroups.map((item) => {
-            const count = evidenceCounts[item.value] || 0;
-            const pct = totalRows ? ((count / total) * 100).toFixed(1) : "0.0";
-            const accessibleLabel = `${item.label}: ${item.description} ${pct}%`;
-            return `<span tabindex="0" title="${escapeHtml(item.description)}" aria-label="${escapeHtml(accessibleLabel)}"><i class="${item.className}"></i>${escapeHtml(item.label)} <strong>${pct}%</strong></span>`;
-          }).join("")}
-        </div>
-        ${totalRows ? `
-          <div class="summary-distribution evidence-distribution" role="img" aria-label="${escapeHtml(evidenceLabelText)}">
-            ${evidenceGroups.map((item) => {
-              const pct = ((evidenceCounts[item.value] || 0) / total) * 100;
-              return `<span class="${item.className}" style="flex-basis:${pct.toFixed(3)}%"></span>`;
-            }).join("")}
+      <details id="countDefinitions" class="count-definitions" ${definitionsOpen ? "open" : ""}>
+        <summary>What the groups mean</summary>
+        <p>All counts follow your filters. Share is the percentage of these records, rounded to one decimal place. A paper link or excerpt does not by itself mean a record is accepted.</p>
+        <div class="count-definition-columns">
+          <dl>${recordStates.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(stateDescriptions[item.value])}</dd></div>`).join("")}</dl>
+          <div>
+            <p>For source material, each record goes in the first matching group in the order shown.</p>
+            <dl>${evidenceGroups.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.description)}</dd></div>`).join("")}</dl>
           </div>
-        ` : ""}
-      </div>
+        </div>
+      </details>
     `;
   }
 

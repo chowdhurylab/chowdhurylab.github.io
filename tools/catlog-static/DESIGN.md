@@ -25,6 +25,12 @@ Rows with values counts visible in one compact band. More counts expands the
 enzyme, EC, organism, review, and evidence breakdowns. Counts follow the current
 filtered results; measurement coverage overlaps and must not form a stacked chart.
 
+Expanded counts separate review status from saved source material. Show the
+denominator, record count, and share in aligned tables. Each record belongs to
+one category per table; source categories follow the stored evidence precedence,
+not an acceptance score. Explain the categories in a native disclosure. Keep
+the bottom page controls compact, with page size left and navigation right.
+
 Filters open on request at every width. A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details
 below the table or cover desktop measurement columns. Keep 25 rows per page,
