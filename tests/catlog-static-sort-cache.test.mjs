@@ -451,6 +451,7 @@ const window = {
   CATLOG_DETAIL_SHARDS: {},
   CATLOG_DETAIL_SHARD_GENERATIONS: {},
   fetch: fetchCompressedShard,
+  AbortController,
   DecompressionStream,
   TextDecoder,
   scheduler: {
@@ -467,6 +468,8 @@ const window = {
     replace() {},
   },
   history: { pushState() {}, replaceState() {} },
+  requestAnimationFrame: (callback) => callback(),
+  scrollTo() {},
   matchMedia: (query) => ({
     get matches() {
       if (query === "(min-width: 1681px)") return embeddedDetailPanel;
@@ -737,6 +740,89 @@ assert.equal(compressedSuccessRequest.searchParams.has("v"), false, "hashed deta
 assert.equal(compressedSuccessRequest.searchParams.has("retry"), false);
 
 const validationShard = "data/details-901.222222222222.jsonl.gz";
+{
+  const original = { fetch: window.fetch, setTimeout: window.setTimeout, clearTimeout: window.clearTimeout };
+  const priorState = { filtered: api.state.filtered, page: api.state.page, pageSize: api.state.pageSize, recordsReady: api.state.recordsReady };
+  const turn = () => new Promise(resolve => setImmediate(resolve));
+  assert.equal(api.DETAIL_REQUEST_TIMEOUT_MS, 30000);
+  try {
+    for (const [index, stage] of ["fetch", "body", "cancel"].entries()) {
+      resetDetailCaches();
+      const shard = `data/details-${970 + index}.abababababab.jsonl.gz`;
+      const timers = new Map(), signals = [], lateResponses = [];
+      let timerId = 0, cancellations = 0;
+      window.setTimeout = (callback, delay) => {
+        if (delay === api.DETAIL_REQUEST_TIMEOUT_MS) {
+          timers.set(++timerId, callback);
+          return timerId;
+        }
+        queueMicrotask(callback);
+        return 0;
+      };
+      window.clearTimeout = id => timers.delete(id);
+      window.fetch = (_url, options) => {
+        signals.push(options.signal);
+        if (stage === "fetch") return new Promise(resolve => lateResponses.push(resolve));
+        return Promise.resolve({ ok: true, body: new ReadableStream({
+          cancel() {
+            cancellations += 1;
+            if (stage === "cancel") return new Promise(() => {});
+          },
+        }) });
+      };
+      api.state.filtered = [row({ record_key: "timeout-row", detail_shard: shard })];
+      api.state.page = 1;
+      api.state.pageSize = 25;
+      api.state.recordsReady = true;
+      element("downloadPageButton").disabled = false;
+      const downloadsBefore = capturedDownloads.length;
+      const detailResult = api.loadDetailShard(shard).then(
+        () => null,
+        error => error,
+      );
+      const pageResult = api.handlePageDownload();
+      assert.equal(api.state.pageDownloadPending, true);
+      assert.equal(element("downloadPageButton").disabled, true);
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        await turn();
+        assert.equal(signals.length, attempt + 1, `${stage}: requests share the existing retry budget`);
+        assert.equal(timers.size, 1, `${stage}: exactly one deadline per shared attempt`);
+        [...timers.values()][0]();
+      }
+      assert.match((await detailResult).message, /record download took too long/);
+      await pageResult;
+      await turn();
+      assert.equal(api.state.pageDownloadPending, false, `${stage}: page download unlocks`);
+      assert.equal(element("downloadPageButton").disabled, false);
+      assert.equal(capturedDownloads.length, downloadsBefore, "Do not download partial records after a timeout");
+      assert.ok(signals.every(signal => signal.aborted), `${stage}: abort every timed-out request`);
+      assert.equal(timers.size, 0, `${stage}: clear all deadline timers`);
+      assert.equal(api.state.loadingScripts.has(shard), false);
+      assert.equal(api.state.loadedScripts.has(shard), false);
+      assert.equal(window.CATLOG_DETAIL_SHARDS[shard], undefined);
+      if (stage !== "fetch") assert.equal(cancellations, 4, `${stage}: cancel stalled bodies`);
+      for (const resolve of lateResponses) resolve(compressedFetchResponse(compressedDetailShard([["timeout-row", {value: -1}]])));
+      await turn();
+      assert.equal(window.CATLOG_DETAIL_SHARDS[shard], undefined, "Late responses must not populate the cache");
+      let successfulSignal;
+      window.fetch = (_url, options) => {
+        successfulSignal = options.signal;
+        return Promise.resolve(compressedFetchResponse(compressedDetailShard([["timeout-row", {value: 23}]])));
+      };
+      const recovered = await api.detailForRow({detail_shard: shard, record_key: "timeout-row"});
+      assert.equal(recovered.value, 23, "Retry the same shard successfully after timeouts");
+      assert.equal(successfulSignal.aborted, false, "A healthy request must not be aborted");
+      assert.equal(timers.size, 0, "A successful request clears its deadline");
+      await api.handlePageDownload();
+      assert.equal(capturedDownloads.length, downloadsBefore + 1, "Page export works again after recovery");
+    }
+  } finally {
+    Object.assign(window, original);
+    Object.assign(api.state, priorState);
+    resetDetailCaches();
+  }
+}
+
 const validHeader = detailShardJsonl([], { recordCount: 1 }).split("\n", 1)[0];
 assert.throws(
   () => api.parseCompressedDetailShard(`${validHeader}\n[\"truncated\"\n`, validationShard),
@@ -774,7 +860,8 @@ async function assertCompressedShardRejected(shard, body, expectedError = null) 
   resetDetailCaches();
   compressedShardHandlers.set(shard, body);
   const requestsBefore = compressedShardRequests.length;
-  window.setTimeout = (callback) => {
+  window.setTimeout = (callback, delay) => {
+    if (delay === api.DETAIL_REQUEST_TIMEOUT_MS) return originalSetTimeout(callback, delay);
     callback();
     return 0;
   };
@@ -837,7 +924,8 @@ compressedShardHandlers.set(compressedRetryShard, () => {
 });
 const retryRequestsBefore = compressedShardRequests.length;
 const compressedRetryNotices = [];
-window.setTimeout = (callback) => {
+window.setTimeout = (callback, delay) => {
+  if (delay === api.DETAIL_REQUEST_TIMEOUT_MS) return originalSetTimeout(callback, delay);
   callback();
   return 0;
 };
@@ -868,7 +956,8 @@ compressedShardHandlers.set(
   compressedDetailShard([["wrong-generation", { value: 29 }]], { sourceSha256: "b".repeat(64) }),
 );
 const wrongGenerationRequestsBefore = compressedShardRequests.length;
-window.setTimeout = (callback) => {
+window.setTimeout = (callback, delay) => {
+  if (delay === api.DETAIL_REQUEST_TIMEOUT_MS) return originalSetTimeout(callback, delay);
   callback();
   return 0;
 };
@@ -1567,6 +1656,15 @@ assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can 
   try {
     api.bindControls();
     assert.equal(searchInput.getAttribute("role"), "combobox");
+    window.location.hash = "#guide";
+    element("guideView").hidden = false;
+    searchInput.focus();
+    assert.equal(element("guideView").hidden, false, "tabbing into Search must not leave Guide");
+    searchInput.value = "Enzyme";
+    searchInput.dispatch("input");
+    assert.equal(element("guideView").hidden, true, "typing a search from Guide opens Browse");
+    window.clearTimeout(api.state.filterTimer);
+    window.location.hash = "";
     openSuggestions();
     element("catalogFilters").dispatch("scroll");
     assert.equal(suggestions.classList.contains("hidden"), true, "Scrolling Filters closes its detached suggestion popup");
@@ -1635,13 +1733,18 @@ assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can 
     assert.equal(chosen.listenerCount("mousedown"), 0, "activation must not depend on pointer-only mousedown");
     assert.equal(chosen.listenerCount("keydown"), 0, "native Enter/Space clicks must not be duplicated by custom activation");
     const focusCountBeforeClick = inputFocusCount;
+    window.location.hash = "#guide";
+    element("guideView").hidden = false;
     chosen.click();
+    assert.equal(element("guideView").hidden, true, "choosing a suggestion from Guide opens Browse");
+    window.location.hash = "";
     assert.equal(searchInput.value, chosen.dataset.value);
     assert.equal(inputFocusCount, focusCountBeforeClick + 1, "one click chooses exactly once");
     assert.equal(document.activeElement, searchInput);
     assert.equal(suggestions.classList.contains("hidden"), true);
     await api.ensureCurrentFilters();
   } finally {
+    window.location.hash = "";
     api.hideSuggestions();
     window.setTimeout = originalSetTimeout;
     window.clearTimeout = originalClearTimeout;
@@ -1681,9 +1784,63 @@ assert.equal(
 );
 assert.equal(
   (sourceCode.match(/if \(focusDetail\) focusDetailHeading\(key\);/g) || []).length,
-  3,
-  "loading, success, and error details should move explicit-selection focus",
+  1,
+  "only the initial explicit selection should move focus unconditionally",
 );
+
+{
+  const content = element("detailContent");
+  const heading = element("detailHeading");
+  const originalContains = content.contains;
+  const originalFocus = heading.focus;
+  let headingFocusCount = 0;
+  content.contains = (target) => target === heading || target === element("closeDetailButton");
+  heading.focus = function () { headingFocusCount += 1; originalFocus.call(this); };
+  try {
+    for (const success of [true, false]) {
+      for (const moveFocus of [true, false]) {
+        const key = `focus-${success}-${moveFocus}`;
+        const shard = `data/details-${key}.js`;
+        const summary = row({ record_key: key, detail_shard: shard });
+        api.state.records = api.state.filtered = [summary];
+        api.state.page = 1;
+        window.CATLOG_DETAIL_SHARDS[shard] = success ? { [key]: { ui_record_key: key } } : {};
+        window.CATLOG_DETAIL_SHARD_GENERATIONS[shard] = runtimeSourceSha256;
+        api.state.loadedScripts.add(shard);
+        headingFocusCount = 0;
+        const selecting = api.selectRecord(key);
+        assert.equal(document.activeElement, heading, "explicit selection focuses the loading heading");
+        if (moveFocus) searchInput.focus();
+        await selecting;
+        assert.equal(document.activeElement, moveFocus ? searchInput : heading,
+          "success and error completion must preserve focus outside the detail panel");
+        assert.equal(headingFocusCount, moveFocus ? 1 : 2,
+          "restore focus only when replacing currently focused detail content");
+        assert.equal(content.innerHTML.includes("retryDetailButton"), !success);
+      }
+    }
+    const originalTimeout = window.setTimeout;
+    let finishFocus;
+    window.setTimeout = (callback) => { finishFocus = callback; return 0; };
+    narrowDetailPanel = true;
+    try {
+      heading.focus();
+      api.focusDetailHeading(api.state.selectedKey);
+      element("closeDetailButton").focus();
+      finishFocus();
+      assert.equal(document.activeElement, element("closeDetailButton"),
+        "a delayed mobile focus callback must not override a later user focus change");
+    } finally {
+      narrowDetailPanel = false;
+      window.setTimeout = originalTimeout;
+    }
+  } finally {
+    content.contains = originalContains;
+    heading.focus = originalFocus;
+    api.state.selectedKey = "";
+    document.body.classList.remove("detail-open");
+  }
+}
 
 const firstRowElement = makeElement("firstRow");
 firstRowElement.dataset.key = "first";
