@@ -38,6 +38,7 @@
   const SORT_RUN_SIZE = 4096;
   const SORT_CACHE_LIMIT = 2;
   const DETAIL_SHARD_CACHE_LIMIT = 8;
+  const DETAIL_REQUEST_TIMEOUT_MS = 30000;
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
   const DETAIL_INERT_SELECTOR = [
@@ -906,47 +907,64 @@
   async function loadCompressedDetailShardAttempt(src, retryAttempt) {
     if (typeof window.fetch !== "function"
         || typeof window.DecompressionStream !== "function"
-        || typeof window.TextDecoder !== "function") {
+        || typeof window.TextDecoder !== "function"
+        || typeof window.AbortController !== "function") {
       throw new Error("This browser cannot read compressed CatLog detail shards");
     }
     discardDetailShard(src);
-    const response = await window.fetch(versionedAssetUrl(src, retryAttempt));
-    if (!response?.ok || !response.body) {
-      throw new Error(`Could not load ${src} (HTTP ${response?.status || "error"})`);
-    }
-
-    const reader = response.body
-      .pipeThrough(new window.DecompressionStream("gzip"))
-      .getReader();
-    let payload = "";
+    const controller = new window.AbortController();
+    const timeoutError = new Error("The record download took too long. Try again.");
+    let timer;
+    let reader;
+    const deadline = new Promise((_, reject) => {
+      timer = window.setTimeout(() => {
+        controller.abort();
+        reject(timeoutError);
+      }, DETAIL_REQUEST_TIMEOUT_MS);
+    });
     try {
-      const decoder = new window.TextDecoder("utf-8", { fatal: true });
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        payload += decoder.decode(value, { stream: true });
+      const response = await Promise.race([
+        window.fetch(versionedAssetUrl(src, retryAttempt), { signal: controller.signal }),
+        deadline,
+      ]);
+      if (!response?.ok || !response.body) {
+        throw new Error(`Could not load ${src} (HTTP ${response?.status || "error"})`);
       }
-      payload += decoder.decode();
-    } catch (_error) {
+
+      reader = response.body.pipeThrough(new window.DecompressionStream("gzip")).getReader();
+      let payload = "";
       try {
-        await reader.cancel();
-      } catch (_cancelError) {
-        // The decompressor may already be in an errored state.
+        const decoder = new window.TextDecoder("utf-8", { fatal: true });
+        while (true) {
+          const { value, done } = await Promise.race([reader.read(), deadline]);
+          if (done) break;
+          payload += decoder.decode(value, { stream: true });
+        }
+        payload += decoder.decode();
+      } catch (_error) {
+        try {
+          // A stalled cancellation must not hold up the existing retry flow.
+          await Promise.race([reader.cancel(), deadline]);
+        } catch (_cancelError) {
+          // The decompressor may already be in an errored state.
+        }
+        if (controller.signal.aborted) throw timeoutError;
+        throw new Error(`Detail shard ${src} could not be decompressed or decoded`);
       }
-      throw new Error(`Detail shard ${src} could not be decompressed or decoded`);
+
+      const parsed = parseCompressedDetailShard(payload, src);
+      window.CATLOG_DETAIL_SHARDS = window.CATLOG_DETAIL_SHARDS || {};
+      window.CATLOG_DETAIL_SHARD_GENERATIONS = window.CATLOG_DETAIL_SHARD_GENERATIONS || {};
+      window.CATLOG_DETAIL_SHARDS[src] = parsed.shard;
+      window.CATLOG_DETAIL_SHARD_GENERATIONS[src] = parsed.sourceSha256;
     } finally {
+      window.clearTimeout(timer);
       try {
-        reader.releaseLock();
+        reader?.releaseLock();
       } catch (_releaseError) {
         // A failed reader still must not replace the original load error.
       }
     }
-
-    const parsed = parseCompressedDetailShard(payload, src);
-    window.CATLOG_DETAIL_SHARDS = window.CATLOG_DETAIL_SHARDS || {};
-    window.CATLOG_DETAIL_SHARD_GENERATIONS = window.CATLOG_DETAIL_SHARD_GENERATIONS || {};
-    window.CATLOG_DETAIL_SHARDS[src] = parsed.shard;
-    window.CATLOG_DETAIL_SHARD_GENERATIONS[src] = parsed.sourceSha256;
   }
 
   function loadWithRetries(src, attemptLoader, { onRetry = null } = {}) {
@@ -1573,6 +1591,7 @@
 
   function chooseSuggestion(input, value) {
     input.value = value || "";
+    if (input.id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
     hideSuggestions();
     input.focus();
     applyFiltersInBackground();
@@ -2063,8 +2082,10 @@
   }
 
   function focusDetailHeading(key) {
+    const activeElement = document.activeElement;
     const focusCurrentHeading = () => {
       if (state.selectedKey !== key || !document.body.classList.contains("detail-open")) return;
+      if (document.activeElement !== activeElement) return;
       $("detailHeading")?.focus();
     };
     if (narrowDetailMedia.matches) window.setTimeout(focusCurrentHeading, 180);
@@ -2182,10 +2203,12 @@
       });
       if (state.selectedKey !== key) return;
       state.selectedDetail = detail;
+      const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       renderDetail(row, detail);
-      if (focusDetail) focusDetailHeading(key);
+      if (restoreFocus) focusDetailHeading(key);
     } catch (error) {
       if (state.selectedKey !== key) return;
+      const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       $("detailContent").innerHTML = `
         <div class="detail-top">
           <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
@@ -2200,7 +2223,7 @@
       `;
       $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
       $("retryDetailButton").addEventListener("click", () => selectRecord(key));
-      if (focusDetail) focusDetailHeading(key);
+      if (restoreFocus) focusDetailHeading(key);
     }
   }
 
@@ -2703,7 +2726,6 @@
       input.setAttribute("aria-autocomplete", "list");
       input.setAttribute("aria-expanded", "false");
       input.addEventListener("focus", () => {
-        if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
         showSuggestions(input);
       });
       input.addEventListener("click", () => showSuggestions(input));
@@ -2870,6 +2892,7 @@
     window.CATLOG_STATIC_TEST_API = {
       SORT_CACHE_LIMIT,
       DETAIL_SHARD_CACHE_LIMIT,
+      DETAIL_REQUEST_TIMEOUT_MS,
       state,
       init,
       loadScript,
@@ -2877,6 +2900,7 @@
       parseCompressedDetailShard,
       retainDetailShard,
       detailForRow,
+      selectRecord,
       handlePageDownload,
       renderDetail,
       recordIndexPath,
