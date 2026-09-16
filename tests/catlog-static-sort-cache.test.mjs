@@ -218,8 +218,8 @@ assert.match(
   indexHtml,
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
-assert.ok(indexHtml.includes(">Paper evidence</dt><dd>A value and its table or measurement excerpt are saved from the paper."));
-assert.ok(indexHtml.includes(">Source note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
+assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>A value and its table or measurement excerpt are saved from the paper."));
+assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
   /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "paper_evidence";\s+if \(row\.proof_kind === "source_note"\) return "source_note";/,
@@ -227,7 +227,7 @@ assert.match(
 assert.match(sourceCode, /counts\.source_note = publicEvidence\.source_note \|\| 0;/);
 assert.match(
   sourceCode,
-  /<span tabindex="0" title="\$\{escapeHtml\(item\.description\)\}" aria-label="\$\{escapeHtml\(accessibleLabel\)\}">/,
+  /<details id="countDefinitions" class="count-definitions"/,
 );
 assert.match(
   sourceCode,
@@ -1286,6 +1286,66 @@ function row(overrides = {}) {
     assert.deepEqual(displayedCounts("snapshotMeta"), metrics, "Coverage counts include zero but exclude missing values");
   }
   Object.assign(api.state, previous);
+}
+
+{
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady };
+  const previousManifest = { total_rows: runtimeManifest.total_rows, summary: runtimeManifest.summary };
+  const records = [
+    row({ proof_kind: "source_note" }),
+    row({ verification_status: "corrected", has_proof_excerpt: false, proof_kind: "source_note" }),
+    row({ verification_status: "manual_review_required", has_proof_excerpt: false }),
+    row({ verification_status: "unverified", has_proof_excerpt: false, has_literature_id: false }),
+    row({ public_trust_basis: "identity_only", has_proof_excerpt: false, proof_kind: "source_note", has_literature_id: false }),
+    row({ verification_status: "disputed" }),
+  ];
+  const readBreakdown = () => Object.fromEntries(
+    [...element("evidenceSummary").innerHTML.matchAll(/data-count-key="([^"]+)"[\s\S]*?<td>([\d,]+)<\/td><td>([^<]+)<\/td>/g)]
+      .map(([, key, count, share]) => [key, [Number(count.replaceAll(",", "")), share]]),
+  );
+  api.state.records = records;
+  api.state.filtered = records;
+  api.state.recordsReady = true;
+  api.renderSummary();
+  assert.deepEqual(readBreakdown(), {
+    accepted: [3, "50.0%"], curation_pending: [1, "16.7%"], not_verified: [2, "33.3%"],
+    paper_evidence: [2, "33.3%"], source_note: [2, "33.3%"], literature_id: [1, "16.7%"], source_records: [1, "16.7%"],
+  }, "Review and source groups each count every record once, with source precedence preserved");
+  assert.match(element("evidenceSummary").innerHTML, /6 records in this snapshot/);
+  element("countDefinitions").open = true;
+  api.state.filtered = records.slice(2, 4);
+  api.renderSummary();
+  assert.match(element("evidenceSummary").innerHTML, /2 matching records/);
+  assert.match(element("evidenceSummary").innerHTML, /id="countDefinitions" class="count-definitions" open/);
+  assert.deepEqual(readBreakdown(), {
+    accepted: [0, "0.0%"], curation_pending: [1, "50.0%"], not_verified: [1, "50.0%"],
+    paper_evidence: [0, "0.0%"], source_note: [0, "0.0%"], literature_id: [1, "50.0%"], source_records: [1, "50.0%"],
+  }, "Filtered shares use matching records, not the full snapshot or the visible page");
+  api.state.filtered = [];
+  api.renderSummary();
+  assert.match(element("evidenceSummary").innerHTML, /0 matching records/);
+  assert.ok(Object.values(readBreakdown()).every(([count, share]) => count === 0 && share === "—"));
+  assert.doesNotMatch(element("evidenceSummary").innerHTML, /class="summary-distribution/);
+  api.state.recordsReady = false;
+  runtimeManifest.total_rows = 4;
+  runtimeManifest.summary = { distributions: {
+    verification_status: [
+      { label: "verified", count: 1 }, { label: "corrected", count: 1 },
+      { label: "manual_review_required", count: 1 }, { label: "disputed", count: 1 },
+    ],
+    public_evidence_group: [
+      { label: "paper_excerpt", count: 1 }, { label: "source_note", count: 1 },
+      { label: "paper_id", count: 1 }, { label: "database_record", count: 1 },
+    ],
+  } };
+  api.renderSummary();
+  assert.deepEqual(readBreakdown(), {
+    accepted: [2, "50.0%"], curation_pending: [1, "25.0%"], not_verified: [1, "25.0%"],
+    paper_evidence: [1, "25.0%"], source_note: [1, "25.0%"], literature_id: [1, "25.0%"], source_records: [1, "25.0%"],
+  }, "Preload summary uses manifest counts before the index arrives");
+  element("countDefinitions").open = false;
+  Object.assign(api.state, previous);
+  Object.assign(runtimeManifest, previousManifest);
 }
 
 const kiMeasurementHtml = api.measurementSection(row(), {
