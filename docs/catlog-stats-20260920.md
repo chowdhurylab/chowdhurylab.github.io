@@ -3,6 +3,25 @@
 UI-only update to the September 20 snapshot. No manifest, data shards,
 download files, record values or review decisions change.
 
+## Follow-up polish
+
+- Navigation is Browse, Guide, Paper, ChowdhuryLab, Stats.
+- Search appears only on Browse. Stats and Guide keep navigation and downloads.
+- Independent chart columns remove shared-row whitespace. Percentages use
+  aligned 0-100% axes; the middle tick is hidden on narrow screens.
+- Short labels and optional examples replace the longer explanations. The
+  identity-only limitation and overlapping counts remain explicit.
+- The Guide starts with three plain tasks and a real laccase/EC search example,
+  without numbered circles or a redundant workflow diagram.
+- Independent source review passed after fixing an overstatement about prior
+  paper checks and centering the middle axis tick.
+- Chrome visual checks covered desktop, 820, 390 and 320 px widths; confirmed
+  single-line navigation at 320 px, no chart overflow, access to the final
+  Stats section, Browse search retention and full-snapshot Stats counts.
+- Actual Safari rendered Stats and Guide, and navigation between them worked.
+  This does not resolve or re-test the earlier unrelated Filters automation
+  uncertainty described below.
+
 - `#stats` has four labelled bar-chart sections: review outcomes, saved
   source material, fields in the full download, and database links.
 - All denominators are the manifest's 156,431 records, independent of Browse

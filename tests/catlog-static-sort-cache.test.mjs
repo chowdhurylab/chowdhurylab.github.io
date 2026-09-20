@@ -1177,6 +1177,7 @@ assert.equal(element("statsView").hidden, false);
 assert.equal(element("catalogView").hidden, true);
 assert.equal(element("guideView").hidden, true);
 assert.equal(element("statsButton").getAttribute("aria-current"), "page");
+assert.equal(document.body.classList.contains("stats-open"), true);
 assert.equal(document.activeElement, element("statsHeading"));
 assert.equal(document.title, "Stats | CatLog");
 api.renderView("guide");
@@ -1186,7 +1187,16 @@ api.renderView("browse");
 assert.equal(element("statsView").hidden, true);
 assert.equal(element("catalogView").hidden, false);
 assert.equal(element("browseButton").getAttribute("aria-current"), "page");
+assert.equal(document.body.classList.contains("stats-open"), false);
+assert.equal(document.body.classList.contains("guide-open"), false);
 assert.doesNotMatch(indexHtml, /id="snapshotBreakdown"|id="moreCountsButton"/);
+const navMarkup = indexHtml.match(/<nav class="top-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
+assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
+  ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
+const guideStart = indexHtml.match(/<section class="guide-workflow"[^>]*>([\s\S]*?)<\/section>/)[1];
+assert.equal((guideStart.match(/class="guide-step"/g) || []).length, 3);
+assert.doesNotMatch(guideStart, /<span>[1-4]<\/span>|<ol|<img/);
+assert.match(guideStart, /laccase/);
 
 assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
 assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
@@ -1425,6 +1435,15 @@ function row(overrides = {}) {
   }, "Snapshot charts use manifest counts with source-group precedence preserved");
   assert.match(element("statsScope").textContent, /All 6 records/);
   const chart = element("statsCharts").innerHTML;
+  assert.match(chart, /stats-scale[\s\S]*?<span>0<\/span><span>50<\/span><span>100%<\/span>/);
+  assert.match(chart, /<span>% of all<\/span>/);
+  assert.match(chart, /class="stats-explanation"/);
+  assert.equal((chart.match(/class="stats-column"/g) || []).length, 2);
+  assert.match(chart, /Paper link only/);
+  assert.match(chart, /A row linked to BRENDA and UniProt counts in both bars/);
+  const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
+  assert.match(halfBar, /width:50%/);
+  assert.match(halfBar, /50\.0%/);
   for (const filtered of [records.slice(2, 4), []]) {
     api.state.filtered = filtered;
     api.renderSummary();

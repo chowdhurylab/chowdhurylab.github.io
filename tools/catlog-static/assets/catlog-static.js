@@ -1529,7 +1529,8 @@
     const outcomes = statuses.map((item) => ({ ...item, description: "", count: counts[item.value] || 0, color: colors[item.value] || "neutral" }));
     const evidence = manifestDistribution("public_evidence_group");
     const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
-    const material = evidenceGroups.map((item) => ({ ...item, count: evidence[sourceKeys[item.value]] || 0, color: "source" }));
+    const materialLabels = { paper_evidence: "Paper extract", source_note: "Database note", literature_id: "Paper link only", source_records: "Database entry only" };
+    const material = evidenceGroups.map((item) => ({ ...item, label: materialLabels[item.value], description: "", count: evidence[sourceKeys[item.value]] || 0, color: "source" }));
     const summary = manifest.summary || {};
     const metrics = summary.coverage || {};
     const fullCoverage = manifest.enriched_download?.coverage || {};
@@ -1545,36 +1546,50 @@
     const accepted = (counts.verified || 0) + (counts.corrected || 0);
     const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
     const totals = summary.totals || {};
-    $("statsScope").textContent = `All ${formatInteger(total)} records. Browse filters do not change these counts.`;
+    $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     $("statsTotals").innerHTML = [["Records", total], ["Accepted", accepted], ["Enzyme names", totals.unique_enzymes], ["EC numbers", totals.unique_ec_numbers], ["Organisms", totals.unique_organisms]]
       .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
-    const columns = (first, last = "") => `<div class="stats-columns" aria-hidden="true"><span>${first}</span><span></span><span>Records</span><span>Share</span>${last ? `<span>${last}</span>` : ""}</div>`;
+    const columns = (first, last = "") => `<div class="stats-columns" aria-hidden="true"><span>${first}</span><span class="stats-scale"><span>0</span><span>50</span><span>100%</span></span><span>Records</span><span>% of all</span>${last ? `<span>${last}</span>` : ""}</div>`;
     $("statsCharts").innerHTML = `
+      <div class="stats-column">
       <section class="stats-section" aria-labelledby="reviewChartTitle">
-        <h2 id="reviewChartTitle">Review outcomes</h2>
-        <p>${formatInteger(accepted)} accepted (${statsShare(accepted, total)}): Verified + Corrected.</p>
+        <h2 id="reviewChartTitle">Record review</h2>
+        <p>${formatInteger(accepted)} accepted: verified or corrected.</p>
         ${columns("Outcome")}${statsBarRows(outcomes, total)}
-        <p class="stats-note">${identityOnly ? `Includes ${formatInteger(identityOnly)} accepted records with identity-only checks, not literature verification of their kinetic values. ` : ""}Pending and unverified do not mean rejected. Calculated records are not the count of calculated kcat/Km values.</p>
-      </section>
-      <section class="stats-section" aria-labelledby="materialChartTitle">
-        <h2 id="materialChartTitle">Saved source material</h2>
-        <p>What is attached to each record, separate from its review outcome.</p>
-        ${columns("Material")}${statsBarRows(material, total)}
-        <p class="stats-note">One group per record, using the first applicable group above. A paper excerpt alone does not mean the record is accepted.</p>
+        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} records were accepted on identity checks alone; this does not confirm their kinetic values. ` : ""}Pending does not mean rejected.</p>
+        <details class="stats-explanation"><summary>What do these mean?</summary><dl>
+          <div><dt>Verified / Corrected</dt><dd>Accepted as reported / accepted after a recorded change.</dd></div>
+          <div><dt>Checks pending</dt><dd>More checks are needed, e.g. matching the protein sequence.</dd></div>
+          <div><dt>Unverified</dt><dd>No accepted review is recorded. This does not mean the value is wrong.</dd></div>
+          <div><dt>Calculated records</dt><dd>Marked as calculated, not accepted. This does not count calculated kcat/Km values.</dd></div>
+          <div><dt>Disputed</dt><dd>Flagged by review; not accepted.</dd></div>
+        </dl></details>
       </section>
       <section class="stats-section stats-field-section" aria-labelledby="fieldsChartTitle">
-        <h2 id="fieldsChartTitle">Fields in the full download</h2>
-        <p>Records with each field filled in. The remainder is not included.</p>
-        ${columns("Field", "Not included")}${statsBarRows(fields, total, { missing: true })}
-        <p class="stats-note">Sequence fields are counted separately and can overlap. Variant sequences apply only to variants. Blank fields are not rejection counts.</p>
+        <h2 id="fieldsChartTitle">Data available</h2>
+        <p>Filled fields in the full download.</p>
+        ${columns("Field", "Blank")}${statsBarRows(fields, total, { missing: true })}
+        <p class="stats-note">Sequence counts overlap. Variant sequences apply only to variants. Blank does not mean rejected.</p>
+        <details class="stats-explanation"><summary>Show an example</summary><p>One row can include both a wild-type sequence and a variant sequence. It counts in both bars.</p></details>
+      </section>
+      </div>
+      <div class="stats-column">
+      <section class="stats-section" aria-labelledby="materialChartTitle">
+        <h2 id="materialChartTitle">Saved sources</h2>
+        <p>What is saved alongside each record.</p>
+        ${columns("Material")}${statsBarRows(material, total)}
+        <p class="stats-note">First matching group above; each record counted once. A saved source does not mean accepted.</p>
+        <details class="stats-explanation"><summary>Show an example</summary><p>A paper link is a DOI or PMID. A paper extract also saves a value, e.g. &ldquo;Km 0.82 &micro;M&rdquo; from a table. A database note has no saved paper extract.</p></details>
       </section>
       <section class="stats-section" aria-labelledby="databaseChartTitle">
-        <h2 id="databaseChartTitle">Data sources</h2>
+        <h2 id="databaseChartTitle">Databases</h2>
         <p>Records linked to each source.</p>
         ${columns("Source")}${statsBarRows(databases, total)}
-        <p class="stats-note">A record can link to more than one source. Counts overlap; records without a named source are not shown. Source licenses are listed in the Guide.</p>
+        <p class="stats-note">Counts overlap. Records with no named source are not shown.</p>
+        <details class="stats-explanation"><summary>Show an example</summary><p>A row linked to BRENDA and UniProt counts in both bars. See the Guide for source licenses.</p></details>
       </section>
+      </div>
     `;
   }
 

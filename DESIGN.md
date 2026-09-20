@@ -22,3 +22,13 @@ numerals aligned, and charts free of decorative imagery or confidence scores.
 At desktop sizes, use two chart columns. Below 1000px, use one column with
 normal page scrolling. Never add an independently scrolling chart panel.
 Keep Browse's filtered state when navigating away and back.
+
+Search belongs to Browse, not Stats or Guide. On Stats, show a shared
+0-100% scale and aligned counts instead of progress-track styling. Keep the
+identity-only caveat visible; put short definitions and examples in optional
+disclosures. Never invent a reason for a pending review from a blank field.
+
+Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use independently
+flowing Stats columns, not equal-height chart rows that create blank blocks.
+The Guide starts with three plain tasks and a real search example, not a
+numbered onboarding strip or a repeated workflow illustration.
