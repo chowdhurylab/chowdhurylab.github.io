@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=0d2087029c715c18" />
+    <link rel="stylesheet" href="assets/catlog-static.css?v=c2cae19822dc0f13" />
   </head>
   <body>
     <div class="static-app">
@@ -24,7 +24,6 @@
         </button>
         <nav class="top-nav" aria-label="Catalog sections">
           <button id="browseButton" class="nav-tab active" type="button" aria-current="page">Browse</button>
-          <button id="statsButton" class="nav-tab" type="button" aria-controls="statsView">Stats</button>
           <button id="guideButton" class="nav-tab" type="button">Guide</button>
           <a
             class="nav-tab"
@@ -34,6 +33,7 @@
             aria-label="Open the CatLog research paper"
           >Paper</a>
           <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
+          <button id="statsButton" class="nav-tab" type="button" aria-controls="statsView">Stats</button>
         </nav>
         <label class="global-search" aria-label="Search catalog">
           <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
@@ -231,7 +231,7 @@
         <div class="stats-shell">
           <header class="stats-heading">
             <div>
-              <h1 id="statsHeading" tabindex="-1">Snapshot statistics</h1>
+              <h1 id="statsHeading" tabindex="-1">CatLog in numbers</h1>
               <p id="statsScope"></p>
             </div>
             <span id="statsDate" class="snapshot-date"></span>
@@ -239,9 +239,9 @@
           <dl id="statsTotals" class="stats-totals"></dl>
           <div id="statsCharts" class="stats-charts"></div>
           <details class="stats-checks">
-            <summary>What needs to be checked before acceptance?</summary>
-            <p>For literature review: the reported value and unit, assay conditions, and protein or variant identity. Some records need a sequence or a source difference resolved first.</p>
-            <p>This snapshot does not count the reasons for pending checks. Missing fields above are not a breakdown of those reasons.</p>
+            <summary>Why can review take longer?</summary>
+            <p>For paper-based acceptance, the value, unit, assay and protein must match. For example, the same enzyme name is not enough if the paper used a different variant.</p>
+            <p>Reasons for pending checks are not counted here.</p>
           </details>
         </div>
       </main>
@@ -250,51 +250,24 @@
         <div class="guide-shell">
           <header class="guide-heading">
             <h1>Using CatLog</h1>
-            <p>Search the table, open a row, and download the data you need.</p>
+            <p>Find a measurement and check its source.</p>
           </header>
 
           <section class="guide-workflow" aria-label="How to use CatLog">
-            <ol class="guide-step-grid" aria-label="CatLog workflow">
-              <li class="guide-step">
-                <span>1</span>
-                <div>
+            <div class="guide-step-grid">
+              <div class="guide-step">
                   <h2>Search</h2>
-                  <p>Enzyme, EC number, organism or substrate.</p>
-                </div>
-              </li>
-              <li class="guide-step">
-                <span>2</span>
-                <div>
-                  <h2>Read values</h2>
-                  <p>Check units, temperature and pH.</p>
-                </div>
-              </li>
-              <li class="guide-step">
-                <span>3</span>
-                <div>
-                  <h2>Open a row</h2>
-                  <p>Find sequences, structures and paper links.</p>
-                </div>
-              </li>
-              <li class="guide-step">
-                <span>4</span>
-                <div>
+                  <p>Try <strong>laccase</strong> or EC <strong>1.10.3.2</strong>. Organism and substrate names work too.</p>
+              </div>
+              <div class="guide-step">
+                  <h2>Open a result</h2>
+                  <p>Check the units and assay conditions. The side panel has paper links and available sequences.</p>
+              </div>
+              <div class="guide-step">
                   <h2>Download</h2>
-                  <p>Save a page, one record or the full dataset.</p>
-                </div>
-              </li>
-            </ol>
-            <details class="guide-visual">
-              <summary>View the diagram</summary>
-              <figure class="guide-figure">
-                <img
-                  src="assets/catlog-guide-workflow.svg?v=43a347bb1e1412c0"
-                  alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
-                  loading="lazy"
-                  decoding="async"
-                />
-              </figure>
-            </details>
+                  <p>Choose <strong>Full data</strong> for available sequences and SMILES, or <strong>Download page</strong> for the visible rows.</p>
+              </div>
+            </div>
           </section>
 
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
@@ -439,7 +412,7 @@
     </div>
 
     <script src="data/manifest.fdf6561c8f6f.js"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=0d2087029c715c18"></script>
+    <script data-catalog-base="." src="assets/catlog-static.js?v=c2cae19822dc0f13"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>
