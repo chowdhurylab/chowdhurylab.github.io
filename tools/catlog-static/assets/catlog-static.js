@@ -282,22 +282,27 @@
   const $ = (id) => document.getElementById(id);
 
   function viewFromLocation() {
-    return window.location.hash === "#guide" ? "guide" : "browse";
+    return ["#guide", "#stats"].includes(window.location.hash) ? window.location.hash.slice(1) : "browse";
   }
 
   function renderView(view, { scroll = false } = {}) {
     const guideOpen = view === "guide";
-    $("catalogView").hidden = guideOpen;
+    const statsOpen = view === "stats";
+    const browseOpen = !guideOpen && !statsOpen;
+    $("catalogView").hidden = !browseOpen;
     $("guideView").hidden = !guideOpen;
+    $("statsView").hidden = !statsOpen;
     document.body.classList.toggle("guide-open", guideOpen);
-    $("browseButton").classList.toggle("active", !guideOpen);
-    $("guideButton").classList.toggle("active", guideOpen);
-    $("browseButton").setAttribute("aria-current", guideOpen ? "false" : "page");
-    $("guideButton").setAttribute("aria-current", guideOpen ? "page" : "false");
+    document.body.classList.toggle("stats-open", statsOpen);
+    for (const name of ["browse", "stats", "guide"]) {
+      const active = name === view;
+      $(`${name}Button`).classList.toggle("active", active);
+      $(`${name}Button`).setAttribute("aria-current", active ? "page" : "false");
+    }
     document.title = guideOpen
       ? "Guide | CatLog"
-      : "CatLog | Enzyme Kinetics Catalog";
-    if (guideOpen) {
+      : statsOpen ? "Stats | CatLog" : "CatLog | Enzyme Kinetics Catalog";
+    if (!browseOpen) {
       setFiltersOpen(false);
       resetDetail();
       hideSuggestions();
@@ -306,6 +311,10 @@
     }
     if (scroll) {
       if (guideOpen) $("guideView").scrollTop = 0;
+      if (statsOpen) {
+        $("statsView").scrollTop = 0;
+        $("statsHeading").focus({ preventScroll: true });
+      }
       window.scrollTo({
         top: 0,
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
@@ -314,7 +323,7 @@
   }
 
   function navigateTo(view) {
-    const targetHash = view === "guide" ? "#guide" : "";
+    const targetHash = view === "browse" ? "" : `#${view}`;
     if (window.location.hash !== targetHash) {
       const url = new URL(window.location.href);
       url.hash = targetHash;
@@ -1458,7 +1467,6 @@
 
   function renderSummary() {
     const summary = manifest.summary || {};
-    const totals = summary.totals || {};
     const coverage = summary.coverage || {};
     const rows = Array.isArray(rowsForSummary()) ? rowsForSummary() : [];
     const isLoaded = state.recordsReady;
@@ -1467,11 +1475,6 @@
       [isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows],
       ["Accepted", recordStateCounts(rows).accepted || 0],
     ];
-    const taxonomy = [
-      ["Enzyme names", isLoaded ? uniqueCount(rows, "enzyme_display_name") : (totals.unique_enzymes ?? null), "", ""],
-      ["EC numbers", isLoaded ? uniqueCount(rows, "ec_number") : (totals.unique_ec_numbers ?? null), "", ""],
-      ["Organisms", isLoaded ? uniqueCount(rows, "organism") : (totals.unique_organisms ?? null), "", ""],
-    ];
     const countHtml = ([label, value]) => `
       <div class="summary-card">
         <span>${escapeHtml(label)}</span>
@@ -1479,8 +1482,6 @@
       </div>
     `;
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
-    $("taxonomyGrid").innerHTML = taxonomy.map(countHtml).join("");
-    renderEvidenceSummary(rows);
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
@@ -1494,19 +1495,29 @@
     $("snapshotDate").title = manifest.content_sha256 || manifest.source_sha256 || "";
   }
 
-  function setMoreCountsOpen(isOpen) {
-    $("snapshotBreakdown").hidden = !isOpen;
-    $("moreCountsButton").setAttribute("aria-expanded", String(Boolean(isOpen)));
+  function statsShare(count, total) {
+    if (!total) return EMPTY_VALUE;
+    const percent = count / total * 100;
+    return percent > 0 && percent < 0.1 ? "<0.1%" : `${percent.toFixed(1)}%`;
   }
 
-  function renderEvidenceSummary(rows) {
-    const isLoaded = state.recordsReady;
-    const totalRows = isLoaded ? rows.length : Number(manifest.total_rows || 0);
-    const counts = reviewStatusCounts(rows);
-    const evidenceCounts = evidenceGroupCounts(rows);
-    const isFiltered = isLoaded && rows.length !== state.records.length;
-    const scope = isFiltered ? "matching records" : "records in this snapshot";
-    const share = (count) => totalRows ? (count / totalRows) * 100 : 0;
+  function statsBarRows(items, total, { missing = false } = {}) {
+    return `<ol class="stats-bars${missing ? " stats-bars-coverage" : ""}">${items.map((item) => {
+      const width = total ? Math.max(0, Math.min(100, item.count / total * 100)) : 0;
+      return `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+        <span class="stats-bar-label">${escapeHtml(item.label)}${item.description ? `<small>${escapeHtml(item.description)}</small>` : ""}</span>
+        <span class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill stats-color-${item.color || "source"}" style="width:${width}%"></span></span>
+        <span class="stats-bar-count">${formatInteger(item.count)}<span class="visually-hidden"> records</span></span>
+        <span class="stats-bar-share">${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>
+        ${missing ? `<span class="stats-bar-missing">${formatInteger(total - item.count)}<span class="visually-hidden"> not included</span></span>` : ""}
+      </li>`;
+    }).join("")}</ol>`;
+  }
+
+  function renderStats() {
+    // Immutable snapshot metadata: Stats must not mix filtered and full-download counts.
+    const total = Number(manifest.total_rows || 0);
+    const counts = manifestDistribution("verification_status");
     const statuses = [...reviewStatuses];
     const knownStatuses = new Set(statuses.map((item) => item.value));
     const otherCount = Object.entries(counts).reduce((total, [key, count]) => total + (knownStatuses.has(key) ? 0 : count), 0);
@@ -1514,45 +1525,56 @@
       counts.other_status = otherCount;
       statuses.push({ value: "other_status", label: "Other status", description: "Not in the six outcomes listed above." });
     }
-    const groupHtml = (title, items, groupCounts) => `
-      <div class="count-group">
-        <table class="count-table" aria-label="${title}">
-          <thead><tr><th scope="col">${title}</th><th scope="col">Records</th><th scope="col">Share</th></tr></thead>
-          <tbody>${items.map((item) => {
-            const count = groupCounts[item.value] || 0;
-            return `<tr data-count-key="${item.value}">
-              <th scope="row"><span class="count-name" title="${escapeHtml(item.description)}">${escapeHtml(item.label)}</span><span class="visually-hidden">. ${escapeHtml(item.description)}</span></th>
-              <td>${formatInteger(count)}</td><td>${totalRows ? `${share(count).toFixed(1)}%` : EMPTY_VALUE}</td>
-            </tr>`;
-          }).join("")}</tbody>
-        </table>
-      </div>`;
-    const fullTotal = Number(manifest.total_rows || 0);
+    const colors = { verified: "verified", corrected: "corrected", manual_review_required: "pending", unverified: "neutral", mathematically_inferred: "calculated", disputed: "disputed" };
+    const outcomes = statuses.map((item) => ({ ...item, description: "", count: counts[item.value] || 0, color: colors[item.value] || "neutral" }));
+    const evidence = manifestDistribution("public_evidence_group");
+    const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
+    const material = evidenceGroups.map((item) => ({ ...item, count: evidence[sourceKeys[item.value]] || 0, color: "source" }));
+    const summary = manifest.summary || {};
+    const metrics = summary.coverage || {};
     const fullCoverage = manifest.enriched_download?.coverage || {};
-    const coverageFields = [["sequence", "Protein sequence"], ["smiles", "Substrate SMILES"]]
-      .filter(([key]) => Number.isInteger(fullCoverage[key]) && fullCoverage[key] >= 0 && fullCoverage[key] <= fullTotal);
-    const coverageHtml = coverageFields.length ? `
-      <section class="download-coverage" aria-label="Full download coverage">
-        <h3>Full download: ${formatInteger(fullTotal)} records</h3>
-        <table class="count-table" aria-label="Fields in the full download">
-          <thead><tr><th scope="col">Field</th><th scope="col">Included</th><th scope="col">Not included</th></tr></thead>
-          <tbody>${coverageFields.map(([key, label]) => `<tr data-coverage-key="${key}"><th scope="row">${label}</th><td>${formatInteger(fullCoverage[key])}</td><td>${formatInteger(fullTotal - fullCoverage[key])}</td></tr>`).join("")}</tbody>
-        </table>
-        <p>Whole snapshot, regardless of filters. Sequence column only; wild-type and variant sequences are separate. Not included does not mean rejected.</p>
-      </section>` : "";
-    const definitionsOpen = $("countDefinitions")?.open;
-    $("evidenceSummary").innerHTML = `
-      <p class="counts-scope">${formatInteger(totalRows)} ${scope}. Review and source counts follow your filters.</p>
-      <p class="counts-context">Accepted includes Verified and Corrected records, including identity-only records. Reasons for pending checks are not counted here.</p>
-      <div class="counts-tables">
-        ${groupHtml("Review outcome", statuses, counts)}
-        <div>${groupHtml("Saved source material", evidenceGroups, evidenceCounts)}${coverageHtml}</div>
-      </div>
-      <details id="countDefinitions" class="count-definitions" ${definitionsOpen ? "open" : ""}>
-        <summary>What does checking involve?</summary>
-        <p>Current literature checks match values and units to source evidence, check assay context, and resolve protein or variant identity. Missing sequences or unresolved source differences can require follow-up. Adding a record is not the same as accepting it.</p>
-        <p>Each record appears once in the review table and once in the source table, using the first source group that applies. Percentages use the matching record count. Saved source material is not an acceptance decision.</p>
-      </details>
+    const fields = [
+      ["kcat", "kcat", metrics.with_kcat], ["km", "Km", metrics.with_km], ["kcat_over_km", "kcat/Km", metrics.with_kcat_over_km],
+      ["sequence", "Protein sequence", fullCoverage.sequence], ["wild_type_sequence", "Wild-type sequence", fullCoverage.wild_type_sequence],
+      ["variant_sequence", "Variant sequence", fullCoverage.variant_sequence], ["smiles", "Substrate SMILES", fullCoverage.smiles],
+    ].filter(([, , count]) => Number.isInteger(count) && count >= 0 && count <= total)
+      .map(([value, label, count]) => ({ value, label, count, color: "coverage" }));
+    const databases = sourceDatabases().filter((item) => Number.isInteger(item.row_count))
+      .map((item) => ({ value: item.key, label: item.name, count: item.row_count, color: "source" }))
+      .sort((a, b) => b.count - a.count);
+    const accepted = (counts.verified || 0) + (counts.corrected || 0);
+    const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
+    const totals = summary.totals || {};
+    $("statsScope").textContent = `All ${formatInteger(total)} records. Browse filters do not change these counts.`;
+    $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
+    $("statsTotals").innerHTML = [["Records", total], ["Accepted", accepted], ["Enzyme names", totals.unique_enzymes], ["EC numbers", totals.unique_ec_numbers], ["Organisms", totals.unique_organisms]]
+      .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
+    const columns = (first, last = "") => `<div class="stats-columns" aria-hidden="true"><span>${first}</span><span></span><span>Records</span><span>Share</span>${last ? `<span>${last}</span>` : ""}</div>`;
+    $("statsCharts").innerHTML = `
+      <section class="stats-section" aria-labelledby="reviewChartTitle">
+        <h2 id="reviewChartTitle">Review outcomes</h2>
+        <p>${formatInteger(accepted)} accepted (${statsShare(accepted, total)}): Verified + Corrected.</p>
+        ${columns("Outcome")}${statsBarRows(outcomes, total)}
+        <p class="stats-note">${identityOnly ? `Includes ${formatInteger(identityOnly)} accepted records with identity-only checks, not literature verification of their kinetic values. ` : ""}Pending and unverified do not mean rejected. Calculated records are not the count of calculated kcat/Km values.</p>
+      </section>
+      <section class="stats-section" aria-labelledby="materialChartTitle">
+        <h2 id="materialChartTitle">Saved source material</h2>
+        <p>What is attached to each record, separate from its review outcome.</p>
+        ${columns("Material")}${statsBarRows(material, total)}
+        <p class="stats-note">One group per record, using the first applicable group above. A paper excerpt alone does not mean the record is accepted.</p>
+      </section>
+      <section class="stats-section stats-field-section" aria-labelledby="fieldsChartTitle">
+        <h2 id="fieldsChartTitle">Fields in the full download</h2>
+        <p>Records with each field filled in. The remainder is not included.</p>
+        ${columns("Field", "Not included")}${statsBarRows(fields, total, { missing: true })}
+        <p class="stats-note">Sequence fields are counted separately and can overlap. Variant sequences apply only to variants. Blank fields are not rejection counts.</p>
+      </section>
+      <section class="stats-section" aria-labelledby="databaseChartTitle">
+        <h2 id="databaseChartTitle">Data sources</h2>
+        <p>Records linked to each source.</p>
+        ${columns("Source")}${statsBarRows(databases, total)}
+        <p class="stats-note">A record can link to more than one source. Counts overlap; records without a named source are not shown. Source licenses are listed in the Guide.</p>
+      </section>
     `;
   }
 
@@ -1620,7 +1642,7 @@
 
   function chooseSuggestion(input, value) {
     input.value = value || "";
-    if (input.id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
+    if (input.id === "globalSearchInput" && viewFromLocation() !== "browse") navigateTo("browse");
     hideSuggestions();
     input.focus();
     applyFiltersInBackground();
@@ -2735,7 +2757,7 @@
       "substrateFilterInput",
     ].forEach((id) => {
       $(id).addEventListener("input", () => {
-        if (id === "globalSearchInput" && viewFromLocation() === "guide") navigateTo("browse");
+        if (id === "globalSearchInput" && viewFromLocation() !== "browse") navigateTo("browse");
         if ($(id).value.trim()) hideSuggestions();
         scheduleFilters();
       });
@@ -2799,12 +2821,14 @@
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     $("browseButton").addEventListener("click", () => navigateTo("browse"));
     $("guideButton").addEventListener("click", () => navigateTo("guide"));
-    $("moreCountsButton").addEventListener("click", () => setMoreCountsOpen($("snapshotBreakdown").hidden));
+    $("statsButton").addEventListener("click", () => navigateTo("stats"));
+    $("snapshotStatsButton").addEventListener("click", () => navigateTo("stats"));
     document.addEventListener("click", (event) => {
       const menu = $("downloadMenu");
       if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
     });
     window.addEventListener("popstate", () => renderView(viewFromLocation()));
+    window.addEventListener("hashchange", () => renderView(viewFromLocation()));
     window.addEventListener("scroll", hideSuggestions, { passive: true });
     $("catalogFilters").addEventListener("scroll", () => {
       const rail = $("catalogFilters");
@@ -2883,11 +2907,6 @@
         closeDetailAndRestoreFocus();
         return;
       }
-      if (event.key === "Escape" && !$("snapshotBreakdown").hidden) {
-        setMoreCountsOpen(false);
-        $("moreCountsButton").focus();
-        return;
-      }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
         navigateTo("browse");
@@ -2899,16 +2918,17 @@
   async function init() {
     try {
       // An older cached page can request the current script after a deployment.
-      if (!$("snapshotBreakdown")) {
+      if (!$("statsView")) {
         const url = new URL(window.location.href);
-        if (/^https?:$/.test(url.protocol) && url.searchParams.get("layout") !== "compact") {
-          url.searchParams.set("layout", "compact");
+        if (/^https?:$/.test(url.protocol) && url.searchParams.get("layout") !== "stats") {
+          url.searchParams.set("layout", "stats");
           window.location.replace(url.href);
           return;
         }
         throw new Error("This tab has an older CatLog page. Reload to get the current layout.");
       }
       renderSummary();
+      renderStats();
       renderDownloadMetadata();
       renderSourceAttribution();
       bindControls();
@@ -2974,7 +2994,12 @@
       closeDetailAndRestoreFocus,
       syncDetailPanelAccessibility,
       renderSummary,
-      setMoreCountsOpen,
+      renderStats,
+      statsShare,
+      statsBarRows,
+      renderView,
+      navigateTo,
+      viewFromLocation,
       setFiltersOpen,
     };
   } else {

@@ -226,8 +226,8 @@ assert.match(
 );
 assert.match(sourceCode, /counts\.source_note = publicEvidence\.source_note \|\| 0;/);
 assert.match(
-  sourceCode,
-  /<details id="countDefinitions" class="count-definitions"/,
+  indexHtml,
+  /<main id="statsView"[^>]*hidden/,
 );
 assert.match(
   sourceCode,
@@ -515,11 +515,11 @@ assert.ok(api, "test API should be exposed without starting the application");
   const originalHref = window.location.href;
   const originalReplace = window.location.replace;
   const navigations = [];
-  document.getElementById = (id) => id === "snapshotBreakdown" ? null : originalGetElement(id);
+  document.getElementById = (id) => id === "statsView" ? null : originalGetElement(id);
   window.location.replace = (href) => navigations.push(href);
   await api.init();
   assert.equal(navigations.length, 1, "Old cached HTML should refresh before binding new controls");
-  assert.equal(new URL(navigations[0]).searchParams.get("layout"), "compact");
+  assert.equal(new URL(navigations[0]).searchParams.get("layout"), "stats");
   window.location.href = navigations[0];
   await api.init();
   assert.equal(navigations.length, 1, "A failed refresh must not loop");
@@ -1172,12 +1172,21 @@ narrowDetailPanel = false;
     document.activeElement = originalActiveElement;
   }
 }
-api.setMoreCountsOpen(true);
-assert.equal(element("snapshotBreakdown").hidden, false);
-assert.equal(element("moreCountsButton").getAttribute("aria-expanded"), "true");
-api.setMoreCountsOpen(false);
-assert.equal(element("snapshotBreakdown").hidden, true);
-assert.equal(element("moreCountsButton").getAttribute("aria-expanded"), "false");
+api.renderView("stats", { scroll: true });
+assert.equal(element("statsView").hidden, false);
+assert.equal(element("catalogView").hidden, true);
+assert.equal(element("guideView").hidden, true);
+assert.equal(element("statsButton").getAttribute("aria-current"), "page");
+assert.equal(document.activeElement, element("statsHeading"));
+assert.equal(document.title, "Stats | CatLog");
+api.renderView("guide");
+assert.equal(element("statsView").hidden, true);
+assert.equal(element("guideView").hidden, false);
+api.renderView("browse");
+assert.equal(element("statsView").hidden, true);
+assert.equal(element("catalogView").hidden, false);
+assert.equal(element("browseButton").getAttribute("aria-current"), "page");
+assert.doesNotMatch(indexHtml, /id="snapshotBreakdown"|id="moreCountsButton"/);
 
 assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
 assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
@@ -1391,48 +1400,47 @@ function row(overrides = {}) {
     row({ verification_status: "disputed" }),
   ];
   const readBreakdown = () => Object.fromEntries(
-    [...element("evidenceSummary").innerHTML.matchAll(/data-count-key="([^"]+)"[\s\S]*?<td>([\d,]+)<\/td><td>([^<]+)<\/td>/g)]
-      .map(([, key, count, share]) => [key, [Number(count.replaceAll(",", "")), share]]),
+    [...element("statsCharts").innerHTML.matchAll(/data-stat-key="([^"]+)" data-count="(\d+)"/g)]
+      .map(([, key, count]) => [key, Number(count)]),
   );
   api.state.records = records;
   api.state.filtered = records;
   api.state.recordsReady = true;
   runtimeManifest.total_rows = 6;
   runtimeManifest.enriched_download = { coverage: { sequence: 4, smiles: 5 } };
-  const readCoverage = () => Object.fromEntries(
-    [...element("evidenceSummary").innerHTML.matchAll(/data-coverage-key="([^"]+)"[\s\S]*?<td>([\d,]+)<\/td><td>([\d,]+)<\/td>/g)]
-      .map(([, key, included, absent]) => [key, [Number(included.replaceAll(",", "")), Number(absent.replaceAll(",", ""))]]),
-  );
-  api.renderSummary();
+  runtimeManifest.summary = { distributions: {
+    verification_status: [
+      { label: "verified", count: 2 }, { label: "corrected", count: 1 },
+      { label: "manual_review_required", count: 1 }, { label: "unverified", count: 1 }, { label: "disputed", count: 1 },
+    ],
+    public_evidence_group: [
+      { label: "paper_excerpt", count: 2 }, { label: "source_note", count: 2 },
+      { label: "paper_id", count: 1 }, { label: "database_record", count: 1 },
+    ],
+  } };
+  api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    verified: [2, "33.3%"], corrected: [1, "16.7%"], manual_review_required: [1, "16.7%"],
-    unverified: [1, "16.7%"], mathematically_inferred: [0, "0.0%"], disputed: [1, "16.7%"],
-    paper_evidence: [2, "33.3%"], source_note: [2, "33.3%"], literature_id: [1, "16.7%"], source_records: [1, "16.7%"],
-  }, "Review and source groups each count every record once, with source precedence preserved");
-  assert.match(element("evidenceSummary").innerHTML, /6 records in this snapshot/);
-  assert.deepEqual(readCoverage(), { sequence: [4, 2], smiles: [5, 1] });
-  assert.doesNotMatch(element("evidenceSummary").innerHTML, /count-dot|summary-distribution/);
-  element("countDefinitions").open = true;
-  api.state.filtered = records.slice(2, 4);
-  api.renderSummary();
-  assert.match(element("evidenceSummary").innerHTML, /2 matching records/);
-  assert.match(element("evidenceSummary").innerHTML, /id="countDefinitions" class="count-definitions" open/);
-  assert.deepEqual(readBreakdown(), {
-    verified: [0, "0.0%"], corrected: [0, "0.0%"], manual_review_required: [1, "50.0%"],
-    unverified: [1, "50.0%"], mathematically_inferred: [0, "0.0%"], disputed: [0, "0.0%"],
-    paper_evidence: [0, "0.0%"], source_note: [0, "0.0%"], literature_id: [1, "50.0%"], source_records: [1, "50.0%"],
-  }, "Filtered shares use matching records, not the full snapshot or the visible page");
-  assert.deepEqual(readCoverage(), { sequence: [4, 2], smiles: [5, 1] }, "Full download coverage is not relabelled as filtered coverage");
-  assert.match(element("evidenceSummary").innerHTML, /Full download: 6 records/);
-  api.state.filtered = [];
-  api.renderSummary();
-  assert.match(element("evidenceSummary").innerHTML, /0 matching records/);
-  assert.ok(Object.values(readBreakdown()).every(([count, share]) => count === 0 && share === "—"));
-  assert.doesNotMatch(element("evidenceSummary").innerHTML, /class="summary-distribution/);
-  api.state.filtered = [row({ verification_status: "mathematically_inferred" }), row({ verification_status: "future_status" })];
-  api.renderSummary();
-  assert.deepEqual(readBreakdown().mathematically_inferred, [1, "50.0%"]);
-  assert.deepEqual(readBreakdown().other_status, [1, "50.0%"], "An unfamiliar saved status must not silently disappear");
+    verified: 2, corrected: 1, manual_review_required: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
+    paper_evidence: 2, source_note: 2, literature_id: 1, source_records: 1, sequence: 4, smiles: 5,
+  }, "Snapshot charts use manifest counts with source-group precedence preserved");
+  assert.match(element("statsScope").textContent, /All 6 records/);
+  const chart = element("statsCharts").innerHTML;
+  for (const filtered of [records.slice(2, 4), []]) {
+    api.state.filtered = filtered;
+    api.renderSummary();
+    api.renderStats();
+    assert.equal(element("statsCharts").innerHTML, chart, "Browse filters never alter Stats denominators or field coverage");
+  }
+  assert.match(chart, /stats-bar-missing">2<span/);
+  assert.match(chart, /stats-bar-missing">1<span/);
+  assert.match(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /width:0%/);
+  assert.doesNotMatch(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /<unsafe>/);
+  assert.equal(api.statsShare(8, 156431), "<0.1%", "A real nonzero outcome must never look like zero");
+  assert.equal(api.statsShare(0, 156431), "0.0%");
+  assert.equal(api.statsShare(0, 0), "—");
+  runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
+  api.renderStats();
+  assert.equal(readBreakdown().other_status, 1, "An unfamiliar outcome must not disappear");
   api.state.recordsReady = false;
   runtimeManifest.total_rows = 4;
   runtimeManifest.summary = { distributions: {
@@ -1445,14 +1453,11 @@ function row(overrides = {}) {
       { label: "paper_id", count: 1 }, { label: "database_record", count: 1 },
     ],
   } };
-  api.renderSummary();
+  api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    verified: [1, "25.0%"], corrected: [1, "25.0%"], manual_review_required: [1, "25.0%"],
-    unverified: [0, "0.0%"], mathematically_inferred: [0, "0.0%"], disputed: [1, "25.0%"],
-    paper_evidence: [1, "25.0%"], source_note: [1, "25.0%"], literature_id: [1, "25.0%"], source_records: [1, "25.0%"],
-  }, "Preload summary uses manifest counts before the index arrives");
-  assert.deepEqual(readCoverage(), { sequence: [4, 0] }, "Invalid coverage is omitted, never rendered as a negative missing count");
-  element("countDefinitions").open = false;
+    verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
+    paper_evidence: 1, source_note: 1, literature_id: 1, source_records: 1, sequence: 4,
+  }, "Stats works before the index arrives; invalid coverage cannot become a negative missing count");
   Object.assign(api.state, previous);
   Object.assign(runtimeManifest, previousManifest);
 }

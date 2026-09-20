@@ -12,7 +12,7 @@
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=43a347bb1e1412c0" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=0d2087029c715c18" />
   </head>
   <body>
     <div class="static-app">
@@ -24,6 +24,7 @@
         </button>
         <nav class="top-nav" aria-label="Catalog sections">
           <button id="browseButton" class="nav-tab active" type="button" aria-current="page">Browse</button>
+          <button id="statsButton" class="nav-tab" type="button" aria-controls="statsView">Stats</button>
           <button id="guideButton" class="nav-tab" type="button">Guide</button>
           <a
             class="nav-tab"
@@ -91,12 +92,8 @@
             <div class="snapshot-meta" id="snapshotMeta"></div>
             <div class="snapshot-controls">
               <span id="snapshotDate" class="snapshot-date">Loading CatLog snapshot</span>
-              <button id="moreCountsButton" class="text-button counts-toggle" type="button" aria-expanded="false" aria-controls="snapshotBreakdown">Review and coverage <span aria-hidden="true">⌄</span></button>
+              <button id="snapshotStatsButton" class="text-button" type="button" aria-controls="statsView">View stats</button>
             </div>
-          </div>
-          <div id="snapshotBreakdown" class="snapshot-breakdown" hidden>
-            <div class="summary-grid" id="taxonomyGrid"></div>
-            <div class="evidence-summary" id="evidenceSummary"></div>
           </div>
         </section>
 
@@ -230,6 +227,25 @@
 
       </main>
 
+      <main id="statsView" class="stats-view" hidden aria-labelledby="statsHeading">
+        <div class="stats-shell">
+          <header class="stats-heading">
+            <div>
+              <h1 id="statsHeading" tabindex="-1">Snapshot statistics</h1>
+              <p id="statsScope"></p>
+            </div>
+            <span id="statsDate" class="snapshot-date"></span>
+          </header>
+          <dl id="statsTotals" class="stats-totals"></dl>
+          <div id="statsCharts" class="stats-charts"></div>
+          <details class="stats-checks">
+            <summary>What needs to be checked before acceptance?</summary>
+            <p>For literature review: the reported value and unit, assay conditions, and protein or variant identity. Some records need a sequence or a source difference resolved first.</p>
+            <p>This snapshot does not count the reasons for pending checks. Missing fields above are not a breakdown of those reasons.</p>
+          </details>
+        </div>
+      </main>
+
       <main id="guideView" class="guide-view" hidden>
         <div class="guide-shell">
           <header class="guide-heading">
@@ -361,7 +377,7 @@
                 <div><dt>Accepted</dt><dd>Verified and Corrected records: accepted as reported or after correction.</dd></div>
                 <div><dt>Accepted (identity only)</dt><dd>Accepted on identity checks only, without establishing literature verification of the kinetic value.</dd></div>
                 <div><dt>Checks pending</dt><dd>Additional checks are required. This is not a rejection.</dd></div>
-                <div><dt>Other records</dt><dd>Unverified, mathematically inferred, and disputed records are listed separately under Review and coverage.</dd></div>
+                <div><dt>Other records</dt><dd>Unverified, mathematically inferred, and disputed records are listed separately in Stats.</dd></div>
                 <div><dt>Paper excerpt</dt><dd>A value and its table or measurement excerpt are saved from the paper. This alone does not mean Accepted.</dd></div>
                 <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
               </dl>
@@ -423,7 +439,7 @@
     </div>
 
     <script src="catlog-static/data/manifest.fdf6561c8f6f.js"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=43a347bb1e1412c0"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=0d2087029c715c18"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>
