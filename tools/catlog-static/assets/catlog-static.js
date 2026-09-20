@@ -60,23 +60,32 @@
     },
     {
       value: "curation_pending",
-      label: "Further checks",
-      shortLabel: "Further checks",
+      label: "Checks pending",
+      shortLabel: "Checks pending",
       className: "review",
     },
     {
       value: "not_verified",
-      label: "Unreviewed or excluded",
+      label: "Other records",
       shortLabel: "Other",
       className: "unresolved",
     },
   ];
 
   const stateDescriptions = {
-    accepted: "Passed the required CatLog checks. Records accepted on identity checks alone are marked in their details.",
-    curation_pending: "A specific check remains open, commonly the protein sequence, substrate structure, or match to the reported source.",
-    not_verified: "Includes unreviewed rows, values calculated from other reported measurements, and disputed rows.",
+    accepted: "Verified and Corrected records. Identity-only records are labelled separately.",
+    curation_pending: "Additional checks are required before acceptance.",
+    not_verified: "Unverified, mathematically inferred, or disputed records. These are separate outcomes, not a single rejected group.",
   };
+
+  const reviewStatuses = [
+    { value: "verified", label: "Verified", description: "Accepted as reported." },
+    { value: "corrected", label: "Corrected", description: "Accepted after correction." },
+    { value: "manual_review_required", label: "Checks pending", description: "Additional checks required." },
+    { value: "unverified", label: "Unverified", description: "No verified or corrected outcome recorded." },
+    { value: "mathematically_inferred", label: "Calculated records", description: "Separate from calculated kcat/Km values." },
+    { value: "disputed", label: "Disputed", description: "Outside the accepted set." },
+  ];
 
   const evidenceGroups = [
     {
@@ -153,7 +162,7 @@
     identity_unresolved: "Unresolved",
   };
 
-  const identityOnlyTrustNote = "Sequence and identity were verified; the kinetic value has no literature reference in CatLog.";
+  const identityOnlyTrustNote = "Accepted on identity checks only; this does not establish literature verification of the kinetic value.";
 
   const conditionFlagLabels = {
     kcat_over_km_quotient_mismatch: "Reported kcat/Km differs from kcat ÷ Km",
@@ -512,7 +521,7 @@
   }
 
   const UNIT_NOT_RECORDED_LABEL = "unit not recorded";
-  const UNIT_NOT_RECORDED_NOTE = "The source did not record a unit for this value, so the column unit does not apply.";
+  const UNIT_NOT_RECORDED_NOTE = "No unit is recorded here, so the column unit does not apply.";
 
   const canonicalMetricUnitKeys = {
     kcat: new Set(["s-1"]),
@@ -683,6 +692,16 @@
     return counts;
   }
 
+  function reviewStatusCounts(rows) {
+    if (!state.recordsReady) return manifestDistribution("verification_status");
+    const counts = {};
+    rows.forEach((row) => {
+      const status = row.verification_status || "unknown";
+      counts[status] = (counts[status] || 0) + 1;
+    });
+    return counts;
+  }
+
   function evidenceGroupForRow(row) {
     if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "paper_evidence";
     if (row.proof_kind === "source_note") return "source_note";
@@ -735,9 +754,9 @@
       case "mathematically_inferred":
         return "Calculated from reported values rather than stated directly in the source.";
       case "disputed":
-        return "Conflicting source values; no single value has been accepted.";
+        return "Disputed; outside the accepted set.";
       default:
-        return "Not reviewed or outside the accepted set.";
+        return "No verified or corrected outcome recorded.";
     }
   }
 
@@ -749,11 +768,11 @@
   function rowStatusLabel(row) {
     if (row.verification_status === "disputed") return "Disputed";
     if (row.verification_status === "mathematically_inferred") return "Calculated";
-    if (row.verification_status === "unverified") return "Not reviewed";
+    if (row.verification_status === "unverified") return "Unverified";
     if (isIdentityOnlyAccepted(row)) return "Accepted (identity only)";
     if (row.verification_status === "corrected") return "Accepted";
     if (row.verification_status === "verified") return "Accepted";
-    if (row.verification_status === "manual_review_required") return "Further checks";
+    if (row.verification_status === "manual_review_required") return "Checks pending";
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
 
@@ -763,7 +782,7 @@
     const isCorrected = row.verification_status === "corrected";
     const identityOnly = isIdentityOnlyAccepted(row);
     const description = isDisputed
-      ? "Conflicting source values; no single value has been accepted."
+      ? "Disputed; outside the accepted set."
       : (identityOnly
           ? identityOnlyTrustNote
           : (isCorrected
@@ -1445,7 +1464,7 @@
     const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
     const cards = [
-      ["Records", totalRows],
+      [isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows],
       ["Accepted", recordStateCounts(rows).accepted || 0],
     ];
     const taxonomy = [
@@ -1483,46 +1502,56 @@
   function renderEvidenceSummary(rows) {
     const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : Number(manifest.total_rows || 0);
-    const counts = recordStateCounts(rows);
+    const counts = reviewStatusCounts(rows);
     const evidenceCounts = evidenceGroupCounts(rows);
     const isFiltered = isLoaded && rows.length !== state.records.length;
     const scope = isFiltered ? "matching records" : "records in this snapshot";
     const share = (count) => totalRows ? (count / totalRows) * 100 : 0;
-    const groupHtml = (title, items, groupCounts, kind) => `
+    const statuses = [...reviewStatuses];
+    const knownStatuses = new Set(statuses.map((item) => item.value));
+    const otherCount = Object.entries(counts).reduce((total, [key, count]) => total + (knownStatuses.has(key) ? 0 : count), 0);
+    if (otherCount) {
+      counts.other_status = otherCount;
+      statuses.push({ value: "other_status", label: "Other status", description: "Not in the six outcomes listed above." });
+    }
+    const groupHtml = (title, items, groupCounts) => `
       <div class="count-group">
         <table class="count-table" aria-label="${title}">
           <thead><tr><th scope="col">${title}</th><th scope="col">Records</th><th scope="col">Share</th></tr></thead>
           <tbody>${items.map((item) => {
             const count = groupCounts[item.value] || 0;
             return `<tr data-count-key="${item.value}">
-              <th scope="row"><span class="count-name"><i class="count-dot ${item.className}" aria-hidden="true"></i>${escapeHtml(item.label)}</span></th>
+              <th scope="row"><span class="count-name" title="${escapeHtml(item.description)}">${escapeHtml(item.label)}</span><span class="visually-hidden">. ${escapeHtml(item.description)}</span></th>
               <td>${formatInteger(count)}</td><td>${totalRows ? `${share(count).toFixed(1)}%` : EMPTY_VALUE}</td>
             </tr>`;
           }).join("")}</tbody>
         </table>
-        ${totalRows ? `<div class="summary-distribution ${kind}-distribution" aria-hidden="true">
-          ${items.filter((item) => groupCounts[item.value] > 0).map((item) =>
-            `<span class="${item.className}" style="flex-basis:${share(groupCounts[item.value]).toFixed(3)}%"></span>`,
-          ).join("")}
-        </div>` : ""}
       </div>`;
+    const fullTotal = Number(manifest.total_rows || 0);
+    const fullCoverage = manifest.enriched_download?.coverage || {};
+    const coverageFields = [["sequence", "Protein sequence"], ["smiles", "Substrate SMILES"]]
+      .filter(([key]) => Number.isInteger(fullCoverage[key]) && fullCoverage[key] >= 0 && fullCoverage[key] <= fullTotal);
+    const coverageHtml = coverageFields.length ? `
+      <section class="download-coverage" aria-label="Full download coverage">
+        <h3>Full download: ${formatInteger(fullTotal)} records</h3>
+        <table class="count-table" aria-label="Fields in the full download">
+          <thead><tr><th scope="col">Field</th><th scope="col">Included</th><th scope="col">Not included</th></tr></thead>
+          <tbody>${coverageFields.map(([key, label]) => `<tr data-coverage-key="${key}"><th scope="row">${label}</th><td>${formatInteger(fullCoverage[key])}</td><td>${formatInteger(fullTotal - fullCoverage[key])}</td></tr>`).join("")}</tbody>
+        </table>
+        <p>Whole snapshot, regardless of filters. Sequence column only; wild-type and variant sequences are separate. Not included does not mean rejected.</p>
+      </section>` : "";
     const definitionsOpen = $("countDefinitions")?.open;
     $("evidenceSummary").innerHTML = `
-      <p class="counts-scope">${formatInteger(totalRows)} ${scope}. Each record is counted once in each table below.</p>
+      <p class="counts-scope">${formatInteger(totalRows)} ${scope}. Review and source counts follow your filters.</p>
+      <p class="counts-context">Accepted includes Verified and Corrected records, including identity-only records. Reasons for pending checks are not counted here.</p>
       <div class="counts-tables">
-        ${groupHtml("Review status", recordStates, counts, "review")}
-        ${groupHtml("Saved source material", evidenceGroups, evidenceCounts, "evidence")}
+        ${groupHtml("Review outcome", statuses, counts)}
+        <div>${groupHtml("Saved source material", evidenceGroups, evidenceCounts)}${coverageHtml}</div>
       </div>
       <details id="countDefinitions" class="count-definitions" ${definitionsOpen ? "open" : ""}>
-        <summary>What the groups mean</summary>
-        <p>All counts follow your filters. Share is the percentage of these records, rounded to one decimal place. A paper link or excerpt does not by itself mean a record is accepted.</p>
-        <div class="count-definition-columns">
-          <dl>${recordStates.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(stateDescriptions[item.value])}</dd></div>`).join("")}</dl>
-          <div>
-            <p>For source material, each record goes in the first matching group in the order shown.</p>
-            <dl>${evidenceGroups.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.description)}</dd></div>`).join("")}</dl>
-          </div>
-        </div>
+        <summary>What does checking involve?</summary>
+        <p>Current literature checks match values and units to source evidence, check assay context, and resolve protein or variant identity. Missing sequences or unresolved source differences can require follow-up. Adding a record is not the same as accepting it.</p>
+        <p>Each record appears once in the review table and once in the source table, using the first source group that applies. Percentages use the matching record count. Saved source material is not an acceptance decision.</p>
       </details>
     `;
   }
@@ -1611,6 +1640,19 @@
     selected.scrollIntoView({ block: "nearest" });
   }
 
+  function positionSuggestions(input, box) {
+    const rect = input.getBoundingClientRect();
+    const width = Math.min(Math.max(240, Math.round(rect.width)), window.innerWidth - 16);
+    const below = Math.max(0, window.innerHeight - rect.bottom - 14);
+    const above = Math.max(0, rect.top - 14);
+    const openAbove = below < 160 && above > below;
+    box.style.left = `${Math.max(8, Math.min(Math.round(rect.left), window.innerWidth - width - 8))}px`;
+    box.style.width = `${width}px`;
+    box.style.maxHeight = `${Math.min(320, openAbove ? above : below)}px`;
+    box.style.top = openAbove ? "auto" : `${Math.round(rect.bottom + 6)}px`;
+    box.style.bottom = openAbove ? `${Math.round(window.innerHeight - rect.top + 6)}px` : "auto";
+  }
+
   function showSuggestions(input) {
     const kind = suggestionInputs[input.id];
     const box = $("searchSuggestions");
@@ -1623,10 +1665,7 @@
     if (state.suggestionInputId && state.suggestionInputId !== input.id) hideSuggestions();
     const suggestions = randomSuggestions(kind);
     if (!suggestions.length) return;
-    const rect = input.getBoundingClientRect();
-    box.style.left = `${Math.round(rect.left)}px`;
-    box.style.top = `${Math.round(rect.bottom + 6)}px`;
-    box.style.width = `${Math.max(240, Math.round(rect.width))}px`;
+    positionSuggestions(input, box);
     box.innerHTML = `
       <div class="suggestion-title">${escapeHtml(suggestionTitles[kind] || "Try a search")}</div>
       ${suggestions.map((value, index) => (
@@ -1649,15 +1688,6 @@
     const selectedStates = new Set(selectedCheckboxes("recordState"));
     const selectedMeasurements = new Set(selectedCheckboxes("measurement"));
     const stateCounts = countsByState();
-    const statusCounts = manifestDistribution("verification_status");
-    const statusBreakdown = [
-      ["Accepted as reported", statusCounts.verified],
-      ["Accepted after correction", statusCounts.corrected],
-      ["Further checks", statusCounts.manual_review_required],
-      ["Not reviewed", statusCounts.unverified],
-      ["Calculated from reported values", statusCounts.mathematically_inferred],
-      ["Disputed", statusCounts.disputed],
-    ].filter((item) => Number(item[1] || 0) > 0);
     $("statusChecklist").innerHTML = recordStates.map((item) => `
       <label class="check-row ${item.className}" title="${escapeHtml(stateDescriptions[item.value])}">
         <input type="checkbox" name="recordState" value="${escapeHtml(item.value)}" ${!hadStateFilters || selectedStates.has(item.value) ? "checked" : ""} />
@@ -1669,12 +1699,6 @@
         <summary>Status definitions</summary>
         <div class="status-guide-body">
           ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted (identity only):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
-          ${statusBreakdown.length ? `
-            <div class="review-profile">
-              <span>Snapshot breakdown</span>
-              ${statusBreakdown.map(([label, count]) => `<p><span>${escapeHtml(label)}</span><strong>${formatInteger(count)}</strong></p>`).join("")}
-            </div>
-          ` : ""}
         </div>
       </details>
     `;
@@ -2782,7 +2806,20 @@
     });
     window.addEventListener("popstate", () => renderView(viewFromLocation()));
     window.addEventListener("scroll", hideSuggestions, { passive: true });
-    $("catalogFilters").addEventListener("scroll", hideSuggestions, { passive: true });
+    $("catalogFilters").addEventListener("scroll", () => {
+      const rail = $("catalogFilters");
+      const input = state.suggestionInputId ? $(state.suggestionInputId) : null;
+      const box = $("searchSuggestions");
+      if (!input || box.classList.contains("hidden")) return;
+      if (!rail.contains(input)) {
+        hideSuggestions();
+        return;
+      }
+      const rect = input.getBoundingClientRect();
+      const bounds = rail.getBoundingClientRect();
+      if (rect.bottom <= bounds.top || rect.top >= bounds.bottom) hideSuggestions();
+      else positionSuggestions(input, box);
+    }, { passive: true });
     window.addEventListener("resize", () => {
       hideSuggestions();
       syncFilterPanel();

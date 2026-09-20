@@ -4,15 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CatLog | Enzyme Kinetics Catalog</title>
-    <meta name="description" content="CatLog snapshot dated September 15, 2026: browse 153,223 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
+    <meta name="description" content="CatLog snapshot dated September 20, 2026: browse 156,431 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
     <meta name="theme-color" content="#1f6f66" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
-    <meta property="og:description" content="CatLog snapshot dated September 15, 2026 with 153,223 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
+    <meta property="og:description" content="CatLog snapshot dated September 20, 2026 with 156,431 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=132345d1cb285cd3" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=43a347bb1e1412c0" />
   </head>
   <body>
     <div class="static-app">
@@ -44,7 +44,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="catlog-static/data/catlog-enriched.21aa407988ca.jsonl.gz"
+                href="catlog-static/data/catlog-enriched.0867b2f89e73.jsonl.gz"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>Full data</strong>
@@ -52,7 +52,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="catlog-static/data/catlog-table.da953fbf01ef.jsonl.gz"
+                href="catlog-static/data/catlog-table.3b902263e05e.jsonl.gz"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table</strong>
@@ -91,7 +91,7 @@
             <div class="snapshot-meta" id="snapshotMeta"></div>
             <div class="snapshot-controls">
               <span id="snapshotDate" class="snapshot-date">Loading CatLog snapshot</span>
-              <button id="moreCountsButton" class="text-button counts-toggle" type="button" aria-expanded="false" aria-controls="snapshotBreakdown">More counts <span aria-hidden="true">⌄</span></button>
+              <button id="moreCountsButton" class="text-button counts-toggle" type="button" aria-expanded="false" aria-controls="snapshotBreakdown">Review and coverage <span aria-hidden="true">⌄</span></button>
             </div>
           </div>
           <div id="snapshotBreakdown" class="snapshot-breakdown" hidden>
@@ -272,7 +272,7 @@
               <summary>View the diagram</summary>
               <figure class="guide-figure">
                 <img
-                  src="catlog-static/assets/catlog-guide-workflow.svg?v=132345d1cb285cd3"
+                  src="catlog-static/assets/catlog-guide-workflow.svg?v=43a347bb1e1412c0"
                   alt="CatLog workflow: search the catalog, scan the results table, open a record panel, download the data."
                   loading="lazy"
                   decoding="async"
@@ -314,7 +314,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.21aa407988ca.jsonl.gz"
+                    href="catlog-static/data/catlog-enriched.0867b2f89e73.jsonl.gz"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -351,21 +351,22 @@
                 <div><dt>T and pH</dt><dd>Temperature and pH recorded for the measurement.</dd></div>
               </dl>
               <p class="guide-note">A dash means a value is missing or hidden after a data check. Open the row to see why.</p>
-              <p class="guide-note"><em>Unit not recorded</em> means the source did not give a unit; the column unit does not apply. A warning marks a value to check against its source. Open the row for the reason.</p>
+              <p class="guide-note"><em>Unit not recorded</em> means no unit is recorded here; the column unit does not apply. A warning marks a value to check against its source. Open the row for the reason.</p>
               <p class="guide-note">For a variant, the wild-type sequence is the reference. A variant sequence is shown only when it was supplied or reconstructed.</p>
             </section>
 
             <section class="guide-reference">
               <h2>Review status</h2>
               <dl class="guide-status-list">
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted</dt><dd>CatLog checked the kinetic value and enzyme identity. The value was kept as reported or updated from a saved source.</dd></div>
-                <div><dt><span class="guide-status-dot accepted"></span>Accepted (identity only)</dt><dd>The protein identity and sequence were checked, but CatLog has no paper reference for the kinetic value.</dd></div>
-                <div><dt><span class="guide-status-dot review"></span>Further checks</dt><dd>Review is unfinished. The sequence, substrate structure, or match to the original measurement still needs checking.</dd></div>
-                <div><dt><span class="guide-status-dot provisional"></span>Unreviewed or excluded</dt><dd>The row is unreviewed, was calculated from other reported values, or remains disputed.</dd></div>
-                <div><dt><span class="guide-status-dot"></span>Paper excerpt</dt><dd>A value and its table or measurement excerpt are saved from the paper. This alone does not mean Accepted.</dd></div>
-                <div><dt><span class="guide-status-dot"></span>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
+                <div><dt>Accepted</dt><dd>Verified and Corrected records: accepted as reported or after correction.</dd></div>
+                <div><dt>Accepted (identity only)</dt><dd>Accepted on identity checks only, without establishing literature verification of the kinetic value.</dd></div>
+                <div><dt>Checks pending</dt><dd>Additional checks are required. This is not a rejection.</dd></div>
+                <div><dt>Other records</dt><dd>Unverified, mathematically inferred, and disputed records are listed separately under Review and coverage.</dd></div>
+                <div><dt>Paper excerpt</dt><dd>A value and its table or measurement excerpt are saved from the paper. This alone does not mean Accepted.</dd></div>
+                <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
               </dl>
-              <p class="guide-note">CatLog uses automated checks. A lab member reviews cases that need a decision.</p>
+              <p class="guide-note">CatLog uses automated checks. A saved record is not automatically accepted.</p>
+              <p class="guide-note">Current literature checks cover the reported value and units, assay context, and protein or variant identity. Missing sequences or unresolved source differences can require follow-up.</p>
               <p class="guide-note">Status describes our review, not the paper's quality.</p>
             </section>
           </div>
@@ -421,8 +422,8 @@
       </main>
     </div>
 
-    <script src="catlog-static/data/manifest.05b07efe4130.js"></script>
-    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=132345d1cb285cd3"></script>
+    <script src="catlog-static/data/manifest.fdf6561c8f6f.js"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=43a347bb1e1412c0"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>

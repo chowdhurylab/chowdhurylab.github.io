@@ -332,7 +332,7 @@ function makeElement(id) {
     contains: () => false,
     focus() { document.activeElement = this; },
     scrollTo() {},
-    getBoundingClientRect: () => ({ left: 0, bottom: 0, width: 200 }),
+    getBoundingClientRect: () => ({ left: 0, top: 0, bottom: 0, width: 200 }),
   };
 }
 
@@ -445,6 +445,8 @@ async function fetchCompressedShard(url) {
 }
 
 const window = {
+  innerWidth: 1440,
+  innerHeight: 900,
   CATLOG_STATIC_TEST_MODE: true,
   CATLOG_STATIC_MANIFEST: runtimeManifest,
   CATLOG_RECORD_CHUNKS: [],
@@ -1379,7 +1381,7 @@ function row(overrides = {}) {
 
 {
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady };
-  const previousManifest = { total_rows: runtimeManifest.total_rows, summary: runtimeManifest.summary };
+  const previousManifest = { total_rows: runtimeManifest.total_rows, summary: runtimeManifest.summary, enriched_download: runtimeManifest.enriched_download };
   const records = [
     row({ proof_kind: "source_note" }),
     row({ verification_status: "corrected", has_proof_excerpt: false, proof_kind: "source_note" }),
@@ -1395,26 +1397,42 @@ function row(overrides = {}) {
   api.state.records = records;
   api.state.filtered = records;
   api.state.recordsReady = true;
+  runtimeManifest.total_rows = 6;
+  runtimeManifest.enriched_download = { coverage: { sequence: 4, smiles: 5 } };
+  const readCoverage = () => Object.fromEntries(
+    [...element("evidenceSummary").innerHTML.matchAll(/data-coverage-key="([^"]+)"[\s\S]*?<td>([\d,]+)<\/td><td>([\d,]+)<\/td>/g)]
+      .map(([, key, included, absent]) => [key, [Number(included.replaceAll(",", "")), Number(absent.replaceAll(",", ""))]]),
+  );
   api.renderSummary();
   assert.deepEqual(readBreakdown(), {
-    accepted: [3, "50.0%"], curation_pending: [1, "16.7%"], not_verified: [2, "33.3%"],
+    verified: [2, "33.3%"], corrected: [1, "16.7%"], manual_review_required: [1, "16.7%"],
+    unverified: [1, "16.7%"], mathematically_inferred: [0, "0.0%"], disputed: [1, "16.7%"],
     paper_evidence: [2, "33.3%"], source_note: [2, "33.3%"], literature_id: [1, "16.7%"], source_records: [1, "16.7%"],
   }, "Review and source groups each count every record once, with source precedence preserved");
   assert.match(element("evidenceSummary").innerHTML, /6 records in this snapshot/);
+  assert.deepEqual(readCoverage(), { sequence: [4, 2], smiles: [5, 1] });
+  assert.doesNotMatch(element("evidenceSummary").innerHTML, /count-dot|summary-distribution/);
   element("countDefinitions").open = true;
   api.state.filtered = records.slice(2, 4);
   api.renderSummary();
   assert.match(element("evidenceSummary").innerHTML, /2 matching records/);
   assert.match(element("evidenceSummary").innerHTML, /id="countDefinitions" class="count-definitions" open/);
   assert.deepEqual(readBreakdown(), {
-    accepted: [0, "0.0%"], curation_pending: [1, "50.0%"], not_verified: [1, "50.0%"],
+    verified: [0, "0.0%"], corrected: [0, "0.0%"], manual_review_required: [1, "50.0%"],
+    unverified: [1, "50.0%"], mathematically_inferred: [0, "0.0%"], disputed: [0, "0.0%"],
     paper_evidence: [0, "0.0%"], source_note: [0, "0.0%"], literature_id: [1, "50.0%"], source_records: [1, "50.0%"],
   }, "Filtered shares use matching records, not the full snapshot or the visible page");
+  assert.deepEqual(readCoverage(), { sequence: [4, 2], smiles: [5, 1] }, "Full download coverage is not relabelled as filtered coverage");
+  assert.match(element("evidenceSummary").innerHTML, /Full download: 6 records/);
   api.state.filtered = [];
   api.renderSummary();
   assert.match(element("evidenceSummary").innerHTML, /0 matching records/);
   assert.ok(Object.values(readBreakdown()).every(([count, share]) => count === 0 && share === "—"));
   assert.doesNotMatch(element("evidenceSummary").innerHTML, /class="summary-distribution/);
+  api.state.filtered = [row({ verification_status: "mathematically_inferred" }), row({ verification_status: "future_status" })];
+  api.renderSummary();
+  assert.deepEqual(readBreakdown().mathematically_inferred, [1, "50.0%"]);
+  assert.deepEqual(readBreakdown().other_status, [1, "50.0%"], "An unfamiliar saved status must not silently disappear");
   api.state.recordsReady = false;
   runtimeManifest.total_rows = 4;
   runtimeManifest.summary = { distributions: {
@@ -1429,9 +1447,11 @@ function row(overrides = {}) {
   } };
   api.renderSummary();
   assert.deepEqual(readBreakdown(), {
-    accepted: [2, "50.0%"], curation_pending: [1, "25.0%"], not_verified: [1, "25.0%"],
+    verified: [1, "25.0%"], corrected: [1, "25.0%"], manual_review_required: [1, "25.0%"],
+    unverified: [0, "0.0%"], mathematically_inferred: [0, "0.0%"], disputed: [1, "25.0%"],
     paper_evidence: [1, "25.0%"], source_note: [1, "25.0%"], literature_id: [1, "25.0%"], source_records: [1, "25.0%"],
   }, "Preload summary uses manifest counts before the index arrives");
+  assert.deepEqual(readCoverage(), { sequence: [4, 0] }, "Invalid coverage is omitted, never rendered as a negative missing count");
   element("countDefinitions").open = false;
   Object.assign(api.state, previous);
   Object.assign(runtimeManifest, previousManifest);
@@ -1605,6 +1625,38 @@ searchInput.value = "";
 api.showSuggestions(searchInput);
 assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can still offer samples");
 
+// Suggestions stay reachable beside narrow screens and bottom-of-panel fields.
+{
+  const originalRect = searchInput.getBoundingClientRect;
+  const originalWidth = window.innerWidth;
+  const originalHeight = window.innerHeight;
+  try {
+    window.innerWidth = 320;
+    window.innerHeight = 480;
+    searchInput.getBoundingClientRect = () => ({ left: 190, top: 420, bottom: 452, width: 120 });
+    api.showSuggestions(searchInput);
+    assert.equal(suggestions.style.left, "72px");
+    assert.equal(suggestions.style.width, "240px");
+    assert.equal(suggestions.style.top, "auto");
+    assert.equal(suggestions.style.bottom, "66px");
+    assert.equal(suggestions.style.maxHeight, "320px");
+    searchInput.getBoundingClientRect = () => ({ left: 0, top: 16, bottom: 48, width: 340 });
+    api.showSuggestions(searchInput);
+    assert.equal(suggestions.style.left, "8px");
+    assert.equal(suggestions.style.width, "304px");
+    assert.equal(suggestions.style.top, "54px");
+    assert.equal(suggestions.style.bottom, "auto", "reopening below clears the previous anchor");
+    window.innerHeight = 240;
+    searchInput.getBoundingClientRect = () => ({ left: 8, top: 90, bottom: 122, width: 220 });
+    api.showSuggestions(searchInput);
+    assert.equal(suggestions.style.maxHeight, "104px", "short viewports use a scrollable list");
+  } finally {
+    searchInput.getBoundingClientRect = originalRect;
+    window.innerWidth = originalWidth;
+    window.innerHeight = originalHeight;
+  }
+}
+
 // R20: exercise the bound handlers with a controlled three-option DOM and clock.
 // Native button key-to-click synthesis remains a real-browser responsibility.
 {
@@ -1655,6 +1707,30 @@ assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can 
   };
   try {
     api.bindControls();
+    {
+      const rail = element("catalogFilters");
+      const input = element("substrateFilterInput");
+      const originalRailRect = rail.getBoundingClientRect;
+      const originalInputRect = input.getBoundingClientRect;
+      const originalRailContains = rail.contains;
+      try {
+        rail.contains = candidate => candidate === input;
+        rail.getBoundingClientRect = () => ({ top: 0, bottom: 600 });
+        input.getBoundingClientRect = () => ({ left: 14, top: 360, bottom: 394, width: 291 });
+        api.showSuggestions(input);
+        const originalOptions = suggestions.innerHTML;
+        rail.dispatch("scroll");
+        assert.equal(suggestions.classList.contains("hidden"), false, "focus-induced scrolling keeps visible suggestions open");
+        assert.equal(suggestions.innerHTML, originalOptions, "scrolling does not replace the offered suggestions");
+        input.getBoundingClientRect = () => ({ left: 14, top: -50, bottom: -16, width: 291 });
+        rail.dispatch("scroll");
+        assert.equal(suggestions.classList.contains("hidden"), true, "offscreen fields dismiss suggestions");
+      } finally {
+        rail.getBoundingClientRect = originalRailRect;
+        input.getBoundingClientRect = originalInputRect;
+        rail.contains = originalRailContains;
+      }
+    }
     assert.equal(searchInput.getAttribute("role"), "combobox");
     window.location.hash = "#guide";
     element("guideView").hidden = false;
