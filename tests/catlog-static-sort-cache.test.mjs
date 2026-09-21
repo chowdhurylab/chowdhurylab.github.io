@@ -1435,19 +1435,20 @@ function row(overrides = {}) {
   }, "Snapshot charts use manifest counts with source-group precedence preserved");
   assert.match(element("statsScope").textContent, /All 6 records/);
   const chart = element("statsCharts").innerHTML;
-  assert.match(chart, /stats-scale[\s\S]*?<span>0<\/span><span>50<\/span><span>100%<\/span>/);
-  assert.match(chart, /<span>% of all<\/span>/);
+  assert.doesNotMatch(chart, /stats-bar-track|stats-scale/, "Approved charts replace the previous repeated bars");
+  assert.match(chart, /of all records/);
   assert.match(chart, /class="stats-explanation"/);
-  assert.equal((chart.match(/class="stats-column"/g) || []).length, 2);
+  assert.equal((chart.match(/<figure data-stat-key=/g) || []).length, 2, "Only available, valid fields get a ring");
   assert.match(chart, /Both count as accepted/);
   assert.match(chart, /not a measure of work completed/);
   assert.match(chart, /does not contain a reason-by-reason tally/);
-  assert.match(chart, /Follow-up needed/);
-  assert.equal((chart.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
+  assert.match(chart, />Follow-up<\/span>/);
+  const reviewSection = chart.split('aria-labelledby="reviewChartTitle"')[1].split("</section>")[0];
+  assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
   assert.match(chart, /stroke-dasharray="50 50"/);
   assert.doesNotMatch(chart, /role="progressbar"/);
   assert.match(chart, /Paper link only/);
-  assert.match(chart, /A row linked to BRENDA and UniProt counts in both bars/);
+  assert.match(chart, /not a count of every database that contributed/);
   const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
   assert.match(halfBar, /width:50%/);
   assert.match(halfBar, /50\.0%/);
@@ -1457,8 +1458,9 @@ function row(overrides = {}) {
     api.renderStats();
     assert.equal(element("statsCharts").innerHTML, chart, "Browse filters never alter Stats denominators or field coverage");
   }
-  assert.match(chart, /stats-bar-missing">2<span/);
-  assert.match(chart, /stats-bar-missing">1<span/);
+  assert.match(chart, /stats-field-remainder">2 without this field/);
+  assert.match(chart, /stats-field-remainder">1 without this field/);
+  assert.doesNotMatch(chart, /Not saved|tokens|cached input/i);
   assert.match(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /width:0%/);
   assert.doesNotMatch(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /<unsafe>/);
   assert.equal(api.statsShare(8, 156431), "<0.1%", "A real nonzero outcome must never look like zero");
@@ -1474,7 +1476,10 @@ function row(overrides = {}) {
     source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
     total: 1, with_literature_id: 1, with_sequence: 0, with_smiles: 1, with_kinetic_value: 1,
   };
-  assert.match(api.statsFollowupCoverage(1), /Already present in follow-up records/);
+  assert.equal((api.statsFollowupCoverage(1).match(/<figure data-stat-key=/g) || []).length, 4);
+  assert.match(api.statsFollowupCoverage(1), /data-stat-key="with_sequence" data-count="0" data-total="1"/);
+  assert.match(api.statsFollowupCoverage(1), /data-stat-key="with_smiles" data-count="1" data-total="1"/);
+  assert.doesNotMatch(api.statsFollowupCoverage(1), /NaN|Infinity|Not saved/);
   assert.equal(api.statsFollowupCoverage(2), "", "Never mix follow-up denominators");
   runtimeManifest.summary.followup_coverage.cohort = "unverified";
   assert.equal(api.statsFollowupCoverage(1), "", "A same-sized cohort is not interchangeable");
@@ -1511,6 +1516,14 @@ function row(overrides = {}) {
     accepted: 2, verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
     paper_evidence: 1, source_note: 1, literature_id: 1, source_records: 1, sequence: 4,
   }, "Stats works before the index arrives; invalid coverage cannot become a negative missing count");
+  runtimeManifest.summary.distributions.source_db = [
+    { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },
+  ];
+  api.renderStats();
+  assert.equal(readBreakdown().source_brenda, 2, "A multi-source record is not also in the BRENDA-only slice");
+  assert.equal(readBreakdown().source_sabio_rk, 1);
+  assert.equal(readBreakdown().source_other, 1);
+  assert.match(element("statsCharts").innerHTML, /Multiple named databases/);
   Object.assign(api.state, previous);
   Object.assign(runtimeManifest, previousManifest);
 }

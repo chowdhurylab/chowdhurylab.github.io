@@ -65,9 +65,17 @@ def check(driver, browser, url):
     assert driver.find_element(By.ID, "statsButton").get_attribute("aria-current") == "page"
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) == total
     coverage = manifest["summary"]["followup_coverage"]
-    assert len(driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage dl > div")) == 4
+    assert len(driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure")) == 4
     assert f'{coverage["with_kinetic_value"]:,}' in driver.find_element(By.CLASS_NAME, "stats-followup-coverage").text
-    assert "Illustrative checks" in driver.find_element(By.CLASS_NAME, "stats-followup-section").text
+    assert "Illustrative checks" in driver.find_element(By.CLASS_NAME, "stats-followup-section").get_attribute("textContent")
+    for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
+        assert int(figure.get_attribute("data-total")) == coverage["total"]
+        assert int(figure.get_attribute("data-count")) == coverage[figure.get_attribute("data-stat-key")]
+    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 12
+    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-material-section li")) == total
+    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-database-section li")) == total
+    stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
+    assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
     for key in ("verified", "corrected"):
         row = driver.find_element(By.CSS_SELECTOR, f'.stats-accepted-split [data-stat-key="{key}"]')
         assert int(row.get_attribute("data-count")) == expected[key]
@@ -84,7 +92,7 @@ def check(driver, browser, url):
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-followup-coverage dd')]
+            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)

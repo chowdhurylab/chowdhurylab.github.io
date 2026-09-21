@@ -1514,7 +1514,7 @@
     }).join("")}</ol>`;
   }
 
-  function statsReviewRing(items, total) {
+  function statsReviewRing(items, total, center = formatInteger(total), caption = "records") {
     // Exact angular shares; tiny categories remain in the adjacent count list.
     let offset = 0;
     const slices = items.map((item) => {
@@ -1526,19 +1526,37 @@
     const complete = items.reduce((sum, item) => sum + item.count, 0) === total;
     return `<div class="stats-review-ring" aria-hidden="true">
       <svg viewBox="0 0 200 200"><circle class="stats-ring-base" cx="100" cy="100" r="82" />${complete ? slices : ""}</svg>
-      <div><strong>${formatInteger(total)}</strong><span>records</span></div>
+      <div><strong>${escapeHtml(center)}</strong><span>${escapeHtml(caption)}</span></div>
     </div>`;
+  }
+
+  function statsLegend(items, total, className = "") {
+    return `<div class="stats-chart-legend ${className}"><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${escapeHtml(item.label)}</span>
+      <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
+      <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>
+    </li>`).join("")}</ul></div>`;
+  }
+
+  function statsFieldRings(fields, total) {
+    return `<div class="stats-field-rings">${fields.map((item) => `<figure data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}" data-total="${total}">
+      <figcaption>${escapeHtml(item.label)}</figcaption>
+      ${statsReviewRing([{ count: item.count, color: item.color }, { count: total - item.count, color: "base" }], total, statsShare(item.count, total), "included")}
+      <div class="stats-field-count">${formatInteger(item.count)} records</div>
+      <div class="stats-field-remainder">${formatInteger(total - item.count)} without this field</div>
+      <span class="visually-hidden">${escapeHtml(statsShare(item.count, total))} included, out of ${formatInteger(total)} records. Without this field means no value in this download.</span>
+    </figure>`).join("")}</div>`;
   }
 
   function statsFollowupCoverage(total) {
     const audit = manifest.summary?.followup_coverage;
     if (!audit || audit.cohort !== "manual_review_required" || !audit.source_sha256 || !audit.download_sha256 || audit.source_sha256 !== manifest.source_sha256
       || audit.download_sha256 !== manifest.enriched_download?.sha256 || audit.total !== total) return "";
-    const fields = [["with_kinetic_value", "Kinetic value saved"], ["with_literature_id", "Paper linked"], ["with_sequence", "Sequence saved"], ["with_smiles", "Structure saved"]];
+    const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"], ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
     if (!fields.every(([key]) => Number.isInteger(audit[key]) && audit[key] >= 0 && audit[key] <= total)) return "";
-    return `<div class="stats-followup-coverage"><h3>Already present in follow-up records</h3>
-      <dl>${fields.map(([key, label]) => `<div><dt>${label}</dt><dd>${formatInteger(audit[key])} <small>of ${formatInteger(total)}</small></dd></div>`).join("")}</dl>
-      <p>These fields can overlap. Their presence does not confirm the measurement.</p></div>`;
+    return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} follow-up records.</p>
+      ${statsFieldRings(fields.map(([key, label, color]) => ({ value: key, label, color, count: audit[key] })), total)}
+      <p>Fields included, not reasons for follow-up. Kinetic value means kcat, Km, Ki or kcat/Km.</p></div>`;
   }
 
   function renderStats() {
@@ -1557,7 +1575,7 @@
     const outcomes = [
       { value: "accepted", label: "Accepted", count: accepted, color: "verified", description: "Verified or corrected" },
       ...statuses.filter((item) => !["verified", "corrected"].includes(item.value)).map((item) => ({
-        ...item, label: item.value === "manual_review_required" ? "Follow-up needed" : item.label,
+        ...item, label: item.value === "manual_review_required" ? "Follow-up" : item.label,
         description: item.value === "manual_review_required" ? "Additional checks; not rejected" : item.value === "unverified" ? "No accepted decision recorded" : "",
         count: counts[item.value] || 0, color: colors[item.value] || "neutral",
       })),
@@ -1565,86 +1583,94 @@
     const evidence = manifestDistribution("public_evidence_group");
     const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
     const materialLabels = { paper_evidence: "Paper extract", source_note: "Database note", literature_id: "Paper link only", source_records: "Database entry only" };
-    const material = evidenceGroups.map((item) => ({ ...item, label: materialLabels[item.value], description: "", count: evidence[sourceKeys[item.value]] || 0, color: "source" }));
+    const materialColors = { paper_evidence: "verified", source_note: "reference", literature_id: "kinetic", source_records: "neutral" };
+    const material = evidenceGroups.map((item) => ({ ...item, label: materialLabels[item.value], count: evidence[sourceKeys[item.value]] || 0, color: materialColors[item.value] }));
     const summary = manifest.summary || {};
     const metrics = summary.coverage || {};
     const fullCoverage = manifest.enriched_download?.coverage || {};
     const fields = [
-      ["kcat", "kcat", metrics.with_kcat], ["km", "Km", metrics.with_km], ["kcat_over_km", "kcat/Km", metrics.with_kcat_over_km],
-      ["sequence", "Protein sequence", fullCoverage.sequence], ["wild_type_sequence", "Wild-type sequence", fullCoverage.wild_type_sequence],
-      ["variant_sequence", "Variant sequence", fullCoverage.variant_sequence], ["smiles", "Substrate SMILES", fullCoverage.smiles],
+      ["kcat", "kcat", metrics.with_kcat, "kinetic"], ["km", "Km", metrics.with_km, "kinetic"], ["kcat_over_km", "kcat/Km", metrics.with_kcat_over_km, "kinetic"],
+      ["sequence", "Protein sequence", fullCoverage.sequence, "protein"], ["smiles", "Substrate SMILES", fullCoverage.smiles, "structure"],
     ].filter(([, , count]) => Number.isInteger(count) && count >= 0 && count <= total)
-      .map(([value, label, count]) => ({ value, label, count, color: "coverage" }));
-    const databases = sourceDatabases().filter((item) => Number.isInteger(item.row_count))
-      .map((item) => ({ value: item.key, label: item.name, count: item.row_count, color: "source" }))
-      .sort((a, b) => b.count - a.count);
+      .map(([value, label, count, color]) => ({ value, label, count, color }));
+    const sequences = [["Protein sequence", fullCoverage.sequence], ["Wild-type sequence", fullCoverage.wild_type_sequence], ["Variant sequence", fullCoverage.variant_sequence]]
+      .filter(([, count]) => Number.isInteger(count) && count >= 0 && count <= total);
+    // Exclusive source_db values, not the overlapping source-database link totals.
+    const recordedSources = manifestDistribution("source_db");
+    const sourceNames = [["brenda", "BRENDA", "reference"], ["oed", "Open Enzyme Database", "kinetic"], ["uniprot", "UniProt", "protein"], ["sabio_rk", "SABIO-RK", "structure"], ["skid", "SKiD", "calculated"]];
+    const namedSources = new Set(sourceNames.map(([key]) => key));
+    const databases = sourceNames.filter(([key]) => recordedSources[key] > 0)
+      .map(([key, label, color]) => ({ value: `source_${key}`, label: `${label} only`, count: recordedSources[key], color }));
+    const otherSources = Object.entries(recordedSources).filter(([key, count]) => !namedSources.has(key) && count > 0);
+    const otherSourcesCount = otherSources.reduce((sum, [, count]) => sum + count, 0);
+    const otherSourceGroups = new Map();
+    for (const [key, count] of otherSources) {
+      const namedParts = key.split(/[;,/+\s]+/).filter(Boolean);
+      const label = ({ primary_paper_direct: "Directly from papers", unknown: "Unspecified", strenda: "STRENDA DB", merged: "Mixed, without named databases", mixed: "Mixed, without named databases" })[key]
+        || (namedParts.length > 1 && namedParts.every((part) => namedSources.has(part)) ? "Multiple named databases" : key);
+      otherSourceGroups.set(label, (otherSourceGroups.get(label) || 0) + count);
+    }
+    if (otherSourcesCount) databases.push({ value: "source_other", label: "Other or multiple", count: otherSourcesCount, color: "neutral" });
     const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
     const totals = summary.totals || {};
     $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     $("statsTotals").innerHTML = [["Records", total], ["Accepted", accepted], ["Enzyme names", totals.unique_enzymes], ["EC numbers", totals.unique_ec_numbers], ["Organisms", totals.unique_organisms]]
       .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
-    const columns = (first, last = "") => `<div class="stats-columns" aria-hidden="true"><span>${first}</span><span class="stats-scale"><span>0</span><span>50</span><span>100%</span></span><span>Records</span><span>% of all</span>${last ? `<span>${last}</span>` : ""}</div>`;
     $("statsCharts").innerHTML = `
       <section class="stats-section stats-review-section" aria-labelledby="reviewChartTitle">
         <h2 id="reviewChartTitle">Review outcomes</h2>
         <p>Record status, not a measure of work completed.</p>
         <div class="stats-review-layout">
-          ${statsReviewRing(outcomes, total)}
-          <div class="stats-review-legend">
-            <div class="stats-outcome-head" aria-hidden="true"><span>Outcome</span><span>Records</span><span>% of all</span></div>
-            <ul>${outcomes.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-              <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i><span>${escapeHtml(item.label)}${item.description ? `<small>${escapeHtml(item.description)}</small>` : ""}</span></span>
-              <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong><span>${statsShare(item.count, total)}<span class="visually-hidden"> of all records</span></span>
-            </li>`).join("")}</ul>
-          </div>
+          ${statsReviewRing(outcomes, total, formatInteger(accepted), "accepted")}
+          ${statsLegend(outcomes, total, "stats-review-legend")}
         </div>
         <div class="stats-accepted-split"><h3>Both count as accepted</h3><dl>
-          <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Verified as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
+          <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Accepted as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
         </dl><p>A change may concern the value, sequence or another field.</p></div>
         <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
-        <details class="stats-explanation"><summary>Other outcomes</summary><p>Unverified does not mean wrong or untouched. Calculated records are not accepted measurements; this is separate from a calculated kcat/Km field. Disputed records were flagged by review.</p></details>
+        <details class="stats-explanation"><summary>Other outcomes</summary><p>Unverified means no accepted decision is recorded, not that the entry is wrong or untouched. Calculated records are separate from accepted measurements and from a calculated kcat/Km field. Disputed records were flagged by review.</p></details>
       </section>
-      <section class="stats-section stats-followup-section" aria-labelledby="followupTitle">
-        <h2 id="followupTitle">What can still need checking?</h2>
-        <p>Follow-up can concern one field or the measurement itself. The status alone does not tell us how much work remains.</p>
-        <dl class="stats-check-examples">
-          <div><dt>Protein or variant</dt><dd>The paper used L431F. Does the saved sequence contain that change?</dd></div>
-          <div><dt>Substrate identity</dt><dd>A substrate name is saved. Does its SMILES describe the same molecule?</dd></div>
-          <div><dt>Value and assay</dt><dd>Km is listed as 0.82 &micro;M. Does it come from the right table row and assay?</dd></div>
-        </dl>
-        <p class="stats-note">Illustrative checks, not counts of why records are pending. This snapshot does not contain a reason-by-reason tally.</p>
+      <section class="stats-section stats-material-section" aria-labelledby="materialChartTitle">
+        <h2 id="materialChartTitle">Material attached</h2>
+        <p>Most specific material recorded for each entry.</p>
+        <div class="stats-review-layout">${statsReviewRing(material, total)}${statsLegend(material, total)}</div>
+        <details class="stats-explanation"><summary>Examples</summary><dl>
+          <div><dt>Paper extract</dt><dd>A captured table line or passage.</dd></div>
+          <div><dt>Database note</dt><dd>A note copied from the source database.</dd></div>
+          <div><dt>Paper link only</dt><dd>A DOI or PMID, without a captured passage.</dd></div>
+          <div><dt>Database entry only</dt><dd>The source entry, without the items above.</dd></div>
+        </dl><p>Each record counts once, in the first matching group above. Attached material is not an acceptance decision.</p></details>
+      </section>
+      <section class="stats-section stats-followup-section stats-wide" aria-labelledby="followupTitle">
+        <h2 id="followupTitle">What the follow-up records already contain</h2>
         ${statsFollowupCoverage(counts.manual_review_required || 0)}
+        <details class="stats-explanation"><summary>What might still need checking?</summary><dl class="stats-check-examples">
+          <div><dt>Protein or variant</dt><dd>Does the sequence match the enzyme or variant tested?</dd></div>
+          <div><dt>Substrate</dt><dd>Does the structure match the compound in the assay?</dd></div>
+          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the correct row and assay, with the right unit?</dd></div>
+        </dl><p>Illustrative checks, not a counted breakdown. This snapshot does not contain a reason-by-reason tally.</p></details>
       </section>
-      <div class="stats-column">
-      <section class="stats-section stats-field-section" aria-labelledby="fieldsChartTitle">
-        <h2 id="fieldsChartTitle">Data available</h2>
-        <p>Filled fields in the full download.</p>
-        ${columns("Field", "Blank")}${statsBarRows(fields, total, { missing: true })}
-        <p class="stats-note">Sequence counts overlap. Variant sequences apply only to variants. Blank does not mean rejected.</p>
-        <details class="stats-explanation"><summary>Example: a variant sequence</summary><p>An L431F record may include the original sequence and the changed sequence. That one record counts in both sequence bars. A wild-type record does not need a variant sequence.</p></details>
+      <section class="stats-section stats-field-section stats-wide" aria-labelledby="fieldsChartTitle">
+        <h2 id="fieldsChartTitle">Included in the full download</h2>
+        <p>All ${formatInteger(total)} records.</p>
+        ${statsFieldRings(fields, total)}
+        <p class="stats-note">The pale remainder means no value in this download, not rejection.</p>
+        <details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table">
+          <thead><tr><th>Field</th><th>Included</th><th>Share of all records</th></tr></thead>
+          <tbody>${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}</tbody>
+        </table><p>These fields overlap. A wild-type record need not have a variant sequence.</p></details>
       </section>
-      </div>
-      <div class="stats-column">
-      <section class="stats-section" aria-labelledby="materialChartTitle">
-        <h2 id="materialChartTitle">Saved sources</h2>
-        <p>What is saved alongside each record.</p>
-        ${columns("Material")}${statsBarRows(material, total)}
-        <p class="stats-note">First matching group above; each record counted once. A saved source does not mean accepted.</p>
-        <details class="stats-explanation"><summary>Example: a link versus a saved value</summary><dl>
-          <div><dt>Paper link</dt><dd>PMID 12514023 identifies the paper.</dd></div>
-          <div><dt>Paper extract</dt><dd>Table 1: Km 0.82 &micro;M for 4-Aminoacetophenone.</dd></div>
-        </dl><p>The second also identifies the measurement. Neither alone is an acceptance decision.</p></details>
+      <section class="stats-section stats-database-section stats-wide" aria-labelledby="databaseChartTitle">
+        <h2 id="databaseChartTitle">Recorded database source</h2>
+        <p>One group per record, using its recorded source field.</p>
+        ${databases.length ? `<div class="stats-review-layout">${statsReviewRing(databases, total)}${statsLegend(databases, total)}</div>` : "<p>Source breakdown unavailable in this snapshot.</p>"}
+        ${otherSourcesCount ? `<details class="stats-explanation"><summary>Other or multiple sources: ${formatInteger(otherSourcesCount)} records</summary><table class="stats-detail-table"><tbody>
+          ${[...otherSourceGroups].map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td></tr>`).join("")}
+        </tbody></table></details>` : ""}
+        <p class="stats-note">This is not a count of every database that contributed to a record.</p>
       </section>
-      <section class="stats-section" aria-labelledby="databaseChartTitle">
-        <h2 id="databaseChartTitle">Databases</h2>
-        <p>Records linked to each source.</p>
-        ${columns("Source")}${statsBarRows(databases, total)}
-        <p class="stats-note">Counts overlap. Records with no named source are not shown.</p>
-        <details class="stats-explanation"><summary>Why do source counts overlap?</summary><p>A row linked to BRENDA and UniProt counts in both bars: BRENDA may supply the kinetic value and UniProt the protein identity.</p></details>
-      </section>
-      </div>
     `;
   }
 
