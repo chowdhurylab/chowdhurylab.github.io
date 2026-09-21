@@ -33,17 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out the public viewer and frozen data
+      - name: Check out the full public release
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 1
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /scripts/
-            /tests/
-            /tools/catlog-static/
-            /tools/catlog-latest.html
       - name: Test viewer and follow-up summary
         run: |
           node tests/catlog-static-sort-cache.test.mjs
