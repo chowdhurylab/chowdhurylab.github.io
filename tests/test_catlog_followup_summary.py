@@ -42,3 +42,35 @@ class FollowupSummaryTests(unittest.TestCase):
     def test_status_is_required(self):
         with self.assertRaisesRegex(ValueError, "Missing review status"):
             followup.summarize([{}])
+
+    def test_review_details_keep_cohorts_and_material_exclusive(self):
+        rows = [
+            {"verification_status": "manual_review_required", "km": 0, "has_proof_excerpt": True,
+             "proof_kind": "source_note", "has_literature_id": True, "supporting_pmids": ["123"]},
+            {"verification_status": "unverified", "sequence": "ACD", "proof_kind": "source_note", "has_literature_id": True},
+            {"verification_status": "unverified", "smiles": "C", "has_literature_id": True},
+            {"verification_status": "unverified"},
+            {"verification_status": "verified", "sequence": "ACD"},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "public.jsonl.gz"
+            with gzip.open(path, "wt") as handle:
+                for row in rows:
+                    handle.write(json.dumps(row) + "\n")
+            manifest = {"source_sha256": "source", "total_rows": 5,
+                        "enriched_download": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest()},
+                        "summary": {"distributions": {"verification_status": [
+                            {"label": "manual_review_required", "count": 1},
+                            {"label": "unverified", "count": 3}, {"label": "verified", "count": 1}]}}}
+            result = followup.build_review_details(manifest, path)
+            pending = result["groups"]["manual_review_required"]
+            unknown = result["groups"]["unverified"]
+            self.assertEqual(pending["with_kinetic_value"], 1)
+            self.assertEqual(pending["material"]["paper_excerpt"], 1)
+            self.assertEqual(unknown["with_sequence"], 1)
+            self.assertEqual(unknown["with_smiles"], 1)
+            self.assertEqual(unknown["material"], dict(paper_excerpt=0, source_note=1, paper_id=1, database_record=1))
+            self.assertEqual(sum(unknown["material"].values()), unknown["total"])
+            manifest["enriched_download"]["sha256"] = "wrong"
+            with self.assertRaisesRegex(ValueError, "hash"):
+                followup.build_review_details(manifest, path)
