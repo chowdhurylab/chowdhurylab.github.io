@@ -2,12 +2,15 @@
 
 import argparse
 import functools
+import hashlib
+from html.parser import HTMLParser
 import http.server
 import json
 import os
 from pathlib import Path
 import threading
 import urllib.request
+from urllib.parse import urljoin, urlsplit
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -24,11 +27,33 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class AssetReferences(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.paths = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        value = attrs.get("src") if tag == "script" else attrs.get("href") if tag == "link" else None
+        if value and ("data/manifest." in value or "assets/catlog-static." in value):
+            self.paths.append(value)
+
+
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120)
     driver.set_window_size(1440, 1000)
     driver.get(url + "#stats")
     wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) >= 5)
+    assets = AssetReferences()
+    assets.feed((ROOT / "tools/catlog-latest.html").read_text())
+    loaded_urls = driver.execute_script("return [...document.querySelectorAll('script[src], link[href]')].map(e => e.src || e.href)")
+    assert len(assets.paths) == 3
+    for reference in assets.paths:
+        asset_url = urljoin(url, reference)
+        assert asset_url in loaded_urls, f"Wrong release asset: {reference}"
+        expected_bytes = (ROOT / "tools" / urlsplit(reference).path).read_bytes()
+        with urllib.request.urlopen(asset_url, timeout=30) as response:
+            assert hashlib.sha256(response.read()).digest() == hashlib.sha256(expected_bytes).digest(), f"Release asset mismatch: {reference}"
     manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
     expected = {item["label"]: item["count"] for item in manifest["summary"]["distributions"]["verification_status"]}
     total = manifest["total_rows"]
@@ -47,7 +72,10 @@ def check(driver, browser, url):
         row = driver.find_element(By.CSS_SELECTOR, f'.stats-accepted-split [data-stat-key="{key}"]')
         assert int(row.get_attribute("data-count")) == expected[key]
 
+    viewports = {}
+
     def capture(label):
+        viewports[label] = driver.execute_script("return {width: innerWidth, height: innerHeight}")
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
         overflow = driver.execute_script("""
             return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-followup-coverage dd')]
@@ -75,7 +103,8 @@ def check(driver, browser, url):
     wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
     assert len(driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) == 25
     search = driver.find_element(By.ID, "globalSearchInput")
-    search.send_keys("laccase", Keys.ESCAPE)
+    search.send_keys("laccase", Keys.TAB)
+    assert search.get_attribute("value") == "laccase"
     wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]") and all("laccase" in row.text.lower() for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
     result_count = driver.find_element(By.ID, "activeSummary").text
     driver.find_element(By.ID, "statsButton").click()
@@ -84,10 +113,11 @@ def check(driver, browser, url):
     assert driver.find_element(By.ID, "globalSearchInput").get_attribute("value") == "laccase"
     assert driver.find_element(By.ID, "activeSummary").text == result_count
     driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]").click()
-    wait.until(lambda d: d.find_element(By.ID, "detailHeading").is_displayed())
+    wait.until(lambda d: d.find_element(By.ID, "downloadSelectedJson").is_displayed())
+    assert not driver.find_elements(By.CSS_SELECTOR, ".detail-load-error, #detailLoadStatus")
     assert "laccase" in driver.find_element(By.ID, "detailHeading").text.lower()
     driver.save_screenshot(str(OUTPUT / f"{browser}-browse-detail.png"))
-    driver.find_element(By.ID, "detailHeading").send_keys(Keys.ESCAPE)
+    driver.find_element(By.ID, "closeDetailButton").click()
     driver.find_element(By.ID, "guideButton").click()
     assert driver.find_element(By.ID, "guideView").is_displayed()
     driver.find_element(By.ID, "statsButton").click()
@@ -95,13 +125,16 @@ def check(driver, browser, url):
     driver.set_window_size(1080, 900)
     capture("stats-compact")
     if browser == "chrome":
-        driver.set_window_size(390, 844)
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True})
+        assert driver.execute_script("return innerWidth") == 390
+        assert driver.execute_script("return matchMedia('(max-width: 520px)').matches")
         capture("stats-mobile")
         driver.execute_script("document.querySelector('.stats-followup-section').scrollIntoView()")
         capture("stats-mobile-followup")
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     return {"browser": browser, "version": driver.capabilities.get("browserVersion"), "url": url,
-            "total": total, "accepted": accepted, "source_sha256": manifest["source_sha256"], "passed": True}
+            "total": total, "accepted": accepted, "source_sha256": manifest["source_sha256"],
+            "release_commit": os.environ.get("GITHUB_SHA"), "viewports": viewports, "passed": True}
 
 
 def main():
