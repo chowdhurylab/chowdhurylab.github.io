@@ -92,7 +92,7 @@ def check(driver, browser, url):
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
+            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dt, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)
@@ -160,6 +160,17 @@ def check(driver, browser, url):
         capture("stats-mobile")
         driver.execute_script("document.querySelector('.stats-followup-section').scrollIntoView()")
         capture("stats-mobile-followup")
+        for cohort in ("unverified", "mathematically_inferred"):
+            driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]').find_element(By.XPATH, "..").click()
+            driver.execute_script("document.querySelector('#statsReviewDetails').scrollIntoView()")
+            capture("stats-mobile-" + cohort)
+        driver.execute_script("document.querySelector('.stats-cohort-context').scrollIntoView()")
+        assert driver.execute_script("""
+            const chart = document.querySelector('.stats-cohort-material .stats-review-ring').getBoundingClientRect();
+            const legend = document.querySelector('.stats-cohort-material .stats-chart-legend').getBoundingClientRect();
+            return legend.top >= chart.bottom;
+        """)
+        capture("stats-mobile-source-material")
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     return {"browser": browser, "version": driver.capabilities.get("browserVersion"), "url": url,
             "total": total, "accepted": accepted, "source_sha256": manifest["source_sha256"],

@@ -2070,7 +2070,6 @@ body.detail-open .detail-panel {
 .stats-cohort-switch small { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 @media (max-width: 520px) {
   .stats-cohort-switch label > span { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; font-size: 13px; }
-  .stats-cohort-context .stats-review-layout { grid-template-columns: 1fr; }
 }
 .stats-cohort-meaning { max-width: 84ch; margin: 0 0 18px; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .stats-cohort-context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; margin: 22px 0 12px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
@@ -2079,7 +2078,11 @@ body.detail-open .detail-panel {
 .stats-cohort-context .stats-review-layout { grid-template-columns: 112px minmax(0, 1fr); gap: 14px; }
 .stats-cohort-context .stats-review-ring { width: 112px; }
 .stats-cohort-context .stats-review-ring strong { font-size: 17px; }
-.stats-cohort-context .stats-check-examples > div { grid-template-columns: 86px minmax(0, 1fr); padding: 8px 0; gap: 10px; font-size: 12px; }
+.stats-cohort-context .stats-check-examples > div { grid-template-columns: 108px minmax(0, 1fr); padding: 8px 0; gap: 10px; font-size: 12px; }
+#statsReviewDetails > .stats-note { margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+@media (max-width: 520px) {
+  .stats-cohort-context .stats-review-layout { grid-template-columns: 1fr; }
+}
 #statsReviewDetails { scroll-margin-top: 18px; }
 .stats-followup-coverage { margin-top: 8px; }
 .stats-followup-coverage dl { margin: 0; display: grid; gap: 8px; }
