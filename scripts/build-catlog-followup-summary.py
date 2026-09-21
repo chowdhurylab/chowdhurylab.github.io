@@ -54,9 +54,47 @@ def build(manifest, download):
     }
 
 
+def build_review_details(manifest, download):
+    with download.open("rb") as handle:
+        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    if digest != manifest["enriched_download"]["sha256"]:
+        raise ValueError("Frozen download hash does not match the manifest")
+    groups = {status: {"total": 0, "with_literature_id": 0, "with_sequence": 0,
+                       "with_smiles": 0, "with_kinetic_value": 0,
+                       "material": dict.fromkeys(("paper_excerpt", "source_note", "paper_id", "database_record"), 0)}
+              for status in ("manual_review_required", "unverified", "mathematically_inferred")}
+    statuses = Counter()
+    with gzip.open(download, "rb") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            status = row.get("verification_status")
+            statuses[status] += 1
+            if status not in groups:
+                continue
+            group = groups[status]
+            group["total"] += 1
+            group["with_literature_id"] += bool(row.get("supporting_pmids") or row.get("supporting_dois"))
+            group["with_sequence"] += bool(row.get("sequence"))
+            group["with_smiles"] += bool(row.get("smiles"))
+            group["with_kinetic_value"] += any(row.get(key) is not None for key in ("kcat", "km", "ki", "kcat_over_km"))
+            material = ("paper_excerpt" if row.get("has_proof_excerpt") else
+                        "source_note" if row.get("proof_kind") == "source_note" else
+                        "paper_id" if row.get("has_literature_id") else "database_record")
+            group["material"][material] += 1
+    expected = {item["label"]: item["count"] for item in manifest["summary"]["distributions"]["verification_status"]}
+    if dict(statuses) != expected or sum(statuses.values()) != manifest["total_rows"]:
+        raise ValueError("Public download statuses do not match the snapshot")
+    return {"source_sha256": manifest["source_sha256"], "download_sha256": digest,
+            "meaning": "Fields and attached material by status, not reasons for review decisions",
+            "groups": groups}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true", help="Write a new immutable manifest and update its page reference")
+    parser.add_argument("--details-report", action="store_true", help="Print hash-bound follow-up and unverified counts without changing files")
     args = parser.parse_args()
     spec = importlib.util.spec_from_file_location("viewer_builder", ROOT / "scripts/build-catlog-viewer-index.py")
     builder = importlib.util.module_from_spec(spec)
@@ -66,6 +104,13 @@ def main():
     download = (CATALOG / manifest["enriched_download"]["path"]).resolve()
     if not download.is_relative_to((CATALOG / "data").resolve()) or download.suffix != ".gz":
         raise ValueError("Expected a public compressed download under this site")
+    if args.details_report:
+        result = build_review_details(manifest, download)
+        saved = manifest["summary"].get("review_details")
+        if saved is not None and saved != result:
+            raise ValueError("Published review details differ from the frozen download")
+        print(json.dumps(result, indent=2))
+        return
     result = build(manifest, download)
     saved = manifest["summary"].get("followup_coverage")
     if saved is not None and saved != result and not args.write:

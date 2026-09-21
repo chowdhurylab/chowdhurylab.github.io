@@ -1442,7 +1442,8 @@ function row(overrides = {}) {
   assert.match(chart, /Both count as accepted/);
   assert.match(chart, /not a measure of work completed/);
   assert.match(chart, /does not contain a reason-by-reason tally/);
-  assert.match(chart, />Follow-up<\/span>/);
+  assert.match(chart, /data-stats-cohort="manual_review_required"[^>]*>Follow-up<\/button>/);
+  assert.match(chart, /data-stats-cohort="mathematically_inferred"[^>]*>Pre-review<\/button>/);
   const reviewSection = chart.split('aria-labelledby="reviewChartTitle"')[1].split("</section>")[0];
   assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
   assert.match(chart, /stroke-dasharray="50 50"/);
@@ -1495,6 +1496,29 @@ function row(overrides = {}) {
   runtimeManifest.summary.followup_coverage.download_sha256 = "fixture-download";
   runtimeManifest.summary.followup_coverage.source_sha256 = "wrong-generation";
   assert.equal(api.statsFollowupCoverage(1), "", "Reject coverage from another snapshot");
+  runtimeManifest.summary.review_details = {
+    source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
+    groups: { unverified: { total: 1, with_kinetic_value: 1, with_literature_id: 0, with_sequence: 0, with_smiles: 1,
+      material: { paper_excerpt: 0, source_note: 0, paper_id: 0, database_record: 1 } } },
+  };
+  assert.equal(api.statsCohortData("unverified", 1).with_smiles, 1);
+  assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
+  api.state.statsCohort = "unverified";
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /data-cohort="unverified"/);
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /of unverified records/);
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified does not mean rejected/);
+  runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
+  assert.equal(api.statsCohortData("unverified", 1), null, "Material must be an exclusive whole-cohort partition");
+  runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 0;
+  runtimeManifest.summary.review_details.download_sha256 = "wrong";
+  assert.equal(api.statsCohortData("unverified", 1), null, "Exact frozen download required");
+  api.state.statsCohort = "mathematically_inferred";
+  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /legacy status does not mean every value was calculated/);
+  const prepared = row({verification_status: "mathematically_inferred"});
+  assert.equal(api.rowStatusLabel(prepared), "Pre-review");
+  assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
+  api.state.statsCohort = "manual_review_required";
+  delete runtimeManifest.summary.review_details;
   delete runtimeManifest.summary.followup_coverage;
   runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
   api.renderStats();

@@ -14,11 +14,12 @@ Review outcomes, saved source material, available fields and database links
 are different concepts. Never imply that a missing field explains a pending
 review or that a source excerpt establishes acceptance.
 
-Use white, unframed sections with light rules and thin circular charts. Teal
-identifies accepted outcomes, amber identifies follow-up, gray means
-unverified, and red marks disputed records. For field coverage, green marks
-kinetics, blue protein sequences, and gold substrate structures; pink marks
-reference material. Color belongs in the charts, not the text or panel fills.
+Use white, unframed sections with light rules and thin circular charts. Match
+the approved artifact palette: blue #339cff for accepted, orange #f3883b for
+follow-up, gray for unverified, and red for disputed. Green #5dc977 marks
+kinetics, blue protein sequences, orange substrate structures, and pink #eb77b1
+reference material. Browse keeps its existing colors. Keep Stats content within
+1200px so charts and labels stay together on a wide monitor.
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.
 
@@ -49,3 +50,11 @@ have an accessible text count. Explain follow-up with explicitly illustrative
 protein, substrate and assay checks; do not infer a reason from missing data.
 Same-snapshot field presence can describe what is already saved in follow-up
 records, but cannot establish a completed check or the severity of the rest.
+Follow-up, Unverified and Pre-review link to a selectable group detail below the
+overview. Each group uses its own hash-bound field and material counts. Keep
+the status meaning and short illustrative checks visible; do not hide all
+explanation behind a disclosure or present these examples as counted reasons.
+Pre-review is the label for the legacy mathematically_inferred record status:
+the importer also used it for source-derived records. Do not describe every
+value in that group as calculated. A calculated ratio field is separate from
+record acceptance; changing these labels must not alter the scientific data.

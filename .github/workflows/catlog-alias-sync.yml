@@ -51,6 +51,14 @@ jobs:
           python3 -m unittest discover -s tests -p test_catlog_source_efficiency_layout.py
       - name: Audit saved fields in the frozen follow-up cohort
         run: python3 scripts/build-catlog-followup-summary.py
+      - name: Audit follow-up, unverified and pre-review details
+        run: python3 scripts/build-catlog-followup-summary.py --details-report > review-details.json
+      - name: Save snapshot statistics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: catlog-review-details
+          path: review-details.json
+          retention-days: 3
       - name: Validate the complete public release
         run: python3 scripts/check-catlog-publish.py
 

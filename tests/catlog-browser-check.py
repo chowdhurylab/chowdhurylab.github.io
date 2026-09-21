@@ -71,7 +71,7 @@ def check(driver, browser, url):
     for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
         assert int(figure.get_attribute("data-total")) == coverage["total"]
         assert int(figure.get_attribute("data-count")) == coverage[figure.get_attribute("data-stat-key")]
-    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 12
+    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 13
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-material-section li")) == total
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-database-section li")) == total
     stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
@@ -92,7 +92,7 @@ def check(driver, browser, url):
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
+            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dt, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)
@@ -100,6 +100,21 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
+    for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
+        driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').click()
+        group = manifest["summary"]["review_details"]["groups"][cohort]
+        radio = driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]')
+        assert radio.is_selected() and driver.switch_to.active_element == radio
+        for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
+            assert int(figure.get_attribute("data-total")) == group["total"]
+            assert int(figure.get_attribute("data-count")) == group[figure.get_attribute("data-stat-key")]
+        assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-cohort-material li")) == group["total"]
+        capture("stats-" + cohort)
+    selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
+    selected.send_keys(Keys.ARROW_RIGHT)
+    assert driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="unverified"]').is_selected()
+    driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="manual_review_required"]').find_element(By.XPATH, "..").click()
+    driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
         element.click()
         assert element.find_element(By.XPATH, "..").get_attribute("open") is not None
@@ -145,6 +160,17 @@ def check(driver, browser, url):
         capture("stats-mobile")
         driver.execute_script("document.querySelector('.stats-followup-section').scrollIntoView()")
         capture("stats-mobile-followup")
+        for cohort in ("unverified", "mathematically_inferred"):
+            driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]').find_element(By.XPATH, "..").click()
+            driver.execute_script("document.querySelector('#statsReviewDetails').scrollIntoView()")
+            capture("stats-mobile-" + cohort)
+        driver.execute_script("document.querySelector('.stats-cohort-context').scrollIntoView()")
+        assert driver.execute_script("""
+            const chart = document.querySelector('.stats-cohort-material .stats-review-ring').getBoundingClientRect();
+            const legend = document.querySelector('.stats-cohort-material .stats-chart-legend').getBoundingClientRect();
+            return legend.top >= chart.bottom;
+        """)
+        capture("stats-mobile-source-material")
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     return {"browser": browser, "version": driver.capabilities.get("browserVersion"), "url": url,
             "total": total, "accepted": accepted, "source_sha256": manifest["source_sha256"],

@@ -31,6 +31,7 @@
     suggestionHideTimer: null,
     suggestionIndex: -1,
     suggestionInputId: "",
+    statsCohort: "manual_review_required",
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -75,7 +76,7 @@
   const stateDescriptions = {
     accepted: "Verified and Corrected records. Identity-only records are labelled separately.",
     curation_pending: "Additional checks are required before acceptance.",
-    not_verified: "Unverified, mathematically inferred, or disputed records. These are separate outcomes, not a single rejected group.",
+    not_verified: "Unverified, pre-review, or disputed records. These are separate outcomes, not a single rejected group.",
   };
 
   const reviewStatuses = [
@@ -83,7 +84,7 @@
     { value: "corrected", label: "Corrected", description: "Accepted after correction." },
     { value: "manual_review_required", label: "Checks pending", description: "Additional checks required." },
     { value: "unverified", label: "Unverified", description: "No verified or corrected outcome recorded." },
-    { value: "mathematically_inferred", label: "Calculated records", description: "Separate from calculated kcat/Km values." },
+    { value: "mathematically_inferred", label: "Pre-review", description: "Prepared from source records, without an accepted review outcome." },
     { value: "disputed", label: "Disputed", description: "Outside the accepted set." },
   ];
 
@@ -761,7 +762,7 @@
       case "manual_review_required":
         return "One or more required checks are still open.";
       case "mathematically_inferred":
-        return "Calculated from reported values rather than stated directly in the source.";
+        return "Prepared from source records; no accepted review outcome is recorded.";
       case "disputed":
         return "Disputed; outside the accepted set.";
       default:
@@ -776,7 +777,7 @@
 
   function rowStatusLabel(row) {
     if (row.verification_status === "disputed") return "Disputed";
-    if (row.verification_status === "mathematically_inferred") return "Calculated";
+    if (row.verification_status === "mathematically_inferred") return "Pre-review";
     if (row.verification_status === "unverified") return "Unverified";
     if (isIdentityOnlyAccepted(row)) return "Accepted (identity only)";
     if (row.verification_status === "corrected") return "Accepted";
@@ -1519,7 +1520,7 @@
     let offset = 0;
     const slices = items.map((item) => {
       const share = total > 0 ? item.count / total * 100 : 0;
-      const slice = `<circle class="stats-ring-${item.color}" cx="100" cy="100" r="82" pathLength="100" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" />`;
+      const slice = `<circle class="stats-ring-${item.color}" cx="100" cy="100" r="82" pathLength="100" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}"><title>${escapeHtml(item.label || (item.color === "base" ? "Without this field" : "Included"))}: ${formatInteger(item.count)} of ${formatInteger(total)}</title></circle>`;
       offset += share;
       return share > 0 ? slice : "";
     }).join("");
@@ -1530,11 +1531,11 @@
     </div>`;
   }
 
-  function statsLegend(items, total, className = "") {
+  function statsLegend(items, total, className = "", scope = "of all records") {
     return `<div class="stats-chart-legend ${className}"><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${escapeHtml(item.label)}</span>
+      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${["manual_review_required", "unverified", "mathematically_inferred"].includes(item.value) ? `<button type="button" class="stats-status-link" data-stats-cohort="${item.value}" aria-controls="statsReviewDetails">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
       <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
-      <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>
+      <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> ${escapeHtml(scope)}</span></span>
     </li>`).join("")}</ul></div>`;
   }
 
@@ -1557,6 +1558,54 @@
     return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} follow-up records.</p>
       ${statsFieldRings(fields.map(([key, label, color]) => ({ value: key, label, color, count: audit[key] })), total)}
       <p>Fields included, not reasons for follow-up. Kinetic value means kcat, Km, Ki or kcat/Km.</p></div>`;
+  }
+
+  function statsCohortData(cohort, total) {
+    const audit = manifest.summary?.review_details;
+    if (!audit?.source_sha256 || !audit.download_sha256 || audit.source_sha256 !== manifest.source_sha256
+      || audit.download_sha256 !== manifest.enriched_download?.sha256) return null;
+    const group = audit.groups?.[cohort];
+    const fields = ["with_kinetic_value", "with_literature_id", "with_sequence", "with_smiles"];
+    const material = ["paper_excerpt", "source_note", "paper_id", "database_record"];
+    if (!group || group.total !== total || !fields.every((key) => Number.isInteger(group[key]) && group[key] >= 0 && group[key] <= total)
+      || !material.every((key) => Number.isInteger(group.material?.[key]) && group.material[key] >= 0)
+      || material.reduce((sum, key) => sum + group.material[key], 0) !== total) return null;
+    return group;
+  }
+
+  function statsReviewDetails(counts) {
+    const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
+    const total = counts[cohort] || 0;
+    const group = statsCohortData(cohort, total);
+    const label = ({ unverified: "Unverified", mathematically_inferred: "Pre-review", manual_review_required: "Follow-up" })[cohort];
+    const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"],
+      ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
+    const material = [["paper_excerpt", "Paper extract", "verified"], ["source_note", "Text note", "reference"],
+      ["paper_id", "Paper link only", "kinetic"], ["database_record", "Database entry only", "neutral"]]
+      .map(([key, name, color]) => ({ value: `cohort_${key}`, label: name, color, count: group?.material[key] || 0 }));
+    return `<fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
+      ${[["manual_review_required", "Follow-up"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
+        <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
+        <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
+      <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
+        ? "Prepared from source records, without an accepted review outcome. Previously labelled Calculated: the legacy status does not mean every value was calculated. Accepted records may also contain a calculated kcat/Km ratio."
+        : cohort === "unverified"
+        ? "No accepted result is recorded for these entries. Unverified does not mean rejected, and the status does not tell us whether review was attempted."
+        : "The saved decision calls for another check before acceptance. That can concern a value, the protein or the substrate; it need not mean starting over."}</p>
+      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Already included in these ${formatInteger(total)} records</h3>
+        ${group ? statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
+          : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
+      </div>
+      <div class="stats-cohort-context">
+        ${group ? `<div class="stats-cohort-material"><h3>Source material in this group</h3><div class="stats-review-layout">
+          ${statsReviewRing(material, total, formatInteger(total), label.toLowerCase())}${statsLegend(material, total, "", `of ${label.toLowerCase()} records`)}
+        </div></div>` : ""}
+        <div class="stats-cohort-example"><h3>What can still need checking?</h3><dl class="stats-check-examples">
+          <div><dt>Protein</dt><dd>A row describes L431F. Does its sequence contain that variant, or only the wild-type protein?</dd></div>
+          <div><dt>Substrate</dt><dd>The name is present. Does its SMILES describe the same compound and isomer?</dd></div>
+          <div><dt>Measurement</dt><dd>The paper reports 0.82 &micro;M. Does it belong to this enzyme and assay, and convert to 0.00082 mM?</dd></div>
+        </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></div>
+      </div><p class="stats-note">Fields and source material are not completed checks. Kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
   }
 
   function renderStats() {
@@ -1582,7 +1631,7 @@
     ];
     const evidence = manifestDistribution("public_evidence_group");
     const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
-    const materialLabels = { paper_evidence: "Paper extract", source_note: "Database note", literature_id: "Paper link only", source_records: "Database entry only" };
+    const materialLabels = { paper_evidence: "Paper extract", source_note: "Text note", literature_id: "Paper link only", source_records: "Database entry only" };
     const materialColors = { paper_evidence: "verified", source_note: "reference", literature_id: "kinetic", source_records: "neutral" };
     const material = evidenceGroups.map((item) => ({ ...item, label: materialLabels[item.value], count: evidence[sourceKeys[item.value]] || 0, color: materialColors[item.value] }));
     const summary = manifest.summary || {};
@@ -1630,7 +1679,7 @@
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
         </dl><p>A change may concern the value, sequence or another field.</p></div>
         <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
-        <details class="stats-explanation"><summary>Other outcomes</summary><p>Unverified means no accepted decision is recorded, not that the entry is wrong or untouched. Calculated records are separate from accepted measurements and from a calculated kcat/Km field. Disputed records were flagged by review.</p></details>
+        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted combines Verified and Corrected. Follow-up requests another check. Unverified has no accepted result recorded. Pre-review is the legacy source-preparation status, previously labelled Calculated. Disputed records were flagged by review.</p></details>
       </section>
       <section class="stats-section stats-material-section" aria-labelledby="materialChartTitle">
         <h2 id="materialChartTitle">Material attached</h2>
@@ -1638,19 +1687,14 @@
         <div class="stats-review-layout">${statsReviewRing(material, total)}${statsLegend(material, total)}</div>
         <details class="stats-explanation"><summary>Examples</summary><dl>
           <div><dt>Paper extract</dt><dd>A captured table line or passage.</dd></div>
-          <div><dt>Database note</dt><dd>A note copied from the source database.</dd></div>
+          <div><dt>Text note</dt><dd>Text saved from a source or a review, without a separately recorded table or value location.</dd></div>
           <div><dt>Paper link only</dt><dd>A DOI or PMID, without a captured passage.</dd></div>
           <div><dt>Database entry only</dt><dd>The source entry, without the items above.</dd></div>
         </dl><p>Each record counts once, in the first matching group above. Attached material is not an acceptance decision.</p></details>
       </section>
       <section class="stats-section stats-followup-section stats-wide" aria-labelledby="followupTitle">
-        <h2 id="followupTitle">What the follow-up records already contain</h2>
-        ${statsFollowupCoverage(counts.manual_review_required || 0)}
-        <details class="stats-explanation"><summary>What might still need checking?</summary><dl class="stats-check-examples">
-          <div><dt>Protein or variant</dt><dd>Does the sequence match the enzyme or variant tested?</dd></div>
-          <div><dt>Substrate</dt><dd>Does the structure match the compound in the assay?</dd></div>
-          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the correct row and assay, with the right unit?</dd></div>
-        </dl><p>Illustrative checks, not a counted breakdown. This snapshot does not contain a reason-by-reason tally.</p></details>
+        <h2 id="followupTitle">A closer look at records outside Accepted</h2>
+        <div id="statsReviewDetails">${statsReviewDetails(counts)}</div>
       </section>
       <section class="stats-section stats-field-section stats-wide" aria-labelledby="fieldsChartTitle">
         <h2 id="fieldsChartTitle">Included in the full download</h2>
@@ -2845,6 +2889,20 @@
   }
 
   function bindControls() {
+    $("statsCharts").addEventListener("change", (event) => {
+      if (event.target.name !== "statsCohort") return;
+      state.statsCohort = event.target.value;
+      renderStats();
+      document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
+    });
+    $("statsCharts").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-stats-cohort]");
+      if (!button) return;
+      state.statsCohort = button.dataset.statsCohort;
+      renderStats();
+      document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
+      $("statsReviewDetails").scrollIntoView({ block: "start" });
+    });
     [
       "globalSearchInput",
       "ecFilterInput",
@@ -3056,6 +3114,8 @@
       selectRecord,
       handlePageDownload,
       renderDetail,
+      rowStatusLabel,
+      reviewOutcome,
       recordIndexPath,
       loadRecordChunks,
       publicSummaryRecord,
@@ -3093,6 +3153,8 @@
       renderStats,
       statsReviewRing,
       statsFollowupCoverage,
+      statsCohortData,
+      statsReviewDetails,
       statsShare,
       statsBarRows,
       renderView,
