@@ -75,7 +75,13 @@ def check(driver, browser, url):
     viewports = {}
 
     def capture(label):
-        viewports[label] = driver.execute_script("return {width: innerWidth, height: innerHeight}")
+        viewports[label] = driver.execute_script("""
+            const page = document.scrollingElement, stats = document.querySelector('#statsView');
+            return {width: innerWidth, height: innerHeight,
+                document_scrolls: page.scrollHeight > page.clientHeight + 1,
+                stats_scrolls: stats.scrollHeight > stats.clientHeight + 1};
+        """)
+        assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
         overflow = driver.execute_script("""
             return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dd, .stats-followup-coverage dd')]
@@ -112,7 +118,7 @@ def check(driver, browser, url):
     driver.find_element(By.ID, "browseButton").click()
     assert driver.find_element(By.ID, "globalSearchInput").get_attribute("value") == "laccase"
     assert driver.find_element(By.ID, "activeSummary").text == result_count
-    driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]").click()
+    driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
     wait.until(lambda d: d.find_element(By.ID, "downloadSelectedJson").is_displayed())
     assert not driver.find_elements(By.CSS_SELECTOR, ".detail-load-error, #detailLoadStatus")
     assert "laccase" in driver.find_element(By.ID, "detailHeading").text.lower()
