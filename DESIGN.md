@@ -14,9 +14,11 @@ Review outcomes, saved source material, available fields and database links
 are different concepts. Never imply that a missing field explains a pending
 review or that a source excerpt establishes acceptance.
 
-Use white, unframed sections with light rules. Teal identifies accepted
-outcomes and field availability, amber identifies pending checks, gray means
-unverified, blue-gray marks source material, and red marks disputed records.
+Use white, unframed sections with light rules and thin circular charts. Teal
+identifies accepted outcomes, amber identifies follow-up, gray means
+unverified, and red marks disputed records. For field coverage, green marks
+kinetics, blue protein sequences, and gold substrate structures; pink marks
+reference material. Color belongs in the charts, not the text or panel fills.
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.
 
@@ -24,13 +26,18 @@ At desktop sizes, use two chart columns. Below 1000px, use one column with
 normal page scrolling. Never add an independently scrolling chart panel.
 Keep Browse's filtered state when navigating away and back.
 
-Search belongs to Browse, not Stats or Guide. On Stats, show a shared
-0-100% scale and aligned counts instead of progress-track styling. Keep the
+Search belongs to Browse, not Stats or Guide. On Stats, show exact percentages
+and aligned counts rather than progress-track styling. Keep the
 identity-only caveat visible; put short definitions and examples in optional
 disclosures. Never invent a reason for a pending review from a blank field.
 
-Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use independently
-flowing Stats columns, not equal-height chart rows that create blank blocks.
+Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use two overview
+sections, followed by full-width field comparisons and the source chart.
+Put overlapping wild-type and variant sequence counts in a disclosure rather
+than adding more repeated rings. "Without this field" means no value in the
+public download; never imply rejection, data loss, or an incomplete review.
+Source-chart slices use exclusive recorded source groups, not overlapping
+database link counts. Do not publish project token statistics on this page.
 The Guide starts with three plain tasks and a real search example, not a
 numbered onboarding strip or a repeated workflow illustration.
 
