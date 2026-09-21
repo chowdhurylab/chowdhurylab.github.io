@@ -62,7 +62,7 @@ def build_review_details(manifest, download):
     groups = {status: {"total": 0, "with_literature_id": 0, "with_sequence": 0,
                        "with_smiles": 0, "with_kinetic_value": 0,
                        "material": dict.fromkeys(("paper_excerpt", "source_note", "paper_id", "database_record"), 0)}
-              for status in ("manual_review_required", "unverified")}
+              for status in ("manual_review_required", "unverified", "mathematically_inferred")}
     statuses = Counter()
     with gzip.open(download, "rb") as handle:
         for line in handle:
