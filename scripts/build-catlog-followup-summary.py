@@ -67,6 +67,9 @@ def main():
     if not download.is_relative_to((CATALOG / "data").resolve()) or download.suffix != ".gz":
         raise ValueError("Expected a public compressed download under this site")
     result = build(manifest, download)
+    saved = manifest["summary"].get("followup_coverage")
+    if saved is not None and saved != result and not args.write:
+        raise ValueError("Published follow-up summary differs from the frozen download")
     print(json.dumps(result, indent=2))
     if args.write:
         manifest["summary"]["followup_coverage"] = result

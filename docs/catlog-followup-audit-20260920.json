@@ -1,0 +1,15 @@
+{
+  "ci_run": "https://github.com/chowdhurylab/chowdhurylab.github.io/actions/runs/35548424067",
+  "audited_commit": "3896b0a024221bcadde71a8c55af107c566b4bbf",
+  "followup_coverage": {
+    "source_sha256": "624e998bee0ab307c39e713b6997c2e6a6c5619262633915a8658516da028c03",
+    "download_sha256": "0867b2f89e73a9d1015c7fab138d761339c308468ee36c4253e038b52f1969d3",
+    "cohort": "manual_review_required",
+    "meaning": "Saved field presence; not completed checks or reasons for follow-up",
+    "total": 75153,
+    "with_literature_id": 69427,
+    "with_sequence": 28899,
+    "with_smiles": 21933,
+    "with_kinetic_value": 72830
+  }
+}

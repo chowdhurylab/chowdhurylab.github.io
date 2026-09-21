@@ -1595,7 +1595,7 @@
             <div class="stats-outcome-head" aria-hidden="true"><span>Outcome</span><span>Records</span><span>% of all</span></div>
             <ul>${outcomes.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
               <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i><span>${escapeHtml(item.label)}${item.description ? `<small>${escapeHtml(item.description)}</small>` : ""}</span></span>
-              <strong>${formatInteger(item.count)}</strong><span>${statsShare(item.count, total)}</span>
+              <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong><span>${statsShare(item.count, total)}<span class="visually-hidden"> of all records</span></span>
             </li>`).join("")}</ul>
           </div>
         </div>

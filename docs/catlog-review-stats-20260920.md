@@ -44,6 +44,11 @@ are not a pie chart. The UI checks source/download hashes and the cohort before
 displaying them. Field presence does not prove that a check passed, and a blank
 field is not automatically the reason for follow-up.
 
+GitHub CI run35548424067 audited the exact public gzip successfully. Within
+75,153 follow-up records, 72,830 contain kinetic values, 69,427 have paper IDs,
+28,899 contain a sequence and 21,933 contain SMILES. These are overlapping
+field-presence counts, not passed-check counts. See the adjacent JSON receipt.
+
 ## Verification scope
 
 Focused regression tests cover combined acceptance, donut shares and tiny/empty
