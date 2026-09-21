@@ -71,7 +71,7 @@ def check(driver, browser, url):
     for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
         assert int(figure.get_attribute("data-total")) == coverage["total"]
         assert int(figure.get_attribute("data-count")) == coverage[figure.get_attribute("data-stat-key")]
-    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 12
+    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 13
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-material-section li")) == total
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-database-section li")) == total
     stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
@@ -100,6 +100,21 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
+    for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
+        driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').click()
+        group = manifest["summary"]["review_details"]["groups"][cohort]
+        radio = driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]')
+        assert radio.is_selected() and driver.switch_to.active_element == radio
+        for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
+            assert int(figure.get_attribute("data-total")) == group["total"]
+            assert int(figure.get_attribute("data-count")) == group[figure.get_attribute("data-stat-key")]
+        assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-cohort-material li")) == group["total"]
+        capture("stats-" + cohort)
+    selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
+    selected.send_keys(Keys.ARROW_RIGHT)
+    assert driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="unverified"]').is_selected()
+    driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="manual_review_required"]').find_element(By.XPATH, "..").click()
+    driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
         element.click()
         assert element.find_element(By.XPATH, "..").get_attribute("open") is not None
