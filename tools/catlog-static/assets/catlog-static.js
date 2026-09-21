@@ -1514,6 +1514,33 @@
     }).join("")}</ol>`;
   }
 
+  function statsReviewRing(items, total) {
+    // Exact angular shares; tiny categories remain in the adjacent count list.
+    let offset = 0;
+    const slices = items.map((item) => {
+      const share = total > 0 ? item.count / total * 100 : 0;
+      const slice = `<circle class="stats-ring-${item.color}" cx="100" cy="100" r="82" pathLength="100" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}" />`;
+      offset += share;
+      return share > 0 ? slice : "";
+    }).join("");
+    const complete = items.reduce((sum, item) => sum + item.count, 0) === total;
+    return `<div class="stats-review-ring" aria-hidden="true">
+      <svg viewBox="0 0 200 200"><circle class="stats-ring-base" cx="100" cy="100" r="82" />${complete ? slices : ""}</svg>
+      <div><strong>${formatInteger(total)}</strong><span>records</span></div>
+    </div>`;
+  }
+
+  function statsFollowupCoverage(total) {
+    const audit = manifest.summary?.followup_coverage;
+    if (!audit || audit.cohort !== "manual_review_required" || !audit.source_sha256 || !audit.download_sha256 || audit.source_sha256 !== manifest.source_sha256
+      || audit.download_sha256 !== manifest.enriched_download?.sha256 || audit.total !== total) return "";
+    const fields = [["with_kinetic_value", "Kinetic value saved"], ["with_literature_id", "Paper linked"], ["with_sequence", "Sequence saved"], ["with_smiles", "Structure saved"]];
+    if (!fields.every(([key]) => Number.isInteger(audit[key]) && audit[key] >= 0 && audit[key] <= total)) return "";
+    return `<div class="stats-followup-coverage"><h3>Already present in follow-up records</h3>
+      <dl>${fields.map(([key, label]) => `<div><dt>${label}</dt><dd>${formatInteger(audit[key])} <small>of ${formatInteger(total)}</small></dd></div>`).join("")}</dl>
+      <p>These fields can overlap. Their presence does not confirm the measurement.</p></div>`;
+  }
+
   function renderStats() {
     // Immutable snapshot metadata: Stats must not mix filtered and full-download counts.
     const total = Number(manifest.total_rows || 0);
@@ -1526,7 +1553,15 @@
       statuses.push({ value: "other_status", label: "Other status", description: "Not in the six outcomes listed above." });
     }
     const colors = { verified: "verified", corrected: "corrected", manual_review_required: "pending", unverified: "neutral", mathematically_inferred: "calculated", disputed: "disputed" };
-    const outcomes = statuses.map((item) => ({ ...item, description: "", count: counts[item.value] || 0, color: colors[item.value] || "neutral" }));
+    const accepted = (counts.verified || 0) + (counts.corrected || 0);
+    const outcomes = [
+      { value: "accepted", label: "Accepted", count: accepted, color: "verified", description: "Verified or corrected" },
+      ...statuses.filter((item) => !["verified", "corrected"].includes(item.value)).map((item) => ({
+        ...item, label: item.value === "manual_review_required" ? "Follow-up needed" : item.label,
+        description: item.value === "manual_review_required" ? "Additional checks; not rejected" : item.value === "unverified" ? "No accepted decision recorded" : "",
+        count: counts[item.value] || 0, color: colors[item.value] || "neutral",
+      })),
+    ];
     const evidence = manifestDistribution("public_evidence_group");
     const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
     const materialLabels = { paper_evidence: "Paper extract", source_note: "Database note", literature_id: "Paper link only", source_records: "Database entry only" };
@@ -1543,7 +1578,6 @@
     const databases = sourceDatabases().filter((item) => Number.isInteger(item.row_count))
       .map((item) => ({ value: item.key, label: item.name, count: item.row_count, color: "source" }))
       .sort((a, b) => b.count - a.count);
-    const accepted = (counts.verified || 0) + (counts.corrected || 0);
     const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
     const totals = summary.totals || {};
     $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
@@ -1552,26 +1586,44 @@
       .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
     const columns = (first, last = "") => `<div class="stats-columns" aria-hidden="true"><span>${first}</span><span class="stats-scale"><span>0</span><span>50</span><span>100%</span></span><span>Records</span><span>% of all</span>${last ? `<span>${last}</span>` : ""}</div>`;
     $("statsCharts").innerHTML = `
-      <div class="stats-column">
-      <section class="stats-section" aria-labelledby="reviewChartTitle">
-        <h2 id="reviewChartTitle">Record review</h2>
-        <p>${formatInteger(accepted)} accepted: verified or corrected.</p>
-        ${columns("Outcome")}${statsBarRows(outcomes, total)}
-        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} records were accepted on identity checks alone; this does not confirm their kinetic values. ` : ""}Pending does not mean rejected.</p>
-        <details class="stats-explanation"><summary>What do these mean?</summary><dl>
-          <div><dt>Verified / Corrected</dt><dd>Accepted as reported / accepted after a recorded change.</dd></div>
-          <div><dt>Checks pending</dt><dd>More checks are needed, e.g. matching the protein sequence.</dd></div>
-          <div><dt>Unverified</dt><dd>No accepted review is recorded. This does not mean the value is wrong.</dd></div>
-          <div><dt>Calculated records</dt><dd>Marked as calculated, not accepted. This does not count calculated kcat/Km values.</dd></div>
-          <div><dt>Disputed</dt><dd>Flagged by review; not accepted.</dd></div>
-        </dl></details>
+      <section class="stats-section stats-review-section" aria-labelledby="reviewChartTitle">
+        <h2 id="reviewChartTitle">Review outcomes</h2>
+        <p>Record status, not a measure of work completed.</p>
+        <div class="stats-review-layout">
+          ${statsReviewRing(outcomes, total)}
+          <div class="stats-review-legend">
+            <div class="stats-outcome-head" aria-hidden="true"><span>Outcome</span><span>Records</span><span>% of all</span></div>
+            <ul>${outcomes.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+              <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i><span>${escapeHtml(item.label)}${item.description ? `<small>${escapeHtml(item.description)}</small>` : ""}</span></span>
+              <strong>${formatInteger(item.count)}</strong><span>${statsShare(item.count, total)}</span>
+            </li>`).join("")}</ul>
+          </div>
+        </div>
+        <div class="stats-accepted-split"><h3>Both count as accepted</h3><dl>
+          <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Verified as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
+          <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
+        </dl><p>A change may concern the value, sequence or another field.</p></div>
+        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
+        <details class="stats-explanation"><summary>Other outcomes</summary><p>Unverified does not mean wrong or untouched. Calculated records are not accepted measurements; this is separate from a calculated kcat/Km field. Disputed records were flagged by review.</p></details>
       </section>
+      <section class="stats-section stats-followup-section" aria-labelledby="followupTitle">
+        <h2 id="followupTitle">What can still need checking?</h2>
+        <p>Follow-up can concern one field or the measurement itself. The status alone does not tell us how much work remains.</p>
+        <dl class="stats-check-examples">
+          <div><dt>Protein or variant</dt><dd>The paper used L431F. Does the saved sequence contain that change?</dd></div>
+          <div><dt>Substrate identity</dt><dd>A substrate name is saved. Does its SMILES describe the same molecule?</dd></div>
+          <div><dt>Value and assay</dt><dd>Km is listed as 0.82 &micro;M. Does it come from the right table row and assay?</dd></div>
+        </dl>
+        <p class="stats-note">Illustrative checks, not counts of why records are pending. This snapshot does not contain a reason-by-reason tally.</p>
+        ${statsFollowupCoverage(counts.manual_review_required || 0)}
+      </section>
+      <div class="stats-column">
       <section class="stats-section stats-field-section" aria-labelledby="fieldsChartTitle">
         <h2 id="fieldsChartTitle">Data available</h2>
         <p>Filled fields in the full download.</p>
         ${columns("Field", "Blank")}${statsBarRows(fields, total, { missing: true })}
         <p class="stats-note">Sequence counts overlap. Variant sequences apply only to variants. Blank does not mean rejected.</p>
-        <details class="stats-explanation"><summary>Show an example</summary><p>One row can include both a wild-type sequence and a variant sequence. It counts in both bars.</p></details>
+        <details class="stats-explanation"><summary>Example: a variant sequence</summary><p>An L431F record may include the original sequence and the changed sequence. That one record counts in both sequence bars. A wild-type record does not need a variant sequence.</p></details>
       </section>
       </div>
       <div class="stats-column">
@@ -1580,14 +1632,17 @@
         <p>What is saved alongside each record.</p>
         ${columns("Material")}${statsBarRows(material, total)}
         <p class="stats-note">First matching group above; each record counted once. A saved source does not mean accepted.</p>
-        <details class="stats-explanation"><summary>Show an example</summary><p>A paper link is a DOI or PMID. A paper extract also saves a value, e.g. &ldquo;Km 0.82 &micro;M&rdquo; from a table. A database note has no saved paper extract.</p></details>
+        <details class="stats-explanation"><summary>Example: a link versus a saved value</summary><dl>
+          <div><dt>Paper link</dt><dd>PMID 12514023 identifies the paper.</dd></div>
+          <div><dt>Paper extract</dt><dd>Table 1: Km 0.82 &micro;M for 4-Aminoacetophenone.</dd></div>
+        </dl><p>The second also identifies the measurement. Neither alone is an acceptance decision.</p></details>
       </section>
       <section class="stats-section" aria-labelledby="databaseChartTitle">
         <h2 id="databaseChartTitle">Databases</h2>
         <p>Records linked to each source.</p>
         ${columns("Source")}${statsBarRows(databases, total)}
         <p class="stats-note">Counts overlap. Records with no named source are not shown.</p>
-        <details class="stats-explanation"><summary>Show an example</summary><p>A row linked to BRENDA and UniProt counts in both bars. See the Guide for source licenses.</p></details>
+        <details class="stats-explanation"><summary>Why do source counts overlap?</summary><p>A row linked to BRENDA and UniProt counts in both bars: BRENDA may supply the kinetic value and UniProt the protein identity.</p></details>
       </section>
       </div>
     `;
@@ -3010,6 +3065,8 @@
       syncDetailPanelAccessibility,
       renderSummary,
       renderStats,
+      statsReviewRing,
+      statsFollowupCoverage,
       statsShare,
       statsBarRows,
       renderView,

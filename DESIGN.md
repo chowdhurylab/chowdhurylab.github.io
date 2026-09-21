@@ -7,8 +7,9 @@ expanding summary that takes space from the table.
 ## Stats
 
 Use the current snapshot manifest, not filtered rows or new backend scans.
-Every chart uses all records as its denominator. Show exact counts beside
-horizontal bars; a nonzero share below 0.1% must not be printed as zero.
+Outcome and coverage charts use all records as their denominator. Any
+follow-up-only counts explicitly name that cohort and bind to the same frozen
+download. Show exact counts; a nonzero share below 0.1% must not print as zero.
 Review outcomes, saved source material, available fields and database links
 are different concepts. Never imply that a missing field explains a pending
 review or that a source excerpt establishes acceptance.
@@ -32,3 +33,12 @@ Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use independently
 flowing Stats columns, not equal-height chart rows that create blank blocks.
 The Guide starts with three plain tasks and a real search example, not a
 numbered onboarding strip or a repeated workflow illustration.
+
+Group verified and corrected together as Accepted in the outcome ring, with
+their two subcounts alongside. The ring is a status distribution, never a
+completion gauge: unaccepted records are not a measure of work remaining.
+Do not enlarge tiny slices or quietly omit unknown categories. All slices
+have an accessible text count. Explain follow-up with explicitly illustrative
+protein, substrate and assay checks; do not infer a reason from missing data.
+Same-snapshot field presence can describe what is already saved in follow-up
+records, but cannot establish a completed check or the severity of the rest.

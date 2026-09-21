@@ -1417,7 +1417,7 @@ function row(overrides = {}) {
   api.state.filtered = records;
   api.state.recordsReady = true;
   runtimeManifest.total_rows = 6;
-  runtimeManifest.enriched_download = { coverage: { sequence: 4, smiles: 5 } };
+  runtimeManifest.enriched_download = { sha256: "fixture-download", coverage: { sequence: 4, smiles: 5 } };
   runtimeManifest.summary = { distributions: {
     verification_status: [
       { label: "verified", count: 2 }, { label: "corrected", count: 1 },
@@ -1430,7 +1430,7 @@ function row(overrides = {}) {
   } };
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    verified: 2, corrected: 1, manual_review_required: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
+    accepted: 3, verified: 2, corrected: 1, manual_review_required: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
     paper_evidence: 2, source_note: 2, literature_id: 1, source_records: 1, sequence: 4, smiles: 5,
   }, "Snapshot charts use manifest counts with source-group precedence preserved");
   assert.match(element("statsScope").textContent, /All 6 records/);
@@ -1439,6 +1439,13 @@ function row(overrides = {}) {
   assert.match(chart, /<span>% of all<\/span>/);
   assert.match(chart, /class="stats-explanation"/);
   assert.equal((chart.match(/class="stats-column"/g) || []).length, 2);
+  assert.match(chart, /Both count as accepted/);
+  assert.match(chart, /not a measure of work completed/);
+  assert.match(chart, /does not contain a reason-by-reason tally/);
+  assert.match(chart, /Follow-up needed/);
+  assert.equal((chart.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
+  assert.match(chart, /stroke-dasharray="50 50"/);
+  assert.doesNotMatch(chart, /role="progressbar"/);
   assert.match(chart, /Paper link only/);
   assert.match(chart, /A row linked to BRENDA and UniProt counts in both bars/);
   const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
@@ -1457,6 +1464,33 @@ function row(overrides = {}) {
   assert.equal(api.statsShare(8, 156431), "<0.1%", "A real nonzero outcome must never look like zero");
   assert.equal(api.statsShare(0, 156431), "0.0%");
   assert.equal(api.statsShare(0, 0), "—");
+  const emptyRing = api.statsReviewRing([{count: 0, color: "verified"}], 0);
+  assert.doesNotMatch(emptyRing, /NaN|Infinity|stroke-dasharray/);
+  const tinySlice = api.statsReviewRing([{count: 8, color: "disputed"}, {count: 156423, color: "neutral"}], 156431);
+  assert.match(tinySlice, new RegExp(`stroke-dasharray="${8 / 156431 * 100} `));
+  assert.doesNotMatch(api.statsReviewRing([{count: 1, color: "verified"}], 2), /stroke-dasharray/, "Do not draw an incomplete distribution as a full ring");
+  runtimeManifest.summary.followup_coverage = {
+    cohort: "manual_review_required",
+    source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
+    total: 1, with_literature_id: 1, with_sequence: 0, with_smiles: 1, with_kinetic_value: 1,
+  };
+  assert.match(api.statsFollowupCoverage(1), /Already present in follow-up records/);
+  assert.equal(api.statsFollowupCoverage(2), "", "Never mix follow-up denominators");
+  runtimeManifest.summary.followup_coverage.cohort = "unverified";
+  assert.equal(api.statsFollowupCoverage(1), "", "A same-sized cohort is not interchangeable");
+  delete runtimeManifest.summary.followup_coverage.cohort;
+  assert.equal(api.statsFollowupCoverage(1), "", "Require an explicit cohort");
+  runtimeManifest.summary.followup_coverage.cohort = "manual_review_required";
+  runtimeManifest.summary.followup_coverage.download_sha256 = "other-download";
+  assert.equal(api.statsFollowupCoverage(1), "", "Require the exact public download");
+  delete runtimeManifest.summary.followup_coverage.download_sha256;
+  delete runtimeManifest.enriched_download.sha256;
+  assert.equal(api.statsFollowupCoverage(1), "", "Missing hashes must not count as a match");
+  runtimeManifest.enriched_download.sha256 = "fixture-download";
+  runtimeManifest.summary.followup_coverage.download_sha256 = "fixture-download";
+  runtimeManifest.summary.followup_coverage.source_sha256 = "wrong-generation";
+  assert.equal(api.statsFollowupCoverage(1), "", "Reject coverage from another snapshot");
+  delete runtimeManifest.summary.followup_coverage;
   runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
   api.renderStats();
   assert.equal(readBreakdown().other_status, 1, "An unfamiliar outcome must not disappear");
@@ -1474,7 +1508,7 @@ function row(overrides = {}) {
   } };
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
+    accepted: 2, verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
     paper_evidence: 1, source_note: 1, literature_id: 1, source_records: 1, sequence: 4,
   }, "Stats works before the index arrives; invalid coverage cannot become a negative missing count");
   Object.assign(api.state, previous);
