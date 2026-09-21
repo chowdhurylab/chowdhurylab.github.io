@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      live:
+        description: Check the deployed site instead of the checkout
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,3 +34,65 @@ jobs:
         run: python3 tests/test_sync_catlog_latest.py
       - name: Verify the stable entry page matches the canonical page
         run: python3 scripts/sync-catlog-latest.py --check
+
+  viewer-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the full public release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Test viewer and follow-up summary
+        run: |
+          node tests/catlog-static-sort-cache.test.mjs
+          python3 -m unittest discover -s tests -p test_catlog_followup_summary.py
+          python3 -m unittest discover -s tests -p test_catlog_source_efficiency_layout.py
+      - name: Audit saved fields in the frozen follow-up cohort
+        run: python3 scripts/build-catlog-followup-summary.py
+      - name: Validate the complete public release
+        run: python3 scripts/check-catlog-publish.py
+
+  browser-checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            browser: chrome
+          - os: macos-15
+            browser: safari
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Check out the browser test and public site
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /tests/catlog-browser-check.py
+            /tools/catlog-static/
+            /tools/catlog-latest.html
+      - name: Install browser test dependency
+        run: |
+          python3 -m venv "$RUNNER_TEMP/catlog-browser"
+          "$RUNNER_TEMP/catlog-browser/bin/pip" install selenium==4.49.0
+      - name: Enable Safari automation on the disposable runner
+        if: matrix.browser == 'safari'
+        run: sudo safaridriver --enable
+      - name: Check layout and interactions
+        env:
+          BROWSER: ${{ matrix.browser }}
+          CHECK_LIVE: ${{ inputs.live }}
+        run: |
+          "$RUNNER_TEMP/catlog-browser/bin/python" tests/catlog-browser-check.py --browser "$BROWSER"
+      - name: Save browser screenshots and results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: catlog-browser-${{ matrix.browser }}
+          path: browser-checks/
+          retention-days: 3
