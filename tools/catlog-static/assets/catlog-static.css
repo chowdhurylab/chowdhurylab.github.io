@@ -1958,7 +1958,7 @@ body.detail-open .detail-panel {
   line-height: 1.25;
 }
 
-.stats-heading .snapshot-date { font-size: 14px; line-height: 1.5; }
+.stats-heading .snapshot-date { font-size: 14px !important; line-height: 1.5; }
 
 .stats-heading p,
 .stats-section > p {
