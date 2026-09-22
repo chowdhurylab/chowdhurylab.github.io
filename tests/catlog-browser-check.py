@@ -42,8 +42,19 @@ class AssetReferences(HTMLParser):
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120)
     driver.set_window_size(1440, 1000)
-    driver.get(url + "#stats")
+    driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
     wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) >= 5)
+    wait.until(lambda d: not urlsplit(d.current_url).query)
+    assert urlsplit(driver.current_url).path == urlsplit(url).path
+    assert urlsplit(driver.current_url).fragment == "stats"
+    for view in ("browse", "guide", "stats"):
+        link = driver.find_element(By.ID, view + "Button")
+        reported_tag = link.tag_name
+        print(f"{browser} {view} link tag: {reported_tag!r}", flush=True)
+        assert reported_tag.lower() == "a", f"Expected a navigation link, got {reported_tag!r}"
+        target = urlsplit(link.get_attribute("href"))
+        assert target.path == urlsplit(url).path and not target.query
+        assert target.fragment == ("" if view == "browse" else view)
     assets = AssetReferences()
     assets.feed((ROOT / "tools/catlog-latest.html").read_text())
     loaded_urls = driver.execute_script("return [...document.querySelectorAll('script[src], link[href]')].map(e => e.src || e.href)")
@@ -100,16 +111,20 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
+    examples = driver.find_element(By.CSS_SELECTOR, ".stats-material-section details")
+    examples.find_element(By.TAG_NAME, "summary").click()
     for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
         driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').click()
         group = manifest["summary"]["review_details"]["groups"][cohort]
         radio = driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]')
         assert radio.is_selected() and driver.switch_to.active_element == radio
+        assert examples.get_attribute("open") is not None, "Group selection must preserve open explanations"
         for figure in driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage figure"):
             assert int(figure.get_attribute("data-total")) == group["total"]
             assert int(figure.get_attribute("data-count")) == group[figure.get_attribute("data-stat-key")]
         assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-cohort-material li")) == group["total"]
         capture("stats-" + cohort)
+    examples.find_element(By.TAG_NAME, "summary").click()
     selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
     selected.send_keys(Keys.ARROW_RIGHT)
     assert driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="unverified"]').is_selected()
@@ -138,6 +153,11 @@ def check(driver, browser, url):
     result_count = driver.find_element(By.ID, "activeSummary").text
     driver.find_element(By.ID, "statsButton").click()
     assert driver.find_element(By.ID, "statsScope").text == f"All {total:,} records, before filtering."
+    driver.back()
+    wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
+    assert driver.find_element(By.ID, "activeSummary").text == result_count
+    driver.forward()
+    wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed())
     driver.find_element(By.ID, "browseButton").click()
     assert driver.find_element(By.ID, "globalSearchInput").get_attribute("value") == "laccase"
     assert driver.find_element(By.ID, "activeSummary").text == result_count

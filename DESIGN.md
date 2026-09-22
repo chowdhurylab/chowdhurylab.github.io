@@ -41,6 +41,10 @@ Source-chart slices use exclusive recorded source groups, not overlapping
 database link counts. Do not publish project token statistics on this page.
 The Guide starts with three plain tasks and a real search example, not a
 numbered onboarding strip or a repeated workflow illustration.
+Browse, Guide and Stats are real links; normal clicks retain the loaded table,
+while modified clicks and copying work normally. Strip only deployment-check
+query tags from shared navigation, preserving the stable path and view hash.
+Changing a review group must leave the surrounding explanations open.
 
 Group verified and corrected together as Accepted in the outcome ring, with
 their two subcounts alongside. The ring is a status distribution, never a

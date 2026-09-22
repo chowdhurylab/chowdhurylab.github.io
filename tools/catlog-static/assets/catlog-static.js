@@ -323,11 +323,18 @@
     }
   }
 
+  function viewUrl(view) {
+    const url = new URL(window.location.href);
+    // Deployment checks belong in requests, not copied navigation links.
+    url.searchParams.delete("release");
+    url.searchParams.delete("browser-check");
+    url.hash = view === "browse" ? "" : `#${view}`;
+    return url;
+  }
+
   function navigateTo(view) {
-    const targetHash = view === "browse" ? "" : `#${view}`;
-    if (window.location.hash !== targetHash) {
-      const url = new URL(window.location.href);
-      url.hash = targetHash;
+    const url = viewUrl(view);
+    if (window.location.href !== url.href) {
       window.history.pushState({ catlogView: view }, "", url);
     }
     renderView(view, { scroll: true });
@@ -1588,7 +1595,7 @@
         <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
         <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
       <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
-        ? "Prepared from source records, without an accepted review outcome. Previously labelled Calculated: the legacy status does not mean every value was calculated. Accepted records may also contain a calculated kcat/Km ratio."
+        ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
         : cohort === "unverified"
         ? "No accepted result is recorded for these entries. Unverified does not mean rejected, and the status does not tell us whether review was attempted."
         : "The saved decision calls for another check before acceptance. That can concern a value, the protein or the substrate; it need not mean starting over."}</p>
@@ -1693,7 +1700,7 @@
         </dl><p>Each record counts once, in the first matching group above. Attached material is not an acceptance decision.</p></details>
       </section>
       <section class="stats-section stats-followup-section stats-wide" aria-labelledby="followupTitle">
-        <h2 id="followupTitle">A closer look at records outside Accepted</h2>
+        <h2 id="followupTitle">Review group details</h2>
         <div id="statsReviewDetails">${statsReviewDetails(counts)}</div>
       </section>
       <section class="stats-section stats-field-section stats-wide" aria-labelledby="fieldsChartTitle">
@@ -2892,14 +2899,14 @@
     $("statsCharts").addEventListener("change", (event) => {
       if (event.target.name !== "statsCohort") return;
       state.statsCohort = event.target.value;
-      renderStats();
+      $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
       document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
     });
     $("statsCharts").addEventListener("click", (event) => {
       const button = event.target.closest("[data-stats-cohort]");
       if (!button) return;
       state.statsCohort = button.dataset.statsCohort;
-      renderStats();
+      $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
       document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
       $("statsReviewDetails").scrollIntoView({ block: "start" });
     });
@@ -2973,9 +2980,15 @@
       });
     });
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
-    $("browseButton").addEventListener("click", () => navigateTo("browse"));
-    $("guideButton").addEventListener("click", () => navigateTo("guide"));
-    $("statsButton").addEventListener("click", () => navigateTo("stats"));
+    for (const view of ["browse", "guide", "stats"]) {
+      const link = $(`${view}Button`);
+      link.setAttribute("href", viewUrl(view).href);
+      link.addEventListener("click", (event) => {
+        if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        navigateTo(view);
+      });
+    }
     $("snapshotStatsButton").addEventListener("click", () => navigateTo("stats"));
     document.addEventListener("click", (event) => {
       const menu = $("downloadMenu");
@@ -3085,6 +3098,9 @@
       renderStats();
       renderDownloadMetadata();
       renderSourceAttribution();
+      const cleanUrl = viewUrl(viewFromLocation());
+      cleanUrl.hash = window.location.hash;
+      if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
       bindControls();
       renderView(viewFromLocation());
       syncFilterPanel();
@@ -3159,6 +3175,7 @@
       statsBarRows,
       renderView,
       navigateTo,
+      viewUrl,
       viewFromLocation,
       setFiltersOpen,
     };
