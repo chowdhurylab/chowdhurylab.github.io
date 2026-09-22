@@ -1958,6 +1958,8 @@ body.detail-open .detail-panel {
   line-height: 1.25;
 }
 
+.stats-heading .snapshot-date { font-size: 14px; line-height: 1.5; }
+
 .stats-heading p,
 .stats-section > p {
   margin: 7px 0 16px;
@@ -2037,7 +2039,7 @@ body.detail-open .detail-panel {
 .stats-chart-legend ul { list-style: none; padding: 0; margin: 0; }
 .stats-outcome-head,
 .stats-chart-legend li { display: grid; grid-template-columns: minmax(0, 1fr) 64px 52px; align-items: start; gap: 8px; }
-.stats-outcome-head { padding-bottom: 8px; font-size: 10px; color: var(--muted); }
+.stats-outcome-head { padding-bottom: 5px; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .stats-outcome-head > span:not(:first-child) { text-align: right; }
 .stats-chart-legend li { padding: 7px 0; font-size: 15px; line-height: 1.4; }
 .stats-chart-legend li > strong { font-weight: 500; }
@@ -2132,6 +2134,7 @@ body.detail-open .detail-panel {
 .stats-detail-table :is(th, td):last-child { padding-right: 0; }
 .stats-database-section .stats-review-layout { max-width: 900px; }
 .stats-database-section .stats-chart-legend ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 26px; }
+.stats-database-section .stats-outcome-head { display: none; }
 
 .stats-section h2 {
   margin: 0;
@@ -2234,7 +2237,8 @@ body.detail-open .detail-panel {
 }
 
 .stats-explanation { font-size: 14px; line-height: 1.5; }
-.stats-explanation summary { width: fit-content; cursor: pointer; color: var(--blue); }
+.stats-explanation summary { width: fit-content; min-height: 36px; padding-block: 7px; cursor: pointer; color: var(--blue); }
+.stats-explanation summary:hover { text-decoration: underline; text-underline-offset: 3px; }
 .stats-explanation p { margin: 8px 0 0; max-width: 56ch; }
 .stats-explanation dl { margin: 8px 0 0; }
 .stats-explanation dl > div { display: grid; grid-template-columns: 130px 1fr; gap: 12px; margin-top: 6px; }
@@ -2263,6 +2267,7 @@ body.detail-open .detail-panel {
   .stats-shell { max-width: 760px; }
   .stats-field-section .stats-field-rings { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .stats-database-section .stats-chart-legend ul { grid-template-columns: 1fr; }
+  .stats-database-section .stats-outcome-head { display: grid; }
 }
 
 @media (min-width: 1001px) and (max-width: 1240px) {
