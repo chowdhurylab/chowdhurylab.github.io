@@ -69,6 +69,15 @@ def build_alias(source: str, *, stats: bool = False) -> str:
     alias = alias.replace('href="#browse"', 'href="catlog-latest.html"')
     alias = alias.replace('href="#guide"', 'href="catlog-latest.html#guide"')
     alias = alias.replace('href="#stats"', 'href="catlog-stats.html"')
+    public_url = f'https://chowdhurylab.github.io/tools/catlog-{"stats" if stats else "latest"}.html'
+    alias = alias.replace(
+        '<link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/"',
+        f'<link rel="canonical" href="{public_url}"',
+    )
+    alias = alias.replace(
+        '<meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/"',
+        f'<meta property="og:url" content="{public_url}"',
+    )
     if stats:
         alias = alias.replace('<title>CatLog | Enzyme Kinetics Catalog</title>', '<title>Stats | CatLog</title>')
         alias = alias.replace('<body>', '<body class="stats-open">')
@@ -78,8 +87,6 @@ def build_alias(source: str, *, stats: bool = False) -> str:
                               'id="browseButton" class="nav-tab" href="catlog-latest.html"')
         alias = alias.replace('id="statsButton" class="nav-tab"', 'id="statsButton" class="nav-tab active" aria-current="page"')
         alias = alias.replace('content="CatLog | Enzyme Kinetics Catalog"', 'content="Stats | CatLog"')
-        alias = alias.replace('https://chowdhurylab.github.io/tools/catlog-static/',
-                              'https://chowdhurylab.github.io/tools/catlog-stats.html')
     return alias
 
 

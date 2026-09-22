@@ -48,6 +48,15 @@ def check(driver, browser, url):
     stats_path = urlsplit(url).path.replace("catlog-latest.html", "catlog-stats.html")
     assert urlsplit(driver.current_url).path == stats_path
     assert not urlsplit(driver.current_url).fragment
+
+    def check_metadata(view):
+        expected_path = stats_path if view == "stats" else urlsplit(url).path
+        expected_url = urljoin(url, expected_path)
+        assert driver.find_element(By.CSS_SELECTOR, 'link[rel="canonical"]').get_attribute("href") == expected_url
+        assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:url"]').get_attribute("content") == expected_url
+        assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute("content") == driver.title
+
+    check_metadata("stats")
     for view in ("browse", "guide", "stats"):
         link = driver.find_element(By.ID, view + "Button")
         reported_tag = link.tag_name
@@ -84,6 +93,7 @@ def check(driver, browser, url):
         displayed = {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
                      for row in driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend li")}
         assert displayed == slices and sum(displayed.values()) == group["total"]
+        assert "Available fields do not mean the record is accepted." in driver.find_element(By.CLASS_NAME, "stats-followup-coverage").text
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage svg"), "Field split belongs in the outcome chart"
         cohort = driver.find_element(By.CSS_SELECTOR, ".stats-followup-coverage").get_attribute("data-cohort")
         outer = {row.get_attribute("data-field-slice"): int(row.get_attribute("data-count"))
@@ -190,20 +200,33 @@ def check(driver, browser, url):
 
     driver.find_element(By.ID, "browseButton").click()
     wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
+    check_metadata("browse")
     assert len(driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) == 25
     search = driver.find_element(By.ID, "globalSearchInput")
+    search.send_keys("zzzz-no-match-catlog", Keys.TAB)
+    wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records")
+    assert not driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+    for identifier in ("downloadPageButton", "prevButton", "nextButton"):
+        assert not driver.find_element(By.ID, identifier).is_enabled()
+    driver.find_element(By.ID, "clearResultsButton").click()
+    wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
+    assert search.get_attribute("value") == ""
+    assert driver.find_element(By.ID, "downloadPageButton").is_enabled()
     search.send_keys("laccase", Keys.TAB)
     assert search.get_attribute("value") == "laccase"
     wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]") and all("laccase" in row.text.lower() for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
     result_count = driver.find_element(By.ID, "activeSummary").text
     driver.find_element(By.ID, "statsButton").click()
     assert urlsplit(driver.current_url).path == stats_path and not urlsplit(driver.current_url).fragment
+    check_metadata("stats")
     assert driver.find_element(By.ID, "statsScope").text == f"All {total:,} records, before filtering."
     driver.back()
     wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
+    check_metadata("browse")
     assert driver.find_element(By.ID, "activeSummary").text == result_count
     driver.forward()
     wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed())
+    check_metadata("stats")
     driver.find_element(By.ID, "browseButton").click()
     assert driver.find_element(By.ID, "globalSearchInput").get_attribute("value") == "laccase"
     assert driver.find_element(By.ID, "activeSummary").text == result_count
@@ -215,6 +238,7 @@ def check(driver, browser, url):
     driver.find_element(By.ID, "closeDetailButton").click()
     driver.find_element(By.ID, "guideButton").click()
     assert driver.find_element(By.ID, "guideView").is_displayed()
+    check_metadata("guide")
     driver.find_element(By.ID, "statsButton").click()
     driver.execute_script("window.scrollTo(0, 0)")
     driver.set_window_size(1080, 900)
