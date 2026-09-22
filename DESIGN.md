@@ -23,8 +23,9 @@ reference material. Browse keeps its existing colors. Keep Stats content within
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.
 
-At desktop sizes, use two chart columns. Below 1000px, use one column with
-normal page scrolling. Never add an independently scrolling chart panel.
+At desktop sizes, keep the review circle, outcome counts and selected field
+breakdown in one section. Narrow layouts stack with normal page scrolling.
+Never add an independently scrolling chart panel.
 Keep Browse's filtered state when navigating away and back.
 
 Search belongs to Browse, not Stats or Guide. On Stats, show exact percentages
@@ -32,8 +33,10 @@ and aligned counts rather than progress-track styling. Keep the
 identity-only caveat visible; put short definitions and examples in optional
 disclosures. Never invent a reason for a pending review from a blank field.
 
-Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use two overview
-sections, followed by full-width field comparisons and the source chart.
+Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use one review
+section, followed by full-width field comparisons and the database source chart.
+Do not show the broad source-material categories as Stats charts; source text
+remains available in individual records and downloads.
 Put overlapping wild-type and variant sequence counts in a disclosure rather
 than adding more repeated rings. "Without this field" means no value in the
 public download; never imply rejection, data loss, or an incomplete review.
@@ -46,8 +49,13 @@ while modified clicks and copying work normally. Strip only deployment-check
 query tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
 catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
 Changing a review group must leave the surrounding explanations open.
-Use one larger field-presence ring per review group: all four fields, exactly
-one absent field, or multiple absent fields. Calculate combinations from the
+Use a single nested circle: outcomes inside and field combinations outside.
+Each outer group spans exactly its inner outcome angle, using the same total.
+Highlight the selected group and list its exact counts beside the chart.
+Only the three hash-bound review groups currently have field subdivisions;
+leave other outcomes unsplit, never infer accepted-record fields from status.
+Field groups are all four fields, exactly one absent field, or multiple absent
+fields. Calculate combinations from the
 same frozen public download, never from marginal totals. Show overlapping
 per-field totals separately and reconcile both views. Main chart labels use
 15px type and secondary text at least 14px; do not shrink text to fit a column.
@@ -60,10 +68,10 @@ have an accessible text count. Explain follow-up with explicitly illustrative
 protein, substrate and assay checks; do not infer a reason from missing data.
 Same-snapshot field presence can describe what is already saved in follow-up
 records, but cannot establish a completed check or the severity of the rest.
-Follow-up, Unverified and Pre-review link to a selectable group detail below the
-overview. Each group uses its own hash-bound field and material counts. Keep
-the status meaning and short illustrative checks visible; do not hide all
-explanation behind a disclosure or present these examples as counted reasons.
+Follow-up, Unverified and Pre-review select the adjacent field breakdown
+without jumping down the desktop page. Each group uses its own hash-bound
+field counts. Keep the status meaning visible and the illustrative checks in
+a short disclosure; do not present these examples as counted reasons.
 Pre-review is the label for the legacy mathematically_inferred record status:
 the importer also used it for source-derived records. Do not describe every
 value in that group as calculated. A calculated ratio field is separate from

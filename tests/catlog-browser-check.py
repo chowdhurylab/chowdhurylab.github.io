@@ -84,7 +84,12 @@ def check(driver, browser, url):
         displayed = {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
                      for row in driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend li")}
         assert displayed == slices and sum(displayed.values()) == group["total"]
-        assert len(driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage svg")) == 1
+        assert not driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage svg"), "Field split belongs in the outcome chart"
+        cohort = driver.find_element(By.CSS_SELECTOR, ".stats-followup-coverage").get_attribute("data-cohort")
+        outer = {row.get_attribute("data-field-slice"): int(row.get_attribute("data-count"))
+                 for row in driver.find_elements(By.CSS_SELECTOR, f'#statsReviewFigure [data-field-group="{cohort}"]')}
+        assert outer == {key: count for key, count in slices.items() if count}
+        assert sum(outer.values()) == group["total"]
         for field, count_key in (("sequence", "with_sequence"), ("smiles", "with_smiles"), ("paper_id", "with_literature_id"), ("kinetic_value", "with_kinetic_value")):
             row = driver.find_element(By.CSS_SELECTOR, f'.stats-missing-totals [data-field="{field}"]')
             assert int(row.get_attribute("data-missing")) == group["total"] - group[count_key]
@@ -92,8 +97,10 @@ def check(driver, browser, url):
 
     check_combined_coverage(manifest["summary"]["review_details"]["groups"]["manual_review_required"])
     assert "Illustrative checks" in driver.find_element(By.CLASS_NAME, "stats-followup-section").get_attribute("textContent")
-    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-review-ring svg")) == 10
-    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-material-section li")) == total
+    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts svg")) == 7
+    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, "#statsReviewFigure [data-outcome]")) == total
+    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-material-section, .stats-cohort-material"), "Remove material charts, not source records"
+    assert driver.execute_script("return document.querySelector('.stats-review-section').contains(document.querySelector('#statsReviewDetails'))")
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-database-section li")) == total
     stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
     assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
@@ -139,7 +146,17 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
-    examples = driver.find_element(By.CSS_SELECTOR, ".stats-material-section details")
+    assert driver.execute_script("""
+        const arc = document.querySelector('#statsReviewFigure [data-field-group="manual_review_required"]');
+        const rect = arc.ownerSVGElement.getBoundingClientRect();
+        const length = parseFloat(arc.getAttribute('stroke-dasharray'));
+        const start = -Number(arc.getAttribute('stroke-dashoffset'));
+        const angle = (start + length / 2) / 100 * Math.PI * 2 - Math.PI / 2;
+        const radius = Number(arc.getAttribute('r')) / 240 * rect.width;
+        return document.elementFromPoint(rect.left + rect.width / 2 + Math.cos(angle) * radius,
+            rect.top + rect.height / 2 + Math.sin(angle) * radius) === arc;
+    """), "The chart center must not block segment labels on hover"
+    examples = driver.find_element(By.CSS_SELECTOR, ".stats-review-overview details")
     examples.find_element(By.TAG_NAME, "summary").click()
     for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
         driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').click()
@@ -148,7 +165,7 @@ def check(driver, browser, url):
         assert radio.is_selected() and driver.switch_to.active_element == radio
         assert examples.get_attribute("open") is not None, "Group selection must preserve open explanations"
         check_combined_coverage(group)
-        assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-cohort-material li")) == group["total"]
+        assert driver.find_element(By.CSS_SELECTOR, ".stats-outer-group.selected").get_attribute("data-review-group") == cohort
         capture("stats-" + cohort)
     examples.find_element(By.TAG_NAME, "summary").click()
     selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
@@ -216,10 +233,9 @@ def check(driver, browser, url):
                 element.click()
                 check_panel_width()
                 element.click()
-        driver.execute_script("document.querySelector('.stats-cohort-context').scrollIntoView()")
         assert driver.execute_script("""
-            const chart = document.querySelector('.stats-cohort-material .stats-review-ring').getBoundingClientRect();
-            const legend = document.querySelector('.stats-cohort-material .stats-chart-legend').getBoundingClientRect();
+            const chart = document.querySelector('.stats-nested-figure').getBoundingClientRect();
+            const legend = document.querySelector('.stats-review-legend').getBoundingClientRect();
             return legend.top >= chart.bottom;
         """)
         capture("stats-mobile-source-material")
