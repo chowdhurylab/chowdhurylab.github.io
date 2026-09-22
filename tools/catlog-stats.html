@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CatLog | Enzyme Kinetics Catalog</title>
+    <title>Stats | CatLog</title>
     <meta name="description" content="CatLog snapshot dated September 20, 2026: browse 156,431 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
     <meta name="theme-color" content="#1f6f66" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
+    <meta property="og:title" content="Stats | CatLog" />
     <meta property="og:description" content="CatLog snapshot dated September 20, 2026 with 156,431 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
-    <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
-    <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
+    <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-stats.html" />
+    <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-stats.html" />
     <link rel="icon" href="/images/rz.png" />
     <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=cfba208893b2623f" />
   </head>
-  <body>
+  <body class="stats-open">
     <div class="static-app">
       <header class="app-header">
         <button id="brandHomeButton" class="brand-lockup" type="button" aria-label="Return to CatLog browse">
@@ -23,7 +23,7 @@
           <span aria-hidden="true">enzyme kinetics catalog</span>
         </button>
         <nav class="top-nav" aria-label="Catalog sections">
-          <a id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page">Browse</a>
+          <a id="browseButton" class="nav-tab" href="catlog-latest.html">Browse</a>
           <a id="guideButton" class="nav-tab" href="catlog-latest.html#guide">Guide</a>
           <a
             class="nav-tab"
@@ -33,7 +33,7 @@
             aria-label="Open the CatLog research paper"
           >Paper</a>
           <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
-          <a id="statsButton" class="nav-tab" href="catlog-stats.html" aria-controls="statsView">Stats</a>
+          <a id="statsButton" class="nav-tab active" aria-current="page" href="catlog-stats.html" aria-controls="statsView">Stats</a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
           <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
@@ -85,7 +85,7 @@
       ><span></span></div>
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
-      <main id="catalogView">
+      <main id="catalogView" hidden>
         <section class="snapshot-band" aria-label="Current results" aria-live="polite">
           <div class="snapshot-overview">
             <div class="summary-grid" id="summaryGrid"></div>
@@ -227,7 +227,7 @@
 
       </main>
 
-      <main id="statsView" class="stats-view" hidden aria-labelledby="statsHeading">
+      <main id="statsView" class="stats-view" aria-labelledby="statsHeading">
         <div class="stats-shell">
           <header class="stats-heading">
             <div>

@@ -19,7 +19,7 @@ the approved artifact palette: blue #339cff for accepted, orange #f3883b for
 follow-up, gray for unverified, and red for disputed. Green #5dc977 marks
 kinetics, blue protein sequences, orange substrate structures, and pink #eb77b1
 reference material. Browse keeps its existing colors. Keep Stats content within
-1200px so charts and labels stay together on a wide monitor.
+1280px so charts and labels stay together on a wide monitor.
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.
 
@@ -43,8 +43,14 @@ The Guide starts with three plain tasks and a real search example, not a
 numbered onboarding strip or a repeated workflow illustration.
 Browse, Guide and Stats are real links; normal clicks retain the loaded table,
 while modified clicks and copying work normally. Strip only deployment-check
-query tags from shared navigation, preserving the stable path and view hash.
+query tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
+catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
 Changing a review group must leave the surrounding explanations open.
+Use one larger field-presence ring per review group: all four fields, exactly
+one absent field, or multiple absent fields. Calculate combinations from the
+same frozen public download, never from marginal totals. Show overlapping
+per-field totals separately and reconcile both views. Main chart labels use
+15px type and secondary text at least 14px; do not shrink text to fit a column.
 
 Group verified and corrected together as Accepted in the outcome ring, with
 their two subcounts alongside. The ring is a status distribution, never a

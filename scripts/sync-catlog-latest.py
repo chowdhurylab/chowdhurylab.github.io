@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "tools" / "catlog-static" / "index.html"
 TARGET = ROOT / "tools" / "catlog-latest.html"
+STATS_TARGET = ROOT / "tools" / "catlog-stats.html"
 PUBLIC_PREFIX = "catlog-static/"
 ASSET_REFERENCE = re.compile(
     r'(?P<head>\b(?:href|src)=")(?P<path>(?:assets|data)/)'
@@ -37,7 +38,7 @@ def prepare_canonical(source: str) -> str:
     return source.replace("</body>", f"{USAGE_TRACKER_TAG}\n</body>")
 
 
-def build_alias(source: str) -> str:
+def build_alias(source: str, *, stats: bool = False) -> str:
     alias, reference_count = ASSET_REFERENCE.subn(
         lambda match: f'{match.group("head")}{PUBLIC_PREFIX}{match.group("path")}',
         source,
@@ -65,6 +66,20 @@ def build_alias(source: str) -> str:
         raise RuntimeError("Alias still contains an unprefixed static asset reference")
     if DATASET_NOTES_REFERENCE.search(alias):
         raise RuntimeError("Alias still contains an unprefixed dataset-notes reference")
+    alias = alias.replace('href="#browse"', 'href="catlog-latest.html"')
+    alias = alias.replace('href="#guide"', 'href="catlog-latest.html#guide"')
+    alias = alias.replace('href="#stats"', 'href="catlog-stats.html"')
+    if stats:
+        alias = alias.replace('<title>CatLog | Enzyme Kinetics Catalog</title>', '<title>Stats | CatLog</title>')
+        alias = alias.replace('<body>', '<body class="stats-open">')
+        alias = alias.replace('<main id="catalogView">', '<main id="catalogView" hidden>')
+        alias = alias.replace('class="stats-view" hidden', 'class="stats-view"')
+        alias = alias.replace('id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page"',
+                              'id="browseButton" class="nav-tab" href="catlog-latest.html"')
+        alias = alias.replace('id="statsButton" class="nav-tab"', 'id="statsButton" class="nav-tab active" aria-current="page"')
+        alias = alias.replace('content="CatLog | Enzyme Kinetics Catalog"', 'content="Stats | CatLog"')
+        alias = alias.replace('https://chowdhurylab.github.io/tools/catlog-static/',
+                              'https://chowdhurylab.github.io/tools/catlog-stats.html')
     return alias
 
 
@@ -79,21 +94,22 @@ def main() -> int:
 
     source = SOURCE.read_text(encoding="utf-8")
     canonical = prepare_canonical(source)
-    expected = build_alias(canonical)
-    current = TARGET.read_text(encoding="utf-8") if TARGET.exists() else None
+    pages = {TARGET: build_alias(canonical), STATS_TARGET: build_alias(canonical, stats=True)}
     if args.check:
         if canonical != source:
             raise SystemExit("tools/catlog-static/index.html is missing its usage tracker")
-        if current != expected:
-            raise SystemExit("tools/catlog-latest.html is out of date")
-        print("tools/catlog-latest.html is synchronized")
+        for target, expected in pages.items():
+            if not target.exists() or target.read_text(encoding="utf-8") != expected:
+                raise SystemExit(f"{target.relative_to(ROOT)} is out of date")
+        print("CatLog Browse and Stats entry pages are synchronized")
         return 0
 
     if canonical != source:
         SOURCE.write_text(canonical, encoding="utf-8")
         print(f"Wrote {SOURCE.relative_to(ROOT)}")
-    TARGET.write_text(expected, encoding="utf-8")
-    print(f"Wrote {TARGET.relative_to(ROOT)}")
+    for target, expected in pages.items():
+        target.write_text(expected, encoding="utf-8")
+        print(f"Wrote {target.relative_to(ROOT)}")
     return 0
 
 
