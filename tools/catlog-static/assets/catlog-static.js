@@ -304,6 +304,13 @@
     document.title = guideOpen
       ? "Guide | CatLog"
       : statsOpen ? "Stats | CatLog" : "CatLog | Enzyme Kinetics Catalog";
+    const currentUrl = new URL(window.location.href);
+    if (/^https?:$/.test(currentUrl.protocol) && /\/catlog-(latest|stats)\.html$/.test(currentUrl.pathname)) {
+      const publicUrl = new URL(statsOpen ? "./catlog-stats.html" : "./catlog-latest.html", currentUrl);
+      document.querySelector('link[rel="canonical"]')?.setAttribute("href", publicUrl.href);
+      document.querySelector('meta[property="og:url"]')?.setAttribute("content", publicUrl.href);
+      document.querySelector('meta[property="og:title"]')?.setAttribute("content", document.title);
+    }
     if (!browseOpen) {
       setFiltersOpen(false);
       resetDetail();
@@ -1633,7 +1640,7 @@
     const multiple = combinations.filter((item) => item.missing.length > 1).sort((a, b) => b.count - a.count);
     const multipleCount = multiple.reduce((sum, item) => sum + item.count, 0);
     const slices = [
-      { value: "complete", label: "All four fields present", count: complete, color: "kinetic" },
+      { value: "complete", label: "All four fields available", count: complete, color: "kinetic" },
       ...fields.map(([key, , , color]) => ({ value: `only_${key}`,
         label: ({ sequence: "Only sequence missing", smiles: "Only SMILES missing", paper_id: "Only paper ID missing", kinetic_value: "Only kinetic value missing" })[key], color,
         count: combinations.find((item) => item.missing.length === 1 && item.missing[0] === key)?.count || 0 })),
@@ -1648,7 +1655,7 @@
     if (!parts) return "";
     const { fields, slices, multiple, multipleCount, names } = parts;
     return `${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
-      <p>Each record counts once. Missing means absent from this download, not rejected.</p>
+      <p>Available fields do not mean the record is accepted. Missing means absent from this download, not rejected.</p>
       <details class="stats-explanation stats-missing-totals"><summary>Missing by field</summary><table class="stats-detail-table">
         <thead><tr><th>Field</th><th>Records</th><th>Share</th></tr></thead><tbody>
           ${fields.map(([key, label, countKey]) => `<tr data-field="${key}" data-missing="${group.total - group[countKey]}"><th scope="row">${label}</th><td>${formatInteger(group.total - group[countKey])}</td><td>${statsShare(group.total - group[countKey], group.total)}</td></tr>`).join("")}
