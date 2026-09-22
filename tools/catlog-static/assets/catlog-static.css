@@ -2123,7 +2123,7 @@ body.detail-open .detail-panel {
 .stats-review-overview > .stats-review-layout { grid-template-columns: 288px minmax(0, 1fr); align-items: start; gap: 20px; }
 .stats-nested-ring { position: relative; width: 288px; max-width: 100%; aspect-ratio: 1; }
 .stats-nested-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); fill: none; }
-.stats-nested-ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+.stats-nested-ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; pointer-events: none; }
 .stats-nested-ring strong { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .stats-nested-ring span { color: var(--muted); font-size: 14px; }
 .stats-outer-group { opacity: 0.3; }

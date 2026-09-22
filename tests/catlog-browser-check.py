@@ -146,6 +146,16 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
+    assert driver.execute_script("""
+        const arc = document.querySelector('#statsReviewFigure [data-field-group="manual_review_required"]');
+        const rect = arc.ownerSVGElement.getBoundingClientRect();
+        const length = parseFloat(arc.getAttribute('stroke-dasharray'));
+        const start = -Number(arc.getAttribute('stroke-dashoffset'));
+        const angle = (start + length / 2) / 100 * Math.PI * 2 - Math.PI / 2;
+        const radius = Number(arc.getAttribute('r')) / 240 * rect.width;
+        return document.elementFromPoint(rect.left + rect.width / 2 + Math.cos(angle) * radius,
+            rect.top + rect.height / 2 + Math.sin(angle) * radius) === arc;
+    """), "The chart center must not block segment labels on hover"
     examples = driver.find_element(By.CSS_SELECTOR, ".stats-review-overview details")
     examples.find_element(By.TAG_NAME, "summary").click()
     for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
