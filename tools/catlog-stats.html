@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CatLog | Enzyme Kinetics Catalog</title>
+    <title>Stats | CatLog</title>
     <meta name="description" content="CatLog snapshot dated September 20, 2026: browse 156,431 enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />
     <meta name="theme-color" content="#1f6f66" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />
+    <meta property="og:title" content="Stats | CatLog" />
     <meta property="og:description" content="CatLog snapshot dated September 20, 2026 with 156,431 enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />
-    <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/" />
-    <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
+    <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-stats.html" />
+    <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-stats.html" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="assets/catlog-static.css?v=0b615a3ef3e30935" />
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=0b615a3ef3e30935" />
   </head>
-  <body>
+  <body class="stats-open">
     <div class="static-app">
       <header class="app-header">
         <button id="brandHomeButton" class="brand-lockup" type="button" aria-label="Return to CatLog browse">
@@ -23,8 +23,8 @@
           <span aria-hidden="true">enzyme kinetics catalog</span>
         </button>
         <nav class="top-nav" aria-label="Catalog sections">
-          <a id="browseButton" class="nav-tab active" href="#browse" aria-current="page">Browse</a>
-          <a id="guideButton" class="nav-tab" href="#guide">Guide</a>
+          <a id="browseButton" class="nav-tab" href="catlog-latest.html">Browse</a>
+          <a id="guideButton" class="nav-tab" href="catlog-latest.html#guide">Guide</a>
           <a
             class="nav-tab"
             href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"
@@ -33,7 +33,7 @@
             aria-label="Open the CatLog research paper"
           >Paper</a>
           <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
-          <a id="statsButton" class="nav-tab" href="#stats" aria-controls="statsView">Stats</a>
+          <a id="statsButton" class="nav-tab active" aria-current="page" href="catlog-stats.html" aria-controls="statsView">Stats</a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
           <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism, or substrate" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
@@ -45,7 +45,7 @@
             <div class="download-options">
               <a
                 id="enrichedDataButton"
-                href="data/catlog-enriched.0867b2f89e73.jsonl.gz"
+                href="catlog-static/data/catlog-enriched.0867b2f89e73.jsonl.gz"
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>Full data</strong>
@@ -53,7 +53,7 @@
               </a>
               <a
                 id="exportSnapshotButton"
-                href="data/catlog-table.3b902263e05e.jsonl.gz"
+                href="catlog-static/data/catlog-table.3b902263e05e.jsonl.gz"
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table</strong>
@@ -66,7 +66,7 @@
                 <strong>Review files</strong>
                 <span>Source records and review notes. Request by email.</span>
               </a>
-              <a id="datasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener">
+              <a id="datasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
                 <span>Snapshot IDs, field coverage, sources, and licenses</span>
               </a>
@@ -85,7 +85,7 @@
       ><span></span></div>
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
-      <main id="catalogView">
+      <main id="catalogView" hidden>
         <section class="snapshot-band" aria-label="Current results" aria-live="polite">
           <div class="snapshot-overview">
             <div class="summary-grid" id="summaryGrid"></div>
@@ -227,7 +227,7 @@
 
       </main>
 
-      <main id="statsView" class="stats-view" hidden aria-labelledby="statsHeading">
+      <main id="statsView" class="stats-view" aria-labelledby="statsHeading">
         <div class="stats-shell">
           <header class="stats-heading">
             <div>
@@ -298,7 +298,7 @@
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
-                    href="data/catlog-enriched.0867b2f89e73.jsonl.gz"
+                    href="catlog-static/data/catlog-enriched.0867b2f89e73.jsonl.gz"
                     download="catlog-enriched.jsonl.gz"
                   >Download full data</a>
                 </section>
@@ -381,7 +381,7 @@
             </dl>
             <div class="guide-citation-links">
               <a href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2" target="_blank" rel="noopener noreferrer">CatLog paper</a>
-              <a id="guideDatasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
+              <a id="guideDatasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
               <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>
             </div>
           </section>
@@ -406,8 +406,8 @@
       </main>
     </div>
 
-    <script src="data/manifest.a3b83fb102ea.js"></script>
-    <script data-catalog-base="." src="assets/catlog-static.js?v=0b615a3ef3e30935"></script>
+    <script src="catlog-static/data/manifest.a3b83fb102ea.js"></script>
+    <script data-catalog-base="catlog-static/" src="catlog-static/assets/catlog-static.js?v=0b615a3ef3e30935"></script>
     <script src="/assets/js/usage-tracker.js" data-usage-source="catlog"></script>
   </body>
 </html>

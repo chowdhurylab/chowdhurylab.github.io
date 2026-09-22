@@ -283,7 +283,8 @@
   const $ = (id) => document.getElementById(id);
 
   function viewFromLocation() {
-    return ["#guide", "#stats"].includes(window.location.hash) ? window.location.hash.slice(1) : "browse";
+    if (["#browse", "#guide", "#stats"].includes(window.location.hash)) return window.location.hash.slice(1);
+    return new URL(window.location.href).pathname.endsWith("/catlog-stats.html") ? "stats" : "browse";
   }
 
   function renderView(view, { scroll = false } = {}) {
@@ -329,6 +330,11 @@
     url.searchParams.delete("release");
     url.searchParams.delete("browser-check");
     url.hash = view === "browse" ? "" : `#${view}`;
+    // Portable exports keep hash navigation; the two published entry pages share one app.
+    if (/\/catlog-(latest|stats)\.html$/.test(url.pathname)) {
+      url.pathname = url.pathname.replace(/catlog-(latest|stats)\.html$/, view === "stats" ? "catlog-stats.html" : "catlog-latest.html");
+      if (view === "stats") url.hash = "";
+    }
     return url;
   }
 
@@ -1580,6 +1586,53 @@
     return group;
   }
 
+  function statsCombinedCoverage(group) {
+    const fields = [
+      ["sequence", "Protein sequence", "with_sequence", "protein"],
+      ["smiles", "Substrate SMILES", "with_smiles", "structure"],
+      ["paper_id", "Paper ID", "with_literature_id", "reference"],
+      ["kinetic_value", "Kinetic value", "with_kinetic_value", "measurement"],
+    ];
+    const combinations = group.field_combinations;
+    if (!Array.isArray(combinations)) return "";
+    const keys = new Set();
+    const valid = combinations.every((item) => {
+      if (!Array.isArray(item.missing) || !Number.isInteger(item.count) || item.count < 1
+        || new Set(item.missing).size !== item.missing.length
+        || !item.missing.every((key) => fields.some(([field]) => field === key))) return false;
+      const key = [...item.missing].sort().join("+");
+      if (keys.has(key)) return false;
+      keys.add(key);
+      return true;
+    });
+    if (!valid || combinations.reduce((sum, item) => sum + item.count, 0) !== group.total
+      || !fields.every(([key, , countKey]) => combinations.reduce((sum, item) => sum + (item.missing.includes(key) ? item.count : 0), 0) === group.total - group[countKey])) return "";
+    const complete = combinations.find((item) => !item.missing.length)?.count || 0;
+    const multiple = combinations.filter((item) => item.missing.length > 1).sort((a, b) => b.count - a.count);
+    const multipleCount = multiple.reduce((sum, item) => sum + item.count, 0);
+    const slices = [
+      { value: "complete", label: "All four fields present", count: complete, color: "kinetic" },
+      ...fields.map(([key, , , color]) => ({ value: `only_${key}`,
+        label: ({ sequence: "Only sequence missing", smiles: "Only SMILES missing", paper_id: "Only paper ID missing", kinetic_value: "Only kinetic value missing" })[key], color,
+        count: combinations.find((item) => item.missing.length === 1 && item.missing[0] === key)?.count || 0 })),
+      { value: "multiple", label: "Two or more fields missing", count: multipleCount, color: "calculated" },
+    ];
+    const names = Object.fromEntries(fields.map(([key, label]) => [key, label]));
+    return `<div class="stats-coverage-layout">
+      <div class="stats-coverage-plot"><div class="stats-review-layout">
+        ${statsReviewRing(slices, group.total)}${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
+      </div><p>Each record appears once. Missing means absent from this download, not rejected.</p></div>
+      <div class="stats-missing-totals"><h3>Missing by field</h3><table class="stats-detail-table">
+        <thead><tr><th>Field</th><th>Records</th><th>Share</th></tr></thead><tbody>
+          ${fields.map(([key, label, countKey]) => `<tr data-field="${key}" data-missing="${group.total - group[countKey]}"><th scope="row">${label}</th><td>${formatInteger(group.total - group[countKey])}</td><td>${statsShare(group.total - group[countKey], group.total)}</td></tr>`).join("")}
+        </tbody></table><p>These totals overlap: a row can lack both a sequence and SMILES.</p>
+      </div>
+    </div>${multipleCount ? `<details class="stats-explanation stats-combination-details"><summary>Which fields are missing together? ${formatInteger(multipleCount)} records</summary>
+      <table class="stats-detail-table"><thead><tr><th>Missing fields</th><th>Records</th></tr></thead><tbody>
+        ${multiple.map((item) => `<tr><th scope="row">${item.missing.map((key) => names[key]).join(" + ")}</th><td>${formatInteger(item.count)}</td></tr>`).join("")}
+      </tbody></table></details>` : ""}`;
+  }
+
   function statsReviewDetails(counts) {
     const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
     const total = counts[cohort] || 0;
@@ -1599,8 +1652,9 @@
         : cohort === "unverified"
         ? "No accepted result is recorded for these entries. Unverified does not mean rejected, and the status does not tell us whether review was attempted."
         : "The saved decision calls for another check before acceptance. That can concern a value, the protein or the substrate; it need not mean starting over."}</p>
-      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Already included in these ${formatInteger(total)} records</h3>
-        ${group ? statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
+      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Four fields, one record</h3>
+        <p class="stats-coverage-intro">Kinetic value, paper ID, protein sequence and substrate SMILES.</p>
+        ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
           : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
       </div>
       <div class="stats-cohort-context">
@@ -1612,7 +1666,7 @@
           <div><dt>Substrate</dt><dd>The name is present. Does its SMILES describe the same compound and isomer?</dd></div>
           <div><dt>Measurement</dt><dd>The paper reports 0.82 &micro;M. Does it belong to this enzyme and assay, and convert to 0.00082 mM?</dd></div>
         </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></div>
-      </div><p class="stats-note">Fields and source material are not completed checks. Kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
+      </div><p class="stats-note">Field presence does not confirm a review. A paper ID is a DOI or PMID; the chart counts records, not papers. Kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
   }
 
   function renderStats() {
@@ -3099,7 +3153,7 @@
       renderDownloadMetadata();
       renderSourceAttribution();
       const cleanUrl = viewUrl(viewFromLocation());
-      cleanUrl.hash = window.location.hash;
+      if (!["#browse", "#guide", "#stats"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
       bindControls();
       renderView(viewFromLocation());
@@ -3170,6 +3224,7 @@
       statsReviewRing,
       statsFollowupCoverage,
       statsCohortData,
+      statsCombinedCoverage,
       statsReviewDetails,
       statsShare,
       statsBarRows,

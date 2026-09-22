@@ -55,9 +55,10 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.root = Path(temporary.name)
         self.source = self.root / "tools/catlog-static/index.html"
         self.target = self.root / "tools/catlog-latest.html"
+        self.stats_target = self.root / "tools/catlog-stats.html"
         self.source.parent.mkdir(parents=True)
         globals_patch = patch.multiple(
-            self.sync, ROOT=self.root, SOURCE=self.source, TARGET=self.target
+            self.sync, ROOT=self.root, SOURCE=self.source, TARGET=self.target, STATS_TARGET=self.stats_target
         )
         globals_patch.start()
         self.addCleanup(globals_patch.stop)
@@ -66,6 +67,7 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.source.write_text(source, encoding="utf-8")
         if alias is not None:
             self.target.write_text(alias, encoding="utf-8")
+            self.stats_target.write_text(self.sync.build_alias(synthetic_page(EXPECTED_TRACKER_TAG), stats=True), encoding="utf-8")
 
     def run_main(self, *arguments: str) -> int:
         with patch.object(sys, "argv", [str(SCRIPT_PATH), *arguments]):
@@ -75,7 +77,7 @@ class SyncCatlogLatestTests(unittest.TestCase):
     def assert_rejected_without_writes(self, *arguments: str) -> None:
         before = {
             path: path.read_bytes() if path.exists() else None
-            for path in (self.source, self.target)
+            for path in (self.source, self.target, self.stats_target)
         }
         with patch.object(
             Path, "write_text", side_effect=AssertionError("Unexpected page write")
@@ -178,6 +180,7 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.assertEqual(canonical.count(EXPECTED_TRACKER_TAG), 1)
         self.assertEqual(alias.count(EXPECTED_TRACKER_TAG), 1)
         self.assertEqual(alias, self.sync.build_alias(canonical))
+        self.assertEqual(self.stats_target.read_text(), self.sync.build_alias(canonical, stats=True))
         self.assertIn('src="assets/catlog-static.js"', canonical)
         self.assertIn('src="catlog-static/assets/catlog-static.js"', alias)
         self.assertIn('src="catlog-static/data/manifest.js"', alias)
@@ -187,6 +190,28 @@ class SyncCatlogLatestTests(unittest.TestCase):
         before = (self.source.read_bytes(), self.target.read_bytes())
         self.assertEqual(self.run_main(), 0)
         self.assertEqual((self.source.read_bytes(), self.target.read_bytes()), before)
+
+    def test_stats_entry_links_and_initial_view(self) -> None:
+        source = synthetic_page(EXPECTED_TRACKER_TAG).replace('<body>', '''<body>
+<title>CatLog | Enzyme Kinetics Catalog</title>
+<a id="browseButton" class="nav-tab active" href="#browse" aria-current="page">Browse</a>
+<a id="guideButton" href="#guide">Guide</a>
+<a id="statsButton" class="nav-tab" href="#stats">Stats</a>
+<main id="catalogView"></main><main id="statsView" class="stats-view" hidden></main>''')
+        stats = self.sync.build_alias(source, stats=True)
+        self.assertIn('<title>Stats | CatLog</title>', stats)
+        self.assertIn('<body class="stats-open">', stats)
+        self.assertIn('<main id="catalogView" hidden>', stats)
+        self.assertNotIn('class="stats-view" hidden', stats)
+        self.assertIn('href="catlog-stats.html"', stats)
+        self.assertIn('href="catlog-latest.html#guide"', stats)
+        self.assertIn('id="statsButton" class="nav-tab active" aria-current="page"', stats)
+
+    def test_check_rejects_stale_stats_page(self) -> None:
+        source = synthetic_page(EXPECTED_TRACKER_TAG)
+        self.write_pages(source, self.sync.build_alias(source))
+        self.stats_target.write_text("stale")
+        self.assert_rejected_without_writes("--check")
 
     def test_main_rejects_invalid_alias_references_before_canonical_write(self) -> None:
         source = synthetic_page().replace(

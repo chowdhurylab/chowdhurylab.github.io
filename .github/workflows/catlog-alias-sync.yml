@@ -30,6 +30,7 @@ jobs:
             /tests/test_sync_catlog_latest.py
             /tools/catlog-static/index.html
             /tools/catlog-latest.html
+            /tools/catlog-stats.html
       - name: Test tracker preservation during regeneration
         run: python3 tests/test_sync_catlog_latest.py
       - name: Verify the stable entry page matches the canonical page
@@ -84,6 +85,7 @@ jobs:
             /tests/catlog-browser-check.py
             /tools/catlog-static/
             /tools/catlog-latest.html
+            /tools/catlog-stats.html
       - name: Install browser test dependency
         run: |
           python3 -m venv "$RUNNER_TEMP/catlog-browser"

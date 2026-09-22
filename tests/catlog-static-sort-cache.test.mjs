@@ -1176,8 +1176,11 @@ narrowDetailPanel = false;
   const oldHref = window.location.href;
   try {
     window.location.href = "https://example.test/tools/catlog-latest.html?release=old&browser-check=test&ref=paper#guide";
-    assert.equal(api.viewUrl("stats").href, "https://example.test/tools/catlog-latest.html?ref=paper#stats");
+    assert.equal(api.viewUrl("stats").href, "https://example.test/tools/catlog-stats.html?ref=paper");
     assert.equal(api.viewUrl("browse").href, "https://example.test/tools/catlog-latest.html?ref=paper");
+    window.location.href = "https://example.test/tools/catlog-stats.html";
+    assert.equal(api.viewUrl("guide").href, "https://example.test/tools/catlog-latest.html#guide");
+    assert.equal(api.viewUrl("browse").href, "https://example.test/tools/catlog-latest.html");
     window.location.href = "file:///tmp/CatLog%20snapshot/index.html?release=old#guide";
     assert.equal(api.viewUrl("stats").href, "file:///tmp/CatLog%20snapshot/index.html#stats");
   } finally { window.location.href = oldHref; }
@@ -1512,7 +1515,8 @@ function row(overrides = {}) {
   runtimeManifest.summary.review_details = {
     source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
     groups: { unverified: { total: 1, with_kinetic_value: 1, with_literature_id: 0, with_sequence: 0, with_smiles: 1,
-      material: { paper_excerpt: 0, source_note: 0, paper_id: 0, database_record: 1 } } },
+      material: { paper_excerpt: 0, source_note: 0, paper_id: 0, database_record: 1 },
+      field_combinations: [{missing: ["sequence", "paper_id"], count: 1}] } },
   };
   assert.equal(api.statsCohortData("unverified", 1).with_smiles, 1);
   assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
@@ -1520,6 +1524,22 @@ function row(overrides = {}) {
   assert.match(api.statsReviewDetails({ unverified: 1 }), /data-cohort="unverified"/);
   assert.match(api.statsReviewDetails({ unverified: 1 }), /of unverified records/);
   assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified does not mean rejected/);
+  const group = runtimeManifest.summary.review_details.groups.unverified;
+  assert.match(api.statsCombinedCoverage(group), /data-stat-key="multiple" data-count="1"/);
+  assert.match(api.statsCombinedCoverage(group), /data-field="sequence" data-missing="1"/);
+  assert.match(api.statsCombinedCoverage(group), /data-field="smiles" data-missing="0"/);
+  group.field_combinations = [{missing: ["sequence"], count: 1}];
+  assert.equal(api.statsCombinedCoverage(group), "", "Partition must reconcile with every marginal field count");
+  group.field_combinations = [{missing: ["paper_id", "sequence"], count: 1}, {missing: ["sequence", "paper_id"], count: 1}];
+  assert.equal(api.statsCombinedCoverage(group), "", "Duplicate combinations must not count twice");
+  group.field_combinations = [{missing: ["paper_id", "sequence", "sequence"], count: 1}];
+  assert.equal(api.statsCombinedCoverage(group), "", "A field cannot repeat within a combination");
+  group.field_combinations = [{missing: ["paper_id", "sequence", "unknown"], count: 1}];
+  assert.equal(api.statsCombinedCoverage(group), "", "Unknown fields cannot create slices");
+  group.field_combinations = [{missing: ["sequence", "paper_id"], count: 1}];
+  const completeGroup = {total: 1, with_sequence: 1, with_smiles: 1, with_kinetic_value: 1, with_literature_id: 1, field_combinations: [{missing: [], count: 1}]};
+  assert.match(api.statsCombinedCoverage(completeGroup), /data-stat-key="complete" data-count="1"/);
+  assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /<details/);
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
   assert.equal(api.statsCohortData("unverified", 1), null, "Material must be an exclusive whole-cohort partition");
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 0;

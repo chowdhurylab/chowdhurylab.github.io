@@ -71,6 +71,24 @@ class FollowupSummaryTests(unittest.TestCase):
             self.assertEqual(unknown["with_smiles"], 1)
             self.assertEqual(unknown["material"], dict(paper_excerpt=0, source_note=1, paper_id=1, database_record=1))
             self.assertEqual(sum(unknown["material"].values()), unknown["total"])
+            self.assertEqual(pending["field_combinations"], [{"missing": ["sequence", "smiles"], "count": 1}])
+            self.assertEqual(sum(item["count"] for item in unknown["field_combinations"]), unknown["total"])
+            # One record may lack several fields, but belongs to exactly one pie slice.
+            for field, count_key in zip(followup.FIELD_NAMES, ("with_kinetic_value", "with_literature_id", "with_sequence", "with_smiles")):
+                missing = sum(item["count"] for item in unknown["field_combinations"] if field in item["missing"])
+                self.assertEqual(missing, unknown["total"] - unknown[count_key])
             manifest["enriched_download"]["sha256"] = "wrong"
             with self.assertRaisesRegex(ValueError, "hash"):
                 followup.build_review_details(manifest, path)
+
+    def test_complete_and_zero_kinetic_values_are_present(self):
+        rows = [{"verification_status": "unverified", "km": 0, "sequence": "ACD", "smiles": "C", "supporting_dois": ["10.1/test"]}]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "public.jsonl.gz"
+            with gzip.open(path, "wt") as handle:
+                handle.write(json.dumps(rows[0]) + "\n")
+            manifest = {"source_sha256": "source", "total_rows": 1,
+                        "enriched_download": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest()},
+                        "summary": {"distributions": {"verification_status": [{"label": "unverified", "count": 1}]}}}
+            group = followup.build_review_details(manifest, path)["groups"]["unverified"]
+            self.assertEqual(group["field_combinations"], [{"missing": [], "count": 1}])
