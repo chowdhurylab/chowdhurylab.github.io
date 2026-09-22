@@ -1172,6 +1172,16 @@ narrowDetailPanel = false;
     document.activeElement = originalActiveElement;
   }
 }
+{
+  const oldHref = window.location.href;
+  try {
+    window.location.href = "https://example.test/tools/catlog-latest.html?release=old&browser-check=test&ref=paper#guide";
+    assert.equal(api.viewUrl("stats").href, "https://example.test/tools/catlog-latest.html?ref=paper#stats");
+    assert.equal(api.viewUrl("browse").href, "https://example.test/tools/catlog-latest.html?ref=paper");
+    window.location.href = "file:///tmp/CatLog%20snapshot/index.html?release=old#guide";
+    assert.equal(api.viewUrl("stats").href, "file:///tmp/CatLog%20snapshot/index.html#stats");
+  } finally { window.location.href = oldHref; }
+}
 api.renderView("stats", { scroll: true });
 assert.equal(element("statsView").hidden, false);
 assert.equal(element("catalogView").hidden, true);
@@ -1191,6 +1201,9 @@ assert.equal(document.body.classList.contains("stats-open"), false);
 assert.equal(document.body.classList.contains("guide-open"), false);
 assert.doesNotMatch(indexHtml, /id="snapshotBreakdown"|id="moreCountsButton"/);
 const navMarkup = indexHtml.match(/<nav class="top-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
+for (const view of ["browse", "guide", "stats"]) {
+  assert.match(navMarkup, new RegExp(`<a id="${view}Button"[^>]*href="#${view}"`));
+}
 assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
   ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
 const guideStart = indexHtml.match(/<section class="guide-workflow"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -1513,7 +1526,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.review_details.download_sha256 = "wrong";
   assert.equal(api.statsCohortData("unverified", 1), null, "Exact frozen download required");
   api.state.statsCohort = "mathematically_inferred";
-  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /legacy status does not mean every value was calculated/);
+  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /This does not mean every value was calculated/);
   const prepared = row({verification_status: "mathematically_inferred"});
   assert.equal(api.rowStatusLabel(prepared), "Pre-review");
   assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
@@ -1802,6 +1815,9 @@ assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can 
   };
   try {
     api.bindControls();
+    for (const modifier of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { button: 1 }]) {
+      assert.equal(element("statsButton").dispatch("click", modifier).defaultPrevented, false, "Modified clicks retain normal link behavior");
+    }
     {
       const rail = element("catalogFilters");
       const input = element("substrateFilterInput");
