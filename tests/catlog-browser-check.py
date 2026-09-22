@@ -103,6 +103,10 @@ def check(driver, browser, url):
 
     viewports = {}
 
+    def check_panel_width():
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
+        assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), "Horizontal overflow inside Stats"
+
     def capture(label):
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
@@ -111,7 +115,7 @@ def check(driver, browser, url):
                 stats_scrolls: stats.scrollHeight > stats.clientHeight + 1};
         """)
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
-        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal page overflow"
+        check_panel_width()
         overflow = driver.execute_script("""
             return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dt, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
@@ -141,6 +145,7 @@ def check(driver, browser, url):
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
         element.click()
         assert element.find_element(By.XPATH, "..").get_attribute("open") is not None
+        check_panel_width()
         element.click()
     driver.execute_script("window.scrollTo(0, 0)")
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
@@ -193,6 +198,10 @@ def check(driver, browser, url):
             driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]').find_element(By.XPATH, "..").click()
             driver.execute_script("document.querySelector('#statsReviewDetails').scrollIntoView()")
             capture("stats-mobile-" + cohort)
+            for element in driver.find_elements(By.CSS_SELECTOR, "#statsReviewDetails details > summary"):
+                element.click()
+                check_panel_width()
+                element.click()
         driver.execute_script("document.querySelector('.stats-cohort-context').scrollIntoView()")
         assert driver.execute_script("""
             const chart = document.querySelector('.stats-cohort-material .stats-review-ring').getBoundingClientRect();

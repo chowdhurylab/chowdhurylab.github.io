@@ -1652,7 +1652,7 @@
         : cohort === "unverified"
         ? "No accepted result is recorded for these entries. Unverified does not mean rejected, and the status does not tell us whether review was attempted."
         : "The saved decision calls for another check before acceptance. That can concern a value, the protein or the substrate; it need not mean starting over."}</p>
-      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Four fields, one record</h3>
+      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Fields in these records</h3>
         <p class="stats-coverage-intro">Kinetic value, paper ID, protein sequence and substrate SMILES.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
           : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
