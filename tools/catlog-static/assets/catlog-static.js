@@ -1546,7 +1546,7 @@
 
   function statsLegend(items, total, className = "", scope = "of all records") {
     return `<div class="stats-chart-legend ${className}"><div class="stats-outcome-head" aria-hidden="true"><span></span><span>Records</span><span>Share</span></div><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${["manual_review_required", "unverified", "mathematically_inferred"].includes(item.value) ? `<button type="button" class="stats-status-link" data-stats-cohort="${item.value}" aria-controls="statsReviewDetails">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
+      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${["manual_review_required", "unverified", "mathematically_inferred"].includes(item.value) ? `<button type="button" class="stats-status-link" data-stats-cohort="${item.value}" aria-controls="statsReviewDetails" aria-pressed="${item.value === state.statsCohort}">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
       <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
       <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> ${escapeHtml(scope)}</span></span>
     </li>`).join("")}</ul></div>`;
@@ -1665,6 +1665,9 @@
     document.querySelectorAll(".stats-outer-group").forEach((group) => {
       group.classList.toggle("selected", group.dataset.reviewGroup === state.statsCohort);
     });
+    document.querySelectorAll(".stats-status-link[data-stats-cohort]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.statsCohort === state.statsCohort));
+    });
   }
 
   function statsReviewDetails(counts) {
@@ -1678,16 +1681,16 @@
       ${[["manual_review_required", "Follow-up"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
         <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
         <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
-      <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
-        ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
-        : cohort === "unverified"
-        ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
-        : "Another check is needed before acceptance, for example on a value, protein or substrate."}</p>
       <div class="stats-followup-coverage" data-cohort="${cohort}">
         <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Share within this group.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
           : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
       </div>
+      <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
+        ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
+        : cohort === "unverified"
+        ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
+        : "Another check is needed before acceptance, for example on a value, protein or substrate."}</p>
       <details class="stats-explanation stats-cohort-example"><summary>Example checks</summary><dl class="stats-check-examples">
           <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
           <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>

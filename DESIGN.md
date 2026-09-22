@@ -23,8 +23,10 @@ reference material. Browse keeps its existing colors. Keep Stats content within
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.
 
-At desktop sizes, keep the review circle, outcome counts and selected field
-breakdown in one section. Narrow layouts stack with normal page scrolling.
+Keep the selected field counts directly beside the review circle down to
+721px-wide viewports, including the in-app browser. Put outcome counts beneath
+the circle, not between it and the field legend. Only phone layouts stack.
+Use normal page scrolling.
 Never add an independently scrolling chart panel.
 Keep Browse's filtered state when navigating away and back.
 
@@ -52,6 +54,10 @@ Changing a review group must leave the surrounding explanations open.
 Use a single nested circle: outcomes inside and field combinations outside.
 Each outer group spans exactly its inner outcome angle, using the same total.
 Highlight the selected group and list its exact counts beside the chart.
+Use matching, higher-contrast field colors in the outer ring and its legend:
+green #349b55, blue #2586df, orange #da7024, pink #c74d90, teal #277c86 and
+purple #805bcc. Keep outcome colors unchanged. The selected outcome label
+must stay visibly and accessibly selected when the group changes.
 Only the three hash-bound review groups currently have field subdivisions;
 leave other outcomes unsplit, never infer accepted-record fields from status.
 Field groups are all four fields, exactly one absent field, or multiple absent
