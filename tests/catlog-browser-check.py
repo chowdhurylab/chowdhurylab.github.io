@@ -108,6 +108,20 @@ def check(driver, browser, url):
         assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), "Horizontal overflow inside Stats"
 
     def capture(label):
+        assert driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('#statsDate')).fontSize)") >= 14
+        assert driver.execute_script("""
+            return [...document.querySelectorAll('#statsView .stats-explanation > summary')]
+                .every(e => e.getBoundingClientRect().height >= 36);
+        """), "Stats disclosures need a usable click target"
+        assert driver.execute_script("""
+            return [...document.querySelectorAll('.stats-chart-legend')].every(legend => {
+                const head = legend.querySelector('.stats-outcome-head');
+                const row = legend.querySelector('li');
+                if (!head.getBoundingClientRect().width || !row) return true;
+                return [1, 2].every(i => Math.abs(head.children[i].getBoundingClientRect().right
+                    - row.children[i].getBoundingClientRect().right) <= 1);
+            });
+        """), "Stats count headings must align with their values"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
             return {width: innerWidth, height: innerHeight,

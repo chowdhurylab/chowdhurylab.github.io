@@ -1453,6 +1453,7 @@ function row(overrides = {}) {
   const chart = element("statsCharts").innerHTML;
   assert.doesNotMatch(chart, /stats-bar-track|stats-scale/, "Approved charts replace the previous repeated bars");
   assert.match(chart, /of all records/);
+  assert.match(chart, /class="stats-outcome-head" aria-hidden="true"><span><\/span><span>Records<\/span><span>Share<\/span>/);
   assert.match(chart, /class="stats-explanation"/);
   assert.equal((chart.match(/<figure data-stat-key=/g) || []).length, 2, "Only available, valid fields get a ring");
   assert.match(chart, /Both count as accepted/);

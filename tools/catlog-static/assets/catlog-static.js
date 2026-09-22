@@ -1545,7 +1545,7 @@
   }
 
   function statsLegend(items, total, className = "", scope = "of all records") {
-    return `<div class="stats-chart-legend ${className}"><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+    return `<div class="stats-chart-legend ${className}"><div class="stats-outcome-head" aria-hidden="true"><span></span><span>Records</span><span>Share</span></div><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
       <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${["manual_review_required", "unverified", "mathematically_inferred"].includes(item.value) ? `<button type="button" class="stats-status-link" data-stats-cohort="${item.value}" aria-controls="statsReviewDetails">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
       <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
       <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> ${escapeHtml(scope)}</span></span>
@@ -1650,8 +1650,8 @@
       <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
         ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
         : cohort === "unverified"
-        ? "No accepted result is recorded for these entries. Unverified does not mean rejected, and the status does not tell us whether review was attempted."
-        : "The saved decision calls for another check before acceptance. That can concern a value, the protein or the substrate; it need not mean starting over."}</p>
+        ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
+        : "Another check is needed before acceptance, for example on a value, protein or substrate. This need not mean starting over."}</p>
       <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Fields in these records</h3>
         <p class="stats-coverage-intro">Kinetic value, paper ID, protein sequence and substrate SMILES.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
@@ -1662,9 +1662,9 @@
           ${statsReviewRing(material, total, formatInteger(total), label.toLowerCase())}${statsLegend(material, total, "", `of ${label.toLowerCase()} records`)}
         </div></div>` : ""}
         <div class="stats-cohort-example"><h3>What can still need checking?</h3><dl class="stats-check-examples">
-          <div><dt>Protein</dt><dd>A row describes L431F. Does its sequence contain that variant, or only the wild-type protein?</dd></div>
-          <div><dt>Substrate</dt><dd>The name is present. Does its SMILES describe the same compound and isomer?</dd></div>
-          <div><dt>Measurement</dt><dd>The paper reports 0.82 &micro;M. Does it belong to this enzyme and assay, and convert to 0.00082 mM?</dd></div>
+          <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
+          <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>
+          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay? In mM, it is 0.00082.</dd></div>
         </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></div>
       </div><p class="stats-note">Field presence does not confirm a review. A paper ID is a DOI or PMID; the chart counts records, not papers. Kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
   }
