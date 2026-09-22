@@ -49,7 +49,9 @@ def check(driver, browser, url):
     assert urlsplit(driver.current_url).fragment == "stats"
     for view in ("browse", "guide", "stats"):
         link = driver.find_element(By.ID, view + "Button")
-        assert link.tag_name == "a"
+        reported_tag = link.tag_name
+        print(f"{browser} {view} link tag: {reported_tag!r}", flush=True)
+        assert reported_tag.lower() == "a", f"Expected a navigation link, got {reported_tag!r}"
         target = urlsplit(link.get_attribute("href"))
         assert target.path == urlsplit(url).path and not target.query
         assert target.fragment == ("" if view == "browse" else view)
