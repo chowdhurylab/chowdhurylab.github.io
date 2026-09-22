@@ -131,13 +131,21 @@ assert.ok(
 );
 
 const aliasHtml = await readFile(relative("tools/catlog-latest.html"), "utf8");
+const statsHtml = await readFile(relative("tools/catlog-stats.html"), "utf8");
 assert.ok(indexHtml.includes(`href="${table.path}"`));
 assert.match(indexHtml, /download="catlog-table\.jsonl\.gz"/);
 assert.ok(!indexHtml.includes(`href="${viewer.path}"`));
 assert.ok(aliasHtml.includes(`src="catlog-static/${manifestPath}"`));
-for (const pageHtml of [indexHtml, aliasHtml]) {
+for (const [pageHtml, prefix] of [
+  [indexHtml, ""],
+  [aliasHtml, "catlog-static/"],
+  [statsHtml, "catlog-static/"],
+]) {
+  assert.ok(pageHtml.includes(`src="${prefix}${manifestPath}"`));
+  assert.ok(pageHtml.includes(`href="${prefix}assets/catlog-static.css?v=${assetVersion}"`));
+  assert.ok(pageHtml.includes(`src="${prefix}assets/catlog-static.js?v=${assetVersion}"`));
   const versions = [...pageHtml.matchAll(/[?&]v=([a-f0-9]{16})/g)].map((match) => match[1]);
-  assert.equal(versions.length, 3);
+  assert.equal(versions.length, 2, "only mutable CSS and JavaScript need query versions");
   assert.deepEqual([...new Set(versions)], [assetVersion]);
 }
 

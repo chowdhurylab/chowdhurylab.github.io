@@ -1279,6 +1279,28 @@
     window.location.replace(url.href);
   }
 
+  async function retryRecordChunks() {
+    state.recordsReady = false;
+    state.recordChunksLoaded = 0;
+    state.recordChunksTotal = Number(manifest.total_rows || 0);
+    state.loadProgressUnit = "records";
+    $("catalogLoadProgress")?.classList.remove("stalled", "complete");
+    updateLoadProgress();
+    try {
+      await loadRecordChunks();
+      syncDetailPanelAccessibility();
+    } catch (error) {
+      state.recordsReady = false;
+      state.recordChunksLoaded = 0;
+      updateLoadProgress();
+      showLoadNotice(
+        "CatLog records are temporarily unavailable",
+        error?.message || String(error),
+        { actionLabel: "Try again", onAction: retryRecordChunks },
+      );
+    }
+  }
+
   async function loadRecordChunks() {
     const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
     let streamedRecords = null;
@@ -1329,7 +1351,7 @@
         showLoadNotice(
           "CatLog records are temporarily unavailable",
           `${streamError?.message || "The table data could not be downloaded"}.`,
-          { actionLabel: "Try again", onAction: reloadCatalogPage },
+          { actionLabel: "Try again", onAction: retryRecordChunks },
         );
       }
       return;
