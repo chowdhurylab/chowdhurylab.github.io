@@ -2118,28 +2118,46 @@ body.detail-open .detail-panel {
 .stats-followup-coverage small { font-size: 11px; font-weight: 400; color: var(--muted); }
 
 .stats-wide { grid-column: 1 / -1; }
-.stats-review-workspace { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr); gap: 32px; align-items: start; }
+.stats-review-workspace { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(380px, 1.3fr); gap: 40px; align-items: start; }
 .stats-review-overview { min-width: 0; }
-.stats-review-overview > .stats-review-layout { grid-template-columns: 288px minmax(0, 1fr); align-items: start; gap: 20px; }
-.stats-nested-ring { position: relative; width: 288px; max-width: 100%; aspect-ratio: 1; }
+.stats-review-overview > .stats-review-layout { grid-template-columns: 1fr; align-items: start; gap: 18px; }
+.stats-nested-figure { width: 100%; }
+.stats-nested-ring { position: relative; width: 320px; max-width: 100%; margin-inline: auto; aspect-ratio: 1; }
 .stats-nested-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); fill: none; }
 .stats-nested-ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; pointer-events: none; }
 .stats-nested-ring strong { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .stats-nested-ring span { color: var(--muted); font-size: 14px; }
-.stats-outer-group { opacity: 0.3; }
+.stats-outer-group { opacity: 0.45; }
 .stats-outer-group.selected { opacity: 1; }
+.stats-outer-group .stats-ring-kinetic { stroke: #349b55; }
+.stats-outer-group .stats-ring-protein { stroke: #2586df; }
+.stats-outer-group .stats-ring-structure { stroke: #da7024; }
+.stats-outer-group .stats-ring-reference { stroke: #c74d90; }
+.stats-outer-group .stats-ring-calculated { stroke: #805bcc; }
+.stats-combination-legend .stats-color-kinetic { background: #349b55; }
+.stats-combination-legend .stats-color-protein { background: #2586df; }
+.stats-combination-legend .stats-color-structure { background: #da7024; }
+.stats-combination-legend .stats-color-reference { background: #c74d90; }
+.stats-combination-legend .stats-color-calculated { background: #805bcc; }
+.stats-combination-legend .stats-outcome-label i { flex-basis: 12px; height: 12px; margin-top: 4px; }
+.stats-review-legend .stats-status-link[aria-pressed="true"] { color: var(--accent); font-weight: 600; border-bottom-style: solid; }
 .stats-nested-figure > p { font-size: 14px; line-height: 1.5; color: var(--muted); margin: 8px 0 0; }
-.stats-review-workspace .stats-review-legend { padding-top: 10px; }
+.stats-review-workspace .stats-review-legend { padding-top: 0; }
 .stats-review-workspace #statsReviewDetails { min-width: 0; border-left: 1px solid var(--line); padding-left: 24px; }
 #fieldsGroupHeading { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
 .stats-review-workspace .stats-cohort-switch { margin-top: 0; }
 .stats-review-workspace .stats-cohort-switch label > span { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; }
-.stats-review-workspace .stats-cohort-meaning { margin-bottom: 12px; font-size: 14px; line-height: 1.5; }
+.stats-review-workspace .stats-cohort-meaning { margin: 16px 0 12px; font-size: 14px; line-height: 1.5; }
 .stats-review-workspace .stats-missing-totals { border-left: 0; padding-left: 0; }
 .stats-review-workspace .stats-combination-details { margin-top: 0; }
 .stats-review-workspace .stats-coverage-intro { margin-bottom: 8px; }
 .stats-review-workspace .stats-check-examples > div { grid-template-columns: 112px minmax(0, 1fr); gap: 10px; font-size: 14px; }
-@media (max-width: 1120px) {
+@media (min-width: 721px) and (max-width: 1000px) {
+  .stats-review-workspace { grid-template-columns: minmax(220px, 0.8fr) minmax(340px, 1.2fr); gap: 24px; }
+  .stats-review-workspace #statsReviewDetails { padding-left: 16px; }
+  .stats-nested-ring { width: 280px; }
+}
+@media (max-width: 720px) {
   .stats-review-workspace { grid-template-columns: 1fr; gap: 24px; }
   .stats-review-workspace #statsReviewDetails { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; }
 }

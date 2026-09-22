@@ -166,6 +166,7 @@ def check(driver, browser, url):
         assert examples.get_attribute("open") is not None, "Group selection must preserve open explanations"
         check_combined_coverage(group)
         assert driver.find_element(By.CSS_SELECTOR, ".stats-outer-group.selected").get_attribute("data-review-group") == cohort
+        assert driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').get_attribute("aria-pressed") == "true"
         capture("stats-" + cohort)
     examples.find_element(By.TAG_NAME, "summary").click()
     selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
@@ -218,6 +219,23 @@ def check(driver, browser, url):
     driver.execute_script("window.scrollTo(0, 0)")
     driver.set_window_size(1080, 900)
     capture("stats-compact")
+    for width in (1080, 884, 760):
+        driver.set_window_size(width, 1000)
+        driver.execute_script("document.querySelector('#statsView').scrollTop=0")
+        assert driver.execute_script("""
+            const chart = document.querySelector('.stats-nested-ring').getBoundingClientRect();
+            const fields = document.querySelector('.stats-combination-legend').getBoundingClientRect();
+            const first = document.querySelector('.stats-combination-legend li').getBoundingClientRect();
+            return fields.left >= chart.right && first.top < chart.bottom && fields.bottom > chart.top;
+        """), "Field counts must stay beside the chart at laptop and in-app browser widths"
+        assert driver.execute_script("""
+            const group = document.querySelector('.stats-followup-coverage').dataset.cohort;
+            return [...document.querySelectorAll('.stats-combination-legend li')].every(row => {
+                const arc = document.querySelector(`[data-field-group="${group}"][data-field-slice="${row.dataset.statKey}"]`);
+                return !arc || getComputedStyle(arc).stroke === getComputedStyle(row.querySelector('i')).backgroundColor;
+            });
+        """), "Field colors must match between chart and count list"
+        capture(f"stats-adjacent-{width}")
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True})
         assert driver.execute_script("return innerWidth") == 390
