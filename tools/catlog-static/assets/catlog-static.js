@@ -1586,7 +1586,7 @@
     return group;
   }
 
-  function statsCombinedCoverage(group) {
+  function statsCoverageParts(group) {
     const fields = [
       ["sequence", "Protein sequence", "with_sequence", "protein"],
       ["smiles", "Substrate SMILES", "with_smiles", "structure"],
@@ -1618,19 +1618,53 @@
       { value: "multiple", label: "Two or more fields missing", count: multipleCount, color: "calculated" },
     ];
     const names = Object.fromEntries(fields.map(([key, label]) => [key, label]));
-    return `<div class="stats-coverage-layout">
-      <div class="stats-coverage-plot"><div class="stats-review-layout">
-        ${statsReviewRing(slices, group.total)}${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
-      </div><p>Each record appears once. Missing means absent from this download, not rejected.</p></div>
-      <div class="stats-missing-totals"><h3>Missing by field</h3><table class="stats-detail-table">
+    return { fields, slices, multiple, multipleCount, names };
+  }
+
+  function statsCombinedCoverage(group) {
+    const parts = statsCoverageParts(group);
+    if (!parts) return "";
+    const { fields, slices, multiple, multipleCount, names } = parts;
+    return `${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
+      <p>Each record counts once. Missing means absent from this download, not rejected.</p>
+      <details class="stats-explanation stats-missing-totals"><summary>Missing by field</summary><table class="stats-detail-table">
         <thead><tr><th>Field</th><th>Records</th><th>Share</th></tr></thead><tbody>
           ${fields.map(([key, label, countKey]) => `<tr data-field="${key}" data-missing="${group.total - group[countKey]}"><th scope="row">${label}</th><td>${formatInteger(group.total - group[countKey])}</td><td>${statsShare(group.total - group[countKey], group.total)}</td></tr>`).join("")}
         </tbody></table><p>These totals overlap: a row can lack both a sequence and SMILES.</p>
-      </div>
-    </div>${multipleCount ? `<details class="stats-explanation stats-combination-details"><summary>Which fields are missing together? ${formatInteger(multipleCount)} records</summary>
+      </details>${multipleCount ? `<details class="stats-explanation stats-combination-details"><summary>Missing together: ${formatInteger(multipleCount)} records</summary>
       <table class="stats-detail-table"><thead><tr><th>Missing fields</th><th>Records</th></tr></thead><tbody>
         ${multiple.map((item) => `<tr><th scope="row">${item.missing.map((key) => names[key]).join(" + ")}</th><td>${formatInteger(item.count)}</td></tr>`).join("")}
       </tbody></table></details>` : ""}`;
+  }
+
+  function statsNestedReviewRing(outcomes, total) {
+    if (!total || outcomes.reduce((sum, item) => sum + item.count, 0) !== total) return statsReviewRing(outcomes, total);
+    let offset = 0;
+    const arcs = outcomes.map((item) => {
+      const start = offset;
+      const share = item.count / total * 100;
+      offset += share;
+      if (!share) return "";
+      const group = statsCohortData(item.value, item.count);
+      const parts = group && statsCoverageParts(group);
+      const inner = `<circle class="stats-ring-${item.color}" data-outcome="${escapeHtml(item.value)}" data-count="${item.count}" cx="120" cy="120" r="73" pathLength="100" stroke-width="24" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(item.label)}: ${formatInteger(item.count)} records</title></circle>`;
+      let fieldOffset = start;
+      const outer = parts ? parts.slices.map((field) => {
+        const fieldShare = field.count / total * 100;
+        const fieldStart = fieldOffset;
+        fieldOffset += fieldShare;
+        return field.count ? `<circle class="stats-ring-${field.color}" data-field-group="${escapeHtml(item.value)}" data-field-slice="${field.value}" data-count="${field.count}" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${fieldShare} ${100 - fieldShare}" stroke-dashoffset="${-fieldStart}"><title>${escapeHtml(item.label)}: ${escapeHtml(field.label)}, ${formatInteger(field.count)} records</title></circle>` : "";
+      }).join("") : "";
+      return `${inner}<g data-review-group="${escapeHtml(item.value)}" class="stats-outer-group${item.value === state.statsCohort ? " selected" : ""}">${outer}</g>`;
+    }).join("");
+    return `<div class="stats-nested-ring" aria-hidden="true"><svg viewBox="0 0 240 240">${arcs}</svg>
+      <div><strong>${formatInteger(total)}</strong><span>records</span></div></div>`;
+  }
+
+  function syncStatsRingSelection() {
+    document.querySelectorAll(".stats-outer-group").forEach((group) => {
+      group.classList.toggle("selected", group.dataset.reviewGroup === state.statsCohort);
+    });
   }
 
   function statsReviewDetails(counts) {
@@ -1640,10 +1674,7 @@
     const label = ({ unverified: "Unverified", mathematically_inferred: "Pre-review", manual_review_required: "Follow-up" })[cohort];
     const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"],
       ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
-    const material = [["paper_excerpt", "Paper extract", "verified"], ["source_note", "Text note", "reference"],
-      ["paper_id", "Paper link only", "kinetic"], ["database_record", "Database entry only", "neutral"]]
-      .map(([key, name, color]) => ({ value: `cohort_${key}`, label: name, color, count: group?.material[key] || 0 }));
-    return `<fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
+    return `<h3 id="fieldsGroupHeading">Fields in these records</h3><fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
       ${[["manual_review_required", "Follow-up"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
         <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
         <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
@@ -1652,21 +1683,17 @@
         : cohort === "unverified"
         ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
         : "Another check is needed before acceptance, for example on a value, protein or substrate. This need not mean starting over."}</p>
-      <div class="stats-followup-coverage" data-cohort="${cohort}"><h3>Fields in these records</h3>
-        <p class="stats-coverage-intro">Kinetic value, paper ID, protein sequence and substrate SMILES.</p>
+      <div class="stats-followup-coverage" data-cohort="${cohort}">
+        <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Share within this group.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
           : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
       </div>
-      <div class="stats-cohort-context">
-        ${group ? `<div class="stats-cohort-material"><h3>Source material in this group</h3><div class="stats-review-layout">
-          ${statsReviewRing(material, total, formatInteger(total), label.toLowerCase())}${statsLegend(material, total, "", `of ${label.toLowerCase()} records`)}
-        </div></div>` : ""}
-        <div class="stats-cohort-example"><h3>What can still need checking?</h3><dl class="stats-check-examples">
+      <details class="stats-explanation stats-cohort-example"><summary>Example checks</summary><dl class="stats-check-examples">
           <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
           <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>
           <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay? In mM, it is 0.00082.</dd></div>
-        </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></div>
-      </div><p class="stats-note">Field presence does not confirm a review. A paper ID is a DOI or PMID; the chart counts records, not papers. Kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
+        </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></details>
+      <p class="stats-note">Fields do not explain the review decision. Paper ID means DOI or PMID; kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
   }
 
   function renderStats() {
@@ -1690,11 +1717,6 @@
         count: counts[item.value] || 0, color: colors[item.value] || "neutral",
       })),
     ];
-    const evidence = manifestDistribution("public_evidence_group");
-    const sourceKeys = { paper_evidence: "paper_excerpt", source_note: "source_note", literature_id: "paper_id", source_records: "database_record" };
-    const materialLabels = { paper_evidence: "Paper extract", source_note: "Text note", literature_id: "Paper link only", source_records: "Database entry only" };
-    const materialColors = { paper_evidence: "verified", source_note: "reference", literature_id: "kinetic", source_records: "neutral" };
-    const material = evidenceGroups.map((item) => ({ ...item, label: materialLabels[item.value], count: evidence[sourceKeys[item.value]] || 0, color: materialColors[item.value] }));
     const summary = manifest.summary || {};
     const metrics = summary.coverage || {};
     const fullCoverage = manifest.enriched_download?.coverage || {};
@@ -1728,34 +1750,26 @@
     $("statsTotals").innerHTML = [["Records", total], ["Accepted", accepted], ["Enzyme names", totals.unique_enzymes], ["EC numbers", totals.unique_ec_numbers], ["Organisms", totals.unique_organisms]]
       .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
     $("statsCharts").innerHTML = `
-      <section class="stats-section stats-review-section" aria-labelledby="reviewChartTitle">
+      <section class="stats-section stats-review-section stats-wide" aria-labelledby="reviewChartTitle">
         <h2 id="reviewChartTitle">Review outcomes</h2>
         <p>Record status, not a measure of work completed.</p>
-        <div class="stats-review-layout">
-          ${statsReviewRing(outcomes, total, formatInteger(accepted), "accepted")}
-          ${statsLegend(outcomes, total, "stats-review-legend")}
-        </div>
+        <div class="stats-review-workspace">
+          <div class="stats-review-overview"><div class="stats-review-layout">
+            <div class="stats-nested-figure"><div id="statsReviewFigure">${statsNestedReviewRing(outcomes, total)}</div>
+              <p>Outcomes inside; fields outside.</p>
+              <p class="stats-note">Field splits are available for Follow-up, Unverified and Pre-review.</p>
+            </div>
+            ${statsLegend(outcomes, total, "stats-review-legend")}
+          </div>
         <div class="stats-accepted-split"><h3>Both count as accepted</h3><dl>
           <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Accepted as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
         </dl><p>A change may concern the value, sequence or another field.</p></div>
         <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
         <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted combines Verified and Corrected. Follow-up requests another check. Unverified has no accepted result recorded. Pre-review is the legacy source-preparation status, previously labelled Calculated. Disputed records were flagged by review.</p></details>
-      </section>
-      <section class="stats-section stats-material-section" aria-labelledby="materialChartTitle">
-        <h2 id="materialChartTitle">Material attached</h2>
-        <p>Most specific material recorded for each entry.</p>
-        <div class="stats-review-layout">${statsReviewRing(material, total)}${statsLegend(material, total)}</div>
-        <details class="stats-explanation"><summary>Examples</summary><dl>
-          <div><dt>Paper extract</dt><dd>A captured table line or passage.</dd></div>
-          <div><dt>Text note</dt><dd>Text saved from a source or a review, without a separately recorded table or value location.</dd></div>
-          <div><dt>Paper link only</dt><dd>A DOI or PMID, without a captured passage.</dd></div>
-          <div><dt>Database entry only</dt><dd>The source entry, without the items above.</dd></div>
-        </dl><p>Each record counts once, in the first matching group above. Attached material is not an acceptance decision.</p></details>
-      </section>
-      <section class="stats-section stats-followup-section stats-wide" aria-labelledby="followupTitle">
-        <h2 id="followupTitle">Review group details</h2>
-        <div id="statsReviewDetails">${statsReviewDetails(counts)}</div>
+          </div>
+          <div id="statsReviewDetails" class="stats-followup-section" aria-labelledby="fieldsGroupHeading">${statsReviewDetails(counts)}</div>
+        </div>
       </section>
       <section class="stats-section stats-field-section stats-wide" aria-labelledby="fieldsChartTitle">
         <h2 id="fieldsChartTitle">Included in the full download</h2>
@@ -2954,6 +2968,7 @@
       if (event.target.name !== "statsCohort") return;
       state.statsCohort = event.target.value;
       $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
+      syncStatsRingSelection();
       document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
     });
     $("statsCharts").addEventListener("click", (event) => {
@@ -2961,8 +2976,8 @@
       if (!button) return;
       state.statsCohort = button.dataset.statsCohort;
       $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
+      syncStatsRingSelection();
       document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
-      $("statsReviewDetails").scrollIntoView({ block: "start" });
     });
     [
       "globalSearchInput",
@@ -3225,6 +3240,7 @@
       statsFollowupCoverage,
       statsCohortData,
       statsCombinedCoverage,
+      statsNestedReviewRing,
       statsReviewDetails,
       statsShare,
       statsBarRows,

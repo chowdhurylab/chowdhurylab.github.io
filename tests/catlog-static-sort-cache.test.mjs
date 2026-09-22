@@ -1447,7 +1447,7 @@ function row(overrides = {}) {
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
     accepted: 3, verified: 2, corrected: 1, manual_review_required: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
-    paper_evidence: 2, source_note: 2, literature_id: 1, source_records: 1, sequence: 4, smiles: 5,
+    sequence: 4, smiles: 5,
   }, "Snapshot charts use manifest counts with source-group precedence preserved");
   assert.match(element("statsScope").textContent, /All 6 records/);
   const chart = element("statsCharts").innerHTML;
@@ -1465,7 +1465,7 @@ function row(overrides = {}) {
   assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
   assert.match(chart, /stroke-dasharray="50 50"/);
   assert.doesNotMatch(chart, /role="progressbar"/);
-  assert.match(chart, /Paper link only/);
+  assert.doesNotMatch(chart, /Material attached|Source material in this group|Text note|stats-material-section/);
   assert.match(chart, /not a count of every database that contributed/);
   const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
   assert.match(halfBar, /width:50%/);
@@ -1523,7 +1523,7 @@ function row(overrides = {}) {
   assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
   api.state.statsCohort = "unverified";
   assert.match(api.statsReviewDetails({ unverified: 1 }), /data-cohort="unverified"/);
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /of unverified records/);
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified: 1 records\. Share within this group/);
   assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified does not mean rejected/);
   const group = runtimeManifest.summary.review_details.groups.unverified;
   assert.match(api.statsCombinedCoverage(group), /data-stat-key="multiple" data-count="1"/);
@@ -1540,7 +1540,16 @@ function row(overrides = {}) {
   group.field_combinations = [{missing: ["sequence", "paper_id"], count: 1}];
   const completeGroup = {total: 1, with_sequence: 1, with_smiles: 1, with_kinetic_value: 1, with_literature_id: 1, field_combinations: [{missing: [], count: 1}]};
   assert.match(api.statsCombinedCoverage(completeGroup), /data-stat-key="complete" data-count="1"/);
-  assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /<details/);
+  assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /stats-combination-details/);
+  const nested = api.statsNestedReviewRing([
+    { value: "accepted", label: "Accepted", color: "verified", count: 3 },
+    { value: "unverified", label: "Unverified", color: "neutral", count: 1 },
+  ], 4);
+  assert.match(nested, /data-outcome="accepted" data-count="3"[^>]*stroke-dasharray="75 25"/);
+  assert.match(nested, /data-outcome="unverified" data-count="1"[^>]*stroke-dasharray="25 75"[^>]*stroke-dashoffset="-75"/);
+  assert.match(nested, /data-field-group="unverified" data-field-slice="multiple" data-count="1"[^>]*stroke-dasharray="25 75"[^>]*stroke-dashoffset="-75"/);
+  assert.doesNotMatch(nested, /data-field-group="accepted"/, "No invented field split for an unaudited group");
+  assert.doesNotMatch(api.statsNestedReviewRing([{value: "unverified", label: "Unverified", color: "neutral", count: 1}], 2), /stroke-dasharray/, "Never draw mismatched totals as a complete circle");
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
   assert.equal(api.statsCohortData("unverified", 1), null, "Material must be an exclusive whole-cohort partition");
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 0;
