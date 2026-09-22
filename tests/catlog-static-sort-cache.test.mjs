@@ -167,7 +167,7 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
   }
 }
 
-for (const pageHtml of [indexHtml, stableAliasHtml]) {
+for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
   assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check. Open the row to see why."));
   assert.ok(pageHtml.includes("A warning marks a value to check against its source. Open the row for the reason."));
@@ -183,14 +183,8 @@ for (const pageHtml of [indexHtml, stableAliasHtml]) {
       `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />`,
     ),
   );
-  assert.match(
-    pageHtml,
-    /<meta property="og:url" content="https:\/\/chowdhurylab\.github\.io\/tools\/catlog-static\/" \/>/,
-  );
-  assert.match(
-    pageHtml,
-    /<link rel="canonical" href="https:\/\/chowdhurylab\.github\.io\/tools\/catlog-static\/" \/>/,
-  );
+  assert.ok(pageHtml.includes(`<meta property="og:url" content="https://chowdhurylab.github.io/tools/${publicPath}" />`));
+  assert.ok(pageHtml.includes(`<link rel="canonical" href="https://chowdhurylab.github.io/tools/${publicPath}" />`));
   assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
   const citationSection = pageHtml.match(/<section class="guide-citation"[\s\S]*?<\/section>/)?.[0];
   assert.ok(citationSection, "Guide must keep its citation/version section");
@@ -1185,6 +1179,38 @@ narrowDetailPanel = false;
     assert.equal(api.viewUrl("stats").href, "file:///tmp/CatLog%20snapshot/index.html#stats");
   } finally { window.location.href = oldHref; }
 }
+{
+  const oldHref = window.location.href;
+  const oldQuerySelector = document.querySelector;
+  const canonical = makeElement("canonical");
+  const shareUrl = makeElement("shareUrl");
+  const shareTitle = makeElement("shareTitle");
+  const metadata = { 'link[rel="canonical"]': canonical, 'meta[property="og:url"]': shareUrl, 'meta[property="og:title"]': shareTitle };
+  try {
+    document.querySelector = (selector) => metadata[selector] || oldQuerySelector(selector);
+    for (const initial of ["catlog-latest.html", "catlog-stats.html"]) {
+      window.location.href = `https://example.test/tools/${initial}?ref=paper&release=old#guide`;
+      for (const view of ["stats", "guide", "browse"]) {
+        api.renderView(view);
+        const url = `https://example.test/tools/catlog-${view === "stats" ? "stats" : "latest"}.html`;
+        assert.equal(canonical.getAttribute("href"), url);
+        assert.equal(shareUrl.getAttribute("content"), url);
+        assert.equal(shareTitle.getAttribute("content"), document.title);
+      }
+    }
+    for (const portableUrl of ["file:///tmp/catlog-stats.html", "https://example.test/export/index.html"]) {
+      window.location.href = portableUrl;
+      canonical.setAttribute("href", "preserved");
+      shareUrl.setAttribute("content", "preserved");
+      api.renderView("stats");
+      assert.equal(canonical.getAttribute("href"), "preserved", "Portable exports must retain their public metadata");
+      assert.equal(shareUrl.getAttribute("content"), "preserved");
+    }
+  } finally {
+    window.location.href = oldHref;
+    document.querySelector = oldQuerySelector;
+  }
+}
 api.renderView("stats", { scroll: true });
 assert.equal(element("statsView").hidden, false);
 assert.equal(element("catalogView").hidden, true);
@@ -1540,6 +1566,8 @@ function row(overrides = {}) {
   group.field_combinations = [{missing: ["sequence", "paper_id"], count: 1}];
   const completeGroup = {total: 1, with_sequence: 1, with_smiles: 1, with_kinetic_value: 1, with_literature_id: 1, field_combinations: [{missing: [], count: 1}]};
   assert.match(api.statsCombinedCoverage(completeGroup), /data-stat-key="complete" data-count="1"/);
+  assert.match(api.statsCombinedCoverage(completeGroup), /All four fields available/);
+  assert.match(api.statsCombinedCoverage(completeGroup), /Available fields do not mean the record is accepted/);
   assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /stats-combination-details/);
   const nested = api.statsNestedReviewRing([
     { value: "accepted", label: "Accepted", color: "verified", count: 3 },
