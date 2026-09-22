@@ -1682,7 +1682,7 @@
         ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
         : cohort === "unverified"
         ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
-        : "Another check is needed before acceptance, for example on a value, protein or substrate. This need not mean starting over."}</p>
+        : "Another check is needed before acceptance, for example on a value, protein or substrate."}</p>
       <div class="stats-followup-coverage" data-cohort="${cohort}">
         <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Share within this group.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)

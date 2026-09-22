@@ -1581,7 +1581,7 @@ function row(overrides = {}) {
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
     accepted: 2, verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
-    paper_evidence: 1, source_note: 1, literature_id: 1, source_records: 1, sequence: 4,
+    sequence: 4,
   }, "Stats works before the index arrives; invalid coverage cannot become a negative missing count");
   runtimeManifest.summary.distributions.source_db = [
     { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },

@@ -2138,7 +2138,7 @@ body.detail-open .detail-panel {
 .stats-review-workspace .stats-missing-totals { border-left: 0; padding-left: 0; }
 .stats-review-workspace .stats-combination-details { margin-top: 0; }
 .stats-review-workspace .stats-coverage-intro { margin-bottom: 8px; }
-.stats-review-workspace .stats-check-examples > div { grid-template-columns: 90px minmax(0, 1fr); gap: 10px; font-size: 14px; }
+.stats-review-workspace .stats-check-examples > div { grid-template-columns: 112px minmax(0, 1fr); gap: 10px; font-size: 14px; }
 @media (max-width: 1120px) {
   .stats-review-workspace { grid-template-columns: 1fr; gap: 24px; }
   .stats-review-workspace #statsReviewDetails { border-left: 0; border-top: 1px solid var(--line); padding: 20px 0 0; }
