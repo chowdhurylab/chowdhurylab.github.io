@@ -8,30 +8,30 @@ This copy is for hosting only
   web-only option for a double-click copy.
 
 Snapshot details
-- Rows: 156431
-- Generated (UTC): 2026-09-20T15:42:40+00:00
-- Exporter commit: 2a1e6443763d61efdd23b6c2574580ce3428f745
+- Rows: 158392
+- Generated (UTC): 2026-09-23T22:09:26+00:00
+- Exporter commit: 752378c13c82907faa6abd0cbe0e214d26b4ddbf
 - Source: verified_catlog.jsonl
-- Source SHA-256: 624e998bee0ab307c39e713b6997c2e6a6c5619262633915a8658516da028c03
-- Public content SHA-256 (decompressed all-public-data JSONL): b3cf5d48d78f1957a70434dc53e23cee13eb559692ac4e7240113b60b182df1e
+- Source SHA-256: c81fb43f1fd31e61550739429c1fa354e5b127e12e79a72a4f0a71690662a5f3
+- Public content SHA-256 (decompressed all-public-data JSONL): e1be1c2c552c0f520d95524551e9bd36866d50d83a6fbce65acf4a7a7fa17fc0
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots and private review payloads are not bundled.
 - All public data: downloads all rows with available protein sequences, SMILES, references, and source details
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
 - Download page: exports the displayed rows with public molecular identity, references, and source details
-- All public data file: data/catlog-enriched.0867b2f89e73.jsonl.gz
-- Rows with sequence: 76279
-- Rows with wild-type sequence: 71627
-- Rows with variant sequence: 20790
-- Rows with SMILES: 93212
+- All public data file: data/catlog-enriched.8246c9d73898.jsonl.gz
+- Rows with sequence: 76271
+- Rows with wild-type sequence: 71625
+- Rows with variant sequence: 20788
+- Rows with SMILES: 93718
 
 Data sources, licenses and attribution
-- BRENDA (brenda): 92177 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
-- Open Enzyme Database (OED) (oed): 29779 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
-- UniProt (uniprot): 16314 rows; license CC BY 4.0; https://www.uniprot.org/
-- SABIO-RK (sabio_rk): 13658 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
-- SKiD (Structure-Oriented Kinetics Database) (skid): 4247 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
+- BRENDA (brenda): 93306 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
+- Open Enzyme Database (OED) (oed): 30285 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
+- UniProt (uniprot): 16319 rows; license CC BY 4.0; https://www.uniprot.org/
+- SABIO-RK (sabio_rk): 13969 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
+- SKiD (Structure-Oriented Kinetics Database) (skid): 4259 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
 - Primary literature (direct extraction) (primary_paper_direct): 193 rows; license as published (see paper)
 - STRENDA DB (strenda): 3 rows; license see source; https://www.beilstein-strenda-db.org/
 - Every row carries source_license, derived from the database(s) it was merged from.
