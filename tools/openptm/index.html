@@ -701,9 +701,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   <main id="workbenchView">
     <nav class="sheet-tabs" aria-label="Workbook views" id="sheetTabs"></nav>
     <section id="diseaseIntro" class="disease-intro" aria-labelledby="diseaseTitle" hidden>
-      <div class="disease-heading"><h1 id="diseaseTitle">Disease &amp; biological context</h1><span id="diseaseCounts"></span></div>
-      <p>Selected studies connecting PTM families with disease and biological contexts. Associations and model experiments do not establish clinical causation or treatment benefit.</p>
-      <div class="disease-meta"><span id="diseaseReviewDate"></span><button class="text-button" id="diseaseMethods" type="button">Selection and review limits</button></div>
+      <div class="disease-heading"><h1 id="diseaseTitle">Disease connections</h1><span id="diseaseCounts"></span></div>
+      <p>Selected disease and infection studies. Findings in cells or animals may not apply to patients.</p>
+      <div class="disease-meta"><span id="diseaseReviewDate"></span><button class="text-button" id="diseaseMethods" type="button">About these studies</button></div>
     </section>
     <div class="workbench" id="workbench">
       <aside class="filter-rail" id="filterRail" aria-label="Filters for the active sheet" tabindex="-1">
@@ -766,33 +766,33 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     <div class="guide-inner">
       <h1>About openPTM</h1>
       <p class="guide-lede" id="guideLede"></p>
-      <p>Start with a PTM family to see its definition, database coverage and selected disease studies. Filters combine within the current view; Copy link preserves them. Export downloads all matching rows in the selected order, not just the visible page. Family exports also include joined coverage and disease-connection IDs. The workbook download retains the original nine sheets.</p>
+      <p>Export saves all filtered rows. Copy link shares the current view. Download workbook saves the original Excel file.</p>
 
       <section aria-labelledby="guideSheetsTitle">
-        <h2 id="guideSheetsTitle">The nine sheets</h2>
+        <h2 id="guideSheetsTitle">Workbook sheets</h2>
         <div class="guide-sheet-list" id="guideSheetList"></div>
       </section>
 
       <section aria-labelledby="guideStatesTitle">
         <h2 id="guideStatesTitle">Coverage states</h2>
-        <p>A family counts as covered only when a dedicated or chemically narrow database with experimental residue-level evidence maps to it. Each of the 111 families is in exactly one of four states:</p>
+        <p>Coverage requires a dedicated or chemically focused database with experimental site evidence. The 111 families fall into four groups:</p>
         <ul class="guide-states" id="guideStates"></ul>
-        <p>“Active, maintained” requires a substantive update on or after 14 August 2021, five years before the audit date. “No qualifying mapping found” means no resource met this rule during the audit. It does not mean the chemistry is absent, unstudied, or unimportant.</p>
+        <p>“Active, maintained” requires an update on or after 14 August 2021. “No dedicated database found” means no database met the audit criteria, not that the PTM lacks evidence.</p>
       </section>
 
       <section id="diseaseMethodsSection" aria-labelledby="guideDiseaseTitle">
-        <h2 id="guideDiseaseTitle">Disease connections: a companion dataset</h2>
+        <h2 id="guideDiseaseTitle">Disease studies</h2>
         <p id="guideDiseaseSummary"></p>
         <p id="guideDiseaseMethod"></p>
-        <p>The original 33 connections came from the Figure 3 context map. Eight records were added in September to broaden human disease coverage, including six previously unrepresented families. Neither selection was sampled to estimate disease prevalence or to rank PTM families. A missing connection is not evidence of absence. Representative-paper counts are not evidence scores.</p>
-        <p>Read each row’s study setting and limits. Infection studies are biological contexts, not necessarily patient disease associations. Resource coverage comes from the August family audit and does not validate a disease connection, subtype, or organism.</p>
-        <p>This dataset is separate from the nine-sheet Excel workbook. The workbook download does not include these connections.</p>
+        <p>Missing entries do not mean no association exists. Paper counts do not measure evidence strength. These studies do not, by themselves, establish causation or treatment benefit.</p>
+        <p>Infection studies may describe biology rather than patient disease. Database coverage is family-level, not proof of a disease link.</p>
+        <p>Disease data are available below, separately from the Excel workbook.</p>
         <div id="diseaseDownloads" class="disease-downloads"></div>
       </section>
 
       <section aria-labelledby="guideUnitsTitle">
         <h2 id="guideUnitsTitle">Why counts can’t be added</h2>
-        <p>Different resources count different things: sites, proteins, events, structures, records. The workbench always shows the unit next to the number and never sums across resources. Two examples:</p>
+        <p>Sites, proteins, events and structures are different units. Their counts cannot be added.</p>
         <ul>
           <li id="guideEpsd"></li>
           <li id="guideStrucPtm"></li>
@@ -801,20 +801,20 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
       <section aria-labelledby="guideLadderTitle">
         <h2 id="guideLadderTitle">Why published PTM totals differ</h2>
-        <p>Published inventories count different objects at different granularity, so their totals disagree with each other and with the 111 used here:</p>
+        <p>Some sources count families; others count individual modifications or sites.</p>
         <div class="guide-ladder" id="guideLadder"></div>
       </section>
 
-      <section aria-labelledby="guideInterpretTitle">
-        <h2 id="guideInterpretTitle">Interpretation</h2>
+      <details class="source-record">
+        <summary>Original audit notes</summary>
         <p id="guideInterpretation"></p>
-      </section>
+      </details>
 
       <section aria-labelledby="guideProvenanceTitle">
-        <h2 id="guideProvenanceTitle">Provenance</h2>
-        <p>The workbook views retain the August audit. Family profiles link those unchanged records to coverage and selected disease evidence. Disease connections combine the original Figure 3 ledger and a separately recorded September extension with reviewed summaries and bibliographic records. Their review date is shown separately. These SHA-256 fingerprints identify the source files:</p>
-        <div class="hash-list" id="hashList"></div>
-        <p class="license-note">This page shares the audit itself, not copies of external databases. Linked resources keep their own licenses and terms of use.</p>
+        <h2 id="guideProvenanceTitle">Sources and downloads</h2>
+        <p>The workbook contains the August audit. Disease data include 33 original Figure 3 connections and eight September additions. Full records, citations and review methods are included in the downloads.</p>
+        <details class="source-record"><summary>File checksums (SHA-256)</summary><div class="hash-list" id="hashList"></div></details>
+        <p class="license-note">External databases retain their own licenses.</p>
       </section>
     </div>
   </main>
@@ -848,6 +848,15 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     if (!Number.isFinite(n)) return String(v);
     return new Intl.NumberFormat("en-US").format(n);
   };
+
+  // Display labels do not change the workbook values or saved filter keys.
+  const displayLabel = value => ({
+    "No qualifying mapping found": "No dedicated database found",
+    "Primary chemistry class": "Chemistry",
+    "Evidence tier": "Evidence",
+    "Scope tier": "Scope",
+    "In selected dataset": "Studies listed",
+  }[value] || value);
 
   const STATUS_LABELS = {
     ACTIVE_MAINTAINED: "Active, maintained",
@@ -952,13 +961,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   const familyCoverage = row => coverageStateOf(coverageByFamily.get(row[0]).row, coverageSheet);
   const familyConnections = row => diseaseByFamily.get(row[0]) || [];
   const searchableValues = (row, sheet) => sheet.id === "family-ledger"
-    ? [...row, familyCoverage(row), ...familyConnections(row).flatMap(r => [r[3], r[5], r[7]])] : row;
+    ? [...row, familyCoverage(row), displayLabel(familyCoverage(row)), ...familyConnections(row).flatMap(r => [r[3], r[5], r[7]])] : row;
   const viewNames = { "family-ledger": "PTM families", "coverage-matrix": "Database coverage", "resource-roster": "Resources" };
   const viewName = sheet => viewNames[sheet.id] || sheet.name;
 
   const CONFIG = {
     "disease-connections": {
-      blurb: "Selected studies, reviewed by title and abstract. Counts apply to this selection only.",
+      blurb: "Disease and infection studies, with sources and study limits.",
       primary: "PTM family", secondary: "Example / subtype",
       display: [
         { col: "PTM family", kind: "primary" },
@@ -970,7 +979,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
                { col: "Review note" }, { col: "Selection" }, { col: "PTM family" }],
     },
     "summary": {
-      blurb: "The workbook’s headline numbers. Each value keeps the formula behind it.",
+      blurb: "Audit totals and formulas.",
       primary: "Item", secondary: "Group",
       display: [
         { col: "Item", kind: "primary" },
@@ -982,7 +991,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       formulaCol: "Formula",
     },
     "methods": {
-      blurb: "The rules the audit followed: scope, family merging, evidence tiers, coverage, and QA.",
+      blurb: "Inclusion criteria and audit methods.",
       primary: "Topic",
       display: [
         { col: "Topic", kind: "primary" },
@@ -993,13 +1002,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       facets: [],
     },
     "family-ledger": {
-      blurb: "Family definitions, August database coverage, and selected disease studies. Open a row for its profile.",
+      blurb: "PTM families, database coverage and disease studies.",
       primary: "PTM family", secondary: "Family ID",
       display: [
         { col: "PTM family", kind: "primary" },
-        { col: "Primary chemistry class", kind: "text" },
-        { col: "Evidence tier", kind: "familyEvidence" },
-        { col: "Database coverage", kind: "familyCoverage", derive: familyCoverage },
+        { col: "Primary chemistry class", label: "Chemistry", kind: "text" },
+        { col: "Evidence tier", label: "Evidence", kind: "familyEvidence" },
+        { col: "Database coverage", label: "Coverage · Aug 2026", kind: "familyCoverage", derive: familyCoverage },
         { col: "Disease examples", kind: "familyConnections", derive: row => familyConnections(row).length },
       ],
       facets: [
@@ -1012,7 +1021,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "coverage-matrix": {
-      blurb: "Database coverage for each family: best current resource, counts, units, and dates.",
+      blurb: "Databases, counts and update dates for each family.",
       primary: "PTM family", secondary: "Family ID",
       display: [
         { col: "PTM family", kind: "primary" },
@@ -1028,7 +1037,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "resource-roster": {
-      blurb: "The 70 databases, atlases, and datasets audited, with status and official links.",
+      blurb: "Databases and datasets checked in August 2026.",
       primary: "Resource", secondary: "Resource class",
       display: [
         { col: "Resource", kind: "primary" },
@@ -1043,7 +1052,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "verified-totals": {
-      blurb: "Counts verified at the source, with units and licenses. Units differ between rows, so they cannot be added.",
+      blurb: "Source-checked counts, units and licenses. Counts with different units cannot be added.",
       primary: "Resource", secondary: "Resource class",
       display: [
         { col: "Resource", kind: "primary" },
@@ -1073,7 +1082,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       ],
     },
     "gap-audit-a": {
-      blurb: "First recheck of families that lacked coverage, mapped to the final taxonomy.",
+      blurb: "First review of families without database coverage.",
       primary: "Legacy family", secondary: "Legacy ID",
       display: [
         { col: "Legacy family", kind: "primary" },
@@ -1085,7 +1094,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       facets: [{ col: "Resource status", human: true }],
     },
     "gap-audit-b": {
-      blurb: "Second recheck of legacy families, with per-family search notes and counts.",
+      blurb: "Follow-up coverage searches and counts.",
       primary: "Legacy family", secondary: "Legacy family ID",
       display: [
         { col: "Legacy family", kind: "primary" },
@@ -1199,7 +1208,6 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     const c = cfg();
     const parts = [];
 
-    parts.push(`<p class="rail-note">${esc(c.blurb)}</p>`);
     parts.push(`
       <div class="filter-section rail-search">
         <label>
@@ -1229,13 +1237,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       parts.push(`
         <div class="filter-section">
           <button class="filter-section-title" type="button" aria-expanded="true" data-section="${fi}">
-            ${esc(key)} <span class="chevron" aria-hidden="true">⌃</span>
+            ${esc(displayLabel(key))} <span class="chevron" aria-hidden="true">⌃</span>
           </button>
           <div class="filter-section-body">
             ${options.map(([value, n]) => `
               <label class="check-option">
                 <input type="checkbox" data-facet="${esc(key)}" value="${esc(value)}" ${selected.has(value) ? "checked" : ""}>
-                <span class="opt-label">${esc(value)}</span>
+                <span class="opt-label">${esc(displayLabel(value))}</span>
                 <span class="opt-count">${n}</span>
               </label>`).join("")}
           </div>
@@ -1251,13 +1259,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     const v = spec.derive ? spec.derive(row) : row[sheet.colIndex[spec.col]];
     const c = cfg();
     const value = name => row[sheet.colIndex[name]];
-    if (spec.kind === "familyEvidence") return `<td>${esc(humanStatus(v))}<span class="cell-secondary">${esc(humanStatus(value("Confidence")))} confidence</span></td>`;
-    if (spec.kind === "familyCoverage") return `<td><span class="coverage-label">${esc(v)}</span><span class="cell-secondary">August 2026 audit</span></td>`;
-    if (spec.kind === "familyConnections") return `<td>${v ? `<strong>${v} selected ${v === 1 ? "connection" : "connections"}</strong><span class="cell-secondary">${esc(familyConnections(row).map(r => r[5]).slice(0, 2).join(" · "))}${v > 2 ? " · …" : ""}</span>` : '<span class="cell-secondary">Not yet included</span>'}</td>`;
+    if (spec.kind === "familyEvidence") return `<td>${esc(humanStatus(v))}</td>`;
+    if (spec.kind === "familyCoverage") return `<td>${esc(displayLabel(v))}</td>`;
+    if (spec.kind === "familyConnections") return `<td>${v ? `<strong>${v} ${v === 1 ? "example" : "examples"}</strong><span class="cell-secondary">${esc(familyConnections(row).map(r => r[5]).slice(0, 2).join(" · "))}${v > 2 ? " · …" : ""}</span>` : '<span class="cell-secondary">Not yet included</span>'}</td>`;
     if (spec.kind === "context") return `<td>${esc(v)}<span class="cell-secondary">${esc(value("Link type"))}</span></td>`;
     if (spec.kind === "finding") return `<td>${esc(v)}<span class="cell-secondary">${esc(value("Study setting"))}</span>
-      ${value("Review note") !== "Title and abstract reviewed" ? `<span class="review-notice">${esc(value("Review note"))} · read the limits</span>` : ""}</td>`;
-    if (spec.kind === "papers") return `<td>${esc(v)} primary ${v === 1 ? "paper" : "papers"}<span class="cell-secondary">Open row for sources and limits</span></td>`;
+      ${value("Review note") !== "Title and abstract reviewed" ? `<span class="review-notice">${value("Review note") === "Scope caveat" ? "Scope note" : esc(value("Review note"))}</span>` : ""}</td>`;
+    if (spec.kind === "papers") return `<td>${esc(v)} ${v === 1 ? "paper" : "papers"}</td>`;
     if (spec.kind === "primary") {
       const secondary = c.secondary ? row[sheet.colIndex[c.secondary]] : "";
       return `<td><span class="cell-primary">${esc(v || "—")}</span>
@@ -1301,7 +1309,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       const ariaSort = sorted ? (dir === "asc" ? "ascending" : "descending") : "none";
       return `<th scope="col" class="${spec.kind === "num" ? "num" : ""}" aria-sort="${ariaSort}">
         <button class="th-button" type="button" data-sort="${esc(spec.col)}">
-          ${esc(spec.col)}${sorted ? `<span class="sort-arrow" aria-hidden="true">${dir === "asc" ? "▲" : "▼"}</span>` : ""}
+          ${esc(spec.label || spec.col)}${sorted ? `<span class="sort-arrow" aria-hidden="true">${dir === "asc" ? "▲" : "▼"}</span>` : ""}
         </button></th>`;
     }).join("")}</tr>`;
 
@@ -1321,7 +1329,6 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
     const nFilters = countActiveFilters();
     $("#filterSummary").textContent = [
-      sheet.id === "family-ledger" ? "Select a family to read its profile" : "",
       rows.length > PAGE_SIZE ? `showing ${first}–${last}` : "",
       nFilters ? `${nFilters} filter${nFilters === 1 ? "" : "s"} active` : "",
     ].filter(Boolean).join(" · ");
@@ -1352,7 +1359,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     const buttons = [];
     if (st.q.trim()) buttons.push(`<button class="filter-chip" type="button" data-clear-query aria-label="Remove search filter">${st.scopeCol >= 0 ? esc(activeSheet().columns[st.scopeCol]) : "Search"}: ${esc(st.q)} <span aria-hidden="true">×</span></button>`);
     Object.entries(st.facets).forEach(([key, values]) => values.forEach(value => buttons.push(
-      `<button class="filter-chip" type="button" data-remove-facet="${esc(key)}" data-value="${esc(value)}" aria-label="Remove ${esc(key)}: ${esc(value)}">${esc(key)}: ${esc(value)} <span aria-hidden="true">×</span></button>`)));
+      `<button class="filter-chip" type="button" data-remove-facet="${esc(key)}" data-value="${esc(value)}" aria-label="Remove ${esc(displayLabel(key))}: ${esc(displayLabel(value))}">${esc(displayLabel(key))}: ${esc(displayLabel(value))} <span aria-hidden="true">×</span></button>`)));
     $("#activeFilters").innerHTML = buttons.join("");
     $("#activeFilters").hidden = !buttons.length;
   }
@@ -1407,21 +1414,21 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       $("#detailTitle").textContent = `${v("PTM family")} · ${v("Disease / context")}`;
       $("#detailBody").innerHTML = `<div class="evidence-detail">
         <p>${esc(v("Reported finding"))}</p>
-        <p><strong>Study setting:</strong> ${esc(v("Study setting"))}<br><strong>Link type:</strong> ${esc(v("Link type"))}</p>
-        <div class="evidence-limit"><strong>What this evidence does not establish</strong>${esc(v("Limits"))}</div>
-        <h3>Primary studies</h3>
+        <p>${esc(v("Study setting"))} · ${esc(v("Link type"))}</p>
+        <div class="evidence-limit"><strong>Study limits</strong>${esc(v("Limits"))}</div>
+        <h3>Sources</h3>
         ${sheet.references[v("Connection ID")].map(p => `<article class="study-citation">
           <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title)}</a>
           <p>${esc(p.journal)} · ${esc(p.year)} · PMID ${esc(p.pmid)}</p>
           ${p.doi ? `<a href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener noreferrer">DOI ${esc(p.doi)}</a>` : ""}
-          ${p.notices.map(n => `<p class="review-notice"><a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">Published correction</a> · notice identified; full contents not assessed.</p>`).join("")}
+          ${p.notices.map(n => `<p class="review-notice"><a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">Published correction</a> · full text not reviewed.</p>`).join("")}
         </article>`).join("")}
-        <h3>Family-level database coverage</h3>
+        <details class="source-record"><summary>Database coverage · August 2026</summary>
         <p>${esc(v("Family resource coverage (August 2026)"))}<br>${esc(v("Resource named in August audit"))}</p>
         <p>${esc(v("Coverage scope"))}</p>
-        <button class="button detail-family-link" type="button" data-open-family="${esc(v("Family ID"))}">Open family record</button>
-        <p class="cell-secondary">Title and abstract review: ${esc(DATA.disease.reviewDate)}. Selected evidence; not a full-text quality assessment.</p>
-        <p class="cell-secondary">Selection: ${esc(v("Selection"))}. <a href="${esc(DATA.disease.jsonFile)}" download>Download data with citations</a></p>
+        </details>
+        <button class="button detail-family-link" type="button" data-open-family="${esc(v("Family ID"))}">View PTM family</button>
+        <p class="cell-secondary">Title/abstract review: ${esc(DATA.disease.reviewDate)} · ${esc(v("Selection"))}</p>
       </div>`;
     } else if (sheet.id === "family-ledger") {
       const id = row[sheet.colIndex["Family ID"]];
@@ -1430,22 +1437,21 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       const cv = name => cov.row[coverageSheet.colIndex[name]];
       const v = name => row[sheet.colIndex[name]];
       const originalRecord = $("#detailBody").innerHTML;
-      $("#detailEyebrow").textContent = `${id} · Family profile`;
+      $("#detailEyebrow").textContent = id;
       $("#detailBody").innerHTML = `<div class="family-profile">
-        <p class="profile-definition">${esc(v("Operational definition"))}</p>
-        <p><strong>Examples and aliases</strong><br>${esc(v("Example terms"))}</p>
-        <p class="profile-meta">${esc(v("Primary chemistry class"))}<br>${esc(humanStatus(v("Evidence tier")))} · ${esc(humanStatus(v("Confidence")))} confidence in the August family audit</p>
-        ${v("Notes") ? `<p>${esc(v("Notes"))}</p>` : ""}
+        <p><strong>Examples</strong><br>${esc(v("Example terms"))}</p>
+        <p class="profile-meta">${esc(v("Primary chemistry class"))} · ${esc(humanStatus(v("Evidence tier")))}</p>
+        ${v("Scope tier") !== "inclusive_biological" ? `<p>Scope: ${esc(humanStatus(v("Scope tier")))}</p>` : ""}
         <h3>Database coverage <small>August 2026</small></h3>
-        <p><strong>${esc(familyCoverage(row))}</strong><br>${esc(cv("Best current resource"))}</p>
+        <p><strong>${esc(displayLabel(familyCoverage(row)))}</strong><br>${esc(cv("Best current resource"))}</p>
         <p>${esc(fmtNum(cv("Count")))} ${esc(cv("Count unit"))}<br><span class="profile-meta">${esc(cv("Count snapshot"))}</span></p>
-        <button class="text-button" type="button" data-open-coverage="${cov.i}">Coverage record and sources →</button>
-        <h3>Disease &amp; context evidence <small>${matches.length} selected</small></h3>
+        <button class="text-button" type="button" data-open-coverage="${cov.i}">Database details →</button>
+        <h3>Disease examples <small>${matches.length}</small></h3>
         ${matches.length ? `<ul class="profile-studies">${matches.map(r => `<li><a href="#sheet=disease-connections&amp;connection=${r[0]}">${esc(r[5])}</a><span>${esc(r[7])} · ${r[11]} ${r[11] === 1 ? "paper" : "papers"}</span></li>`).join("")}</ul>
-          <button class="text-button" type="button" data-disease-family="${esc(id)}">Compare this family’s connections →</button>`
-          : '<p>No example for this family in the selected dataset. This does not mean there is no disease association.</p>'}
-        <p class="profile-meta">Selected studies, not a complete literature survey. Source review: ${esc(DATA.disease.reviewDate)}.</p>
-        <details class="source-record"><summary>Full workbook record &amp; source links</summary>${originalRecord}</details>
+          <button class="text-button" type="button" data-disease-family="${esc(id)}">View examples →</button>`
+          : '<p>No studies listed here yet.</p>'}
+        <p class="profile-meta">Selected examples; not a complete literature review.</p>
+        <details class="source-record"><summary>Full record &amp; sources</summary>${originalRecord}</details>
       </div>`;
     }
 
@@ -1556,7 +1562,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
     $("#snapshotBand").innerHTML = `
       <div class="snap-group">
-        <span class="snap-label">Operational PTM families</span>
+        <span class="snap-label">PTM families</span>
         <button class="snap-value" type="button" data-goto="family-ledger"
           aria-label="Open the Family Ledger sheet">${s.headline.operational_families}</button>
         <span class="snap-sub"><strong>${s.headline.strict_endogenous}</strong> strict endogenous · <strong>${s.headline.established_only}</strong> established-only</span>
@@ -1569,7 +1575,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
           ${covSegs.map(([tone, label, n]) => `
             <li><button type="button" class="tone-${tone}" data-goto="coverage-matrix" data-coverage-state="${esc(coverageFacetLabel(label))}">
               <span class="status-dot" aria-hidden="true"></span>
-              <strong>${n} · ${pct(n, s.coverage.denominator)}</strong> ${esc(label)}
+              <strong>${n} · ${pct(n, s.coverage.denominator)}</strong> ${esc(displayLabel(label))}
             </button></li>`).join("")}
         </ul>
       </div>
@@ -1609,9 +1615,8 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   function renderGuide() {
     const s = DATA.stats;
     $("#guideLede").textContent =
-      `openPTM is the Chowdhury Lab’s audit of post-translational modification families and the databases that cover them: ` +
-      `111 families, 70 resources, evidence checked through ${DATA.meta.auditDate}. ` +
-      `The nine workbook sheets retain that snapshot. A separate Disease connections view adds selected studies with a ${DATA.disease.reviewDate} title-and-abstract review.`;
+      `PTM families, databases and disease studies from the Chowdhury Lab. ` +
+      `Workbook: ${DATA.meta.auditDate}. Disease review: ${DATA.disease.reviewDate}.`;
 
     $("#guideSheetList").innerHTML = DATA.sheets.filter(sh => sh.kind !== "companion").map((sh) => `
       <div class="guide-sheet">
@@ -1630,7 +1635,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     $("#guideStates").innerHTML = states.map(([tone, label, n, why]) => `
       <li><span class="status-dot tone-${tone}" aria-hidden="true"></span>
       <strong>${n} · ${(100 * n / s.coverage.denominator).toFixed(1)}%</strong>
-      <span><strong>${esc(label)}</strong> — ${esc(why)}.</span></li>`).join("");
+      <span><strong>${esc(displayLabel(label))}</strong> — ${esc(why)}.</span></li>`).join("");
 
     const gap = s.epsdGap;
     $("#guideEpsd").innerHTML =
@@ -1655,13 +1660,12 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     const d = DATA.disease;
     $("#overviewSummary").innerHTML = `<button type="button" class="overview-stat" data-goto="family-ledger"><strong>${s.headline.operational_families}</strong> PTM families</button>
       <button type="button" class="overview-stat" data-goto="resource-roster"><strong>${s.resources.audited}</strong> resources</button>
-      <button type="button" class="overview-stat" data-goto="disease-connections"><strong>${d.connections}</strong> disease / context connections</button>
+      <button type="button" class="overview-stat" data-goto="disease-connections"><strong>${d.connections}</strong> disease connections</button>
       <span class="overview-date">Workbook · ${esc(DATA.meta.auditDate)}</span>`;
-    $("#diseaseCounts").textContent = `${d.connections} connections · ${d.families} families · ${d.contexts} context groups · ${d.papers} papers`;
-    $("#diseaseReviewDate").textContent = `Title and abstract review · ${d.reviewDate}`;
-    $("#guideDiseaseSummary").textContent = `${d.connections} selected connections across ${d.families} families and ${d.contexts} context groups, citing ${d.papers} primary papers. The selection includes `
-      + Object.entries(d.linkTypes).map(([label, count]) => `${count} ${label.toLowerCase()} connections`).join(", ") + ".";
-    $("#guideDiseaseMethod").textContent = d.method;
+    $("#diseaseCounts").textContent = `${d.connections} connections · ${d.families} families · ${d.papers} papers`;
+    $("#diseaseReviewDate").textContent = `Title/abstract review · ${d.reviewDate}`;
+    $("#guideDiseaseSummary").textContent = `${d.connections} connections across ${d.families} families and ${d.contexts} disease or biological contexts, with ${d.papers} primary papers.`;
+    $("#guideDiseaseMethod").textContent = "Titles, abstracts and publication notices were checked through Europe PMC. This is a selected collection, not a systematic or full-text review. Correction notices are linked but their full text has not been reviewed.";
     $("#diseaseDownloads").innerHTML = `<button type="button" class="button" data-goto="disease-connections">Browse connections</button>
       <a href="${esc(d.csvFile)}" download>Connections CSV</a><a href="${esc(d.jsonFile)}" download>Data with citations (JSON)</a>`;
 
@@ -2147,7 +2151,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   /* ---------- Boot ---------- */
 
   $("#footerLeft").textContent =
-    `Workbook: ${DATA.meta.auditDate} · Disease source review: ${DATA.disease.reviewDate} · Chowdhury Lab, Iowa State University`;
+    `Workbook: ${DATA.meta.auditDate} · Disease review: ${DATA.disease.reviewDate} · Chowdhury Lab`;
 
   // Preserve a shared link until the initial rendering has finished.
   restoring = true;
