@@ -32,6 +32,7 @@
     suggestionIndex: -1,
     suggestionInputId: "",
     statsCohort: "manual_review_required",
+    statsField: "",
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -1575,7 +1576,7 @@
 
   function statsLegend(items, total, className = "", scope = "of all records") {
     return `<div class="stats-chart-legend ${className}"><div class="stats-outcome-head" aria-hidden="true"><span></span><span>Records</span><span>Share</span></div><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${["manual_review_required", "unverified", "mathematically_inferred"].includes(item.value) ? `<button type="button" class="stats-status-link" data-stats-cohort="${item.value}" aria-controls="statsReviewDetails" aria-pressed="${item.value === state.statsCohort}">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
+      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${className === "stats-review-legend" ? `<button type="button" class="stats-status-link" data-stats-cohort="${escapeHtml(item.value)}" aria-controls="statsReviewDetails" aria-pressed="${item.value === state.statsCohort}">${escapeHtml(item.label)}</button>` : className === "stats-combination-legend" ? `<button type="button" class="stats-status-link" data-stats-cohort="${escapeHtml(state.statsCohort)}" data-stats-field="${item.value}" aria-controls="statsReviewFigure" aria-pressed="${item.value === state.statsField}">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
       <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
       <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> ${escapeHtml(scope)}</span></span>
     </li>`).join("")}</ul></div>`;
@@ -1676,30 +1677,81 @@
       if (!share) return "";
       const group = statsCohortData(item.value, item.count);
       const parts = group && statsCoverageParts(group);
-      const inner = `<circle class="stats-ring-${item.color}" data-outcome="${escapeHtml(item.value)}" data-count="${item.count}" cx="120" cy="120" r="73" pathLength="100" stroke-width="24" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(item.label)}: ${formatInteger(item.count)} records</title></circle>`;
+      const label = `${item.label}: ${formatInteger(item.count)} records, ${statsShare(item.count, total)} of all records`;
+      const inner = `<circle class="stats-ring-${item.color}" data-outcome="${escapeHtml(item.value)}" data-count="${item.count}" data-chart-cohort="${escapeHtml(item.value)}" role="button" tabindex="0" aria-controls="statsReviewDetails" aria-label="${escapeHtml(label)}" aria-pressed="${item.value === state.statsCohort}" cx="120" cy="120" r="73" pathLength="100" stroke-width="24" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(label)}</title></circle>`;
       let fieldOffset = start;
       const outer = parts ? parts.slices.map((field) => {
         const fieldShare = field.count / total * 100;
         const fieldStart = fieldOffset;
         fieldOffset += fieldShare;
-        return field.count ? `<circle class="stats-ring-${field.color}" data-field-group="${escapeHtml(item.value)}" data-field-slice="${field.value}" data-count="${field.count}" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${fieldShare} ${100 - fieldShare}" stroke-dashoffset="${-fieldStart}"><title>${escapeHtml(item.label)}: ${escapeHtml(field.label)}, ${formatInteger(field.count)} records</title></circle>` : "";
+        const fieldLabel = `${item.label}: ${field.label}, ${formatInteger(field.count)} records, ${statsShare(field.count, item.count)} of this group`;
+        return field.count ? `<circle class="stats-ring-${field.color}" data-field-group="${escapeHtml(item.value)}" data-field-slice="${field.value}" data-count="${field.count}" data-chart-cohort="${escapeHtml(item.value)}" data-chart-field="${field.value}" role="button" tabindex="0" aria-controls="statsReviewDetails" aria-label="${escapeHtml(fieldLabel)}" aria-pressed="${item.value === state.statsCohort && field.value === state.statsField}" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${fieldShare} ${100 - fieldShare}" stroke-dashoffset="${-fieldStart}"><title>${escapeHtml(fieldLabel)}</title></circle>` : "";
       }).join("") : "";
       return `${inner}<g data-review-group="${escapeHtml(item.value)}" class="stats-outer-group${item.value === state.statsCohort ? " selected" : ""}">${outer}</g>`;
     }).join("");
-    return `<div class="stats-nested-ring" aria-hidden="true"><svg viewBox="0 0 240 240">${arcs}</svg>
-      <div><strong>${formatInteger(total)}</strong><span>records</span></div></div>`;
+    return `<div class="stats-nested-ring"><svg viewBox="0 0 240 240" role="group" aria-label="Review outcomes and available fields">${arcs}</svg>
+      <div aria-hidden="true"><strong id="statsRingCount">${formatInteger(total)}</strong><span id="statsRingLabel">records</span></div></div>`;
   }
 
   function syncStatsRingSelection() {
     document.querySelectorAll(".stats-outer-group").forEach((group) => {
       group.classList.toggle("selected", group.dataset.reviewGroup === state.statsCohort);
     });
-    document.querySelectorAll(".stats-status-link[data-stats-cohort]").forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.statsCohort === state.statsCohort));
+    document.querySelectorAll("[data-stats-cohort], [data-chart-cohort]").forEach((button) => {
+      const cohort = button.dataset.statsCohort || button.dataset.chartCohort;
+      const field = button.dataset.statsField || button.dataset.chartField;
+      button.setAttribute("aria-pressed", String(cohort === state.statsCohort && (!field || field === state.statsField)));
+    });
+    document.querySelectorAll(".stats-combination-legend li").forEach((row) => {
+      row.classList.toggle("is-selected", row.dataset.statKey === state.statsField);
     });
   }
 
+  function selectStatsGroup(cohort, field = "") {
+    const changed = cohort !== state.statsCohort;
+    state.statsCohort = cohort;
+    state.statsField = field;
+    const panel = $("statsReviewDetails");
+    if (changed) {
+      const openClasses = [...panel.querySelectorAll("details[open]")].map((item) => item.className);
+      panel.innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
+      panel.querySelectorAll("details").forEach((item) => { item.open = openClasses.includes(item.className); });
+    }
+    panel.querySelectorAll('input[name="statsCohort"]').forEach((input) => { input.checked = input.value === cohort; });
+    if (field === "multiple") {
+      const details = panel.querySelector(".stats-combination-details");
+      if (details) details.open = true;
+    }
+    syncStatsRingSelection();
+    const arc = [...document.querySelectorAll("[data-chart-cohort]")].find((item) =>
+      item.dataset.chartCohort === cohort && (item.dataset.chartField || "") === field);
+    $("statsChartAnnouncement").textContent = arc?.getAttribute("aria-label") || "";
+    const legend = field ? ".stats-combination-legend" : ".stats-review-legend";
+    const row = [...document.querySelectorAll(`${legend} li`)].find((item) => item.dataset.statKey === (field || cohort));
+    if (row) {
+      $("statsRingCount").textContent = formatInteger(Number(row.dataset.count));
+      $("statsRingLabel").textContent = row.querySelector(".stats-status-link").textContent;
+    }
+  }
+
   function statsReviewDetails(counts) {
+    if (state.statsCohort === "accepted") {
+      const accepted = (counts.verified || 0) + (counts.corrected || 0);
+      const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
+      return `<h3 id="fieldsGroupHeading">Accepted records</h3><p>${formatInteger(accepted)} records: verified or corrected.</p>
+        <table class="stats-detail-table"><tbody>
+          <tr><th scope="row">Accepted as reported</th><td>${formatInteger(counts.verified || 0)}</td></tr>
+          <tr><th scope="row">Accepted after a change</th><td>${formatInteger(counts.corrected || 0)}</td></tr>
+        </tbody></table><p>A change may concern the value, sequence or another field.</p>
+        ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} have identity checks only; that status does not confirm their kinetic values.</p>` : ""}`;
+    }
+    if (["disputed", "other_status"].includes(state.statsCohort)) {
+      const disputed = state.statsCohort === "disputed";
+      const known = new Set(reviewStatuses.map((item) => item.value));
+      const total = disputed ? counts.disputed || 0 : Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
+      return `<h3 id="fieldsGroupHeading">${disputed ? "Disputed records" : "Other review statuses"}</h3>
+        <p>${formatInteger(total)} records.</p><p>${disputed ? "Flagged during review. This is separate from records awaiting a check." : "Statuses outside the named review groups."}</p>`;
+    }
     const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
     const total = counts[cohort] || 0;
     const group = statsCohortData(cohort, total);
@@ -1788,6 +1840,7 @@
         <div class="stats-review-workspace">
           <div class="stats-review-overview"><div class="stats-review-layout">
             <div class="stats-nested-figure"><div id="statsReviewFigure">${statsNestedReviewRing(outcomes, total)}</div>
+              <div id="statsChartAnnouncement" class="visually-hidden" role="status" aria-atomic="true"></div>
               <p>Outcomes inside; fields outside.</p>
               <p class="stats-note">Field splits are available for Follow-up, Unverified and Pre-review.</p>
             </div>
@@ -2998,18 +3051,21 @@
   function bindControls() {
     $("statsCharts").addEventListener("change", (event) => {
       if (event.target.name !== "statsCohort") return;
-      state.statsCohort = event.target.value;
-      $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
-      syncStatsRingSelection();
+      selectStatsGroup(event.target.value);
       document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
     });
     $("statsCharts").addEventListener("click", (event) => {
-      const button = event.target.closest("[data-stats-cohort]");
+      const button = event.target.closest("[data-stats-cohort], [data-chart-cohort]");
       if (!button) return;
-      state.statsCohort = button.dataset.statsCohort;
-      $("statsReviewDetails").innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
-      syncStatsRingSelection();
-      document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
+      selectStatsGroup(button.dataset.statsCohort || button.dataset.chartCohort, button.dataset.statsField || button.dataset.chartField || "");
+      if (button.hasAttribute("data-chart-cohort")) button.focus({ preventScroll: true });
+      else if (!button.hasAttribute("data-stats-field")) document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
+    });
+    $("statsCharts").addEventListener("keydown", (event) => {
+      const arc = event.target.closest("[data-chart-cohort]");
+      if (!arc || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      arc.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     [
       "globalSearchInput",

@@ -13,6 +13,7 @@ import urllib.request
 from urllib.parse import urljoin, urlsplit
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -179,16 +180,85 @@ def check(driver, browser, url):
         assert driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').get_attribute("aria-pressed") == "true"
         capture("stats-" + cohort)
     examples.find_element(By.TAG_NAME, "summary").click()
+    def click_arc(selector, touch=False):
+        arc = driver.find_element(By.CSS_SELECTOR, selector)
+        point = driver.execute_script("""
+            const arc = arguments[0];
+            arc.scrollIntoView({block: 'center'});
+            const rect = arc.ownerSVGElement.getBoundingClientRect();
+            const share = parseFloat(arc.getAttribute('stroke-dasharray'));
+            const start = -Number(arc.getAttribute('stroke-dashoffset'));
+            const angle = (start + share / 2) / 100 * Math.PI * 2 - Math.PI / 2;
+            const radius = Number(arc.getAttribute('r')) / 240 * rect.width;
+            const x = Math.round(rect.left + rect.width / 2 + Math.cos(angle) * radius);
+            const y = Math.round(rect.top + rect.height / 2 + Math.sin(angle) * radius);
+            return {x, y, hit: document.elementFromPoint(x, y) === arc};
+        """, arc)
+        assert point["hit"], f"Another element blocks the chart segment: {selector}"
+        if touch:
+            driver.execute_cdp_cmd("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": point["x"], "y": point["y"]}]})
+            driver.execute_cdp_cmd("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        else:
+            actions = ActionChains(driver)
+            actions.w3c_actions.pointer_action.move_to_location(point["x"], point["y"])
+            actions.w3c_actions.pointer_action.click()
+            actions.perform()
+        assert arc.get_attribute("aria-pressed") == "true"
+        assert arc == driver.switch_to.active_element, "Keep chart focus on the selected segment"
+        assert driver.execute_script("return getComputedStyle(arguments[0]).outlineStyle", arc) == "none", "Do not draw a full-circle focus rectangle for pointer input"
+        return arc
+
+    click_arc('#statsReviewFigure [data-outcome="accepted"]')
+    assert driver.find_element(By.ID, "fieldsGroupHeading").text == "Accepted records"
+    assert f"{accepted:,} records" in driver.find_element(By.ID, "statsReviewDetails").text
+    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend")
+    # Tiny outcomes remain keyboard accessible without inflating their visual share.
+    disputed = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-outcome="disputed"]')
+    driver.execute_script("arguments[0].focus({preventScroll: true})", disputed)
+    assert disputed == driver.switch_to.active_element
+    ActionChains(driver).send_keys(Keys.ENTER).perform()
+    assert driver.find_element(By.ID, "fieldsGroupHeading").text == "Disputed records"
+    for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
+        click_arc(f'#statsReviewFigure [data-outcome="{cohort}"]')
+        check_combined_coverage(manifest["summary"]["review_details"]["groups"][cohort])
+        for field in ("complete", "only_sequence", "multiple"):
+            selector = f'#statsReviewFigure [data-field-group="{cohort}"][data-field-slice="{field}"]'
+            if not driver.find_elements(By.CSS_SELECTOR, selector):
+                row = driver.find_element(By.CSS_SELECTOR, f'.stats-combination-legend [data-stat-key="{field}"]')
+                assert row.get_attribute("data-count") == "0", "Only zero-count categories may omit an arc"
+                continue
+            arc = click_arc(selector)
+            row = driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected")
+            assert row.get_attribute("data-stat-key") == field
+            assert row.get_attribute("data-count") == arc.get_attribute("data-count")
+            assert driver.find_element(By.ID, "statsChartAnnouncement").get_attribute("textContent") == arc.get_attribute("aria-label")
+            assert driver.find_element(By.ID, "statsRingCount").text == f"{int(arc.get_attribute('data-count')):,}"
+            if field == "multiple":
+                assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-details").get_attribute("open") is not None
+    capture("stats-chart-selection")
+    keyboard_arc = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-field-group="unverified"][data-field-slice="only_sequence"]')
+    driver.execute_script("arguments[0].focus({preventScroll: true})", keyboard_arc)
+    assert keyboard_arc == driver.switch_to.active_element
+    before_scroll = driver.execute_script("return document.querySelector('#statsView').scrollTop")
+    ActionChains(driver).send_keys(Keys.SPACE).perform()
+    assert keyboard_arc.get_attribute("aria-pressed") == "true"
+    assert driver.execute_script("return getComputedStyle(arguments[0]).stroke", keyboard_arc) == "rgb(23, 44, 58)", "Keyboard focus must have a visible segment indicator"
+    assert driver.execute_script("return document.querySelector('#statsView').scrollTop") == before_scroll
+    assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
+    driver.find_element(By.CSS_SELECTOR, '.stats-review-legend [data-stats-cohort="manual_review_required"]').click()
     selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
     selected.send_keys(Keys.ARROW_RIGHT)
     assert driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="unverified"]').is_selected()
     driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="manual_review_required"]').find_element(By.XPATH, "..").click()
     driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
+        parent = element.find_element(By.XPATH, "..")
+        was_open = parent.get_attribute("open") is not None
         element.click()
-        assert element.find_element(By.XPATH, "..").get_attribute("open") is not None
+        assert (parent.get_attribute("open") is not None) != was_open
         check_panel_width()
         element.click()
+        assert (parent.get_attribute("open") is not None) == was_open
     driver.execute_script("window.scrollTo(0, 0)")
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
     for identifier in ("enrichedDataButton", "exportSnapshotButton"):
@@ -264,6 +334,10 @@ def check(driver, browser, url):
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True})
         assert driver.execute_script("return innerWidth") == 390
         assert driver.execute_script("return matchMedia('(max-width: 520px)').matches")
+        driver.execute_cdp_cmd("Emulation.setTouchEmulationEnabled", {"enabled": True})
+        click_arc('#statsReviewFigure [data-field-group="manual_review_required"][data-field-slice="only_sequence"]', touch=True)
+        assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
+        capture("stats-mobile-chart-selection")
         capture("stats-mobile")
         driver.execute_script("document.querySelector('.stats-followup-section').scrollIntoView()")
         capture("stats-mobile-followup")

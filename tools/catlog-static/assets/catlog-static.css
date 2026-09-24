@@ -2127,8 +2127,15 @@ body.detail-open .detail-panel {
 .stats-nested-ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; pointer-events: none; }
 .stats-nested-ring strong { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .stats-nested-ring span { color: var(--muted); font-size: 14px; }
+.stats-nested-ring > div > span { max-width: 45%; text-align: center; line-height: 1.3; }
 .stats-outer-group { opacity: 0.45; }
 .stats-outer-group.selected { opacity: 1; }
+.stats-nested-ring [data-chart-cohort] { cursor: pointer; pointer-events: visiblePainted; -webkit-tap-highlight-color: transparent; }
+.stats-nested-ring [data-chart-cohort]:focus { outline: none; }
+.stats-nested-ring [data-chart-cohort]:hover { filter: brightness(0.85); }
+.stats-nested-ring [data-chart-cohort]:focus-visible { outline: none; stroke: #172c3a; }
+.stats-nested-ring [data-chart-field][aria-pressed="true"] { stroke-width: 27; }
+.stats-combination-legend li.is-selected { background: #edf5f4; outline: 1px solid #8aa9a3; outline-offset: 3px; }
 .stats-outer-group .stats-ring-kinetic { stroke: #349b55; }
 .stats-outer-group .stats-ring-protein { stroke: #2586df; }
 .stats-outer-group .stats-ring-structure { stroke: #da7024; }
