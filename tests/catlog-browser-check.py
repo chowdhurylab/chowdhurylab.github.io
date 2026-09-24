@@ -232,7 +232,8 @@ def check(driver, browser, url):
             assert row.get_attribute("data-count") == arc.get_attribute("data-count")
             assert driver.find_element(By.ID, "statsChartAnnouncement").get_attribute("textContent") == arc.get_attribute("aria-label")
             assert driver.find_element(By.ID, "statsRingCount").text == f"{int(arc.get_attribute('data-count')):,}"
-        assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-details").get_attribute("open") is not None
+            if field == "multiple":
+                assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-details").get_attribute("open") is not None
     capture("stats-chart-selection")
     keyboard_arc = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-field-group="unverified"][data-field-slice="only_sequence"]')
     driver.execute_script("arguments[0].focus({preventScroll: true})", keyboard_arc)
