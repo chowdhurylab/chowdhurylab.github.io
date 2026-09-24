@@ -20,8 +20,8 @@ Snapshot details
 - Scope note: the 111 operational families are a rule-defined working set, not a universal count of all PTMs; counts keep their original units and are not additive across resources.
 
 Disease connections (separate from the Excel workbook)
-- 41 selected connections, 29 PTM families, 9 context groups, 46 primary papers.
-- Original Figure 3 selection: 33 connections. September extension: 8 connections, 6 previously unrepresented families, 10 additional primary papers.
+- 44 selected connections, 32 PTM families, 9 context groups, 49 primary papers.
+- Original Figure 3 selection: 33 connections. September extension: 11 connections, 9 previously unrepresented families, 13 additional primary papers.
 - Includes study-setting labels, evidence limits, primary citations, correction notices, family cross-links and stable connection URLs.
 - Targeted title-and-abstract review of the original Figure 3 selection and a separately documented human-disease extension; not a systematic literature search or full-text quality assessment. Newly added records are not necessarily newly published studies.
 - Two papers have published correction notices whose full contents have not been assessed.

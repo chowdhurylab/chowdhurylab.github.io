@@ -1,27 +1,27 @@
 {
   "meta": {
     "reviewDate": "2026-09-24",
-    "method": "Targeted review of titles, abstracts, publication types and linked notices for all 36 PubMed records in the August Figure 3 ledger, retrieved through Europe PMC. Study-setting labels and summaries were checked against those abstracts. This is not a systematic literature search or a full-text quality assessment. Published correction notices are linked; their full contents have not been assessed. Eight additional connections were selected to broaden human disease coverage, including six families absent from the original selection. Ten primary-study titles and abstracts, publication types and linked notices were checked through Europe PMC. These are newly added records, not newly published studies. This targeted extension is not exhaustive and does not update the August resource audit.",
+    "method": "Targeted review of titles, abstracts, publication types and linked notices for all 36 PubMed records in the August Figure 3 ledger, retrieved through Europe PMC. Study-setting labels and summaries were checked against those abstracts. This is not a systematic literature search or a full-text quality assessment. Published correction notices are linked; their full contents have not been assessed. Eleven additional connections broaden human disease coverage, including nine families absent from the original selection. Thirteen primary-study titles and abstracts, publication types and linked notices were checked through Europe PMC. These are newly added records, not newly published studies. This targeted extension is not exhaustive and does not update the August resource audit.",
     "originalConnections": 33,
-    "addedConnections": 8,
-    "additionSourceRetrievedAt": "2026-09-24T17:58:51.981889+00:00",
-    "additionsSha256": "ec6223f2111283c7b7318303a470ac3968e4fc4a949a43a74016ea2f686dc461",
-    "additionSourceSnapshotSha256": "ff7ca8c2bcf493417201e66859057a937fadea78e7df9c9bde686663cfe775e7",
+    "addedConnections": 11,
+    "additionSourceRetrievedAt": "2026-09-24T21:44:45.462562+00:00",
+    "additionsSha256": "41284f699685a97a7bef4068f464a61cc1b6fa9417794b34f50107bc0289e2df",
+    "additionSourceSnapshotSha256": "f42b0682e97f2ee1f7c4f89a1ba0e580ebc49e473f2c41c1e19863aa34913d82",
     "sourceRetrievedAt": "2026-09-24T16:35:26.069550+00:00",
-    "connections": 41,
+    "connections": 44,
     "sourceSnapshotSha256": "ccc87593bb881f922904e04c8396cf4b24678aa0bba1443c0e779b4e4a82eb29",
-    "families": 29,
+    "families": 32,
     "contexts": 9,
-    "papers": 46,
+    "papers": 49,
     "linkTypes": {
-      "Disease association": 31,
+      "Disease association": 34,
       "Host–pathogen study": 8,
       "Microbiome association": 2
     },
     "ledgerSha256": "96d3f7510f79c8a7318b0cb0af29d3deb64570a2b03adaa22e82794e5614e646",
     "reviewSha256": "5f224d4b69515ad5e1bf4791e081baaf0aca06f05f88aa39dd78b3b34207a979",
     "csvFile": "openptm-disease-connections-2026-09-24.csv",
-    "csvSha256": "27cbfc8632b16121f15b4ee09669ace09fe682bb8d07219b1b56e2585b4f619f",
+    "csvSha256": "f4a7360ea3c1ebbc6bc51b6c3b910b7938cf4e89f1e766a92862afb4d5c1bff7",
     "jsonFile": "openptm-disease-connections-2026-09-24.json"
   },
   "dataset": {
@@ -868,6 +868,66 @@
         "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
         "2026-09-24",
         "September extension"
+      ],
+      [
+        "DC042",
+        "ADJ066",
+        "UFMylation",
+        "UFM1 / UFC1-dependent UFMylation",
+        "Inherited / developmental",
+        "UFM1 / UFC1-related encephalopathy",
+        "Disease association",
+        "Human genetics + functional studies",
+        "Biallelic UFM1 or UFC1 variants were identified in six families with early-onset encephalopathy and progressive microcephaly. Functional studies found reduced cellular UFMylation.",
+        "A small rare-disease series. It does not identify all affected protein substrates or establish a treatment benefit.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/29868776/",
+        "No qualifying mapping found",
+        "none dedicated found",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC043",
+        "ADJ086",
+        "Glutamylation",
+        "CCP1 / tubulin polyglutamylation",
+        "Neurodegeneration",
+        "CCP1-related infantile neurodegeneration",
+        "Disease association",
+        "Human genetics + functional studies",
+        "A study of 13 individuals linked biallelic CCP1 variants to infantile-onset neurodegeneration. Functional studies found loss of CCP1 activity and disturbed tubulin polyglutamylation.",
+        "The findings concern loss of a tubulin deglutamylase, not all glutamylation. Treatment benefit was not tested.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/30420557/",
+        "No qualifying mapping found",
+        "ProteomeScout current general integrator",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC044",
+        "ADJ085",
+        "Formylglycine formation",
+        "FGE / sulfatase formylglycine formation",
+        "Inherited / developmental",
+        "Multiple sulfatase deficiency",
+        "Disease association",
+        "Human genetics + functional studies",
+        "FGE variants were identified in seven patients with multiple sulfatase deficiency. Restoring functional FGE partly recovered sulfatase activity in patient fibroblasts.",
+        "Cell-level rescue is not clinical treatment evidence. This concerns sulfatase activation by formylglycine formation, not protein sulfation.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/12757705/",
+        "No qualifying mapping found",
+        "ProteomeScout chemistry label and primary sulfatase maturation studies",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
       ]
     ],
     "references": {
@@ -1376,6 +1436,39 @@
           "journal": "PloS one",
           "url": "https://pubmed.ncbi.nlm.nih.gov/22900076/",
           "doi": "10.1371/journal.pone.0042988",
+          "notices": []
+        }
+      ],
+      "DC042": [
+        {
+          "pmid": "29868776",
+          "title": "Biallelic UFM1 and UFC1 mutations expand the essential role of ufmylation in brain development.",
+          "year": "2018",
+          "journal": "Brain : a journal of neurology",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/29868776/",
+          "doi": "10.1093/brain/awy135",
+          "notices": []
+        }
+      ],
+      "DC043": [
+        {
+          "pmid": "30420557",
+          "title": "Loss of tubulin deglutamylase CCP1 causes infantile-onset neurodegeneration.",
+          "year": "2018",
+          "journal": "The EMBO journal",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/30420557/",
+          "doi": "10.15252/embj.2018100540",
+          "notices": []
+        }
+      ],
+      "DC044": [
+        {
+          "pmid": "12757705",
+          "title": "Multiple sulfatase deficiency is caused by mutations in the gene encoding the human C(alpha)-formylglycine generating enzyme.",
+          "year": "2003",
+          "journal": "Cell",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/12757705/",
+          "doi": "10.1016/s0092-8674(03)00347-7",
           "notices": []
         }
       ]
