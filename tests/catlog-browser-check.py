@@ -250,10 +250,13 @@ def check(driver, browser, url):
     driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="manual_review_required"]').find_element(By.XPATH, "..").click()
     driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
+        parent = element.find_element(By.XPATH, "..")
+        was_open = parent.get_attribute("open") is not None
         element.click()
-        assert element.find_element(By.XPATH, "..").get_attribute("open") is not None
+        assert (parent.get_attribute("open") is not None) != was_open
         check_panel_width()
         element.click()
+        assert (parent.get_attribute("open") is not None) == was_open
     driver.execute_script("window.scrollTo(0, 0)")
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
     for identifier in ("enrichedDataButton", "exportSnapshotButton"):
