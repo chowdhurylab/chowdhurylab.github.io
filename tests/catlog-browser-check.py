@@ -205,6 +205,7 @@ def check(driver, browser, url):
             actions.perform()
         assert arc.get_attribute("aria-pressed") == "true"
         assert arc == driver.switch_to.active_element, "Keep chart focus on the selected segment"
+        assert driver.execute_script("return getComputedStyle(arguments[0]).outlineStyle", arc) == "none", "Do not draw a full-circle focus rectangle for pointer input"
         return arc
 
     click_arc('#statsReviewFigure [data-outcome="accepted"]')
@@ -241,6 +242,7 @@ def check(driver, browser, url):
     before_scroll = driver.execute_script("return document.querySelector('#statsView').scrollTop")
     ActionChains(driver).send_keys(Keys.SPACE).perform()
     assert keyboard_arc.get_attribute("aria-pressed") == "true"
+    assert driver.execute_script("return getComputedStyle(arguments[0]).stroke", keyboard_arc) == "rgb(23, 44, 58)", "Keyboard focus must have a visible segment indicator"
     assert driver.execute_script("return document.querySelector('#statsView').scrollTop") == before_scroll
     assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
     driver.find_element(By.CSS_SELECTOR, '.stats-review-legend [data-stats-cohort="manual_review_required"]').click()

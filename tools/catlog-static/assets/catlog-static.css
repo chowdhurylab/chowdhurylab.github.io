@@ -2130,7 +2130,8 @@ body.detail-open .detail-panel {
 .stats-nested-ring > div > span { max-width: 45%; text-align: center; line-height: 1.3; }
 .stats-outer-group { opacity: 0.45; }
 .stats-outer-group.selected { opacity: 1; }
-.stats-nested-ring [data-chart-cohort] { cursor: pointer; pointer-events: visiblePainted; }
+.stats-nested-ring [data-chart-cohort] { cursor: pointer; pointer-events: visiblePainted; -webkit-tap-highlight-color: transparent; }
+.stats-nested-ring [data-chart-cohort]:focus { outline: none; }
 .stats-nested-ring [data-chart-cohort]:hover { filter: brightness(0.85); }
 .stats-nested-ring [data-chart-cohort]:focus-visible { outline: none; stroke: #172c3a; }
 .stats-nested-ring [data-chart-field][aria-pressed="true"] { stroke-width: 27; }
