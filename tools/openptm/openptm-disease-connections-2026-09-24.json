@@ -1,22 +1,28 @@
 {
   "meta": {
     "reviewDate": "2026-09-24",
-    "method": "Targeted review of titles, abstracts, publication types and linked notices for all 36 PubMed records in the August Figure 3 ledger, retrieved through Europe PMC. Study-setting labels and summaries were checked against those abstracts. This is not a systematic literature search or a full-text quality assessment. Published correction notices are linked; their full contents have not been assessed.",
+    "method": "Targeted review of titles, abstracts, publication types and linked notices for all 36 PubMed records in the August Figure 3 ledger, retrieved through Europe PMC. Study-setting labels and summaries were checked against those abstracts. This is not a systematic literature search or a full-text quality assessment. Published correction notices are linked; their full contents have not been assessed. Eight additional connections were selected to broaden human disease coverage, including six families absent from the original selection. Ten primary-study titles and abstracts, publication types and linked notices were checked through Europe PMC. These are newly added records, not newly published studies. This targeted extension is not exhaustive and does not update the August resource audit.",
+    "originalConnections": 33,
+    "addedConnections": 8,
+    "additionSourceRetrievedAt": "2026-09-24T17:58:51.981889+00:00",
+    "additionsSha256": "ec6223f2111283c7b7318303a470ac3968e4fc4a949a43a74016ea2f686dc461",
+    "additionSourceSnapshotSha256": "ff7ca8c2bcf493417201e66859057a937fadea78e7df9c9bde686663cfe775e7",
     "sourceRetrievedAt": "2026-09-24T16:35:26.069550+00:00",
-    "connections": 33,
+    "connections": 41,
     "sourceSnapshotSha256": "ccc87593bb881f922904e04c8396cf4b24678aa0bba1443c0e779b4e4a82eb29",
-    "families": 23,
-    "contexts": 7,
-    "papers": 36,
+    "families": 29,
+    "contexts": 9,
+    "papers": 46,
     "linkTypes": {
-      "Disease association": 23,
+      "Disease association": 31,
       "Host–pathogen study": 8,
       "Microbiome association": 2
     },
     "ledgerSha256": "96d3f7510f79c8a7318b0cb0af29d3deb64570a2b03adaa22e82794e5614e646",
     "reviewSha256": "5f224d4b69515ad5e1bf4791e081baaf0aca06f05f88aa39dd78b3b34207a979",
     "csvFile": "openptm-disease-connections-2026-09-24.csv",
-    "csvSha256": "d2b7f00ec6546515ca379a63256f446bb6d083c007a5595caade649638612495"
+    "csvSha256": "27cbfc8632b16121f15b4ee09669ace09fe682bb8d07219b1b56e2585b4f619f",
+    "jsonFile": "openptm-disease-connections-2026-09-24.json"
   },
   "dataset": {
     "id": "disease-connections",
@@ -39,7 +45,8 @@
       "Family resource coverage (August 2026)",
       "Resource named in August audit",
       "Coverage scope",
-      "Source review date"
+      "Source review date",
+      "Selection"
     ],
     "rows": [
       [
@@ -59,7 +66,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC002",
@@ -78,7 +86,8 @@
         "No qualifying mapping found",
         "HL60 citrullination atlas",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC003",
@@ -97,7 +106,8 @@
         "Active / maintained in August audit",
         "Human SUMO PeptideAtlas/PTMeXchange plus CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC004",
@@ -116,7 +126,8 @@
         "No qualifying mapping found",
         "dbPTM 2025 general integrator",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC005",
@@ -135,7 +146,8 @@
         "No qualifying mapping found",
         "ProteomeScout current general integrator",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC006",
@@ -154,7 +166,8 @@
         "Active / maintained in August audit",
         "Human Ubiquitination PeptideAtlas/PTMeXchange plus CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC007",
@@ -173,7 +186,8 @@
         "Active / maintained in August audit",
         "Plant PTM Viewer 2.0 current plant MAR subset; ADPriboDB 2.0 live aging global",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC008",
@@ -192,7 +206,8 @@
         "No qualifying mapping found",
         "HL60 citrullination atlas",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC009",
@@ -211,7 +226,8 @@
         "Active / maintained in August audit",
         "NEDD8 site atlas PXD022812 plus CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC010",
@@ -230,7 +246,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC011",
@@ -249,7 +266,8 @@
         "Active / maintained in August audit",
         "KlaDB",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC012",
@@ -268,7 +286,8 @@
         "Active / maintained in August audit",
         "Plant PTM Viewer 2.0 current plant MAR subset; ADPriboDB 2.0 live aging global",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC013",
@@ -287,7 +306,8 @@
         "Active / maintained in August audit",
         "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC014",
@@ -306,7 +326,8 @@
         "Active / maintained in August audit",
         "GlyGen 2.10.1; linkage-specific resources where available",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC015",
@@ -325,7 +346,8 @@
         "Active / maintained in August audit",
         "dbSNO 3.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC016",
@@ -344,7 +366,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC017",
@@ -363,7 +386,8 @@
         "No qualifying mapping found",
         "ProteomeXchange PXD054426 plus dbPTM",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC018",
@@ -382,7 +406,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0 partial lysine subtype; StrucPTM gamma-carboxyglutamate occurrences",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC019",
@@ -401,7 +426,8 @@
         "Active / maintained in August audit",
         "HypDB for proline plus CPLM 4.0 for lysine",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC020",
@@ -420,7 +446,8 @@
         "No qualifying mapping found",
         "2026 Cell Metabolism primary proteomics dataset (iProX IPX0010608001)",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC021",
@@ -439,7 +466,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC022",
@@ -458,7 +486,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC023",
@@ -477,7 +506,8 @@
         "Historical only",
         "DOSS historical tyrosine-sulfation database; StrucPTM structural subset",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC024",
@@ -496,7 +526,8 @@
         "Active / maintained in August audit",
         "Human SUMO PeptideAtlas/PTMeXchange plus CPLM 4.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC025",
@@ -515,7 +546,8 @@
         "Active / maintained in August audit",
         "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC026",
@@ -534,7 +566,8 @@
         "Active / maintained in August audit",
         "GlyGen 2.10.1; linkage-specific resources where available",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC027",
@@ -553,7 +586,8 @@
         "No qualifying mapping found",
         "dbPTM 2025 general integrator",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC028",
@@ -572,7 +606,8 @@
         "Active / maintained in August audit",
         "CPLM 4.0; GlycateBase static validation set",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC029",
@@ -591,7 +626,8 @@
         "Active / maintained in August audit",
         "Plant PTM Viewer 2.0 current plant subset; CarbonylDB live aging",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC030",
@@ -610,7 +646,8 @@
         "No qualifying mapping found",
         "none dedicated found",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC031",
@@ -629,7 +666,8 @@
         "Active / maintained in August audit",
         "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
         "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC032",
@@ -648,7 +686,8 @@
         "Historical only",
         "DOSS historical tyrosine-sulfation database; StrucPTM structural subset",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
       ],
       [
         "DC033",
@@ -667,7 +706,168 @@
         "Active / maintained in August audit",
         "EPSD 2.0; dbPSP 2.0",
         "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
-        "2026-09-24"
+        "2026-09-24",
+        "Figure 3 selection"
+      ],
+      [
+        "DC034",
+        "ADJ031",
+        "Methylation",
+        "EZH2 / histone H3K27 methylation",
+        "Inherited / developmental",
+        "Weaver syndrome",
+        "Disease association",
+        "Human genetics + functional studies",
+        "De novo EZH2 variants were identified in Weaver syndrome; a follow-up study linked an affected individual's variant to reduced H3K27 methylation and overgrowth in a mouse model.",
+        "The genetic and functional evidence concerns specific EZH2 variants, not methylation generally. It does not show that changing methylation is an effective treatment.",
+        "Title and abstract reviewed",
+        2,
+        "https://pubmed.ncbi.nlm.nih.gov/22177091/ | https://pubmed.ncbi.nlm.nih.gov/29244146/",
+        "Active / maintained in August audit",
+        "PTMeXchange Human Methylation build; ProMetheusDB; CPLM 4.0",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC035",
+        "ADJ089",
+        "Hypusination",
+        "DHPS / eIF5A hypusination",
+        "Inherited / developmental",
+        "DHPS-related neurodevelopmental disorder",
+        "Disease association",
+        "Human genetics + functional studies",
+        "Five affected individuals from four families carried biallelic DHPS variants. Functional assays found reduced enzyme activity and reduced eIF5A hypusination for tested variants.",
+        "A small rare-disease series with cell-based functional support; the assays do not establish how restoring hypusination would affect patients.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/30661771/",
+        "No qualifying mapping found",
+        "ProteomeScout current general integrator",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC036",
+        "ADJ095",
+        "Lipoylation",
+        "LIAS / mitochondrial protein lipoylation",
+        "Inherited / developmental",
+        "LIAS deficiency",
+        "Disease association",
+        "Human genetics + biochemical studies",
+        "An individual with a homozygous LIAS variant had neonatal epilepsy, metabolic abnormalities, reduced pyruvate dehydrogenase activity and markedly reduced protein-bound lipoamide.",
+        "A single-patient biochemical and genetic report. It supports this specific cofactor-maturation disorder, not a general neurological effect of lipoylation.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/22152680/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC037",
+        "ADJ092",
+        "Biotinylation",
+        "HLCS / carboxylase biotinylation",
+        "Inherited / developmental",
+        "Holocarboxylase synthetase deficiency",
+        "Disease association",
+        "Human genetics + functional studies",
+        "A study of five patients from four families identified HLCS variants; expression in patient fibroblasts linked a tested variant to reduced holocarboxylase synthetase activity.",
+        "Evidence concerns the enzyme responsible for carboxylase biotinylation, not a residue-resolved disease-site atlas. The small cohort does not establish variant frequencies in other populations.",
+        "Scope caveat",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/8541348/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC038",
+        "ADJ044",
+        "GPI anchoring",
+        "PIGA / GPI-anchor biosynthesis",
+        "Hematologic",
+        "Paroxysmal nocturnal hemoglobinuria",
+        "Disease association",
+        "Human genetics + biochemical studies",
+        "Patient blood-cell populations with defective GPI anchoring shared a somatic PIGA mutation, linking an acquired clonal blood disorder to loss of surface GPI-anchored proteins.",
+        "This is an acquired somatic disorder, not an inherited GPI deficiency. The finding does not by itself explain every step in clonal expansion or establish a treatment effect.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/8500164/",
+        "Live but aging",
+        "GPI-AP Database",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC039",
+        "ADJ081",
+        "Deamidation",
+        "Tissue transglutaminase / gliadin deamidation",
+        "Autoimmune / inflammatory",
+        "Celiac disease",
+        "Disease association",
+        "Human biopsy-derived cells + biochemical studies",
+        "T cells derived from adult celiac lesions preferentially recognized deamidated gliadin, supporting a role for tissue transglutaminase in forming the recognized epitopes.",
+        "The modified substrate is dietary wheat gliadin, not a human protein. Biopsy and T-cell experiments support antigen recognition, not a clinical treatment claim.",
+        "Scope caveat",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/11465088/",
+        "No qualifying mapping found",
+        "dbPTM 2025 general integrator",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC040",
+        "ADJ065",
+        "Ubiquitination",
+        "UBA1 / ubiquitin activation",
+        "Autoimmune / inflammatory",
+        "VEXAS syndrome",
+        "Disease association",
+        "Human genetics + functional studies",
+        "A study of 25 men linked somatic UBA1 variants to adult-onset inflammatory disease, reduced cellular ubiquitylation and impaired activity of a cytoplasmic UBA1 isoform.",
+        "The original cohort and tested variants do not represent all patients with VEXAS. Somatic mutation evidence is not an inherited-risk estimate or proof of benefit from altering ubiquitination.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/33108101/",
+        "Active / maintained in August audit",
+        "Human Ubiquitination PeptideAtlas/PTMeXchange plus CPLM 4.0",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
+      ],
+      [
+        "DC041",
+        "ADJ036",
+        "Phosphorylation",
+        "FAM20C / secreted-protein phosphorylation",
+        "Inherited / developmental",
+        "Raine syndrome",
+        "Disease association",
+        "Cells / biochemical assays",
+        "Biochemical studies identified FAM20C as a kinase for secreted biomineralization proteins; tested Raine syndrome variants impaired its localization and kinase activity.",
+        "These studies address the biochemical function of a disease-associated enzyme. They are not clinical trials and do not establish which individual substrate changes account for each patient feature.",
+        "Title and abstract reviewed",
+        2,
+        "https://pubmed.ncbi.nlm.nih.gov/22582013/ | https://pubmed.ncbi.nlm.nih.gov/22900076/",
+        "Active / maintained in August audit",
+        "EPSD 2.0; dbPSP 2.0",
+        "Family-level classification from the unchanged August audit. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24",
+        "September extension"
       ]
     ],
     "references": {
@@ -1070,6 +1270,112 @@
           "journal": "Molecular and cellular neurosciences",
           "url": "https://pubmed.ncbi.nlm.nih.gov/21504794/",
           "doi": "10.1016/j.mcn.2011.04.001",
+          "notices": []
+        }
+      ],
+      "DC034": [
+        {
+          "pmid": "22177091",
+          "title": "Mutations in EZH2 cause Weaver syndrome.",
+          "year": "2012",
+          "journal": "American journal of human genetics",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22177091/",
+          "doi": "10.1016/j.ajhg.2011.11.018",
+          "notices": []
+        },
+        {
+          "pmid": "29244146",
+          "title": "Ezh2 Mutations Found in the Weaver Overgrowth Syndrome Cause a Partial Loss of H3K27 Histone Methyltransferase Activity.",
+          "year": "2018",
+          "journal": "The Journal of clinical endocrinology and metabolism",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/29244146/",
+          "doi": "10.1210/jc.2017-01948",
+          "notices": []
+        }
+      ],
+      "DC035": [
+        {
+          "pmid": "30661771",
+          "title": "Recessive Rare Variants in Deoxyhypusine Synthase, an Enzyme Involved in the Synthesis of Hypusine, Are Associated with a Neurodevelopmental Disorder.",
+          "year": "2019",
+          "journal": "American journal of human genetics",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/30661771/",
+          "doi": "10.1016/j.ajhg.2018.12.017",
+          "notices": []
+        }
+      ],
+      "DC036": [
+        {
+          "pmid": "22152680",
+          "title": "Lipoic acid synthetase deficiency causes neonatal-onset epilepsy, defective mitochondrial energy metabolism, and glycine elevation.",
+          "year": "2011",
+          "journal": "American journal of human genetics",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22152680/",
+          "doi": "10.1016/j.ajhg.2011.11.011",
+          "notices": []
+        }
+      ],
+      "DC037": [
+        {
+          "pmid": "8541348",
+          "title": "Molecular analysis of holocarboxylase synthetase deficiency: a missense mutation and a single base deletion are predominant in Japanese patients.",
+          "year": "1995",
+          "journal": "Biochimica et biophysica acta",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/8541348/",
+          "doi": "10.1016/0925-4439(95)00082-8",
+          "notices": []
+        }
+      ],
+      "DC038": [
+        {
+          "pmid": "8500164",
+          "title": "Deficiency of the GPI anchor caused by a somatic mutation of the PIG-A gene in paroxysmal nocturnal hemoglobinuria.",
+          "year": "1993",
+          "journal": "Cell",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/8500164/",
+          "doi": "10.1016/0092-8674(93)90250-t",
+          "notices": []
+        }
+      ],
+      "DC039": [
+        {
+          "pmid": "11465088",
+          "title": "T cells from celiac disease lesions recognize gliadin epitopes deamidated in situ by endogenous tissue transglutaminase.",
+          "year": "2001",
+          "journal": "European journal of immunology",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/11465088/",
+          "doi": "10.1002/1521-4141(200105)31:5<1317::aid-immu1317>3.0.co;2-i",
+          "notices": []
+        }
+      ],
+      "DC040": [
+        {
+          "pmid": "33108101",
+          "title": "Somatic Mutations in UBA1 and Severe Adult-Onset Autoinflammatory Disease.",
+          "year": "2020",
+          "journal": "The New England journal of medicine",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/33108101/",
+          "doi": "10.1056/nejmoa2026834",
+          "notices": []
+        }
+      ],
+      "DC041": [
+        {
+          "pmid": "22582013",
+          "title": "Secreted kinase phosphorylates extracellular proteins that regulate biomineralization.",
+          "year": "2012",
+          "journal": "Science (New York, N.Y.)",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22582013/",
+          "doi": "10.1126/science.1217817",
+          "notices": []
+        },
+        {
+          "pmid": "22900076",
+          "title": "The Raine syndrome protein FAM20C is a Golgi kinase that phosphorylates bio-mineralization proteins.",
+          "year": "2012",
+          "journal": "PloS one",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22900076/",
+          "doi": "10.1371/journal.pone.0042988",
           "notices": []
         }
       ]

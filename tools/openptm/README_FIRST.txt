@@ -16,13 +16,22 @@ Snapshot details
 - Disease/context source review: 2026-09-24
 - Source: PTM_family_database_audit_final_2026-08-14.xlsx
 - Source SHA-256: ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
-- Contents: the complete nine-sheet audit workbook rendered as a searchable, filterable workbench with row-level detail, per-sheet CSV export, provenance fingerprints, and anonymous session usage tracking. No external fonts.
+- Contents: the complete nine-sheet audit workbook with family profiles, joined coverage and disease evidence, searchable/filterable views, filtered CSV export, shareable filters, provenance fingerprints, and anonymous session usage tracking. No external fonts.
 - Scope note: the 111 operational families are a rule-defined working set, not a universal count of all PTMs; counts keep their original units and are not additive across resources.
 
 Disease connections (separate from the Excel workbook)
-- 33 selected connections, 23 PTM families, 7 context groups, 36 primary papers.
+- 41 selected connections, 29 PTM families, 9 context groups, 46 primary papers.
+- Original Figure 3 selection: 33 connections. September extension: 8 connections, 6 previously unrepresented families, 10 additional primary papers.
 - Includes study-setting labels, evidence limits, primary citations, correction notices, family cross-links and stable connection URLs.
-- Targeted title-and-abstract review of the original Figure 3 selection; not a systematic literature search or full-text quality assessment.
+- Targeted title-and-abstract review of the original Figure 3 selection and a separately documented human-disease extension; not a systematic literature search or full-text quality assessment. Newly added records are not necessarily newly published studies.
 - Two papers have published correction notices whose full contents have not been assessed.
 - Associations and model experiments do not establish clinical causation or treatment benefit. Family resource coverage is the August audit classification, not disease-specific validation.
 - CSV contains the complete reviewed table; JSON also includes citation metadata and review provenance.
+
+Using the explorer
+- Open a family for its definition, aliases, dated resource coverage, selected disease studies, and complete source record.
+- Three primary workbook views are shown first; Audit worksheets retains all other sheets. On phones one selector includes all nine views.
+- August audit details expands the original coverage/evidence distributions.
+- Copy link preserves filters, search scope, sort, page, and selected family or connection.
+- Export downloads all matching rows in sort order. Family CSV exports append coverage and disease-connection IDs to the original columns.
+- Complete disease CSV and JSON downloads remain available in the Guide; the Excel workbook does not include this companion dataset.
