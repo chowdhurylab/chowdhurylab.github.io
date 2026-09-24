@@ -1,0 +1,1079 @@
+{
+  "meta": {
+    "reviewDate": "2026-09-24",
+    "method": "Targeted review of titles, abstracts, publication types and linked notices for all 36 PubMed records in the August Figure 3 ledger, retrieved through Europe PMC. Study-setting labels and summaries were checked against those abstracts. This is not a systematic literature search or a full-text quality assessment. Published correction notices are linked; their full contents have not been assessed.",
+    "sourceRetrievedAt": "2026-09-24T16:35:26.069550+00:00",
+    "connections": 33,
+    "sourceSnapshotSha256": "ccc87593bb881f922904e04c8396cf4b24678aa0bba1443c0e779b4e4a82eb29",
+    "families": 23,
+    "contexts": 7,
+    "papers": 36,
+    "linkTypes": {
+      "Disease association": 23,
+      "Host–pathogen study": 8,
+      "Microbiome association": 2
+    },
+    "ledgerSha256": "96d3f7510f79c8a7318b0cb0af29d3deb64570a2b03adaa22e82794e5614e646",
+    "reviewSha256": "5f224d4b69515ad5e1bf4791e081baaf0aca06f05f88aa39dd78b3b34207a979",
+    "csvFile": "openptm-disease-connections-2026-09-24.csv",
+    "csvSha256": "d2b7f00ec6546515ca379a63256f446bb6d083c007a5595caade649638612495"
+  },
+  "dataset": {
+    "id": "disease-connections",
+    "name": "Disease connections",
+    "kind": "companion",
+    "columns": [
+      "Connection ID",
+      "Family ID",
+      "PTM family",
+      "Example / subtype",
+      "Context group",
+      "Disease / context",
+      "Link type",
+      "Study setting",
+      "Reported finding",
+      "Limits",
+      "Review note",
+      "Primary papers",
+      "Source URLs",
+      "Family resource coverage (August 2026)",
+      "Resource named in August audit",
+      "Coverage scope",
+      "Source review date"
+    ],
+    "rows": [
+      [
+        "DC001",
+        "ADJ007",
+        "Acetylation",
+        "Histone H2B acetylation",
+        "Autoimmune / inflammatory",
+        "Systemic lupus erythematosus",
+        "Disease association",
+        "Human samples + experimental models",
+        "Acetylated histone H2B was recognized by lupus-associated autoantibodies in patient samples and mouse experiments.",
+        "An autoantibody epitope study; it does not establish that acetylation causes lupus.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/19747733/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC002",
+        "ADJ080",
+        "Citrullination",
+        "Citrullination",
+        "Autoimmune / inflammatory",
+        "Rheumatoid arthritis",
+        "Disease association",
+        "Human observational + biochemical",
+        "Autoantibodies recognized citrullinated tenascin-C in rheumatoid arthritis cohorts and in some samples collected before diagnosis.",
+        "Biomarker association and epitope recognition do not establish disease causation.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/26659718/",
+        "No qualifying mapping found",
+        "HL60 citrullination atlas",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC003",
+        "ADJ064",
+        "SUMOylation",
+        "SUMOylation",
+        "Autoimmune / inflammatory",
+        "Experimental autoimmunity",
+        "Disease association",
+        "Animal + cellular models",
+        "Preventing NFATc1 SUMOylation reduced disease severity in mouse models of autoimmune encephalomyelitis and graft-versus-host disease.",
+        "Experimental mouse models; benefit in patients was not tested.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/32986812/",
+        "Active / maintained in August audit",
+        "Human SUMO PeptideAtlas/PTMeXchange plus CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC004",
+        "ADJ033",
+        "NMPylation",
+        "AMPylation + UMPylation",
+        "Bacterial infection / toxins",
+        "Bacterial infection research",
+        "Host–pathogen study",
+        "Biochemical / cellular models",
+        "Two bacterial studies describe AMPylation and UMPylation in infection-related biology.",
+        "The studies concern different substrates and organisms. The UMPylation study concerns a bacterial protein, not a host protein; this grouping does not imply a shared disease mechanism.",
+        "Scope caveat",
+        2,
+        "https://pubmed.ncbi.nlm.nih.gov/20651120/ | https://pubmed.ncbi.nlm.nih.gov/35532216/",
+        "No qualifying mapping found",
+        "dbPTM 2025 general integrator",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC005",
+        "ADJ034",
+        "Phosphoaminoalcoholation",
+        "Phosphocholination",
+        "Bacterial infection / toxins",
+        "Bacterial infection research",
+        "Host–pathogen study",
+        "Biochemical / cellular models",
+        "A Legionella study reports phosphocholination in host-cell biology.",
+        "A mechanistic infection study, not a patient association or a validated clinical target.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/22158903/",
+        "No qualifying mapping found",
+        "ProteomeScout current general integrator",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC006",
+        "ADJ065",
+        "Ubiquitination",
+        "Phosphoribosyl-linked ubiquitination",
+        "Bacterial infection / toxins",
+        "Bacterial infection research",
+        "Host–pathogen study",
+        "Biochemical / cellular models",
+        "A Legionella study examines noncanonical ubiquitin modification during infection.",
+        "The phosphoribosyl-linked subtype is distinct from conventional ubiquitination. Family-wide coverage does not establish subtype-specific disease coverage.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/39214970/",
+        "Active / maintained in August audit",
+        "Human Ubiquitination PeptideAtlas/PTMeXchange plus CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC007",
+        "ADJ023",
+        "ADP-ribosylation",
+        "ADP-ribosylation",
+        "Bacterial infection / toxins",
+        "Bacterial toxin research",
+        "Host–pathogen study",
+        "Biochemical study",
+        "A biochemical study identifies toxin-associated ADP-ribosylation of a host protein.",
+        "Biochemical evidence, not a clinical cohort. The family-level resource status includes organism-limited coverage.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/6267047/",
+        "Active / maintained in August audit",
+        "Plant PTM Viewer 2.0 current plant MAR subset; ADPriboDB 2.0 live aging global",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC008",
+        "ADJ080",
+        "Citrullination",
+        "Citrullination",
+        "Bacterial infection / toxins",
+        "Periodontal infection / autoimmunity research",
+        "Host–pathogen study",
+        "Biochemical / cellular models",
+        "An oral-bacterium study reports citrullination of human proteins relevant to rheumatoid arthritis research.",
+        "A proposed link between infection and autoimmunity; this experiment alone does not show that infection causes rheumatoid arthritis.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/20506214/",
+        "No qualifying mapping found",
+        "HL60 citrullination atlas",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC009",
+        "ADJ057",
+        "NEDDylation",
+        "NEDDylation",
+        "Cancer",
+        "Non-small cell lung cancer",
+        "Disease association",
+        "Human samples + experimental models",
+        "UBE2F-associated neddylation was linked to lung-cancer-cell survival, with patient-tissue associations and cell and xenograft experiments.",
+        "Patient associations and model experiments are not evidence of clinical treatment efficacy.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/27591266/",
+        "Active / maintained in August audit",
+        "NEDD8 site atlas PXD022812 plus CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC010",
+        "ADJ011",
+        "Crotonylation",
+        "Crotonylation",
+        "Cancer",
+        "Cervical cancer cell models",
+        "Disease association",
+        "Cellular models",
+        "p300-associated crotonylation and HNRNPA1 expression were linked to proliferation and migration in cervical cancer cells.",
+        "Cell-line evidence; no demonstrated patient benefit or family-wide cancer effect.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/33457194/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC011",
+        "ADJ016",
+        "Lactylation",
+        "Lactylation",
+        "Cancer",
+        "Hepatocellular carcinoma cell models",
+        "Disease association",
+        "Cellular models",
+        "GPC3 knockdown altered lactylation, growth and metabolic readouts in liver-cancer cells under hypoxia.",
+        "Cell-culture evidence. The study does not establish a clinical lactylation biomarker or treatment.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/37131292/",
+        "Active / maintained in August audit",
+        "KlaDB",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC012",
+        "ADJ023",
+        "ADP-ribosylation",
+        "PARylation",
+        "Cancer",
+        "Breast cancer cell models",
+        "Disease association",
+        "Cellular models",
+        "PARP1-dependent ADP-ribosylation was linked to transcription of proliferation and DNA-repair genes in breast cancer cells.",
+        "A cellular transcription study; the evidence is specific to the studied system.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/31614656/",
+        "Active / maintained in August audit",
+        "Plant PTM Viewer 2.0 current plant MAR subset; ADPriboDB 2.0 live aging global",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC013",
+        "ADJ048",
+        "Protein fatty acylation",
+        "Palmitoylation",
+        "Cancer",
+        "NRAS-associated leukemia models",
+        "Disease association",
+        "Animal + cellular models",
+        "NRAS palmitoylation was required for leukemia-like disease in the mouse model studied.",
+        "Mouse-model evidence does not establish efficacy of targeting palmitoylation in patients.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/20200357/",
+        "Active / maintained in August audit",
+        "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC014",
+        "ADJ042",
+        "Protein glycosylation",
+        "O-GlcNAcylation",
+        "Cancer",
+        "Colon cancer",
+        "Disease association",
+        "Human samples + experimental models",
+        "PGK1 O-GlcNAcylation was elevated in colon tumors and linked to metabolism and tumor growth in cell and xenograft experiments.",
+        "An O-GlcNAc example within the broader protein-glycosylation family, not evidence for every glycan linkage.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/31911580/",
+        "Active / maintained in August audit",
+        "GlyGen 2.10.1; linkage-specific resources where available",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC015",
+        "ADJ079",
+        "Sulfhydration and persulfidation",
+        "Sulfhydration / persulfidation",
+        "Cardiovascular / metabolic",
+        "Fatty liver disease",
+        "Disease association",
+        "Human samples + experimental models",
+        "FXR persulfidation was linked to metabolic and liver-disease readouts in mouse and cell models, with supporting patient-liver observations.",
+        "The paper uses NAFLD/NASH terminology. Its experimental effects do not demonstrate a treatment benefit in patients.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/35586979/",
+        "Active / maintained in August audit",
+        "dbSNO 3.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC016",
+        "ADJ019",
+        "Malonylation",
+        "Malonylation",
+        "Cardiovascular / metabolic",
+        "Diabetic retinal vascular dysfunction",
+        "Disease association",
+        "Animal + cellular models",
+        "mTOR malonylation was linked to retinal vascular readouts in diabetic mice and endothelial-cell experiments.",
+        "Preclinical evidence. A published corrigendum is linked; its contents need full-text assessment before relying on individual experimental results.",
+        "Correction notice linked",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/34619345/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC017",
+        "ADJ037",
+        "Protein monoaminylation",
+        "Serotonylation",
+        "Cardiovascular / metabolic",
+        "Pulmonary hypertension",
+        "Disease association",
+        "Human samples + experimental models",
+        "RhoA serotonylation was associated with pulmonary hypertension in patient material and studied in cells and mice.",
+        "Serotonylation is one subtype of protein monoaminylation. This does not establish a clinical treatment effect.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/19299501/",
+        "No qualifying mapping found",
+        "ProteomeXchange PXD054426 plus dbPTM",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC018",
+        "ADJ027",
+        "Carboxylation",
+        "γ-carboxylation",
+        "Cardiovascular / metabolic",
+        "Arterial calcification",
+        "Disease association",
+        "Human observational",
+        "Long-term coumarin use was associated with arterial calcification in a small cross-sectional study; impaired MGP carboxylation was a proposed explanation.",
+        "Indirect PTM evidence: the study does not demonstrate that a specific carboxylation site causes calcification or establish causal direction.",
+        "Scope caveat",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/20354170/",
+        "Active / maintained in August audit",
+        "CPLM 4.0 partial lysine subtype; StrucPTM gamma-carboxyglutamate occurrences",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC019",
+        "ADJ088",
+        "Hydroxylation",
+        "Hydroxylation",
+        "Cardiovascular / metabolic",
+        "Dilated cardiomyopathy",
+        "Disease association",
+        "Human samples + experimental models",
+        "JMJD4-dependent PKM2 hydroxylation was linked to cardiac metabolism and cardiomyopathy in experimental models, alongside patient-heart observations.",
+        "A published correction is linked; its contents need full-text assessment before relying on individual experimental results.",
+        "Correction notice linked",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/37066795/",
+        "Active / maintained in August audit",
+        "HypDB for proline plus CPLM 4.0 for lysine",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC020",
+        "ADJ017",
+        "Lysine phenylacetylation",
+        "Lysine phenylacetylation",
+        "Cardiovascular / metabolic",
+        "Obesity / MASLD / MASH",
+        "Microbiome association",
+        "Human samples + experimental models",
+        "Lysine phenylacetylation was linked to microbiota-derived metabolism and mitochondrial dysfunction in experiments, with observations in adults with obesity and MASH.",
+        "A selected 2026 study of an emerging modification; replication and clinical utility are not established here.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/42341761/",
+        "No qualifying mapping found",
+        "2026 Cell Metabolism primary proteomics dataset (iProX IPX0010608001)",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC021",
+        "ADJ007",
+        "Acetylation",
+        "Acetylation",
+        "Mucosal / intestinal inflammation",
+        "Crohn’s disease",
+        "Microbiome association",
+        "Human observational",
+        "Host and microbial acetylated peptides differed between Crohn’s disease samples and controls in a microbiome proteomics study.",
+        "Differential abundance does not establish whether acetylation is a cause or consequence of disease.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/32807798/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC022",
+        "ADJ011",
+        "Crotonylation",
+        "Crotonylation",
+        "Mucosal / intestinal inflammation",
+        "Experimental colitis / cell therapy",
+        "Disease association",
+        "Animal + cellular models",
+        "Crotonylation was linked to stem-cell senescence and improved cell-therapy readouts in a mouse colitis model.",
+        "A preclinical model, not a demonstration of efficacy in people with inflammatory bowel disease.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/41764109/",
+        "Active / maintained in August audit",
+        "CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC023",
+        "ADJ038",
+        "Sulfation",
+        "Mucin/carbohydrate sulfation",
+        "Mucosal / intestinal inflammation",
+        "Colitis / colonic carcinogenesis",
+        "Disease association",
+        "Human samples + experimental models",
+        "PAPSS2-associated sulfation was linked to intestinal-barrier phenotypes in mice and colon-cancer observations in humans.",
+        "Scope-limited context: the abstract concerns sulfomucin and bile-acid sulfates. It does not identify a sulfated protein-residue site; bile-acid sulfation is not a protein PTM. Retained as contextual evidence, not direct residue-level disease evidence.",
+        "Scope caveat",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/33819483/",
+        "Historical only",
+        "DOSS historical tyrosine-sulfation database; StrucPTM structural subset",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC024",
+        "ADJ064",
+        "SUMOylation",
+        "SUMOylation",
+        "Neurodegeneration",
+        "Alzheimer-related amyloid models",
+        "Disease association",
+        "Cellular models",
+        "APP SUMOylation was associated with lower amyloid-beta aggregate levels in the cell experiments studied.",
+        "A cellular aggregation endpoint, not evidence of prevention or treatment of Alzheimer’s disease.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/18675254/",
+        "Active / maintained in August audit",
+        "Human SUMO PeptideAtlas/PTMeXchange plus CPLM 4.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC025",
+        "ADJ048",
+        "Protein fatty acylation",
+        "Palmitoylation",
+        "Neurodegeneration",
+        "Huntington’s disease cell models",
+        "Disease association",
+        "Cellular models",
+        "GAD65 palmitoylation and trafficking were altered in neuronal cell models expressing mutant huntingtin.",
+        "Cellular models; no patient outcome or general effect of all fatty acylation was established.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/22103299/",
+        "Active / maintained in August audit",
+        "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC026",
+        "ADJ042",
+        "Protein glycosylation",
+        "O-GlcNAcylation",
+        "Neurodegeneration",
+        "Tau-related neurodegeneration research",
+        "Disease association",
+        "Experimental study",
+        "The study linked SIRT1/OGT regulation to tau O-GlcNAcylation and phosphorylation.",
+        "The abstract does not specify all experimental models. No patient treatment effect can be inferred from this record.",
+        "Scope caveat",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/32310828/",
+        "Active / maintained in August audit",
+        "GlyGen 2.10.1; linkage-specific resources where available",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC027",
+        "ADJ033",
+        "NMPylation",
+        "AMPylation / deAMPylation",
+        "Neurodegeneration",
+        "Inherited motor neuron disease",
+        "Disease association",
+        "Human genetics + functional study",
+        "Biallelic FICD variants in affected individuals were linked to impaired deAMPylation and altered BiP regulation in patient-derived fibroblasts.",
+        "A specific rare genetic disorder with functional evidence; it does not imply that AMPylation explains motor neuron disease generally.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/36136088/",
+        "No qualifying mapping found",
+        "dbPTM 2025 general integrator",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC028",
+        "ADJ041",
+        "Glycation and AGE formation",
+        "Glycation",
+        "Neurodegeneration",
+        "Huntington’s disease models",
+        "Disease association",
+        "Animal + cellular models",
+        "Increased glycation worsened mutant-huntingtin aggregation or toxicity in yeast, cell and fruit-fly models.",
+        "Experimental models; relevance to patient progression or treatment remains unestablished here.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/27857176/",
+        "Active / maintained in August audit",
+        "CPLM 4.0; GlycateBase static validation set",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC029",
+        "ADJ068",
+        "Carbonylation",
+        "Protein carbonylation",
+        "Neurodegeneration",
+        "Mild cognitive impairment / early Alzheimer’s disease",
+        "Disease association",
+        "Human observational",
+        "Redox proteomics identified elevated carbonylation of selected proteins in post-mortem brain samples.",
+        "Post-mortem association cannot establish temporal order or disease causation.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/19686046/",
+        "Active / maintained in August audit",
+        "Plant PTM Viewer 2.0 current plant subset; CarbonylDB live aging",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC030",
+        "ADJ056",
+        "ISGylation",
+        "ISGylation",
+        "Viral infection",
+        "Antiviral immunity research",
+        "Host–pathogen study",
+        "Human samples + experimental models",
+        "Mouse and human studies report species-dependent roles for ISG15 in antiviral responses.",
+        "Free ISG15 and protein-conjugated ISG15 are different. The human study does not demonstrate a uniform antiviral effect of ISGylation, and mouse findings cannot be generalized to humans.",
+        "Scope caveat",
+        2,
+        "https://pubmed.ncbi.nlm.nih.gov/17227866/ | https://pubmed.ncbi.nlm.nih.gov/27193971/",
+        "No qualifying mapping found",
+        "none dedicated found",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC031",
+        "ADJ048",
+        "Protein fatty acylation",
+        "Myristoylation + palmitoylation",
+        "Viral infection",
+        "Viral infection research",
+        "Host–pathogen study",
+        "Cellular models",
+        "Two studies examine protein fatty-acyl modifications in different viral systems.",
+        "Myristoylation and palmitoylation are distinct subtypes. These experiments do not establish a shared clinical effect across viruses.",
+        "Title and abstract reviewed",
+        2,
+        "https://pubmed.ncbi.nlm.nih.gov/2405382/ | https://pubmed.ncbi.nlm.nih.gov/35813875/",
+        "Active / maintained in August audit",
+        "dbSNO 3.0 S-palmitoylation subset; Plant PTM Viewer 2.0 and MYRbase partial children",
+        "Family-level qualifying coverage is subtype-, organism-, or evidence-scope limited. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC032",
+        "ADJ038",
+        "Sulfation",
+        "Tyrosine sulfation",
+        "Viral infection",
+        "Viral infection research",
+        "Host–pathogen study",
+        "Biochemical / cellular models",
+        "A cellular study links host-receptor sulfation with viral infection biology.",
+        "A receptor-specific experimental context, not evidence that sulfation generally predicts clinical outcomes.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/10089882/",
+        "Historical only",
+        "DOSS historical tyrosine-sulfation database; StrucPTM structural subset",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ],
+      [
+        "DC033",
+        "ADJ036",
+        "Phosphorylation",
+        "Phosphorylation",
+        "Viral infection",
+        "HIV-associated neurocognitive disease research",
+        "Disease association",
+        "Human samples + experimental models",
+        "pRb phosphorylation was associated with HIV-related neural injury in brain material and cellular experiments.",
+        "This is a neurotoxicity context; it does not establish a universal effect of phosphorylation in viral disease.",
+        "Title and abstract reviewed",
+        1,
+        "https://pubmed.ncbi.nlm.nih.gov/21504794/",
+        "Active / maintained in August audit",
+        "EPSD 2.0; dbPSP 2.0",
+        "Family-level audit classification. Coverage describes a PTM family, not disease-specific validation.",
+        "2026-09-24"
+      ]
+    ],
+    "references": {
+      "DC001": [
+        {
+          "pmid": "19747733",
+          "title": "Apoptosis-associated acetylation on histone H2B is an epitope for lupus autoantibodies.",
+          "year": "2009",
+          "journal": "Molecular immunology",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19747733/",
+          "doi": "10.1016/j.molimm.2009.08.009",
+          "notices": []
+        }
+      ],
+      "DC002": [
+        {
+          "pmid": "26659718",
+          "title": "Identification of an immunodominant peptide from citrullinated tenascin-C as a major target for autoantibodies in rheumatoid arthritis.",
+          "year": "2016",
+          "journal": "Annals of the rheumatic diseases",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/26659718/",
+          "doi": "10.1136/annrheumdis-2015-208495",
+          "notices": []
+        }
+      ],
+      "DC003": [
+        {
+          "pmid": "32986812",
+          "title": "Lack of NFATc1 SUMOylation prevents autoimmunity and alloreactivity.",
+          "year": "2021",
+          "journal": "The Journal of experimental medicine",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/32986812/",
+          "doi": "10.1084/jem.20181853",
+          "notices": []
+        }
+      ],
+      "DC004": [
+        {
+          "pmid": "20651120",
+          "title": "The Legionella effector protein DrrA AMPylates the membrane traffic regulator Rab1b.",
+          "year": "2010",
+          "journal": "Science (New York, N.Y.)",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/20651120/",
+          "doi": "10.1126/science.1192276",
+          "notices": []
+        },
+        {
+          "pmid": "35532216",
+          "title": "Salmonella Facilitates Iron Acquisition through UMPylation of Ferric Uptake Regulator.",
+          "year": "2022",
+          "journal": "mBio",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/35532216/",
+          "doi": "10.1128/mbio.00207-22",
+          "notices": []
+        }
+      ],
+      "DC005": [
+        {
+          "pmid": "22158903",
+          "title": "Legionella pneumophila regulates the small GTPase Rab1 activity by reversible phosphorylcholination.",
+          "year": "2011",
+          "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22158903/",
+          "doi": "10.1073/pnas.1114023109",
+          "notices": []
+        }
+      ],
+      "DC006": [
+        {
+          "pmid": "39214970",
+          "title": "Sde proteins coordinate ubiquitin utilization and phosphoribosylation to establish and maintain the Legionella replication vacuole.",
+          "year": "2024",
+          "journal": "Nature communications",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/39214970/",
+          "doi": "10.1038/s41467-024-51272-2",
+          "notices": []
+        }
+      ],
+      "DC007": [
+        {
+          "pmid": "6267047",
+          "title": "Diphtheria toxin. Site and configuration of ADP-ribosylation of diphthamide in elongation factor 2.",
+          "year": "1981",
+          "journal": "The Journal of biological chemistry",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/6267047/",
+          "doi": "10.1016/s0021-9258(19)68883-6",
+          "notices": []
+        }
+      ],
+      "DC008": [
+        {
+          "pmid": "20506214",
+          "title": "Peptidylarginine deiminase from Porphyromonas gingivalis citrullinates human fibrinogen and α-enolase: implications for autoimmunity in rheumatoid arthritis.",
+          "year": "2010",
+          "journal": "Arthritis and rheumatism",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/20506214/",
+          "doi": "10.1002/art.27552",
+          "notices": []
+        }
+      ],
+      "DC009": [
+        {
+          "pmid": "27591266",
+          "title": "Neddylation E2 UBE2F Promotes the Survival of Lung Cancer Cells by Activating CRL5 to Degrade NOXA via the K11 Linkage.",
+          "year": "2017",
+          "journal": "Clinical cancer research : an official journal of the American Association for Cancer Research",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/27591266/",
+          "doi": "10.1158/1078-0432.ccr-16-1585",
+          "notices": []
+        }
+      ],
+      "DC010": [
+        {
+          "pmid": "33457194",
+          "title": "p300-Catalyzed Lysine Crotonylation Promotes the Proliferation, Invasion, and Migration of HeLa Cells via Heterogeneous Nuclear Ribonucleoprotein A1.",
+          "year": "2020",
+          "journal": "Analytical cellular pathology (Amsterdam)",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/33457194/",
+          "doi": "10.1155/2020/5632342",
+          "notices": []
+        }
+      ],
+      "DC011": [
+        {
+          "pmid": "37131292",
+          "title": "Glypican-3 knockdown inhibits the cell growth, stemness, and glycolysis development of hepatocellular carcinoma cells under hypoxic microenvironment through lactylation.",
+          "year": "2024",
+          "journal": "Archives of physiology and biochemistry",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/37131292/",
+          "doi": "10.1080/13813455.2023.2206982",
+          "notices": []
+        }
+      ],
+      "DC012": [
+        {
+          "pmid": "31614656",
+          "title": "PARP1 Co-Regulates EP300-BRG1-Dependent Transcription of Genes Involved in Breast Cancer Cell Proliferation and DNA Repair.",
+          "year": "2019",
+          "journal": "Cancers",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/31614656/",
+          "doi": "10.3390/cancers11101539",
+          "notices": []
+        }
+      ],
+      "DC013": [
+        {
+          "pmid": "20200357",
+          "title": "Palmitoylation of oncogenic NRAS is essential for leukemogenesis.",
+          "year": "2010",
+          "journal": "Blood",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/20200357/",
+          "doi": "10.1182/blood-2009-03-213876",
+          "notices": []
+        }
+      ],
+      "DC014": [
+        {
+          "pmid": "31911580",
+          "title": "O-GlcNAcylation of PGK1 coordinates glycolysis and TCA cycle to promote tumor growth.",
+          "year": "2020",
+          "journal": "Nature communications",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/31911580/",
+          "doi": "10.1038/s41467-019-13601-8",
+          "notices": []
+        }
+      ],
+      "DC015": [
+        {
+          "pmid": "35586979",
+          "title": "Hepatocellular cystathionine γ lyase/hydrogen sulfide attenuates nonalcoholic fatty liver disease by activating farnesoid X receptor.",
+          "year": "2022",
+          "journal": "Hepatology (Baltimore, Md.)",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/35586979/",
+          "doi": "10.1002/hep.32577",
+          "notices": []
+        }
+      ],
+      "DC016": [
+        {
+          "pmid": "34619345",
+          "title": "Dihydroartemisinin ameliorates retinal vascular dysfunction in diabetes mellitus via the FASN/Kmal-mTOR/SREBP1 feedback loop.",
+          "year": "2021",
+          "journal": "Pharmacological research",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/34619345/",
+          "doi": "10.1016/j.phrs.2021.105871",
+          "notices": [
+            {
+              "type": "Erratum in",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/35999108/",
+              "citation": "Pharmacol Res. 2022 Sep;183:106410. doi: 10.1016/j.phrs.2022.106410"
+            }
+          ]
+        }
+      ],
+      "DC017": [
+        {
+          "pmid": "19299501",
+          "title": "RhoA and Rho kinase activation in human pulmonary hypertension: role of 5-HT signaling.",
+          "year": "2009",
+          "journal": "American journal of respiratory and critical care medicine",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19299501/",
+          "doi": "10.1164/rccm.200805-691oc",
+          "notices": []
+        }
+      ],
+      "DC018": [
+        {
+          "pmid": "20354170",
+          "title": "Chronic coumarin treatment is associated with increased extracoronary arterial calcification in humans.",
+          "year": "2010",
+          "journal": "Blood",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/20354170/",
+          "doi": "10.1182/blood-2010-01-264598",
+          "notices": []
+        }
+      ],
+      "DC019": [
+        {
+          "pmid": "37066795",
+          "title": "Jmjd4 Facilitates Pkm2 Degradation in Cardiomyocytes and Is Protective Against Dilated Cardiomyopathy.",
+          "year": "2023",
+          "journal": "Circulation",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/37066795/",
+          "doi": "10.1161/circulationaha.123.064121",
+          "notices": [
+            {
+              "type": "Erratum in",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/38976614/",
+              "citation": "Circulation. 2024 Jul 9;150(2):e64. doi: 10.1161/CIR.0000000000001268"
+            }
+          ]
+        }
+      ],
+      "DC020": [
+        {
+          "pmid": "42341761",
+          "title": "Gut microbiota-derived lysine phenylacetylation impairs mitochondrial function and is alleviated by SIRT3.",
+          "year": "2026",
+          "journal": "Cell metabolism",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/42341761/",
+          "doi": "10.1016/j.cmet.2026.05.016",
+          "notices": []
+        }
+      ],
+      "DC021": [
+        {
+          "pmid": "32807798",
+          "title": "Widespread protein lysine acetylation in gut microbiome and its alterations in patients with Crohn's disease.",
+          "year": "2020",
+          "journal": "Nature communications",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/32807798/",
+          "doi": "10.1038/s41467-020-17916-9",
+          "notices": []
+        }
+      ],
+      "DC022": [
+        {
+          "pmid": "41764109",
+          "title": "ACSS2-mediated lysine crotonylation attenuates senescence and enhances the therapeutic efficacy of adipose-derived stem cells in inflammatory bowel disease.",
+          "year": "2026",
+          "journal": "Cell regeneration (London, England)",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/41764109/",
+          "doi": "10.1186/s13619-026-00285-x",
+          "notices": []
+        }
+      ],
+      "DC023": [
+        {
+          "pmid": "33819483",
+          "title": "Intestinal Sulfation Is Essential to Protect Against Colitis and Colonic Carcinogenesis.",
+          "year": "2021",
+          "journal": "Gastroenterology",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/33819483/",
+          "doi": "10.1053/j.gastro.2021.03.048",
+          "notices": []
+        }
+      ],
+      "DC024": [
+        {
+          "pmid": "18675254",
+          "title": "Sumoylation of amyloid precursor protein negatively regulates Abeta aggregate levels.",
+          "year": "2008",
+          "journal": "Biochemical and biophysical research communications",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/18675254/",
+          "doi": "10.1016/j.bbrc.2008.07.109",
+          "notices": []
+        }
+      ],
+      "DC025": [
+        {
+          "pmid": "22103299",
+          "title": "Palmitoylation and trafficking of GAD65 are impaired in a cellular model of Huntington's disease.",
+          "year": "2012",
+          "journal": "The Biochemical journal",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22103299/",
+          "doi": "10.1042/bj20110679",
+          "notices": []
+        }
+      ],
+      "DC026": [
+        {
+          "pmid": "32310828",
+          "title": "SIRT1 regulates O-GlcNAcylation of tau through OGT.",
+          "year": "2020",
+          "journal": "Aging",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/32310828/",
+          "doi": "10.18632/aging.103062",
+          "notices": []
+        }
+      ],
+      "DC027": [
+        {
+          "pmid": "36136088",
+          "title": "BiP inactivation due to loss of the deAMPylation function of FICD causes a motor neuron disease.",
+          "year": "2022",
+          "journal": "Genetics in medicine : official journal of the American College of Medical Genetics",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/36136088/",
+          "doi": "10.1016/j.gim.2022.08.019",
+          "notices": []
+        }
+      ],
+      "DC028": [
+        {
+          "pmid": "27857176",
+          "title": "Glycation potentiates neurodegeneration in models of Huntington's disease.",
+          "year": "2016",
+          "journal": "Scientific reports",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/27857176/",
+          "doi": "10.1038/srep36798",
+          "notices": []
+        }
+      ],
+      "DC029": [
+        {
+          "pmid": "19686046",
+          "title": "Redox proteomic analysis of carbonylated brain proteins in mild cognitive impairment and early Alzheimer's disease.",
+          "year": "2010",
+          "journal": "Antioxidants & redox signaling",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19686046/",
+          "doi": "10.1089/ars.2009.2810",
+          "notices": []
+        }
+      ],
+      "DC030": [
+        {
+          "pmid": "17227866",
+          "title": "IFN-stimulated gene 15 functions as a critical antiviral molecule against influenza, herpes, and Sindbis viruses.",
+          "year": "2007",
+          "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/17227866/",
+          "doi": "10.1073/pnas.0607038104",
+          "notices": []
+        },
+        {
+          "pmid": "27193971",
+          "title": "ISG15 deficiency and increased viral resistance in humans but not mice.",
+          "year": "2016",
+          "journal": "Nature communications",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/27193971/",
+          "doi": "10.1038/ncomms11496",
+          "notices": []
+        }
+      ],
+      "DC031": [
+        {
+          "pmid": "2405382",
+          "title": "Myristoylation-dependent replication and assembly of human immunodeficiency virus 1.",
+          "year": "1990",
+          "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/2405382/",
+          "doi": "10.1073/pnas.87.2.523",
+          "notices": []
+        },
+        {
+          "pmid": "35813875",
+          "title": "Glycosylation and S-palmitoylation regulate SARS-CoV-2 spike protein intracellular trafficking.",
+          "year": "2022",
+          "journal": "iScience",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/35813875/",
+          "doi": "10.1016/j.isci.2022.104709",
+          "notices": []
+        }
+      ],
+      "DC032": [
+        {
+          "pmid": "10089882",
+          "title": "Tyrosine sulfation of the amino terminus of CCR5 facilitates HIV-1 entry.",
+          "year": "1999",
+          "journal": "Cell",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/10089882/",
+          "doi": "10.1016/s0092-8674(00)80577-2",
+          "notices": []
+        }
+      ],
+      "DC033": [
+        {
+          "pmid": "21504794",
+          "title": "Site-specific hyperphosphorylation of pRb in HIV-induced neurotoxicity.",
+          "year": "2011",
+          "journal": "Molecular and cellular neurosciences",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/21504794/",
+          "doi": "10.1016/j.mcn.2011.04.001",
+          "notices": []
+        }
+      ]
+    },
+    "date": "2026-09-24"
+  }
+}
