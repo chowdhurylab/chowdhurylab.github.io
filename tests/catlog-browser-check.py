@@ -214,13 +214,19 @@ def check(driver, browser, url):
     # Tiny outcomes remain keyboard accessible without inflating their visual share.
     disputed = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-outcome="disputed"]')
     driver.execute_script("arguments[0].focus({preventScroll: true})", disputed)
-    disputed.send_keys(Keys.ENTER)
+    assert disputed == driver.switch_to.active_element
+    ActionChains(driver).send_keys(Keys.ENTER).perform()
     assert driver.find_element(By.ID, "fieldsGroupHeading").text == "Disputed records"
     for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
         click_arc(f'#statsReviewFigure [data-outcome="{cohort}"]')
         check_combined_coverage(manifest["summary"]["review_details"]["groups"][cohort])
         for field in ("complete", "only_sequence", "multiple"):
-            arc = click_arc(f'#statsReviewFigure [data-field-group="{cohort}"][data-field-slice="{field}"]')
+            selector = f'#statsReviewFigure [data-field-group="{cohort}"][data-field-slice="{field}"]'
+            if not driver.find_elements(By.CSS_SELECTOR, selector):
+                row = driver.find_element(By.CSS_SELECTOR, f'.stats-combination-legend [data-stat-key="{field}"]')
+                assert row.get_attribute("data-count") == "0", "Only zero-count categories may omit an arc"
+                continue
+            arc = click_arc(selector)
             row = driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected")
             assert row.get_attribute("data-stat-key") == field
             assert row.get_attribute("data-count") == arc.get_attribute("data-count")
@@ -230,8 +236,9 @@ def check(driver, browser, url):
     capture("stats-chart-selection")
     keyboard_arc = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-field-group="unverified"][data-field-slice="only_sequence"]')
     driver.execute_script("arguments[0].focus({preventScroll: true})", keyboard_arc)
+    assert keyboard_arc == driver.switch_to.active_element
     before_scroll = driver.execute_script("return document.querySelector('#statsView').scrollTop")
-    keyboard_arc.send_keys(Keys.SPACE)
+    ActionChains(driver).send_keys(Keys.SPACE).perform()
     assert keyboard_arc.get_attribute("aria-pressed") == "true"
     assert driver.execute_script("return document.querySelector('#statsView').scrollTop") == before_scroll
     assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
