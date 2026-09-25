@@ -173,9 +173,18 @@
 
 @media screen and (max-width: 900px) {
   #top-navbar {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     transform: translateY(-105%);
     transition: transform 0.28s ease;
     pointer-events: none;
+  }
+
+  body.top-navbar-open {
+    overflow: hidden;
   }
 
   body.top-navbar-open #top-navbar {
@@ -190,7 +199,7 @@
   }
 
   #top-navbar #top-menu {
-    min-height: 100vh;
+    min-height: 100%;
     padding: 6.25rem 1.5rem 2rem 1.5rem;
     margin-bottom: 0;
     background: rgba(248, 249, 250, 0.995);
