@@ -152,7 +152,10 @@ def check_browse(driver, browser, url, route_label):
     viewports = {}
 
     def row_keys():
-        return [row.get_attribute("data-key") for row in driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")]
+        return driver.execute_script("""
+            return [...document.querySelectorAll('#recordsBody tr[data-key]')]
+                .map(row => row.getAttribute('data-key'));
+        """)
 
     def capture(viewport, state):
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Page overflow: {route_label}/{viewport}/{state}"
@@ -227,10 +230,11 @@ def check_browse(driver, browser, url, route_label):
             # and Escape must all refer to the same displayed identity.
             rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
             driver.execute_script("arguments[0].focus()", rows[0])
-            rows[0].send_keys(Keys.ARROW_DOWN)
+            assert driver.switch_to.active_element.get_attribute("data-key") == first_keys[0]
+            ActionChains(driver).send_keys(Keys.ARROW_DOWN).perform()
             selected_key = first_keys[1]
             assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
-            driver.switch_to.active_element.send_keys(Keys.ENTER)
+            ActionChains(driver).send_keys(Keys.ENTER).perform()
             wait.until(lambda d: d.find_elements(By.ID, "downloadSelectedJson") and d.find_element(By.ID, "downloadSelectedJson").is_displayed())
             wait.until(lambda d: d.switch_to.active_element.get_attribute("id") == "detailHeading")
             assert not driver.find_elements(By.CSS_SELECTOR, ".detail-load-error, #detailLoadStatus")
