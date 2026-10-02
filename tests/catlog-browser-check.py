@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import threading
 import urllib.request
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -38,6 +38,263 @@ class AssetReferences(HTMLParser):
         value = attrs.get("src") if tag == "script" else attrs.get("href") if tag == "link" else None
         if value and ("data/manifest." in value or "assets/catlog-static." in value):
             self.paths.append(value)
+
+
+def cache_tagged(url, release):
+    parts = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "nocache"]
+    return urlunsplit(parts._replace(query=urlencode([*query, ("nocache", release)])))
+
+
+def check_browse_assets(driver, url):
+    """Bind the served route and its three release assets to this checkout."""
+    page_path = ROOT / urlsplit(url).path.lstrip("/")
+    if urlsplit(url).path.endswith("/"):
+        page_path /= "index.html"
+    release = os.environ.get("GITHUB_SHA", "local-browser-check")[:12]
+
+    def bound_bytes(asset_url, path):
+        expected_bytes = path.read_bytes()
+        request = urllib.request.Request(cache_tagged(asset_url, release), headers={"Cache-Control": "no-cache"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            actual = response.read(len(expected_bytes) + 1)
+        assert len(actual) == len(expected_bytes) and hashlib.sha256(actual).digest() == hashlib.sha256(expected_bytes).digest(), f"Release bytes differ: {asset_url}"
+        return expected_bytes
+
+    page_bytes = bound_bytes(url, page_path)
+    assets = AssetReferences()
+    assets.feed(page_bytes.decode("utf-8"))
+    assert len(assets.paths) == 3, "Expected exactly the manifest, stylesheet and application script"
+    loaded_urls = driver.execute_script("return [...document.querySelectorAll('script[src], link[href]')].map(e => e.src || e.href)")
+    hashes = {"page": hashlib.sha256(page_bytes).hexdigest()}
+    expected_manifest = None
+    for reference in assets.paths:
+        asset_url = urljoin(url, reference)
+        assert asset_url in loaded_urls, f"Page loaded a different release asset: {reference}"
+        asset_bytes = bound_bytes(asset_url, ROOT / urlsplit(asset_url).path.lstrip("/"))
+        expected_sha256 = hashlib.sha256(asset_bytes).hexdigest()
+        # Check the browser's same-URL cached bytes too, not only a separate
+        # cache-busted HTTP request made by the test runner.
+        browser_bytes = driver.execute_async_script("""
+            const done = arguments[arguments.length - 1];
+            fetch(arguments[0], {cache: 'force-cache'}).then(async response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const bytes = await response.arrayBuffer();
+                const digest = await crypto.subtle.digest('SHA-256', bytes);
+                done({size: bytes.byteLength,
+                    sha256: [...new Uint8Array(digest)].map(v => v.toString(16).padStart(2, '0')).join('')});
+            }).catch(error => done({error: String(error)}));
+        """, asset_url)
+        assert browser_bytes == {"size": len(asset_bytes), "sha256": expected_sha256}, f"Browser asset bytes differ: {reference}"
+        hashes[urlsplit(asset_url).path] = expected_sha256
+        if "data/manifest." in reference:
+            expected_manifest = json.loads(asset_bytes.decode("utf-8").split("=", 1)[1].strip().removesuffix(";"))
+    assert expected_manifest is not None
+    assert driver.execute_script("return window.CATLOG_STATIC_MANIFEST") == expected_manifest
+    return expected_manifest, hashes
+
+
+def set_browse_viewport(driver, browser, width, height):
+    if browser == "chrome":
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
+            "width": width, "height": height, "deviceScaleFactor": 1, "mobile": width == 390,
+        })
+        driver.execute_cdp_cmd("Emulation.setTouchEmulationEnabled", {"enabled": width == 390})
+    else:
+        driver.set_window_size(width, height)
+        inner = driver.execute_script("return {width: innerWidth, height: innerHeight}")
+        driver.set_window_size(width + width - inner["width"], height + height - inner["height"])
+    assert driver.execute_script("return [innerWidth, innerHeight]") == [width, height], "Requested viewport is not the actual viewport"
+
+
+def check_browse(driver, browser, url, route_label):
+    """Exercise public Browse, using only rendered rows and generated JSON Blobs."""
+    wait = WebDriverWait(driver, 120)
+    try:
+        set_browse_viewport(driver, browser, 1440, 1000)
+        driver.get(url)
+        wait.until(lambda d: d.execute_script("return Boolean(window.CATLOG_STATIC_MANIFEST?.total_rows)"))
+        manifest, asset_hashes = check_browse_assets(driver, url)
+        total = manifest["total_rows"]
+        assert isinstance(total, int) and total > 50
+        wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
+        assert urlsplit(driver.current_url).path == urlsplit(url).path
+        assert driver.find_element(By.ID, "catalogView").is_displayed()
+        assert driver.find_element(By.ID, "browseButton").get_attribute("aria-current") == "page"
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-desktop-1440x1000-failure.png"))
+        raise
+
+    # Keep the real Blob and object URL, suppress only the anchor's download
+    # navigation, and restore both hooks even when an assertion fails.
+    driver.execute_script("""
+        const original = URL.createObjectURL;
+        const downloads = [];
+        const captureClick = event => {
+            const anchor = event.target.closest?.('a[download]');
+            const captured = anchor && downloads.find(item => item.url === anchor.href);
+            if (captured) {
+                captured.filename = anchor.download;
+                event.preventDefault();
+            }
+        };
+        window.__catlogBrowserDownloadCapture = {original, downloads, captureClick};
+        URL.createObjectURL = function(blob) {
+            const entry = {url: original.call(URL, blob), type: blob.type};
+            downloads.push(entry);
+            blob.text().then(text => {entry.text = text;}, error => {entry.error = String(error);});
+            return entry.url;
+        };
+        document.addEventListener('click', captureClick, true);
+    """)
+    viewports = {}
+
+    def row_keys():
+        return [row.get_attribute("data-key") for row in driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")]
+
+    def capture(viewport, state):
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Page overflow: {route_label}/{viewport}/{state}"
+        assert driver.execute_script("""
+            const wrap = document.querySelector('#recordTableWrap');
+            const box = wrap.getBoundingClientRect();
+            return box.left >= -1 && box.right <= innerWidth + 1
+                && (wrap.scrollWidth <= wrap.clientWidth + 1
+                    || ['auto', 'scroll'].includes(getComputedStyle(wrap).overflowX));
+        """), "Wide table must scroll inside its bounded wrapper"
+        clipped = driver.execute_script("""
+            return [...document.querySelectorAll('.app-header, .records-header, .pagination, #detailContent')]
+                .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
+                .map(e => e.id || e.className);
+        """)
+        assert not clipped, f"Clipped Browse panels: {clipped}"
+        path = OUTPUT / f"{browser}-{route_label}-{viewport}-{state}.png"
+        assert driver.save_screenshot(str(path))
+        return path.name
+
+    def downloaded_payload(button_id):
+        index = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length")
+        driver.find_element(By.ID, button_id).click()
+        wait.until(lambda d: d.execute_script("""
+            const item = window.__catlogBrowserDownloadCapture.downloads[arguments[0]];
+            return Boolean(item && (typeof item.text === 'string' || item.error));
+        """, index))
+        download = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads[arguments[0]]", index)
+        assert not download.get("error")
+        assert download["type"].startswith("application/json")
+        assert download.get("filename", "").endswith(".json")
+        assert driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length") == index + 1
+        return json.loads(download["text"])
+
+    def exact_pair(record):
+        pair = [record.get("measurement_key"), record.get("review_key")]
+        assert all(isinstance(value, str) and value and value == value.strip() for value in pair)
+        return pair
+
+    try:
+        sizes = [("desktop-1440x1000", 1440, 1000)]
+        if browser == "chrome":
+            sizes.append(("mobile-390x844", 390, 844))
+        for viewport, width, height in sizes:
+            set_browse_viewport(driver, browser, width, height)
+            driver.execute_script("window.scrollTo(0, 0)")
+            assert driver.find_element(By.ID, "pageSizeSelect").get_attribute("value") == "25"
+            first_keys = row_keys()
+            assert len(first_keys) == len(set(first_keys)) == 25
+            assert driver.find_element(By.ID, "pageLabel").text == f"1–25 of {total:,}"
+            assert not driver.find_element(By.ID, "prevButton").is_enabled()
+            screenshots = [capture(viewport, "browse")]
+            driver.find_element(By.ID, "nextButton").click()
+            wait.until(lambda _d: row_keys() != first_keys)
+            page_keys = row_keys()
+            assert len(page_keys) == len(set(page_keys)) == 25 and not set(first_keys) & set(page_keys)
+            assert driver.find_element(By.ID, "pageLabel").text == f"26–50 of {total:,}"
+            assert driver.find_element(By.ID, "prevButton").is_enabled()
+            screenshots.append(capture(viewport, "page-2"))
+            page_payload = downloaded_payload("downloadPageButton")
+            assert [record.get("record_key") for record in page_payload["records"]] == page_keys
+            page_pairs = [exact_pair(record) for record in page_payload["records"]]
+            assert len({tuple(pair) for pair in page_pairs}) == 25
+            assert page_payload["metadata"]["page"] == 2 and page_payload["metadata"]["row_count"] == 25
+            assert page_payload["metadata"]["export_scope"] == "current_page_public_records"
+            assert page_payload["metadata"]["source_sha256"] == manifest["source_sha256"]
+            assert page_payload["metadata"]["snapshot_generated_at"] == manifest["generated_at"]
+            driver.find_element(By.ID, "prevButton").click()
+            wait.until(lambda _d: row_keys() == first_keys)
+
+            # Roving row focus, keyboard activation, loaded exact-key details,
+            # and Escape must all refer to the same displayed identity.
+            rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+            driver.execute_script("arguments[0].focus()", rows[0])
+            rows[0].send_keys(Keys.ARROW_DOWN)
+            selected_key = first_keys[1]
+            assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
+            driver.switch_to.active_element.send_keys(Keys.ENTER)
+            wait.until(lambda d: d.find_elements(By.ID, "downloadSelectedJson") and d.find_element(By.ID, "downloadSelectedJson").is_displayed())
+            wait.until(lambda d: d.switch_to.active_element.get_attribute("id") == "detailHeading")
+            assert not driver.find_elements(By.CSS_SELECTOR, ".detail-load-error, #detailLoadStatus")
+            assert driver.find_element(By.CSS_SELECTOR, '#recordsBody tr[aria-selected="true"]').get_attribute("data-key") == selected_key
+            loaded_detail = driver.execute_script("""
+                return Object.values(window.CATLOG_DETAIL_SHARDS || {})
+                    .map(shard => shard[arguments[0]]).find(Boolean) || null;
+            """, selected_key)
+            assert loaded_detail is not None, "The selected exact key has no loaded detail"
+            screenshots.append(capture(viewport, "detail"))
+            record_payload = downloaded_payload("downloadSelectedJson")
+            assert record_payload["summary"]["record_key"] == selected_key
+            selected_pair = exact_pair(record_payload["summary"])
+            assert exact_pair(record_payload["detail"]) == exact_pair(loaded_detail) == selected_pair
+            displayed_id = driver.execute_script("""
+                return [...document.querySelectorAll('#detailContent .kv-line')]
+                    .filter(e => e.querySelector('span')?.textContent === 'CatLog record ID')
+                    .map(e => e.querySelector('strong').textContent);
+            """)
+            assert displayed_id == [selected_pair[0]]
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+            assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
+            assert "hidden" in driver.find_element(By.ID, "detailContent").get_attribute("class").split()
+
+            search = driver.find_element(By.ID, "globalSearchInput")
+            search.send_keys(selected_pair[0], Keys.TAB)
+            wait.until(lambda _d: selected_key in row_keys() and row_keys() != first_keys)
+            assert search.get_attribute("value") == selected_pair[0]
+            assert driver.find_element(By.ID, "activeSummary").text.endswith(" records")
+            screenshots.append(capture(viewport, "search"))
+            search.clear()
+            search.send_keys("zzzz-no-match-catlog-browser-check", Keys.TAB)
+            wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records")
+            assert row_keys() == []
+            assert driver.find_element(By.ID, "pageLabel").text == "No records"
+            for identifier in ("downloadPageButton", "prevButton", "nextButton"):
+                assert not driver.find_element(By.ID, identifier).is_enabled()
+            screenshots.append(capture(viewport, "empty"))
+            driver.find_element(By.ID, "clearResultsButton").click()
+            wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records" and row_keys() == first_keys)
+            assert search.get_attribute("value") == ""
+            assert driver.find_element(By.ID, "downloadPageButton").is_enabled()
+            assert driver.find_element(By.ID, "pageLabel").text == f"1–25 of {total:,}"
+            assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed")
+            screenshots.append(capture(viewport, "cleared"))
+            viewports[viewport] = {"width": width, "height": height, "rows": 25,
+                "first_page_keys": first_keys, "second_page_keys": page_keys,
+                "selected_record_key": selected_key, "selected_identity": selected_pair,
+                "page_download_identities": page_pairs, "screenshots": screenshots, "passed": True}
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-{viewport}-failure.png"))
+        raise
+    finally:
+        driver.execute_script("""
+            const capture = window.__catlogBrowserDownloadCapture;
+            if (capture) {
+                URL.createObjectURL = capture.original;
+                document.removeEventListener('click', capture.captureClick, true);
+                capture.downloads.forEach(item => URL.revokeObjectURL(item.url));
+                delete window.__catlogBrowserDownloadCapture;
+            }
+        """)
+    return {"url": url, "route": route_label, "total": total,
+            "source_sha256": manifest["source_sha256"], "asset_sha256": asset_hashes,
+            "viewports": viewports, "passed": True}
 
 
 def check(driver, browser, url):
@@ -376,9 +633,10 @@ def main():
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(ROOT)))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    url = f"http://127.0.0.1:{server.server_port}/tools/catlog-latest.html"
+    local_base = f"http://127.0.0.1:{server.server_port}/"
+    url = urljoin(local_base, "tools/catlog-latest.html")
     if os.environ.get("CHECK_LIVE") == "true":
-        url = "https://chowdhurylab.github.io/tools/catlog-latest.html?browser-check=" + os.environ["GITHUB_SHA"][:12]
+        url = cache_tagged("https://chowdhurylab.github.io/tools/catlog-latest.html", os.environ["GITHUB_SHA"][:12])
     driver = None
     try:
         if args.browser == "safari":
@@ -390,6 +648,17 @@ def main():
             options.add_argument("--disable-dev-shm-usage")
             driver = webdriver.Chrome(options=options)
         result = check(driver, args.browser, url)
+        browse = []
+        bases = [("local", local_base)]
+        if os.environ.get("CHECK_LIVE") == "true":
+            bases.append(("live", "https://chowdhurylab.github.io/"))
+        for environment, base in bases:
+            for route, path in (("static", "tools/catlog-static/"), ("latest", "tools/catlog-latest.html")):
+                browse_url = urljoin(base, path)
+                if environment == "live":
+                    browse_url = cache_tagged(browse_url, os.environ["GITHUB_SHA"][:12])
+                browse.append(check_browse(driver, args.browser, browse_url, f"{environment}-{route}"))
+        result["browse_routes"] = browse
         (OUTPUT / f"{args.browser}-result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result))
     except Exception:
