@@ -88,7 +88,9 @@ def check_browse_assets(driver, url):
         assert browser_bytes == {"size": len(asset_bytes), "sha256": expected_sha256}, f"Browser asset bytes differ: {reference}"
         hashes[urlsplit(asset_url).path] = expected_sha256
         if "data/manifest." in reference:
-            expected_manifest = json.loads(asset_bytes.decode("utf-8").split("=", 1)[1].strip().removesuffix(";"))
+            expected_manifest, _end = json.JSONDecoder().raw_decode(
+                asset_bytes.decode("utf-8").split("=", 1)[1].lstrip()
+            )
     assert expected_manifest is not None
     assert driver.execute_script("return window.CATLOG_STATIC_MANIFEST") == expected_manifest
     return expected_manifest, hashes
