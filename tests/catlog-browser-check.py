@@ -305,10 +305,11 @@ def check_browse(driver, browser, url, route_label):
 
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120)
+    expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
     driver.set_window_size(1440, 1000)
     driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
     wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) >= 5)
-    wait.until(lambda d: not urlsplit(d.current_url).query)
+    wait.until(lambda d: parse_qsl(urlsplit(d.current_url).query, keep_blank_values=True) == expected_query)
     stats_path = urlsplit(url).path.replace("catlog-latest.html", "catlog-stats.html")
     assert urlsplit(driver.current_url).path == stats_path
     assert not urlsplit(driver.current_url).fragment
@@ -327,7 +328,8 @@ def check(driver, browser, url):
         print(f"{browser} {view} link tag: {reported_tag!r}", flush=True)
         assert reported_tag.lower() == "a", f"Expected a navigation link, got {reported_tag!r}"
         target = urlsplit(link.get_attribute("href"))
-        assert target.path == (stats_path if view == "stats" else urlsplit(url).path) and not target.query
+        assert target.path == (stats_path if view == "stats" else urlsplit(url).path)
+        assert parse_qsl(target.query, keep_blank_values=True) == expected_query
         assert target.fragment == ("guide" if view == "guide" else "")
     assets = AssetReferences()
     assets.feed((ROOT / "tools/catlog-stats.html").read_text())
