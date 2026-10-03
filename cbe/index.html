@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Explore Chemical and Biological Engineering | Iowa State University</title>
+<meta name="description" content="Scanned the QR code? Start here: apply for a BS or PhD in Chemical and Biological Engineering at Iowa State University, explore research areas and meet the faculty.">
+<meta property="og:title" content="Explore Chemical and Biological Engineering at Iowa State">
+<meta property="og:description" content="Apply for a BS or PhD, explore research areas and meet the faculty.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chowdhurylab.github.io/cbe/">
+<meta name="theme-color" content="#C8102E">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8102E'/%3E%3Cpath d='M16 6l8.7 5v10L16 26l-8.7-5V11z' fill='none' stroke='%23F1BE48' stroke-width='2.6' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='3.6' fill='%23F1BE48'/%3E%3C/svg%3E">
+<style>
+:root{--cardinal:#C8102E;--gold:#F1BE48;--gold-light:#ffe3a1;--cardinal-deep:#8c0a20;--cardinal-ink:#5e0716;--gold-edge:#b8862b;--ink:#22161a;--muted:#5d4f52;--cream:#fbf6ee;--line:#efe1c8;--star:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);color-scheme:light}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;overflow-wrap:break-word;background:var(--cream);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.4}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none!important}
+
+/* ---------- Hero: a little reactor ---------- */
+.hero{position:relative;overflow:hidden;color:#fff;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 30px max(16px,env(safe-area-inset-left));background:radial-gradient(60% 50% at 50% 115%,rgba(241,190,72,.18),transparent 70%),radial-gradient(120% 80% at 100% 0%,#b80e2b 0%,transparent 60%),linear-gradient(165deg,#C8102E 0%,#b30d29 55%,#8c0a20 100%)}
+.hero::before{content:"";position:absolute;inset:0;opacity:.08;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48'%3E%3Cpath d='M14 0L28 8V24L14 32L0 24V8ZM14 32V48' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3C/svg%3E") 0 0/28px 48px}
+.deco{position:absolute;inset:0;pointer-events:none}
+.deco span{position:absolute;display:block}
+.mol{background:no-repeat center/contain;opacity:.22;animation:drift var(--t,12s) ease-in-out infinite alternate}
+.ring{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cpath d='M30 6l20.8 12v24L30 54 9.2 42V18z' fill='none' stroke='%23F1BE48' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='30' cy='30' r='11' fill='none' stroke='%23F1BE48' stroke-width='2.5'/%3E%3C/svg%3E")}
+.ball{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Cpath d='M12 28L30 12L48 28' stroke='%23fff' stroke-width='3' fill='none'/%3E%3Ccircle cx='30' cy='12' r='8' fill='%23F1BE48'/%3E%3Ccircle cx='12' cy='28' r='6' fill='%23fff'/%3E%3Ccircle cx='48' cy='28' r='6' fill='%23fff'/%3E%3C/svg%3E")}
+.dna{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 80'%3E%3Cpath d='M8 0C8 20 32 20 32 40S8 60 8 80M32 0C32 20 8 20 8 40S32 60 32 80' stroke='%23F1BE48' stroke-width='3' fill='none'/%3E%3Cpath d='M12 10h16M12 30h16M12 50h16M12 70h16' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")}
+.m1{width:96px;height:96px;right:-20px;top:12px;--t:14s;--dx:-14px;--dy:12px;--r:40deg}
+.m2{width:30px;height:60px;right:24%;top:42%;--t:11s;--dx:8px;--dy:-10px;--r:-18deg}
+.m3{width:44px;height:44px;left:60%;top:4px;--t:12s;--dx:10px;--dy:8px;--r:-50deg}
+.m4{width:52px;height:35px;right:6%;bottom:44px;--t:10s;--dx:-10px;--dy:-8px;--r:24deg}
+.m5{width:34px;height:34px;left:-8px;bottom:46px;--t:13s;--dx:12px;--dy:-6px;--r:60deg}
+@keyframes drift{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
+.bub{bottom:18px;width:var(--s,10px);height:var(--s,10px);border-radius:50%;opacity:0;border:1.5px solid rgba(255,243,214,.65);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.6) 0 18%,rgba(255,255,255,.06) 45%);animation:rise var(--t,8s) linear infinite;animation-delay:var(--d,0s)}
+.bub:nth-of-type(odd){border-color:rgba(241,190,72,.8)}
+@keyframes rise{0%{transform:translate(0,0) scale(.5);opacity:0}12%{opacity:.9}50%{transform:translate(var(--w,6px),-110px) scale(.85)}100%{transform:translate(0,-230px) scale(1);opacity:0}}
+.wave{left:0;bottom:-1px;width:calc(100% + 120px);height:24px;background-repeat:repeat-x;background-size:120px 24px;animation:slide 6s linear infinite}
+.w1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24'%3E%3Cpath d='M0 12Q30 2 60 12T120 12V24H0z' fill='%23fbf6ee'/%3E%3C/svg%3E")}
+.w2{bottom:4px;animation-duration:9s;animation-direction:reverse;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24'%3E%3Cpath d='M0 12Q30 2 60 12T120 12V24H0z' fill='%23F1BE48'/%3E%3C/svg%3E")}
+@keyframes slide{to{transform:translateX(-120px)}}.hero-in{position:relative;z-index:1;max-width:460px;margin:0 auto}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;margin:0;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.22);color:var(--gold-light);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.dot{position:relative;flex:none;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--gold);animation:ping 2.2s ease-out infinite}
+@keyframes ping{from{transform:scale(1);opacity:.7}to{transform:scale(3.2);opacity:0}}
+.stamp{margin:0;padding:3px 7px;border:2px solid var(--ink);border-radius:7px;background:var(--gold);color:var(--ink);box-shadow:2px 2px 0 var(--ink);font-size:11px;font-weight:900;letter-spacing:.04em;line-height:1.1;text-transform:uppercase;text-align:center;transform:rotate(-6deg);animation:stamp .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stamp{from{transform:rotate(-24deg) scale(1.7)}}
+@media (max-width:369px){.eyebrow{gap:6px;padding:4px 8px;font-size:11px;letter-spacing:.08em}.stamp{max-width:min-content;font-size:10.5px}}
+h1{margin:8px 0 0;line-height:1.02;overflow-wrap:anywhere;text-shadow:0 2px 0 rgba(0,0,0,.12)}
+.h1a{display:block;color:var(--gold-light);font-size:clamp(20px,6.4vw,26px);font-weight:700;letter-spacing:-.005em}
+.h1b{display:block;margin-top:2px;font-size:clamp(34px,11vw,48px);font-weight:900;letter-spacing:-.02em}
+.tagwrap{position:relative;margin-top:10px}
+.tag{margin:0}
+.pre{display:block;padding-right:44px;color:#fff;font-size:16px;font-weight:600}
+.type{display:block;min-height:1.3em;color:var(--gold-light);font-size:clamp(22px,7vw,30px);font-weight:800;line-height:1.3;letter-spacing:-.01em}
+.caret{display:inline-block;width:3px;height:.95em;margin-left:3px;vertical-align:-.12em;border-radius:2px;background:var(--gold);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.pause{position:absolute;top:-13px;right:-8px;width:48px;height:48px;padding:0;border:0;background:none;color:var(--gold-light);cursor:pointer;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}
+.pause span{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,243,214,.6);background:rgba(0,0,0,.14)}
+.pause svg{width:14px;height:14px;fill:currentColor}
+.pause .i-play,.pause[aria-pressed="true"] .i-pause{display:none}
+.pause[aria-pressed="true"] .i-play{display:block}
+.pause:focus-visible{outline:3px solid #fff;outline-offset:-2px}
+
+/* ---------- Buttons ---------- */
+main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left))}
+.kick{display:flex;align-items:center;gap:8px;margin:0 0 8px;color:var(--cardinal-ink);font-size:15px;font-weight:800;letter-spacing:.01em}
+.kick::before{content:"";width:13px;height:13px;flex:none;background:var(--gold);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.nw{white-space:nowrap}
+.kick svg{width:14px;height:14px;margin-left:2px;vertical-align:-1px;fill:var(--gold-edge)}
+.links{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0 0 16px;padding:0;list-style:none}
+.links li{animation:pop .45s cubic-bezier(.2,.9,.3,1.35) both;animation-delay:calc(var(--i,0) * 50ms)}
+@keyframes pop{from{transform:translateY(10px) scale(.96)}}
+.btn{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:60px;padding:8px 12px;border:0;border-radius:16px;font:inherit;text-align:left;text-decoration:none;cursor:pointer;box-shadow:0 4px 0 var(--edge),0 10px 18px -10px rgba(70,0,14,.55);transition:transform .09s ease,box-shadow .09s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge),0 4px 8px -6px rgba(70,0,14,.5)}
+@media (hover:hover){.btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--edge),0 14px 22px -12px rgba(70,0,14,.55)}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:4px}
+.fx{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+.fx::after{content:"";position:absolute;left:var(--x,50%);top:var(--y,50%);width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:currentColor;opacity:0;transform:scale(0)}
+.rip .fx::after{animation:rip .6s ease-out}
+@keyframes rip{from{opacity:.32;transform:scale(0)}to{opacity:0;transform:scale(45)}}
+.ico{position:relative;flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px}
+.ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.txt{position:relative;flex:1;min-width:0;display:flex;flex-direction:column}
+.lrow{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
+.lbl{font-size:20px;font-weight:800;line-height:1.2}
+.sub{margin-top:1px;font-size:14px;font-weight:600;line-height:1.25}
+.chev{position:relative;flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s ease}
+@media (hover:hover){.btn:hover .chev{transform:translateX(3px)}}
+@media (max-width:374px){.btn{gap:8px;padding-left:10px;padding-right:10px}.ico{width:34px;height:34px}.sub{font-size:13.5px}}
+.gold{--edge:var(--gold-edge);background:var(--gold);color:var(--cardinal)}
+.gold .sub{color:#7a0a1c}
+.gold .ico{background:rgba(200,16,46,.12)}
+.red{--edge:#7a0a1c;background:var(--cardinal);color:var(--gold)}
+.red .sub{color:var(--gold-light)}
+.red .ico{background:rgba(241,190,72,.17)}
+.soon{display:inline-block;padding:2px 7px;border-radius:999px;background:var(--cardinal-deep);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;line-height:1.35;text-transform:uppercase;transform:rotate(4deg);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.wiggle .ico{animation:wig .6s ease}
+.wiggle .soon{animation:boing .5s ease}
+@keyframes wig{20%{transform:rotate(-14deg) scale(1.08)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(4deg)}}
+@keyframes boing{40%{transform:rotate(-4deg) scale(1.25)}}
+
+/* Genie: deliberately different */
+.genie{--edge:#1d0610;padding-top:6px;padding-bottom:6px;background:linear-gradient(135deg,#3a0c1f 0%,#5b0f2c 55%,#7a1235 100%);color:#fff;border:2px solid rgba(241,190,72,.7)}
+.genie .ico{background:rgba(241,190,72,.16);color:var(--gold)}
+.genie .sub{color:#f6dca0}
+.genie .soon{background:var(--gold);color:#3a0c1f}
+.spark{position:absolute;width:11px;height:11px;background:var(--gold);clip-path:var(--star);animation:twinkle 2.4s ease-in-out infinite;pointer-events:none}
+.s1{top:6px;left:44px}
+.s2{bottom:7px;left:7px;width:8px;height:8px;animation-delay:.8s}
+.s3{top:44%;right:7px;width:9px;height:9px;animation-delay:1.6s}
+@keyframes twinkle{0%,100%{transform:scale(.3) rotate(0);opacity:.25}50%{transform:scale(1) rotate(45deg);opacity:1}}
+.smoke{transform-box:fill-box;transform-origin:center;animation:puff 2.6s ease-out infinite}
+.smoke+.smoke{animation-delay:1.3s}
+@keyframes puff{0%{transform:translate(0,3px) scale(.4);opacity:0}30%{opacity:1}100%{transform:translate(-2px,-4px) scale(1.2);opacity:0}}
+
+/* ---------- Flask discovery card ---------- */
+.lab{margin:22px 0 0;padding:18px 16px 8px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 3px 0 var(--line),0 12px 28px rgba(120,70,20,.08);text-align:center}
+.lab h2{margin:0;font-size:22px;font-weight:800;line-height:1.2}
+.hl{padding:0 2px;background:linear-gradient(transparent 58%,rgba(241,190,72,.7) 58%)}
+.note{margin:6px 0 0;color:var(--muted);font-size:15px}
+.flask{--liq:#F1BE48;position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:2px;max-width:100%;margin:14px 0 4px;padding:8px 24px 12px;border:2px dashed #e2b54a;border-radius:24px;background:radial-gradient(circle at 50% 45%,#fff,#fdf0d0);color:#8a0b20;font:inherit;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s}
+.flask:active{transform:scale(.96)}
+.flask:focus-visible,.lnk:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.fsvg{display:block;width:88px;height:116px;overflow:visible;transform-origin:50% 88%}
+.mix .fsvg{animation:wob .6s ease-in-out}
+@keyframes wob{20%{transform:rotate(-11deg)}45%{transform:rotate(9deg)}70%{transform:rotate(-5deg)}85%{transform:rotate(2deg)}}
+.liq{fill:var(--liq);transition:fill .45s;animation:slosh 2.8s linear infinite}
+@keyframes slosh{to{transform:translateX(-50px)}}
+.bb{fill:#fff;opacity:.75;transform-box:fill-box;animation:fbub 2.4s ease-in infinite}
+.bb:nth-of-type(2){animation-delay:-.9s}
+.bb:nth-of-type(3){animation-delay:-1.7s}
+@keyframes fbub{0%{opacity:0;transform:translateY(0)}25%{opacity:.85}100%{opacity:0;transform:translateY(-32px)}}
+.pb circle{fill:var(--liq);opacity:0;transform-box:fill-box;transform-origin:center}
+.mix .pb circle{animation:burst .75s ease-out}
+.mix .pb circle:nth-child(2){animation-delay:.08s}
+.mix .pb circle:nth-child(3){animation-delay:.16s}
+@keyframes burst{0%{opacity:1;transform:translate(0,10px) scale(.3)}100%{opacity:0;transform:translate(var(--x),-16px) scale(1.15)}}
+.reveal{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;min-height:166px;margin:8px 0 0;padding:14px;border-radius:16px;background:var(--cream);text-align:left}
+@media (max-width:374px){.reveal{min-height:200px}}
+.emo{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:#fff;box-shadow:0 2px 0 var(--line);font-size:30px;line-height:1}
+.rvb{flex:1 1 9rem;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin:0;padding:3px 9px 3px 7px;border-radius:10px;background:#fff;color:#4a423b;font-size:12px;font-weight:800;line-height:1.3}
+.chip i{flex:none;width:9px;height:9px;border-radius:50%;background:#c9bfb2;transition:background .3s}
+.rvt{margin:6px 0 2px;font-size:18px;font-weight:800;line-height:1.2}
+.rvd{margin:0;color:#4a423b;font-size:15px}
+.in .emo{animation:popin .5s cubic-bezier(.3,1.6,.5,1)}
+.in .rvb{animation:nudge .4s ease-out}
+@keyframes popin{from{transform:scale(.3) rotate(-25deg)}}
+@keyframes nudge{from{transform:translateY(6px)}}
+.prog{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;margin:12px 0 0;color:var(--muted);font-size:14px;font-weight:700}
+.dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+.dots i{width:10px;height:10px;border-radius:50%;background:#ebe2d3;transition:background .3s,transform .3s}
+.dots i.on{transform:scale(1.2)}
+.src{margin:4px 0 0;font-size:13px}
+.lnk{display:inline-flex;align-items:center;min-height:48px;padding:0 4px;color:var(--cardinal);font-weight:700;text-underline-offset:3px}
+
+@media (max-width:300px){.btn .ico{display:none}main{padding-left:12px;padding-right:12px}.h1b{font-size:26px}}
+
+/* ---------- Four focus areas (static, no-JS fallback) ---------- */
+.more{margin-top:26px}
+.themes{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0;padding:0;list-style:none}
+@media (min-width:360px){.themes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.themes li{position:relative;padding:14px 14px 14px 16px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 0 var(--line);overflow:hidden}
+.themes li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cardinal)}
+.themes li:nth-child(even)::before{background:var(--gold)}
+.themes svg{width:28px;height:28px;fill:none;stroke:var(--cardinal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.themes h3{margin:6px 0 4px;font-size:16px;line-height:1.2}
+.themes p{margin:0;color:var(--muted);font-size:14px;line-height:1.35}
+
+footer{padding:14px 16px calc(14px + env(safe-area-inset-bottom));color:var(--muted);font-size:14px;text-align:center}
+footer p{margin:0}
+footer a{display:inline-block;padding:12px 4px;line-height:20px;color:var(--cardinal);font-weight:700}
+footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-radius:6px}
+
+/* ---------- Toast + tap fizz ---------- */
+.toast{position:fixed;z-index:20;left:50%;top:calc(12px + env(safe-area-inset-top));bottom:auto;display:flex;align-items:center;gap:12px;width:min(420px,calc(100% - 32px));padding:12px 16px;border-radius:16px;background:#22161a;color:#fff;font-size:16px;font-weight:600;line-height:1.35;box-shadow:0 12px 30px -10px rgba(0,0,0,.5);border:2px solid var(--gold);transform:translate(-50%,calc(-100% - 40px));opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.2,.9,.3,1.2),opacity .2s ease}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.toast.low{top:auto;bottom:calc(12px + env(safe-area-inset-bottom));transform:translate(-50%,calc(100% + 40px))}
+.toast.low.show{transform:translate(-50%,0)}
+.toast i{flex:none;width:22px;height:22px;background:var(--gold);clip-path:var(--star)}
+.pop{position:fixed;z-index:30;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;pointer-events:none;border:2px solid var(--gold);animation:fizz .7s ease-out forwards}
+.pop.spk{border:0;border-radius:0;background:var(--gold);clip-path:var(--star)}
+@keyframes fizz{from{transform:scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.1);opacity:0}}
+
+/* No JS = no pause button, so no looping motion either */
+.no-js .deco span,.no-js .spark,.no-js .smoke,.no-js .caret,.no-js .dot::after{animation:none}
+/* Pause button freezes all looping motion */
+.still .deco span,.still .spark,.still .smoke,.still .caret,.still .dot::after,.still .liq,.still .bb{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.bub,.dot::after{display:none}}
+</style>
+</head>
+<body>
+<!-- This page is the target of printed QR codes (https://chowdhurylab.github.io/cbe/). Do not move, rename or delete this folder; edit this file in place. -->
+
+<header class="hero">
+ <div class="deco" aria-hidden="true">
+  <span class="mol ring m1"></span>
+  <span class="mol dna m2"></span>
+  <span class="mol ring m3"></span>
+  <span class="mol ball m4"></span>
+  <span class="mol ring m5"></span>
+  <span class="bub" style="left:7%;--s:9px;--t:7s;--d:-1s"></span>
+  <span class="bub" style="left:19%;--s:13px;--t:9s;--d:-5s;--w:-8px"></span>
+  <span class="bub" style="left:32%;--s:7px;--t:6.5s;--d:-3s"></span>
+  <span class="bub" style="left:46%;--s:11px;--t:8.5s;--d:-7s;--w:-6px"></span>
+  <span class="bub" style="left:60%;--s:8px;--t:7.5s;--d:-2s"></span>
+  <span class="bub" style="left:71%;--s:14px;--t:10s;--d:-6s;--w:-10px"></span>
+  <span class="bub" style="left:83%;--s:9px;--t:6.8s;--d:-4s"></span>
+  <span class="bub" style="left:93%;--s:12px;--t:9.2s;--d:-8s;--w:-7px"></span>
+  <span class="wave w2"></span>
+  <span class="wave w1"></span>
+ </div>
+
+ <div class="hero-in">
+  <div class="top">
+   <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Iowa State University</p>
+   <p class="stamp">Go Cyclones!</p>
+  </div>
+  <h1><span class="h1a">Chemical and Biological</span> <span class="h1b">Engineering</span></h1>
+  <div class="tagwrap">
+   <p class="tag">
+    <span class="pre">Come to Ames and engineer</span>
+    <span class="sr-only">renewable fuels, regenerative medicine, 2D nanomaterials, AI-driven tools, synthetic biology, semiconductors, computer models and more.</span>
+    <span class="type" aria-hidden="true"><span id="word">renewable fuels</span><span class="caret"></span></span>
+   </p>
+   <button class="pause" id="pause" type="button" aria-pressed="false" aria-label="Pause animations" hidden>
+    <span>
+     <svg class="i-pause" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
+     <svg class="i-play" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9.5-5.5z"/></svg>
+    </span>
+   </button>
+  </div>
+ </div>
+</header>
+
+<main>
+ <h2 class="kick">Start here</h2>
+ <!-- Gold buttons, cardinal text -->
+ <ul class="links">
+  <li style="--i:0">
+   <a class="btn gold" href="https://apps.admissions.iastate.edu/apply/online/">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3.5 2.6 8.5 2.6 12 0v-5"/><path d="M22 9v6"/></svg></span>
+    <span class="txt"><span class="lbl">Apply for BS</span><span class="sub">Become a Cyclone</span></span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+   </a>
+  </li>
+  <li style="--i:1">
+   <!-- INFO SESSION has no link yet, so it is a <button> that shows a toast.
+     When the URL arrives, replace the whole <button>...</button> with this <a> (put the URL in href; no JS change):
+
+   <a class="btn gold" href="PASTE-INFO-SESSION-URL-HERE">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/></svg></span>
+    <span class="txt"><span class="lbl">Info Session</span><span class="sub">Meet the department</span></span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+   </a>
+   -->
+   <button class="btn gold" type="button" data-soon="info">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/></svg></span>
+    <span class="txt"><span class="lrow"><span class="lbl">Info Session</span><span class="soon">Soon!</span></span><span class="sub">Details coming soon</span></span>
+   </button>
+  </li>
+ </ul>
+
+ <h2 class="kick">Future PhDs &amp; the curious</h2>
+ <!-- Cardinal buttons, gold text -->
+ <ul class="links">
+  <li style="--i:2">
+   <a class="btn red" href="https://www.cbe.iastate.edu/graduate-programs/how-to-apply/">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5.6 9.6A2 2 0 0 0 6.1 21.6h11.8a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7.2 15.5h9.6"/></svg></span>
+    <span class="txt"><span class="lbl">Apply for PhD</span><span class="sub">Grad school starts here</span></span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+   </a>
+  </li>
+  <li style="--i:3">
+   <a class="btn red" href="https://www.cbe.iastate.edu/research/">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+    <span class="txt"><span class="lbl">Research Areas</span><span class="sub">Bio, energy, materials &amp; modeling</span></span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+   </a>
+  </li>
+  <li style="--i:4">
+   <a class="btn red" href="https://www.cbe.iastate.edu/the-department/facultystaff/">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.6 14.6c2.6-.4 4.7 1.4 5.4 4.4"/></svg></span>
+    <span class="txt"><span class="lbl">Faculty List</span><span class="sub">Find your future mentor</span></span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+   </a>
+  </li>
+ </ul>
+
+ <h2 class="kick"><span>Got a question? Make a <span class="nw">wish&nbsp;<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0l2.9 9.1L24 12l-9.1 2.9L12 24l-2.9-9.1L0 12l9.1-2.9z"/></svg></span></span></h2>
+ <ul class="links">
+  <li style="--i:5">
+   <!-- CBE GENIE CHATBOT is not built yet, so it is a <button> that shows a toast.
+     When it is live, replace the whole <button>...</button> with this <a> (put the URL in href; no JS change):
+
+   <a class="btn genie" href="PASTE-CHATBOT-URL-HERE">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 13h13a6.5 4.4 0 0 1-13 0z"/><path d="M16.5 13c1.8 0 2.8-1.6 5-2.6-.6 2.6-2.2 4.4-5.3 5.4"/><path d="M3.5 13c-2.2.1-2.4 2.9-.2 3.5"/><path d="M7.5 13c0-2 1.1-3.3 2.5-3.3s2.5 1.3 2.5 3.3"/><path d="M8 20.5h4M10 17.4v3.1"/><circle class="smoke" cx="20" cy="6.6" r="1.3"/><circle class="smoke" cx="18.6" cy="3.6" r="1"/></svg></span>
+    <span class="txt"><span class="lbl">CBE Genie ChatBot</span><span class="sub">AI helper for department questions</span></span>
+    <span class="spark s1" aria-hidden="true"></span><span class="spark s2" aria-hidden="true"></span><span class="spark s3" aria-hidden="true"></span>
+   </a>
+   -->
+   <button class="btn genie" type="button" data-soon="genie">
+    <span class="fx"></span>
+    <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 13h13a6.5 4.4 0 0 1-13 0z"/><path d="M16.5 13c1.8 0 2.8-1.6 5-2.6-.6 2.6-2.2 4.4-5.3 5.4"/><path d="M3.5 13c-2.2.1-2.4 2.9-.2 3.5"/><path d="M7.5 13c0-2 1.1-3.3 2.5-3.3s2.5 1.3 2.5 3.3"/><path d="M8 20.5h4M10 17.4v3.1"/><circle class="smoke" cx="20" cy="6.6" r="1.3"/><circle class="smoke" cx="18.6" cy="3.6" r="1"/></svg></span>
+    <span class="txt"><span class="lrow"><span class="lbl">CBE Genie ChatBot</span><span class="soon">Soon!</span></span><span class="sub">AI helper for department questions</span></span>
+    <span class="spark s1" aria-hidden="true"></span><span class="spark s2" aria-hidden="true"></span><span class="spark s3" aria-hidden="true"></span>
+   </button>
+  </li>
+ </ul>
+
+ <!-- Flask card: shown only when JS runs (the static cards below cover no-JS).
+   Its themes (R list in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
+ <section class="lab" id="lab" aria-labelledby="lab-h" hidden>
+  <h2 id="lab-h">What could <span class="hl">you</span> engineer?</h2>
+  <p class="note">12 real CBE research themes are hiding in this flask. Can you find them all?</p>
+  <button class="flask" id="flask" type="button">
+   <svg class="fsvg" viewBox="0 -26 100 132" aria-hidden="true" focusable="false">
+    <defs><clipPath id="fc"><path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z"/></clipPath></defs>
+    <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z" fill="#fff"/>
+    <g clip-path="url(#fc)">
+     <path class="liq" d="M0 60q12.5-6 25 0t25 0 25 0 25 0 25 0 25 0 25 0 25 0V110H0z"/>
+     <circle class="bb" cx="38" cy="94" r="3"/>
+     <circle class="bb" cx="55" cy="96" r="2.2"/>
+     <circle class="bb" cx="66" cy="91" r="2.6"/>
+    </g>
+    <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10" fill="none" stroke="#8a0b20" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M35 10h30" stroke="#8a0b20" stroke-width="5" stroke-linecap="round"/>
+    <path d="M27 79l-5 8" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+    <g class="pb"><circle cx="50" cy="2" r="4.5" style="--x:-3px"/><circle cx="46" cy="4" r="3" style="--x:-14px"/><circle cx="54" cy="4" r="3.5" style="--x:13px"/></g>
+   </svg>
+   Tap to mix!<span class="sr-only"> Reveal a random CBE research theme.</span>
+  </button>
+  <div class="reveal" id="reveal" aria-live="polite" aria-atomic="true">
+   <div class="emo" aria-hidden="true">&#x2753;</div>
+   <div class="rvb">
+    <p class="chip"><i></i><span>Mystery sample</span></p>
+    <p class="rvt">Your discovery appears here</p>
+    <p class="rvd">Each mix reveals one real research theme from the department.</p>
+   </div>
+  </div>
+  <div class="prog"><span class="dots" id="dots" aria-hidden="true"></span><span><span id="count">0</span> / 12 found</span></div>
+  <p class="src"><a class="lnk" href="https://www.cbe.iastate.edu/research/">Source: CBE Research Areas &rarr;</a></p>
+ </section>
+
+ <section class="more" aria-labelledby="areas">
+  <h2 class="kick" id="areas">Four research focus areas</h2>
+  <ul class="themes">
+   <li>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9M9.3 6.5h5.4M9.3 17.5h5.4"/></svg>
+    <h3>Biomedicine &amp; biotechnology</h3>
+    <p>Synthetic biology, genomics and nanotechnology for infections, cancer and regenerative medicine</p>
+   </li>
+   <li>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>
+    <h3>Energy &amp; sustainability</h3>
+    <p>(Electro)catalysis, biomass and renewable energy for sustainable chemicals, fuels and cleaner processes</p>
+   </li>
+   <li>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3.5l4 2.3v4.6l-4 2.3-4-2.3V5.8zM16 10.5l4 2.3v4.6l-4 2.3-4-2.3v-4.6z"/></svg>
+    <h3>Materials design &amp; discovery</h3>
+    <p>1D and 2D nanomaterials, polymers, semiconductors and biomaterials</p>
+   </li>
+   <li>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 18L12 6.5l6.5 8"/><circle cx="5" cy="18.5" r="2.2"/><circle cx="12" cy="5.5" r="2.2"/><circle cx="19" cy="15" r="2.2"/></svg>
+    <h3>Modeling, simulation &amp; data science</h3>
+    <p>Computational methods and AI for catalytic reactions, multiphase flow and more</p>
+   </li>
+  </ul>
+ </section>
+</main>
+
+<footer>
+ <p>Official department website: <a href="https://www.cbe.iastate.edu/">cbe.iastate.edu</a></p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><i aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<script>
+(function () {
+ var d = document, root = d.documentElement;
+ root.className = root.className.replace('no-js', 'js');
+ var rm = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+ function still() { return rm.matches || root.classList.contains('still'); }
+ function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+ /* Typewriter: themes from cbe.iastate.edu/research, three per focus area, rotating energy, bio, materials, modeling */
+ var words = ['renewable fuels', 'regenerative medicine', '2D nanomaterials', 'AI-driven tools',
+  'cleaner processes', 'synthetic biology', 'semiconductors', 'computer models',
+  'catalysts', 'bioproducts', 'biomaterials', 'multiscale models'];
+ var w = d.getElementById('word'), wi = 0, n = words[0].length, del = true, tid = null;
+ function step() {
+  tid = null;
+  if (still()) { w.textContent = words[wi]; n = words[wi].length; del = true; return; }
+  if (del) {
+   n--;
+   if (n <= 0) { n = 0; del = false; wi = (wi + 1) % words.length; tid = setTimeout(step, 260); }
+   else tid = setTimeout(step, 32);
+  } else {
+   n++;
+   if (n >= words[wi].length) { del = true; tid = setTimeout(step, 1900); }
+   else tid = setTimeout(step, 70);
+  }
+  w.textContent = words[wi].slice(0, n);
+ }
+ function go(ms) { if (!tid && !still()) tid = setTimeout(step, ms); }
+ go(2000);
+
+ /* Pause / play all looping motion */
+ var pb = d.getElementById('pause');
+ pb.hidden = rm.matches;
+ pb.addEventListener('click', function () {
+  var on = root.classList.toggle('still');
+  pb.setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (on) { clearTimeout(tid); tid = null; w.textContent = words[wi]; n = words[wi].length; del = true; }
+  else go(1200);
+ });
+ if (rm.addEventListener) rm.addEventListener('change', function () { pb.hidden = rm.matches; go(1200); });
+
+ /* Fizz: little bubbles / sparkles at a point (fixed position, never moves layout) */
+ function fizz(x, y, kind) {
+  if (rm.matches) return;
+  for (var i = 0; i < 8; i++) {
+   var s = d.createElement('span'), a = Math.random() * 6.283, r = 26 + Math.random() * 38;
+   s.className = 'pop ' + kind;
+   s.setAttribute('aria-hidden', 'true');
+   s.style.cssText = 'left:' + x + 'px;top:' + y + 'px;--dx:' + (Math.cos(a) * r).toFixed(1) + 'px;--dy:' + (Math.sin(a) * r - 18).toFixed(1) + 'px';
+   d.body.appendChild(s);
+   setTimeout(function (el) { return function () { el.remove(); }; }(s), 800);
+  }
+ }
+ d.querySelector('.hero').addEventListener('pointerdown', function (e) {
+  if (!e.target.closest('button')) fizz(e.clientX, e.clientY, 'bub');
+ });
+
+ /* Press ripple on every button */
+ var btns = d.querySelectorAll('.btn');
+ for (var i = 0; i < btns.length; i++) {
+  btns[i].addEventListener('pointerdown', function (e) {
+   if (rm.matches) return;
+   var r = this.getBoundingClientRect();
+   this.style.setProperty('--x', (e.clientX - r.left) + 'px');
+   this.style.setProperty('--y', (e.clientY - r.top) + 'px');
+   restart(this, 'rip');
+  });
+ }
+ d.addEventListener('touchstart', function () {}, { passive: true }); /* enables :active on iOS */
+
+ /* Toast (top of screen, never covers taps) */
+ var toast = d.getElementById('toast'), msg = d.getElementById('toast-msg'), tt, ts;
+ function say(text, low) {
+  clearTimeout(tt); clearTimeout(ts);
+  msg.textContent = '';
+  toast.classList.toggle('low', !!low);
+  ts = setTimeout(function () { msg.textContent = text; toast.classList.add('show'); }, 60);
+  tt = setTimeout(function () {
+   toast.classList.remove('show');
+   ts = setTimeout(function () { msg.textContent = ''; }, 350); /* hidden toast leaves nothing for screen readers to land on */
+  }, 3260);
+ }
+
+ /* Friendly toast for buttons that are not live yet */
+ var lines = {
+  info: ['Info session details are still bubbling in the lab. Check back soon!',
+   'The info session link is coming soon. Check back!',
+   'Patience, future engineer: info session details are on the way.'],
+  genie: ['Genie is still in the lamp. Coming soon!',
+   'No wishes granted yet. CBE Genie is still being built!',
+   'Rubbing the lamp harder won’t help (yet). Coming soon!']
+ };
+ var count = { info: 0, genie: 0 };
+ var soon = d.querySelectorAll('[data-soon]');
+ for (var j = 0; j < soon.length; j++) {
+  soon[j].addEventListener('click', function (e) {
+   var k = this.getAttribute('data-soon'), list = lines[k];
+   say(list[count[k]++ % list.length], this.getBoundingClientRect().top < 130);
+   if (rm.matches) return;
+   restart(this, 'wiggle');
+   if (k === 'genie') { var r = this.getBoundingClientRect(); fizz(e.detail ? e.clientX : r.left + 34, e.detail ? e.clientY : r.top + r.height / 2, 'spk'); }
+  });
+ }
+
+ /* Flask discovery card: 12 themes, 3 per focus area, paraphrased from cbe.iastate.edu/research only */
+ var A = [['Biomedicine & biotechnology', '#C8102E'], ['Energy & sustainability', '#F1BE48'],
+  ['Materials design & discovery', '#2f7f8a'], ['Modeling, simulation & data science', '#6a3a9a']];
+ var R = [
+  ['\u{1F9EC}', 0, 'Synthetic biology', 'Tools to create and control microbial, cell and immune systems.'],
+  ['\u{1F9A0}', 0, 'Antimicrobial resistance', 'Biotech that takes on antimicrobial resistance and respiratory infections.'],
+  ['\u{1FA79}', 0, 'Regenerative medicine', 'Research aimed at regenerative medicine, cancer and metabolic disorders.'],
+  ['⚡', 1, '(Electro)catalysis', 'Catalysis and electrocatalysis for cleaner chemical processes.'],
+  ['\u{1F331}', 1, 'Biomass to fuels', 'Biomass and renewable energy for sustainable chemicals, materials and fuels.'],
+  ['\u{1F916}', 1, 'AI for sustainability', 'AI-driven computational tools for energy and sustainability.'],
+  ['\u{1F52C}', 2, '2D nanomaterials', 'New 1D and 2D nanomaterials for clean energy and information technology.'],
+  ['\u{1F4A1}', 2, 'Semiconductors', 'Designing new semiconductors, polymers and biomaterials.'],
+  ['\u{1F69C}', 2, 'Smart agriculture', 'New materials for smart agriculture, manufacturing, transportation and medicine.'],
+  ['\u{1F4BB}', 3, 'Multiscale modeling', 'Modeling chemical and biological systems across many length and time scales.'],
+  ['⚗️', 3, 'Simulated catalysis', 'Computer models of heterogeneous catalytic reactions.'],
+  ['\u{1F30A}', 3, 'Multiphase flow', 'Advanced computation and AI to model multiphase flow.']
+ ];
+ var lab = d.getElementById('lab'), fl = d.getElementById('flask'), rv = d.getElementById('reveal'),
+   emo = rv.querySelector('.emo'), dot = rv.querySelector('.chip i'), area = rv.querySelector('.chip span'),
+   ttl = rv.querySelector('.rvt'), dsc = rv.querySelector('.rvd'),
+   dots = d.getElementById('dots'), cnt = d.getElementById('count');
+ lab.hidden = false;
+ R.forEach(function () { dots.appendChild(d.createElement('i')); });
+ var seen = {}, found = 0, bag = [], last = -1;
+ function draw() { /* shuffle bag: every theme once per round, no immediate repeats */
+  if (!bag.length) {
+   for (var i = 0; i < R.length; i++) bag.push(i);
+   for (i = bag.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = bag[i]; bag[i] = bag[j]; bag[j] = t; }
+   if (bag[bag.length - 1] === last) { t = bag[0]; bag[0] = bag[bag.length - 1]; bag[bag.length - 1] = t; }
+  }
+  return (last = bag.pop());
+ }
+ fl.addEventListener('click', function () {
+  var i = draw(), r = R[i], a = A[r[1]];
+  fl.style.setProperty('--liq', a[1]);
+  emo.textContent = r[0]; dot.style.background = a[1]; area.textContent = a[0];
+  ttl.textContent = r[2]; dsc.textContent = r[3];
+  if (!rm.matches) { restart(fl, 'mix'); restart(rv, 'in'); }
+  if (!seen[i]) {
+   seen[i] = 1; found++;
+   var o = dots.children[found - 1]; o.style.background = a[1]; o.className = 'on';
+   cnt.textContent = found;
+   if (found === R.length) setTimeout(function () {
+    say('You found all 12! Explore them for real in Research Areas.');
+    var b = fl.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top + 40, 'spk');
+   }, 450);
+  }
+ });
+})();
+</script>
+</body>
+</html>
