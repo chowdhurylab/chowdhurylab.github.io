@@ -111,41 +111,64 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 .lab h2{margin:0;font-size:22px;font-weight:800;line-height:1.2}
 .hl{padding:0 2px;background:linear-gradient(transparent 58%,rgba(241,190,72,.7) 58%)}
 .note{margin:6px 0 0;color:var(--muted);font-size:15px}
-.flask{--liq:#F1BE48;position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:2px;max-width:100%;margin:14px 0 4px;padding:8px 24px 12px;border:2px dashed #e2b54a;border-radius:24px;background:radial-gradient(circle at 50% 45%,#fff,#fdf0d0);color:#8a0b20;font:inherit;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s}
-.flask:active{transform:scale(.96)}
-.flask:focus-visible,.lnk:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.fsvg{display:block;width:88px;height:116px;overflow:visible;transform-origin:50% 88%}
+/* Two pick lists: single-select chips (--c option colour, --t its light tint; both set by the script) */
+.step{margin:14px 0 6px;color:var(--cardinal-ink);font-size:15px;font-weight:800;line-height:1.25;text-align:left}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:64px;padding:7px 6px 6px;border:2px solid #e6d8c0;border-radius:14px;background:#fff;box-shadow:0 3px 0 var(--c);color:var(--ink);font:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s,background-color .2s}
+.opt:nth-child(3):last-child{grid-column:1/-1;justify-content:center}
+.em{font-size:20px;line-height:1.1}
+.opt:active{transform:translateY(2px)}
+.opt[aria-pressed=true]{border-color:var(--ink);background:var(--t);box-shadow:0 1px 0 var(--c);transform:translateY(2px)}
+.opt[aria-pressed=true]::after{content:"";position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 50%/12px no-repeat;box-shadow:0 0 0 2px #fff}
+@media (hover:hover){.opt[aria-pressed=false]:hover{border-color:#cdb68f}}
+@media (min-width:360px){.opt{flex-direction:row;justify-content:flex-start;gap:6px;min-height:48px;padding:6px;font-size:13.5px;text-align:left}}
+/* The flask is the Mix button: one layer per pick, blended on mix */
+.flask{--liq:#F1BE48;position:relative;display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;max-width:100%;margin:14px 0 0;padding:6px 18px 6px 12px;border:2px dashed #e2b54a;border-radius:24px;background:radial-gradient(circle at 35% 50%,#fff,#fdf0d0);color:inherit;font:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s}
+.flask[aria-disabled=false]:active{transform:scale(.96)}
+.flask[aria-disabled=true]{border-color:#e6d8c0;background:#fdfbf7}
+.flask:focus-visible,.opt:focus-visible,.lnk:focus-visible,.again:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.fsvg{display:block;width:56px;height:74px;overflow:visible;transform-origin:50% 88%}
+.go{display:inline-flex;align-items:center;justify-content:center;min-width:92px;min-height:44px;padding:0 20px;border-radius:999px;background:var(--cardinal);box-shadow:0 3px 0 #7a0a1c;color:#fff;font-size:17px;font-weight:800}
+.flask[aria-disabled=true] .go{background:#efe7da;box-shadow:0 3px 0 #ddd0bb;color:var(--muted)}
+.ready .go{animation:boing .5s ease}
 .mix .fsvg{animation:wob .6s ease-in-out}
 @keyframes wob{20%{transform:rotate(-11deg)}45%{transform:rotate(9deg)}70%{transform:rotate(-5deg)}85%{transform:rotate(2deg)}}
-.liq{fill:var(--liq);transition:fill .45s;animation:slosh 2.8s linear infinite}
-@keyframes slosh{to{transform:translateX(-50px)}}
-.bb{fill:#fff;opacity:.75;transform-box:fill-box;animation:fbub 2.4s ease-in infinite}
-.bb:nth-of-type(2){animation-delay:-.9s}
-.bb:nth-of-type(3){animation-delay:-1.7s}
-@keyframes fbub{0%{opacity:0;transform:translateY(0)}25%{opacity:.85}100%{opacity:0;transform:translateY(-32px)}}
+.lay{transform:scaleY(0);transform-box:fill-box;transform-origin:50% 100%;transition:fill .45s,transform .3s}
+.lay.on{transform:none}
+.p1 .l1,.p2 .l2{animation:pour .45s ease-out}
+@keyframes pour{from{transform:scaleY(0)}}
+.bb{fill:#fff;opacity:.7}
 .pb circle{fill:var(--liq);opacity:0;transform-box:fill-box;transform-origin:center}
-.mix .pb circle{animation:burst .75s ease-out}
-.mix .pb circle:nth-child(2){animation-delay:.08s}
-.mix .pb circle:nth-child(3){animation-delay:.16s}
+.mix .pb circle{animation:burst .55s ease-out}
+.mix .pb circle:nth-child(2){animation-delay:.06s}
+.mix .pb circle:nth-child(3){animation-delay:.12s}
 @keyframes burst{0%{opacity:1;transform:translate(0,10px) scale(.3)}100%{opacity:0;transform:translate(var(--x),-16px) scale(1.15)}}
-.reveal{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;min-height:166px;margin:8px 0 0;padding:14px;border-radius:16px;background:var(--cream);text-align:left}
-@media (max-width:374px){.reveal{min-height:224px}}
-.emo{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:#fff;box-shadow:0 2px 0 var(--line);font-size:30px;line-height:1}
-.rvb{flex:1 1 9rem;min-width:0}
-.chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin:0;padding:3px 9px 3px 7px;border-radius:10px;background:#fff;color:#4a423b;font-size:12px;font-weight:800;line-height:1.3}
-.chip i{flex:none;width:9px;height:9px;border-radius:50%;background:#c9bfb2;transition:background .3s}
-.rvt{margin:6px 0 2px;font-size:18px;font-weight:800;line-height:1.2}
+/* Result: invisible copies of all 12 outcomes share one grid cell, so the box is always as tall as the longest */
+.reveal{display:grid;margin:12px 0 0;text-align:left}
+.rvi{grid-area:1/1;min-width:0;padding:10px 14px 0;border-radius:16px;background:var(--cream)}
+.ghost{visibility:hidden}
+.none{display:grid;place-items:center;padding:14px;border:2px dashed var(--line);background:#fffdf8;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
+.none p{margin:0}
+.ask{animation:nudge .35s ease-out}
+.rvk{margin:0;color:var(--muted);font-size:13px;font-weight:700}
+.rvt{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:18px;font-weight:800;line-height:1.2}
+.rvt span{min-width:0}
+.emo{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 2px 0 var(--line);font-size:24px;line-height:1}
 .rvd{margin:0;color:#4a423b;font-size:15px}
+.chip{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;margin:8px 0 0;padding:3px 9px 3px 7px;border-radius:10px;background:#fff;color:#4a423b;font-size:13px;font-weight:800;line-height:1.3}
+.chip i{flex:none;width:9px;height:9px;border-radius:50%;background:#c9bfb2}
+.rvl{margin:2px 0 0}
+.lnk{display:inline-flex;align-items:center;min-height:44px;margin-left:-4px;padding:2px 4px;color:var(--cardinal);font-size:15px;font-weight:700;line-height:20px;text-underline-offset:3px}
+.in{animation:nudge .35s ease-out}
 .in .emo{animation:popin .5s cubic-bezier(.3,1.6,.5,1)}
-.in .rvb{animation:nudge .4s ease-out}
 @keyframes popin{from{transform:scale(.3) rotate(-25deg)}}
 @keyframes nudge{from{transform:translateY(6px)}}
 .prog{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;margin:12px 0 0;color:var(--muted);font-size:14px;font-weight:700}
-.dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+.dots{display:flex;flex-wrap:wrap;flex-basis:100%;justify-content:center;gap:5px}
 .dots i{width:10px;height:10px;border-radius:50%;background:#ebe2d3;transition:background .3s,transform .3s}
 .dots i.on{transform:scale(1.2)}
-.src{margin:4px 0 0;font-size:13px}
-.lnk{display:inline-flex;align-items:center;min-height:48px;padding:0 4px;color:var(--cardinal);font-weight:700;text-underline-offset:3px}
+.again{min-height:44px;margin:2px 0 0;padding:0 12px;border:0;background:none;color:var(--cardinal);font:inherit;font-size:15px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media (max-width:299px){.lab{padding-left:12px;padding-right:12px}.opts{grid-template-columns:minmax(0,1fr)}.opt,.opt:nth-child(3):last-child{flex-direction:row;justify-content:flex-start;gap:8px;min-height:48px;padding:6px 10px;text-align:left}.rvi{padding-left:10px;padding-right:10px}.rvt{flex-direction:column;align-items:flex-start;gap:6px;font-size:16px}}
 
 @media (max-width:300px){.btn .ico{display:none}main{padding-left:12px;padding-right:12px}.h1b{font-size:26px}}
 
@@ -286,16 +309,30 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  </ul>
 
  <!-- Flask card: shown only when JS runs (the static cards below cover no-JS).
-   Its themes (R list in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
+   Its outcomes (O table in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
  <section class="lab" id="lab" aria-labelledby="lab-h" hidden>
   <h2 id="lab-h">What could <span class="hl">you</span> engineer?</h2>
-  <p class="note">Tap the flask to see some of the research happening in CBE.</p>
-  <button class="flask" id="flask" type="button">
+  <p class="note">Pick one from each list, then mix. Change a pick to mix again.</p>
+  <p class="step" id="lab-a">1. What do you like working with?</p>
+  <div class="opts" role="group" aria-labelledby="lab-a" data-s="a">
+   <button class="opt" type="button" data-k="cells" aria-pressed="false"><span class="em" aria-hidden="true">🧬</span><span>Living cells</span></button>
+   <button class="opt" type="button" data-k="chem" aria-pressed="false"><span class="em" aria-hidden="true">⚗️</span><span>Chemicals and reactions</span></button>
+   <button class="opt" type="button" data-k="mat" aria-pressed="false"><span class="em" aria-hidden="true">🔬</span><span>New materials</span></button>
+   <button class="opt" type="button" data-k="comp" aria-pressed="false"><span class="em" aria-hidden="true">💻</span><span>Computers and&nbsp;AI</span></button>
+  </div>
+  <p class="step" id="lab-b">2. What would you like to help with?</p>
+  <div class="opts" role="group" aria-labelledby="lab-b" data-s="b">
+   <button class="opt" type="button" data-k="health" aria-pressed="false"><span class="em" aria-hidden="true">🩺</span><span>Health and medicine</span></button>
+   <button class="opt" type="button" data-k="energy" aria-pressed="false"><span class="em" aria-hidden="true">🌍</span><span>Energy and environment</span></button>
+   <button class="opt" type="button" data-k="tech" aria-pressed="false"><span class="em" aria-hidden="true">📱</span><span>Technology and products</span></button>
+  </div>
+  <button class="flask" id="flask" type="button" aria-disabled="true">
    <svg class="fsvg" viewBox="0 -26 100 132" aria-hidden="true" focusable="false">
     <defs><clipPath id="fc"><path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z"/></clipPath></defs>
     <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z" fill="#fff"/>
     <g clip-path="url(#fc)">
-     <path class="liq" d="M0 60q12.5-6 25 0t25 0 25 0 25 0 25 0 25 0 25 0 25 0V110H0z"/>
+     <path class="lay l2" d="M0 56q12.5-5 25 0t25 0 25 0 25 0V110H0z"/>
+     <path class="lay l1" d="M0 78q12.5-4 25 0t25 0 25 0 25 0V110H0z"/>
      <circle class="bb" cx="38" cy="94" r="3"/>
      <circle class="bb" cx="55" cy="96" r="2.2"/>
      <circle class="bb" cx="66" cy="91" r="2.6"/>
@@ -305,18 +342,13 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
     <path d="M27 79l-5 8" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
     <g class="pb"><circle cx="50" cy="2" r="4.5" style="--x:-3px"/><circle cx="46" cy="4" r="3" style="--x:-14px"/><circle cx="54" cy="4" r="3.5" style="--x:13px"/></g>
    </svg>
-   Tap to mix<span class="sr-only"> and show a CBE research topic</span>
+   <span class="go">Mix</span>
   </button>
-  <div class="reveal" id="reveal" aria-live="polite" aria-atomic="true">
-   <div class="emo" aria-hidden="true">&#x2753;</div>
-   <div class="rvb">
-    <p class="chip"><i></i><span>Research topic</span></p>
-    <p class="rvt">Tap the flask to start</p>
-    <p class="rvd">Each tap shows one of 12 research topics from the department.</p>
-   </div>
+  <div class="reveal" id="reveal">
+   <div class="rvi none" id="rv" aria-live="polite" aria-atomic="true"><p>Pick one from each list.</p></div>
   </div>
-  <div class="prog"><span class="dots" id="dots" aria-hidden="true"></span><span><span id="count">0</span> of 12 seen</span></div>
-  <p class="src"><a class="lnk" href="https://www.cbe.iastate.edu/research/">Source: CBE Research Areas &rarr;</a></p>
+  <div class="prog"><span>Combinations tried: <span id="count">0</span> of 12</span><span class="dots" id="dots" aria-hidden="true"></span></div>
+  <button class="again" id="again" type="button">Start over</button>
  </section>
 
  <section class="more" aria-labelledby="areas">
@@ -419,53 +451,111 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   });
  }
 
- /* Flask discovery card: 12 themes, 3 per focus area, paraphrased from cbe.iastate.edu/research only */
- var A = [['Biomedicine & biotechnology', '#C8102E'], ['Energy & sustainability', '#F1BE48'],
-  ['Materials design & discovery', '#2f7f8a'], ['Modeling, simulation & data science', '#6a3a9a']];
- var R = [
-  ['\u{1F9EC}', 0, 'Engineering microbes and cells', 'Designing microbes and cells that make useful products.'],
-  ['\u{1F9A0}', 0, 'Fighting drug-resistant infections', 'Research on antibiotic resistance and respiratory infections.'],
-  ['\u{1FA79}', 0, 'Health and medicine', 'Research on cancer, regenerative medicine and metabolic disorders.'],
-  ['⚡', 1, 'Cleaner chemical processes', 'Using catalysts to make chemical production cleaner.'],
-  ['\u{1F331}', 1, 'Fuels and chemicals from plants', 'Turning biomass and renewable energy into fuels, chemicals and materials.'],
-  ['\u{1F916}', 1, 'AI for clean energy', 'Using AI and computer tools to speed up cleaner energy research.'],
-  ['\u{1F52C}', 2, 'Ultra-thin materials', 'New materials just a few atoms thick, for energy and electronics.'],
-  ['\u{1F4A1}', 2, 'Materials for electronics', 'New semiconductors and polymers for electronics and technology.'],
-  ['\u{1F69C}', 2, 'Materials for farming and medicine', 'New materials for agriculture, manufacturing and medicine.'],
-  ['\u{1F4BB}', 3, 'Computer simulations', 'Using computers to model chemical and biological systems.'],
-  ['⚗️', 3, 'Modeling chemical reactions', 'Simulating how reactions happen on catalysts.'],
-  ['\u{1F30A}', 3, 'How fluids flow and mix', 'Modeling how liquids, gases and particles move together.']
+ /* Flask discovery card: pick one from each list, then mix. After the first mix, changing a pick re-mixes. */
+ var C = { cells: '#d9485f', chem: '#F1BE48', mat: '#2f7f8a', comp: '#6a3a9a', health: '#e07a5f', energy: '#4c9a55', tech: '#3b6fb6' };
+ var A = [
+  ['Biomedicine and biotechnology', 'https://www.cbe.iastate.edu/research/biomedicine-biotechnology/'],
+  ['Energy and sustainability', 'https://www.cbe.iastate.edu/research/energy-and-sustainability/'],
+  ['Materials design and discovery', 'https://www.cbe.iastate.edu/research/materials-design-and-discovery/'],
+  ['Modeling, simulation and data science', 'https://www.cbe.iastate.edu/research/modeling-simulation-and-data-science/']
  ];
- var lab = d.getElementById('lab'), fl = d.getElementById('flask'), rv = d.getElementById('reveal'),
-   emo = rv.querySelector('.emo'), dot = rv.querySelector('.chip i'), area = rv.querySelector('.chip span'),
-   ttl = rv.querySelector('.rvt'), dsc = rv.querySelector('.rvd'),
-   dots = d.getElementById('dots'), cnt = d.getElementById('count');
- lab.hidden = false;
- R.forEach(function () { dots.appendChild(d.createElement('i')); });
- var seen = {}, found = 0, bag = [], last = -1;
- function draw() { /* shuffle bag: every theme once per round, no immediate repeats */
-  if (!bag.length) {
-   for (var i = 0; i < R.length; i++) bag.push(i);
-   for (i = bag.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = bag[i]; bag[i] = bag[j]; bag[j] = t; }
-   if (bag[bag.length - 1] === last) { t = bag[0]; bag[0] = bag[bag.length - 1]; bag[bag.length - 1] = t; }
-  }
-  return (last = bag.pop());
+ /* Each outcome paraphrases https://www.cbe.iastate.edu/research/ (area pages linked). */
+ var O = { /* step1-step2: [emoji, title, description, area index] */
+  'cells-health': ['🧫', 'Treating disease', 'Research on cancer, infections, regenerative medicine and metabolic disorders.', 0],
+  'cells-energy': ['🌱', 'Fuels from biology', 'Using microbes and plant material to make fuels and chemicals.', 1],
+  'cells-tech': ['🧬', 'Engineering microbes and cells', 'Designing microbes and cells that make useful products.', 0],
+  'chem-health': ['🦠', 'Fighting drug-resistant infections', 'Using nanotechnology and polymers to tackle antibiotic resistance and infections.', 0],
+  'chem-energy': ['⚡', 'Cleaner chemical processes', 'Using catalysts to make chemical production cleaner.', 1],
+  'chem-tech': ['♻️', 'Greener chemicals and materials', 'Making chemicals and high-performance materials from renewable sources.', 1],
+  'mat-health': ['🩹', 'Materials for medicine', 'Designing new materials, including biomaterials, for use in medicine.', 2],
+  'mat-energy': ['🔋', 'Materials for clean energy', 'Discovering new materials, some just a few atoms thick, for clean energy.', 2],
+  'mat-tech': ['💡', 'Materials for electronics', 'New semiconductors and polymers for electronics, transportation and manufacturing.', 2],
+  'comp-health': ['🖥️', 'Computer models of biology', 'Using computers and AI to model how biological systems behave.', 3],
+  'comp-energy': ['🤖', 'AI for sustainability', 'Using AI and computer tools to speed up the development of cleaner processes.', 1],
+  'comp-tech': ['🌊', 'Simulating chemical processes', 'Computer models of reactions and flowing liquids and gases that help guide experiments.', 3]
+ };
+ var lab = d.getElementById('lab'), fl = d.getElementById('flask'), rv = d.getElementById('rv'),
+   l1 = fl.querySelector('.l1'), l2 = fl.querySelector('.l2'), opts = lab.querySelectorAll('.opt'),
+   dots = d.getElementById('dots'), cnt = d.getElementById('count'),
+   pick = {}, tried = {}, n = 0, mixed = false, wait;
+ function rgb(h) { h = parseInt(h.slice(1), 16); return [h >> 16, h >> 8 & 255, h & 255]; }
+ function blend(a, b, t) { /* colour a moved t of the way to colour b, as #rrggbb */
+  var x = rgb(a), y = rgb(b), s = '#';
+  for (var i = 0; i < 3; i++) s += (256 + Math.round(x[i] + (y[i] - x[i]) * t)).toString(16).slice(1);
+  return s;
  }
- fl.addEventListener('click', function () {
-  var i = draw(), r = R[i], a = A[r[1]];
-  fl.style.setProperty('--liq', a[1]);
-  emo.textContent = r[0]; dot.style.background = a[1]; area.textContent = a[0];
-  ttl.textContent = r[2]; dsc.textContent = r[3];
-  if (!rm.matches) { restart(fl, 'mix'); restart(rv, 'in'); }
-  if (!seen[i]) {
-   seen[i] = 1; found++;
-   var o = dots.children[found - 1]; o.style.background = a[1]; o.className = 'on';
-   cnt.textContent = found;
-   if (found === R.length) setTimeout(function () {
-    say('You have seen all 12. Find more under Research Areas.');
-    var b = fl.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top + 40, 'spk');
-   }, 450);
-  }
+ function card(k) {
+  var o = O[k], a = A[o[3]];
+  return '<p class="rvk">You could work on</p><p class="rvt"><span class="emo" aria-hidden="true">' + o[0] + '</span><span>' + o[1] +
+   '</span></p><p class="rvd">' + o[2] + '</p><p class="chip"><i></i><span>' + a[0] + '</span></p><p class="rvl"><a class="lnk" href="' + a[1] +
+   '"><span>See the faculty in this area<span aria-hidden="true">&nbsp;&rarr;</span></span></a></p>';
+ }
+ for (var k in O) { /* invisible copies reserve the height of the longest result, so nothing below jumps */
+  var g = d.createElement('div'); g.className = 'rvi ghost'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = card(k);
+  rv.parentNode.appendChild(g);
+ }
+ for (var q = 0; q < 12; q++) dots.appendChild(d.createElement('i'));
+ lab.hidden = false;
+
+ function ask(bump) { /* before the first mix, the result box says what to do next */
+  rv.className = 'rvi none';
+  rv.innerHTML = '<p>' + (pick.a && pick.b ? 'Tap Mix to see your result.' : pick.a ? 'Now pick what you would like to help with.' :
+   pick.b ? 'Now pick what you like working with.' : 'Pick one from each list.') + '</p>';
+  if (bump && !rm.matches) restart(rv.firstChild, 'ask');
+ }
+ function fill(lay, c) { /* set a layer's colour at once; the pour shows the change, so no colour fade */
+  lay.style.transition = 'none'; lay.style.fill = c; lay.getBoundingClientRect(); lay.style.transition = '';
+ }
+ function show(k, c) {
+  rv.className = 'rvi'; rv.innerHTML = card(k);
+  rv.querySelector('.chip i').style.background = c;
+  if (!rm.matches) restart(rv, 'in');
+  if (tried[k]) return;
+  tried[k] = 1;
+  var o = dots.children[n++]; o.style.background = c; o.className = 'on';
+  cnt.textContent = n;
+  if (n === 12) { say('You have tried all 12 combinations.'); var b = fl.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top + 30, 'spk'); }
+ }
+ function mix(now) { /* wobble, blend both layers into their average colour, bubble burst, then the result */
+  clearTimeout(wait);
+  if (!(pick.a && pick.b)) return ask(true); /* tapped too early: point at what is still missing */
+  var k = pick.a + '-' + pick.b, c = blend(C[pick.a], C[pick.b], .5);
+  mixed = true;
+  l1.style.fill = l2.style.fill = c;
+  fl.style.setProperty('--liq', c);
+  if (rm.matches) return show(k, c);
+  restart(fl, 'mix');
+  if (now === true) return show(k, c); /* re-mix after a changed pick: answer straight away */
+  wait = setTimeout(function () { show(k, c); }, 300);
+ }
+ fl.addEventListener('click', mix);
+
+ for (q = 0; q < opts.length; q++) {
+  var c0 = C[opts[q].getAttribute('data-k')];
+  opts[q].style.setProperty('--c', c0);
+  opts[q].style.setProperty('--t', blend(c0, '#ffffff', .78));
+  opts[q].addEventListener('click', function () {
+   var s = this.parentNode.getAttribute('data-s'), k = this.getAttribute('data-k'), sib = this.parentNode.children,
+     lay = s === 'a' ? l1 : l2, other = s === 'a' ? 'b' : 'a', was = !(pick.a && pick.b);
+   if (pick[s] === k) return;
+   pick[s] = k;
+   for (var i = 0; i < sib.length; i++) sib[i].setAttribute('aria-pressed', sib[i] === this);
+   fill(lay, C[k]); lay.classList.add('on'); /* pour this pick in as its own layer */
+   if (mixed) fill(lay === l1 ? l2 : l1, C[pick[other]]);
+   fl.setAttribute('aria-disabled', !(pick.a && pick.b));
+   if (!rm.matches) { restart(fl, s === 'a' ? 'p1' : 'p2'); if (was && pick.a && pick.b) restart(fl, 'ready'); }
+   if (!mixed) return ask();
+   clearTimeout(wait);
+   if (rm.matches) mix(); else wait = setTimeout(function () { mix(true); }, 180);
+  });
+ }
+
+ d.getElementById('again').addEventListener('click', function () {
+  clearTimeout(wait);
+  pick = {}; mixed = false; fl.setAttribute('aria-disabled', 'true');
+  for (var i = 0; i < opts.length; i++) opts[i].setAttribute('aria-pressed', 'false');
+  l1.classList.remove('on'); l2.classList.remove('on');
+  ask();
  });
 })();
 </script>
