@@ -21,7 +21,7 @@ body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:col
 [hidden]{display:none!important}
 
 /* ---------- Hero: a little reactor ---------- */
-.hero{position:relative;overflow:hidden;color:#fff;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 30px max(16px,env(safe-area-inset-left));background:radial-gradient(60% 50% at 50% 115%,rgba(241,190,72,.18),transparent 70%),radial-gradient(120% 80% at 100% 0%,#b80e2b 0%,transparent 60%),linear-gradient(165deg,#C8102E 0%,#b30d29 55%,#8c0a20 100%)}
+.hero{position:relative;overflow:hidden;color:#fff;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 34px max(16px,env(safe-area-inset-left));background:radial-gradient(60% 50% at 50% 115%,rgba(241,190,72,.18),transparent 70%),radial-gradient(120% 80% at 100% 0%,#b80e2b 0%,transparent 60%),linear-gradient(165deg,#C8102E 0%,#b30d29 55%,#8c0a20 100%)}
 .hero::before{content:"";position:absolute;inset:0;opacity:.08;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48'%3E%3Cpath d='M14 0L28 8V24L14 32L0 24V8ZM14 32V48' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3C/svg%3E") 0 0/28px 48px}
 .deco{position:absolute;inset:0;pointer-events:none}
 .deco span{position:absolute;display:block}
@@ -53,18 +53,6 @@ body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:col
 h1{margin:8px 0 0;line-height:1.02;overflow-wrap:anywhere;text-shadow:0 2px 0 rgba(0,0,0,.12)}
 .h1a{display:block;color:var(--gold-light);font-size:clamp(20px,6.4vw,26px);font-weight:700;letter-spacing:-.005em}
 .h1b{display:block;margin-top:2px;font-size:clamp(34px,11vw,48px);font-weight:900;letter-spacing:-.02em}
-.tagwrap{position:relative;margin-top:10px}
-.tag{margin:0}
-.pre{display:block;padding-right:44px;color:#fff;font-size:16px;font-weight:600}
-.type{display:block;min-height:1.3em;color:var(--gold-light);font-size:clamp(22px,7vw,30px);font-weight:800;line-height:1.3;letter-spacing:-.01em}
-.caret{display:inline-block;width:3px;height:.95em;margin-left:3px;vertical-align:-.12em;border-radius:2px;background:var(--gold);animation:blink 1s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-.pause{position:absolute;top:-13px;right:-8px;width:48px;height:48px;padding:0;border:0;background:none;color:var(--gold-light);cursor:pointer;display:grid;place-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent}
-.pause span{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,243,214,.6);background:rgba(0,0,0,.14)}
-.pause svg{width:14px;height:14px;fill:currentColor}
-.pause .i-play,.pause[aria-pressed="true"] .i-pause{display:none}
-.pause[aria-pressed="true"] .i-play{display:block}
-.pause:focus-visible{outline:3px solid #fff;outline-offset:-2px}
 
 /* ---------- Buttons ---------- */
 main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left))}
@@ -187,10 +175,8 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
 .pop.spk{border:0;border-radius:0;background:var(--gold);clip-path:var(--star)}
 @keyframes fizz{from{transform:scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.1);opacity:0}}
 
-/* No JS = no pause button, so no looping motion either */
-.no-js .deco span,.no-js .spark,.no-js .smoke,.no-js .caret,.no-js .dot::after{animation:none}
-/* Pause button freezes all looping motion */
-.still .deco span,.still .spark,.still .smoke,.still .caret,.still .dot::after,.still .liq,.still .bb{animation-play-state:paused!important}
+/* Nothing loops on its own: decorations stay still; motion only on load (once) or on tap */
+.mol,.wave,.dot::after,.spark,.smoke,.liq,.bb{animation:none}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.bub,.dot::after{display:none}}
 </style>
 </head>
@@ -204,14 +190,6 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   <span class="mol ring m3"></span>
   <span class="mol ball m4"></span>
   <span class="mol ring m5"></span>
-  <span class="bub" style="left:7%;--s:9px;--t:7s;--d:-1s"></span>
-  <span class="bub" style="left:19%;--s:13px;--t:9s;--d:-5s;--w:-8px"></span>
-  <span class="bub" style="left:32%;--s:7px;--t:6.5s;--d:-3s"></span>
-  <span class="bub" style="left:46%;--s:11px;--t:8.5s;--d:-7s;--w:-6px"></span>
-  <span class="bub" style="left:60%;--s:8px;--t:7.5s;--d:-2s"></span>
-  <span class="bub" style="left:71%;--s:14px;--t:10s;--d:-6s;--w:-10px"></span>
-  <span class="bub" style="left:83%;--s:9px;--t:6.8s;--d:-4s"></span>
-  <span class="bub" style="left:93%;--s:12px;--t:9.2s;--d:-8s;--w:-7px"></span>
   <span class="wave w2"></span>
   <span class="wave w1"></span>
  </div>
@@ -222,19 +200,6 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <p class="stamp">Go Cyclones!</p>
   </div>
   <h1><span class="h1a">Chemical and Biological</span> <span class="h1b">Engineering</span></h1>
-  <div class="tagwrap">
-   <p class="tag">
-    <span class="pre">Come to Ames and engineer</span>
-    <span class="sr-only">renewable fuels, regenerative medicine, 2D nanomaterials, AI-driven tools, synthetic biology, semiconductors, computer models and more.</span>
-    <span class="type" aria-hidden="true"><span id="word">renewable fuels</span><span class="caret"></span></span>
-   </p>
-   <button class="pause" id="pause" type="button" aria-pressed="false" aria-label="Pause animations" hidden>
-    <span>
-     <svg class="i-pause" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
-     <svg class="i-play" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9.5-5.5z"/></svg>
-    </span>
-   </button>
-  </div>
  </div>
 </header>
 
@@ -392,41 +357,8 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  var d = document, root = d.documentElement;
  root.className = root.className.replace('no-js', 'js');
  var rm = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
- function still() { return rm.matches || root.classList.contains('still'); }
  function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 
- /* Typewriter: themes from cbe.iastate.edu/research, three per focus area, rotating energy, bio, materials, modeling */
- var words = ['renewable fuels', 'regenerative medicine', '2D nanomaterials', 'AI-driven tools',
-  'cleaner processes', 'synthetic biology', 'semiconductors', 'computer models',
-  'catalysts', 'bioproducts', 'biomaterials', 'multiscale models'];
- var w = d.getElementById('word'), wi = 0, n = words[0].length, del = true, tid = null;
- function step() {
-  tid = null;
-  if (still()) { w.textContent = words[wi]; n = words[wi].length; del = true; return; }
-  if (del) {
-   n--;
-   if (n <= 0) { n = 0; del = false; wi = (wi + 1) % words.length; tid = setTimeout(step, 260); }
-   else tid = setTimeout(step, 32);
-  } else {
-   n++;
-   if (n >= words[wi].length) { del = true; tid = setTimeout(step, 1900); }
-   else tid = setTimeout(step, 70);
-  }
-  w.textContent = words[wi].slice(0, n);
- }
- function go(ms) { if (!tid && !still()) tid = setTimeout(step, ms); }
- go(2000);
-
- /* Pause / play all looping motion */
- var pb = d.getElementById('pause');
- pb.hidden = rm.matches;
- pb.addEventListener('click', function () {
-  var on = root.classList.toggle('still');
-  pb.setAttribute('aria-pressed', on ? 'true' : 'false');
-  if (on) { clearTimeout(tid); tid = null; w.textContent = words[wi]; n = words[wi].length; del = true; }
-  else go(1200);
- });
- if (rm.addEventListener) rm.addEventListener('change', function () { pb.hidden = rm.matches; go(1200); });
 
  /* Fizz: little bubbles / sparkles at a point (fixed position, never moves layout) */
  function fizz(x, y, kind) {
