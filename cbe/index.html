@@ -56,10 +56,7 @@ h1{margin:8px 0 0;line-height:1.02;overflow-wrap:anywhere;text-shadow:0 2px 0 rg
 
 /* ---------- Buttons ---------- */
 main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left))}
-.kick{display:flex;align-items:center;gap:8px;margin:0 0 8px;color:var(--cardinal-ink);font-size:15px;font-weight:800;letter-spacing:.01em}
-.kick::before{content:"";width:13px;height:13px;flex:none;background:var(--gold);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
-.nw{white-space:nowrap}
-.kick svg{width:14px;height:14px;margin-left:2px;vertical-align:-1px;fill:var(--gold-edge)}
+.kick{margin:0 0 8px;color:var(--cardinal-ink);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .links{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0 0 16px;padding:0;list-style:none}
 .links li{animation:pop .45s cubic-bezier(.2,.9,.3,1.35) both;animation-delay:calc(var(--i,0) * 50ms)}
 @keyframes pop{from{transform:translateY(10px) scale(.96)}}
@@ -81,10 +78,8 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 @media (hover:hover){.btn:hover .chev{transform:translateX(3px)}}
 @media (max-width:374px){.btn{gap:8px;padding-left:10px;padding-right:10px}.ico{width:34px;height:34px}.sub{font-size:13.5px}}
 .gold{--edge:var(--gold-edge);background:var(--gold);color:var(--cardinal)}
-.gold .sub{color:#7a0a1c}
 .gold .ico{background:rgba(200,16,46,.12)}
 .red{--edge:#7a0a1c;background:var(--cardinal);color:var(--gold)}
-.red .sub{color:var(--gold-light)}
 .red .ico{background:rgba(241,190,72,.17)}
 .soon{display:inline-block;padding:2px 7px;border-radius:999px;background:var(--cardinal-deep);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;line-height:1.35;text-transform:uppercase;transform:rotate(4deg);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .wiggle .ico{animation:wig .6s ease}
@@ -106,82 +101,62 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 .smoke+.smoke{animation-delay:1.3s}
 @keyframes puff{0%{transform:translate(0,3px) scale(.4);opacity:0}30%{opacity:1}100%{transform:translate(-2px,-4px) scale(1.2);opacity:0}}
 
-/* ---------- Flask discovery card ---------- */
-.lab{margin:22px 0 0;padding:18px 16px 8px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 3px 0 var(--line),0 12px 28px rgba(120,70,20,.08);text-align:center}
+/* ---------- Mix card ---------- */
+.lab{margin:24px 0 0;padding:18px 16px 10px;background:#fff;border:1px solid var(--line);border-radius:20px;text-align:center}
 .lab h2{margin:0;font-size:22px;font-weight:800;line-height:1.2}
-.hl{padding:0 2px;background:linear-gradient(transparent 58%,rgba(241,190,72,.7) 58%)}
-.note{margin:6px 0 0;color:var(--muted);font-size:15px}
-/* Two pick lists: single-select chips (--c option colour, --t its light tint; both set by the script) */
-.step{margin:14px 0 6px;color:var(--cardinal-ink);font-size:15px;font-weight:800;line-height:1.25;text-align:left}
+.note{margin:4px 0 0;color:var(--muted);font-size:15px}
+.step{display:flex;align-items:center;gap:8px;margin:16px 0 8px;color:var(--ink);font-size:15px;font-weight:800;line-height:1.25;text-align:left}
+.step b{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--cardinal);color:#fff;font-size:12px}
 .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.opt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:64px;padding:7px 6px 6px;border:2px solid #e6d8c0;border-radius:14px;background:#fff;box-shadow:0 3px 0 var(--c);color:var(--ink);font:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s,background-color .2s}
-.opt:nth-child(3):last-child{grid-column:1/-1;justify-content:center}
-.em{font-size:20px;line-height:1.1}
-.opt:active{transform:translateY(2px)}
-.opt[aria-pressed=true]{border-color:var(--ink);background:var(--t);box-shadow:0 1px 0 var(--c);transform:translateY(2px)}
-.opt[aria-pressed=true]::after{content:"";position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 50%/12px no-repeat;box-shadow:0 0 0 2px #fff}
-@media (hover:hover){.opt[aria-pressed=false]:hover{border-color:#cdb68f}}
-@media (min-width:360px){.opt{flex-direction:row;justify-content:flex-start;gap:6px;min-height:48px;padding:6px;font-size:13.5px;text-align:left}}
-/* The flask is the Mix button: one layer per pick, blended on mix */
-.flask{--liq:#F1BE48;position:relative;display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;max-width:100%;margin:14px 0 0;padding:6px 18px 6px 12px;border:2px dashed #e2b54a;border-radius:24px;background:radial-gradient(circle at 35% 50%,#fff,#fdf0d0);color:inherit;font:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s}
-.flask[aria-disabled=false]:active{transform:scale(.96)}
-.flask[aria-disabled=true]{border-color:#e6d8c0;background:#fdfbf7}
-.flask:focus-visible,.opt:focus-visible,.lnk:focus-visible,.again:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.fsvg{display:block;width:56px;height:74px;overflow:visible;transform-origin:50% 88%}
-.go{display:inline-flex;align-items:center;justify-content:center;min-width:92px;min-height:44px;padding:0 20px;border-radius:999px;background:var(--cardinal);box-shadow:0 3px 0 #7a0a1c;color:#fff;font-size:17px;font-weight:800}
-.flask[aria-disabled=true] .go{background:#efe7da;box-shadow:0 3px 0 #ddd0bb;color:var(--muted)}
-.ready .go{animation:boing .5s ease}
-.mix .fsvg{animation:wob .6s ease-in-out}
-@keyframes wob{20%{transform:rotate(-11deg)}45%{transform:rotate(9deg)}70%{transform:rotate(-5deg)}85%{transform:rotate(2deg)}}
-.lay{transform:scaleY(0);transform-box:fill-box;transform-origin:50% 100%;transition:fill .45s,transform .3s}
+.opt{display:flex;align-items:center;gap:8px;min-width:0;min-height:48px;padding:8px 10px;border:1.5px solid #e3d6c1;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:14px;font-weight:700;line-height:1.2;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background-color .15s}
+.opt:nth-child(3):last-child{grid-column:1/-1}
+.opt i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.opt[aria-pressed=true]{border-color:var(--cardinal);background:#fdf1f2;box-shadow:inset 0 0 0 1.5px var(--cardinal)}
+@media (hover:hover){.opt[aria-pressed=false]:hover{border-color:#c9b48f}}
+.opt:focus-visible,.go:focus-visible,.lnk:focus-visible,.again:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+/* Bench: each pick drops into the flask as its own layer; Mix swirls them into the colour of the research area */
+.bench{display:flex;align-items:center;justify-content:center;gap:20px;margin:16px 0 0}
+.fsvg{display:block;width:76px;height:100px;overflow:visible;transform-origin:50% 90%}
+.go{min-width:104px;min-height:48px;padding:0 22px;border:0;border-radius:999px;background:var(--cardinal);box-shadow:0 3px 0 #7a0a1c;color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s}
+.go[aria-disabled=true]{background:#efe7da;box-shadow:0 3px 0 #ddd0bb;color:var(--muted);cursor:default}
+.go[aria-disabled=false]:active{transform:translateY(2px);box-shadow:0 1px 0 #7a0a1c}
+.lay{transform:scaleY(0);transform-box:fill-box;transform-origin:50% 100%;transition:transform .35s ease-out,fill .45s ease}
 .lay.on{transform:none}
-.p1 .l1,.p2 .l2{animation:pour .45s ease-out}
-@keyframes pour{from{transform:scaleY(0)}}
-.bb{fill:#fff;opacity:.7}
-.pb circle{fill:var(--liq);opacity:0;transform-box:fill-box;transform-origin:center}
-.mix .pb circle{animation:burst .55s ease-out}
-.mix .pb circle:nth-child(2){animation-delay:.06s}
-.mix .pb circle:nth-child(3){animation-delay:.12s}
-@keyframes burst{0%{opacity:1;transform:translate(0,10px) scale(.3)}100%{opacity:0;transform:translate(var(--x),-16px) scale(1.15)}}
+.drop{opacity:0}
+.p1 .d1,.p2 .d2{animation:fdrop .42s ease-in}
+@keyframes fdrop{0%{opacity:1;transform:translateY(0)}85%{opacity:1;transform:translateY(64px)}100%{opacity:0;transform:translateY(70px)}}
+.mixing .fsvg{animation:wob .6s ease-in-out}
+@keyframes wob{20%{transform:rotate(-10deg)}45%{transform:rotate(8deg)}70%{transform:rotate(-4deg)}85%{transform:rotate(2deg)}}
+.fb{fill:#fff;opacity:0;transform-box:fill-box}
+.mixing .fb{animation:fbub .8s ease-out .15s}
+.mixing .fb:nth-of-type(2){animation-delay:.25s}
+.mixing .fb:nth-of-type(3){animation-delay:.35s}
+@keyframes fbub{0%{opacity:0;transform:translateY(0)}20%{opacity:.9}100%{opacity:0;transform:translateY(-34px)}}
+.fp circle{fill:#e4d8c8;opacity:0;transform-box:fill-box;transform-origin:center}
+.mixing .fp circle{animation:fpuff .7s ease-out .3s}
+.mixing .fp circle:nth-child(2){animation-delay:.4s}
+@keyframes fpuff{0%{opacity:.85;transform:translateY(0) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
 /* Result: invisible copies of all 12 outcomes share one grid cell, so the box is always as tall as the longest */
-.reveal{display:grid;margin:12px 0 0;text-align:left}
-.rvi{grid-area:1/1;min-width:0;padding:10px 14px 0;border-radius:16px;background:var(--cream)}
+.reveal{display:grid;margin:14px 0 0;text-align:left}
+.rvi{grid-area:1/1;min-width:0;padding:12px 14px 2px;border-radius:14px;background:var(--cream)}
 .ghost{visibility:hidden}
-.none{display:grid;place-items:center;padding:14px;border:2px dashed var(--line);background:#fffdf8;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
+.none{display:grid;place-items:center;padding:14px;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
 .none p{margin:0}
-.ask{animation:nudge .35s ease-out}
-.rvk{margin:0;color:var(--muted);font-size:13px;font-weight:700}
-.rvt{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:18px;font-weight:800;line-height:1.2}
-.rvt span{min-width:0}
-.emo{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 2px 0 var(--line);font-size:24px;line-height:1}
-.rvd{margin:0;color:#4a423b;font-size:15px}
-.chip{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;margin:8px 0 0;padding:3px 9px 3px 7px;border-radius:10px;background:#fff;color:#4a423b;font-size:13px;font-weight:800;line-height:1.3}
-.chip i{flex:none;width:9px;height:9px;border-radius:50%;background:#c9bfb2}
-.rvl{margin:2px 0 0}
-.lnk{display:inline-flex;align-items:center;min-height:44px;margin-left:-4px;padding:2px 4px;color:var(--cardinal);font-size:15px;font-weight:700;line-height:20px;text-underline-offset:3px}
-.in{animation:nudge .35s ease-out}
-.in .emo{animation:popin .5s cubic-bezier(.3,1.6,.5,1)}
-@keyframes popin{from{transform:scale(.3) rotate(-25deg)}}
+.ask,.in{animation:nudge .3s ease-out}
 @keyframes nudge{from{transform:translateY(6px)}}
-.prog{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;margin:12px 0 0;color:var(--muted);font-size:14px;font-weight:700}
-.dots{display:flex;flex-wrap:wrap;flex-basis:100%;justify-content:center;gap:5px}
-.dots i{width:10px;height:10px;border-radius:50%;background:#ebe2d3;transition:background .3s,transform .3s}
-.dots i.on{transform:scale(1.2)}
-.again{min-height:44px;margin:2px 0 0;padding:0 12px;border:0;background:none;color:var(--cardinal);font:inherit;font-size:15px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-@media (max-width:299px){.lab{padding-left:12px;padding-right:12px}.opts{grid-template-columns:minmax(0,1fr)}.opt,.opt:nth-child(3):last-child{flex-direction:row;justify-content:flex-start;gap:8px;min-height:48px;padding:6px 10px;text-align:left}.rvi{padding-left:10px;padding-right:10px}.rvt{flex-direction:column;align-items:flex-start;gap:6px;font-size:16px}}
+.rvk{margin:0;color:var(--muted);font-size:13px;font-weight:700}
+.rvt{margin:4px 0 6px;font-size:19px;font-weight:800;line-height:1.2}
+.rvd{margin:0;color:#4a423b;font-size:15px}
+.rva{display:flex;align-items:center;gap:7px;margin:10px 0 0;color:#4a423b;font-size:13px;font-weight:700;line-height:1.3}
+.rva i{flex:none;width:10px;height:10px;border-radius:50%}
+.rvl{margin:0}
+.lnk{display:inline-flex;align-items:center;min-height:44px;color:var(--cardinal);font-size:15px;font-weight:700;text-underline-offset:3px}
+.prog{margin:10px 0 0;color:var(--muted);font-size:14px;font-weight:600}
+#count{display:inline-block;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.again{display:block;min-height:44px;margin:0 auto;padding:0 10px;border:0;background:none;color:var(--cardinal);font:inherit;font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media (max-width:299px){.lab{padding-left:12px;padding-right:12px}.opts{grid-template-columns:minmax(0,1fr)}.bench{flex-direction:column;gap:10px}.rvi{padding-left:10px;padding-right:10px}}
 
 @media (max-width:300px){.btn .ico{display:none}main{padding-left:12px;padding-right:12px}.h1b{font-size:26px}}
-
-/* ---------- Four focus areas (static, no-JS fallback) ---------- */
-.more{margin-top:26px}
-.themes{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0;padding:0;list-style:none}
-@media (min-width:360px){.themes{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.themes li{position:relative;padding:14px 14px 14px 16px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 0 var(--line);overflow:hidden}
-.themes li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cardinal)}
-.themes li:nth-child(even)::before{background:var(--gold)}
-.themes svg{width:28px;height:28px;fill:none;stroke:var(--cardinal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.themes h3{margin:6px 0 4px;font-size:16px;line-height:1.2}
-.themes p{margin:0;color:var(--muted);font-size:14px;line-height:1.35}
 
 footer{padding:14px 16px calc(14px + env(safe-area-inset-bottom));color:var(--muted);font-size:14px;text-align:center}
 footer p{margin:0}
@@ -199,7 +174,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
 @keyframes fizz{from{transform:scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.1);opacity:0}}
 
 /* Nothing loops on its own: decorations stay still; motion only on load (once) or on tap */
-.mol,.wave,.dot::after,.spark,.smoke,.liq,.bb{animation:none}
+.mol,.wave,.dot::after,.spark,.smoke{animation:none}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.bub,.dot::after{display:none}}
 </style>
 </head>
@@ -234,7 +209,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <a class="btn gold" href="https://apps.admissions.iastate.edu/apply/online/">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3.5 2.6 8.5 2.6 12 0v-5"/><path d="M22 9v6"/></svg></span>
-    <span class="txt"><span class="lbl">Apply for BS</span><span class="sub">Undergraduate application</span></span>
+    <span class="txt"><span class="lbl">Apply for BS</span></span>
     <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
    </a>
   </li>
@@ -245,14 +220,14 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <a class="btn gold" href="PASTE-INFO-SESSION-URL-HERE">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/></svg></span>
-    <span class="txt"><span class="lbl">Info Session</span><span class="sub">Learn about the program</span></span>
+    <span class="txt"><span class="lbl">Info Session</span></span>
     <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
    </a>
    -->
    <button class="btn gold" type="button" data-soon="info">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/></svg></span>
-    <span class="txt"><span class="lrow"><span class="lbl">Info Session</span><span class="soon">Soon</span></span><span class="sub">Details coming soon</span></span>
+    <span class="txt"><span class="lrow"><span class="lbl">Info Session</span><span class="soon">Soon</span></span></span>
    </button>
   </li>
  </ul>
@@ -264,7 +239,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <a class="btn red" href="https://www.cbe.iastate.edu/graduate-programs/how-to-apply/">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5.6 9.6A2 2 0 0 0 6.1 21.6h11.8a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7.2 15.5h9.6"/></svg></span>
-    <span class="txt"><span class="lbl">Apply for PhD</span><span class="sub">Graduate application</span></span>
+    <span class="txt"><span class="lbl">Apply for PhD</span></span>
     <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
    </a>
   </li>
@@ -272,7 +247,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <a class="btn red" href="https://www.cbe.iastate.edu/research/">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="3.2"/></svg></span>
-    <span class="txt"><span class="lbl">Research Areas</span><span class="sub">Bio, energy, materials &amp; modeling</span></span>
+    <span class="txt"><span class="lbl">Research Areas</span></span>
     <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
    </a>
   </li>
@@ -280,7 +255,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    <a class="btn red" href="https://www.cbe.iastate.edu/the-department/facultystaff/">
     <span class="fx"></span>
     <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.6 14.6c2.6-.4 4.7 1.4 5.4 4.4"/></svg></span>
-    <span class="txt"><span class="lbl">Faculty List</span><span class="sub">Meet the faculty</span></span>
+    <span class="txt"><span class="lbl">Faculty List</span></span>
     <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
    </a>
   </li>
@@ -308,73 +283,49 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   </li>
  </ul>
 
- <!-- Flask card: shown only when JS runs (the static cards below cover no-JS).
+ <!-- Mix card: hidden without JS (the buttons above still work).
    Its outcomes (O table in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
  <section class="lab" id="lab" aria-labelledby="lab-h" hidden>
-  <h2 id="lab-h">What could <span class="hl">you</span> engineer?</h2>
-  <p class="note">Pick one from each list, then mix. Change a pick to mix again.</p>
-  <p class="step" id="lab-a">1. What do you like working with?</p>
+  <h2 id="lab-h">What could you engineer?</h2>
+  <p class="note">Pick one from each list, then mix.</p>
+  <p class="step" id="lab-a"><b aria-hidden="true">1</b>What do you like working with?</p>
   <div class="opts" role="group" aria-labelledby="lab-a" data-s="a">
-   <button class="opt" type="button" data-k="cells" aria-pressed="false"><span class="em" aria-hidden="true">🧬</span><span>Living cells</span></button>
-   <button class="opt" type="button" data-k="chem" aria-pressed="false"><span class="em" aria-hidden="true">⚗️</span><span>Chemicals and reactions</span></button>
-   <button class="opt" type="button" data-k="mat" aria-pressed="false"><span class="em" aria-hidden="true">🔬</span><span>New materials</span></button>
-   <button class="opt" type="button" data-k="comp" aria-pressed="false"><span class="em" aria-hidden="true">💻</span><span>Computers and&nbsp;AI</span></button>
+   <button class="opt" type="button" data-k="cells" aria-pressed="false"><i aria-hidden="true"></i>Living cells</button>
+   <button class="opt" type="button" data-k="chem" aria-pressed="false"><i aria-hidden="true"></i>Chemicals and reactions</button>
+   <button class="opt" type="button" data-k="mat" aria-pressed="false"><i aria-hidden="true"></i>New materials</button>
+   <button class="opt" type="button" data-k="comp" aria-pressed="false"><i aria-hidden="true"></i>Computers and&nbsp;AI</button>
   </div>
-  <p class="step" id="lab-b">2. What would you like to help with?</p>
+  <p class="step" id="lab-b"><b aria-hidden="true">2</b>What would you like to help with?</p>
   <div class="opts" role="group" aria-labelledby="lab-b" data-s="b">
-   <button class="opt" type="button" data-k="health" aria-pressed="false"><span class="em" aria-hidden="true">🩺</span><span>Health and medicine</span></button>
-   <button class="opt" type="button" data-k="energy" aria-pressed="false"><span class="em" aria-hidden="true">🌍</span><span>Energy and environment</span></button>
-   <button class="opt" type="button" data-k="tech" aria-pressed="false"><span class="em" aria-hidden="true">📱</span><span>Technology and products</span></button>
+   <button class="opt" type="button" data-k="health" aria-pressed="false"><i aria-hidden="true"></i>Health and medicine</button>
+   <button class="opt" type="button" data-k="energy" aria-pressed="false"><i aria-hidden="true"></i>Energy and environment</button>
+   <button class="opt" type="button" data-k="tech" aria-pressed="false"><i aria-hidden="true"></i>Technology and products</button>
   </div>
-  <button class="flask" id="flask" type="button" aria-disabled="true">
+  <div class="bench" id="bench">
    <svg class="fsvg" viewBox="0 -26 100 132" aria-hidden="true" focusable="false">
     <defs><clipPath id="fc"><path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z"/></clipPath></defs>
     <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z" fill="#fff"/>
     <g clip-path="url(#fc)">
      <path class="lay l2" d="M0 56q12.5-5 25 0t25 0 25 0 25 0V110H0z"/>
-     <path class="lay l1" d="M0 78q12.5-4 25 0t25 0 25 0 25 0V110H0z"/>
-     <circle class="bb" cx="38" cy="94" r="3"/>
-     <circle class="bb" cx="55" cy="96" r="2.2"/>
-     <circle class="bb" cx="66" cy="91" r="2.6"/>
+     <path class="lay l1" d="M0 76q12.5-4 25 0t25 0 25 0 25 0V110H0z"/>
+     <circle class="fb" cx="38" cy="94" r="3"/>
+     <circle class="fb" cx="56" cy="96" r="2.4"/>
+     <circle class="fb" cx="66" cy="91" r="2.8"/>
     </g>
+    <circle class="drop d1" cx="50" cy="-6" r="4.5"/>
+    <circle class="drop d2" cx="50" cy="-6" r="4.5"/>
     <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10" fill="none" stroke="#8a0b20" stroke-width="4" stroke-linejoin="round"/>
     <path d="M35 10h30" stroke="#8a0b20" stroke-width="5" stroke-linecap="round"/>
     <path d="M27 79l-5 8" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".75"/>
-    <g class="pb"><circle cx="50" cy="2" r="4.5" style="--x:-3px"/><circle cx="46" cy="4" r="3" style="--x:-14px"/><circle cx="54" cy="4" r="3.5" style="--x:13px"/></g>
+    <g class="fp"><circle cx="46" cy="2" r="4"/><circle cx="55" cy="-2" r="3.2"/></g>
    </svg>
-   <span class="go">Mix</span>
-  </button>
+   <button class="go" id="mix" type="button" aria-disabled="true">Mix</button>
+  </div>
   <div class="reveal" id="reveal">
    <div class="rvi none" id="rv" aria-live="polite" aria-atomic="true"><p>Pick one from each list.</p></div>
   </div>
-  <div class="prog"><span>Combinations tried: <span id="count">0</span> of 12</span><span class="dots" id="dots" aria-hidden="true"></span></div>
+  <p class="prog"><span id="count">0</span> of 12 combinations tried</p>
   <button class="again" id="again" type="button">Start over</button>
- </section>
-
- <section class="more" aria-labelledby="areas">
-  <h2 class="kick" id="areas">Four research areas</h2>
-  <ul class="themes">
-   <li>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9M9.3 6.5h5.4M9.3 17.5h5.4"/></svg>
-    <h3>Biomedicine &amp; biotechnology</h3>
-    <p>Engineering cells and tiny materials to fight infections, cancer and other diseases</p>
-   </li>
-   <li>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>
-    <h3>Energy &amp; sustainability</h3>
-    <p>Making fuels and chemicals from renewable sources with cleaner processes</p>
-   </li>
-   <li>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3.5l4 2.3v4.6l-4 2.3-4-2.3V5.8zM16 10.5l4 2.3v4.6l-4 2.3-4-2.3v-4.6z"/></svg>
-    <h3>Materials design &amp; discovery</h3>
-    <p>New materials for clean energy, electronics, farming and medicine</p>
-   </li>
-   <li>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 18L12 6.5l6.5 8"/><circle cx="5" cy="18.5" r="2.2"/><circle cx="12" cy="5.5" r="2.2"/><circle cx="19" cy="15" r="2.2"/></svg>
-    <h3>Modeling, simulation &amp; data science</h3>
-    <p>Computer models and AI that explain and predict how chemical and biological systems behave</p>
-   </li>
-  </ul>
  </section>
 </main>
 
@@ -451,108 +402,96 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   });
  }
 
- /* Flask discovery card: pick one from each list, then mix. After the first mix, changing a pick re-mixes. */
- var C = { cells: '#d9485f', chem: '#F1BE48', mat: '#2f7f8a', comp: '#6a3a9a', health: '#e07a5f', energy: '#4c9a55', tech: '#3b6fb6' };
- var A = [
-  ['Biomedicine and biotechnology', 'https://www.cbe.iastate.edu/research/biomedicine-biotechnology/'],
-  ['Energy and sustainability', 'https://www.cbe.iastate.edu/research/energy-and-sustainability/'],
-  ['Materials design and discovery', 'https://www.cbe.iastate.edu/research/materials-design-and-discovery/'],
-  ['Modeling, simulation and data science', 'https://www.cbe.iastate.edu/research/modeling-simulation-and-data-science/']
+ /* Mix card: pick one from each list, then mix. After the first mix, changing a pick mixes again. */
+ var C = { cells: '#d9485f', chem: '#e8ac2c', mat: '#2f7f8a', comp: '#6a3a9a', health: '#e07a5f', energy: '#4c9a55', tech: '#3b6fb6' };
+ var A = [ /* research area: name, page (lists its faculty), liquid colour after mixing */
+  ['Biomedicine and biotechnology', 'https://www.cbe.iastate.edu/research/biomedicine-biotechnology/', '#C8102E'],
+  ['Energy and sustainability', 'https://www.cbe.iastate.edu/research/energy-and-sustainability/', '#3f8f4a'],
+  ['Materials design and discovery', 'https://www.cbe.iastate.edu/research/materials-design-and-discovery/', '#2f7f8a'],
+  ['Modeling, simulation and data science', 'https://www.cbe.iastate.edu/research/modeling-simulation-and-data-science/', '#6a3a9a']
  ];
  /* Each outcome paraphrases https://www.cbe.iastate.edu/research/ (area pages linked). */
- var O = { /* step1-step2: [emoji, title, description, area index] */
-  'cells-health': ['🧫', 'Treating disease', 'Research on cancer, infections, regenerative medicine and metabolic disorders.', 0],
-  'cells-energy': ['🌱', 'Fuels from biology', 'Using microbes and plant material to make fuels and chemicals.', 1],
-  'cells-tech': ['🧬', 'Engineering microbes and cells', 'Designing microbes and cells that make useful products.', 0],
-  'chem-health': ['🦠', 'Fighting drug-resistant infections', 'Using nanotechnology and polymers to tackle antibiotic resistance and infections.', 0],
-  'chem-energy': ['⚡', 'Cleaner chemical processes', 'Using catalysts to make chemical production cleaner.', 1],
-  'chem-tech': ['♻️', 'Greener chemicals and materials', 'Making chemicals and high-performance materials from renewable sources.', 1],
-  'mat-health': ['🩹', 'Materials for medicine', 'Designing new materials, including biomaterials, for use in medicine.', 2],
-  'mat-energy': ['🔋', 'Materials for clean energy', 'Discovering new materials, some just a few atoms thick, for clean energy.', 2],
-  'mat-tech': ['💡', 'Materials for electronics', 'New semiconductors and polymers for electronics, transportation and manufacturing.', 2],
-  'comp-health': ['🖥️', 'Computer models of biology', 'Using computers and AI to model how biological systems behave.', 3],
-  'comp-energy': ['🤖', 'AI for sustainability', 'Using AI and computer tools to speed up the development of cleaner processes.', 1],
-  'comp-tech': ['🌊', 'Simulating chemical processes', 'Computer models of reactions and flowing liquids and gases that help guide experiments.', 3]
+ var O = { /* step1-step2: [title, description, area index] */
+  'cells-health': ['Treating disease', 'Research on cancer, infections, regenerative medicine and metabolic disorders.', 0],
+  'cells-energy': ['Fuels from biology', 'Using microbes and plant material to make fuels and chemicals.', 1],
+  'cells-tech': ['Engineering microbes and cells', 'Designing microbes and cells that make useful products.', 0],
+  'chem-health': ['Fighting drug-resistant infections', 'Using nanotechnology and polymers to tackle antibiotic resistance and infections.', 0],
+  'chem-energy': ['Cleaner chemical processes', 'Using catalysts to make chemical production cleaner.', 1],
+  'chem-tech': ['Greener chemicals and materials', 'Making chemicals and high-performance materials from renewable sources.', 1],
+  'mat-health': ['Materials for medicine', 'Designing new materials, including biomaterials, for use in medicine.', 2],
+  'mat-energy': ['Materials for clean energy', 'Discovering new materials, some just a few atoms thick, for clean energy.', 2],
+  'mat-tech': ['Materials for electronics', 'New semiconductors and polymers for electronics, transportation and manufacturing.', 2],
+  'comp-health': ['Computer models of biology', 'Using computers and AI to model how biological systems behave.', 3],
+  'comp-energy': ['AI for sustainability', 'Using AI and computer tools to speed up the development of cleaner processes.', 1],
+  'comp-tech': ['Simulating chemical processes', 'Computer models of reactions and flowing liquids and gases that help guide experiments.', 3]
  };
- var lab = d.getElementById('lab'), fl = d.getElementById('flask'), rv = d.getElementById('rv'),
-   l1 = fl.querySelector('.l1'), l2 = fl.querySelector('.l2'), opts = lab.querySelectorAll('.opt'),
-   dots = d.getElementById('dots'), cnt = d.getElementById('count'),
+ var lab = d.getElementById('lab'), bench = d.getElementById('bench'), go = d.getElementById('mix'), rv = d.getElementById('rv'),
+   l1 = bench.querySelector('.l1'), l2 = bench.querySelector('.l2'), d1 = bench.querySelector('.d1'), d2 = bench.querySelector('.d2'),
+   opts = lab.querySelectorAll('.opt'), cnt = d.getElementById('count'),
    pick = {}, tried = {}, n = 0, mixed = false, wait;
- function rgb(h) { h = parseInt(h.slice(1), 16); return [h >> 16, h >> 8 & 255, h & 255]; }
- function blend(a, b, t) { /* colour a moved t of the way to colour b, as #rrggbb */
-  var x = rgb(a), y = rgb(b), s = '#';
-  for (var i = 0; i < 3; i++) s += (256 + Math.round(x[i] + (y[i] - x[i]) * t)).toString(16).slice(1);
-  return s;
- }
  function card(k) {
-  var o = O[k], a = A[o[3]];
-  return '<p class="rvk">You could work on</p><p class="rvt"><span class="emo" aria-hidden="true">' + o[0] + '</span><span>' + o[1] +
-   '</span></p><p class="rvd">' + o[2] + '</p><p class="chip"><i></i><span>' + a[0] + '</span></p><p class="rvl"><a class="lnk" href="' + a[1] +
-   '"><span>See the faculty in this area<span aria-hidden="true">&nbsp;&rarr;</span></span></a></p>';
+  var o = O[k], a = A[o[2]];
+  return '<p class="rvk">You could work on</p><p class="rvt">' + o[0] + '</p><p class="rvd">' + o[1] +
+   '</p><p class="rva"><i style="background:' + a[2] + '"></i>' + a[0] + '</p><p class="rvl"><a class="lnk" href="' + a[1] +
+   '">See the faculty in this area<span aria-hidden="true">&nbsp;&rarr;</span></a></p>';
  }
  for (var k in O) { /* invisible copies reserve the height of the longest result, so nothing below jumps */
   var g = d.createElement('div'); g.className = 'rvi ghost'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = card(k);
   rv.parentNode.appendChild(g);
  }
- for (var q = 0; q < 12; q++) dots.appendChild(d.createElement('i'));
  lab.hidden = false;
 
+ function ready() { return !!(pick.a && pick.b); }
  function ask(bump) { /* before the first mix, the result box says what to do next */
   rv.className = 'rvi none';
-  rv.innerHTML = '<p>' + (pick.a && pick.b ? 'Tap Mix to see your result.' : pick.a ? 'Now pick what you would like to help with.' :
+  rv.innerHTML = '<p>' + (ready() ? 'Tap Mix to see your result.' : pick.a ? 'Now pick what you would like to help with.' :
    pick.b ? 'Now pick what you like working with.' : 'Pick one from each list.') + '</p>';
   if (bump && !rm.matches) restart(rv.firstChild, 'ask');
  }
- function fill(lay, c) { /* set a layer's colour at once; the pour shows the change, so no colour fade */
-  lay.style.transition = 'none'; lay.style.fill = c; lay.getBoundingClientRect(); lay.style.transition = '';
+ function fill(el, c) { /* set a colour at once; the drop and pour show the change */
+  el.style.transition = 'none'; el.style.fill = c; el.getBoundingClientRect(); el.style.transition = '';
  }
- function show(k, c) {
+ function show(k) {
   rv.className = 'rvi'; rv.innerHTML = card(k);
-  rv.querySelector('.chip i').style.background = c;
   if (!rm.matches) restart(rv, 'in');
   if (tried[k]) return;
-  tried[k] = 1;
-  var o = dots.children[n++]; o.style.background = c; o.className = 'on';
-  cnt.textContent = n;
-  if (n === 12) { say('You have tried all 12 combinations.'); var b = fl.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top + 30, 'spk'); }
+  tried[k] = 1; cnt.textContent = ++n;
+  if (n === 12) { say('You have tried all 12 combinations.'); var b = go.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top, 'spk'); }
  }
- function mix(now) { /* wobble, blend both layers into their average colour, bubble burst, then the result */
+ function mix(now) { /* swirl, the liquid turns the colour of the research area, bubbles rise, then the result */
   clearTimeout(wait);
-  if (!(pick.a && pick.b)) return ask(true); /* tapped too early: point at what is still missing */
-  var k = pick.a + '-' + pick.b, c = blend(C[pick.a], C[pick.b], .5);
+  if (!ready()) return ask(true);
+  var k = pick.a + '-' + pick.b;
   mixed = true;
-  l1.style.fill = l2.style.fill = c;
-  fl.style.setProperty('--liq', c);
-  if (rm.matches) return show(k, c);
-  restart(fl, 'mix');
-  if (now === true) return show(k, c); /* re-mix after a changed pick: answer straight away */
-  wait = setTimeout(function () { show(k, c); }, 300);
+  l1.style.fill = l2.style.fill = A[O[k][2]][2];
+  if (rm.matches) return show(k);
+  restart(bench, 'mixing');
+  if (now === true) return show(k); /* mixing again after a changed pick: answer straight away */
+  wait = setTimeout(function () { show(k); }, 350);
  }
- fl.addEventListener('click', mix);
+ go.addEventListener('click', mix);
 
- for (q = 0; q < opts.length; q++) {
-  var c0 = C[opts[q].getAttribute('data-k')];
-  opts[q].style.setProperty('--c', c0);
-  opts[q].style.setProperty('--t', blend(c0, '#ffffff', .78));
+ for (var q = 0; q < opts.length; q++) {
+  opts[q].style.setProperty('--c', C[opts[q].getAttribute('data-k')]);
   opts[q].addEventListener('click', function () {
    var s = this.parentNode.getAttribute('data-s'), k = this.getAttribute('data-k'), sib = this.parentNode.children,
-     lay = s === 'a' ? l1 : l2, other = s === 'a' ? 'b' : 'a', was = !(pick.a && pick.b);
+     first = s === 'a', other = first ? 'b' : 'a';
    if (pick[s] === k) return;
    pick[s] = k;
    for (var i = 0; i < sib.length; i++) sib[i].setAttribute('aria-pressed', sib[i] === this);
-   fill(lay, C[k]); lay.classList.add('on'); /* pour this pick in as its own layer */
-   if (mixed) fill(lay === l1 ? l2 : l1, C[pick[other]]);
-   fl.setAttribute('aria-disabled', !(pick.a && pick.b));
-   if (!rm.matches) { restart(fl, s === 'a' ? 'p1' : 'p2'); if (was && pick.a && pick.b) restart(fl, 'ready'); }
+   fill(first ? l1 : l2, C[k]); fill(first ? d1 : d2, C[k]); (first ? l1 : l2).classList.add('on');
+   if (mixed) fill(first ? l2 : l1, C[pick[other]]); /* un-mix: both picks show again before the next reaction */
+   go.setAttribute('aria-disabled', !ready());
+   if (!rm.matches) restart(bench, first ? 'p1' : 'p2');
    if (!mixed) return ask();
    clearTimeout(wait);
-   if (rm.matches) mix(); else wait = setTimeout(function () { mix(true); }, 180);
+   if (rm.matches) mix(); else wait = setTimeout(function () { mix(true); }, 300);
   });
  }
 
  d.getElementById('again').addEventListener('click', function () {
   clearTimeout(wait);
-  pick = {}; mixed = false; fl.setAttribute('aria-disabled', 'true');
+  pick = {}; mixed = false; go.setAttribute('aria-disabled', 'true');
   for (var i = 0; i < opts.length; i++) opts[i].setAttribute('aria-pressed', 'false');
   l1.classList.remove('on'); l2.classList.remove('on');
   ask();
