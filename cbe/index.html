@@ -135,29 +135,36 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 .mixing .fp circle{animation:fpuff .7s ease-out .3s}
 .mixing .fp circle:nth-child(2){animation-delay:.4s}
 @keyframes fpuff{0%{opacity:.85;transform:translateY(0) scale(.5)}100%{opacity:0;transform:translateY(-18px) scale(1.4)}}
-/* Result panel: topic on top, next step below. Invisible copies of every topic and every step reserve the
-   height of the longest of each, so nothing below jumps. Before the first mix the panel shows a prompt. */
-.reveal{position:relative;margin:14px 0 0;padding:12px 14px 2px;border-radius:14px;background:var(--cream);text-align:left}
-.prompt{position:absolute;inset:0;display:none;place-items:center;margin:0;padding:14px;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
-.blank .prompt{display:grid}
-.blank .rg{visibility:hidden}
-.rg{display:grid}
-.rg2{margin-top:8px;padding-top:4px;border-top:1px solid #eadfcb}
-.rvi{grid-area:1/1;min-width:0}
-.ghost{visibility:hidden}
+/* Result panel: topics grouped by research area, then the chosen ways to get started */
+.reveal{margin:14px 0 0;padding:12px 14px 4px;border-radius:14px;background:var(--cream);text-align:left}
+.prompt{margin:0;padding:10px 0 14px;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
 .ask,.in{animation:nudge .3s ease-out}
 @keyframes nudge{from{transform:translateY(6px)}}
 .rvk{margin:0;color:var(--muted);font-size:13px;font-weight:700}
-.rvt{margin:4px 0 6px;font-size:19px;font-weight:800;line-height:1.2}
-.rvs{margin:4px 0 4px;font-size:16px;font-weight:800;line-height:1.25}
-.rvd{margin:0;color:#4a423b;font-size:15px}
-.rva{display:flex;align-items:center;gap:7px;margin:10px 0 0;color:#4a423b;font-size:13px;font-weight:700;line-height:1.3}
+.area{margin:8px 0 0}
+.area + .area{margin-top:4px;padding-top:8px;border-top:1px solid #eadfcb}
+.rva{display:flex;align-items:center;gap:7px;margin:0 0 4px;color:#4a423b;font-size:13px;font-weight:700;line-height:1.3}
 .rva i{flex:none;width:10px;height:10px;border-radius:50%}
+.tl{margin:0;padding:0;list-style:none}
+.tl li{margin:6px 0 0}
+.tl b{display:block;font-size:17px;font-weight:800;line-height:1.25}
+.tl span{display:block;color:#4a423b;font-size:15px}
 .rvl{margin:0}
 .lnk{display:inline-flex;align-items:center;min-height:44px;color:var(--cardinal);font-size:15px;font-weight:700;text-underline-offset:3px}
+.gs{margin:6px 0 0;padding-top:8px;border-top:1px solid #eadfcb}
+.gs .rvk{margin-bottom:2px}
+.rvs{margin:6px 0 2px;font-size:16px;font-weight:800;line-height:1.25}
+.rvd{margin:0;color:#4a423b;font-size:15px}
+/* Next step after a mix */
+.next{margin:14px 0 0}
+.next .kick{text-align:left}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:8px 16px;border-radius:14px;background:var(--gold);box-shadow:0 3px 0 var(--gold-edge);color:var(--cardinal);font-size:19px;font-weight:800;text-decoration:none}
+.cta:active{transform:translateY(2px);box-shadow:0 1px 0 var(--gold-edge)}
+.cta svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .prog{margin:10px 0 0;color:var(--muted);font-size:14px;font-weight:600}
 #count{display:inline-block;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
-.again{display:block;min-height:44px;margin:0 auto;padding:0 10px;border:0;background:none;color:var(--cardinal);font:inherit;font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.again{display:block;min-height:44px;margin:4px auto 0;padding:0 10px;border:0;background:none;color:var(--cardinal);font:inherit;font-size:15px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (max-width:299px){.lab{padding-left:12px;padding-right:12px}.opts{grid-template-columns:minmax(0,1fr)}.bench{flex-direction:column;gap:10px}.reveal{padding-left:10px;padding-right:10px}}
 
 @media (max-width:300px){.btn .ico{display:none}main{padding-left:12px;padding-right:12px}.h1b{font-size:26px}}
@@ -291,7 +298,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    Its outcomes (O table in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
  <section class="lab" id="lab" aria-labelledby="lab-h" hidden>
   <h2 id="lab-h">What could you engineer?</h2>
-  <p class="note">Pick one from each list and tap Mix. Skip a list and Mix picks for you.</p>
+  <p class="note">Pick one or more from each list, then tap Mix. Skip a list and Mix picks for you.</p>
   <p class="step" id="lab-a"><b aria-hidden="true">1</b>What do you like working with?</p>
   <div class="opts" role="group" aria-labelledby="lab-a" data-s="a">
    <button class="opt" type="button" data-k="cells" aria-pressed="false"><i aria-hidden="true"></i>Living cells</button>
@@ -313,7 +320,8 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   </div>
   <div class="bench" id="bench">
    <svg class="fsvg" viewBox="0 -26 100 132" aria-hidden="true" focusable="false">
-    <defs><clipPath id="fc"><path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z"/></clipPath></defs>
+    <defs><clipPath id="fc"><path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z"/></clipPath>
+     <linearGradient id="ga"/><linearGradient id="gb"/><linearGradient id="gc"/><linearGradient id="gm"/></defs>
     <path d="M42 10v30L16 87a8 8 0 0 0 7 12h54a8 8 0 0 0 7-12L58 40V10z" fill="#fff"/>
     <g clip-path="url(#fc)">
      <path class="lay l3" d="M0 48q12.5-5 25 0t25 0 25 0 25 0V110H0z"/>
@@ -333,13 +341,16 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    </svg>
    <button class="go" id="mix" type="button">Mix</button>
   </div>
-  <div class="reveal blank" id="reveal" aria-live="polite" aria-atomic="true">
-   <p class="prompt" id="prompt">Pick one from each list and tap Mix.</p>
-   <div class="rg"><div class="rvi" id="rv"></div></div>
-   <div class="rg rg2"><div class="rvi" id="rs"></div></div>
+  <div class="reveal" id="reveal" aria-live="polite">
+   <p class="prompt" id="prompt">Pick from each list, then tap Mix.</p>
+   <div id="res" hidden></div>
+  </div>
+  <div class="next" id="next" hidden>
+   <h3 class="kick">Next step</h3>
+   <a class="cta" href="https://apps.admissions.iastate.edu/apply/online/">Apply for BS<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+   <button class="again" id="again" type="button">Mix again</button>
   </div>
   <p class="prog"><span id="count">0</span> of 12 research topics found</p>
-  <button class="again" id="again" type="button">Start over</button>
  </section>
 </main>
 
@@ -416,7 +427,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   });
  }
 
- /* Mix card: pick one from each list, then Mix. Mix fills any skipped list at random.
+ /* Mix card: pick one or more from each list, then Mix. Mix fills any skipped list at random.
     After the first mix, changing a pick mixes again. */
  var C = { cells: '#d9485f', chem: '#e8ac2c', mat: '#2f7f8a', comp: '#6a3a9a', health: '#e07a5f', energy: '#4c9a55',
   tech: '#3b6fb6', research: '#8c6b3f', intern: '#c2549d', hands: '#5f6b75' };
@@ -451,66 +462,88 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    'https://www.cbe.iastate.edu/undergraduate-programs/hands-on/', 'See the Unit Operations Lab']
  };
  var lab = d.getElementById('lab'), bench = d.getElementById('bench'), go = d.getElementById('mix'),
-   panel = d.getElementById('reveal'), prompt = d.getElementById('prompt'), rv = d.getElementById('rv'), rs = d.getElementById('rs'),
+   prompt = d.getElementById('prompt'), res = d.getElementById('res'), next = d.getElementById('next'),
    cnt = d.getElementById('count'), opts = lab.querySelectorAll('.opt'), L = {}, G = {},
-   pick = {}, tried = {}, n = 0, mixed = false, wait;
+   pick = { a: [], b: [], c: [] }, tried = {}, n = 0, mixed = false, wait;
+ var NS = 'http://www.w3.org/2000/svg', gm = d.getElementById('gm');
  ['a', 'b', 'c'].forEach(function (s, i) {
-  L[s] = { n: i + 1, lay: bench.querySelector('.l' + (i + 1)), drop: bench.querySelector('.d' + (i + 1)) };
+  L[s] = { n: i + 1, lay: bench.querySelector('.l' + (i + 1)), drop: bench.querySelector('.d' + (i + 1)), grad: d.getElementById('g' + s) };
   G[s] = lab.querySelectorAll('[data-s="' + s + '"] .opt');
  });
- function arrow(t) { return t + '<span aria-hidden="true">&nbsp;&rarr;</span>'; }
- function topic(k) {
-  var o = O[k], a = A[o[2]];
-  return '<p class="rvk">You could work on</p><p class="rvt">' + o[0] + '</p><p class="rvd">' + o[1] +
-   '</p><p class="rva"><i style="background:' + a[2] + '"></i>' + a[0] + '</p><p class="rvl"><a class="lnk" href="' + a[1] + '">' +
-   arrow('See the faculty in this area') + '</a></p>';
- }
- function step(k) {
-  var x = N[k];
-  return '<p class="rvk">Get started</p><p class="rvs">' + x[0] + '</p><p class="rvd">' + x[1] +
-   '</p><p class="rvl"><a class="lnk" href="' + x[2] + '">' + arrow(x[3]) + '</a></p>';
- }
- function ghosts(box, keys, make) { /* invisible copies reserve the height of the longest, so nothing below jumps */
-  keys.forEach(function (k) {
-   var g = d.createElement('div'); g.className = 'rvi ghost'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = make(k);
-   box.parentNode.appendChild(g);
+ function grad(g, colors) { /* side-by-side colours in one layer: several picks from the same list */
+  while (g.firstChild) g.removeChild(g.firstChild);
+  var list = colors.length > 1 ? colors : [colors[0], colors[0]];
+  list.forEach(function (c, i) {
+   var st = d.createElementNS(NS, 'stop');
+   st.setAttribute('offset', i / (list.length - 1)); st.setAttribute('stop-color', c);
+   g.appendChild(st);
   });
  }
- ghosts(rv, Object.keys(O), topic); ghosts(rs, Object.keys(N), step);
+ function arrow(t) { return t + '<span aria-hidden="true">&nbsp;&rarr;</span>'; }
+ function keys() { /* every topic from the picks in lists 1 and 2 */
+  var out = [];
+  pick.a.forEach(function (a) { pick.b.forEach(function (b) { out.push(a + '-' + b); }); });
+  return out;
+ }
+ function render(ks) {
+  var areas = [], h = '<p class="rvk">You could work on</p>';
+  ks.forEach(function (k) { if (areas.indexOf(O[k][2]) < 0) areas.push(O[k][2]); });
+  areas.sort().forEach(function (ai) {
+   var a = A[ai];
+   h += '<div class="area"><p class="rva"><i style="background:' + a[2] + '"></i>' + a[0] + '</p><ul class="tl">';
+   ks.forEach(function (k) { if (O[k][2] === ai) h += '<li><b>' + O[k][0] + '</b><span>' + O[k][1] + '</span></li>'; });
+   h += '</ul><p class="rvl"><a class="lnk" href="' + a[1] + '">' + arrow('See the faculty in this area') + '</a></p></div>';
+  });
+  h += '<div class="gs"><p class="rvk">Get started</p>';
+  pick.c.forEach(function (c) {
+   var x = N[c];
+   h += '<p class="rvs">' + x[0] + '</p><p class="rvd">' + x[1] + '</p><p class="rvl"><a class="lnk" href="' + x[2] + '">' + arrow(x[3]) + '</a></p>';
+  });
+  return h + '</div>';
+ }
  for (var q = 0; q < opts.length; q++) opts[q].style.setProperty('--c', C[opts[q].getAttribute('data-k')]);
  lab.hidden = false;
 
+ function full() { return pick.a.length && pick.b.length && pick.c.length; }
  function ask(bump) { /* before the first mix, the panel says what to do next */
-  panel.classList.add('blank'); rv.innerHTML = rs.innerHTML = '';
-  var got = (pick.a ? 1 : 0) + (pick.b ? 1 : 0) + (pick.c ? 1 : 0);
-  prompt.textContent = got === 3 ? 'Tap Mix to see your result.' : got ? 'Keep picking, or tap Mix to fill in the rest.' :
-   'Pick one from each list and tap Mix.';
+  var got = (pick.a.length ? 1 : 0) + (pick.b.length ? 1 : 0) + (pick.c.length ? 1 : 0);
+  prompt.textContent = got === 3 ? 'Tap Mix to see your results.' : got ? 'Keep picking, or tap Mix to fill in the rest.' :
+   'Pick from each list, then tap Mix.';
   if (bump && !rm.matches) restart(prompt, 'ask');
  }
- function fill(el, c) { /* set a colour at once; the drop and pour show the change */
-  el.style.transition = 'none'; el.style.fill = c; el.getBoundingClientRect(); el.style.transition = '';
+ function paint(s) { /* show a list's picks as its own layer in the flask */
+  var p = pick[s];
+  L[s].lay.classList.toggle('on', p.length > 0);
+  if (p.length) grad(L[s].grad, p.map(function (k) { return C[k]; }));
+  L[s].lay.setAttribute('fill', 'url(#g' + s + ')');
  }
- function choose(btn) { /* select one option and drop its colour into the flask */
-  var s = btn.parentNode.getAttribute('data-s'), k = btn.getAttribute('data-k'), sib = G[s];
-  pick[s] = k;
-  for (var i = 0; i < sib.length; i++) sib[i].setAttribute('aria-pressed', sib[i] === btn);
-  fill(L[s].lay, C[k]); fill(L[s].drop, C[k]); L[s].lay.classList.add('on');
-  if (!rm.matches) restart(bench, 'p' + L[s].n);
+ function toggle(btn, on) {
+  var s = btn.parentNode.getAttribute('data-s'), k = btn.getAttribute('data-k'), p = pick[s], i = p.indexOf(k);
+  if (on === undefined) on = i < 0;
+  if (on && i < 0) p.push(k);
+  if (!on && i >= 0) p.splice(i, 1);
+  /* keep list order, so results read the same way every time */
+  pick[s] = Array.prototype.map.call(G[s], function (b) { return b.getAttribute('data-k'); }).filter(function (x) { return p.indexOf(x) >= 0; });
+  btn.setAttribute('aria-pressed', on);
+  paint(s);
+  if (on) { L[s].drop.style.fill = C[k]; if (!rm.matches) restart(bench, 'p' + L[s].n); }
  }
  function show() {
-  var k = pick.a + '-' + pick.b;
-  rv.innerHTML = topic(k); rs.innerHTML = step(pick.c);
-  panel.classList.remove('blank');
-  if (!rm.matches) restart(panel, 'in');
-  if (tried[k]) return;
-  tried[k] = 1; cnt.textContent = ++n;
-  if (n === 12) { say('You have found all 12 research topics.'); var b = go.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top, 'spk'); }
+  var ks = keys();
+  res.innerHTML = render(ks); res.hidden = false; prompt.hidden = true; next.hidden = false;
+  if (!rm.matches) restart(res, 'in');
+  var before = n;
+  ks.forEach(function (k) { if (!tried[k]) { tried[k] = 1; n++; } });
+  cnt.textContent = n;
+  if (n === 12 && before < 12) { say('You have found all 12 research topics.'); var b = go.getBoundingClientRect(); fizz(b.left + b.width / 2, b.top, 'spk'); }
  }
- function react(now) { /* swirl, the liquid turns the colour of the research area, bubbles rise, then the result */
+ function react(now) { /* swirl, the liquid turns the colour of the research area(s), bubbles rise, then the results */
   clearTimeout(wait);
-  var c = A[O[pick.a + '-' + pick.b][2]][2];
+  var cols = [];
+  keys().forEach(function (k) { var c = A[O[k][2]][2]; if (cols.indexOf(c) < 0) cols.push(c); });
+  grad(gm, cols);
   mixed = true;
-  L.a.lay.style.fill = L.b.lay.style.fill = L.c.lay.style.fill = c;
+  ['a', 'b', 'c'].forEach(function (s) { L[s].lay.setAttribute('fill', 'url(#gm)'); });
   if (rm.matches) return show();
   restart(bench, 'mixing');
   if (now === true) return show(); /* mixing again after a changed pick: answer straight away */
@@ -519,27 +552,28 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  go.addEventListener('click', function () {
   clearTimeout(wait);
   var auto = false;
-  ['a', 'b', 'c'].forEach(function (s) { /* fill any skipped list at random */
-   if (!pick[s]) { choose(G[s][Math.floor(Math.random() * G[s].length)]); auto = true; }
+  ['a', 'b', 'c'].forEach(function (s) { /* fill any skipped list with one random pick */
+   if (!pick[s].length) { toggle(G[s][Math.floor(Math.random() * G[s].length)], true); auto = true; }
   });
   if (auto && !rm.matches) wait = setTimeout(react, 480); else react();
  });
  for (q = 0; q < opts.length; q++) opts[q].addEventListener('click', function () {
-  var s = this.parentNode.getAttribute('data-s');
-  if (pick[s] === this.getAttribute('data-k')) return;
   clearTimeout(wait);
-  choose(this);
+  toggle(this);
   if (!mixed) return ask();
-  ['a', 'b', 'c'].forEach(function (t) { if (t !== s) fill(L[t].lay, C[pick[t]]); }); /* un-mix before the next reaction */
+  if (!full()) return; /* a list is now empty: keep the last results until the next Mix */
   if (rm.matches) react(); else wait = setTimeout(function () { react(true); }, 300);
  });
 
  d.getElementById('again').addEventListener('click', function () {
   clearTimeout(wait);
-  pick = {}; mixed = false;
+  pick = { a: [], b: [], c: [] }; mixed = false;
   for (var i = 0; i < opts.length; i++) opts[i].setAttribute('aria-pressed', 'false');
-  L.a.lay.classList.remove('on'); L.b.lay.classList.remove('on'); L.c.lay.classList.remove('on');
+  ['a', 'b', 'c'].forEach(paint);
+  res.hidden = true; res.innerHTML = ''; prompt.hidden = false; next.hidden = true;
   ask();
+  lab.scrollIntoView({ behavior: rm.matches ? 'auto' : 'smooth', block: 'start' });
+  G.a[0].focus({ preventScroll: true });
  });
 })();
 </script>
