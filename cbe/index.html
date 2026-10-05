@@ -138,6 +138,7 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 /* Result panel: topics grouped by research area, then the chosen ways to get started */
 .reveal{margin:14px 0 0;padding:12px 14px 4px;border-radius:14px;background:var(--cream);text-align:left}
 .prompt{margin:0;padding:10px 0 14px;color:var(--muted);font-size:15px;font-weight:600;text-align:center}
+.stale{opacity:.4;transition:opacity .2s}
 .ask,.in{animation:nudge .3s ease-out}
 @keyframes nudge{from{transform:translateY(6px)}}
 .rvk{margin:0;color:var(--muted);font-size:13px;font-weight:700}
@@ -464,7 +465,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  var lab = d.getElementById('lab'), bench = d.getElementById('bench'), go = d.getElementById('mix'),
    prompt = d.getElementById('prompt'), res = d.getElementById('res'), next = d.getElementById('next'),
    cnt = d.getElementById('count'), opts = lab.querySelectorAll('.opt'), L = {}, G = {},
-   pick = { a: [], b: [], c: [] }, tried = {}, n = 0, mixed = false, wait;
+   pick = { a: [], b: [], c: [] }, tried = {}, n = 0, mixed = false, follow = false, wait;
  var NS = 'http://www.w3.org/2000/svg', gm = d.getElementById('gm');
  ['a', 'b', 'c'].forEach(function (s, i) {
   L[s] = { n: i + 1, lay: bench.querySelector('.l' + (i + 1)), drop: bench.querySelector('.d' + (i + 1)), grad: d.getElementById('g' + s) };
@@ -530,8 +531,13 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  }
  function show() {
   var ks = keys();
-  res.innerHTML = render(ks); res.hidden = false; prompt.hidden = true; next.hidden = false;
+  res.innerHTML = render(ks); res.hidden = false; res.classList.remove('stale'); prompt.hidden = true; next.hidden = false;
   if (!rm.matches) restart(res, 'in');
+  if (follow) { /* after a Mix tap, bring the flask and the results into view if they landed below the screen */
+   follow = false;
+   var t = res.querySelector('.tl b').getBoundingClientRect();
+   if (t.bottom > innerHeight - 8) scrollTo({ top: bench.getBoundingClientRect().top + pageYOffset - 12, behavior: rm.matches ? 'auto' : 'smooth' });
+  }
   var before = n;
   ks.forEach(function (k) { if (!tried[k]) { tried[k] = 1; n++; } });
   cnt.textContent = n;
@@ -551,6 +557,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
  }
  go.addEventListener('click', function () {
   clearTimeout(wait);
+  follow = true;
   var auto = false;
   ['a', 'b', 'c'].forEach(function (s) { /* fill any skipped list with one random pick */
    if (!pick[s].length) { toggle(G[s][Math.floor(Math.random() * G[s].length)], true); auto = true; }
@@ -561,7 +568,11 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   clearTimeout(wait);
   toggle(this);
   if (!mixed) return ask();
-  if (!full()) return; /* a list is now empty: keep the last results until the next Mix */
+  if (!full()) { /* a list is now empty: dim the old results until the picks are complete again */
+   res.classList.add('stale');
+   prompt.textContent = 'Pick from each list to update these results, or tap Mix.'; prompt.hidden = false;
+   return;
+  }
   if (rm.matches) react(); else wait = setTimeout(function () { react(true); }, 300);
  });
 
