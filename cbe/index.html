@@ -9,6 +9,11 @@
 <meta property="og:description" content="Apply, explore research areas and meet the faculty.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://chowdhurylab.github.io/cbe/">
+<meta property="og:image" content="https://chowdhurylab.github.io/cbe/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Iowa State University, Chemical and Biological Engineering, with the Marston Water Tower">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#C8102E">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C8102E'/%3E%3Cpath d='M16 6l8.7 5v10L16 26l-8.7-5V11z' fill='none' stroke='%23F1BE48' stroke-width='2.6' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='3.6' fill='%23F1BE48'/%3E%3C/svg%3E">
@@ -104,7 +109,7 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 /* ---------- Mix card ---------- */
 .lab{margin:24px 0 0;padding:18px 16px 10px;background:#fff;border:1px solid var(--line);border-radius:20px;text-align:center}
 .lab h2{margin:0;font-size:22px;font-weight:800;line-height:1.2}
-.note{margin:4px 0 0;color:var(--muted);font-size:15px}
+.note{margin:4px 0 0;color:var(--muted);font-size:15px;text-wrap:balance}
 .step{display:flex;align-items:center;gap:8px;margin:16px 0 8px;color:var(--ink);font-size:15px;font-weight:800;line-height:1.25;text-align:left}
 .step b{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--cardinal);color:#fff;font-size:12px}
 .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -170,6 +175,23 @@ main{flex:1;width:100%;max-width:492px;margin:0 auto;padding:14px max(16px,env(s
 
 @media (max-width:300px){.btn .ico{display:none}main{padding-left:12px;padding-right:12px}.h1b{font-size:26px}}
 
+/* ---------- Wide screens: buttons in a left column that stays in view, mix card beside it ---------- */
+@media (min-width:900px){
+ .hero{padding-top:calc(22px + env(safe-area-inset-top));padding-bottom:58px}
+ .hero-in{max-width:1080px}
+ .h1a{font-size:34px}
+ .h1b{font-size:72px}
+ .js main{display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);column-gap:44px;align-items:start;max-width:1112px;padding-top:32px}
+ .js .side{position:sticky;top:24px}
+ .lab{margin-top:0;padding:24px 28px 14px}
+ .lab h2{font-size:26px}
+}
+@media (min-width:1100px){
+ .opts[data-s=a]{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .opts[data-s=b],.opts[data-s=c]{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .opt:nth-child(3):last-child{grid-column:auto}
+}
+
 footer{padding:14px 16px calc(14px + env(safe-area-inset-bottom));color:var(--muted);font-size:14px;text-align:center}
 footer p{margin:0}
 footer a{display:inline-block;padding:12px 4px;line-height:20px;color:var(--cardinal);font-weight:700}
@@ -214,6 +236,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
 </header>
 
 <main>
+ <div class="side">
  <h2 class="kick">Undergraduate</h2>
  <!-- Gold buttons, cardinal text -->
  <ul class="links">
@@ -294,6 +317,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
    </button>
   </li>
  </ul>
+ </div>
 
  <!-- Mix card: hidden without JS (the buttons above still work).
    Its outcomes (O table in the script) paraphrase https://www.cbe.iastate.edu/research/ only. -->
@@ -316,7 +340,7 @@ footer a:focus-visible{outline:3px solid var(--ink);outline-offset:-2px;border-r
   <p class="step" id="lab-c"><b aria-hidden="true">3</b>How would you like to get started?</p>
   <div class="opts" role="group" aria-labelledby="lab-c" data-s="c">
    <button class="opt" type="button" data-k="research" aria-pressed="false"><i aria-hidden="true"></i>Research with faculty</button>
-   <button class="opt" type="button" data-k="intern" aria-pressed="false"><i aria-hidden="true"></i>Internships and co-ops</button>
+   <button class="opt" type="button" data-k="intern" aria-pressed="false"><i aria-hidden="true"></i>Internships and co&#8209;ops</button>
    <button class="opt" type="button" data-k="hands" aria-pressed="false"><i aria-hidden="true"></i>Hands-on lab work</button>
   </div>
   <div class="bench" id="bench">
