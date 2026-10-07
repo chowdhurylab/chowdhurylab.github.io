@@ -94,7 +94,7 @@
       value: "paper_evidence",
       label: "Paper excerpt",
       className: "paper",
-      description: "A value and unit saved with a table or measurement excerpt.",
+      description: "Saved paper text; it may describe context rather than this value.",
     },
     {
       value: "source_note",
