@@ -212,7 +212,7 @@ assert.match(
   indexHtml,
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
-assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>A value and its table or measurement excerpt are saved from the paper."));
+assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value."));
 assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
