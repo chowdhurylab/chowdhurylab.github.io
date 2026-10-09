@@ -149,6 +149,7 @@
     sabio: "SABIO-RK",
     skid: "SKiD",
     uniprot: "UniProt",
+    primary_paper_direct: "Directly from papers",
   };
 
   function sourceDatabaseLabel(value) {
@@ -791,7 +792,17 @@
     }
   }
 
-  function reviewOutcome(summary) {
+  // CatLog v2 rows: every value read from the paper and checked by an independent second reading.
+  const v2Method = "catlog_v2_read_and_independent_verify";
+
+  function reviewOutcome(summary, detail = {}) {
+    const method = String(detail.verification_method || "");
+    if (summary.verification_status === "verified" && method.startsWith(v2Method)) {
+      const ec = method.includes("ec_from_databases")
+        ? " The paper prints no EC number; the EC shown is the one the enzyme databases list for this paper's values."
+        : "";
+      return `Read from the paper and independently verified.${ec}`;
+    }
     const outcome = reviewOutcomeBase(summary);
     return isIdentityOnlyAccepted(summary) ? `${outcome} ${identityOnlyTrustNote}` : outcome;
   }
@@ -2911,7 +2922,7 @@
       ${detailSection("Paper", referenceRows)}
       <details class="detail-disclosure review-notes">
         <summary>Review notes</summary>
-        <p>${escapeHtml(reviewOutcome(summary))}</p>
+        <p>${escapeHtml(reviewOutcome(summary, detail))}</p>
         ${proofLines.length ? `
         <div class="evidence-note-section">
           <h3>${escapeHtml(proofHeading)}</h3>
