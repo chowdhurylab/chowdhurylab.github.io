@@ -795,6 +795,31 @@
   // CatLog v2 rows: every value read from the paper and checked by an independent second reading.
   const v2Method = "catlog_v2_read_and_independent_verify";
 
+  // Human review (CatLog v2 HUMAN_REVIEW.md "Guideline"): records a human reviewer checked, and neutral notes on what a
+  // reviewer assessed. data/human-review-marks.json is keyed by the record key; the page works without it.
+  let humanReviewMarks = {};
+
+  async function loadHumanReviewMarks() {
+    if (typeof window.fetch !== "function") return;
+    try {
+      const response = await window.fetch(versionedAssetUrl("data/human-review-marks.json"));
+      if (response.ok) humanReviewMarks = (await response.json()).marks || {};
+    } catch (error) {
+      humanReviewMarks = {};
+    }
+  }
+
+  function humanReviewMark(row) {
+    const key = String(row?.measurement_key || "");
+    return humanReviewMarks[key] || humanReviewMarks[key.split("-")[0]] || null;
+  }
+
+  function humanReviewNote(row) {
+    const mark = humanReviewMark(row);
+    const text = mark?.note || (mark?.checked ? "Checked by a human reviewer." : "");
+    return text ? `<p class="human-review-note">${escapeHtml(text)}</p>` : "";
+  }
+
   function reviewOutcome(summary, detail = {}) {
     const method = String(detail.verification_method || "");
     if (summary.verification_status === "verified" && method.startsWith(v2Method)) {
@@ -832,12 +857,15 @@
               : (stateDescriptions[config.value] || config.label)));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
-    const qualifierText = identityOnly
-      ? `(${isCorrected ? "corrected, identity only" : "identity only"})`
-      : (isCorrected ? "corrected" : "");
+    const checked = Boolean(humanReviewMark(row)?.checked);
+    const qualifierText = [
+      identityOnly ? `(${isCorrected ? "corrected, identity only" : "identity only"})` : (isCorrected ? "corrected" : ""),
+      checked ? "human-checked" : "",
+    ].filter(Boolean).join(" · ");
     const qualifier = qualifierText ? `<small>${escapeHtml(qualifierText)}</small>` : "";
+    const fullDescription = checked ? `${description} Checked by a human reviewer.` : description;
     const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
-    return `<span class="state-badge ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(`${label}. ${description}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
+    return `<span class="state-badge ${className}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(`${label}. ${fullDescription}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
   }
 
   function isContentHashedDataAsset(src) {
@@ -2923,6 +2951,7 @@
       <details class="detail-disclosure review-notes">
         <summary>Review notes</summary>
         <p>${escapeHtml(reviewOutcome(summary, detail))}</p>
+        ${humanReviewNote(summary)}
         ${proofLines.length ? `
         <div class="evidence-note-section">
           <h3>${escapeHtml(proofHeading)}</h3>
@@ -3273,6 +3302,7 @@
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
+      await loadHumanReviewMarks();
       await loadRecordChunks();
     } catch (error) {
       showLoadNotice(
