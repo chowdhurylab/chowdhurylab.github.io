@@ -149,7 +149,7 @@
     sabio: "SABIO-RK",
     skid: "SKiD",
     uniprot: "UniProt",
-    primary_paper_direct: "Directly from papers",
+    primary_paper_direct: "Primary literature",
   };
 
   function sourceDatabaseLabel(value) {
@@ -284,6 +284,10 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // Search text: lower case, Greek letters spelled out, so β-lactamase and beta-lactamase match each other.
+  const greekNames = { α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", κ: "kappa", λ: "lambda", μ: "mu", µ: "mu", ω: "omega", σ: "sigma", θ: "theta" };
+  const foldSearch = (s) => String(s ?? "").toLowerCase().replace(/[α-ωµ]/g, (c) => greekNames[c] || c);
+
   function viewFromLocation() {
     if (["#browse", "#guide", "#stats"].includes(window.location.hash)) return window.location.hash.slice(1);
     return new URL(window.location.href).pathname.endsWith("/catlog-stats.html") ? "stats" : "browse";
@@ -413,7 +417,7 @@
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
         `${total} rows`,
-        "without sequences or SMILES",
+        "without sequences, SMILES or paper IDs",
         tableSize,
       ].filter(Boolean).join(" · ");
     }
@@ -431,6 +435,11 @@
     if ($("guideExportId")) {
       $("guideExportId").textContent = exportId;
       $("guideExportId").title = manifest.exporter_commit || "";
+    }
+    // One citation line, selectable as a whole (no copy button): snapshot date (UTC) and the Data ID shown above.
+    const generated = manifest.generated_at ? new Date(manifest.generated_at) : null;
+    if ($("guideCitationLine") && generated && !Number.isNaN(generated.getTime()) && sourceId !== EMPTY_VALUE) {
+      $("guideCitationLine").textContent = `CatLog snapshot ${generated.toISOString().slice(0, 10)} (data ID ${sourceId}), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html`;
     }
   }
 
@@ -491,7 +500,7 @@
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
       const text = publicEvidenceString(String(value));
-      return text ? `<p class="evidence-note-plain">${escapePublic(text)}</p>` : "";
+      return text ? `<p class="evidence-note-plain">${caretHtml(escapePublic(text))}</p>` : "";
     }
 
     const location = [value.table_label, value.row_label].map(publicEvidenceString).filter(Boolean).join(" · ");
@@ -506,14 +515,14 @@
 
     if (!rows.length) {
       const fallback = evidenceText(value);
-      return fallback ? `<p class="evidence-note-plain">${escapePublic(fallback)}</p>` : "";
+      return fallback ? `<p class="evidence-note-plain">${caretHtml(escapePublic(fallback))}</p>` : "";
     }
     return `
       <div class="evidence-note-item">
         ${rows.map(([label, text]) => `
           <div class="evidence-note-line">
             <span>${escapeHtml(label)}</span>
-            <p>${escapePublic(text)}</p>
+            <p>${caretHtml(escapePublic(text))}</p>
           </div>
         `).join("")}
       </div>
@@ -619,6 +628,13 @@
     return escapeHtml(value)
       .replace(/\^?\(-1\)|\^-1/g, "<sup>-1</sup>")
       .replace(/\*/g, " ");
+  }
+
+  // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}): the exponent becomes a superscript; the numbers stay as printed.
+  function caretHtml(html) {
+    return html
+      .replace(/\^\(([−-]?\d+)\)|\^\{([−-]?\d+)\}|\^([−-]?\d+)/g, (_m, a, b, c) => `<sup>${a ?? b ?? c}</sup>`)
+      .replace(/<\/sup>\*(?=[A-Za-zµμ])/g, "</sup> ");
   }
 
   function metricUnitHtml(row, field) {
@@ -792,8 +808,10 @@
     }
   }
 
-  // CatLog v2 rows: every value read from the paper and checked by an independent second reading.
+  // CatLog v2 rows: every value read from the paper by an AI model, checked against the paper by a second, separate AI
+  // run; code converted the units. The method token is the exporter's and stays as it is.
   const v2Method = "catlog_v2_read_and_independent_verify";
+  const v2Sentence = "Read from the paper by an AI model; a second, separate AI run checked it against the paper; code converted the units.";
 
   // Human review (CatLog v2 HUMAN_REVIEW.md "Guideline"): records a human reviewer checked, and neutral notes on what a
   // reviewer assessed. data/human-review-marks.json is keyed by the record key; the page works without it.
@@ -826,7 +844,7 @@
       const ec = method.includes("ec_from_databases")
         ? " The paper prints no EC number; the EC shown is the one the enzyme databases list for this paper's values."
         : "";
-      return `Read from the paper and independently verified.${ec}`;
+      return `${v2Sentence}${ec}`;
     }
     const outcome = reviewOutcomeBase(summary);
     return isIdentityOnlyAccepted(summary) ? `${outcome} ${identityOnlyTrustNote}` : outcome;
@@ -848,17 +866,23 @@
     const isDisputed = row.verification_status === "disputed";
     const isCorrected = row.verification_status === "corrected";
     const identityOnly = isIdentityOnlyAccepted(row);
-    const description = isDisputed
-      ? "Disputed; outside the accepted set."
-      : (identityOnly
-          ? identityOnlyTrustNote
-          : (isCorrected
-              ? "Accepted after a recorded correction."
-              : (stateDescriptions[config.value] || config.label)));
+    // CatLog v2 rows (read from the paper) carry "from paper"; their description is the v2 sentence.
+    const fromPaper = row.source_db === "primary_paper_direct" && row.verification_status === "verified";
+    const description = fromPaper
+      ? v2Sentence
+      : (isDisputed
+          ? "Disputed; outside the accepted set."
+          : (identityOnly
+              ? identityOnlyTrustNote
+              : (isCorrected
+                  ? "Accepted after a recorded correction."
+                  : (stateDescriptions[config.value] || config.label))));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
-    const checked = Boolean(humanReviewMark(row)?.checked);
+    // "human-checked" only on accepted rows; the Review-notes note shows for every row.
+    const checked = config.value === "accepted" && Boolean(humanReviewMark(row)?.checked);
     const qualifierText = [
+      fromPaper ? "from paper" : "",
       identityOnly ? `(${isCorrected ? "corrected, identity only" : "identity only"})` : (isCorrected ? "corrected" : ""),
       checked ? "human-checked" : "",
     ].filter(Boolean).join(" · ");
@@ -1120,24 +1144,27 @@
       row._loadIndex = index;
       row._recordState = recordStateForRow(row);
       row._stateRank = recordStates.findIndex((item) => item.value === row._recordState);
-      row._tierRank = tierOrder[row.evidence_confidence_tier] ?? 99;
+      // Review-status sort: CatLog v2 accepted rows (read from the paper) lead the accepted block.
+      row._tierRank = (row._recordState === "accepted" && row.source_db === "primary_paper_direct")
+        ? -1
+        : (tierOrder[row.evidence_confidence_tier] ?? 99);
       row._sourceCount = Number(row.source_record_count || 0);
       row._ecSort = String(row.ec_number || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
       row._sortEnzyme = String(row.enzyme_display_name || "");
       row._sortOrganism = String(row.organism || "");
       row._sortSubstrate = String(row.substrate_name || "");
-      row._search = row._search || String(row._search_text || [
+      row._search = row._search || foldSearch(row._search_text || [
         row.measurement_key,
         row.review_key,
         row.ec_number,
         row.enzyme_display_name,
         row.organism,
         row.substrate_name,
-        row.mutation_signature,
+        row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
         row.source_db,
         row.primary_uniprot_id,
         row.protein_accession,
-      ].join(" ")).toLowerCase();
+      ].join(" "));
     });
   }
 
@@ -1852,16 +1879,17 @@
       .filter(([, count]) => Number.isInteger(count) && count >= 0 && count <= total);
     // Exclusive source_db values, not the overlapping source-database link totals.
     const recordedSources = manifestDistribution("source_db");
-    const sourceNames = [["brenda", "BRENDA", "reference"], ["oed", "Open Enzyme Database", "kinetic"], ["uniprot", "UniProt", "protein"], ["sabio_rk", "SABIO-RK", "structure"], ["skid", "SKiD", "calculated"]];
+    const sourceNames = [["brenda", "BRENDA", "reference"], ["oed", "Open Enzyme Database", "kinetic"], ["uniprot", "UniProt", "protein"], ["sabio_rk", "SABIO-RK", "structure"], ["skid", "SKiD", "calculated"], ["primary_paper_direct", "Primary literature", "measurement"]];
     const namedSources = new Set(sourceNames.map(([key]) => key));
+    // Primary literature is not a database, so it gets no " only".
     const databases = sourceNames.filter(([key]) => recordedSources[key] > 0)
-      .map(([key, label, color]) => ({ value: `source_${key}`, label: `${label} only`, count: recordedSources[key], color }));
+      .map(([key, label, color]) => ({ value: `source_${key}`, label: key === "primary_paper_direct" ? label : `${label} only`, count: recordedSources[key], color }));
     const otherSources = Object.entries(recordedSources).filter(([key, count]) => !namedSources.has(key) && count > 0);
     const otherSourcesCount = otherSources.reduce((sum, [, count]) => sum + count, 0);
     const otherSourceGroups = new Map();
     for (const [key, count] of otherSources) {
       const namedParts = key.split(/[;,/+\s]+/).filter(Boolean);
-      const label = ({ primary_paper_direct: "Directly from papers", unknown: "Unspecified", strenda: "STRENDA DB", merged: "Mixed, without named databases", mixed: "Mixed, without named databases" })[key]
+      const label = ({ primary_paper_direct: "Primary literature", unknown: "Unspecified", strenda: "STRENDA DB", merged: "Mixed, without named databases", mixed: "Mixed, without named databases" })[key]
         || (namedParts.length > 1 && namedParts.every((part) => namedSources.has(part)) ? "Multiple named databases" : key);
       otherSourceGroups.set(label, (otherSourceGroups.get(label) || 0) + count);
     }
@@ -2059,7 +2087,7 @@
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted (identity only):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (identity only):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
         </div>
       </details>
     `;
@@ -2084,13 +2112,13 @@
 
   function currentFilters() {
     return {
-      q: [
+      q: foldSearch([
         $("globalSearchInput").value,
-      ].join(" ").trim().toLowerCase(),
-      ec: $("ecFilterInput").value.trim().toLowerCase(),
-      enzyme: $("enzymeFilterInput").value.trim().toLowerCase(),
-      organism: $("organismFilterInput").value.trim().toLowerCase(),
-      substrate: $("substrateFilterInput").value.trim().toLowerCase(),
+      ].join(" ").trim()),
+      ec: foldSearch($("ecFilterInput").value.trim()),
+      enzyme: foldSearch($("enzymeFilterInput").value.trim()),
+      organism: foldSearch($("organismFilterInput").value.trim()),
+      substrate: foldSearch($("substrateFilterInput").value.trim()),
       recordStates: selectedCheckboxes("recordState"),
       metrics: selectedCheckboxes("measurement"),
       sort: $("sortSelect").value,
@@ -2111,7 +2139,7 @@
 
   function fieldContains(row, field, value) {
     if (!value) return true;
-    return String(row[field] || "").toLowerCase().includes(value);
+    return foldSearch(row[field] || "").includes(value);
   }
 
   function rowMatches(row, filters) {
@@ -2782,7 +2810,7 @@
           ${kv("pH", phValue)}
           ${sourceEfficiencyRow(summary, detail)}
           ${conditionFlagsHtml(flags)}
-          ${conditionsSummary ? kv("Conditions", conditionsSummary) : ""}
+          ${conditionsSummary ? linkedKv("Conditions", caretHtml(escapePublic(compactValue(conditionsSummary)))) : ""}
         </div>
       </section>
     `;
@@ -2848,7 +2876,7 @@
         <h3>Protein and substrate</h3>
         <div class="detail-kv">
           ${kv("Enzyme form", enzymeForm)}
-          ${sequenceVariantNote ? kv("Form note", sequenceVariantNote) : ""}
+          ${sequenceVariantNote ? kv("Sequence note", sequenceVariantNote) : ""}
           ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
@@ -2941,7 +2969,7 @@
         <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
         <div class="detail-status-line">
           ${statusBadge(summary)}
-          <span class="evidence-source">${escapeHtml(evidenceLabel(summary, proofLines))}</span>
+          <span class="evidence-source">${escapeHtml(String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines))}</span>
         </div>
       </div>
 

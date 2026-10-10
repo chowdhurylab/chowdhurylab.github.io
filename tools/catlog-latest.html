@@ -57,7 +57,7 @@
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table</strong>
-                <span id="tableIndexDescription">All rows without long sequence or SMILES fields</span>
+                <span id="tableIndexDescription">All rows without sequences, SMILES or paper IDs</span>
               </a>
               <a
                 class="corpus-request-link"
@@ -68,7 +68,7 @@
               </a>
               <a id="datasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
-                <span>Snapshot IDs, field coverage, sources, and licenses</span>
+                <span>Fields, units, sources, licenses and how to cite</span>
               </a>
             </div>
           </details>
@@ -252,7 +252,7 @@
             <div class="guide-step-grid">
               <div class="guide-step">
                   <h2>Search</h2>
-                  <p>Try <strong>laccase</strong> or EC <strong>1.10.3.2</strong>. Organism and substrate names work too.</p>
+                  <p>Try <strong>laccase</strong> or EC <strong>1.10.3.2</strong>. Organism and substrate names work too. Greek letters and their spelled-out names match each other (β-lactamase, beta-lactamase); UniProt accessions (P11509) work too; gene names are not indexed.</p>
               </div>
               <div class="guide-step">
                   <h2>Open a result</h2>
@@ -333,6 +333,7 @@
                 <div><dt><i>K</i><sub>m</sub></dt><dd>Substrate concentration at half-maximal rate (mM)</dd></div>
                 <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency (s<sup>-1</sup> mM<sup>-1</sup>). Calculated values are marked.</dd></div>
                 <div><dt>T and pH</dt><dd>Temperature and pH recorded for the measurement.</dd></div>
+                <div><dt>Unknown</dt><dd>Not stated in the paper or the source database.</dd></div>
               </dl>
               <p class="guide-note">A dash means a value is missing or hidden after a data check. Open the row to see why.</p>
               <p class="guide-note"><em>Unit not recorded</em> means no unit is recorded here; the column unit does not apply. A warning marks a value to check against its source. Open the row for the reason.</p>
@@ -343,15 +344,16 @@
               <h2>Review status</h2>
               <dl class="guide-status-list">
                 <div><dt>Accepted</dt><dd>Verified and Corrected records: accepted as reported or after correction.</dd></div>
+                <div><dt>Accepted · from paper</dt><dd>Read from the paper by an AI model; a second, separate AI run checked it against the paper; code converted the units.</dd></div>
                 <div><dt>Accepted (identity only)</dt><dd>Accepted on identity checks only, without establishing literature verification of the kinetic value.</dd></div>
                 <div><dt>Checks pending</dt><dd>Additional checks are required. This is not a rejection.</dd></div>
                 <div><dt>Other records</dt><dd>Unverified, mathematically inferred, and disputed records are listed separately in Stats.</dd></div>
                 <div><dt>Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value. An excerpt alone does not mean Accepted.</dd></div>
                 <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
               </dl>
-              <p class="guide-note">CatLog uses automated checks. A saved record is not automatically accepted.</p>
+              <p class="guide-note">How values are read: CatLog v2 records (marked "from paper" under Status) were read from the paper by an AI model (Claude, Anthropic); a second, separate AI run checked each value against the paper, and code converted the units. Older records come mostly from the enzyme databases listed below, checked by an earlier automated pipeline (AI models and code checks). "human-checked" means a human reviewer approved the record&rsquo;s values against the paper in CatLog&rsquo;s 2026 review (Review notes say which values); a record without it was not in that review. A saved record is not automatically accepted.</p>
               <p class="guide-note">Current literature checks cover the reported value and units, assay context, and protein or variant identity. Missing sequences or unresolved source differences can require follow-up.</p>
-              <p class="guide-note">Status describes our review, not the paper's quality.</p>
+              <p class="guide-note">Status describes CatLog&rsquo;s checks, not the paper's quality.</p>
             </section>
           </div>
 
@@ -363,8 +365,9 @@
             </header>
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>All rows, with sequences and SMILES where available.</dd></div>
-              <div><dt>Table</dt><dd>All rows in a smaller file, without long sequence or SMILES fields.</dd></div>
+              <div><dt>Table</dt><dd>All rows in a smaller file, without sequences, SMILES, paper IDs or assay conditions; join it to Full data on record_key.</dd></div>
               <div><dt>From Browse</dt><dd>Download the current page or the open record.</dd></div>
+              <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line. Field names and units are in the Dataset notes (README) below.</dd></div>
             </dl>
           </section>
 
@@ -372,7 +375,8 @@
             <div>
               <h2 id="guide-citation-title">Cite this snapshot</h2>
               <p id="guidePaperCitation">Sajeevan, K. A., et al. (2025). <cite>Robust Prediction of Enzyme Variant Kinetics with RealKcat.</cite> bioRxiv, version 2. doi: 10.1101/2025.02.10.637555.</p>
-              <p>Cite the CatLog paper and include the snapshot date and data ID in your methods or data statement.</p>
+              <p>Cite the paper and the snapshot you used:</p>
+              <p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the catalog loads)</code></p>
             </div>
             <dl class="guide-citation-meta">
               <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>

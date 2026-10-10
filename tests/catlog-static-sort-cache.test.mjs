@@ -1311,10 +1311,10 @@ assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
 const emptyIdentityHtml = api.molecularIdentitySection({}, {});
 assert.match(emptyIdentityHtml, /<h3>Protein and substrate<\/h3>/);
 assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
-assert.doesNotMatch(emptyIdentityHtml, /Form note/);
+assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
 const blankFormNoteHtml = api.molecularIdentitySection({}, { sequence_variant_note: "   " });
 assert.match(blankFormNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
-assert.doesNotMatch(blankFormNoteHtml, /Form note/);
+assert.doesNotMatch(blankFormNoteHtml, /Sequence note/);
 const formNoteHtml = api.molecularIdentitySection(
   { sequence_variant_note: "Source says <variant> & unresolved" },
   {},
@@ -1322,11 +1322,11 @@ const formNoteHtml = api.molecularIdentitySection(
 assert.match(formNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
 assert.match(
   formNoteHtml,
-  /<span>Form note<\/span><strong>Source says &lt;variant&gt; &amp; unresolved<\/strong>/,
+  /<span>Sequence note<\/span><strong>Source says &lt;variant&gt; &amp; unresolved<\/strong>/,
   "the form note should be visible and HTML-escaped",
 );
 assert.ok(
-  formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Form note"),
+  formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Sequence note"),
   "the form note should follow the enzyme form",
 );
 assert.equal(

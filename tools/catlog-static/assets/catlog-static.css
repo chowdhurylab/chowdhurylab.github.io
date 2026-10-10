@@ -2842,6 +2842,16 @@ body.detail-open .detail-panel {
   font-size: 11.5px;
 }
 
+/* The citation line selects as a whole (no copy button) and wraps on narrow screens. */
+.guide-citation-line code {
+  color: #253330;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  user-select: all;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .guide-citation-links {
   display: grid;
   gap: 8px;
