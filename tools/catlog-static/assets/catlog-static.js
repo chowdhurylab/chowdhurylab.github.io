@@ -2912,7 +2912,7 @@
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km")}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km")}</span></td>
-        <td class="c-assay num">${escapeHtml(formatAssay(row))}</td>
+        <td class="c-assay num"><span>${escapeHtml(formatAssay(row))}</span></td>
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
@@ -2958,26 +2958,22 @@
       && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
   }
 
-  // Column widths follow the page: Enzyme, Organism, Substrate and Assay are as wide as their longest entry on the page
-  // (within a minimum and a cap; longer names wrap to two lines) and Status as wide as its longest badge. The space
-  // left over goes to the arrow column at the right edge, so the values sit close to the names. EC and the values keep
-  // the stylesheet's widths. Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
+  // Column widths follow the page. Values, EC, Assay and Status are as wide as their widest entry; a name column is as
+  // wide as three in four of its names, within a minimum and a cap (longer names wrap to two lines; the full name is in
+  // the tooltip). The space left over goes to the arrow column at the right edge, so the values sit next to the names.
+  // When the window is too narrow, names give way first, then EC and Assay; values and Status never wrap. Phones show
+  // cards, and placeholder or empty tables keep the stylesheet's widths.
   const FIT_COLUMNS = [
-    { key: "enzyme", min: 168, narrowMin: 150, cap: 340 },
-    { key: "organism", min: 112, narrowMin: 104, cap: 220 },
-    { key: "substrate", min: 120, narrowMin: 112, cap: 260 },
-    { key: "assay", min: 72, narrowMin: 64, cap: 150 },
+    { key: "enzyme", cell: ".c-enzyme", min: 160, narrowMin: 150, cap: 340, shrink: 1 },
+    { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120, shrink: 2 },
+    { key: "organism", cell: ".c-organism", min: 112, narrowMin: 104, cap: 220, shrink: 1 },
+    { key: "substrate", cell: ".c-substrate", min: 120, narrowMin: 112, cap: 260, shrink: 1 },
+    { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
+    { key: "km", cell: ".c-km", min: 60, narrowMin: 56, cap: 200 },
+    { key: "efficiency", cell: ".c-eff", min: 88, narrowMin: 84, cap: 220 },
+    { key: "assay", cell: ".c-assay", min: 72, narrowMin: 64, cap: 150, shrink: 2 },
+    { key: "state", cell: ".c-status", min: 96, narrowMin: 96, cap: 400 },
   ];
-  const FITTED_COLUMNS = ["enzyme", "organism", "substrate", "assay", "state", "open"];
-  let measureContext = null;
-
-  // Canvas text width, with a margin for the tabular digits and kerning the page uses and a canvas does not.
-  function textWidth(text, font) {
-    measureContext ??= document.createElement?.("canvas")?.getContext?.("2d") || null;
-    if (!measureContext || !text) return 0;
-    measureContext.font = font;
-    return measureContext.measureText(text).width * 1.03 + 3;
-  }
 
   function fitTableColumns() {
     const table = $("recordTableWrap")?.querySelector?.("table");
@@ -2985,81 +2981,50 @@
     if (!table || typeof style !== "function") return;
     const cols = {};
     table.querySelectorAll("col").forEach((col) => { cols[col.className.replace(/^col-/, "")] = col; });
-    const sized = FITTED_COLUMNS.map((key) => cols[key]).filter(Boolean);
-    sized.forEach((col) => { col.style.width = ""; });
+    if (!cols.open || FIT_COLUMNS.some((column) => !cols[column.key])) return;
+    Object.values(cols).forEach((col) => { col.style.width = ""; });
     table.style.minWidth = "";
     const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
-    if (!rows.length || style(table).display !== "table" || sized.length !== FITTED_COLUMNS.length) return;
-    const first = rows[0];
-    const font = (element) => {
-      const computed = style(element);
-      return `${computed.fontStyle} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
-    };
-    const padding = (element) => {
-      const computed = style(element);
-      return parseFloat(computed.paddingLeft) + parseFloat(computed.paddingRight) + 2;
-    };
-    const visible = (element) => Boolean(element) && style(element).display !== "none";
-    const widest = (measure) => Math.max(0, ...rows.map(measure));
-    const nameFont = font(first.querySelector(".primary-cell strong"));
-    const formElement = rows.map((row) => row.querySelector(".enzyme-form")).find(Boolean);
-    const formFont = formElement ? font(formElement) : "";
-    const plainFont = font(first.querySelector(".c-organism .clamp-2"));
-    const assayFont = font(first.querySelector(".c-assay"));
-    const plain = (selector, cellFont) => widest((row) => textWidth(row.querySelector(selector)?.textContent.trim(), cellFont))
-      + padding(first.querySelector(selector));
-    const need = {
-      enzyme: widest((row) => {
-        const form = row.querySelector(".enzyme-form");
-        return textWidth(row.querySelector(".primary-cell strong")?.textContent, nameFont)
-          + (form ? textWidth(" ", nameFont) + textWidth(form.textContent, formFont) + 10 : 0);
-      }) + padding(first.querySelector(".c-enzyme")),
-      organism: plain(".c-organism", plainFont),
-      substrate: plain(".c-substrate", plainFont),
-      assay: plain(".c-assay", assayFont),
-    };
-    // Status: the dot and its gap before the word; tags joined by a dot between two 3px margins.
-    const tagsElement = first.querySelector(".state-tags");
-    const tagsShown = visible(tagsElement);
-    const tagsFont = font(tagsElement);
-    const tagsIndent = parseFloat(style(tagsElement).paddingLeft) || 0;
-    const labelFont = font(first.querySelector(".state-label"));
-    const status = Math.ceil(Math.max(96, widest((row) => Math.max(
-      textWidth(row.querySelector(".state-label")?.textContent, labelFont) + 14,
-      tagsShown ? tagsIndent + textWidth([...row.querySelectorAll(".state-tag")].map((tag) => tag.textContent).join(" · "), tagsFont) : 0,
-    )) + padding(first.querySelector(".c-status"))));
+    if (!rows.length || style(table).display !== "table") return;
+    const visible = (element) => style(element).display !== "none";
+    const narrow = narrowDetailMedia.matches;
+    // Each cell's natural width, read once with wrapping switched off (table.measuring in the stylesheet).
+    table.classList.add("measuring");
+    const widths = FIT_COLUMNS.filter((column) => visible(cols[column.key])).map((column) => {
+      const cells = rows.map((row) => row.querySelector(column.cell)).filter(Boolean);
+      const first = style(cells[0]);
+      const padding = parseFloat(first.paddingLeft) + parseFloat(first.paddingRight) + 2;
+      const natural = cells.map((cell) => cell.firstElementChild?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
+      const widest = natural[natural.length - 1];
+      const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
+      const need = Math.ceil(content + padding);
+      const min = narrow ? column.narrowMin : column.min;
+      return { ...column, min, need, width: Math.max(min, Math.min(column.cap, need)) };
+    });
+    table.classList.remove("measuring");
     const arrowShown = visible(cols.open);
     const arrow = arrowShown ? parseFloat(style(cols.open).width) || 24 : 0;
-    const fixed = Object.entries(cols)
-      .filter(([key, col]) => !FITTED_COLUMNS.includes(key) && visible(col))
-      .reduce((sum, [, col]) => sum + (parseFloat(style(col).width) || 0), 0);
-    const narrow = narrowDetailMedia.matches;
-    const widths = FIT_COLUMNS.filter((column) => visible(cols[column.key])).map((column) => {
-      const min = narrow ? column.narrowMin : column.min;
-      const content = Math.ceil(need[column.key]);
-      return { ...column, min, need: content, width: Math.max(min, Math.min(column.cap, content)) };
-    });
     const total = () => widths.reduce((sum, column) => sum + column.width, 0);
-    const available = table.parentElement.clientWidth - fixed - status - arrow;
-    if (total() > available && available >= widths.reduce((sum, column) => sum + column.min, 0)) {
-      // Too wide for the window: shrink the name columns toward their minimums (names wrap to two lines).
-      const excess = total() - available;
-      const slack = widths.reduce((sum, column) => sum + column.width - column.min, 0);
-      widths.forEach((column) => { column.width = Math.floor(column.width - excess * (column.width - column.min) / slack); });
-    } else if (total() < available) {
-      // Room to spare: an entry longer than its cap may use some of it before the arrow column takes the rest.
-      let spare = available - total();
-      widths.forEach((column) => {
-        const grow = Math.min(spare, Math.max(0, Math.min(column.need, Math.round(column.cap * 1.5)) - column.width));
-        column.width += grow;
-        spare -= grow;
-      });
+    const available = table.parentElement.clientWidth - arrow;
+    const shrinkable = widths.filter((column) => column.shrink);
+    const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
+    if (total() > available && available >= floor) {
+      // Too wide for the window: the names give way first, then EC and Assay, toward their minimums (they wrap to two
+      // lines).
+      for (const stage of [1, 2]) {
+        const excess = total() - available;
+        const group = shrinkable.filter((column) => column.shrink === stage);
+        const slack = group.reduce((sum, column) => sum + column.width - column.min, 0);
+        if (excess <= 0 || !slack) continue;
+        const share = Math.min(1, excess / slack);
+        group.forEach((column) => { column.width = Math.floor(column.width - share * (column.width - column.min)); });
+      }
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     // Without the arrow column (a record open on desktop) Status takes what is left.
-    cols.state.style.width = arrowShown ? `${status}px` : "auto";
     if (arrowShown) cols.open.style.width = "auto";
-    table.style.minWidth = `${Math.ceil(total() + fixed + status + arrow)}px`;
+    else cols.state.style.width = "auto";
+    table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
   }
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each

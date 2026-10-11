@@ -71,10 +71,11 @@ hover and in the record. Every table row has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it.
 
 Status cells align left: a dot and one word, then whole-word tags on a second
-line. Columns are sized to the page's content: Enzyme, Organism, Substrate,
-Assay and Status are as wide as their longest entry (names longer than a cap
-wrap to two lines), values and EC have set widths, and the space left over goes
-to the arrow column at the right edge, so values sit next to the names.
+line. Columns are sized to the page's content: values, EC, Assay and Status are
+as wide as their widest entry and never wrap; Enzyme, Organism and Substrate are
+as wide as three in four of their names (longer names wrap to two lines, the
+full name on hover); the space left over goes to the arrow column at the right
+edge, so values sit next to the names. In a narrow window names give way first.
 Temperature and pH share one Assay column ("25 °C · pH 7.5"). The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ with the stored digits (no
 rounding); the record and downloads keep the stored text. Every column fits from
