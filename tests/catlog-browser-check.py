@@ -386,7 +386,7 @@ def check(driver, browser, url):
         displayed = {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
                      for row in driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend li")}
         assert displayed == slices and sum(displayed.values()) == group["total"]
-        assert "Available fields do not mean the record is accepted." in driver.find_element(By.CLASS_NAME, "stats-followup-coverage").text
+        assert "Missing: no value for that field in the download." in driver.find_element(By.CLASS_NAME, "stats-followup-coverage").text
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage svg"), "Field split belongs in the outcome chart"
         cohort = driver.find_element(By.CSS_SELECTOR, ".stats-followup-coverage").get_attribute("data-cohort")
         outer = {row.get_attribute("data-field-slice"): int(row.get_attribute("data-count"))
@@ -399,7 +399,7 @@ def check(driver, browser, url):
         assert driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('.stats-combination-legend li')).fontSize)") >= 15
 
     check_combined_coverage(manifest["summary"]["review_details"]["groups"]["manual_review_required"])
-    assert "Illustrative checks" in driver.find_element(By.CLASS_NAME, "stats-followup-section").get_attribute("textContent")
+    assert "Examples only" in driver.find_element(By.CLASS_NAME, "stats-followup-section").get_attribute("textContent")
     assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts svg")) == 7
     assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, "#statsReviewFigure [data-outcome]")) == total
     assert not driver.find_elements(By.CSS_SELECTOR, ".stats-material-section, .stats-cohort-material"), "Remove material charts, not source records"

@@ -87,18 +87,18 @@
   ];
 
   const stateDescriptions = {
-    accepted: "Verified and Corrected records. Identity-only records are labelled separately.",
-    curation_pending: "Additional checks are required before acceptance.",
-    not_verified: "Unverified, pre-review, or disputed records. These are separate outcomes, not a single rejected group.",
+    accepted: "Accepted as reported or after a correction.",
+    curation_pending: "Not accepted: at least one check is still open, for example on the value, protein or substrate.",
+    not_verified: "Unverified, Not reviewed or Disputed; each row says which.",
   };
 
   const reviewStatuses = [
     { value: "verified", label: "Verified", description: "Accepted as reported." },
-    { value: "corrected", label: "Corrected", description: "Accepted after correction." },
-    { value: "manual_review_required", label: "Checks pending", description: "Additional checks required." },
-    { value: "unverified", label: "Unverified", description: "No verified or corrected outcome recorded." },
-    { value: "mathematically_inferred", label: "Pre-review", description: "Prepared from source records, without an accepted review outcome." },
-    { value: "disputed", label: "Disputed", description: "Outside the accepted set." },
+    { value: "corrected", label: "Corrected", description: "Accepted after a correction." },
+    { value: "manual_review_required", label: "Checks pending", description: "At least one check is still open." },
+    { value: "unverified", label: "Unverified", description: "No accepted result is recorded." },
+    { value: "mathematically_inferred", label: "Not reviewed", description: "Prepared from source records, without an accepted review outcome." },
+    { value: "disputed", label: "Disputed", description: "Flagged during review; not accepted." },
   ];
 
   const measurementFilters = [
@@ -150,18 +150,18 @@
     identity_unresolved: "Unresolved",
   };
 
-  const identityOnlyTrustNote = "Accepted on identity checks only; this does not establish literature verification of the kinetic value.";
+  const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be checked against a paper.";
 
   const conditionFlagLabels = {
     kcat_over_km_quotient_mismatch: "Reported kcat/Km differs from kcat ÷ Km",
-    kcat_over_km_unit_mismatch: "kcat/Km unit mismatch (×1000 class)",
-    km_magnitude_needs_check: "Km above 10 M — check units",
-    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹ — check units",
+    kcat_over_km_unit_mismatch: "kcat/Km unit may be off by 1000×",
+    km_magnitude_needs_check: "Km above 10 M: check the unit",
+    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹: check the unit",
     efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
     temperature_value_needs_check: "Temperature value needs check",
     temperature_unit_needs_check: "Temperature unit needs check",
     temperature_invalid: "Temperature value is not usable",
-    temperature_zero_celsius_needs_check: "Temperature recorded as exactly 0 °C — check source",
+    temperature_zero_celsius_needs_check: "Temperature recorded as exactly 0 °C: check the paper",
     ph_outside_0_14: "pH outside 0–14",
     ph_invalid: "pH value is not usable",
     unit_not_recorded: "Unit not recorded",
@@ -235,11 +235,16 @@
 
   const CURATION_LICENSE_NOTE = "For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.";
 
+  // CatLog's own compilation (the rows CatLog read from papers) is CC BY 4.0; quoted paper text remains the publisher's.
+  const PRIMARY_LITERATURE_NAME = "Primary literature (read by CatLog)";
+  const PRIMARY_LITERATURE_LICENSE = "CatLog compilation CC BY 4.0; quoted paper text remains the publisher’s";
+
   const fallbackSourceDatabases = [
+    { key: "primary_paper_direct", name: PRIMARY_LITERATURE_NAME, license: "", citation_url: "" },
     { key: "brenda", name: "BRENDA", license: "CC BY 4.0", citation_url: "https://www.brenda-enzymes.org/" },
     { key: "sabio_rk", name: "SABIO-RK", license: "", citation_url: "https://sabiork.h-its.org/" },
     { key: "skid", name: "SKiD", license: "CC BY-NC-ND 4.0", citation_url: "" },
-    { key: "oed", name: "Open Enzyme Database (OED)", license: "", citation_url: "" },
+    { key: "oed", name: "Open Enzyme Database (OED)", license: "CC BY 4.0", citation_url: "https://openenzymedb.platform.moleculemaker.org/" },
     { key: "uniprot", name: "UniProt", license: "CC BY 4.0", citation_url: "https://www.uniprot.org/" },
   ];
   const displayedSourceDatabaseKeys = new Set([
@@ -799,12 +804,12 @@
   }
 
   function evidenceLabel(row, proofLines = []) {
-    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "Saved paper evidence";
-    if (row.proof_kind === "source_note" || proofLines.length) return "Source note";
+    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "Paper excerpt";
+    if (row.proof_kind === "source_note" || proofLines.length) return "Database note";
     if (row.evidence_confidence_tier === "cross_source_supported") {
-      return "Cross-source match";
+      return "Several database records";
     }
-    return row.has_literature_id ? "Reference available" : "Source record";
+    return row.has_literature_id ? "Paper linked" : "Database record only";
   }
 
   function sourceLicense(summary, detail) {
@@ -819,24 +824,24 @@
   function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Accepted after a recorded correction.";
+        return "Accepted after a correction.";
       case "verified":
         return "Accepted as reported.";
       case "manual_review_required":
-        return "One or more required checks are still open.";
+        return "Not accepted: at least one check is still open.";
       case "mathematically_inferred":
         return "Prepared from source records; no accepted review outcome is recorded.";
       case "disputed":
-        return "Disputed; outside the accepted set.";
+        return "Disputed: flagged during review; not accepted.";
       default:
-        return "No verified or corrected outcome recorded.";
+        return "No accepted result is recorded.";
     }
   }
 
-  // CatLog v2 rows: every value read from the paper by an AI model, checked against the paper by a second, separate AI
+  // CatLog v2 rows: every value read from the paper by an AI model and checked against the paper by a second, separate AI
   // run; code converted the units. The method token is the exporter's and stays as it is.
   const v2Method = "catlog_v2_read_and_independent_verify";
-  const v2Sentence = "Read from the paper by an AI model; a second, separate AI run checked it against the paper; code converted the units.";
+  const v2Sentence = "Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units.";
 
   // A CatLog v2 row in the table index (no verification_method there). The frozen Oct 7 base's own paper-read rows
   // carry ec_name_fallback, so the enzyme-name source tells them apart.
@@ -924,9 +929,9 @@
 
   function rowStatusLabel(row) {
     if (row.verification_status === "disputed") return "Disputed";
-    if (row.verification_status === "mathematically_inferred") return "Pre-review";
+    if (row.verification_status === "mathematically_inferred") return "Not reviewed";
     if (row.verification_status === "unverified") return "Unverified";
-    if (isIdentityOnlyAccepted(row)) return "Accepted (identity only)";
+    if (isIdentityOnlyAccepted(row)) return "Accepted (no paper linked)";
     if (row.verification_status === "corrected") return "Accepted";
     if (row.verification_status === "verified") return "Accepted";
     if (row.verification_status === "manual_review_required") return "Checks pending";
@@ -934,7 +939,7 @@
   }
 
   // One badge for the table and the record: a dot and the status word, then whole-word tags (from paper, corrected,
-  // identity only, human-checked). The tag line is always present, so every badge has the same height. In the record
+  // no paper linked, human-checked). The tag line is always present, so every badge has the same height. In the record
   // (long) the v2 tag reads "read from the paper".
   function statusBadge(row, { long = false } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
@@ -943,18 +948,18 @@
     const identityOnly = isIdentityOnlyAccepted(row);
     // CatLog v2 rows (read from the paper) carry "from paper"; their description is the v2 sentence.
     const fromPaper = isV2Row(row);
-    // Other records (Unverified, Pre-review, ...) describe their own status, not the whole group.
+    // Other records (Unverified, Not reviewed, ...) describe their own status, not the whole group.
     const ownStatus = config.value === "not_verified"
       ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
       : "";
     const description = fromPaper
       ? v2Sentence
       : (isDisputed
-          ? "Disputed; outside the accepted set."
+          ? "Disputed: flagged during review; not accepted."
           : (identityOnly
               ? identityOnlyTrustNote
               : (isCorrected
-                  ? "Accepted after a recorded correction."
+                  ? "Accepted after a correction."
                   : (ownStatus || stateDescriptions[config.value] || config.label))));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
@@ -963,7 +968,7 @@
     const tags = [
       fromPaper ? (long ? "read from the paper" : "from paper") : "",
       isCorrected ? "corrected" : "",
-      identityOnly ? "identity only" : "",
+      identityOnly ? "no paper linked" : "",
       checked ? "human-checked" : "",
     ].filter(Boolean);
     const fullDescription = checked ? `${description} Checked by a human reviewer.` : description;
@@ -1904,7 +1909,7 @@
           export_scope: "current_page_public_records",
           page,
           row_count: records.length,
-          note: "Raw internal source-record payloads are not included in the public static package.",
+          note: "Database source records are not included.",
           license_note: SOURCE_LICENSE_NOTE,
         },
         records,
@@ -2031,7 +2036,7 @@
     if (!fields.every(([key]) => Number.isInteger(audit[key]) && audit[key] >= 0 && audit[key] <= total)) return "";
     return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} records with checks pending.</p>
       ${statsFieldRings(fields.map(([key, label, color]) => ({ value: key, label, color, count: audit[key] })), total)}
-      <p>Fields included, not reasons the checks are pending. Kinetic value means kcat, Km, Ki or kcat/Km.</p></div>`;
+      <p>Kinetic value: kcat, Km, Ki or kcat/Km. These fields do not give the reason checks are pending.</p></div>`;
   }
 
   function statsCohortData(cohort, total) {
@@ -2087,7 +2092,7 @@
     if (!parts) return "";
     const { fields, slices, multiple, multipleCount, names } = parts;
     return `${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
-      <p>Available fields do not mean the record is accepted. Missing means absent from this download, not rejected.</p>
+      <p>Missing: no value for that field in the download.</p>
       <details class="stats-explanation stats-missing-totals"><summary>Missing by field</summary><table class="stats-detail-table">
         <thead><tr><th>Field</th><th>Records</th><th>Share</th></tr></thead><tbody>
           ${fields.map(([key, label, countKey]) => `<tr data-field="${key}" data-missing="${group.total - group[countKey]}"><th scope="row">${label}</th><td>${formatInteger(group.total - group[countKey])}</td><td>${statsShare(group.total - group[countKey], group.total)}</td></tr>`).join("")}
@@ -2191,42 +2196,42 @@
         <table class="stats-detail-table"><tbody>
           <tr><th scope="row">Accepted as reported</th><td>${formatInteger(counts.verified || 0)}</td></tr>
           <tr><th scope="row">Accepted after a change</th><td>${formatInteger(counts.corrected || 0)}</td></tr>
-        </tbody></table><p>A change may concern the value, sequence or another field.</p>
-        ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} have identity checks only; that status does not confirm their kinetic values.</p>` : ""}`;
+        </tbody></table>
+        ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} of them have no PMID or DOI linked.</p>` : ""}`;
     }
     if (["disputed", "other_status"].includes(state.statsCohort)) {
       const disputed = state.statsCohort === "disputed";
       const known = new Set(reviewStatuses.map((item) => item.value));
       const total = disputed ? counts.disputed || 0 : Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
       return `<h3 id="fieldsGroupHeading">${disputed ? "Disputed records" : "Other review statuses"}</h3>
-        <p>${formatInteger(total)} records.</p><p>${disputed ? "Flagged during review. This is separate from records awaiting a check." : "Statuses outside the named review groups."}</p>`;
+        <p>${formatInteger(total)} records.</p><p>${disputed ? "Flagged during review; not accepted." : "Statuses not listed above."}</p>`;
     }
     const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
     const total = counts[cohort] || 0;
     const group = statsCohortData(cohort, total);
-    const label = ({ unverified: "Unverified", mathematically_inferred: "Pre-review", manual_review_required: "Checks pending" })[cohort];
+    const label = ({ unverified: "Unverified", mathematically_inferred: "Not reviewed", manual_review_required: "Checks pending" })[cohort];
     const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"],
       ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
     return `<h3 id="fieldsGroupHeading">Fields in these records</h3><fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
-      ${[["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
+      ${[["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Not reviewed"]].map(([value, name]) => `<label>
         <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
         <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
       <div class="stats-followup-coverage" data-cohort="${cohort}">
-        <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Share within this group.</p>
+        <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Percentages are of this group.</p>
         ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
           : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
       </div>
       <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
-        ? "Prepared from source records, without an accepted review. This does not mean every value was calculated. Accepted records can also have calculated ratios."
+        ? "Prepared from source records, without an accepted review."
         : cohort === "unverified"
-        ? "No acceptance is recorded. Unverified does not mean rejected. Review may have been attempted."
-        : "Another check is needed before acceptance, for example on a value, protein or substrate."}</p>
+        ? "No accepted result is recorded; a review may have been attempted."
+        : "At least one check is still open, for example on the value, protein or substrate."}</p>
       <details class="stats-explanation stats-cohort-example"><summary>Example checks</summary><dl class="stats-check-examples">
           <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
           <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>
           <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay? In mM, it is 0.00082.</dd></div>
-        </dl><p>Illustrative checks. The snapshot does not contain a reason-by-reason tally.</p></details>
-      <p class="stats-note">Fields do not explain the review decision. Paper ID means DOI or PMID; kinetic value means kcat, Km, Ki or kcat/Km.</p>`;
+        </dl><p>Examples only. The snapshot does not record which check is open for each record.</p></details>
+      <p class="stats-note">Paper ID: PMID or DOI. Kinetic value: kcat, Km, Ki or kcat/Km. These fields do not give the reason for a status.</p>`;
   }
 
   function renderStats() {
@@ -2238,7 +2243,7 @@
     const otherCount = Object.entries(counts).reduce((total, [key, count]) => total + (knownStatuses.has(key) ? 0 : count), 0);
     if (otherCount) {
       counts.other_status = otherCount;
-      statuses.push({ value: "other_status", label: "Other status", description: "Not in the six outcomes listed above." });
+      statuses.push({ value: "other_status", label: "Other status", description: "Not one of the six statuses above." });
     }
     const colors = { verified: "verified", corrected: "corrected", manual_review_required: "pending", unverified: "neutral", mathematically_inferred: "calculated", disputed: "disputed" };
     const accepted = (counts.verified || 0) + (counts.corrected || 0);
@@ -2246,7 +2251,7 @@
       { value: "accepted", label: "Accepted", count: accepted, color: "verified", description: "Verified or corrected" },
       ...statuses.filter((item) => !["verified", "corrected"].includes(item.value)).map((item) => ({
         ...item,
-        description: item.value === "manual_review_required" ? "Additional checks; not rejected" : item.value === "unverified" ? "No accepted decision recorded" : "",
+        description: item.value === "manual_review_required" ? "At least one check is still open" : item.value === "unverified" ? "No accepted result is recorded" : "",
         count: counts[item.value] || 0, color: colors[item.value] || "neutral",
       })),
     ];
@@ -2286,22 +2291,22 @@
     $("statsCharts").innerHTML = `
       <section class="stats-section stats-review-section stats-wide" aria-labelledby="reviewChartTitle">
         <h2 id="reviewChartTitle">Review outcomes</h2>
-        <p>Record status, not a measure of work completed.</p>
+        <p>Each record has one status.</p>
         <div class="stats-review-workspace">
           <div class="stats-review-overview"><div class="stats-review-layout">
             <div class="stats-nested-figure"><div id="statsReviewFigure">${statsNestedReviewRing(outcomes, total)}</div>
               <div id="statsChartAnnouncement" class="visually-hidden" role="status" aria-atomic="true"></div>
-              <p>Outcomes inside; fields outside.</p>
-              <p class="stats-note">Field splits are available for Checks pending, Unverified and Pre-review.</p>
+              <p>Inner ring: review status. Outer ring: which fields the records have.</p>
+              <p class="stats-note">The outer ring is split only for Checks pending, Unverified and Not reviewed.</p>
             </div>
             ${statsLegend(outcomes, total, "stats-review-legend")}
           </div>
         <div class="stats-accepted-split"><h3>Both count as accepted</h3><dl>
           <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Accepted as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
-        </dl><p>A change may concern the value, sequence or another field.</p></div>
-        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
-        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted combines Verified and Corrected. Checks pending means another check is required. Unverified has no accepted result recorded. Pre-review is the legacy source-preparation status, previously labelled Calculated. Disputed records were flagged by review.</p></details>
+        </dl><p>The change can be to the value, the sequence or another field.</p></div>
+        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.` : ""}</p>
+        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted: accepted as reported (Verified) or after a correction (Corrected). Checks pending: at least one check is still open. Unverified: no accepted result is recorded. Not reviewed: prepared from source records without an accepted review (formerly labelled Calculated). Disputed: flagged during review.</p></details>
           </div>
           <div id="statsReviewDetails" class="stats-followup-section" aria-labelledby="fieldsGroupHeading">${statsReviewDetails(counts)}</div>
         </div>
@@ -2310,20 +2315,19 @@
         <h2 id="fieldsChartTitle">Included in the full download</h2>
         <p>All ${formatInteger(total)} records.</p>
         ${statsFieldRings(fields, total)}
-        <p class="stats-note">The pale remainder means no value in this download, not rejection.</p>
         <details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table">
           <thead><tr><th>Field</th><th>Included</th><th>Share of all records</th></tr></thead>
           <tbody>${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}</tbody>
-        </table><p>These fields overlap. A wild-type record need not have a variant sequence.</p></details>
+        </table><p>These counts overlap: a variant record can have both a wild-type and a variant sequence.</p></details>
       </section>
       <section class="stats-section stats-database-section stats-wide" aria-labelledby="databaseChartTitle">
-        <h2 id="databaseChartTitle">Recorded database source</h2>
-        <p>One group per record, using its recorded source field.</p>
+        <h2 id="databaseChartTitle">Source database</h2>
+        <p>Each record is counted once, under its main source (source_db).</p>
         ${databases.length ? `<div class="stats-review-layout">${statsReviewRing(databases, total)}${statsLegend(databases, total)}</div>` : "<p>Source breakdown unavailable in this snapshot.</p>"}
         ${otherSourcesCount ? `<details class="stats-explanation"><summary>Other or multiple sources: ${formatInteger(otherSourcesCount)} records</summary><table class="stats-detail-table"><tbody>
           ${[...otherSourceGroups].map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td></tr>`).join("")}
         </tbody></table></details>` : ""}
-        <p class="stats-note">This is not a count of every database that contributed to a record.</p>
+        <p class="stats-note">A record can also hold values from other databases; its Source details list them.</p>
       </section>
     `;
   }
@@ -2476,7 +2480,7 @@
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (identity only):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (no paper linked):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
         </div>
       </details>
     `;
@@ -3225,8 +3229,8 @@
     $("detailContent").classList.remove("hidden");
     $("detailContent").innerHTML = `
       <div class="detail-top">
-        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
-        <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Name not preserved")}</h2>
+        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+        <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Enzyme name not recorded")}</h2>
       </div>
       <p id="detailLoadStatus" class="muted" role="status">Loading record...</p>
     `;
@@ -3249,8 +3253,8 @@
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       $("detailContent").innerHTML = `
         <div class="detail-top">
-          <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
-          <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Name not preserved")}</h2>
+          <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+          <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Enzyme name not recorded")}</h2>
           <p>${escapeHtml(row.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(row.organism || EMPTY_VALUE)}</p>
         </div>
         <div class="detail-load-error" role="alert">
@@ -3409,7 +3413,7 @@
       return "The source names a variant but no exact substitution, so no variant sequence was built.";
     }
     if (/^Canonical sequence is preserved, but mutation context is present; variant sequence was not attached without safely applying the mutation\.?$/.test(text)) {
-      return "The mutation could not be applied safely, so only the wild-type sequence is shown.";
+      return "The mutation could not be placed on this sequence, so only the wild-type sequence is shown.";
     }
     if (/^Mutation context was captured, but the signature could not be translated into an exact residue substitution safely\.?$/.test(text)) {
       return "The mutation could not be read as an exact residue substitution, so no variant sequence was built.";
@@ -3500,6 +3504,23 @@
     return linkedKv("Source-listed kcat/Km", valueHtml);
   }
 
+  // A from-paper row's values as the paper prints them (number, uncertainty and unit, with the table), taken from its
+  // proof lines; nothing is computed.
+  function printedValuesHtml(detail) {
+    if (!String(detail.verification_method || "").startsWith(v2Method)) return "";
+    const lines = (Array.isArray(detail.proof_lines) ? detail.proof_lines : [])
+      .filter((line) => line && typeof line === "object" && line.metric && String(line.raw_value ?? "").trim());
+    if (!lines.length) return "";
+    const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
+    const locations = [...new Set(lines.map((line) => clean(line.table_label)))];
+    const shared = locations.length === 1 ? locations[0] : "";
+    const values = lines.map((line) => {
+      const value = [line.metric, line.raw_value, line.raw_unit].map(clean).filter(Boolean).join(" ");
+      return !shared && clean(line.table_label) ? `${value} (${clean(line.table_label)})` : value;
+    }).join("; ");
+    return linkedKv("As printed", caretHtml(escapePublic(shared ? `${values} (${shared})` : values)));
+  }
+
   function measurementSection(summary, detail) {
     const metricSummary = {
       ...summary,
@@ -3553,6 +3574,7 @@
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
           ${conditionRows?.cosubstrate || ""}
+          ${printedValuesHtml(detail)}
           ${kv("Temperature", temperatureValue)}
           ${kv("pH", phValue)}
           ${sourceEfficiencyRow(summary, detail)}
@@ -3741,6 +3763,30 @@
     `;
   }
 
+  // Plain-text unit for an e-mail: s^(-1)*mM^(-1) -> s^-1 mM^-1.
+  function plainUnit(value) {
+    return String(value || "").replace(/\^\(([−-]?\d+(?:\.\d+)?)\)/g, "^$1").replace(/\*/g, " ").trim();
+  }
+
+  // "Report a problem": an e-mail to the lab with the record ID, the snapshot and the values shown.
+  function reportProblemHref(summary, pmids) {
+    const key = summary.record_key || summary.measurement_key || "";
+    const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"]]
+      .filter(([field]) => metricHasValue(summary, field))
+      .map(([field, label]) => [label, metricDisplay(summary, field), plainUnit(metricUnit(summary, field))].filter(Boolean).join(" "));
+    const about = [
+      summary.enzyme_display_name,
+      summary.organism,
+      summary.substrate_name,
+      ...values,
+      pmids.length ? `PMID ${pmids.slice(0, 5).join(", ")}${pmids.length > 5 ? ` and ${pmids.length - 5} more` : ""}` : "",
+    ].map((part) => String(part || "").trim()).filter(Boolean).join("; ");
+    const snapshot = manifest.generated_at ? String(manifest.generated_at).slice(0, 10) : "";
+    const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
+    const body = `Record ${key}, CatLog snapshot ${snapshot} (data ID ${dataId}): ${about}.\n\nWhat looks wrong:\n`;
+    return `mailto:ratul@iastate.edu?cc=supantha@iastate.edu&subject=${encodeURIComponent(`CatLog record ${key}`)}&body=${encodeURIComponent(body)}`;
+  }
+
   function renderDetail(summary, detail) {
     const pmidsRaw = Array.isArray(detail.supporting_pmids)
       ? detail.supporting_pmids.filter(Boolean)
@@ -3755,9 +3801,10 @@
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
     const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)));
     const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
-      ? "Source note"
+      ? "Database note"
       : "Values in source";
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
     const firstPmid = pmids[0] || "";
     const firstDoi = dois[0] || "";
     const hasSourceEvidence = proofLines.length > 0;
@@ -3771,11 +3818,16 @@
           dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
           pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
         ]
-      : [kv("Identifier", "Not available")])];
+      : [kv("PMID or DOI", "None recorded")])];
+    // How many database rows a record merges is said once, here; Source details then names the databases only when
+    // they are not just the source.
+    if (mergedRows > 1) {
+      referenceRows.push(kv("Merged from", `${formatInteger(mergedRows)} database rows${pmids.length ? `, ${formatInteger(pmids.length)} ${pmids.length === 1 ? "paper" : "papers"}` : ""}`));
+    }
     $("detailContent").innerHTML = `
       <div class="detail-top">
-        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
-        <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Name not preserved")}</h2>
+        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+        <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Enzyme name not recorded")}</h2>
         <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
         <div class="detail-status-line">${statusBadge(summary, { long: true })}</div>
       </div>
@@ -3799,7 +3851,6 @@
         // CatLog's own compilation of the values it read from papers is CC BY 4.0; quoted paper text stays the publisher's.
         v2Record ? kv("License", "CC BY 4.0 (CatLog)") : kv("Source license", sourceLicense(summary, detail)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
-        Number(detail.source_record_count || summary.source_record_count) > 1 ? kv("Database rows", detail.source_record_count || summary.source_record_count) : "",
         mergedDatabasesRow(summary, detail),
         publicEvidenceString(detail.data_origin) ? kv("Data origin", publicEvidenceString(detail.data_origin)) : "",
         kv("Protein identity", identityResolutionLabel({
@@ -3810,6 +3861,7 @@
 
       <div class="detail-actions">
         <button id="downloadSelectedJson" class="button secondary" type="button">Download record</button>
+        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids))}">Report a problem</a>
       </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
@@ -3835,7 +3887,9 @@
       .filter((item) => item && typeof item === "object")
       .map((item) => ({
         key: String(item.key || "").trim(),
-        name: String(item.name || "").trim() || (item.key ? sourceDatabaseLabel(item.key) : ""),
+        name: String(item.key || "").trim() === "primary_paper_direct"
+          ? PRIMARY_LITERATURE_NAME
+          : String(item.name || "").trim() || (item.key ? sourceDatabaseLabel(item.key) : ""),
         license: String(item.license || "").trim(),
         citation_url: String(item.citation_url || "").trim(),
         row_count: item.row_count,
@@ -3872,7 +3926,9 @@
     if (guideList) {
       guideList.innerHTML = sources.map((item) => {
         const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} rows in this snapshot`;
-        const license = item.license ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms";
+        const license = item.key === "primary_paper_direct"
+          ? escapeHtml(PRIMARY_LITERATURE_LICENSE)
+          : (item.license && !/^see source$/i.test(item.license) ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms");
         return `
           <div>
             <dt>${sourceNameHtml(item)}</dt>

@@ -105,10 +105,12 @@ dataset notes, not the Browse footer.
 
 ## Guide
 
-Show the four starting steps once, followed by the worked record example. Keep
-the optional diagram behind a native disclosure, usable at every viewport.
-Retain the field meanings, review definitions, download differences, and source
-licenses; shorten duplicate instructions rather than scientific qualifications.
+One reading column (72ch, 16px body). Show three plain tasks, then where the
+values come from with one worked from-paper record, field meanings, review
+status drawn with the table's own status badges, what to check before using the
+values, downloads, citation and source licenses. Long lists of labels go in
+native disclosures. Shorten duplicate instructions rather than scientific
+qualifications.
 
 ## Verification
 

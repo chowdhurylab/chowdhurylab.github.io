@@ -2,8 +2,8 @@
 
 - Records: 164,936; accepted (Verified and Corrected): 31,255.
 - Base: the certified October 7, 2026 checkpoint of the old catalog (generation d241dad83bc1).
-- CatLog v2: 15185 measurements from 441 papers, each read from the paper and
-  independently verified, replace those papers' 9695 older rows
+- CatLog v2: 15185 measurements from 441 papers, each value read from the paper by an AI model and
+  checked against it by a second, separate AI run, replace those papers' 9695 older rows
   (896 of them accepted); papers v2 finished with no values (a retracted paper, reviews
   that only reprint) no longer show their old rows. CatLog v2 commit fb7a281, catlog_wide sha256
   4c908245e2ccb741.

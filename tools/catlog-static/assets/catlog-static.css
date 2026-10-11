@@ -854,3 +854,384 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
     gap: 18px;
   }
 }
+
+/* WP4: Guide. One reading column (72ch, body 16px/1.6), the same status badges as the table, plain section rules.
+   Every rule is scoped to .guide-view; it adds to the Guide rules above without changing them. */
+.guide-view .guide-shell {
+  box-sizing: content-box;
+  width: auto;
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.guide-view .guide-shell :is(p, dd, dt, li, summary) {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.guide-view .guide-shell :is(h1, h2, h3) {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.guide-view .guide-heading {
+  max-width: none;
+}
+
+.guide-view .guide-heading h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.guide-view .guide-heading > p:last-child {
+  max-width: none;
+  margin: 12px 0 0;
+  color: var(--ink);
+}
+
+.guide-view .guide-shell h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.guide-view .guide-shell h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.guide-view .guide-shell p {
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.guide-view .guide-shell :is(sub, sup) {
+  line-height: 0;
+}
+
+.guide-view .guide-shell code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* Sections stack in one column, divided by a rule. */
+.guide-view :is(.guide-workflow, .guide-record-depth, .guide-reference, .guide-downloads, .guide-citation, .guide-sources) {
+  display: block;
+  margin: 36px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 0;
+}
+
+.guide-view :is(.guide-reference-grid, .guide-step-grid, .guide-record-depth-heading) {
+  display: block;
+  border: 0;
+}
+
+.guide-view .guide-reference,
+.guide-view .guide-reference:first-child,
+.guide-view .guide-reference:last-child {
+  padding: 28px 0 0;
+}
+
+.guide-view .guide-step,
+.guide-view .guide-step:first-child,
+.guide-view .guide-step:last-child {
+  margin: 20px 0 0;
+  border: 0;
+  padding: 0;
+}
+
+.guide-view .guide-step p:last-child {
+  margin-bottom: 0;
+}
+
+.guide-view .guide-record-depth-heading p {
+  max-width: none;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+/* The worked example: two stacked cards; the open-record card has a neutral border. */
+.guide-view .guide-record-example {
+  display: block;
+  margin: 20px 0 0;
+}
+
+.guide-view .guide-record-example figcaption {
+  display: block;
+  margin: 0 0 12px;
+}
+
+.guide-view .guide-record-example figcaption > span:first-child {
+  margin: 0;
+  color: var(--teal-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.guide-view .guide-record-example figcaption > strong {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.guide-view .guide-record-example figcaption > .guide-example-source {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.guide-view .guide-example-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.guide-view .guide-example-level {
+  height: auto;
+  padding: 16px 20px 18px;
+}
+
+.guide-view .guide-example-level.research {
+  border-color: var(--line);
+  background: var(--panel);
+}
+
+.guide-view .guide-example-level header > span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.guide-view .guide-example-level header > h3 {
+  margin: 2px 0 12px;
+  font-size: 18px;
+}
+
+.guide-view .guide-example-value strong {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.guide-view .guide-example-value span {
+  font-size: 16px;
+}
+
+.guide-view .guide-example-level dl > div {
+  grid-template-columns: 8em minmax(0, 1fr);
+  gap: 4px 16px;
+  padding: 8px 0;
+}
+
+.guide-view .guide-example-level :is(dt, dd) {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.guide-view .guide-example-level dd {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.guide-view .guide-choice-link {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+/* Field meanings and labels: term above its meaning. */
+.guide-view .guide-reference dl {
+  gap: 14px;
+  margin: 0;
+}
+
+.guide-view .guide-reference dt {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guide-view .guide-reference dd {
+  color: var(--ink);
+}
+
+.guide-view .guide-shell .guide-note {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+/* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
+.guide-view .guide-status-list {
+  margin: 16px 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.guide-view .guide-status-list > div {
+  display: grid;
+  grid-template-columns: 11em minmax(0, 1fr);
+  gap: 4px 20px;
+  align-items: start;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 10px 0;
+}
+
+.guide-view .guide-status-list dt {
+  display: block;
+}
+
+.guide-view .guide-status-list .state-badge {
+  display: inline-grid;
+  height: auto;
+  justify-items: start;
+  align-content: start;
+  max-width: 100%;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.guide-view .guide-status-list .state-badge.accepted { --guide-status-dot: var(--teal-dark); }
+.guide-view .guide-status-list .state-badge.review { --guide-status-dot: var(--orange); }
+.guide-view .guide-status-list .state-badge.unresolved { --guide-status-dot: var(--quiet); }
+.guide-view .guide-status-list .state-badge.disputed { --guide-status-dot: var(--red); }
+
+.guide-view .guide-status-list .state-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+/* The table's status colour when the badge defines one (--status-color), otherwise the Guide's own. */
+.guide-view .guide-status-list .state-label::before {
+  content: "";
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-color, var(--guide-status-dot));
+}
+
+.guide-view .guide-status-list .state-tags {
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.guide-view .guide-status-list .state-tags:empty {
+  display: none;
+}
+
+.guide-view .guide-status-list .state-tag + .state-tag::before {
+  content: " · ";
+}
+
+.guide-view .guide-status-list dd {
+  margin: 0;
+}
+
+.guide-view .guide-details {
+  margin: 20px 0 0;
+}
+
+.guide-view .guide-details > summary {
+  color: var(--blue);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.guide-view .guide-details > dl {
+  margin: 12px 0 0;
+  border-left: 2px solid var(--line-soft);
+  padding-left: 16px;
+}
+
+/* Lists of terms (caveats, downloads, sources, citation details): term left, meaning right. */
+.guide-view :is(.guide-download-list, .guide-term-list) {
+  display: block;
+  margin: 4px 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.guide-view :is(.guide-download-list, .guide-term-list) > div,
+.guide-view .guide-citation-meta > div {
+  display: grid;
+  grid-template-columns: 11em minmax(0, 1fr);
+  gap: 4px 20px;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 10px 0;
+}
+
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-status-list) > div:last-child {
+  border-bottom: 0;
+}
+
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dt {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.guide-view .guide-citation p {
+  max-width: none;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.guide-view .guide-citation-meta {
+  display: block;
+  margin: 8px 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.guide-view .guide-citation-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 16px 0 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.guide-view .guide-shell .guide-sources .guide-note {
+  max-width: none;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.guide-view .guide-shell .guide-sources .guide-curation-license {
+  margin: 16px 0 0;
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .guide-view .guide-shell {
+    padding: 24px 16px 40px;
+  }
+
+  .guide-view .guide-status-list > div,
+  .guide-view :is(.guide-download-list, .guide-term-list) > div,
+  .guide-view .guide-citation-meta > div,
+  .guide-view .guide-example-level dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .guide-view .guide-example-level {
+    padding: 14px 16px 16px;
+  }
+}

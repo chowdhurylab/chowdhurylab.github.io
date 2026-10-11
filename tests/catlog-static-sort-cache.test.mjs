@@ -189,13 +189,13 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   const citationSection = pageHtml.match(/<section class="guide-citation"[\s\S]*?<\/section>/)?.[0];
   assert.ok(citationSection, "Guide must keep its citation/version section");
   assert.ok(citationSection.includes('id="guidePaperCitation"'));
-  assert.ok(citationSection.includes("Sajeevan, K. A., et al. (2025)."));
-  assert.ok(citationSection.includes("Robust Prediction of Enzyme Variant Kinetics with RealKcat."));
-  assert.ok(citationSection.includes("bioRxiv, version 2. doi: 10.1101/2025.02.10.637555."));
+  assert.ok(citationSection.includes("Sajeevan, K. A., et al. (2026)."));
+  assert.ok(citationSection.includes("CatRange enables robust prediction of enzyme variant kinetic regimes."));
+  assert.ok(citationSection.includes("PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309."));
   for (const id of ["guideSnapshotDate", "guideSourceId", "guideExportId"]) {
     assert.ok(citationSection.includes(`id="${id}"`), `${id} must remain in Guide`);
   }
-  assert.ok(citationSection.includes('href="https://www.biorxiv.org/content/10.1101/2025.02.10.637555v2"'));
+  assert.ok(citationSection.includes('href="https://doi.org/10.1093/pnasnexus/pgag309"'));
   assert.ok(citationSection.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
   const notesPath = pageHtml === indexHtml ? "README_FIRST.txt" : "catlog-static/README_FIRST.txt";
   assert.ok(citationSection.includes(`id="guideDatasetNotesLink" href="${notesPath}"`));
@@ -216,7 +216,7 @@ assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>Saved paper text; it may de
 assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
-  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Saved paper evidence";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Source note";/,
+  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Paper excerpt";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Database note";/,
 );
 assert.match(
   indexHtml,
@@ -224,7 +224,7 @@ assert.match(
 );
 assert.match(
   sourceCode,
-  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Source note"\s+: "Values in source";/,
+  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Values in source";/,
 );
 assert.match(sourceCode, /<h3>\$\{escapeHtml\(proofHeading\)\}<\/h3>/);
 
@@ -1233,6 +1233,7 @@ for (const view of ["browse", "guide", "stats"]) {
 }
 assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
   ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
+assert.match(navMarkup, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*aria-label="Open the CatLog paper \(PNAS Nexus\)"\s*>Paper</);
 const guideStart = indexHtml.match(/<section class="guide-workflow"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.equal((guideStart.match(/class="guide-step"/g) || []).length, 3);
 assert.doesNotMatch(guideStart, /<span>[1-4]<\/span>|<ol|<img/);
@@ -1481,16 +1482,16 @@ function row(overrides = {}) {
   assert.match(chart, /class="stats-explanation"/);
   assert.equal((chart.match(/<figure data-stat-key=/g) || []).length, 2, "Only available, valid fields get a ring");
   assert.match(chart, /Both count as accepted/);
-  assert.match(chart, /not a measure of work completed/);
-  assert.match(chart, /does not contain a reason-by-reason tally/);
+  assert.match(chart, /Each record has one status/);
+  assert.match(chart, /does not record which check is open/);
   assert.match(chart, /data-stats-cohort="manual_review_required"[^>]*>Checks pending<\/button>/);
-  assert.match(chart, /data-stats-cohort="mathematically_inferred"[^>]*>Pre-review<\/button>/);
+  assert.match(chart, /data-stats-cohort="mathematically_inferred"[^>]*>Not reviewed<\/button>/);
   const reviewSection = chart.split('aria-labelledby="reviewChartTitle"')[1].split("</section>")[0];
   assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
   assert.match(chart, /stroke-dasharray="50 50"/);
   assert.doesNotMatch(chart, /role="progressbar"/);
   assert.doesNotMatch(chart, /Material attached|Source material in this group|Text note|stats-material-section/);
-  assert.match(chart, /not a count of every database that contributed/);
+  assert.match(chart, /its Source details list them/);
   const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
   assert.match(halfBar, /width:50%/);
   assert.match(halfBar, /50\.0%/);
@@ -1547,8 +1548,8 @@ function row(overrides = {}) {
   assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
   api.state.statsCohort = "unverified";
   assert.match(api.statsReviewDetails({ unverified: 1 }), /data-cohort="unverified"/);
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified: 1 records\. Share within this group/);
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified does not mean rejected/);
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified: 1 records\. Percentages are of this group/);
+  assert.match(api.statsReviewDetails({ unverified: 1 }), /a review may have been attempted/);
   const group = runtimeManifest.summary.review_details.groups.unverified;
   assert.match(api.statsCombinedCoverage(group), /data-stat-key="multiple" data-count="1"/);
   assert.match(api.statsCombinedCoverage(group), /data-field="sequence" data-missing="1"/);
@@ -1565,7 +1566,7 @@ function row(overrides = {}) {
   const completeGroup = {total: 1, with_sequence: 1, with_smiles: 1, with_kinetic_value: 1, with_literature_id: 1, field_combinations: [{missing: [], count: 1}]};
   assert.match(api.statsCombinedCoverage(completeGroup), /data-stat-key="complete" data-count="1"/);
   assert.match(api.statsCombinedCoverage(completeGroup), /All four fields available/);
-  assert.match(api.statsCombinedCoverage(completeGroup), /Available fields do not mean the record is accepted/);
+  assert.match(api.statsCombinedCoverage(completeGroup), /Missing: no value for that field in the download\./);
   assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /stats-combination-details/);
   const nested = api.statsNestedReviewRing([
     { value: "accepted", label: "Accepted", color: "verified", count: 3 },
@@ -1596,9 +1597,9 @@ function row(overrides = {}) {
   runtimeManifest.summary.review_details.download_sha256 = "wrong";
   assert.equal(api.statsCohortData("unverified", 1), null, "Exact frozen download required");
   api.state.statsCohort = "mathematically_inferred";
-  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /This does not mean every value was calculated/);
+  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /Prepared from source records, without an accepted review\./);
   const prepared = row({verification_status: "mathematically_inferred"});
-  assert.equal(api.rowStatusLabel(prepared), "Pre-review");
+  assert.equal(api.rowStatusLabel(prepared), "Not reviewed");
   assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
   api.state.statsCohort = "manual_review_required";
   delete runtimeManifest.summary.review_details;
@@ -1663,7 +1664,7 @@ const withheldMeasurementHtml = api.measurementSection(withheldConditions, {
   ph: null,
   condition_flags: withheldConditions.condition_flags,
 });
-assert.match(withheldMeasurementHtml, /Temperature recorded as exactly 0 °C — check source/);
+assert.match(withheldMeasurementHtml, /Temperature recorded as exactly 0 °C: check the paper/);
 assert.match(withheldMeasurementHtml, /pH outside 0–14/);
 assert.ok(withheldMeasurementHtml.includes("<span>Temperature</span><strong>—</strong>"));
 assert.ok(withheldMeasurementHtml.includes("<span>pH</span><strong>—</strong>"));
