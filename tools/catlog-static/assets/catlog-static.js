@@ -2960,7 +2960,7 @@
 
   // Column widths follow the page. Values, EC, Assay and Status are as wide as their widest entry; a name column is as
   // wide as three in four of its names, within a minimum and a cap (longer names wrap to two lines; the full name is in
-  // the tooltip), and wider when there is room and its longest name would not fit in two lines. The space left over goes to the arrow column at the right edge, so the values sit next to the names.
+  // the tooltip), and wider when there is room and a name would otherwise be cut short. The space left over goes to the arrow column at the right edge, so the values sit next to the names.
   // When the window is too narrow, names give way first, then EC and Assay; values and Status never wrap. Phones show
   // cards, and placeholder or empty tables keep the stylesheet's widths.
   const FIT_COLUMNS = [
@@ -2999,9 +2999,7 @@
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const need = Math.ceil(content + padding);
       const min = narrow ? column.narrowMin : column.min;
-      // About the width at which the longest name still fits in two lines.
-      const twoLines = Math.ceil(widest * 0.62 + padding);
-      return { ...column, min, need, twoLines, width: Math.max(min, Math.min(column.cap, need)) };
+      return { ...column, min, need, width: Math.max(min, Math.min(column.cap, need)) };
     });
     table.classList.remove("measuring");
     const arrowShown = visible(cols.open);
@@ -3021,20 +3019,27 @@
         const share = Math.min(1, excess / slack);
         group.forEach((column) => { column.width = Math.floor(column.width - share * (column.width - column.min)); });
       }
-    } else {
-      // Room to spare: a name column widens, if need be, until its longest name fits in two lines (up to half again
-      // its cap); the arrow column takes the rest.
-      let spare = available - total();
-      shrinkable.filter((column) => column.shrink === 1).forEach((column) => {
-        const grow = Math.max(0, Math.min(spare, Math.min(column.twoLines, Math.round(column.cap * 1.5)) - column.width));
-        column.width += grow;
-        spare -= grow;
-      });
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     // Without the arrow column (a record open on desktop) Status takes what is left.
     if (arrowShown) cols.open.style.width = "auto";
     else cols.state.style.width = "auto";
+    // Room to spare: a name column widens step by step while one of its names is cut short (up to half again its cap).
+    let spare = available - total();
+    for (let pass = 0; pass < 6 && spare > 0; pass += 1) {
+      const cut = widths.filter((column) => column.shrink === 1 && column.width < column.cap * 1.5
+        && rows.some((row) => {
+          const name = row.querySelector(`${column.cell} .clamp-2`);
+          return name && name.scrollHeight > name.clientHeight + 1;
+        }));
+      if (!cut.length) break;
+      cut.forEach((column) => {
+        const grow = Math.min(spare, Math.max(16, Math.round(column.width * 0.15)), Math.round(column.cap * 1.5) - column.width);
+        column.width += grow;
+        spare -= grow;
+        cols[column.key].style.width = `${column.width}px`;
+      });
+    }
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
   }
 
