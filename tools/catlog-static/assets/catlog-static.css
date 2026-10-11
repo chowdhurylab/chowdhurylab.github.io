@@ -19,6 +19,12 @@
   --red-soft: #faeaeb;
   --accepted-ring: #a7d8d2;
   --shadow: 0 10px 26px rgba(20, 34, 31, 0.09);
+  /* Review-status dots: the Stats outcome colours. */
+  --status-accepted: #339cff;
+  --status-pending: #f3883b;
+  --status-unverified: #a9b1ae;
+  --status-not-reviewed: #9b79ec;
+  --status-disputed: #e02e2a;
 }
 
 * {
@@ -53,9 +59,33 @@ a:hover {
   text-decoration: underline;
 }
 
-:where(a, button, input, select):focus-visible {
+:where(a, button, input, select, summary):focus-visible {
   outline: 3px solid #2d766d;
   outline-offset: 2px;
+}
+
+/* "Skip to records": the first stop for the keyboard, shown only when focused. */
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 200;
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 8px 12px;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+body:is(.stats-open, .guide-open, .filters-open) .skip-link {
+  display: none;
 }
 
 .static-app {
@@ -195,6 +225,11 @@ a.nav-tab:hover {
   border-radius: 6px;
   background: var(--panel);
   padding: 0 7px 0 10px;
+}
+
+.global-search:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(40, 115, 106, 0.2);
 }
 
 .global-search input {
@@ -539,19 +574,6 @@ button:disabled {
 
 .check-row.review input {
   accent-color: var(--orange);
-}
-
-.state-badge small {
-  display: block;
-  margin-top: 1px;
-  font-size: 10.5px;
-  font-weight: 400;
-  line-height: 1.3;
-}
-
-.state-badge-copy {
-  display: grid;
-  text-align: left;
 }
 
 .check-row.unresolved input {
@@ -931,66 +953,60 @@ table {
   table-layout: fixed;
 }
 
-.col-enzyme {
-  width: 18%;
-}
-
+/* Column widths follow their content: values, Status and the arrow are fixed, Organism and Substrate grow a little
+   with the window, and Enzyme takes the rest, so values sit close to the names. */
 .col-ec {
-  width: 9%;
+  width: 92px;
 }
 
 .col-organism {
-  width: 12%;
+  width: clamp(140px, 11vw, 190px);
 }
 
 .col-substrate {
-  width: 15%;
+  width: clamp(150px, 11.5vw, 210px);
 }
 
-.col-kcat {
-  width: 8%;
-}
-
+.col-kcat,
 .col-km {
-  width: 8%;
+  width: 96px;
 }
 
 .col-efficiency {
-  width: 9%;
+  width: 120px;
 }
 
 .col-temp {
-  width: 6%;
+  width: 64px;
 }
 
 .col-ph {
-  width: 5%;
+  width: 52px;
 }
 
 .col-state {
-  width: 8%;
+  width: 194px;
 }
 
 .col-open {
-  width: 2%;
+  width: 28px;
 }
 
 th,
 td {
   border-bottom: 1px solid var(--line-soft);
   border-right: 0;
-  padding: 10px 11px;
+  padding: 4px 10px;
   text-align: left;
   vertical-align: middle;
   font-size: 13px;
+  line-height: 17px;
   overflow-wrap: break-word;
   word-break: normal;
 }
 
-th:nth-child(4),
-td:nth-child(4),
-th:nth-child(9),
-td:nth-child(9) {
+.c-substrate,
+.c-ph {
   border-right: 1px solid var(--line);
 }
 
@@ -1016,34 +1032,35 @@ th {
   white-space: nowrap;
 }
 
-th:nth-child(n+5):nth-child(-n+9),
-td:nth-child(n+5):nth-child(-n+9) {
+.num {
   text-align: right;
-}
-
-td:nth-child(n+5):nth-child(-n+9) {
   white-space: nowrap;
 }
 
-td:nth-child(2) {
+.c-ec {
   white-space: nowrap;
 }
 
-th:nth-child(10),
-td:nth-child(10),
-th:nth-child(11),
-td:nth-child(11) {
+/* Names wrap to two lines; the full text is in the tooltip and the record. */
+.clamp-2 {
+  display: -webkit-box;
+  max-height: 34px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+th.c-open,
+td.c-open {
+  padding-left: 0;
+  padding-right: 6px;
   text-align: center;
 }
 
-th:nth-child(10),
-td:nth-child(10) {
-  padding-left: 7px;
-  padding-right: 7px;
-}
-
 tbody tr {
-  height: 56px;
+  height: 44px;
   cursor: pointer;
   transition: background-color 120ms ease, box-shadow 120ms ease;
 }
@@ -1053,8 +1070,7 @@ tbody tr:nth-child(even) {
 }
 
 tbody tr:hover,
-tbody tr:focus-visible,
-tbody tr.selected {
+tbody tr:focus-visible {
   background: #f3faf8;
 }
 
@@ -1065,8 +1081,12 @@ tbody tr:focus-visible {
   outline-offset: -2px;
 }
 
-tbody tr.selected {
-  background: #edf7f4;
+/* The open record's row: a teal tint and a teal edge, painted on the cells so the sticky first column carries them. */
+tbody tr.selected td {
+  background: var(--teal-soft);
+}
+
+tbody tr.selected td:first-child {
   box-shadow: inset 3px 0 0 var(--teal);
 }
 
@@ -1079,76 +1099,63 @@ tbody tr.selected .row-arrow {
 }
 
 .primary-cell strong {
-  display: block;
   color: var(--blue);
   font-size: 13.5px;
   font-weight: 500;
-  line-height: 1.32;
-  overflow-wrap: break-word;
-}
-
-.primary-cell .primary-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  margin-top: 2px;
 }
 
 .primary-cell .enzyme-form {
-  display: inline-flex;
-  max-width: 100%;
+  display: inline;
   border: 1px solid #c6ddd7;
   border-radius: 4px;
   background: #edf6f3;
-  padding: 1px 5px;
+  padding: 0 4px;
   color: #235e57;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+  line-height: 1;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
-.organism-cell {
-  min-width: 0;
-}
-
-.substrate-cell {
-  min-width: 0;
-}
-
-.metric-cell {
-  min-width: 0;
+/* A value and its markers (no unit, calc., stored unit, a caution) share one line. Only when a long value and its
+   markers do not fit the column do the markers move to a second line (rows keep their height), never over the next
+   column. */
+.metric-with-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 0 4px;
+  max-width: 100%;
+  vertical-align: middle;
   white-space: nowrap;
 }
 
-.metric-cell strong {
-  color: #182235;
-  font-weight: 400;
-}
-
-.metric-with-note,
 .source-efficiency-value {
-  white-space: nowrap;
   display: grid;
   gap: 2px;
+  white-space: nowrap;
 }
 
 .metric-origin,
 .source-efficiency-value small {
   color: #6a756f;
-  font-size: 9px;
+  font-size: 11px;
   font-style: normal;
-  font-weight: 550;
+  font-weight: 500;
   line-height: 1.2;
   text-transform: none;
 }
 
+.metric-origin[title] {
+  cursor: help;
+}
+
 .metric-inline-unit {
   display: inline;
-  margin-left: 4px;
   color: #6a756f;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1161,7 +1168,6 @@ tbody tr.selected .row-arrow {
 .measurement-value strong .metric-inline-unit {
   display: inline;
   margin: 0 0 0 4px;
-  font-size: 10px;
 }
 
 .scientific-number {
@@ -1215,43 +1221,140 @@ tbody tr.selected .row-arrow {
   width: 52%;
 }
 
-.skeleton-row td:nth-child(n+5):nth-child(-n+9) span {
+.skeleton-row td.num span {
   width: 44%;
   margin-left: auto;
 }
 
-.skeleton-row td:last-child span {
+.skeleton-row td.c-open span {
   display: none;
 }
 
+/* No record matches: the notice sits in the table, under the column headings. */
+.empty-row,
+.empty-row:hover {
+  height: auto;
+  cursor: default;
+  background: var(--panel);
+}
+
+.empty-row td {
+  padding: 28px 16px;
+  border-right: 0;
+}
+
+.load-notice.empty-notice {
+  border-left-color: var(--line);
+  background: var(--panel-muted);
+  color: var(--ink);
+}
+
+.load-notice.empty-notice strong {
+  color: var(--ink);
+}
+
+.load-notice.empty-notice .button {
+  border-color: var(--line);
+}
+
+/* Status: a coloured dot and the status word, then whole-word tags on a second line. The badge has a fixed height,
+   so every row is the same height whatever its tags, and adding the human-checked tag changes nothing (a badge
+   without tags centres its word). Dot colours are the Stats outcome colours; the words stay in ink. */
+td.c-status {
+  padding: 4px 11px;
+  text-align: left;
+}
+
 .state-badge {
-  display: inline-flex;
+  display: grid;
+  grid-template-rows: 18px auto;
+  align-content: center;
+  justify-items: start;
+  height: 32px;
+  min-width: 0;
   max-width: 100%;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.state-label {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  border-radius: 0;
-  padding: 0;
-  font-size: 12px;
+  gap: 6px;
   font-weight: 500;
-  line-height: 1.35;
-  white-space: normal;
+}
+
+.state-label::before {
+  content: "";
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-color, var(--status-unverified));
 }
 
 .state-badge.accepted {
-  color: var(--teal-dark);
+  --status-color: var(--status-accepted);
 }
 
 .state-badge.review {
-  color: #9a6100;
+  --status-color: var(--status-pending);
 }
 
 .state-badge.unresolved {
-  color: #5f6b68;
+  --status-color: var(--status-unverified);
+}
+
+.state-badge[data-status="mathematically_inferred"] {
+  --status-color: var(--status-not-reviewed);
 }
 
 .state-badge.disputed {
-  color: #c2141a;
+  --status-color: var(--status-disputed);
+}
+
+.state-tags {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 14px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+/* The separator has no spaces (margins instead), so each tag stays one box. */
+.state-tag + .state-tag::before {
+  content: "\00b7";
+  margin: 0 3px;
+}
+
+/* In the record the badge is one line: "Accepted · read from the paper · human-checked". */
+.detail-status-line .state-badge {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  height: auto;
+  white-space: normal;
+}
+
+.detail-status-line .state-tags {
+  overflow: visible;
+  padding-left: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.detail-status-line .state-tag {
+  white-space: nowrap;
+}
+
+.detail-status-line .state-tags:not(:empty)::before,
+.detail-status-line .state-tag + .state-tag::before {
+  content: "\00b7";
+  margin: 0 6px;
 }
 
 .row-arrow {
@@ -1328,6 +1431,15 @@ body.detail-open .detail-panel {
   font-size: 17px;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.detail-top h2:focus {
+  outline: none;
+}
+
+.detail-top h2:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 
 .detail-top p {
@@ -2549,55 +2661,57 @@ body.detail-open .detail-panel {
   }
 
   body.detail-open .table-wrap table {
-    min-width: 760px;
+    min-width: 800px;
   }
 
-  body.detail-open .col-enzyme {
-    width: 22%;
-  }
-
-  body.detail-open .col-ec {
-    width: 9%;
+  /* With a record open, EC, temperature, pH and the arrow give way (the record shows them); Status stays, as one
+     word. */
+  body.detail-open .col-ec,
+  body.detail-open .col-temp,
+  body.detail-open .col-ph,
+  body.detail-open .col-open,
+  body.detail-open .c-ec,
+  body.detail-open .c-temp,
+  body.detail-open .c-ph,
+  body.detail-open .c-open {
+    display: none;
   }
 
   body.detail-open .col-organism {
-    width: 14%;
+    width: clamp(120px, 10vw, 170px);
   }
 
   body.detail-open .col-substrate {
-    width: 17%;
+    width: clamp(130px, 11.5vw, 190px);
   }
 
-  body.detail-open .col-kcat {
-    width: 8%;
-  }
-
+  body.detail-open .col-kcat,
   body.detail-open .col-km {
-    width: 8%;
+    width: 88px;
   }
 
   body.detail-open .col-efficiency {
-    width: 9%;
+    width: 104px;
   }
 
-  body.detail-open .col-temp {
-    width: 7%;
+  body.detail-open .col-state {
+    width: 140px;
   }
 
-  body.detail-open .col-ph {
-    width: 6%;
+  body.detail-open .c-substrate {
+    border-right: 1px solid var(--line);
   }
 
-  body.detail-open .col-state,
-  body.detail-open .col-open {
-    width: 0;
+  body.detail-open .c-eff {
+    border-right: 1px solid var(--line);
   }
 
-  body.detail-open th:nth-child(10),
-  body.detail-open td:nth-child(10),
-  body.detail-open th:nth-child(11),
-  body.detail-open td:nth-child(11) {
+  body.detail-open #recordsBody .state-tags {
     display: none;
+  }
+
+  body.detail-open #recordsBody .state-badge {
+    grid-template-rows: 18px;
   }
 
   .detail-empty {
@@ -2637,14 +2751,17 @@ body.detail-open .detail-panel {
     padding: 0;
   }
 
+  /* One header grid on every view: brand and Download, then the tabs on their own row (one line, scrolling sideways
+     if ever needed), then search on Browse. */
   .app-header {
-    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-columns: minmax(0, 1fr) max-content;
     grid-template-areas:
-      "brand nav actions"
-      "search search search";
-    column-gap: 18px;
-    row-gap: 10px;
-    padding: 10px 16px;
+      "brand actions"
+      "nav nav"
+      "search search";
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 8px 16px 10px;
   }
 
   .brand-lockup {
@@ -2653,7 +2770,23 @@ body.detail-open .detail-panel {
 
   .top-nav {
     grid-area: nav;
-    justify-self: start;
+    justify-self: stretch;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .top-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 10px;
   }
 
   .global-search {
@@ -2841,24 +2974,24 @@ body.detail-open .detail-panel {
       inset -12px 0 10px -12px rgba(23, 33, 32, 0.62);
   }
 
+  /* Enzyme keeps at least 220px; the table scrolls sideways inside its frame. */
   table {
-    min-width: 980px;
+    min-width: 1146px;
   }
 
-  .col-enzyme { width: 170px; }
   .col-ec { width: 80px; }
-  .col-organism { width: 120px; }
-  .col-substrate { width: 145px; }
-  .col-kcat { width: 80px; }
-  .col-km { width: 80px; }
-  .col-efficiency { width: 90px; }
-  .col-temp { width: 60px; }
-  .col-ph { width: 50px; }
-  .col-state { width: 100px; }
-  .col-open { width: 23px; }
+  .col-organism { width: 124px; }
+  .col-substrate { width: 136px; }
+  .col-kcat,
+  .col-km { width: 86px; }
+  .col-efficiency { width: 100px; }
+  .col-temp { width: 52px; }
+  .col-ph { width: 44px; }
+  .col-state { width: 194px; }
+  .col-open { width: 24px; }
 
-  th:first-child,
-  td:first-child {
+  /* The enzyme column stays in view while the table scrolls sideways. */
+  .c-enzyme {
     position: sticky;
     left: 0;
     z-index: 2;
@@ -2866,22 +2999,23 @@ body.detail-open .detail-panel {
     box-shadow: 1px 0 0 var(--line), 8px 0 12px rgba(20, 34, 31, 0.05);
   }
 
-  th:first-child {
+  th.c-enzyme {
     z-index: 3;
     background: var(--panel-muted);
   }
 
-  tbody tr:nth-child(even) td:first-child {
+  tbody tr:nth-child(even) td.c-enzyme {
     background: #fbfcfb;
   }
 
-  tbody tr:hover td:first-child,
-  tbody tr:focus-visible td:first-child {
+  tbody tr:hover td.c-enzyme,
+  tbody tr:focus-visible td.c-enzyme {
     background: #f3faf8;
   }
 
-  tbody tr.selected td:first-child {
-    background: #edf7f4;
+  tbody tr.selected td.c-enzyme {
+    background: var(--teal-soft);
+    box-shadow: inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20, 34, 31, 0.05);
   }
 }
 
@@ -2924,28 +3058,14 @@ body.detail-open .detail-panel {
     font-size: 18px;
   }
 
-  .app-header {
-    grid-template-columns: minmax(0, 1fr) max-content;
-    grid-template-areas:
-      "brand actions"
-      "nav nav"
-      "search search";
-    column-gap: 12px;
-    row-gap: 8px;
-  }
-
   .brand-lockup {
     flex-wrap: wrap;
     min-width: 0;
   }
 
-  .header-actions,
-  .top-nav {
+  .header-actions {
     flex-wrap: wrap;
   }
-
-  .top-nav { gap: 4px; }
-  .nav-tab { min-width: 0; min-height: 38px; padding: 6px; }
 
   .download-options {
     width: min(330px, calc(100vw - 32px));
@@ -3247,16 +3367,21 @@ body:is(.stats-open, .guide-open) .brand-lockup { grid-area: brand; }
 body:is(.stats-open, .guide-open) .top-nav { grid-area: nav; }
 body:is(.stats-open, .guide-open) .header-actions { grid-area: actions; }
 
-@media (max-width: 1000px) {
+/* Stats and Guide use the Browse header grid without the search row. */
+@media (max-width: 1180px) {
   body:is(.stats-open, .guide-open) .app-header {
     grid-template-columns: minmax(0, 1fr) max-content;
     grid-template-areas: "brand actions" "nav nav";
   }
 }
 
+@media (max-width: 640px) {
+  .nav-tab { padding: 0 6px; }
+}
+
 @media (max-width: 360px) {
   .top-nav { gap: 2px; }
-  .nav-tab { padding-inline: 3px; font-size: 13px; }
+  .nav-tab { padding-inline: 4px; font-size: 13px; }
 }
 
 @media print {
@@ -3386,65 +3511,54 @@ body:is(.stats-open, .guide-open) .header-actions { grid-area: actions; }
 
   .primary-cell strong,
   .state-badge,
+  .state-tags,
   a {
     color: #111111 !important;
+  }
+
+  .clamp-2 {
+    display: block;
+    max-height: none;
+    -webkit-line-clamp: unset;
   }
 }
 
 /* Value caveats, unit markers, load notices, and source attribution */
 .metric-unit-missing {
-  display: block;
-  max-width: 100%;
-  margin-top: 1px;
+  display: inline;
   color: #8a5a14;
-  font-size: 9px;
+  font-size: 11px;
   font-style: normal;
-  font-weight: 550;
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-  white-space: normal;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: help;
 }
 
-.state-badge small {
-  white-space: normal;
-}
-
 .measurement-value .metric-unit-missing {
+  display: block;
   margin-top: 2px;
 }
 
+/* A caution on a value: a 14px amber "!" beside it; the words are in its tooltip and accessible name. */
 .value-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  width: fit-content;
-  max-width: 100%;
-  border: 1px solid #e3c08a;
-  border-radius: 10px;
-  background: var(--orange-soft);
-  padding: 1px 6px 1px 4px;
-  color: #7a4b0f;
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  line-height: 1.3;
-  text-align: left;
-  white-space: normal;
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 14px;
+  place-items: center;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
   cursor: help;
 }
 
 .value-flag::before {
   content: "!";
-  display: inline-grid;
-  place-items: center;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--orange);
-  color: #fff;
-  font-size: 8px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
   line-height: 1;
 }
 

@@ -18,7 +18,9 @@ Use white, unframed sections with light rules and thin circular charts. Match
 the approved artifact palette: blue #339cff for accepted, orange #f3883b for
 follow-up, gray for unverified, and red for disputed. Green #5dc977 marks
 kinetics, blue protein sequences, orange substrate structures, and pink #eb77b1
-reference material. Browse keeps its existing colors. Keep Stats content within
+reference material. Browse status dots use the same outcome colors (purple
+#9b79ec for the legacy mathematically_inferred group), with the status words in
+ink, so Browse, Guide and Stats share one legend. Keep Stats content within
 1280px so charts and labels stay together on a wide monitor.
 Color is secondary to the written label and count. Keep labels readable,
 numerals aligned, and charts free of decorative imagery or confidence scores.

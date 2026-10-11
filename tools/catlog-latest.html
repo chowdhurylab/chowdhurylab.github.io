@@ -16,6 +16,7 @@
     <script data-src="catlog-static/data/catlog-viewer-index.8d6f218298af.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||h==="#guide"||h==="#stats")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
   </head>
   <body>
+    <a class="skip-link" href="#recordTableWrap">Skip to records</a>
     <div class="static-app">
       <header class="app-header">
         <button id="brandHomeButton" class="brand-lockup" type="button" aria-label="Return to CatLog browse">
@@ -87,6 +88,7 @@
       <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Search suggestions"></div>
 
       <main id="catalogView">
+        <h1 class="visually-hidden">CatLog enzyme kinetics records</h1>
         <section class="snapshot-band" aria-label="Current results" aria-live="polite">
           <div class="snapshot-overview">
             <div class="summary-grid" id="summaryGrid"></div>
@@ -114,19 +116,19 @@
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">EC number <span>⌃</span></button>
-              <input id="ecFilterInput" type="search" placeholder="Filter by EC number" />
+              <input id="ecFilterInput" type="search" placeholder="Filter by EC number" aria-label="Filter by EC number" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Enzyme <span>⌃</span></button>
-              <input id="enzymeFilterInput" type="search" placeholder="Filter by enzyme" />
+              <input id="enzymeFilterInput" type="search" placeholder="Filter by enzyme" aria-label="Filter by enzyme" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Organism <span>⌃</span></button>
-              <input id="organismFilterInput" type="search" placeholder="Filter by organism" />
+              <input id="organismFilterInput" type="search" placeholder="Filter by organism" aria-label="Filter by organism" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Substrate <span>⌃</span></button>
-              <input id="substrateFilterInput" type="search" placeholder="Filter by substrate" />
+              <input id="substrateFilterInput" type="search" placeholder="Filter by substrate" aria-label="Filter by substrate" />
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Measurement type <span>⌃</span></button>
@@ -169,8 +171,8 @@
                 </select>
               </div>
             </div>
-            <div id="recordTableWrap" class="table-wrap">
-              <table>
+            <div id="recordTableWrap" class="table-wrap" tabindex="-1">
+              <table aria-label="Enzyme kinetics records" aria-describedby="pageSummary">
                 <colgroup>
                   <col class="col-enzyme" />
                   <col class="col-ec" />
@@ -186,30 +188,30 @@
                 </colgroup>
                 <thead>
                   <tr>
-                    <th scope="col">Enzyme</th>
-                    <th scope="col">EC number</th>
-                    <th scope="col">Organism</th>
-                    <th scope="col">Substrate</th>
-                    <th scope="col"><i>k</i><sub>cat</sub><span class="header-unit">s<sup>-1</sup></span></th>
-                    <th scope="col"><i>K</i><sub>m</sub><span class="header-unit">mM</span></th>
-                    <th scope="col"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><span class="header-unit">s<sup>-1</sup> mM<sup>-1</sup></span></th>
-                    <th scope="col">T (°C)</th>
-                    <th scope="col">pH</th>
-                    <th scope="col">Status</th>
-                    <th scope="col"><span class="visually-hidden">Open record</span></th>
+                    <th scope="col" class="c-enzyme">Enzyme</th>
+                    <th scope="col" class="c-ec">EC number</th>
+                    <th scope="col" class="c-organism">Organism</th>
+                    <th scope="col" class="c-substrate">Substrate</th>
+                    <th scope="col" class="c-kcat num"><i>k</i><sub>cat</sub><span class="header-unit">s<sup>-1</sup></span></th>
+                    <th scope="col" class="c-km num"><i>K</i><sub>m</sub><span class="header-unit">mM</span></th>
+                    <th scope="col" class="c-eff num"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><span class="header-unit">s<sup>-1</sup> mM<sup>-1</sup></span></th>
+                    <th scope="col" class="c-temp num">T (°C)</th>
+                    <th scope="col" class="c-ph num">pH</th>
+                    <th scope="col" class="c-status">Status</th>
+                    <th scope="col" class="c-open"><span class="visually-hidden">Open record</span></th>
                   </tr>
                 </thead>
                 <tbody id="recordsBody">
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
                 </tbody>
               </table>
             </div>

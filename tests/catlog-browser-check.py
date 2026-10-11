@@ -176,6 +176,32 @@ def check_browse(driver, browser, url, route_label):
         assert driver.save_screenshot(str(path))
         return path.name
 
+    def check_status_column(width):
+        """Status cells: the badge starts at the cell's content edge, tags never break, one badge height; on
+        desktop every row has the same height."""
+        geometry = driver.execute_script("""
+            const rows = [...document.querySelectorAll('#recordsBody tr[data-key]')];
+            const out = {rows: rows.length, offsets: [], brokenTags: 0, badgeHeights: [], rowHeights: []};
+            for (const row of rows) {
+                out.rowHeights.push(Math.round(row.getBoundingClientRect().height * 10) / 10);
+                const badge = row.querySelector('.state-badge');
+                if (!badge) continue;
+                const cell = badge.closest('td');
+                const style = getComputedStyle(cell);
+                const contentLeft = cell.getBoundingClientRect().left + parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth);
+                out.offsets.push(Math.abs(badge.getBoundingClientRect().left - contentLeft));
+                out.badgeHeights.push(Math.round(badge.getBoundingClientRect().height * 10) / 10);
+                badge.querySelectorAll('.state-tag').forEach(tag => { if (tag.getClientRects().length !== 1) out.brokenTags += 1; });
+            }
+            return out;
+        """)
+        assert geometry["rows"] == 25 and len(geometry["offsets"]) == 25, "Every row needs a status badge"
+        assert max(geometry["offsets"]) <= 1, f"Status badges must start at the cell's content edge: {geometry['offsets']}"
+        assert geometry["brokenTags"] == 0, "A status tag broke across lines"
+        assert len(set(geometry["badgeHeights"])) == 1, f"Status badges differ in height: {set(geometry['badgeHeights'])}"
+        if width >= 1024:
+            assert len(set(geometry["rowHeights"])) == 1, f"Table rows differ in height: {set(geometry['rowHeights'])}"
+
     def downloaded_payload(button_id):
         index = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length")
         driver.find_element(By.ID, button_id).click()
@@ -208,6 +234,7 @@ def check_browse(driver, browser, url, route_label):
             assert driver.find_element(By.ID, "pageLabel").text == f"1–25 of {total:,}"
             assert not driver.find_element(By.ID, "prevButton").is_enabled()
             screenshots = [capture(viewport, "browse")]
+            check_status_column(width)
             driver.find_element(By.ID, "nextButton").click()
             wait.until(lambda _d: row_keys() != first_keys)
             page_keys = row_keys()

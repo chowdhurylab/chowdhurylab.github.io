@@ -204,13 +204,14 @@
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
   }
 
+  // A small amber "!" beside the value; its words are in the tooltip, the accessible name and hidden text.
   function valueFlagBadgeHtml(flags, field) {
     const matched = [...flags].filter((flag) => valueIntegrityFlags[flag]?.field === field);
     if (!matched.length) return "";
     const labels = [...new Set(matched.map(conditionFlagLabel).filter(Boolean))];
     const shortText = [...new Set(matched.map((flag) => valueIntegrityFlags[flag].short))].join(" · ");
     const summary = `Check against source: ${labels.join("; ")}`;
-    return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}">${escapeHtml(shortText)}</span>`;
+    return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
   }
 
   function conditionFlagsHtml(flags) {
@@ -552,7 +553,7 @@
     return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times; 10<sup>${escapeHtml(exponent)}</sup></span></span>`;
   }
 
-  const UNIT_NOT_RECORDED_LABEL = "unit not recorded";
+  const UNIT_NOT_RECORDED_LABEL = "no unit";
   const UNIT_NOT_RECORDED_NOTE = "No unit is recorded here, so the column unit does not apply.";
 
   const canonicalMetricUnitKeys = {
@@ -654,9 +655,12 @@
     return storedUnitDiffers(row, field) ? `${displayHtml}${storedUnitHtml(row, field)}` : displayHtml;
   }
 
-  function efficiencyOriginHtml(row) {
+  const CALCULATED_NOTE = "kcat ÷ Km, not printed in the source";
+
+  // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record.
+  function efficiencyOriginHtml(row, { short = false } = {}) {
     return row.kcat_over_km_origin === "calculated"
-      ? '<small class="metric-origin">calculated</small>'
+      ? `<small class="metric-origin" title="${escapeHtml(CALCULATED_NOTE)}">${short ? "calc." : "calculated"}</small>`
       : "";
   }
 
@@ -874,7 +878,10 @@
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
 
-  function statusBadge(row) {
+  // One badge for the table and the record: a dot and the status word, then whole-word tags (from paper, corrected,
+  // identity only, human-checked). The tag line is always present, so every badge has the same height. In the record
+  // (long) the v2 tag reads "read from the paper".
+  function statusBadge(row, { long = false } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isDisputed = row.verification_status === "disputed";
     const isCorrected = row.verification_status === "corrected";
@@ -898,15 +905,16 @@
     const visibleLabel = identityOnly ? "Accepted" : label;
     // "human-checked" only on accepted rows; the Review-notes note shows for every row.
     const checked = config.value === "accepted" && Boolean(humanReviewMark(row)?.checked);
-    const qualifierText = [
-      fromPaper ? "from paper" : "",
-      identityOnly ? `(${isCorrected ? "corrected, identity only" : "identity only"})` : (isCorrected ? "corrected" : ""),
+    const tags = [
+      fromPaper ? (long ? "read from the paper" : "from paper") : "",
+      isCorrected ? "corrected" : "",
+      identityOnly ? "identity only" : "",
       checked ? "human-checked" : "",
-    ].filter(Boolean).join(" · ");
-    const qualifier = qualifierText ? `<small>${escapeHtml(qualifierText)}</small>` : "";
+    ].filter(Boolean);
     const fullDescription = checked ? `${description} Checked by a human reviewer.` : description;
     const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
-    return `<span class="state-badge ${className}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(`${label}. ${fullDescription}`)}"><span class="state-badge-copy">${escapeHtml(visibleLabel)}${qualifier}</span></span>`;
+    const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("");
+    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(`${label}. ${fullDescription}`)}"><span class="state-label">${escapeHtml(visibleLabel)}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
   function isContentHashedDataAsset(src) {
@@ -1341,13 +1349,18 @@
     return new Promise((resolve) => window.setTimeout(resolve, 0));
   }
 
+  // The number of table columns (the test harness has no table, hence the fallback).
+  function tableColumnCount() {
+    return document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
+  }
+
   function showLoadNotice(title, message, { actionLabel = "", onAction = null } = {}) {
     document.body.classList.add("catalog-load-failed");
     const body = $("recordsBody");
     if (body) {
       body.innerHTML = `
         <tr class="loading-row notice-row">
-          <td colspan="11">
+          <td colspan="${tableColumnCount()}">
             <div class="load-notice" role="alert">
               <strong>${escapeHtml(title)}</strong>
               <span>${escapeHtml(message)}</span>
@@ -2792,24 +2805,35 @@
       body.innerHTML = skeletonRowsHtml();
       return;
     }
-    body.innerHTML = pageRows.map((row) => `
+    if (!pageRows.length && state.recordsReady) {
+      body.innerHTML = emptyResultsHtml();
+      body.querySelector?.('[data-action="clear-filters"]')?.addEventListener("click", () => {
+        clearFilters();
+        $("globalSearchInput").focus({ preventScroll: true });
+      });
+      return;
+    }
+    body.innerHTML = pageRows.map((row) => {
+      const flags = conditionFlags(row);
+      const enzymeName = row.enzyme_display_name || "Name not preserved";
+      const enzymeForm = enzymeFormHtml(row);
+      const enzymeTitle = [enzymeName, enzymeForm ? enzymeFormLabel(row) : ""].filter(Boolean).join(" · ");
+      return `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
-        <td class="primary-cell">
-          <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
-          ${enzymeFormHtml(row) ? `<span class="primary-meta">${enzymeFormHtml(row)}</span>` : ""}
-        </td>
-        <td>${escapeHtml(row.ec_number || EMPTY_VALUE)}</td>
-        <td class="organism-cell">${escapePublic(row.organism || EMPTY_VALUE)}</td>
-        <td class="substrate-cell">${escapePublic(row.substrate_name || EMPTY_VALUE)}</td>
-        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat")}${valueFlagBadgeHtml(conditionFlags(row), "kcat")}</span></td>
-        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "km")}${valueFlagBadgeHtml(conditionFlags(row), "km")}</span></td>
-        <td class="metric-cell"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat_over_km")}${efficiencyOriginHtml(row)}${valueFlagBadgeHtml(conditionFlags(row), "kcat_over_km")}</span></td>
-        <td>${escapeHtml(formatTemperature(row))}</td>
-        <td>${escapeHtml(formatPh(row))}</td>
-        <td>${statusBadge(row)}</td>
-        <td class="row-arrow" aria-hidden="true">&rsaquo;</td>
+        <td class="c-enzyme primary-cell"><span class="clamp-2" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong>${enzymeForm ? ` ${enzymeForm}` : ""}</span></td>
+        <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
+        <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
+        <td class="c-substrate"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span></td>
+        <td class="c-kcat num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat")}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
+        <td class="c-km num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "km")}${valueFlagBadgeHtml(flags, "km")}</span></td>
+        <td class="c-eff num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat_over_km")}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km")}</span></td>
+        <td class="c-temp num">${escapeHtml(formatTemperature(row))}</td>
+        <td class="c-ph num">${escapeHtml(formatPh(row))}</td>
+        <td class="c-status">${statusBadge(row)}</td>
+        <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
-    `).join("");
+    `;
+    }).join("");
     const rowElements = [...body.querySelectorAll("tr[data-key]")];
     rowElements.forEach((rowElement) => {
       // Hovering or focusing a row a moment starts loading its record, so opening it is immediate.
@@ -2849,11 +2873,31 @@
       && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
   }
 
-  // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is.
+  // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each
+  // cell takes its column's role class from the header, so number placeholders sit on the right.
   function skeletonRowsHtml(count = 10) {
-    const columns = document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
-    const row = `<tr class="skeleton-row" aria-hidden="true">${"<td><span></span></td>".repeat(columns)}</tr>`;
-    return row.repeat(count);
+    const headers = [...(document.querySelectorAll?.("#recordTableWrap thead th") || [])];
+    const cells = headers.length
+      ? headers.map((th) => `<td class="${escapeHtml(th.className || "")}"><span></span></td>`).join("")
+      : "<td><span></span></td>".repeat(tableColumnCount());
+    return `<tr class="skeleton-row" aria-hidden="true">${cells}</tr>`.repeat(count);
+  }
+
+  // No record matches: say so in the table, with a way back to every record.
+  function emptyResultsHtml() {
+    const query = String($("globalSearchInput")?.value || "").trim();
+    const heading = query ? `No records match "${query}"` : "No records match these filters";
+    return `
+      <tr class="empty-row">
+        <td colspan="${tableColumnCount()}">
+          <div class="load-notice empty-notice">
+            <strong>${escapeHtml(heading)}</strong>
+            <span>Check the spelling, or try an EC number (1.1.1.1) or a UniProt accession (P11509).</span>
+            <button class="button secondary" type="button" data-action="clear-filters">Clear search and filters</button>
+          </div>
+        </td>
+      </tr>
+    `;
   }
 
   function prefetchDetail(key) {
@@ -3800,6 +3844,12 @@
       renderRows();
     });
     $("downloadPageButton").addEventListener("click", handlePageDownload);
+    // "Skip to records" moves focus to the table without changing the address (the hash names the view).
+    document.querySelector(".skip-link")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (viewFromLocation() !== "browse") navigateTo("browse");
+      (document.querySelector('#recordsBody tr[tabindex="0"]') || $("recordTableWrap"))?.focus();
+    });
     $("recordTableWrap").addEventListener("scroll", updateTableScrollControls, { passive: true });
     $("scrollTableLeftButton").addEventListener("click", () => scrollTableColumns(-1));
     $("scrollTableRightButton").addEventListener("click", () => scrollTableColumns(1));
