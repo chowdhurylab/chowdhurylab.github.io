@@ -36,11 +36,11 @@ column on desktop and a full-height dialog on smaller screens. Never put details
 below the table or cover desktop measurement columns. Keep 25 rows per page,
 scrolling within the table, and the page controls reachable.
 
-While records load, placeholder rows keep the table's shape and the count beside
-Filters says how many have loaded. Page 1 appears from the first rows of the
-index, which arrives in Review-status order, and stays in place when the rest
-arrives; sorting waits for all records. Stats and Guide never download the
-record index.
+While records load, placeholder rows keep the table's shape and, until the first
+rows appear, the count beside Filters says how many have loaded. Page 1 appears
+from the first rows of the index, which arrives in Review-status order, and
+stays in place when the rest arrives; sorting waits for all records. Stats and
+Guide never download the record index.
 
 ## Type And Color
 

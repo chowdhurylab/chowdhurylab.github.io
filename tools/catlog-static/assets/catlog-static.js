@@ -26,8 +26,6 @@
     // The row order the loaded index declares ("default_review_status": the Review-status sort), or "".
     indexOrder: "",
     preserveRenderedRows: false,
-    // The page range shown beside the loading count ("1–25 of 169,309", or "312 available" while filtering).
-    loadingLead: "",
     statsRendered: false,
     recordsGeneration: 0,
     sortCache: new Map(),
@@ -1223,11 +1221,12 @@
       rail.classList.toggle("complete", state.recordsReady);
       if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
     }
-    // The count beside Filters while records load: on its own until rows are drawn, then after the page range.
+    // The count beside Filters says how many records have loaded only until the first rows are drawn. After that it
+    // keeps the page range, so its width (and the toolbar's wrapping) does not change when the rest arrives; the bar's
+    // aria-valuetext keeps the count.
     const summary = $("pageSummary");
     if (!summary || state.recordsReady || document.body.classList.contains("catalog-load-failed")) return;
     if (!document.querySelector?.("#recordsBody tr[data-key]")) summary.textContent = loadProgressText();
-    else if (state.loadingLead) summary.textContent = `${state.loadingLead} · ${loadProgressText()}`;
   }
 
   function markPerformance(name) {
@@ -1592,6 +1591,7 @@
         setupFilters();
         setSortAvailable(false);
         await ensureCurrentFilters();
+        updateTableScrollControls();
         state.firstRowsShown = true;
         markPerformance("catlog:first-rows");
       } catch (error) {
@@ -2682,14 +2682,14 @@
     const range = pageRows.length
       ? `${formatInteger(start + 1)}–${formatInteger(Math.min(start + pageRows.length, shownTotal))} of ${formatInteger(shownTotal)}`
       : "";
-    state.loadingLead = loading && pageRows.length
-      ? (finalPages ? range : `${formatInteger(state.filtered.length)} available`)
-      : "";
+    // While loading, a page that is already final shows its range ("1–25 of 169,309"); a filtered one, how many
+    // records match so far ("312 available").
+    const loadingSummary = finalPages ? range : `${formatInteger(state.filtered.length)} available`;
     $("activeSummary").textContent = state.recordsReady
       ? `${formatInteger(state.filtered.length)} records`
       : `${formatInteger(state.filtered.length)} available`;
     $("pageSummary").textContent = pageRows.length
-      ? (loading ? `${state.loadingLead} · ${loadProgressText()}` : range)
+      ? (loading ? loadingSummary : range)
       : (state.recordsReady ? "No matching records" : loadProgressText());
     if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0;
     $("pageLabel").textContent = pageRows.length
@@ -2869,7 +2869,10 @@
   function updateTableScrollControls() {
     const wrap = $("recordTableWrap");
     if (!wrap) return;
-    const hasOverflow = wrap.scrollWidth > wrap.clientWidth + 2;
+    // Placeholder rows have no columns to show: Columns stays hidden until the first rows are drawn. Beside the loading
+    // count it would wrap the toolbar at some tablet widths, and the table would move up when the rows arrive.
+    const placeholdersOnly = !state.recordsReady && !wrap.querySelector?.("tr[data-key]");
+    const hasOverflow = !placeholdersOnly && wrap.scrollWidth > wrap.clientWidth + 2;
     const canScrollLeft = wrap.scrollLeft > 2;
     const canScrollRight = wrap.scrollLeft + wrap.clientWidth < wrap.scrollWidth - 2;
     $("scrollTableLeftButton")?.closest(".table-scroll-controls")?.classList.toggle("hidden", !hasOverflow);
@@ -3647,10 +3650,19 @@
     };
     window.addEventListener("popstate", showLocationView);
     window.addEventListener("hashchange", showLocationView);
-    // From Stats or Guide, pointing at or focusing the way back to Browse (or the search box) starts the download.
+    // From Stats or Guide, resting on the way back to Browse for a moment (pointer or keyboard focus), or focusing the
+    // search box, starts the download. Passing over the link on the way to another tab does not.
     for (const id of ["browseButton", "brandHomeButton"]) {
-      $(id).addEventListener("pointerenter", () => ensureRecordsLoaded());
-      $(id).addEventListener("focus", () => ensureRecordsLoaded());
+      let prefetchTimer = 0;
+      const startPrefetch = () => {
+        window.clearTimeout(prefetchTimer);
+        prefetchTimer = window.setTimeout(() => ensureRecordsLoaded(), DETAIL_PREFETCH_DELAY_MS);
+      };
+      const cancelPrefetch = () => window.clearTimeout(prefetchTimer);
+      $(id).addEventListener("pointerenter", startPrefetch);
+      $(id).addEventListener("focus", startPrefetch);
+      $(id).addEventListener("pointerleave", cancelPrefetch);
+      $(id).addEventListener("blur", cancelPrefetch);
     }
     $("globalSearchInput").addEventListener("focus", () => ensureRecordsLoaded());
     window.addEventListener("scroll", hideSuggestions, { passive: true });
