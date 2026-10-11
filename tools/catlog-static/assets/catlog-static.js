@@ -2098,6 +2098,24 @@
       </tbody></table></details>` : ""}`;
   }
 
+  // The outer ring beside an outcome that has no field split (Accepted, Disputed): a pale band that says so, with the
+  // words along the band when they fit.
+  function statsUnsplitArc(item, start, share) {
+    const note = `${item.label}: not split by field`;
+    const band = `<circle class="stats-ring-unsplit" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(note)}</title></circle>`;
+    const words = "not split by field";
+    const radius = 104;
+    const arcLength = 2 * Math.PI * radius * share / 100;
+    if (arcLength < words.length * 6.5 + 12) return band;
+    const point = (percent) => {
+      const angle = percent / 100 * 2 * Math.PI;
+      return `${(120 + radius * Math.cos(angle)).toFixed(2)} ${(120 + radius * Math.sin(angle)).toFixed(2)}`;
+    };
+    const id = `statsUnsplit-${String(item.value).replace(/[^\w-]/g, "")}`;
+    return `${band}<path id="${id}" d="M ${point(start)} A ${radius} ${radius} 0 ${share > 50 ? 1 : 0} 1 ${point(start + share)}" fill="none" stroke="none" />
+      <text class="stats-ring-gap-label" font-size="11" dy="0.35em" aria-hidden="true"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${words}</textPath></text>`;
+  }
+
   function statsNestedReviewRing(outcomes, total) {
     if (!total || outcomes.reduce((sum, item) => sum + item.count, 0) !== total) return statsReviewRing(outcomes, total);
     let offset = 0;
@@ -2118,7 +2136,7 @@
         const fieldLabel = `${item.label}: ${field.label}, ${formatInteger(field.count)} records, ${statsShare(field.count, item.count)} of this group`;
         return field.count ? `<circle class="stats-ring-${field.color}" data-field-group="${escapeHtml(item.value)}" data-field-slice="${field.value}" data-count="${field.count}" data-chart-cohort="${escapeHtml(item.value)}" data-chart-field="${field.value}" role="button" tabindex="0" aria-controls="statsReviewDetails" aria-label="${escapeHtml(fieldLabel)}" aria-pressed="${item.value === state.statsCohort && field.value === state.statsField}" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${fieldShare} ${100 - fieldShare}" stroke-dashoffset="${-fieldStart}"><title>${escapeHtml(fieldLabel)}</title></circle>` : "";
       }).join("") : "";
-      return `${inner}<g data-review-group="${escapeHtml(item.value)}" class="stats-outer-group${item.value === state.statsCohort ? " selected" : ""}">${outer}</g>`;
+      return `${inner}<g data-review-group="${escapeHtml(item.value)}" class="stats-outer-group${item.value === state.statsCohort ? " selected" : ""}">${outer}</g>${parts ? "" : statsUnsplitArc(item, start, share)}`;
     }).join("");
     return `<div class="stats-nested-ring"><svg viewBox="0 0 240 240" role="group" aria-label="Review outcomes and available fields">${arcs}</svg>
       <div aria-hidden="true"><strong id="statsRingCount">${formatInteger(total)}</strong><span id="statsRingLabel">records</span></div></div>`;
@@ -3687,7 +3705,6 @@
             <summary>SMILES</summary>
             <div class="copy-field">
               <div class="copy-field-heading">
-                <span>SMILES</span>
                 <button class="copy-button" type="button" aria-live="polite" data-copy-target="detailSmiles">Copy</button>
               </div>
               <code id="detailSmiles">${escapeHtml(smiles)}</code>
@@ -3725,6 +3742,13 @@
     }
     button.textContent = copied ? "Copied" : "Copy failed";
     window.setTimeout(() => { button.textContent = "Copy"; }, copied ? 1200 : 3000);
+  }
+
+  // The databases a record merges, unless that only repeats its Source.
+  function mergedDatabasesRow(summary, detail) {
+    const names = [...new Set((detail.source_databases_merged || []).map(sourceDatabaseLabel))];
+    if (!names.length || (names.length === 1 && names[0] === sourceDatabaseLabel(summary.source_db || detail.source_db))) return "";
+    return kv("Databases", names.join(", "));
   }
 
   function detailDisclosure(title, rows) {
@@ -3794,8 +3818,8 @@
         // CatLog's own compilation of the values it read from papers is CC BY 4.0; quoted paper text stays the publisher's.
         v2Record ? kv("License", "CC BY 4.0 (CatLog)") : kv("Source license", sourceLicense(summary, detail)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
-        kv("Database rows", detail.source_record_count || summary.source_record_count),
-        detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
+        Number(detail.source_record_count || summary.source_record_count) > 1 ? kv("Database rows", detail.source_record_count || summary.source_record_count) : "",
+        mergedDatabasesRow(summary, detail),
         publicEvidenceString(detail.data_origin) ? kv("Data origin", publicEvidenceString(detail.data_origin)) : "",
         kv("Protein identity", identityResolutionLabel({
           identity_resolution_state: detail.identity_resolution_state || summary.identity_resolution_state,

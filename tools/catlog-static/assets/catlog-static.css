@@ -341,7 +341,7 @@ body.detail-open .detail-panel { display:block }
 
 /* Outer-ring gap: outcomes not split by field. */
 .stats-ring-unsplit { stroke:var(--stats-ring-base) }
-.stats-ring-gap-label { fill:var(--text-3); font-size:var(--fs-min) }
+.stats-ring-gap-label { fill:var(--text-3); font-size:var(--fs-min); pointer-events:none }
 .stats-color-verified, .stats-color-corrected, .stats-color-protein { background:var(--stats-blue) }
 .stats-color-pending, .stats-color-structure { background:var(--stats-orange) }
 .stats-color-neutral { background:var(--stats-grey-dark) }
@@ -700,7 +700,7 @@ body:is(.stats-open, .guide-open) .app-header { grid-template-columns:max-conten
   .records-title { display:contents }
   #openFiltersButton { grid-column:1; grid-row:1 }
   .records-tools { grid-column:2; grid-row:1; grid-template-columns:max-content minmax(0, 1fr) }
-  #pageSummary, #clearResultsButton { grid-column:1 / -1; justify-self:start }
+  #pageSummary, #clearResultsButton { grid-column:1 / -1; grid-row:auto; justify-self:start }
   .records-tools label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
   .records-tools select { width:100% }
   .table-scroll-controls { display:none }
