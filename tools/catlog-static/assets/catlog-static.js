@@ -1182,6 +1182,42 @@
     return row._ecSort;
   }
 
+  // Common names the search box understands (catlog-v2 enrich.COMMON, plus yeast), keyed by genus and species.
+  const commonOrganismNames = {
+    "homo sapiens": "human",
+    "rattus norvegicus": "rat",
+    "mus musculus": "mouse",
+    "oryctolagus cuniculus": "rabbit",
+    "bos taurus": "bovine cow",
+    "sus scrofa": "porcine pig",
+    "canis lupus": "dog",
+    "gallus gallus": "chicken",
+    "zea mays": "maize",
+    "sorghum bicolor": "sorghum",
+    "saccharomyces cerevisiae": "yeast",
+  };
+  const organismSearchExtras = new Map();
+
+  // "Escherichia coli" also answers to "E. coli" and "E.coli"; "Homo sapiens" to "human".
+  function organismSearchText(organism) {
+    const text = String(organism || "").trim();
+    if (!text) return "";
+    let extra = organismSearchExtras.get(text);
+    if (extra === undefined) {
+      const words = text.replace(/[()]/g, " ").split(/\s+/).filter(Boolean);
+      const [genus = "", species = ""] = words;
+      const parts = [];
+      if (/^[A-Z][a-z]+$/.test(genus) && /^[a-z][a-z-]+$/.test(species) && species !== "sp.") {
+        parts.push(`${genus[0]}. ${species}`, `${genus[0]}.${species}`);
+      }
+      const common = commonOrganismNames[`${genus} ${species}`.toLowerCase()];
+      if (common) parts.push(common);
+      extra = parts.join(" ");
+      organismSearchExtras.set(text, extra);
+    }
+    return extra;
+  }
+
   // The folded text the search box matches, built the first time a search needs it.
   function searchText(row) {
     row._search ??= foldSearch(row._search_text || [
@@ -1190,6 +1226,7 @@
       row.ec_number,
       row.enzyme_display_name,
       row.organism,
+      organismSearchText(row.organism),
       row.substrate_name,
       row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
       row.source_db,
@@ -1197,6 +1234,36 @@
       row.protein_accession,
     ].join(" "));
     return row._search;
+  }
+
+  // An EC number or class typed in full parts ("1.1.1", "EC 2.7.1.1"): it matches that number and every number under it,
+  // never 3.1.1.1 or 1.1.11.x.
+  const EC_QUERY = /^(?:ec)?(\d+(?:\.(?:\d+|-)){0,3})\.?$/;
+
+  function ecQuery(word) {
+    const match = String(word || "").match(EC_QUERY);
+    return match ? match[1] : "";
+  }
+
+  function ecMatches(row, query) {
+    return String(row.ec_number || "").toLowerCase().split(/[;,\s]+/)
+      .some((ec) => ec === query || ec.startsWith(`${query}.`));
+  }
+
+  // Search words: every word must match, in any order. Words split at spaces only, so a chemical name keeps its commas
+  // ("2,4-dinitrophenol" is one word); a comma or semicolon typed after a word is dropped. A word that is an EC number
+  // with at least two parts matches EC parts; "EC" in front of one is dropped.
+  function searchWords(query) {
+    const words = String(query || "").split(/\s+/)
+      .map((word) => word.replace(/^[,;]+|[,;]+$/g, ""))
+      .filter((word) => /[\p{L}\p{N}]/u.test(word));
+    const hasEcNumber = words.some((word) => ecQuery(word).includes("."));
+    return words
+      .filter((word) => !(hasEcNumber && word === "ec"))
+      .map((word) => {
+        const ec = ecQuery(word);
+        return ec.includes(".") ? { ec } : { text: word };
+      });
   }
 
   function loadProgressText() {
@@ -2345,10 +2412,12 @@
   }
 
   function currentFilters() {
+    const q = foldSearch([
+      $("globalSearchInput").value,
+    ].join(" ").trim());
     return {
-      q: foldSearch([
-        $("globalSearchInput").value,
-      ].join(" ").trim()),
+      q,
+      qWords: searchWords(q),
       ec: foldSearch($("ecFilterInput").value.trim()),
       enzyme: foldSearch($("enzymeFilterInput").value.trim()),
       organism: foldSearch($("organismFilterInput").value.trim()),
@@ -2394,10 +2463,18 @@
   }
 
   function rowMatches(row, filters) {
-    if (filters.q && !searchText(row).includes(filters.q)) return false;
+    if (filters.q) {
+      const words = filters.qWords || searchWords(filters.q);
+      const text = searchText(row);
+      if (!words.every((word) => (word.ec ? ecMatches(row, word.ec) : text.includes(word.text)))) return false;
+    }
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
     if (filters.v2Only && !isV2Row(row)) return false;
-    if (!fieldContains(row, "ec_number", filters.ec)) return false;
+    if (filters.ec) {
+      // The EC filter matches whole EC parts: "1.1.1" is EC 1.1.1 and every number under it.
+      const query = filters.ec.replace(/^ec\s*/, "").replace(/\.$/, "");
+      if (query && !ecMatches(row, query)) return false;
+    }
     if (!fieldContains(row, "enzyme_display_name", filters.enzyme)) return false;
     if (!fieldContains(row, "organism", filters.organism)) return false;
     if (!fieldContains(row, "substrate_name", filters.substrate)) return false;
