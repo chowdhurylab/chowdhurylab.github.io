@@ -218,7 +218,6 @@ assert.match(
   sourceCode,
   /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "paper_evidence";\s+if \(row\.proof_kind === "source_note"\) return "source_note";/,
 );
-assert.match(sourceCode, /counts\.source_note = publicEvidence\.source_note \|\| 0;/);
 assert.match(
   indexHtml,
   /<main id="statsView"[^>]*hidden/,
@@ -348,7 +347,6 @@ const detailBackgroundSelector = [
   "#catalogLoadProgress",
   "#searchSuggestions",
   "#catalogView > .snapshot-band",
-  "#catalogFooter",
   ".workbench > :not(.detail-panel)",
 ].join(", ");
 const detailBackgroundElements = [makeElement("header"), makeElement("table")];

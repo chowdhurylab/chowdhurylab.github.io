@@ -48,7 +48,6 @@
     "#catalogLoadProgress",
     "#searchSuggestions",
     "#catalogView > .snapshot-band",
-    "#catalogFooter",
     ".workbench > :not(.detail-panel)",
   ].join(", ");
   const FILTER_INERT_SELECTOR = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
@@ -749,37 +748,11 @@
     return counts;
   }
 
-  function reviewStatusCounts(rows) {
-    if (!state.recordsReady) return manifestDistribution("verification_status");
-    const counts = {};
-    rows.forEach((row) => {
-      const status = row.verification_status || "unknown";
-      counts[status] = (counts[status] || 0) + 1;
-    });
-    return counts;
-  }
-
   function evidenceGroupForRow(row) {
     if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "paper_evidence";
     if (row.proof_kind === "source_note") return "source_note";
     if (row.has_literature_id) return "literature_id";
     return "source_records";
-  }
-
-  function evidenceGroupCounts(rows) {
-    const counts = Object.fromEntries(evidenceGroups.map((item) => [item.value, 0]));
-    if (!state.recordsReady) {
-      const publicEvidence = manifestDistribution("public_evidence_group");
-      counts.paper_evidence = publicEvidence.paper_excerpt || 0;
-      counts.source_note = publicEvidence.source_note || 0;
-      counts.literature_id = publicEvidence.paper_id || 0;
-      counts.source_records = publicEvidence.database_record || 0;
-      return counts;
-    }
-    rows.forEach((row) => {
-      counts[evidenceGroupForRow(row)] += 1;
-    });
-    return counts;
   }
 
   function evidenceLabel(row, proofLines = []) {
@@ -1586,10 +1559,6 @@
         }
       }
     }
-  }
-
-  function uniqueCount(rows, field) {
-    return new Set(rows.map((row) => String(row[field] || "").trim()).filter(Boolean)).size;
   }
 
   function metricCoverage(rows, field) {
@@ -3181,16 +3150,6 @@
 
   function renderSourceAttribution() {
     const sources = sourceDatabases();
-    const footer = $("catalogFooter");
-    if (footer) {
-      footer.innerHTML = `
-        <span class="footer-label">Data sources</span>
-        <span class="footer-sources">${sources.map((item) => (
-          `<span class="footer-source">${sourceNameHtml(item)}${item.license ? ` <small>${escapeHtml(item.license)}</small>` : ""}</span>`
-        )).join("")}</span>
-        <span class="footer-license">For reuse of CatLog review notes or corrections, <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20reuse%20question">contact the Chowdhury Lab</a>. <a class="footer-report" href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>.</span>
-      `;
-    }
     const guideList = $("guideSourceList");
     if (guideList) {
       guideList.innerHTML = sources.map((item) => {
