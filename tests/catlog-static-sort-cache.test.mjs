@@ -216,7 +216,7 @@ assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>Saved paper text; it may de
 assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
-  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "paper_evidence";\s+if \(row\.proof_kind === "source_note"\) return "source_note";/,
+  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Saved paper evidence";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Source note";/,
 );
 assert.match(
   indexHtml,

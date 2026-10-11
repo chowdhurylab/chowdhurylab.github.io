@@ -103,33 +103,6 @@
     { value: "disputed", label: "Disputed", description: "Outside the accepted set." },
   ];
 
-  const evidenceGroups = [
-    {
-      value: "paper_evidence",
-      label: "Paper excerpt",
-      className: "paper",
-      description: "Saved paper text; it may describe context rather than this value.",
-    },
-    {
-      value: "source_note",
-      label: "Database note",
-      className: "note",
-      description: "A database note, without a paper-value excerpt.",
-    },
-    {
-      value: "literature_id",
-      label: "Reference only",
-      className: "linked",
-      description: "A PMID or DOI is linked; no paper-value excerpt is saved.",
-    },
-    {
-      value: "source_records",
-      label: "Database record only",
-      className: "source",
-      description: "Only the source database record is available.",
-    },
-  ];
-
   const measurementFilters = [
     { value: "kcat", label: "Has kcat", field: "kcat" },
     { value: "km", label: "Has Km", field: "km" },
@@ -767,13 +740,6 @@
       counts[row._recordState || recordStateForRow(row)] += 1;
     });
     return counts;
-  }
-
-  function evidenceGroupForRow(row) {
-    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "paper_evidence";
-    if (row.proof_kind === "source_note") return "source_note";
-    if (row.has_literature_id) return "literature_id";
-    return "source_records";
   }
 
   function evidenceLabel(row, proofLines = []) {
