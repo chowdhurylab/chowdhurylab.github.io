@@ -57,8 +57,10 @@ hover and in the record. Every table row has the same height. Value markers
 
 Status cells align left: a dot and one word, then whole-word tags on a second
 line. Columns are sized to their content (values, Status and the arrow are
-fixed, names take the rest), so values sit close to the names. With a record
-open, EC, temperature, pH and the arrow give way; Status stays.
+fixed, names take the rest), so values sit close to the names. Every column
+fits from about 1010px; narrower screens scroll the table sideways with the
+enzyme name kept in view. With a record open, EC, temperature, pH and the arrow
+give way; Status stays.
 
 White and neutral surfaces carry the data. Teal identifies selection and actions;
 status uses a coloured dot (the Stats outcome colours) with the word in ink;
@@ -68,9 +70,10 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 ## Record Details
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
-The status is one line ("Accepted · read from the paper · human-checked"). A
-CatLog v2 record's conditions are short labelled lines (Cosubstrate,
-Conditions as a list, Preparation), never one block of text.
+The status is one line ("Accepted · read from the paper · human-checked"); an
+older record's evidence label sits with its paper links. A CatLog v2 record's
+conditions are short labelled lines (Cosubstrate, Conditions as a list,
+Preparation), never one block of text, and its sequence note is short and plain.
 Sequence and SMILES strings and review notes expand on request. Do not discard
 source text, hide scientific warnings, recompute measurements, or weaken review
 definitions to make the page shorter. Database attribution belongs in Guide and
