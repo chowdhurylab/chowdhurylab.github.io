@@ -74,7 +74,7 @@ have an accessible text count. Explain follow-up with explicitly illustrative
 protein, substrate and assay checks; do not infer a reason from missing data.
 Same-snapshot field presence can describe what is already saved in follow-up
 records, but cannot establish a completed check or the severity of the rest.
-Follow-up, Unverified and Pre-review select the adjacent field breakdown
+Checks pending, Unverified and Pre-review select the adjacent field breakdown
 without jumping down the desktop page. Each group uses its own hash-bound
 field counts. Keep the status meaning visible and the illustrative checks in
 a short disclosure; do not present these examples as counted reasons.

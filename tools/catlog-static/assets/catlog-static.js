@@ -417,7 +417,7 @@
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
         `${total} rows`,
-        "without sequences, SMILES or paper IDs",
+        "pH and temperature, without sequences, SMILES, paper IDs or assay_conditions_summary",
         tableSize,
       ].filter(Boolean).join(" · ");
     }
@@ -642,16 +642,25 @@
     return unitHtml(metricUnit(row, field));
   }
 
+  const STORED_UNIT_NOTE = "stored in this unit, not converted to the column unit";
+
+  // A kcat, Km or kcat/Km kept in a unit other than the catalog's (min^-1, mg/mL, ...): shown after the value.
+  function storedUnitDiffers(row, field) {
+    const storedUnit = metricUnit(row, field);
+    return Boolean(canonicalMetricUnitKeys[field] && storedUnit && metricHasValue(row, field))
+      && !canonicalMetricUnitKeys[field].has(normalizedUnitKey(storedUnit));
+  }
+
+  function storedUnitHtml(row, field) {
+    return `<small class="metric-inline-unit" title="${escapeHtml(STORED_UNIT_NOTE)}">${unitHtml(metricUnit(row, field))}</small>`;
+  }
+
   function metricDisplayWithUnitHtml(row, field) {
     const display = metricDisplay(row, field);
     const displayHtml = scientificValueHtml(display);
     if (display === EMPTY_VALUE) return displayHtml;
     if (metricUnitMissing(row, field)) return `${displayHtml}${unitMissingHtml()}`;
-    const storedUnit = metricUnit(row, field);
-    if (canonicalMetricUnitKeys[field]?.has(normalizedUnitKey(storedUnit))) {
-      return displayHtml;
-    }
-    return `${displayHtml}<small class="metric-inline-unit">${unitHtml(storedUnit)}</small>`;
+    return storedUnitDiffers(row, field) ? `${displayHtml}${storedUnitHtml(row, field)}` : displayHtml;
   }
 
   function efficiencyOriginHtml(row) {
@@ -813,6 +822,14 @@
   const v2Method = "catlog_v2_read_and_independent_verify";
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI run checked it against the paper; code converted the units.";
 
+  // A CatLog v2 row in the table index (no verification_method there). The frozen Oct 7 base's own paper-read rows
+  // carry ec_name_fallback, so the enzyme-name source tells them apart.
+  function isV2Row(row) {
+    return row?.source_db === "primary_paper_direct"
+      && row.verification_status === "verified"
+      && row.enzyme_label_source === "explicit_enzyme_name";
+  }
+
   // Human review (CatLog v2 HUMAN_REVIEW.md "Guideline"): records a human reviewer checked, and neutral notes on what a
   // reviewer assessed. data/human-review-marks.json is keyed by the record key; the page works without it.
   let humanReviewMarks = {};
@@ -834,7 +851,11 @@
 
   function humanReviewNote(row) {
     const mark = humanReviewMark(row);
-    const text = mark?.note || (mark?.checked ? "Checked by a human reviewer." : "");
+    // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
+    const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
+    const text = mark?.note || (mark?.checked
+      ? (accepted ? "Checked by a human reviewer." : "A human reviewer approved these values in CatLog's 2026 review; other checks on this record are still open.")
+      : "");
     return text ? `<p class="human-review-note">${escapeHtml(text)}</p>` : "";
   }
 
@@ -867,7 +888,11 @@
     const isCorrected = row.verification_status === "corrected";
     const identityOnly = isIdentityOnlyAccepted(row);
     // CatLog v2 rows (read from the paper) carry "from paper"; their description is the v2 sentence.
-    const fromPaper = row.source_db === "primary_paper_direct" && row.verification_status === "verified";
+    const fromPaper = isV2Row(row);
+    // Other records (Unverified, Pre-review, ...) describe their own status, not the whole group.
+    const ownStatus = config.value === "not_verified"
+      ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
+      : "";
     const description = fromPaper
       ? v2Sentence
       : (isDisputed
@@ -876,7 +901,7 @@
               ? identityOnlyTrustNote
               : (isCorrected
                   ? "Accepted after a recorded correction."
-                  : (stateDescriptions[config.value] || config.label))));
+                  : (ownStatus || stateDescriptions[config.value] || config.label))));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
     // "human-checked" only on accepted rows; the Review-notes note shows for every row.
@@ -1145,7 +1170,7 @@
       row._recordState = recordStateForRow(row);
       row._stateRank = recordStates.findIndex((item) => item.value === row._recordState);
       // Review-status sort: CatLog v2 accepted rows (read from the paper) lead the accepted block.
-      row._tierRank = (row._recordState === "accepted" && row.source_db === "primary_paper_direct")
+      row._tierRank = isV2Row(row)
         ? -1
         : (tierOrder[row.evidence_confidence_tier] ?? 99);
       row._sourceCount = Number(row.source_record_count || 0);
@@ -1664,9 +1689,9 @@
       || audit.download_sha256 !== manifest.enriched_download?.sha256 || audit.total !== total) return "";
     const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"], ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
     if (!fields.every(([key]) => Number.isInteger(audit[key]) && audit[key] >= 0 && audit[key] <= total)) return "";
-    return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} follow-up records.</p>
+    return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} records with checks pending.</p>
       ${statsFieldRings(fields.map(([key, label, color]) => ({ value: key, label, color, count: audit[key] })), total)}
-      <p>Fields included, not reasons for follow-up. Kinetic value means kcat, Km, Ki or kcat/Km.</p></div>`;
+      <p>Fields included, not reasons the checks are pending. Kinetic value means kcat, Km, Ki or kcat/Km.</p></div>`;
   }
 
   function statsCohortData(cohort, total) {
@@ -1821,11 +1846,11 @@
     const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
     const total = counts[cohort] || 0;
     const group = statsCohortData(cohort, total);
-    const label = ({ unverified: "Unverified", mathematically_inferred: "Pre-review", manual_review_required: "Follow-up" })[cohort];
+    const label = ({ unverified: "Unverified", mathematically_inferred: "Pre-review", manual_review_required: "Checks pending" })[cohort];
     const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"],
       ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
     return `<h3 id="fieldsGroupHeading">Fields in these records</h3><fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
-      ${[["manual_review_required", "Follow-up"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
+      ${[["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Pre-review"]].map(([value, name]) => `<label>
         <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
         <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
       <div class="stats-followup-coverage" data-cohort="${cohort}">
@@ -1862,7 +1887,7 @@
     const outcomes = [
       { value: "accepted", label: "Accepted", count: accepted, color: "verified", description: "Verified or corrected" },
       ...statuses.filter((item) => !["verified", "corrected"].includes(item.value)).map((item) => ({
-        ...item, label: item.value === "manual_review_required" ? "Follow-up" : item.label,
+        ...item,
         description: item.value === "manual_review_required" ? "Additional checks; not rejected" : item.value === "unverified" ? "No accepted decision recorded" : "",
         count: counts[item.value] || 0, color: colors[item.value] || "neutral",
       })),
@@ -1909,7 +1934,7 @@
             <div class="stats-nested-figure"><div id="statsReviewFigure">${statsNestedReviewRing(outcomes, total)}</div>
               <div id="statsChartAnnouncement" class="visually-hidden" role="status" aria-atomic="true"></div>
               <p>Outcomes inside; fields outside.</p>
-              <p class="stats-note">Field splits are available for Follow-up, Unverified and Pre-review.</p>
+              <p class="stats-note">Field splits are available for Checks pending, Unverified and Pre-review.</p>
             </div>
             ${statsLegend(outcomes, total, "stats-review-legend")}
           </div>
@@ -1918,7 +1943,7 @@
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
         </dl><p>A change may concern the value, sequence or another field.</p></div>
         <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have identity checks only; their kinetic values are not confirmed by that status.` : ""}</p>
-        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted combines Verified and Corrected. Follow-up requests another check. Unverified has no accepted result recorded. Pre-review is the legacy source-preparation status, previously labelled Calculated. Disputed records were flagged by review.</p></details>
+        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted combines Verified and Corrected. Checks pending means another check is required. Unverified has no accepted result recorded. Pre-review is the legacy source-preparation status, previously labelled Calculated. Disputed records were flagged by review.</p></details>
           </div>
           <div id="statsReviewDetails" class="stats-followup-section" aria-labelledby="fieldsGroupHeading">${statsReviewDetails(counts)}</div>
         </div>
@@ -2076,6 +2101,7 @@
     const hadMeasurementFilters = Boolean(document.querySelector('input[name="measurement"]'));
     const selectedStates = new Set(selectedCheckboxes("recordState"));
     const selectedMeasurements = new Set(selectedCheckboxes("measurement"));
+    const v2Only = Boolean($("sourceV2Filter")?.checked);
     const stateCounts = countsByState();
     $("statusChecklist").innerHTML = recordStates.map((item) => `
       <label class="check-row ${item.className}" title="${escapeHtml(stateDescriptions[item.value])}">
@@ -2084,6 +2110,11 @@
         <strong>${state.recordsReady ? formatInteger(stateCounts[item.value] || 0) : EMPTY_VALUE}</strong>
       </label>
     `).join("") + `
+      <label class="check-row source-v2" title="${escapeHtml(v2Sentence)}">
+        <input id="sourceV2Filter" type="checkbox" name="recordSource" value="v2" ${v2Only ? "checked" : ""} />
+        <span>Read from the paper (CatLog v2)</span>
+        <strong>${state.recordsReady ? formatInteger(state.records.filter(isV2Row).length) : EMPTY_VALUE}</strong>
+      </label>
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
@@ -2120,6 +2151,7 @@
       organism: foldSearch($("organismFilterInput").value.trim()),
       substrate: foldSearch($("substrateFilterInput").value.trim()),
       recordStates: selectedCheckboxes("recordState"),
+      v2Only: Boolean($("sourceV2Filter")?.checked),
       metrics: selectedCheckboxes("measurement"),
       sort: $("sortSelect").value,
     };
@@ -2129,7 +2161,7 @@
     const textFilterCount = [filters.q, filters.ec, filters.enzyme, filters.organism, filters.substrate]
       .filter(Boolean).length;
     const statusFilterCount = filters.recordStates.length === recordStates.length ? 0 : 1;
-    const count = textFilterCount + statusFilterCount + filters.metrics.length;
+    const count = textFilterCount + statusFilterCount + (filters.v2Only ? 1 : 0) + filters.metrics.length;
     const badge = $("activeFilterCount");
     if (!badge) return;
     badge.textContent = count ? String(count) : "";
@@ -2145,6 +2177,7 @@
   function rowMatches(row, filters) {
     if (filters.q && !row._search.includes(filters.q)) return false;
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
+    if (filters.v2Only && !isV2Row(row)) return false;
     if (!fieldContains(row, "ec_number", filters.ec)) return false;
     if (!fieldContains(row, "enzyme_display_name", filters.enzyme)) return false;
     if (!fieldContains(row, "organism", filters.organism)) return false;
@@ -2680,6 +2713,7 @@
     uniprot_ec_organism_mutation_ranked_match: "UniProt accession inferred from EC, organism, and variant",
     unresolved_ec_organism: "No sequence match from EC and organism",
     manual_literature_uniprot_resolution: "UniProt match from the cited paper",
+    manual_literature_structure_uniprot_resolution: "UniProt match from the cited paper's structure",
     uniprot_ec_organism_unique: "UniProt accession inferred from EC and organism",
     brenda_getsequence_unique_ec_organism: "UniProt accession inferred from BRENDA EC and organism",
     multiple: "Multiple sources",
@@ -2695,15 +2729,98 @@
       || key === "brenda_getsequence_unique_ec_organism";
   }
 
-  function sequenceSourceLabel(value, confidence) {
-    const key = sequenceSourceKey(value);
+  // Accessions inside older rows' free-text lookup notes ("UniProtKB:P00469 direct REST lookup on 2026-06-18").
+  const UNIPROT_ACCESSION = /(?:^|[^A-Z0-9])([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})(?![A-Z0-9])/;
+  const NCBI_ACCESSION = /(?:^|[^A-Z0-9])([A-Z]{2}_\d{5,9}\.\d+|[A-Z]{1,3}\d{5,9}\.\d+)(?![A-Z0-9])/;
+
+  // The sequence a reference names: a UniProt or NCBI accession, else the database, else none.
+  function sequenceReference(text) {
+    const value = String(text || "");
+    const uniprot = /uniprot/i.test(value) ? value.match(UNIPROT_ACCESSION) : null;
+    if (uniprot) return { database: "UniProt", accession: uniprot[1] };
+    const ncbi = /ncbi|refseq|genbank|embl/i.test(value) ? value.match(NCBI_ACCESSION) : null;
+    if (ncbi) return { database: "NCBI", accession: ncbi[1] };
+    if (/uniprot/i.test(value)) return { database: "UniProt", accession: "" };
+    if (/ncbi|refseq|genbank|embl/i.test(value)) return { database: "NCBI", accession: "" };
+    return null;
+  }
+
+  // Sequence source: a fixed label, never the lookup trace (dates, worker runs, URLs) older rows carry.
+  function sequenceSourceLabel(value) {
+    if (value && typeof value === "object") return "";
+    const text = String(value ?? "").trim();
+    const key = sequenceSourceKey(text);
     if (!key) return "";
-    const label = sequenceSourceLabels[key]
-      || (key.startsWith("uniprot_ec_organism_") ? "UniProt accession inferred from EC and organism" : "")
-      || key.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
-    return typeof confidence === "number" && Number.isFinite(confidence)
-      ? `${label} · confidence ${confidence}`
-      : label;
+    const firstToken = key.split(";", 1)[0].trim();
+    if (sequenceSourceLabels[key] || sequenceSourceLabels[firstToken]) return sequenceSourceLabels[key] || sequenceSourceLabels[firstToken];
+    if (key.startsWith("uniprot_ec_organism_")) return "UniProt accession inferred from EC and organism";
+    const reference = sequenceReference(text);
+    if (reference) return [reference.database, reference.accession].filter(Boolean).join(" ");
+    if (/(?:^|[^a-z])(?:pdb|rcsb)(?![a-z])/i.test(text)) {
+      const pdbId = (text.match(/(?:^|[^A-Za-z0-9])[0-9][A-Za-z0-9]{3}(?![A-Za-z0-9])/g) || [])
+        .map((item) => item.replace(/^[^A-Za-z0-9]/, "")).find((item) => /[A-Za-z]/.test(item));
+      return pdbId ? `PDB ${pdbId.toUpperCase()}` : "PDB";
+    }
+    const accession = text.match(UNIPROT_ACCESSION) || text.match(NCBI_ACCESSION);
+    if (accession) return `Accession ${accession[1]}`;
+    // A route token (identity_matching) reads as words; free text stays as written.
+    if (/\s/.test(text)) return text;
+    return text.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
+  }
+
+  // A free-text lookup trace on a record that shows no sequence names no shown sequence's source.
+  function showsSequenceSource(value, hasSequence) {
+    return hasSequence || !/\s/.test(String(value ?? "").trim());
+  }
+
+  // Older rows' Sequence note: the importer's boilerplate in short public words (same meaning); other notes as
+  // written. A note that only repeats Enzyme form is not shown.
+  function sequenceNoteText(note, enzymeForm = "") {
+    const text = String(note || "").trim();
+    let match;
+    if (/^Sequence is treated as wild-type because the source explicitly marked the record as wild-type\.?$/.test(text)) {
+      return enzymeForm === "Wild type" ? "" : "The source marks this record as wild type.";
+    }
+    if (/^Sequence identity was resolved, but no explicit wild-type or mutant call was captured\.?$/.test(text)) {
+      return enzymeForm === "Not recorded" ? "" : "The source does not say whether this is wild type or a variant.";
+    }
+    if (/^No sequence was resolved for this record, so variant-aware sequence handling could not be applied\.?$/.test(text)) {
+      return "No sequence was found for this record.";
+    }
+    if (/^Mutation context is present, but no sequence was resolved for this record\.?$/.test(text)) {
+      return "No sequence was found for this variant.";
+    }
+    match = text.match(/^Resolved canonical sequence from (.+?) and applied mutation signature (\S+)(?: with inferred residue-numbering offset ([+-]\d+))? to reconstruct the assayed variant sequence\.?$/);
+    if (match) {
+      const reference = sequenceReference(match[1]);
+      const target = reference?.database === "UniProt"
+        ? `the UniProt sequence${reference.accession ? ` ${reference.accession}` : ""}`
+        : (reference?.accession ? `the NCBI sequence ${reference.accession}` : "the reference sequence");
+      return `${match[2]} applied to ${target}${match[3] ? ` (residue numbering offset ${match[3]})` : ""}`;
+    }
+    match = text.match(/^Resolved sequence already matches the mutant residue\(s\)(?: after applying an inferred residue-numbering offset ([+-]\d+))?, so it is treated as a source-provided variant sequence\.?$/);
+    if (match) {
+      return `The sequence already carries the mutant residue(s)${match[1] ? ` (residue numbering offset ${match[1]})` : ""}; shown as the variant sequence.`;
+    }
+    if (/^Source notes indicate a mutant or variant enzyme, but no machine-applicable substitution signature was available\.?$/.test(text)) {
+      return "The source names a variant but no exact substitution, so no variant sequence was built.";
+    }
+    if (/^Canonical sequence is preserved, but mutation context is present; variant sequence was not attached without safely applying the mutation\.?$/.test(text)) {
+      return "The mutation could not be applied safely, so only the wild-type sequence is shown.";
+    }
+    if (/^Mutation context was captured, but the signature could not be translated into an exact residue substitution safely\.?$/.test(text)) {
+      return "The mutation could not be read as an exact residue substitution, so no variant sequence was built.";
+    }
+    if (/^Mutation context was captured, but conflicting substitutions targeted the same residue position\.?$/.test(text)) {
+      return "Two substitutions name the same residue, so no variant sequence was built.";
+    }
+    match = text.match(/^Mutation signature (\S+) could not be applied safely because the resolved sequence does not match the expected reference residue\(s\)\.?$/);
+    if (match) return `${match[1]} not applied: the sequence does not have the expected wild-type residue(s).`;
+    match = text.match(/^Mutation signature (\S+) matches the mutant residue at offset [+-]\d+ and the reference residue at offset [+-]\d+; variant reconstruction was not applied because multiple plausible residue-numbering offsets are present\.?$/);
+    if (match) return `${match[1]} not applied: more than one residue numbering fits the sequence.`;
+    match = text.match(/^Mutation signature (\S+) references residue (\d+), which is outside the resolved sequence length\.?$/);
+    if (match) return `${match[1]} not applied: residue ${match[2]} is beyond the sequence length.`;
+    return text;
   }
 
   function identityResolutionLabel(row) {
@@ -2795,11 +2912,13 @@
         <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
           ${metrics.map(([label, field, value]) => {
             const unitMissing = metricUnitMissing(metricSummary, field, flags);
-            const unit = unitMissing ? "" : metricUnitHtml(metricSummary, field);
+            // A non-catalog stored unit goes after the value, like in the table; the label then shows none.
+            const storedUnit = !unitMissing && storedUnitDiffers(metricSummary, field);
+            const unit = unitMissing || storedUnit ? "" : metricUnitHtml(metricSummary, field);
             return `
             <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
               <span>${label}${unitMissing ? unitMissingHtml() : (unit ? `<small>${unit}</small>` : "")}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
-              <strong>${scientificValueHtml(value)}${valueFlagBadgeHtml(flags, field)}</strong>
+              <strong>${scientificValueHtml(value)}${storedUnit ? storedUnitHtml(metricSummary, field) : ""}${valueFlagBadgeHtml(flags, field)}</strong>
             </div>
           `;
           }).join("")}
@@ -2862,15 +2981,17 @@
     ).trim();
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
     const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
-    const sequenceVariantNote = String(detail.sequence_variant_note || summary.sequence_variant_note || "").trim();
-    const sequenceSourceRecord = detail.sequence_source ? detail : summary;
-    const sequenceSource = sequenceSourceLabel(sequenceSourceRecord.sequence_source, sequenceSourceRecord.sequence_source_confidence);
+    const sequenceVariantNote = sequenceNoteText(detail.sequence_variant_note || summary.sequence_variant_note, enzymeForm);
+    const sequenceSourceValue = detail.sequence_source || summary.sequence_source;
     const accessionLabel = proteinAccessionDatabase === "UniProt"
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
     const sequenceHtml = variantSequence
       ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
+    const sequenceSource = showsSequenceSource(sequenceSourceValue, Boolean(sequenceHtml.trim()))
+      ? sequenceSourceLabel(sequenceSourceValue)
+      : "";
     return `
       <section class="detail-section identity-section">
         <h3>Protein and substrate</h3>
@@ -3104,6 +3225,7 @@
     document.querySelectorAll('input[name="measurement"]').forEach((input) => {
       input.checked = false;
     });
+    if ($("sourceV2Filter")) $("sourceV2Filter").checked = false;
     $("sortSelect").value = "evidence";
     resetDetail();
     applyFiltersInBackground();
@@ -3330,7 +3452,11 @@
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
-      await loadHumanReviewMarks();
+      // The marks load beside the table and never hold it up; when they arrive the visible badges are redrawn.
+      loadHumanReviewMarks().then(() => {
+        if (state.filtered.length && Object.keys(humanReviewMarks).length
+          && !document.body.classList.contains("catalog-load-failed")) renderRows();
+      });
       await loadRecordChunks();
     } catch (error) {
       showLoadNotice(
@@ -3374,6 +3500,8 @@
       enzymeFormLabel,
       enzymeFormHtml,
       sequenceSourceLabel,
+      sequenceNoteText,
+      isV2Row,
       identityResolutionLabel,
       measurementSection,
       molecularIdentitySection,

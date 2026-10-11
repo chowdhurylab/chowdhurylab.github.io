@@ -1331,11 +1331,11 @@ assert.ok(
 );
 assert.equal(
   api.sequenceSourceLabel("uniprot_accession", 1),
-  "UniProt accession · confidence 1",
+  "UniProt accession",
 );
 assert.equal(
   api.sequenceSourceLabel("uniprot_ec_organism_unique", 0.6),
-  "UniProt accession inferred from EC and organism · confidence 0.6",
+  "UniProt accession inferred from EC and organism",
 );
 assert.equal(
   api.sequenceSourceLabel("uniprot_ec_organism_unique", null),
@@ -1343,7 +1343,7 @@ assert.equal(
 );
 assert.equal(
   api.sequenceSourceLabel("brenda_getSequence_unique_ec_organism", 0),
-  "UniProt accession inferred from BRENDA EC and organism · confidence 0",
+  "UniProt accession inferred from BRENDA EC and organism",
 );
 assert.equal(
   api.sequenceSourceLabel("uniprot_ec_organism_future_method", null),
@@ -1374,8 +1374,8 @@ const inferredIdentityHtml = api.molecularIdentitySection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: 0.6 },
 );
-assert.match(inferredIdentityHtml, /UniProt accession inferred from EC and organism · confidence 0\.6/);
-assert.doesNotMatch(inferredIdentityHtml, /confidence 1/);
+assert.match(inferredIdentityHtml, /UniProt accession inferred from EC and organism/);
+assert.doesNotMatch(inferredIdentityHtml, /confidence/);
 const missingDetailConfidenceHtml = api.molecularIdentitySection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: null },
@@ -1485,7 +1485,7 @@ function row(overrides = {}) {
   assert.match(chart, /Both count as accepted/);
   assert.match(chart, /not a measure of work completed/);
   assert.match(chart, /does not contain a reason-by-reason tally/);
-  assert.match(chart, /data-stats-cohort="manual_review_required"[^>]*>Follow-up<\/button>/);
+  assert.match(chart, /data-stats-cohort="manual_review_required"[^>]*>Checks pending<\/button>/);
   assert.match(chart, /data-stats-cohort="mathematically_inferred"[^>]*>Pre-review<\/button>/);
   const reviewSection = chart.split('aria-labelledby="reviewChartTitle"')[1].split("</section>")[0];
   assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");

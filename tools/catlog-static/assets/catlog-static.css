@@ -1043,6 +1043,16 @@ body.filters-open .filter-backdrop {
   font-weight: 500;
 }
 
+/* The source filter sits under the status rows: it narrows, while they include. */
+.check-row.source-v2 {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 9px;
+}
+
+.check-row.source-v2 input {
+  accent-color: var(--teal);
+}
+
 .status-guide {
   border-top: 1px solid var(--line-soft);
   margin-top: 4px;
@@ -1412,6 +1422,17 @@ tbody tr.selected .row-arrow {
   font-size: 9px;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.metric-inline-unit[title] {
+  cursor: help;
+}
+
+/* A stored (unconverted) unit after the drawer value, inline like in the table. */
+.measurement-value strong .metric-inline-unit {
+  display: inline;
+  margin: 0 0 0 4px;
+  font-size: 10px;
 }
 
 .scientific-number {
