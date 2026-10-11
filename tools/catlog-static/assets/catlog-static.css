@@ -1458,15 +1458,7 @@ body.detail-open .detail-panel {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
   margin-top: 4px;
-}
-
-.evidence-source {
-  display: inline-flex;
-  align-items: center;
-  color: var(--muted);
-  font-size: 12px;
 }
 
 .detail-section {
@@ -1574,6 +1566,7 @@ body.detail-open .detail-panel {
 
 .measurement-value {
   display: grid;
+  align-content: space-between;
   min-width: 0;
   gap: 4px;
   border-left: 1px solid var(--line);
@@ -1585,13 +1578,13 @@ body.detail-open .detail-panel {
   padding-left: 0;
 }
 
-.measurement-value span {
+.measurement-value > span {
   color: var(--muted);
   font-size: 10.5px;
   white-space: nowrap;
 }
 
-.measurement-value small {
+.measurement-value > span small {
   display: block;
   margin-top: 2px;
   color: var(--muted);
@@ -1610,6 +1603,22 @@ body.detail-open .detail-panel {
 
 .measurement-conditions {
   margin-top: 12px;
+}
+
+/* CatLog v2 conditions: one short line per part. */
+.condition-list {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 14px;
+  color: #162033;
+  font-weight: 520;
+  overflow-wrap: anywhere;
+}
+
+.condition-list li::marker {
+  color: var(--muted);
 }
 
 .identity-section {

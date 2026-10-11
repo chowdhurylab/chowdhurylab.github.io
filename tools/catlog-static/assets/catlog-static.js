@@ -3253,7 +3253,29 @@
     if (match) return `${match[1]} not applied: more than one residue numbering fits the sequence.`;
     match = text.match(/^Mutation signature (\S+) references residue (\d+), which is outside the resolved sequence length\.?$/);
     if (match) return `${match[1]} not applied: residue ${match[2]} is beyond the sequence length.`;
-    return text;
+    // CatLog v2 notes, in short plain words (same meaning).
+    match = text.match(/^no sequence: (.+) share UniProt (\S+): which sequence is which is not known\.?$/);
+    if (match) return `No sequence: ${match[1]} share one UniProt entry (${match[2]}).`;
+    if (/^no sequence: the measured construct could not be placed on UniProt\.?$/.test(text)) {
+      return "No sequence: the measured construct could not be matched to UniProt.";
+    }
+    if (/^UniProt canonical sequence shown: the sequence of this variant is not known\.?$/.test(text)) {
+      return "Wild-type sequence shown; the variant's own sequence is not known.";
+    }
+    if (/^UniProt canonical sequence shown: the measured construct could not be placed on it\.?$/.test(text)) {
+      return "Full UniProt sequence shown; the measured construct could not be matched to it.";
+    }
+    match = text.match(/^UniProt canonical sequence shown without (.+): the paper's residue numbers do not match it\.?$/);
+    if (match) return `Wild-type sequence shown, without ${match[1]} (the paper numbers residues differently).`;
+    match = text.match(/^UniProt canonical sequence shown without (.+): the measured construct could not be placed on it\.?$/);
+    if (match) return `Wild-type sequence shown, without ${match[1]} (the measured construct could not be matched to UniProt).`;
+    match = text.match(/^measured construct: (.+)$/);
+    if (match) return `Measured construct: ${match[1]}`;
+    // How the paper's residue numbers were matched, in fewer words.
+    return text
+      .replace(/ \(the paper numbers the chain after the ([^:()]+): its residue 1 is UniProt residue (\d+)\)/, " (the paper's residue 1 is UniProt residue $2, after the $1)")
+      .replace(/ \(the paper numbers residues as PDB (\S+) chain (\S+)\)/, " (numbered as in PDB $1 chain $2)")
+      .replace(/ \(positions matched through the paper's printed mutagenesis primers\)/, " (positions found from the paper's primers)");
   }
 
   function identityResolutionLabel(row) {
@@ -3339,6 +3361,8 @@
       metrics.push(["<i>K</i><sub>i</sub>", "ki", metricDisplay(metricSummary, "ki")]);
     }
     const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const conditionRows = v2Record ? v2ConditionRows(conditionsSummary ? compactValue(conditionsSummary) : "") : null;
     return `
       <section class="detail-section measurement-section">
         <h3>Measurement</h3>
@@ -3350,7 +3374,7 @@
             const unit = unitMissing || storedUnit ? "" : metricUnitHtml(metricSummary, field);
             return `
             <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
-              <span>${label}${unitMissing ? unitMissingHtml() : (unit ? `<small>${unit}</small>` : "")}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
+              <span>${label}${unitMissing ? unitMissingHtml() : `<small>${unit || "&nbsp;"}</small>`}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
               <strong>${scientificValueHtml(value)}${storedUnit ? storedUnitHtml(metricSummary, field) : ""}${valueFlagBadgeHtml(flags, field)}</strong>
             </div>
           `;
@@ -3358,14 +3382,64 @@
         </div>
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
+          ${conditionRows?.cosubstrate || ""}
           ${kv("Temperature", temperatureValue)}
           ${kv("pH", phValue)}
           ${sourceEfficiencyRow(summary, detail)}
           ${conditionFlagsHtml(flags)}
-          ${conditionsSummary ? linkedKv("Conditions", caretHtml(escapePublic(compactValue(conditionsSummary)))) : ""}
+          ${conditionRows ? conditionRows.conditions + conditionRows.preparation : (conditionsSummary ? linkedKv("Conditions", caretHtml(escapePublic(compactValue(conditionsSummary)))) : "")}
         </div>
       </section>
     `;
+  }
+
+  // A CatLog v2 condition summary, split at "; " outside brackets.
+  function conditionSegments(text) {
+    const parts = [];
+    let depth = 0;
+    let start = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      const character = text[index];
+      if (character === "(" || character === "[") depth += 1;
+      else if ((character === ")" || character === "]") && depth > 0) depth -= 1;
+      else if (character === ";" && depth === 0 && text[index + 1] === " ") {
+        parts.push(text.slice(start, index));
+        start = index + 2;
+      }
+    }
+    parts.push(text.slice(start));
+    return parts.map((part) => part.trim()).filter(Boolean);
+  }
+
+  // CatLog v2 conditions as short labelled lines: the "cosubstrate X" and "preparation: ..." segments get their own
+  // line; the rest is a short list.
+  function v2ConditionRows(text) {
+    const cosubstrates = [];
+    const preparations = [];
+    const rest = [];
+    conditionSegments(String(text || "").trim()).forEach((segment) => {
+      let match = segment.match(/^preparation:\s*(.+)$/i);
+      if (match) {
+        preparations.push(match[1]);
+        return;
+      }
+      match = segment.match(/^cosubstrates?:?\s+(.+)$/i);
+      if (match) {
+        cosubstrates.push(match[1]);
+        return;
+      }
+      rest.push(segment);
+    });
+    const html = (value) => caretHtml(escapePublic(value));
+    return {
+      cosubstrate: cosubstrates.length ? linkedKv("Cosubstrate", html(cosubstrates.join("; "))) : "",
+      conditions: !rest.length
+        ? ""
+        : (rest.length === 1
+          ? linkedKv("Conditions", html(rest[0]))
+          : `<div class="kv-line"><span>Conditions</span><ul class="condition-list">${rest.map((segment) => `<li>${html(segment)}</li>`).join("")}</ul></div>`),
+      preparation: preparations.length ? linkedKv("Preparation", html(preparations.join("; "))) : "",
+    };
   }
 
   function sequenceDisclosure(label, sequence, targetId) {
@@ -3507,24 +3581,27 @@
     const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
       ? "Source note"
       : "Values in source";
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const firstPmid = pmids[0] || "";
     const firstDoi = dois[0] || "";
     const hasSourceEvidence = proofLines.length > 0;
-    const referenceRows = firstPmid || firstDoi
+    // What stands behind an older record's values (a CatLog v2 record's badge already says "read from the paper"). It
+    // sits with the paper links, so the status stays one line.
+    const evidenceRow = isV2Row(summary)
+      ? ""
+      : kv("Evidence", String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines));
+    const referenceRows = [evidenceRow, ...(firstPmid || firstDoi
       ? [
           dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
           pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
         ]
-      : [kv("Identifier", "Not available")];
+      : [kv("Identifier", "Not available")])];
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close detail">&times;</button>
         <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Name not preserved")}</h2>
         <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
-        <div class="detail-status-line">
-          ${statusBadge(summary)}
-          <span class="evidence-source">${escapeHtml(String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines))}</span>
-        </div>
+        <div class="detail-status-line">${statusBadge(summary, { long: true })}</div>
       </div>
 
       ${measurementSection(summary, detail)}
@@ -3543,7 +3620,8 @@
       ${detailDisclosure("Source details", [
         kv("Enzyme name", sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source || "Not recorded"),
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
-        kv("Source license", sourceLicense(summary, detail)),
+        // CatLog's own compilation of the values it read from papers is CC BY 4.0; quoted paper text stays the publisher's.
+        v2Record ? kv("License", "CC BY 4.0 (CatLog)") : kv("Source license", sourceLicense(summary, detail)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         kv("Database rows", detail.source_record_count || summary.source_record_count),
         detail.source_databases_merged?.length ? kv("Databases", detail.source_databases_merged.map(sourceDatabaseLabel).join(", ")) : "",
