@@ -102,9 +102,9 @@
   ];
 
   const measurementFilters = [
-    { value: "kcat", label: "Has kcat", field: "kcat" },
-    { value: "km", label: "Has Km", field: "km" },
-    { value: "kcat_over_km", label: "Has kcat/Km", field: "kcat_over_km" },
+    { value: "kcat", label: "Has kcat", labelHtml: "Has <i>k</i><sub>cat</sub>", field: "kcat" },
+    { value: "km", label: "Has Km", labelHtml: "Has <i>K</i><sub>m</sub>", field: "km" },
+    { value: "kcat_over_km", label: "Has kcat/Km", labelHtml: "Has <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", field: "kcat_over_km" },
   ];
 
   const tierOrder = {
@@ -647,9 +647,52 @@
     return `<small class="metric-inline-unit" title="${escapeHtml(STORED_UNIT_NOTE)}">${unitHtml(metricUnit(row, field))}</small>`;
   }
 
-  function metricDisplayWithUnitHtml(row, field) {
+  // A table number: a × 10ⁿ at or above 10⁵ and below 10⁻³, a plain decimal in between, always with the digits as
+  // stored (nothing is rounded). The record panel and the downloads keep the stored text.
+  function tableNumberHtml(value) {
+    const text = compactValue(value).trim();
+    const match = text.match(/^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
+    const magnitude = Math.abs(Number(text));
+    if (!match || !(match[2] || match[3]) || !Number.isFinite(magnitude) || magnitude === 0) return scientificValueHtml(text);
+    const [, sign, whole = "", fraction = "", exponentText] = match;
+    let digits = whole + fraction;
+    let point = whole.length + Number(exponentText || 0);
+    const leadingZeros = digits.match(/^0*/)[0].length;
+    digits = digits.slice(leadingZeros);
+    point -= leadingZeros;
+    if (magnitude >= 1e5 || magnitude < 1e-3) {
+      // Trailing zeros of a plain integer (123000) are not printed digits.
+      const significant = fraction || exponentText ? digits : digits.replace(/0+$/, "") || "0";
+      const coefficient = significant.length > 1 ? `${significant[0]}.${significant.slice(1)}` : significant;
+      return scientificValueHtml(`${sign}${coefficient}e${point - 1}`);
+    }
+    if (!exponentText) return escapePublic(text);
+    if (point <= 0) return escapePublic(`${sign}0.${"0".repeat(-point)}${digits}`);
+    if (point >= digits.length) return escapePublic(`${sign}${digits}${"0".repeat(point - digits.length)}`);
+    return escapePublic(`${sign}${digits.slice(0, point)}.${digits.slice(point)}`);
+  }
+
+  const SUPERSCRIPT_DIGITS = { "-": "⁻", "−": "⁻", "+": "⁺", ".": "·", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+
+  // A unit as plain text for a tooltip: s^(-1)*mM^(-1) -> s⁻¹ mM⁻¹.
+  function unitText(value) {
+    return String(value || "")
+      .replace(/\^\(([−+-]?[\d.]+)\)|\^\{([−+-]?[\d.]+)\}|\^([−+-]?[\d.]+)/g, (_m, a, b, c) => [...(a ?? b ?? c)].map((ch) => SUPERSCRIPT_DIGITS[ch] ?? ch).join(""))
+      .replace(/\*/g, " ")
+      .trim();
+  }
+
+  // The stored value and its unit, for the tooltip of a table value.
+  function valueTitle(row, field) {
     const display = metricDisplay(row, field);
-    const displayHtml = scientificValueHtml(display);
+    if (display === EMPTY_VALUE) return "";
+    const unit = metricUnitMissing(row, field) ? "" : unitText(metricUnit(row, field));
+    return ` title="${escapeHtml([display, unit].filter(Boolean).join(" "))}"`;
+  }
+
+  function metricDisplayWithUnitHtml(row, field, { table = false } = {}) {
+    const display = metricDisplay(row, field);
+    const displayHtml = table ? tableNumberHtml(display) : scientificValueHtml(display);
     if (display === EMPTY_VALUE) return displayHtml;
     if (metricUnitMissing(row, field)) return `${displayHtml}${unitMissingHtml()}`;
     return storedUnitDiffers(row, field) ? `${displayHtml}${storedUnitHtml(row, field)}` : displayHtml;
@@ -708,6 +751,17 @@
     const number = Number(value);
     if (!Number.isFinite(number) || number < 0 || number > 14) return EMPTY_VALUE;
     return formatNumber(number, { maximumFractionDigits: 1 });
+  }
+
+  // The table's Assay cell: "25 °C · pH 7.5", either part alone, or a dash.
+  function formatAssay(row) {
+    const temperature = formatTemperature(row);
+    const ph = formatPh(row);
+    const parts = [
+      temperature !== EMPTY_VALUE ? `${temperature} °C` : "",
+      ph !== EMPTY_VALUE ? `pH ${ph}` : "",
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : EMPTY_VALUE;
   }
 
   function stateConfig(value) {
@@ -822,6 +876,7 @@
       const badge = tr.querySelector(".state-badge");
       if (row && badge) badge.outerHTML = statusBadge(row);
     });
+    fitTableColumns();
     // a record opened before the marks arrived (a deep link) gets its human-review note too
     if (state.selectedKey && document.body.classList.contains("detail-open")) {
       selectRecord(state.selectedKey, { focusDetail: false });
@@ -1372,6 +1427,7 @@
     }
     $("activeSummary").textContent = title;
     $("pageSummary").textContent = message;
+    $("pageSummary").classList.remove("visually-hidden");
     if ($("clearResultsButton")) $("clearResultsButton").hidden = true;
     $("pageLabel").textContent = "No records";
     $("prevButton").disabled = true;
@@ -1619,6 +1675,7 @@
           // Page 1 stays on screen; only the counts say that the rest is being downloaded again.
           $("activeSummary").textContent = "Retrying table download";
           $("pageSummary").textContent = message;
+          $("pageSummary").classList.remove("visually-hidden");
           $("catalogLoadProgress")?.classList.add("stalled");
         } else {
           showLoadNotice("Retrying table download", message);
@@ -2414,7 +2471,7 @@
     $("measurementChecklist").innerHTML = measurementFilters.map((item) => `
       <label class="check-row">
         <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" ${hadMeasurementFilters && selectedMeasurements.has(item.value) ? "checked" : ""} />
-        <span>${escapeHtml(item.label)}</span>
+        <span>${item.labelHtml}</span>
         <strong>${formatCount(state.recordsReady ? metricCoverage(state.records, item.field) : manifestMetricCounts[item.field])}</strong>
       </label>
     `).join("");
@@ -2785,6 +2842,14 @@
     $("pageLabel").textContent = pageRows.length
       ? range
       : "No records";
+    // The count beside Filters is read out when it changes; it is shown only when it says more than the page range.
+    $("pageSummary").classList.toggle("visually-hidden", $("pageSummary").textContent === $("pageLabel").textContent);
+    const showResults = $("showResultsButton");
+    if (showResults) {
+      showResults.textContent = state.recordsReady
+        ? `Show ${formatInteger(state.filtered.length)} ${state.filtered.length === 1 ? "record" : "records"}`
+        : "Show records";
+    }
     $("prevButton").disabled = state.page <= 1;
     // While loading, the next page opens once its rows have loaded.
     $("nextButton").disabled = loading
@@ -2803,10 +2868,12 @@
     const focusedRowKey = state.preserveRenderedRows && body.contains?.(document.activeElement) ? state.activeRowKey : "";
     if (loading && !pageRows.length && !state.records.length) {
       body.innerHTML = skeletonRowsHtml();
+      fitTableColumns();
       return;
     }
     if (!pageRows.length && state.recordsReady) {
       body.innerHTML = emptyResultsHtml();
+      fitTableColumns();
       body.querySelector?.('[data-action="clear-filters"]')?.addEventListener("click", () => {
         clearFilters();
         $("globalSearchInput").focus({ preventScroll: true });
@@ -2824,16 +2891,16 @@
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
         <td class="c-substrate"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span></td>
-        <td class="c-kcat num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat")}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
-        <td class="c-km num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "km")}${valueFlagBadgeHtml(flags, "km")}</span></td>
-        <td class="c-eff num"><span class="metric-with-note">${metricDisplayWithUnitHtml(row, "kcat_over_km")}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km")}</span></td>
-        <td class="c-temp num">${escapeHtml(formatTemperature(row))}</td>
-        <td class="c-ph num">${escapeHtml(formatPh(row))}</td>
+        <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
+        <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km")}</span></td>
+        <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km")}</span></td>
+        <td class="c-assay num">${escapeHtml(formatAssay(row))}</td>
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
     `;
     }).join("");
+    fitTableColumns();
     const rowElements = [...body.querySelectorAll("tr[data-key]")];
     rowElements.forEach((rowElement) => {
       // Hovering or focusing a row a moment starts loading its record, so opening it is immediate.
@@ -2871,6 +2938,110 @@
     return filters.sort === "evidence"
       && !filters.q && !filters.ec && !filters.enzyme && !filters.organism && !filters.substrate
       && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
+  }
+
+  // Column widths follow the page: Enzyme, Organism, Substrate and Assay are as wide as their longest entry on the page
+  // (within a minimum and a cap; longer names wrap to two lines) and Status as wide as its longest badge. The space
+  // left over goes to the arrow column at the right edge, so the values sit close to the names. EC and the values keep
+  // the stylesheet's widths. Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
+  const FIT_COLUMNS = [
+    { key: "enzyme", min: 168, narrowMin: 150, cap: 340 },
+    { key: "organism", min: 112, narrowMin: 104, cap: 220 },
+    { key: "substrate", min: 120, narrowMin: 112, cap: 260 },
+    { key: "assay", min: 72, narrowMin: 64, cap: 150 },
+  ];
+  const FITTED_COLUMNS = ["enzyme", "organism", "substrate", "assay", "state", "open"];
+  let measureContext = null;
+
+  // Canvas text width, with a margin for the tabular digits and kerning the page uses and a canvas does not.
+  function textWidth(text, font) {
+    measureContext ??= document.createElement?.("canvas")?.getContext?.("2d") || null;
+    if (!measureContext || !text) return 0;
+    measureContext.font = font;
+    return measureContext.measureText(text).width * 1.03 + 3;
+  }
+
+  function fitTableColumns() {
+    const table = $("recordTableWrap")?.querySelector?.("table");
+    const style = window.getComputedStyle;
+    if (!table || typeof style !== "function") return;
+    const cols = {};
+    table.querySelectorAll("col").forEach((col) => { cols[col.className.replace(/^col-/, "")] = col; });
+    const sized = FITTED_COLUMNS.map((key) => cols[key]).filter(Boolean);
+    sized.forEach((col) => { col.style.width = ""; });
+    table.style.minWidth = "";
+    const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
+    if (!rows.length || style(table).display !== "table" || sized.length !== FITTED_COLUMNS.length) return;
+    const first = rows[0];
+    const font = (element) => {
+      const computed = style(element);
+      return `${computed.fontStyle} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
+    };
+    const padding = (element) => {
+      const computed = style(element);
+      return parseFloat(computed.paddingLeft) + parseFloat(computed.paddingRight) + 2;
+    };
+    const visible = (element) => Boolean(element) && style(element).display !== "none";
+    const widest = (measure) => Math.max(0, ...rows.map(measure));
+    const nameFont = font(first.querySelector(".primary-cell strong"));
+    const formElement = rows.map((row) => row.querySelector(".enzyme-form")).find(Boolean);
+    const formFont = formElement ? font(formElement) : "";
+    const plainFont = font(first.querySelector(".c-organism .clamp-2"));
+    const assayFont = font(first.querySelector(".c-assay"));
+    const plain = (selector, cellFont) => widest((row) => textWidth(row.querySelector(selector)?.textContent.trim(), cellFont))
+      + padding(first.querySelector(selector));
+    const need = {
+      enzyme: widest((row) => {
+        const form = row.querySelector(".enzyme-form");
+        return textWidth(row.querySelector(".primary-cell strong")?.textContent, nameFont)
+          + (form ? textWidth(" ", nameFont) + textWidth(form.textContent, formFont) + 10 : 0);
+      }) + padding(first.querySelector(".c-enzyme")),
+      organism: plain(".c-organism", plainFont),
+      substrate: plain(".c-substrate", plainFont),
+      assay: plain(".c-assay", assayFont),
+    };
+    // Status: the dot and its gap before the word; tags joined by a dot between two 3px margins.
+    const tagsElement = first.querySelector(".state-tags");
+    const tagsShown = visible(tagsElement);
+    const tagsFont = font(tagsElement);
+    const tagsIndent = parseFloat(style(tagsElement).paddingLeft) || 0;
+    const labelFont = font(first.querySelector(".state-label"));
+    const status = Math.ceil(Math.max(96, widest((row) => Math.max(
+      textWidth(row.querySelector(".state-label")?.textContent, labelFont) + 14,
+      tagsShown ? tagsIndent + textWidth([...row.querySelectorAll(".state-tag")].map((tag) => tag.textContent).join(" · "), tagsFont) : 0,
+    )) + padding(first.querySelector(".c-status"))));
+    const arrowShown = visible(cols.open);
+    const arrow = arrowShown ? parseFloat(style(cols.open).width) || 24 : 0;
+    const fixed = Object.entries(cols)
+      .filter(([key, col]) => !FITTED_COLUMNS.includes(key) && visible(col))
+      .reduce((sum, [, col]) => sum + (parseFloat(style(col).width) || 0), 0);
+    const narrow = narrowDetailMedia.matches;
+    const widths = FIT_COLUMNS.filter((column) => visible(cols[column.key])).map((column) => {
+      const min = narrow ? column.narrowMin : column.min;
+      const content = Math.ceil(need[column.key]);
+      return { ...column, min, need: content, width: Math.max(min, Math.min(column.cap, content)) };
+    });
+    const total = () => widths.reduce((sum, column) => sum + column.width, 0);
+    const available = table.parentElement.clientWidth - fixed - status - arrow;
+    if (total() > available && available >= widths.reduce((sum, column) => sum + column.min, 0)) {
+      // Too wide for the window: shrink the name columns toward their minimums (names wrap to two lines).
+      const excess = total() - available;
+      const slack = widths.reduce((sum, column) => sum + column.width - column.min, 0);
+      widths.forEach((column) => { column.width = Math.floor(column.width - excess * (column.width - column.min) / slack); });
+    } else if (total() < available) {
+      // Room to spare: an entry longer than its cap may use some of it before the arrow column takes the rest.
+      let spare = available - total();
+      widths.forEach((column) => {
+        const grow = Math.min(spare, Math.max(0, Math.min(column.need, Math.round(column.cap * 1.5)) - column.width));
+        column.width += grow;
+        spare -= grow;
+      });
+    }
+    widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
+    // Without the arrow column (a record open on desktop) Status takes what is left.
+    cols.state.style.width = arrowShown ? `${status}px` : "auto";
+    if (arrowShown) cols.open.style.width = "auto";
+    table.style.minWidth = `${Math.ceil(total() + fixed + status + arrow)}px`;
   }
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each
@@ -3823,9 +3994,20 @@
         const isOpen = !section.classList.contains("open");
         section.classList.toggle("open", isOpen);
         button.setAttribute("aria-expanded", String(isOpen));
-        const marker = button.querySelector("span");
-        if (marker) marker.textContent = isOpen ? "⌃" : "⌄";
       });
+    });
+    // Phones: the filters' "Show N records" button closes the panel.
+    $("showResultsButton")?.addEventListener("click", () => {
+      setFiltersOpen(false);
+      $("openFiltersButton")?.focus({ preventScroll: true });
+    });
+    // Phones: the counts band shows the two main counts; More shows the rest.
+    $("snapshotMoreButton")?.addEventListener("click", (event) => {
+      const band = event.currentTarget.closest(".snapshot-band");
+      const expanded = !band.classList.contains("expanded");
+      band.classList.toggle("expanded", expanded);
+      event.currentTarget.setAttribute("aria-expanded", String(expanded));
+      event.currentTarget.firstChild.textContent = expanded ? "Less " : "More ";
     });
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     for (const view of ["browse", "guide", "stats"]) {
@@ -3882,6 +4064,7 @@
     window.addEventListener("resize", () => {
       hideSuggestions();
       syncFilterPanel();
+      fitTableColumns();
       updateTableScrollControls();
     });
     narrowDetailMedia.addEventListener?.("change", () => {

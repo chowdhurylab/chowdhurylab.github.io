@@ -4,16 +4,27 @@ description: A compact enzyme kinetics workbench for reading measurements and th
 colors:
   background: "#ffffff"
   text: "#172120"
-  primary: "#245f58"
+  text-2: "#3d4845"
   muted: "#5f6b68"
+  primary: "#245f58"
   border: "#d3dcd7"
+  status-accepted: "#339cff"
+  status-pending: "#f3883b"
+  status-unverified: "#a9b1ae"
+  status-not-reviewed: "#9b79ec"
+  status-disputed: "#e02e2a"
 typography:
   body:
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif'
-    fontSize: 13px
+    fontSize: 14px
     fontWeight: 400
     lineHeight: 1.45
     letterSpacing: 0px
+  table:
+    fontSize: 13px
+  scale: 11, 12, 13, 14, 16, 18, 22, 28px (Stats labels 15px, Stats notes 14px)
+  weights: 400, 500, 600
+spacing: 4, 8, 12, 16, 24, 32px
 ---
 
 # CatLog
@@ -21,9 +32,11 @@ typography:
 ## Layout
 
 Start with the table, not a landing page. Keep Records, Accepted, and the three
-Rows with values counts visible in one compact band. More counts expands the
-enzyme, EC, organism, review, and evidence breakdowns. Counts follow the current
-filtered results; measurement coverage overlaps and must not form a stacked chart.
+Rows with values counts in one 48px line, labels and counts on one baseline, the
+snapshot date and View stats at its end; on phones the line keeps Records and
+Accepted and a More button shows the rest. Counts follow the current filtered
+results; measurement coverage overlaps and must not form a stacked chart. The
+count beside Filters is shown only when it says more than the page range.
 
 Expanded counts separate review status from saved source material. Show the
 denominator, record count, and share in aligned tables. Each record belongs to
@@ -48,23 +61,32 @@ Guide never download the record index.
 
 ## Type And Color
 
-Use the existing system font, tabular numerals, and zero letter spacing. Table
-numbers share regular weight; enzyme names use medium weight. Reserve semibold
-for counts, section headings, and the selected record's main values. Numeric
+Use the existing system font, tabular numerals, and zero letter spacing. One
+type scale (front matter) and weights 400/500/600 only; no text below 11px.
+Colours are tokens in the stylesheet's :root, the only place hex values appear.
+Table numbers share regular weight; enzyme names use medium weight. Reserve
+semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
 hover and in the record. Every table row has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it.
 
 Status cells align left: a dot and one word, then whole-word tags on a second
-line. Columns are sized to their content (values, Status and the arrow are
-fixed, names take the rest), so values sit close to the names. Every column
-fits from about 1010px; narrower screens scroll the table sideways with the
-enzyme name kept in view. With a record open, EC, temperature, pH and the arrow
-give way; Status stays.
+line. Columns are sized to the page's content: Enzyme, Organism, Substrate,
+Assay and Status are as wide as their longest entry (names longer than a cap
+wrap to two lines), values and EC have set widths, and the space left over goes
+to the arrow column at the right edge, so values sit next to the names.
+Temperature and pH share one Assay column ("25 °C · pH 7.5"). The table writes
+numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ with the stored digits (no
+rounding); the record and downloads keep the stored text. Every column fits from
+about 1010px; narrower screens scroll the table sideways with the enzyme name
+kept in view. With a record open, EC, Assay and the arrow give way; Status
+stays. On phones (640px and below) each record is a card: name; organism ·
+substrate; kcat, Km and kcat/Km with their units as labels; status and assay.
+Filters on phones end with a "Show N records" button.
 
-White and neutral surfaces carry the data. Teal identifies selection and actions;
-status uses a coloured dot (the Stats outcome colours) with the word in ink;
-amber is reserved for cautions. Use thin dividers, modest control radii, and
+White and neutral surfaces carry the data. Teal marks selection and actions;
+status uses a coloured dot (the Stats outcome colours) and ink words; amber
+marks cautions. Use thin dividers, modest control radii, and
 shadows only for overlays. No decorative gradients, statistic cards, or hero art.
 
 ## Record Details
