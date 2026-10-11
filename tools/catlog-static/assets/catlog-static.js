@@ -13,6 +13,7 @@
     page: 1,
     pageSize: 25,
     selectedKey: "",
+    selectedShard: "",
     activeRowKey: "",
     selectedDetail: null,
     pageDownloadPending: false,
@@ -20,6 +21,14 @@
     recordChunksTotal: 0,
     loadProgressUnit: "chunks",
     recordsReady: false,
+    // Page 1 is on screen while the rest of the index downloads (an index already in the default order).
+    firstRowsShown: false,
+    // The row order the loaded index declares ("default_review_status": the Review-status sort), or "".
+    indexOrder: "",
+    preserveRenderedRows: false,
+    // The page range shown beside the loading count ("1–25 of 169,309", or "312 available" while filtering).
+    loadingLead: "",
+    statsRendered: false,
     recordsGeneration: 0,
     sortCache: new Map(),
     filterRunId: 0,
@@ -41,6 +50,12 @@
   const SORT_CACHE_LIMIT = 2;
   const DETAIL_SHARD_CACHE_LIMIT = 8;
   const DETAIL_REQUEST_TIMEOUT_MS = 30000;
+  // Page 1 is drawn once the default-order index has given this many rows.
+  const FIRST_ROWS_MIN = 100;
+  // Hovering or focusing a row this long starts loading its record.
+  const DETAIL_PREFETCH_DELAY_MS = 120;
+  const SORT_LOADING_TITLE = "Sorting is available when all records have loaded";
+  const DEFAULT_INDEX_ORDER = "default_review_status";
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
   const DETAIL_INERT_SELECTOR = [
@@ -299,6 +314,11 @@
     $("catalogView").hidden = !browseOpen;
     $("guideView").hidden = !guideOpen;
     $("statsView").hidden = !statsOpen;
+    // Stats come from the manifest alone: drawn the first time they are shown, never from the record index.
+    if (statsOpen && !state.statsRendered) {
+      renderStats();
+      state.statsRendered = true;
+    }
     document.body.classList.toggle("guide-open", guideOpen);
     document.body.classList.toggle("stats-open", statsOpen);
     for (const name of ["browse", "stats", "guide"]) {
@@ -355,6 +375,7 @@
     if (window.location.href !== url.href) {
       window.history.pushState({ catlogView: view }, "", url);
     }
+    if (view === "browse") ensureRecordsLoaded();
     renderView(view, { scroll: true });
   }
 
@@ -818,8 +839,42 @@
   }
 
   function humanReviewMark(row) {
-    const key = String(row?.measurement_key || "");
+    const key = String(row?.measurement_key || row?.record_key || "");
     return humanReviewMarks[key] || null;  // exact key only: a suffixed duplicate is a different record
+  }
+
+  // When the marks arrive, the visible status badges are updated in place (rows are not redrawn: a reader, or a test,
+  // holding a row keeps it).
+  function applyHumanReviewMarks() {
+    if (!state.filtered.length || !Object.keys(humanReviewMarks).length
+      || document.body.classList.contains("catalog-load-failed")) return;
+    const pageRows = new Map(currentPageRows().map((row) => [row.record_key, row]));
+    document.querySelectorAll("#recordsBody tr[data-key]").forEach((tr) => {
+      const row = pageRows.get(tr.dataset.key);
+      const badge = tr.querySelector(".state-badge");
+      if (row && badge) badge.outerHTML = statusBadge(row);
+    });
+    // a record opened before the marks arrived (a deep link) gets its human-review note too
+    if (state.selectedKey && document.body.classList.contains("detail-open")) {
+      selectRecord(state.selectedKey, { focusDetail: false });
+    }
+  }
+
+  // The record index (and the human-review marks) load the first time Browse is shown or about to be: Stats and Guide
+  // never download them.
+  let recordsLoad = null;
+  function ensureRecordsLoaded() {
+    if (!recordsLoad) {
+      recordsLoad = loadRecordChunks().catch((error) => {
+        showLoadNotice(
+          "CatLog could not start",
+          error?.message || String(error),
+          { actionLabel: "Try again", onAction: reloadCatalogPage },
+        );
+      });
+      loadHumanReviewMarks().then(applyHumanReviewMarks).catch(() => {});
+    }
+    return recordsLoad;
   }
 
   function humanReviewNote(row) {
@@ -1123,8 +1178,11 @@
     if (!src || !Object.prototype.hasOwnProperty.call(shards, src)) return;
     state.detailShardLru.delete(src);
     state.detailShardLru.set(src, true);
+    // the open record's shard is never evicted (a hover prefetch must not unload the record being read)
+    const keep = state.selectedKey ? state.selectedShard : "";
     while (state.detailShardLru.size > DETAIL_SHARD_CACHE_LIMIT) {
-      const oldest = state.detailShardLru.keys().next().value;
+      const oldest = [...state.detailShardLru.keys()].find((key) => key !== keep && key !== src);
+      if (!oldest) break;
       state.detailShardLru.delete(oldest);
       discardDetailShard(oldest);
     }
@@ -1138,32 +1196,47 @@
     state.recordsGeneration += 1;
     state.filterRunId += 1;
     state.sortCache.clear();
+    const stateRanks = Object.fromEntries(recordStates.map((item, index) => [item.value, index]));
     state.records.forEach((row, index) => {
       row._loadIndex = index;
       row._recordState = recordStateForRow(row);
-      row._stateRank = recordStates.findIndex((item) => item.value === row._recordState);
+      row._stateRank = stateRanks[row._recordState];
       // Review-status sort: CatLog v2 accepted rows (read from the paper) lead the accepted block.
       row._tierRank = isV2Row(row)
         ? -1
         : (tierOrder[row.evidence_confidence_tier] ?? 99);
       row._sourceCount = Number(row.source_record_count || 0);
-      row._ecSort = String(row.ec_number || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
       row._sortEnzyme = String(row.enzyme_display_name || "");
       row._sortOrganism = String(row.organism || "");
       row._sortSubstrate = String(row.substrate_name || "");
-      row._search = row._search || foldSearch(row._search_text || [
-        row.measurement_key,
-        row.review_key,
-        row.ec_number,
-        row.enzyme_display_name,
-        row.organism,
-        row.substrate_name,
-        row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
-        row.source_db,
-        row.primary_uniprot_id,
-        row.protein_accession,
-      ].join(" "));
+      // _ecSort and _search are filled on first use (ecParts, searchText): most rows never need them.
     });
+  }
+
+  function ecParts(row) {
+    row._ecSort ??= String(row.ec_number || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
+    return row._ecSort;
+  }
+
+  // The folded text the search box matches, built the first time a search needs it.
+  function searchText(row) {
+    row._search ??= foldSearch(row._search_text || [
+      row.measurement_key,
+      row.review_key,
+      row.ec_number,
+      row.enzyme_display_name,
+      row.organism,
+      row.substrate_name,
+      row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
+      row.source_db,
+      row.primary_uniprot_id,
+      row.protein_accession,
+    ].join(" "));
+    return row._search;
+  }
+
+  function loadProgressText() {
+    return `Loading ${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "records" : "data chunks"}`;
   }
 
   function updateLoadProgress() {
@@ -1172,17 +1245,38 @@
       ? 100
       : Math.min(100, Math.round((state.recordChunksLoaded / total) * 100));
     const rail = $("catalogLoadProgress");
-    if (!rail) return;
-    rail.style.setProperty("--load-progress", String(progress / 100));
-    rail.setAttribute("aria-valuenow", String(progress));
-    rail.setAttribute(
-      "aria-valuetext",
-      state.recordsReady
-        ? "CatLog ready"
-        : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "CatLog records" : "data chunks"} loaded`,
-    );
-    rail.classList.toggle("complete", state.recordsReady);
-    if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
+    if (rail) {
+      rail.style.setProperty("--load-progress", String(progress / 100));
+      rail.setAttribute("aria-valuenow", String(progress));
+      rail.setAttribute(
+        "aria-valuetext",
+        state.recordsReady
+          ? "CatLog ready"
+          : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "CatLog records" : "data chunks"} loaded`,
+      );
+      rail.classList.toggle("complete", state.recordsReady);
+      if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
+    }
+    // The count beside Filters while records load: on its own until rows are drawn, then after the page range.
+    const summary = $("pageSummary");
+    if (!summary || state.recordsReady || document.body.classList.contains("catalog-load-failed")) return;
+    if (!document.querySelector?.("#recordsBody tr[data-key]")) summary.textContent = loadProgressText();
+    else if (state.loadingLead) summary.textContent = `${state.loadingLead} · ${loadProgressText()}`;
+  }
+
+  function markPerformance(name) {
+    try {
+      window.performance?.mark?.(name);
+    } catch (_error) {
+      // Timing marks are optional.
+    }
+  }
+
+  function setSortAvailable(available) {
+    const select = $("sortSelect");
+    if (!select) return;
+    select.disabled = !available;
+    select.title = available ? "" : SORT_LOADING_TITLE;
   }
 
   function recordIndexPath() {
@@ -1253,7 +1347,115 @@
     }
   }
 
-  async function streamCompressedRecordIndexAttempt(retryAttempt = 0) {
+  // Schema 2 of the record index: a header line, then one JSON array per row in header.fields order. Fields named in
+  // header.enums hold an index into that list; fields named in header.texts hold either text or an index into that
+  // list; kcat, km and kcat_over_km hold true when Number(their *_display) is the value; review_key and
+  // protein_accession hold true when equal to record_key and primary_uniprot_id; s is the detail-shard number.
+  const VIEWER_INDEX_ENUM_FIELDS = [
+    "enzyme_label_source", "source_db", "verification_status", "evidence_confidence_tier", "sequence_variant_status",
+    "kcat_over_km_origin", "public_trust_basis", "temperature_display", "condition_flags", "kcat_unit", "km_unit",
+    "kcat_over_km_unit", "wild_type",
+  ];
+  const VIEWER_INDEX_TEXT_FIELDS = [
+    "enzyme_display_name", "ec_number", "organism", "substrate_name", "mutation_signature", "primary_uniprot_id",
+    "kcat_display", "km_display", "kcat_over_km_display",
+  ];
+  const VIEWER_INDEX_FIELDS = [
+    "record_key", "review_key", ...VIEWER_INDEX_TEXT_FIELDS, "protein_accession", "kcat", "km", "kcat_over_km",
+    "ph_display", "temperature_k", "source_record_count", ...VIEWER_INDEX_ENUM_FIELDS, "s",
+  ];
+  // Record-panel fields a schema-2 row leaves to the record's detail entry.
+  const DETAIL_ONLY_FIELDS = [
+    "identity_resolution_state", "uniprot_candidate_ids", "sequence_resolved", "has_proof_excerpt", "proof_kind",
+    "has_literature_id", "protein_accession_database", "source_protein_accession", "kcat_over_km_source_differs",
+  ];
+
+  function isViewerIndexHeader(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value) && value.kind === "catlog_viewer_index";
+  }
+
+  function checkedViewerIndexHeader(header, detailsPerShard) {
+    if (header.schema_version !== 2) {
+      throw new Error(`This page cannot read CatLog index version ${header.schema_version}. Reload the page.`);
+    }
+    const fields = Array.isArray(header.fields) ? header.fields : [];
+    const missing = VIEWER_INDEX_FIELDS.filter((field) => !fields.includes(field));
+    const enums = header.enums && typeof header.enums === "object" ? header.enums : {};
+    const missingEnums = VIEWER_INDEX_ENUM_FIELDS.filter((field) => !Array.isArray(enums[field]));
+    if (missing.length || missingEnums.length) {
+      throw new Error(`The CatLog index is missing ${[...missing, ...missingEnums].join(", ")}`);
+    }
+    if (Number(header.details_per_shard) !== detailsPerShard) {
+      throw new Error("The CatLog index and its record files use different shard sizes");
+    }
+    return header;
+  }
+
+  // One constructor for every row: rows share one compact shape (169k plain objects with these fields would use far
+  // more memory and sort slower), and the shared values are frozen because many rows hold the same object.
+  function viewerRowConstructor(header, detailShards) {
+    const at = Object.fromEntries(VIEWER_INDEX_FIELDS.map((field) => [field, header.fields.indexOf(field)]));
+    const shared = (values) => Object.freeze((Array.isArray(values) ? values : []).map(
+      (value) => (value && typeof value === "object" ? Object.freeze(value) : value),
+    ));
+    const enums = Object.fromEntries(VIEWER_INDEX_ENUM_FIELDS.map((field) => [field, shared(header.enums[field])]));
+    const texts = Object.fromEntries(VIEWER_INDEX_TEXT_FIELDS.map((field) => [field, shared(header.texts?.[field])]));
+    const text = (field, v) => {
+      const value = v[at[field]];
+      return typeof value === "number" ? texts[field][value] : value;
+    };
+    const item = (field, v) => enums[field][v[at[field]]];
+    const number = (field, v, display) => (v[at[field]] === true ? Number(display) : v[at[field]]);
+    function ViewerRow(v) {
+      this.record_key = v[at.record_key];
+      this.review_key = v[at.review_key] === true ? this.record_key : v[at.review_key];
+      this.enzyme_display_name = text("enzyme_display_name", v);
+      this.ec_number = text("ec_number", v);
+      this.organism = text("organism", v);
+      this.substrate_name = text("substrate_name", v);
+      this.mutation_signature = text("mutation_signature", v);
+      this.primary_uniprot_id = text("primary_uniprot_id", v);
+      this.protein_accession = v[at.protein_accession] === true ? this.primary_uniprot_id : v[at.protein_accession];
+      this.kcat_display = text("kcat_display", v);
+      this.km_display = text("km_display", v);
+      this.kcat_over_km_display = text("kcat_over_km_display", v);
+      this.kcat = number("kcat", v, this.kcat_display);
+      this.km = number("km", v, this.km_display);
+      this.kcat_over_km = number("kcat_over_km", v, this.kcat_over_km_display);
+      this.ph_display = v[at.ph_display];
+      this.temperature_k = v[at.temperature_k];
+      this.source_record_count = v[at.source_record_count];
+      this.enzyme_label_source = item("enzyme_label_source", v);
+      this.source_db = item("source_db", v);
+      this.verification_status = item("verification_status", v);
+      this.evidence_confidence_tier = item("evidence_confidence_tier", v);
+      this.sequence_variant_status = item("sequence_variant_status", v);
+      this.kcat_over_km_origin = item("kcat_over_km_origin", v);
+      this.public_trust_basis = item("public_trust_basis", v);
+      this.temperature_display = item("temperature_display", v);
+      this.condition_flags = item("condition_flags", v);
+      this.kcat_unit = item("kcat_unit", v);
+      this.km_unit = item("km_unit", v);
+      this.kcat_over_km_unit = item("kcat_over_km_unit", v);
+      this.wild_type = item("wild_type", v);
+      this.detail_shard = detailShards[v[at.s]] || "";
+      this.measurement_key = this.record_key;
+      this.ph = this.ph_display;
+      this._loadIndex = 0;
+      this._recordState = null;
+      this._stateRank = 0;
+      this._tierRank = 0;
+      this._sourceCount = 0;
+      this._ecSort = null;
+      this._sortEnzyme = "";
+      this._sortOrganism = "";
+      this._sortSubstrate = "";
+      this._search = null;
+    }
+    return ViewerRow;
+  }
+
+  async function streamCompressedRecordIndexAttempt(retryAttempt = 0, { onFirstRows = null } = {}) {
     const tablePath = recordIndexPath();
     if (!canStreamCompressedIndex()) return null;
 
@@ -1272,10 +1474,16 @@
     const records = [];
     let buffer = "";
     let lastProgress = 0;
+    // Schema 2 starts with a header line; schema 1 (an older page's manifest) is one keyed object per row.
+    let layoutKnown = false;
+    let header = null;
+    let ViewerRow = null;
+    let firstRowsSent = false;
 
     state.loadProgressUnit = "records";
     state.recordChunksLoaded = 0;
     state.recordChunksTotal = totalRows || 1;
+    state.indexOrder = "";
     updateLoadProgress();
 
     const consumeLines = (final = false) => {
@@ -1283,9 +1491,23 @@
       buffer = final ? "" : (lines.pop() || "");
       lines.forEach((line) => {
         if (!line.trim()) return;
-        const row = JSON.parse(line);
-        row.detail_shard = detailShards[Math.floor(records.length / detailsPerShard)] || "";
-        records.push(row);
+        const value = JSON.parse(line);
+        if (!layoutKnown) {
+          layoutKnown = true;
+          if (isViewerIndexHeader(value)) {
+            header = checkedViewerIndexHeader(value, detailsPerShard);
+            ViewerRow = viewerRowConstructor(header, detailShards);
+            state.indexOrder = header.order === DEFAULT_INDEX_ORDER ? DEFAULT_INDEX_ORDER : "";
+            return;
+          }
+        }
+        if (ViewerRow) {
+          if (!Array.isArray(value)) throw new Error("The CatLog index contains an invalid row");
+          records.push(new ViewerRow(value));
+          return;
+        }
+        value.detail_shard = detailShards[Math.floor(records.length / detailsPerShard)] || "";
+        records.push(value);
       });
     };
 
@@ -1295,7 +1517,16 @@
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         consumeLines();
-        if (records.length - lastProgress >= 2500) {
+        if (!firstRowsSent && onFirstRows && state.indexOrder === DEFAULT_INDEX_ORDER
+            && records.length >= FIRST_ROWS_MIN) {
+          // Page 1 of the default order is final already: draw it now, then keep reading.
+          firstRowsSent = true;
+          state.recordChunksLoaded = records.length;
+          lastProgress = records.length;
+          updateLoadProgress();
+          await onFirstRows(records.slice());
+          await yieldToBrowser();
+        } else if (records.length - lastProgress >= 2500) {
           state.recordChunksLoaded = records.length;
           lastProgress = records.length;
           updateLoadProgress();
@@ -1307,6 +1538,9 @@
 
       if (totalRows && records.length !== totalRows) {
         throw new Error(`Expected ${totalRows} CatLog rows, received ${records.length}`);
+      }
+      if (header && header.row_count !== records.length) {
+        throw new Error(`Expected ${header.row_count} CatLog rows, received ${records.length}`);
       }
       state.recordChunksLoaded = records.length;
       return records;
@@ -1326,19 +1560,24 @@
     }
   }
 
-  async function streamCompressedRecordIndex() {
+  async function streamCompressedRecordIndex({ onFirstRows = null } = {}) {
     let lastError = null;
     for (let attempt = 0; attempt <= LOAD_RETRY_DELAYS.length; attempt += 1) {
       try {
-        return await streamCompressedRecordIndexAttempt(attempt);
+        return await streamCompressedRecordIndexAttempt(attempt, { onFirstRows });
       } catch (error) {
         lastError = error;
         if (attempt >= LOAD_RETRY_DELAYS.length) break;
         const delaySeconds = Math.round(LOAD_RETRY_DELAYS[attempt] / 1000);
-        showLoadNotice(
-          "Retrying table download",
-          `The download was interrupted. Trying again in ${delaySeconds} seconds.`,
-        );
+        const message = `The download was interrupted. Trying again in ${delaySeconds} seconds.`;
+        if (state.firstRowsShown) {
+          // Page 1 stays on screen; only the counts say that the rest is being downloaded again.
+          $("activeSummary").textContent = "Retrying table download";
+          $("pageSummary").textContent = message;
+          $("catalogLoadProgress")?.classList.add("stalled");
+        } else {
+          showLoadNotice("Retrying table download", message);
+        }
         await wait(LOAD_RETRY_DELAYS[attempt]);
       }
     }
@@ -1377,8 +1616,26 @@
     const chunks = Array.isArray(manifest.record_chunks) ? manifest.record_chunks : [];
     let streamedRecords = null;
     let streamError = null;
+    // Page 1 is drawn once from the first rows of an index in the default order; a retried download never redraws it.
+    let firstPainted = false;
+    const onFirstRows = async (rows) => {
+      if (firstPainted || state.recordsReady) return;
+      firstPainted = true;
+      try {
+        indexLoadedRecords(rows);
+        setupFilters();
+        setSortAvailable(false);
+        await ensureCurrentFilters();
+        state.firstRowsShown = true;
+        markPerformance("catlog:first-rows");
+      } catch (error) {
+        // The complete index still renders when it arrives.
+        state.firstRowsShown = false;
+        console.warn("CatLog could not show the first rows early", error);
+      }
+    };
     try {
-      streamedRecords = await streamCompressedRecordIndex();
+      streamedRecords = await streamCompressedRecordIndex({ onFirstRows });
     } catch (error) {
       streamedRecords = null;
       streamError = error;
@@ -1388,10 +1645,21 @@
       state.recordsReady = true;
       updateLoadProgress();
       setupFilters();
-      await ensureCurrentFilters();
+      setSortAvailable(true);
+      // The page already drawn from the first rows stays as it is when it is the same page.
+      state.preserveRenderedRows = state.firstRowsShown;
+      try {
+        await ensureCurrentFilters({ resetPage: !state.firstRowsShown });
+      } finally {
+        state.preserveRenderedRows = false;
+        state.firstRowsShown = false;
+      }
+      markPerformance("catlog:ready");
       updateTableScrollControls();
       return;
     }
+    state.firstRowsShown = false;
+    setSortAvailable(true);
 
     state.loadProgressUnit = "chunks";
     state.recordChunksLoaded = 0;
@@ -2138,13 +2406,29 @@
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
   }
 
+  // Field filters fold each distinct value once per loaded generation (not once per row and keystroke).
+  const foldedFields = { generation: -1, values: new Map() };
+
+  function foldedField(value) {
+    if (foldedFields.generation !== state.recordsGeneration) {
+      foldedFields.generation = state.recordsGeneration;
+      foldedFields.values = new Map();
+    }
+    let folded = foldedFields.values.get(value);
+    if (folded === undefined) {
+      folded = foldSearch(value);
+      foldedFields.values.set(value, folded);
+    }
+    return folded;
+  }
+
   function fieldContains(row, field, value) {
     if (!value) return true;
-    return foldSearch(row[field] || "").includes(value);
+    return foldedField(row[field] || "").includes(value);
   }
 
   function rowMatches(row, filters) {
-    if (filters.q && !row._search.includes(filters.q)) return false;
+    if (filters.q && !searchText(row).includes(filters.q)) return false;
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
     if (filters.v2Only && !isV2Row(row)) return false;
     if (!fieldContains(row, "ec_number", filters.ec)) return false;
@@ -2163,8 +2447,8 @@
   }
 
   function ecSort(a, b) {
-    const left = a._ecSort || [];
-    const right = b._ecSort || [];
+    const left = ecParts(a);
+    const right = ecParts(b);
     for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
       const delta = (left[index] ?? -1) - (right[index] ?? -1);
       if (delta !== 0) return delta;
@@ -2265,6 +2549,22 @@
     return isSortEntryCurrent(entry) ? (runs[0] || []) : null;
   }
 
+  let indexOrderWarned = false;
+
+  async function confirmIndexOrder(records, comparator, entry) {
+    for (let index = 1; index < records.length; index += 1) {
+      if (comparator(records[index - 1], records[index]) > 0) {
+        if (!indexOrderWarned) {
+          indexOrderWarned = true;
+          console.warn(`CatLog index rows ${index - 1} and ${index} are out of the default order; sorting in the browser instead.`);
+        }
+        return cooperativeStableSort(records, comparator, entry);
+      }
+      if (index % (SORT_RUN_SIZE * 4) === 0 && !(await yieldDuringSort(entry))) return null;
+    }
+    return isSortEntryCurrent(entry) ? records.slice() : null;
+  }
+
   function normalizedSortName(sort) {
     return [
       "evidence",
@@ -2299,11 +2599,13 @@
     }
 
     const entry = { recordsGeneration, cancelled: false, promise: null };
-    entry.promise = cooperativeStableSort(
-      state.records,
-      rowComparator(sortName),
-      entry,
-    ).catch((error) => {
+    const comparator = rowComparator(sortName);
+    const records = state.records;
+    // An index that arrives in the default order needs one check, not a sort.
+    const sorted = sortName === "evidence" && state.indexOrder === DEFAULT_INDEX_ORDER
+      ? confirmIndexOrder(records, comparator, entry)
+      : cooperativeStableSort(records, comparator, entry);
+    entry.promise = sorted.catch((error) => {
       if (state.sortCache.get(sortName) === entry) state.sortCache.delete(sortName);
       throw error;
     });
@@ -2404,26 +2706,50 @@
     const pageRows = currentPageRows();
     const activeRowKey = activeTableRowKey(pageRows);
     state.activeRowKey = activeRowKey;
+    const loading = !state.recordsReady;
+    // While the index loads in the default order with nothing filtered, the pages already drawn are final: count them
+    // against every record. Otherwise the count is what has loaded so far.
+    const finalPages = loading && showsWholeIndexOrder();
+    const shownTotal = finalPages
+      ? Math.max(Number(manifest.total_rows || 0), state.filtered.length)
+      : state.filtered.length;
     const range = pageRows.length
-      ? `${formatInteger(start + 1)}–${formatInteger(Math.min(start + pageRows.length, state.filtered.length))} of ${formatInteger(state.filtered.length)}`
+      ? `${formatInteger(start + 1)}–${formatInteger(Math.min(start + pageRows.length, shownTotal))} of ${formatInteger(shownTotal)}`
       : "";
-    const loadingNote = state.recordsReady
-      ? ""
-      : ` · Loading full index ${formatInteger(state.recordChunksLoaded)}/${formatInteger(state.recordChunksTotal)}`;
+    state.loadingLead = loading && pageRows.length
+      ? (finalPages ? range : `${formatInteger(state.filtered.length)} available`)
+      : "";
     $("activeSummary").textContent = state.recordsReady
       ? `${formatInteger(state.filtered.length)} records`
       : `${formatInteger(state.filtered.length)} available`;
     $("pageSummary").textContent = pageRows.length
-      ? `${range}${loadingNote}`
-      : (state.recordsReady ? "No matching records" : "Loading first records...");
+      ? (loading ? `${state.loadingLead} · ${loadProgressText()}` : range)
+      : (state.recordsReady ? "No matching records" : loadProgressText());
     if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0;
     $("pageLabel").textContent = pageRows.length
       ? range
       : "No records";
     $("prevButton").disabled = state.page <= 1;
-    $("nextButton").disabled = state.page >= totalPages;
+    // While loading, the next page opens once its rows have loaded.
+    $("nextButton").disabled = loading
+      ? (state.page + 1) * state.pageSize > state.filtered.length
+      : state.page >= totalPages;
     $("downloadPageButton").disabled = state.pageDownloadPending || !pageRows.length;
-    $("recordsBody").innerHTML = pageRows.map((row) => `
+    const body = $("recordsBody");
+    if (state.preserveRenderedRows && pageRows.length) {
+      // The complete index arrived: the page drawn from its first rows stays (focus, hover and selection intact)
+      // when it shows the same records.
+      const shownKeys = [...body.querySelectorAll("tr[data-key]")].map((rowElement) => rowElement.dataset.key);
+      if (shownKeys.length === pageRows.length && pageRows.every((row, index) => row.record_key === shownKeys[index])) {
+        return;
+      }
+    }
+    const focusedRowKey = state.preserveRenderedRows && body.contains?.(document.activeElement) ? state.activeRowKey : "";
+    if (loading && !pageRows.length && !state.records.length) {
+      body.innerHTML = skeletonRowsHtml();
+      return;
+    }
+    body.innerHTML = pageRows.map((row) => `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="primary-cell">
           <strong>${escapePublic(row.enzyme_display_name || "Name not preserved")}</strong>
@@ -2441,9 +2767,22 @@
         <td class="row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
     `).join("");
-    const rowElements = [...$("recordsBody").querySelectorAll("tr[data-key]")];
+    const rowElements = [...body.querySelectorAll("tr[data-key]")];
     rowElements.forEach((rowElement) => {
-      rowElement.addEventListener("focus", () => setActiveTableRow(rowElement, rowElements));
+      // Hovering or focusing a row a moment starts loading its record, so opening it is immediate.
+      let prefetchTimer = 0;
+      const startPrefetch = () => {
+        window.clearTimeout(prefetchTimer);
+        prefetchTimer = window.setTimeout(() => prefetchDetail(rowElement.dataset.key), DETAIL_PREFETCH_DELAY_MS);
+      };
+      const cancelPrefetch = () => window.clearTimeout(prefetchTimer);
+      rowElement.addEventListener("pointerenter", startPrefetch);
+      rowElement.addEventListener("pointerleave", cancelPrefetch);
+      rowElement.addEventListener("blur", cancelPrefetch);
+      rowElement.addEventListener("focus", () => {
+        setActiveTableRow(rowElement, rowElements);
+        startPrefetch();
+      });
       rowElement.addEventListener("click", () => selectRecord(rowElement.dataset.key));
       rowElement.addEventListener("keydown", (event) => {
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -2456,6 +2795,28 @@
         selectRecord(rowElement.dataset.key);
       });
     });
+    if (focusedRowKey) rowElements.find((rowElement) => rowElement.dataset.key === focusedRowKey)?.focus();
+  }
+
+  function showsWholeIndexOrder() {
+    if (state.indexOrder !== DEFAULT_INDEX_ORDER) return false;
+    const filters = currentFilters();
+    return filters.sort === "evidence"
+      && !filters.q && !filters.ec && !filters.enzyme && !filters.organism && !filters.substrate
+      && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
+  }
+
+  // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is.
+  function skeletonRowsHtml(count = 10) {
+    const columns = document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
+    const row = `<tr class="skeleton-row" aria-hidden="true">${"<td><span></span></td>".repeat(columns)}</tr>`;
+    return row.repeat(count);
+  }
+
+  function prefetchDetail(key) {
+    const row = currentPageRows().find((item) => item.record_key === key);
+    if (!row?.detail_shard) return;
+    loadDetailShard(row.detail_shard).then(() => retainDetailShard(row.detail_shard)).catch(() => {});
   }
 
   function setDetailOpen(isOpen) {
@@ -2569,6 +2930,7 @@
 
   function resetDetail() {
     state.selectedKey = "";
+    state.selectedShard = "";
     state.selectedDetail = null;
     $("detailStatus").textContent = "";
     $("detailContent").classList.add("hidden");
@@ -2593,6 +2955,7 @@
       return;
     }
     state.selectedKey = key;
+    state.selectedShard = row.detail_shard || "";
     state.activeRowKey = key;
     setFiltersOpen(false);
     setDetailOpen(true);
@@ -2619,7 +2982,7 @@
       if (state.selectedKey !== key) return;
       state.selectedDetail = detail;
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
-      renderDetail(row, detail);
+      renderDetail(summaryWithDetail(row, detail), detail);
       if (restoreFocus) focusDetailHeading(key);
     } catch (error) {
       if (state.selectedKey !== key) return;
@@ -2640,6 +3003,17 @@
       $("retryDetailButton").addEventListener("click", () => selectRecord(key));
       if (restoreFocus) focusDetailHeading(key);
     }
+  }
+
+  // A schema-2 index row leaves the record-panel fields to the record's detail entry: the panel gets both.
+  function summaryWithDetail(row, detail) {
+    const missing = DETAIL_ONLY_FIELDS.filter((field) => !(field in row) && detail && field in detail);
+    if (!missing.length) return row;
+    const summary = { ...row };
+    missing.forEach((field) => {
+      summary[field] = detail[field];
+    });
+    return summary;
   }
 
   function kv(label, value) {
@@ -3300,8 +3674,19 @@
       const menu = $("downloadMenu");
       if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
     });
-    window.addEventListener("popstate", () => renderView(viewFromLocation()));
-    window.addEventListener("hashchange", () => renderView(viewFromLocation()));
+    const showLocationView = () => {
+      const view = viewFromLocation();
+      if (view === "browse") ensureRecordsLoaded();
+      renderView(view);
+    };
+    window.addEventListener("popstate", showLocationView);
+    window.addEventListener("hashchange", showLocationView);
+    // From Stats or Guide, pointing at or focusing the way back to Browse (or the search box) starts the download.
+    for (const id of ["browseButton", "brandHomeButton"]) {
+      $(id).addEventListener("pointerenter", () => ensureRecordsLoaded());
+      $(id).addEventListener("focus", () => ensureRecordsLoaded());
+    }
+    $("globalSearchInput").addEventListener("focus", () => ensureRecordsLoaded());
     window.addEventListener("scroll", hideSuggestions, { passive: true });
     $("catalogFilters").addEventListener("scroll", () => {
       const rail = $("catalogFilters");
@@ -3401,7 +3786,6 @@
         throw new Error("This tab has an older CatLog page. Reload to get the current layout.");
       }
       renderSummary();
-      renderStats();
       renderDownloadMetadata();
       renderSourceAttribution();
       const cleanUrl = viewUrl(viewFromLocation());
@@ -3411,24 +3795,8 @@
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
-      // The marks load beside the table and never hold it up; when they arrive the visible status badges are updated in
-      // place (rows are not redrawn: a reader, or a test, holding a row keeps it).
-      loadHumanReviewMarks().then(() => {
-        if (state.filtered.length && Object.keys(humanReviewMarks).length
-          && !document.body.classList.contains("catalog-load-failed")) {
-          const pageRows = new Map(currentPageRows().map((row) => [row.record_key, row]));
-          document.querySelectorAll("#recordsBody tr[data-key]").forEach((tr) => {
-            const row = pageRows.get(tr.dataset.key);
-            const badge = tr.querySelector(".state-badge");
-            if (row && badge) badge.outerHTML = statusBadge(row);
-          });
-          // a record opened before the marks arrived (a deep link) gets its human-review note too
-          if (state.selectedKey && document.body.classList.contains("detail-open")) {
-            selectRecord(state.selectedKey, { focusDetail: false });
-          }
-        }
-      });
-      await loadRecordChunks();
+      // Stats and Guide never download the record index; it loads when Browse is first shown or about to be.
+      if (viewFromLocation() === "browse") await ensureRecordsLoaded();
     } catch (error) {
       showLoadNotice(
         "CatLog could not start",
@@ -3457,6 +3825,9 @@
       reviewOutcome,
       recordIndexPath,
       loadRecordChunks,
+      isViewerIndexHeader,
+      checkedViewerIndexHeader,
+      viewerRowConstructor,
       publicSummaryRecord,
       sourceLicense,
       indexLoadedRecords,

@@ -5,81 +5,69 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 import { gunzipSync } from "node:zlib";
 
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
-const manifestSource = readFileSync(
-  new URL("../tools/catlog-static/data/manifest.js", import.meta.url),
-  "utf8",
-);
+const catalogFile = (path) => new URL(`../tools/catlog-static/${path}`, import.meta.url);
+// The manifest the published page loads (content-addressed: data/manifest.<hash>.js).
+const indexHtml = readFileSync(catalogFile("index.html"), "utf8");
+const manifestPath = indexHtml.match(/<script src="(data\/manifest(?:\.[a-f0-9]{12})?\.js)(?:\?[^"]*)?"><\/script>/)?.[1];
+if (!manifestPath) throw new Error("index.html does not load a manifest");
+const manifestSource = readFileSync(catalogFile(manifestPath), "utf8");
 const manifestPrefix = "window.CATLOG_STATIC_MANIFEST = ";
 const manifestLine = manifestSource.split("\n", 1)[0];
 const manifest = JSON.parse(manifestLine.slice(manifestPrefix.length, -1));
 
-const recordStates = ["accepted", "curation_pending", "not_verified"];
-const tierOrder = {
-  paper_grounded_high_confidence: 0,
-  paper_grounded: 1,
-  cross_source_supported: 2,
-  literature_linked: 3,
-  candidate_only: 4,
-};
-
-function recordStateForRow(row) {
-  if (row.verification_status === "verified" || row.verification_status === "corrected") {
-    return "accepted";
-  }
-  if (row.verification_status === "manual_review_required") return "curation_pending";
-  return "not_verified";
-}
-
-function prepare(records) {
-  records.forEach((row, index) => {
-    row._loadIndex = index;
-    row._recordState = recordStateForRow(row);
-    row._stateRank = recordStates.indexOf(row._recordState);
-    row._tierRank = tierOrder[row.evidence_confidence_tier] ?? 99;
-    row._sourceCount = Number(row.source_record_count || 0);
-    row._ecSort = String(row.ec_number || "").split(".").map(
-      (part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER),
-    );
-    row._sortEnzyme = String(row.enzyme_display_name || "");
-    row._sortOrganism = String(row.organism || "");
-    row._sortSubstrate = String(row.substrate_name || "");
-    row._search = String([
-      row.measurement_key,
-      row.review_key,
-      row.ec_number,
-      row.enzyme_display_name,
-      row.organism,
-      row.substrate_name,
-      row.mutation_signature,
-      row.source_db,
-      row.primary_uniprot_id,
-      row.protein_accession,
-    ].join(" ")).toLowerCase();
-  });
+// The page's own decoder and row preparation (catlog-static.js in test mode), not a copy.
+function loadViewer() {
+  const window = {
+    CATLOG_STATIC_TEST_MODE: true,
+    CATLOG_STATIC_MANIFEST: manifest,
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    location: { href: "https://example.test/tools/catlog-static/", protocol: "https:" },
+  };
+  const document = {
+    currentScript: { src: "https://example.test/tools/catlog-static/assets/catlog-static.js", dataset: {} },
+    baseURI: "https://example.test/tools/catlog-static/",
+    getElementById: () => null,
+    querySelectorAll: () => [],
+  };
+  vm.runInNewContext(readFileSync(catalogFile("assets/catlog-static.js"), "utf8"), { window, document, URL, console });
+  return window.CATLOG_STATIC_TEST_API;
 }
 
 function runWorker(relativePath) {
   if (typeof global.gc !== "function") {
     throw new Error("worker requires node --expose-gc");
   }
+  const viewer = loadViewer();
   global.gc();
   const baselineHeapBytes = process.memoryUsage().heapUsed;
-  let compressed = readFileSync(new URL(`../tools/catlog-static/${relativePath}`, import.meta.url));
+  let compressed = readFileSync(catalogFile(relativePath));
   let decoded = gunzipSync(compressed).toString("utf8");
   const decompressedBytes = Buffer.byteLength(decoded);
   compressed = null;
 
   const parseStarted = performance.now();
   const records = [];
+  let ViewerRow = null;
+  let format = "keyed rows (schema 1 or the table)";
   let lineStart = 0;
   while (lineStart < decoded.length) {
     const lineEnd = decoded.indexOf("\n", lineStart);
     const end = lineEnd === -1 ? decoded.length : lineEnd;
-    if (end > lineStart) records.push(JSON.parse(decoded.slice(lineStart, end)));
+    if (end > lineStart) {
+      const value = JSON.parse(decoded.slice(lineStart, end));
+      if (!records.length && !ViewerRow && viewer.isViewerIndexHeader(value)) {
+        const header = viewer.checkedViewerIndexHeader(value, Number(manifest.details_per_shard));
+        ViewerRow = viewer.viewerRowConstructor(header, manifest.detail_shards || []);
+        format = `schema ${header.schema_version} arrays`;
+      } else {
+        records.push(ViewerRow ? new ViewerRow(value) : value);
+      }
+    }
     if (lineEnd === -1) break;
     lineStart = lineEnd + 1;
   }
@@ -87,13 +75,14 @@ function runWorker(relativePath) {
   decoded = null;
 
   const prepareStarted = performance.now();
-  prepare(records);
+  viewer.indexLoadedRecords(records);
   const prepareMilliseconds = performance.now() - prepareStarted;
   global.gc();
   const retainedHeapBytes = process.memoryUsage().heapUsed - baselineHeapBytes;
 
   process.stdout.write(`${JSON.stringify({
     relative_path: relativePath,
+    format,
     rows: records.length,
     decompressed_bytes: decompressedBytes,
     parse_ms: parseMilliseconds,
@@ -110,6 +99,7 @@ function median(values) {
 
 function summarize(samples) {
   return {
+    format: samples[0].format,
     rows: samples[0].rows,
     decompressed_bytes: samples[0].decompressed_bytes,
     median_parse_ms: median(samples.map((sample) => sample.parse_ms)),

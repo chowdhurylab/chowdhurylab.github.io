@@ -2143,9 +2143,13 @@ assert.equal(element("detailStatus").textContent, "");
 assert.equal(document.body.classList.contains("detail-open"), false);
 narrowDetailPanel = false;
 
+// The viewer fills _ecSort on first use, so the reference computes the EC parts itself.
+const referenceEcParts = (row) => String(row.ec_number || "").split(".")
+  .map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER));
+
 function referenceEcSort(a, b) {
-  const left = a._ecSort || [];
-  const right = b._ecSort || [];
+  const left = referenceEcParts(a);
+  const right = referenceEcParts(b);
   for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
     const delta = (left[index] ?? -1) - (right[index] ?? -1);
     if (delta !== 0) return delta;
@@ -2432,5 +2436,35 @@ assert.equal(
   "load-time filtering must leave the detail pane closed until a row is selected",
 );
 embeddedDetailPanel = false;
+
+// Stats and Guide are drawn from the manifest: opening either never downloads the record index or the marks.
+for (const hash of ["#stats", "#guide"]) {
+  const originalFetch = window.fetch;
+  const requests = [];
+  window.fetch = (url, ...rest) => {
+    requests.push(String(url));
+    return originalFetch(url, ...rest);
+  };
+  window.location.hash = hash;
+  window.location.href = `https://example.test/catlog/${hash}`;
+  api.state.statsRendered = false;
+  element("statsCharts").innerHTML = "";
+  try {
+    await api.init();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(
+      requests.filter((url) => /catlog-viewer-index|catlog-table|human-review-marks/.test(url)),
+      [],
+      `${hash} must not download the record index`,
+    );
+    assert.equal(element("statsView").hidden, hash !== "#stats");
+    assert.equal(api.state.statsRendered, hash === "#stats", "Stats are drawn the first time they are shown");
+    assert.equal(element("statsCharts").innerHTML.length > 0, hash === "#stats");
+  } finally {
+    window.fetch = originalFetch;
+    window.location.hash = "";
+    window.location.href = "https://example.test/catlog/";
+  }
+}
 
 console.log("CatLog viewer behavior checks passed.");

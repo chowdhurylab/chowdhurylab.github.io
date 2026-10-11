@@ -97,9 +97,9 @@ a:hover {
 
 .catalog-load-progress {
   --load-progress: 0;
-  height: 3px;
+  height: 4px;
   overflow: hidden;
-  background: #e5ece8;
+  background: var(--line-soft);
   opacity: 1;
   transition: opacity 180ms ease;
 }
@@ -116,6 +116,11 @@ a:hover {
 
 .catalog-load-progress.complete {
   opacity: 0;
+}
+
+/* Stats and Guide never load the record index. */
+body:is(.stats-open, .guide-open) .catalog-load-progress {
+  display: none;
 }
 
 .brand-lockup {
@@ -1188,6 +1193,35 @@ tbody tr.selected .row-arrow {
 .loading-indicator {
   color: var(--muted);
   font-size: 12.5px;
+}
+
+/* Placeholder rows while the first records load: the table keeps its shape. */
+.skeleton-row,
+.skeleton-row:hover {
+  cursor: default;
+  background: var(--panel);
+}
+
+.skeleton-row span {
+  display: block;
+  width: 68%;
+  max-width: 180px;
+  height: 10px;
+  border-radius: 4px;
+  background: var(--line-soft);
+}
+
+.skeleton-row:nth-child(even) span {
+  width: 52%;
+}
+
+.skeleton-row td:nth-child(n+5):nth-child(-n+9) span {
+  width: 44%;
+  margin-left: auto;
+}
+
+.skeleton-row td:last-child span {
+  display: none;
 }
 
 .state-badge {

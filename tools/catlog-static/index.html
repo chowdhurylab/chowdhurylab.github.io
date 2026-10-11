@@ -13,6 +13,7 @@
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
     <link rel="stylesheet" href="assets/catlog-static.css?v=b9349e53b8525e11" />
+    <script data-src="data/catlog-viewer-index.8d6f218298af.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||h==="#guide"||h==="#stats")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
   </head>
   <body>
     <div class="static-app">
@@ -140,7 +141,7 @@
                   Filters <span id="activeFilterCount" class="filter-count hidden"></span>
                 </button>
                 <strong id="activeSummary" class="visually-hidden">Loading CatLog records...</strong>
-                <span id="pageSummary">Preparing table</span>
+                <span id="pageSummary">Loading records</span>
                 <button id="clearResultsButton" class="text-button" type="button" hidden>Clear search and filters</button>
                 <div class="table-scroll-controls hidden" aria-label="Table columns">
                   <span>Columns</span>
@@ -199,9 +200,16 @@
                   </tr>
                 </thead>
                 <tbody id="recordsBody">
-                  <tr class="loading-row">
-                    <td colspan="11"><span class="loading-indicator">Loading CatLog records...</span></td>
-                  </tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>
                 </tbody>
               </table>
             </div>

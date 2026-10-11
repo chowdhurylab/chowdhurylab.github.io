@@ -25,7 +25,7 @@ class ViewerManifestTests(unittest.TestCase):
             data = root / "data"
             data.mkdir()
             row = {field: None for field in BUILD.TABLE_FIELDS}
-            row["record_key"] = "record-1"
+            row["record_key"] = row["measurement_key"] = "record-1"
             table = gzip.compress((json.dumps(row) + "\n").encode(), mtime=0)
             table_hash = hashlib.sha256(table).hexdigest()
             table_ref = f"data/catlog-table.{table_hash[:12]}.jsonl.gz"
@@ -51,6 +51,67 @@ class ViewerManifestTests(unittest.TestCase):
                 with patch("sys.argv", [str(SCRIPT), "--check"]), redirect_stdout(io.StringIO()):
                     self.assertEqual(BUILD.main(), 0)
                 self.assertEqual(BUILD.load_manifest()["viewer_index"]["row_count"], 1)
+
+    def table_row(self, key, **values):
+        row = {field: None for field in BUILD.TABLE_FIELDS}
+        row.update(record_key=key, measurement_key=key, review_key=key, kcat_display="Not reported",
+                   km_display="Not reported", kcat_over_km_display="Not reported", condition_flags=[],
+                   source_record_count=1, verification_status="unverified")
+        row.update(values)
+        return row
+
+    def build_rows(self, rows, details_per_shard=2):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        table = root / "table.jsonl.gz"
+        table.write_bytes(gzip.compress("".join(json.dumps(row) + "\n" for row in rows).encode(), mtime=0))
+        target = root / "viewer.jsonl.gz"
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            metadata = BUILD.build(table, target, details_per_shard=details_per_shard)
+        lines = gzip.decompress(target.read_bytes()).decode().splitlines()
+        return metadata, json.loads(lines[0]), [json.loads(line) for line in lines[1:]]
+
+    def test_schema_2_header_order_and_descriptor(self):
+        rows = [
+            self.table_row("a", verification_status="unverified", ec_number="2.1.1.1"),
+            self.table_row("b", verification_status="manual_review_required", ec_number="1.1.1.1",
+                           kcat=7.333, kcat_display="7.333", km=0.5, km_display="0.50001"),
+            self.table_row("c", verification_status="verified", ec_number="3.1.1.1", review_key="other",
+                           primary_uniprot_id="P11509", protein_accession="P11509"),
+            self.table_row("d", verification_status="verified", ec_number="3.1.1.1", source_db="primary_paper_direct",
+                           enzyme_label_source="explicit_enzyme_name"),
+        ]
+        metadata, header, encoded = self.build_rows(rows)
+        self.assertEqual((header["kind"], header["schema_version"], header["order"]),
+                         ("catlog_viewer_index", 2, "default_review_status"))
+        self.assertEqual((header["row_count"], header["details_per_shard"]), (4, 2))
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "s"])
+        decoded = []
+        for values in encoded:
+            row = dict(zip(header["fields"], values))
+            for field in BUILD.ENUM_FIELDS:
+                row[field] = header["enums"][field][row[field]]
+            decoded.append(row)
+        # accepted first (the CatLog v2 row leads), then checks pending, then other records; s is the table position
+        self.assertEqual([row["record_key"] for row in decoded], ["d", "c", "b", "a"])
+        self.assertEqual([row["s"] for row in decoded], [1, 1, 0, 0])
+        by_key = {row["record_key"]: row for row in decoded}
+        self.assertIs(by_key["b"]["kcat"], True)  # Number("7.333") is the stored value
+        self.assertEqual(by_key["b"]["km"], 0.5)  # the display text is not the stored value
+        self.assertIs(by_key["c"]["protein_accession"], True)
+        self.assertEqual(by_key["c"]["review_key"], "other")
+        self.assertIs(by_key["a"]["review_key"], True)
+        metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
+        descriptor = BUILD.viewer_descriptor(metadata)
+        self.assertEqual((descriptor["schema_version"], descriptor["encoding"], descriptor["row_order"]),
+                         (2, "header_arrays_enums", "default_review_status"))
+        self.assertEqual(descriptor["details_per_shard"], 2)
+        self.assertEqual(descriptor["derived_fields"], {"measurement_key": "record_key", "ph": "ph_display"})
+        self.assertEqual(sorted(descriptor["retained_fields"] + descriptor["omitted_fields"]), sorted(BUILD.TABLE_FIELDS))
+        self.assertEqual(descriptor["uncompressed_size_bytes"], metadata["viewer_uncompressed_bytes"])
+        for field in ("path", "sha256", "content_sha256", "size_bytes", "source_table_sha256", "source_table_size_bytes"):
+            self.assertIn(field, descriptor)
 
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:

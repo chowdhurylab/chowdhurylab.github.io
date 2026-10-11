@@ -308,4 +308,137 @@ for (const route of ["tools/catlog-static/", "tools/catlog-latest.html"]) {
 }
 await runRetryCase("tools/catlog-static/", "http", { pendingSort: true });
 
+// Schema 2: a header line, then one array per row (shared values by number, numbers read from their display text).
+async function runSchemaTwoCase() {
+  const elements = new Map();
+  const delays = [];
+  const element = () => ({
+    disabled: false,
+    textContent: "",
+    title: "",
+    classList: { add() {}, remove() {}, contains: () => false, toggle() {} },
+    style: { setProperty() {} },
+    setAttribute() {},
+  });
+  for (const id of ["recordsBody", "activeSummary", "pageSummary", "pageLabel", "prevButton", "nextButton",
+    "downloadPageButton", "catalogLoadProgress", "sortSelect"]) {
+    elements.set(id, element());
+  }
+  const fields = [
+    "record_key", "review_key", "enzyme_display_name", "ec_number", "organism", "substrate_name", "mutation_signature",
+    "primary_uniprot_id", "protein_accession", "kcat_display", "km_display", "kcat_over_km_display", "kcat", "km",
+    "kcat_over_km", "ph_display", "temperature_k", "source_record_count", "enzyme_label_source", "source_db",
+    "verification_status", "evidence_confidence_tier", "sequence_variant_status", "kcat_over_km_origin",
+    "public_trust_basis", "temperature_display", "condition_flags", "kcat_unit", "km_unit", "kcat_over_km_unit",
+    "wild_type", "s",
+  ];
+  const header = {
+    kind: "catlog_viewer_index", schema_version: 2, row_count: 3, order: "default_review_status",
+    details_per_shard: 2, fields,
+    enums: {
+      enzyme_label_source: ["explicit_enzyme_name", "ec_name_fallback"],
+      source_db: ["primary_paper_direct", "brenda"],
+      verification_status: ["verified", "manual_review_required", "unverified"],
+      evidence_confidence_tier: ["paper_grounded", "literature_linked"],
+      sequence_variant_status: ["canonical_wild_type_sequence"],
+      kcat_over_km_origin: ["paper_reported", null],
+      public_trust_basis: [null],
+      temperature_display: ["25", "n/a"],
+      condition_flags: [[], ["unit_not_recorded_km"]],
+      kcat_unit: ["s^(-1)", null],
+      km_unit: ["mM"],
+      kcat_over_km_unit: ["s^(-1)*mM^(-1)", null],
+      wild_type: [true, null],
+    },
+    texts: { organism: ["Homo sapiens"], kcat_over_km_display: ["Not reported"], kcat_display: ["Not reported"] },
+  };
+  const rows = [
+    ["k1", true, "laccase", "1.10.3.2", 0, "ABTS", "Unknown", "P11509", true, "12.5", "0.25", "50", true, true, 50.0001,
+      7.5, 298.15, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ["k2", "r2", "hexokinase", "2.7.1.1", "Escherichia coli", "glucose", "D10A", null, "Q99999", 0, "0.1", 0, null,
+      true, null, 7, null, 3, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0],
+    ["k3", true, "esterase", "3.1.1.1", 0, "pNPA", "Unknown", null, null, 0, "2", 0, null, true, null, null, null, 1,
+      1, 1, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1],
+  ];
+  const text = `${[header, ...rows].map((line) => JSON.stringify(line)).join("\n")}\n`;
+  const manifest = {
+    total_rows: 3,
+    record_chunks: [],
+    details_per_shard: 2,
+    viewer_index: { path: "data/catlog-viewer-index.abcdef123456.jsonl.gz" },
+    detail_shards: ["data/details-000.abcdef123456.jsonl.gz", "data/details-001.abcdef123456.jsonl.gz"],
+  };
+  const window = {
+    CATLOG_STATIC_MANIFEST: manifest,
+    DecompressionStream,
+    matchMedia: () => ({ matches: false }),
+    location: { href: "https://example.test/tools/catlog-static/", protocol: "https:", replace() {} },
+    setTimeout(callback, delay) {
+      delays.push(delay);
+      queueMicrotask(callback);
+    },
+  };
+  const document = {
+    body: { classList: { add() {}, remove() {}, contains: () => false } },
+    hidden: false,
+    currentScript: { src: "https://example.test/tools/catlog-static/assets/catlog-static.js", dataset: {} },
+    baseURI: "https://example.test/tools/catlog-static/",
+    getElementById: (id) => elements.get(id),
+    querySelectorAll: () => [],
+  };
+  const fetch = async () => ({
+    ok: true,
+    status: 200,
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(gzipSync(text));
+        controller.close();
+      },
+    }),
+  });
+  const context = vm.createContext({ window, document, URL, console, fetch, DecompressionStream, TextDecoder });
+  vm.runInContext(`${viewerSource.slice(0, testModeStart)}
+    setupFilters = () => {};
+    ensureCurrentFilters = async () => true;
+    updateTableScrollControls = () => {};
+    syncDetailPanelAccessibility = () => {};
+    window.loaderTest = {state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord};
+  })();`, context);
+  const { state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord } = window.loaderTest;
+  await loadRecordChunks();
+  return { state, delays, elements, orderedRecordsFor, publicSummaryRecord };
+}
+
+{
+  const { state, delays, orderedRecordsFor, publicSummaryRecord } = await runSchemaTwoCase();
+  assert.equal(state.recordsReady, true);
+  assert.deepEqual(delays, [], "a healthy schema-2 index needs no retry");
+  assert.equal(state.indexOrder, "default_review_status");
+  const [first, second, third] = state.records;
+  // arrays come from the viewer's realm: compare their items
+  const pick = (row, keys) => Object.fromEntries(keys.map((key) => [key, Array.isArray(row[key]) ? [...row[key]] : row[key]]));
+  assert.deepEqual(pick(first, ["record_key", "measurement_key", "review_key", "organism", "protein_accession",
+    "kcat", "km", "kcat_over_km", "kcat_over_km_display", "ph", "ph_display", "source_db", "verification_status",
+    "public_trust_basis", "wild_type", "detail_shard"]), {
+    record_key: "k1", measurement_key: "k1", review_key: "k1", organism: "Homo sapiens", protein_accession: "P11509",
+    kcat: 12.5, km: 0.25, kcat_over_km: 50.0001, kcat_over_km_display: "50", ph: 7.5, ph_display: 7.5,
+    source_db: "primary_paper_direct", verification_status: "verified", public_trust_basis: null, wild_type: true,
+    detail_shard: "data/details-000.abcdef123456.jsonl.gz",
+  });
+  assert.deepEqual(pick(second, ["review_key", "organism", "primary_uniprot_id", "protein_accession", "kcat_display",
+    "kcat", "km", "kcat_over_km_display", "kcat_over_km", "condition_flags", "kcat_unit", "detail_shard"]), {
+    review_key: "r2", organism: "Escherichia coli", primary_uniprot_id: null, protein_accession: "Q99999",
+    kcat_display: "Not reported", kcat: null, km: 0.1, kcat_over_km_display: "Not reported", kcat_over_km: null,
+    condition_flags: ["unit_not_recorded_km"], kcat_unit: null, detail_shard: "data/details-000.abcdef123456.jsonl.gz",
+  });
+  assert.equal(third.detail_shard, "data/details-001.abcdef123456.jsonl.gz");
+  assert.equal(third.verification_status, "unverified");
+  assert.ok(Object.isFrozen(second.condition_flags), "shared values are frozen");
+  assert.strictEqual(second.condition_flags, third.condition_flags, "rows share one value object");
+  const exported = publicSummaryRecord(first);
+  assert.equal(exported.measurement_key, "k1");
+  assert.ok(!Object.keys(exported).some((key) => key.startsWith("_") || key === "detail_shard"),
+    "downloads keep only public fields");
+  assert.deepEqual(Array.from(await orderedRecordsFor("evidence"), (row) => row.record_key), ["k1", "k2", "k3"]);
+}
 console.log("catlog-static-index-retry: ok");
