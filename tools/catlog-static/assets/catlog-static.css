@@ -2660,6 +2660,42 @@ body.detail-open .detail-panel {
   display: none !important;
 }
 
+/* Up to 1400px the cells are tighter and the fixed columns narrower, so Enzyme keeps room for a name in two lines. */
+@media (max-width: 1400px) {
+  th,
+  td,
+  td.c-status {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  th.c-enzyme,
+  td.c-enzyme {
+    padding-left: 10px;
+  }
+
+  th.c-ec,
+  th.c-temp {
+    white-space: normal;
+  }
+
+  .col-ec { width: 72px; }
+  .col-organism { width: clamp(112px, 11vw, 190px); }
+  .col-substrate { width: clamp(124px, 11.5vw, 210px); }
+  .col-kcat,
+  .col-km { width: 82px; }
+  .col-efficiency { width: 98px; }
+  .col-temp { width: 46px; }
+  .col-ph { width: 44px; }
+  .col-state { width: 168px; }
+  .col-open { width: 20px; }
+
+  /* The tag line starts under the dot here, so the longest tags (from paper · human-checked) fit the column. */
+  #recordsBody .state-tags {
+    padding-left: 0;
+  }
+}
+
 @media (min-width: 1181px) {
   .table-panel {
     border-right: 0;
@@ -2983,21 +3019,11 @@ body.detail-open .detail-panel {
       inset -12px 0 10px -12px rgba(23, 33, 32, 0.62);
   }
 
-  /* Enzyme keeps at least 220px; the table scrolls sideways inside its frame. */
+  /* Every column fits from about 1010px (a tablet held sideways); narrower windows scroll the table sideways inside
+     its frame, with Enzyme kept in view. */
   table {
-    min-width: 1146px;
+    min-width: 1000px;
   }
-
-  .col-ec { width: 80px; }
-  .col-organism { width: 124px; }
-  .col-substrate { width: 136px; }
-  .col-kcat,
-  .col-km { width: 86px; }
-  .col-efficiency { width: 100px; }
-  .col-temp { width: 52px; }
-  .col-ph { width: 44px; }
-  .col-state { width: 194px; }
-  .col-open { width: 24px; }
 
   /* The enzyme column stays in view while the table scrolls sideways. */
   .c-enzyme {
@@ -3025,6 +3051,14 @@ body.detail-open .detail-panel {
   tbody tr.selected td.c-enzyme {
     background: var(--teal-soft);
     box-shadow: inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20, 34, 31, 0.05);
+  }
+}
+
+/* Below 1000px the table scrolls sideways anyway, so the kept-in-view Enzyme column has room for a name in two
+   lines. */
+@media (max-width: 1000px) {
+  table {
+    min-width: 1072px;
   }
 }
 
