@@ -3025,6 +3025,14 @@ body.detail-open .detail-panel {
     min-width: 1000px;
   }
 
+  /* A no-match notice stays at the left of the visible frame and within the screen, however wide the table is. */
+  .load-notice.empty-notice {
+    position: sticky;
+    left: 16px;
+    max-width: min(520px, calc(100vw - 48px));
+    margin: 0;
+  }
+
   /* The enzyme column stays in view while the table scrolls sideways. */
   .c-enzyme {
     position: sticky;
