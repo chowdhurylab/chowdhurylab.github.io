@@ -79,15 +79,30 @@ def build_alias(source: str, *, stats: bool = False) -> str:
         f'<meta property="og:url" content="{public_url}"',
     )
     if stats:
-        alias = alias.replace('<title>CatLog | Enzyme Kinetics Catalog</title>', '<title>Stats | CatLog</title>')
-        alias = alias.replace('<body>', '<body class="stats-open">')
-        alias = alias.replace('<main id="catalogView">', '<main id="catalogView" hidden>')
-        alias = alias.replace('class="stats-view" hidden', 'class="stats-view"')
-        alias = alias.replace('id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page"',
-                              'id="browseButton" class="nav-tab" href="catlog-latest.html"')
-        alias = alias.replace('id="statsButton" class="nav-tab"', 'id="statsButton" class="nav-tab active" aria-current="page"')
-        alias = alias.replace('content="CatLog | Enzyme Kinetics Catalog"', 'content="Stats | CatLog"')
+        # Each edit must happen exactly once: a reordered attribute would otherwise ship a Stats page that first
+        # paints as Browse.
+        for old, new in STATS_PAGE_EDITS:
+            alias = replace_once(alias, old, new)
     return alias
+
+
+STATS_PAGE_EDITS = (
+    ('<title>CatLog | Enzyme Kinetics Catalog</title>', '<title>Stats | CatLog</title>'),
+    ('<body>', '<body class="stats-open">'),
+    ('<main id="catalogView">', '<main id="catalogView" hidden>'),
+    ('class="stats-view" hidden', 'class="stats-view"'),
+    ('id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page"',
+     'id="browseButton" class="nav-tab" href="catlog-latest.html"'),
+    ('id="statsButton" class="nav-tab"', 'id="statsButton" class="nav-tab active" aria-current="page"'),
+    ('content="CatLog | Enzyme Kinetics Catalog"', 'content="Stats | CatLog"'),
+)
+
+
+def replace_once(text: str, old: str, new: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise RuntimeError(f"Stats page: expected {old!r} exactly once, found {count}")
+    return text.replace(old, new)
 
 
 def main() -> int:

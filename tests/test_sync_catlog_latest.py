@@ -22,12 +22,19 @@ RELATIVE_TRACKER_TAG = (
 
 
 def synthetic_page(tracker: str = "") -> str:
-    """Supply only the structural references required by build_alias()."""
+    """Supply only the structural references required by build_alias() (the Stats page edits included)."""
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n'
+        '  <title>CatLog | Enzyme Kinetics Catalog</title>\n'
+        '  <meta property="og:title" content="CatLog | Enzyme Kinetics Catalog" />\n'
         '  <link rel="stylesheet" href="assets/catalog.css">\n'
         '</head>\n<body>\n'
         '  <!-- Preserve this synthetic μM label byte-for-byte. -->\n'
+        '  <a id="browseButton" class="nav-tab active" href="#browse" aria-current="page">Browse</a>\n'
+        '  <a id="guideButton" class="nav-tab" href="#guide">Guide</a>\n'
+        '  <a id="statsButton" class="nav-tab" href="#stats">Stats</a>\n'
+        '  <main id="catalogView"></main>\n'
+        '  <main id="statsView" class="stats-view" hidden></main>\n'
         '  <img src="assets/mark.svg" alt="">\n'
         '  <img src="assets/guide.svg" alt="">\n'
         '  <a href="README_FIRST.txt">Download notes</a>\n'
@@ -192,20 +199,35 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.assertEqual((self.source.read_bytes(), self.target.read_bytes()), before)
 
     def test_stats_entry_links_and_initial_view(self) -> None:
-        source = synthetic_page(EXPECTED_TRACKER_TAG).replace('<body>', '''<body>
-<title>CatLog | Enzyme Kinetics Catalog</title>
-<a id="browseButton" class="nav-tab active" href="#browse" aria-current="page">Browse</a>
-<a id="guideButton" href="#guide">Guide</a>
-<a id="statsButton" class="nav-tab" href="#stats">Stats</a>
-<main id="catalogView"></main><main id="statsView" class="stats-view" hidden></main>''')
+        source = synthetic_page(EXPECTED_TRACKER_TAG)
         stats = self.sync.build_alias(source, stats=True)
         self.assertIn('<title>Stats | CatLog</title>', stats)
+        self.assertIn('content="Stats | CatLog"', stats)
         self.assertIn('<body class="stats-open">', stats)
         self.assertIn('<main id="catalogView" hidden>', stats)
         self.assertNotIn('class="stats-view" hidden', stats)
         self.assertIn('href="catlog-stats.html"', stats)
         self.assertIn('href="catlog-latest.html#guide"', stats)
         self.assertIn('id="statsButton" class="nav-tab active" aria-current="page"', stats)
+        self.assertIn('id="browseButton" class="nav-tab" href="catlog-latest.html">', stats)
+        self.assertNotIn('aria-current="page">Browse', stats)
+
+    def test_stats_page_edits_must_each_apply_exactly_once(self) -> None:
+        source = synthetic_page(EXPECTED_TRACKER_TAG)
+        broken_pages = {
+            "reordered Browse attributes": source.replace(
+                'id="browseButton" class="nav-tab active" href="#browse" aria-current="page"',
+                'id="browseButton" href="#browse" class="nav-tab active" aria-current="page"',
+            ),
+            "body with a class": source.replace("<body>", '<body class="x">'),
+            "two Stats links": source.replace("</body>", '<a id="statsButton" class="nav-tab" href="#stats">Stats</a>\n</body>'),
+            "no hidden Stats view": source.replace('class="stats-view" hidden', 'class="stats-view"'),
+        }
+        for label, page in broken_pages.items():
+            with self.subTest(label=label):
+                self.sync.build_alias(page)  # the Browse alias does not depend on them
+                with self.assertRaises(RuntimeError):
+                    self.sync.build_alias(page, stats=True)
 
     def test_check_rejects_stale_stats_page(self) -> None:
         source = synthetic_page(EXPECTED_TRACKER_TAG)
