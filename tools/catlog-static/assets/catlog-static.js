@@ -417,7 +417,7 @@
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
         `${total} rows`,
-        "pH and temperature, without sequences, SMILES, paper IDs or assay_conditions_summary",
+        "with pH and temperature; without sequences, SMILES, paper IDs or other assay conditions",
         tableSize,
       ].filter(Boolean).join(" · ");
     }
@@ -633,7 +633,7 @@
   // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}): the exponent becomes a superscript; the numbers stay as printed.
   function caretHtml(html) {
     return html
-      .replace(/\^\(([−-]?\d+)\)|\^\{([−-]?\d+)\}|\^([−-]?\d+)/g, (_m, a, b, c) => `<sup>${a ?? b ?? c}</sup>`)
+      .replace(/\^\(([−-]?\d+(?:\.\d+)?)\)|\^\{([−-]?\d+(?:\.\d+)?)\}|\^([−-]?\d+(?:\.\d+)?)/g, (_m, a, b, c) => `<sup>${a ?? b ?? c}</sup>`)
       .replace(/<\/sup>\*(?=[A-Za-zµμ])/g, "</sup> ");
   }
 
@@ -846,7 +846,7 @@
 
   function humanReviewMark(row) {
     const key = String(row?.measurement_key || "");
-    return humanReviewMarks[key] || humanReviewMarks[key.split("-")[0]] || null;
+    return humanReviewMarks[key] || null;  // exact key only: a suffixed duplicate is a different record
   }
 
   function humanReviewNote(row) {
@@ -3455,7 +3455,13 @@
       // The marks load beside the table and never hold it up; when they arrive the visible badges are redrawn.
       loadHumanReviewMarks().then(() => {
         if (state.filtered.length && Object.keys(humanReviewMarks).length
-          && !document.body.classList.contains("catalog-load-failed")) renderRows();
+          && !document.body.classList.contains("catalog-load-failed")) {
+          renderRows();
+          // a record opened before the marks arrived (a deep link) gets its human-review note too
+          if (state.selectedKey && document.body.classList.contains("detail-open")) {
+            selectRecord(state.selectedKey, { focusDetail: false });
+          }
+        }
       });
       await loadRecordChunks();
     } catch (error) {

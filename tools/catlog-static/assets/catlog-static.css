@@ -2868,6 +2868,7 @@ body.detail-open .detail-panel {
   color: #253330;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 11.5px;
+  -webkit-user-select: all;
   user-select: all;
   white-space: normal;
   overflow-wrap: anywhere;
