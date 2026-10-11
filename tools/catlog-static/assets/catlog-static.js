@@ -3452,11 +3452,17 @@
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
-      // The marks load beside the table and never hold it up; when they arrive the visible badges are redrawn.
+      // The marks load beside the table and never hold it up; when they arrive the visible status badges are updated in
+      // place (rows are not redrawn: a reader, or a test, holding a row keeps it).
       loadHumanReviewMarks().then(() => {
         if (state.filtered.length && Object.keys(humanReviewMarks).length
           && !document.body.classList.contains("catalog-load-failed")) {
-          renderRows();
+          const pageRows = new Map(currentPageRows().map((row) => [row.record_key, row]));
+          document.querySelectorAll("#recordsBody tr[data-key]").forEach((tr) => {
+            const row = pageRows.get(tr.dataset.key);
+            const badge = tr.querySelector(".state-badge");
+            if (row && badge) badge.outerHTML = statusBadge(row);
+          });
           // a record opened before the marks arrived (a deep link) gets its human-review note too
           if (state.selectedKey && document.body.classList.contains("detail-open")) {
             selectRecord(state.selectedKey, { focusDetail: false });
