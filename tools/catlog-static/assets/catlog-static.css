@@ -594,78 +594,34 @@ body.detail-open .detail-panel { display:block }
   .stats-detail-table th, .stats-detail-table td { padding:8px 5px }
 }
 
-.guide-shell { width:min(1280px,100%); margin:0 auto; padding:28px 32px 36px }
-.guide-heading { max-width:760px }
-.guide-heading h1 { margin:0; color:var(--text); font-size:var(--fs-h1); font-weight:600; line-height:1.15 }
-.guide-heading > p:last-child { max-width:680px; margin:8px 0 0; color:var(--text-3); font-size:var(--fs-ui) }
-.guide-workflow { margin-top:22px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:20px 0 0 }
-.guide-step-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:0; padding:0; list-style:none }
-.guide-step { display:block; min-width:0; border-left:1px solid var(--line); padding:0 18px 20px }
-.guide-step:first-child { border-left:0; padding-left:0 }
-.guide-step:last-child { padding-right:0 }
-.guide-step h2, .guide-reference h2, .guide-downloads h2, .guide-citation h2, .guide-sources h2, .guide-record-depth-heading h2 { margin:0; color:var(--text); font-size:var(--fs-h3); font-weight:600 }
-.guide-step h2 { margin:0 0 4px; font-size:var(--fs-body) }
-.guide-step p { margin:0; color:var(--text-3); font-size:var(--fs-ui); line-height:1.55 }
-.guide-record-depth { margin-top:24px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:24px 0 }
-.guide-record-depth-heading { display:grid; grid-template-columns:minmax(220px,0.7fr) minmax(0,1.3fr); gap:48px; align-items:start }
-.guide-record-depth-heading h2 { font-size:var(--fs-h2) }
-.guide-record-depth-heading p { max-width:700px; margin:1px 0 0; color:var(--text-3); font-size:var(--fs-body); line-height:1.55 }
-.guide-record-example { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; align-items:start; margin:28px 0 0 }
-.guide-record-example figcaption { display:grid; grid-template-columns:minmax(0,1fr) max-content; column-gap:24px; min-width:0 }
-.guide-record-example figcaption > span { display:block; margin-bottom:6px; color:var(--teal-dark); font-size:var(--fs-meta); font-weight:600 }
-.guide-record-example figcaption > strong { display:block; color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.35 }
-.guide-record-example figcaption > p { margin:8px 0 0; color:var(--text-3); font-size:var(--fs-table); line-height:1.55 }
-.guide-record-example figcaption > .guide-example-source { grid-column:2; grid-row:1 / span 2; align-self:end; justify-content:flex-end; display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:0; font-size:var(--fs-meta) }
-.guide-example-source a { font-weight:600 }
-.guide-example-compare { display:grid; grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr); gap:8px; align-items:center; min-width:0 }
-.guide-example-level { display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; height:100%; border:1px solid var(--line); border-top-width:3px; border-radius:var(--radius); padding:18px 20px 20px }
+.guide-step-grid { grid-template-columns:repeat(3,minmax(0,1fr)); list-style:none }
+.guide-record-depth-heading { grid-template-columns:minmax(220px,0.7fr) minmax(0,1.3fr); gap:48px; align-items:start }
+.guide-record-example { grid-template-columns:minmax(0,1fr); gap:16px; align-items:start }
+.guide-record-example figcaption { grid-template-columns:minmax(0,1fr) max-content; column-gap:24px }
+.guide-record-example figcaption > span { display:block; font-weight:600 }
+.guide-record-example figcaption > strong { display:block; line-height:1.35 }
+.guide-record-example figcaption > .guide-example-source { grid-column:2; grid-row:1 / span 2; align-self:end; justify-content:flex-end; flex-wrap:wrap; gap:4px 12px }
+.guide-example-compare { align-items:center }
+.guide-example-level { display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; border:1px solid var(--line); border-top-width:3px; border-radius:var(--radius) }
 .guide-example-level.public { border-top-color:var(--teal); background:var(--teal-tint) }
-.guide-example-level.research { border-top-color:var(--amber); background:var(--amber-tint) }
-.guide-example-level header > span { color:var(--text-3); font-size:var(--fs-meta); font-weight:600 }
-.guide-example-level header > h3 { margin:3px 0 16px; color:var(--text); font-size:var(--fs-h3); font-weight:600 }
 .guide-example-value { display:grid; gap:2px; border-bottom:1px solid var(--line-soft); padding-bottom:14px }
-.guide-example-value strong { color:var(--text); font-size:var(--fs-h2); font-weight:600 }
-.guide-example-value span { color:var(--text-3); font-size:var(--fs-meta) }
+.guide-example-value span { color:var(--text-3) }
 .guide-example-level dl { display:grid; align-content:start; gap:0; margin:10px 0 0 }
-.guide-example-level dl > div { display:grid; grid-template-columns:minmax(82px,0.42fr) minmax(0,1fr); gap:10px; border-bottom:1px solid var(--line-soft); padding:7px 0 }
+.guide-example-level dl > div { display:grid; border-bottom:1px solid var(--line-soft) }
 .guide-example-level dl > div:last-child { border-bottom:0 }
-.guide-example-level dt, .guide-example-level dd { margin:0; font-size:var(--fs-meta); line-height:1.45 }
+.guide-example-level dt, .guide-example-level dd { margin:0 }
 .guide-example-level dt { color:var(--text-3) }
-.guide-example-level dd { color:var(--text); font-weight:600 }
-.guide-example-plus { display:inline-grid; width:30px; height:30px; place-items:center; justify-self:center; border:1px solid var(--line); border-radius:50%; background:var(--surface); color:var(--text-3); font-size:var(--fs-h3); text-align:center }
-.guide-choice-link { grid-row:4; align-self:end; justify-self:start; min-height:34px; margin-top:14px; background:var(--surface); white-space:nowrap }
-.guide-reference-grid { display:grid; grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr); border-bottom:1px solid var(--line) }
-.guide-reference { min-width:0; border-left:1px solid var(--line); padding:30px 36px 32px }
-.guide-reference:first-child { border-left:0; padding-left:0 }
-.guide-reference:last-child { padding-right:0 }
-.guide-reference h2 { margin:0 0 16px; font-size:var(--fs-body) }
-.guide-reference dl { display:grid; gap:12px; margin:0 }
+.guide-choice-link { grid-row:4; align-self:end; justify-self:start; white-space:nowrap }
+.guide-reference-grid { grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr) }
+.guide-reference dl { display:grid }
 .guide-reference dl > div { display:grid; gap:3px }
-.guide-reference dt { color:var(--text); font-size:var(--fs-table); font-weight:600 }
-.guide-reference dd, .guide-note { margin:0; color:var(--text-3); font-size:var(--fs-table); line-height:1.5 }
-.guide-note { margin-top:16px }
-.guide-status-list dt { display:flex; align-items:center; gap:7px }
-.guide-downloads, .guide-sources { border-bottom:1px solid var(--line); padding:30px 0 34px }
-.guide-download-list { margin:22px 0 0; border-top:1px solid var(--line-soft) }
-.guide-download-list > div { display:grid; grid-template-columns:minmax(150px,0.28fr) minmax(0,1fr); gap:24px; border-bottom:1px solid var(--line-soft); padding:12px 0 }
-.guide-download-list > div:last-child { border-bottom:0 }
-.guide-download-list dt { color:var(--text); font-size:var(--fs-table); font-weight:600 }
-.guide-download-list dd { margin:0; color:var(--text-3); font-size:var(--fs-table); line-height:1.5 }
-.guide-download-list dd > span { color:var(--text-2); font-weight:600 }
-.guide-source-list a { color:var(--link) }
-.guide-sources .guide-note { max-width:760px }
-.guide-curation-license { color:var(--text-2); font-weight:500 }
-.guide-citation { display:grid; grid-template-columns:minmax(230px,0.75fr) minmax(360px,1fr) max-content; gap:28px; align-items:start; border-bottom:1px solid var(--line); padding:30px 0 34px }
-.guide-citation p { max-width:440px; margin:7px 0 0; color:var(--text-3); font-size:var(--fs-table); line-height:1.55 }
-.guide-citation-meta { display:grid; gap:7px; margin:0 }
-.guide-citation-meta > div { display:grid; grid-template-columns:88px minmax(0,1fr); gap:12px }
-.guide-citation-meta dt, .guide-citation-meta dd { margin:0; font-size:var(--fs-table) }
-.guide-citation-meta dt { color:var(--text-3) }
-.guide-citation-meta dd { color:var(--text); font-weight:600 }
-.guide-citation-meta code, .guide-citation-line code { font-family:var(--font-mono); font-size:var(--fs-meta) }
+.guide-reference dd, .guide-note { margin:0 }
+.guide-status-list dt { align-items:center; gap:7px }
+.guide-citation { grid-template-columns:minmax(230px,0.75fr) minmax(360px,1fr) max-content; gap:28px; align-items:start }
+.guide-citation-meta { gap:7px }
 
-.guide-citation-line code { color:var(--text); -webkit-user-select:all; user-select:all; white-space:normal; overflow-wrap:anywhere }
-.guide-citation-links { display:grid; gap:8px; justify-items:start; font-size:var(--fs-table); font-weight:600 }
+.guide-citation-line code { user-select:all }
+.guide-citation-links { justify-items:start }
 
 /* Stats and Guide: no search row. */
 body:is(.stats-open,.guide-open) .global-search { display:none }
@@ -725,7 +681,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
   .guide-record-depth-heading { grid-template-columns:1fr; gap:10px }
   .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
-  .guide-citation-links { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px 20px }
+  .guide-citation-links { grid-column:1 / -1 }
 }
 
 @media (max-width: 1024px) {
@@ -748,20 +704,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .pagination-label-detail { display:none }
   #pageLabel { margin-left:0; min-width:0; font-size:var(--fs-meta) }
   .kv-line { grid-template-columns:96px minmax(0,1fr) }
-  .guide-shell { padding:30px 18px 42px }
   .guide-step-grid { grid-template-columns:1fr }
-  .guide-step, .guide-step:first-child, .guide-step:last-child { border-left:0; border-top:1px solid var(--line); padding:12px 0 }
-  .guide-step:first-child { border-top:0 }
-  .guide-record-depth { margin-top:28px; padding:26px 0 30px }
   .guide-record-example figcaption { grid-template-columns:1fr }
-  .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start; margin-top:8px }
-  .guide-example-compare { grid-template-columns:1fr; gap:10px }
-  .guide-example-level { height:auto }
-  .guide-example-plus { margin:-2px 0 }
+  .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start }
   .guide-reference-grid { grid-template-columns:1fr }
-  .guide-reference, .guide-reference:first-child, .guide-reference:last-child { border-top:1px solid var(--line); border-left:0; padding:24px 0 }
-  .guide-reference:first-child { border-top:0 }
-  .guide-download-list > div { grid-template-columns:1fr; gap:3px; padding:14px 0 }
 }
 
 /* Phones: a compact header and counts, one toolbar row, and each record as a card instead of a wide table. */
@@ -824,8 +770,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 }
 
 @media (max-width: 520px) {
-  .guide-example-level { padding:16px }
-  .guide-choice-link { width:100%; justify-content:center; white-space:normal }
+  .guide-choice-link { width:100%; white-space:normal }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -855,383 +800,80 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   }
 }
 
-/* WP4: Guide. One reading column (72ch, body 16px/1.6), the same status badges as the table, plain section rules.
-   Every rule is scoped to .guide-view; it adds to the Guide rules above without changing them. */
-.guide-view .guide-shell {
-  box-sizing: content-box;
-  width: auto;
-  max-width: 72ch;
-  margin: 0 auto;
-  padding: 32px 24px 56px;
-  color: var(--ink);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.guide-view .guide-shell :is(p, dd, dt, li, summary) {
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.guide-view .guide-shell :is(h1, h2, h3) {
-  color: var(--ink);
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.guide-view .guide-heading {
-  max-width: none;
-}
-
-.guide-view .guide-heading h1 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.25;
-}
-
-.guide-view .guide-heading > p:last-child {
-  max-width: none;
-  margin: 12px 0 0;
-  color: var(--ink);
-}
-
-.guide-view .guide-shell h2 {
-  margin: 0 0 12px;
-  font-size: 22px;
-  line-height: 1.3;
-}
-
-.guide-view .guide-shell h3 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  line-height: 1.35;
-}
-
-.guide-view .guide-shell p {
-  margin: 0 0 12px;
-  color: var(--ink);
-}
-
-.guide-view .guide-shell :is(sub, sup) {
-  line-height: 0;
-}
-
-.guide-view .guide-shell code {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-
+/* Guide: one reading column (72ch, body 16px/1.6), the same status badges as the table, plain section rules. Every rule is scoped to .guide-view, so it wins over the older Guide rules above. */
+.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:72ch; margin:0 auto; padding:32px 24px 56px; color:var(--ink); font-size:16px; line-height:1.6 }
+.guide-view .guide-shell :is(p, dd, dt, li, summary) { font-size:16px; line-height:1.6 }
+.guide-view .guide-shell :is(h1, h2, h3) { color:var(--ink); font-weight:600; letter-spacing:0 }
+.guide-view .guide-heading { max-width:none }
+.guide-view .guide-heading h1 { margin:0; font-size:28px; line-height:1.25 }
+.guide-view .guide-heading > p:last-child { max-width:none; margin:12px 0 0; color:var(--ink) }
+.guide-view .guide-shell h2 { margin:0 0 12px; font-size:22px; line-height:1.3 }
+.guide-view .guide-shell h3 { margin:0 0 6px; font-size:18px; line-height:1.35 }
+.guide-view .guide-shell p { margin:0 0 12px; color:var(--ink) }
+.guide-view .guide-shell :is(sub, sup) { line-height:0 }
+.guide-view .guide-shell code { font-family:ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size:14px; overflow-wrap:anywhere }
 /* Sections stack in one column, divided by a rule. */
-.guide-view :is(.guide-workflow, .guide-record-depth, .guide-reference, .guide-downloads, .guide-citation, .guide-sources) {
-  display: block;
-  margin: 36px 0 0;
-  border: 0;
-  border-top: 1px solid var(--line);
-  padding: 28px 0 0;
-}
-
-.guide-view :is(.guide-reference-grid, .guide-step-grid, .guide-record-depth-heading) {
-  display: block;
-  border: 0;
-}
-
-.guide-view .guide-reference,
-.guide-view .guide-reference:first-child,
-.guide-view .guide-reference:last-child {
-  padding: 28px 0 0;
-}
-
-.guide-view .guide-step,
-.guide-view .guide-step:first-child,
-.guide-view .guide-step:last-child {
-  margin: 20px 0 0;
-  border: 0;
-  padding: 0;
-}
-
-.guide-view .guide-step p:last-child {
-  margin-bottom: 0;
-}
-
-.guide-view .guide-record-depth-heading p {
-  max-width: none;
-  margin: 0 0 12px;
-  color: var(--ink);
-}
-
+.guide-view :is(.guide-workflow, .guide-record-depth, .guide-reference, .guide-downloads, .guide-citation, .guide-sources) { display:block; margin:36px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
+.guide-view :is(.guide-reference-grid, .guide-step-grid, .guide-record-depth-heading) { display:block; border:0 }
+.guide-view .guide-reference, .guide-view .guide-reference:first-child, .guide-view .guide-reference:last-child { padding:28px 0 0 }
+.guide-view .guide-step, .guide-view .guide-step:first-child, .guide-view .guide-step:last-child { margin:20px 0 0; border:0; padding:0 }
+.guide-view .guide-step p:last-child { margin-bottom:0 }
+.guide-view .guide-record-depth-heading p { max-width:none; margin:0 0 12px; color:var(--ink) }
 /* The worked example: two stacked cards; the open-record card has a neutral border. */
-.guide-view .guide-record-example {
-  display: block;
-  margin: 20px 0 0;
-}
-
-.guide-view .guide-record-example figcaption {
-  display: block;
-  margin: 0 0 12px;
-}
-
-.guide-view .guide-record-example figcaption > span:first-child {
-  margin: 0;
-  color: var(--teal-dark);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.guide-view .guide-record-example figcaption > strong {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.guide-view .guide-record-example figcaption > .guide-example-source {
-  display: block;
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 16px;
-}
-
-.guide-view .guide-example-compare {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-}
-
-.guide-view .guide-example-level {
-  height: auto;
-  padding: 16px 20px 18px;
-}
-
-.guide-view .guide-example-level.research {
-  border-color: var(--line);
-  background: var(--panel);
-}
-
-.guide-view .guide-example-level header > span {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.guide-view .guide-example-level header > h3 {
-  margin: 2px 0 12px;
-  font-size: 18px;
-}
-
-.guide-view .guide-example-value strong {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.guide-view .guide-example-value span {
-  font-size: 16px;
-}
-
-.guide-view .guide-example-level dl > div {
-  grid-template-columns: 8em minmax(0, 1fr);
-  gap: 4px 16px;
-  padding: 8px 0;
-}
-
-.guide-view .guide-example-level :is(dt, dd) {
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.guide-view .guide-example-level dd {
-  color: var(--ink);
-  font-weight: 500;
-}
-
-.guide-view .guide-choice-link {
-  margin-top: 16px;
-  font-size: 14px;
-}
-
+.guide-view .guide-record-example { display:block; margin:20px 0 0 }
+.guide-view .guide-record-example figcaption { display:block; margin:0 0 12px }
+.guide-view .guide-record-example figcaption > span:first-child { margin:0; color:var(--teal-dark); font-size:14px; font-weight:600 }
+.guide-view .guide-record-example figcaption > strong { font-size:18px; font-weight:600 }
+.guide-view .guide-record-example figcaption > .guide-example-source { display:block; margin:4px 0 0; color:var(--muted); font-size:16px }
+.guide-view .guide-example-compare { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px }
+.guide-view .guide-example-level { height:auto; padding:16px 20px 18px }
+.guide-view .guide-example-level.research { border-color:var(--line); background:var(--panel) }
+.guide-view .guide-example-level header > span { color:var(--muted); font-size:14px; font-weight:500 }
+.guide-view .guide-example-level header > h3 { margin:2px 0 12px; font-size:18px }
+.guide-view .guide-example-value strong { font-size:22px; font-weight:600 }
+.guide-view .guide-example-value span { font-size:16px }
+.guide-view .guide-example-level dl > div { grid-template-columns:8em minmax(0, 1fr); gap:4px 16px; padding:8px 0 }
+.guide-view .guide-example-level :is(dt, dd) { font-size:16px; line-height:1.5 }
+.guide-view .guide-example-level dd { color:var(--ink); font-weight:500 }
+.guide-view .guide-choice-link { margin-top:16px; font-size:14px }
 /* Field meanings and labels: term above its meaning. */
-.guide-view .guide-reference dl {
-  gap: 14px;
-  margin: 0;
-}
-
-.guide-view .guide-reference dt {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.guide-view .guide-reference dd {
-  color: var(--ink);
-}
-
-.guide-view .guide-shell .guide-note {
-  margin: 16px 0 0;
-  color: var(--muted);
-}
-
+.guide-view .guide-reference dl { gap:14px; margin:0 }
+.guide-view .guide-reference dt { color:var(--ink); font-weight:600 }
+.guide-view .guide-reference dd { color:var(--ink) }
+.guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
 /* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
-.guide-view .guide-status-list {
-  margin: 16px 0 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-.guide-view .guide-status-list > div {
-  display: grid;
-  grid-template-columns: 11em minmax(0, 1fr);
-  gap: 4px 20px;
-  align-items: start;
-  border-bottom: 1px solid var(--line-soft);
-  padding: 10px 0;
-}
-
-.guide-view .guide-status-list dt {
-  display: block;
-}
-
-.guide-view .guide-status-list .state-badge {
-  display: inline-grid;
-  height: auto;
-  justify-items: start;
-  align-content: start;
-  max-width: 100%;
-  color: var(--ink);
-  font-size: 16px;
-  line-height: 1.6;
-  white-space: nowrap;
-}
-
-.guide-view .guide-status-list .state-badge.accepted { --guide-status-dot: var(--teal-dark); }
-.guide-view .guide-status-list .state-badge.review { --guide-status-dot: var(--orange); }
-.guide-view .guide-status-list .state-badge.unresolved { --guide-status-dot: var(--quiet); }
-.guide-view .guide-status-list .state-badge.disputed { --guide-status-dot: var(--red); }
-
-.guide-view .guide-status-list .state-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
+.guide-view .guide-status-list { margin:16px 0 0; border-top:1px solid var(--line-soft) }
+.guide-view .guide-status-list > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; align-items:start; border-bottom:1px solid var(--line-soft); padding:10px 0 }
+.guide-view .guide-status-list dt { display:block }
+.guide-view .guide-status-list .state-badge { display:inline-grid; height:auto; justify-items:start; align-content:start; max-width:100%; color:var(--ink); font-size:16px; line-height:1.6; white-space:nowrap }
+.guide-view .guide-status-list .state-badge.accepted { --guide-status-dot:var(--teal-dark) }
+.guide-view .guide-status-list .state-badge.review { --guide-status-dot:var(--orange) }
+.guide-view .guide-status-list .state-badge.unresolved { --guide-status-dot:var(--quiet) }
+.guide-view .guide-status-list .state-badge.disputed { --guide-status-dot:var(--red) }
+.guide-view .guide-status-list .state-label { display:inline-flex; align-items:center; gap:8px; font-weight:500 }
 /* The table's status colour when the badge defines one (--status-color), otherwise the Guide's own. */
-.guide-view .guide-status-list .state-label::before {
-  content: "";
-  flex: 0 0 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--status-color, var(--guide-status-dot));
-}
-
-.guide-view .guide-status-list .state-tags {
-  padding-left: 16px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.guide-view .guide-status-list .state-tags:empty {
-  display: none;
-}
-
-.guide-view .guide-status-list .state-tag + .state-tag::before {
-  content: " · ";
-}
-
-.guide-view .guide-status-list dd {
-  margin: 0;
-}
-
-.guide-view .guide-details {
-  margin: 20px 0 0;
-}
-
-.guide-view .guide-details > summary {
-  color: var(--blue);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.guide-view .guide-details > dl {
-  margin: 12px 0 0;
-  border-left: 2px solid var(--line-soft);
-  padding-left: 16px;
-}
-
+.guide-view .guide-status-list .state-label::before { content:""; flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:var(--status-color, var(--guide-status-dot)) }
+.guide-view .guide-status-list .state-tags { padding-left:16px; color:var(--muted); font-size:14px; line-height:1.4 }
+.guide-view .guide-status-list .state-tags:empty { display:none }
+.guide-view .guide-status-list .state-tag + .state-tag::before { content:" · " }
+.guide-view .guide-status-list dd { margin:0 }
+.guide-view .guide-details { margin:20px 0 0 }
+.guide-view .guide-details > summary { color:var(--blue); font-weight:500; cursor:pointer }
+.guide-view .guide-details > dl { margin:12px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
 /* Lists of terms (caveats, downloads, sources, citation details): term left, meaning right. */
-.guide-view :is(.guide-download-list, .guide-term-list) {
-  display: block;
-  margin: 4px 0 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-.guide-view :is(.guide-download-list, .guide-term-list) > div,
-.guide-view .guide-citation-meta > div {
-  display: grid;
-  grid-template-columns: 11em minmax(0, 1fr);
-  gap: 4px 20px;
-  border-bottom: 1px solid var(--line-soft);
-  padding: 10px 0;
-}
-
-.guide-view :is(.guide-download-list, .guide-term-list, .guide-status-list) > div:last-child {
-  border-bottom: 0;
-}
-
-.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dt {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd {
-  margin: 0;
-  color: var(--ink);
-  font-weight: 400;
-}
-
-.guide-view .guide-citation p {
-  max-width: none;
-  margin: 0 0 12px;
-  color: var(--ink);
-}
-
-.guide-view .guide-citation-meta {
-  display: block;
-  margin: 8px 0 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-.guide-view .guide-citation-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  margin: 16px 0 0;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.guide-view .guide-shell .guide-sources .guide-note {
-  max-width: none;
-  margin: 0 0 12px;
-  color: var(--ink);
-}
-
-.guide-view .guide-shell .guide-sources .guide-curation-license {
-  margin: 16px 0 0;
-  font-weight: 400;
-}
+.guide-view :is(.guide-download-list, .guide-term-list) { display:block; margin:4px 0 0; border-top:1px solid var(--line-soft) }
+.guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; border-bottom:1px solid var(--line-soft); padding:10px 0 }
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-status-list) > div:last-child { border-bottom:0 }
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dt { color:var(--ink); font-weight:600 }
+.guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd { margin:0; color:var(--ink); font-weight:400 }
+.guide-view .guide-citation p { max-width:none; margin:0 0 12px; color:var(--ink) }
+.guide-view .guide-citation-meta { display:block; margin:8px 0 0; border-top:1px solid var(--line-soft) }
+.guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:16px; font-weight:500 }
+.guide-view .guide-shell .guide-sources .guide-note { max-width:none; margin:0 0 12px; color:var(--ink) }
+.guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }
 
 @media (max-width: 640px) {
-  .guide-view .guide-shell {
-    padding: 24px 16px 40px;
-  }
-
-  .guide-view .guide-status-list > div,
-  .guide-view :is(.guide-download-list, .guide-term-list) > div,
-  .guide-view .guide-citation-meta > div,
-  .guide-view .guide-example-level dl > div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
-  }
-
-  .guide-view .guide-example-level {
-    padding: 14px 16px 16px;
-  }
+  .guide-view .guide-shell { padding:24px 16px 40px }
+  .guide-view .guide-status-list > div, .guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div, .guide-view .guide-example-level dl > div { grid-template-columns:minmax(0, 1fr); gap:2px }
+  .guide-view .guide-example-level { padding:14px 16px 16px }
 }
