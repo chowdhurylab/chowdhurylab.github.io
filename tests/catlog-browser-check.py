@@ -582,6 +582,21 @@ def check_filters(driver, browser, url, route_label):
         assert labels and all(label == "Not checked" for label in labels), labels
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
+
+        # 6. Variants: the mutation has its own line under the name (never clipped with it), and rows keep one height.
+        open_page(base + "#browse?variant=variant")
+        forms = driver.execute_script("""
+            return [...document.querySelectorAll('#recordsBody tr[data-key]')].map(row => {
+                const form = row.querySelector('.primary-cell > .enzyme-form');
+                const name = row.querySelector('.primary-cell > .clamp-2');
+                return {text: form ? form.textContent : null, below: form ? form.getBoundingClientRect().top >= name.getBoundingClientRect().bottom - 1 : false,
+                        height: Math.round(row.getBoundingClientRect().height)};
+            });
+        """)
+        assert forms and all(item["text"] and not item["text"].startswith("Variant") and item["below"] for item in forms), forms[:3]
+        assert len({item["height"] for item in forms}) == 1, {item["height"] for item in forms}
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise

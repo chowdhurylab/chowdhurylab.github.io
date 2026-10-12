@@ -312,7 +312,12 @@ tbody tr.selected td:first-child { box-shadow:inset 3px 0 0 var(--teal) }
 tbody tr.selected .row-arrow { color:var(--teal-dark) }
 .primary-cell { min-width:0 }
 .primary-cell strong { color:var(--link); font-weight:500 }
-.primary-cell .enzyme-form { display:inline; border:1px solid var(--teal-line); border-radius:4px; background:var(--teal-soft); padding:0 4px; color:var(--link); font-size:var(--fs-min); font-weight:500; line-height:1; -webkit-box-decoration-break:clone; box-decoration-break:clone }
+/* A variant's mutation: its own line under the name, never clipped by it; the name then keeps one line, so every row
+   keeps one height. Phones show it after organism · substrate (td.c-form, hidden in the table). */
+.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--teal-line); border-radius:4px; background:var(--teal-soft); padding:1px 4px; color:var(--link); font-size:var(--fs-min); font-weight:500; line-height:12px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+.primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
+.clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
+td.c-form { display:none }
 .row-arrow { color:var(--text-3); font-size:var(--fs-stat) }
 
 /* A value and its markers (no unit,calc.,a caution) share one line. */
@@ -769,6 +774,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody td.c-organism { flex:0 1 auto; max-width:60%; margin-right:-6px }
   #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:block; max-height:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
   #recordsBody td.c-substrate .clamp-2::before { content:"\00b7\00a0" }
+  /* The variant line follows organism · substrate; the name keeps its two lines. */
+  #recordsBody .primary-cell .enzyme-form { display:none }
+  #recordsBody .clamp-2.has-form { max-height:34px; -webkit-line-clamp:2 }
+  #recordsBody td.c-form { display:block; order:2; flex:0 0 100% }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }

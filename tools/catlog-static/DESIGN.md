@@ -148,7 +148,10 @@ Colours are tokens in the stylesheet's :root, the only place hex values appear.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
-hover and in the record. Every table row has the same height. Value markers
+hover and in the record. A variant's mutation (the bare signature, "D102E", or
+"variant, not specified") has its own line under the name, a small teal tag that
+is never clipped with the name, which then keeps one line; wild type shows
+nothing. Every table row has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"
 (they may wrap to the next line there).
@@ -171,7 +174,7 @@ rounding); the record and downloads keep the stored text. Every column fits from
 about 1010px; narrower screens scroll the table sideways with the enzyme name
 kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name and EC;
-organism · substrate; kcat, Km and kcat/Km with their units as labels; the
+organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge, then °C and pH at the line's end.
 The filters overlay (below 1440px, phones included) ends with a "Show N
 records" button. Filter chips use the teal tint with a thin teal line, 12px

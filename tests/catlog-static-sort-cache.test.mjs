@@ -1273,9 +1273,13 @@ assert.equal(
 );
 assert.match(
   api.enzymeFormHtml({ sequence_variant_status: "variant" }),
-  />Variant \(unspecified\)</,
+  />variant, not specified</,
   "the table marker should identify an unspecified variant",
 );
+assert.match(api.enzymeFormHtml({ mutation_signature: "D102E", wild_type: false }), /<span class="enzyme-form" title="Variant: D102E">D102E<\/span>/,
+  "the table shows the bare mutation");
+assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
+assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
 {
   const originalCreateElement = document.createElement;

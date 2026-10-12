@@ -928,10 +928,17 @@
     return showUnknown ? "Not recorded" : "";
   }
 
-  function enzymeFormHtml(row) {
+  // The table's variant line: the bare mutation ("D102E", "H254Q/H257F"), "variant, not specified" without one, and
+  // nothing for wild type or a record that does not say.
+  function enzymeFormText(row) {
     const label = enzymeFormLabel(row);
-    if (!label || label === "Wild type") return "";
-    return `<span class="enzyme-form" title="Measured enzyme form">${escapePublic(label)}</span>`;
+    if (!label.startsWith("Variant")) return "";
+    return mutationSignature(row) || "variant, not specified";
+  }
+
+  function enzymeFormHtml(row, { className = "enzyme-form" } = {}) {
+    const text = enzymeFormText(row);
+    return text ? `<span class="${className}" title="Variant: ${escapeHtml(text)}">${escapePublic(text)}</span>` : "";
   }
 
   // The temperature (°C) and pH the table shows, as numbers for sorting (null when the table shows a dash).
@@ -4031,14 +4038,16 @@
     body.innerHTML = pageRows.map((row) => {
       const flags = conditionFlags(row);
       const enzymeName = row.enzyme_display_name || "Name not preserved";
+      // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
       const enzymeForm = enzymeFormHtml(row);
-      const enzymeTitle = [enzymeName, enzymeForm ? enzymeFormLabel(row) : ""].filter(Boolean).join(" · ");
+      const enzymeTitle = [enzymeName, enzymeFormText(row)].filter(Boolean).join(" · ");
       return `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
-        <td class="c-enzyme primary-cell"><span class="clamp-2" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong>${enzymeForm ? ` ${enzymeForm}` : ""}</span></td>
+        <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong></span>${enzymeForm}</td>
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
         <td class="c-substrate"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span></td>
+        ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km")}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
