@@ -577,6 +577,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* E. A sequence or SMILES: its length, then Show and Copy; Show opens it under the row. */
 .reveal-line { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px }
+/* A long run with no spaces (28 substitutions joined by "/") wraps inside the record instead of widening it. */
+.reveal-summary { min-width:0; overflow-wrap:anywhere }
 .row-actions { display:inline-flex; gap:12px }
 .row-actions .text-button, .copy-button { border:0; background:transparent; color:var(--accent); cursor:pointer; padding:0; font-size:var(--fs-13); font-weight:500 }
 .row-actions .text-button:hover, .copy-button:hover { text-decoration:underline }

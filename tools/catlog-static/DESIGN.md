@@ -410,7 +410,8 @@ is left out, never an empty heading. The order (design spec 5):
   and organism)") or "Sequence known, no UniProt entry", "Several possible
   UniProt entries", "Not matched to UniProt"; each sequence as "605 aa" with Show
   (opens it under the row) and Copy, the variant's named by its note ("489 aa,
-  UniProt P22498 with H150A"); without a sequence the row says why or "None
+  UniProt P22498 with H150A"; a long list of substitutions wraps inside the
+  record); without a sequence the row says why or "None
   recorded"; the substrate in full; SMILES with Show and Copy, or "None
   recorded".
 - F. Paper: the title and year when the record carries them; PubMed and DOI

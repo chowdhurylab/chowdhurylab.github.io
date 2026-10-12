@@ -1246,6 +1246,9 @@ RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein iden
 RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "Paper", "Against the databases", "Review and audit",
                    "Source details"]
 
+# A malic enzyme variant with 28 substitutions (PMID 24998673): its sequence line is one long run with no spaces.
+LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
+
 
 def check_record_panel(driver, browser, url, route_label):
     """The record (design spec 5): header lines, then Values, Source, Conditions, Protein and substrate, Paper, Against the
@@ -1363,6 +1366,16 @@ def check_record_panel(driver, browser, url, route_label):
                 results[f"{kind}-{label}"] = True
                 ActionChains(driver).send_keys(Keys.ESCAPE).perform()
                 wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+            # A variant written as one long run with no spaces (28 substitutions joined by "/") wraps inside the record
+            # instead of widening it (skipped when this snapshot does not have that record).
+            driver.get("about:blank")
+            driver.get(base + f"#record={LONG_VARIANT_RECORD}")
+            wait.until(lambda d: d.execute_script(
+                "return Boolean(document.querySelector('#detailContent .reveal-summary') || document.querySelector('#recordsBody .empty-notice'))"))
+            if driver.find_elements(By.CSS_SELECTOR, "#detailContent .reveal-summary"):
+                wide = driver.execute_script("const panel = document.getElementById('detailPanel'); return [panel.scrollWidth, panel.clientWidth]")
+                assert wide[0] <= wide[1] + 1, f"The long variant record overflows sideways at {width}px: {wide}"
+                results[f"long-variant-{label}"] = True
         set_browse_viewport(driver, browser, 1440, 1000)
         # A link to filtered results with a record, followed inside the open page, opens that record on its page.
         driver.get("about:blank")
