@@ -679,6 +679,81 @@ def check_filters(driver, browser, url, route_label):
     return {"route": route_label, "human_checked": checked, "passed": True}
 
 
+# Words of the earlier pipeline and of CatLog's tooling that a record must never show.
+RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|CatLog v2")
+
+
+def check_record_panel(driver, browser, url, route_label):
+    """The record: header lines, then Measurement, Assay conditions, Paper and review, Protein and structure and Source
+    details; a record read from the paper says how in its Method line (with the Guide link) and gives its values as
+    printed; an older record names the earlier automated review; no labelled row shows a bare dash."""
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
+    base = url.split("#", 1)[0]
+    results = {}
+
+    def open_first_record(address):
+        driver.get("about:blank")
+        driver.get(base + address)
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+                   and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: d.execute_script(
+            "return document.body.classList.contains('detail-open') && !document.querySelector('#detailLoadStatus')"
+            " && Boolean(document.querySelector('#detailContent .detail-section'))"))
+        return driver.execute_script("""
+            const content = document.querySelector('#detailContent');
+            const row = (label) => [...content.querySelectorAll('.kv-line')]
+                .filter(e => e.querySelector('span')?.textContent === label).map(e => e.querySelector('strong'));
+            const method = row('Method')[0];
+            return {
+                sections: [...content.querySelectorAll('.detail-section > h3, .detail-disclosure > summary')].map(e => e.textContent.trim()),
+                subtitle: content.querySelector('.detail-top .detail-subtitle')?.textContent || '',
+                substrate: content.querySelector('.detail-top .detail-substrate')?.textContent || '',
+                status: content.querySelector('.detail-top .detail-status')?.textContent || '',
+                dashes: [...content.querySelectorAll('.kv-line > strong')].filter(e => e.textContent.trim() === '—').length,
+                method: method ? method.textContent : null,
+                methodLink: method?.querySelector('a.method-link')?.getAttribute('href') || null,
+                review: row('Review')[0]?.textContent || null,
+                valuesHead: [...content.querySelectorAll('.values-table thead th')].map(e => e.textContent),
+                text: content.innerText,
+                overflow: document.documentElement.scrollWidth > innerWidth + 1
+                    || document.querySelector('.detail-panel').scrollWidth > document.querySelector('.detail-panel').clientWidth + 1,
+            };
+        """)
+
+    sizes = [("desktop", 1440, 1000)] + ([("mobile", 390, 844)] if browser == "chrome" else [])
+    try:
+        for label, width, height in sizes:
+            set_browse_viewport(driver, browser, width, height)
+            for kind, address in (("from-paper", "#browse?source=paper&status=accepted"), ("database", "#browse?source=brenda")):
+                panel = open_first_record(address)
+                assert panel["sections"] == ["Measurement", "Assay conditions", "Paper and review", "Protein and structure",
+                                             "Source details"], panel["sections"]
+                assert panel["subtitle"].startswith("EC "), panel["subtitle"]
+                assert panel["substrate"].startswith("Substrate: "), panel["substrate"]
+                assert panel["dashes"] == 0, "A labelled row shows a bare dash"
+                assert not RECORD_PANEL_FORBIDDEN.search(panel["text"]), RECORD_PANEL_FORBIDDEN.search(panel["text"]).group(0)
+                assert not panel["overflow"], f"The {kind} record overflows sideways at {width}px"
+                if kind == "from-paper":
+                    assert "from paper" in panel["status"], panel["status"]
+                    assert panel["method"] and panel["method"].startswith(
+                        "Read from the paper by an AI model; a second, separate AI check compared each value with the paper;"), panel["method"]
+                    assert panel["methodLink"] == "#guide-method"
+                    assert panel["valuesHead"][1:3] == ["As printed", "In catalog units"], panel["valuesHead"]
+                    assert panel["review"] is None
+                else:
+                    assert panel["method"] is None and "earlier automated review" in (panel["review"] or ""), panel["review"]
+                driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-{kind}-{label}.png"))
+                results[f"{kind}-{label}"] = True
+                ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+                wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+        set_browse_viewport(driver, browser, 1440, 1000)
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))
+        raise
+    return {"route": route_label, "checked": results, "passed": True}
+
+
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
@@ -1043,6 +1118,7 @@ def main():
                     browse_url = cache_tagged(browse_url, os.environ["GITHUB_SHA"][:12])
                 browse.append(check_browse(driver, args.browser, browse_url, f"{environment}-{route}"))
                 browse[-1]["filters"] = check_filters(driver, args.browser, browse_url, f"{environment}-{route}")
+                browse[-1]["record_panel"] = check_record_panel(driver, args.browser, browse_url, f"{environment}-{route}")
         result["browse_routes"] = browse
         (OUTPUT / f"{args.browser}-result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result))
