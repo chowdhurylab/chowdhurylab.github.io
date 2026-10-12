@@ -39,10 +39,11 @@ counted" in the other (stacked, so a short section leaves no gap). On phones a
 second count column ("Accepted") is wide enough for its heading.
 
 Charts are plain horizontal bars: name, bar, count, share of all records.
-Colour marks the review result only, with the Browse status dot colours (blue
-#339cff accepted, orange #f3883b not confirmed, grey not checked, for
-Unverified and Not reviewed alike, red #e02e2a disputed); every other bar is one teal
-(#277c86). Top-10 bars are drawn against the largest item, all others against
+Colour marks the review result only, with the Browse status dot colours (the
+stylesheet's --st-* tokens, the Nature BPG palette: navy accepted, salmon not
+confirmed, slate Unverified, tan Not reviewed, dark red disputed); every other bar
+is one neutral grey (--bar-neutral). Colours are always tokens, never hex values
+in the page code. Top-10 bars are drawn against the largest item, all others against
 all records. Value ranges show, per metric in catalog units (kcat s⁻¹, Km mM,
 kcat/Km s⁻¹ mM⁻¹), the median, the 10–90% range and a histogram per power of
 ten whose end bars hold every value beyond them; values without a recorded
@@ -81,13 +82,14 @@ from several databases counts under each source (so sources add up to more than
 all records, and match the Guide's source list). Stats and the filters use the
 same names for cautions and sources.
 
-Use white, unframed sections with light rules, within 1280px. Use normal page
+Use white, unframed sections with light rules, in one centred column at most
+1200px wide (32px 24px padding). Use normal page
 scrolling; never an independently scrolling chart panel. Search belongs to
 Browse, not Stats or Guide. Keep Browse's filtered state when navigating away
 and back. Do not publish project token statistics on this page.
 
-Navigation order is Browse, Stats, Guide, then, apart at the right, the links
-out "CatRange paper ↗" and "Chowdhury Lab ↗". Browse, Guide and Stats are real
+Navigation order is Browse, Stats, Guide, Team, then, set apart by a thin rule,
+the links out "CatRange paper ↗" and "Chowdhury Lab ↗". Browse, Guide and Stats are real
 links; normal clicks retain the loaded table, while
 modified clicks and copying work normally. Strip only deployment-check query
 tags from shared navigation. Stats uses catlog-stats.html; Browse keeps

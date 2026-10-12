@@ -3,45 +3,80 @@ name: CatLog
 description: A compact enzyme kinetics workbench for reading measurements and their sources.
 colors:
   background: "#ffffff"
+  surface-2: "#f6f8f7"
   text: "#172120"
   text-2: "#3d4845"
-  muted: "#5f6b68"
-  primary: "#245f58"
-  border: "#d3dcd7"
-  status-accepted: "#339cff"
-  status-pending: "#f3883b"
-  status-unverified: "#858f8c"
-  status-not-reviewed: "#9b79ec"
-  status-disputed: "#e02e2a"
+  muted: "#5c6865"
+  line: "#d3dcd7"
+  line-soft: "#e7ece9"
+  accent: "#245f58"
+  accent-hover: "#1b4a44"
+  accent-tint: "#e8f2ef"
+  status-accepted: "#3C5488"
+  status-pending: "#F39B7F"
+  status-pending-ring: "#c4664a"
+  status-unverified: "#8491B4"
+  status-not-reviewed: "#B09C85"
+  status-not-reviewed-ring: "#8c7a64"
+  status-disputed: "#DC0000"
   human-checked: "#17733a"
+  caution: "#8a5a14"
+  caution-tint: "#fff6e8"
+  compare-same: "#00A087"
+  compare-differs: "#7E6148"
+  compare-new: "#4DBBD5"
+  change-magnitude: "#E64B35"
+  change-precision: "#91D1C2"
+  bar-neutral: "#7d8885"
 typography:
   body:
-    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif'
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.45
+    lineHeight: 20px
     letterSpacing: 0px
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
   table:
     fontSize: 13px
-  scale: 11, 12, 13, 14, 16, 18, 22, 28px (Stats labels 15px, Stats notes 14px)
+  scale: 12/16, 13/18, 14/20, 16/24, 18/24, 20/24, 24/28, 32/36px (size/line height; Stats rows keep 15px until its figure set replaces them)
   weights: 400, 500, 600
-spacing: 4, 8, 12, 16, 24, 32px
+  numbers: tabular-nums lining-nums
+spacing: 4, 8, 12, 16, 24, 32, 48px
+radius: 4px (controls), 0 (bars)
+layout:
+  header: 56px
+  counts-band: 64px
+  gutter: 24px (16px below 1024px)
+  sidebar: 256px (to 1279px), 272px (1280-1439px), 288px (1440px and up); rail 48px
+  record: 440px (1024-1439px), 480px (1440px and up)
 ---
 
 # CatLog
 
 ## Layout
 
-Start with the table, not a landing page. Keep Records, Accepted, Read from the
-paper, Human-checked and the three "With kcat · Km · kcat/Km" counts in one 48px
-line, labels and counts on one baseline, the snapshot date at its end (its title
-is the Data ID; Stats is a tab, not a band link); from 1181 to 1339px the gaps
-tighten, and a window still too narrow wraps the date to a second line; from 641
-to 1023px it takes two lines (Records, Accepted, Read from the paper,
+Start with the table, not a landing page. The page is one grid on a 4px spacing
+scale with 24px gutters (16px below 1024px): a 56px header, a 64px counts band,
+then [filter sidebar | table | open record]. Rules are 1px --line between regions
+and --line-soft inside them; there are no gradients, and shadows only on the phone
+sheet, dialogs and menus.
+
+The header is one line from 1181px: brand ("CatLog", enzyme kinetics catalog),
+the catalog's tabs Browse · Stats · Guide · Team, the links out set apart by a
+thin rule, the search box (at most 560px) and Download. Tabs are 14px/500, the
+current one 600 with a 2px accent rule under it.
+
+Keep Records, Accepted, Read from the paper, Human-checked and the three "With
+kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
+--muted, on one baseline, the snapshot date (12px) at its end (its title is the
+Data ID; Stats is a tab, not a band link). From 1024 to 1439px the gaps tighten
+and "With" is read out but not shown; a window still too narrow (or "Matching
+records") moves the date under the counts, inside the same 64px. From 641 to
+1023px the band takes two lines (Records, Accepted, Read from the paper,
 Human-checked; then the With counts and the date, with no divider at the start of
-a line); on phones the line keeps Records and Accepted, Human-checked takes the
-next line with the More button, and More shows the rest (Read from the paper
-first). Read from the paper N links to those records (#browse?source=paper plus
+a line); on phones the line keeps Records and Accepted (numbers still 20px),
+Human-checked takes the next line with the More button, and More shows the rest
+(Read from the paper first). Read from the paper N links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's
 summary.overview.from_paper.records on an unfiltered view until the records
 load, then the count among the current results; 0 is plain text. Human-checked N is a link to those records
@@ -70,15 +105,26 @@ one category per table; source categories follow the stored evidence precedence,
 not an acceptance score. Explain the categories in a native disclosure. Keep
 the bottom page controls compact, with page size left and navigation right.
 
-Filters open on request at every width. From 1440px they are a column beside
-the table (288px; no overlay, the table stays usable) and the results follow
-each change; from 1600px they stay open beside an open record, below that a
-record takes their place and closing it brings them back where they were.
-Beside them a name column is never narrower than its longest word (a line may
-break after a hyphen, comma or slash); a table still too wide scrolls sideways
-with the Columns control, edge shadows and Enzyme kept in view. Narrower than
-1440px (where a column would squeeze the names to a few letters), they are an
-overlay that ends with a "Show N records" button. The panel order: Source (three
+Filters are a persistent sidebar, a grid column left of the table and never
+over it, and the results follow each change (no "Show N records" button beside
+the table). From 1024px it is open by default (256px to 1279px, 272px to 1439px,
+288px from 1440px); « in its heading collapses it to a 48px rail, a tall
+"Filters" button set vertically with the active-filter count, and a viewer's
+choice is kept in their browser (localStorage, optional). From 1024 to 1599px an
+open record takes the sidebar's place: it becomes the rail and comes back where
+it was when the record closes (opening it closes the record); from 1600px the
+sidebar, the table and the record sit side by side. From 641 to 1023px it starts
+as the rail and opening it pushes the table (which scrolls sideways). On phones
+(640px and below) only, the filters are a full-screen sheet that slides up:
+"Filters · Clear all · ×" at the top and "Show N records" (accent, 44px) at the
+bottom; Esc, × or that button close it, and Escape never closes the sidebar.
+Beside the sidebar a name column is never narrower than its longest word (a line
+may break after a hyphen, comma or slash); a table still too wide scrolls
+sideways with the Columns control, edge shadows and Enzyme kept in view. The
+sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
+its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
+rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
+count at the right) and 32px fields. The panel order: Source (three
 radio buttons: All records, Read from the paper by CatLog and From enzyme
 databases, the last two with a one-line help under them, the first ending in a
 link to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
@@ -144,13 +190,18 @@ of its paper: the index carries each record's PMIDs and DOIs from the Full data
 download of the same snapshot. When nothing matches, the table names the
 filters that are on and offers to remove the one set last that brings records
 back (with how many) or to clear everything. The header's tabs are the
-catalog's own views, Browse · Stats · Guide; the links out, "CatRange paper ↗"
-and "Chowdhury Lab ↗", sit apart at the right (beside Download; on phones the
-first reads "Paper ↗"). At 1180px and below the header is one grid on every
-view: brand and Download, the tabs with the links out at the line's end, then
-search (Browse only). A selected record uses a separate right
-column on desktop and a full-height dialog on smaller screens. Never put details
-below the table or cover desktop measurement columns. Keep 25 rows per page,
+catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
+behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
+them, set apart by a thin rule. From 641 to 1180px the header is one grid on
+every view: brand and Download, the tabs with the links out at the line's end,
+then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
+and Download share the first line, the four tabs share the second across the
+width, then search. The table's toolbar (48px) holds the active filters as chips
+with Clear all at the left and Columns, Export and Sort at the right; on phones a
+Filters button opens the sheet and the chips go under the toolbar. A selected
+record is a column right of the table from 1024px (440px, 480px from 1440px) and
+a full-height dialog below. Never put details below the table or cover desktop
+measurement columns. Keep 25 rows per page,
 scrolling within the table, and the page controls reachable. An open record's
 address names it (record=<record key>, replaced, not added to history, and
 removed when the record closes), so it can be shared; opening such an address
@@ -177,18 +228,28 @@ Not checked, as the index arrives).
 
 ## Type And Color
 
-Use the existing system font, tabular numerals, and zero letter spacing. Table
+Use the existing system font (no web font), tabular lining numerals, and zero
+letter spacing; mono only for record keys, mutations, SMILES and sequences. One
+scale of sizes with their line heights (12/16 units, ticks and counts in filter
+options; 13/18 table cells, chips, labels and captions; 14/20 UI text and record
+values; 16/24 Guide body; 18/24 Stats section headings; 20/24 counts band
+numbers and record title; 24/28 Stats and Guide titles; 32/36 Stats headline),
+each a --fs-N / --lh-N token in the stylesheet. Table
 names break between words and hyphenate a word longer than its column (a break
 inside a word only as a last resort; the Organism column is at least about 13
 characters wide); only SMILES and sequences break anywhere. No serial comma;
 tags are lower case, filter labels and headings sentence case. One
-type scale (front matter) and weights 400/500/600 only; no text below 11px.
-Colours are tokens in the stylesheet's :root, the only place hex values appear.
+type scale (front matter) and weights 400/500/600 only; no text below 12px.
+Colours are tokens in the stylesheet's :root, the only place hex values appear
+(other areas use the tokens: --st-* for review status with --st-*-fill at alpha
+0.6 for figure fills, --cmp-* and --chg-* for the database comparison and kinds
+of change, --bar-neutral for single-series bars, --caution* for cautions,
+--checked for human-checked, --accent* for actions).
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
 hover and in the record. A variant's mutation (the bare signature, "D102E", or
-"variant, not specified") has its own line under the name, a small teal tag that
+"variant, not specified") has its own line under the name, a small accent tag that
 is never clipped with the name, which then keeps one line; wild type shows
 nothing. Records of one paper that read alike but differ in their assay carry a
 short condition note (the export's condition_note, "+10 mM FBP") as a grey second
@@ -238,31 +299,33 @@ figures of kcat and Km, at most 4 (one that only equals kcat ÷ Km never more th
 it is stored with: 0.56 stays 0.56). Tooltips, the record's "In catalog units"
 and the downloads keep the stored digits; a record read by CatLog shows its values
 to the figures the paper printed when CatLog gives them (value_display: 135.0).
-Every column fits from
-about 1010px; narrower screens scroll the table sideways with the enzyme name
-kept in view. With a record open, EC, T, pH and the arrow give way; Status
+Every column fits in about 1010px of table; a table with less room (beside the
+sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
+with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px. With a record open, EC, T, pH and the arrow give way; Status
 stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
 organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge, then °C and pH at the line's end.
-The filters overlay (below 1440px, phones included) ends with a "Show N
-records" button. Filter chips use the teal tint with a thin teal line, 12px
-text, and wrap within the page gutters.
+The phone filter sheet ends with a "Show N records" button. Filter chips use
+the accent tint with a thin accent line, 12px text, and wrap within the toolbar.
 
-White and neutral surfaces carry the data. Teal marks selection and actions;
-status uses a coloured dot (the Stats outcome colours) and ink words: accepted
-blue, not confirmed orange, not checked grey (Unverified and Not reviewed
-alike, the Stats grey #858f8c, 3.3:1), disputed red; the filter's ticks use darker
-forms of them (#1f6fc5, #b85d12, #6b7572; disputed red as it is), so a ticked box
-stands out on white and does not look disabled. Amber marks
-cautions. Green (human-checked, 5.9:1 on white) is only for
+White and neutral surfaces carry the data. One accent (--accent, 7.4:1) marks
+links, selection, buttons and the focus ring (2px, 2px offset). Status uses a
+coloured dot from the Nature BPG palette (ggsci NPG "nrc") and ink words:
+accepted navy, not confirmed salmon, not checked slate for Unverified and tan for
+Not reviewed (the word says Not checked for both; its title names which),
+disputed dark red; the light salmon and tan dots carry a 1px darker ring. The
+filter's ticks use the status colour, or a darker form where it is light
+(salmon's ring colour, a darker slate), so a ticked box stands out on white and
+does not look disabled. Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
 "human-checked": a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records
 only; it updates in place when the marks arrive (rows are not redrawn). On a
 phone card the badge keeps its two lines and T and pH sit at its right; a tag
-line too long for the room left ends in an ellipsis. Use thin dividers, modest
-control radii, and
-shadows only for overlays. No decorative gradients, statistic cards, or hero art.
+line too long for the room left ends in an ellipsis. Use thin dividers, 4px
+control radii, and shadows only for the phone sheet, dialogs and menus. No
+decorative gradients, statistic cards, or hero art.
 
 ## Record Details
 
@@ -364,7 +427,7 @@ One plain page from the snapshot manifest (never the record index): two
 headline lines, then sections that each have a heading, at most one line of
 explanation and plain bars (name, bar, count, share of all records). Colour
 marks the review result only, with the status dot colours; other bars are one
-teal. Names Browse can filter on link to `#browse?` with the shared filter
+neutral grey (--bar-neutral). Names Browse can filter on link to `#browse?` with the shared filter
 keys. Value ranges show the median, the 10–90% range and a log histogram per
 metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
 
