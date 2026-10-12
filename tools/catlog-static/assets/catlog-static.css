@@ -320,6 +320,9 @@ th:not([aria-sort]) .sort-icon { color:var(--text-3) }
 th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 
 .c-substrate, .c-ph { border-right:1px solid var(--line) }
+/* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
+.c-substrate.has-note .clamp-2 { max-height:17px; -webkit-line-clamp:1 }
+.condition-note { display:block; overflow:hidden; color:var(--text-3); font-size:var(--fs-min); line-height:14px; text-overflow:ellipsis; white-space:nowrap }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
 
@@ -422,6 +425,7 @@ body.detail-open .detail-panel { display:block }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-table) }
 .detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text); overflow-wrap:anywhere }
 .detail-substrate > span:first-child { color:var(--text-3) }
+.detail-top p.detail-condition-note { margin-top:-4px; color:var(--text-3); font-size:var(--fs-meta) }
 .close-detail { position:absolute; top:12px; right:12px }
 .detail-section { border-bottom:1px solid var(--line-soft); padding:16px 0 }
 .detail-section h3 { margin:0 0 12px; color:var(--text); font-size:var(--fs-ui); font-weight:600 }
@@ -824,6 +828,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody .primary-cell .enzyme-form { display:none }
   #recordsBody .clamp-2.has-form { max-height:34px; -webkit-line-clamp:2 }
   #recordsBody td.c-form { display:block; order:2; flex:0 0 100% }
+  #recordsBody td.c-substrate .condition-note { padding-left:10px; font-size:var(--fs-meta) }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }

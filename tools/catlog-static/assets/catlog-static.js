@@ -4215,6 +4215,38 @@
     nextRow.focus();
   }
 
+  // Records of one paper that read the same in every column but differ in their assay: the short condition note the
+  // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, two records on
+  // this page that share a paper and every column say that their conditions differ.
+  const VISIBLE_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name",
+    "kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit", "verification_status",
+    "source_db"];
+
+  function conditionNoteText(...rows) {
+    for (const row of rows) {
+      const note = publicEvidenceString(String(row?.condition_note ?? "")).trim();
+      if (note) return note;
+    }
+    return "";
+  }
+
+  function lookAlikeRowKeys(pageRows) {
+    const groups = new Map();
+    pageRows.forEach((row) => {
+      if (conditionNoteText(row)) return;
+      const papers = [row._pmids, row._dois].map((value) => JSON.stringify(value ?? null)).join("|");
+      if (papers === "null|null") return;
+      const key = JSON.stringify([...VISIBLE_ROW_FIELDS.map((field) => row[field] ?? null), formatTemperature(row), formatPh(row), papers]);
+      groups.set(key, [...(groups.get(key) || []), row.record_key]);
+    });
+    return new Set([...groups.values()].filter((keys) => keys.length > 1).flat());
+  }
+
+  function substrateNoteHtml(row, lookAlikes) {
+    const note = conditionNoteText(row) || (lookAlikes.has(row.record_key) ? "conditions differ, see record" : "");
+    return note ? `<small class="condition-note" title="${escapePublic(note)}">${escapePublic(note)}</small>` : "";
+  }
+
   function renderRows() {
     document.body.classList.remove("catalog-load-failed");
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
@@ -4293,8 +4325,10 @@
       });
       return;
     }
+    const lookAlikes = lookAlikeRowKeys(pageRows);
     body.innerHTML = pageRows.map((row) => {
       const flags = conditionFlags(row);
+      const substrateNote = substrateNoteHtml(row, lookAlikes);
       const enzymeName = row.enzyme_display_name || "Name not recorded";
       // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
       const enzymeForm = enzymeFormHtml(row);
@@ -4304,7 +4338,7 @@
         <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong></span>${enzymeForm}</td>
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
-        <td class="c-substrate"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span></td>
+        <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span>${substrateNote}</td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
@@ -5861,10 +5895,13 @@
 
   // "Substrate: ...", under the EC line. A long name is cut to two lines here and given in full under Assay conditions.
   const LONG_DETAIL_SUBSTRATE = 90;
-  function detailSubstrateHtml(row) {
+  function detailSubstrateHtml(row, detail = {}) {
     const text = String(row.substrate_name || "").trim();
     const name = hasDisplayValue(text) && !/^unknown$/i.test(text) ? text : "Not recorded";
-    return `<p class="detail-substrate"><span>Substrate:</span> <span class="detail-substrate-name">${escapePublic(name)}</span></p>`;
+    // What tells this record from others of its paper that read the same (condition_note), in grey under it.
+    const note = conditionNoteText(row, detail);
+    return `<p class="detail-substrate"><span>Substrate:</span> <span class="detail-substrate-name">${escapePublic(name)}</span></p>`
+      + (note ? `<p class="detail-condition-note">${escapePublic(note)}</p>` : "");
   }
 
   // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms.
@@ -5955,7 +5992,7 @@
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
         ${detailHeadingHtml(summary)}
         ${detailSubtitleHtml(summary, { ecFromDatabases: v2Record && ecFromDatabases(detail) })}
-        ${detailSubstrateHtml(summary)}
+        ${detailSubstrateHtml(summary, detail)}
         ${detailStatusHtml(summary, { v2Record })}
       </div>
 
@@ -6514,6 +6551,8 @@
       isV2Row,
       identityResolutionLabel,
       measurementSection,
+      lookAlikeRowKeys,
+      substrateNoteHtml,
       molecularIdentitySection,
       numberHtml,
       numberText,

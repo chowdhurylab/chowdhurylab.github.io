@@ -2061,6 +2061,21 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(close, /kcat\/Km listed by BRENDA/);
   assert.doesNotMatch(close, /fold above|listed values differ/, "one listed value agrees: no note");
 }
+// Records of one paper that read alike: the export's condition note under the substrate (table and record); without
+// one, look-alikes on the page that share a paper say their conditions differ.
+{
+  const twin = (key, extra = {}) => Object.assign(row({ record_key: key, measurement_key: key, substrate_name: "pyruvate" }), { _pmids: 25401076, _dois: null }, extra);
+  const page = [twin("a"), twin("b"), twin("c", { kcat_display: "2" }), twin("d", { condition_note: "+10 mM FBP" }), twin("e", { _pmids: 1 })];
+  const alike = api.lookAlikeRowKeys(page);
+  assert.deepEqual([...alike].sort(), ["a", "b"]);
+  assert.equal(api.substrateNoteHtml(page[0], alike), '<small class="condition-note" title="conditions differ, see record">conditions differ, see record</small>');
+  assert.equal(api.substrateNoteHtml(page[2], alike), "");
+  assert.match(api.substrateNoteHtml(page[3], alike), />\+10 mM FBP<\/small>/);
+  api.renderDetail(row({ record_key: "noted" }), { condition_note: "with 10 mM FBP" });
+  assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Substrate<\/span><\/p><p class="detail-condition-note">with 10 mM FBP<\/p>/);
+  api.renderDetail(row({ record_key: "not-noted" }), {});
+  assert.doesNotMatch(element("detailContent").innerHTML, /detail-condition-note/);
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.
