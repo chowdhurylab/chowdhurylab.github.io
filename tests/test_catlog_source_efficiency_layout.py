@@ -78,7 +78,7 @@ process.stdout.write(JSON.stringify([
             with self.subTest(value=(6004, "6.004e+7")[index]):
                 # These fixtures contain only one named HTML entity: &times;.
                 root = ElementTree.fromstring(html.replace("&times;", "&#215;"))
-                label = root.find("span")
+                label = root.find("dt")
                 self.assertEqual("".join(label.itertext()), "kcat/Km listed by BRENDA",
                                  "The row names the source that lists the value")
                 values = root.findall(".//span[@class='source-efficiency-value']")
@@ -110,7 +110,7 @@ process.stdout.write(JSON.stringify([
                     )
         # Several values from one source: a range in the catalog unit, and how many values, beside it.
         root = ElementTree.fromstring(rendered[2])
-        self.assertEqual("".join(root.find("span").itertext()), "kcat/Km listed by OED")
+        self.assertEqual("".join(root.find("dt").itertext()), "kcat/Km listed by OED")
         (value,) = root.findall(".//span[@class='source-efficiency-value']")
         self.assertEqual([child.tag for child in value], ["span", "small"])
         number_line, count = value
