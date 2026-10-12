@@ -1406,6 +1406,19 @@ def check_record_panel(driver, browser, url, route_label):
                     assert fit["below"], f"calc. stays beside the number at {phone_width}px: {fit}"
                     assert fit["printed"] >= (90 if phone_width == 390 else 48), f"As printed is squeezed at {phone_width}px: {fit}"
                     results[f"values-table-{phone_width}"] = True
+                    if phone_width == 390:
+                        # Only the name and × stay in view when the record scrolls; the status line scrolls away.
+                        stuck = driver.execute_script("""
+                            const panel = document.getElementById('detailPanel');
+                            panel.scrollTop = 600;
+                            const title = panel.querySelector('.detail-title').getBoundingClientRect();
+                            const close = document.getElementById('closeDetailButton').getBoundingClientRect();
+                            return {top: title.top - panel.getBoundingClientRect().top, share: title.height / panel.clientHeight,
+                                    closeShown: close.top >= 0 && close.bottom <= innerHeight,
+                                    statusGone: panel.querySelector('.detail-status').getBoundingClientRect().bottom <= title.top + 1};
+                        """)
+                        assert abs(stuck["top"]) <= 1 and stuck["closeShown"] and stuck["statusGone"], stuck
+                        assert stuck["share"] < 0.15, f"The record's sticky header takes {stuck['share']:.0%} of a phone screen"
                 set_browse_viewport(driver, browser, width, height)
         set_browse_viewport(driver, browser, 1440, 1000)
         # A link to filtered results with a record, followed inside the open page, opens that record on its page.

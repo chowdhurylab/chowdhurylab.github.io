@@ -8140,8 +8140,10 @@
   function detailTopHtml(summary, detail, { v2Record = isV2Row(summary), withDetail = true } = {}) {
     return `
       <div class="detail-top">
-        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-        ${detailHeadingHtml(summary)}
+        <div class="detail-title">
+          <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+          ${detailHeadingHtml(summary)}
+        </div>
         ${detailSubtitleHtml(summary, { ecFromDatabases: withDetail && v2Record && ecFromDatabases(detail) })}
         ${withDetail ? detailSubstrateHtml(summary, detail) : ""}
         ${withDetail ? detailStatusHtml(summary, { v2Record }) : ""}
@@ -8678,6 +8680,10 @@
       (document.querySelector('#recordsBody tr[tabindex="0"]') || $("recordTableWrap"))?.focus();
     });
     $("recordTableWrap").addEventListener("scroll", updateTableScrollControls, { passive: true });
+    // On phones only the record's name and × stay in view; a rule under them shows once the record scrolls.
+    $("detailPanel")?.addEventListener("scroll", (event) => {
+      event.currentTarget.classList.toggle("is-scrolled", event.currentTarget.scrollTop > 0);
+    }, { passive: true });
     $("scrollTableLeftButton").addEventListener("click", () => scrollTableColumns(-1));
     $("scrollTableRightButton").addEventListener("click", () => scrollTableColumns(1));
     document.addEventListener("keydown", (event) => {

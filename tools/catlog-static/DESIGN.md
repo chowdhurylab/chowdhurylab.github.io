@@ -354,8 +354,9 @@ after a soft rule with a 14px/600 heading and a definition list (112px terms in
 12px muted, 14px values; 96px terms on phones). A section with nothing to say
 is left out, never an empty heading. The order (design spec 5):
 
-- A. Header (stays in view): the name (20px/600; 16px when longer than 64
-  characters) and × close; "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
+- A. Header (stays in view; on phones only the name and × stay, with a rule
+  under them once the record scrolls, and the lines below scroll with the
+  record): the name (20px/600; 16px when longer than 64 characters) and × close; "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
   `N145A`" (the binomial in italics, a strain or "sp." roman; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
   paper does not print reads "EC 2.3.1.183 (from enzyme databases; not printed
