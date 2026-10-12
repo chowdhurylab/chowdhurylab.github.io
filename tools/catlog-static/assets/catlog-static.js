@@ -5973,6 +5973,21 @@
     return parts.map((part) => part.trim()).filter(Boolean);
   }
 
+  // The AI reader's own remarks about its reading ("which is not part of the provided text", "so the assay temperature is
+  // not pinned down", "(... which repeats Table 2's pH; the table columns give the assay pH)") are not facts about the
+  // assay: a bracket or a trailing clause that holds one goes, the facts before it stay, and a segment that still holds
+  // one is not shown. CatLog strips them when it builds the snapshot (website plan P3); this keeps older snapshots clean.
+  const READER_REMARK = /provided text|not part of the (?:provided )?text|pinned down|\bwhich repeats\b|the table columns give|\bso the (?:assay )?\w+ is\b/i;
+  function withoutReaderRemarks(segment) {
+    let text = String(segment || "");
+    if (!READER_REMARK.test(text)) return text;
+    text = text.replace(/\s*[(\[][^()[\]]*[)\]]/g, (aside) => (READER_REMARK.test(aside) ? "" : aside));
+    const clause = text.search(/,\s+(?:which|so|and|but|while|where)\b[^,]*$/i);
+    if (clause >= 0 && READER_REMARK.test(text.slice(clause))) text = text.slice(0, clause);
+    text = text.trim().replace(/[,;:]+$/, "").trim();
+    return READER_REMARK.test(text) ? "" : text;
+  }
+
   // Assay conditions as short labelled lines: "cosubstrate X" / "cofactor X" and "preparation: ..." get their own line,
   // the rest is a short list; a pH or temperature that only repeats the lines above ("pH 7.5", "298.15 K") is left out.
   function conditionLines(text, summary = {}) {
@@ -5984,7 +5999,8 @@
     const reasons = { ph: "", temperature: "" };
     const ph = formatPh(summary);
     const temperature = formatTemperature(summary);
-    conditionSegments(String(compactValue(text) === EMPTY_VALUE ? "" : compactValue(text)).trim()).forEach((segment) => {
+    conditionSegments(String(compactValue(text) === EMPTY_VALUE ? "" : compactValue(text)).trim())
+      .map(withoutReaderRemarks).filter(Boolean).forEach((segment) => {
       // Why a pH or temperature was left blank goes on that row ("pH: not confirmed in the paper text"); a segment that
       // only says it is not stated repeats the row.
       let match = segment.match(/^(pH|temperature) left blank: (.+)$/i);

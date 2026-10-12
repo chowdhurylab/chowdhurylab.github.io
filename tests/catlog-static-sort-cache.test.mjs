@@ -1933,6 +1933,20 @@ const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; 
 assert.match(lines.cosubstrate, /<span>Cosubstrate<\/span><strong>NAD\+<\/strong>/);
 assert.match(lines.conditions, /<span>Conditions<\/span><strong>apparent kcat, Km<\/strong>/);
 assert.match(lines.preparation, /<strong>purified<\/strong>/);
+// The AI reader's remarks about its own reading never show; the facts before them stay (PMIDs 29115742, 18783250, 27271847).
+{
+  const remarks = api.conditionLines([
+    "the assay buffer, Mg2+ concentration, pH and temperature of the kinetic assay are given only in the Supporting Information, which is not part of the provided text",
+    "100 mM phosphate buffer (Supporting Information Table 1 footnote, which repeats Table 2's \"pH 7.5\"; the table columns give the assay pH)",
+    "HiBgl3C's temperature optimum is printed 55 C in Table 3 but 60 C in the Results text and Fig. 2C, so the assay temperature is not pinned down",
+    "Mg2+ (provided text), Tris",
+  ].join("; "), row({}));
+  assert.doesNotMatch(remarks.conditions, /provided text|pinned down|which repeats|table columns give/);
+  assert.match(remarks.conditions, /given only in the Supporting Information<\/li>/);
+  assert.match(remarks.conditions, /<li>100 mM phosphate buffer<\/li>/);
+  assert.match(remarks.conditions, /and Fig\. 2C<\/li>/);
+  assert.match(remarks.conditions, /<li>Mg2<sup>\+<\/sup>, Tris<\/li>|<li>Mg2\+, Tris<\/li>/);
+}
 
 // Exporter-produced flagged conditions are withheld, with the reason still visible.
 const withheldConditions = row({
