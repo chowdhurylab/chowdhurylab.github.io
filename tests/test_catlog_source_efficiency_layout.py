@@ -49,12 +49,21 @@ const sandbox = {
 vm.runInNewContext(instrumented, sandbox, { filename: viewerPath, timeout: 1000 });
 const render = sandbox.window.CATLOG_STATIC_TEST_API.sourceEfficiencyRow;
 assert.equal(typeof render, "function");
-process.stdout.write(JSON.stringify([6004, "6.004e+7"].map((value) => render(
-  { kcat_over_km_source_differs: true },
-  { source_kcat_over_km_values: [
-    { value, unit: "s^(-1)*mM^(-1)", source_db: "brenda" },
-  ] },
-))));
+process.stdout.write(JSON.stringify([
+  ...[6004, "6.004e+7"].map((value) => render(
+    { kcat_over_km_source_differs: true },
+    { source_kcat_over_km_values: [
+      { value, unit: "s^(-1)*mM^(-1)", source_db: "brenda" },
+    ] },
+  )),
+  render(
+    { kcat_over_km_source_differs: true },
+    { source_kcat_over_km_values: [
+      { value: 3.0, unit: "1/mM*1/s", source_db: "oed" },
+      { value: 6.117, unit: "1/mM*1/s", source_db: "oed" },
+    ] },
+  ),
+]));
 """
         result = subprocess.run(
             [node, "-e", harness, str(viewer)],
@@ -64,28 +73,29 @@ process.stdout.write(JSON.stringify([6004, "6.004e+7"].map((value) => render(
             timeout=10,
         )
         rendered = json.loads(result.stdout)
-        self.assertEqual(len(rendered), 2)
-        for index, html in enumerate(rendered):
+        self.assertEqual(len(rendered), 3)
+        for index, html in enumerate(rendered[:2]):
             with self.subTest(value=(6004, "6.004e+7")[index]):
                 # These fixtures contain only one named HTML entity: &times;.
                 root = ElementTree.fromstring(html.replace("&times;", "&#215;"))
+                label = root.find("span")
+                self.assertEqual("".join(label.itertext()), "kcat/Km listed by BRENDA",
+                                 "The row names the source that lists the value")
                 values = root.findall(".//span[@class='source-efficiency-value']")
                 self.assertEqual(len(values), 1)
                 value = values[0]
                 self.assertEqual(
                     [child.tag for child in value],
-                    ["span", "small"],
-                    "The value and unit must share one span, with source attribution "
-                    "as a sibling; direct superscripts become separate CSS grid items",
+                    ["span"],
+                    "The value and unit must share one span; direct superscripts become separate CSS grid items",
                 )
-                number_line, attribution = value
+                (number_line,) = value
                 self.assertFalse((value.text or "").strip())
                 self.assertFalse((number_line.tail or "").strip())
                 self.assertEqual(
                     [sup.text for sup in number_line.findall("sup")], ["-1", "-1"]
                 )
                 self.assertIn("s-1 mM-1", "".join(number_line.itertext()))
-                self.assertEqual("".join(attribution.itertext()), "BRENDA")
                 self.assertIsNone(number_line.find("small"))
                 scientific = number_line.find(".//span[@class='scientific-number']")
                 if index == 0:
@@ -98,6 +108,14 @@ process.stdout.write(JSON.stringify([6004, "6.004e+7"].map((value) => render(
                         scientific.attrib["aria-label"],
                         "6.004 times 10 to the power of 7",
                     )
+        # Several values from one source: a range in the catalog unit, and how many values, beside it.
+        root = ElementTree.fromstring(rendered[2])
+        self.assertEqual("".join(root.find("span").itertext()), "kcat/Km listed by OED")
+        (value,) = root.findall(".//span[@class='source-efficiency-value']")
+        self.assertEqual([child.tag for child in value], ["span", "small"])
+        number_line, count = value
+        self.assertEqual("".join(number_line.itertext()), "3.0–6.1 s-1 mM-1")
+        self.assertEqual("".join(count.itertext()), "2 values")
 
 
 if __name__ == "__main__":

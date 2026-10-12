@@ -5106,23 +5106,93 @@
     return numberHtml(metricDisplay(row, field), figures ? { figures } : undefined);
   }
 
-  function sourceEfficiencyRow(summary, detail) {
-    if (!summary.kcat_over_km_source_differs && !detail.kcat_over_km_source_differs) return "";
+  // ---- Record panel: kcat/Km as the sources list it ----
+  // A merged older record whose sources list their own kcat/Km: those values, by source and unit, in the source's name.
+  const LISTED_EFFICIENCY_UNIT_KEYS = new Set(["s-1mm-1", "mm-1s-1", "1/mm1/s", "1/s1/mm", "1/mm/s", "1/(mms)", "1/(smm)"]);
+  const sourceShortNames = { oed: "OED", brenda: "BRENDA", sabio_rk: "SABIO-RK", sabio: "SABIO-RK", skid: "SKiD", uniprot: "UniProt", strenda: "STRENDA DB" };
+
+  function listedEfficiencyInCatalogUnit(unit) {
+    return LISTED_EFFICIENCY_UNIT_KEYS.has(normalizedUnitKey(unit));
+  }
+
+  function sourceShortName(value) {
+    const key = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+    return sourceShortNames[key] || sourceDatabaseLabel(value);
+  }
+
+  function listedEfficiencies(summary, detail) {
+    if (!summary.kcat_over_km_source_differs && !detail.kcat_over_km_source_differs) return [];
     const seen = new Set();
-    const values = (Array.isArray(detail.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
+    return (Array.isArray(detail.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
       .filter((item) => {
-        const key = item && item.value != null ? JSON.stringify([item.value, item.unit || "", item.source_db || ""]) : "";
+        const key = item && item.value != null && Number.isFinite(Number(item.value))
+          ? JSON.stringify([item.value, item.unit || "", item.source_db || ""])
+          : "";
         if (!key || seen.has(key)) return false;
         seen.add(key);
         return true;
       });
+  }
+
+  // A range of listed values to two significant figures (three when two would make its ends equal).
+  function listedRangeText(values) {
+    const low = Math.min(...values);
+    const high = Math.max(...values);
+    if (values.length === 1 || low === high) return numberText(String(low));
+    let figures = 2;
+    while (figures < 4 && numberText(low, { figures }) === numberText(high, { figures })) figures += 1;
+    return `${numberText(low, { figures })}–${numberText(high, { figures })}`;
+  }
+
+  // "kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹ (5 values)", one line per source.
+  function sourceEfficiencyRow(summary, detail) {
+    const values = listedEfficiencies(summary, detail);
     if (!values.length) return "";
-    const valueHtml = values.map((item) => {
-      const unit = item.unit ? ` ${unitHtml(item.unit)}` : "";
-      const source = item.source_db ? ` <small>${escapePublic(sourceDatabaseLabel(item.source_db))}</small>` : "";
-      return `<span class="source-efficiency-value"><span>${numberHtml(item.value)}${unit}</span>${source}</span>`;
-    }).join("");
-    return linkedKv("Source-listed kcat/Km", valueHtml);
+    const groups = new Map();
+    values.forEach((item) => {
+      const source = sourceShortName(item.source_db) || "the source";
+      const catalogUnit = listedEfficiencyInCatalogUnit(item.unit);
+      const unitKey = catalogUnit ? "catalog" : String(item.unit || "");
+      const key = JSON.stringify([source, unitKey]);
+      if (!groups.has(key)) groups.set(key, { source, unit: catalogUnit ? "s^(-1)*mM^(-1)" : String(item.unit || ""), values: [] });
+      groups.get(key).values.push(Number(item.value));
+    });
+    const bySource = new Map();
+    groups.forEach((group) => {
+      const unit = group.unit ? ` ${unitHtml(group.unit)}` : ` ${unitMissingHtml()}`;
+      const number = group.values.length === 1 ? numberHtml(String(group.values[0])) : escapePublic(listedRangeText(group.values));
+      const count = group.values.length > 1 ? `<small>${formatInteger(group.values.length)} values</small>` : "";
+      const html = `<span class="source-efficiency-value"><span>${number}${unit}</span>${count}</span>`;
+      bySource.set(group.source, [...(bySource.get(group.source) || []), html]);
+    });
+    return [...bySource].map(([source, items]) => linkedKv(`kcat/Km listed by ${source}`, items.join(""))).join("");
+  }
+
+  // kcat ÷ Km against every kcat/Km the sources list (in catalog units): a note when all are more than 2-fold away.
+  function listedEfficiencyNote(summary, detail, flags) {
+    if ([...KCAT_KM_FLAGS].some((flag) => flags.has(flag))) return "";
+    const listed = listedEfficiencies(summary, detail).filter((item) => listedEfficiencyInCatalogUnit(item.unit) && Number(item.value) > 0);
+    if (!listed.length) return "";
+    const kcat = Number(metricDisplay(summary, "kcat"));
+    const km = Number(metricDisplay(summary, "km"));
+    if (!(kcat > 0 && km > 0) || !canonicalMetricUnitKeys.kcat.has(normalizedUnitKey(metricUnit(summary, "kcat")))
+      || !canonicalMetricUnitKeys.km.has(normalizedUnitKey(metricUnit(summary, "km")))) return "";
+    const quotient = kcat / km;
+    const folds = listed.map((item) => quotient / Number(item.value));
+    if (!folds.every((fold) => fold > 2 || fold < 0.5)) return "";
+    const above = folds.every((fold) => fold > 2);
+    const below = folds.every((fold) => fold < 0.5);
+    const sizes = folds.map((fold) => Math.max(fold, 1 / fold));
+    const foldText = (value) => (value < 10 ? value.toFixed(1) : formatInteger(Math.round(value)));
+    const low = Math.min(...sizes);
+    const high = Math.max(...sizes);
+    const fold = low.toFixed(1) === high.toFixed(1) || (low >= 10 && Math.round(low) === Math.round(high)) ? foldText(low) : `${foldText(low)}–${foldText(high)}`;
+    const sources = [...new Set(listed.map((item) => sourceShortName(item.source_db) || "the source"))];
+    const lists = `${sources.join(" and ")} ${sources.length > 1 ? "list" : "lists"}`;
+    const unit = unitText("s^(-1)*mM^(-1)");
+    const direction = above ? `${fold}-fold above` : (below ? `${fold}-fold below` : "more than 2-fold away from");
+    return `kcat ÷ Km (${numberText(quotient, { figures: quotientFigures(summary) })} ${unit}) is ${direction} `
+      + `${listed.length > 1 ? "every" : "the"} kcat/Km ${lists} for this record (${listedRangeText(listed.map((item) => Number(item.value)))}).`;
   }
 
   // ---- Record panel: flags ----
@@ -5164,7 +5234,7 @@
           const { check } = consistent;
           text = `The stored kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}) is `
             + `${check.foldText} ${check.direction} kcat ÷ Km (${check.quotientText} ${check.unit}). The source's own kcat/Km, `
-            + `${numberText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed below)" : ""}, `
+            + `${numberText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed above)" : ""}, `
             + "agrees with kcat ÷ Km and is shown above."
             + (check.factor ? ` ${check.factor[1]}` : "");
         }
@@ -5453,6 +5523,8 @@
     const proof = v2ProofFacts(summary, detail);
     const unitCautions = unitPrefixCautions(metricSummary, proof);
     const notes = flagNotes(metricSummary, detail, flags, consistent);
+    const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
+    if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "listed values differ", text: listedNote });
     unitCautions.forEach(({ field, text }) => {
       notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
     });

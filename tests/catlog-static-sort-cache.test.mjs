@@ -1814,7 +1814,7 @@ const unitFlagHtml = api.measurementSection(row({
   condition_flags: ["kcat_over_km_unit_mismatch"], kcat_over_km_source_differs: true,
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<strong>64<button class="value-flag"/);
-assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed below\), agrees with kcat ÷ Km and is shown above\. The factor is close to 1000, the factor between per mM and per M\./);
+assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is close to 1000, the factor between per mM and per M\./);
 // v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
 const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
 assert.match(lines.cosubstrate, /<span>Cosubstrate<\/span><strong>NAD\+<\/strong>/);
@@ -2044,6 +2044,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
   assert.match(sameHtml, /<small>converted by code, printed unit read as 10<sup>3<\/sup> M-1 s-1<\/small>/);
+}
+// A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
+// when every one is more than 2-fold from kcat ÷ Km, an amber note says so.
+{
+  const merged = row({ record_key: "listed", kcat: 7.333, km: 0.5, kcat_over_km: 14.666, kcat_display: "7.333", km_display: "0.5",
+    kcat_over_km_display: "14.666", kcat_over_km_origin: "calculated", kcat_unit: "s^(-1)", km_unit: "mM",
+    kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_source_differs: true, source_db: "oed" });
+  const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
+  const html = api.measurementSection(merged, { source_kcat_over_km_values: listed });
+  assert.match(html, /<span>kcat\/Km listed by OED<\/span><strong><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/strong>/);
+  assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
+  assert.match(html, /aria-label="kcat\/Km: listed values differ\. Show the note\."/);
+  assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
+  const close = api.measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  assert.match(close, /kcat\/Km listed by BRENDA/);
+  assert.doesNotMatch(close, /fold above|listed values differ/, "one listed value agrees: no note");
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every

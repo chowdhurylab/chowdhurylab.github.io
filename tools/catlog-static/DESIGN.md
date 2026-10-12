@@ -285,7 +285,10 @@ rule in the value strip, the stored digits in its values table); a kcat/Km CatLo
 calculated for an older record keeps the significant figures of kcat and Km. An
 older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
-with kcat ÷ Km, and its note gives the stored number. Sequence and SMILES
+with kcat ÷ Km, and its note gives the stored number. A merged older record
+gives the kcat/Km its sources list right under the values, in the source's name
+and the catalog unit ("kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹, 5 values"), with
+an amber note when every one is more than 2-fold from kcat ÷ Km. Sequence and SMILES
 strings and an older record's review notes expand on request. Do not discard
 source text, hide scientific warnings, recompute measurements, or weaken review
 definitions to make the page shorter. Database attribution belongs in Guide and
