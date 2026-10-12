@@ -96,6 +96,7 @@
   --bar-neutral-fill:#7d888599;
   /* Shadows only on the phone sheet, dialogs and menus. */
   --overlay:rgba(20,34,31,0.24);
+  --scroll-edge:rgba(23,33,32,0.5);
   --shadow:0 10px 26px rgba(20,34,31,0.09);
   --shadow-panel:0 0 36px rgba(20,34,31,0.16);
   /* Older names. */
@@ -154,7 +155,7 @@ a:hover { text-decoration:underline }
 /* Skip link: shown only when focused. */
 .skip-link { position:absolute; top:8px; left:8px; z-index:200; border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); padding:8px 12px; color:var(--link); font-size:var(--fs-ui); font-weight:600; transform:translateY(-200%) }
 .skip-link:focus { transform:none }
-body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
+body:is(.stats-open,.guide-open) .skip-link { display:none }
 .static-app { display:flex; flex-direction:column; height:100vh; height:100dvh; min-height:0; background:var(--surface) }
 .app-header, .catalog-load-progress, .snapshot-band { flex-shrink:0 }
 #catalogView { display:flex; flex-direction:column; flex:1; min-height:0 }
@@ -257,106 +258,153 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
   .snapshot-title { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
 }
 
-/* Workbench: filters (overlay), table, open record. */
-.workbench { display:grid; grid-template-columns:minmax(0,1fr); align-items:stretch; flex:1; min-height:340px }
-body.detail-open .workbench { grid-template-columns:minmax(0,1fr) minmax(360px,29%) }
-.filter-rail, .table-panel, .detail-panel { background:var(--surface) }
-.filter-rail { position:fixed; inset:0 auto 0 0; z-index:80; display:flex; flex-direction:column; width:min(320px,calc(100vw - 36px)); height:100vh; height:100dvh; min-height:0; overflow:auto; border-right:1px solid var(--line); box-shadow:var(--shadow-panel); padding:16px 16px 32px; transform:translateX(calc(-100% - 18px)); visibility:hidden; pointer-events:none; transition:transform 160ms ease, visibility 160ms ease }
-.filter-backdrop { position:fixed; inset:0; z-index:75; border:0; background:var(--overlay); cursor:default; opacity:0; visibility:hidden; pointer-events:none; transition:opacity 160ms ease, visibility 160ms ease }
-body.filters-open .filter-rail { transform:translateX(0); visibility:visible; pointer-events:auto }
-body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-events:auto }
-.rail-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px }
-.rail-heading strong { font-size:var(--fs-body) }
-.rail-actions { display:flex; align-items:center; gap:8px }
+/* Workbench: one grid, [filter sidebar | table | open record]. The sidebar is a column from 641px (open, or a 48px rail
+   when collapsed), never over the table; the record is a column from 1024px; phones get a filter sheet and a record
+   dialog. Sidebar and record scroll on their own; the table keeps its own scroll and page controls. */
+.workbench { --filter-col:var(--rail-w); display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); align-items:stretch; flex:1; min-height:340px }
+.filter-rail, .table-panel, .detail-panel { background:var(--bg) }
+.filter-column { display:contents }
+.filter-rail-button { display:none }
+@media (min-width: 641px) {
+  .workbench { grid-template-columns:var(--filter-col) minmax(0,1fr) }
+  body.filters-open .workbench { --filter-col:var(--sidebar-w) }
+  .filter-column { display:flex; grid-column:1; grid-row:1; min-width:0; min-height:0; border-right:1px solid var(--line); background:var(--bg) }
+  .table-panel { grid-column:2; grid-row:1 }
+  /* Collapsed: the rail, one tall button with "Filters" set vertically and the active-filter count. */
+  body:not(.filters-open) .filter-rail-button { display:flex; flex-direction:column; align-items:center; gap:var(--sp-2); width:100%; border:0; background:transparent; color:var(--text-2); cursor:pointer; padding:var(--sp-3) 0; font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+  .filter-rail-button:hover { background:var(--accent-tint); color:var(--text) }
+  .filter-rail-button:focus-visible { outline-offset:-2px }
+  .filter-rail-label { writing-mode:vertical-rl; transform:rotate(180deg) }
+  body:not(.filters-open) .filter-rail { display:none }
+  body.filters-open .filter-rail { display:flex }
+  .filter-backdrop, .close-filters { display:none }
+}
+.double-chevron { flex:0 0 16px; width:16px; height:16px; color:var(--muted) }
+/* The sidebar (and, on phones, the sheet): a sticky heading, then the filter groups. */
+.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain }
+.filter-rail:focus { outline:none }
+.rail-heading { position:sticky; top:0; z-index:2; display:flex; flex-shrink:0; min-height:48px; align-items:center; gap:var(--sp-2); border-bottom:1px solid var(--line-soft); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-4) }
+.rail-title { margin:0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.rail-heading #clearButton { margin-left:auto; font-size:var(--fs-13) }
+.rail-heading .icon-button { flex:0 0 32px }
 .filter-toggle { width:max-content }
-.filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--teal-soft); color:var(--teal-dark); padding:0 5px; font-size:var(--fs-min); font-weight:600 }
-.filter-section { display:grid; gap:8px; border-top:1px solid var(--line-soft); padding:12px 0 }
-.filter-section-title { display:flex; width:100%; min-height:24px; align-items:center; justify-content:space-between; border:0; background:transparent; color:var(--text); cursor:pointer; padding:0; text-align:left; font-size:var(--fs-table); font-weight:600 }
+.filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }
+/* Groups: native disclosures, 13px/600 summaries, a soft rule between them. */
+.filter-section { border-bottom:1px solid var(--line-soft) }
+.filter-section-title { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--sp-2); color:var(--text); cursor:pointer; padding:var(--sp-3) var(--sp-4); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); list-style:none; user-select:none }
+.filter-section-title::-webkit-details-marker { display:none }
+.filter-section-title:hover { background:var(--surface-2) }
+.filter-section-title:focus-visible { outline-offset:-2px }
+.filter-section > :not(summary) { margin:0 var(--sp-4) var(--sp-3) }
 
-/* 12px chevrons; they turn over when their section opens or closes. */
+/* 12px chevrons; they turn over when their group opens or closes. */
 .chevron { flex:0 0 12px; width:12px; height:12px; transition:transform 160ms ease }
-.filter-section-title .chevron { color:var(--text-3) }
-.filter-section:not(.open) .chevron, .download-menu[open] .chevron, .snapshot-band.expanded .chevron { transform:rotate(180deg) }
-.filter-section:not(.open) > :not(.filter-section-title) { display:none }
-.filter-section input:is([type="search"],[type="text"]), .records-tools select, .pagination select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); color:var(--text); padding:6px 8px; font-size:var(--fs-table) }
-.filter-section input:is([type="search"],[type="text"]):focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--teal) }
-.filter-section input[aria-invalid="true"] { border-color:var(--red-text) }
+.filter-section-title .chevron { color:var(--muted) }
+.filter-section:not([open]) .chevron, .download-menu[open] .chevron, .snapshot-band.expanded .chevron { transform:rotate(180deg) }
+.filter-section input:is([type="search"],[type="text"]), .records-tools select, .pagination select { width:100%; min-width:0; min-height:32px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); color:var(--text); padding:4px var(--sp-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.filter-section input:is([type="search"],[type="text"]):focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--accent) }
+.filter-section input[aria-invalid="true"] { border-color:var(--st-disputed) }
 /* Names and EC number: a label beside each field. */
-.field-grid { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:6px 8px }
-.field-grid label { color:var(--text-2); font-size:var(--fs-table) }
+.field-grid { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:var(--sp-2) }
+.field-grid label { color:var(--text-2); font-size:var(--fs-13) }
 /* Assay conditions: a label and its count, then from and to. */
-.range-stack { display:grid; gap:10px }
-.range-row { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:4px 6px }
-.range-label { grid-column:1 / 3; color:var(--text); font-size:var(--fs-table) }
-.range-row > strong { grid-column:3; justify-self:end; color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
-.range-dash { color:var(--text-3); font-size:var(--fs-table) }
-.filter-note { margin:0; color:var(--text-3); font-size:var(--fs-meta); line-height:1.4 }
-.check-stack { display:grid; gap:4px }
-.check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:8px; color:var(--text); font-size:var(--fs-table) }
-.check-row input { width:14px; height:14px; margin:0; accent-color:var(--teal) }
+.range-stack { display:grid; gap:var(--sp-3) }
+.range-row { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:var(--sp-1) 6px }
+.range-label { grid-column:1 / 3; color:var(--text); font-size:var(--fs-13) }
+.range-row > strong { grid-column:3; justify-self:end; color:var(--muted); font-size:var(--fs-12); font-weight:400 }
+.range-dash { color:var(--muted); font-size:var(--fs-13) }
+.filter-note { margin:0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+/* Options: 28px rows, a 14px box, the 13px label and its 12px count at the right. */
+.check-stack { display:grid; gap:0 }
+.check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:var(--sp-2); color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
+.check-row input { width:14px; height:14px; margin:0; accent-color:var(--accent) }
 /* Review result ticks in the status colours; green only for human-checked. */
 .check-row.accepted input { accent-color:var(--tick-accepted) }
 .check-row.review input { accent-color:var(--tick-pending) }
 .check-row.unresolved input { accent-color:var(--tick-unverified) }
-.check-row.disputed input { accent-color:var(--status-disputed) }
+.check-row.disputed input { accent-color:var(--st-disputed) }
 .check-row.human-checked input { accent-color:var(--checked) }
 .check-row.nested { margin-left:22px }
 .human-checked-word { color:var(--checked); font-weight:500; white-space:nowrap }
 .human-checked-word .check-icon { margin-right:2px }
-.check-row strong { color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
+.check-row strong { color:var(--muted); font-size:var(--fs-12); font-weight:400 }
 /* Counts being worked out after a change fade only if that takes a moment. */
 #catalogFilters [data-count] { transition:opacity 120ms ease }
 #catalogFilters[data-counts="pending"] [data-count] { opacity:0.5; transition-delay:250ms }
 /* An option no current result has: grey, still clickable. */
-.check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--text-3) }
+.check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
 .check-row.is-zero .human-checked-word { color:inherit }
 
 /* Source: three choices, each with a short help line under it; the databases fold under "By database". */
-.source-modes { display:grid; gap:4px }
-.check-row.radio-row input { accent-color:var(--teal) }
-.source-help { margin:-4px 0 4px 22px }
+.source-modes { display:grid; gap:0 }
+.check-row.radio-row input { accent-color:var(--accent) }
+.source-help { margin:-2px 0 var(--sp-1) 22px }
 .source-help a { white-space:nowrap }
-.source-databases { margin-left:22px; color:var(--text-3); font-size:var(--fs-meta) }
-.source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--link); cursor:pointer; font-weight:500; list-style:none }
+.source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
+.source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .source-databases > summary::-webkit-details-marker { display:none }
-.source-databases > summary::after { content:"+"; content:"+" / ""; color:var(--text-3); font-size:var(--fs-body); line-height:1 }
+.source-databases > summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
 .source-databases[open] > summary::after { content:"\2212"; content:"\2212" / "" }
-.source-databases > .check-stack { padding-top:4px }
-.status-guide { margin-top:4px; border-top:1px solid var(--line-soft); padding-top:8px; color:var(--text-3); font-size:var(--fs-meta); line-height:1.45 }
-.status-guide summary { display:flex; align-items:center; justify-content:space-between; color:var(--link); cursor:pointer; font-weight:500; list-style:none }
+.source-databases > .check-stack { padding-top:var(--sp-1) }
+.status-guide { margin-top:var(--sp-1); border-top:1px solid var(--line-soft); padding-top:var(--sp-2); color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.status-guide summary { display:flex; align-items:center; justify-content:space-between; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .status-guide summary::-webkit-details-marker { display:none }
-.status-guide summary::after, .detail-disclosure summary::after { content:"+"; content:"+" / ""; color:var(--text-3); font-size:var(--fs-body); line-height:1 }
+.status-guide summary::after, .detail-disclosure summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
 .status-guide[open] summary::after, .detail-disclosure[open] summary::after { content:"\2212"; content:"\2212" / "" }
-.status-guide-body { display:grid; gap:6px; padding-top:8px }
+.status-guide-body { display:grid; gap:6px; padding-top:var(--sp-2) }
 .status-guide-body p { margin:0 }
 .status-guide-body strong { color:var(--text) }
 .status-guide-body a { white-space:nowrap }
 
-/* "Show N records": the filters overlay (below 1440px) ends with it. */
+/* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
+   at the bottom. */
 .filter-footer { display:none }
-@media (max-width: 1439px) {
-  .filter-rail { padding-bottom:0 }
-  .filter-footer { display:block; position:sticky; bottom:0; margin:auto -16px 0; border-top:1px solid var(--line); background:var(--surface); padding:12px 16px }
-  .filter-footer .button { width:100%; min-height:40px; border-color:var(--teal-dark); background:var(--teal-dark); color:var(--surface) }
+@media (max-width: 640px) {
+  .filter-rail { position:fixed; inset:0; z-index:80; height:100vh; height:100dvh; box-shadow:var(--shadow-panel); transform:translateY(calc(100% + 24px)); visibility:hidden; pointer-events:none; transition:transform 200ms ease, visibility 200ms ease }
+  body.filters-open .filter-rail { transform:translateY(0); visibility:visible; pointer-events:auto }
+  .filter-backdrop { position:fixed; inset:0; z-index:75; border:0; background:var(--overlay); cursor:default; opacity:0; visibility:hidden; pointer-events:none; transition:opacity 160ms ease, visibility 160ms ease }
+  body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-events:auto }
+  .collapse-filters { display:none }
+  .filter-footer { display:block; position:sticky; bottom:0; z-index:2; margin-top:auto; border-top:1px solid var(--line); background:var(--bg); padding:var(--sp-3) var(--sp-4) }
+  .filter-footer .button { width:100%; min-height:44px; border-color:var(--accent); background:var(--accent); color:var(--bg); font-size:var(--fs-14) }
+  .filter-footer .button:hover { border-color:var(--accent-hover); background:var(--accent-hover) }
 }
 
-/* Records: toolbar, table, page controls. */
+/* Records: a 48px toolbar (Filters on phones, the active filters as chips and Clear all; Columns, Export and Sort at the
+   right), the table, page controls. */
 .table-panel { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden }
-.records-header { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:56px; flex-shrink:0; align-items:center; gap:12px; border-bottom:1px solid var(--line); background:var(--surface); padding:8px 16px }
-.records-title { display:flex; flex-wrap:wrap; align-items:center; gap:12px; min-width:0 }
-.records-title > span { color:var(--text-2); font-size:var(--fs-table) }
-.records-tools { display:grid; grid-template-columns:auto auto 180px; align-items:center; gap:8px; color:var(--text-2); font-size:var(--fs-table) }
+.records-header { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:48px; flex-shrink:0; align-items:center; gap:var(--sp-3); border-bottom:1px solid var(--line); background:var(--bg); padding:var(--sp-2) var(--sp-4) }
+.records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0 }
+.records-title > span { color:var(--text-2); font-size:var(--fs-13) }
+.records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
+.records-tools select { width:180px }
+.records-tools label { white-space:nowrap }
+.sort-control { display:inline-flex; min-width:0; align-items:center; gap:var(--sp-2) }
 .records-tools .button { white-space:nowrap }
-.table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--surface) }
+#openFiltersButton { display:none }
+.table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
 /* Active filters: one removable chip each, then Clear all. */
-.active-filters { display:flex; flex-wrap:wrap; flex-shrink:0; align-items:center; gap:6px 8px; border-bottom:1px solid var(--line); background:var(--surface); padding:8px 16px }
-.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:26px; align-items:center; gap:4px; border:1px solid var(--teal-line); border-radius:var(--radius); background:var(--teal-tint); color:var(--text); cursor:pointer; padding:2px 6px 2px 8px; font-size:var(--fs-meta); line-height:1.3 }
+.active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
+.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--accent-line); border-radius:var(--radius); background:var(--accent-tint); color:var(--text); cursor:pointer; padding:2px 6px 2px var(--sp-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--text-3) }
-.filter-chip:hover { border-color:var(--teal); background:var(--teal-soft) }
-.filter-chip:hover .chip-x { color:var(--teal-dark) }
-.filter-chips-clear { margin-left:4px; font-size:var(--fs-meta) }
-.table-scroll-controls { display:none }
+.filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--muted) }
+.filter-chip:hover { border-color:var(--accent) }
+.filter-chip:hover .chip-x { color:var(--accent) }
+.filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
+/* Columns: shown when the table is wider than its room (the script hides it otherwise). */
+.table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:2px }
+.table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
+.table-scroll-controls .icon-button { width:28px; height:28px; font-size:var(--fs-18) }
+/* A table wider than its room scrolls sideways: Enzyme stays in view and the scrolled edges are marked. */
+.table-wrap { overscroll-behavior-x:contain }
+.table-wrap.can-scroll-right { box-shadow:inset -12px 0 10px -12px var(--scroll-edge) }
+.table-wrap.can-scroll-left { box-shadow:inset 12px 0 10px -12px var(--scroll-edge) }
+.table-wrap.can-scroll-left.can-scroll-right { box-shadow:inset 12px 0 10px -12px var(--scroll-edge), inset -12px 0 10px -12px var(--scroll-edge) }
+.table-wrap:is(.can-scroll-left,.can-scroll-right) .c-enzyme { position:sticky; left:0; z-index:2; background:var(--bg); box-shadow:1px 0 0 var(--line) }
+.table-wrap:is(.can-scroll-left,.can-scroll-right) th.c-enzyme { z-index:3; background:var(--surface-2) }
+.table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
+.table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:is(:hover,:focus-visible) td.c-enzyme { background:var(--hover) }
+.table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr.selected td.c-enzyme { background:var(--accent-tint); box-shadow:inset 3px 0 0 var(--accent), 1px 0 0 var(--line) }
 
 /* Fixed layout. These widths are a starting point: the script sizes each column to the page and gives the rest to the name columns. */
 table { --cell-x:10px; width:100%; border-collapse:collapse; table-layout:fixed }
@@ -477,8 +525,11 @@ td.c-status { text-align:left }
 #pageLabel { margin-left:auto; min-width:116px; text-align:center }
 
 /* The open record: a column on desktop, a dialog on smaller screens. */
-.detail-panel { display:none; position:relative; grid-column:2; min-height:0; max-height:100%; border-left:1px solid var(--line); overflow:auto; overscroll-behavior:contain }
+.detail-panel { display:none; position:relative; grid-column:3; grid-row:1; min-height:0; max-height:100%; border-left:1px solid var(--line); overflow:auto; overscroll-behavior:contain }
 body.detail-open .detail-panel { display:block }
+@media (min-width: 1024px) {
+  body.detail-open .workbench { grid-template-columns:var(--filter-col) minmax(0,1fr) var(--panel-w) }
+}
 #detailContent { padding:16px 20px 20px }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:6px; border-bottom:1px solid var(--line); background:var(--surface); margin:-16px -20px 0; padding:16px 56px 14px 20px }
 .detail-top h2 { margin:0; color:var(--text); font-size:var(--fs-h2); font-weight:600; line-height:1.25; min-width:0; overflow-wrap:break-word; hyphens:auto }
@@ -729,88 +780,62 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .header-actions { grid-area:actions }
 .detail-empty { display:none }
 
-/* Wide screens (1440px and up): open filters are a column beside the table (no overlay), and results follow each
-   change. From 1600px they stay beside an open record. A table still too wide beside them scrolls sideways with the
-   Columns control, edge shadows and the Enzyme column kept in view, as below 1181px. */
-@media (min-width: 1440px) {
-  body.filters-open .workbench { --filter-column:288px; grid-template-columns:var(--filter-column) minmax(0,1fr); grid-template-rows:minmax(0,1fr) }
-  body.filters-open.detail-open .workbench { grid-template-columns:var(--filter-column) minmax(0,1fr) minmax(360px,29%) }
-  body:not(.filters-open) .filter-rail { display:none }
-  body.filters-open .filter-rail { position:relative; inset:auto; z-index:auto; grid-column:1; grid-row:1; width:auto; height:auto; max-height:100%; min-height:0; box-shadow:none; transform:none; transition:none; padding-bottom:16px }
-  body.filters-open .table-panel { grid-column:2; grid-row:1 }
-  body.filters-open .detail-panel { grid-column:3; grid-row:1 }
-  body.filters-open .filter-backdrop { display:none }
-  body.filters-open:not(.stats-open,.guide-open) .skip-link { display:block }
-  body.filters-open .table-scroll-controls { display:flex; gap:3px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:2px }
-  body.filters-open .table-scroll-controls > span { align-self:center; padding:0 4px 0 6px; color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
-  body.filters-open .table-scroll-controls .icon-button { width:28px; height:28px; font-size:var(--fs-h3) }
-  body.filters-open .table-wrap { overscroll-behavior-x:contain }
-  body.filters-open .table-wrap.can-scroll-right { box-shadow:inset -12px 0 10px -12px rgba(23,33,32,0.62) }
-  body.filters-open .table-wrap.can-scroll-left { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45) }
-  body.filters-open .table-wrap.can-scroll-left.can-scroll-right { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45), inset -12px 0 10px -12px rgba(23,33,32,0.62) }
-  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) .c-enzyme { position:sticky; left:0; z-index:2; background:var(--surface); box-shadow:1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
-  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) th.c-enzyme { z-index:3; background:var(--surface-2) }
-  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
-  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:is(:hover,:focus-visible) td.c-enzyme { background:var(--hover) }
-  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
-}
+/* Column widths: the sidebar 256px (to 1279px, tablets included), 272px (1280-1439), 288px (1440 and up); the record
+   440px (1024-1439), 480px (1440 and up). */
+@media (max-width: 1279px) { :root { --sidebar-w:256px } }
+@media (min-width: 1280px) and (max-width: 1439px) { :root { --sidebar-w:272px } }
+@media (max-width: 1439px) { :root { --panel-w:440px } }
 
 /* A record open on desktop: EC, T, pH and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
    and without the other tags. */
-@media (min-width: 1181px) {
+@media (min-width: 1024px) {
   body.detail-open :is(.col-ec,.col-temp,.col-ph,.col-open,.c-ec,.c-temp,.c-ph,.c-open) { display:none }
   body.detail-open .c-eff { border-right:1px solid var(--line) }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
 }
 
-/* Laptops and tablets: header in rows, overlays for filters and the record, a table that can scroll sideways. */
+/* Laptops and tablets: the header in rows (brand and Download; tabs and the links out; search). */
 @media (max-width: 1180px) {
-  .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" "search search"; column-gap:12px; row-gap:6px; padding:8px 16px 10px }
+  .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" "search search"; column-gap:var(--sp-3); row-gap:6px; padding:var(--sp-2) var(--sp-4) 10px }
   body:is(.stats-open,.guide-open) .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" }
-  .top-nav { justify-self:stretch; flex-wrap:nowrap; gap:4px; min-width:0; overflow-x:auto; scrollbar-width:none }
+  .top-nav { justify-self:stretch; flex-wrap:nowrap; gap:var(--sp-1); min-width:0; overflow-x:auto; scrollbar-width:none }
   .top-nav::-webkit-scrollbar { display:none }
-  .nav-tab { flex:0 0 auto; min-width:0; min-height:40px; padding:3px 10px 0 }
+  .nav-tab { flex:0 0 auto; min-width:0; min-height:40px; padding:2px 10px 0 }
   .global-search { justify-self:stretch; width:100% }
-  .snapshot-band { padding:0 16px }
-  .snapshot-overview { flex-wrap:wrap; padding:6px 0 }
-  .workbench, body.detail-open .workbench { grid-template-columns:1fr }
-  body.filters-open, body.detail-open { overflow:hidden }
+  .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
+  .guide-citation-links { grid-column:1 / -1 }
+}
+
+/* A table with little room (beside the sidebar or a record, or on a tablet): tighter cells; a table still too wide
+   scrolls sideways (Columns, Enzyme kept in view). */
+.table-panel { container:records / inline-size }
+@container records (max-width: 720px) {
+  .records-header { grid-template-columns:minmax(0,1fr) }
+  .records-tools { flex-wrap:wrap }
+}
+@container records (max-width: 1100px) {
+  table { --cell-x:6px }
+  th.c-enzyme, td.c-enzyme { padding-left:10px }
+  #recordsBody .state-tags { padding-left:0 }
+  .load-notice.empty-notice { position:sticky; left:16px; max-width:min(520px,calc(100% - 32px)); margin:0 }
+}
+
+/* Tablets and phones: 16px gutters; the record is a full-height dialog over the page. */
+@media (max-width: 1023px) {
+  :root { --gutter:16px }
+  body.detail-open { overflow:hidden }
   /* The record is a dialog here: Tab stays inside it, never on the skip link behind it. */
   body.detail-open .skip-link { display:none }
   .detail-panel { position:fixed; inset:0 0 0 auto; z-index:70; width:min(440px,100vw); height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; box-shadow:var(--shadow-panel); transform:translateX(calc(100% + 18px)); visibility:hidden; pointer-events:none; transition:transform 160ms ease, visibility 160ms ease }
   body.detail-open .detail-panel { transform:translateX(0); visibility:visible; pointer-events:auto }
-  .table-scroll-controls { display:flex; gap:3px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:2px }
-  .table-scroll-controls > span { align-self:center; padding:0 4px 0 6px; color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
-  .table-scroll-controls .icon-button { width:28px; height:28px; font-size:var(--fs-h3) }
-  .table-wrap { overscroll-behavior-x:contain }
-  .table-wrap.can-scroll-right { box-shadow:inset -12px 0 10px -12px rgba(23,33,32,0.62) }
-  .table-wrap.can-scroll-left { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45) }
-  .table-wrap.can-scroll-left.can-scroll-right { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45), inset -12px 0 10px -12px rgba(23,33,32,0.62) }
   /* Every column fits from about 1010px. */
-  table { --cell-x:6px; min-width:1000px }
-  th.c-enzyme, td.c-enzyme { padding-left:10px }
+  table { min-width:1000px }
   .col-ec { width:72px }
   .col-kcat, .col-km { width:80px }
   .col-efficiency { width:96px }
   .col-temp, .col-ph { width:48px }
   .col-state { width:168px }
   .col-open { width:20px }
-
-  #recordsBody .state-tags { padding-left:0 }
-
-  .load-notice.empty-notice { position:sticky; left:16px; max-width:min(520px,calc(100vw - 48px)); margin:0 }
-  /* Enzyme stays in view while the table scrolls sideways. */
-  .c-enzyme { position:sticky; left:0; z-index:2; background:var(--surface); box-shadow:1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
-  th.c-enzyme { z-index:3; background:var(--surface-2) }
-  tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
-  tbody tr:hover td.c-enzyme, tbody tr:focus-visible td.c-enzyme { background:var(--hover) }
-  tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
-  .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
-  .guide-citation-links { grid-column:1 / -1 }
-}
-
-@media (max-width: 1024px) {
-  table { min-width:1072px }
 }
 
 /* Tablets: the counts band takes two lines, Records, Accepted and Human-checked, then the rows with values and the
@@ -827,13 +852,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .header-actions { flex-wrap:wrap }
   .download-options { width:min(330px,calc(100vw - 32px)) }
   .detail-panel { width:100vw; border-left:0 }
-  .records-header { grid-template-columns:1fr }
-  .records-title { display:grid; grid-template-columns:max-content minmax(0,1fr) max-content }
-  .records-title > span { grid-column:2; grid-row:1 }
-  #clearResultsButton { grid-column:2 / -1; justify-self:start }
-  .table-scroll-controls { grid-column:3; grid-row:1; justify-self:end }
   .table-scroll-controls > span { display:none }
-  .records-tools { grid-template-columns:max-content max-content minmax(0,1fr) }
   .pagination { display:grid; grid-template-columns:max-content 64px minmax(0,1fr) 32px 32px; gap:6px; padding:8px 12px }
   .pagination-label-detail { display:none }
   #pageLabel { margin-left:0; min-width:0; font-size:var(--fs-meta) }
@@ -862,16 +881,19 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .summary-grid { gap:16px }
   .snapshot-meta { flex-basis:100%; flex-wrap:wrap; gap:4px 16px; border-left:0; padding-left:0 }
   .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }
-  /* One toolbar row; a count that is not the page range goes below it. */
-  .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:8px; padding:8px 16px }
+  body.filters-open { overflow:hidden }
+  body.filters-open .skip-link { display:none }
+  /* One toolbar row (Filters, Export, Sort); the chips and a count that is not the page range go below it. */
+  .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:var(--sp-2); padding:var(--sp-2) var(--sp-4) }
   .records-title { display:contents }
-  #openFiltersButton { grid-column:1; grid-row:1 }
-  .records-tools { grid-column:2; grid-row:1; grid-template-columns:max-content max-content minmax(0,1fr) }
-  #pageSummary, #clearResultsButton { grid-column:1 / -1; grid-row:auto; justify-self:start }
+  #openFiltersButton { display:inline-flex; grid-column:1; grid-row:1 }
+  .records-tools { grid-column:2; grid-row:1 }
+  #pageSummary, #clearResultsButton, #activeFilters { grid-column:1 / -1; grid-row:auto; justify-self:start }
   /* "Sort" stays visible beside the menu, so it never reads as a review-result filter. */
   .records-tools label { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
   .records-tools .sort-label-detail { display:none }
-  .records-tools select { width:100% }
+  .sort-control { flex:1 1 auto }
+  .records-tools select { flex:1 1 auto; width:auto; min-width:0 }
   .download-page-detail { display:none }
   /* Export results opens across the toolbar, inside the page's gutters. */
   .records-header { position:relative }
@@ -944,7 +966,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   @page { size:landscape; margin:10mm }
   html, body, .static-app, .table-panel, .table-wrap, tbody tr { background:var(--surface) !important }
   .static-app, #catalogView, .workbench { display:block; height:auto; min-height:0; overflow:visible }
-  .top-nav, .external-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more { display:none !important }
+  .top-nav, .external-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-column, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more { display:none !important }
   .app-header { display:block; min-height:0; padding:0 0 8px }
   .table-wrap, .table-panel, .stats-view { overflow:visible; border:0 }
   table { min-width:0 !important }

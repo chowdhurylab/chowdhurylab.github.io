@@ -48,7 +48,8 @@
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
-    // Docked filters closed for a record (below 1600px), with their scroll position: they come back when it closes.
+    // The filter sidebar collapsed to its rail for a record (1024-1599px), with its scroll position: it comes back when
+    // the record closes.
     filtersAwayForRecord: null,
   };
   const EMPTY_VALUE = "—";
@@ -69,11 +70,17 @@
   const DEFAULT_INDEX_ORDER = "default_review_status";
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const FILTER_TYPING_DELAY_MS = 180;
-  const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
-  // Wide screens: the filters are a column beside the table (not an overlay), and from 1600px they stay open beside
-  // an open record. Below 1440px a column would leave the table too narrow for its names, so they are an overlay.
-  const dockedFiltersMedia = window.matchMedia("(min-width: 1440px)");
+  // Below 1024px an open record is a full-height dialog; from 1024px it is a column beside the table.
+  const narrowDetailMedia = window.matchMedia("(max-width: 1023px)");
+  // From 641px the filters are a sidebar column beside the table, never over it: open, or a 48px rail when collapsed.
+  // Phones (640px and below) get a full-screen sheet instead.
+  const sidebarFiltersMedia = window.matchMedia("(min-width: 641px)");
+  // From 1024px the sidebar starts open (unless this viewer collapsed it); tablets start with the rail.
+  const desktopMedia = window.matchMedia("(min-width: 1024px)");
+  // From 1600px the sidebar stays open beside an open record; from 1024 to 1599px the record takes its place.
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
+  // A viewer's choice to collapse the sidebar on a desktop screen (a convenience: storage may be unavailable).
+  const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
   const DETAIL_INERT_SELECTOR = [
     ".app-header",
     "#catalogLoadProgress",
@@ -549,10 +556,13 @@
       document.querySelector('meta[property="og:title"]')?.setAttribute("content", document.title);
     }
     if (!browseOpen) {
-      setFiltersOpen(false);
+      // The phone sheet closes; the sidebar stays as it is (it is part of Browse, hidden with it).
+      if (!filtersDocked()) setFiltersOpen(false, { focus: false });
       resetDetail();
       hideSuggestions();
     } else {
+      // A sidebar a record had collapsed (the record closed when Browse was left) comes back with Browse.
+      if (state.filtersAwayForRecord && !document.body.classList.contains("detail-open")) restoreFiltersAwayForRecord();
       window.requestAnimationFrame(updateTableScrollControls);
     }
     // A section address (#guide-units) shows that section, also when the page opens at it.
@@ -4035,16 +4045,14 @@
     });
   }
 
-  // A section a filter is set in opens, so nothing active is hidden in a closed section.
+  // A group a filter is set in opens (each group is a <details>), so nothing active is hidden in a closed group.
   function openActiveFilterSections() {
     document.querySelectorAll?.("#catalogFilters .filter-section").forEach((section) => {
       const active = [...section.querySelectorAll("input")].some((input) => {
         if (input.type === "radio") return input.checked && input.value !== "all";
         return input.type === "checkbox" ? input.checked && input.name !== "recordState" : Boolean(String(input.value || "").trim());
       });
-      if (!active || section.classList.contains("open")) return;
-      section.classList.add("open");
-      section.querySelector(".filter-section-title")?.setAttribute("aria-expanded", "true");
+      if (active && !section.open) section.open = true;
     });
   }
 
@@ -4252,12 +4260,15 @@
       if (!state.filterOrder.includes(key)) state.filterOrder.push(key);
     });
     const count = items.length;
-    const badge = $("activeFilterCount");
-    if (badge) {
+    // The count beside Filters: on the phone button, the sidebar's heading and its rail.
+    const badges = new Set([$("activeFilterCount"), ...(document.querySelectorAll?.("[data-filter-count]") || [])]);
+    badges.forEach((badge) => {
+      if (!badge) return;
       badge.textContent = count ? String(count) : "";
       badge.classList.toggle("hidden", count === 0);
-    }
+    });
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
+    $("filterRailButton")?.setAttribute("aria-label", count ? `Show filters, ${count} active` : "Show filters");
     const bar = $("activeFilters");
     if (!bar) return;
     const html = count
@@ -4276,7 +4287,7 @@
       const buttons = [...bar.querySelectorAll("button")];
       const target = (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey))
         || buttons[Math.min(focusedIndex, buttons.length - 1)]
-        || $("openFiltersButton");
+        || filtersToggleButton();
       target?.focus({ preventScroll: true });
     }
   }
@@ -4291,7 +4302,7 @@
     state.pendingPage = 0;
     renderActiveFilters();
     const chips = [...($("activeFilters")?.querySelectorAll?.(".filter-chip") || [])];
-    if (focusIndex >= 0) (chips[Math.min(focusIndex, chips.length - 1)] || $("openFiltersButton"))?.focus({ preventScroll: true });
+    if (focusIndex >= 0) (chips[Math.min(focusIndex, chips.length - 1)] || filtersToggleButton())?.focus({ preventScroll: true });
     applyFiltersInBackground();
   }
 
@@ -4787,7 +4798,7 @@
       const removeLast = body.querySelector?.('[data-action="remove-last-filter"]');
       removeLast?.addEventListener("click", () => {
         removeActiveFilter(removeLast.dataset.filterKey);
-        ($("activeFilters")?.querySelector?.(".filter-chip") || $("openFiltersButton"))?.focus({ preventScroll: true });
+        ($("activeFilters")?.querySelector?.(".filter-chip") || filtersToggleButton())?.focus({ preventScroll: true });
       });
       return;
     }
@@ -5042,33 +5053,69 @@
     loadDetailShard(row.detail_shard).then(() => retainDetailShard(row.detail_shard)).catch(() => {});
   }
 
+  // From 641px the filters are a sidebar column (open, or its 48px rail); on phones a sheet over the page.
   function filtersDocked() {
-    return Boolean(dockedFiltersMedia.matches);
+    return Boolean(sidebarFiltersMedia.matches);
   }
 
-  // Docked filters and an open record share the screen from 1600px; below that, opening one closes the other.
+  // From 1024 to 1599px an open record takes the sidebar's place: the sidebar collapses to its rail and comes back when
+  // the record closes. From 1600px both stay open; below 1024px the record is a dialog over the page.
+  function recordTakesSidebarPlace() {
+    return Boolean(desktopMedia.matches) && !filtersBesideRecordMedia.matches;
+  }
+
   function filtersFitBesideRecord() {
-    return filtersDocked() && Boolean(filtersBesideRecordMedia.matches);
+    return filtersDocked() && !recordTakesSidebarPlace();
+  }
+
+  // The viewer's own choice on a desktop screen: open unless they collapsed it (kept in this browser when it can be).
+  function storedFiltersCollapsed() {
+    try {
+      return window.localStorage?.getItem(FILTERS_COLLAPSED_STORAGE_KEY) === "1";
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function storeFiltersCollapsed(collapsed) {
+    try {
+      if (collapsed) window.localStorage?.setItem(FILTERS_COLLAPSED_STORAGE_KEY, "1");
+      else window.localStorage?.removeItem(FILTERS_COLLAPSED_STORAGE_KEY);
+    } catch (_error) {
+      // Storage unavailable (private window, blocked site data): the sidebar simply starts open next time.
+    }
+  }
+
+  // Where the sidebar should be with no record in the way: open on a desktop screen unless collapsed by this viewer,
+  // the rail on a tablet, closed on a phone.
+  function preferredFiltersOpen() {
+    return Boolean(desktopMedia.matches) && !storedFiltersCollapsed();
+  }
+
+  // The visible control that opens or collapses the filters (focus returns to it).
+  function filtersToggleButton() {
+    if (!filtersDocked()) return $("openFiltersButton");
+    return document.body.classList.contains("filters-open") ? $("collapseFiltersButton") : $("filterRailButton");
   }
 
   function setDetailOpen(isOpen) {
-    if (isOpen && !filtersFitBesideRecord()) {
-      const docked = filtersDocked() && document.body.classList.contains("filters-open");
+    if (isOpen && filtersDocked() && recordTakesSidebarPlace() && document.body.classList.contains("filters-open")) {
       const scrollTop = $("catalogFilters")?.scrollTop || 0;
-      setFiltersOpen(false);
-      if (docked) state.filtersAwayForRecord = { scrollTop };
+      setFiltersOpen(false, { focus: false });
+      state.filtersAwayForRecord = { scrollTop };
     }
     document.body.classList.toggle("detail-open", Boolean(isOpen));
     syncDetailPanelAccessibility();
+    // Closing the record brings the sidebar back where it was; when Browse itself was left, it comes back with Browse.
+    if (!isOpen && state.filtersAwayForRecord && !$("catalogView")?.hidden) restoreFiltersAwayForRecord();
+  }
+
+  function restoreFiltersAwayForRecord() {
     const away = state.filtersAwayForRecord;
-    if (!isOpen && away) {
-      state.filtersAwayForRecord = null;
-      // Closing the record brings the docked filters back where they were (not when Browse itself was left).
-      if (filtersDocked() && !$("catalogView")?.hidden) {
-        setFiltersOpen(true, { focus: false });
-        if ($("catalogFilters")) $("catalogFilters").scrollTop = away.scrollTop;
-      }
-    }
+    state.filtersAwayForRecord = null;
+    if (!away || !filtersDocked() || document.body.classList.contains("detail-open")) return;
+    setFiltersOpen(true, { focus: false });
+    if ($("catalogFilters")) $("catalogFilters").scrollTop = away.scrollTop;
   }
 
   function syncDetailPanelAccessibility() {
@@ -5130,41 +5177,74 @@
     }
   }
 
-  function setFiltersOpen(isOpen, { focus = true } = {}) {
+  // Opens or collapses the filters: the sidebar (from 641px; collapsed, it is the rail) or the phone sheet. remember
+  // keeps a desktop viewer's choice for their next visit.
+  function setFiltersOpen(isOpen, { focus = true, remember = false } = {}) {
     const shouldOpen = Boolean(isOpen);
     const wasOpen = document.body.classList.contains("filters-open");
+    const rail = $("catalogFilters");
+    const focusInside = Boolean(rail?.contains?.(document.activeElement));
     // Filters opened (or closed) by hand are not brought back when a record closes.
     if (shouldOpen || !document.body.classList.contains("detail-open")) state.filtersAwayForRecord = null;
     hideSuggestions();
-    // Docked filters below 1600px take the record's place.
-    if (shouldOpen && filtersDocked() && !filtersFitBesideRecord() && document.body.classList.contains("detail-open")) {
+    // From 1024 to 1599px the sidebar takes the record's place.
+    if (shouldOpen && filtersDocked() && recordTakesSidebarPlace() && document.body.classList.contains("detail-open")) {
       resetDetail();
     }
+    if (remember && desktopMedia.matches) storeFiltersCollapsed(!shouldOpen);
     document.body.classList.toggle("filters-open", shouldOpen);
-    $("openFiltersButton")?.setAttribute("aria-expanded", String(shouldOpen));
+    for (const id of ["openFiltersButton", "filterRailButton", "collapseFiltersButton"]) {
+      $(id)?.setAttribute("aria-expanded", String(shouldOpen));
+    }
     if (shouldOpen && !wasOpen) updateFilterCounts();
-    const rail = $("catalogFilters");
     syncFilterRailRole();
     syncDetailPanelAccessibility();
-    // A docked panel changes the table's width.
+    // The sidebar changes the table's width.
     if (wasOpen !== shouldOpen && filtersDocked()) {
       fitTableColumns();
       updateTableScrollControls();
     }
+    // Collapsing with the focus inside leaves it on the control that opens them again.
+    if (!shouldOpen && wasOpen && focusInside && focus) filtersToggleButton()?.focus({ preventScroll: true });
     if (shouldOpen && focus) {
       window.setTimeout(() => {
         if (document.body.classList.contains("filters-open") && !rail?.contains(document.activeElement)) {
-          $("closeFiltersButton")?.focus({ preventScroll: true });
+          (filtersDocked() ? $("collapseFiltersButton") : $("closeFiltersButton"))?.focus({ preventScroll: true });
         }
       }, 180);
     }
   }
 
+  // The sidebar where it belongs for this window: the viewer's choice on a desktop screen (the rail while a record
+  // takes its place), the rail on a tablet, closed on a phone.
+  function applyFiltersLayout() {
+    const open = document.body.classList.contains("filters-open");
+    const detailOpen = document.body.classList.contains("detail-open");
+    if (!filtersDocked()) {
+      state.filtersAwayForRecord = null;
+      if (open) setFiltersOpen(false, { focus: false });
+      return;
+    }
+    let shouldOpen = preferredFiltersOpen();
+    if (shouldOpen && detailOpen && recordTakesSidebarPlace()) {
+      state.filtersAwayForRecord = state.filtersAwayForRecord || { scrollTop: 0 };
+      shouldOpen = false;
+    }
+    if (shouldOpen !== open) setFiltersOpen(shouldOpen, { focus: false });
+    else {
+      syncFilterRailRole();
+      syncDetailPanelAccessibility();
+    }
+  }
+
   function syncFilterPanel() {
-    // A window narrowed below 1600px with docked filters and a record both open keeps the record.
+    // A window narrowed below 1600px with the sidebar and a record both open keeps the record (the sidebar becomes
+    // the rail and comes back when the record closes).
     if (document.body.classList.contains("filters-open") && document.body.classList.contains("detail-open")
-      && filtersDocked() && !filtersFitBesideRecord()) {
-      setFiltersOpen(false);
+      && filtersDocked() && recordTakesSidebarPlace()) {
+      const scrollTop = $("catalogFilters")?.scrollTop || 0;
+      setFiltersOpen(false, { focus: false });
+      state.filtersAwayForRecord = { scrollTop };
       return;
     }
     syncFilterRailRole();
@@ -7031,17 +7111,9 @@
       input?.focus();
       hideSuggestions();
     });
-    document.querySelectorAll(".filter-section-title").forEach((button) => {
-      button.addEventListener("click", () => {
-        const section = button.closest(".filter-section");
-        const isOpen = !section.classList.contains("open");
-        section.classList.toggle("open", isOpen);
-        button.setAttribute("aria-expanded", String(isOpen));
-      });
-    });
-    // Phones: the filters' "Show N records" button closes the panel.
+    // Phones: the sheet's "Show N records" button closes it.
     $("showResultsButton")?.addEventListener("click", () => {
-      setFiltersOpen(false);
+      setFiltersOpen(false, { focus: false });
       $("openFiltersButton")?.focus({ preventScroll: true });
     });
     // Phones: the counts band shows the two main counts; More shows the rest.
@@ -7162,7 +7234,9 @@
       syncFilterPanel();
       syncDetailPanelAccessibility();
     });
-    dockedFiltersMedia.addEventListener?.("change", syncFilterPanel);
+    // Crossing into a phone, tablet or desktop width puts the filters where that width has them.
+    sidebarFiltersMedia.addEventListener?.("change", applyFiltersLayout);
+    desktopMedia.addEventListener?.("change", applyFiltersLayout);
     filtersBesideRecordMedia.addEventListener?.("change", syncFilterPanel);
     // "Only human-checked" sits under Accepted: ticking it ticks Accepted too, and unticking Accepted unticks it (only
     // accepted records are human-checked, so it would leave no results).
@@ -7208,7 +7282,7 @@
       }
       if (event.target?.closest?.("[data-filter-clear]")) {
         clearFilters();
-        $("openFiltersButton")?.focus({ preventScroll: true });
+        filtersToggleButton()?.focus({ preventScroll: true });
       }
     });
     // The filter changed last is the one the empty-results note offers to remove.
@@ -7220,17 +7294,24 @@
       clearFilters();
       $("globalSearchInput").focus({ preventScroll: true });
     });
-    // On wide screens the Filters button opens and closes the docked panel.
+    // Phones: Filters opens the sheet; its × and the backdrop close it.
     $("openFiltersButton").addEventListener("click", () => {
-      setFiltersOpen(!(filtersDocked() && document.body.classList.contains("filters-open")));
+      setFiltersOpen(!document.body.classList.contains("filters-open"));
     });
     $("closeFiltersButton").addEventListener("click", () => {
-      setFiltersOpen(false);
-      $("openFiltersButton")?.focus();
+      setFiltersOpen(false, { focus: false });
+      filtersToggleButton()?.focus();
     });
     $("filterBackdrop").addEventListener("click", () => {
-      setFiltersOpen(false);
-      $("openFiltersButton")?.focus();
+      setFiltersOpen(false, { focus: false });
+      filtersToggleButton()?.focus();
+    });
+    // From 641px: the rail's Filters button opens the sidebar and « collapses it to the rail (remembered on a desktop
+    // screen).
+    $("filterRailButton")?.addEventListener("click", () => setFiltersOpen(true, { remember: true }));
+    $("collapseFiltersButton")?.addEventListener("click", () => {
+      setFiltersOpen(false, { remember: true, focus: false });
+      $("filterRailButton")?.focus({ preventScroll: true });
     });
     $("pageSizeSelect").addEventListener("change", () => {
       applyPageSize($("pageSizeSelect").value);
@@ -7266,17 +7347,13 @@
         openMenu.querySelector("summary")?.focus();
         return;
       }
-      if (event.key === "Escape" && document.body.classList.contains("filters-open")) {
+      // Escape closes the phone sheet; the sidebar is part of the page and stays (« collapses it).
+      if (event.key === "Escape" && document.body.classList.contains("filters-open") && !filtersDocked()) {
         const activeElement = document.activeElement;
         if (activeElement?.matches?.('input[type="search"]') && activeElement.value) return;
-        // Docked beside an open record, Escape closes whichever holds the focus (the record when neither does).
-        const recordFirst = filtersDocked() && document.body.classList.contains("detail-open")
-          && !$("catalogFilters")?.contains(activeElement);
-        if (!recordFirst) {
-          setFiltersOpen(false);
-          $("openFiltersButton")?.focus();
-          return;
-        }
+        setFiltersOpen(false, { focus: false });
+        $("openFiltersButton")?.focus();
+        return;
       }
       if (event.key === "Escape" && document.body.classList.contains("detail-open")) {
         closeDetailAndRestoreFocus();
@@ -7318,7 +7395,8 @@
       if (addressFilters?.size) applyBrowseParams(addressFilters);
       renderActiveFilters();
       renderView(viewFromLocation());
-      syncFilterPanel();
+      // The sidebar starts open on a desktop screen (unless this viewer collapsed it), as the rail on a tablet.
+      applyFiltersLayout();
       syncDetailPanelAccessibility();
       // Stats and Guide never download the record index; it loads when Browse is first shown or about to be.
       if (viewFromLocation() === "browse") await ensureRecordsLoaded();

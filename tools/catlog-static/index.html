@@ -47,7 +47,7 @@
         </label>
         <div class="header-actions">
           <details id="downloadMenu" class="download-menu">
-            <summary class="button secondary">Download<span class="download-data-word"> data</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <summary class="button secondary"><span>Download<span class="download-data-word"> data</span></span><svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
             <div class="download-options">
               <a
                 id="enrichedDataButton"
@@ -108,87 +108,91 @@
 
         <section class="workbench">
           <button id="filterBackdrop" class="filter-backdrop" type="button" aria-label="Close filters" tabindex="-1"></button>
-          <aside id="catalogFilters" class="filter-rail" aria-label="Catalog filters" aria-hidden="true" inert tabindex="-1">
-            <div class="rail-heading">
-              <strong>Filters</strong>
-              <div class="rail-actions">
+          <div class="filter-column">
+            <button id="filterRailButton" class="filter-rail-button" type="button" aria-controls="catalogFilters" aria-expanded="false" aria-label="Show filters" title="Show filters"><svg class="double-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.5 4l4 4-4 4M3.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="filter-rail-label">Filters</span><span class="filter-count hidden" data-filter-count></span></button>
+            <aside id="catalogFilters" class="filter-rail" aria-labelledby="filtersTitle" aria-hidden="true" inert tabindex="-1">
+              <div class="rail-heading">
+                <h2 id="filtersTitle" class="rail-title">Filters</h2>
+                <span class="filter-count hidden" data-filter-count></span>
                 <button id="clearButton" class="text-button" type="button">Clear all</button>
+                <button id="collapseFiltersButton" class="icon-button collapse-filters" type="button" aria-controls="catalogFilters" aria-expanded="true" aria-label="Hide filters" title="Hide filters"><svg class="double-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8.5 4 4.5 8l4 4M12.5 4l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <button id="closeFiltersButton" class="icon-button close-filters" type="button" aria-label="Close filters">&times;</button>
               </div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Source <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="check-stack" id="sourceChecklist"></div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Review result <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="check-stack" id="statusChecklist"></div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Enzyme, organism and substrate <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="field-grid">
-                <label for="ecFilterInput">EC number</label>
-                <input id="ecFilterInput" type="search" placeholder="e.g. 1.1.1" autocomplete="off" />
-                <label for="enzymeFilterInput">Enzyme</label>
-                <input id="enzymeFilterInput" type="search" placeholder="e.g. lipase" autocomplete="off" />
-                <label for="organismFilterInput">Organism</label>
-                <input id="organismFilterInput" type="search" placeholder="e.g. E. coli" autocomplete="off" />
-                <label for="substrateFilterInput">Substrate</label>
-                <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" />
-              </div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Measurement type <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="check-stack" id="measurementChecklist"></div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Wild type or variant <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="check-stack" id="variantChecklist"></div>
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Assay conditions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="range-stack">
-                <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
-                  <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
-                  <strong data-count="range:temperature" title="Records that give an assay temperature">—</strong>
-                  <input id="temperatureMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="Temperature from, °C" />
-                  <span class="range-dash" aria-hidden="true">–</span>
-                  <input id="temperatureMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="Temperature to, °C" />
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Source <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="check-stack" id="sourceChecklist"></div>
+              </details>
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Review result <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="check-stack" id="statusChecklist"></div>
+              </details>
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Enzyme, organism and substrate <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="field-grid">
+                  <label for="ecFilterInput">EC number</label>
+                  <input id="ecFilterInput" type="search" placeholder="e.g. 1.1.1" autocomplete="off" />
+                  <label for="enzymeFilterInput">Enzyme</label>
+                  <input id="enzymeFilterInput" type="search" placeholder="e.g. lipase" autocomplete="off" />
+                  <label for="organismFilterInput">Organism</label>
+                  <input id="organismFilterInput" type="search" placeholder="e.g. E. coli" autocomplete="off" />
+                  <label for="substrateFilterInput">Substrate</label>
+                  <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" />
                 </div>
-                <div class="range-row" role="group" aria-labelledby="phRangeLabel">
-                  <span id="phRangeLabel" class="range-label">pH</span>
-                  <strong data-count="range:ph" title="Records that give an assay pH">—</strong>
-                  <input id="phMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="pH from" />
-                  <span class="range-dash" aria-hidden="true">–</span>
-                  <input id="phMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="pH to" />
+              </details>
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Measurement type <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="check-stack" id="measurementChecklist"></div>
+              </details>
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Wild type or variant <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="check-stack" id="variantChecklist"></div>
+              </details>
+              <details class="filter-section" open>
+                <summary class="filter-section-title">Assay conditions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="range-stack">
+                  <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
+                    <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
+                    <strong data-count="range:temperature" title="Records that give an assay temperature">—</strong>
+                    <input id="temperatureMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="Temperature from, °C" />
+                    <span class="range-dash" aria-hidden="true">–</span>
+                    <input id="temperatureMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="Temperature to, °C" />
+                  </div>
+                  <div class="range-row" role="group" aria-labelledby="phRangeLabel">
+                    <span id="phRangeLabel" class="range-label">pH</span>
+                    <strong data-count="range:ph" title="Records that give an assay pH">—</strong>
+                    <input id="phMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="pH from" />
+                    <span class="range-dash" aria-hidden="true">–</span>
+                    <input id="phMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="pH to" />
+                  </div>
                 </div>
+              </details>
+              <details class="filter-section">
+                <summary class="filter-section-title">Cautions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="check-stack" id="cautionChecklist"></div>
+              </details>
+              <div class="filter-footer">
+                <button id="showResultsButton" class="button" type="button">Show records</button>
               </div>
-            </div>
-            <div class="filter-section">
-              <button class="filter-section-title" type="button" aria-expanded="false">Cautions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="check-stack" id="cautionChecklist"></div>
-            </div>
-            <div class="filter-footer">
-              <button id="showResultsButton" class="button" type="button">Show records</button>
-            </div>
-          </aside>
+            </aside>
+          </div>
 
           <section class="table-panel">
             <div class="records-header">
               <div class="records-title">
                 <button id="openFiltersButton" class="button filter-toggle" type="button" aria-controls="catalogFilters" aria-expanded="false">
-                  Filters <span id="activeFilterCount" class="filter-count hidden"></span>
+                  Filters <span id="activeFilterCount" class="filter-count hidden" data-filter-count></span>
                 </button>
                 <strong id="activeSummary" class="visually-hidden">Loading records…</strong>
                 <span id="pageSummary">Loading records</span>
+                <div id="activeFilters" class="active-filters" role="group" aria-label="Active filters" hidden></div>
                 <button id="clearResultsButton" class="text-button" type="button" hidden>Clear search and filters</button>
+              </div>
+              <div class="records-tools">
                 <div class="table-scroll-controls hidden" aria-label="Table columns">
                   <span>Columns</span>
                   <button id="scrollTableLeftButton" class="icon-button" type="button" aria-label="Show previous columns">‹</button>
                   <button id="scrollTableRightButton" class="icon-button" type="button" aria-label="Show more columns">›</button>
                 </div>
-              </div>
-              <div class="records-tools">
                 <details id="exportMenu" class="download-menu export-menu">
                   <summary class="button secondary"><span>Export<span class="download-page-detail"> results</span></span><svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                   <div class="download-options export-options">
@@ -206,28 +210,29 @@
                     </button>
                   </div>
                 </details>
-                <label for="sortSelect">Sort<span class="sort-label-detail"> by</span></label>
-                <select id="sortSelect">
-                  <option value="evidence">Review result</option>
-                  <option value="ec_number">EC number</option>
-                  <option value="enzyme">Enzyme</option>
-                  <option value="organism">Organism</option>
-                  <option value="substrate">Substrate</option>
-                  <option value="kcat">kcat, high to low</option>
-                  <option value="kcat_asc">kcat, low to high</option>
-                  <option value="km">Km, high to low</option>
-                  <option value="km_asc">Km, low to high</option>
-                  <option value="kcat_over_km">kcat/Km, high to low</option>
-                  <option value="kcat_over_km_asc">kcat/Km, low to high</option>
-                  <option value="temperature">T (°C), high to low</option>
-                  <option value="temperature_asc">T (°C), low to high</option>
-                  <option value="ph">pH, high to low</option>
-                  <option value="ph_asc">pH, low to high</option>
-                </select>
+                <span class="sort-control">
+                  <label for="sortSelect">Sort<span class="sort-label-detail"> by</span></label>
+                  <select id="sortSelect">
+                    <option value="evidence">Review result</option>
+                    <option value="ec_number">EC number</option>
+                    <option value="enzyme">Enzyme</option>
+                    <option value="organism">Organism</option>
+                    <option value="substrate">Substrate</option>
+                    <option value="kcat">kcat, high to low</option>
+                    <option value="kcat_asc">kcat, low to high</option>
+                    <option value="km">Km, high to low</option>
+                    <option value="km_asc">Km, low to high</option>
+                    <option value="kcat_over_km">kcat/Km, high to low</option>
+                    <option value="kcat_over_km_asc">kcat/Km, low to high</option>
+                    <option value="temperature">T (°C), high to low</option>
+                    <option value="temperature_asc">T (°C), low to high</option>
+                    <option value="ph">pH, high to low</option>
+                    <option value="ph_asc">pH, low to high</option>
+                  </select>
+                </span>
               </div>
             </div>
             <p id="tableStatus" class="visually-hidden" role="status" aria-live="polite"></p>
-            <div id="activeFilters" class="active-filters" role="group" aria-label="Active filters" hidden></div>
             <div id="recordTableWrap" class="table-wrap" tabindex="-1">
               <table aria-label="Enzyme kinetics records" aria-describedby="pageSummary">
                 <colgroup>

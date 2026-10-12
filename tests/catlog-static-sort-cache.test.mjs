@@ -483,7 +483,7 @@ const window = {
   matchMedia: (query) => ({
     get matches() {
       if (query === "(min-width: 1681px)") return embeddedDetailPanel;
-      if (query === "(max-width: 1180px)") return narrowDetailPanel;
+      if (query === "(max-width: 1023px)") return narrowDetailPanel;
       return false;
     },
     addEventListener() {},
