@@ -1053,6 +1053,12 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-18) }
+  /* The record's values: calc. and "!" go under the number, so As printed keeps its room and the table its width. */
+  .values-table :is(th,td) { padding-right:6px; padding-left:6px }
+  .values-table td.vt-value .vt-number { display:block }
+  .values-table td.vt-value .metric-origin { margin-left:0 }
+  .values-table td.vt-value .metric-origin + .value-flag { margin-left:4px }
+  .values-table .vt-printed { overflow-wrap:anywhere }
   .snapshot-overview { min-height:40px; row-gap:6px }
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }
   .snapshot-more { display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-height:28px }
@@ -1133,6 +1139,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody tr.skeleton-row td.num span { width:30%; margin-left:0 }
   #recordsBody :is(tr.empty-row,tr.loading-row) td { padding:24px 16px }
   .load-notice.empty-notice { position:static; max-width:none }
+}
+
+/* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px, and the
+   Method row's Guide link may wrap. */
+@media (max-width: 360px) {
+  .values-table .vt-unit { white-space:normal }
+  .method-link { white-space:normal }
 }
 
 @media (max-width: 520px) {

@@ -1248,6 +1248,8 @@ RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "P
 
 # A malic enzyme variant with 28 substitutions (PMID 24998673): its sequence line is one long run with no spaces.
 LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
+# A triose phosphate isomerase read from the paper whose calculated kcat/Km (8.49 × 10⁷) carries calc. and a "!".
+CALC_FLAG_RECORD = "1704dd2d6297af79"
 
 
 def check_record_panel(driver, browser, url, route_label):
@@ -1376,6 +1378,35 @@ def check_record_panel(driver, browser, url, route_label):
                 wide = driver.execute_script("const panel = document.getElementById('detailPanel'); return [panel.scrollWidth, panel.clientWidth]")
                 assert wide[0] <= wide[1] + 1, f"The long variant record overflows sideways at {width}px: {wide}"
                 results[f"long-variant-{label}"] = True
+            if label == "mobile":
+                # On phones calc. and "!" go under the number, so the Values table stays inside its section and As printed
+                # keeps room (at 390 and at 320px; skipped when this snapshot does not have that record).
+                for phone_width in (390, 320):
+                    set_browse_viewport(driver, browser, phone_width, height)
+                    driver.get("about:blank")
+                    driver.get(base + f"#record={CALC_FLAG_RECORD}")
+                    wait.until(lambda d: d.execute_script(
+                        "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                    if not driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .metric-origin"):
+                        continue
+                    fit = driver.execute_script("""
+                        const section = document.querySelector('#detailContent .values-section');
+                        const table = section.querySelector('.values-table');
+                        const contentRight = section.getBoundingClientRect().right - parseFloat(getComputedStyle(section).paddingRight);
+                        const heads = [...table.querySelectorAll('thead th')].map(th => [th.textContent, th.getBoundingClientRect().width]);
+                        const cell = section.querySelector('td.vt-value .metric-origin').closest('td');
+                        const panel = document.getElementById('detailPanel');
+                        return {over: table.getBoundingClientRect().right - contentRight,
+                                printed: (heads.find(([name]) => name === 'As printed') || [, 0])[1],
+                                below: cell.querySelector('.metric-origin').getBoundingClientRect().top
+                                    >= cell.querySelector('.vt-number').getBoundingClientRect().bottom - 1,
+                                sideways: panel.scrollWidth - panel.clientWidth};
+                    """)
+                    assert fit["over"] <= 1 and fit["sideways"] <= 1, f"The Values table runs past its section at {phone_width}px: {fit}"
+                    assert fit["below"], f"calc. stays beside the number at {phone_width}px: {fit}"
+                    assert fit["printed"] >= (90 if phone_width == 390 else 48), f"As printed is squeezed at {phone_width}px: {fit}"
+                    results[f"values-table-{phone_width}"] = True
+                set_browse_viewport(driver, browser, width, height)
         set_browse_viewport(driver, browser, 1440, 1000)
         # A link to filtered results with a record, followed inside the open page, opens that record on its page.
         driver.get("about:blank")
