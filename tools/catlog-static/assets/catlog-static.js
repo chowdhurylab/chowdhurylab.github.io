@@ -3412,6 +3412,16 @@
     return `10${[...String(exponent)].map((character) => SUPERSCRIPT_DIGITS[character] ?? character).join("")}`;
   }
 
+  // A median or percentile from 1,000 to below 100,000 prints with thousands separators, like the counts (2,300); smaller
+  // and larger ones print as numberText and numberHtml do (0.067, 1.2 × 10⁵).
+  function statsRangeNumber(value, { html = false } = {}) {
+    if (Math.abs(value) >= 1000 && Math.abs(value) < 1e5) {
+      const text = new Intl.NumberFormat(undefined, { maximumFractionDigits: 20 }).format(value);
+      return html ? escapeHtml(text) : text;
+    }
+    return html ? numberHtml(value) : numberText(value);
+  }
+
   // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
   // the 10–90% range beneath. Returns "" for a summary that does not hold together.
   function statsValueRange(metric, summary) {
@@ -3432,13 +3442,13 @@
     const low = position(summary.p10);
     const high = position(summary.p90);
     const unit = escapeHtml(metric.unit);
-    const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${numberText(summary.median)} ${metric.unit}; `
-      + `10% of values are below ${numberText(summary.p10)} and 10% above ${numberText(summary.p90)}; ${formatInteger(n)} values.`;
+    const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${statsRangeNumber(summary.median)} ${metric.unit}; `
+      + `10% of values are below ${statsRangeNumber(summary.p10)} and 10% above ${statsRangeNumber(summary.p90)}; ${formatInteger(n)} values.`;
     return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}">
       <figcaption>${metric.html} <span class="stats-range-unit">(${unit})</span></figcaption>
       <dl class="stats-range-numbers">
-        <div><dt>Median</dt><dd>${numberHtml(summary.median)}</dd></div>
-        <div><dt>10–90%</dt><dd>${numberHtml(summary.p10)} – ${numberHtml(summary.p90)}</dd></div>
+        <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true })}</dd></div>
+        <div><dt>10–90%</dt><dd>${statsRangeNumber(summary.p10, { html: true })} – ${statsRangeNumber(summary.p90, { html: true })}</dd></div>
       </dl>
       <div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
         <div class="stats-histogram-bars">${counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" title="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(start + 1) : index === bins - 1 ? statsPowerOfTen(start + index) + " and above" : `${statsPowerOfTen(start + index)} to ${statsPowerOfTen(start + index + 1)}`}: ${formatInteger(count)}`)}"></span>`).join("")}</div>

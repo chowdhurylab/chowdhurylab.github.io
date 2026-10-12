@@ -1959,6 +1959,12 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   assert.match(range, /data-metric="km" data-count="4"/);
   assert.match(range, /style="height:50%"/);
   assert.match(range, /<i style="left:[\d.]+%"><\/i>/);
+  // A percentile of 1,000 or more prints with thousands separators, like the counts; 100,000 and over as a power of ten.
+  const wide = api.statsValueRange({ key: "kcat_over_km", html: "kcat/Km", unit: "s⁻¹ mM⁻¹" }, { n: 3, median: 17, p10: 0.067, p90: 2300, log10_start: -2, counts: [1, 1, 0, 0, 0, 1] });
+  assert.match(wide, /<dt>10–90%<\/dt><dd>0\.067 – 2,300<\/dd>/);
+  assert.match(wide, /10% above 2,300; 3 values\./);
+  assert.match(api.statsValueRange({ key: "kcat", html: "kcat", unit: "s⁻¹" }, { n: 2, median: 1250.5, p10: 2, p90: 250000, log10_start: 0, counts: [1, 0, 0, 0, 0, 1] }),
+    /<dd>1,250\.5<\/dd>[\s\S]*<dd>2 – <span class="scientific-number"[^>]*><span aria-hidden="true">2\.5 &times; 10<sup>5<\/sup>/);
 
   // An overview from another download, or with another record count, is not used.
   runtimeManifest.summary.overview = { ...overview, download_sha256: "other-download" };
