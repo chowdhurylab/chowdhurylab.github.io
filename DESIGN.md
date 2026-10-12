@@ -82,13 +82,18 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   a different number, no database value; the caption says only the paper and
   parameter are compared and a different number is not a database error; its
   data line names the papers the databases miss, "For 9 papers no database
-  lists any of these parameters; for 171 more, at least one of them is missing
-  from the databases"),
+  lists any of the parameters CatLog read from them; for 171 more, the
+  databases list some of them but not all", leaving out a count of zero),
   the corrections on records accepted after a correction (rounding, a
   different number, unit or magnitude, added) and the earlier records of
   papers CatLog has read (same number in CatLog's reading, not found). 100%
   bars per parameter with reference lines at 25/50/75/100% and the shares
-  under them. Absent counts: no figure and no heading.
+  under them. Absent counts: no figure and no heading. Captions never seem to
+  contradict the headline: figure 5's papers are those CatLog has read that
+  the earlier catalog also had, figure 3 says for how many papers no database
+  lists any parameter CatLog read and for how many it lists some but not all,
+  and figure 4, when its record count is not the snapshot's count of records
+  accepted after a correction, names both (with the date it was counted).
 - Table, Checks on the values: second AI check (records read from the paper),
   AI audits, the reviewers' approved values, human-checked records, the human
   review of the earlier catalog (the share correct always beside the label

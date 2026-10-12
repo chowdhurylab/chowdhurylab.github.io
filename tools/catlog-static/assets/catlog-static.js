@@ -3905,12 +3905,14 @@
     const calculated = statsCount(data.calculated ?? data.calculated_not_compared);
     const papersNone = statsCount(data.papers_all_absent);
     const papersSome = statsCount(data.papers_some_absent);
-    // Papers the databases miss: all of these parameters, then (the other papers) at least one of them.
+    // Papers the databases miss: papers_all_absent, where no database lists any parameter CatLog read from the paper,
+    // then (the other papers) papers_some_absent, where they list some of them but not all. A zero count is left out.
     const papers = (count) => `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
+    const them = (count) => (count === 1 ? "it" : "them");
     const papersMissing = [
-      papersNone ? `for ${papers(papersNone)} no database lists any of these parameters` : "",
-      papersSome ? (papersNone ? `for ${formatInteger(papersSome)} more, at least one of them is missing from the databases`
-        : `for ${papers(papersSome)} at least one of these parameters is missing from the databases`) : "",
+      papersNone ? `for ${papers(papersNone)} no database lists any of the parameters CatLog read from ${them(papersNone)}` : "",
+      papersSome ? (papersNone ? `for ${formatInteger(papersSome)} more, the databases list some of them but not all`
+        : `for ${papers(papersSome)} the databases list some of the parameters CatLog read from ${them(papersSome)} but not all`) : "",
     ].filter(Boolean).join("; ");
     const notes = [
       "Numbers compared for the same paper and parameter; substrate, variant and conditions are not compared, and a different number does not mean the database is wrong.",
@@ -3925,7 +3927,14 @@
     };
   }
 
-  function statsCorrectionsFigure(quality) {
+  // The date overview.quality was counted, as the page writes dates; empty without one.
+  function statsAsOf(quality) {
+    return /^\d{4}-\d{2}-\d{2}/.test(String(quality?.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
+  }
+
+  // snapshot.corrected: this snapshot's records accepted after a correction (figure 1). Counts made for another snapshot
+  // name both numbers, so the caption never contradicts figure 1.
+  function statsCorrectionsFigure(quality, snapshot = {}) {
     const data = quality?.earlier_corrections;
     const records = statsCount(data?.records);
     if (!records || !data.values || typeof data.values !== "object") return null;
@@ -3948,7 +3957,9 @@
     return {
       id: "statsCorrectionsTitle", key: "earlier-corrections", title: "Corrections on records accepted after a correction",
       body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      caption: `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} records accepted after a correction, by kind of change.`,
+      caption: Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
+        ? `Values the earlier review changed to the value the paper prints, by kind of change, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
+        : `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind of change.`,
       data: statsDataLine(listedText),
     };
   }
@@ -3972,7 +3983,8 @@
     return {
       id: "statsReplacedTitle", key: "replaced", title: "Earlier records of papers CatLog has read",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      caption: `The ${formatInteger(records)} earlier ${records === 1 ? "record" : "records"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : " of the papers"} CatLog has read: whether CatLog's reading has the same number for that paper and parameter.`,
+      // papers: the papers CatLog has read that the earlier catalog also had (fewer than the papers CatLog has read).
+      caption: `The ${formatInteger(records)} earlier ${records === 1 ? "record" : "records"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog has read and the earlier catalog also had` : " of the papers CatLog has read"}: whether CatLog's reading has the same number for that paper and parameter.`,
       data: statsDataLine("CatLog's records replace a paper's earlier ones. kcat/Km calculated from kcat and Km are left out."),
     };
   }
@@ -4139,7 +4151,7 @@
 
     // Figures 3-5: CatLog against the databases, the earlier corrections, and the earlier records CatLog replaced.
     for (const build of [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]) {
-      const figure = build(overview?.quality);
+      const figure = build(overview?.quality, { corrected: counts.corrected });
       if (figure) figures.push(figure);
     }
 

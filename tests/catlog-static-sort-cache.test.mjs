@@ -1885,13 +1885,26 @@ function row(overrides = {}) {
     "Corrections on records accepted after a correction", "Earlier records of papers CatLog has read"]);
   assert.match(figures, /<strong>Figure 3\.<\/strong> Values CatLog read from the paper/);
   assert.match(figures, /data-row="all" data-count="14"/);
-  assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of these parameters; for 2 more, at least one of them is missing from the databases\./);
+  assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of the parameters CatLog read from it; for 2 more, the databases list some of them but not all\./);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
-  assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 paper CatLog has read/);
+  assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 paper that CatLog has read and the earlier catalog also had: /);
+  // Figure 4 counted for another snapshot names both counts of records accepted after a correction (figure 1 has the
+  // snapshot's own); with the same count it names one.
+  const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
+  assert.ok(Number.isInteger(correctedNow) && correctedNow !== 5);
+  assert.match(figures, new RegExp(`by kind of change, on the 5 records accepted after a correction when counted; Figure 1 counts ${correctedNow} in this snapshot\\.`));
+  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow,
+    values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
+  api.renderStats();
+  assert.match(element("statsCharts").innerHTML, new RegExp(`on the ${correctedNow} records? accepted after a correction, by kind of change\\.`));
+  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow + 1,
+    values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
+  api.renderStats();
+  assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\); Figure 1 counts \d+ in this snapshot\./);
   // With no paper missing every parameter, the papers missing one are counted on their own.
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, papers_all_absent: 0, papers_some_absent: 1 } } };
   api.renderStats();
-  assert.match(element("statsCharts").innerHTML, /wrong\. For 1 paper at least one of these parameters is missing from the databases\./);
+  assert.match(element("statsCharts").innerHTML, /wrong\. For 1 paper the databases list some of the parameters CatLog read from it but not all\./);
   // A figure whose counts are not whole numbers is not drawn (never an empty heading).
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
