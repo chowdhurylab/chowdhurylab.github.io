@@ -737,8 +737,14 @@ def check(driver, browser, url):
     wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
                and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
 
+    # Browse keeps the filters the Stats link set (shown as chips); Clear all shows every record again.
+    pending = expected.get("manual_review_required", 0)
     driver.find_element(By.ID, "browseButton").click()
+    wait.until(lambda d: urlsplit(d.current_url).fragment == "browse?status=curation_pending"
+               and d.find_element(By.ID, "activeSummary").text == f"{pending:,} records")
+    driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
     wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
+    assert not urlsplit(driver.current_url).fragment
     check_metadata("browse")
     assert len(driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) == 25
     search = driver.find_element(By.ID, "globalSearchInput")
