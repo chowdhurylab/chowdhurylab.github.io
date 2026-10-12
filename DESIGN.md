@@ -40,7 +40,7 @@ second count column ("Accepted") is wide enough for its heading.
 
 Charts are plain horizontal bars: name, bar, count, share of all records.
 Colour marks the review result only, with the Browse status dot colours (blue
-#339cff accepted, orange #f3883b not confirmed, grey #a9b1ae not checked, for
+#339cff accepted, orange #f3883b not confirmed, grey not checked, for
 Unverified and Not reviewed alike, red #e02e2a disputed); every other bar is one teal
 (#277c86). Top-10 bars are drawn against the largest item, all others against
 all records. Value ranges show, per metric in catalog units (kcat s⁻¹, Km mM,

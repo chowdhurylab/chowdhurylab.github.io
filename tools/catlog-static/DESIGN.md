@@ -341,7 +341,7 @@ attribution belongs in Guide and dataset notes, not the Browse footer.
 One plain page from the snapshot manifest (never the record index): two
 headline lines, then sections that each have a heading, at most one line of
 explanation and plain bars (name, bar, count, share of all records). Colour
-marks review status only, with the status dot colours; other bars are one
+marks the review result only, with the status dot colours; other bars are one
 teal. Names Browse can filter on link to `#browse?` with the shared filter
 keys. Value ranges show the median, the 10–90% range and a log histogram per
 metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
@@ -349,7 +349,7 @@ metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
 ## Guide
 
 One reading column (72ch, 16px body). The introduction says what CatLog is and,
-in one sentence, that the CatRange paper (PNAS Nexus, linked from the header) describes
+in one sentence, that the CatRange paper (PNAS Nexus, linked in the header) describes
 CatLog-27k and that this site is the growing catalog that followed, then
 points to the method ("How this catalog is built: see ..."). Then "On this
 page", a short contents list (three columns, two on phones) linking to the
