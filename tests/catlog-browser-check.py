@@ -423,8 +423,10 @@ def check_browse(driver, browser, url, route_label):
             # Export results as CSV: every matching record, as many lines as the count says.
             matching = int(driver.find_element(By.ID, "activeSummary").text.split()[0].replace(",", ""))
             assert driver.find_element(By.ID, "exportAllCsvLabel").get_attribute("textContent").startswith(f"All {matching:,} matching")
-            _header, csv_rows = downloaded_csv("exportAllCsvButton")
+            header, csv_rows = downloaded_csv("exportAllCsvButton")
             assert len(csv_rows) == matching and selected_key in {line.split(",", 1)[0] for line in csv_rows}
+            # The table's grey note under the substrate is a column too, so look-alike records stay apart.
+            assert header[header.index("substrate_name") + 1] == "condition_note", header
             screenshots.append(capture(viewport, "search"))
             search.clear()
             search.send_keys("zzzz-no-match-catlog-browser-check", Keys.TAB)

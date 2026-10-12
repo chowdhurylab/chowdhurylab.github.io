@@ -2774,6 +2774,8 @@
     ["ec_number", (row) => row.ec_number],
     ["organism", (row) => row.organism],
     ["substrate_name", (row) => row.substrate_name],
+    // The grey note under the substrate ("+10 mM FBP", "no effector"): what tells look-alike records of a paper apart.
+    ["condition_note", (row) => conditionNoteText(row)],
     ["variant", (row) => enzymeFormText(row) || (rowVariantBits(row) === 1 ? "wild type" : "")],
     ...["kcat", "km", "kcat_over_km"].flatMap((field) => [
       [field, (row) => (metricHasValue(row, field) ? metricDisplay(row, field) : "")],

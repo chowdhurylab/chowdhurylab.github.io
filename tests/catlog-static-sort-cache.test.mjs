@@ -3099,6 +3099,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
 {
   const csvRows = [
     row({ record_key: "csv-1", enzyme_display_name: "alcohol dehydrogenase, class I", substrate_name: "=SUM(A1)", organism: 'Homo "sapiens"',
+      condition_note: "+10 mM FBP",
       kcat_display: "30.333", kcat_unit: "s^(-1)", km_display: "0.05", km_unit: "mM", kcat_over_km_display: "606.66",
       kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "calculated", mutation_signature: "D102E", wild_type: false,
       verification_status: "unverified", _pmids: [123, 456], primary_uniprot_id: "P00330" }),
@@ -3108,16 +3109,16 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   const text = (await api.csvParts(csvRows)).join("");
   const lines = text.replace(/^\ufeff/, "").split("\r\n").filter(Boolean);
   assert.equal(lines.length, 3);
-  assert.equal(lines[0], "record_key,enzyme_display_name,ec_number,organism,substrate_name,variant,kcat,kcat_unit,km,km_unit,"
+  assert.equal(lines[0], "record_key,enzyme_display_name,ec_number,organism,substrate_name,condition_note,variant,kcat,kcat_unit,km,km_unit,"
     + "kcat_over_km,kcat_over_km_unit,kcat_over_km_origin,temperature_c,ph,review_result,human_checked,source,source_db,pubmed_id,doi,primary_uniprot_id");
-  assert.ok(lines[1].startsWith('csv-1,"alcohol dehydrogenase, class I",1.1.1.1,"Homo ""sapiens""",\'=SUM(A1),D102E,30.333,s^-1,0.05,mM,606.66,s^-1 mM^-1,calculated,25,7,Not checked (Unverified),'), lines[1]);
+  assert.ok(lines[1].startsWith('csv-1,"alcohol dehydrogenase, class I",1.1.1.1,"Homo ""sapiens""",\'=SUM(A1),\'+10 mM FBP,D102E,30.333,s^-1,0.05,mM,606.66,s^-1 mM^-1,calculated,25,7,Not checked (Unverified),'), lines[1]);
   assert.ok(lines[1].endsWith(",BRENDA,brenda,123; 456,,P00330"), lines[1]);
-  assert.match(lines[2], /^csv-2,Enzyme,1\.1\.1\.1,Organism,Substrate,wild type,,,1,mM,/, "a missing value is an empty cell");
+  assert.match(lines[2], /^csv-2,Enzyme,1\.1\.1\.1,Organism,Substrate,,wild type,,,1,mM,/, "a missing value is an empty cell");
   assert.match(lines[2], /,Accepted,[^,]*,from paper,primary_paper_direct,/);
   // A cell starting with + or - is a formula to a spreadsheet unless it is a plain number (variant "+G212").
   const signed = (await api.csvParts([row({ record_key: "csv-3", mutation_signature: "+G212", wild_type: false, organism: "-Organism",
     kcat_display: "-5", kcat_unit: "s^(-1)", km_display: "+0.5", km_unit: "mM" })])).join("").replace(/^\ufeff/, "").split("\r\n")[1];
-  assert.match(signed, /^csv-3,Enzyme,1\.1\.1\.1,'-Organism,Substrate,'\+G212,-5,s\^-1,\+0\.5,mM,/, signed);
+  assert.match(signed, /^csv-3,Enzyme,1\.1\.1\.1,'-Organism,Substrate,,'\+G212,-5,s\^-1,\+0\.5,mM,/, signed);
 }
 
 api.indexLoadedRecords([row()]);

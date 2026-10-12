@@ -92,7 +92,8 @@ count beside Filters is shown only when it says more than the page range.
 Export results (a menu beside Sort, "Export" on phones, opening to the right)
 offers "All N matching records (CSV)", "This page (CSV)" and "This page (JSON)".
 The CSV is built in the page from the loaded index, a slice at a time: the
-table's columns with their units and stored digits, review result (the exact
+table's columns with their units and stored digits, the condition note under the
+substrate (condition_note, so look-alike records of a paper stay apart), review result (the exact
 value), human-checked, source, PMIDs, DOIs, UniProt ID and record ID, one line
 per record (RFC 4180, UTF-8 with a byte-order mark; a cell a spreadsheet would
 read as a formula starts with an apostrophe). The JSON page export keeps every
