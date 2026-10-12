@@ -34,7 +34,9 @@ spacing: 4, 8, 12, 16, 24, 32px
 
 Start with the table, not a landing page. Keep Records, Accepted, Human-checked
 and the three Rows with values counts in one 48px line, labels and counts on one
-baseline, the snapshot date and View stats at its end; on phones the line keeps
+baseline, the snapshot date and View stats at its end; from 641 to 1023px it
+takes two lines (Records, Accepted, Human-checked; then the rows with values and
+the date, with no divider at the start of a line); on phones the line keeps
 Records and Accepted, Human-checked takes the next line with the More button,
 and More shows the rest. Human-checked N is a link to those records
 (#browse?checked=1 plus the filters set now, from page 1); N is the snapshot's

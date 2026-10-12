@@ -23,8 +23,10 @@ plain explanation and its chart: Review status (full width); Read from the
 paper and Human review (two short boxes; the v2 box reuses the page's
 v2Sentence); What the records contain; Enzyme classes (records and accepted);
 Most common organisms and EC numbers (top 10, the EC with the enzyme name its
-records use most); Value ranges (full width); Wild type and variants;
-Cautions; Main source; and a closed "How these numbers are counted".
+records use most); Value ranges (full width); Wild type and variants above
+Cautions in one column, Main source above a closed "How these numbers are
+counted" in the other (stacked, so a short section leaves no gap). On phones a
+second count column ("Accepted") is wide enough for its heading.
 
 Charts are plain horizontal bars: name, bar, count, share of all records.
 Colour marks review status only, with the Browse status dot colours (blue

@@ -2711,9 +2711,15 @@
       { value: "variant", label: "Variant", count: statsCount(form.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
       { value: "not_stated", label: "Not stated", count: statsCount(form.not_stated, total) },
     ];
-    if (forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total) {
-      sections.push(statsSection("statsFormTitle", "Wild type and variants", statsBarRows(forms, total)));
-    }
+    // The last four sections stand two to a column (each column one grid item), so a short section leaves no gap
+    // beside a taller one.
+    const stack = (...items) => {
+      const present = items.filter(Boolean);
+      return present.length > 1 ? `<div class="stats-stack">${present.join("")}</div>` : present.join("");
+    };
+    const formSection = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total
+      ? statsSection("statsFormTitle", "Wild type and variants", statsBarRows(forms, total))
+      : "";
 
     // Cautions.
     const caution = overview?.cautions || {};
@@ -2722,23 +2728,25 @@
       ...cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
         count: statsCount(caution[item.value], total), params: { caution: item.value } })),
     ];
-    if (cautions.every((item) => item.count !== null)) {
-      sections.push(statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
-        { note: "A caution marks a value to check against the source; a record can carry more than one." }));
-    }
+    sections.push(stack(formSection, cautions.every((item) => item.count !== null)
+      ? statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
+        { note: "A caution marks a value to check against the source; a record can carry more than one." })
+      : ""));
 
     // Main source.
     const sources = statsSources(overview);
-    sections.push(statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
-      { note: "A record merged from several databases counts under each of them, so these counts add up to more than all records. Select a name to see those records in Browse." }));
+    const sourceSection = statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
+      { note: "A record merged from several databases counts under each of them, so these counts add up to more than all records. Select a name to see those records in Browse." });
 
-    if (overview) {
-      sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
+    if (!overview) {
+      sections.push(sourceSection);
+    } else {
+      sections.push(stack(sourceSection, `<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records a human reviewer checked, as the status tag shows.</dd></div>
         <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot; Human-checked also uses the human-review marks published with it.</dd></div>
-      </dl></details>`);
+      </dl></details>`));
     }
     $("statsCharts").innerHTML = sections.join("");
   }
