@@ -169,7 +169,8 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check."));
+  assert.ok(pageHtml.includes("A dash means no value (in the T column, a temperature flagged as questionable)."));
+  assert.doesNotMatch(pageHtml, /hidden after a data check/, "A dash never suggests values were suppressed");
   assert.ok(pageHtml.includes("beside a value flags a possible problem; open the record to read what it is."));
   // Cautions state the problem; they give no orders.
   assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
@@ -200,7 +201,10 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // The exporter commit names a private repository no reader can open: it stays in the README only.
   assert.doesNotMatch(pageHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0], /guideExportId|Exporter commit|exporter/i);
   assert.ok(citationSection.includes('href="https://doi.org/10.1093/pnasnexus/pgag309"'));
-  assert.ok(citationSection.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
+  // Reporting an error is answered once, under Questions.
+  assert.ok(!citationSection.includes("mailto:"));
+  const questions = pageHtml.match(/<section [^>]*id="guide-questions"[\s\S]*?<\/section>/)[0];
+  assert.ok(questions.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
   const notesPath = pageHtml === indexHtml ? "README_FIRST.txt" : "catlog-static/README_FIRST.txt";
   assert.ok(citationSection.includes(`id="guideDatasetNotesLink" href="${notesPath}"`));
   assert.equal(pageHtml.split(`href="${notesPath}"`).length - 1, 2,
@@ -1562,7 +1566,8 @@ function row(overrides = {}) {
     kcat: 5, km: 6, kcat_over_km: 2, sequence: 4, smiles: 5,
   }, "Stats uses the manifest's counts; Unverified and Not reviewed sit under Not checked");
   assert.deepEqual(headings(), ["Review result", "What the records contain", "Main source"]);
-  assert.match(element("statsScope").textContent, /All 6 records/);
+  assert.equal(element("statsScope").textContent, "All 6 records in this snapshot. Select a name to see those records in Browse.");
+  assert.equal((element("statsCharts").innerHTML.match(/Select a (linked )?name/g) || []).length, 0, "Said once, under the heading");
   assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
   assert.match(element("statsTotals").innerHTML, /Enzymes<\/dt><dd>2</);
   let chart = element("statsCharts").innerHTML;

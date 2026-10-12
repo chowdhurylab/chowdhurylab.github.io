@@ -363,7 +363,7 @@
             <p>Click a row, or press Enter on it, to open the record.</p>
             <dl class="guide-term-list">
               <div><dt>Status line</dt><dd>The review result and its tags, for example <em>Accepted &middot; from paper &middot; human-checked</em>.</dd></div>
-              <div><dt>Measurement</dt><dd>The values in catalog units, each caution once in words, then substrate, cosubstrate, temperature, pH and the other assay conditions.</dd></div>
+              <div><dt>Measurement</dt><dd>The values in catalog units with any cautions, then substrate, cosubstrate, temperature, pH and other assay conditions.</dd></div>
               <div><dt>Protein and substrate</dt><dd>Wild type or variant, UniProt accession, protein sequence and substrate SMILES, where CatLog has them.</dd></div>
               <div><dt>Paper</dt><dd>PubMed and DOI links and the review outcome. A from-paper record lists each value as printed in the paper and as stored. <strong>Human review</strong> says what a human reviewer approved.</dd></div>
               <div><dt>Source details</dt><dd>Where the enzyme name comes from, the source database, the license and the CatLog record ID.</dd></div>
@@ -488,7 +488,7 @@
               <div><dt>Other units</dt><dd>A few older records keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               <div><dt>Large and small</dt><dd>Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>).</dd></div>
               <div><dt>Digits</dt><dd>The table and the record show at most 4 significant figures, and 3 where a conversion from per minute left repeating digits (30.333 shows as 30.3); a whole number keeps all its digits. The tooltip, the record&rsquo;s values table and the downloads keep the stored digits.</dd></div>
-              <div><dt>Dash, Unknown</dt><dd>A dash means a value is missing or hidden after a data check. <em>Unknown</em> means not stated in the paper or the source database.</dd></div>
+              <div><dt>Missing values</dt><dd>A dash means no value (in the T column, a temperature flagged as questionable). In the record, a value the paper or the source database does not give reads <em>Not stated in the paper</em> or <em>Not recorded</em>.</dd></div>
             </dl>
           </section>
 
@@ -513,8 +513,7 @@
             <dl class="guide-download-list">
               <div><dt>Review result</dt><dd>Only Accepted records passed review: Not confirmed records have an open question and Not checked records have no review result. Most records have not been checked by a person.</dd></div>
               <div><dt>Units</dt><dd>Read the unit beside each value: a few older records keep another unit or none (see <a href="#guide-units">Units</a>).</dd></div>
-              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
-              <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence includes its mutations only where CatLog could build it; otherwise the record gives the wild-type reference.</dd></div>
+              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>See the caution <a href="#guide-cautions"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</a>.</dd></div>
               <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
               <div><dt>Training sets</dt><dd>Records of one paper share its PMID: split training and test sets by paper or by UniProt accession.</dd></div>
             </dl>
@@ -535,7 +534,6 @@
             <div class="guide-citation-links">
               <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>
               <a id="guideDatasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
-              <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>
             </div>
           </section>
 

@@ -2923,7 +2923,7 @@
     const known = new Set(reviewStatuses.map((item) => item.value));
     const otherStatus = Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
 
-    $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
+    $("statsScope").textContent = `All ${formatInteger(total)} records in this snapshot. Select a name to see those records in Browse.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     const humanChecked = statsCount(overview?.human_checked_accepted, accepted);
     const fromPaper = overview?.from_paper && statsCount(overview.from_paper.records, total);
@@ -2965,7 +2965,7 @@
     ];
     sections.push(statsSection("statsStatusTitle", "Review result", `${statsBarRows(statusItems, total)}
       ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
-      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result. Select a linked name to see those records in Browse." }));
+      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result." }));
 
     // Three short boxes: read from the paper by CatLog, AI audits and human review (the Guide's method section gives the
     // same numbers). A box whose numbers this snapshot does not have is left out.
@@ -3044,7 +3044,7 @@
       labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ec: String(item.ec || "") } }));
     if (organisms.length) {
       sections.push(statsSection("statsOrganismsTitle", "Most common organisms", statsBarRows(organisms, total, { scale: organisms[0].count }),
-        { note: "Records whose organism name contains this name, as Browse finds them, so strains count with their species." }));
+        { note: "Strains are counted with their species." }));
     }
     if (ecNumbers.length) {
       sections.push(statsSection("statsEcTitle", "Most common EC numbers", statsBarRows(ecNumbers, total, { scale: ecNumbers[0].count }),
@@ -3090,7 +3090,7 @@
     // Main source.
     const sources = statsSources(overview);
     const sourceSection = statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
-      { note: "A record merged from several databases counts under each of them, so the counts can add up to more than all records. Select a name to see those records in Browse." });
+      { note: "A record merged from several databases counts under each of them, so the counts can add up to more than all records." });
 
     if (!overview) {
       sections.push(sourceSection);
@@ -3099,7 +3099,7 @@
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records where a human reviewer approved every value, as the tag shows.</dd></div>
-        <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot; Human-checked also uses the human-review marks published with it.</dd></div>
+        <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`));
     }
     $("statsCharts").innerHTML = sections.join("");

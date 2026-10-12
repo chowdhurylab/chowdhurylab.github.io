@@ -1084,7 +1084,7 @@ def check(driver, browser, url):
     driver.find_element(By.ID, "statsButton").click()
     assert urlsplit(driver.current_url).path == stats_path and not urlsplit(driver.current_url).fragment
     check_metadata("stats")
-    assert driver.find_element(By.ID, "statsScope").text == f"All {total:,} records, before filtering."
+    assert driver.find_element(By.ID, "statsScope").text == f"All {total:,} records in this snapshot. Select a name to see those records in Browse."
     driver.back()
     wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
     check_metadata("browse")
