@@ -1589,6 +1589,19 @@ function row(overrides = {}) {
   assert.doesNotMatch(chart, /status=unverified|status=mathematically_inferred/, "Unverified and Not reviewed have no single Browse filter here");
   // Disputed has its own Browse key (status=not_verified opens Not checked only).
   assert.match(chart, /#browse\?status=disputed">Disputed<\/a>/);
+  // Under the review rules (an export that counts accepted_basis) the records without a paper are Not checked, and
+  // Accepted names the records a human reviewer's approval accepted.
+  {
+    const saved = runtimeManifest.summary.distributions;
+    runtimeManifest.summary.distributions = { ...saved, accepted_basis: [{ label: "human review", count: 1 }] };
+    api.renderStats();
+    const ruled = element("statsCharts").innerHTML;
+    assert.match(ruled, /1 records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted\./);
+    assert.doesNotMatch(ruled, /accepted records have no PMID/);
+    assert.match(ruled, /1 as printed, 1 after a correction, 1 after a human reviewer approved every value\./);
+    runtimeManifest.summary.distributions = saved;
+    api.renderStats();
+  }
   for (const filtered of [records.slice(2, 4), []]) {
     api.state.filtered = filtered;
     api.renderSummary();
@@ -1774,6 +1787,31 @@ function row(overrides = {}) {
   ]) assert.equal(api.reviewOutcome(row({ verification_status: status })), sentence);
   assert.equal(api.reviewOutcome(row({ verification_status: "verified", public_trust_basis: "identity_only" })),
     "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.");
+  // An older snapshot: an accepted record without a paper is tagged; a human-checked one keeps the earlier review's title.
+  assert.match(api.statusBadge(row({ verification_status: "verified", public_trust_basis: "identity_only" })),
+    /title="Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper\."[^>]*aria-label="Accepted, BRENDA, no paper linked"/);
+  // The user's review rules (D1, D2), followed by an export that counts accepted_basis: a record without a paper is Not
+  // checked and still tagged; a record a human reviewer approved in full may be accepted for that alone.
+  {
+    const savedSummary = runtimeManifest.summary;
+    runtimeManifest.summary = { ...savedSummary, distributions: { ...savedSummary.distributions,
+      accepted_basis: [{ label: "human review", count: 1 }] } };
+    const noPaper = row({ record_key: "no-paper", measurement_key: "no-paper", verification_status: "mathematically_inferred", public_trust_basis: "identity_only", source_db: "skid" });
+    const badge = api.statusBadge(noPaper);
+    assert.match(badge, /aria-label="Not checked, SKiD, no paper linked"/);
+    assert.match(badge, /title="Not checked: the earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted\."/);
+    assert.doesNotMatch(badge, /never reviewed/);
+    assert.equal(api.rowStatusLabel(noPaper, { exact: true }), "Not checked", "the tag says why, not 'Not reviewed'");
+    assert.equal(api.reviewOutcome(noPaper), "Not checked: the earlier automated review accepted it, but no paper is cited, so the value cannot be traced to a paper.");
+    const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
+    api.setHumanReviewMarks({ approved: { checked: true } });
+    assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or because a human reviewer approved every value\. Human-checked: a human reviewer approved every value shown\."/);
+    assert.equal(api.reviewOutcome(approved, { accepted_basis: "human review" }),
+      "Accepted because a human reviewer approved every value; the earlier automated review had not accepted it.");
+    assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed, in the earlier automated review.");
+    api.setHumanReviewMarks({});
+    runtimeManifest.summary = savedSummary;
+  }
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.
   delete runtimeManifest.summary.review_details;

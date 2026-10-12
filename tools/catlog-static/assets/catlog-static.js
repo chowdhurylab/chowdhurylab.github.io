@@ -94,7 +94,12 @@
   ];
 
   const stateDescriptions = {
-    accepted: "Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.",
+    // Under the review rules (followsReviewRules) a full human approval also accepts a record.
+    get accepted() {
+      return followsReviewRules()
+        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review as printed or after a correction, or every value approved by a human reviewer."
+        : "Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.";
+    },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
     not_verified: "No review result. Unverified: the earlier review recorded no final check. Not reviewed: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed.",
     disputed: "A check found a problem; not accepted.",
@@ -223,6 +228,21 @@
   };
 
   const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper.";
+  // The user's review rules (website plan D1, D2), followed by an export that lists accepted_basis among its counts: an
+  // accepted record needs a linked paper (a record without one is Not checked, tagged "no paper linked"), and a record
+  // whose every value a human reviewer approved is accepted ("human review"). An older snapshot has neither rule.
+  function followsReviewRules() {
+    return Array.isArray(manifest?.summary?.distributions?.accepted_basis);
+  }
+  const NO_PAPER_NOT_ACCEPTED = "No PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
+  const NO_PAPER_RECORD_NOTE = "The earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
+  function noPaperDefinition() {
+    return followsReviewRules() ? NO_PAPER_NOT_ACCEPTED : identityOnlyTrustNote;
+  }
+  // Records accepted because a human reviewer approved every value (accepted_basis "human review").
+  function humanAcceptedCount() {
+    return manifestDistribution("accepted_basis")["human review"] || 0;
+  }
 
   const conditionFlagLabels = {
     kcat_over_km_quotient_mismatch: "kcat/Km differs from kcat ÷ Km",
@@ -1135,8 +1155,13 @@
   }
 
   function isIdentityOnlyAccepted(row) {
-    return (row._recordState || recordStateForRow(row)) === "accepted"
-      && String(row.public_trust_basis || "").trim() === "identity_only";
+    return (row._recordState || recordStateForRow(row)) === "accepted" && hasNoPaperLinked(row);
+  }
+
+  // No PMID or DOI linked (public_trust_basis identity_only): accepted in an older snapshot, Not checked under the
+  // review rules; tagged "no paper linked" either way.
+  function hasNoPaperLinked(row) {
+    return String(row?.public_trust_basis || "").trim() === "identity_only";
   }
 
   // An older record's review, said as what it was: the earlier automated review.
@@ -1273,15 +1298,23 @@
   function reviewOutcome(summary, detail = {}) {
     const method = String(detail.verification_method || "");
     if (summary.verification_status === "verified" && method.startsWith(v2Method)) return v2MethodSentence();
-    return isIdentityOnlyAccepted(summary)
-      ? "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper."
+    if (String(detail.accepted_basis || summary.accepted_basis || "").trim() === "human review"
+      && (summary._recordState || recordStateForRow(summary)) === "accepted") {
+      return "Accepted because a human reviewer approved every value; the earlier automated review had not accepted it.";
+    }
+    if (isIdentityOnlyAccepted(summary)) {
+      return "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.";
+    }
+    return hasNoPaperLinked(summary)
+      ? "Not checked: the earlier automated review accepted it, but no paper is cited, so the value cannot be traced to a paper."
       : reviewOutcomeBase(summary);
   }
 
   // The review result; with exact, a Not checked record also names its own status ("Not checked (Unverified)").
   function rowStatusLabel(row, { exact = false } = {}) {
     const result = stateConfig(row._recordState || recordStateForRow(row)).label;
-    if (!exact || result !== "Not checked") return result;
+    // A record without a linked paper is Not checked for that reason (its tag says so), not because nobody reviewed it.
+    if (!exact || result !== "Not checked" || hasNoPaperLinked(row)) return result;
     const status = String(row.verification_status || "").trim();
     const own = reviewStatuses.find((item) => item.value === status)?.label
       || (status ? status.replace(/_/g, " ").replace(/^./, (letter) => letter.toUpperCase()) : "");
@@ -1295,32 +1328,40 @@
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isCorrected = row.verification_status === "corrected";
     const identityOnly = isIdentityOnlyAccepted(row);
+    const noPaper = hasNoPaperLinked(row);
     const fromPaper = isV2Row(row);
     // A Not checked record describes its own status (Unverified, Not reviewed).
     const ownStatus = config.value === "not_verified"
       ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
       : "";
+    // "human-checked" only on accepted rows, with a check in its own colour; the record's Human review line shows for
+    // every marked row.
+    const checked = isHumanChecked(row);
+    // Under the review rules a human-checked record may be accepted for that approval alone (the table does not say
+    // which), so its title does not name the earlier review.
+    const acceptedHow = checked && !fromPaper && row.verification_status === "verified" && humanAcceptedCount()
+      ? "Accepted as printed by the earlier automated review, or because a human reviewer approved every value."
+      : reviewStatuses.find((item) => item.value === row.verification_status)?.description;
     const description = fromPaper
       ? v2Sentence
       : (identityOnly
           ? identityOnlyTrustNote
-          : (config.value === "accepted"
-              ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
-              : (ownStatus ? `${rowStatusLabel(row, { exact: true })}: ${ownStatus}` : stateDescriptions[config.value])))
+          : (noPaper
+              ? `${config.label}: ${NO_PAPER_RECORD_NOTE.charAt(0).toLowerCase()}${NO_PAPER_RECORD_NOTE.slice(1)}`
+              : (config.value === "accepted"
+                  ? acceptedHow
+                  : (ownStatus ? `${rowStatusLabel(row, { exact: true })}: ${ownStatus}` : stateDescriptions[config.value]))))
       || config.label;
     const label = rowStatusLabel(row);
-    // "human-checked" only on accepted rows, with a check in its own colour; the record's Human review line shows for
-    // every marked row.
-    const checked = isHumanChecked(row);
     const tags = [
       sourceTagText(row),
       isCorrected ? "corrected" : "",
-      identityOnly ? "no paper linked" : "",
+      noPaper ? "no paper linked" : "",
     ].filter(Boolean);
     const fullDescription = checked
       ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value shown."}`
       : description;
-    const className = `${config.className}${identityOnly ? " identity-only" : ""}`;
+    const className = `${config.className}${noPaper ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
       + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
     const name = [label, ...tags, checked ? "human-checked" : ""].filter(Boolean).join(", ");
@@ -2921,6 +2962,9 @@
   // The Guide's method section: the audit and human-review items get this snapshot's numbers when it has them (they
   // read without numbers otherwise). The Guide reads only the manifest, never the record index.
   function renderGuideMethod() {
+    // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
+    if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
+    if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
     const overview = statsOverview(Number(manifest.total_rows || 0));
     const audit = auditFacts(overview);
     if ($("guideMethodAudits") && audit) {
@@ -2943,6 +2987,7 @@
     const totals = summary.totals || {};
     const accepted = (counts.verified || 0) + (counts.corrected || 0);
     const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
+    const humanAccepted = humanAcceptedCount();
     const known = new Set(reviewStatuses.map((item) => item.value));
     const otherStatus = Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
 
@@ -2970,9 +3015,12 @@
     // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
     // Browse uses. Accepted says how many were read from the paper by CatLog (all of them accepted as printed).
     const fromPaperAccepted = statsCount(overview?.from_paper?.records, counts.verified || 0);
+    // Records a human reviewer's approval accepted (accepted_basis "human review") are verified records too.
+    const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} after a human reviewer approved every value` : "";
     const acceptedNote = fromPaperAccepted !== null
-      ? `${formatInteger(fromPaperAccepted)} read from the paper by CatLog; ${formatInteger(accepted - fromPaperAccepted)} from the earlier catalog (${formatInteger((counts.verified || 0) - fromPaperAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction).`
-      : `${formatInteger(counts.verified || 0)} as printed, ${formatInteger(counts.corrected || 0)} after a correction.`;
+      ? `${formatInteger(fromPaperAccepted)} read from the paper by CatLog; ${formatInteger(accepted - fromPaperAccepted)} from the earlier catalog (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
+      : `${formatInteger((counts.verified || 0) - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}.`;
+    const noPaperRule = followsReviewRules();
     const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
     const statusItems = [
       { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" }, note: acceptedNote },
@@ -2982,14 +3030,18 @@
         note: "No review result." },
       ...["unverified", "mathematically_inferred"].map((value) => {
         const status = reviewStatuses.find((item) => item.value === value);
-        return { value, label: status.label, color: "neutral", sub: true, count: counts[value] || 0, note: status.description };
+        // Under the review rules, Not reviewed also holds the records accepted earlier that have no linked paper.
+        const note = value === "mathematically_inferred" && noPaperRule && identityOnly
+          ? `${status.description} Also ${formatInteger(identityOnly)} records the earlier review accepted that have no PMID or DOI linked (no paper linked).`
+          : status.description;
+        return { value, label: status.label, color: "neutral", sub: true, count: counts[value] || 0, note };
       }),
       { value: "disputed", label: "Disputed", color: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
         note: stateDescriptions.disputed },
       ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
     sections.push(statsSection("statsStatusTitle", "Review result", `${statsBarRows(statusItems, total)}
-      ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
+      ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} ${noPaperRule ? "records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted." : "accepted records have no PMID or DOI linked, so their values cannot be traced to a paper."}</p>` : ""}
       ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result." }));
 
     // Three short boxes: read from the paper by CatLog, AI audits and human review (the Guide's method section gives the
@@ -3422,7 +3474,7 @@
           <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
           <p><strong>from paper:</strong> ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a></p>
           <p><strong>corrected:</strong> Accepted by the earlier automated review after a correction.</p>
-          <p><strong>no paper linked:</strong> ${escapeHtml(identityOnlyTrustNote)}</p>
+          <p><strong>no paper linked:</strong> ${escapeHtml(noPaperDefinition())}</p>
         </div>
       </details>
     `;
@@ -6253,7 +6305,7 @@
   function detailStatusHtml(row, { v2Record = isV2Row(row) } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
-    const identityOnly = isIdentityOnlyAccepted(row);
+    const identityOnly = hasNoPaperLinked(row);
     const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value] || "unverified";
     const words = [
       rowStatusLabel(row, { exact: true }),

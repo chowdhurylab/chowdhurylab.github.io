@@ -209,7 +209,11 @@ Status cells align left: a dot and the review result (Accepted, Not confirmed,
 Not checked or Disputed: words that define themselves and promise no further
 work), then whole-word tags on a second line that always starts with the source: "from paper" (read by CatLog), the
 databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
-each), "earlier extraction" or "source not recorded". Columns are sized to the page's content: values, EC, T, pH and Status are
+each), "earlier extraction" or "source not recorded". "no paper linked" marks a
+record without a PMID or DOI; under the user's review rules (an export that
+counts accepted_basis) such a record is Not checked, and a record whose every
+value a human reviewer approved is Accepted (its record says so: "Accepted
+because a human reviewer approved every value"). Columns are sized to the page's content: values, EC, T, pH and Status are
 as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
