@@ -532,10 +532,11 @@
     }
     document.body.classList.toggle("guide-open", guideOpen);
     document.body.classList.toggle("stats-open", statsOpen);
-    for (const name of ["browse", "stats", "guide"]) {
+    // The catalog's tabs: Browse · Stats · Guide · Team.
+    for (const name of ["browse", "stats", "guide", "team"]) {
       const active = name === view;
-      $(`${name}Button`).classList.toggle("active", active);
-      $(`${name}Button`).setAttribute("aria-current", active ? "page" : "false");
+      $(`${name}Button`)?.classList.toggle("active", active);
+      $(`${name}Button`)?.setAttribute("aria-current", active ? "page" : "false");
     }
     document.title = guideOpen
       ? "Guide | CatLog"

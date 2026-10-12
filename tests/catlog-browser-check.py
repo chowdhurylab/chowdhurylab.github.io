@@ -890,8 +890,9 @@ def check(driver, browser, url):
         assert target.path == (stats_path if view == "stats" else urlsplit(url).path)
         assert parse_qsl(target.query, keep_blank_values=True) == expected_query
         assert target.fragment == ("guide" if view == "guide" else "")
-    # The catalog's own tabs, then the links out apart at the right.
-    assert [link.text for link in driver.find_elements(By.CSS_SELECTOR, ".top-nav a")] == ["Browse", "Stats", "Guide"]
+    # The catalog's own tabs (Browse · Stats · Guide · Team), then the links out.
+    assert [link.text for link in driver.find_elements(By.CSS_SELECTOR, ".top-nav a")] == ["Browse", "Stats", "Guide", "Team"]
+    assert urlsplit(driver.find_element(By.ID, "teamButton").get_attribute("href")).fragment == "team"
     external = driver.find_elements(By.CSS_SELECTOR, ".external-nav a")
     assert [link.text.replace("\u00a0", " ") for link in external] == ["CatRange paper ↗", "Chowdhury Lab ↗"]
     assert external[0].location["x"] > driver.find_element(By.ID, "guideButton").location["x"]

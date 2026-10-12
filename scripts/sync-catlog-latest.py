@@ -68,6 +68,7 @@ def build_alias(source: str, *, stats: bool = False) -> str:
         raise RuntimeError("Alias still contains an unprefixed dataset-notes reference")
     alias = alias.replace('href="#browse"', 'href="catlog-latest.html"')
     alias = alias.replace('href="#guide"', 'href="catlog-latest.html#guide"')
+    alias = alias.replace('href="#team"', 'href="catlog-latest.html#team"')
     alias = alias.replace('href="#stats"', 'href="catlog-stats.html"')
     public_url = f'https://chowdhurylab.github.io/tools/catlog-{"stats" if stats else "latest"}.html'
     alias = alias.replace(

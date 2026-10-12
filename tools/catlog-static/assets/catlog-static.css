@@ -159,25 +159,30 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 .app-header, .catalog-load-progress, .snapshot-band { flex-shrink:0 }
 #catalogView { display:flex; flex-direction:column; flex:1; min-height:0 }
 
-/* Header: brand, tabs, search, Download. */
-.app-header { display:grid; grid-template-columns:minmax(220px,max-content) auto minmax(200px,1fr) max-content max-content; grid-template-areas:"brand nav search links actions"; min-height:64px; align-items:center; gap:24px; border-bottom:1px solid var(--line); background:var(--surface); padding:0 24px }
-.brand-lockup { display:flex; min-width:max-content; align-items:baseline; gap:8px; border:0; background:transparent; cursor:pointer; padding:0; text-align:left }
-.brand-lockup strong { color:var(--text); font-size:var(--fs-stat); font-weight:600 }
-.brand-lockup span { color:var(--text-3); font-size:var(--fs-meta) }
-.brand-lockup:hover strong { color:var(--teal-dark) }
-.top-nav { display:flex; align-self:stretch; align-items:stretch; gap:8px }
-.nav-tab { display:inline-flex; align-items:center; justify-content:center; min-width:64px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--text-2); cursor:pointer; padding:3px 8px 0; font-size:var(--fs-ui); font-weight:500; text-decoration:none }
+/* Header (56px): brand, the catalog's tabs (Browse · Stats · Guide · Team), the links out, search (at most 560px), Download. */
+.app-header { display:grid; grid-template-columns:max-content max-content max-content minmax(200px,1fr) max-content; grid-template-areas:"brand nav links search actions"; min-height:var(--header-h); align-items:center; column-gap:var(--sp-5); border-bottom:1px solid var(--line); background:var(--bg); padding:0 var(--gutter) }
+.brand-lockup { display:flex; min-width:max-content; align-items:baseline; gap:var(--sp-2); border:0; background:transparent; cursor:pointer; padding:0; text-align:left }
+.brand-lockup strong { color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
+.brand-lockup span { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.brand-lockup:hover strong { color:var(--accent) }
+.top-nav { display:flex; align-self:stretch; align-items:stretch; gap:var(--sp-1) }
+.nav-tab { display:inline-flex; align-items:center; justify-content:center; min-width:56px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--text-2); cursor:pointer; padding:2px var(--sp-2) 0; font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14); text-decoration:none }
 .nav-tab:hover { color:var(--text); text-decoration:none }
-.nav-tab.active { border-bottom-color:var(--link); color:var(--text); font-weight:600 }
-/* The CatRange paper and the lab's site: links out, right of the catalog's own tabs. */
-.external-nav { display:flex; align-items:center; gap:16px; white-space:nowrap }
-.nav-external { color:var(--text-2); font-size:var(--fs-table); font-weight:500; text-decoration:none }
-.nav-external:hover { color:var(--link); text-decoration:underline }
-.nav-external > span[aria-hidden] { color:var(--text-3) }
+.nav-tab.active { border-bottom-color:var(--accent); color:var(--text); font-weight:600 }
+/* The CatRange paper and the lab's site: links out, after the catalog's own tabs and set apart by a rule. */
+.external-nav { display:flex; align-items:center; gap:var(--sp-4); border-left:1px solid var(--line); padding-left:var(--sp-5); white-space:nowrap }
+.nav-external { color:var(--text-2); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13); text-decoration:none }
+.nav-external:hover { color:var(--accent); text-decoration:underline }
+.nav-external > span[aria-hidden] { color:var(--muted) }
 .nav-external-short { display:none }
-.global-search { display:grid; grid-template-columns:minmax(0,1fr) auto; justify-self:end; width:min(460px,100%); align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); padding:0 8px 0 12px }
+.global-search { display:grid; grid-template-columns:minmax(0,1fr) auto; justify-self:end; width:min(560px,100%); align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-3) }
 .global-search:focus-within { border-color:var(--accent); outline:2px solid var(--accent); outline-offset:2px }
-.global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-ui) }
+/* Laptops: closer header areas leave the search box room for its placeholder. */
+@media (min-width: 1181px) and (max-width: 1439px) {
+  .app-header { column-gap:var(--sp-4) }
+  .external-nav { gap:var(--sp-3); padding-left:var(--sp-4) }
+}
+.global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-14) }
 .global-search input::placeholder { color:var(--text-3) }
 .global-search kbd { min-width:20px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); color:var(--text-3); text-align:center; font:var(--fs-meta)/18px var(--font-mono) }
 .header-actions { display:flex; min-width:max-content; align-items:center; gap:12px }
@@ -222,43 +227,34 @@ button:disabled { cursor:not-allowed; opacity:0.5 }
 .catalog-load-progress.stalled > span { transform:scaleX(1); background:var(--amber); opacity:0.6 }
 body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
 
-/* Counts band: one 48px line. */
-.snapshot-band { min-width:0; border-bottom:1px solid var(--line); background:var(--surface); padding:0 24px }
-.snapshot-overview { display:flex; flex-wrap:wrap; min-height:48px; align-items:center; gap:8px 24px; padding:4px 0 }
-.summary-grid, .snapshot-meta, .snapshot-controls { display:flex; min-width:0; align-items:baseline; gap:24px }
-.snapshot-meta { gap:16px; border-left:1px solid var(--line); padding-left:24px }
-.summary-card, .snapshot-line { display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap }
-.summary-card span, .snapshot-title, .snapshot-line > span { color:var(--text-3); font-size:var(--fs-meta) }
+/* Counts band (64px): numbers 20px/600 and labels 13px on one baseline, the snapshot date at the line's end. */
+.snapshot-band { min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:0 var(--gutter) }
+.snapshot-overview { display:flex; flex-wrap:wrap; min-height:var(--band-h); align-items:baseline; align-content:center; gap:var(--sp-2) var(--sp-5); padding:var(--sp-2) 0 }
+.summary-grid, .snapshot-meta, .snapshot-controls { display:flex; min-width:0; align-items:baseline; gap:var(--sp-5) }
+.snapshot-meta { gap:var(--sp-4); border-left:1px solid var(--line); padding-left:var(--sp-5) }
+.summary-card, .snapshot-line, .snapshot-checked, .snapshot-paper { display:inline-flex; align-items:baseline; gap:var(--sp-2); color:var(--text); white-space:nowrap }
+.summary-card span, .snapshot-title, .snapshot-line > span, .snapshot-paper > span { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .snapshot-line > span { color:var(--text-2) }
-.summary-card strong, .snapshot-line strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
+.summary-card strong, .snapshot-line strong, .snapshot-checked > strong, .snapshot-paper > strong { color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
 /* Human-checked N: a link to those records, its label in the human-checked green. */
-.snapshot-checked { display:inline-flex; align-items:baseline; gap:6px; color:var(--text); white-space:nowrap }
-.snapshot-checked > span { color:var(--checked); font-size:var(--fs-meta); font-weight:500 }
-.snapshot-checked > strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
+.snapshot-checked > span { color:var(--checked); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
 .snapshot-checked:hover { text-decoration:none }
 .snapshot-checked[href]:hover > span { text-decoration:underline }
 .snapshot-checked .check-icon { margin-right:3px }
 /* Read from the paper N: a link to those records, a label like the others. */
-.snapshot-paper { display:inline-flex; align-items:baseline; gap:6px; color:var(--text); white-space:nowrap }
-.snapshot-paper > span { color:var(--text-3); font-size:var(--fs-meta) }
-.snapshot-paper > strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
 .snapshot-paper:hover { text-decoration:none }
-.snapshot-paper[href] > span { color:var(--link) }
+.snapshot-paper[href] > span { color:var(--accent) }
 .snapshot-paper[href]:hover > span { text-decoration:underline }
-.snapshot-controls { gap:16px; margin-left:auto }
-.snapshot-date { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
+.snapshot-controls { gap:var(--sp-4); margin-left:auto }
+.snapshot-date { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); white-space:nowrap }
 .snapshot-more { display:none }
-/* Laptops: tighter gaps keep the counts on one line. */
-@media (min-width: 1181px) and (max-width: 1339px) {
-  .snapshot-overview { column-gap:16px }
-  .summary-grid { gap:16px }
-  .snapshot-meta { gap:12px; padding-left:16px }
-}
-/* Just above the tablet layout, with a filter on ("Matching records"), tighter still, so the date keeps its line. */
-@media (min-width: 1181px) and (max-width: 1239px) {
-  .snapshot-overview { column-gap:12px }
-  .summary-grid { gap:12px }
-  .snapshot-meta { gap:8px; padding-left:12px }
+/* Laptops: tighter gaps and no visible "With" keep the counts on one line; a window still too narrow (or "Matching
+   records") moves the date under them, inside the same 64px. */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .snapshot-overview { gap:var(--sp-1) var(--sp-3) }
+  .summary-grid { gap:var(--sp-3) }
+  .snapshot-meta { gap:var(--sp-3); padding-left:var(--sp-3) }
+  .snapshot-title { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
 }
 
 /* Workbench: filters (overlay), table, open record. */
@@ -725,7 +721,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* Stats and Guide: no search row. */
 body:is(.stats-open,.guide-open) .global-search { display:none }
-body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content max-content minmax(0,1fr) max-content max-content; grid-template-areas:"brand nav . links actions" }
+body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content max-content max-content minmax(0,1fr) max-content; grid-template-areas:"brand nav links . actions" }
 .brand-lockup { grid-area:brand }
 .top-nav { grid-area:nav }
 .external-nav { grid-area:links }
@@ -848,12 +844,14 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 
 /* Phones: a compact header and counts, one toolbar row, and each record as a card instead of a wide table. */
 @media (max-width: 640px) {
-  .app-header { row-gap:4px; padding:6px 16px 8px }
-  .top-nav { gap:2px }
-  .nav-tab { min-height:36px; padding:3px 6px 0 }
-  .external-nav { gap:10px }
-  .nav-external { font-size:var(--fs-meta) }
-  .nav-external-long { display:none }
+  /* Brand, the links out and Download; then the four tabs across the width; then search (Browse only). */
+  .app-header, body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content minmax(0,1fr) max-content; grid-template-areas:"brand links actions" "nav nav nav" "search search search"; column-gap:var(--sp-3); row-gap:var(--sp-1); padding:var(--sp-2) var(--sp-4) }
+  body:is(.stats-open,.guide-open) .app-header { grid-template-areas:"brand links actions" "nav nav nav" }
+  .top-nav { gap:0 }
+  .nav-tab { flex:1 1 0; min-height:40px; padding:2px var(--sp-1) 0 }
+  .external-nav { justify-self:end; gap:var(--sp-3); border-left:0; padding-left:0 }
+  .nav-external { font-size:var(--fs-12) }
+  .nav-external-long, .download-data-word { display:none }
   .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-h3) }
