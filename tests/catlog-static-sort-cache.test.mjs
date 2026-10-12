@@ -1780,6 +1780,20 @@ function row(overrides = {}) {
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
   assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog does not have 12 of them; it has 6 with the same number \(an AI audit kept 2, a check against the paper found 1 right, 3 not settled yet\); 2 it had were dropped after an AI audit found them wrong\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
   assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
+  // Values of CatLog's own records that reviewers checked directly, with what an AI audit then found.
+  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_records_reviewed: 12,
+    direct_values_reviewed: 30, direct_values_agree: 26, direct_values_disagree: 3, direct_values_other: 1,
+    direct_disagree_wrong_after_audit: 1, direct_disagree_audit_pending: 2 } } };
+  api.renderStats();
+  assert.match(element("statsLead").innerHTML, /Reviewers checked 30 values of CatLog&#39;s own records directly: they approved 26 and disputed 3; an AI audit found 1 of those wrong and 2 are not audited yet\./);
+  // Direct counts that do not add up say no audit split, and none at all are not mentioned.
+  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_values_reviewed: 30,
+    direct_values_agree: 26, direct_values_disagree: 3, direct_disagree_wrong_after_audit: 3, direct_disagree_audit_pending: 2 } } };
+  api.renderStats();
+  assert.match(element("statsLead").innerHTML, /they approved 26 and disputed 3\./);
+  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_values_reviewed: 0 } } };
+  api.renderStats();
+  assert.doesNotMatch(element("statsLead").innerHTML, /Reviewers checked/);
   // Rejections that do not add up are not summed.
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_values: 21 } } };
   api.renderStats();
@@ -1798,7 +1812,7 @@ function row(overrides = {}) {
   assert.match(figures, /data-row="all" data-count="14"/);
   assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\./);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
-  assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 papers CatLog has read/);
+  assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 paper CatLog has read/);
   // A figure whose counts are not whole numbers is not drawn (never an empty heading).
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };

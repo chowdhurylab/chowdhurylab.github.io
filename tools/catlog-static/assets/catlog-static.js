@@ -3693,7 +3693,7 @@
     return {
       id: "statsReplacedTitle", key: "replaced", title: "Earlier records of papers CatLog has read",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      caption: `The ${formatInteger(records)} earlier records${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} papers` : " of the papers"} CatLog has read: whether CatLog's reading has the same number for that paper and parameter.`,
+      caption: `The ${formatInteger(records)} earlier ${records === 1 ? "record" : "records"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : " of the papers"} CatLog has read: whether CatLog's reading has the same number for that paper and parameter.`,
       data: statsDataLine("CatLog's records replace a paper's earlier ones. kcat/Km calculated from kcat and Km are left out."),
     };
   }
