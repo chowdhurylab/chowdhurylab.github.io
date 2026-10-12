@@ -933,6 +933,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   .stats-charts { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
+  .stats-totals { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }

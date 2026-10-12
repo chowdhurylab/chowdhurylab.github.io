@@ -123,7 +123,7 @@ reviewers in the lead), kinds of change (--chg-precision mint,
 --chg-magnitude red), --bar-neutral for single-series bars and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring. On phones each name sits above its bar. `@media
-print`: one column, no figure split across pages (the three
+print`: one column, no figure or headline count split across pages (the three
 value-range histograms stay side by side on any paper size, so their caption
 stays with them); bars, swatches and columns print in their colours even with
 the browser's background graphics off.
