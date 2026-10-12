@@ -302,7 +302,7 @@ to the figures the paper printed when CatLog gives them (value_display: 135.0).
 Every column fits in about 1010px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
-12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px. With a record open, EC, T, pH and the arrow give way; Status
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC, T, pH and the arrow give way; Status
 stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
 organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge, then °C and pH at the line's end.

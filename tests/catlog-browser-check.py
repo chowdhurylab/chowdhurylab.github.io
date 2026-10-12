@@ -1013,6 +1013,25 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: is_open() and box(".filter-column")["width"] == 288)
         assert stored() in (None, "unavailable")
         results["sidebar-1440"] = True
+        # Every row is 44px: a variant's tag under the name and a condition note under the substrate add no height.
+        for width in (1440, 1024):
+            set_browse_viewport(driver, browser, width, 1000)
+            open_page("#browse?variant=variant")
+            heights = driver.execute_script("""
+                const rows = [...document.querySelectorAll('#recordsBody tr[data-key]')];
+                const tagged = rows.filter(row => row.querySelector('.primary-cell .enzyme-form'));
+                // The note as the table writes it, under the first variant row's substrate.
+                const cell = tagged[0]?.querySelector('td.c-substrate');
+                if (cell && !cell.querySelector('.condition-note')) {
+                  cell.classList.add('has-note');
+                  cell.insertAdjacentHTML('beforeend', '<small class="condition-note">+10 mM fructose 1,6-bisphosphate</small>');
+                }
+                return {tagged: tagged.length, noted: rows.filter(row => row.querySelector('.condition-note')).length,
+                        heights: [...new Set(rows.map(row => Math.round(row.getBoundingClientRect().height)))]};
+            """)
+            assert heights["tagged"] and heights["noted"] and heights["heights"] == [44], (
+                f"At {width}px rows with a variant tag or a condition note stay 44px: {heights}")
+        results["row-height"] = True
         # 1280: the sidebar is 272px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()

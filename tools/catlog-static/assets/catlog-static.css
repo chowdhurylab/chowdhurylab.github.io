@@ -400,7 +400,7 @@ tbody tr.selected .row-arrow { color:var(--accent) }
 .primary-cell strong { color:var(--accent); font-weight:500 }
 /* A variant's mutation: its own line under the name, never clipped by it; the name then keeps one line, so every row
    keeps one height. Phones show it after organism · substrate (td.c-form, hidden in the table). */
-.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--accent-line); border-radius:4px; background:var(--accent-tint); padding:1px 4px; color:var(--accent); font-size:var(--fs-12); font-weight:500; line-height:13px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--accent-line); border-radius:4px; background:var(--accent-tint); padding:0 4px; color:var(--accent); font-size:var(--fs-12); font-weight:500; line-height:14px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
 td.c-form { display:none }
