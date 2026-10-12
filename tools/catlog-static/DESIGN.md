@@ -252,82 +252,89 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 
 ## Record Details
 
-Keep values, units, warnings, protein form, identifiers, and paper links visible.
-The header tells records of one paper apart: the name; "EC 1.4.1.20 · Bacillus
-sphaericus · N145A variant" (nothing for wild type; an EC the paper does not
-print reads "EC 2.3.1.183 (from enzyme databases; not printed in the paper)");
-"Substrate: ..." (two lines
-at most; a longer name is also given in full under Assay conditions); one status
-line in the table's words and colours: the review result ("Not checked
-(Unverified)" keeps the earlier status in brackets), the source ("from paper", or
-the databases as the table names them: "BRENDA", "earlier extraction", "source not
-recorded"), then "corrected", "no paper linked" or "✓ human-checked" ("Accepted ·
-from paper · ✓ human-checked", "Accepted · BRENDA · corrected"). Then, in this order: Measurement (the values,
-each caution once as a plain note under them, and for a record read from the
-paper "As printed in the paper (Table 2)": one row per value with As printed and
-In catalog units, an AI check column only when the values' results differ,
-in words that give the new state ("Unit set to mM", "Confirmed"), then each quoted
-line once, "Table 2 row, as extracted from the paper's text", with table
-markers removed and K_M set as K<sub>m</sub>; a row of more than four cells, or
-one whose ± signs extraction dropped, is folded under "Show the line as
-extracted" with that warning); Assay conditions
-(cosubstrate, temperature, pH, other conditions as a short list, preparation; a
-missing temperature or pH reads "Not stated in the paper" on a record read from
-the paper and "Not recorded" on a database record, a value a flag holds back
-says why on its own row, "Not shown, the source's temperature unit is unclear
-(source note: 30 °C)", and a cofactor that is the substrate is not repeated; a
-labelled row never shows a bare dash);
-Paper and review (the paper's title and year when the record carries them;
-links; for a record read by CatLog a Method line, the short
-method sentence ending "units converted by code" or "values stored as printed"
-with a link to the Guide's method section, and a Check line, one result for
-every value ("All values confirmed.", "Unit set to mM for every value.") or a
-pointer to the AI check column, then once what the check changed on the record
-("The AI check also removed EC 2.7.2.12 and corrected the assay conditions"),
-and "as printed; see the note on kcat/Km" when a value carries a caution; then
-an AI audit line with the
-audit's date and verdict only when one re-checked the values; for an older
-record its Review line, which names the earlier automated review and what it
-found ("Accepted as printed, in the earlier automated review."); a Human review line with the reviewer's facts-only note on every record
-that has a mark; merged rows; an older record's notes); Protein and structure
-(Enzyme form "H150A variant" or "Wild type"; one UniProt line, the accession and
-how it was found, "(inferred from EC number and organism)", or "Sequence known,
-no UniProt entry", "Several possible UniProt entries", "Not matched to UniProt";
-the variant sequence named by its note, "Variant sequence (UniProt P22498 with
-H150A)"; a note that only says "UniProt canonical sequence" is not shown); Source details,
-collapsed (Name from "Paper" or "BRENDA recommended name"; Source "The paper
-(read by CatLog)" or the databases by name, never a raw key; one licence line);
-the actions. An older record's database note is headed by its source ("Note from
-BRENDA"), without an importer's label, and is not shown when it only repeats the
-temperature and pH rows. Odd records read plainly: a name longer than 64 characters is set
-at 16px so the header that stays in view stays short; "Unknown" EC or organism
-reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
-says so (or that it stores a Ki only); a missing sequence or SMILES reads
-"None"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
-link, and Report a problem names the DOI when there is no PMID and quotes the
-values as the record shows them. A flagged value
-carries a small "!" button that moves to its note; nothing is readable only on
-hover. A value whose printed concentration unit is not the one CatLog read it in
-(µM printed, mM used) is such a caution: its note says whether kcat ÷ Km shows
-the unit used is right, and the values table says "CatLog uses mM, not the
-printed µM" in amber where other conversions keep a grey hint. The record writes
-numbers like the table (a × 10ⁿ at or above 10⁵ and below 10⁻³, the same display
-rule in the value strip, the stored digits in its values table); a kcat/Km CatLog
-calculated for an older record keeps the significant figures of kcat and Km. An
-older record whose
-stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
-with kcat ÷ Km, and its note gives the stored number. A merged older record
-gives the kcat/Km its sources list right under the values, in the source's name
-and the catalog unit ("kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹, 5 values"), with
-an amber note when every one is more than 2-fold from kcat ÷ Km. Sequence and SMILES
-strings and an older record's review notes expand on request: "Earlier
-automated review: where the values are printed", with Where, As printed and
-the Conversion line, code quotes and "->" written as plain text and arrows. An
-older record's Evidence line reads "Located in the paper", "Paper cited (values
-not located)", "Several database records" or "Database record only". Do not discard
-source text, hide scientific warnings, recompute measurements, or weaken review
-definitions to make the page shorter. Database attribution belongs in Guide and
-dataset notes, not the Browse footer.
+Keep values, units, warnings, protein form, identifiers, and paper links
+visible, and say each thing once, in plain words. The record reads top to
+bottom in this order:
+
+- Header (stays in view): the name; "EC 1.4.1.20 · Bacillus sphaericus · N145A
+  variant" (nothing for wild type; an EC the paper does not print reads "EC
+  2.3.1.183 (from enzyme databases; not printed in the paper)"); "Substrate:
+  ..." (two lines at most, a longer name also in full under Assay conditions),
+  with the record's condition note under it in grey; one status line in the
+  table's words and colours: the review result ("Not checked (Unverified)" keeps
+  the earlier status in brackets), the source as the table names it ("from
+  paper", "BRENDA", "earlier extraction", "source not recorded"), then
+  "corrected", "no paper linked" or "✓ human-checked" ("Accepted · from paper ·
+  ✓ human-checked").
+- Measurement: the values; for a merged older record the kcat/Km its sources
+  list ("kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹, 5 values", in the catalog
+  unit); each caution once as a plain amber note; and for a record read from the
+  paper "As printed in the paper (Table 2)": one row per value with As printed
+  and In catalog units, an AI check column only when the values' results differ
+  ("Unit set to mM", "Confirmed"), then each quoted line once, "Table 2 row, as
+  extracted from the paper's text", with table markers removed and K_M set as
+  K<sub>m</sub>; a row of more than four cells, or one whose ± signs extraction
+  dropped, is folded under "Show the line as extracted" with that warning.
+- Assay conditions: cosubstrate, temperature, pH, other conditions as a short
+  list, preparation. A missing temperature or pH reads "Not stated in the
+  paper" on a record read from the paper and "Not recorded" on a database
+  record; a value a flag holds back says why on its own row ("Not shown, the
+  source's temperature unit is unclear (source note: 30 °C)"); a cofactor that
+  is the substrate is not repeated. A labelled row never shows a bare dash.
+- Paper and review: the paper's title and year when the record carries them;
+  DOI and PubMed links; for a record read by CatLog a Method line (the short
+  method sentence ending "units converted by code" or "values stored as
+  printed", with a link to the Guide's method section), a Check line (one
+  result for every value, "All values confirmed." or "Unit set to mM for every
+  value.", or a pointer to the AI check column; then once what the check changed
+  on the record, "The AI check also removed EC 2.7.2.12 and corrected the assay
+  conditions"; "as printed; see the note on kcat/Km" when a value carries a
+  caution) and an AI audit line with the audit's date and verdict only; for an
+  older record an Evidence line ("Located in the paper", "Paper cited (values
+  not located)", "Several database records" or "Database record only") and a
+  Review line that names the earlier automated review and what it found; a
+  Human review line with the reviewer's facts-only note on every record that has
+  a mark (no review year); merged rows; an older record's notes, on request:
+  "Earlier automated review: where the values are printed" (Where, As printed
+  and Conversion, code quotes and "->" written as plain text and arrows) or a
+  database note headed by its source ("Note from BRENDA"), without an importer's
+  label and not shown when it only repeats the temperature and pH rows.
+- Protein and structure: Enzyme form ("H150A variant", "Wild type"); one
+  UniProt line, the accession and how it was found ("(inferred from EC number
+  and organism)") or "Sequence known, no UniProt entry", "Several possible
+  UniProt entries", "Not matched to UniProt"; the sequences on request, the
+  variant's named by its note ("Variant sequence (UniProt P22498 with H150A)"; a
+  note that only says "UniProt canonical sequence" is not shown); SMILES.
+- Source details, collapsed: Name from ("Paper", "BRENDA recommended name"),
+  Source ("The paper (read by CatLog)" or the databases by name, never a raw
+  key), one licence line, the CatLog record ID.
+- Download record and Report a problem (prefilled with the record ID, the
+  snapshot and the values as the record shows them; the DOI when there is no
+  PMID).
+
+A flagged value carries a small "!" button that moves to its note; nothing is
+readable only on hover. A value whose printed concentration unit is not the one
+CatLog read it in (µM printed, mM used) is such a caution: its note says whether
+kcat ÷ Km shows the unit used is right, and the values table says "CatLog uses
+mM, not the printed µM" in amber where other conversions keep a grey hint. A
+merged older record whose listed kcat/Km values are all more than 2-fold from
+kcat ÷ Km gets a note saying so. An older record whose stored kcat/Km is a unit
+factor off shows the source's own kcat/Km that agrees with kcat ÷ Km, and its
+note gives the stored number.
+
+The record writes numbers like the table (a × 10ⁿ at or above 10⁵ and below
+10⁻³, the same display rule in the value strip, the stored digits in its values
+table); a kcat/Km CatLog calculated for an older record keeps the
+significant figures of kcat and Km. Odd records read plainly: a name longer
+than 64 characters is set at 16px so the header that stays in view stays short;
+"Unknown" EC or organism reads "EC unknown" / "organism unknown"; a record
+without kcat, Km or kcat/Km says so (or that it stores a Ki only); a missing
+sequence, SMILES or paper ID reads "None"; a paper's stand-in ID (NP and 8 hex
+digits) is text, never a PubMed link. A record that cannot be loaded says so
+("This record could not be loaded.", or that the page is out of date, with
+Reload). Do not discard source text, hide scientific warnings, recompute
+measurements, or weaken review definitions to make the page shorter. Database
+attribution belongs in Guide and dataset notes, not the Browse footer.
 
 ## Stats
 
