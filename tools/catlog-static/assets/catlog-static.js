@@ -2852,6 +2852,70 @@
     ].filter((item) => item.count > 0);
   }
 
+  // Audit and human-review results (overview.quality: copied at build time from the human-review marks file, which the
+  // CatLog side writes from its audit record and review results). Each part is shown only when its numbers hold
+  // together; Stats and the Guide's method section use the same sentences.
+  function qualityShare(part, whole) {
+    const percent = part / whole * 100;
+    if (percent > 0 && percent < 0.1) return "<0.1%";
+    if (percent < 100 && percent > 99.9) return ">99.9%";
+    return `${percent.toFixed(1)}%`;
+  }
+
+  function auditFacts(overview) {
+    const quality = overview?.quality;
+    const values = statsCount(quality?.audit_values);
+    const wrong = values ? statsCount(quality.audit_wrong, values) : null;
+    if (!values || wrong === null) return null;
+    const asOf = /^\d{4}-\d{2}-\d{2}/.test(String(quality.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
+    return { values, wrong, date: asOf };
+  }
+
+  function auditOutcomeText(audit) {
+    if (!audit.wrong) return "none was wrong";
+    return `${formatInteger(audit.wrong)} ${audit.wrong === 1 ? "was" : "were"} wrong (${qualityShare(audit.wrong, audit.values)}) and removed`;
+  }
+
+  // What reviewers found when they compared values with their papers. The share correct is never shown without the
+  // label errors beside it.
+  function humanComparisonText(overview) {
+    const quality = overview?.quality || {};
+    const parts = [];
+    const compared = statsCount(quality.compared_values_v1);
+    const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
+    const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
+    if (compared && wrong !== null && labels !== null) {
+      parts.push(`In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate or protein label.`);
+    }
+    const approved = statsCount(quality.v2_approved_total);
+    const found = approved ? statsCount(quality.v2_found, approved) : null;
+    const differed = statsCount(quality.v2_differences_checked);
+    const differedWrong = differed ? statsCount(quality.v2_wrong, differed) : null;
+    if (approved && found !== null) {
+      const differences = differedWrong !== null
+        ? `; ${differedWrong ? formatInteger(differedWrong) : "none"} of the ${formatInteger(differed)} values where it differed ${differedWrong > 1 ? "were" : "was"} wrong against the paper`
+        : "";
+      parts.push(`CatLog found ${formatInteger(found)} of the ${formatInteger(approved)} values reviewers approved${differences}.`);
+    }
+    return parts.join(" ");
+  }
+
+  // The Guide's method section: the audit and human-review items get this snapshot's numbers when it has them (they
+  // read without numbers otherwise). The Guide reads only the manifest, never the record index.
+  function renderGuideMethod() {
+    const overview = statsOverview(Number(manifest.total_rows || 0));
+    const audit = auditFacts(overview);
+    if ($("guideMethodAudits") && audit) {
+      $("guideMethodAudits").textContent = `${formatInteger(audit.values)} values re-checked against their papers by a separate AI auditor that tries to find errors; ${auditOutcomeText(audit)}.${audit.date ? ` As of ${audit.date}.` : ""}`;
+    }
+    const counts = manifestDistribution("verification_status");
+    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
+    if ($("guideMethodHuman") && humanChecked !== null) {
+      const comparison = humanComparisonText(overview);
+      $("guideMethodHuman").textContent = `${formatInteger(humanChecked)} accepted records are human-checked: a human reviewer approved every value they show.${comparison ? ` ${comparison}` : ""}`;
+    }
+  }
+
   function renderStats() {
     // Immutable snapshot metadata: Stats never mixes filtered and full-download counts, and never loads the record index.
     const total = Number(manifest.total_rows || 0);
@@ -2908,17 +2972,28 @@
       ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
       ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result. Select a linked name to see those records in Browse." }));
 
+    // Three short boxes: read from the paper by CatLog, AI audits and human review (the Guide's method section gives the
+    // same numbers). A box whose numbers this snapshot does not have is left out.
+    const boxes = [];
     if (fromPaper !== null && fromPaper !== undefined) {
-      sections.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
+      boxes.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
         <p>${escapeHtml(v2Sentence)} <a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers →</a></p>
         <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
     }
+    const audit = auditFacts(overview);
+    if (audit) {
+      boxes.push(statsSection("statsAuditTitle", "AI audits", `<p class="stats-figure"><strong>${formatInteger(audit.values)}</strong> values re-checked against their papers</p>
+        <p>A separate AI auditor tries to find errors in them; ${escapeHtml(auditOutcomeText(audit))}.${audit.date ? ` As of ${escapeHtml(audit.date)}.` : ""}</p>`, { className: "stats-box-section" }));
+    }
     if (humanChecked !== null) {
       const marked = statsCount(overview.human_marked, total);
-      sections.push(statsSection("statsHumanTitle", "Human review", `<p class="stats-figure"><strong>${formatInteger(humanChecked)}</strong> accepted records checked by a person</p>
-        <p>A human reviewer approved the values these records print; their status carries the tag human-checked.${marked !== null && marked > humanChecked ? ` Reviewers left a mark or a note on ${formatInteger(marked)} records in all; the tag shows only on accepted records whose values they approved.` : ""}</p>
+      const comparison = humanComparisonText(overview);
+      boxes.push(statsSection("statsHumanTitle", "Human review", `<p class="stats-figure"><strong>${formatInteger(humanChecked)}</strong> accepted records are human-checked</p>
+        <p>${marked !== null && marked > humanChecked ? `Human reviewers looked at ${formatInteger(marked)} records; the accepted ones where they approved every value carry human-checked.` : "A human reviewer approved every value these records show."}</p>
+        ${comparison ? `<p>${escapeHtml(comparison)}</p>` : ""}
         <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
     }
+    if (boxes.length) sections.push(`<div class="stats-boxes stats-wide" style="--stats-boxes:${boxes.length}">${boxes.join("")}</div>`);
 
     // What the records contain.
     const coverage = summary.coverage || {};
@@ -6779,6 +6854,7 @@
       renderSummary();
       renderDownloadMetadata();
       renderSourceAttribution();
+      renderGuideMethod();
       const cleanUrl = viewUrl(viewFromLocation());
       if (!["#browse", "#guide", "#stats"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
@@ -6886,6 +6962,8 @@
       syncDetailPanelAccessibility,
       renderSummary,
       renderStats,
+      renderGuideMethod,
+      humanComparisonText,
       statsCohortData,
       statsOverview,
       statsBrowseHref,

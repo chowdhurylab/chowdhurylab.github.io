@@ -562,7 +562,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-color-calculated { background:var(--stats-purple) }
 .stats-color-disputed { background:var(--stats-red) }
 .stats-status-section .stats-bars { max-width:980px }
-/* CatLog v2 and human review: one number and two short lines each. */
+/* Read from the paper by CatLog, AI audits and human review: one number and a few short lines each, side by side. */
+.stats-boxes { display:grid; grid-template-columns:repeat(var(--stats-boxes,3),minmax(0,1fr)); gap:28px 40px; align-items:stretch }
 .stats-box-section p { margin:8px 0 0; max-width:62ch; font-size:var(--fs-stats-meta); line-height:1.5; color:var(--text-2) }
 .stats-box-section .stats-figure { margin-top:10px; font-size:var(--fs-stats-label); color:var(--text) }
 .stats-figure strong { font-size:var(--fs-h2); font-weight:600 }
@@ -605,7 +606,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-unaccepted-fields table { max-width:760px }
 
 @media (max-width: 1024px) {
-  .stats-charts { grid-template-columns:1fr }
+  .stats-charts, .stats-boxes { grid-template-columns:1fr }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:520px }
 }

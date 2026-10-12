@@ -1615,6 +1615,41 @@ function row(overrides = {}) {
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /#browse\?source=paper">Browse these records/);
   assert.match(chart, /#browse\?checked=1">Browse these records/);
+  assert.match(chart, /<strong>1<\/strong> accepted records are human-checked/);
+  assert.match(chart, /Human reviewers looked at 2 records; the accepted ones where they approved every value carry human-checked\./);
+  assert.doesNotMatch(chart, /AI audits|statsAuditTitle|wrong number or unit/, "Without overview.quality there is no audit box and no accuracy");
+  assert.match(chart, /<div class="stats-boxes stats-wide" style="--stats-boxes:2">/);
+  // The Guide's method section gets the same human-review number; its audit item keeps the words without numbers.
+  element("guideMethodAudits").textContent = "static audits";
+  element("guideMethodHuman").textContent = "static human";
+  api.renderGuideMethod();
+  assert.equal(element("guideMethodAudits").textContent, "static audits");
+  assert.equal(element("guideMethodHuman").textContent, "1 accepted records are human-checked: a human reviewer approved every value they show.");
+  // With the audit and review results (overview.quality, copied from the human-review marks file at build time).
+  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-11", audit_values: 742, audit_wrong: 2,
+    compared_values_v1: 2431, compared_papers_v1: 312, wrong_v1: 9, label_or_annotation_v1: 114, v2_found: 2160,
+    v2_approved_total: 2380, v2_differences_checked: 504, v2_wrong: 0 } };
+  api.renderStats();
+  const qualityChart = element("statsCharts").innerHTML;
+  assert.deepEqual(headings().slice(0, 4), ["Review result", "Read from the paper by CatLog", "AI audits", "Human review"]);
+  assert.match(qualityChart, /<strong>742<\/strong> values re-checked against their papers<\/p>\s*<p>A separate AI auditor tries to find errors in them; 2 were wrong \(0\.3%\) and removed\. As of Oct 11, 2026\.<\/p>/);
+  assert.ok(qualityChart.includes("In the earlier catalog, 9 of 2,431 values reviewers compared had a wrong number or unit (99.6% correct), and 114 had a wrong enzyme, organism, substrate or protein label. CatLog found 2,160 of the 2,380 values reviewers approved; none of the 504 values where it differed was wrong against the paper."));
+  assert.match(qualityChart, /--stats-boxes:3/);
+  api.renderGuideMethod();
+  assert.equal(element("guideMethodAudits").textContent, "742 values re-checked against their papers by a separate AI auditor that tries to find errors; 2 were wrong (0.3%) and removed. As of Oct 11, 2026.");
+  assert.match(element("guideMethodHuman").textContent, /^1 accepted records are human-checked: a human reviewer approved every value they show\. In the earlier catalog, 9 of 2,431 values/);
+  // Numbers that do not hold together are not shown: the share correct never appears without the label errors.
+  runtimeManifest.summary.overview = { ...overview, quality: { audit_values: 5, audit_wrong: 6, compared_values_v1: 10, wrong_v1: 1,
+    v2_approved_total: 4, v2_found: 3, v2_differences_checked: 2, v2_wrong: 2 } };
+  api.renderStats();
+  const partialChart = element("statsCharts").innerHTML;
+  assert.doesNotMatch(partialChart, /AI audits|% correct/);
+  assert.match(partialChart, /CatLog found 3 of the 4 values reviewers approved; 2 of the 2 values where it differed were wrong against the paper\./);
+  assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "CatLog found 3 of the 4 values reviewers approved.");
+  assert.equal(api.humanComparisonText({ quality: { compared_values_v1: 1000, wrong_v1: 0, label_or_annotation_v1: 0 } }),
+    "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate or protein label.");
+  runtimeManifest.summary.overview = overview;
+  api.renderStats();
   assert.match(chart, /#browse\?ec=1\.">EC 1/);
   assert.match(chart, /#browse\?ec=1\.1\.1\.1"/);
   assert.match(chart, /#browse\?organism=Homo\+sapiens"><i>Homo sapiens<\/i>/);

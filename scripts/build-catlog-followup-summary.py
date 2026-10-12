@@ -513,8 +513,28 @@ def summarize_overview(rows, marks=None):
     return overview, dict(statuses)
 
 
+# Audit and human-review results the CatLog side writes into the marks file's top-level "quality" object (from its audit
+# record and review accuracy). The overview keeps these fields only: whole counts, and the date they were counted.
+QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared_papers_v1", "wrong_v1",
+                  "label_or_annotation_v1", "v2_found", "v2_approved_total", "v2_differences_checked", "v2_wrong")
+
+
+def marks_quality(payload):
+    """The marks file's quality object, reduced to its known fields (the page checks how they relate), or None."""
+    quality = payload.get("quality") if isinstance(payload, dict) else None
+    if not isinstance(quality, dict):
+        return None
+    kept = {key: quality[key] for key in QUALITY_FIELDS
+            if isinstance(quality.get(key), int) and not isinstance(quality.get(key), bool) and quality[key] >= 0}
+    as_of = quality.get("as_of")
+    if kept and isinstance(as_of, str) and re.match(r"^\d{4}-\d{2}-\d{2}", as_of):
+        kept = {"as_of": as_of[:10], **kept}
+    return kept or None
+
+
 def build_overview(manifest, download, marks_path=None):
-    """The Stats page overview, counted from the frozen public download (and the human-review marks, when given)."""
+    """The Stats page overview, counted from the frozen public download (and the human-review marks, when given; their
+    quality object is copied as overview.quality, bound like the counts by marks_sha256)."""
     download = Path(download)
     with download.open("rb") as handle:
         digest = hashlib.file_digest(handle, "sha256").hexdigest()
@@ -522,12 +542,15 @@ def build_overview(manifest, download, marks_path=None):
         raise ValueError("Frozen download hash does not match the manifest")
     marks = None
     marks_digest = None
+    quality = None
     if marks_path is not None:
         payload = Path(marks_path).read_bytes()
         marks_digest = hashlib.sha256(payload).hexdigest()
-        marks = json.loads(payload).get("marks")
+        content = json.loads(payload)
+        marks = content.get("marks")
         if not isinstance(marks, dict):
             raise ValueError("Human-review marks file has no marks")
+        quality = marks_quality(content)
     with gzip.open(download, "rb") as handle:
         overview, statuses = summarize_overview((json.loads(line) for line in handle if line.strip()), marks)
     expected = manifest.get("summary", {}).get("distributions", {}).get("verification_status")
@@ -538,6 +561,8 @@ def build_overview(manifest, download, marks_path=None):
     binding = {"source_sha256": manifest.get("source_sha256"), "download_sha256": digest}
     if marks_digest:
         binding["marks_sha256"] = marks_digest
+    if quality:
+        overview["quality"] = quality
     return {**binding, **overview}
 
 

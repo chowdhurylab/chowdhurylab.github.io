@@ -19,9 +19,18 @@ heading, a headline without its number, or a count above the record total.
 Order: two headline lines (Records, Accepted, Human-checked, Read from the
 paper by CatLog with its papers; then Papers, Enzymes, EC numbers,
 Organisms, Substrates), then sections, each a heading, at most one line of
-plain explanation and its chart: Review status (full width); Read from the
-paper and Human review (two short boxes; the v2 box reuses the page's
-v2Sentence); What the records contain; Enzyme classes (records and accepted);
+plain explanation and its chart: Review result (full width); three short
+boxes side by side (one column below 1025px): Read from the paper by CatLog
+(records and papers, the method in one line with "How CatLog reads papers →"
+to the Guide's #guide-method), AI audits (values re-checked, how many were
+wrong and removed, as of when) and Human review (accepted records
+human-checked, records reviewers looked at, and what reviewers found when they
+compared values with their papers: the share correct always beside the label
+errors). The audit and comparison numbers come from overview.quality, which
+`build_overview` copies from the human-review marks file's top-level
+"quality" object (known whole-count fields and the as_of date only); a box or
+sentence whose numbers are missing or do not hold together is left out, and
+the Guide's method section uses the same sentences. What the records contain; Enzyme classes (records and accepted);
 Most common organisms and EC numbers (top 10, the EC with the enzyme name its
 records use most); Value ranges (full width); Wild type and variants above
 Cautions in one column, Main source above a closed "How these numbers are

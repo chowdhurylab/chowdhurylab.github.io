@@ -465,6 +465,62 @@ def stats_overview(manifest):
     return overview
 
 
+# Audit and human-review results as the CatLog side will write them (overview.quality); no snapshot has them yet.
+QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
+                   "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
+                   "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0}
+
+
+def check_quality(driver, browser, url, quality=None):
+    """Stats' AI audits and Human review boxes and the Guide's method section give the audit and human-review numbers
+    of overview.quality. Without a quality object in the snapshot, a copy of the manifest with QUALITY_FIXTURE (set in
+    Chrome before the page starts; the data files are not changed) is checked instead."""
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    injected = None
+    if quality is None:
+        quality = QUALITY_FIXTURE
+        injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
+            Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+              set(value) {
+                if (value?.summary?.overview) value.summary.overview.quality = %s;
+                Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+              } });
+        """ % json.dumps(QUALITY_FIXTURE)})
+    audited = isinstance(quality.get("audit_values"), int) and quality["audit_values"] > 0
+    compared = all(isinstance(quality.get(key), int) for key in ("compared_values_v1", "wrong_v1", "label_or_annotation_v1")) \
+        and quality["compared_values_v1"] > 0
+    correct = f"{(quality['compared_values_v1'] - quality['wrong_v1']) / quality['compared_values_v1'] * 100:.1f}% correct" if compared else ""
+    try:
+        set_browse_viewport(driver, browser, 1440, 1000)
+        driver.get("about:blank")
+        driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+        wait.until(lambda d: d.find_elements(By.ID, "statsHumanTitle"))
+        if audited:
+            audit = driver.find_element(By.CSS_SELECTOR, "[aria-labelledby='statsAuditTitle']").text
+            assert f"{quality['audit_values']:,} values re-checked against their papers" in audit, audit
+            assert "independent" not in audit.lower(), audit
+        human = driver.find_element(By.CSS_SELECTOR, "[aria-labelledby='statsHumanTitle']").text
+        if compared:
+            # The share correct is shown only with the label errors beside it.
+            assert correct in human and f"and {quality['label_or_annotation_v1']:,} had a wrong enzyme, organism" in human, human
+        boxes = driver.execute_script("""
+            return [...document.querySelectorAll('.stats-boxes > .stats-section')].map(box => box.getBoundingClientRect().top);
+        """)
+        assert len(boxes) == 2 + audited and max(boxes) - min(boxes) < 2, f"The boxes stand side by side: {boxes}"
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+        driver.get("about:blank")
+        driver.get(url + "#guide-method")
+        wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+        if audited:
+            guide = driver.find_element(By.ID, "guideMethodAudits").text
+            assert guide.startswith(f"{quality['audit_values']:,} values re-checked against their papers by a separate AI auditor"), guide
+        if compared:
+            assert correct in driver.find_element(By.ID, "guideMethodHuman").text
+    finally:
+        if injected:
+            driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+
+
 def check_filters(driver, browser, url, route_label):
     """Filters in the address (#browse?...), the Human-checked filter and a range filter, on fresh page loads."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
@@ -1124,6 +1180,10 @@ def main():
             options.add_argument("--disable-dev-shm-usage")
             driver = webdriver.Chrome(options=options)
         result = check(driver, args.browser, url)
+        manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+        quality = (stats_overview(manifest) or {}).get("quality")
+        if quality or args.browser == "chrome":
+            check_quality(driver, args.browser, url, quality)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":

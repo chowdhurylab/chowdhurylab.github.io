@@ -124,13 +124,16 @@ def overview_rows():
 
 
 class OverviewTests(unittest.TestCase):
-    def write_fixture(self, directory, rows, marks):
+    def write_fixture(self, directory, rows, marks, quality=None):
         path = Path(directory) / "public.jsonl.gz"
         with gzip.open(path, "wt") as handle:
             for row in rows:
                 handle.write(json.dumps(row) + "\n")
         marks_path = Path(directory) / "marks.json"
-        marks_path.write_text(json.dumps({"schema": "catlog-human-review-marks/1", "marks": marks}))
+        payload = {"schema": "catlog-human-review-marks/1", "marks": marks}
+        if quality is not None:
+            payload["quality"] = quality
+        marks_path.write_text(json.dumps(payload))
         statuses = {}
         for row in rows:
             statuses[row["verification_status"]] = statuses.get(row["verification_status"], 0) + 1
@@ -204,6 +207,27 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(followup.source_keys("sabio_rk/brenda+skid"), {"sabio_rk", "brenda", "skid"})
         self.assertEqual(followup.source_keys("unknown"), set())
         self.assertEqual(followup.field_words("β-Galactosidase  4 nitrophenyl"), ["betagalactosidase", "4nitrophenyl"])
+
+    def test_overview_copies_the_marks_quality(self):
+        quality = {"as_of": "2026-10-11T05:05:00", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
+                   "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
+                   "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0,
+                   "reviewer": "someone", "audit_wrong_share": 0.27, "v2_wrong_bool": True}
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}}, quality)
+            result = followup.build_overview(manifest, path, marks_path)
+            # Only the known whole counts and the date are kept; names, shares and flags are not copied.
+            expected = {key: quality[key] for key in followup.QUALITY_FIELDS}
+            self.assertEqual(result["quality"], {"as_of": "2026-10-11", **expected})
+            self.assertEqual(list(result["quality"])[0], "as_of")
+            self.assertIn("marks_sha256", result)
+            # A marks file without a quality object (today's) adds none; a broken one is ignored, not guessed.
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}})
+            self.assertNotIn("quality", followup.build_overview(manifest, path, marks_path))
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}},
+                                                            {"audit_values": "742", "as_of": "2026-10-11"})
+            self.assertNotIn("quality", followup.build_overview(manifest, path, marks_path))
+            self.assertIsNone(followup.marks_quality({"quality": [1, 2]}))
 
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:
