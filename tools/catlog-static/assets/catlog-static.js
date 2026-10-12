@@ -1059,7 +1059,8 @@
   // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}): the exponent becomes a superscript; the numbers stay as printed.
   function caretHtml(html) {
     return html
-      .replace(/\^\(([−-]?\d+(?:\.\d+)?)\)|\^\{([−-]?\d+(?:\.\d+)?)\}|\^([−-]?\d+(?:\.\d+)?)/g, (_m, a, b, c) => `<sup>${a ?? b ?? c}</sup>`)
+      .replace(/\^\(\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\)|\^\{\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\}|\^([−-]?\d+(?:\.\d+)?)/g,
+        (_m, s1, d1, s2, d2, c) => `<sup>${c ?? `${s1 || s2 ? (s1 || s2).replace(/[–—]/, "−") : ""}${d1 ?? d2}`}</sup>`)
       .replace(/<\/sup>\*(?=[A-Za-zµμ])/g, "</sup> ");
   }
 
@@ -1139,18 +1140,16 @@
   const CALCULATED_NOTE = "kcat ÷ Km, not printed in the source";
   const EQUALS_QUOTIENT_NOTE = "Equals kcat ÷ Km; the source does not say whether it was printed or calculated. Shown with the significant figures of kcat and Km.";
 
-  // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record. An earlier-catalog
-  // kcat/Km of unstated origin that equals kcat ÷ Km (within 0.1%) is tagged the same way, its title saying so.
+  // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record.
   function efficiencyOriginHtml(row, { short = false } = {}) {
     const note = row.kcat_over_km_origin === "calculated" ? CALCULATED_NOTE : (efficiencyLooksCalculated(row) ? EQUALS_QUOTIENT_NOTE : "");
     return note ? `<small class="metric-origin" title="${escapeHtml(note)}">${short ? "calc." : "calculated"}</small>` : "";
   }
 
-  // An earlier-catalog kcat/Km whose origin is not stated and that equals kcat ÷ Km to 0.1% (a database's own quotient).
-  function efficiencyLooksCalculated(row) {
-    if (row?.kcat_over_km_origin !== "not_specified" || isV2Row(row)) return false;
-    const check = kcatKmCheck(row);
-    return Boolean(check) && Math.abs(Number(metricDisplay(row, "kcat_over_km")) / check.quotient - 1) <= 0.001;
+  // An earlier-catalog kcat/Km whose origin is not stated is never called calculated, even when it equals kcat ÷ Km: of
+  // the 7,502 that do, 531 say in their own record that the paper printed them (recheck, 2026-10-12).
+  function efficiencyLooksCalculated(_row) {
+    return false;
   }
 
   function mutationSignature(row) {
@@ -3157,6 +3156,26 @@
     return `${formatInteger(audit.wrong)} ${audit.wrong === 1 ? "was" : "were"} wrong (${qualityShare(audit.wrong, audit.values)}) and removed`;
   }
 
+  // How often CatLog and human reviewers agree (quality.agreement, catlog-v2 human_review.AGREEMENT_DEFINITIONS): the
+  // reviewers' approved values CatLog has too, and what CatLog's own check against the paper found where they differ.
+  function agreementText(a) {
+    const approved = statsCount(a?.values_approved);
+    const agree = approved ? statsCount(a.agree, approved) : null;
+    if (agree === null) return "";
+    const papers = statsCount(a.papers_compared);
+    let text = `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
+    const differ = statsCount(a.differ, approved);
+    const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
+    const right = differ !== null ? statsCount(a.differ_catlog_right, differ) : null;
+    const wrong = differ !== null ? statsCount(a.differ_catlog_wrong, differ) : null;
+    if (differ && open !== null && right !== null && wrong !== null && right + wrong <= differ - open) {
+      const checked = differ - open;
+      const other = checked - right - wrong;
+      text += ` Of the ${formatInteger(differ)} that differ, ${formatInteger(checked)} were checked against the paper: CatLog was right in ${formatInteger(right)} and wrong in ${wrong ? formatInteger(wrong) : "none"}${other ? `; ${formatInteger(other)} are the same value under another name, a rounding, or a value CatLog leaves out by its reading rules` : ""}${open ? `. ${formatInteger(open)} are not checked yet` : ""}.`;
+    }
+    return text;
+  }
+
   // What reviewers found when they compared values with their papers. The share correct is never shown without the
   // label errors beside it.
   function humanComparisonText(overview) {
@@ -3168,6 +3187,8 @@
     if (compared && wrong !== null && labels !== null) {
       parts.push(`In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate or protein label.`);
     }
+    const agreement = agreementText(quality.agreement);
+    if (agreement) return [agreement, ...parts].join(" ");
     const approved = statsCount(quality.v2_approved_total);
     const found = approved ? statsCount(quality.v2_found, approved) : null;
     const differed = statsCount(quality.v2_differences_checked);
@@ -3196,7 +3217,8 @@
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     if ($("guideMethodHuman") && humanChecked !== null) {
       const comparison = humanComparisonText(overview);
-      $("guideMethodHuman").textContent = `${formatInteger(humanChecked)} accepted records are human-checked: a human reviewer approved every value they show.${comparison ? ` ${comparison}` : ""}`;
+      // the agreement of CatLog with human reviewers comes first (the user, 2026-10-12)
+      $("guideMethodHuman").textContent = `${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: a human reviewer approved every value they show.`;
     }
   }
 
@@ -7397,6 +7419,7 @@
       renderGuideMethod,
       sourceAttributionRows,
       humanComparisonText,
+      agreementText,
       statsCohortData,
       statsOverview,
       statsBrowseHref,

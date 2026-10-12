@@ -1673,6 +1673,9 @@ function row(overrides = {}) {
   assert.doesNotMatch(partialChart, /AI audits|% correct/);
   assert.match(partialChart, /CatLog found 3 of the 4 values reviewers approved; 2 of the 2 values where it differed were wrong against the paper\./);
   assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "CatLog found 3 of the 4 values reviewers approved.");
+assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agree: 2232, differ: 257, differ_catlog_right: 109,
+  differ_catlog_wrong: 0, differ_not_adjudicated: 105 }),
+  "On 98 papers human reviewers checked that CatLog has since read, CatLog has the same value for 2,232 of the 2,489 values the reviewers approved (89.7%). Of the 257 that differ, 152 were checked against the paper: CatLog was right in 109 and wrong in none; 43 are the same value under another name, a rounding, or a value CatLog leaves out by its reading rules. 105 are not checked yet.");
   assert.equal(api.humanComparisonText({ quality: { compared_values_v1: 1000, wrong_v1: 0, label_or_annotation_v1: 0 } }),
     "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate or protein label.");
   runtimeManifest.summary.overview = overview;
@@ -1906,11 +1909,11 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times; 10<sup>7<\/sup>/);
   // The record's value strip follows the rule; the tooltip keeps the stored digits.
   assert.equal(api.panelValueHtml(row({ kcat_display: "30.333" }), "kcat"), "30.3");
-  // An earlier-catalog kcat/Km of unstated origin that equals kcat ÷ Km is shown and tagged as calculated; a printed one is not.
+  // An earlier-catalog kcat/Km of unstated origin is never called calculated, even when it equals kcat ÷ Km.
   const quotientRow = row({ kcat_display: "2.2", km_display: "0.19", kcat_over_km_display: "11.579", kcat: 2.2, km: 0.19, kcat_over_km: 11.579,
     kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "not_specified" });
-  assert.equal(api.metricDisplayWithUnitHtml(quotientRow, "kcat_over_km", { table: true }), "12");
-  assert.match(api.efficiencyOriginHtml(quotientRow, { short: true }), /title="Equals kcat ÷ Km; the source does not say whether it was printed or calculated\.[^"]*">calc\.</);
+  assert.equal(api.metricDisplayWithUnitHtml(quotientRow, "kcat_over_km", { table: true }), "11.58");
+  assert.equal(api.efficiencyOriginHtml(quotientRow, { short: true }), "");
   const printedRow = { ...quotientRow, kcat_over_km_origin: "paper_reported" };
   assert.equal(api.metricDisplayWithUnitHtml(printedRow, "kcat_over_km", { table: true }), "11.58");
   assert.equal(api.efficiencyOriginHtml(printedRow, { short: true }), "");
