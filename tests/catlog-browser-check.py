@@ -856,19 +856,20 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open() and is_open())
         assert box(".filter-column")["width"] == 272
         results["record-1280"] = True
-        # 1700: sidebar, table and record side by side.
-        set_browse_viewport(driver, browser, 1700, 1000)
-        open_page()
-        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
-        wait.until(lambda d: detail_open())
-        assert is_open() and box(".filter-column")["width"] == 288 and box("#detailPanel")["width"] == 480
-        ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
-        assert ok, f"Sidebar, table and record sit side by side: {boxes}"
-        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1700-record.png"))
-        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-        wait.until(lambda d: not detail_open())
-        results["record-1700"] = True
+        # 1700: sidebar, table and record side by side (Safari only where the screen is that wide).
+        if browser == "chrome" or driver.execute_script("return screen.availWidth") >= 1720:
+            set_browse_viewport(driver, browser, 1700, 1000)
+            open_page()
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+            wait.until(lambda d: detail_open())
+            assert is_open() and box(".filter-column")["width"] == 288 and box("#detailPanel")["width"] == 480
+            ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
+            assert ok, f"Sidebar, table and record sit side by side: {boxes}"
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+            driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1700-record.png"))
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: not detail_open())
+            results["record-1700"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)
         open_page()

@@ -5064,10 +5064,6 @@
     return Boolean(desktopMedia.matches) && !filtersBesideRecordMedia.matches;
   }
 
-  function filtersFitBesideRecord() {
-    return filtersDocked() && !recordTakesSidebarPlace();
-  }
-
   // The viewer's own choice on a desktop screen: open unless they collapsed it (kept in this browser when it can be).
   function storedFiltersCollapsed() {
     try {
