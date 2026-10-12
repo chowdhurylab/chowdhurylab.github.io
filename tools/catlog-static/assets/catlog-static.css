@@ -222,9 +222,9 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .status-guide-body p { margin:0 }
 .status-guide-body strong { color:var(--text) }
 
-/* "Show N records": the filters overlay (below 1280px) ends with it. */
+/* "Show N records": the filters overlay (below 1440px) ends with it. */
 .filter-footer { display:none }
-@media (max-width: 1279px) {
+@media (max-width: 1439px) {
   .filter-rail { padding-bottom:0 }
   .filter-footer { display:block; position:sticky; bottom:0; margin:auto -16px 0; border-top:1px solid var(--line); background:var(--surface); padding:12px 16px }
   .filter-footer .button { width:100%; min-height:40px; border-color:var(--teal-dark); background:var(--teal-dark); color:var(--surface) }
@@ -592,10 +592,11 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .header-actions { grid-area:actions }
 .detail-empty { display:none }
 
-/* Wide screens (1280px and up): open filters are a column beside the table (no overlay), and results follow each
-   change. From 1600px they stay beside an open record. */
-@media (min-width: 1280px) {
-  body.filters-open .workbench { --filter-column:248px; grid-template-columns:var(--filter-column) minmax(0,1fr); grid-template-rows:minmax(0,1fr) }
+/* Wide screens (1440px and up): open filters are a column beside the table (no overlay), and results follow each
+   change. From 1600px they stay beside an open record. A table still too wide beside them scrolls sideways with the
+   Columns control, edge shadows and the Enzyme column kept in view, as below 1181px. */
+@media (min-width: 1440px) {
+  body.filters-open .workbench { --filter-column:288px; grid-template-columns:var(--filter-column) minmax(0,1fr); grid-template-rows:minmax(0,1fr) }
   body.filters-open.detail-open .workbench { grid-template-columns:var(--filter-column) minmax(0,1fr) minmax(360px,29%) }
   body:not(.filters-open) .filter-rail { display:none }
   body.filters-open .filter-rail { position:relative; inset:auto; z-index:auto; grid-column:1; grid-row:1; width:auto; height:auto; max-height:100%; min-height:0; box-shadow:none; transform:none; transition:none; padding-bottom:16px }
@@ -603,10 +604,18 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   body.filters-open .detail-panel { grid-column:3; grid-row:1 }
   body.filters-open .filter-backdrop { display:none }
   body.filters-open:not(.stats-open,.guide-open) .skip-link { display:block }
-}
-
-@media (min-width: 1440px) {
-  body.filters-open .workbench { --filter-column:288px }
+  body.filters-open .table-scroll-controls { display:flex; gap:3px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:2px }
+  body.filters-open .table-scroll-controls > span { align-self:center; padding:0 4px 0 6px; color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
+  body.filters-open .table-scroll-controls .icon-button { width:28px; height:28px; font-size:var(--fs-h3) }
+  body.filters-open .table-wrap { overscroll-behavior-x:contain }
+  body.filters-open .table-wrap.can-scroll-right { box-shadow:inset -12px 0 10px -12px rgba(23,33,32,0.62) }
+  body.filters-open .table-wrap.can-scroll-left { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45) }
+  body.filters-open .table-wrap.can-scroll-left.can-scroll-right { box-shadow:inset 12px 0 10px -12px rgba(23,33,32,0.45), inset -12px 0 10px -12px rgba(23,33,32,0.62) }
+  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) .c-enzyme { position:sticky; left:0; z-index:2; background:var(--surface); box-shadow:1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
+  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) th.c-enzyme { z-index:3; background:var(--surface-2) }
+  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
+  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:is(:hover,:focus-visible) td.c-enzyme { background:var(--hover) }
+  body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
 }
 
 /* A record open on desktop: EC, T, pH and the arrow give way; Status stays, as one word. */

@@ -52,11 +52,15 @@ one category per table; source categories follow the stored evidence precedence,
 not an acceptance score. Explain the categories in a native disclosure. Keep
 the bottom page controls compact, with page size left and navigation right.
 
-Filters open on request at every width. From 1280px they are a column beside
-the table (248px, 288px from 1440px; no overlay, the table stays usable) and
-the results follow each change; from 1600px they stay open beside an open
-record, below that opening one closes the other. Narrower, they are an overlay
-that ends with a "Show N records" button. The panel order: Review status (the
+Filters open on request at every width. From 1440px they are a column beside
+the table (288px; no overlay, the table stays usable) and the results follow
+each change; from 1600px they stay open beside an open record, below that a
+record takes their place and closing it brings them back where they were.
+Beside them a name column is never narrower than its longest word (a line may
+break after a hyphen, comma or slash); a table still too wide scrolls sideways
+with the Columns control, edge shadows and Enzyme kept in view. Narrower than
+1440px (where a column would squeeze the names to a few letters), they are an
+overlay that ends with a "Show N records" button. The panel order: Review status (the
 three statuses, Read from the paper (CatLog v2), Human-checked: accepted records
 whose badge shows "human-checked"; its count waits for the review marks), Names
 and EC number (labelled fields), Measurement type (ticking several shows records
@@ -150,7 +154,7 @@ kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name and EC;
 organism · substrate; kcat, Km and kcat/Km with their units as labels; status,
 °C and pH.
-The filters overlay (below 1280px, phones included) ends with a "Show N
+The filters overlay (below 1440px, phones included) ends with a "Show N
 records" button. Filter chips use the teal tint with a thin teal line, 12px
 text, and wrap within the page gutters.
 

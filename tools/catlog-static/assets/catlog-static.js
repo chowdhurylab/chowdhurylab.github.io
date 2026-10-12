@@ -48,6 +48,8 @@
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
+    // Docked filters closed for a record (below 1600px), with their scroll position: they come back when it closes.
+    filtersAwayForRecord: null,
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -66,8 +68,8 @@
   const FILTER_TYPING_DELAY_MS = 180;
   const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
   // Wide screens: the filters are a column beside the table (not an overlay), and from 1600px they stay open beside
-  // an open record.
-  const dockedFiltersMedia = window.matchMedia("(min-width: 1280px)");
+  // an open record. Below 1440px a column would leave the table too narrow for its names, so they are an overlay.
+  const dockedFiltersMedia = window.matchMedia("(min-width: 1440px)");
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
   const DETAIL_INERT_SELECTOR = [
     ".app-header",
@@ -3992,8 +3994,11 @@
   function widestWordWidth(element) {
     fitTextContext ??= document.createElement("canvas").getContext("2d");
     const text = element.querySelector("strong") || element;
-    fitTextContext.font = window.getComputedStyle(text).font;
-    return Math.max(0, ...String(text.textContent || "").split(/\s+/).map((word) => fitTextContext.measureText(word).width));
+    // The font from its parts: the computed shorthand can be empty (then the canvas would measure 10px sans-serif).
+    const font = window.getComputedStyle(text);
+    fitTextContext.font = font.font || `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
+    // A line can also break after a hyphen, comma or slash, so a chemical name's parts count as its words.
+    return Math.max(0, ...String(text.textContent || "").split(/\s+|(?<=[-,/])/).map((word) => fitTextContext.measureText(word).width));
   }
 
   function fitTableColumns() {
@@ -4009,6 +4014,9 @@
     if (!rows.length || style(table).display !== "table") return;
     const visible = (element) => style(element).display !== "none";
     const narrow = narrowDetailMedia.matches;
+    // Beside docked filters a name column is never narrower than its longest word: the table scrolls sideways instead
+    // (with the Columns control and the Enzyme column kept in view).
+    const docked = filtersDocked() && document.body.classList.contains("filters-open");
     // Each cell's natural width, read once with wrapping switched off (table.measuring in the stylesheet).
     table.classList.add("measuring");
     const widths = FIT_COLUMNS.filter((column) => visible(cols[column.key])).map((column) => {
@@ -4021,12 +4029,14 @@
       const widest = Math.max(natural[natural.length - 1], header);
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
-      const width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
+      const wordWidth = column.shrink
+        ? Math.ceil(Math.max(...cells.map((cell) => widestWordWidth(cell.firstElementChild || cell))) + padding)
+        : min;
+      let width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
+      if (docked && column.shrink) width = Math.max(width, Math.min(column.cap, wordWidth));
       // A name column's width with every name on one line, and the narrowest that breaks no word.
       const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
-      const words = column.shrink
-        ? Math.min(width, Math.ceil(Math.max(...cells.map((cell) => widestWordWidth(cell.firstElementChild || cell))) + padding))
-        : min;
+      const words = column.shrink ? Math.min(width, wordWidth) : min;
       return { ...column, min, width, oneLine, words };
     });
     table.classList.remove("measuring");
@@ -4035,11 +4045,11 @@
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
     const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
-    // Beside docked filters the names give way as far as they can even when the table must still scroll sideways.
-    const docked = filtersDocked() && document.body.classList.contains("filters-open");
     if (total() > available && (available >= floor || docked)) {
-      // Too wide for the window: the names give way, first to two lines broken between words, then to their minimums.
-      for (const target of [(column) => Math.max(column.min, column.words), (column) => column.min]) {
+      // Too wide for the window: the names give way, first to two lines broken between words, then (not beside docked
+      // filters) to their minimums.
+      const targets = [(column) => Math.max(column.min, column.words), (column) => column.min];
+      for (const target of docked ? targets.slice(0, 1) : targets) {
         const excess = total() - available;
         const slack = shrinkable.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;
@@ -4153,9 +4163,23 @@
   }
 
   function setDetailOpen(isOpen) {
-    if (isOpen && !filtersFitBesideRecord()) setFiltersOpen(false);
+    if (isOpen && !filtersFitBesideRecord()) {
+      const docked = filtersDocked() && document.body.classList.contains("filters-open");
+      const scrollTop = $("catalogFilters")?.scrollTop || 0;
+      setFiltersOpen(false);
+      if (docked) state.filtersAwayForRecord = { scrollTop };
+    }
     document.body.classList.toggle("detail-open", Boolean(isOpen));
     syncDetailPanelAccessibility();
+    const away = state.filtersAwayForRecord;
+    if (!isOpen && away) {
+      state.filtersAwayForRecord = null;
+      // Closing the record brings the docked filters back where they were (not when Browse itself was left).
+      if (filtersDocked() && !$("catalogView")?.hidden) {
+        setFiltersOpen(true, { focus: false });
+        if ($("catalogFilters")) $("catalogFilters").scrollTop = away.scrollTop;
+      }
+    }
   }
 
   function syncDetailPanelAccessibility() {
@@ -4217,9 +4241,11 @@
     }
   }
 
-  function setFiltersOpen(isOpen) {
+  function setFiltersOpen(isOpen, { focus = true } = {}) {
     const shouldOpen = Boolean(isOpen);
     const wasOpen = document.body.classList.contains("filters-open");
+    // Filters opened (or closed) by hand are not brought back when a record closes.
+    if (shouldOpen || !document.body.classList.contains("detail-open")) state.filtersAwayForRecord = null;
     hideSuggestions();
     // Docked filters below 1600px take the record's place.
     if (shouldOpen && filtersDocked() && !filtersFitBesideRecord() && document.body.classList.contains("detail-open")) {
@@ -4236,7 +4262,7 @@
       fitTableColumns();
       updateTableScrollControls();
     }
-    if (shouldOpen) {
+    if (shouldOpen && focus) {
       window.setTimeout(() => {
         if (document.body.classList.contains("filters-open") && !rail?.contains(document.activeElement)) {
           $("closeFiltersButton")?.focus({ preventScroll: true });
