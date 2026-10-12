@@ -963,7 +963,7 @@
       const fallback = evidenceText(value);
       return fallback ? `<p class="evidence-note-plain">${evidenceTextHtml(fallback)}</p>` : "";
     }
-    return `<div class="evidence-note-item detail-kv">${rows.map(([label, text]) => linkedKv(label, evidenceTextHtml(text))).join("")}</div>`;
+    return kvList(rows.map(([label, text]) => linkedKv(label, evidenceTextHtml(text))), "evidence-note-item");
   }
 
   function evidenceNotesHtml(values, limit = 3) {
@@ -5315,11 +5315,8 @@
     $("detailEmpty").classList.add("hidden");
     $("detailContent").classList.remove("hidden");
     $("detailContent").innerHTML = `
-      <div class="detail-top">
-        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-        ${detailHeadingHtml(row)}
-      </div>
-      <p id="detailLoadStatus" class="muted" role="status">Loading record…</p>
+      ${detailTopHtml(row, {}, { withDetail: false })}
+      <p id="detailLoadStatus" class="muted detail-load-status" role="status">Loading record…</p>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
     if (focusDetail) focusDetailHeading(key);
@@ -5335,17 +5332,22 @@
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       renderDetail(summaryWithDetail(row, detail), detail);
       if (restoreFocus) focusDetailHeading(key);
+      // The snapshot's record checks (when it has a file of them) arrive once; the open record is drawn again with them.
+      if (recordChecksPath() && !recordChecks) {
+        ensureRecordChecks().then(() => {
+          if (state.selectedKey !== key || state.selectedDetail !== detail || !recordCheck(row)) return;
+          const focusInside = $("detailContent").contains(document.activeElement);
+          renderDetail(summaryWithDetail(row, detail), detail);
+          if (focusInside) $("detailHeading")?.focus({ preventScroll: true });
+        });
+      }
     } catch (error) {
       if (state.selectedKey !== key) return;
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       // A record file from another snapshot needs the page reloaded; anything else can be tried again.
       const outOfDate = String(error?.message || "") === PAGE_OUT_OF_DATE;
       $("detailContent").innerHTML = `
-        <div class="detail-top">
-          <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-          ${detailHeadingHtml(row)}
-          ${detailSubtitleHtml(row)}
-        </div>
+        ${detailTopHtml(row, {}, { withDetail: false })}
         <div class="detail-load-error" role="alert">
           <strong>${escapeHtml(outOfDate ? PAGE_OUT_OF_DATE : RECORD_NOT_LOADED)}</strong>
           <span>The table still shows its values.</span>
@@ -5369,10 +5371,11 @@
     return summary;
   }
 
-  // A labelled row of the record; a missing value reads "Not recorded", never a bare dash.
+  // A labelled row of the record (a term and its value in the section's list); a missing value reads "Not recorded",
+  // never a bare dash.
   function kv(label, value) {
     const text = compactValue(value);
-    return `<div class="kv-line"><span>${escapePublic(label)}</span><strong>${escapePublic(text === EMPTY_VALUE ? "Not recorded" : text)}</strong></div>`;
+    return linkedKv(label, escapePublic(text === EMPTY_VALUE ? "Not recorded" : text));
   }
 
   function doiLink(value) {
@@ -5580,10 +5583,11 @@
     return "";
   }
 
-  // The record's form, in the record: "H150A variant", "Variant, not specified", "Wild type" or "Not recorded".
+  // The record's form, in the record as in its header: "Variant H150A", "Variant, not specified", "Wild type" or "Not
+  // recorded".
   function panelEnzymeForm(row) {
     const signature = mutationSignature(row);
-    if (signature) return `${signature} variant`;
+    if (signature) return `Variant ${signature}`;
     const label = enzymeFormLabel(row, { showUnknown: true });
     return label === "Variant (unspecified)" ? "Variant, not specified" : label;
   }
@@ -5604,18 +5608,20 @@
     return `<div class="reference-list">${values.map((value) => linkBuilder(value)).join("")}</div>`;
   }
 
-  function linkedKv(label, valueHtml) {
-    return `<div class="kv-line"><span>${escapePublic(label)}</span><strong>${valueHtml}</strong></div>`;
+  function linkedKv(label, valueHtml, { className = "" } = {}) {
+    return `<div class="kv-line${className ? ` ${className}` : ""}"><dt>${escapePublic(label)}</dt><dd>${valueHtml}</dd></div>`;
   }
 
-  function detailSection(title, rows) {
+  // A section's rows as one definition list (112px terms, values beside them); "" when no row has anything to say.
+  function kvList(rows, className = "") {
     const contentRows = rows.filter(Boolean);
-    return `
-      <section class="detail-section">
-        <h3>${escapeHtml(title)}</h3>
-        <div class="detail-kv">${contentRows.join("")}</div>
-      </section>
-    `;
+    return contentRows.length ? `<dl class="detail-kv${className ? ` ${className}` : ""}">${contentRows.join("")}</dl>` : "";
+  }
+
+  // One section of the record panel (design spec 5, B-H): a 14px heading and what follows it.
+  function detailSection(key, title, body) {
+    return `<section class="detail-section ${key}-section" aria-labelledby="detail-${key}-title">`
+      + `<h3 id="detail-${key}-title">${escapeHtml(title)}</h3>${body}</section>`;
   }
 
   // ---- Record panel: numbers ----
@@ -6102,43 +6108,140 @@
     return { lines: sorted, facts: sorted.map(v2LineFacts) };
   }
 
-  // The values as the paper prints them, in Measurement right under the values: one row per value, "As printed" and
-  // "In catalog units" (with how code converted it); a Check column only when the values' results differ (one result for
-  // all is said once, in Paper and review). The place is in the heading when every value shares it.
-  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts), cautions = [], context = {}) {
-    const text = (value) => caretHtml(escapePublic(value));
-    const places = new Set(lines.map(v2LinePlace));
-    const shared = places.size === 1 ? [...places][0] : "";
-    const checks = facts.some((fact) => fact.check) && !v2SharedCheck(facts, context);
-    const rows = lines.map((line, index) => {
-      const fact = facts[index];
-      const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
-      const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
-      // In catalog units: the stored digits, or CatLog's text of them to the figures printed (135.0).
-      const storedText = fact.valueDisplay && Math.abs(Number(fact.valueDisplay) - Number(metricDisplay(summary, field))) <= Math.abs(Number(metricDisplay(summary, field))) * 1e-9
-        ? fact.valueDisplay
-        : metricDisplay(summary, field);
-      const stored = field && metricHasValue(summary, field)
-        ? `${numberHtml(storedText)} ${unitHtml(metricUnit(summary, field))}`
-        : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
-      const place = !shared && v2LinePlace(line) ? `<small>${escapePublic(v2LinePlace(line))}</small>` : "";
-      // A unit CatLog did not take from the paper: amber, beside the value (its note is under the values).
-      const caution = cautions.find((item) => item.field === field);
-      const conversion = caution ? String(fact.conversion || "").replace(/,?\s*printed unit read as .+$/, "") : fact.conversion;
-      const how = (conversion ? `<small>${text(conversion)}</small>` : "")
-        + (caution ? `<small class="unit-caution"><span class="value-flag" aria-hidden="true"></span>${escapePublic(`CatLog uses ${caution.used}, not the printed ${caution.printed}`)}</small>` : "");
-      return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(valueCheckText(fact, context))}</td>` : ""}</tr>`;
-    }).join("");
+  // ---- Record panel: B. Values ----
+  // One table, Parameter | Value | Unit | As printed | Where, in kcat, Km, kcat/Km (then Ki) order; a metric the record
+  // lacks is not a row. A record read from the paper gives each value as printed and where it is printed; an older record
+  // has a dash there (its earlier review's notes are under Paper). Under the table: the kcat/Km its sources list, each
+  // caution once (amber, with the "!" the value carries), the grey notes (how code converted a unit, calc.), then each
+  // line quoted from the paper once. Facts only (where, what was printed, how it was converted), never reasoning.
+  const VALUE_FIELDS = [
+    ["kcat", "<i>k</i><sub>cat</sub>"],
+    ["km", "<i>K</i><sub>m</sub>"],
+    ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>"],
+    ["ki", "<i>K</i><sub>i</sub>"],
+  ];
+  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; not printed in the paper.";
+  const CALCULATED_OLDER_NOTE = "kcat ÷ Km, not printed in the source.";
+
+  // The proof line (a record read from the paper) that gives a field's value, or -1.
+  function proofLineIndex(proof, field) {
+    return proof ? proof.lines.findIndex((line) => (v2MetricLabels[line.metric] || [])[0] === field) : -1;
+  }
+
+  // "calc." beside a kcat/Km worked out from kcat and Km, its meaning in the title and in the note under the table.
+  function calculatedNote(summary, v2Record) {
+    if (summary.kcat_over_km_origin !== "calculated") return "";
+    return v2Record ? CALCULATED_V2_NOTE : CALCULATED_OLDER_NOTE;
+  }
+
+  // How code converted each value (a record read from the paper): "kcat and Km: converted by code from the printed
+  // units." once, and a value whose printed unit was read in a stated way on its own ("kcat/Km: converted by code, printed
+  // unit read as 10³ M⁻¹ s⁻¹."). A value with a printed-unit caution says the rest in its amber note.
+  function conversionNotesHtml(proof, unitCautions) {
+    if (!proof) return [];
+    const plain = [];
+    const own = [];
+    proof.lines.forEach((line, index) => {
+      const field = (v2MetricLabels[line.metric] || [])[0];
+      let conversion = String(proof.facts[index].conversion || "").trim();
+      if (unitCautions.some((item) => item.field === field)) conversion = conversion.replace(/,?\s*printed unit read as .+$/, "").trim();
+      if (!conversion) return;
+      if (/^converted by code$/i.test(conversion)) {
+        if (!plain.includes(line.metric)) plain.push(line.metric);
+      } else {
+        own.push(`${escapePublic(line.metric)}: ${caretHtml(escapePublic(conversion))}.`);
+      }
+    });
+    const shared = plain.length
+      ? [`${escapePublic(sentenceList(plain))}: converted by code from the printed ${plain.length > 1 ? "units" : "unit"}.`]
+      : [];
+    return [...shared, ...own];
+  }
+
+  function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail) } = {}) {
+    const metricSummary = metricSummaryFor(summary, detail);
+    const flags = conditionFlags(summary, detail);
+    const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
+    // A Ki only when the record's detail says it has one.
+    const fields = VALUE_FIELDS.filter(([field]) => (field === "ki"
+      ? Boolean(metricSummary.has_ki) && metricHasValue(metricSummary, field)
+      : metricHasValue(metricSummary, field) || proofLineIndex(proof, field) >= 0));
+    const calcNote = calculatedNote(summary, v2Record);
+    // Where each value is printed: a column when the values' places differ, one caption above the table when every value
+    // shares it, nothing for an older record (its notes are under Paper).
+    const placeOf = (field) => {
+      const index = proofLineIndex(proof, field);
+      return index >= 0 ? v2LinePlace(proof.lines[index]) : "";
+    };
+    // (A kcat/Km CatLog calculated has no place of its own.)
+    const places = fields.filter(([field]) => proofLineIndex(proof, field) >= 0).map(([field]) => placeOf(field));
+    const sharedPlace = places.length && places[0] && places.every((place) => place === places[0]) ? places[0] : "";
+    const whereColumn = !sharedPlace && places.some(Boolean);
+    const rows = fields.map(([field, label]) => {
+      const index = proofLineIndex(proof, field);
+      const line = index >= 0 ? proof.lines[index] : null;
+      const fact = index >= 0 ? proof.facts[index] : null;
+      let valueHtml;
+      let unitCell;
+      if (metricHasValue(metricSummary, field)) {
+        // A non-catalog stored unit is the record's unit (with what that means in its title); a missing one says so.
+        valueHtml = field === "kcat_over_km" && consistent ? numberHtml(consistent.value) : panelValueHtml(metricSummary, field);
+        unitCell = metricUnitMissing(metricSummary, field, flags)
+          ? unitMissingHtml()
+          : (storedUnitDiffers(metricSummary, field) ? storedUnitHtml(metricSummary, field) : metricUnitHtml(metricSummary, field));
+      } else {
+        // A value the paper prints that the record's own fields lack: the proof line's value in catalog units.
+        valueHtml = numberHtml(clean(line.normalized_value));
+        unitCell = unitHtml(clean(line.normalized_unit));
+      }
+      const calc = field === "kcat_over_km" && calcNote
+        ? `<small class="metric-origin" title="${escapeHtml(calcNote)}">calc.</small>`
+        : "";
+      const place = whereColumn ? placeOf(field) : "";
+      const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
+      return `<tr><th scope="row">${label}</th>`
+        + `<td class="vt-value"><span class="vt-number">${valueHtml}</span>${calc}${flagMarkerHtml(field, notes)}</td>`
+        + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
+        + `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>`
+        + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
+        + "</tr>";
+    });
+    // A record with no kcat, Km or kcat/Km says so in words (some keep a Ki only).
+    const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !fields.some(([shown]) => shown === field));
+    const emptyNote = !noKinetics
+      ? ""
+      : (fields.some(([field]) => field === "ki")
+          ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
+          : "No kcat, Km or kcat/Km is stored for this record.");
+    // A merged older record's kcat/Km values as its sources list them.
+    const listed = sourceEfficiencyRow(summary, detail);
+    const greyNotes = [
+      ...conversionNotesHtml(proof, unitCautions),
+      calcNote && fields.some(([field]) => field === "kcat_over_km")
+        ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}`
+        : "",
+    ].filter(Boolean);
     // Each printed line once; a "line" that is only the printed number itself adds nothing.
-    const notes = lines.map((line, index) => [v2LinePlace(line), facts[index].printedLine, facts[index].printed])
+    const quotes = !proof ? [] : proof.lines.map((line, index) => [v2LinePlace(line), proof.facts[index].printedLine, proof.facts[index].printed])
       .filter(([, printedLine, printed], index, all) => printedLine && !printed.startsWith(printedLine)
         && all.findIndex(([, other]) => other === printedLine) === index)
       .map(([place, printedLine]) => printedLineNoteHtml(place, printedLine));
-    const heading = `As printed in the paper${shared ? ` (${shared})` : ""}`;
-    return `<div class="detail-values"><h4>${escapePublic(heading)}</h4>`
-      + `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">As printed</th><th scope="col">In catalog units</th>${checks ? '<th scope="col">AI check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
-      + notes.join("")
-      + "</div>";
+    const table = rows.length
+      ? `<table class="values-table">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
+        + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th>`
+        + `<th scope="col">Unit</th><th scope="col">As printed</th>${whereColumn ? '<th scope="col" class="vt-where">Where</th>' : ""}</tr></thead>`
+        + `<tbody>${rows.join("")}</tbody></table>`
+      : "";
+    return detailSection("values", "Values", [
+      table,
+      emptyNote ? `<p class="values-empty">${escapeHtml(emptyNote)}</p>` : "",
+      listed ? kvList([listed], "measurement-listed") : "",
+      flagNotesHtml(notes),
+      greyNotes.length ? `<ul class="value-notes">${greyNotes.map((note) => `<li>${note}</li>`).join("")}</ul>` : "",
+      quotes.length ? `<div class="printed-lines">${quotes.join("")}</div>` : "",
+    ].filter(Boolean).join(""));
   }
 
   // A line quoted from the paper's text, as extraction left it, made readable: table markers ([rowspan]) go, _{...} and
@@ -6161,10 +6264,21 @@
 
   // Where the line is, "Table 2 row" for a table, then the line; a long table row (more than four cells) or one whose
   // ± signs extraction dropped ("1.1 ( 0.070") is folded away, with that warning.
+  // A quote longer than PRINTED_LINE_MAX characters ends at the last cell or word that fits, with an ellipsis (the record
+  // download keeps the whole line).
+  const PRINTED_LINE_MAX = 240;
+  function shortPrintedLine(text) {
+    const value = String(text ?? "");
+    if (value.length <= PRINTED_LINE_MAX) return value;
+    const head = value.slice(0, PRINTED_LINE_MAX - 1);
+    const cut = Math.max(head.lastIndexOf(" | "), head.lastIndexOf(" "));
+    return `${(cut > PRINTED_LINE_MAX / 2 ? head.slice(0, cut) : head).replace(/[\s|,;]+$/, "")}…`;
+  }
+
   function printedLineNoteHtml(place, printedLine) {
     const where = /^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place;
     const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
-    const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(printedLine)}”</p>`;
+    const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
     const cells = String(printedLine).split("|").length;
     const lostPlusMinus = /\d \( \d/.test(printedLine);
     if (cells <= 4 && !lostPlusMinus) return quote;
@@ -6349,73 +6463,27 @@
     const notes = flagNotes(metricSummary, detail, flags, consistent);
     const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
     if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "kcat/Km mismatch", text: listedNote });
-    unitCautions.forEach(({ field, text }) => {
-      notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
+    // Named by its value ("Km: The paper prints µM; ..."), as the other notes name theirs.
+    unitCautions.forEach(({ field, metric, text }) => {
+      notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text: `${metric}: ${text}` });
     });
     return { notes, unitCautions, consistent, flags };
   }
 
-  function measurementSection(summary, detail) {
-    const metricSummary = metricSummaryFor(summary, detail);
+  // ---- Record panel: D. Conditions ----
+  // Temperature and pH (or why there is none, on the row itself), the assay's other conditions, cosubstrate, cofactor
+  // and preparation, each on its own row.
+  function conditionsSection(summary, detail) {
     const flags = conditionFlags(summary, detail);
-    const metrics = [
-      ["<i>k</i><sub>cat</sub>", "kcat"],
-      ["<i>K</i><sub>m</sub>", "km"],
-      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km"],
-    ];
-    if (metricSummary.has_ki) metrics.push(["<i>K</i><sub>i</sub>", "ki"]);
-    // A record read from the paper: its values as printed, right under the values they give.
-    const proof = v2ProofFacts(summary, detail);
-    const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
-    const checkContext = { hasPreparation: Boolean(conditions.preparation), hasConditions: Boolean(conditions.conditions) };
-    const { temperature: temperatureValue, ph: phValue } = conditionRowValues(summary, detail, flags, conditions.reasons);
-    // A record with three dashes says so in words (some keep a Ki only).
-    const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !metricHasValue(metricSummary, field));
-    const emptyNote = !noKinetics
-      ? ""
-      : (metricSummary.has_ki && metricHasValue(metricSummary, "ki")
-          ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
-          : "No kcat, Km or kcat/Km is stored for this record.");
-    // The header shows the substrate; a long name it cuts short is given in full here.
-    const substrate = String(summary.substrate_name || "").trim();
-    // A merged older record's kcat/Km values as its sources list them, under the values.
-    const listed = sourceEfficiencyRow(summary, detail);
-    return `
-      <section class="detail-section measurement-section">
-        <h3>Measurement</h3>
-        <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
-          ${metrics.map(([label, field]) => {
-            const unitMissing = metricUnitMissing(metricSummary, field, flags);
-            // A non-catalog stored unit goes after the value, like in the table; the label then shows none.
-            const storedUnit = !unitMissing && storedUnitDiffers(metricSummary, field);
-            const unit = unitMissing || storedUnit ? "" : metricUnitHtml(metricSummary, field);
-            const value = field === "kcat_over_km" && consistent ? numberHtml(consistent.value) : panelValueHtml(metricSummary, field);
-            return `
-            <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
-              <span>${label}${unitMissing ? unitMissingHtml() : `<small>${unit || "&nbsp;"}</small>`}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
-              <strong>${value}${storedUnit ? storedUnitHtml(metricSummary, field) : ""}${flagMarkerHtml(field, notes)}</strong>
-            </div>
-          `;
-          }).join("")}
-        </div>
-        ${listed ? `<div class="detail-kv measurement-listed">${listed}</div>` : ""}
-        ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
-        ${flagNotesHtml(notes)}
-        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts, unitCautions, checkContext) : ""}
-      </section>
-      <section class="detail-section conditions-section">
-        <h3>Assay conditions</h3>
-        <div class="detail-kv">
-          ${substrate.length > LONG_DETAIL_SUBSTRATE ? kv("Substrate", substrate) : ""}
-          ${conditions.cosubstrate}
-          ${kv("Temperature", temperatureValue)}
-          ${kv("pH", phValue)}
-          ${conditions.conditions}
-          ${conditions.preparation}
-        </div>
-      </section>
-    `;
+    const { temperature, ph } = conditionRowValues(summary, detail, flags, conditions.reasons);
+    return detailSection("conditions", "Conditions", kvList([
+      kv("Temperature", temperature),
+      kv("pH", ph),
+      conditions.conditions,
+      conditions.cosubstrate,
+      conditions.preparation,
+    ]));
   }
 
   // An assay summary, split at "; " outside brackets.
@@ -6514,29 +6582,24 @@
       conditions: !items.length
         ? ""
         : (items.length === 1
-          ? linkedKv("Conditions", html(items[0]))
-          : `<div class="kv-line"><span>Conditions</span><ul class="condition-list">${items.map((item) => `<li>${html(item)}</li>`).join("")}</ul></div>`),
+          ? linkedKv("Assay", html(items[0]))
+          : linkedKv("Assay", `<ul class="condition-list">${items.map((item) => `<li>${html(item)}</li>`).join("")}</ul>`)),
       preparation: preparations.length ? linkedKv("Preparation", html(preparations.join("; "))) : "",
     };
   }
 
-  function sequenceDisclosure(label, sequence, targetId) {
-    if (!sequence) return "";
-    return `
-      <details class="sequence-disclosure">
-        <summary>${escapeHtml(label)} <span>${formatInteger(sequence.length)} aa</span></summary>
-        <div class="copy-field sequence-field">
-          <div class="copy-field-heading">
-            <span>Amino-acid sequence</span>
-            <button class="copy-button" type="button" aria-live="polite" data-copy-target="${escapeHtml(targetId)}">Copy</button>
-          </div>
-          <code id="${escapeHtml(targetId)}">${escapeHtml(sequence)}</code>
-        </div>
-      </details>
-    `;
+  // ---- Record panel: E. Protein and substrate ----
+  // A long text (a sequence, a SMILES) as one row: what it is ("605 aa"), then Show and Copy; Show opens it below.
+  function revealRowHtml(label, text, id, { summary = "", note = "" } = {}) {
+    if (!text) return "";
+    return linkedKv(label, `<span class="reveal-line">${summary ? `<span class="reveal-summary">${escapePublic(summary)}</span>` : ""}`
+      + `<span class="row-actions"><button class="text-button reveal-button" type="button" aria-expanded="false" aria-controls="${id}Box" data-reveal-target="${id}Box">Show</button>`
+      + `<button class="text-button copy-button" type="button" aria-live="polite" data-copy-target="${id}">Copy</button></span></span>`
+      + (note ? `<span class="reveal-note">${escapePublic(note)}</span>` : "")
+      + `<span id="${id}Box" class="copy-field" hidden><code id="${id}">${escapeHtml(text)}</code></span>`, { className: "reveal-row" });
   }
 
-  function molecularIdentitySection(summary, detail) {
+  function proteinSection(summary, detail) {
     const uniprot = detail.uniprot_id || summary.primary_uniprot_id || "";
     const proteinAccession = detail.protein_accession || summary.protein_accession || uniprot;
     const proteinAccessionDatabase = detail.protein_accession_database
@@ -6573,20 +6636,27 @@
     const accessionLabel = isUniProt
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
-    // "UniProt canonical sequence" only repeats the sequence's own label; "H150A applied to the UniProt canonical
-    // sequence" names the variant sequence instead: "Variant sequence (UniProt P22498 with H150A)".
+    // "UniProt canonical sequence" only repeats the row; "H150A applied to the UniProt canonical sequence" names the
+    // variant sequence instead: "Variant sequence: 489 aa, UniProt P22498 with H150A".
     if (/^UniProt canonical sequence\.?$/.test(sequenceVariantNote)) sequenceVariantNote = "";
-    let variantLabel = "Variant sequence";
+    let variantSummary = "";
     const applied = sequenceVariantNote.match(/^(\S+) applied to the UniProt (?:canonical sequence|sequence(?: ([A-Z0-9]+))?)(?: \((.+)\))?$/);
     if (applied && variantSequence) {
       const accession = applied[2] || (isUniProt ? proteinAccession : "");
-      variantLabel = `Variant sequence (${accession ? `UniProt ${accession}` : "UniProt sequence"} with ${applied[1]}${applied[3] ? `; ${applied[3]}` : ""})`;
+      variantSummary = `${accession ? `UniProt ${accession}` : "UniProt sequence"} with ${applied[1]}${applied[3] ? `; ${applied[3]}` : ""}`;
       sequenceVariantNote = "";
     }
-    const sequenceHtml = variantSequence
-      ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure(variantLabel, variantSequence, "detailVariantSequence")}`
-      : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
-    const hasSequence = Boolean(sequenceHtml.trim());
+    const length = (value) => `${formatInteger(value.length)} aa`;
+    const sequenceRows = variantSequence
+      ? [
+          revealRowHtml("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence", { summary: wildTypeSequence ? length(wildTypeSequence) : "" }),
+          revealRowHtml("Variant sequence", variantSequence, "detailVariantSequence",
+            { summary: [length(variantSequence), variantSummary].filter(Boolean).join(", "), note: sequenceVariantNote }),
+        ]
+      // A wild-type record's sequence is the Sequence (its form is said above); one of another form names it wild type.
+      : [revealRowHtml(wildTypeSequence && enzymeForm !== "Wild type" ? "Wild-type sequence" : "Sequence", wildTypeSequence || sequence, "detailSequence",
+          { summary: length(wildTypeSequence || sequence), note: sequenceVariantNote })];
+    const hasSequence = Boolean(wildTypeSequence || variantSequence || sequence);
     // A note about a sequence that is not shown ("shown as the variant sequence") says nothing true here.
     if (!hasSequence && /\bshown\b| applied to /.test(sequenceVariantNote) && !/^No sequence/.test(sequenceVariantNote)) sequenceVariantNote = "";
     // One line says how the protein is matched to UniProt.
@@ -6603,36 +6673,23 @@
     } else {
       identityRow = kv("UniProt", identityLabels.identity_unresolved);
     }
-    return `
-      <section class="detail-section identity-section">
-        <h3>Protein and structure</h3>
-        <div class="detail-kv">
-          ${kv("Enzyme form", enzymeForm)}
-          ${sequenceVariantNote ? kv("Sequence note", sequenceVariantNote) : ""}
-          ${identityRow}
-          ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
-          ${!hasSequence && !/sequence/i.test(sequenceVariantNote || "") ? kv("Sequence", "None") : ""}
-          ${smiles ? "" : kv("SMILES", "None")}
-        </div>
-        ${sequenceHtml}
-        ${smiles ? `
-          <details class="sequence-disclosure">
-            <summary>SMILES</summary>
-            <div class="copy-field">
-              <div class="copy-field-heading">
-                <button class="copy-button" type="button" aria-live="polite" data-copy-target="detailSmiles">Copy</button>
-              </div>
-              <code id="detailSmiles">${escapeHtml(smiles)}</code>
-            </div>
-          </details>
-        ` : ""}
-      </section>
-    `;
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const substrate = recordedName(summary.substrate_name) || (v2Record ? "Not stated in the paper" : "Not recorded");
+    return detailSection("protein", "Protein and substrate", kvList([
+      linkedKv("Enzyme form", detailFormHtml({ ...summary, ...detail }) || escapePublic(enzymeForm)),
+      identityRow,
+      sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : "",
+      // No sequence: the row says why (the note) or None.
+      ...(hasSequence ? sequenceRows : [kv("Sequence", sequenceVariantNote || "None")]),
+      kv("Substrate", substrate),
+      smiles ? revealRowHtml("SMILES", smiles, "detailSmiles") : kv("SMILES", "None"),
+    ]));
   }
 
+  // Copy: a sequence or SMILES (data-copy-target names the element) or a given text (data-copy-text, the record's link).
   async function copyDetailValue(button) {
-    const target = $(button.dataset.copyTarget);
-    const value = target?.textContent || "";
+    const value = button.dataset.copyText || $(button.dataset.copyTarget)?.textContent || "";
+    const label = button.dataset.copyLabel || "Copy";
     if (!value) return;
     let copied = false;
     try {
@@ -6656,7 +6713,7 @@
       }
     }
     button.textContent = copied ? "Copied" : "Copy failed";
-    window.setTimeout(() => { button.textContent = "Copy"; }, copied ? 1200 : 3000);
+    window.setTimeout(() => { button.textContent = label; }, copied ? 1200 : 3000);
   }
 
   // A record's source in words: "The paper (read by CatLog)" for a record CatLog read, else the databases by name, read
@@ -6725,7 +6782,9 @@
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
     const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
-    return `<p class="detail-status" style="--status-color:var(--status-${colour})">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
+    // The light salmon dot gets its darker ring (design spec 2).
+    const ring = colour === "pending" ? ";--status-ring:var(--st-pending-ring, transparent)" : "";
+    return `<p class="detail-status" style="--status-color:var(--status-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
   }
 
   // The record's name; a long one (several names in brackets) is set smaller, so the header that stays in view while the
@@ -6736,16 +6795,29 @@
     return `<h2 id="detailHeading" tabindex="-1"${name.length > LONG_DETAIL_NAME ? ' class="long-name"' : ""}>${escapePublic(name)}</h2>`;
   }
 
-  // The variant as the header names it: "N145A variant", "variant, not specified", or nothing for wild type (and for a
-  // record that does not say).
-  function detailVariantText(row) {
-    const signature = mutationSignature(row);
-    if (signature) return `${signature} variant`;
-    return enzymeFormLabel(row) === "Variant (unspecified)" ? "variant, not specified" : "";
+  // The organism with its binomial in italics ("<i>Escherichia coli</i> K-12", "<i>Bacillus</i> sp. A1"); a name that is
+  // not a binomial (a virus, "unidentified bacterium") stays roman.
+  function organismHtml(name) {
+    const text = String(name || "").trim();
+    if (/virus|phage|viroid/i.test(text)) return escapePublic(text);
+    let match = text.match(/^([A-Z][a-z]+)(\s+spp?\.)(.*)$/);
+    if (match) return `<i>${escapePublic(match[1])}</i>${escapePublic(match[2] + match[3])}`;
+    match = text.match(/^([A-Z][a-z]+\s+[a-z][a-z-]+)(?![\w.])(.*)$/);
+    return match ? `<i>${escapePublic(match[1])}</i>${escapePublic(match[2])}` : escapePublic(text);
   }
 
-  // "EC 1.4.1.20 · Bacillus sphaericus · N145A variant", leaving out what is not recorded, so records of one paper
-  // differ at the top; "Unknown" (not stated in the paper or the source database) says which of the two it is.
+  // The form as the header names it: "Wild type", "Variant H150A" (the mutation in mono) or "Variant, not specified";
+  // nothing for a record that does not say.
+  function detailFormHtml(row) {
+    const signature = mutationSignature(row);
+    if (signature) return `Variant <code class="mutation">${escapePublic(signature)}</code>`;
+    const label = enzymeFormLabel(row);
+    if (label === "Variant (unspecified)") return "Variant, not specified";
+    return label === "Wild type" ? "Wild type" : "";
+  }
+
+  // "EC 1.4.1.20 · Bacillus sphaericus · Variant N145A", leaving out what is not recorded, so records of one paper differ
+  // at the top; "Unknown" (not stated in the paper or the source database) says which of the two it is.
   function detailSubtitleHtml(row, { ecFromDatabases = false, v2Record = isV2Row(row) } = {}) {
     const ec = String(row.ec_number || "").trim();
     const organism = String(row.organism || "").trim();
@@ -6753,15 +6825,31 @@
     // A record read from a paper that prints no EC number: the EC the enzyme databases list for this paper's values.
     const ecNote = ecFromDatabases ? " (from enzyme databases; not printed in the paper)" : "";
     const parts = [
-      /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? `EC ${ec}${ecNote}` : ""),
-      /^unknown$/i.test(organism) ? `organism ${missing}` : (hasDisplayValue(organism) ? organism : ""),
-      detailVariantText(row),
+      /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? escapePublic(`EC ${ec}${ecNote}`) : ""),
+      /^unknown$/i.test(organism) ? `organism ${missing}` : (hasDisplayValue(organism) ? organismHtml(organism) : ""),
+      detailFormHtml(row),
     ].filter(Boolean);
-    return parts.length ? `<p class="detail-subtitle">${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
+    return parts.length ? `<p class="detail-subtitle">${parts.join(" &middot; ")}</p>` : "";
   }
 
-  // "Substrate: ...", under the EC line. A long name is cut to two lines here and given in full under Assay conditions.
-  const LONG_DETAIL_SUBSTRATE = 90;
+  // The address of a record: this page with #record=<key> (what Copy link copies).
+  function recordLink(key) {
+    const url = new URL(window.location.href);
+    url.hash = `#record=${encodeURIComponent(key)}`;
+    return url.href;
+  }
+
+  // The record ID in mono and a Copy link button, the header's last line.
+  function detailKeyHtml(row) {
+    const key = String(row.record_key || row.measurement_key || "").trim();
+    if (!key) return "";
+    return `<p class="detail-key"><span class="visually-hidden">Record ID </span><code id="detailRecordKey">${escapeHtml(key)}</code>`
+      + `<span class="detail-key-sep" aria-hidden="true">&middot;</span>`
+      + `<button class="text-button copy-button copy-link" type="button" aria-live="polite" data-copy-text="${escapeHtml(recordLink(key))}" data-copy-label="Copy link">Copy link</button></p>`;
+  }
+
+  // "Substrate: ...", under the EC line. A long name is cut to two lines here and given in full under Protein and
+  // substrate.
   // A name as the record gives it; "" when blank or "Unknown" (a missing name: a dash in the table, words in the record).
   function recordedName(value) {
     const text = String(value ?? "").trim();
@@ -6802,6 +6890,363 @@
     };
   }
 
+  // ---- Record panel: the snapshot's record checks (design spec 5G) ----
+  // data/catlog-checks.<hash>.json, keyed by record key ({db, chg, audit}), when the manifest names one: loaded on the
+  // first record opened, like the human-review marks. The page works without it; records carrying their own comparison
+  // fields (database_status ... on each value, corrections) do not need it.
+  let recordChecks = null;
+  let recordChecksLoad = null;
+
+  function recordChecksPath() {
+    const entry = manifest.catlog_checks;
+    const path = String((typeof entry === "string" ? entry : entry?.path) || "");
+    return /^data\/catlog-checks\.[0-9a-f]{12}\.json$/.test(path) ? path : "";
+  }
+
+  function ensureRecordChecks() {
+    const path = recordChecksPath();
+    if (!path || typeof window.fetch !== "function") return Promise.resolve(null);
+    if (!recordChecksLoad) {
+      recordChecksLoad = window.fetch(versionedAssetUrl(path))
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          const records = data?.records && typeof data.records === "object" ? data.records : data;
+          recordChecks = records && typeof records === "object" ? records : {};
+          return recordChecks;
+        })
+        .catch(() => {
+          recordChecks = {};
+          return recordChecks;
+        });
+    }
+    return recordChecksLoad;
+  }
+
+  function recordCheck(row) {
+    if (!recordChecks) return null;
+    const entry = recordChecks[row.record_key] || recordChecks[row.measurement_key];
+    return entry && typeof entry === "object" ? entry : null;
+  }
+
+  // ---- Record panel: G. Against the databases ----
+  // A record read from the paper: one row per value, what the enzyme databases list for the same paper (fixed phrases from
+  // the snapshot, shown as given). An earlier "corrected" record: what its earlier review changed, Before and After. Any
+  // other database record the earlier review did not settle: the values are the database's. Nothing else gets the
+  // section (never an empty heading).
+  const DATABASE_RESULTS = [
+    { test: /other[\s_-]*label/i, word: "Same number, other label", key: "neutral" },
+    { test: /^(?:confirmed|same)/i, word: "Same as a database", key: "same" },
+    { test: /^correct/i, word: "Corrects a database", key: "magnitude" },
+    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Differs from the databases", key: "differs" },
+    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "New to the databases", key: "new" },
+    { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "" },
+  ];
+  // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given.
+  const DATABASE_CAUSES = {
+    header_scale_inverted: "the table header's scale factor applied the wrong way",
+    header_scale_ignored: "the table header's scale factor not applied",
+    unit_not_converted: "the printed unit not converted",
+    uM_entered_as_mM: "a µM value entered as mM",
+    mM_entered_as_uM: "an mM value entered as µM",
+    time_unit: "a per-minute or per-hour value not converted",
+    decimal_or_exponent_slip: "a decimal point or exponent slip",
+    value_from_other_row: "a value from another row",
+    value_not_in_paper: "a value the paper does not print",
+    paper_unit_misprint: "a unit the paper misprints",
+    recomputed_ratio: "kcat ÷ Km recomputed from rounded values",
+    different_measurement: "a different measurement",
+  };
+  const DATABASES_COMPARED_NOTE = "Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper. "
+    + "A different number can mean a different measurement.";
+  const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
+  const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
+
+  // Text from the snapshot shown as given (internal placeholders removed), at most `max` characters.
+  function shownText(value, max = PRINTED_LINE_MAX) {
+    const text = publicEvidenceString(String(value ?? "")).replace(/\s+/g, " ").trim();
+    return text.length > max ? `${text.slice(0, max - 1).replace(/\s+\S*$/, "")}…` : text;
+  }
+
+  // A location that names a local file (a path, a .pdf) is never shown.
+  function looksLikeLocalPath(value) {
+    return /(?:^|[\s("'])(?:\/(?:Users|home|private|tmp|var|Volumes)\/|~\/|[A-Z]:\\)|file:\/\/|\.(?:pdf|txt|xml|json|tsv)\b/i.test(String(value || ""));
+  }
+
+  function databaseResult(status) {
+    const text = String(status ?? "").trim();
+    if (!text) return null;
+    return DATABASE_RESULTS.find((item) => item.test.test(text))
+      || { word: text.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase()), key: "" };
+  }
+
+  function databaseCauseText(value) {
+    const text = shownText(value);
+    if (!text) return "";
+    if (DATABASE_CAUSES[text]) return DATABASE_CAUSES[text];
+    return /^[A-Za-z]+(?:_[A-Za-z]+)+$/.test(text) ? text.replace(/_/g, " ") : text;
+  }
+
+  // One value's comparison from its own fields (database_status, database_line, database_cause, database_evidence, or
+  // one database_check object), or null.
+  function databaseFacts(line) {
+    const check = line?.database_check && typeof line.database_check === "object" ? line.database_check : {};
+    const status = shownText(line?.database_status ?? check.status);
+    const sentence = shownText(line?.database_line ?? check.line);
+    const cause = databaseCauseText(line?.database_cause ?? check.cause);
+    const evidence = shownText(line?.database_evidence ?? check.evidence);
+    if (!status && !sentence && !cause && !evidence) return null;
+    const sources = Array.isArray(check.sources) ? check.sources.map((item) => shownText(item)).filter(Boolean).join(", ") : shownText(check.sources);
+    const number = check.database_value;
+    const listed = number != null && number !== "" && Number.isFinite(Number(number))
+      ? `${numberText(String(number))}${check.database_unit ? ` ${unitText(shownText(check.database_unit))}` : ""}`
+      : "";
+    return { status, sentence, cause, evidence: looksLikeLocalPath(evidence) ? "" : evidence, databases: [sources, listed].filter(Boolean).join(": ") };
+  }
+
+  // The side file's comparison of one parameter (["same", "BRENDA,SABIO-RK"], ["differs", "BRENDA", 3]) in the spec's
+  // fixed phrases.
+  function sideFileDatabaseFacts(entry, metric) {
+    if (!Array.isArray(entry) || !entry.length) return null;
+    const [status, sourceText = "", count] = entry;
+    const sources = String(sourceText || "").split(/\s*,\s*/).filter(Boolean);
+    const names = sentenceList(sources);
+    const result = databaseResult(status);
+    let sentence = "";
+    if (result?.key === "same") sentence = `same number in ${sources.join(", ")}`;
+    else if (result?.key === "differs") {
+      sentence = `not among the ${Number(count) > 0 ? `${formatInteger(count)} ` : ""}${metric} values ${names} ${sources.length > 1 ? "list" : "lists"} for this paper`;
+    } else if (result?.key === "new") sentence = `no database lists a ${metric} for this paper`;
+    else if (/^calc/i.test(String(status))) sentence = "calculated; not compared";
+    return { status: String(status), sentence, cause: "", evidence: "", databases: sources.join(", ") };
+  }
+
+  function databaseResultHtml(facts) {
+    const result = databaseResult(facts.status);
+    const head = result
+      ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(result.word)}</strong></span>`
+      : "";
+    return head
+      + (facts.sentence ? `<span class="cmp-line">${caretHtml(escapePublic(facts.sentence))}</span>` : "")
+      + (facts.cause ? `<small>Cause: ${escapePublic(facts.cause)}</small>` : "")
+      + (facts.evidence ? `<small>${caretHtml(escapePublic(facts.evidence))}</small>` : "");
+  }
+
+  // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
+  function v2DatabaseComparisonHtml(summary, detail, proof, check) {
+    const metricSummary = metricSummaryFor(summary, detail);
+    const rows = (proof?.lines || []).map((line) => {
+      const field = (v2MetricLabels[line.metric] || [])[0];
+      const facts = databaseFacts(line) || sideFileDatabaseFacts(check?.db?.[line.metric], line.metric);
+      if (!field || !facts) return null;
+      return { field, label: v2MetricLabels[line.metric][1], facts };
+    }).filter(Boolean);
+    const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
+      .map((note) => shownText(note)).filter(Boolean);
+    if (!rows.length && !paperNotes.length) return "";
+    const withDatabases = rows.some((row) => row.facts.databases);
+    const table = rows.length
+      ? `<table class="values-table compare-table"><thead><tr><th scope="col">Parameter</th><th scope="col">CatLog</th>`
+        + `${withDatabases ? '<th scope="col">Databases for this paper</th>' : ""}<th scope="col">Result</th></tr></thead><tbody>`
+        + rows.map(({ field, label, facts }) => `<tr><th scope="row">${label}</th>`
+          + `<td class="cmp-catlog">${metricHasValue(metricSummary, field) ? `${panelValueHtml(metricSummary, field)} <small>${metricUnitHtml(metricSummary, field)}</small>` : EMPTY_VALUE}</td>`
+          + `${withDatabases ? `<td>${facts.databases ? caretHtml(escapePublic(facts.databases)) : EMPTY_VALUE}</td>` : ""}`
+          + `<td class="cmp-cell">${databaseResultHtml(facts)}</td></tr>`).join("")
+        + "</tbody></table>"
+      : "";
+    return paperNotes.map((note) => `<p class="cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
+      + table
+      + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "");
+  }
+
+  // An earlier "corrected" record's correction trail (corrections, corrected_fields or the side file's chg), each
+  // item as {field, before, after, unit, kind, listed, why}.
+  function correctionItems(detail, check) {
+    const raw = [detail.corrections, detail.corrected_fields, detail.earlier_corrections, check?.chg].find(Array.isArray) || [];
+    return raw.filter((item) => item && typeof item === "object").map((item) => ({
+      field: String(item.field ?? item.f ?? "").trim(),
+      before: item.old_value ?? item.before ?? item.b,
+      after: item.new_value ?? item.after ?? item.a,
+      unit: shownText(item.unit ?? item.u),
+      kind: String(item.kind ?? item.change ?? item.k ?? "").trim(),
+      listed: shownText(item.listed ?? item.before_listed),
+      why: shownText(item.evidence_table_row ?? item.evidence ?? item.why ?? item.w),
+    })).filter((item) => item.field);
+  }
+
+  const CORRECTION_FIELD_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", "kcat/km": "kcat/Km", ki: "Ki" };
+  const CHANGE_KINDS = [
+    { test: /round|precision|digit/i, word: "more digits / rounding", key: "precision" },
+    { test: /magnitude|power|scale|unit/i, word: "unit or magnitude", key: "magnitude" },
+    { test: /^add/i, word: "added: the source had none", key: "new" },
+    { test: /differ|number|value/i, word: "different number", key: "differs" },
+  ];
+
+  function powerFactorText(power) {
+    const size = Math.abs(power);
+    const factor = size <= 3 ? String(10 ** size) : `10${[...String(size)].map((character) => SUPERSCRIPT_DIGITS[character]).join("")}`;
+    return `${power < 0 ? "÷" : "×"} ${factor}`;
+  }
+
+  // "unit or magnitude (÷ 1000)": the factor when After is Before times a power of ten.
+  function changeWords(item) {
+    const before = Number(item.before);
+    const after = Number(item.after);
+    let kind = CHANGE_KINDS.find((entry) => entry.test.test(item.kind));
+    if (!kind && (item.before == null || item.before === "")) kind = CHANGE_KINDS[2];
+    if (!kind) return { word: item.kind.replace(/_/g, " "), key: "" };
+    if (kind.key === "magnitude" && before > 0 && after > 0) {
+      const power = Math.round(Math.log10(after / before));
+      if (power && Math.abs(Math.log10(after / before) - power) < 0.01) return { word: `${kind.word} (${powerFactorText(power)})`, key: kind.key };
+    }
+    return kind;
+  }
+
+  function correctionValueText(value, unit) {
+    if (value == null || value === "") return "none";
+    const number = Number(value);
+    return `${Number.isFinite(number) && String(value).trim() !== "" ? numberText(String(value)) : shownText(value)}${unit ? ` ${unitText(unit)}` : ""}`;
+  }
+
+  function earlierCorrectionsHtml(items) {
+    const valueItems = [];
+    const identity = [];
+    items.forEach((item) => {
+      const key = item.field.toLowerCase().replace(/\s+/g, "");
+      const name = CORRECTION_FIELD_NAMES[key];
+      if (name) {
+        // A field whose number did not change is not listed.
+        if (item.before != null && item.before !== "" && Number(item.before) === Number(item.after)) return;
+        valueItems.push({ ...item, name });
+      } else if (/uniprot|accession/.test(key)) {
+        identity.push(`UniProt ${shownText(item.before) || "none"} → ${shownText(item.after) || "none"}`);
+      } else if (/sequence/.test(key)) identity.push("Sequence replaced");
+      else if (/smiles/.test(key)) identity.push("SMILES replaced");
+      else identity.push(`${item.field.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase())} changed`);
+    });
+    if (!valueItems.length && !identity.length) return "";
+    const table = valueItems.length
+      ? `<table class="values-table compare-table"><thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>`
+        + valueItems.map((item) => {
+          const change = changeWords(item);
+          const where = item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value";
+          return `<tr><th scope="row">${escapeHtml(item.name)}</th>`
+            + `<td>${escapePublic(correctionValueText(item.before, item.unit))}<small>${escapePublic(where)}</small></td>`
+            + `<td>${escapePublic(correctionValueText(item.after, item.unit))}</td>`
+            + `<td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>${escapeHtml(change.word)}</span></td></tr>`;
+        }).join("")
+        + "</tbody></table>"
+      : "";
+    const reasons = [...new Set(items.map((item) => item.why).filter((why) => why && !looksLikeLocalPath(why)))];
+    return table
+      + (identity.length ? `<ul class="value-notes">${identity.map((text) => `<li>${escapePublic(text)}</li>`).join("")}</ul>` : "")
+      + reasons.map((why) => `<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — ${caretHtml(escapePublic(why.replace(/[.\s]+$/, "")))}.</p>`).join("");
+  }
+
+  function databasesSection(summary, detail, { proof = null, check = null, v2Record = false } = {}) {
+    let body = "";
+    if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check);
+    else {
+      const corrections = correctionItems(detail, check);
+      if (corrections.length) body = earlierCorrectionsHtml(corrections);
+      else {
+        const result = summary._recordState || recordStateForRow(summary);
+        const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);
+        // A database record the earlier review did not settle, with a paper to check it against.
+        if (fromDatabase && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
+          body = `<p class="section-text">${escapeHtml(DATABASE_VALUES_NOTE)}</p>`;
+        }
+      }
+    }
+    return body ? detailSection("databases", "Against the databases", body) : "";
+  }
+
+  // ---- Record panel: C. Source ----
+  function sourceSection(summary, detail, { v2Record, proof, mergedRows, paperCount, evidence, sourceNoteHtml }) {
+    const facts = proof?.facts || null;
+    const dataId = snapshotDataId();
+    return detailSection("source", "Source", kvList([
+      kv("Source", recordSourceName(summary.source_db || detail.source_db, v2Record)),
+      // How many database rows a record merges is said once, here.
+      mergedRows > 1
+        ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
+        : "",
+      // A record read by CatLog: how (Method) and what the second AI check found; an older record: what stands behind
+      // its values.
+      v2Record
+        ? linkedKv("Method", `${escapePublic(v2MethodSentence(facts, { unitChanged: measurementNotes(summary, detail, { proof }).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →</span></a>`)
+        : (evidence && evidence !== "Database note" ? kv("Evidence", evidence) : ""),
+      v2Record && facts ? kv("Second check", v2CheckText(facts, v2CheckOptions(summary, detail, proof))) : "",
+      kv("License", detailLicense(summary, detail, v2Record)),
+      dataId ? kv("Data ID", `${dataId}${manifest.generated_at ? ` (snapshot ${formatDate(manifest.generated_at)})` : ""}`) : "",
+    ]) + sourceNoteHtml);
+  }
+
+  // ---- Record panel: F. Paper ----
+  function paperSection(summary, detail, { pmids, standInIds, dois, proof, notesHtml }) {
+    const title = paperTitleText(summary, detail);
+    const places = proof ? [...new Set(proof.lines.map((line) => v2LinePlace(line)).filter(Boolean))] : [];
+    const noPaper = !pmids.length && !standInIds.length && !dois.length;
+    return detailSection("paper", "Paper", kvList([
+      title ? kv("Title", title) : "",
+      pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
+      dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
+      standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
+      noPaper ? kv("PMID or DOI", "None") : "",
+      places.length ? kv("Location", places.join("; ")) : "",
+    ]) + notesHtml);
+  }
+
+  // ---- Record panel: H. Review and audit ----
+  // The record's review in one sentence, the AI audit (date and result only), what a human reviewer found, then the
+  // record's actions.
+  const V2_STATUS_SENTENCE = "Accepted: read from the paper by CatLog.";
+  const CORRECTED_LISTED_SENTENCE = "Corrected and accepted in the earlier automated review; the changes are listed under Against the databases.";
+
+  function sideFileAuditText(check) {
+    if (!Array.isArray(check?.audit) || !check.audit.length) return "";
+    const [date, result] = check.audit;
+    const verdict = /unit/i.test(String(result || ""))
+      ? "re-checked against the paper; the unit was corrected."
+      : (/^(?:kept|confirmed)$/i.test(String(result || "")) ? "re-checked against the paper and kept." : "re-checked against the paper.");
+    const when = auditDateText(date);
+    const text = `${when ? `${when}: ` : ""}${verdict}`;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  function reviewSection(summary, detail, { v2Record, proof, check, hasCorrections, reportHref }) {
+    const humanNote = humanReviewNote(summary);
+    const status = v2Record
+      ? escapePublic(V2_STATUS_SENTENCE)
+      // The earlier review was an automated pipeline of AI models and code checks: the Guide's method section says so.
+      : `${escapePublic(hasCorrections && summary.verification_status === "corrected" ? CORRECTED_LISTED_SENTENCE : reviewOutcome(summary, detail))} <a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →</span></a>`;
+    const audit = (proof && v2AuditText(proof.lines, proof.facts)) || sideFileAuditText(check);
+    return detailSection("review", "Review and audit", kvList([
+      linkedKv("Status", status),
+      audit ? kv("AI audit", audit) : "",
+      // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
+      humanNote
+        ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}`, { className: "human-review-line" })
+        : "",
+    ]) + `
+      <div class="detail-actions">
+        <button id="downloadSelectedJson" class="button primary" type="button">Download record</button>
+        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportHref)}">Report a problem</a>
+      </div>`);
+  }
+
+  // The header (section A): name, close, EC · organism · form, substrate (with its condition note), status, record ID.
+  function detailTopHtml(summary, detail, { v2Record = isV2Row(summary), withDetail = true } = {}) {
+    return `
+      <div class="detail-top">
+        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+        ${detailHeadingHtml(summary)}
+        ${detailSubtitleHtml(summary, { ecFromDatabases: withDetail && v2Record && ecFromDatabases(detail) })}
+        ${withDetail ? detailSubstrateHtml(summary, detail) : ""}
+        ${withDetail ? detailStatusHtml(summary, { v2Record }) : ""}
+        ${detailKeyHtml(summary)}
+      </div>`;
+  }
+
   function renderDetail(summary, detail) {
     const pmidsRaw = Array.isArray(detail.supporting_pmids)
       ? detail.supporting_pmids.filter(Boolean)
@@ -6821,95 +7266,54 @@
     const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)) && !noteRepeatsConditions(line, summary))
       .map((line) => noteWithoutHeadingSource(line, noteSource));
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
-    const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
-      ? (noteSource === "Not recorded" ? "Database note" : `Note from ${noteSource}`)
-      : "Earlier automated review: where the values are printed";
-    const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
-    // What stands behind an older record's values (a CatLog v2 record's status already says "from paper"); a database
-    // note is named by its own heading instead.
-    const evidence = v2Record ? "" : evidenceLabel(summary, proofLines);
-    const evidenceRow = evidence && evidence !== "Database note" ? kv("Evidence", evidence) : "";
-    const humanNote = humanReviewNote(summary);
-    // A CatLog v2 record's values are one table, in Measurement; an older record keeps its notes, here.
     const v2Proof = v2ProofFacts(summary, detail);
-    const v2Facts = v2Proof?.facts || null;
-    const paperTitle = paperTitleText(summary, detail);
-    const paperRows = [
-      paperTitle ? kv("Paper", paperTitle) : "",
-      ...(paperIds.length || dois.length
-        ? [
-            dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
-            pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
-            standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
-          ]
-        : [kv("PMID or DOI", "None")]),
-      evidenceRow,
-      // A record read by CatLog: how (Method) and what the second check found (Check); an older record: its review.
-      ...(v2Record
-        ? [
-            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts, { unitChanged: measurementNotes(summary, detail).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →</span></a>`),
-            v2Facts ? kv("Check", v2CheckText(v2Facts, v2CheckOptions(summary, detail, v2Proof))) : "",
-            v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
-          ]
-        // The earlier review was an automated pipeline of AI models and code checks: the Guide's method section says so.
-        : [linkedKv("Review", `${escapePublic(reviewOutcome(summary, detail))} <a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →</span></a>`)]),
-      // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
-      humanNote
-        ? `<div class="kv-line human-review-line"><span>Human review</span><strong>${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}</strong></div>`
-        : "",
-      // How many database rows a record merges is said once, here; Source details then names the databases only when
-      // they are not just the source.
-      mergedRows > 1
-        ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
-        : "",
-    ];
-    // An older record's notes (the earlier catalog's review text) expand on request.
-    const notesHtml = !proofLines.length || v2Facts
-      ? ""
-      : `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(proofHeading)}</summary><div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`;
+    const isSourceNote = (summary.proof_kind || detail.proof_kind) === "source_note";
+    const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
+    // What stands behind an older record's values (a record read by CatLog says so in its Method line).
+    const evidence = v2Record ? "" : evidenceLabel(summary, proofLines);
+    // An older record's notes expand on request: a database's own note under Source, the earlier review's notes on where
+    // the paper prints the values under Paper.
+    const notesDisclosure = (heading) => `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(heading)}</summary>`
+      + `<div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`;
+    const showNotes = proofLines.length && !v2Proof;
+    const sourceNoteHtml = showNotes && isSourceNote
+      ? notesDisclosure(noteSource === "Not recorded" ? "Database note" : `Note from ${noteSource}`)
+      : "";
+    const paperNotesHtml = showNotes && !isSourceNote ? notesDisclosure("Earlier automated review: where the values are printed") : "";
     const dataOrigin = publicEvidenceString(detail.data_origin);
+    const check = recordCheck(summary);
+    const hasCorrections = correctionItems(detail, check).length > 0;
     // The values the record shows where they differ from the stored ones (the source's own kcat/Km), for the report email.
-    const consistentShown = measurementNotes(summary, detail).consistent;
+    const consistentShown = measurementNotes(summary, detail, { proof: v2Proof }).consistent;
     const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
-    // The order: what was measured (values, cautions, the paper's own numbers), under which conditions, where it comes
-    // from and how it was checked, which protein and substrate structure, then the source details.
+    const reportHref = reportProblemHref(metricSummaryFor(summary, detail), pmids, { dois, standInIds, shown: shownValues });
+    // The order (design spec 5): what was measured, where it comes from and how it was checked, under which conditions,
+    // which protein and substrate, the paper, the databases, the review; the source's own fields last.
     $("detailContent").innerHTML = `
-      <div class="detail-top">
-        <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-        ${detailHeadingHtml(summary)}
-        ${detailSubtitleHtml(summary, { ecFromDatabases: v2Record && ecFromDatabases(detail) })}
-        ${detailSubstrateHtml(summary, detail)}
-        ${detailStatusHtml(summary, { v2Record })}
-      </div>
-
-      ${measurementSection(summary, detail)}
-      <section class="detail-section paper-section">
-        <h3>Paper and review</h3>
-        <div class="detail-kv">${paperRows.filter(Boolean).join("")}</div>
-        ${notesHtml}
-      </section>
-      ${molecularIdentitySection(summary, detail)}
+      ${detailTopHtml(summary, detail, { v2Record })}
+      ${valuesSection(summary, detail, { proof: v2Proof })}
+      ${sourceSection(summary, detail, { v2Record, proof: v2Proof, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
+      ${conditionsSection(summary, detail)}
+      ${proteinSection(summary, detail)}
+      ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
+      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record })}
+      ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref })}
       ${detailDisclosure("Source details", [
         kv("Name from", v2Record ? "Paper" : sourceLabels[summary.enzyme_label_source] || "Not recorded"),
-        kv("Source", recordSourceName(summary.source_db || detail.source_db, v2Record)),
-        kv("License", detailLicense(summary, detail, v2Record)),
-        kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         mergedDatabasesRow(summary, detail),
         // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
         dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
       ])}
-
-      <div class="detail-actions">
-        <button id="downloadSelectedJson" class="button secondary" type="button">Download record</button>
-        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(metricSummaryFor(summary, detail), pmids, { dois, standInIds, shown: shownValues }))}">Report a problem</a>
-      </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
       button.addEventListener("click", () => showFlagNote(button.dataset.flagNote));
     });
-    document.querySelectorAll(".copy-button").forEach((button) => {
+    document.querySelectorAll("#detailContent .copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));
+    });
+    document.querySelectorAll("#detailContent [data-reveal-target]").forEach((button) => {
+      button.addEventListener("click", () => toggleReveal(button));
     });
     $("downloadSelectedJson").addEventListener("click", () => {
       const payload = {
@@ -6920,6 +7324,16 @@
       };
       triggerBlobDownload(`${summary.record_key || "catlog-record"}.json`, JSON.stringify(payload, null, 2));
     });
+  }
+
+  // Show / Hide a sequence or SMILES under its row.
+  function toggleReveal(button) {
+    const box = $(button.dataset.revealTarget);
+    if (!box) return;
+    const open = box.hidden;
+    box.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+    button.textContent = open ? "Hide" : "Show";
   }
 
   function sourceDatabases() {
@@ -7460,10 +7874,14 @@
       sequenceNoteText,
       isV2Row,
       identityResolutionLabel,
-      measurementSection,
+      valuesSection,
+      conditionsSection,
       lookAlikeRowKeys,
       substrateNoteHtml,
-      molecularIdentitySection,
+      proteinSection,
+      organismHtml,
+      databasesSection,
+      recordLink,
       numberHtml,
       numberText,
       metricDisplayWithUnitHtml,

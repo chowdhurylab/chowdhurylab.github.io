@@ -230,8 +230,8 @@ assert.match(
   indexHtml,
   /<main id="statsView"[^>]*hidden/,
 );
-assert.match(sourceCode, /: "Earlier automated review: where the values are printed";/);
-assert.match(sourceCode, /const heading = `As printed in the paper\$\{shared \? ` \(\$\{shared\}\)` : ""\}`;/);
+assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed"\)/);
+assert.match(sourceCode, /<th scope="col">As printed<\/th>\$\{whereColumn \? '<th scope="col" class="vt-where">Where<\/th>' : ""\}/);
 
 function makeClassList() {
   const values = new Set();
@@ -1369,25 +1369,28 @@ assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
     navigator.clipboard = {};
   }
 }
-const emptyIdentityHtml = api.molecularIdentitySection({}, {});
-assert.match(emptyIdentityHtml, /<h3>Protein and structure<\/h3>/);
-assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+const emptyIdentityHtml = api.proteinSection({}, {});
+assert.match(emptyIdentityHtml, /<h3 id="detail-protein-title">Protein and substrate<\/h3>/);
+assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None<\/dd>/);
+assert.match(emptyIdentityHtml, /<dt>Substrate<\/dt><dd>Not recorded<\/dd>/);
+assert.match(emptyIdentityHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
-const blankFormNoteHtml = api.molecularIdentitySection({}, { sequence_variant_note: "   " });
-assert.match(blankFormNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+const blankFormNoteHtml = api.proteinSection({}, { sequence_variant_note: "   " });
+assert.match(blankFormNoteHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(blankFormNoteHtml, /Sequence note/);
-const formNoteHtml = api.molecularIdentitySection(
+const formNoteHtml = api.proteinSection(
   { sequence_variant_note: "Source says <variant> & unresolved" },
   {},
 );
-assert.match(formNoteHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
+assert.match(formNoteHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
+// Without a sequence, the Sequence row says why (the note), visible and HTML-escaped, after the enzyme form.
 assert.match(
   formNoteHtml,
-  /<span>Sequence note<\/span><strong>Source says &lt;variant&gt; &amp; unresolved<\/strong>/,
+  /<dt>Sequence<\/dt><dd>Source says &lt;variant&gt; &amp; unresolved<\/dd>/,
   "the form note should be visible and HTML-escaped",
 );
 assert.ok(
-  formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Sequence note"),
+  formNoteHtml.indexOf("Enzyme form") < formNoteHtml.indexOf("Source says"),
   "the form note should follow the enzyme form",
 );
 assert.equal(
@@ -1431,43 +1434,48 @@ assert.equal(
   }),
   "Not matched to UniProt",
 );
-const inferredIdentityHtml = api.molecularIdentitySection(
+const inferredIdentityHtml = api.proteinSection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: 0.6 },
 );
-assert.match(inferredIdentityHtml, /<span>UniProt<\/span><strong><a [^>]*>Q12345<\/a> <span class="identity-how">\(inferred from EC number and organism\)<\/span><\/strong>/);
+assert.match(inferredIdentityHtml, /<dt>UniProt<\/dt><dd><a [^>]*>Q12345<\/a> <span class="identity-how">\(inferred from EC number and organism\)<\/span><\/dd>/);
 assert.doesNotMatch(inferredIdentityHtml, /confidence|Sequence source/);
-const missingDetailConfidenceHtml = api.molecularIdentitySection(
+const missingDetailConfidenceHtml = api.proteinSection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: null },
 );
 assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organism\)/);
 // One UniProt line; the variant's own sequence is named by its note; jargon states read plainly.
 {
-  const variantHtml = api.molecularIdentitySection(
+  const variantHtml = api.proteinSection(
     { primary_uniprot_id: "P22498", mutation_signature: "H150A", wild_type: false },
     { sequence_source: "uniprot_accession", sequence_variant_status: "reconstructed_variant_sequence", wild_type_sequence: "MAAA",
       variant_sequence: "MAAG", sequence_variant_note: "H150A applied to the UniProt canonical sequence" },
   );
-  assert.match(variantHtml, /<span>Enzyme form<\/span><strong>H150A variant<\/strong>/);
-  assert.match(variantHtml, /<summary>Variant sequence \(UniProt P22498 with H150A\) <span>4 aa<\/span><\/summary>/);
-  assert.match(variantHtml, /<span>UniProt<\/span><strong><a [^>]*>P22498<\/a><\/strong>/);
+  assert.match(variantHtml, /<dt>Enzyme form<\/dt><dd>Variant <code class="mutation">H150A<\/code><\/dd>/);
+  assert.match(variantHtml, /<dt>Variant sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa, UniProt P22498 with H150A<\/span>/);
+  assert.match(variantHtml, /<dt>Wild-type sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/);
+  // Show opens the sequence under its row; Copy copies it.
+  assert.match(variantHtml, /aria-expanded="false" aria-controls="detailVariantSequenceBox" data-reveal-target="detailVariantSequenceBox">Show<\/button><button class="text-button copy-button" type="button" aria-live="polite" data-copy-target="detailVariantSequence">Copy<\/button>/);
+  assert.match(variantHtml, /<span id="detailVariantSequenceBox" class="copy-field" hidden><code id="detailVariantSequence">MAAG<\/code><\/span>/);
+  assert.match(variantHtml, /<dt>UniProt<\/dt><dd><a [^>]*>P22498<\/a><\/dd>/);
   assert.doesNotMatch(variantHtml, /Sequence note|Sequence source|Variant: /);
-  const wildHtml = api.molecularIdentitySection({ primary_uniprot_id: "P1", wild_type: true },
+  const wildHtml = api.proteinSection({ primary_uniprot_id: "P1", wild_type: true },
     { sequence_variant_status: "canonical_wild_type_sequence", wild_type_sequence: "MAAA", sequence_variant_note: "UniProt canonical sequence" });
-  assert.match(wildHtml, /<span>Enzyme form<\/span><strong>Wild type<\/strong>/);
-  assert.doesNotMatch(wildHtml, /Sequence note/);
-  assert.match(api.molecularIdentitySection({}, { identity_resolution_state: "sequence_resolved_no_accession", sequence: "MAAA" }),
-    /<span>UniProt<\/span><strong>Sequence known, no UniProt entry<\/strong>/);
-  assert.match(api.molecularIdentitySection({}, { identity_resolution_state: "candidate_pool", uniprot_candidate_ids: ["P1", "P2"] }),
-    /<span>UniProt<\/span><strong>Several possible UniProt entries<div class="reference-list">/);
-  const unmatched = api.molecularIdentitySection({ mutation_signature: "R269A/N270A" }, { identity_resolution_state: "identity_unresolved",
+  assert.match(wildHtml, /<dt>Enzyme form<\/dt><dd>Wild type<\/dd>/);
+  assert.match(wildHtml, /<dt>Sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/, "a wild-type record's sequence is its Sequence");
+  assert.doesNotMatch(wildHtml, /Sequence note|UniProt canonical sequence/);
+  assert.match(api.proteinSection({}, { identity_resolution_state: "sequence_resolved_no_accession", sequence: "MAAA" }),
+    /<dt>UniProt<\/dt><dd>Sequence known, no UniProt entry<\/dd>/);
+  assert.match(api.proteinSection({}, { identity_resolution_state: "candidate_pool", uniprot_candidate_ids: ["P1", "P2"] }),
+    /<dt>UniProt<\/dt><dd>Several possible UniProt entries<div class="reference-list">/);
+  const unmatched = api.proteinSection({ mutation_signature: "R269A/N270A" }, { identity_resolution_state: "identity_unresolved",
     sequence_source: "manual_literature_uniprot_resolution",
     sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." });
-  assert.match(unmatched, /<span>UniProt<\/span><strong>Not matched to UniProt<\/strong>/);
-  assert.match(unmatched, /<span>Sequence<\/span><strong>None<\/strong>/);
+  assert.match(unmatched, /<dt>UniProt<\/dt><dd>Not matched to UniProt<\/dd>/);
+  assert.match(unmatched, /<dt>Sequence<\/dt><dd>None<\/dd>/);
   assert.doesNotMatch(unmatched, /shown as the variant sequence|from the cited paper/, "no note about a sequence that is not shown");
-  assert.match(api.molecularIdentitySection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
+  assert.match(api.proteinSection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
     /\(from the cited paper\)/);
 }
 assert.doesNotMatch(missingDetailConfidenceHtml, /confidence/);
@@ -1867,18 +1875,21 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   Object.assign(runtimeManifest, saved);
 }
 
-const kiMeasurementHtml = api.measurementSection(row(), {
+// The record's Values and Conditions sections together (what the round-4 Measurement and Assay conditions showed).
+const measurementSection = (summary, detail) => api.valuesSection(summary, detail) + api.conditionsSection(summary, detail);
+const kiMeasurementHtml = measurementSection(row(), {
   has_ki: true,
   ki_display: "0.25",
   ki_unit: "µM",
 });
-assert.match(kiMeasurementHtml, /class="measurement-strip has-ki"/);
-assert.match(kiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
-assert.match(kiMeasurementHtml, /<strong>0\.25<\/strong>/);
-assert.match(kiMeasurementHtml, /<small>µM<\/small>/);
+// Values: one row per stored value, Ki last; a value's number and its unit in their own cells.
+assert.match(kiMeasurementHtml, /<tr><th scope="row"><i>K<\/i><sub>i<\/sub><\/th><td class="vt-value"><span class="vt-number">0\.25<\/span><\/td><td class="vt-unit">µM<\/td>/);
+// An older record: As printed is a dash; no place is known, so no Where column.
+assert.match(kiMeasurementHtml, /<th scope="col">Parameter<\/th><th scope="col" class="vt-value">Value<\/th><th scope="col">Unit<\/th><th scope="col">As printed<\/th><\/tr>/);
+assert.match(kiMeasurementHtml, /<td class="vt-printed">—<\/td><\/tr>/);
+assert.ok(kiMeasurementHtml.indexOf("<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></th>") < kiMeasurementHtml.indexOf("<i>K</i><sub>i</sub></th>"), "Ki comes last");
 
-const noKiMeasurementHtml = api.measurementSection(row({ has_ki: false }), {});
-assert.doesNotMatch(noKiMeasurementHtml, /class="measurement-strip has-ki"/);
+const noKiMeasurementHtml = measurementSection(row({ has_ki: false }), {});
 assert.doesNotMatch(noKiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
 
 // Record panel: one number style; a quotient CatLog works out keeps its inputs' significant figures.
@@ -1945,8 +1956,8 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
     kcat_over_km: 1.3167, kcat_over_km_origin: "calculated" });
   assert.equal(api.panelValueHtml(calculated, "kcat_over_km"), "1.317");
 }
-// A value CatLog gives to the figures printed (value_display "135.0") keeps its trailing zero in the value strip, under
-// In catalog units and in the report email; another number in that field is not used.
+// A value CatLog gives to the figures printed (value_display "135.0") keeps its trailing zero in Values and in the report
+// email; another number in that field is not used.
 {
   const v2 = row({ record_key: "printed-zero", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     kcat: 135, kcat_display: "135", km: 0.03, km_display: "0.03", kcat_over_km: 4500, kcat_over_km_display: "4500",
@@ -1955,17 +1966,18 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
     proof_lines: [line("kcat", "135.0 ± 15.1 sec−1", "135.0"), line("Km", "30 µM", "0.030"), line("kcat/Km", "4.5 × 10^3", "4501")] });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<strong>135\.0<\/strong>|<strong>135\.0</, "the value strip keeps the printed zero");
-  assert.match(html, /<td>135\.0 s<sup>-1<\/sup>/, "In catalog units keeps it too");
-  assert.match(html, /<td>0\.030 mM/);
-  assert.match(html, /<td>4500 s<sup>-1<\/sup> mM<sup>-1<\/sup>/, "a value_display that is not the stored number is not used");
+  assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
+  assert.match(html, /<span class="vt-number">0\.030<\/span><\/td><td class="vt-unit">mM<\/td>/);
+  assert.match(html, /<span class="vt-number">4500<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup> mM<sup>-1<\/sup><\/td>/, "a value_display that is not the stored number is not used");
+  assert.match(html, /<caption>Printed in Table 1<\/caption>/, "a place every value shares is said once");
+  assert.doesNotMatch(html, /class="vt-where/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
   assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.030 mM/);
 }
 assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
 assert.equal(api.printedValueText("320", "mM"), "320 mM");
 // A flag is said once: a marker button on the value and one note under the values, no second list.
-const flaggedHtml = api.measurementSection(row({
+const flaggedHtml = measurementSection(row({
   kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
   condition_flags: ["kcat_over_km_quotient_mismatch"],
 }), {});
@@ -1987,7 +1999,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   const fromPaperRow = row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     kcat: 10.7, km: 0.00037, kcat_over_km: 28.9, kcat_display: "10.7", km_display: "0.00037", kcat_over_km_display: "28.9",
     kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", condition_flags: ["kcat_over_km_unit_mismatch"] });
-  const html = api.measurementSection(fromPaperRow, { proof_lines: [
+  const html = measurementSection(fromPaperRow, { proof_lines: [
     { metric: "Km", raw_value: "0.37 ± 0.01", raw_unit: "µM" },
     { metric: "kcat", raw_value: "10.7 ± 0.0", raw_unit: "s−1" },
     { metric: "kcat/Km", raw_value: "28.9", raw_unit: "mM−1 · s−1" },
@@ -2000,10 +2012,10 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
 }
 // A magnitude caution names the bound the value passes.
 {
-  const low = api.measurementSection(row({ km: 1e-14, km_display: "1e-14", condition_flags: ["km_magnitude_needs_check"] }), {});
+  const low = measurementSection(row({ km: 1e-14, km_display: "1e-14", condition_flags: ["km_magnitude_needs_check"] }), {});
   assert.match(low, /Km is below 1 nM; the unit may be wrong\./);
   assert.match(low, /aria-label="Km &lt; 1 nM\. Show the note\."/);
-  const high = api.measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
+  const high = measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
   assert.match(high, /kcat is above 10⁸ s⁻¹; the unit may be wrong\./);
   // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
   const unflaggedLow = row({ km: 2e-14, km_display: "2e-14", km_unit: "mM", condition_flags: [] });
@@ -2018,17 +2030,17 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     .has("kcat_magnitude_needs_check"), "a kcat in another unit keeps its flag");
 }
 // An older record's kcat/Km off by a unit factor shows the source's own value that agrees with kcat ÷ Km.
-const unitFlagHtml = api.measurementSection(row({
+const unitFlagHtml = measurementSection(row({
   kcat: 22.6, km: 0.35, kcat_over_km: 64000, kcat_display: "22.6", km_display: "0.35", kcat_over_km_display: "64000",
   condition_flags: ["kcat_over_km_unit_mismatch"], kcat_over_km_source_differs: true,
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
-assert.match(unitFlagHtml, /<strong>64<button class="value-flag"/);
+assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is close to 1000, the factor between per mM and per M\./);
 // v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
 const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
-assert.match(lines.cosubstrate, /<span>Cosubstrate<\/span><strong>NAD\+<\/strong>/);
-assert.match(lines.conditions, /<span>Conditions<\/span><strong>apparent kcat, Km<\/strong>/);
-assert.match(lines.preparation, /<strong>purified<\/strong>/);
+assert.match(lines.cosubstrate, /<dt>Cosubstrate<\/dt><dd>NAD\+<\/dd>/);
+assert.match(lines.conditions, /<dt>Assay<\/dt><dd>apparent kcat, Km<\/dd>/);
+assert.match(lines.preparation, /<dt>Preparation<\/dt><dd>purified<\/dd>/);
 // The AI reader's remarks about its own reading never show; the facts before them stay (PMIDs 29115742, 18783250, 27271847).
 {
   const remarks = api.conditionLines([
@@ -2053,32 +2065,32 @@ const withheldConditions = row({
   condition_flags: ["temperature_zero_celsius_needs_check", "ph_outside_0_14"],
 });
 const withheldConditionsBefore = structuredClone(withheldConditions);
-const withheldMeasurementHtml = api.measurementSection(withheldConditions, {
+const withheldMeasurementHtml = measurementSection(withheldConditions, {
   temperature_k: null,
   ph: null,
   condition_flags: withheldConditions.condition_flags,
 });
 // A flag on the temperature or pH is said on its row, never as a bare dash; the kinetic notes stay about the values.
-assert.ok(withheldMeasurementHtml.includes("<span>Temperature</span><strong>Not shown, recorded as exactly 0 °C, which may stand for a missing value</strong>"));
-assert.ok(withheldMeasurementHtml.includes("<span>pH</span><strong>Not shown, the source&#39;s value is outside 0–14</strong>"));
-assert.doesNotMatch(withheldMeasurementHtml, /class="flag-notes"|<strong>—<\/strong>/);
+assert.ok(withheldMeasurementHtml.includes("<dt>Temperature</dt><dd>Not shown, recorded as exactly 0 °C, which may stand for a missing value</dd>"));
+assert.ok(withheldMeasurementHtml.includes("<dt>pH</dt><dd>Not shown, the source&#39;s value is outside 0–14</dd>"));
+assert.doesNotMatch(withheldMeasurementHtml, /class="flag-notes"|<dd>—<\/dd>/);
 assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
 {
   // The source's note gives the temperature it printed; a record read from the paper says what the paper does not state.
-  const unitFlag = api.measurementSection(row({ temperature_k: null, temperature_display: "n/a", condition_flags: ["temperature_unit_needs_check"] }),
+  const unitFlag = measurementSection(row({ temperature_k: null, temperature_display: "n/a", condition_flags: ["temperature_unit_needs_check"] }),
     { proof_lines: ["pH 7.4, 30°C, recombinant mutant"] });
-  assert.ok(unitFlag.includes("<span>Temperature</span><strong>Not shown, the source&#39;s temperature unit is unclear (source note: 30 °C)</strong>"));
-  const v2Missing = api.measurementSection(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+  assert.ok(unitFlag.includes("<dt>Temperature</dt><dd>Not shown, the source&#39;s temperature unit is unclear (source note: 30 °C)</dd>"));
+  const v2Missing = measurementSection(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null, substrate_name: "NADH" }),
   { verification_method: "catlog_v2_read_and_independent_verify",
     assay_conditions_summary: "pH left blank: the printed value could not be confirmed in the paper text; assay temperature not stated; buffer not stated; cofactor NADH" });
-  assert.ok(v2Missing.includes("<span>Temperature</span><strong>Not stated in the paper</strong>"));
-  assert.ok(v2Missing.includes("<span>pH</span><strong>Not confirmed in the paper text</strong>"));
-  assert.match(v2Missing, /<span>Conditions<\/span><strong>buffer not stated<\/strong>/);
-  assert.doesNotMatch(v2Missing, /left blank|assay temperature not stated|<span>Cofactor<\/span>/);
-  const dbMissing = api.measurementSection(row({ temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null }), {});
-  assert.ok(dbMissing.includes("<span>Temperature</span><strong>Not recorded</strong>"));
-  assert.ok(dbMissing.includes("<span>pH</span><strong>Not recorded</strong>"));
+  assert.ok(v2Missing.includes("<dt>Temperature</dt><dd>Not stated in the paper</dd>"));
+  assert.ok(v2Missing.includes("<dt>pH</dt><dd>Not confirmed in the paper text</dd>"));
+  assert.match(v2Missing, /<dt>Assay<\/dt><dd>buffer not stated<\/dd>/);
+  assert.doesNotMatch(v2Missing, /left blank|assay temperature not stated|<dt>Cofactor<\/dt>/);
+  const dbMissing = measurementSection(row({ temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null }), {});
+  assert.ok(dbMissing.includes("<dt>Temperature</dt><dd>Not recorded</dd>"));
+  assert.ok(dbMissing.includes("<dt>pH</dt><dd>Not recorded</dd>"));
 }
 assert.deepEqual(withheldConditions, withheldConditionsBefore);
 
@@ -2150,8 +2162,8 @@ api.renderDetail(row({ record_key: "doi-case-duplicates" }), {
 let referenceHtml = element("detailContent").innerHTML;
 assert.equal((referenceHtml.match(/href="https:\/\/doi.org\//g) || []).length, 1);
 assert.ok(referenceHtml.includes('href="https://doi.org/10.1128/AEM.03151-20"'));
-assert.match(referenceHtml, /<span>DOI<\/span>/);
-assert.doesNotMatch(referenceHtml, /<span>DOIs<\/span>/);
+assert.match(referenceHtml, /<dt>DOI<\/dt>/);
+assert.doesNotMatch(referenceHtml, /<dt>DOIs<\/dt>/);
 assert.deepEqual(doiCaseVariants, ["10.1128/AEM.03151-20", "10.1128/aem.03151-20"]);
 
 api.renderDetail(row({ record_key: "doi-distinct-references" }), {
@@ -2160,7 +2172,7 @@ api.renderDetail(row({ record_key: "doi-distinct-references" }), {
 referenceHtml = element("detailContent").innerHTML;
 const doiHrefs = [...referenceHtml.matchAll(/href="(https:\/\/doi.org\/[^\"]+)"/g)].map(match => match[1]);
 assert.deepEqual(doiHrefs, ["https://doi.org/10.1128/AEM.03151-20", "https://doi.org/10.1000/Second"]);
-assert.match(referenceHtml, /<span>DOIs<\/span>/);
+assert.match(referenceHtml, /<dt>DOIs<\/dt>/);
 
 // A stand-in paper ID (a paper without a PMID) is shown as text, never as a PubMed link; the e-mail names the DOI.
 api.renderDetail(row({ record_key: "stand-in-paper" }), {
@@ -2170,7 +2182,7 @@ api.renderDetail(row({ record_key: "stand-in-paper" }), {
 });
 referenceHtml = element("detailContent").innerHTML;
 assert.doesNotMatch(referenceHtml, /pubmed\.ncbi\.nlm\.nih\.gov\/NP/);
-assert.match(referenceHtml, /<span>Paper ID<\/span><strong>NP1a2b3c4d \(no PMID\)<\/strong>/);
+assert.match(referenceHtml, /<dt>Paper ID<\/dt><dd>NP1a2b3c4d \(no PMID\)<\/dd>/);
 assert.match(decodeURIComponent(referenceHtml.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1]), /DOI 10\.1000\/standin, paper NP1a2b3c4d/);
 // An EC or organism stated nowhere says which of the two is unknown; a record without values says so.
 api.renderDetail(row({ record_key: "unknowns", ec_number: "Unknown", organism: "Unknown", kcat: null, km: null, kcat_over_km: null,
@@ -2182,11 +2194,11 @@ api.renderDetail(row({ record_key: "unknowns-v2", source_db: "primary_paper_dire
 assert.match(element("detailContent").innerHTML, /EC 1\.1\.1\.1 &middot; organism not stated in the paper<\/p>/);
 assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Not stated in the paper<\/span>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
-assert.match(referenceHtml, /<span>SMILES<\/span><strong>None<\/strong>/);
+assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
-// The record: name; EC, organism and variant; substrate; status. Then Measurement (with the values as printed),
-// Assay conditions, Paper and review, Protein and structure, Source details.
+// The record (design spec 5): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values (with
+// the values as printed), Source, Conditions, Protein and substrate, Paper, Review and audit, Source details last.
 {
   const v2Summary = row({ record_key: "v2-structure", measurement_key: "v2-structure", source_db: "primary_paper_direct",
     enzyme_label_source: "explicit_enzyme_name", ec_number: "1.4.1.20", organism: "Bacillus sphaericus",
@@ -2200,21 +2212,29 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     ],
   });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; Bacillus sphaericus &middot; N145A variant<\/p>/);
+  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; Variant <code class="mutation">N145A<\/code><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
-  const order = ["<h3>Measurement</h3>", "<h4>As printed in the paper (Table 2)</h4>", "<h3>Assay conditions</h3>",
-    "<h3>Paper and review</h3>", "<h3>Protein and structure</h3>", "<summary>Source details</summary>", 'id="downloadSelectedJson"'];
+  assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
+  const order = ['class="detail-top"', ">Values</h3>", ">Source</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
+    ">Review and audit</h3>", 'id="downloadSelectedJson"', "<summary>Source details</summary>"];
   const positions = order.map((part) => html.indexOf(part));
   assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
-  assert.match(html, /<th scope="col">As printed<\/th><th scope="col">In catalog units<\/th><\/tr>/);
-  // A long substrate name is cut short in the header and given in full under Assay conditions.
+  assert.match(html, /<caption>Printed in Table 2<\/caption><thead><tr><th scope="col">Parameter<\/th>/);
+  assert.match(html, /<td class="vt-printed">68 s<sup>-1<\/sup><\/td><\/tr>/);
+  assert.match(html, /<dt>Location<\/dt><dd>Table 2<\/dd>/);
+  assert.doesNotMatch(html, /Against the databases/, "no database comparison in the snapshot: no section");
+  assert.match(html, /<dt>Status<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd>/);
+  // Organism names: the binomial in italics; a strain or "sp." stays roman; a virus stays roman.
+  assert.equal(api.organismHtml("Escherichia coli K-12"), "<i>Escherichia coli</i> K-12");
+  assert.equal(api.organismHtml("Bacillus sp. A1"), "<i>Bacillus</i> sp. A1");
+  assert.equal(api.organismHtml("Human immunodeficiency virus 1"), "Human immunodeficiency virus 1");
+  assert.equal(api.organismHtml("unidentified bacterium"), "unidentified bacterium");
+  // The substrate is cut short in the header and given in full under Protein and substrate.
   const longName = `${"2-deoxy-3-O-[(3R)-3-hydroxytetradecanoyl]-".repeat(3)}glucose`;
   api.renderDetail(row({ record_key: "long-substrate", substrate_name: longName }), {});
-  assert.match(element("detailContent").innerHTML, new RegExp(`<span>Substrate</span><strong>${longName.replace(/[[\]()]/g, "\\$&")}</strong>`));
-  api.renderDetail(row({ record_key: "short-substrate" }), {});
-  assert.doesNotMatch(element("detailContent").innerHTML, /<span>Substrate<\/span>/);
+  assert.match(element("detailContent").innerHTML, new RegExp(`<dt>Substrate</dt><dd>${longName.replace(/[[\]()]/g, "\\$&")}</dd>`));
   // The status line names the result and the source as the table does (one helper); Not checked keeps the earlier
   // status in brackets.
   api.renderDetail(row({ record_key: "status-words", verification_status: "mathematically_inferred", source_db: "skid" }), {});
@@ -2233,16 +2253,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify; ec_from_databases",
     proof_lines: [line("kcat", ""), line("Km", "")] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<span>Method<\/span><strong>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →<\/span><\/a><\/strong>/);
-  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/);
+  assert.match(html, /<dt>Method<\/dt><dd>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →<\/span><\/a><\/dd>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
-  assert.doesNotMatch(html, /<span>Review<\/span>|second, separate AI run|independent/);
+  assert.doesNotMatch(html, /<dt>Evidence<\/dt>|second, separate AI run|independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /compared each value with the paper; units converted by code\./);
-  assert.match(html, /<span>Check<\/span><strong>kcat: confirmed; Km: unit set to mM\.<\/strong>/);
-  assert.match(html, /<th scope="col">AI check<\/th>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>kcat: confirmed; Km: unit set to mM\.<\/dd>/);
+  assert.match(html, /<ul class="value-notes"><li>kcat: converted by code from the printed unit\.<\/li><\/ul>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
   assert.match(badge, /aria-label="Accepted, from paper"/);
@@ -2258,13 +2278,14 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { audit_date: "2026-10-11", audit_result: "kept" }), line("Km", { audit_date: "2026-10-11", audit_result: "kept" })] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong><\/div><div class="kv-line"><span>AI audit<\/span><strong>Oct 11, 2026: re-checked against the paper and kept\.<\/strong>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
+  assert.match(html, /<dt>Status<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd><\/div><div class="kv-line"><dt>AI audit<\/dt><dd>Oct 11, 2026: re-checked against the paper and kept\.<\/dd>/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { check: "confirmed; re-checked in an independent audit (2026-10-11)" }),
       line("Km", { check: "confirmed; unit corrected in an independent audit (2026-10-11)" })] });
   html = element("detailContent").innerHTML;
-  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/, "the audit suffix does not hide the check");
-  assert.match(html, /<span>AI audit<\/span><strong>Oct 11, 2026: kcat re-checked against the paper and kept\. Oct 11, 2026: Km re-checked against the paper; the unit was corrected\.<\/strong>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/, "the audit suffix does not hide the check");
+  assert.match(html, /<dt>AI audit<\/dt><dd>Oct 11, 2026: kcat re-checked against the paper and kept\. Oct 11, 2026: Km re-checked against the paper; the unit was corrected\.<\/dd>/);
   assert.doesNotMatch(html, /independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: [line("kcat"), line("Km")] });
   assert.doesNotMatch(element("detailContent").innerHTML, /AI audit/, "no audit, no line");
@@ -2278,16 +2299,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_unit: "s^(-1)*mM^(-1)" });
   const proofLine = (metric, raw_value, raw_unit, conversion) => ({ metric, table_label: "Table I", raw_value, raw_unit,
     printed: `${raw_value} ${raw_unit}`, check: "confirmed", conversion });
-  const confirmedHtml = api.measurementSection(confirmedSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+  const confirmedHtml = measurementSection(confirmedSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("Km", "228.78", "µM", "converted by code"), proofLine("kcat", "12.45", "min^-1", "converted by code"),
       proofLine("kcat/Km", "55.06", "µM^-1 min^-1", "converted by code, printed unit read as mM^-1 min^-1")] });
   assert.match(confirmedHtml, /The paper prints µM⁻¹ min⁻¹; CatLog uses mM⁻¹ min⁻¹, the unit in which the printed kcat\/Km \(55\.06\) agrees with kcat ÷ Km \(54\.41\)\./);
   assert.match(confirmedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"[^>]*aria-label="kcat\/Km: printed unit differs\. Show the note\."/);
-  assert.match(confirmedHtml, /<small>converted by code<\/small><small class="unit-caution"><span class="value-flag" aria-hidden="true"><\/span>CatLog uses mM⁻¹ min⁻¹, not the printed µM⁻¹ min⁻¹<\/small>/);
+  // The value carries the "!" (its amber note says which unit and why); the grey note says only that code converted it.
+  assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
+  assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>-1<\/sup> min<sup>-1<\/sup>/);
+  assert.match(confirmedHtml, /<li>kcat, Km and kcat\/Km: converted by code from the printed units\.<\/li>/);
   assert.doesNotMatch(confirmedHtml, /printed unit read as/);
   const bothSummary = v2({ record_key: "unit-both", kcat: 150, km: 2.9, kcat_over_km: 54, kcat_display: "150", km_display: "2.9",
     kcat_over_km_display: "54", kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)" });
-  const bothHtml = api.measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+  const bothHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
@@ -2300,10 +2324,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(methodHtml, /values stored as printed/);
   assert.match(methodHtml, /compared each value with the paper; not every value is stored in the unit the paper prints \(see the notes\)\./);
   // The same prefix read differently (M^-1 s^-1 for m^-1 s^-1) keeps the plain grey hint.
-  const sameHtml = api.measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+  const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
-  assert.match(sameHtml, /<small>converted by code, printed unit read as 10<sup>3<\/sup> M-1 s-1<\/small>/);
+  assert.match(sameHtml, /<li>kcat\/Km: converted by code, printed unit read as 10<sup>3<\/sup> M-1 s-1\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
 // when every one is more than 2-fold from kcat ÷ Km, an amber note says so.
@@ -2312,8 +2336,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_display: "14.666", kcat_over_km_origin: "calculated", kcat_unit: "s^(-1)", km_unit: "mM",
     kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_source_differs: true, source_db: "oed" });
   const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
-  const html = api.measurementSection(merged, { source_kcat_over_km_values: listed });
-  assert.match(html, /<span>kcat\/Km listed by OED<\/span><strong><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/strong>/);
+  const html = measurementSection(merged, { source_kcat_over_km_values: listed });
+  assert.match(html, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
@@ -2322,12 +2346,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const flagged = Object.assign(row({ ...merged, condition_flags: ["kcat_over_km_source_mismatch"] }), {});
   assert.equal(api.rowCautionBits(flagged), 1, "counted under kcat/Km mismatch, not under No cautions");
   assert.match(api.valueFlagBadgeHtml(api.conditionFlags(flagged), "kcat_over_km", flagged), /title="Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown"/);
-  const flaggedHtml = api.measurementSection(flagged, { source_kcat_over_km_values: listed });
+  const flaggedHtml = measurementSection(flagged, { source_kcat_over_km_values: listed });
   assert.match(flaggedHtml, /is 2\.4–4\.9-fold above every kcat\/Km OED lists/);
   assert.doesNotMatch(flaggedHtml, /Kcat over km|source mismatch|more than 2-fold from the kcat\/Km shown/);
-  assert.match(api.measurementSection(flagged, {}), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
+  assert.match(measurementSection(flagged, {}), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
   assert.equal(api.rowCautionBits(row({ record_key: "ph-only", condition_flags: ["ph_outside_0_14"] })), 16, "a flag of no group is no caution, as Stats counts it");
-  const close = api.measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  const close = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(close, /kcat\/Km listed by BRENDA/);
   assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");
 }
@@ -2369,7 +2393,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
 // k<sub>cat</sub>; a long table row or one whose ± signs were lost is folded away with a warning.
 {
   const v2Summary = row({ record_key: "printed-lines", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
-  const quoted = (printed_line, metric = "Km") => api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+  const quoted = (printed_line, metric = "Km") => measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric, table_label: "Table 2", printed: "1 mM", printed_line, check: "confirmed", conversion: "" }] });
   let html = quoted("mpCAR [rowspan] | K_m [mm] | 20±4*");
   assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
@@ -2384,7 +2408,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const longRow = quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9");
   assert.match(longRow, /<details class="printed-line-disclosure">/, "more than four cells");
   assert.doesNotMatch(longRow, /printed-line-note/, "a row that kept its ± signs gets no warning");
-  assert.doesNotMatch(api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+  assert.doesNotMatch(measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
   /row, as extracted/, "only a table's line is a row");
 }
@@ -2399,39 +2423,38 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render([line("kcat", "corrected: construct description"), line("Km", "corrected: construct description")],
     { assay_conditions_summary: "50 mM Tris; preparation: His-tagged" });
-  assert.match(html, /<span>Check<\/span><strong>All values confirmed\. The AI check also corrected the construct description \(see Preparation\)\.<\/strong>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\. The AI check also corrected the construct description \(see Preparation\)\.<\/dd>/);
   assert.doesNotMatch(html, /AI check<\/th>|second run|for every value:/);
   html = render([line("kcat", "corrected: unit used for the conversion (was none, now mM)"), line("Km", "corrected: unit used for the conversion (was none, now mM)")]);
-  assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\.<\/strong>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>Unit set to mM for every value\.<\/dd>/);
   html = render([line("kcat", "confirmed"), line("Km", "corrected: EC number (was 2.7.2.12, now none); assay conditions; qualifier (apparent, Hill fit or similar)")],
     { assay_conditions_summary: "pH 7; 50 mM Tris" });
-  assert.match(html, /<th scope="col">AI check<\/th>/);
-  assert.match(html, /<td>Confirmed<\/td><\/tr>/);
-  assert.match(html, /<td>Qualifier corrected<\/td><\/tr>/);
-  assert.match(html, /The AI check also removed EC 2\.7\.2\.12 and corrected the assay conditions \(see Conditions\)\.<\/strong>/);
+  // Values whose results differ: the Second check line names each value's result (no column in Values).
+  assert.doesNotMatch(html, /AI check<\/th>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>kcat: confirmed; Km: qualifier corrected\. The AI check also removed EC 2\.7\.2\.12 and corrected the assay conditions \(see Conditions\)\.<\/dd>/);
   assert.doesNotMatch(html, /\(was |unit used for the conversion/);
   // Phrases already in plain words pass through; a caution on a confirmed value is pointed to.
   html = render([line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")]);
-  assert.match(html, /All values confirmed\.<\/strong>/);
+  assert.match(html, /All values confirmed\.<\/dd>/);
   api.renderDetail(row({ record_key: "checks-flag", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
     condition_flags: ["kcat_over_km_quotient_mismatch"] }), { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")] });
-  assert.match(element("detailContent").innerHTML, /<span>Check<\/span><strong>All values confirmed as printed; see the note on kcat\/Km\.<\/strong>/);
+  assert.match(element("detailContent").innerHTML, /<dt>Second check<\/dt><dd>All values confirmed as printed; see the note on kcat\/Km\.<\/dd>/);
   html = render([line("kcat", "corrected: cosubstrate; assay conditions")], { assay_conditions_summary: "50 mM Tris" });
-  assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/strong>/);
+  assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/dd>/);
   html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.1 removed")]);
-  assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/strong>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/dd>/);
   // CatLog's words for a field the reader left empty ("set to") or the check emptied ("left blank") read as actions too.
   html = render([line("kcat", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected"),
     line("Km", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected")]);
-  assert.match(html, /All values confirmed\. The AI check also left the pH blank and the temperature blank, set the EC number to 3\.2\.1\.23 and corrected the protein IDs\.<\/strong>/);
+  assert.match(html, /All values confirmed\. The AI check also left the pH blank and the temperature blank, set the EC number to 3\.2\.1\.23 and corrected the protein IDs\.<\/dd>/);
   html = render([line("kcat", "corrected: organism set to Carica papaya")]);
-  assert.match(html, /All values confirmed\. The AI check also set the organism to Carica papaya\.<\/strong>/);
+  assert.match(html, /All values confirmed\. The AI check also set the organism to Carica papaya\.<\/dd>/);
   html = render([line("kcat", "corrected: pH set to 7.5; variant set to K12A; temperature set to 30 °C")]);
-  assert.match(html, /The AI check also set the pH to 7\.5, the variant to K12A and the temperature to 30 °C\.<\/strong>/);
+  assert.match(html, /The AI check also set the pH to 7\.5, the variant to K12A and the temperature to 30 °C\.<\/dd>/);
   html = render([line("kcat", "corrected: pH corrected to 7.0; variant removed; organism removed")]);
-  assert.match(html, /The AI check also corrected the pH to 7\.0 and removed the variant and the organism\.<\/strong>/);
+  assert.match(html, /The AI check also corrected the pH to 7\.0 and removed the variant and the organism\.<\/dd>/);
   assert.doesNotMatch(html, /also (?:pH|EC|organism|temperature|variant) /);
 }
 // An older record's notes: under "Earlier automated review: where the values are printed", Where, As printed and the
@@ -2444,9 +2467,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   });
   const html = element("detailContent").innerHTML;
   assert.match(html, /<summary>Earlier automated review: where the values are printed<\/summary>/);
-  assert.match(html, /<span>Where<\/span><strong>Table III · row Butanol<\/strong>/);
-  assert.match(html, /<span>As printed<\/span><strong>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>-1<\/sup>\)<\/strong>/);
-  assert.match(html, /<span>Conversion<\/span><strong>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup> \(no conversion\)\.<\/strong>/);
+  assert.match(html, /<dt>Where<\/dt><dd>Table III · row Butanol<\/dd>/);
+  assert.match(html, /<dt>As printed<\/dt><dd>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>-1<\/sup>\)<\/dd>/);
+  assert.match(html, /<dt>Conversion<\/dt><dd>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup> \(no conversion\)\.<\/dd>/);
   // The earlier pipeline's reasoning goes; what was printed and the arithmetic stay (6d4893fb4e83eb11, a6c5593105452783).
   assert.equal(api.conversionFacts("Km: printed Table 1 cell 14.8 uM; 1 uM is 0.001 mM, so 14.8 / 1000 = 0.0148 mM; kcat: printed Table 1 cell 0.610 s-1; the printed unit is already the canonical s-1, so no unit conversion applies and the paper-side value is 0.61 s-1"),
     "Km: printed Table 1 cell 14.8 µM; 14.8 / 1000 = 0.0148 mM. kcat: printed Table 1 cell 0.610 s-1 (no conversion).");
@@ -2456,13 +2479,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(api.conversionFacts("kcat: printed cell 22 +/- 0.6 s^-1 is already in canonical units, 22.0 s^(-1)."), "kcat: printed cell 22 +/- 0.6 s^-1 (no conversion).");
   // A clause whose printed number would go is kept as it was.
   assert.match(api.conversionFacts("kcat: the column is per second, so no unit conversion applies"), /^kcat: no conversion\.$/);
-  assert.match(html, /<span>Evidence<\/span><strong>Located in the paper<\/strong>/);
+  assert.match(html, /<dt>Evidence<\/dt><dd>Located in the paper<\/dd>/);
   assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
   api.renderDetail(row({ record_key: "older-normalized", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
     proof_lines: [{ table_label: "Table 1", normalized_value_unit_evidence: "Normalized paper Km: 14.29 uM = 0.01429 mM" }] });
-  assert.match(element("detailContent").innerHTML, /<span>Conversion<\/span><strong>paper Km: 14\.29 µM = 0\.01429 mM\.<\/strong>/);
+  assert.match(element("detailContent").innerHTML, /<dt>Conversion<\/dt><dd>paper Km: 14\.29 µM = 0\.01429 mM\.<\/dd>/);
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
-  assert.match(element("detailContent").innerHTML, /<span>Evidence<\/span><strong>Paper cited \(values not located\)<\/strong>/);
+  assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited \(values not located\)<\/dd>/);
 }
 // Source names: a record CatLog read says so; databases by name, never a raw key; a database note is headed by its
 // source, without an importer's label, and is not shown when it only repeats the temperature and pH.
@@ -2473,18 +2496,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  assert.match(html, /<span>Source<\/span><strong>The paper \(read by CatLog\)<\/strong>/);
-  assert.match(html, /<span>Name from<\/span><strong>Paper<\/strong>/);
+  assert.match(html, /<dt>Source<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
+  assert.match(html, /<dt>Name from<\/dt><dd>Paper<\/dd>/);
   html = render({ source_db: "strenda", proof_kind: "source_note", has_proof_excerpt: false },
     { proof_lines: ["Raw STRENDA Extraction: kcat/Km\t4200.0 (+/-) 290.0 M⁻¹ s⁻¹"] });
   assert.match(html, /<summary>Note from STRENDA DB<\/summary>/);
   assert.match(html, /<p class="evidence-note-plain">kcat\/Km 4200\.0 ± 290\.0 M⁻¹ s⁻¹<\/p>/);
-  assert.match(html, /<span>Source<\/span><strong>STRENDA DB<\/strong>/);
-  assert.doesNotMatch(html, /Raw STRENDA|<span>Evidence<\/span><strong>Database note/);
+  assert.match(html, /<dt>Source<\/dt><dd>STRENDA DB<\/dd>/);
+  assert.doesNotMatch(html, /Raw STRENDA|<dt>Evidence<\/dt><dd>Database note/);
   html = render({ source_db: "sabio_rk;brenda", enzyme_label_source: "brenda_recommended_name", proof_kind: "source_note",
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7.5" }, { proof_lines: ["pH 7.5, 25°C"] });
-  assert.match(html, /<span>Source<\/span><strong>BRENDA, SABIO-RK<\/strong>/, "named as the status line names them");
-  assert.match(html, /<span>Name from<\/span><strong>BRENDA recommended name<\/strong>/);
+  assert.match(html, /<dt>Source<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "named as the status line names them");
+  assert.match(html, /<dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/);
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
   // SKiD's notes as CatLog writes them ("SKiD: 55°C, pH 8.9"): hidden when they only repeat T and pH; otherwise shown
   // without repeating the source the heading names.
@@ -2500,7 +2523,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<p class="evidence-note-plain">pH 7\.5, 30°C<\/p>/);
   assert.doesNotMatch(html, /SKiD: 30°C/, "the SKiD note repeats T and pH");
 }
-// The report email quotes the numbers as the record shows them; the paper's title and year lead Paper and review.
+// The report email quotes the numbers as the record shows them; the paper's title and year lead Paper.
 {
   api.renderDetail(row({ record_key: "report-numbers", kcat: 7.333, km: 0.5, kcat_over_km: 14.666, kcat_display: "7.333",
     km_display: "0.5", kcat_over_km_display: "14.666", kcat_over_km_origin: "calculated", kcat_unit: "s^(-1)", km_unit: "mM",
@@ -2509,9 +2532,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
   assert.match(body, /kcat 7\.33 s⁻¹; Km 0\.5 mM; kcat\/Km 15 s⁻¹ mM⁻¹; PMID 2936344/, "440/60 stored as 7.333 shows 3 figures");
   assert.doesNotMatch(body, /14\.666|7\.333/);
-  assert.match(html, /<h3>Paper and review<\/h3>\s*<div class="detail-kv"><div class="kv-line"><span>Paper<\/span><strong>Probing an invariant His \(2019\)<\/strong><\/div>/);
+  assert.match(html, /<h3 id="detail-paper-title">Paper<\/h3><dl class="detail-kv"><div class="kv-line"><dt>Title<\/dt><dd>Probing an invariant His \(2019\)<\/dd><\/div>/);
   api.renderDetail(row({ record_key: "no-title" }), {});
-  assert.doesNotMatch(element("detailContent").innerHTML, /<span>Paper<\/span>/);
+  assert.doesNotMatch(element("detailContent").innerHTML, /<dt>Title<\/dt>/);
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
@@ -2532,18 +2555,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
-  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value on this record\.<\/strong><\/div>/);
+  assert.match(html, /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value on this record\.<\/dd><\/div>/);
   assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every value shown\."/);
   assert.match(api.statusBadge(accepted), /aria-label="Accepted, BRENDA, human-checked"/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
-  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/strong>/);
+  assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/dd>/);
   api.renderDetail(noted, {});
   // A note's review year is not shown (facts only).
-  assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km in CatLog&#39;s review of the earlier catalog\./);
+  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier catalog\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
-  assert.match(element("detailContent").innerHTML, /<strong>A human reviewer approved the same kcat and Km for this paper in the review of the earlier catalog; kcat\/Km was not reviewed\.<\/strong>/);
+  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier catalog; kcat\/Km was not reviewed\.<\/dd>/);
 
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
     summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
@@ -2657,7 +2680,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-lice
   const text = JSON.stringify(v2Payload);
   assert.doesNotMatch(text, /independent|AI run|catlog_v2|accession_resolved|normali[sz]ed|proof_lines|verification_method/);
 }
-const detailFalseKiHtml = api.measurementSection(row({
+const detailFalseKiHtml = measurementSection(row({
   has_ki: true,
   ki_display: "0.5",
   ki_unit: "mM",
@@ -3036,11 +3059,13 @@ assert.equal(
   "a material quotient discrepancy should remain visible",
 );
 
+// Loading, success and error draw one header helper, which holds the focusable heading.
 assert.equal(
-  (sourceCode.match(/\$\{detailHeadingHtml\((?:row|summary)\)\}/g) || []).length,
+  (sourceCode.match(/\$\{detailTopHtml\((?:row|summary), /g) || []).length,
   3,
   "loading, success, and error details should expose a programmatically focusable heading",
 );
+assert.equal((sourceCode.match(/\$\{detailHeadingHtml\((?:row|summary)\)\}/g) || []).length, 1, "the header helper draws the heading");
 assert.equal((sourceCode.match(/<h2 id="detailHeading" tabindex="-1"/g) || []).length, 1, "one heading helper");
 assert.equal(
   (sourceCode.match(/if \(focusDetail\) focusDetailHeading\(key\);/g) || []).length,
