@@ -4142,7 +4142,7 @@
         <rect x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
         <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text></g>`;
     }).join("") : "";
-    const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
+    const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
     return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-labelledby="teamFigureTitle-${layoutKey}">
       <title id="teamFigureTitle-${layoutKey}">CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated, and back to papers; CatLog also feeds the website and the paper.</title>

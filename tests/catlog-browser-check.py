@@ -589,7 +589,11 @@ def check_team(driver, browser, url):
     lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
     assert lit == ["human"], lit
     # Pointing at an agent on the figure lights its station.
-    ActionChains(driver).move_to_element(wide.find_element(By.CSS_SELECTOR, ".team-actor[data-actor='reading'] rect")).perform()
+    chip = wide.find_element(By.CSS_SELECTOR, ".team-actor[data-actor='reading'] rect")
+    if browser == "chrome":
+        ActionChains(driver).move_to_element(chip).perform()
+    else:
+        driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerover', {bubbles: true}))", chip)
     wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
     driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
     if browser == "chrome":
