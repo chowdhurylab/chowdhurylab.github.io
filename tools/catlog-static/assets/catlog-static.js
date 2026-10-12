@@ -8666,10 +8666,12 @@
         openMenu.querySelector("summary")?.focus();
         return;
       }
+      // Escape in a filled search box (the header's or a filter's) only empties that box, as the browser does, and the
+      // results follow; an open record or phone sheet stays open until the next Escape.
+      const activeElement = document.activeElement;
+      if (event.key === "Escape" && activeElement?.matches?.('input[type="search"]') && activeElement.value) return;
       // Escape closes the phone sheet; the sidebar is part of the page and stays (« collapses it).
       if (event.key === "Escape" && document.body.classList.contains("filters-open") && !filtersDocked()) {
-        const activeElement = document.activeElement;
-        if (activeElement?.matches?.('input[type="search"]') && activeElement.value) return;
         setFiltersOpen(false, { focus: false });
         $("openFiltersButton")?.focus();
         return;

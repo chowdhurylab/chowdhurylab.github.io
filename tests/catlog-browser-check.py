@@ -850,6 +850,24 @@ def check_filters(driver, browser, url, route_label):
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         assert driver.execute_script("return document.body.classList.contains('filters-open')")
         if browser == "chrome":
+            # Escape in a filled search box empties it and the results follow (the box and the results never disagree);
+            # an open record stays open until the next Escape. (The first Escape may only close the suggestions.)
+            search = driver.find_element(By.ID, "globalSearchInput")
+            search.send_keys("dehydrogenase")
+            wait.until(lambda d: "q" in chip_keys())
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')"))
+            search.click()
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            if search.get_attribute("value"):
+                ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: "q" not in chip_keys())
+            assert search.get_attribute("value") == "" and "q=" not in fragment(), fragment()
+            assert driver.execute_script("return document.body.classList.contains('detail-open')"), "The record stays open"
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+            wait_ready()
+        if browser == "chrome":
             # Phones keep the filters as a full-screen sheet that ends with "Show N records".
             set_browse_viewport(driver, browser, 390, 844)
             wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
