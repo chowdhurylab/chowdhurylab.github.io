@@ -1792,6 +1792,7 @@ function row(overrides = {}) {
   // Where the paper shows CatLog right, what the earlier catalog had wrong (the README's split).
   assert.match(lead, /In the 109 differences where the paper shows CatLog right, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);
   assert.doesNotMatch(lead, /Same value<\/dt>/, "Without a first comparison the big number already gives the same-value count");
+  assert.match(element("statsCharts").innerHTML, /<td>2,232 the same in CatLog \(89\.7%\)<\/td>/, "No first comparison: the count stands alone");
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex/);
   // The Guide's method section opens with the same agreement, in one sentence linked to Stats.
@@ -1809,6 +1810,11 @@ function row(overrides = {}) {
   assert.match(lead, /At the first comparison, on the 58 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for 84\.7% of the values they approved\./);
   assert.match(lead, /First comparison<\/dt><dd>2,110 the same \(84\.8%\)/);
   assert.match(lead, /Now, after fixes<\/dt><dd>2,232 \(89\.7%\)/);
+  // Table 1 beside that lead says its agreement count is the one after fixes; its bars are grey, as in the other tables.
+  assert.match(element("statsCharts").innerHTML, /<tr data-check="agreement">[\s\S]*?<td>2,232 the same in CatLog now, after fixes \(89\.7%\)<\/td>/);
+  const checksTable = element("statsCharts").innerHTML.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0];
+  assert.match(checksTable, /stats-minibar"><span class="stats-seg stats-part-neutral"/);
+  assert.doesNotMatch(checksTable, /stats-minibar"><span class="stats-seg stats-part-(?!neutral)/);
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
   // What became of the values reviewers called wrong that CatLog had with the same number: parts of that number.
   assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog did not have 12 of them; it had 8 with the same number \(an AI audit kept 2, 2 were dropped after an AI audit found them wrong, a check against the paper found 1 right, CatLog has changed or removed 1 since and 2 are not settled yet\)\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);

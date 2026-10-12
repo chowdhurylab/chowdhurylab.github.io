@@ -4165,9 +4165,12 @@
       if (figure) figures.push(figure);
     }
 
-    // Checks on the records read from the paper: one row per kind of check, with a small bar.
+    // Checks on the records read from the paper: one row per kind of check, with a small grey bar like the other tables
+    // (the comparison colours belong to the database comparison).
     const audit = auditFacts(overview);
     const agreement = agreementHeadline(overview?.quality?.agreement);
+    // Beside a lead that gives the first comparison, the agreement row says its count is the one after fixes.
+    const afterFixes = agreement && (agreement.blind || statsCount(overview.quality.agreement.first_agree, agreement.approved) !== null);
     const marked = statsCount(overview?.human_marked, total);
     const quality = overview?.quality || {};
     const compared = statsCount(quality.compared_values_v1);
@@ -4184,7 +4187,7 @@
       audit ? { key: "audit", name: "AI audits", count: `${formatInteger(audit.values)} values`,
         result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}`, share: (audit.values - audit.wrong) / audit.values } : null,
       agreement ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(agreement.approved)} values`,
-        result: `${formatInteger(agreement.agree)} the same in CatLog (${qualityShare(agreement.agree, agreement.approved)})`, share: agreement.agree / agreement.approved }
+        result: `${formatInteger(agreement.agree)} the same in CatLog${afterFixes ? " now, after fixes" : ""} (${qualityShare(agreement.agree, agreement.approved)})`, share: agreement.agree / agreement.approved }
         : found !== null ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(approvedV2)} values`,
           result: `CatLog found ${formatInteger(found)}${foundWrong !== null ? `; ${foundWrong ? formatInteger(foundWrong) : "none"} of the ${formatInteger(differed)} where it differed ${foundWrong > 1 ? "were" : "was"} wrong against the paper` : ""}`, share: found / approvedV2 } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked records", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} accepted records</a>`,
@@ -4199,7 +4202,7 @@
         body: `<table class="stats-table stats-checks-table">
           <thead><tr><th scope="col">Check</th><th scope="col">Checked</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Share</span></th><th scope="col">Result</th></tr></thead>
           <tbody>${checkRows.map((row) => `<tr data-check="${row.key}"><th scope="row">${escapeHtml(row.name)}</th><td>${row.count}</td>
-            <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined ? `<span class="stats-minibar"><span class="stats-seg stats-part-${row.key === "earlier" ? "neutral" : "same"}" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td>
+            <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined ? `<span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td>
             <td>${escapeHtml(row.result)}</td></tr>`).join("")}</tbody></table>`,
         caption: `${escapeHtml(v2Sentence)} AI audits and human reviewers then check samples against the papers.`,
         data: statsDataLine(),

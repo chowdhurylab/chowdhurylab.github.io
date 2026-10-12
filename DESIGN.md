@@ -97,7 +97,9 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
 - Table, Checks on the values: second AI check (records read from the paper),
   AI audits, the reviewers' approved values, human-checked records, the human
   review of the earlier catalog (the share correct always beside the label
-  errors); a row whose numbers are missing is left out.
+  errors); a row whose numbers are missing is left out. Its bars are grey
+  (--bar-neutral), as in the other tables; when the lead gives the first
+  comparison, the reviewers' row says its count is now, after fixes.
 - Enzyme classes: records bars (light) with the accepted drawn over them.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
@@ -111,7 +113,7 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
 
 Figure style: every figure and table has a heading (18px), the plot, then
 "Figure N." or "Table N." (numbered in reading order, figures and tables
-apart) with one sentence (13px) and a 12px data line (snapshot, Data ID,
+apart, so without figures 3-5 the next figure is 3) with one sentence (13px) and a 12px data line (snapshot, Data ID,
 definition). Bars 16px thick, 8px apart, square ends; fills at 60% of their
 colour with a 1px opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
