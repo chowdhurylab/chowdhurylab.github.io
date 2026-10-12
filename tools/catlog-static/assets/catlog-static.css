@@ -719,6 +719,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .snapshot-overview { flex-wrap:wrap; padding:6px 0 }
   .workbench, body.detail-open .workbench { grid-template-columns:1fr }
   body.filters-open, body.detail-open { overflow:hidden }
+  /* The record is a dialog here: Tab stays inside it, never on the skip link behind it. */
+  body.detail-open .skip-link { display:none }
   .detail-panel { position:fixed; inset:0 0 0 auto; z-index:70; width:min(440px,100vw); height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; box-shadow:var(--shadow-panel); transform:translateX(calc(100% + 18px)); visibility:hidden; pointer-events:none; transition:transform 160ms ease, visibility 160ms ease }
   body.detail-open .detail-panel { transform:translateX(0); visibility:visible; pointer-events:auto }
   .table-scroll-controls { display:flex; gap:3px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:2px }
@@ -806,9 +808,11 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:8px; padding:8px 16px }
   .records-title { display:contents }
   #openFiltersButton { grid-column:1; grid-row:1 }
-  .records-tools { grid-column:2; grid-row:1; grid-template-columns:max-content minmax(0,1fr) }
+  .records-tools { grid-column:2; grid-row:1; grid-template-columns:max-content max-content minmax(0,1fr) }
   #pageSummary, #clearResultsButton { grid-column:1 / -1; grid-row:auto; justify-self:start }
-  .records-tools label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+  /* "Sort" stays visible beside the menu, so it never reads as a review-result filter. */
+  .records-tools label { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
+  .records-tools .sort-label-detail { display:none }
   .records-tools select { width:100% }
   .download-page-detail { display:none }
   /* Export results opens across the toolbar, inside the page's gutters. */
@@ -818,7 +822,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .table-scroll-controls { display:none }
   #recordTableWrap table, #recordTableWrap tbody { display:block; width:100%; min-width:0 !important }
   #recordTableWrap colgroup { display:none }
-  #recordTableWrap thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%) }
+  /* Cards sort with the Sort by menu: the hidden column headers are no tab stops. */
+  #recordTableWrap thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); visibility:hidden }
   #recordsBody tr { display:block; height:auto; border-bottom:1px solid var(--line-soft) }
   #recordsBody tr:nth-child(even) { background:var(--surface) }
   #recordsBody td { display:block; position:static; min-width:0; border:0; box-shadow:none; background:transparent; padding:0 }
@@ -842,7 +847,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody .primary-cell .enzyme-form { display:none }
   #recordsBody .clamp-2.has-form { max-height:34px; -webkit-line-clamp:2 }
   #recordsBody td.c-form { display:block; order:2; flex:0 0 100% }
-  #recordsBody td.c-substrate .condition-note { padding-left:10px; font-size:var(--fs-meta); text-align:left }
+  /* A condition note is a grey line of its own under organism · substrate. */
+  #recordsBody td.c-substrate.has-note { display:contents }
+  #recordsBody td.c-substrate.has-note > .clamp-2 { order:2; flex:1 1 0; min-width:0; color:var(--text-2) }
+  #recordsBody td.c-substrate .condition-note { order:2; flex:0 0 100%; font-size:var(--fs-meta) }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }

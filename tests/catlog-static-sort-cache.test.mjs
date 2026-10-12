@@ -2743,6 +2743,11 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(counts.source.brenda, 0, "ticking BRENDA with Accepted would give nothing");
   assert.equal(counts.state.disputed, 1, "Disputed would give the BRENDA record back");
   assert.equal(counts.metric.km, 0, "a record failing two groups counts nowhere");
+  // "Only human-checked" counts what a click shows: it ticks Accepted too.
+  api.setHumanReviewMarks({ "src-v2": { checked: true } });
+  counts = await countsFor("status=curation_pending");
+  assert.equal(counts.checked, 1, "the human-checked record that Not confirmed alone leaves out");
+  api.setHumanReviewMarks({});
   await countsFor("");
 }
 

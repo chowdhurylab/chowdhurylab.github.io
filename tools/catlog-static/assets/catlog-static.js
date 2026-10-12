@@ -3646,7 +3646,12 @@
           const failed = rowFacetFailures(row, filters);
           if (failed === null) continue;
           if (!failed.length) addFacetCounts(counts, row);
-          else if (failed.length === 1) addFacetCounts(counts, row, failed[0]);
+          else if (failed.length === 1) {
+            addFacetCounts(counts, row, failed[0]);
+            // Ticking "Only human-checked" ticks Accepted too, so its count includes the human-checked (accepted)
+            // records that only the review results chosen leave out.
+            if (failed[0] === "state" && isHumanChecked(row)) counts.checked += 1;
+          }
         }
         if (!deadline || deadline.didTimeout || deadline.timeRemaining() < 4) break;
         budget = 2000;
@@ -6152,10 +6157,11 @@
       // Each result once, with the values it is for: "kcat confirmed; Km and kcat/Km: unit set to mM."
       const results = new Map();
       facts.forEach((fact, index) => {
-        const text = valueCheckText(fact, context) || "Confirmed";
+        const { value } = checkPhrases(fact.check, context);
+        const text = value.length ? value.map(unitText).join(", ") : "confirmed";
         results.set(text, [...(results.get(text) || []), fact.metric || `value ${index + 1}`]);
       });
-      head = `${[...results].map(([text, metrics]) => `${sentenceList(metrics)}: ${text.charAt(0).toLowerCase()}${text.slice(1)}`).join("; ")}.`;
+      head = `${[...results].map(([text, metrics]) => `${sentenceList(metrics)}: ${text}`).join("; ")}.`;
     }
     else if (shared === "Confirmed") head = note ? `All values confirmed as printed; ${note}.` : "All values confirmed.";
     else head = `${shared} for every value.`;

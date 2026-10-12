@@ -123,8 +123,8 @@ open one. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
-The search box's placeholder is short enough to fit on a laptop ("Search enzyme,
-EC, organism or substrate"); its accessible name says all it finds (enzyme, EC
+The search box's placeholder is short enough to fit on a laptop ("Enzyme, EC,
+organism or substrate"); its accessible name says all it finds (enzyme, EC
 number, organism, substrate, UniProt ID or PMID), and so does the line of
 examples. Empty, it offers one fixed line of examples
 ("Try: hexokinase · 1.1.1.1 · Escherichia coli · NADH · P00330 · PMID
