@@ -560,6 +560,84 @@ def check_quality(driver, browser, url, quality=None):
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
 
 
+# Figures 3-5 as the CatLog side will write them into overview.quality (the design spec's counts); no snapshot has them yet.
+FIGURES_FIXTURE = {
+    "db_compare": {"kcat": {"same": 28743, "differs": 2964, "absent": 494}, "km": {"same": 32551, "differs": 2867, "absent": 307},
+                   "kcat_over_km": {"same": 20243, "differs": 3694, "absent": 5425}, "calculated": 4486,
+                   "papers_all_absent": 9, "papers_some_absent": 171},
+    "earlier_corrections": {"records": 5838, "before_listed": [5513, 7449], "values": {
+        "kcat": {"rounding": 960, "different": 450, "magnitude": 56, "added": 467},
+        "km": {"rounding": 453, "different": 645, "magnitude": 130, "added": 565},
+        "kcat_over_km": {"rounding": 3092, "different": 1569, "magnitude": 94, "added": 443}}},
+    "replaced": {"records": 24433, "accepted": 3889, "papers": 1313,
+                 "values": {"kcat": [19250, 21222], "km": [21071, 23351], "kcat_over_km": [1109, 1234]}},
+}
+FIGURE_TITLES = ("Values read from the paper against the databases", "Corrections on records accepted after a correction",
+                 "Earlier records of papers CatLog has read")
+
+
+def check_stats_figures(driver, browser, url):
+    """Figures 3-5 and figure 2 by review result, from a copy of the manifest set in Chrome before the page starts (the
+    data files are not changed): figures 3-5 follow figure 2 in order, their bars fill 100% per parameter with the shares
+    under them, figure 2 stacks each main source by review result, and nothing overflows at 1440 or 375px."""
+    if browser != "chrome":
+        return {"route": "stats-figures", "skipped": "Chrome only"}
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    # Main sources: every record under BRENDA, split as the snapshot's review results are (so the counts add up).
+    injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+          set(value) {
+            const overview = value?.summary?.overview;
+            if (overview) {
+              overview.quality = { ...(overview.quality || {}), ...%s };
+              const statuses = {};
+              for (const item of value.summary.distributions?.verification_status || []) statuses[item.label] = item.count;
+              overview.main_sources = { brenda: statuses };
+            }
+            Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+          } });
+    """ % json.dumps(FIGURES_FIXTURE)})
+    try:
+        for width, height in ((1440, 1000), (375, 812)):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.ID, "statsReplacedTitle"))
+            headings = [h.text for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2")]
+            assert headings[2:5] == list(FIGURE_TITLES), headings
+            figures = driver.execute_script("""
+                return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
+                    key: chart.dataset.chart,
+                    rows: [...chart.querySelectorAll('.stats-chart-row')].map(row => ({
+                        key: row.dataset.row, count: +row.dataset.count,
+                        width: [...row.querySelectorAll('.stats-seg')].reduce((sum, seg) => sum + parseFloat(seg.style.width), 0)}))}));
+            """)
+            assert [figure["key"] for figure in figures] == ["db-compare", "earlier-corrections", "replaced"], figures
+            for figure in figures:
+                for row in figure["rows"]:
+                    assert abs(row["width"] - 100) < 0.01, f"{figure['key']} {row['key']} fills {row['width']}%"
+            rows = {row["key"]: row["count"] for row in figures[0]["rows"]}
+            assert rows["all"] == sum(sum(FIGURES_FIXTURE["db_compare"][key].values()) for key in ("kcat", "km", "kcat_over_km")), rows
+            assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-compare'] .stats-share-lines dd span"), "Shares under the bars"
+            caption = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-compare'] figcaption").text
+            assert "a different number does not mean the database is wrong" in caption, caption
+            # Figure 2: stacked by review result, with its legend.
+            legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
+            for word in ("Accepted", "Not confirmed", "Not checked"):
+                assert word in legend, legend
+            brenda = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-chart-row[data-row='brenda']")
+            assert int(brenda.get_attribute("data-count")) == driver.execute_script("return window.CATLOG_STATIC_MANIFEST.total_rows")
+            assert len(brenda.find_elements(By.CSS_SELECTOR, ".stats-seg")) >= 3
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
+            assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
+            driver.execute_script("document.querySelector('[data-figure=\"db-compare\"]').scrollIntoView()")
+            driver.save_screenshot(str(OUTPUT / f"{browser}-stats-figures-{width}.png"))
+    finally:
+        driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"route": "stats-figures", "passed": True}
+
+
 TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "rules", "website", "paper")
 
 
@@ -1550,6 +1628,7 @@ def main():
         quality = (stats_overview(manifest) or {}).get("quality")
         if quality or args.browser == "chrome":
             check_quality(driver, args.browser, url, quality)
+        result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
