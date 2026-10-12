@@ -353,7 +353,7 @@ def check_browse(driver, browser, url, route_label):
             search.send_keys(selected_pair[0], Keys.TAB)
             wait.until(lambda _d: selected_key in row_keys() and row_keys() != first_keys)
             assert search.get_attribute("value") == selected_pair[0]
-            assert driver.find_element(By.ID, "activeSummary").text.endswith(" records")
+            assert driver.find_element(By.ID, "activeSummary").text.endswith((" record", " records"))
             screenshots.append(capture(viewport, "search"))
             search.clear()
             search.send_keys("zzzz-no-match-catlog-browser-check", Keys.TAB)

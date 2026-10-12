@@ -1715,7 +1715,17 @@
     if (!select || select.disabled) return;
     select.value = select.value === key ? `${key}_asc` : key;
     syncSortHeaders();
+    announceSort();
     applyFiltersInBackground();
+  }
+
+  // A screen reader hears the new order (the counts, which it also hears, do not change).
+  function announceSort() {
+    const select = $("sortSelect");
+    const status = $("tableStatus");
+    if (!select || !status) return;
+    const label = select.options?.[select.selectedIndex]?.textContent || select.value;
+    status.textContent = `Sorted by ${label}`;
   }
 
   function recordIndexPath() {
@@ -3792,7 +3802,7 @@
     // records match so far ("312 available").
     const loadingSummary = finalPages ? range : `${formatInteger(state.filtered.length)} available`;
     $("activeSummary").textContent = state.recordsReady
-      ? `${formatInteger(state.filtered.length)} records`
+      ? `${formatInteger(state.filtered.length)} ${state.filtered.length === 1 ? "record" : "records"}`
       : `${formatInteger(state.filtered.length)} available`;
     // Human-checked needs the review marks, which arrive after the index: until then the table waits for them.
     const awaitingMarks = !pageRows.length && state.recordsReady && !state.humanMarksLoaded && Boolean($("humanCheckedFilter")?.checked);
@@ -5350,6 +5360,7 @@
     });
     $("sortSelect").addEventListener("change", () => {
       syncSortHeaders();
+      announceSort();
       applyFiltersInBackground();
     });
     document.querySelectorAll(".sort-button").forEach((button) => {
