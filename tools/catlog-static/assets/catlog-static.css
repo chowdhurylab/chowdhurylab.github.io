@@ -749,11 +749,15 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody tr[data-key]:hover:not(.selected) { background:var(--hover) }
   #recordsBody tr.selected { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal) }
   #recordsBody tr.selected td, #recordsBody tr.selected td.c-enzyme { background:transparent; box-shadow:none }
-  #recordsBody td.c-enzyme { flex:1 0 100%; font-size:var(--fs-ui) }
-  /* EC and the arrow cell become line breaks (EC stays readable to screen readers). */
-  #recordsBody :is(td.c-ec,td.c-open) { flex:0 0 100%; height:0; overflow:hidden; order:3 }
-  #recordsBody td.c-open { order:5 }
-  #recordsBody :is(td.c-organism,td.c-substrate) { order:1; flex:1 1 0; color:var(--text-2) }
+  /* Name, then EC at the line's end; the row's ::before and ::after and the arrow cell are line breaks. */
+  #recordsBody td.c-enzyme { flex:1 1 0; font-size:var(--fs-ui) }
+  #recordsBody td.c-ec { flex:0 1 auto; max-width:40%; margin-top:1px; color:var(--text-3); font-size:var(--fs-meta) }
+  #recordsBody td.c-ec .clamp-2 { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  #recordsBody td.c-ec .clamp-2::before { content:"EC\00a0" }
+  #recordsBody tr[data-key]::before, #recordsBody tr[data-key]::after, #recordsBody td.c-open { content:""; flex:0 0 100%; height:0; overflow:hidden; order:1 }
+  #recordsBody td.c-open { order:3 }
+  #recordsBody tr[data-key]::after { order:5 }
+  #recordsBody :is(td.c-organism,td.c-substrate) { order:2; flex:1 1 0; color:var(--text-2) }
   #recordsBody td.c-organism { flex:0 1 auto; max-width:60%; margin-right:-6px }
   #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:block; max-height:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
   #recordsBody td.c-substrate .clamp-2::before { content:"\00b7\00a0" }
@@ -767,6 +771,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody td.c-ph > span::before { content:"pH\00a0" }
 
   #recordsBody .state-badge { display:flex; height:18px; align-items:center; gap:8px }
+  /* A caution shows its short words beside the "!" (no tooltip on a touch screen). */
+  #recordsBody .value-flag { display:inline-flex; flex:0 0 auto; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--amber-text); font-size:var(--fs-min); line-height:14px }
+  #recordsBody .value-flag::before { display:grid; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--amber); color:var(--surface) }
+  #recordsBody .value-flag .visually-hidden { position:static; width:auto; height:auto; clip:auto; clip-path:none }
   #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
   #recordsBody tr.skeleton-row { padding:14px 16px }
   #recordsBody tr.skeleton-row td:not(.c-enzyme,.c-organism,.c-kcat) { display:none }
