@@ -3660,7 +3660,8 @@
           const { check } = consistent;
           text = `This record stores kcat/Km as ${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}; `
             + `kcat ÷ Km is ${check.quotientText} ${check.unit} (${check.foldText} apart). The source's own kcat/Km, `
-            + `${numberText(consistent.value)} ${check.unit} (listed below), agrees with kcat ÷ Km and is shown above.`
+            + `${numberText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed below)" : ""}, `
+            + "agrees with kcat ÷ Km and is shown above."
             + (check.factor ? ` ${check.factor[1]}` : "");
         }
         if (text && !notes.some((note) => note.text === text)) {
