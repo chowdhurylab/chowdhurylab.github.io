@@ -6810,7 +6810,7 @@
   // nothing for a record that does not say.
   function detailFormHtml(row) {
     const signature = mutationSignature(row);
-    if (signature) return `Variant <code class="mutation">${escapePublic(signature)}</code>`;
+    if (signature) return `<span class="detail-form">Variant <code class="mutation">${escapePublic(signature)}</code></span>`;
     const label = enzymeFormLabel(row);
     if (label === "Variant (unspecified)") return "Variant, not specified";
     return label === "Wild type" ? "Wild type" : "";
@@ -6934,11 +6934,11 @@
   // other database record the earlier review did not settle: the values are the database's. Nothing else gets the
   // section (never an empty heading).
   const DATABASE_RESULTS = [
-    { test: /other[\s_-]*label/i, word: "Same number, other label", key: "neutral" },
-    { test: /^(?:confirmed|same)/i, word: "Same as a database", key: "same" },
-    { test: /^correct/i, word: "Corrects a database", key: "magnitude" },
-    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Differs from the databases", key: "differs" },
-    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "New to the databases", key: "new" },
+    { test: /other[\s_-]*label/i, word: "Other label", key: "neutral" },
+    { test: /^(?:confirmed|same)/i, word: "Same number", key: "same" },
+    { test: /^correct/i, word: "Corrects the database", key: "magnitude" },
+    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Different number", key: "differs" },
+    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "Not in the databases", key: "new" },
     { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "" },
   ];
   // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given.
@@ -7017,14 +7017,18 @@
       sentence = `not among the ${Number(count) > 0 ? `${formatInteger(count)} ` : ""}${metric} values ${names} ${sources.length > 1 ? "list" : "lists"} for this paper`;
     } else if (result?.key === "new") sentence = `no database lists a ${metric} for this paper`;
     else if (/^calc/i.test(String(status))) sentence = "calculated; not compared";
-    return { status: String(status), sentence, cause: "", evidence: "", databases: sources.join(", ") };
+    // The phrase is the result (beside its square) and names the databases; no column repeats them.
+    return { status: String(status), sentence, cause: "", evidence: "", databases: "", phraseOnly: Boolean(sentence) };
   }
 
   function databaseResultHtml(facts) {
     const result = databaseResult(facts.status);
-    const head = result
-      ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(result.word)}</strong></span>`
-      : "";
+    const mark = `<span class="cmp-mark${result?.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span>`;
+    if (facts.phraseOnly) {
+      const phrase = facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1);
+      return `<span class="cmp-result">${mark}<span>${caretHtml(escapePublic(phrase))}</span></span>`;
+    }
+    const head = result ? `<span class="cmp-result">${mark}<strong>${escapeHtml(result.word)}</strong></span>` : "";
     return head
       + (facts.sentence ? `<span class="cmp-line">${caretHtml(escapePublic(facts.sentence))}</span>` : "")
       + (facts.cause ? `<small>Cause: ${escapePublic(facts.cause)}</small>` : "")
@@ -7073,7 +7077,7 @@
     })).filter((item) => item.field);
   }
 
-  const CORRECTION_FIELD_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", "kcat/km": "kcat/Km", ki: "Ki" };
+  const CORRECTION_FIELDS = { kcat: "kcat", km: "km", kcat_over_km: "kcat_over_km", "kcat/km": "kcat_over_km", ki: "ki" };
   const CHANGE_KINDS = [
     { test: /round|precision|digit/i, word: "more digits / rounding", key: "precision" },
     { test: /magnitude|power|scale|unit/i, word: "unit or magnitude", key: "magnitude" },
@@ -7112,7 +7116,8 @@
     const identity = [];
     items.forEach((item) => {
       const key = item.field.toLowerCase().replace(/\s+/g, "");
-      const name = CORRECTION_FIELD_NAMES[key];
+      const field = CORRECTION_FIELDS[key];
+      const name = field ? VALUE_FIELDS.find(([shown]) => shown === field)[1] : "";
       if (name) {
         // A field whose number did not change is not listed.
         if (item.before != null && item.before !== "" && Number(item.before) === Number(item.after)) return;
@@ -7129,7 +7134,7 @@
         + valueItems.map((item) => {
           const change = changeWords(item);
           const where = item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value";
-          return `<tr><th scope="row">${escapeHtml(item.name)}</th>`
+          return `<tr><th scope="row">${item.name}</th>`
             + `<td>${escapePublic(correctionValueText(item.before, item.unit))}<small>${escapePublic(where)}</small></td>`
             + `<td>${escapePublic(correctionValueText(item.after, item.unit))}</td>`
             + `<td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>${escapeHtml(change.word)}</span></td></tr>`;
@@ -7881,6 +7886,7 @@
       proteinSection,
       organismHtml,
       databasesSection,
+      toggleReveal,
       recordLink,
       numberHtml,
       numberText,

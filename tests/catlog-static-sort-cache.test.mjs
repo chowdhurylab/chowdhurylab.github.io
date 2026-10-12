@@ -1452,7 +1452,7 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
     { sequence_source: "uniprot_accession", sequence_variant_status: "reconstructed_variant_sequence", wild_type_sequence: "MAAA",
       variant_sequence: "MAAG", sequence_variant_note: "H150A applied to the UniProt canonical sequence" },
   );
-  assert.match(variantHtml, /<dt>Enzyme form<\/dt><dd>Variant <code class="mutation">H150A<\/code><\/dd>/);
+  assert.match(variantHtml, /<dt>Enzyme form<\/dt><dd><span class="detail-form">Variant <code class="mutation">H150A<\/code><\/span><\/dd>/);
   assert.match(variantHtml, /<dt>Variant sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa, UniProt P22498 with H150A<\/span>/);
   assert.match(variantHtml, /<dt>Wild-type sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/);
   // Show opens the sequence under its row; Copy copies it.
@@ -2212,7 +2212,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     ],
   });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; Variant <code class="mutation">N145A<\/code><\/p>/);
+  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><\/span><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
@@ -2537,6 +2537,109 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(element("detailContent").innerHTML, /<dt>Title<\/dt>/);
 }
 
+// Against the databases (design spec 5G): a record read from the paper shows its values against the databases only when
+// the snapshot carries the comparison (each value's database_status ... fields, the record's database_note, or the
+// snapshot's record checks); an earlier "corrected" record its correction trail; a database record the earlier review
+// did not settle that its values are the database's; any other record has no section (never an empty heading).
+{
+  const v2Summary = row({ record_key: "v2-db", measurement_key: "v2-db", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 30.4, km: 549.9, kcat_over_km: 0.06, kcat_display: "30.4", km_display: "549.9", kcat_over_km_display: "0.06",
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "paper_reported" });
+  const line = (metric, extra = {}) => ({ metric, table_label: "Table 1", printed: "1", check: "confirmed", conversion: "", ...extra });
+  const render = (summary, detail) => {
+    api.renderDetail(summary, detail);
+    return element("detailContent").innerHTML;
+  };
+  const v2Detail = (lines, extra = {}) => ({ verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"], proof_lines: lines, ...extra });
+  let html = render(v2Summary, v2Detail([line("kcat"), line("Km")]));
+  assert.doesNotMatch(html, /Against the databases|cmp-mark/);
+  html = render(v2Summary, v2Detail([
+    line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA, SABIO-RK." }),
+    line("Km", { database_status: "corrected", database_line: "BRENDA lists 0.5499 mM, 1,000× lower.", database_cause: "mM_entered_as_uM",
+      database_evidence: "Table 1, row Cellobiose: 549.9 ± 62.5" }),
+    line("kcat/Km", { database_status: "new", database_line: "Not in BRENDA, SABIO-RK, OED, SKiD or STRENDA for this paper." }),
+  ], { database_note: "All 12 BRENDA Km values for this paper are 1000× lower than printed." }));
+  const section = html.slice(html.indexOf('class="detail-section databases-section"'), html.indexOf('class="detail-section review-section"'));
+  assert.match(section, /<h3 id="detail-databases-title">Against the databases<\/h3><p class="cmp-paper-note">All 12 BRENDA Km values for this paper are 1000× lower than printed\.<\/p><table class="values-table compare-table">/);
+  assert.match(section, /<th scope="col">Parameter<\/th><th scope="col">CatLog<\/th><th scope="col">Result<\/th>/, "no Databases column without database values");
+  assert.match(section, /<span class="cmp-mark cmp-same" aria-hidden="true"><\/span><strong>Same number<\/strong><\/span><span class="cmp-line">Same as BRENDA, SABIO-RK\.<\/span>/);
+  assert.match(section, /<span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects the database<\/strong><\/span><span class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/span><small>Cause: an mM value entered as µM<\/small><small>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/small>/);
+  assert.match(section, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong>/);
+  assert.match(section, /<td class="cmp-catlog">549\.9 <small>mM<\/small><\/td>/);
+  assert.match(section, /<p class="section-note">Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\. A different number can mean a different measurement\.<\/p>/);
+  assert.ok(html.indexOf(">Paper</h3>") < html.indexOf(">Against the databases</h3>") && html.indexOf(">Against the databases</h3>") < html.indexOf(">Review and audit</h3>"));
+  // A local file named as evidence is never shown.
+  html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
+  assert.doesNotMatch(html, /Users\/someone|\.pdf/);
+  assert.match(html, /<strong>Different number<\/strong><\/span><span class="cmp-line">BRENDA lists 3 s⁻¹\.<\/span><\/td>/);
+  // A database_check object (one field per fact) and its database value.
+  html = render(v2Summary, v2Detail([line("Km", { database_check: { status: "corrected", sources: ["BRENDA", "OED"], database_value: 0.0028, database_unit: "mM" } })]));
+  assert.match(html, /<th scope="col">Databases for this paper<\/th>/);
+  assert.match(html, /<td>BRENDA, OED: 0\.0028 mM<\/td>/);
+  // The snapshot's record checks (spec side file): its phrases are the result.
+  assert.match(api.databasesSection(v2Summary, v2Detail([line("kcat"), line("Km"), line("kcat/Km")]), {
+    v2Record: true, proof: null, check: { db: { kcat: ["same", "BRENDA,SABIO-RK"] } } }), /^$/, "no proof lines, no rows");
+  {
+    const proof = { lines: [line("kcat"), line("Km"), line("kcat/Km")], facts: [line("kcat"), line("Km"), line("kcat/Km")].map(api.v2LineFacts) };
+    const sideFile = api.databasesSection(v2Summary, {}, { v2Record: true, proof,
+      check: { db: { kcat: ["same", "BRENDA,SABIO-RK"], Km: ["differs", "BRENDA,OED", 5], "kcat/Km": ["absent", ""] } } });
+    assert.match(sideFile, /<span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span>Same number in BRENDA, SABIO-RK<\/span>/);
+    assert.match(sideFile, /<span>Not among the 5 Km values BRENDA and OED list for this paper<\/span>/);
+    assert.match(sideFile, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><span>No database lists a kcat\/Km for this paper<\/span>/);
+  }
+
+  // An earlier "corrected" record: Before, After and the kind of change; the identity changes listed; why, once.
+  const corrected = row({ record_key: "corrected-trail", verification_status: "corrected", source_db: "oed", kcat: 2.67, km: 0.066,
+    kcat_display: "2.67", km_display: "0.066", kcat_unit: "s^(-1)", km_unit: "mM" });
+  html = render(corrected, { supporting_pmids: ["2226453"], corrections: [
+    { field: "km", old_value: 66, new_value: 0.066, unit: "mM", kind: "magnitude", listed: "OED", evidence_table_row: "Table 2, row 12-hydroxydodecanoic acid: Km 66 µM" },
+    { field: "kcat", old_value: 2.7, new_value: 2.67, unit: "s^(-1)", kind: "rounding", evidence_table_row: "Table 2, row 12-hydroxydodecanoic acid: Km 66 µM" },
+    { field: "kcat", old_value: 5, new_value: 5, unit: "s^(-1)", kind: "different" },
+    { field: "kcat_over_km", old_value: null, new_value: 40, unit: "s^(-1)*mM^(-1)", kind: "added", evidence_table_row: "C:\\papers\\x.pdf" },
+    { field: "uniprot_id", old_value: "P00325", new_value: "P00326" },
+    { field: "smiles", old_value: "C", new_value: "CC" },
+  ] });
+  assert.match(html, /<th scope="col">Field<\/th><th scope="col">Before<\/th><th scope="col">After<\/th><th scope="col">Change<\/th>/);
+  assert.match(html, /<tr><th scope="row"><i>K<\/i><sub>m<\/sub><\/th><td>66 mM<small>as in OED for this paper<\/small><\/td><td>0\.066 mM<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span>unit or magnitude \(÷ 1000\)<\/span><\/td><\/tr>/);
+  assert.match(html, /<td>2\.7 s⁻¹<small>earlier catalog value<\/small><\/td><td>2\.67 s⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span>more digits \/ rounding<\/span>/);
+  assert.equal((html.match(/<td>5 s⁻¹/g) || []).length, 0, "a field whose number did not change is not listed");
+  assert.match(html, /<td>none<small>earlier catalog value<\/small><\/td><td>40 s⁻¹ mM⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span>added: the source had none<\/span>/);
+  assert.match(html, /<li>UniProt P00325 → P00326<\/li><li>SMILES replaced<\/li>/);
+  assert.equal((html.match(/Why: /g) || []).length, 1, "the same reason once; a local path never");
+  assert.match(html, /<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — Table 2, row 12-hydroxydodecanoic acid: Km 66 µM\.<\/p>/);
+  assert.match(html, /<dt>Status<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Against the databases\./);
+  assert.doesNotMatch(html, /value before correction was not kept/);
+  // Without its trail, a corrected record keeps the round-4 sentence and has no section.
+  html = render(corrected, { supporting_pmids: ["2226453"] });
+  assert.doesNotMatch(html, /Against the databases/);
+  assert.match(html, /the value before correction was not kept/);
+
+  // A database record the earlier review did not settle: the values are the database's; accepted, disputed, no paper
+  // linked or an earlier extraction: no section.
+  const sectionOf = (summary) => render(summary, { supporting_pmids: ["1"] }).match(/<h3 id="detail-databases-title">Against the databases<\/h3>(.*?)<\/section>/)?.[1] ?? null;
+  assert.equal(sectionOf(row({ record_key: "db-unverified", verification_status: "unverified", source_db: "brenda" })),
+    '<p class="section-text">Not yet checked against the paper: the values are the database&#39;s.</p>');
+  assert.ok(sectionOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk" })));
+  assert.equal(sectionOf(row({ record_key: "db-accepted", verification_status: "verified", source_db: "brenda" })), null);
+  assert.equal(sectionOf(row({ record_key: "db-disputed", verification_status: "disputed", source_db: "brenda" })), null);
+  assert.equal(sectionOf(row({ record_key: "db-no-paper", verification_status: "unverified", source_db: "skid", public_trust_basis: "identity_only" })), null);
+  assert.equal(sectionOf(row({ record_key: "earlier-extraction", verification_status: "unverified", source_db: "primary_paper_direct" })), null);
+}
+// Show opens a sequence under its row and says Hide; Copy link copies the record's address.
+{
+  const box = element("revealBox");
+  box.hidden = true;
+  const button = makeElement("revealButton");
+  button.dataset.revealTarget = "revealBox";
+  api.toggleReveal(button);
+  assert.equal(box.hidden, false);
+  assert.equal(button.getAttribute("aria-expanded"), "true");
+  assert.equal(button.textContent, "Hide");
+  api.toggleReveal(button);
+  assert.equal(box.hidden, true);
+  assert.equal(button.textContent, "Show");
+  assert.match(api.recordLink("a b"), /#record=a%20b$/);
+}
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.
 {

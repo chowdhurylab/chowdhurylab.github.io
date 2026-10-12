@@ -535,13 +535,14 @@ body.detail-open .detail-panel { display:block }
 #detailContent { padding:0 0 8px }
 .detail-load-status { margin:0; padding:16px 20px }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:4px; border-bottom:1px solid var(--line); background:var(--surface); padding:16px 56px 12px 20px }
-.detail-top h2 { margin:0 0 2px; color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20); min-width:0; overflow-wrap:break-word; hyphens:auto }
+.detail-top h2 { margin:0 0 2px; color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20); min-width:0; overflow-wrap:break-word }
 .detail-top h2.long-name { font-size:var(--fs-16); line-height:var(--lh-16) }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
+.detail-form { display:inline-block; max-width:100% }
 .detail-subtitle code.mutation { color:var(--text); font:var(--fs-12)/var(--lh-12) var(--font-mono); overflow-wrap:anywhere }
-.detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text); hyphens:auto }
+.detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text) }
 .detail-substrate > span:first-child { color:var(--muted) }
 .detail-top p.detail-condition-note { margin-top:-2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .detail-top p.detail-key { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 6px; margin-top:2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -554,13 +555,13 @@ body.detail-open .detail-panel { display:block }
 .detail-kv { display:grid; gap:6px; margin:0 }
 .kv-line { display:grid; grid-template-columns:112px minmax(0,1fr); column-gap:12px; align-items:baseline }
 .kv-line > dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.kv-line > dd { min-width:0; margin:0; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14); overflow-wrap:break-word; hyphens:auto }
+.kv-line > dd { min-width:0; margin:0; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14); overflow-wrap:break-word }
 .reference-list { display:grid; gap:2px }
 .reference-link { text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
 .reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }
 .identity-how { color:var(--text-2) }
 .method-link { white-space:nowrap }
-.condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:break-word; hyphens:auto }
+.condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:break-word }
 .condition-list li::marker { color:var(--muted) }
 .source-efficiency-value { display:grid; gap:2px; white-space:nowrap }
 .measurement-listed { margin-top:12px }
@@ -583,6 +584,8 @@ body.detail-open .detail-panel { display:block }
 .values-table :is(th,td):last-child { padding-right:0 }
 .values-table thead th { border-bottom-color:var(--line); padding-top:0; color:var(--text-2); font-size:var(--fs-12); font-weight:600; line-height:var(--lh-12); vertical-align:bottom }
 .values-table tbody th { font-weight:400; white-space:nowrap }
+/* Parameter, Value and Unit take what they need; As printed (or a comparison's result) takes the rest. */
+.values-table :is(thead th:first-child, tbody th, .vt-value, .vt-unit) { width:1% }
 .values-table .vt-value { text-align:right; white-space:nowrap }
 .values-table td.vt-value .vt-number { font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
 .values-table td.vt-value .metric-origin { margin-left:4px }
@@ -612,7 +615,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .printed-line-disclosure > :not(summary) { margin-top:6px }
 .printed-line-note { margin:4px 0 0; color:var(--muted); font-size:var(--fs-12) }
 .evidence-note-list { display:grid; gap:12px }
-.evidence-note-item, .evidence-note-plain { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); min-width:0; overflow-wrap:break-word; hyphens:auto }
+.evidence-note-item, .evidence-note-plain { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); min-width:0; overflow-wrap:break-word }
 .evidence-note-plain { margin:0 }
 .evidence-note-item .kv-line > dd { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 
@@ -635,7 +638,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* G. Against the databases: a 10px square in the comparison colour beside the result word (colour never alone). */
 .compare-table .cmp-cell { min-width:0 }
-.compare-table td.cmp-catlog { white-space:nowrap }
+.compare-table td.cmp-catlog { width:1%; white-space:nowrap }
 .compare-table td.cmp-catlog small { display:inline; color:var(--muted) }
 .cmp-result { display:inline-flex; align-items:baseline; gap:6px }
 .cmp-result strong { font-weight:600 }
