@@ -962,7 +962,7 @@
       return `${v2Sentence}${ec}`;
     }
     const outcome = reviewOutcomeBase(summary);
-    return isIdentityOnlyAccepted(summary) ? `${outcome} ${identityOnlyTrustNote}` : outcome;
+    return isIdentityOnlyAccepted(summary) ? `${outcome} No PMID or DOI is linked, so the value cannot be checked against a paper.` : outcome;
   }
 
   function rowStatusLabel(row) {
@@ -3960,11 +3960,11 @@
     const sequenceHtml = variantSequence
       ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
-    // "UniProt accession" (or "UniProt P12345") only repeats the UniProt line above it.
+    // "UniProt", "UniProt accession" or "UniProt P12345" only repeats the UniProt line above it.
     const sequenceSourceText = showsSequenceSource(sequenceSourceValue, Boolean(sequenceHtml.trim()))
       ? sequenceSourceLabel(sequenceSourceValue)
       : "";
-    const sequenceSource = accessionLabel === "UniProt" && ["UniProt accession", `UniProt ${proteinAccession}`].includes(sequenceSourceText)
+    const sequenceSource = accessionLabel === "UniProt" && ["UniProt", "UniProt accession", `UniProt ${proteinAccession}`].includes(sequenceSourceText)
       ? ""
       : sequenceSourceText;
     return `

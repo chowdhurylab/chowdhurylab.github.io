@@ -404,7 +404,6 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .values-table :is(th,td) { position:static; height:auto; padding:6px 10px 6px 0; background:none; vertical-align:top; white-space:normal }
 .values-table tbody th { color:var(--text); font-size:var(--fs-table); font-weight:400; white-space:nowrap }
 .values-table thead th { padding-top:0; color:var(--text-3); font-weight:500 }
-.values-table :is(th,td):last-child { padding-right:0 }
 .values-table small { display:block; color:var(--text-3); font-size:var(--fs-min) }
 
 /* Stats and Guide pages. */
