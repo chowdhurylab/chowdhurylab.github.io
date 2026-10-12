@@ -196,6 +196,10 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result, [{"name": "Escherichia coli", "count": 9},
                                   {"name": "Saccharomyces cerevisiae", "count": 6},
                                   {"name": "Homo sapiens", "count": 2}])
+        # A common name matches as a whole word: "rat" is not inside Serratia.
+        self.assertTrue(followup.organism_matches("Rattus norvegicus", ["rat"]))
+        self.assertFalse(followup.organism_matches("Serratia marcescens", ["rat"]))
+        self.assertTrue(followup.organism_matches("Escherichia coli K-12", ["escherichia", "coli"]))
         self.assertEqual(followup.source_keys("brenda; skid"), {"brenda", "skid"})
         self.assertEqual(followup.source_keys("sabio_rk/brenda+skid"), {"sabio_rk", "brenda", "skid"})
         self.assertEqual(followup.source_keys("unknown"), set())

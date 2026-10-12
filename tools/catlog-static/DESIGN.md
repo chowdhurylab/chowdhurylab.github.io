@@ -94,7 +94,8 @@ against their names (β = beta), µ/micro/u-, dash and prime variants, and
 hyphens, spaces, commas or underscores inside a name (4-nitrophenyl = 4
 nitrophenyl; a locant, a D/L/p/o/m/n prefix or a Greek name typed as its own
 word joins the next). It also knows common species names (human, mouse, yeast,
-E. coli), as does the Organism field; an EC number matches whole parts, so
+E. coli), as does the Organism field, where a common name matches as a whole
+word (rat finds rats, not Serratia); an EC number matches whole parts, so
 1.1.1 is that subclass only and 1.1.1.1 never 1.1.1.10. EC 1.1.1.1, ec:1.1.1.1,
 1.1.1.- and "1." (a class) work in the search box; the EC field takes any
 number and several at once. A number also finds the records of

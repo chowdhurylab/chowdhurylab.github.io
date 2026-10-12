@@ -1945,6 +1945,24 @@ const detailFalseKiHtml = api.measurementSection(row({
 }), { has_ki: false });
 assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
 
+// The Organism field: a common name matches as a whole word ("rat" is not inside Serratia or auratus); other words
+// match inside a name, and a binomial finds its strains.
+{
+  api.indexLoadedRecords(["Rattus norvegicus", "Serratia marcescens", "Mesocricetus auratus", "Homo sapiens", "Escherichia coli K-12"]
+    .map((organism, index) => row({ record_key: `organism-${index}`, measurement_key: `organism-${index}`, organism })));
+  const organismsFor = async (text) => {
+    element("organismFilterInput").value = text;
+    await api.ensureCurrentFilters();
+    return api.state.filtered.map((item) => item.organism).sort();
+  };
+  assert.deepEqual(await organismsFor("rat"), ["Rattus norvegicus"]);
+  assert.deepEqual(await organismsFor("Rat"), ["Rattus norvegicus"]);
+  assert.deepEqual(await organismsFor("human"), ["Homo sapiens"]);
+  assert.deepEqual(await organismsFor("ratt"), ["Rattus norvegicus"]);
+  assert.deepEqual(await organismsFor("E. coli"), ["Escherichia coli K-12"]);
+  element("organismFilterInput").value = "";
+}
+
 api.indexLoadedRecords([row()]);
 const searchInput = element("globalSearchInput");
 const suggestions = element("searchSuggestions");

@@ -304,6 +304,25 @@ def folded_organism(organism):
     return compact_search(fold_search(f"{text}|{organism_search_text(text)}"))
 
 
+COMMON_ORGANISM_WORDS = {word for names in COMMON_ORGANISM_NAMES.values() for word in names.split()}
+
+
+def organism_matches(organism, words, folded=None):
+    """fieldContains for the organism: a common name (rat, pig, ...) as a whole word, any other word inside the name."""
+    folded = folded_organism(organism) if folded is None else folded
+    whole = None
+    for word in words:
+        if word in COMMON_ORGANISM_WORDS:
+            if whole is None:
+                text = str(organism or "")
+                whole = set(filter(None, re.split(r"[^a-z0-9]+", fold_search(f"{text}|{organism_search_text(text)}"))))
+            if word not in whole:
+                return False
+        elif word not in folded:
+            return False
+    return True
+
+
 def field_words(text):
     words = fold_search(text).split()
     joined = []
@@ -335,7 +354,7 @@ def top_organisms(spellings, raw_counts, limit=OVERVIEW_TOP):
         if not words or any(all(word in own for word in listed_words) or all(word in listed_own for word in words)
                             for _name, listed_words, listed_own, _count in chosen):
             continue
-        count = sum(number for raw, number in raw_counts.items() if all(word in folded[raw] for word in words))
+        count = sum(number for raw, number in raw_counts.items() if organism_matches(raw, words, folded[raw]))
         chosen.append((name, words, own, count))
     chosen.sort(key=lambda item: (-item[3], item[0]))
     return [{"name": name, "count": count} for name, _words, _own, count in chosen[:limit]]

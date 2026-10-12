@@ -3501,25 +3501,46 @@
   // Field filters fold each distinct value once per loaded generation (not once per row and keystroke).
   const foldedFields = { generation: -1, values: new Map() };
 
-  function foldedField(value, field = "") {
+  function foldedFieldCache() {
     if (foldedFields.generation !== state.recordsGeneration) {
       foldedFields.generation = state.recordsGeneration;
       foldedFields.values = new Map();
     }
+    return foldedFields.values;
+  }
+
+  function foldedField(value, field = "") {
+    const cache = foldedFieldCache();
     // An organism also answers to its short and common names ("E. coli", "human").
     const key = field === "organism" ? `organism|${value}` : value;
-    let folded = foldedFields.values.get(key);
+    let folded = cache.get(key);
     if (folded === undefined) {
       folded = compactSearch(foldSearch(field === "organism" ? `${value}|${organismSearchText(value)}` : value));
-      foldedFields.values.set(key, folded);
+      cache.set(key, folded);
     }
     return folded;
+  }
+
+  // A common organism name typed in the Organism field (rat, pig, dog, ...) matches as a whole word, so "rat" finds rats,
+  // not Serratia or Mesocricetus auratus.
+  const COMMON_ORGANISM_WORDS = new Set(Object.values(commonOrganismNames).flatMap((names) => names.split(" ")));
+
+  function organismWordSet(value) {
+    const cache = foldedFieldCache();
+    const key = `organism-words|${value}`;
+    let words = cache.get(key);
+    if (words === undefined) {
+      words = new Set(foldSearch(`${value}|${organismSearchText(value)}`).split(/[^a-z0-9]+/).filter(Boolean));
+      cache.set(key, words);
+    }
+    return words;
   }
 
   function fieldContains(row, field, words) {
     if (!words?.length) return true;
     const value = foldedField(row[field] || "", field);
-    return words.every((word) => value.includes(word));
+    if (field !== "organism") return words.every((word) => value.includes(word));
+    return words.every((word) => (COMMON_ORGANISM_WORDS.has(word) ? organismWordSet(row[field] || "").has(word) : value.includes(word)));
   }
 
   function rowMatches(row, filters) {
