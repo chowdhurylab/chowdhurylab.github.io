@@ -283,12 +283,17 @@ an AI audit line with the
 audit's date and verdict only when one re-checked the values; for an older
 record its Review line, which names the earlier automated review and what it
 found ("Accepted as printed, in the earlier automated review."); a Human review line with the reviewer's facts-only note on every record
-that has a mark; merged rows; an older record's notes); Protein and structure; Source details,
+that has a mark; merged rows; an older record's notes); Protein and structure
+(Enzyme form "H150A variant" or "Wild type"; one UniProt line, the accession and
+how it was found, "(inferred from EC number and organism)", or "Sequence known,
+no UniProt entry", "Several possible UniProt entries", "Not matched to UniProt";
+the variant sequence named by its note, "Variant sequence (UniProt P22498 with
+H150A)"; a note that only says "UniProt canonical sequence" is not shown); Source details,
 collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism
 reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
-says so (or that it stores a Ki only); a missing sequence or SMILES reads "None
-recorded"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
+says so (or that it stores a Ki only); a missing sequence or SMILES reads
+"None"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
 link, and Report a problem names the DOI when there is no PMID. A flagged value
 carries a small "!" button that moves to its note; nothing is readable only on
 hover. A value whose printed concentration unit is not the one CatLog read it in

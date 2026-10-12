@@ -205,11 +205,12 @@
     return sourceDatabaseLabels[key] || text || EMPTY_VALUE;
   }
 
+  // How a record's protein is matched to UniProt, in the record's UniProt line.
   const identityLabels = {
-    accession_resolved: "Accession resolved",
-    sequence_resolved_no_accession: "Sequence resolved; accession unavailable",
-    candidate_pool: "Candidate match",
-    identity_unresolved: "Unresolved",
+    accession_resolved: "UniProt entry",
+    sequence_resolved_no_accession: "Sequence known, no UniProt entry",
+    candidate_pool: "Several possible UniProt entries",
+    identity_unresolved: "Not matched to UniProt",
   };
 
   const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper.";
@@ -4934,10 +4935,7 @@
     return text.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase());
   }
 
-  // A free-text lookup trace on a record that shows no sequence names no shown sequence's source.
-  function showsSequenceSource(value, hasSequence) {
-    return hasSequence || !/\s/.test(String(value ?? "").trim());
-  }
+
 
   // Older rows' Sequence note: the importer's boilerplate in short public words (same meaning); other notes as
   // written. A note that only repeats Enzyme form is not shown.
@@ -5015,9 +5013,42 @@
   function identityResolutionLabel(row) {
     const state = String(row?.identity_resolution_state || "").trim();
     if (state === "accession_resolved" && isEcOrganismInferredSequenceSource(row?.sequence_source)) {
-      return "Accession inferred (EC/organism)";
+      return "UniProt entry inferred from EC number and organism";
     }
-    return identityLabels[state] || state;
+    return identityLabels[state] || "Not matched to UniProt";
+  }
+
+  // How the record's UniProt entry was found, said after the accession ("inferred from EC number and organism"); "" when
+  // the entry is simply the one the source names, or the source is a lookup trace.
+  const uniprotHowTexts = {
+    manual_literature_uniprot_resolution: "from the cited paper",
+    manual_literature_structure_uniprot_resolution: "from the cited paper's structure",
+    source_record: "from the source database",
+    multiple: "from several sources",
+    uniprot_accession_inactive_uniparc: "entry now in the UniParc archive",
+  };
+
+  function uniprotHowText(sequenceSource, accession) {
+    if (sequenceSource && typeof sequenceSource === "object") return "";
+    const key = sequenceSourceKey(sequenceSource);
+    if (!key) return "";
+    if (key === "uniprot_ec_organism_mutation_ranked_match") return "inferred from EC number, organism and variant";
+    if (isEcOrganismInferredSequenceSource(sequenceSource)) return "inferred from EC number and organism";
+    const fixed = uniprotHowTexts[key.split(";", 1)[0].trim()];
+    if (fixed) return fixed;
+    const label = sequenceSourceLabel(sequenceSource);
+    if (/^(?:PDB|NCBI)\b/.test(label)) return `from ${label}`;
+    const other = label.match(/^UniProt (\S+)$/);
+    if (other && UNIPROT_ACCESSION.test(` ${other[1]}`) && other[1] !== accession) return `sequence from ${label}`;
+    return "";
+  }
+
+  // The record's form, in the record: "H150A variant", "Variant, not specified", "Wild type" or "Not recorded".
+  function panelEnzymeForm(row) {
+    const signature = mutationSignature(row);
+    if (signature) return `${signature} variant`;
+    const label = enzymeFormLabel(row, { showUnknown: true });
+    return label === "Variant (unspecified)" ? "Variant, not specified" : label;
   }
 
   function uniqueReferenceValues(values, { caseInsensitive = false } = {}) {
@@ -5855,34 +5886,54 @@
       || (["reconstructed_variant_sequence", "source_provided_variant_sequence"].includes(variantStatus) ? sequence : ""),
     ).trim();
     const sourceProteinAccession = String(detail.source_protein_accession || summary.source_protein_accession || "").trim();
-    const enzymeForm = enzymeFormLabel({ ...summary, ...detail }, { showUnknown: true });
-    const sequenceVariantNote = sequenceNoteText(detail.sequence_variant_note || summary.sequence_variant_note, enzymeForm);
+    const enzymeForm = panelEnzymeForm({ ...summary, ...detail });
+    const rawNote = String(detail.sequence_variant_note || summary.sequence_variant_note || "");
+    let sequenceVariantNote = sequenceNoteText(rawNote, enzymeForm);
     const sequenceSourceValue = detail.sequence_source || summary.sequence_source;
-    const accessionLabel = proteinAccessionDatabase === "UniProt"
+    const isUniProt = proteinAccessionDatabase === "UniProt";
+    const accessionLabel = isUniProt
       ? "UniProt"
       : (proteinAccessionDatabase === "NCBI Protein" ? "NCBI Protein" : "Protein accession");
+    // "UniProt canonical sequence" only repeats the sequence's own label; "H150A applied to the UniProt canonical
+    // sequence" names the variant sequence instead: "Variant sequence (UniProt P22498 with H150A)".
+    if (/^UniProt canonical sequence\.?$/.test(sequenceVariantNote)) sequenceVariantNote = "";
+    let variantLabel = "Variant sequence";
+    const applied = sequenceVariantNote.match(/^(\S+) applied to the UniProt (?:canonical sequence|sequence(?: ([A-Z0-9]+))?)(?: \((.+)\))?$/);
+    if (applied && variantSequence) {
+      const accession = applied[2] || (isUniProt ? proteinAccession : "");
+      variantLabel = `Variant sequence (${accession ? `UniProt ${accession}` : "UniProt sequence"} with ${applied[1]}${applied[3] ? `; ${applied[3]}` : ""})`;
+      sequenceVariantNote = "";
+    }
     const sequenceHtml = variantSequence
-      ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
+      ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure(variantLabel, variantSequence, "detailVariantSequence")}`
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
-    // "UniProt", "UniProt accession" or "UniProt P12345" only repeats the UniProt line above it.
-    const sequenceSourceText = showsSequenceSource(sequenceSourceValue, Boolean(sequenceHtml.trim()))
-      ? sequenceSourceLabel(sequenceSourceValue)
-      : "";
-    const sequenceSource = accessionLabel === "UniProt" && ["UniProt", "UniProt accession", `UniProt ${proteinAccession}`].includes(sequenceSourceText)
-      ? ""
-      : sequenceSourceText;
+    const hasSequence = Boolean(sequenceHtml.trim());
+    // A note about a sequence that is not shown ("shown as the variant sequence") says nothing true here.
+    if (!hasSequence && /\bshown\b| applied to /.test(sequenceVariantNote) && !/^No sequence/.test(sequenceVariantNote)) sequenceVariantNote = "";
+    // One line says how the protein is matched to UniProt.
+    const state = String(detail.identity_resolution_state || summary.identity_resolution_state || "").trim();
+    const sharedEntry = /(?:all|both) map to UniProt \S+, which does not say which is which|share UniProt \S+: which sequence is which/.test(rawNote);
+    let identityRow;
+    if (proteinAccession) {
+      const how = isUniProt ? (sharedEntry ? "one entry for several forms of this enzyme" : uniprotHowText(sequenceSourceValue, proteinAccession)) : "";
+      identityRow = linkedKv(accessionLabel, `${proteinAccessionLink(proteinAccession, proteinAccessionDatabase)}${how ? ` <span class="identity-how">(${escapePublic(how)})</span>` : ""}`);
+    } else if (accessionCandidates.length) {
+      identityRow = linkedKv("UniProt", `${accessionCandidates.length > 1 ? identityLabels.candidate_pool : "Possible UniProt entry"}${referenceList(accessionCandidates, uniprotLink)}`);
+    } else if (state === "sequence_resolved_no_accession" || hasSequence) {
+      identityRow = kv("UniProt", identityLabels.sequence_resolved_no_accession);
+    } else {
+      identityRow = kv("UniProt", identityLabels.identity_unresolved);
+    }
     return `
       <section class="detail-section identity-section">
         <h3>Protein and structure</h3>
         <div class="detail-kv">
           ${kv("Enzyme form", enzymeForm)}
           ${sequenceVariantNote ? kv("Sequence note", sequenceVariantNote) : ""}
-          ${proteinAccession ? linkedKv(accessionLabel, proteinAccessionLink(proteinAccession, proteinAccessionDatabase)) : ""}
+          ${identityRow}
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
-          ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
-          ${sequenceSource ? kv("Sequence source", sequenceSource) : ""}
-          ${!sequenceHtml.trim() && !/sequence/i.test(sequenceVariantNote || "") ? kv("Sequence", "None recorded") : ""}
-          ${smiles ? "" : kv("SMILES", "None recorded")}
+          ${!hasSequence && !/sequence/i.test(sequenceVariantNote || "") ? kv("Sequence", "None") : ""}
+          ${smiles ? "" : kv("SMILES", "None")}
         </div>
         ${sequenceHtml}
         ${smiles ? `
@@ -6039,19 +6090,6 @@
     return license && !/^see source$/i.test(license) ? license : "See the source database's terms";
   }
 
-  // A protein identity that does not contradict the sequence note: several forms sharing one UniProt entry are a shared
-  // accession, not a resolved one.
-  function detailIdentityLabel(summary, detail) {
-    const note = String(detail.sequence_variant_note || summary.sequence_variant_note || "");
-    if (/(?:all|both) map to UniProt \S+, which does not say which is which|share UniProt \S+: which sequence is which/.test(note)) {
-      return "Shared accession (one UniProt entry for several forms)";
-    }
-    return identityResolutionLabel({
-      identity_resolution_state: detail.identity_resolution_state || summary.identity_resolution_state,
-      sequence_source: detail.sequence_source || summary.sequence_source,
-    });
-  }
-
   // What the Check line needs: whether Preparation and Conditions rows exist (corrections point to them) and which values
   // carry a caution (the line points to their notes).
   function v2CheckOptions(summary, detail, proof) {
@@ -6150,7 +6188,6 @@
         mergedDatabasesRow(summary, detail),
         // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
         dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
-        kv("Protein identity", detailIdentityLabel(summary, detail)),
       ])}
 
       <div class="detail-actions">

@@ -1400,33 +1400,61 @@ assert.equal(
     identity_resolution_state: "accession_resolved",
     sequence_source: "uniprot_ec_organism_unique",
   }),
-  "Accession inferred (EC/organism)",
+  "UniProt entry inferred from EC number and organism",
 );
 assert.equal(
   api.identityResolutionLabel({
     identity_resolution_state: "accession_resolved",
     sequence_source: "uniprot_accession",
   }),
-  "Accession resolved",
+  "UniProt entry",
 );
 assert.equal(
   api.identityResolutionLabel({
     identity_resolution_state: "identity_unresolved",
     sequence_source: "uniprot_ec_organism_unique",
   }),
-  "Unresolved",
+  "Not matched to UniProt",
 );
 const inferredIdentityHtml = api.molecularIdentitySection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: 0.6 },
 );
-assert.match(inferredIdentityHtml, /UniProt accession inferred from EC and organism/);
-assert.doesNotMatch(inferredIdentityHtml, /confidence/);
+assert.match(inferredIdentityHtml, /<span>UniProt<\/span><strong><a [^>]*>Q12345<\/a> <span class="identity-how">\(inferred from EC number and organism\)<\/span><\/strong>/);
+assert.doesNotMatch(inferredIdentityHtml, /confidence|Sequence source/);
 const missingDetailConfidenceHtml = api.molecularIdentitySection(
   { primary_uniprot_id: "Q12345", sequence_source: "uniprot_accession", sequence_source_confidence: 1 },
   { sequence_source: "uniprot_ec_organism_unique", sequence_source_confidence: null },
 );
-assert.match(missingDetailConfidenceHtml, /UniProt accession inferred from EC and organism/);
+assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organism\)/);
+// One UniProt line; the variant's own sequence is named by its note; jargon states read plainly.
+{
+  const variantHtml = api.molecularIdentitySection(
+    { primary_uniprot_id: "P22498", mutation_signature: "H150A", wild_type: false },
+    { sequence_source: "uniprot_accession", sequence_variant_status: "reconstructed_variant_sequence", wild_type_sequence: "MAAA",
+      variant_sequence: "MAAG", sequence_variant_note: "H150A applied to the UniProt canonical sequence" },
+  );
+  assert.match(variantHtml, /<span>Enzyme form<\/span><strong>H150A variant<\/strong>/);
+  assert.match(variantHtml, /<summary>Variant sequence \(UniProt P22498 with H150A\) <span>4 aa<\/span><\/summary>/);
+  assert.match(variantHtml, /<span>UniProt<\/span><strong><a [^>]*>P22498<\/a><\/strong>/);
+  assert.doesNotMatch(variantHtml, /Sequence note|Sequence source|Variant: /);
+  const wildHtml = api.molecularIdentitySection({ primary_uniprot_id: "P1", wild_type: true },
+    { sequence_variant_status: "canonical_wild_type_sequence", wild_type_sequence: "MAAA", sequence_variant_note: "UniProt canonical sequence" });
+  assert.match(wildHtml, /<span>Enzyme form<\/span><strong>Wild type<\/strong>/);
+  assert.doesNotMatch(wildHtml, /Sequence note/);
+  assert.match(api.molecularIdentitySection({}, { identity_resolution_state: "sequence_resolved_no_accession", sequence: "MAAA" }),
+    /<span>UniProt<\/span><strong>Sequence known, no UniProt entry<\/strong>/);
+  assert.match(api.molecularIdentitySection({}, { identity_resolution_state: "candidate_pool", uniprot_candidate_ids: ["P1", "P2"] }),
+    /<span>UniProt<\/span><strong>Several possible UniProt entries<div class="reference-list">/);
+  const unmatched = api.molecularIdentitySection({ mutation_signature: "R269A/N270A" }, { identity_resolution_state: "identity_unresolved",
+    sequence_source: "manual_literature_uniprot_resolution",
+    sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." });
+  assert.match(unmatched, /<span>UniProt<\/span><strong>Not matched to UniProt<\/strong>/);
+  assert.match(unmatched, /<span>Sequence<\/span><strong>None<\/strong>/);
+  assert.doesNotMatch(unmatched, /shown as the variant sequence|from the cited paper/, "no note about a sequence that is not shown");
+  assert.match(api.molecularIdentitySection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
+    /\(from the cited paper\)/);
+}
 assert.doesNotMatch(missingDetailConfidenceHtml, /confidence/);
 
 function row(overrides = {}) {
@@ -1940,7 +1968,8 @@ api.renderDetail(row({ record_key: "unknowns", ec_number: "Unknown", organism: "
 referenceHtml = element("detailContent").innerHTML;
 assert.match(referenceHtml, /<p class="detail-subtitle">EC unknown &middot; organism unknown<\/p>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
-assert.match(referenceHtml, /<span>SMILES<\/span><strong>None recorded<\/strong>/);
+assert.match(referenceHtml, /<span>SMILES<\/span><strong>None<\/strong>/);
+assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
 // The record: name; EC, organism and variant; substrate; status. Then Measurement (with the values as printed),
 // Assay conditions, Paper and review, Protein and structure, Source details.
