@@ -2836,13 +2836,17 @@
         for (const key of keys.length ? keys : ["other"]) counts[key] = (counts[key] || 0) + count;
       }
     }
+    // Records read from the paper by CatLog (source=paper opens exactly these) apart from the earlier paper extractions
+    // (source=earlier_paper, under By database). Without the snapshot's count of the first, papers are one row without a
+    // link, since no single Browse filter opens both.
     const v2 = statsCount(overview?.from_paper?.records, counts.paper || 0);
-    const paperNote = v2 !== null && counts.paper > v2
-      ? `${formatInteger(v2)} read from the paper by CatLog; ${formatInteger(counts.paper - v2)} from earlier paper extractions.`
-      : "";
+    const paperItems = v2 !== null
+      ? [{ value: "source_catlog", label: SOURCE_CATLOG_LABEL, count: v2, params: { source: "paper" } },
+        { value: "source_paper_earlier", label: "Earlier paper extractions", count: (counts.paper || 0) - v2, params: { source: "earlier_paper" } }]
+      : [{ value: "source_paper", label: "From papers", count: counts.paper || 0 }];
     return [
-      ...statsSourceNames.map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key },
-        note: key === "paper" ? paperNote : "" })),
+      ...paperItems,
+      ...statsSourceNames.filter(([key]) => key !== "paper").map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key } })),
       { value: "source_other", label: "Other", note: "Another database, or not recorded", count: counts.other || 0 },
     ].filter((item) => item.count > 0);
   }
@@ -3087,9 +3091,9 @@
         { note: "A caution marks a value that may be wrong; a record can carry more than one." })
       : ""));
 
-    // Main source.
+    // Source.
     const sources = statsSources(overview);
-    const sourceSection = statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
+    const sourceSection = statsSection("statsSourcesTitle", "Source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
       { note: "A record merged from several databases counts under each of them, so the counts can add up to more than all records." });
 
     if (!overview) {

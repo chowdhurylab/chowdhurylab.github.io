@@ -1031,10 +1031,13 @@ def check(driver, browser, url):
             assert response.status == 200 and int(response.headers["Content-Length"]) > 1_000_000
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
 
-    # A linked Stats count is the number of records its link opens: the most common organism (with its strains) and
-    # BRENDA (records merged from several databases count under each).
+    # A linked Stats count is the number of records its link opens: the most common organism (with its strains),
+    # BRENDA (records merged from several databases count under each), the records read from the paper by CatLog and
+    # the earlier paper extractions.
     for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] .stats-bars li",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_brenda']"):
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_brenda']",
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_catlog']",
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_paper_earlier']"):
         found = driver.find_elements(By.CSS_SELECTOR, selector)
         if not found:
             continue

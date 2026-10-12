@@ -1565,7 +1565,7 @@ function row(overrides = {}) {
     accepted: 3, manual_review_required: 1, not_verified: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
     kcat: 5, km: 6, kcat_over_km: 2, sequence: 4, smiles: 5,
   }, "Stats uses the manifest's counts; Unverified and Not reviewed sit under Not checked");
-  assert.deepEqual(headings(), ["Review result", "What the records contain", "Main source"]);
+  assert.deepEqual(headings(), ["Review result", "What the records contain", "Source"]);
   assert.equal(element("statsScope").textContent, "All 6 records in this snapshot. Select a name to see those records in Browse.");
   assert.equal((element("statsCharts").innerHTML.match(/Select a (linked )?name/g) || []).length, 0, "Said once, under the heading");
   assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
@@ -1618,7 +1618,7 @@ function row(overrides = {}) {
   }
   assert.match(totalsHtml, /from 1 papers/);
   assert.deepEqual(headings(), ["Review result", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
-    "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
+    "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Source"]);
   assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
   assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads papers →<\/a>/);
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
@@ -1666,13 +1666,19 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No cautions/);
-  assert.match(chart, /#browse\?source=paper">Read from papers/);
+  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper by CatLog<\/a>/);
+  assert.doesNotMatch(chart, /source_paper_earlier|CatLog v2/, "No earlier paper extractions here; no version name");
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
-  assert.doesNotMatch(chart, /from earlier paper extractions/, "every paper record here was read by CatLog");
   assert.doesNotMatch(chart + element("statsTotals").innerHTML, /CatLog v2/, "The version name is never public");
+  // With earlier paper extractions, they are their own row, linked to their By database choice.
+  runtimeManifest.summary.overview = { ...overview, sources: { ...overview.sources, paper: 3 }, from_paper: { records: 2, papers: 1 } };
+  api.renderStats();
+  assert.match(element("statsCharts").innerHTML, /data-stat-key="source_paper_earlier" data-count="1">[\s\S]*?#browse\?source=earlier_paper">Earlier paper extractions<\/a>/);
+  runtimeManifest.summary.overview = overview;
+  api.renderStats();
   const breakdown = readBreakdown();
   assert.equal(breakdown.wild + breakdown.variant + breakdown.not_stated, 6);
-  assert.equal(breakdown.source_paper + breakdown.source_brenda + breakdown.source_oed, 6);
+  assert.equal(breakdown.source_catlog + breakdown.source_brenda + breakdown.source_oed, 6);
   assert.equal(breakdown.temperature, 4);
   assert.equal(breakdown.ph, 5);
   assert.match(chart, /3 records give both temperature and pH/);

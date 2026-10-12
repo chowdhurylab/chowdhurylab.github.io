@@ -30,10 +30,11 @@ errors). The audit and comparison numbers come from overview.quality, which
 `build_overview` copies from the human-review marks file's top-level
 "quality" object (known whole-count fields and the as_of date only); a box or
 sentence whose numbers are missing or do not hold together is left out, and
-the Guide's method section uses the same sentences. What the records contain; Enzyme classes (records and accepted);
+the Guide's method section uses the same sentences. What the records contain;
+Enzyme classes (records and accepted);
 Most common organisms and EC numbers (top 10, the EC with the enzyme name its
 records use most); Value ranges (full width); Wild type and variants above
-Cautions in one column, Main source above a closed "How these numbers are
+Cautions in one column, Source above a closed "How these numbers are
 counted" in the other (stacked, so a short section leaves no gap). On phones a
 second count column ("Accepted") is wide enough for its heading.
 
@@ -61,8 +62,10 @@ that the unaccepted records measure work remaining.
 Every name Browse can filter on links to `catlog-latest.html#browse?` with the
 shared keys (status, checked, ec, organism, metric, variant, caution, source);
 a portable copy links within itself. Items with no single Browse filter
-(Unverified alone, Not stated, other sources, sequence, temperature, pH) stay
-plain text. Counting rules shared with the page: human-checked is an accepted
+(Unverified alone, Not stated, earlier paper extractions, other sources,
+sequence, temperature, pH) stay plain text. Source lists the records read from
+the paper by CatLog (linked as #browse?status=v2, which opens exactly them)
+apart from the earlier paper extractions, then each database. Counting rules shared with the page: human-checked is an accepted
 record whose mark is checked (looked up as the badge does); papers are
 distinct PMIDs, else DOIs, else a stand-in id; names are distinct ignoring
 capitals, without "Unknown"; EC numbers are complete four-part numbers; a
