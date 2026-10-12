@@ -123,7 +123,8 @@ reviewers in the lead), kinds of change (--chg-precision mint,
 --chg-magnitude red), --bar-neutral for single-series bars and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring. On phones each name sits above its bar. `@media
-print`: one column, no figure split across pages.
+print`: one column, no figure split across pages; bars, swatches and columns
+print in their colours even with the browser's background graphics off.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
 rows under it split it into the records read from the paper by CatLog and the

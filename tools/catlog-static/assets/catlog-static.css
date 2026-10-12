@@ -929,6 +929,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 }
 
 @media print {
+  /* The bars, swatches and columns are painted backgrounds: print them in colour even with background graphics off. */
+  .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   .stats-charts { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
   .team-dots { display:none }
