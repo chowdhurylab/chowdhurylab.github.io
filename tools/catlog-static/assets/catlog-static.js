@@ -121,12 +121,13 @@
   ];
 
   // Cautions, grouped as the table's "!" markers and the record's notes show them (conditionFlags).
+  // Each caution states the problem; the record's note gives the numbers.
   const cautionFilters = [
-    { value: "differs", label: "kcat/Km values differ", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values differ", bit: 1, title: "The printed kcat/Km and kcat ÷ Km differ" },
-    { value: "units", label: "Unit or magnitude to check", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000×, or kcat/Km above the diffusion limit" },
-    { value: "unit_missing", label: "Unit not recorded", bit: 4, title: "A kcat or Km without a recorded unit" },
-    { value: "temperature", label: "Temperature to check", bit: 8, title: "A temperature value or unit to check against the source" },
-    { value: "none", label: "No caution", bit: 16, title: "Records without any caution" },
+    { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000×, or kcat/Km above the diffusion limit" },
+    { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
+    { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
+    { value: "none", label: "No cautions", bit: 16, title: "Records without any caution" },
   ];
   const CAUTION_FLAG_BITS = {
     kcat_over_km_quotient_mismatch: 1,
@@ -214,15 +215,15 @@
   const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper.";
 
   const conditionFlagLabels = {
-    kcat_over_km_quotient_mismatch: "Reported kcat/Km differs from kcat ÷ Km",
+    kcat_over_km_quotient_mismatch: "kcat/Km differs from kcat ÷ Km",
     kcat_over_km_unit_mismatch: "kcat/Km unit may be off by 1000×",
-    km_magnitude_needs_check: "Km above 10 M: check the unit",
-    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹: check the unit",
+    km_magnitude_needs_check: "Km above 10 M; the unit may be wrong",
+    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹; the unit may be wrong",
     efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
-    temperature_value_needs_check: "Temperature value needs check",
-    temperature_unit_needs_check: "Temperature unit needs check",
+    temperature_value_needs_check: "Temperature value questionable",
+    temperature_unit_needs_check: "Temperature unit questionable",
     temperature_invalid: "Temperature value is not usable",
-    temperature_zero_celsius_needs_check: "Temperature recorded as exactly 0 °C: check the paper",
+    temperature_zero_celsius_needs_check: "Temperature recorded as exactly 0 °C; may stand for a missing value",
     ph_outside_0_14: "pH outside 0–14",
     ph_invalid: "pH value is not usable",
     unit_not_recorded: "Unit not recorded",
@@ -234,12 +235,32 @@
 
   // Flags that question the value itself; each is surfaced beside the metric it concerns.
   const valueIntegrityFlags = {
-    kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "values differ" },
-    kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "unit mismatch" },
-    efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above limit" },
-    km_magnitude_needs_check: { field: "km", short: "check units" },
-    kcat_magnitude_needs_check: { field: "kcat", short: "check units" },
+    kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "kcat/Km mismatch" },
+    kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "possible 1000× unit error" },
+    efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above diffusion limit" },
+    km_magnitude_needs_check: { field: "km", short: "Km > 10 M" },
+    kcat_magnitude_needs_check: { field: "kcat", short: "kcat > 10⁷ s⁻¹" },
   };
+
+  // A magnitude caution says which bound the stored value passes: Km above 10 M (or below 1 nM), kcat above 10⁷ s⁻¹ (or
+  // 10⁸ s⁻¹), so its words stay true whichever bound the export used.
+  function magnitudeBound(flag, row) {
+    const value = Number(row ? metricDisplay(row, valueIntegrityFlags[flag]?.field || "") : NaN);
+    if (flag === "km_magnitude_needs_check") {
+      return Number.isFinite(value) && value > 0 && value < 1e-6
+        ? { short: "Km < 1 nM", label: "Km below 1 nM; the unit may be wrong", note: "Km is below 1 nM; the unit may be wrong." }
+        : { short: "Km > 10 M", label: conditionFlagLabels.km_magnitude_needs_check, note: "Km is above 10 M; the unit may be wrong." };
+    }
+    if (flag === "kcat_magnitude_needs_check") {
+      const power = Number.isFinite(value) && value > 1e8 ? "10⁸" : "10⁷";
+      return { short: `kcat > ${power} s⁻¹`, label: `kcat above ${power} s⁻¹; the unit may be wrong`, note: `kcat is above ${power} s⁻¹; the unit may be wrong.` };
+    }
+    return null;
+  }
+
+  function flagShortText(flag, row) {
+    return magnitudeBound(flag, row)?.short || valueIntegrityFlags[flag]?.short || "";
+  }
 
   function conditionFlags(...rows) {
     const flags = new Set();
@@ -258,11 +279,13 @@
     return flags;
   }
 
-  // With the record (row), a kcat/Km flag says what differs: both numbers, how far apart, and a likely cause when the
-  // factor is a familiar one.
-  function conditionFlagLabel(flag, row) {
-    const comparison = row && KCAT_KM_FLAGS.has(flag) ? kcatKmComparisonText(row) : "";
+  // With the record (row), a kcat/Km flag says what differs: both numbers, how far apart, and what a familiar factor is;
+  // with its detail, also whether the paper's own numbers agree.
+  function conditionFlagLabel(flag, row, detail = null) {
+    const comparison = row && KCAT_KM_FLAGS.has(flag) ? kcatKmComparisonText(row, detail) : "";
     if (comparison) return comparison;
+    const bound = row ? magnitudeBound(flag, row) : null;
+    if (bound) return bound.label;
     if (conditionFlagLabels[flag]) return conditionFlagLabels[flag];
     if (String(flag || "").startsWith("unit_not_recorded")) return conditionFlagLabels.unit_not_recorded;
     const text = String(flag || "").replace(/_/g, " ").trim();
@@ -271,12 +294,13 @@
 
   // kcat/Km against kcat ÷ Km in the units the record shows (both flags, quotient and unit mismatch, are about this).
   const KCAT_KM_FLAGS = new Set(["kcat_over_km_quotient_mismatch", "kcat_over_km_unit_mismatch"]);
+  // A familiar factor, stated as a fact; "time" and "concentration" name the unit it belongs to.
   const KCAT_KM_FACTORS = [
-    [10, "A factor near 10 often means a misplaced decimal point or power of ten."],
-    [60, "A factor near 60 often means one value is per minute and the other per second."],
-    [100, "A factor near 100 often means a misplaced power of ten."],
-    [1000, "A factor near 1000 often means one value is per mM and the other per M."],
-    [1e6, "A factor near 10⁶ often means one value is per µM and the other per M."],
+    [10, "The factor is close to 10, one shifted decimal place."],
+    [60, "The factor is close to 60, the factor between per minute and per second.", "time"],
+    [100, "The factor is close to 100, two shifted decimal places."],
+    [1000, "The factor is close to 1000, the factor between per mM and per M.", "concentration"],
+    [1e6, "The factor is close to 10⁶, the factor between per µM and per M.", "concentration"],
   ];
 
   // kcat/Km against kcat ÷ Km, in the units the record shows; null when a unit is not the catalog's or a value is missing.
@@ -292,25 +316,45 @@
       quotient,
       quotientText: numberText(quotient, { figures: quotientFigures(row) }),
       fold,
-      foldText: `${fold < 10 ? fold.toFixed(1) : formatInteger(Math.round(fold))}×`,
+      foldText: `${fold < 10 ? fold.toFixed(1) : formatInteger(Math.round(fold))}-fold`,
+      direction: reported > quotient ? "above" : "below",
       factor: KCAT_KM_FACTORS.find(([target]) => Math.abs(fold / target - 1) <= 0.1),
       unit: unitText(metricUnit(row, "kcat_over_km")),
       v2: isV2Row(row) || String(row.verification_method || "").startsWith(v2Method),
     };
   }
 
-  function kcatKmComparisonText(row) {
+  // "Printed kcat/Km (2.2 s⁻¹ mM⁻¹) is 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
+  // them." A familiar factor is named; for a unit factor on a record read from the paper, the printed numbers' own
+  // arithmetic shows whether they agree in one unit.
+  function kcatKmComparisonText(row, detail = null) {
     const check = kcatKmCheck(row);
     if (!check) return "";
-    const { quotientText, foldText, factor, unit, v2 } = check;
-    const head = `kcat/Km from the ${v2 ? "paper" : "source"}: ${numberText(metricDisplay(row, "kcat_over_km"))} ${unit}; `
-      + `kcat ÷ Km: ${quotientText} ${unit} (${foldText} apart).`;
-    if (v2) {
-      return factor
-        ? `${head} ${factor[1]} CatLog keeps all three values as printed.`
-        : `${head} The paper's own numbers do not agree; CatLog keeps all three as printed.`;
-    }
-    return `${head} ${factor ? factor[1] : "The source's own values do not agree."}`;
+    const { quotientText, foldText, direction, factor, unit, v2 } = check;
+    const sentences = [`${v2 ? "Printed kcat/Km" : "The source's kcat/Km"} (${numberText(metricDisplay(row, "kcat_over_km"))} ${unit}) is `
+      + `${foldText} ${direction} kcat ÷ Km (${quotientText} ${unit}).`];
+    if (factor) sentences.push(factor[1]);
+    if (v2 && factor?.[2]) sentences.push(printedQuotientText(detail, factor[2]));
+    sentences.push(v2 ? "All three are stored as the paper gives them." : "All three are stored as the source lists them.");
+    return sentences.filter(Boolean).join(" ");
+  }
+
+  // The paper's printed kcat ÷ Km against its printed kcat/Km (from the record's printed lines): when they agree, the
+  // difference is the unit, and the note says so with the arithmetic.
+  function printedQuotientText(detail, kind) {
+    const lines = Array.isArray(detail?.proof_lines) ? detail.proof_lines : [];
+    const printed = (metric) => {
+      const line = lines.find((item) => item && typeof item === "object" && item.metric === metric);
+      const match = String(line?.raw_value ?? "").trim().match(/^(\d+(?:\.\d+)?)(?![\d.]|\s*[×x*]\s*10)/);
+      return match ? match[1] : "";
+    };
+    const [kcat, km, ratio] = ["kcat", "Km", "kcat/Km"].map(printed);
+    if (!(Number(kcat) > 0 && Number(km) > 0 && Number(ratio) > 0)) return "";
+    const quotient = Number(kcat) / Number(km);
+    if (Math.abs(quotient / Number(ratio) - 1) > 0.05) return "";
+    const figures = Math.max(2, numberParts(ratio)?.significant || 2);
+    const units = kind === "time" ? "kcat and kcat/Km share one time unit" : "Km and kcat/Km share one concentration unit";
+    return `The printed numbers agree (${kcat} ÷ ${km} = ${numberText(quotient, { figures })}) only if ${units}.`;
   }
 
   // A small amber "!" beside the value; its words are in the tooltip, the accessible name and hidden text.
@@ -318,8 +362,8 @@
     const matched = [...flags].filter((flag) => valueIntegrityFlags[flag]?.field === field);
     if (!matched.length) return "";
     const labels = [...new Set(matched.map((flag) => conditionFlagLabel(flag, row)).filter(Boolean))];
-    const shortText = [...new Set(matched.map((flag) => valueIntegrityFlags[flag].short))].join(" · ");
-    const summary = `Check against source: ${labels.join("; ")}`;
+    const shortText = [...new Set(matched.map((flag) => flagShortText(flag, row)))].join(" · ");
+    const summary = labels.join("; ");
     return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
   }
 
@@ -4131,8 +4175,8 @@
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
         <td class="c-substrate"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span></td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
-        <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
-        <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km")}</span></td>
+        <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
+        <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
         ${conditionCellHtml("c-temp", formatTemperature(row))}
         ${conditionCellHtml("c-ph", formatPh(row))}
@@ -4966,9 +5010,7 @@
 
   const metricNames = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", ki: "Ki" };
   const flagNoteTexts = {
-    km_magnitude_needs_check: "Km is above 10 M: check the unit against the source.",
-    kcat_magnitude_needs_check: "kcat is above 10⁷ s⁻¹: check the unit against the source.",
-    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit: check the units against the source.",
+    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit; a unit may be wrong.",
   };
 
   // Each flag on the record once, as a plain sentence; the value it questions gets a marker that points to it. A
@@ -4984,18 +5026,18 @@
         if (unitField && metricUnitMissing(summary, unitField, flags)) return;
         // With the source's own kcat/Km shown, the stored value's diffusion-limit flag is the same unit factor.
         if (consistent && flag === "efficiency_above_diffusion_limit") return;
-        let text = flagNoteTexts[flag] || conditionFlagLabel(flag, summary);
+        let text = magnitudeBound(flag, summary)?.note || flagNoteTexts[flag] || conditionFlagLabel(flag, summary, detail);
         if (unitField) text = `No unit is recorded for ${metricNames[unitField] || unitField}.`;
         if (consistent && KCAT_KM_FLAGS.has(flag)) {
           const { check } = consistent;
-          text = `This record stores kcat/Km as ${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}; `
-            + `kcat ÷ Km is ${check.quotientText} ${check.unit} (${check.foldText} apart). The source's own kcat/Km, `
+          text = `The stored kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}) is `
+            + `${check.foldText} ${check.direction} kcat ÷ Km (${check.quotientText} ${check.unit}). The source's own kcat/Km, `
             + `${numberText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed below)" : ""}, `
             + "agrees with kcat ÷ Km and is shown above."
             + (check.factor ? ` ${check.factor[1]}` : "");
         }
         if (text && !notes.some((note) => note.text === text)) {
-          notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: valueIntegrityFlags[flag]?.short || "", text });
+          notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: flagShortText(flag, summary), text });
         }
       });
     return notes;
@@ -6069,6 +6111,7 @@
       applyFiltersInBackground,
       applyPageSize,
       conditionFlags,
+      valueFlagBadgeHtml,
       enzymeFormLabel,
       enzymeFormHtml,
       sequenceSourceLabel,
