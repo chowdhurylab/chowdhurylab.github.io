@@ -346,9 +346,9 @@
   const KCAT_KM_FLAGS = new Set(["kcat_over_km_quotient_mismatch", "kcat_over_km_unit_mismatch"]);
   // A familiar factor, stated as a fact; "time" and "concentration" name the unit it belongs to.
   const KCAT_KM_FACTORS = [
-    [10, "The factor is close to 10, one shifted decimal place."],
+    [10, "The factor is close to 10, a shift of one decimal place."],
     [60, "The factor is close to 60, the factor between per minute and per second.", "time"],
-    [100, "The factor is close to 100, two shifted decimal places."],
+    [100, "The factor is close to 100, a shift of two decimal places."],
     [1000, "The factor is close to 1000, the factor between per mM and per M.", "concentration"],
     [1e6, "The factor is close to 10⁶, the factor between per µM and per M.", "concentration"],
   ];
@@ -366,7 +366,7 @@
       quotient,
       quotientText: numberText(quotient, { figures: quotientFigures(row) }),
       fold,
-      foldText: `${fold < 10 ? fold.toFixed(1) : formatInteger(Math.round(fold))}-fold`,
+      foldText: `${foldNumberText(fold)}-fold`,
       direction: reported > quotient ? "above" : "below",
       factor: KCAT_KM_FACTORS.find(([target]) => Math.abs(fold / target - 1) <= 0.1),
       unit: unitText(metricUnit(row, "kcat_over_km")),
@@ -374,14 +374,26 @@
     };
   }
 
-  // "Printed kcat/Km (2.2 s⁻¹ mM⁻¹) is 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
+  // A fold as the notes write it: one decimal below 10 (1.6), a whole number from 10 on (never "10.0").
+  function foldNumberText(fold) {
+    return fold < 9.95 ? fold.toFixed(1) : formatInteger(Math.round(fold));
+  }
+
+  // A value in a note, in the same number style as the quotient beside it (38000 printed to 2 figures is 3.8 × 10⁴).
+  function noteValueText(row, field) {
+    const display = metricDisplay(row, field);
+    const figures = displayFigures(row, field) || numberParts(display)?.significant || 0;
+    return numberText(display, figures ? { figures } : undefined);
+  }
+
+  // "The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
   // them." A familiar factor is named; for a unit factor on a record read from the paper, the printed numbers' own
   // arithmetic shows whether they agree in one unit.
   function kcatKmComparisonText(row, detail = null) {
     const check = kcatKmCheck(row);
     if (!check) return "";
     const { quotientText, foldText, direction, factor, unit, v2 } = check;
-    const sentences = [`${v2 ? "Printed kcat/Km" : "The source's kcat/Km"} (${numberText(metricDisplay(row, "kcat_over_km"))} ${unit}) is `
+    const sentences = [`${v2 ? "The paper's kcat/Km" : "The source's kcat/Km"} (${noteValueText(row, "kcat_over_km")} ${unit}) is `
       + `${foldText} ${direction} kcat ÷ Km (${quotientText} ${unit}).`];
     if (factor) sentences.push(factor[1]);
     if (v2 && factor?.[2]) sentences.push(printedQuotientText(detail, factor[2]));
@@ -1109,7 +1121,8 @@
     const display = metricDisplay(row, field);
     if (display === EMPTY_VALUE) return "";
     const unit = metricUnitMissing(row, field) ? "" : unitText(metricUnit(row, field));
-    return ` title="${escapeHtml([display, unit].filter(Boolean).join(" "))}"`;
+    // The stored digits in the page's notation (9.3333 × 10⁵, not 9.3333e+05).
+    return ` title="${escapeHtml([numberText(display), unit].filter(Boolean).join(" "))}"`;
   }
 
   function metricDisplayWithUnitHtml(row, field, { table = false } = {}) {
@@ -2099,6 +2112,11 @@
     if (/^Detail shard /.test(text)) {
       console.warn(`CatLog: ${text}`);
       return "This record could not be loaded.";
+    }
+    // The index's own checks and script errors are not for readers: the detail goes to the console.
+    if (/CatLog index contains an invalid row|^Expected \d+ CatLog rows|is not a function|Cannot read propert|is not defined|is undefined|Unexpected token|^(?:Type|Reference|Syntax|Range)Error\b/.test(text)) {
+      console.warn(`CatLog: ${text}`);
+      return "The records could not be read. Reload the page to try again.";
     }
     return text;
   }
@@ -5713,7 +5731,7 @@
     const above = folds.every((fold) => fold > 2);
     const below = folds.every((fold) => fold < 0.5);
     const sizes = folds.map((fold) => Math.max(fold, 1 / fold));
-    const foldText = (value) => (value < 10 ? value.toFixed(1) : formatInteger(Math.round(value)));
+    const foldText = foldNumberText;
     const low = Math.min(...sizes);
     const high = Math.max(...sizes);
     const fold = low.toFixed(1) === high.toFixed(1) || (low >= 10 && Math.round(low) === Math.round(high)) ? foldText(low) : `${foldText(low)}–${foldText(high)}`;
@@ -5784,7 +5802,9 @@
   function flagMarkerHtml(field, notes) {
     const own = notes.filter((note) => note.field === field);
     if (!own.length) return "";
-    const name = `${metricNames[field]}: ${[...new Set(own.map((note) => note.short).filter(Boolean))].join(", ")}. Show the note.`;
+    const shorts = [...new Set(own.map((note) => note.short).filter(Boolean))].join(", ");
+    // "kcat/Km mismatch. Show the note.", not "kcat/Km: kcat/Km mismatch": the metric is named once.
+    const name = `${shorts.startsWith(metricNames[field]) ? "" : `${metricNames[field]}: `}${shorts}. Show the note.`;
     return `<button class="value-flag" type="button" data-flag-note="${own[0].id}" aria-describedby="${own.map((note) => note.id).join(" ")}" aria-label="${escapeHtml(name)}" title="Show the note"></button>`;
   }
 
@@ -5840,6 +5860,7 @@
     const result = reported.match(/A second, separate AI run (confirmed it|corrected: (.+?))\.?$/);
     const readAs = normalized.match(/in units of (.+)\)$/);
     return {
+      metric: clean(line.metric),
       printed: clean(line.printed) || printedValueText(line.raw_value, line.raw_unit),
       printedLine: "printed_line" in line ? clean(line.printed_line) : ((reported.match(/in the line “(.+)”/) || [])[1] || ""),
       check: "check" in line ? check : (result ? (result[2] ? `corrected: ${result[2]}` : "confirmed") : ""),
@@ -5957,7 +5978,10 @@
 
   // Where a proof line's value is printed ("Table 2", "Table 2, row 3").
   function v2LinePlace(line) {
-    return [line.table_label, line.row_label].map((value) => publicEvidenceString(String(value ?? "")).trim()).filter(Boolean).join(", ");
+    return [line.table_label, line.row_label].map((value) => publicEvidenceString(String(value ?? "")).trim()
+      // CatLog's "read off the page image (scanned paper)" reads plainly inside a heading's brackets.
+      .replace(/^read off the page image \(scanned paper\)$/i, "read from the page image"))
+      .filter(Boolean).join(", ");
   }
 
   // A CatLog v2 record's proof lines and their facts, in kcat, Km, kcat/Km order; null for an older record (its notes
@@ -6036,9 +6060,11 @@
     const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
     const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(printedLine)}”</p>`;
     const cells = String(printedLine).split("|").length;
-    if (cells <= 4 && !/\d \( \d/.test(printedLine)) return quote;
+    const lostPlusMinus = /\d \( \d/.test(printedLine);
+    if (cells <= 4 && !lostPlusMinus) return quote;
+    // The warning only where the ± signs were lost; a long row is folded without it.
     return `<details class="printed-line-disclosure"><summary>Show the line as extracted</summary>${quote}`
-      + `<p class="printed-line-note">Text extraction can drop symbols such as ±.</p></details>`;
+      + `${lostPlusMinus ? '<p class="printed-line-note">Text extraction dropped the ± signs from this line.</p>' : ""}</details>`;
   }
 
   // ---- Record panel: what the AI check found ----
@@ -6122,7 +6148,15 @@
       ? `see the ${cautionFields.length > 1 ? "notes" : "note"} on ${sentenceList(cautionFields.map((field) => metricNames[field]))}`
       : "";
     let head;
-    if (!shared) head = "The results differ by value: see the AI check column under the values.";
+    if (!shared) {
+      // Each result once, with the values it is for: "kcat confirmed; Km and kcat/Km: unit set to mM."
+      const results = new Map();
+      facts.forEach((fact, index) => {
+        const text = valueCheckText(fact, context) || "Confirmed";
+        results.set(text, [...(results.get(text) || []), fact.metric || `value ${index + 1}`]);
+      });
+      head = `${[...results].map(([text, metrics]) => `${sentenceList(metrics)}: ${text.charAt(0).toLowerCase()}${text.slice(1)}`).join("; ")}.`;
+    }
     else if (shared === "Confirmed") head = note ? `All values confirmed as printed; ${note}.` : "All values confirmed.";
     else head = `${shared} for every value.`;
     if (note && shared !== "Confirmed") head += ` See the ${cautionFields.length > 1 ? "notes" : "note"} on ${sentenceList(cautionFields.map((field) => metricNames[field]))}.`;

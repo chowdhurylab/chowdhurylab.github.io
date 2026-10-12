@@ -199,7 +199,7 @@ has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"
 (they may wrap to the next line there). A caution states the problem, never an
-order: the tooltip is the record's note ("Printed kcat/Km (2.2 s⁻¹ mM⁻¹) is
+order: the tooltip is the record's note ("The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is
 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
 them."; a familiar factor is named as a fact, and on a record read from the
 paper the printed numbers' own arithmetic says when they agree in one unit); the

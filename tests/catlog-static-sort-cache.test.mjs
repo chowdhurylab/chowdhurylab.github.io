@@ -547,6 +547,8 @@ assert.ok(api, "test API should be exposed without starting the application");
     assert.equal(api.publicLoadMessage("This page cannot read CatLog index version 3. Reload the page."), "This page is out of date. Reload to update it.");
     assert.equal(api.publicLoadMessage("Detail shard data/details-001.js does not contain abc"), "This record could not be loaded.");
     assert.equal(api.publicLoadMessage("The table data could not be downloaded (HTTP 404)"), "The table data could not be downloaded (HTTP 404)");
+    assert.equal(api.publicLoadMessage("Expected 168765 CatLog rows, received 168000"), "The records could not be read. Reload the page to try again.");
+    assert.equal(api.publicLoadMessage("Cannot read properties of undefined (reading 'x')"), "The records could not be read. Reload the page to try again.");
   } finally {
     console.warn = originalWarn;
   }
@@ -1964,7 +1966,7 @@ const flaggedHtml = api.measurementSection(row({
 }), {});
 assert.match(flaggedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"/);
 assert.match(flaggedHtml, /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as the source lists them\./);
-assert.match(flaggedHtml, /aria-label="kcat\/Km: kcat\/Km mismatch\. Show the note\."/);
+assert.match(flaggedHtml, /aria-label="kcat\/Km mismatch\. Show the note\."/);
 assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often means|check the unit/);
 // The table's "!" states the problem in its tooltip (no order to check), its short words on phones.
 {
@@ -1985,7 +1987,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     { metric: "kcat", raw_value: "10.7 ± 0.0", raw_unit: "s−1" },
     { metric: "kcat/Km", raw_value: "28.9", raw_unit: "mM−1 · s−1" },
   ] });
-  assert.ok(html.includes("Printed kcat/Km (28.9 s⁻¹ mM⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ s⁻¹ mM⁻¹). "
+  assert.ok(html.includes("The paper&#39;s kcat/Km (28.9 s⁻¹ mM⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ s⁻¹ mM⁻¹). "
     + "The factor is close to 1000, the factor between per mM and per M. "
     + "The printed numbers agree (10.7 ÷ 0.37 = 28.9) only if Km and kcat/Km share one concentration unit. "
     + "All three are stored as the paper gives them."), html);
@@ -1995,7 +1997,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
 {
   const low = api.measurementSection(row({ km: 1e-14, km_display: "1e-14", condition_flags: ["km_magnitude_needs_check"] }), {});
   assert.match(low, /Km is below 1 nM; the unit may be wrong\./);
-  assert.match(low, /aria-label="Km: Km &lt; 1 nM\. Show the note\."/);
+  assert.match(low, /aria-label="Km &lt; 1 nM\. Show the note\."/);
   const high = api.measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
   assert.match(high, /kcat is above 10⁸ s⁻¹; the unit may be wrong\./);
   // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
@@ -2234,7 +2236,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /compared each value with the paper; units converted by code\./);
-  assert.match(html, /<span>Check<\/span><strong>The results differ by value: see the AI check column under the values\.<\/strong>/);
+  assert.match(html, /<span>Check<\/span><strong>kcat: confirmed; Km: unit set to mM\.<\/strong>/);
   assert.match(html, /<th scope="col">AI check<\/th>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
@@ -2308,7 +2310,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const html = api.measurementSection(merged, { source_kcat_over_km_values: listed });
   assert.match(html, /<span>kcat\/Km listed by OED<\/span><strong><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/strong>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
-  assert.match(html, /aria-label="kcat\/Km: kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
+  assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
   // CatLog's flag for the same conflict: a kcat/Km mismatch caution in the table and the filter; the record's note is the
   // one above, never the flag's name.
@@ -2373,8 +2375,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<i>K<\/i><sub>m L<\/sub>-methionine/);
   html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
   assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">Table 2 row, as extracted/);
-  assert.match(html, /<p class="printed-line-note">Text extraction can drop symbols such as ±\.<\/p><\/details>/);
-  assert.match(quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9"), /<details class="printed-line-disclosure">/, "more than four cells");
+  assert.match(html, /<p class="printed-line-note">Text extraction dropped the ± signs from this line\.<\/p><\/details>/);
+  const longRow = quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9");
+  assert.match(longRow, /<details class="printed-line-disclosure">/, "more than four cells");
+  assert.doesNotMatch(longRow, /printed-line-note/, "a row that kept its ± signs gets no warning");
   assert.doesNotMatch(api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
   /row, as extracted/, "only a table's line is a row");
