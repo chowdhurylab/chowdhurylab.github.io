@@ -2313,13 +2313,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");
 }
 // Records of one paper that read alike: the export's condition note under the substrate (table and record); without
-// one, look-alikes on the page that share a paper say their conditions differ.
+// one, look-alikes with values on the page that share a paper say only that they read the same.
 {
   const twin = (key, extra = {}) => Object.assign(row({ record_key: key, measurement_key: key, substrate_name: "pyruvate" }), { _pmids: 25401076, _dois: null }, extra);
   const page = [twin("a"), twin("b"), twin("c", { kcat_display: "2" }), twin("d", { condition_note: "+10 mM FBP" }), twin("e", { _pmids: 1 })];
   const alike = api.lookAlikeRowKeys(page);
   assert.deepEqual([...alike].sort(), ["a", "b"]);
-  assert.equal(api.substrateNoteHtml(page[0], alike), '<small class="condition-note" title="conditions differ, see record">conditions differ, see record</small>');
+  assert.equal(api.substrateNoteHtml(page[0], alike), '<small class="condition-note" title="same values as another record of this paper">same values as another record of this paper</small>');
+  const empty = (key) => twin(key, { kcat_display: "", km_display: "", kcat_over_km_display: "" });
+  assert.equal(api.lookAlikeRowKeys([empty("x"), empty("y")]).size, 0, "records without values are not called look-alikes");
   assert.equal(api.substrateNoteHtml(page[2], alike), "");
   assert.match(api.substrateNoteHtml(page[3], alike), />\+10 mM FBP<\/small>/);
   api.renderDetail(row({ record_key: "noted" }), { condition_note: "with 10 mM FBP" });

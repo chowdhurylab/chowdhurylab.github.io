@@ -190,8 +190,8 @@ is never clipped with the name, which then keeps one line; wild type shows
 nothing. Records of one paper that read alike but differ in their assay carry a
 short condition note (the export's condition_note, "+10 mM FBP") as a grey second
 line under the substrate, the substrate then taking one line; without a note,
-records on the page that share a paper and every column read "conditions differ,
-see record". The record shows the note under its Substrate line. Every table row
+records with values on the page that share a paper and every column read "same
+values as another record of this paper" (the table cannot tell what differs). The record shows the note under its Substrate line. Every table row
 has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"

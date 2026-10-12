@@ -3872,8 +3872,9 @@
   }
 
   // Back, Forward or an edited address: the controls follow the address, and the records follow when it changed them.
+  // A bare #record= address has no filters, as on a fresh load. Returns whether a filter pass started.
   function applyLocationFilters() {
-    const params = browseParamsFromLocation();
+    const params = RECORD_HASH.test(window.location.hash || "") ? new Map() : browseParamsFromLocation();
     if (!params) return false;
     const before = browseHash();
     applyBrowseParams(params);
@@ -4443,8 +4444,9 @@
   }
 
   // Records of one paper that read the same in every column but differ in their assay: the short condition note the
-  // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, two records on
-  // this page that share a paper and every column say that their conditions differ.
+  // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, two records with
+  // values on this page that share a paper and every column say only that (the table cannot tell whether their
+  // conditions, protein or nothing at all differ).
   const VISIBLE_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name",
     "kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit", "verification_status",
     "source_db"];
@@ -4461,6 +4463,7 @@
     const groups = new Map();
     pageRows.forEach((row) => {
       if (conditionNoteText(row)) return;
+      if (!["kcat", "km", "kcat_over_km"].some((field) => metricHasValue(row, field))) return;
       const papers = [row._pmids, row._dois].map((value) => JSON.stringify(value ?? null)).join("|");
       if (papers === "null|null") return;
       const key = JSON.stringify([...VISIBLE_ROW_FIELDS.map((field) => row[field] ?? null), formatTemperature(row), formatPh(row), papers]);
@@ -4469,8 +4472,10 @@
     return new Set([...groups.values()].filter((keys) => keys.length > 1).flat());
   }
 
+  const LOOK_ALIKE_NOTE = "same values as another record of this paper";
+
   function substrateNoteHtml(row, lookAlikes) {
-    const note = conditionNoteText(row) || (lookAlikes.has(row.record_key) ? "conditions differ, see record" : "");
+    const note = conditionNoteText(row) || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
     return note ? `<small class="condition-note" title="${escapePublic(note)}">${escapePublic(note)}</small>` : "";
   }
 
@@ -6819,11 +6824,13 @@
       const view = viewFromLocation();
       if (view === "browse") ensureRecordsLoaded();
       renderView(view);
-      applyLocationFilters();
+      const filtering = applyLocationFilters() && state.records.length > 0;
       const recordKey = recordKeyFromLocation();
       if (recordKey && recordKey !== state.selectedKey) {
+        // With new filters the record opens when their results are ready (applyFilters ends by opening it), on the
+        // page that shows it; looking it up now would use the previous results.
         state.pendingRecordKey = recordKey;
-        openRecordFromLocation();
+        if (!filtering) openRecordFromLocation();
       } else if (!recordKey && state.selectedKey && view === "browse") {
         // An address without a record (Back, Forward, a link to filtered Browse) closes the open one.
         resetDetail();
