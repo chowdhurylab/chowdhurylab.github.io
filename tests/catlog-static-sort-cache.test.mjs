@@ -1327,6 +1327,10 @@ const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S
 assert.match(guideMethod, /<a href="#team">People behind CatLog<\/a>/);
 assert.match(guideMethod, /An AI model \(Claude, Anthropic\) reads each/);
 assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);
+// printed unit differs belongs to the Possible unit or magnitude error group (CAUTION_FLAG_BITS), in the Guide and the filter.
+assert.match(guideHtml, /<em>Possible unit or magnitude error<\/em> \([^)]*above diffusion limit, printed unit differs\)/);
+assert.doesNotMatch(guideHtml, /not in the table or the Cautions filter/);
+assert.match(sourceCode, /value: "units", label: "Possible unit or magnitude error", bit: 2, title: "[^"]*a printed unit that differs[^"]*"/);
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
 assert.doesNotMatch(guideHtml, /CatLog v2|independent|AI run|guide-note">Older records/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");

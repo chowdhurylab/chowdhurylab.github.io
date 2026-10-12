@@ -536,7 +536,10 @@ differs"), named by its value ("Km: The paper prints µM; ..."): its note says
 whether kcat ÷ Km shows the unit used is right and, when an AI audit
 re-checked the value, ends with what it found ("... and kept mM."); the note
 stays amber. CatLog's own flag for it
-(printed_unit_prefix_differs) counts as a possible unit error and is said once.
+(printed_unit_prefix_differs) counts as a possible unit error and is said once;
+with the flag the table's "!" and the Cautions filter's Possible unit or
+magnitude error find the record too (its title and the Guide's list of that
+group name it), without it the caution is in the record only.
 A merged older record whose listed kcat/Km values are all more than 2-fold from
 kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"; a familiar factor such as
 1000 is named, and a fold past 10,000 reads "more than 10,000-fold"). A stored

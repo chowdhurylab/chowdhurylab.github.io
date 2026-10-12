@@ -156,7 +156,7 @@
   // Each caution states the problem; the record's note gives the numbers.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000× or kcat/Km above the diffusion limit" },
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above the diffusion limit or a printed unit that differs from the one CatLog read" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
     { value: "none", label: "No cautions", bit: 16, title: "Records without any caution" },
