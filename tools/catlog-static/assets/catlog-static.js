@@ -4296,7 +4296,7 @@
     if (!suggestions.length) return;
     positionSuggestions(input, box);
     box.innerHTML = `<span class="suggestion-title" aria-hidden="true">Try:</span>${suggestions.map((value, index) => (
-      `${index ? '<span class="suggestion-sep" aria-hidden="true">·</span>' : ""}<button id="catlog-suggestion-${index}" type="button" role="option" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
+      `${index ? '<span class="suggestion-sep" aria-hidden="true">·</span>' : ""}<button id="catlog-suggestion-${index}" type="button" role="option" tabindex="-1" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
     )).join("")}`;
     box.classList.remove("hidden");
     state.suggestionIndex = -1;
@@ -8338,7 +8338,12 @@
           hideSuggestions();
         }
       });
-      input.addEventListener("blur", scheduleSuggestionHide);
+      // The examples are reached with the arrow keys, never with Tab (they follow the header in the page): Tab to
+      // anything else closes them at once.
+      input.addEventListener("blur", (event) => {
+        if (event.relatedTarget && !$("searchSuggestions")?.contains(event.relatedTarget)) hideSuggestions();
+        else scheduleSuggestionHide();
+      });
     });
     const suggestionBox = $("searchSuggestions");
     suggestionBox?.addEventListener("focusin", () => window.clearTimeout(state.suggestionHideTimer));

@@ -3314,6 +3314,13 @@ assert.match(suggestions.innerHTML, /^<span class="suggestion-title" aria-hidden
     assert.equal(searchInput.getAttribute("aria-expanded"), "false");
     assert.equal(searchInput.getAttribute("aria-activedescendant"), null);
 
+    // The examples are never Tab stops; Tab from the input to the next control closes them at once.
+    openSuggestions();
+    assert.match(suggestions.innerHTML, /<button id="catlog-suggestion-0" type="button" role="option" tabindex="-1"/);
+    searchInput.dispatch("blur", { relatedTarget: outside });
+    assert.equal(suggestions.classList.contains("hidden"), true, "Tab out of the search box closes the examples at once");
+    assert.equal(searchInput.getAttribute("aria-expanded"), "false");
+
     openSuggestions();
     options[0].focus();
     const escape = suggestions.dispatch("keydown", { key: "Escape", target: options[0] });
