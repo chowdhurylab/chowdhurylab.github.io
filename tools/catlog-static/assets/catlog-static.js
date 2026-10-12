@@ -5226,34 +5226,52 @@
     "kcat/Km": ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>"],
   };
 
-  // The "Second check" column shows only when the values' results differ; one result for all is said once, in Review.
-  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts)) {
-    const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
-    const text = (value) => caretHtml(escapePublic(value));
-    const where = (line) => [line.table_label, line.row_label].map(clean).filter(Boolean).join(", ");
-    const places = new Set(lines.map(where));
-    const shared = places.size === 1 ? [...places][0] : "";
+  // Where a proof line's value is printed ("Table 2", "Table 2, row 3").
+  function v2LinePlace(line) {
+    return [line.table_label, line.row_label].map((value) => publicEvidenceString(String(value ?? "")).trim()).filter(Boolean).join(", ");
+  }
+
+  // A CatLog v2 record's proof lines and their facts, in kcat, Km, kcat/Km order; null for an older record (its notes
+  // are the earlier review's text).
+  function v2ProofFacts(summary, detail) {
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const lines = (Array.isArray(detail.proof_lines) ? detail.proof_lines : []).filter(Boolean);
+    if (!v2Record || !lines.length || !lines.every((line) => typeof line === "object" && line.metric)) return null;
     const order = Object.keys(v2MetricLabels);
-    const rank = (line) => order.indexOf(line.metric);
-    const sorted = lines.map((line, index) => [line, facts[index]]).sort(([a], [b]) => rank(a) - rank(b));
+    const rank = (line) => (order.includes(line.metric) ? order.indexOf(line.metric) : order.length);
+    const sorted = [...lines].sort((a, b) => rank(a) - rank(b));
+    return { lines: sorted, facts: sorted.map(v2LineFacts) };
+  }
+
+  // The values as the paper prints them, in Measurement right under the values: one row per value, "As printed" and
+  // "In catalog units" (with how code converted it); a Check column only when the values' results differ (one result for
+  // all is said once, in Paper and review). The place is in the heading when every value shares it.
+  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts)) {
+    const text = (value) => caretHtml(escapePublic(value));
+    const places = new Set(lines.map(v2LinePlace));
+    const shared = places.size === 1 ? [...places][0] : "";
     const checks = facts.some((fact) => fact.check) && !v2SharedCheck(facts);
-    const rows = sorted.map(([line, fact]) => {
+    const rows = lines.map((line, index) => {
+      const fact = facts[index];
       const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
+      const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
       const stored = field && metricHasValue(summary, field)
         ? `${numberHtml(metricDisplay(summary, field))} ${unitHtml(metricUnit(summary, field))}`
         : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
-      const place = !shared && where(line) ? `<small>${escapePublic(where(line))}</small>` : "";
+      const place = !shared && v2LinePlace(line) ? `<small>${escapePublic(v2LinePlace(line))}</small>` : "";
       const how = fact.conversion ? `<small>${text(fact.conversion)}</small>` : "";
       return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(fact.check)}</td>` : ""}</tr>`;
     }).join("");
     // Each printed line once; a "line" that is only the printed number itself adds nothing.
-    const notes = sorted.map(([line, fact]) => [where(line), fact.printedLine, fact.printed])
+    const notes = lines.map((line, index) => [v2LinePlace(line), facts[index].printedLine, facts[index].printed])
       .filter(([, printedLine, printed], index, all) => printedLine && !printed.startsWith(printedLine)
         && all.findIndex(([, other]) => other === printedLine) === index)
       .map(([place, printedLine]) => `${place ? `${place}, printed line` : "Printed line"}: “${printedLine}”`);
-    if (shared && !notes.length) notes.push(`Printed in ${shared}.`);
-    return `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">Printed in paper</th><th scope="col">Stored as</th>${checks ? '<th scope="col">Second check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
-      + notes.map((note) => `<p class="evidence-note-plain">${text(note)}</p>`).join("");
+    const heading = `As printed in the paper${shared ? ` (${shared})` : ""}`;
+    return `<div class="detail-values"><h4>${escapePublic(heading)}</h4>`
+      + `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">As printed</th><th scope="col">In catalog units</th>${checks ? '<th scope="col">Check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
+      + notes.map((note) => `<p class="evidence-note-plain">${text(note)}</p>`).join("")
+      + "</div>";
   }
 
   // The second run's result when it is the same for every value ("confirmed", "corrected: ..."), else "".
@@ -5268,7 +5286,9 @@
     return corrected ? `The second run corrected, for every value: ${corrected[1]}.` : "";
   }
 
-  // ---- Record panel: measurement ----
+  // ---- Record panel: measurement and assay conditions ----
+  // Two sections: Measurement (the values, each caution once, then, for a record read from the paper, the values as
+  // printed) and Assay conditions (cosubstrate, temperature, pH, the other conditions and the preparation).
   function measurementSection(summary, detail) {
     const metricSummary = {
       ...summary,
@@ -5307,6 +5327,12 @@
       : (metricSummary.has_ki && metricHasValue(metricSummary, "ki")
           ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
           : "No kcat, Km or kcat/Km is stored for this record.");
+    // A record read from the paper: its values as printed, right under the values they give.
+    const proof = v2ProofFacts(summary, detail);
+    // The header shows the substrate; a long name it cuts short is given in full here.
+    const substrate = String(summary.substrate_name || "").trim();
+    // A merged older record's kcat/Km values as its sources list them, under the values.
+    const listed = sourceEfficiencyRow(summary, detail);
     return `
       <section class="detail-section measurement-section">
         <h3>Measurement</h3>
@@ -5325,16 +5351,20 @@
           `;
           }).join("")}
         </div>
+        ${listed ? `<div class="detail-kv measurement-listed">${listed}</div>` : ""}
         ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
         ${flagNotesHtml(notes)}
-        <div class="detail-kv measurement-conditions">
-          ${kv("Substrate", /^unknown$/i.test(String(summary.substrate_name || "").trim()) ? "Not recorded" : summary.substrate_name)}
+        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts) : ""}
+      </section>
+      <section class="detail-section conditions-section">
+        <h3>Assay conditions</h3>
+        <div class="detail-kv">
+          ${substrate.length > LONG_DETAIL_SUBSTRATE ? kv("Substrate", substrate) : ""}
           ${conditions.cosubstrate}
           ${kv("Temperature", temperatureValue)}
           ${kv("pH", phValue)}
           ${conditions.conditions}
           ${conditions.preparation}
-          ${sourceEfficiencyRow(summary, detail)}
         </div>
       </section>
     `;
@@ -5474,7 +5504,7 @@
       : sequenceSourceText;
     return `
       <section class="detail-section identity-section">
-        <h3>Protein and substrate</h3>
+        <h3>Protein and structure</h3>
         <div class="detail-kv">
           ${kv("Enzyme form", enzymeForm)}
           ${sequenceVariantNote ? kv("Sequence note", sequenceVariantNote) : ""}
@@ -5573,16 +5603,17 @@
   }
 
   // ---- Record panel: header and source details ----
-  // The record's status as one line, in the table's words and colours: a dot, the status, the source ("from paper",
-  // "BRENDA", ...), then "corrected", "no paper linked" or "human-checked".
-  function detailStatusHtml(row) {
+  // The record's status as one line, in the table's words and colours: a dot, the review result (a Not checked record
+  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the source ("from paper", "BRENDA", ...), then
+  // "corrected", "no paper linked" or "human-checked".
+  function detailStatusHtml(row, { v2Record = isV2Row(row) } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
     const identityOnly = isIdentityOnlyAccepted(row);
     const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value] || "unverified";
     const words = [
       rowStatusLabel(row, { exact: true }),
-      sourceTagText(row),
+      v2Record ? "from paper" : sourceTagText(row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
@@ -5598,16 +5629,33 @@
     return `<h2 id="detailHeading" tabindex="-1"${name.length > LONG_DETAIL_NAME ? ' class="long-name"' : ""}>${escapePublic(name)}</h2>`;
   }
 
-  // "EC · organism", leaving out what is not recorded; "Unknown" (not stated in the paper or the source database) says
-  // which of the two it is.
+  // The variant as the header names it: "N145A variant", "variant, not specified", or nothing for wild type (and for a
+  // record that does not say).
+  function detailVariantText(row) {
+    const signature = mutationSignature(row);
+    if (signature) return `${signature} variant`;
+    return enzymeFormLabel(row) === "Variant (unspecified)" ? "variant, not specified" : "";
+  }
+
+  // "EC 1.4.1.20 · Bacillus sphaericus · N145A variant", leaving out what is not recorded, so records of one paper
+  // differ at the top; "Unknown" (not stated in the paper or the source database) says which of the two it is.
   function detailSubtitleHtml(row) {
-    const parts = [[row.ec_number, "EC unknown"], [row.organism, "organism unknown"]]
-      .map(([value, unknown]) => {
-        const text = String(value || "").trim();
-        return /^unknown$/i.test(text) ? unknown : text;
-      })
-      .filter(hasDisplayValue);
-    return parts.length ? `<p>${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
+    const ec = String(row.ec_number || "").trim();
+    const organism = String(row.organism || "").trim();
+    const parts = [
+      /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? `EC ${ec}` : ""),
+      /^unknown$/i.test(organism) ? "organism unknown" : (hasDisplayValue(organism) ? organism : ""),
+      detailVariantText(row),
+    ].filter(Boolean);
+    return parts.length ? `<p class="detail-subtitle">${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
+  }
+
+  // "Substrate: ...", under the EC line. A long name is cut to two lines here and given in full under Assay conditions.
+  const LONG_DETAIL_SUBSTRATE = 90;
+  function detailSubstrateHtml(row) {
+    const text = String(row.substrate_name || "").trim();
+    const name = hasDisplayValue(text) && !/^unknown$/i.test(text) ? text : "Not recorded";
+    return `<p class="detail-substrate"><span>Substrate:</span> <span class="detail-substrate-name">${escapePublic(name)}</span></p>`;
   }
 
   // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms.
@@ -5656,10 +5704,9 @@
       ? ""
       : kv("Evidence", String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines));
     const humanNote = humanReviewNote(summary);
-    // A CatLog v2 record's values are one table; an older record keeps its notes.
-    const v2Facts = v2Record && proofLines.every((line) => typeof line === "object" && line.metric) ? proofLines.map(v2LineFacts) : null;
+    // A CatLog v2 record's values are one table, in Measurement; an older record keeps its notes, here.
+    const v2Facts = v2ProofFacts(summary, detail)?.facts || null;
     const paperRows = [
-      evidenceRow,
       ...(paperIds.length || dois.length
         ? [
             dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
@@ -5667,11 +5714,7 @@
             standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
           ]
         : [kv("PMID or DOI", "None recorded")]),
-      // How many database rows a record merges is said once, here; Source details then names the databases only when
-      // they are not just the source.
-      mergedRows > 1
-        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
-        : "",
+      evidenceRow,
       kv("Review", [
         reviewOutcome(summary, detail),
         v2Facts ? v2CheckSentence(v2SharedCheck(v2Facts)) : "",
@@ -5680,29 +5723,35 @@
       humanNote
         ? `<div class="kv-line human-review-line"><span>Human review</span><strong>${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}</strong></div>`
         : "",
+      // How many database rows a record merges is said once, here; Source details then names the databases only when
+      // they are not just the source.
+      mergedRows > 1
+        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
+        : "",
     ];
     // An older record's notes (the earlier catalog's review text) expand on request.
-    const valuesHtml = !proofLines.length
+    const notesHtml = !proofLines.length || v2Facts
       ? ""
-      : (v2Facts
-          ? `<div class="detail-values"><h4>${escapeHtml(proofHeading)}</h4>${v2ValuesHtml(summary, proofLines, v2Facts)}</div>`
-          : `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(proofHeading)}</summary><div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`);
+      : `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(proofHeading)}</summary><div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`;
     const dataOrigin = publicEvidenceString(detail.data_origin);
+    // The order: what was measured (values, cautions, the paper's own numbers), under which conditions, where it comes
+    // from and how it was checked, which protein and substrate structure, then the source details.
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
         ${detailHeadingHtml(summary)}
         ${detailSubtitleHtml(summary)}
-        ${detailStatusHtml(summary)}
+        ${detailSubstrateHtml(summary)}
+        ${detailStatusHtml(summary, { v2Record })}
       </div>
 
       ${measurementSection(summary, detail)}
-      ${molecularIdentitySection(summary, detail)}
       <section class="detail-section paper-section">
-        <h3>Paper</h3>
+        <h3>Paper and review</h3>
         <div class="detail-kv">${paperRows.filter(Boolean).join("")}</div>
-        ${valuesHtml}
+        ${notesHtml}
       </section>
+      ${molecularIdentitySection(summary, detail)}
       ${detailDisclosure("Source details", [
         kv("Enzyme name from", v2Record ? "the paper" : sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source || "not recorded"),
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),

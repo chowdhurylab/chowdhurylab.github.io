@@ -420,6 +420,8 @@ body.detail-open .detail-panel { display:block }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--teal); outline-offset:2px }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-table) }
+.detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text); overflow-wrap:anywhere }
+.detail-substrate > span:first-child { color:var(--text-3) }
 .close-detail { position:absolute; top:12px; right:12px }
 .detail-section { border-bottom:1px solid var(--line-soft); padding:16px 0 }
 .detail-section h3 { margin:0 0 12px; color:var(--text); font-size:var(--fs-ui); font-weight:600 }
@@ -441,7 +443,7 @@ body.detail-open .detail-panel { display:block }
 
 .measurement-value strong .metric-inline-unit { margin-left:4px }
 .measurement-value strong .value-flag { margin-left:6px; vertical-align:middle }
-.measurement-conditions { margin-top:12px }
+.measurement-listed { margin-top:12px }
 
 .condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:anywhere }
 .condition-list li::marker { color:var(--text-3) }

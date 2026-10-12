@@ -248,15 +248,22 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 ## Record Details
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
-Order: name, EC · organism and one status line in the table's words ("Accepted ·
-from paper · ✓ human-checked", "Accepted · BRENDA · corrected"; a Not checked
-record names its exact value, "Not checked (Unverified)"); Measurement (the values, then each flag once as a plain
-note under them, then substrate, cosubstrate, temperature, pH, conditions as a
-short list, preparation); Protein and substrate; Paper (links, the review
-outcome, a Human review line with the reviewer's facts-only note on every record
-that has a mark, and a CatLog v2 record's values as one table: printed, stored,
-second check only when results differ); Source details, collapsed, with one
-licence line. Odd records read plainly: a name longer than 64 characters is set
+The header tells records of one paper apart: the name; "EC 1.4.1.20 · Bacillus
+sphaericus · N145A variant" (nothing for wild type); "Substrate: ..." (two lines
+at most; a longer name is also given in full under Assay conditions); one status
+line in the table's words and colours: the review result ("Not checked
+(Unverified)" keeps the earlier status in brackets), the source ("from paper", or
+the databases as the table names them: "BRENDA", "earlier extraction", "source not
+recorded"), then "corrected", "no paper linked" or "✓ human-checked" ("Accepted ·
+from paper · ✓ human-checked", "Accepted · BRENDA · corrected"). Then, in this order: Measurement (the values,
+each caution once as a plain note under them, and for a record read from the
+paper "As printed in the paper (Table 2)": one row per value with As printed and
+In catalog units, a Check column only when results differ); Assay conditions
+(cosubstrate, temperature, pH, other conditions as a short list, preparation);
+Paper and review (links, how the values were read and checked, a Human review
+line with the reviewer's facts-only note on every record that has a mark, merged
+rows, an older record's notes); Protein and structure; Source details,
+collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism
 reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
 says so (or that it stores a Ki only); a missing sequence or SMILES reads "None

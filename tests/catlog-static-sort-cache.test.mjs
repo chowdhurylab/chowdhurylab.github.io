@@ -226,7 +226,7 @@ assert.match(
   sourceCode,
   /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Values in source";/,
 );
-assert.match(sourceCode, /<h4>\$\{escapeHtml\(proofHeading\)\}<\/h4>/);
+assert.match(sourceCode, /const heading = `As printed in the paper\$\{shared \? ` \(\$\{shared\}\)` : ""\}`;/);
 
 function makeClassList() {
   const values = new Set();
@@ -1355,7 +1355,7 @@ assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
   }
 }
 const emptyIdentityHtml = api.molecularIdentitySection({}, {});
-assert.match(emptyIdentityHtml, /<h3>Protein and substrate<\/h3>/);
+assert.match(emptyIdentityHtml, /<h3>Protein and structure<\/h3>/);
 assert.match(emptyIdentityHtml, /<span>Enzyme form<\/span><strong>Not recorded<\/strong>/);
 assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
 const blankFormNoteHtml = api.molecularIdentitySection({}, { sequence_variant_note: "   " });
@@ -1928,10 +1928,49 @@ assert.match(decodeURIComponent(referenceHtml.match(/id="reportRecordProblem" cl
 api.renderDetail(row({ record_key: "unknowns", ec_number: "Unknown", organism: "Unknown", kcat: null, km: null, kcat_over_km: null,
   kcat_display: "Not reported", km_display: "Not reported", kcat_over_km_display: "Not reported" }), {});
 referenceHtml = element("detailContent").innerHTML;
-assert.match(referenceHtml, /<p>EC unknown &middot; organism unknown<\/p>/);
+assert.match(referenceHtml, /<p class="detail-subtitle">EC unknown &middot; organism unknown<\/p>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
 assert.match(referenceHtml, /<span>SMILES<\/span><strong>None recorded<\/strong>/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
+// The record: name; EC, organism and variant; substrate; status. Then Measurement (with the values as printed),
+// Assay conditions, Paper and review, Protein and structure, Source details.
+{
+  const v2Summary = row({ record_key: "v2-structure", measurement_key: "v2-structure", source_db: "primary_paper_direct",
+    enzyme_label_source: "explicit_enzyme_name", ec_number: "1.4.1.20", organism: "Bacillus sphaericus",
+    substrate_name: "3-phenyl-2-oxopropanoate", mutation_signature: "N145A", wild_type: false });
+  api.renderDetail(v2Summary, {
+    verification_method: "catlog_v2_read_and_independent_verify",
+    supporting_pmids: ["12234181"],
+    proof_lines: [
+      { metric: "kcat", table_label: "Table 2", printed: "68 s^-1", check: "confirmed", conversion: "", normalized_value: 68, normalized_unit: "s^(-1)" },
+      { metric: "Km", table_label: "Table 2", printed: "1.1 mM", check: "confirmed", conversion: "", normalized_value: 1.1, normalized_unit: "mM" },
+    ],
+  });
+  const html = element("detailContent").innerHTML;
+  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; Bacillus sphaericus &middot; N145A variant<\/p>/);
+  assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
+  const order = ["<h3>Measurement</h3>", "<h4>As printed in the paper (Table 2)</h4>", "<h3>Assay conditions</h3>",
+    "<h3>Paper and review</h3>", "<h3>Protein and structure</h3>", "<summary>Source details</summary>", 'id="downloadSelectedJson"'];
+  const positions = order.map((part) => html.indexOf(part));
+  assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
+  assert.match(html, /<th scope="col">As printed<\/th><th scope="col">In catalog units<\/th><\/tr>/);
+  // A long substrate name is cut short in the header and given in full under Assay conditions.
+  const longName = `${"2-deoxy-3-O-[(3R)-3-hydroxytetradecanoyl]-".repeat(3)}glucose`;
+  api.renderDetail(row({ record_key: "long-substrate", substrate_name: longName }), {});
+  assert.match(element("detailContent").innerHTML, new RegExp(`<span>Substrate</span><strong>${longName.replace(/[[\]()]/g, "\\$&")}</strong>`));
+  api.renderDetail(row({ record_key: "short-substrate" }), {});
+  assert.doesNotMatch(element("detailContent").innerHTML, /<span>Substrate<\/span>/);
+  // The status line names the result and the source as the table does (one helper); Not checked keeps the earlier
+  // status in brackets.
+  api.renderDetail(row({ record_key: "status-words", verification_status: "mathematically_inferred", source_db: "skid" }), {});
+  assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Not reviewed\)<\/span><span>SKiD<\/span>/);
+  api.renderDetail(row({ record_key: "status-words-2", verification_status: "manual_review_required", source_db: "sabio_rk;brenda" }), {});
+  assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not confirmed<\/span><span>BRENDA, SABIO-RK<\/span>/);
+  api.renderDetail(row({ record_key: "status-words-3", verification_status: "unverified", source_db: "unknown" }), {});
+  assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Unverified\)<\/span><span>source not recorded<\/span>/);
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.
