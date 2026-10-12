@@ -1675,7 +1675,17 @@ function row(overrides = {}) {
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
   assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
   assert.doesNotMatch(paperBadge, /independent|run\b|code converted/);
-  assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
+  assert.equal(api.reviewOutcome(prepared), "Not checked: taken from the source database as listed.");
+  // An older record's review says it was the earlier automated review, and what it found.
+  for (const [status, sentence] of [
+    ["corrected", "Corrected and accepted in the earlier automated review (the value before correction was not kept)."],
+    ["verified", "Accepted as printed, in the earlier automated review."],
+    ["manual_review_required", "Not confirmed: the earlier automated review left a question open on the value, protein or substrate."],
+    ["unverified", "Not checked: the earlier automated review recorded no final check."],
+    ["disputed", "Disputed in the earlier automated review; not accepted (no reason recorded)."],
+  ]) assert.equal(api.reviewOutcome(row({ verification_status: status })), sentence);
+  assert.equal(api.reviewOutcome(row({ verification_status: "verified", public_trust_basis: "identity_only" })),
+    "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.");
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.
   delete runtimeManifest.summary.review_details;

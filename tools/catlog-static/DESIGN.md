@@ -281,7 +281,8 @@ pointer to the AI check column, then once what the check changed on the record
 and "as printed; see the note on kcat/Km" when a value carries a caution; then
 an AI audit line with the
 audit's date and verdict only when one re-checked the values; for an older
-record its Review line; a Human review line with the reviewer's facts-only note on every record
+record its Review line, which names the earlier automated review and what it
+found ("Accepted as printed, in the earlier automated review."); a Human review line with the reviewer's facts-only note on every record
 that has a mark; merged rows; an older record's notes); Protein and structure; Source details,
 collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism

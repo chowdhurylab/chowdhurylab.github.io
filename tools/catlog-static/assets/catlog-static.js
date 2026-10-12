@@ -1093,20 +1093,21 @@
       && String(row.public_trust_basis || "").trim() === "identity_only";
   }
 
+  // An older record's review, said as what it was: the earlier automated review.
   function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Accepted after a correction in an earlier review; the change is not recorded.";
+        return "Corrected and accepted in the earlier automated review (the value before correction was not kept).";
       case "verified":
-        return "Accepted as reported.";
+        return "Accepted as printed, in the earlier automated review.";
       case "manual_review_required":
-        return "Not accepted: at least one check is still open.";
+        return "Not confirmed: the earlier automated review left a question open on the value, protein or substrate.";
       case "mathematically_inferred":
-        return "Prepared from source records; no accepted review outcome is recorded.";
+        return "Not checked: taken from the source database as listed.";
       case "disputed":
-        return "Disputed: flagged in an earlier review and not accepted; the reason is not recorded.";
+        return "Disputed in the earlier automated review; not accepted (no reason recorded).";
       default:
-        return "No accepted result is recorded.";
+        return "Not checked: the earlier automated review recorded no final check.";
     }
   }
 
@@ -1228,8 +1229,9 @@
   function reviewOutcome(summary, detail = {}) {
     const method = String(detail.verification_method || "");
     if (summary.verification_status === "verified" && method.startsWith(v2Method)) return v2MethodSentence();
-    const outcome = reviewOutcomeBase(summary);
-    return isIdentityOnlyAccepted(summary) ? `${outcome} No PMID or DOI is linked, so the value cannot be checked against a paper.` : outcome;
+    return isIdentityOnlyAccepted(summary)
+      ? "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper."
+      : reviewOutcomeBase(summary);
   }
 
   // The review result; with exact, a Not checked record also names its own status ("Not checked (Unverified)").
