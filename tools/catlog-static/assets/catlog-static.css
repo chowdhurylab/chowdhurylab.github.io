@@ -325,6 +325,8 @@ tbody tr.selected .row-arrow { color:var(--teal-dark) }
 .load-notice.empty-notice { border-left-color:var(--line-strong); background:var(--surface-2); color:var(--text-2) }
 .load-notice.empty-notice strong { color:var(--text) }
 .load-notice.empty-notice .button { border-color:var(--line-strong) }
+.empty-actions { display:flex; flex-wrap:wrap; gap:8px }
+.empty-actions .button { max-width:100%; white-space:normal; text-align:left }
 .catalog-load-failed .records-title { display:flex; flex-wrap:wrap }
 .catalog-load-failed .records-title > strong, .catalog-load-failed .records-title > span { flex-basis:100% }
 .catalog-load-failed .table-wrap table { min-width:0 !important }

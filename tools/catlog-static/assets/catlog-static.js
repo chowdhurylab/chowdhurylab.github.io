@@ -3839,6 +3839,11 @@
         clearFilters();
         $("globalSearchInput").focus({ preventScroll: true });
       });
+      const removeLast = body.querySelector?.('[data-action="remove-last-filter"]');
+      removeLast?.addEventListener("click", () => {
+        removeActiveFilter(removeLast.dataset.filterKey);
+        ($("activeFilters")?.querySelector?.(".filter-chip") || $("openFiltersButton"))?.focus({ preventScroll: true });
+      });
       return;
     }
     body.innerHTML = pageRows.map((row) => {
@@ -4009,24 +4014,57 @@
     return `<tr class="skeleton-row" aria-hidden="true">${cells}</tr>`.repeat(count);
   }
 
-  // No record matches: say so in the table, with a way back to every record.
+  // The controls without one active filter (activeFilterItems keys), to count what removing it would show.
+  function controlsWithout(controls, key) {
+    const next = { ...controls };
+    const [group, value] = key.split(":");
+    const lists = { metric: "metrics", variant: "variants", caution: "cautions", source: "sources" };
+    if (lists[group]) next[lists[group]] = controls[lists[group]].filter((item) => item !== value);
+    else if (group === "status") next.states = recordStates.map((item) => item.value);
+    else if (group === "temperature") Object.assign(next, { tmin: "", tmax: "" });
+    else if (group === "ph") Object.assign(next, { phmin: "", phmax: "" });
+    else if (["q", "ec", "enzyme", "organism", "substrate"].includes(group)) next[group] = "";
+    else if (group === "v2" || group === "checked") next[group] = false;
+    return next;
+  }
+
+  // No record matches: say so in the table, name the filters that are on, and offer to remove the one set last (with
+  // how many records that shows) or to clear everything.
   function emptyResultsHtml() {
     const query = String($("globalSearchInput")?.value || "").trim();
     // A shared record link (#record=) whose record this snapshot does not have.
     const missingRecord = Boolean(query) && query === state.missingRecordKey;
+    const controls = filterControlState();
+    const items = activeFilterItems(controls);
+    const searchOnly = items.length === 1 && items[0].key === "q";
     const heading = missingRecord
       ? `Record ${query} is not in this snapshot`
-      : query ? `No records match "${query}"` : "No records match these filters";
+      : searchOnly ? `No records match "${query}"` : "No records match these filters";
     const hint = missingRecord
       ? "Records change between snapshots. Search for the enzyme, organism, substrate or PMID to find the current ones."
-      : "Check the spelling, or try an EC number (1.1.1.1), a UniProt accession (P11509) or a PMID.";
+      : items.length > 1
+        ? `Filters on: ${items.map((item) => item.label).join(" · ")}.`
+        : searchOnly || !items.length
+          ? "Check the spelling, or try an EC number (1.1.1.1), a UniProt accession (P11509) or a PMID."
+          : `Filter on: ${items[0].label}.`;
+    let removeLast = "";
+    if (!missingRecord && items.length > 1) {
+      const lastKey = [...state.filterOrder].reverse().find((key) => items.some((item) => item.key === key)) || items[items.length - 1].key;
+      const last = items.find((item) => item.key === lastKey);
+      const filters = currentFilters(controlsWithout(controls, lastKey));
+      const count = state.records.reduce((total, row) => total + (rowMatches(row, filters) ? 1 : 0), 0);
+      removeLast = `<button class="button secondary" type="button" data-action="remove-last-filter" data-filter-key="${escapeHtml(lastKey)}">Remove ${escapeHtml(last.label)} (${formatInteger(count)} ${count === 1 ? "record" : "records"})</button>`;
+    }
     return `
       <tr class="empty-row">
         <td colspan="${tableColumnCount()}">
           <div class="load-notice empty-notice">
             <strong>${escapeHtml(heading)}</strong>
             <span>${escapeHtml(hint)}</span>
-            <button class="button secondary" type="button" data-action="clear-filters">Clear search and filters</button>
+            <div class="empty-actions">
+              ${removeLast}
+              <button class="button secondary" type="button" data-action="clear-filters">Clear search and filters</button>
+            </div>
           </div>
         </td>
       </tr>
