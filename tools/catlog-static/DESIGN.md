@@ -57,7 +57,10 @@ While records load, placeholder rows keep the table's shape and, until the first
 rows appear, the count beside Filters says how many have loaded. Page 1 appears
 from the first rows of the index, which arrives in Review-status order, and
 stays in place when the rest arrives; sorting waits for all records. Stats and
-Guide never download the record index.
+Guide never download the record index. kcat, Km, kcat/Km, T and pH sort both
+ways, from the Sort menu or by clicking the column header (high to low first,
+then low to high); the header's arrow shows the direction, and records without
+the value stay last. Review status stays the default order.
 
 ## Type And Color
 

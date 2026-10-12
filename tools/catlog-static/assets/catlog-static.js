@@ -780,6 +780,21 @@
     return `<span class="enzyme-form" title="Measured enzyme form">${escapePublic(label)}</span>`;
   }
 
+  // The temperature (°C) and pH the table shows, as numbers for sorting (null when the table shows a dash).
+  function temperatureValue(row) {
+    if (hasDisplayValue(row.temperature_display)) {
+      const value = Number(row.temperature_display);
+      return Number.isFinite(value) ? value : null;
+    }
+    const kelvin = row.temperature_k == null || row.temperature_k === "" ? NaN : Number(row.temperature_k);
+    return Number.isFinite(kelvin) && kelvin > 170 && kelvin <= 1000 ? kelvin - 273.15 : null;
+  }
+
+  function phValue(row) {
+    const value = row.ph_display == null || row.ph_display === "" ? NaN : Number(row.ph_display);
+    return Number.isFinite(value) && value >= 0 && value <= 14 ? value : null;
+  }
+
   function formatTemperature(row) {
     const display = row.temperature_display;
     if (hasDisplayValue(display)) return display;
@@ -1275,6 +1290,8 @@
       row._sortEnzyme = String(row.enzyme_display_name || "");
       row._sortOrganism = String(row.organism || "");
       row._sortSubstrate = String(row.substrate_name || "");
+      row._sortTemperature = temperatureValue(row);
+      row._sortPh = phValue(row);
       // _ecSort and _search are filled on first use (ecParts, searchText): most rows never need them.
     });
   }
@@ -1411,6 +1428,35 @@
     if (!select) return;
     select.disabled = !available;
     select.title = available ? "" : SORT_LOADING_TITLE;
+    document.querySelectorAll?.(".sort-button").forEach((button) => { button.disabled = !available; });
+    syncSortHeaders();
+  }
+
+  // The numeric columns sort both ways: "kcat" is high to low, "kcat_asc" low to high. A column header shows the
+  // direction of the current sort (aria-sort and an arrow); clicking it sorts high to low, then low to high.
+  const SORT_HEADER_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", temperature: "assay temperature", ph: "assay pH" };
+
+  function syncSortHeaders() {
+    const sort = $("sortSelect")?.value || "evidence";
+    const loading = Boolean($("sortSelect")?.disabled);
+    document.querySelectorAll?.(".sort-button").forEach((button) => {
+      const key = button.dataset.sort;
+      const direction = sort === key ? "descending" : sort === `${key}_asc` ? "ascending" : "";
+      const th = button.closest("th");
+      if (direction) th.setAttribute("aria-sort", direction);
+      else th.removeAttribute("aria-sort");
+      button.title = loading
+        ? SORT_LOADING_TITLE
+        : `Sort by ${SORT_HEADER_NAMES[key]}, ${direction === "descending" ? "low to high" : "high to low"}`;
+    });
+  }
+
+  function sortByColumn(key) {
+    const select = $("sortSelect");
+    if (!select || select.disabled) return;
+    select.value = select.value === key ? `${key}_asc` : key;
+    syncSortHeaders();
+    applyFiltersInBackground();
   }
 
   function recordIndexPath() {
@@ -1590,6 +1636,8 @@
       this._sortEnzyme = "";
       this._sortOrganism = "";
       this._sortSubstrate = "";
+      this._sortTemperature = null;
+      this._sortPh = null;
       this._search = null;
     }
     return ViewerRow;
@@ -1887,6 +1935,8 @@
       _sortEnzyme,
       _sortOrganism,
       _sortSubstrate,
+      _sortTemperature,
+      _sortPh,
       _search,
       _search_text,
       next_best_action,
@@ -2638,14 +2688,27 @@
       const bv = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
       return bv - av;
     };
+    // Low to high; rows without the value stay last.
+    const numericAsc = (field) => (a, b) => {
+      const av = a[field] == null ? Number.POSITIVE_INFINITY : Number(a[field]);
+      const bv = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
+      return av - bv;
+    };
     const sorters = {
       ec_number: ecSort,
       enzyme: textKey("_sortEnzyme"),
       organism: textKey("_sortOrganism"),
       substrate: textKey("_sortSubstrate"),
       kcat: numericDesc("kcat"),
+      kcat_asc: numericAsc("kcat"),
       km: numericDesc("km"),
+      km_asc: numericAsc("km"),
       kcat_over_km: numericDesc("kcat_over_km"),
+      kcat_over_km_asc: numericAsc("kcat_over_km"),
+      temperature: numericDesc("_sortTemperature"),
+      temperature_asc: numericAsc("_sortTemperature"),
+      ph: numericDesc("_sortPh"),
+      ph_asc: numericAsc("_sortPh"),
       evidence: (a, b) => {
         const stateDelta = a._stateRank - b._stateRank;
         if (stateDelta !== 0) return stateDelta;
@@ -2748,8 +2811,15 @@
       "organism",
       "substrate",
       "kcat",
+      "kcat_asc",
       "km",
+      "km_asc",
       "kcat_over_km",
+      "kcat_over_km_asc",
+      "temperature",
+      "temperature_asc",
+      "ph",
+      "ph_asc",
     ].includes(sort) ? sort : "evidence";
   }
 
@@ -3044,7 +3114,9 @@
       const first = style(cells[0]);
       const padding = parseFloat(first.paddingLeft) + parseFloat(first.paddingRight) + 2;
       const natural = cells.map((cell) => cell.firstElementChild?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
-      const widest = natural[natural.length - 1];
+      // A value column is also as wide as its header (with the sort arrow).
+      const header = table.querySelector(`thead ${column.cell} .sort-button`)?.getBoundingClientRect().width || 0;
+      const widest = Math.max(natural[natural.length - 1], header);
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
       const width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
@@ -4289,6 +4361,7 @@
     });
     if ($("sourceV2Filter")) $("sourceV2Filter").checked = false;
     $("sortSelect").value = "evidence";
+    syncSortHeaders();
     resetDetail();
     applyFiltersInBackground();
   }
@@ -4333,7 +4406,11 @@
       });
     });
     $("sortSelect").addEventListener("change", () => {
+      syncSortHeaders();
       applyFiltersInBackground();
+    });
+    document.querySelectorAll(".sort-button").forEach((button) => {
+      button.addEventListener("click", () => sortByColumn(button.dataset.sort));
     });
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);

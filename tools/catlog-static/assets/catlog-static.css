@@ -243,6 +243,14 @@ table { --cell-x:10px; width:100%; border-collapse:collapse; table-layout:fixed 
 th, td { border-bottom:1px solid var(--line-soft); padding:4px var(--cell-x); text-align:left; vertical-align:middle; font-size:var(--fs-table); line-height:17px; overflow-wrap:break-word }
 th { position:sticky; top:0; z-index:1; height:48px; background:var(--surface-2); color:var(--text-2); font-size:var(--fs-meta); font-weight:600; line-height:1.25; white-space:nowrap }
 .header-unit { display:block; margin-top:4px; color:var(--text-3); font-size:var(--fs-min); font-weight:400; white-space:nowrap }
+/* Sortable value headers: the arrow shows the current sort and its direction (down: high to low). */
+.sort-button { display:inline-flex; align-items:flex-start; gap:2px; border:0; background:none; padding:0; color:inherit; font:inherit; text-align:right; cursor:pointer }
+.sort-button:disabled { cursor:default }
+.sort-icon { flex:0 0 12px; height:12px; margin-top:1px; color:var(--teal); visibility:hidden }
+th[aria-sort] { color:var(--text) }
+th[aria-sort] .sort-icon, .sort-button:enabled:is(:hover,:focus-visible) .sort-icon { visibility:visible }
+th:not([aria-sort]) .sort-icon { color:var(--text-3) }
+th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 
 .c-substrate, .c-ph { border-right:1px solid var(--line) }
 .num { text-align:right; white-space:nowrap }
@@ -251,6 +259,7 @@ th { position:sticky; top:0; z-index:1; height:48px; background:var(--surface-2)
 /* Names wrap to two lines; the full name is in the tooltip. */
 .clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere; white-space:normal }
 /* While the script measures each cell's natural width (one layout,never painted). */
+table.measuring .sort-button { width:max-content }
 table.measuring .clamp-2 { display:inline-block; max-width:none; white-space:nowrap }
 table.measuring .metric-with-note { flex-wrap:nowrap; max-width:none }
 table.measuring .state-badge { display:inline-grid; max-width:none }

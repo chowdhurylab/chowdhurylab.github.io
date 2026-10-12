@@ -2193,6 +2193,16 @@ function referenceComparator(sort) {
     const right = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
     return right - left;
   };
+  // Low to high, rows without the value last; T and pH sort by the number the table shows.
+  const numericAsc = (field) => (a, b) => {
+    const left = a[field] == null ? Number.POSITIVE_INFINITY : Number(a[field]);
+    const right = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
+    return left - right;
+  };
+  const shown = (field, valueOf) => (row) => ({ [field]: valueOf(row) });
+  const temperature = (row) => (/^-?[\d.]+$/.test(String(row.temperature_display ?? "")) ? Number(row.temperature_display) : null);
+  const ph = (row) => (/^[\d.]+$/.test(String(row.ph_display ?? "")) && Number(row.ph_display) <= 14 ? Number(row.ph_display) : null);
+  const by = (comparator, valueOf) => (a, b) => comparator({ ...a, ...valueOf(a) }, { ...b, ...valueOf(b) });
   const comparators = {
     evidence: (a, b) => (
       (a._stateRank - b._stateRank)
@@ -2205,8 +2215,15 @@ function referenceComparator(sort) {
     organism: textKey("_sortOrganism"),
     substrate: textKey("_sortSubstrate"),
     kcat: numericDesc("kcat"),
+    kcat_asc: numericAsc("kcat"),
     km: numericDesc("km"),
+    km_asc: numericAsc("km"),
     kcat_over_km: numericDesc("kcat_over_km"),
+    kcat_over_km_asc: numericAsc("kcat_over_km"),
+    temperature: by(numericDesc("t"), shown("t", temperature)),
+    temperature_asc: by(numericAsc("t"), shown("t", temperature)),
+    ph: by(numericDesc("p"), shown("p", ph)),
+    ph_asc: by(numericAsc("p"), shown("p", ph)),
   };
   return (a, b) => comparators[sort](a, b) || (a._loadIndex - b._loadIndex);
 }
@@ -2218,13 +2235,20 @@ const modes = [
   "organism",
   "substrate",
   "kcat",
+  "kcat_asc",
   "km",
+  "km_asc",
   "kcat_over_km",
+  "kcat_over_km_asc",
+  "temperature",
+  "temperature_asc",
+  "ph",
+  "ph_asc",
 ];
 const fixtures = [
-  row({ record_key: "a", verification_status: "unverified", evidence_confidence_tier: "candidate_only", source_record_count: 2, ec_number: "10.2.1.1", enzyme_display_name: "Zulu", organism: "Mouse", substrate_name: "ATP", kcat: null, km: 8, kcat_over_km: 0.1 }),
-  row({ record_key: "b", verification_status: "verified", evidence_confidence_tier: "paper_grounded_high_confidence", source_record_count: 1, ec_number: "2.7.1.1", enzyme_display_name: "Alpha", organism: "Yeast", substrate_name: "Glucose", kcat: 9, km: null, kcat_over_km: 2 }),
-  row({ record_key: "c", verification_status: "manual_review_required", evidence_confidence_tier: "literature_linked", source_record_count: 8, ec_number: "2.7.1.-", enzyme_display_name: "Beta", organism: "Human", substrate_name: "Citrate", kcat: 3, km: 4, kcat_over_km: null }),
+  row({ record_key: "a", verification_status: "unverified", evidence_confidence_tier: "candidate_only", source_record_count: 2, ec_number: "10.2.1.1", enzyme_display_name: "Zulu", organism: "Mouse", substrate_name: "ATP", kcat: null, km: 8, kcat_over_km: 0.1, temperature_display: "37", ph_display: "n/a" }),
+  row({ record_key: "b", verification_status: "verified", evidence_confidence_tier: "paper_grounded_high_confidence", source_record_count: 1, ec_number: "2.7.1.1", enzyme_display_name: "Alpha", organism: "Yeast", substrate_name: "Glucose", kcat: 9, km: null, kcat_over_km: 2, temperature_display: "n/a", ph_display: "8.5" }),
+  row({ record_key: "c", verification_status: "manual_review_required", evidence_confidence_tier: "literature_linked", source_record_count: 8, ec_number: "2.7.1.-", enzyme_display_name: "Beta", organism: "Human", substrate_name: "Citrate", kcat: 3, km: 4, kcat_over_km: null, temperature_display: "4", ph_display: "6" }),
   row({ record_key: "d", verification_status: "corrected", evidence_confidence_tier: "paper_grounded", source_record_count: 3, ec_number: "1.1.1.1", enzyme_display_name: "Gamma", organism: "Bacterium", substrate_name: "Pyruvate", kcat: 5, km: 2, kcat_over_km: 4 }),
   row({ record_key: "e", verification_status: "verified", evidence_confidence_tier: "paper_grounded", source_record_count: 3, ec_number: "1.1.1.1", enzyme_display_name: "Gamma", organism: "Bacterium", substrate_name: "Pyruvate", kcat: 5, km: 2, kcat_over_km: 4 }),
 ];
