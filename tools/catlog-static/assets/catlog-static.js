@@ -2014,6 +2014,9 @@
     return detail;
   }
 
+  // The button's label; phones show "Download" (its accessible name stays "Download page").
+  const DOWNLOAD_PAGE_LABEL = 'Download<span class="download-page-detail"> page</span>';
+
   async function handlePageDownload() {
     const button = $("downloadPageButton");
     const originalTitle = button?.title || "";
@@ -2059,10 +2062,10 @@
       state.pageDownloadPending = false;
       if (button) {
         button.disabled = !state.recordsReady || !currentPageRows().length;
-        if (!failed) button.textContent = "Download page";
+        if (!failed) button.innerHTML = DOWNLOAD_PAGE_LABEL;
         if (failed) {
           window.setTimeout(() => {
-            button.textContent = "Download page";
+            button.innerHTML = DOWNLOAD_PAGE_LABEL;
             button.title = originalTitle;
           }, 2500);
         }

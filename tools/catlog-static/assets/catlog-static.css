@@ -738,6 +738,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #pageSummary, #clearResultsButton { grid-column:1 / -1; grid-row:auto; justify-self:start }
   .records-tools label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
   .records-tools select { width:100% }
+  .download-page-detail { display:none }
   .table-scroll-controls { display:none }
   #recordTableWrap table, #recordTableWrap tbody { display:block; width:100%; min-width:0 !important }
   #recordTableWrap colgroup { display:none }

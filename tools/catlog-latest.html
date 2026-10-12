@@ -162,7 +162,8 @@
                   class="button secondary"
                   type="button"
                   title="Download the rows shown on this page with available molecular identity, references, and source details."
-                >Download page</button>
+                  aria-label="Download page"
+                >Download<span class="download-page-detail"> page</span></button>
                 <label for="sortSelect">Sort by</label>
                 <select id="sortSelect">
                   <option value="evidence">Review status</option>
@@ -176,8 +177,8 @@
                   <option value="km_asc">Km, low to high</option>
                   <option value="kcat_over_km">kcat/Km, high to low</option>
                   <option value="kcat_over_km_asc">kcat/Km, low to high</option>
-                  <option value="temperature">Temperature, high to low</option>
-                  <option value="temperature_asc">Temperature, low to high</option>
+                  <option value="temperature">T (°C), high to low</option>
+                  <option value="temperature_asc">T (°C), low to high</option>
                   <option value="ph">pH, high to low</option>
                   <option value="ph_asc">pH, low to high</option>
                 </select>
