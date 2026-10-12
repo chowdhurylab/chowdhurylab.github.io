@@ -125,6 +125,10 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
   .app-header { column-gap:var(--sp-4) }
   .external-nav { gap:var(--sp-3); padding-left:var(--sp-4) }
 }
+/* Below 1260px the brand shows "CatLog" alone (the tagline is still read out), so the placeholder is never cut. */
+@media (min-width: 1181px) and (max-width: 1259px) {
+  .brand-lockup span:not(.visually-hidden) { display:none }
+}
 .global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-14) }
 .global-search input::placeholder { color:var(--muted) }
 .global-search kbd { min-width:20px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); color:var(--muted); text-align:center; font:var(--fs-12)/18px var(--font-mono) }

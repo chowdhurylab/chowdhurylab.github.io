@@ -63,8 +63,9 @@ sheet, dialogs and menus.
 
 The header is one line from 1181px: brand ("CatLog", enzyme kinetics catalog),
 the catalog's tabs Browse · Stats · Guide · Team, the links out set apart by a
-thin rule, the search box (at most 560px) and Download. Tabs are 14px/500, the
-current one 600 with a 2px accent rule under it.
+thin rule, the search box (at most 560px) and Download. From 1181 to 1259px the
+brand shows "CatLog" alone, so the search box's placeholder fits. Tabs are
+14px/500, the current one 600 with a 2px accent rule under it.
 
 Keep Records, Accepted, Read from the paper, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px

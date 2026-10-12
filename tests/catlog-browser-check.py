@@ -1041,6 +1041,22 @@ def check_layout(driver, browser, url, route_label):
             assert heights["tagged"] and heights["noted"] and heights["heights"] == [44], (
                 f"At {width}px rows with a variant tag or a condition note stay 44px: {heights}")
         results["row-height"] = True
+        # The one-line header (from 1181px) never cuts the search box's placeholder.
+        for width in (1181, 1259, 1260, 1280, 1440):
+            set_browse_viewport(driver, browser, width, 900)
+            fit = driver.execute_script("""
+                const input = document.getElementById('globalSearchInput');
+                const style = getComputedStyle(input);
+                const probe = document.createElement('span');
+                probe.textContent = input.placeholder;
+                probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+                document.body.appendChild(probe);
+                const need = probe.getBoundingClientRect().width;
+                probe.remove();
+                return {need: Math.ceil(need), room: Math.floor(input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight))};
+            """)
+            assert fit["need"] <= fit["room"], f"At {width}px the search placeholder fits: {fit}"
+        results["search-placeholder"] = True
         # 1280: the sidebar is 272px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
