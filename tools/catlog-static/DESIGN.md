@@ -241,8 +241,8 @@ characters wide); only SMILES and sequences break anywhere. No serial comma;
 tags are lower case, filter labels and headings sentence case. One
 type scale (front matter) and weights 400/500/600 only; no text below 12px.
 Colours are tokens in the stylesheet's :root, the only place hex values appear
-(other areas use the tokens: --st-* for review status with --st-*-fill at alpha
-0.6 for figure fills, --cmp-* and --chg-* for the database comparison and kinds
+(other areas use the tokens: --st-* for review status, which figures fill at 60%
+with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
 of change, --bar-neutral for single-series bars, --caution* for cautions,
 --checked for human-checked, --accent* for actions).
 Table numbers share regular weight; enzyme names use medium weight. Reserve

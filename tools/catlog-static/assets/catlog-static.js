@@ -7563,8 +7563,8 @@
     ].filter(Boolean);
     const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
     // The light salmon and tan dots get their darker rings (design spec 2).
-    const ring = colour === "pending" || colour === "not-reviewed" ? `;--status-ring:var(--st-${colour}-ring, transparent)` : "";
-    return `<p class="detail-status" style="--status-color:var(--status-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
+    const ring = colour === "pending" || colour === "not-reviewed" ? `;--status-ring:var(--st-${colour}-ring)` : "";
+    return `<p class="detail-status" style="--status-color:var(--st-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
   }
 
   // The record's name; a long one (several names in brackets) is set smaller, so the header that stays in view while the

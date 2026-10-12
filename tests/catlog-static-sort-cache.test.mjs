@@ -2392,13 +2392,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Not reviewed\)<\/span><span>SKiD<\/span>/);
   // Its dot is the exact status's colour, as in the table: tan with its ring for Not reviewed, salmon with its ring for
   // Not confirmed, slate for Unverified.
-  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--status-not-reviewed\);--status-ring:var\(--st-not-reviewed-ring, transparent\)">/);
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--st-not-reviewed\);--status-ring:var\(--st-not-reviewed-ring\)">/);
   api.renderDetail(row({ record_key: "status-words-2", verification_status: "manual_review_required", source_db: "sabio_rk;brenda" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not confirmed<\/span><span>BRENDA, SABIO-RK<\/span>/);
-  assert.match(element("detailContent").innerHTML, /style="--status-color:var\(--status-pending\);--status-ring:var\(--st-pending-ring, transparent\)"/);
+  assert.match(element("detailContent").innerHTML, /style="--status-color:var\(--st-pending\);--status-ring:var\(--st-pending-ring\)"/);
   api.renderDetail(row({ record_key: "status-words-3", verification_status: "unverified", source_db: "unknown" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Unverified\)<\/span><span>source not recorded<\/span>/);
-  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--status-unverified\)">/);
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--st-unverified\)">/);
 }
 // A record read by CatLog: Method (with "values stored as printed" when code converted nothing) and Check; the EC the
 // paper does not print is said in the header. Badges are named by their words, not the method sentence.
