@@ -5678,7 +5678,14 @@
     return Math.max(0, ...String(text.textContent || "").split(/\s+|(?<=[-,/])/).map((word) => fitTextContext.measureText(word).width));
   }
 
+  // Every refit (new rows, the human-review marks widening Status, a record opening or closing, the sidebar, a resize)
+  // also updates the sideways-scroll cues: the sticky Enzyme column, the edge shadows and the scroll buttons.
   function fitTableColumns() {
+    fitColumnWidths();
+    updateTableScrollControls();
+  }
+
+  function fitColumnWidths() {
     const table = $("recordTableWrap")?.querySelector?.("table");
     const style = window.getComputedStyle;
     if (!table || typeof style !== "function") return;
@@ -5974,10 +5981,7 @@
     syncFilterRailRole();
     syncDetailPanelAccessibility();
     // The sidebar changes the table's width.
-    if (wasOpen !== shouldOpen && filtersDocked()) {
-      fitTableColumns();
-      updateTableScrollControls();
-    }
+    if (wasOpen !== shouldOpen && filtersDocked()) fitTableColumns();
     // Collapsing with the focus inside leaves it on the control that opens them again.
     if (!shouldOpen && wasOpen && focusInside && focus) filtersToggleButton()?.focus({ preventScroll: true });
     if (shouldOpen && focus) {
@@ -6034,9 +6038,11 @@
     const hasOverflow = !placeholdersOnly && wrap.scrollWidth > wrap.clientWidth + 2;
     const canScrollLeft = wrap.scrollLeft > 2;
     const canScrollRight = wrap.scrollLeft + wrap.clientWidth < wrap.scrollWidth - 2;
-    $("scrollTableLeftButton")?.closest(".table-scroll-controls")?.classList.toggle("hidden", !hasOverflow);
-    $("scrollTableLeftButton").disabled = !canScrollLeft;
-    $("scrollTableRightButton").disabled = !canScrollRight;
+    const left = $("scrollTableLeftButton");
+    const right = $("scrollTableRightButton");
+    left?.closest(".table-scroll-controls")?.classList.toggle("hidden", !hasOverflow);
+    if (left) left.disabled = !canScrollLeft;
+    if (right) right.disabled = !canScrollRight;
     wrap.classList.toggle("can-scroll-left", canScrollLeft);
     wrap.classList.toggle("can-scroll-right", canScrollRight);
   }
@@ -8442,7 +8448,6 @@
       hideSuggestions();
       syncFilterPanel();
       fitTableColumns();
-      updateTableScrollControls();
     });
     narrowDetailMedia.addEventListener?.("change", () => {
       syncFilterPanel();

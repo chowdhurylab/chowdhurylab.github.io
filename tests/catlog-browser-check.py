@@ -1028,6 +1028,25 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open() and is_open())
         assert box(".filter-column")["width"] == 272
         results["record-1280"] = True
+        # The human-review marks widen Status with the human-checked tag after the rows are drawn: a table that then
+        # scrolls sideways shows it at once (scroll buttons, sticky Enzyme column, edge cue), before any scroll.
+        manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+        if isinstance(((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted"), int):
+            open_page("#browse?checked=1")
+            wait.until(lambda d: all(
+                row.find_elements(By.CSS_SELECTOR, ".state-tag.human-checked")
+                for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
+            cues = driver.execute_script("""
+                const wrap = document.getElementById('recordTableWrap');
+                const enzyme = wrap.querySelector('#recordsBody td.c-enzyme');
+                return {overflow: wrap.scrollWidth > wrap.clientWidth + 2, scrollLeft: wrap.scrollLeft,
+                        right: wrap.classList.contains('can-scroll-right'),
+                        controls: !document.querySelector('.table-scroll-controls').classList.contains('hidden'),
+                        sticky: getComputedStyle(enzyme).position === 'sticky'};
+            """)
+            assert cues["scrollLeft"] == 0 and cues["overflow"] == cues["right"] == cues["controls"] == cues["sticky"], (
+                f"The scroll cues follow the table's width once the marks are in: {cues}")
+            results["scroll-cues-1280"] = True
         # 1700: sidebar, table and record side by side (Safari only where the screen is that wide).
         if browser == "chrome" or driver.execute_script("return screen.availWidth") >= 1720:
             set_browse_viewport(driver, browser, 1700, 1000)
