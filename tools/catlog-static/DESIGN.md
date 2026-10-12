@@ -10,7 +10,7 @@ colors:
   border: "#d3dcd7"
   status-accepted: "#339cff"
   status-pending: "#f3883b"
-  status-unverified: "#a9b1ae"
+  status-unverified: "#858f8c"
   status-not-reviewed: "#9b79ec"
   status-disputed: "#e02e2a"
   human-checked: "#17733a"
@@ -250,7 +250,9 @@ text, and wrap within the page gutters.
 White and neutral surfaces carry the data. Teal marks selection and actions;
 status uses a coloured dot (the Stats outcome colours) and ink words: accepted
 blue, not confirmed orange, not checked grey (Unverified and Not reviewed
-alike), disputed red; the filter's ticks use the same colours. Amber marks
+alike, the Stats grey #858f8c, 3.3:1), disputed red; the filter's ticks use darker
+forms of them (#1f6fc5, #b85d12, #6b7572; disputed red as it is), so a ticked box
+stands out on white and does not look disabled. Amber marks
 cautions. Green (human-checked, 5.9:1 on white) is only for
 "human-checked": a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human

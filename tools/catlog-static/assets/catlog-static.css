@@ -57,9 +57,14 @@
   /* Status dots: the Stats outcome colours */
   --status-accepted:#339cff;
   --status-pending:#f3883b;
-  --status-unverified:#a9b1ae;
+  --status-unverified:#858f8c;
   --status-not-reviewed:#9b79ec;
   --status-disputed:#e02e2a;
+  /* Filter ticks: darker forms of the status colours, so a ticked box stands out on white (4.5:1 or more) and never
+     looks disabled (a white check sits on the fill in Safari) */
+  --tick-accepted:#1f6fc5;
+  --tick-pending:#b85d12;
+  --tick-unverified:#6b7572;
   /* Human-checked: a check and the tag in green (5.9:1 on white, 5.1:1 on the selected row) */
   --checked:#17733a;
   /* Stats palette */
@@ -234,9 +239,9 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:8px; color:var(--text); font-size:var(--fs-table) }
 .check-row input { width:14px; height:14px; margin:0; accent-color:var(--teal) }
 /* Review result ticks in the status colours; green only for human-checked. */
-.check-row.accepted input { accent-color:var(--status-accepted) }
-.check-row.review input { accent-color:var(--status-pending) }
-.check-row.unresolved input { accent-color:var(--status-unverified) }
+.check-row.accepted input { accent-color:var(--tick-accepted) }
+.check-row.review input { accent-color:var(--tick-pending) }
+.check-row.unresolved input { accent-color:var(--tick-unverified) }
 .check-row.disputed input { accent-color:var(--status-disputed) }
 .check-row.human-checked input { accent-color:var(--checked) }
 .check-row.nested { margin-left:22px }
