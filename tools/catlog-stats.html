@@ -267,12 +267,12 @@
             <div class="guide-step-grid">
               <div class="guide-step">
                 <h3>Search and filter</h3>
-                <p>Type an enzyme, EC number, organism, substrate or UniProt accession: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>. Several words narrow the search (<strong>Trametes laccase</strong>), and common names such as human, mouse, yeast or E. coli find the species. Greek letters and their names match each other (β-lactamase, beta-lactamase). Gene names and PMIDs are not indexed.</p>
-                <p><strong>Filters</strong> combine EC number, enzyme, organism and substrate, a review status, and rows with <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>. In Filters, EC 1.1.1 lists the whole subclass.</p>
+                <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
+                <p><strong>Filters</strong> combine review status, EC number, enzyme, organism, substrate and measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); in Filters, EC 1.1.1 lists the whole subclass. The table sorts by status, EC number, name or value, ascending or descending.</p>
               </div>
               <div class="guide-step">
                 <h3>Open a row</h3>
-                <p>The record shows the values with their units, the assay conditions, the protein sequence, the substrate SMILES and the paper. On a from-paper row, <strong>As printed</strong> gives each value as the paper prints it and <strong>Review notes</strong> show where it is printed. <strong>Report a problem</strong> sends the lab an e-mail about that record.</p>
+                <p>The record gives the values and units, assay conditions, protein sequence, substrate SMILES and paper, and the address bar then holds a link to that record, to share or bookmark. On a from-paper row, <strong>Review notes</strong> show each value as printed in the paper, as stored, and what the second check found. <strong>Report a problem</strong> e-mails the lab about the record.</p>
               </div>
               <div class="guide-step">
                 <h3>Download</h3>
@@ -305,9 +305,10 @@
                     <span><i>K</i><sub>m</sub> for 4-aminoacetophenone</span>
                   </div>
                   <dl>
-                    <div><dt>Assay</dt><dd>30 °C · pH 7.5</dd></div>
+                    <div><dt>T (°C)</dt><dd>30</dd></div>
+                    <div><dt>pH</dt><dd>7.5</dd></div>
                     <div><dt>Organism</dt><dd><i>Pseudomonas fluorescens</i>, wild type</dd></div>
-                    <div><dt>Status</dt><dd>Accepted, from paper</dd></div>
+                    <div><dt>Status</dt><dd>Accepted · from paper</dd></div>
                   </dl>
                   <a
                     class="button secondary guide-choice-link"
@@ -321,11 +322,11 @@
                     <span>In the open record</span>
                     <h3>Review notes</h3>
                   </header>
-                  <dl>
-                    <div><dt>Location</dt><dd>Table 1</dd></div>
-                    <div><dt>Reported</dt><dd>0.82 (0.1) &micro;M as printed; a second, separate AI run confirmed it</dd></div>
-                    <div><dt>Normalized</dt><dd>0.82 &micro;M = 0.00082 mM, converted by code</dd></div>
-                  </dl>
+                  <table class="stats-detail-table values-table">
+                    <thead><tr><th>Value</th><th>Printed in paper</th><th>Stored as</th><th>Second check</th></tr></thead>
+                    <tbody><tr><th scope="row"><i>K</i><sub>m</sub></th><td>0.82 (0.1) &micro;M</td><td>0.00082 mM <small>converted by code</small></td><td>confirmed</td></tr></tbody>
+                  </table>
+                  <p class="evidence-note-plain">Table 1, printed line: &ldquo;4-Aminoacetophenone<sup>b</sup> 0.82 (0.1) 12.7 (0.7) 15,000&rdquo;</p>
                 </section>
               </div>
             </figure>
@@ -338,7 +339,8 @@
                 <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
                 <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
                 <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>). <em>calc.</em> marks <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> worked out from the two values; the source does not print it.</dd></div>
-                <div><dt>Assay (temperature and pH)</dt><dd>Assay temperature in °C and pH. The record lists the other conditions.</dd></div>
+                <div><dt>T (°C)</dt><dd>Assay temperature.</dd></div>
+                <div><dt>pH</dt><dd>Assay pH. The record lists the other conditions.</dd></div>
                 <div><dt>Unknown</dt><dd>Not stated in the paper or the source database.</dd></div>
               </dl>
               <p class="guide-note">A dash means a value is missing or hidden after a data check. Open the row to see why.</p>
@@ -384,7 +386,7 @@
                 </div>
               </dl>
               <details class="guide-details">
-                <summary>Labels beside the status in an open record</summary>
+                <summary>Evidence labels on older records</summary>
                 <dl>
                   <div><dt>Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value. An excerpt alone does not mean Accepted.</dd></div>
                   <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
@@ -400,7 +402,7 @@
             <h2 id="guide-caveats-title">Before you use the values</h2>
             <dl class="guide-download-list">
               <div><dt>Units</dt><dd>A few older rows keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
-              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed value that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept, and the record notes the difference.</dd></div>
+              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
               <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence carries its mutations only when one was built; otherwise it is the wild-type reference.</dd></div>
               <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
             </dl>

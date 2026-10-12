@@ -105,12 +105,16 @@ dataset notes, not the Browse footer.
 
 ## Guide
 
-One reading column (72ch, 16px body). Show three plain tasks, then where the
-values come from with one worked from-paper record, field meanings, review
-status drawn with the table's own status badges, what to check before using the
-values, downloads, citation and source licenses. Long lists of labels go in
-native disclosures. Shorten duplicate instructions rather than scientific
-qualifications.
+One reading column (72ch, 16px body). The introduction says in one sentence
+that the CatRange paper (PNAS Nexus, the Paper tab) describes CatLog-27k and
+that this site is the growing catalog that followed. Show three plain tasks,
+then where the values come from with one worked from-paper record (its row with
+the table's own columns, and its values table drawn as the record panel draws
+it), field meanings, review status drawn with the table's own status badges,
+what to check before using the values, downloads, citation and source licenses.
+Long lists of labels go in native disclosures. Shorten duplicate instructions
+rather than scientific qualifications. When the table or the record panel
+changes, the Guide's wording and example change with it.
 
 ## Verification
 

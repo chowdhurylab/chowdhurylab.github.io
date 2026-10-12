@@ -872,6 +872,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:16px; font-weight:500 }
 .guide-view .guide-shell .guide-sources .guide-note { max-width:none; margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }
+/* Guide example (R2 content): the open record's values table at the record panel's size, its printed line below it. */
+.guide-view .guide-example-level .evidence-note-plain { margin:12px 0 0; font-size:var(--fs-stats-meta) }
 
 @media (max-width: 640px) {
   .guide-view .guide-shell { padding:24px 16px 40px }
