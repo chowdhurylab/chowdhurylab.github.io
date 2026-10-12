@@ -1233,7 +1233,7 @@ for (const view of ["browse", "guide", "stats"]) {
 }
 assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
   ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
-assert.match(navMarkup, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*aria-label="Open the CatLog paper \(PNAS Nexus\)"\s*>Paper</);
+assert.match(navMarkup, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*aria-label="Open the CatRange paper \(PNAS Nexus\)"\s*>Paper</);
 const guideStart = indexHtml.match(/<section class="guide-workflow"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.equal((guideStart.match(/class="guide-step"/g) || []).length, 3);
 assert.doesNotMatch(guideStart, /<span>[1-4]<\/span>|<ol|<img/);
