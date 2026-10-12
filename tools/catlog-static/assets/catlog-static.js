@@ -219,27 +219,32 @@
     [1e6, "A factor near 10⁶ often means one value is per µM and the other per M."],
   ];
 
-  function sentenceNumber(value) {
-    const number = Number(value);
-    if (!Number.isFinite(number) || number === 0) return String(value);
-    if (Math.abs(number) >= 1e-3 && Math.abs(number) < 1e5) return String(Number(number.toPrecision(3)));
-    const [mantissa, exponent] = number.toExponential(2).split("e");
-    return `${Number(mantissa)} × 10${[...String(Number(exponent))].map((ch) => SUPERSCRIPT_DIGITS[ch] ?? ch).join("")}`;
+  // kcat/Km against kcat ÷ Km, in the units the record shows; null when a unit is not the catalog's or a value is missing.
+  // The quotient keeps the significant figures of kcat and Km (at least 2), like every number CatLog works out.
+  function kcatKmCheck(row) {
+    const fields = ["kcat", "km", "kcat_over_km"];
+    if (!fields.every((field) => canonicalMetricUnitKeys[field].has(normalizedUnitKey(metricUnit(row, field))))) return null;
+    const [kcat, km, reported] = fields.map((field) => Number(metricDisplay(row, field)));
+    if (!(kcat > 0 && km > 0 && reported > 0)) return null;
+    const quotient = kcat / km;
+    const fold = Math.max(reported / quotient, quotient / reported);
+    return {
+      quotient,
+      quotientText: numberText(quotient, { figures: quotientFigures(row) }),
+      fold,
+      foldText: `${fold < 10 ? fold.toFixed(1) : formatInteger(Math.round(fold))}×`,
+      factor: KCAT_KM_FACTORS.find(([target]) => Math.abs(fold / target - 1) <= 0.1),
+      unit: unitText(metricUnit(row, "kcat_over_km")),
+      v2: isV2Row(row) || String(row.verification_method || "").startsWith(v2Method),
+    };
   }
 
   function kcatKmComparisonText(row) {
-    const fields = ["kcat", "km", "kcat_over_km"];
-    if (!fields.every((field) => canonicalMetricUnitKeys[field].has(normalizedUnitKey(metricUnit(row, field))))) return "";
-    const [kcat, km, reported] = fields.map((field) => Number(metricDisplay(row, field)));
-    if (!(kcat > 0 && km > 0 && reported > 0)) return "";
-    const quotient = kcat / km;
-    const fold = Math.max(reported / quotient, quotient / reported);
-    const factor = KCAT_KM_FACTORS.find(([target]) => Math.abs(fold / target - 1) <= 0.1);
-    const shown = metricDisplay(row, "kcat_over_km");
-    const v2 = isV2Row(row) || String(row.verification_method || "").startsWith(v2Method);
-    const unit = unitText(metricUnit(row, "kcat_over_km"));
-    const head = `kcat/Km from the ${v2 ? "paper" : "source"}: ${/e/i.test(shown) ? sentenceNumber(shown) : shown} ${unit}; `
-      + `kcat ÷ Km: ${sentenceNumber(quotient)} ${unit} (${fold < 10 ? fold.toFixed(1) : formatInteger(Math.round(fold))}× apart).`;
+    const check = kcatKmCheck(row);
+    if (!check) return "";
+    const { quotientText, foldText, factor, unit, v2 } = check;
+    const head = `kcat/Km from the ${v2 ? "paper" : "source"}: ${numberText(metricDisplay(row, "kcat_over_km"))} ${unit}; `
+      + `kcat ÷ Km: ${quotientText} ${unit} (${foldText} apart).`;
     if (v2) {
       return factor
         ? `${head} ${factor[1]} CatLog keeps all three values as printed.`
@@ -256,14 +261,6 @@
     const shortText = [...new Set(matched.map((flag) => valueIntegrityFlags[flag].short))].join(" · ");
     const summary = `Check against source: ${labels.join("; ")}`;
     return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
-  }
-
-  // A kcat/Km sentence (with row) is a note, not a pill: class flag-note.
-  function conditionFlagsHtml(flags, row) {
-    const items = new Map([...flags].map((flag) => [conditionFlagLabel(flag, row), conditionFlagLabel(flag)]));
-    items.delete("");
-    if (!items.size) return "";
-    return `<div class="kv-line condition-flag-line"><span>Check against source</span><ul class="condition-flag-list">${[...items].map(([label, plain]) => `<li${label === plain ? "" : ' class="flag-note"'}>${escapeHtml(label)}</li>`).join("")}</ul></div>`;
   }
 
   // The exporter replaces internal file references with this marker; a string that still
@@ -539,11 +536,16 @@
       .trim();
   }
 
+  // Source text in the record panel: caret exponents as superscripts, and "1.3 x 10^-2" written 1.3 × 10^-2.
+  function evidenceTextHtml(text) {
+    return caretHtml(escapePublic(String(text).replace(/(\d)\s*[x×]\s*10\^/g, "$1 × 10^")));
+  }
+
   function evidenceNoteHtml(value) {
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
       const text = publicEvidenceString(String(value));
-      return text ? `<p class="evidence-note-plain">${caretHtml(escapePublic(text))}</p>` : "";
+      return text ? `<p class="evidence-note-plain">${evidenceTextHtml(text)}</p>` : "";
     }
 
     const location = [value.table_label, value.row_label].map(publicEvidenceString).filter(Boolean).join(" · ");
@@ -558,18 +560,9 @@
 
     if (!rows.length) {
       const fallback = evidenceText(value);
-      return fallback ? `<p class="evidence-note-plain">${caretHtml(escapePublic(fallback))}</p>` : "";
+      return fallback ? `<p class="evidence-note-plain">${evidenceTextHtml(fallback)}</p>` : "";
     }
-    return `
-      <div class="evidence-note-item">
-        ${rows.map(([label, text]) => `
-          <div class="evidence-note-line">
-            <span>${escapeHtml(label)}</span>
-            <p>${caretHtml(escapePublic(text))}</p>
-          </div>
-        `).join("")}
-      </div>
-    `;
+    return `<div class="evidence-note-item detail-kv">${rows.map(([label, text]) => linkedKv(label, evidenceTextHtml(text))).join("")}</div>`;
   }
 
   function evidenceNotesHtml(values, limit = 3) {
@@ -870,7 +863,7 @@
   function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Accepted after a correction.";
+        return "Accepted after a correction in an earlier review; the change is not recorded.";
       case "verified":
         return "Accepted as reported.";
       case "manual_review_required":
@@ -878,7 +871,7 @@
       case "mathematically_inferred":
         return "Prepared from source records; no accepted review outcome is recorded.";
       case "disputed":
-        return "Disputed: flagged during review; not accepted.";
+        return "Disputed: flagged in an earlier review and not accepted; the reason is not recorded.";
       default:
         return "No accepted result is recorded.";
     }
@@ -955,10 +948,9 @@
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
-    const text = mark?.note || (mark?.checked
+    return mark?.note || (mark?.checked
       ? (accepted ? "Checked by a human reviewer." : "A human reviewer approved these values in CatLog's 2026 review; other checks on this record are still open.")
       : "");
-    return text ? `<p class="human-review-note">${escapeHtml(text)}</p>` : "";
   }
 
   function reviewOutcome(summary, detail = {}) {
@@ -3307,7 +3299,7 @@
         <div class="detail-top">
           <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
           <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Enzyme name not recorded")}</h2>
-          <p>${escapeHtml(row.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(row.organism || EMPTY_VALUE)}</p>
+          ${detailSubtitleHtml(row)}
         </div>
         <div class="detail-load-error" role="alert">
           <strong>Record details could not be loaded.</strong>
@@ -3480,8 +3472,9 @@
     match = text.match(/^Mutation signature (\S+) references residue (\d+), which is outside the resolved sequence length\.?$/);
     if (match) return `${match[1]} not applied: residue ${match[2]} is beyond the sequence length.`;
     // CatLog v2 notes, in short plain words (same meaning).
-    match = text.match(/^no sequence: (.+) share UniProt (\S+): which sequence is which is not known\.?$/);
-    if (match) return `No sequence: ${match[1]} share one UniProt entry (${match[2]}).`;
+    match = text.match(/^no sequence: (.+) share UniProt (\S+): which sequence is which is not known\.?$/)
+      || text.match(/^No sequence shown: (.+) (?:all|both) map to UniProt (\S+), which does not say which is which\.?$/);
+    if (match) return `No sequence: ${match[1]} share one UniProt entry (${match[2]}), which does not say which is which.`;
     if (/^no sequence: the measured construct could not be placed on UniProt\.?$/.test(text)) {
       return "No sequence: the measured construct could not be matched to UniProt.";
     }
@@ -3542,71 +3535,243 @@
     `;
   }
 
+  // ---- Record panel: numbers ----
+  // One number style for the record panel (the table's notation; the table can use it too): the stored digits, as
+  // a × 10ⁿ at or above 10⁵ and below 10⁻³ and as a plain decimal in between. With `figures`, a number CatLog worked out
+  // (kcat ÷ Km) is first rounded to that many significant figures, so it never shows more precision than the values it
+  // comes from; a rounded number of 1000 or more whose last digits would be zeros that are not significant keeps the
+  // × 10ⁿ form (5.0 × 10³, not 5000).
+  function numberParts(value, { figures = 0 } = {}) {
+    let text = compactValue(value).trim();
+    const number = Number(text);
+    if (!text || !Number.isFinite(number) || number === 0) return null;
+    if (figures > 0) text = number.toPrecision(Math.min(Math.max(Math.round(figures), 1), 21));
+    const match = text.match(/^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
+    if (!match || !(match[2] || match[3])) return null;
+    const [, signText, whole = "", fraction = "", exponentText] = match;
+    const sign = signText === "-" ? "-" : "";
+    let digits = whole + fraction;
+    let point = whole.length + Number(exponentText || 0);
+    const leadingZeros = digits.match(/^0*/)[0].length;
+    digits = digits.slice(leadingZeros);
+    point -= leadingZeros;
+    // Trailing zeros of a plain integer (123000) are not printed digits.
+    const significant = fraction || exponentText ? digits : digits.replace(/0+$/, "") || "0";
+    const magnitude = Math.abs(Number(text));
+    if (magnitude >= 1e5 || magnitude < 1e-3 || (figures > 0 && magnitude >= 1000 && significant.length < point)) {
+      const coefficient = significant.length > 1 ? `${significant[0]}.${significant.slice(1)}` : significant;
+      return { sign, coefficient, exponent: point - 1, significant: significant.length };
+    }
+    let plain = text.replace(/^\+/, "");
+    if (exponentText) {
+      if (point <= 0) plain = `${sign}0.${"0".repeat(-point)}${digits}`;
+      else if (point >= digits.length) plain = `${sign}${digits}${"0".repeat(point - digits.length)}`;
+      else plain = `${sign}${digits.slice(0, point)}.${digits.slice(point)}`;
+    }
+    return { plain, significant: significant.length };
+  }
+
+  function numberHtml(value, options) {
+    const parts = numberParts(value, options);
+    if (!parts) return scientificValueHtml(value);
+    if (parts.plain !== undefined) return escapePublic(parts.plain);
+    return scientificValueHtml(`${parts.sign}${parts.coefficient}e${parts.exponent}`);
+  }
+
+  function numberText(value, options) {
+    const parts = numberParts(value, options);
+    if (!parts) return compactValue(value);
+    if (parts.plain !== undefined) return parts.plain;
+    const exponent = [...String(parts.exponent)].map((character) => SUPERSCRIPT_DIGITS[character] ?? character).join("");
+    return `${parts.sign}${parts.coefficient} × 10${exponent}`;
+  }
+
+  // Significant figures for kcat ÷ Km: the fewer of kcat's and Km's, at least 2 (databases drop trailing zeros).
+  function quotientFigures(row) {
+    const figures = ["kcat", "km"].map((field) => numberParts(metricDisplay(row, field))?.significant || 0);
+    return Math.max(2, Math.min(...figures));
+  }
+
+  // A value as the panel shows it. A kcat/Km CatLog calculated from kcat and Km in an older record keeps their
+  // significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³); CatLog v2 values arrive rounded as the paper prints them.
+  function panelValueHtml(row, field) {
+    const display = metricDisplay(row, field);
+    const calculated = field === "kcat_over_km" && row.kcat_over_km_origin === "calculated" && !isV2Row(row);
+    return numberHtml(display, calculated ? { figures: quotientFigures(row) } : undefined);
+  }
+
   function sourceEfficiencyRow(summary, detail) {
     if (!summary.kcat_over_km_source_differs && !detail.kcat_over_km_source_differs) return "";
-    const values = Array.isArray(detail.source_kcat_over_km_values)
-      ? detail.source_kcat_over_km_values.filter((item) => item && item.value != null)
-      : [];
+    const seen = new Set();
+    const values = (Array.isArray(detail.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
+      .filter((item) => {
+        const key = item && item.value != null ? JSON.stringify([item.value, item.unit || "", item.source_db || ""]) : "";
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     if (!values.length) return "";
     const valueHtml = values.map((item) => {
       const unit = item.unit ? ` ${unitHtml(item.unit)}` : "";
       const source = item.source_db ? ` <small>${escapePublic(sourceDatabaseLabel(item.source_db))}</small>` : "";
-      return `<span class="source-efficiency-value"><span>${scientificValueHtml(item.value)}${unit}</span>${source}</span>`;
+      return `<span class="source-efficiency-value"><span>${numberHtml(item.value)}${unit}</span>${source}</span>`;
     }).join("");
     return linkedKv("Source-listed kcat/Km", valueHtml);
   }
 
-  // A from-paper row's values as the paper prints them (number, uncertainty and unit, with the table), taken from its
-  // proof lines; nothing is computed.
-  function printedValuesHtml(detail) {
-    if (!String(detail.verification_method || "").startsWith(v2Method)) return "";
-    const lines = (Array.isArray(detail.proof_lines) ? detail.proof_lines : [])
-      .filter((line) => line && typeof line === "object" && line.metric && String(line.raw_value ?? "").trim());
-    if (!lines.length) return "";
-    const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
-    const locations = [...new Set(lines.map((line) => clean(line.table_label)))];
-    const shared = locations.length === 1 ? locations[0] : "";
-    const values = lines.map((line) => {
-      // "printed" joins number and unit as code read them: 0.002 × 10^6 M^-1 min^-1, not 0.002 10^6 M^-1 min^-1
-      const value = [line.metric, ...(clean(line.printed) ? [line.printed] : [line.raw_value, line.raw_unit])].map(clean).filter(Boolean).join(" ");
-      return !shared && clean(line.table_label) ? `${value} (${clean(line.table_label)})` : value;
-    }).join("; ");
-    return linkedKv("As printed", caretHtml(escapePublic(shared ? `${values} (${shared})` : values)));
+  // ---- Record panel: flags ----
+  // An older record whose stored kcat/Km is a unit factor away from kcat ÷ Km (flag kcat_over_km_unit_mismatch) while
+  // the source also lists a kcat/Km in the same unit that agrees with kcat ÷ Km (within 10%): the panel shows that value.
+  function consistentEfficiency(summary, detail, flags) {
+    if (!flags.has("kcat_over_km_unit_mismatch")) return null;
+    const check = kcatKmCheck(summary);
+    if (!check) return null;
+    const listed = (Array.isArray(detail.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
+      .filter((item) => item && Number(item.value) > 0
+        && canonicalMetricUnitKeys.kcat_over_km.has(normalizedUnitKey(item.unit))
+        && Math.abs(Number(item.value) / check.quotient - 1) <= 0.1)
+      .sort((a, b) => Math.abs(a.value / check.quotient - 1) - Math.abs(b.value / check.quotient - 1));
+    return listed.length ? { value: listed[0].value, check } : null;
   }
 
-  // A CatLog v2 record's values in Review notes, one row each: as printed, as stored in the catalog's units ("converted by
-  // code" when code converted it) and what the second AI run found; under it each printed line once, with where it is
-  // printed. The fields hold facts only (where, what was printed, what was corrected, how it was converted), never
-  // reasoning. Records without these fields (older data, older catalog) keep the notes list.
+  const metricNames = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", ki: "Ki" };
+  const flagNoteTexts = {
+    km_magnitude_needs_check: "Km is above 10 M: check the unit against the source.",
+    kcat_magnitude_needs_check: "kcat is above 10⁷ s⁻¹: check the unit against the source.",
+    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit: check the units against the source.",
+  };
+
+  // Each flag on the record once, as a plain sentence; the value it questions gets a marker that points to it. A
+  // missing unit the values already show as "no unit" needs no second note.
+  function flagNotes(summary, detail, flags, consistent) {
+    const order = ["kcat", "km", "kcat_over_km"];
+    const notes = [];
+    [...flags]
+      .map((flag) => ({ flag, field: valueIntegrityFlags[flag]?.field || "" }))
+      .sort((a, b) => (a.field ? order.indexOf(a.field) : 9) - (b.field ? order.indexOf(b.field) : 9))
+      .forEach(({ flag, field }) => {
+        const unitField = (String(flag).match(/^unit_not_recorded_(\w+)$/) || [])[1];
+        if (unitField && metricUnitMissing(summary, unitField, flags)) return;
+        // With the source's own kcat/Km shown, the stored value's diffusion-limit flag is the same unit factor.
+        if (consistent && flag === "efficiency_above_diffusion_limit") return;
+        let text = flagNoteTexts[flag] || conditionFlagLabel(flag, summary);
+        if (unitField) text = `No unit is recorded for ${metricNames[unitField] || unitField}.`;
+        if (consistent && KCAT_KM_FLAGS.has(flag)) {
+          const { check } = consistent;
+          text = `This record stores kcat/Km as ${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}; `
+            + `kcat ÷ Km is ${check.quotientText} ${check.unit} (${check.foldText} apart). The source's own kcat/Km, `
+            + `${numberText(consistent.value)} ${check.unit} (listed below), agrees with kcat ÷ Km and is shown above.`
+            + (check.factor ? ` ${check.factor[1]}` : "");
+        }
+        if (text && !notes.some((note) => note.text === text)) {
+          notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: valueIntegrityFlags[flag]?.short || "", text });
+        }
+      });
+    return notes;
+  }
+
+  // The marker beside a flagged value: a small "!" button that moves to its note (mouse, touch and keyboard).
+  function flagMarkerHtml(field, notes) {
+    const own = notes.filter((note) => note.field === field);
+    if (!own.length) return "";
+    const name = `${metricNames[field]}: ${[...new Set(own.map((note) => note.short).filter(Boolean))].join(", ")}. Show the note.`;
+    return `<button class="value-flag" type="button" data-flag-note="${own[0].id}" aria-describedby="${own.map((note) => note.id).join(" ")}" aria-label="${escapeHtml(name)}" title="Show the note"></button>`;
+  }
+
+  function flagNotesHtml(notes) {
+    if (!notes.length) return "";
+    return `<ul class="flag-notes" aria-label="Notes on these values">${notes.map((note) => `<li id="${note.id}" tabindex="-1"><span class="value-flag" aria-hidden="true"></span><span>${escapeHtml(note.text)}</span></li>`).join("")}</ul>`;
+  }
+
+  function showFlagNote(id) {
+    const note = $(id);
+    if (!note) return;
+    note.scrollIntoView?.({ block: "nearest" });
+    note.focus?.({ preventScroll: true });
+    note.classList.add("is-target");
+    window.setTimeout(() => note.classList.remove("is-target"), 1600);
+  }
+
+  // ---- Record panel: the paper's values ----
+  // A power of ten printed as the unit ("0.002" with "10^6 M^-1 min^-1") multiplies the number, as CatLog's converter
+  // reads it: 0.002 × 10^6 M^-1 min^-1. Units that already carry the sign, or say more ("10^-6 × kcat/Km"), stay as printed.
+  function printedValueText(value, unit) {
+    const number = String(value ?? "").trim();
+    const printedUnit = String(unit ?? "").trim();
+    const times = /^10\^[({]?[−-]?\d+[)}]?\s+[A-Za-zµμ]/.test(printedUnit) && !/[×x]|kcat/i.test(printedUnit) ? " × " : " ";
+    return [number, printedUnit].filter(Boolean).join(times);
+  }
+
+  // A CatLog v2 proof line's facts: from the fields CatLog writes (printed, printed_line, check, conversion) or, in older
+  // data, from the two sentences it wrote before (same facts, fixed wording).
+  function v2LineFacts(line) {
+    const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
+    const reported = clean(line.raw_value_unit_evidence);
+    const normalized = clean(line.normalized_value_unit_evidence);
+    const result = reported.match(/A second, separate AI run (confirmed it|corrected: (.+?))\.?$/);
+    const readAs = normalized.match(/in units of (.+)\)$/);
+    return {
+      printed: clean(line.printed) || printedValueText(line.raw_value, line.raw_unit),
+      printedLine: "printed_line" in line ? clean(line.printed_line) : ((reported.match(/in the line “(.+)”/) || [])[1] || ""),
+      check: "check" in line ? clean(line.check) : (result ? (result[2] ? `corrected: ${result[2]}` : "confirmed") : ""),
+      conversion: "conversion" in line
+        ? clean(line.conversion)
+        : (/converted by code/.test(normalized) ? "converted by code" : (readAs ? `printed unit read as ${readAs[1]}` : "")),
+    };
+  }
+
+  // A CatLog v2 record's values, one row each: as printed, as stored in the catalog's units ("converted by code" when code
+  // converted it) and what the second AI run found; under it each printed line once, with where it is printed. Facts
+  // only (where, what was printed, what was corrected, how it was converted), never reasoning.
   const v2MetricLabels = {
     kcat: ["kcat", "<i>k</i><sub>cat</sub>"],
     Km: ["km", "<i>K</i><sub>m</sub>"],
     "kcat/Km": ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>"],
   };
 
-  function v2ValuesHtml(summary, lines) {
+  // The "Second check" column shows only when the values' results differ; one result for all is said once, in Review.
+  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts)) {
     const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
     const text = (value) => caretHtml(escapePublic(value));
     const where = (line) => [line.table_label, line.row_label].map(clean).filter(Boolean).join(", ");
     const places = new Set(lines.map(where));
     const shared = places.size === 1 ? [...places][0] : "";
     const order = Object.keys(v2MetricLabels);
-    const rows = [...lines].sort((a, b) => order.indexOf(a.metric) - order.indexOf(b.metric)).map((line) => {
+    const rank = (line) => order.indexOf(line.metric);
+    const sorted = lines.map((line, index) => [line, facts[index]]).sort(([a], [b]) => rank(a) - rank(b));
+    const checks = facts.some((fact) => fact.check) && !v2SharedCheck(facts);
+    const rows = sorted.map(([line, fact]) => {
       const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
       const stored = field && metricHasValue(summary, field)
-        ? `${metricDisplay(summary, field)} ${metricUnit(summary, field)}`
-        : `${clean(line.normalized_value)} ${clean(line.normalized_unit)}`;
-      const place = !shared && where(line) ? ` <small>${escapePublic(where(line))}</small>` : "";
-      const how = clean(line.conversion) ? ` <small>${text(clean(line.conversion))}</small>` : "";
-      return `<tr><th scope="row">${label}</th><td>${text(clean(line.printed))}${place}</td><td>${text(stored.trim())}${how}</td><td>${text(clean(line.check))}</td></tr>`;
+        ? `${panelValueHtml(summary, field)} ${unitHtml(metricUnit(summary, field))}`
+        : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
+      const place = !shared && where(line) ? `<small>${escapePublic(where(line))}</small>` : "";
+      const how = fact.conversion ? `<small>${text(fact.conversion)}</small>` : "";
+      return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(fact.check)}</td>` : ""}</tr>`;
     }).join("");
-    const notes = lines.filter((line) => clean(line.printed_line))
-      .map((line) => `${where(line) ? `${where(line)}, printed line` : "Printed line"}: “${clean(line.printed_line)}”`);
-    if (shared && !notes.length) notes.push(shared);
-    return `<table class="stats-detail-table values-table"><thead><tr><th>Value</th><th>Printed in paper</th><th>Stored as</th><th>Second check</th></tr></thead><tbody>${rows}</tbody></table>`
+    // Each printed line once; a "line" that is only the printed number itself adds nothing.
+    const notes = sorted.map(([line, fact]) => [where(line), fact.printedLine, fact.printed])
+      .filter(([, printedLine, printed], index, all) => printedLine && !printed.startsWith(printedLine)
+        && all.findIndex(([, other]) => other === printedLine) === index)
+      .map(([place, printedLine]) => `${place ? `${place}, printed line` : "Printed line"}: “${printedLine}”`);
+    if (shared && !notes.length) notes.push(`Printed in ${shared}.`);
+    return `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">Printed in paper</th><th scope="col">Stored as</th>${checks ? '<th scope="col">Second check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
       + notes.map((note) => `<p class="evidence-note-plain">${text(note)}</p>`).join("");
   }
 
+  // The second run's result when it is the same for every value ("confirmed", "corrected: ..."), else "".
+  function v2SharedCheck(facts) {
+    const results = new Set(facts.map((fact) => fact.check));
+    return results.size === 1 ? [...results][0] : "";
+  }
+
+  function v2CheckSentence(check) {
+    if (check === "confirmed") return "The second run confirmed every value.";
+    const corrected = check.match(/^corrected: (.+)$/);
+    return corrected ? `The second run corrected, for every value: ${corrected[1]}.` : "";
+  }
+
+  // ---- Record panel: measurement ----
   function measurementSection(summary, detail) {
     const metricSummary = {
       ...summary,
@@ -3630,48 +3795,47 @@
           ? `${compactValue(detail.ph ?? summary.ph)} (stored)`
           : EMPTY_VALUE);
     const metrics = [
-      ["<i>k</i><sub>cat</sub>", "kcat", metricDisplay(metricSummary, "kcat")],
-      ["<i>K</i><sub>m</sub>", "km", metricDisplay(metricSummary, "km")],
-      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km", metricDisplay(metricSummary, "kcat_over_km")],
+      ["<i>k</i><sub>cat</sub>", "kcat"],
+      ["<i>K</i><sub>m</sub>", "km"],
+      ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km"],
     ];
-    if (metricSummary.has_ki) {
-      metrics.push(["<i>K</i><sub>i</sub>", "ki", metricDisplay(metricSummary, "ki")]);
-    }
-    const conditionsSummary = publicEvidenceString(detail.assay_conditions_summary);
-    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
-    const conditionRows = v2Record ? v2ConditionRows(conditionsSummary ? compactValue(conditionsSummary) : "") : null;
+    if (metricSummary.has_ki) metrics.push(["<i>K</i><sub>i</sub>", "ki"]);
+    const consistent = consistentEfficiency(metricSummary, detail, flags);
+    const notes = flagNotes(metricSummary, detail, flags, consistent);
+    const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
     return `
       <section class="detail-section measurement-section">
         <h3>Measurement</h3>
         <div class="measurement-strip${metrics.length > 3 ? " has-ki" : ""}">
-          ${metrics.map(([label, field, value]) => {
+          ${metrics.map(([label, field]) => {
             const unitMissing = metricUnitMissing(metricSummary, field, flags);
             // A non-catalog stored unit goes after the value, like in the table; the label then shows none.
             const storedUnit = !unitMissing && storedUnitDiffers(metricSummary, field);
             const unit = unitMissing || storedUnit ? "" : metricUnitHtml(metricSummary, field);
+            const value = field === "kcat_over_km" && consistent ? numberHtml(consistent.value) : panelValueHtml(metricSummary, field);
             return `
             <div class="measurement-value${unitMissing ? " unit-missing" : ""}">
               <span>${label}${unitMissing ? unitMissingHtml() : `<small>${unit || "&nbsp;"}</small>`}${field === "kcat_over_km" ? efficiencyOriginHtml(summary) : ""}</span>
-              <strong>${scientificValueHtml(value)}${storedUnit ? storedUnitHtml(metricSummary, field) : ""}${valueFlagBadgeHtml(flags, field, summary)}</strong>
+              <strong>${value}${storedUnit ? storedUnitHtml(metricSummary, field) : ""}${flagMarkerHtml(field, notes)}</strong>
             </div>
           `;
           }).join("")}
         </div>
+        ${flagNotesHtml(notes)}
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
-          ${conditionRows?.cosubstrate || ""}
-          ${printedValuesHtml(detail)}
+          ${conditions.cosubstrate}
           ${kv("Temperature", temperatureValue)}
           ${kv("pH", phValue)}
+          ${conditions.conditions}
+          ${conditions.preparation}
           ${sourceEfficiencyRow(summary, detail)}
-          ${conditionFlagsHtml(flags, summary)}
-          ${conditionRows ? conditionRows.conditions + conditionRows.preparation : (conditionsSummary ? linkedKv("Conditions", caretHtml(escapePublic(compactValue(conditionsSummary)))) : "")}
         </div>
       </section>
     `;
   }
 
-  // A CatLog v2 condition summary, split at "; " outside brackets.
+  // An assay summary, split at "; " outside brackets.
   function conditionSegments(text) {
     const parts = [];
     let depth = 0;
@@ -3689,33 +3853,55 @@
     return parts.map((part) => part.trim()).filter(Boolean);
   }
 
-  // CatLog v2 conditions as short labelled lines: the "cosubstrate X" and "preparation: ..." segments get their own
-  // line; the rest is a short list.
-  function v2ConditionRows(text) {
+  // Assay conditions as short labelled lines: "cosubstrate X" / "cofactor X" and "preparation: ..." get their own line,
+  // the rest is a short list; a pH or temperature that only repeats the lines above ("pH 7.5", "298.15 K") is left out.
+  function conditionLines(text, summary = {}) {
     const cosubstrates = [];
+    const cofactors = [];
     const preparations = [];
     const rest = [];
-    conditionSegments(String(text || "").trim()).forEach((segment) => {
+    const qualified = new Map();
+    const ph = formatPh(summary);
+    const temperature = formatTemperature(summary);
+    conditionSegments(String(compactValue(text) === EMPTY_VALUE ? "" : compactValue(text)).trim()).forEach((segment) => {
       let match = segment.match(/^preparation:\s*(.+)$/i);
       if (match) {
         preparations.push(match[1]);
         return;
       }
-      match = segment.match(/^cosubstrates?:?\s+(.+)$/i);
+      match = segment.match(/^(cosubstrates?|cofactors?):?\s+(.+)$/i);
       if (match) {
-        cosubstrates.push(match[1]);
+        (/^cof/i.test(match[1]) ? cofactors : cosubstrates).push(match[2]);
         return;
       }
+      // Per-value qualifiers ("apparent kcat", "apparent Km") become one item: "apparent kcat, Km".
+      match = segment.match(/^(apparent|estimated|approximate) (kcat|Km|kcat\/Km)$/);
+      if (match) {
+        if (!qualified.has(match[1])) {
+          qualified.set(match[1], { qualifier: match[1], metrics: [] });
+          rest.push(qualified.get(match[1]));
+        }
+        qualified.get(match[1]).metrics.push(match[2]);
+        return;
+      }
+      // Older data list "printed kcat/Km differs from kcat ÷ Km by N×" here; the flag note under the values says it.
+      if (/^printed kcat\/Km differs from kcat ÷ Km by /.test(segment)) return;
+      match = segment.match(/^pH\s*(\d+(?:\.\d+)?)$/i);
+      if (match && ph !== EMPTY_VALUE && Number(match[1]) === Number(ph)) return;
+      match = segment.match(/^(\d+(?:\.\d+)?)\s*K$/);
+      if (match && temperature !== EMPTY_VALUE && formatNumber(Number(match[1]) - 273.15, { maximumFractionDigits: 1 }) === temperature) return;
       rest.push(segment);
     });
+    const items = rest.map((item) => (typeof item === "string" ? item : `${item.qualifier} ${item.metrics.join(", ")}`));
     const html = (value) => caretHtml(escapePublic(value));
     return {
-      cosubstrate: cosubstrates.length ? linkedKv("Cosubstrate", html(cosubstrates.join("; "))) : "",
-      conditions: !rest.length
+      cosubstrate: (cosubstrates.length ? linkedKv("Cosubstrate", html(cosubstrates.join("; "))) : "")
+        + (cofactors.length ? linkedKv("Cofactor", html(cofactors.join("; "))) : ""),
+      conditions: !items.length
         ? ""
-        : (rest.length === 1
-          ? linkedKv("Conditions", html(rest[0]))
-          : `<div class="kv-line"><span>Conditions</span><ul class="condition-list">${rest.map((segment) => `<li>${html(segment)}</li>`).join("")}</ul></div>`),
+        : (items.length === 1
+          ? linkedKv("Conditions", html(items[0]))
+          : `<div class="kv-line"><span>Conditions</span><ul class="condition-list">${items.map((item) => `<li>${html(item)}</li>`).join("")}</ul></div>`),
       preparation: preparations.length ? linkedKv("Preparation", html(preparations.join("; "))) : "",
     };
   }
@@ -3774,9 +3960,13 @@
     const sequenceHtml = variantSequence
       ? `${sequenceDisclosure("Wild-type sequence", wildTypeSequence, "detailWildTypeSequence")}${sequenceDisclosure("Variant sequence", variantSequence, "detailVariantSequence")}`
       : sequenceDisclosure(wildTypeSequence ? "Wild-type sequence" : "Protein sequence", wildTypeSequence || sequence, "detailSequence");
-    const sequenceSource = showsSequenceSource(sequenceSourceValue, Boolean(sequenceHtml.trim()))
+    // "UniProt accession" (or "UniProt P12345") only repeats the UniProt line above it.
+    const sequenceSourceText = showsSequenceSource(sequenceSourceValue, Boolean(sequenceHtml.trim()))
       ? sequenceSourceLabel(sequenceSourceValue)
       : "";
+    const sequenceSource = accessionLabel === "UniProt" && ["UniProt accession", `UniProt ${proteinAccession}`].includes(sequenceSourceText)
+      ? ""
+      : sequenceSourceText;
     return `
       <section class="detail-section identity-section">
         <h3>Protein and substrate</h3>
@@ -3873,6 +4063,55 @@
     return `mailto:ratul@iastate.edu?cc=supantha@iastate.edu&subject=${encodeURIComponent(`CatLog record ${key}`)}&body=${encodeURIComponent(body)}`;
   }
 
+  // ---- Record panel: header and source details ----
+  // The record's status as one line, in the table's words and colours: a dot, the status, then "read from the paper",
+  // "corrected", "no paper linked" or "human-checked".
+  function detailStatusHtml(row) {
+    const config = stateConfig(row._recordState || recordStateForRow(row));
+    const status = row.verification_status;
+    const identityOnly = isIdentityOnlyAccepted(row);
+    const colour = status === "disputed"
+      ? "disputed"
+      : (status === "mathematically_inferred"
+          ? "not-reviewed"
+          : ({ accepted: "accepted", curation_pending: "pending" }[config.value] || "unverified"));
+    const checked = config.value === "accepted" && Boolean(humanReviewMark(row)?.checked);
+    const words = [
+      identityOnly ? "Accepted" : rowStatusLabel(row),
+      isV2Row(row) ? "read from the paper" : "",
+      status === "corrected" ? "corrected" : "",
+      identityOnly ? "no paper linked" : "",
+      checked ? "human-checked" : "",
+    ].filter(Boolean);
+    return `<p class="detail-status" style="--status-color:var(--status-${colour})">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}</p>`;
+  }
+
+  // "EC · organism", leaving out what is not recorded.
+  function detailSubtitleHtml(row) {
+    const parts = [row.ec_number, row.organism].map((value) => String(value || "").trim()).filter(hasDisplayValue);
+    return parts.length ? `<p>${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
+  }
+
+  // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms.
+  function detailLicense(summary, detail, v2Record) {
+    if (v2Record) return "CC BY 4.0 (CatLog compilation)";
+    const license = String(sourceLicense(summary, detail) || "").trim();
+    return license && !/^see source$/i.test(license) ? license : "See the source database's terms";
+  }
+
+  // A protein identity that does not contradict the sequence note: several forms sharing one UniProt entry are a shared
+  // accession, not a resolved one.
+  function detailIdentityLabel(summary, detail) {
+    const note = String(detail.sequence_variant_note || summary.sequence_variant_note || "");
+    if (/(?:all|both) map to UniProt \S+, which does not say which is which|share UniProt \S+: which sequence is which/.test(note)) {
+      return "Shared accession (one UniProt entry for several forms)";
+    }
+    return identityResolutionLabel({
+      identity_resolution_state: detail.identity_resolution_state || summary.identity_resolution_state,
+      sequence_source: detail.sequence_source || summary.sequence_source,
+    });
+  }
+
   function renderDetail(summary, detail) {
     const pmidsRaw = Array.isArray(detail.supporting_pmids)
       ? detail.supporting_pmids.filter(Boolean)
@@ -3891,60 +4130,63 @@
       : "Values in source";
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
-    const firstPmid = pmids[0] || "";
-    const firstDoi = dois[0] || "";
-    const hasSourceEvidence = proofLines.length > 0;
-    // What stands behind an older record's values (a CatLog v2 record's badge already says "read from the paper"). It
-    // sits with the paper links, so the status stays one line.
+    // What stands behind an older record's values (a CatLog v2 record's status already says "read from the paper").
     const evidenceRow = isV2Row(summary)
       ? ""
       : kv("Evidence", String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines));
-    const referenceRows = [evidenceRow, ...(firstPmid || firstDoi
-      ? [
-          dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
-          pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
-        ]
-      : [kv("PMID or DOI", "None recorded")])];
-    // How many database rows a record merges is said once, here; Source details then names the databases only when
-    // they are not just the source.
-    if (mergedRows > 1) {
-      referenceRows.push(kv("Merged from", `${formatInteger(mergedRows)} database rows${pmids.length ? `, ${formatInteger(pmids.length)} ${pmids.length === 1 ? "paper" : "papers"}` : ""}`));
-    }
+    const humanNote = humanReviewNote(summary);
+    // A CatLog v2 record's values are one table; an older record keeps its notes.
+    const v2Facts = v2Record && proofLines.every((line) => typeof line === "object" && line.metric) ? proofLines.map(v2LineFacts) : null;
+    const paperRows = [
+      evidenceRow,
+      ...(pmids.length || dois.length
+        ? [
+            dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
+            pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
+          ]
+        : [kv("PMID or DOI", "None recorded")]),
+      // How many database rows a record merges is said once, here; Source details then names the databases only when
+      // they are not just the source.
+      mergedRows > 1
+        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${pmids.length ? `, ${formatInteger(pmids.length)} ${pmids.length === 1 ? "paper" : "papers"}` : ""}`)
+        : "",
+      kv("Review", [
+        reviewOutcome(summary, detail),
+        v2Facts ? v2CheckSentence(v2SharedCheck(v2Facts)) : "",
+        humanNote,
+      ].filter(Boolean).join(" ")),
+    ];
+    // An older record's notes (the earlier catalog's review text) expand on request.
+    const valuesHtml = !proofLines.length
+      ? ""
+      : (v2Facts
+          ? `<div class="detail-values"><h4>${escapeHtml(proofHeading)}</h4>${v2ValuesHtml(summary, proofLines, v2Facts)}</div>`
+          : `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(proofHeading)}</summary><div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`);
+    const dataOrigin = publicEvidenceString(detail.data_origin);
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
         <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Enzyme name not recorded")}</h2>
-        <p>${escapeHtml(summary.ec_number || EMPTY_VALUE)} &middot; ${escapePublic(summary.organism || EMPTY_VALUE)}</p>
-        <div class="detail-status-line">${statusBadge(summary, { long: true })}</div>
+        ${detailSubtitleHtml(summary)}
+        ${detailStatusHtml(summary)}
       </div>
 
       ${measurementSection(summary, detail)}
       ${molecularIdentitySection(summary, detail)}
-      ${detailSection("Paper", referenceRows)}
-      <details class="detail-disclosure review-notes">
-        <summary>Review notes</summary>
-        <p>${escapeHtml(reviewOutcome(summary, detail))}</p>
-        ${humanReviewNote(summary)}
-        ${proofLines.length ? `
-        <div class="evidence-note-section">
-          <h3>${escapeHtml(proofHeading)}</h3>
-          <div class="evidence-note-list">${v2Record && proofLines.every((line) => line?.check)
-            ? v2ValuesHtml(summary, proofLines)
-            : evidenceNotesHtml(proofLines, 3)}</div>
-        </div>` : ""}
-      </details>
+      <section class="detail-section paper-section">
+        <h3>Paper</h3>
+        <div class="detail-kv">${paperRows.filter(Boolean).join("")}</div>
+        ${valuesHtml}
+      </section>
       ${detailDisclosure("Source details", [
         kv("Enzyme name from", v2Record ? "the paper" : sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source || "not recorded"),
         kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
-        // CatLog's own compilation of the values it read from papers is CC BY 4.0; quoted paper text stays the publisher's.
-        v2Record ? kv("License", "CC BY 4.0 (CatLog)") : kv("Source license", sourceLicense(summary, detail)),
+        kv("License", detailLicense(summary, detail, v2Record)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         mergedDatabasesRow(summary, detail),
-        publicEvidenceString(detail.data_origin) ? kv("Data origin", publicEvidenceString(detail.data_origin)) : "",
-        kv("Protein identity", identityResolutionLabel({
-          identity_resolution_state: detail.identity_resolution_state || summary.identity_resolution_state,
-          sequence_source: detail.sequence_source || summary.sequence_source,
-        })),
+        // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
+        dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
+        kv("Protein identity", detailIdentityLabel(summary, detail)),
       ])}
 
       <div class="detail-actions">
@@ -3953,6 +4195,9 @@
       </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+    document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
+      button.addEventListener("click", () => showFlagNote(button.dataset.flagNote));
+    });
     document.querySelectorAll(".copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));
     });
@@ -4362,6 +4607,11 @@
       identityResolutionLabel,
       measurementSection,
       molecularIdentitySection,
+      numberHtml,
+      numberText,
+      printedValueText,
+      v2LineFacts,
+      conditionLines,
       copyDetailValue,
       showSuggestions,
       hideSuggestions,

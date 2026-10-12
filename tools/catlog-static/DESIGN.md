@@ -94,11 +94,19 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 ## Record Details
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
-The status is one line ("Accepted · read from the paper · human-checked"); an
-older record's evidence label sits with its paper links. A CatLog v2 record's
-conditions are short labelled lines (Cosubstrate, Conditions as a list,
-Preparation), never one block of text, and its sequence note is short and plain.
-Sequence and SMILES strings and review notes expand on request. Do not discard
+Order: name, EC · organism and one status line ("Accepted · read from the
+paper · human-checked"); Measurement (the values, then each flag once as a plain
+note under them, then substrate, cosubstrate, temperature, pH, conditions as a
+short list, preparation); Protein and substrate; Paper (links, the review
+outcome, and a CatLog v2 record's values as one table: printed, stored, second
+check only when results differ); Source details, collapsed, with one licence
+line. A flagged value carries a small "!" button that moves to its note; nothing
+is readable only on hover. The record writes numbers like the table (a × 10ⁿ at
+or above 10⁵ and below 10⁻³, stored digits); a kcat/Km CatLog calculated for an
+older record keeps the significant figures of kcat and Km. An older record whose
+stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
+with kcat ÷ Km, and its note gives the stored number. Sequence and SMILES
+strings and an older record's review notes expand on request. Do not discard
 source text, hide scientific warnings, recompute measurements, or weaken review
 definitions to make the page shorter. Database attribution belongs in Guide and
 dataset notes, not the Browse footer.

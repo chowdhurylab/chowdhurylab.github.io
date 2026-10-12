@@ -226,7 +226,7 @@ assert.match(
   sourceCode,
   /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Values in source";/,
 );
-assert.match(sourceCode, /<h3>\$\{escapeHtml\(proofHeading\)\}<\/h3>/);
+assert.match(sourceCode, /<h4>\$\{escapeHtml\(proofHeading\)\}<\/h4>/);
 
 function makeClassList() {
   const values = new Set();
@@ -1649,6 +1649,34 @@ assert.match(kiMeasurementHtml, /<small>µM<\/small>/);
 const noKiMeasurementHtml = api.measurementSection(row({ has_ki: false }), {});
 assert.doesNotMatch(noKiMeasurementHtml, /class="measurement-strip has-ki"/);
 assert.doesNotMatch(noKiMeasurementHtml, /<i>K<\/i><sub>i<\/sub>/);
+
+// Record panel: one number style; a quotient CatLog works out keeps its inputs' significant figures.
+assert.equal(api.numberText("8.5"), "8.5");
+assert.equal(api.numberText("6.004e+7"), "6.004 × 10⁷");
+assert.equal(api.numberText(5038.4615, { figures: 2 }), "5.0 × 10³");
+assert.equal(api.numberText(8.5 / 320, { figures: 2 }), "0.027");
+assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
+assert.equal(api.printedValueText("320", "mM"), "320 mM");
+// A flag is said once: a marker button on the value and one note under the values, no second list.
+const flaggedHtml = api.measurementSection(row({
+  kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
+  condition_flags: ["kcat_over_km_quotient_mismatch"],
+}), {});
+assert.match(flaggedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"/);
+assert.match(flaggedHtml, /<li id="detailFlagNote1"[^>]*>.*kcat ÷ Km: 0\.027 mM-1 s-1 \(1\.2× apart\)/);
+assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag/);
+// An older record's kcat/Km off by a unit factor shows the source's own value that agrees with kcat ÷ Km.
+const unitFlagHtml = api.measurementSection(row({
+  kcat: 22.6, km: 0.35, kcat_over_km: 64000, kcat_display: "22.6", km_display: "0.35", kcat_over_km_display: "64000",
+  condition_flags: ["kcat_over_km_unit_mismatch"], kcat_over_km_source_differs: true,
+}), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
+assert.match(unitFlagHtml, /<strong>64<button class="value-flag"/);
+assert.match(unitFlagHtml, /stores kcat\/Km as 64000 mM-1 s-1; kcat ÷ Km is 65 mM-1 s-1 \(991× apart\)/);
+// v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
+const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
+assert.match(lines.cosubstrate, /<span>Cosubstrate<\/span><strong>NAD\+<\/strong>/);
+assert.match(lines.conditions, /<span>Conditions<\/span><strong>apparent kcat, Km<\/strong>/);
+assert.match(lines.preparation, /<strong>purified<\/strong>/);
 
 // Exporter-produced flagged conditions are withheld, with the reason still visible.
 const withheldConditions = row({

@@ -318,11 +318,6 @@ td.c-status { text-align:left }
 /* No spaces in the separator, so each tag stays one box. */
 .state-tag + .state-tag::before { content:"\00b7"; margin:0 3px }
 
-/* In the record the badge is one line. */
-.detail-status-line .state-badge { display:inline-flex; flex-wrap:wrap; align-items:center; height:auto; white-space:normal }
-.detail-status-line .state-tags { overflow:visible; padding-left:0; color:var(--text-2); font-size:var(--fs-table); line-height:18px }
-.detail-status-line .state-tag { white-space:nowrap }
-.detail-status-line .state-tags:not(:empty)::before, .detail-status-line .state-tag + .state-tag::before { content:"\00b7"; margin:0 6px }
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-table) }
 .pagination select { width:64px }
 #pageLabel { margin-left:auto; min-width:116px; text-align:center }
@@ -330,17 +325,15 @@ td.c-status { text-align:left }
 /* The open record: a column on desktop, a dialog on smaller screens. */
 .detail-panel { display:none; position:relative; grid-column:2; min-height:0; max-height:100%; border-left:1px solid var(--line); overflow:auto; overscroll-behavior:contain }
 body.detail-open .detail-panel { display:block }
-.detail-empty, #detailContent { padding:16px 20px 20px }
-.detail-empty { color:var(--text-3); font-size:var(--fs-table) }
+#detailContent { padding:16px 20px 20px }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:6px; border-bottom:1px solid var(--line); background:var(--surface); margin:-16px -20px 0; padding:16px 56px 14px 20px }
 .detail-top h2 { margin:0; color:var(--text); font-size:var(--fs-h2); font-weight:600; line-height:1.25; overflow-wrap:anywhere }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--teal); outline-offset:2px }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-table) }
 .close-detail { position:absolute; top:12px; right:12px }
-.detail-status-line { display:flex; flex-wrap:wrap; align-items:center; margin-top:2px }
 .detail-section { border-bottom:1px solid var(--line-soft); padding:16px 0 }
-.detail-section h3, .review-notes h3 { margin:0 0 12px; color:var(--text); font-size:var(--fs-ui); font-weight:600 }
+.detail-section h3 { margin:0 0 12px; color:var(--text); font-size:var(--fs-ui); font-weight:600 }
 .detail-kv { display:grid; gap:8px }
 .kv-line { display:grid; grid-template-columns:112px minmax(0,1fr); gap:12px; align-items:baseline; font-size:var(--fs-table) }
 .kv-line > span { color:var(--text-3); font-size:var(--fs-meta) }
@@ -355,9 +348,7 @@ body.detail-open .detail-panel { display:block }
 .measurement-value:first-child { border-left:0; padding-left:0 }
 .measurement-value > span { color:var(--text-2); font-size:var(--fs-meta); white-space:nowrap }
 .measurement-value > span small { display:block; margin-top:2px; color:var(--text-3); font-size:var(--fs-min); font-style:normal }
-.measurement-value > span .metric-origin { display:block }
 .measurement-value strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25; overflow-wrap:anywhere }
-.measurement-value .metric-unit-missing { display:block; margin-top:2px }
 
 .measurement-value strong .metric-inline-unit { margin-left:4px }
 .measurement-value strong .value-flag { margin-left:6px; vertical-align:middle }
@@ -365,10 +356,6 @@ body.detail-open .detail-panel { display:block }
 
 .condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:anywhere }
 .condition-list li::marker { color:var(--text-3) }
-.condition-flag-line { align-items:start }
-.condition-flag-list { display:flex; flex-wrap:wrap; gap:4px; margin:0; padding:0; list-style:none }
-.condition-flag-list li { border:1px solid var(--amber-line); border-radius:999px; background:var(--amber-soft); padding:2px 8px; color:var(--amber-ink); font-size:var(--fs-meta); font-weight:500; line-height:1.3 }
-li.flag-note { border-radius:6px }
 .source-efficiency-value { display:grid; gap:2px; white-space:nowrap }
 .identity-section { display:grid; gap:12px }
 .identity-section h3 { margin-bottom:0 }
@@ -383,26 +370,42 @@ li.flag-note { border-radius:6px }
 .sequence-disclosure > summary::before { content:"+"; width:12px; margin-right:8px; color:var(--text-3) }
 .sequence-disclosure[open] > summary::before { content:"\2212" }
 .sequence-disclosure > summary > span { margin-left:auto; color:var(--text-3); font-weight:400 }
-.sequence-disclosure > .copy-field { margin-top:8px }
+.sequence-disclosure > :not(summary) { margin-top:8px }
 .detail-disclosure { border-bottom:1px solid var(--line-soft) }
 .detail-disclosure summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:14px 0; color:var(--text); font-size:var(--fs-ui); font-weight:600; list-style:none }
 .detail-disclosure summary::-webkit-details-marker { display:none }
 .detail-disclosure .detail-kv { padding-bottom:14px }
-.review-notes p { margin:0 0 12px; color:var(--text); font-size:var(--fs-table) }
-.review-notes .evidence-note-list { padding-bottom:14px }
 .evidence-note-list { display:grid; gap:12px }
 .evidence-note-item, .evidence-note-plain { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2); font-size:var(--fs-table); line-height:1.5; overflow-wrap:anywhere }
-.evidence-note-item { display:grid; gap:6px }
 .evidence-note-plain { margin:0 }
-.evidence-note-line { display:grid; grid-template-columns:72px minmax(0,1fr); gap:8px; align-items:baseline }
-.evidence-note-line span { color:var(--text-3); font-size:var(--fs-min); font-weight:500 }
-.evidence-note-line p { margin:0 }
 .detail-load-error { display:grid; gap:6px; margin:16px 20px; border-left:3px solid var(--amber); background:var(--amber-soft); padding:12px 14px; color:var(--amber-ink); font-size:var(--fs-table) }
 .detail-load-error strong { color:var(--amber-ink) }
 .detail-load-error .button { width:max-content; margin-top:6px; border-color:var(--amber-line) }
 .detail-actions { display:grid; grid-template-columns:1fr; gap:10px; border-top:1px solid var(--line); margin:20px -20px -20px; background:var(--surface-3); padding:16px 20px }
 #downloadSelectedJson { min-height:38px; border-color:var(--teal-dark); background:var(--teal-dark); color:var(--surface) }
 #downloadSelectedJson:hover { border-color:var(--teal-darker); background:var(--teal-darker) }
+
+/* Record panel: status line, flag notes, the paper's values. */
+.detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px }
+.detail-status::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--status-color) }
+.detail-status > span { white-space:nowrap }
+.detail-status-word { color:var(--text); font-weight:500 }
+.detail-status > span + span::before { content:"\00b7"; margin-right:6px }
+button.value-flag { border:0; padding:0; cursor:pointer }
+.flag-notes { display:grid; gap:6px; margin:12px 0 0; padding:0; list-style:none }
+.flag-notes li { display:flex; gap:8px; border-radius:var(--radius); background:var(--amber-soft); padding:8px 10px; color:var(--amber-ink); font-size:var(--fs-table); line-height:1.45 }
+.flag-notes .value-flag { align-self:start; margin-top:2px }
+.flag-notes li:is(:focus-visible,.is-target) { outline:2px solid var(--amber) }
+.detail-values { display:grid; gap:8px; margin-top:16px }
+.detail-values h4 { margin:0; color:var(--text-3); font-size:var(--fs-meta); font-weight:500 }
+.detail-notes { margin-top:12px }
+.values-table { min-width:0; table-layout:auto }
+.values-table tr:nth-child(n) { height:auto; background:none; cursor:auto }
+.values-table :is(th,td) { position:static; height:auto; padding:6px 10px 6px 0; background:none; vertical-align:top; white-space:normal }
+.values-table tbody th { color:var(--text); font-size:var(--fs-table); font-weight:400; white-space:nowrap }
+.values-table thead th { padding-top:0; color:var(--text-3); font-weight:500 }
+.values-table :is(th,td):last-child { padding-right:0 }
+.values-table small { display:block; color:var(--text-3); font-size:var(--fs-min) }
 
 /* Stats and Guide pages. */
 .guide-view, .stats-view { flex:1; min-height:0; overflow:auto; border-bottom:1px solid var(--line); background:var(--surface) }
@@ -537,7 +540,7 @@ li.flag-note { border-radius:6px }
 .stats-detail-table { margin-top:12px; width:100%; min-width:0; table-layout:auto; border-collapse:collapse; font-size:var(--fs-stats-meta) }
 .stats-detail-table tr { height:auto }
 .stats-detail-table th, .stats-detail-table td { position:static; height:auto; background:transparent; padding:8px 12px; border-bottom:1px solid var(--line-soft); color:var(--text); text-align:right; font-size:var(--fs-stats-meta); line-height:1.5; font-weight:400; white-space:normal }
-.stats-detail-table th:first-child, .values-table :is(th,td) { text-align:left; padding-left:0 }
+.stats-detail-table th:first-child { text-align:left; padding-left:0 }
 .stats-detail-table thead th { font-weight:500 }
 .stats-detail-table :is(th,td):last-child { padding-right:0 }
 .stats-database-section .stats-review-layout { max-width:900px }
