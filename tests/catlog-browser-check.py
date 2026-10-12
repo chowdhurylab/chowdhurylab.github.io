@@ -400,12 +400,14 @@ def check_browse(driver, browser, url, route_label):
             record_payload = downloaded_payload("downloadSelectedJson")
             assert exact_key(record_payload) == selected_key == loaded_detail.get("measurement_key")
             assert record_payload.get("source_license") and record_payload.get("review_result")
+            # The header gives the record ID and a Copy link to this record.
             displayed_id = driver.execute_script("""
-                return [...document.querySelectorAll('#detailContent .kv-line')]
-                    .filter(e => e.querySelector('span')?.textContent === 'CatLog record ID')
-                    .map(e => e.querySelector('strong').textContent);
+                const button = document.querySelector('#detailContent .detail-top .copy-link');
+                return [document.querySelector('#detailContent .detail-top #detailRecordKey')?.textContent,
+                        button?.dataset.copyText || ''];
             """)
-            assert displayed_id == [selected_key]
+            assert displayed_id[0] == selected_key, displayed_id
+            assert displayed_id[1].endswith(f"#record={selected_key}"), displayed_id
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
             assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
@@ -897,10 +899,15 @@ def check_layout(driver, browser, url, route_label):
 RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|CatLog v2")
 
 
+RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "Paper", "Against the databases", "Review and audit",
+                   "Source details"]
+
+
 def check_record_panel(driver, browser, url, route_label):
-    """The record: header lines, then Measurement, Assay conditions, Paper and review, Protein and structure and Source
-    details; a record read from the paper says how in its Method line (with the Guide link) and gives its values as
-    printed; an older record names the earlier automated review; no labelled row shows a bare dash."""
+    """The record (design spec 5): header lines, then Values, Source, Conditions, Protein and substrate, Paper, Against the
+    databases (only when it has something to say), Review and audit, and Source details last; a record read from the paper
+    says how in its Method line (with the Guide link) and gives its values as printed; an older record names the earlier
+    automated review; no labelled row shows a bare dash; Show opens a sequence under its row."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     base = url.split("#", 1)[0]
     results = {}
@@ -917,18 +924,33 @@ def check_record_panel(driver, browser, url, route_label):
         return driver.execute_script("""
             const content = document.querySelector('#detailContent');
             const row = (label) => [...content.querySelectorAll('.kv-line')]
-                .filter(e => e.querySelector('span')?.textContent === label).map(e => e.querySelector('strong'));
+                .filter(e => e.querySelector('dt')?.textContent === label).map(e => e.querySelector('dd'));
             const method = row('Method')[0];
+            // Show opens the first sequence (or SMILES) under its row and says Hide.
+            const reveal = content.querySelector('[data-reveal-target]');
+            let revealed = null;
+            if (reveal) {
+                const box = document.getElementById(reveal.dataset.revealTarget);
+                const before = box.hidden;
+                reveal.click();
+                revealed = [before, box.hidden, reveal.getAttribute('aria-expanded'), reveal.textContent,
+                    box.getBoundingClientRect().height > 0];
+                reveal.click();
+            }
             return {
                 sections: [...content.querySelectorAll('.detail-section > h3, .detail-disclosure > summary')].map(e => e.textContent.trim()),
+                headingSize: getComputedStyle(content.querySelector('.detail-section > h3')).fontSize,
                 subtitle: content.querySelector('.detail-top .detail-subtitle')?.textContent || '',
                 substrate: content.querySelector('.detail-top .detail-substrate')?.textContent || '',
                 status: content.querySelector('.detail-top .detail-status')?.textContent || '',
-                dashes: [...content.querySelectorAll('.kv-line > strong')].filter(e => e.textContent.trim() === '—').length,
+                recordKey: content.querySelector('.detail-top #detailRecordKey')?.textContent || '',
+                dashes: [...content.querySelectorAll('.kv-line > dd')].filter(e => e.textContent.trim() === '—').length,
                 method: method ? method.textContent : null,
                 methodLink: method?.querySelector('a.method-link')?.getAttribute('href') || null,
-                review: row('Review')[0]?.textContent || null,
-                valuesHead: [...content.querySelectorAll('.values-table thead th')].map(e => e.textContent),
+                review: row('Status')[0]?.textContent || null,
+                valuesHead: [...content.querySelectorAll('.values-section .values-table thead th')].map(e => e.textContent),
+                valueCells: [...content.querySelectorAll('.values-section .values-table td.vt-value')].map(e => getComputedStyle(e).textAlign),
+                revealed,
                 text: content.innerText,
                 overflow: document.documentElement.scrollWidth > innerWidth + 1
                     || document.querySelector('.detail-panel').scrollWidth > document.querySelector('.detail-panel').clientWidth + 1,
@@ -941,10 +963,16 @@ def check_record_panel(driver, browser, url, route_label):
             set_browse_viewport(driver, browser, width, height)
             for kind, address in (("from-paper", "#browse?source=paper&status=accepted"), ("database", "#browse?source=brenda")):
                 panel = open_first_record(address)
-                assert panel["sections"] == ["Measurement", "Assay conditions", "Paper and review", "Protein and structure",
-                                             "Source details"], panel["sections"]
+                expected = [name for name in RECORD_SECTIONS if name != "Against the databases" or name in panel["sections"]]
+                assert panel["sections"] == expected, panel["sections"]
+                assert panel["headingSize"] == "14px", panel["headingSize"]
                 assert panel["subtitle"].startswith("EC "), panel["subtitle"]
                 assert panel["substrate"].startswith("Substrate: "), panel["substrate"]
+                assert re.fullmatch(r"[0-9a-f]{16}(?:-\d+)?", panel["recordKey"]), panel["recordKey"]
+                assert panel["valuesHead"][:4] == ["Parameter", "Value", "Unit", "As printed"], panel["valuesHead"]
+                assert panel["valueCells"] and set(panel["valueCells"]) == {"right"}, panel["valueCells"]
+                if panel["revealed"] is not None:
+                    assert panel["revealed"] == [True, False, "true", "Hide", True], panel["revealed"]
                 assert panel["dashes"] == 0, "A labelled row shows a bare dash"
                 assert not RECORD_PANEL_FORBIDDEN.search(panel["text"]), RECORD_PANEL_FORBIDDEN.search(panel["text"]).group(0)
                 assert not panel["overflow"], f"The {kind} record overflows sideways at {width}px"
@@ -953,8 +981,7 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["method"] and panel["method"].startswith(
                         "Read from the paper by an AI model; a second, separate AI check compared each value with the paper;"), panel["method"]
                     assert panel["methodLink"] == "#guide-method"
-                    assert panel["valuesHead"][1:3] == ["As printed", "In catalog units"], panel["valuesHead"]
-                    assert panel["review"] is None
+                    assert panel["review"] == "Accepted: read from the paper by CatLog.", panel["review"]
                 else:
                     assert panel["method"] is None and "earlier automated review" in (panel["review"] or ""), panel["review"]
                 if label == "desktop":
