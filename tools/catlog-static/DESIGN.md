@@ -305,7 +305,9 @@ bottom in this order:
   Human review line with the reviewer's facts-only note on every record that has
   a mark (no review year); merged rows; an older record's notes, on request:
   "Earlier automated review: where the values are printed" (Where, As printed
-  and Conversion, code quotes and "->" written as plain text and arrows) or a
+  and Conversion, code quotes and "->" written as plain text and arrows; the
+  Conversion line keeps each value's printed number and arithmetic and says "(no
+  conversion)" for the earlier pipeline's reasoning, uM reads µM) or a
   database note headed by its source ("Note from BRENDA"), without an importer's
   label and not shown when it only repeats the temperature and pH rows.
 - Protein and structure: Enzyme form ("H150A variant", "Wild type"); one

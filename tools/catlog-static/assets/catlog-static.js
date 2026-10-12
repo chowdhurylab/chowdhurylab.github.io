@@ -778,6 +778,7 @@
       .replace(/\bnormalized_value=/gi, "")
       .replace(/\bnormalized_unit=/gi, "")
       .replace(/\bmicroM\b/g, "µM")
+      .replace(/\buM\b/g, "µM")
       .replace(/\s+/g, " ")
       .trim();
   }
@@ -834,6 +835,79 @@
     return repeated && !rest.replace(/\b(?:at|and)\b/gi, "").replace(/[\s,;.]/g, "");
   }
 
+  // An older record's Conversion line (deviation 1 keeps it) as facts: each metric's printed value and the arithmetic,
+  // without the earlier pipeline's reasoning. "Km: printed Table 1 cell 14.8 uM; 1 uM is 0.001 mM, so 14.8 / 1000 =
+  // 0.0148 mM; kcat: printed Table 1 cell 0.610 s-1; the printed unit is already the canonical s-1, so no unit conversion
+  // applies and the paper-side value is 0.61 s-1" reads "Km: printed Table 1 cell 14.8 µM; 14.8 / 1000 = 0.0148 mM.
+  // kcat: printed Table 1 cell 0.610 s-1 (no conversion)." A clause that would lose its printed number stays as it was.
+  const CONVERSION_METRIC_START = /(?:^|(?<=[.;]\s+))(?=(?:kcat\s*\/\s*K_?m|kcat_over_km|k_?cat|K_?m|Ki|Vmax)\s*[:=])/i;
+  const CONVERSION_NONE = /(?:,\s*)?\b(?:(?:which|that)(?: unit)? (?:is|are) |(?:is|are) )?(?:already\b|the same unit as\b|(?:the )?canonical\b|so no (?:unit )?conversion|no (?:unit )?conversion (?:applies|is applied|is needed|was applied)\b|no conversion\b|no unit conversion\b)/i;
+  const CONVERSION_DROP = /^(?:and )?(?:the (?:paper(?:-side)?|normali[sz]ed|canonical|stored) value is\b|carried exactly\b|(?:it|the printed cell) (?:reads|normali[sz]es to)\b|normali[sz]e[sd]?(?: to)?\s+[\d.]|the paper value is\b|(?:an |also )?exact(?: conversion)?\b|with no repeating decimal)/i;
+  const CONVERSION_ASIDE = /\s*\((?=[^()]*(?:\bso no\b|is involved|this article prints|already|canonical|normali[sz]ed?))[^()]*\)/gi;
+  const CONVERSION_FIELDS = /metric:\s*([^;]+?);\s*(?:raw value:\s*([^;]+?);\s*)?(?:raw unit:\s*([^;]+?);\s*)?normali[sz]ed value:\s*([^;]+?)(?:;\s*normali[sz]ed unit:\s*([^;.]+))?(?=;|\.?$)/gi;
+  const CONVERSION_VALUE_DIGIT = /(?<![\^\-−⁻\w.])\d/;
+
+  function conversionFirstNumber(text) {
+    return (String(text).match(/\d+(?:\.\d+)?/) || [""])[0];
+  }
+
+  function conversionClause(clause) {
+    const colon = clause.indexOf(":");
+    const label = clause.slice(0, colon + 1);
+    const body = clause.slice(colon + 1).replace(CONVERSION_ASIDE, "")
+      .replace(/,\s*(?:an |also )?exact(?: conversion)?(?: with no repeating decimal)?/gi, "");
+    const parts = body.split(/;\s+|\.\s+(?=[a-z0-9])/i).map((part) => part.trim().replace(/[.;,]+$/, "")).filter(Boolean);
+    const kept = [];
+    let none = false;
+    for (let part of parts) {
+      part = part.replace(/^the printed (.*?)\b(cell|value)s? is\s+/i, "printed $1$2 ").replace(/^the (?:paper's own )?printed\b/i, "printed");
+      // "1 uM is 0.001 mM, so 14.8 / 1000 = 0.0148 mM", "the turnover column is per minute, so 1 / 60 = 0.0167": the arithmetic.
+      const arithmetic = part.match(/^(?:so\s+)?[^;=]*?\b(?:is|are|equals)\b[^;=]*?,?\s+so\s+(?!no\b)(?=[^;]*[=→])(.+)$/i);
+      if (arithmetic) part = arithmetic[1];
+      part = part.replace(/^so\s+/i, "").replace(/^the printed cell (?:converts to|reads)\s+/i, "→ ");
+      if (CONVERSION_DROP.test(part)) continue;
+      const at = part.search(CONVERSION_NONE);
+      if (at >= 0) {
+        const head = part.slice(0, at).trim().replace(/[,;:]+$/, "");
+        if (head && CONVERSION_VALUE_DIGIT.test(head) && !/^(?:the|1|one)\b/i.test(head)) kept.push(head);
+        none = true;
+        continue;
+      }
+      kept.push(part);
+    }
+    let text = kept.join("; ");
+    if (none) text = text ? `${text} (no conversion)` : "no conversion";
+    const result = `${label} ${text}`.replace(/\s+/g, " ").trim();
+    const first = conversionFirstNumber(clause.slice(colon + 1));
+    return !first || result.includes(first) ? result : clause.trim();
+  }
+
+  function conversionFacts(value) {
+    let text = String(value || "").trim();
+    if (!text) return "";
+    text = text.replace(CONVERSION_FIELDS, (_m, metric, raw, unit, number, numberUnit) =>
+      `${metric.trim()}: ${raw ? `${raw.trim()}${unit && !/[a-zµμ]/i.test(raw) ? ` ${unit.trim()}` : ""} → ` : ""}${number.trim()}${numberUnit ? ` ${numberUnit.trim()}` : ""}`)
+      .replace(/^normali[sz]ed(?: explicit table cells)?:?\s+/i, "")
+      .replace(/\bprinted_efficiency_normali[sz]ed=\s*/gi, "printed kcat/Km ")
+      .replace(/\b(?:[a-z]+_)*normali[sz]ed_(?:value|unit)=\s*/gi, "");
+    text = text.replace(CONVERSION_ASIDE, "");
+    const clauses = text.split(CONVERSION_METRIC_START).map((clause) => clause.trim().replace(/[.;]+$/, "")).filter(Boolean);
+    const cleaned = clauses.map((clause) => (/^[^:]{1,12}:/.test(clause) ? conversionClause(clause) : clause));
+    return `${cleaned.join(". ")}.`
+      .replace(/\s+normali[sz]es to\s+/gi, " → ")
+      .replace(/\bnormali[sz]e to\b/gi, "in catalog units are")
+      .replace(/\bnormali[sz]ation\b/gi, "conversion")
+      .replace(/\bindependently\b/gi, "separately")
+      .replace(/\bindependent\b/gi, "separate")
+      .replace(/\bnormali[sz]e\b/gi, "convert")
+      .replace(/\bnormali[sz]ed\s+(?=[\d.])/gi, "")
+      .replace(/\bnormali[sz]ed value\b/gi, "value in catalog units")
+      .replace(/\bnormali[sz]ed unit\b/gi, "unit")
+      .replace(/\bnormali[sz]ed\b/gi, "converted")
+      .replace(/\buM\b/g, "µM")
+      .replace(/\s+/g, " ");
+  }
+
   function evidenceNoteHtml(value) {
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
@@ -849,7 +923,7 @@
       location ? ["Where", location] : null,
       reported ? ["As printed", cleanEvidenceValue(reported)] : null,
       // The earlier pipeline's own word for it ("Normalized paper Km: ...") is the label's.
-      normalized ? ["Conversion", cleanEvidenceValue(normalized).replace(/^normali[sz]ed:?\s+/i, "")] : null,
+      normalized ? ["Conversion", cleanEvidenceValue(conversionFacts(normalized)).replace(/^normali[sz]ed:?\s+/i, "")] : null,
     ].filter(Boolean);
 
     if (!rows.length) {
@@ -7141,6 +7215,7 @@
       efficiencyOriginHtml,
       printedValueText,
       v2LineFacts,
+      conversionFacts,
       conditionLines,
       copyDetailValue,
       showSuggestions,

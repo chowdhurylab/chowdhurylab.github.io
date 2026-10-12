@@ -2425,12 +2425,21 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<summary>Earlier automated review: where the values are printed<\/summary>/);
   assert.match(html, /<span>Where<\/span><strong>Table III · row Butanol<\/strong>/);
   assert.match(html, /<span>As printed<\/span><strong>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>-1<\/sup>\)<\/strong>/);
-  assert.match(html, /<span>Conversion<\/span><strong>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup>; no unit conversion<\/strong>/);
+  assert.match(html, /<span>Conversion<\/span><strong>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup> \(no conversion\)\.<\/strong>/);
+  // The earlier pipeline's reasoning goes; what was printed and the arithmetic stay (6d4893fb4e83eb11, a6c5593105452783).
+  assert.equal(api.conversionFacts("Km: printed Table 1 cell 14.8 uM; 1 uM is 0.001 mM, so 14.8 / 1000 = 0.0148 mM; kcat: printed Table 1 cell 0.610 s-1; the printed unit is already the canonical s-1, so no unit conversion applies and the paper-side value is 0.61 s-1"),
+    "Km: printed Table 1 cell 14.8 µM; 14.8 / 1000 = 0.0148 mM. kcat: printed Table 1 cell 0.610 s-1 (no conversion).");
+  assert.equal(api.conversionFacts("kcat: paper V1 cell 5.2 s-1 → 5.2 s-1; no unit conversion (the paper's unit row already prints s-1, so no min-1/60-style conversion is involved). Km: paper cell 0.27 mM → 0.27 mM; no conversion. kcat/Km: not printed"),
+    "kcat: paper V1 cell 5.2 s-1 → 5.2 s-1 (no conversion). Km: paper cell 0.27 mM → 0.27 mM (no conversion). kcat/Km: not printed.");
+  assert.equal(api.conversionFacts("metric: Km; raw value: 3.4 ± 0.3; raw unit: uM; normalized value: 0.0034; normalized unit: mM"), "Km: 3.4 ± 0.3 µM → 0.0034 mM.");
+  assert.equal(api.conversionFacts("kcat: printed cell 22 +/- 0.6 s^-1 is already in canonical units, 22.0 s^(-1)."), "kcat: printed cell 22 +/- 0.6 s^-1 (no conversion).");
+  // A clause whose printed number would go is kept as it was.
+  assert.match(api.conversionFacts("kcat: the column is per second, so no unit conversion applies"), /^kcat: no conversion\.$/);
   assert.match(html, /<span>Evidence<\/span><strong>Located in the paper<\/strong>/);
   assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
   api.renderDetail(row({ record_key: "older-normalized", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
     proof_lines: [{ table_label: "Table 1", normalized_value_unit_evidence: "Normalized paper Km: 14.29 uM = 0.01429 mM" }] });
-  assert.match(element("detailContent").innerHTML, /<span>Conversion<\/span><strong>paper Km: 14\.29 uM = 0\.01429 mM<\/strong>/);
+  assert.match(element("detailContent").innerHTML, /<span>Conversion<\/span><strong>paper Km: 14\.29 µM = 0\.01429 mM\.<\/strong>/);
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<span>Evidence<\/span><strong>Paper cited \(values not located\)<\/strong>/);
 }
