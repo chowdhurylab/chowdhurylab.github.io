@@ -746,6 +746,22 @@ def check(driver, browser, url):
             assert response.status == 200 and int(response.headers["Content-Length"]) > 1_000_000
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
 
+    # A linked Stats count is the number of records its link opens: the most common organism (with its strains) and
+    # BRENDA (records merged from several databases count under each).
+    for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] .stats-bars li",
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_brenda']"):
+        found = driver.find_elements(By.CSS_SELECTOR, selector)
+        if not found:
+            continue
+        count = int(found[0].get_attribute("data-count"))
+        stat_link = found[0].find_element(By.CSS_SELECTOR, "a.stats-link")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", stat_link)
+        stat_link.click()
+        wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count:,} records")
+        driver.back()
+        wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
+                   and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
+
     # A Stats link opens Browse; Back returns to Stats.
     pending_link = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"] a.stats-link')
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", pending_link)
