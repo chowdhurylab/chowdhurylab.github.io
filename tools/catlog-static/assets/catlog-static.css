@@ -165,7 +165,7 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
 .snapshot-checked > span { color:var(--checked); font-size:var(--fs-meta); font-weight:500 }
 .snapshot-checked > strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
 .snapshot-checked:hover { text-decoration:none }
-.snapshot-checked:hover > span { text-decoration:underline }
+.snapshot-checked[href]:hover > span { text-decoration:underline }
 .snapshot-checked .check-icon { margin-right:3px }
 .snapshot-controls { gap:16px; margin-left:auto }
 .snapshot-date { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }

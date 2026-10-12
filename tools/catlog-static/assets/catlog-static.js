@@ -2348,28 +2348,32 @@
   }
 
   // "Human-checked N" in the counts band links to the human-checked records among the current results. Before the
-  // records and marks load, N is the snapshot's count (summary.overview.human_checked_accepted); without that field the
-  // item is hidden.
+  // records and marks load, N is the snapshot's count (summary.overview.human_checked_accepted of this same snapshot, as
+  // Stats uses it); without it the item is hidden. A filtered view whose marks have not arrived shows a dash, and a count
+  // of 0 (or a dash) is plain text, not a link to an empty table.
   function humanCheckedHref() {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.startsWith("#browse?") ? hash.slice("#browse?".length) : "");
-    params.set("checked", "1");
-    return `#browse?${params.toString()}`;
+    // The filters set now (read from the controls, so it is never one change behind the address), from the first page.
+    const params = browseParamsFromControls({ ...filterControlState(), checked: true }).filter(([key]) => key !== "page");
+    return browseHash(params);
   }
 
   function renderHumanCheckedCount(rows) {
     const link = $("humanCheckedLink");
     if (!link) return;
-    const snapshotCount = Number(manifest.summary?.overview?.human_checked_accepted);
-    if (!Number.isFinite(snapshotCount) || snapshotCount < 0) {
+    const snapshotCount = statsCount(statsOverview(Number(manifest.total_rows || 0))?.human_checked_accepted);
+    if (snapshotCount === null) {
       link.hidden = true;
       return;
     }
-    const count = state.recordsReady && Object.keys(humanReviewMarks).length
-      ? rows.reduce((total, row) => total + (isHumanChecked(row) ? 1 : 0), 0)
-      : snapshotCount;
+    let count = snapshotCount;
+    if (state.recordsReady && Object.keys(humanReviewMarks).length) {
+      count = rows.reduce((total, row) => total + (isHumanChecked(row) ? 1 : 0), 0);
+    } else if (state.recordsReady && rows.length !== state.records.length) {
+      count = null;
+    }
     link.hidden = false;
-    link.setAttribute("href", humanCheckedHref());
+    if (count) link.setAttribute("href", humanCheckedHref());
+    else link.removeAttribute("href");
     if ($("humanCheckedCount")) $("humanCheckedCount").textContent = formatCount(count);
   }
 
@@ -2832,12 +2836,7 @@
     });
   }
 
-  // Human-checked: accepted records a human reviewer checked, the same rule as the status badge's "human-checked" tag
-  // (statusBadge). The marks arrive after the index; until then the count waits.
-  function isHumanChecked(row) {
-    return (row._recordState || recordStateForRow(row)) === "accepted" && Boolean(humanReviewMark(row)?.checked);
-  }
-
+  // Human-checked (isHumanChecked, beside statusBadge): the marks arrive after the index; until then the count waits.
   function humanReviewMarksArrived() {
     state.humanMarksLoaded = true;
     state.humanMarksVersion += 1;
@@ -5463,10 +5462,13 @@
       event.currentTarget.setAttribute("aria-expanded", String(expanded));
       event.currentTarget.firstChild.textContent = expanded ? "Less " : "More ";
     });
-    // The Human-checked count keeps the current filters in its link (read when it is used, so it is never stale).
+    // The Human-checked count keeps the current filters in its link (read again when it is used: rows per page can
+    // change without a new count).
     const humanCheckedLink = $("humanCheckedLink");
     for (const type of ["pointerenter", "focus", "click"]) {
-      humanCheckedLink?.addEventListener(type, () => humanCheckedLink.setAttribute("href", humanCheckedHref()));
+      humanCheckedLink?.addEventListener(type, () => {
+        if (humanCheckedLink.hasAttribute("href")) humanCheckedLink.setAttribute("href", humanCheckedHref());
+      });
     }
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     for (const view of ["browse", "guide", "stats"]) {

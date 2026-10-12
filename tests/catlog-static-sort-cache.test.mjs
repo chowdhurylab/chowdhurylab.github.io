@@ -1839,27 +1839,54 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(noted, {});
   assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km/);
 
-  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, summary: runtimeManifest.summary };
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
+    summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
   const link = element("humanCheckedLink");
   api.state.records = [accepted, pending, noted];
   api.state.filtered = [accepted, pending, noted];
   api.state.recordsReady = true;
   runtimeManifest.summary = { ...(previous.summary || {}) };
+  runtimeManifest.total_rows = 3;
+  runtimeManifest.enriched_download = { ...(previous.download || {}), sha256: "d".repeat(64) };
   delete runtimeManifest.summary.overview;
   api.renderSummary();
   assert.equal(link.hidden, true, "no overview count, no Human-checked item");
-  runtimeManifest.summary.overview = { human_checked_accepted: 1798 };
+  const binding = { download_sha256: "d".repeat(64), source_sha256: runtimeManifest.source_sha256, records: 3 };
+  runtimeManifest.summary.overview = { ...binding, download_sha256: "e".repeat(64), human_checked_accepted: 1798 };
+  api.renderSummary();
+  assert.equal(link.hidden, true, "an overview counted from another download is not used");
+  runtimeManifest.summary.overview = { ...binding, human_checked_accepted: 1798 };
   api.renderSummary();
   assert.equal(link.hidden, false);
   assert.equal(element("humanCheckedCount").textContent, "1", "the count follows the loaded results");
   assert.equal(link.getAttribute("href"), "#browse?checked=1");
-  window.location.hash = "#browse?ec=1.1.1&variant=wild";
-  assert.equal(api.humanCheckedHref(), "#browse?ec=1.1.1&variant=wild&checked=1", "the link keeps the current filters");
+  // The link carries the filters set now (not the address, which can be one change behind or a record's), never the page.
+  window.location.hash = "#browse?q=old";
+  element("ecFilterInput").value = "1.1.1";
+  element("organismFilterInput").value = "Homo sapiens";
+  api.state.page = 3;
+  assert.equal(api.humanCheckedHref(), "#browse?checked=1&ec=1.1.1&organism=Homo+sapiens", "the link keeps the current filters");
+  element("ecFilterInput").value = "";
+  element("organismFilterInput").value = "";
+  api.state.page = previous.page;
   window.location.hash = "";
+  // No human-checked record among the results: the count is plain text, not a link to an empty table.
+  api.state.filtered = [pending, noted];
+  api.renderSummary();
+  assert.equal(element("humanCheckedCount").textContent, "0");
+  assert.equal(link.getAttribute("href"), null);
   api.setHumanReviewMarks({});
   api.renderSummary();
+  assert.equal(element("humanCheckedCount").textContent, "—", "a filtered view without the marks has no count yet");
+  api.state.filtered = [accepted, pending, noted];
+  api.renderSummary();
   assert.equal(element("humanCheckedCount").textContent, "1,798", "before the marks load, the snapshot's count");
+  assert.equal(link.getAttribute("href"), "#browse?checked=1");
   runtimeManifest.summary = previous.summary;
+  runtimeManifest.total_rows = previous.total;
+  runtimeManifest.enriched_download = previous.download;
+  if (previous.total === undefined) delete runtimeManifest.total_rows;
+  if (previous.download === undefined) delete runtimeManifest.enriched_download;
   Object.assign(api.state, { records: previous.records, filtered: previous.filtered, recordsReady: previous.recordsReady });
   api.renderSummary();
 }
