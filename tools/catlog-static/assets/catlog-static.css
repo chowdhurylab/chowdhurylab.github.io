@@ -962,6 +962,14 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-charts { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
   .team-dots { display:none }
+  /* Team on paper: the wide loop with its people and agents, then the legend in two columns, kept whole. */
+  .team-view { overflow:visible; border:0 }
+  .team-shell { padding:0 }
+  .team-body { display:block }
+  .team-figure { break-inside:avoid; margin-bottom:16px; padding:8px }
+  .team-loop-wide { display:block; max-width:100% }
+  .team-loop-narrow { display:none }
+  .team-legend { grid-template-columns:repeat(2,minmax(0,1fr)); break-inside:avoid }
 }
 
 .guide-record-example figcaption > span { display:block; font-weight:600 }
