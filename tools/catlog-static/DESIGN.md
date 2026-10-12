@@ -350,9 +350,15 @@ metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
 
 One reading column (72ch, 16px body). The introduction says what CatLog is and,
 in one sentence, that the CatRange paper (PNAS Nexus, linked from the header) describes
-CatLog-27k and that this site is the growing catalog that followed. Then "On
-this page", a short contents list (three columns, two on phones) linking to the
-sections, in this order and with these addresses: Find records (#guide-find:
+CatLog-27k and that this site is the growing catalog that followed, then
+points to the method ("How this catalog is built: see ..."). Then "On this
+page", a short contents list (three columns, two on phones) linking to the
+sections, in this order and with these addresses: How CatLog reads and checks
+values (#guide-method: the only place the method is said in full, a definition
+list of Read from the paper, AI audits, Human review and Earlier catalog; the
+audit and human-review numbers are filled from the snapshot's overview when it
+has them, never typed, and the items read without numbers otherwise; badges,
+filters and Stats say it in one line and link here), Find records (#guide-find:
 search, filters, sort, sharing a view, and example views linked in the
 #browse? format), Read a record (#guide-record: the panel's parts, one worked
 from-paper record drawn as the table and the panel draw it, and Cautions, one

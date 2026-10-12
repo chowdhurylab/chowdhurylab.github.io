@@ -1265,8 +1265,14 @@ assert.doesNotMatch(indexHtml, /ChowdhuryLab</);
 const guideHtml = indexHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0];
 const guideContents = guideHtml.match(/<nav class="guide-contents"[^>]*>([\s\S]*?)<\/nav>/)[1];
 const guideAnchors = [...guideContents.matchAll(/href="#(guide-[a-z-]+)"/g)].map((match) => match[1]);
-assert.deepEqual(guideAnchors, ["guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads",
+assert.deepEqual(guideAnchors, ["guide-method", "guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads",
   "guide-caveats", "guide-cite", "guide-sources", "guide-questions"]);
+// The method is said in full once, in its own section (with the model's name); nowhere else in the Guide.
+const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
+assert.match(guideMethod, /An AI model \(Claude, Anthropic\) reads each/);
+assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);
+assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
+assert.doesNotMatch(guideHtml, /CatLog v2|independent|AI run|guide-note">Older records/);
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.match(guideFind, /laccase/);
@@ -1605,6 +1611,8 @@ function row(overrides = {}) {
   assert.deepEqual(headings(), ["Review result", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
     "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
   assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
+  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads papers →<\/a>/);
+  assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /#browse\?source=paper">Browse these records/);
   assert.match(chart, /#browse\?checked=1">Browse these records/);
   assert.match(chart, /#browse\?ec=1\.">EC 1/);

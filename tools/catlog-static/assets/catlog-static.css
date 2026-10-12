@@ -537,8 +537,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-section > .stats-note { margin:12px 0 8px; font-size:var(--fs-stats-meta) }
 .stats-wide { grid-column:1 / -1 }
 .stats-stack { display:grid; gap:28px; align-content:start; min-width:0 }
-.stats-link { color:var(--link); text-decoration:underline; text-decoration-color:var(--teal-line); text-underline-offset:3px }
-.stats-link:hover { text-decoration-color:currentColor }
+.stats-link, .stats-guide-link { color:var(--link); text-decoration:underline; text-decoration-color:var(--teal-line); text-underline-offset:3px }
+.stats-link:hover, .stats-guide-link:hover { text-decoration-color:currentColor }
 /* Bars: name, bar, count, share. Colour only marks review status; every other bar is one teal. */
 .stats-bars { list-style:none; margin:0; padding:0 }
 .stats-bars li, .stats-bars-head { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(48px,1fr) 76px 60px; align-items:center; gap:4px 14px }

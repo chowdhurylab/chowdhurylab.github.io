@@ -111,7 +111,7 @@ def set_browse_viewport(driver, browser, width, height):
     assert driver.execute_script("return [innerWidth, innerHeight]") == [width, height], "Requested viewport is not the actual viewport"
 
 
-GUIDE_SECTIONS = ("guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads", "guide-caveats",
+GUIDE_SECTIONS = ("guide-method", "guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads", "guide-caveats",
                   "guide-cite", "guide-sources", "guide-questions")
 
 
@@ -125,6 +125,13 @@ def check_guide(driver, wait):
     examples = [urlsplit(link.get_attribute("href")).fragment
                 for link in driver.find_elements(By.CSS_SELECTOR, "#guide-find .guide-link-list a")]
     assert "browse?checked=1" in examples and all(fragment.startswith("browse?") for fragment in examples)
+    # The method is said once, in full, in its own section; the from-paper tag points to it.
+    method = driver.find_element(By.ID, "guide-method").text
+    assert "Claude, Anthropic" in method and "A second, separate AI check compares every value with the paper." in method
+    assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
+    guide_text = driver.find_element(By.ID, "guideView").text
+    for word in ("CatLog v2", "independent", "AI run", "Checks pending"):
+        assert word not in guide_text, f"The Guide still says {word}"
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
     assert driver.execute_script("""
