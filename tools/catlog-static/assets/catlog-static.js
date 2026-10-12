@@ -842,8 +842,8 @@
     return `<small class="metric-inline-unit" title="${escapeHtml(STORED_UNIT_NOTE)}">${unitHtml(metricUnit(row, field))}</small>`;
   }
 
-  // A table number: a × 10ⁿ at or above 10⁵ and below 10⁻³, a plain decimal in between, always with the digits as
-  // stored (nothing is rounded). The record panel and the downloads keep the stored text.
+  // A table number with the digits as stored: a × 10ⁿ at or above 10⁵ and below 10⁻³, a plain decimal in between. Values
+  // with more digits than were measured are rounded first (displayFigures, numberHtml); the downloads keep the stored text.
   function tableNumberHtml(value) {
     const text = compactValue(value).trim();
     const match = text.match(/^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
@@ -887,9 +887,9 @@
 
   function metricDisplayWithUnitHtml(row, field, { table = false } = {}) {
     const display = metricDisplay(row, field);
-    // A calculated kcat/Km is shown with the significant figures of its inputs, as in the record (the stored digits stay
-    // in the tooltip, the sort and the downloads).
-    const figures = display === EMPTY_VALUE ? 0 : calculatedFigures(row, field);
+    // Shown with no more precision than was measured (displayFigures), as in the record; the stored digits stay in the
+    // tooltip, the sort and the downloads.
+    const figures = display === EMPTY_VALUE ? 0 : displayFigures(row, field);
     const displayHtml = figures ? numberHtml(display, { figures }) : table ? tableNumberHtml(display) : scientificValueHtml(display);
     if (display === EMPTY_VALUE) return displayHtml;
     if (metricUnitMissing(row, field)) return `${displayHtml}${unitMissingHtml()}`;
@@ -897,12 +897,20 @@
   }
 
   const CALCULATED_NOTE = "kcat ÷ Km, not printed in the source";
+  const EQUALS_QUOTIENT_NOTE = "Equals kcat ÷ Km; the source does not say whether it was printed or calculated. Shown with the significant figures of kcat and Km.";
 
-  // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record.
+  // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record. An earlier-catalog
+  // kcat/Km of unstated origin that equals kcat ÷ Km (within 0.1%) is tagged the same way, its title saying so.
   function efficiencyOriginHtml(row, { short = false } = {}) {
-    return row.kcat_over_km_origin === "calculated"
-      ? `<small class="metric-origin" title="${escapeHtml(CALCULATED_NOTE)}">${short ? "calc." : "calculated"}</small>`
-      : "";
+    const note = row.kcat_over_km_origin === "calculated" ? CALCULATED_NOTE : (efficiencyLooksCalculated(row) ? EQUALS_QUOTIENT_NOTE : "");
+    return note ? `<small class="metric-origin" title="${escapeHtml(note)}">${short ? "calc." : "calculated"}</small>` : "";
+  }
+
+  // An earlier-catalog kcat/Km whose origin is not stated and that equals kcat ÷ Km to 0.1% (a database's own quotient).
+  function efficiencyLooksCalculated(row) {
+    if (row?.kcat_over_km_origin !== "not_specified" || isV2Row(row)) return false;
+    const check = kcatKmCheck(row);
+    return Boolean(check) && Math.abs(Number(metricDisplay(row, "kcat_over_km")) / check.quotient - 1) <= 0.001;
   }
 
   function mutationSignature(row) {
@@ -4882,14 +4890,43 @@
   }
 
   // A kcat/Km calculated from kcat and Km keeps their significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³): the
-  // number of figures to show, or 0 for any other value (shown as stored).
+  // number of figures to show, or 0 for any other value. A kcat/Km that only equals kcat ÷ Km counts as calculated.
   function calculatedFigures(row, field) {
-    return field === "kcat_over_km" && row.kcat_over_km_origin === "calculated" ? quotientFigures(row) : 0;
+    return field === "kcat_over_km" && (row.kcat_over_km_origin === "calculated" || efficiencyLooksCalculated(row))
+      ? quotientFigures(row)
+      : 0;
+  }
+
+  // The display rule: no more precision than was measured. A stored value shows at most 4 significant figures, 3 when its
+  // digits from the fourth on are a ÷60 artefact (30.333, 5.1667: a repeating 3 or 6), and never fewer than its integer
+  // digits below 10⁵ (12345.6 shows 12346). Printed digits up to 4 stay as stored (135.0, 0.030). Returns the figures to
+  // round to, or 0 to show the stored text. Tooltips, the record's "In catalog units" and the downloads keep the stored
+  // digits.
+  const DISPLAY_FIGURES = 4;
+  const DIVIDED_BY_60_TAIL = /^(?:3{2,}|6{2,}|6+7)$/;
+
+  function roundingFigures(value) {
+    const text = compactValue(value).trim();
+    const match = text.match(/^[+-]?(\d*)(?:\.(\d*))?(?:[eE][+-]?\d+)?$/);
+    const magnitude = Math.abs(Number(text));
+    if (!match || !Number.isFinite(magnitude) || magnitude === 0) return 0;
+    const fraction = match[2] || "";
+    const digits = `${match[1] || ""}${fraction}`.replace(/^0+/, "");
+    // Trailing zeros of a plain integer are not printed digits.
+    const significant = fraction || /e/i.test(text) ? digits : digits.replace(/0+$/, "");
+    if (significant.length <= DISPLAY_FIGURES) return 0;
+    let figures = DIVIDED_BY_60_TAIL.test(significant.slice(3)) ? 3 : DISPLAY_FIGURES;
+    if (magnitude >= 1 && magnitude < 1e5) figures = Math.max(figures, Math.floor(Math.log10(magnitude)) + 1);
+    return figures < significant.length ? figures : 0;
+  }
+
+  function displayFigures(row, field) {
+    return calculatedFigures(row, field) || roundingFigures(metricDisplay(row, field));
   }
 
   // A value as the panel shows it (as the table does).
   function panelValueHtml(row, field) {
-    const figures = calculatedFigures(row, field);
+    const figures = displayFigures(row, field);
     return numberHtml(metricDisplay(row, field), figures ? { figures } : undefined);
   }
 
@@ -5037,7 +5074,7 @@
     const rows = sorted.map(([line, fact]) => {
       const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
       const stored = field && metricHasValue(summary, field)
-        ? `${panelValueHtml(summary, field)} ${unitHtml(metricUnit(summary, field))}`
+        ? `${numberHtml(metricDisplay(summary, field))} ${unitHtml(metricUnit(summary, field))}`
         : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
       const place = !shared && where(line) ? `<small>${escapePublic(where(line))}</small>` : "";
       const how = fact.conversion ? `<small>${text(fact.conversion)}</small>` : "";
@@ -6043,6 +6080,9 @@
       numberHtml,
       numberText,
       metricDisplayWithUnitHtml,
+      roundingFigures,
+      panelValueHtml,
+      efficiencyOriginHtml,
       printedValueText,
       v2LineFacts,
       conditionLines,

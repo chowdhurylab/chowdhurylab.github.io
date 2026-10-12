@@ -614,6 +614,20 @@ def check_filters(driver, browser, url, route_label):
         assert summary_count() == paper, (summary(), paper)
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
+
+        # 8. No more precision than was measured: a value shows at most 4 significant figures (a whole number keeps its
+        # digits); its tooltip keeps the stored digits.
+        for address in ("#browse?enzyme=aldolase&rows=100", "#browse?sort=kcat_over_km_asc"):
+            open_page(base + address)
+            shown = driver.execute_script("""
+                return [...document.querySelectorAll('#recordsBody tr[data-key] :is(.c-kcat,.c-km,.c-eff) .metric-with-note')]
+                    .map(e => [(e.innerText.match(/^-?[\\d.]+/) || [''])[0], e.title]).filter(([text]) => text);
+            """)
+            assert shown, address
+            for text, title in shown:
+                digits = text.replace(".", "").lstrip("0")
+                assert len(digits) <= 4 or "." not in text, (text, title)
+                assert title, text
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise

@@ -1721,6 +1721,32 @@ assert.equal(api.numberText(8.5 / 320, { figures: 2 }), "0.027");
   const printed = api.metricDisplayWithUnitHtml({ ...calculated, kcat_over_km_origin: "printed" }, "kcat_over_km", { table: true });
   assert.match(printed, /9\.85/);
 }
+// The display rule: at most 4 significant figures, 3 for a ÷60 artefact, never fewer than the integer digits; printed
+// digits up to 4 (and their trailing zeros) stay as stored.
+assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579", "135.0", "0.030", "2.8", "123000", "1.23456e+7"]
+  .map((value) => api.roundingFigures(value)), [3, 3, 3, 5, 4, 4, 0, 0, 0, 0, 4]);
+{
+  const shown = (fields) => api.metricDisplayWithUnitHtml(row({ kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)",
+    kcat_over_km_origin: "paper_reported", ...fields }), Object.keys(fields)[0].replace(/_display$/, ""), { table: true });
+  assert.equal(shown({ kcat_display: "30.333" }), "30.3", "a ÷60 artefact shows 3 figures");
+  assert.equal(shown({ kcat_display: "5.1667" }), "5.17");
+  assert.equal(shown({ kcat_display: "135.0" }), "135.0", "printed trailing zeros stay");
+  assert.equal(shown({ km_display: "0.02828" }), "0.02828");
+  assert.equal(shown({ km_display: "17.8894" }), "17.89");
+  assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times; 10<sup>7<\/sup>/);
+  // The record's value strip follows the rule; the tooltip keeps the stored digits.
+  assert.equal(api.panelValueHtml(row({ kcat_display: "30.333" }), "kcat"), "30.3");
+  // An earlier-catalog kcat/Km of unstated origin that equals kcat ÷ Km is shown and tagged as calculated; a printed one is not.
+  const quotientRow = row({ kcat_display: "2.2", km_display: "0.19", kcat_over_km_display: "11.579", kcat: 2.2, km: 0.19, kcat_over_km: 11.579,
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "not_specified" });
+  assert.equal(api.metricDisplayWithUnitHtml(quotientRow, "kcat_over_km", { table: true }), "12");
+  assert.match(api.efficiencyOriginHtml(quotientRow, { short: true }), /title="Equals kcat ÷ Km; the source does not say whether it was printed or calculated\.[^"]*">calc\.</);
+  const printedRow = { ...quotientRow, kcat_over_km_origin: "paper_reported" };
+  assert.equal(api.metricDisplayWithUnitHtml(printedRow, "kcat_over_km", { table: true }), "11.58");
+  assert.equal(api.efficiencyOriginHtml(printedRow, { short: true }), "");
+  const fromPaperRow = { ...quotientRow, source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" };
+  assert.equal(api.efficiencyOriginHtml(fromPaperRow, { short: true }), "", "a value read from the paper is never called calculated");
+}
 assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
 assert.equal(api.printedValueText("320", "mM"), "320 mM");
 // A flag is said once: a marker button on the value and one note under the values, no second list.

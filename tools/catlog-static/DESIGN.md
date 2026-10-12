@@ -173,8 +173,15 @@ right after Status. In a narrow window the names give way (two lines, broken
 between words while they can; the full name is on hover), and when that is not
 enough the table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
 and pH, with a dash when the value is missing. The table writes
-numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ with the stored digits (no
-rounding); the record and downloads keep the stored text. Every column fits from
+numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
+than was measured: at most 4 significant figures, 3 when the stored digits from
+the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17), never
+fewer than a number's integer digits below 10⁵; up to 4 printed digits stay as
+stored, trailing zeros included (135.0, 0.030). A kcat/Km CatLog calculated, or
+an earlier-catalog kcat/Km of unstated origin that equals kcat ÷ Km within 0.1%,
+carries "calc." (its title says which) and the significant figures of kcat and
+Km. Tooltips, the record's "In catalog units" and the downloads keep the stored
+digits. Every column fits from
 about 1010px; narrower screens scroll the table sideways with the enzyme name
 kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name and EC;
@@ -217,8 +224,9 @@ recorded"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
 link, and Report a problem names the DOI when there is no PMID. A flagged value
 carries a small "!" button that moves to its note; nothing is readable only on
 hover. The record writes numbers like the table (a × 10ⁿ at
-or above 10⁵ and below 10⁻³, stored digits); a kcat/Km CatLog calculated for an
-older record keeps the significant figures of kcat and Km. An older record whose
+or above 10⁵ and below 10⁻³, the same display rule in the value strip, the stored
+digits in its values table); a kcat/Km CatLog calculated for an older record
+keeps the significant figures of kcat and Km. An older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number. Sequence and SMILES
 strings and an older record's review notes expand on request. Do not discard
