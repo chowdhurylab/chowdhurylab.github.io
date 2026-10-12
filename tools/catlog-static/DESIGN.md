@@ -71,19 +71,20 @@ hover and in the record. Every table row has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it.
 
 Status cells align left: a dot and one word, then whole-word tags on a second
-line. Columns are sized to the page's content: values, EC, Assay and Status are
-as wide as their widest entry and never wrap; Enzyme, Organism and Substrate are
-as wide as three in four of their names, and wider while room is left and a
-name would otherwise be cut short (names wrap to two lines; the full name is on
-hover); the space left over goes to the arrow column at the right edge, so
-values sit next to the names. In a narrow window names give way first.
-Temperature and pH share one Assay column ("25 °C · pH 7.5"). The table writes
+line. Columns are sized to the page's content: values, EC, T, pH and Status are
+as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
+start as wide as three in four of their names. The room left in the window goes
+to the name columns, first until their names fit on one line, then in
+proportion to their widths, so the table fills the window and the arrow sits
+right after Status. In a narrow window names give way first (two lines; the
+full name is on hover). Temperature and pH are two plain numeric columns, T (°C)
+and pH, with a dash when the value is missing. The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ with the stored digits (no
 rounding); the record and downloads keep the stored text. Every column fits from
 about 1010px; narrower screens scroll the table sideways with the enzyme name
-kept in view. With a record open, EC, Assay and the arrow give way; Status
+kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name; organism ·
-substrate; kcat, Km and kcat/Km with their units as labels; status and assay.
+substrate; kcat, Km and kcat/Km with their units as labels; status, °C and pH.
 Filters on phones end with a "Show N records" button.
 
 White and neutral surfaces carry the data. Teal marks selection and actions;

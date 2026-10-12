@@ -797,15 +797,11 @@
     return formatNumber(number, { maximumFractionDigits: 1 });
   }
 
-  // The table's Assay cell: "25 °C · pH 7.5", either part alone, or a dash.
-  function formatAssay(row) {
-    const temperature = formatTemperature(row);
-    const ph = formatPh(row);
-    const parts = [
-      temperature !== EMPTY_VALUE ? `${temperature} °C` : "",
-      ph !== EMPTY_VALUE ? `pH ${ph}` : "",
-    ].filter(Boolean);
-    return parts.length ? parts.join(" · ") : EMPTY_VALUE;
+  // The table's T and pH cells: the number alone, or a dash (marked empty, so a phone card leaves it out).
+  function conditionCellHtml(className, value) {
+    return value === EMPTY_VALUE
+      ? `<td class="${className} num" data-empty=""><span>${EMPTY_VALUE}</span></td>`
+      : `<td class="${className} num"><span>${escapeHtml(value)}</span></td>`;
   }
 
   function stateConfig(value) {
@@ -2960,7 +2956,8 @@
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat")}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km")}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
-        <td class="c-assay num"><span>${escapeHtml(formatAssay(row))}</span></td>
+        ${conditionCellHtml("c-temp", formatTemperature(row))}
+        ${conditionCellHtml("c-ph", formatPh(row))}
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
@@ -3006,11 +3003,12 @@
       && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
   }
 
-  // Column widths follow the page. Values, EC, Assay and Status are as wide as their widest entry; a name column is as
-  // wide as three in four of its names, within a minimum and a cap (longer names wrap to two lines; the full name is in
-  // the tooltip), and wider when there is room and a name would otherwise be cut short. The space left over goes to the arrow column at the right edge, so the values sit next to the names.
-  // When the window is too narrow, names give way first, then EC and Assay; values and Status never wrap. Phones show
-  // cards, and placeholder or empty tables keep the stylesheet's widths.
+  // Column widths follow the page. Values, EC, T, pH and Status are as wide as their widest entry and never wrap. A name
+  // column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
+  // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
+  // rest in proportion to their widths, so the table fills the window and the arrow sits right after Status. When the
+  // window is too narrow, names give way first (they wrap to two lines; the full name is in the tooltip), then EC.
+  // Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
   const FIT_COLUMNS = [
     { key: "enzyme", cell: ".c-enzyme", min: 160, narrowMin: 150, cap: 340, shrink: 1 },
     { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120, shrink: 2 },
@@ -3019,9 +3017,12 @@
     { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
     { key: "km", cell: ".c-km", min: 60, narrowMin: 56, cap: 200 },
     { key: "efficiency", cell: ".c-eff", min: 88, narrowMin: 84, cap: 220 },
-    { key: "assay", cell: ".c-assay", min: 72, narrowMin: 64, cap: 150, shrink: 2 },
+    { key: "temp", cell: ".c-temp", min: 44, narrowMin: 40, cap: 90 },
+    { key: "ph", cell: ".c-ph", min: 44, narrowMin: 40, cap: 80 },
     { key: "state", cell: ".c-status", min: 96, narrowMin: 96, cap: 400 },
   ];
+  // A name column grows toward one line for its names up to this many times its cap; longer names keep two lines.
+  const FIT_ONE_LINE_LIMIT = 2;
 
   function fitTableColumns() {
     const table = $("recordTableWrap")?.querySelector?.("table");
@@ -3045,20 +3046,20 @@
       const natural = cells.map((cell) => cell.firstElementChild?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
       const widest = natural[natural.length - 1];
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
-      const need = Math.ceil(content + padding);
       const min = narrow ? column.narrowMin : column.min;
-      return { ...column, min, need, width: Math.max(min, Math.min(column.cap, need)) };
+      const width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
+      // A name column's width with every name on one line.
+      const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
+      return { ...column, min, width, oneLine };
     });
     table.classList.remove("measuring");
-    const arrowShown = visible(cols.open);
-    const arrow = arrowShown ? parseFloat(style(cols.open).width) || 24 : 0;
+    const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
     const total = () => widths.reduce((sum, column) => sum + column.width, 0);
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
     const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
     if (total() > available && available >= floor) {
-      // Too wide for the window: the names give way first, then EC and Assay, toward their minimums (they wrap to two
-      // lines).
+      // Too wide for the window: the names give way first, then EC, toward their minimums (they wrap to two lines).
       for (const stage of [1, 2]) {
         const excess = total() - available;
         const group = shrinkable.filter((column) => column.shrink === stage);
@@ -3068,26 +3069,20 @@
         group.forEach((column) => { column.width = Math.floor(column.width - share * (column.width - column.min)); });
       }
     }
-    widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
-    // Without the arrow column (a record open on desktop) Status takes what is left.
-    if (arrowShown) cols.open.style.width = "auto";
-    else cols.state.style.width = "auto";
-    // Room to spare: a name column widens step by step while one of its names is cut short (up to half again its cap).
-    let spare = available - total();
-    for (let pass = 0; pass < 6 && spare > 0; pass += 1) {
-      const cut = widths.filter((column) => column.shrink === 1 && column.width < column.cap * 1.5
-        && rows.some((row) => {
-          const name = row.querySelector(`${column.cell} .clamp-2`);
-          return name && name.scrollHeight > name.clientHeight + 1;
-        }));
-      if (!cut.length) break;
-      cut.forEach((column) => {
-        const grow = Math.min(spare, Math.max(16, Math.round(column.width * 0.15)), Math.round(column.cap * 1.5) - column.width);
-        column.width += grow;
-        spare -= grow;
-        cols[column.key].style.width = `${column.width}px`;
-      });
+    const names = widths.filter((column) => column.shrink === 1);
+    if (available > total() && names.length) {
+      // Room to spare: the name columns widen until their names fit on one line, each in proportion to what it lacks,
+      const lacking = names.map((column) => column.oneLine - column.width);
+      const lackingTotal = lacking.reduce((sum, value) => sum + value, 0);
+      const toOneLine = Math.min(available - total(), lackingTotal);
+      if (toOneLine > 0) names.forEach((column, index) => { column.width += Math.floor(toOneLine * lacking[index] / lackingTotal); });
+      // then share what is still left in proportion to their widths; the rounding remainder goes to Enzyme.
+      const rest = available - total();
+      const base = names.reduce((sum, column) => sum + column.width, 0);
+      names.forEach((column) => { column.width += Math.floor(rest * column.width / base); });
+      names[0].width += Math.max(0, available - total());
     }
+    widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
   }
 
