@@ -489,6 +489,9 @@ def check_filters(driver, browser, url, route_label):
         return driver.execute_script("return [...document.querySelectorAll('#activeFilters [data-filter-key]')].map(e => e.dataset.filterKey)")
 
     def count_of(key):
+        # Counts follow the results; while newer ones are worked out the panel says so (data-counts="pending").
+        if driver.find_element(By.ID, "catalogFilters").get_attribute("data-counts") == "pending":
+            return None
         text = driver.find_element(By.CSS_SELECTOR, f'#catalogFilters [data-count="{key}"]').get_attribute("textContent").strip()
         return int(text.replace(",", "")) if re.fullmatch(r"[\d,]+", text) else None
 

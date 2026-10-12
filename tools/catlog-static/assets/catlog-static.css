@@ -243,6 +243,9 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .human-checked-word { color:var(--checked); font-weight:500; white-space:nowrap }
 .human-checked-word .check-icon { margin-right:2px }
 .check-row strong { color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
+/* Counts being worked out after a change fade only if that takes a moment. */
+#catalogFilters [data-count] { transition:opacity 120ms ease }
+#catalogFilters[data-counts="pending"] [data-count] { opacity:0.5; transition-delay:250ms }
 /* An option no current result has: grey, still clickable. */
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--text-3) }
 .check-row.is-zero .human-checked-word { color:inherit }

@@ -3326,8 +3326,12 @@
     return counts[group]?.[value] || 0;
   }
 
-  // Draws the counts: an option at 0 is greyed (it stays clickable).
+  // Draws the counts: an option at 0 is greyed (it stays clickable). While newer counts are worked out the panel is
+  // marked busy (data-counts="pending"; the numbers fade if that takes a moment).
   function drawFilterCounts(counts) {
+    const rail = $("catalogFilters");
+    if (rail?.dataset) delete rail.dataset.counts;
+    rail?.removeAttribute?.("aria-busy");
     document.querySelectorAll?.("#catalogFilters [data-count]").forEach((element) => {
       const count = filterCountValue(element.dataset.count, counts);
       element.textContent = formatCount(count);
@@ -3341,7 +3345,13 @@
       drawFilterCounts(null);
       return;
     }
-    countFacets(filterControlState(), drawFilterCounts);
+    const controls = filterControlState();
+    if (facetCountJob.key !== facetCountKey(controls)) {
+      const rail = $("catalogFilters");
+      if (rail?.dataset) rail.dataset.counts = "pending";
+      rail?.setAttribute?.("aria-busy", "true");
+    }
+    countFacets(controls, drawFilterCounts);
   }
 
   function selectedCheckboxes(name) {
