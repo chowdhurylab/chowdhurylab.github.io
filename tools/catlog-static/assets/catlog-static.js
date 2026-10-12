@@ -802,12 +802,24 @@
       .trim();
   }
 
-  // A database note that says only the temperature and pH the record's rows already give ("25°C", "pH 7.5, 30 °C").
+  // A database's name leading its note ("SKiD: 55°C, pH 8.9", as CatLog writes SKiD's raw conditions).
+  const NOTE_SOURCE_LABEL = /^\s*(SKiD|BRENDA|SABIO-RK|OED|Open Enzyme Database|UniProt|STRENDA DB)\s*:\s*/i;
+
+  // A database note without its leading database name when that is the one database the heading names ("Note from
+  // SKiD"); a merged record's notes keep it, so each says where it comes from.
+  function noteWithoutHeadingSource(value, source) {
+    if (typeof value !== "string") return value;
+    const match = value.match(NOTE_SOURCE_LABEL);
+    return match && String(source || "").toLowerCase().split(/\s*\(/)[0] === match[1].toLowerCase() ? value.slice(match[0].length) : value;
+  }
+
+  // A database note that says only the temperature and pH the record's rows already give ("25°C", "pH 7.5, 30 °C",
+  // "SKiD: 55°C, pH 8.9").
   function noteRepeatsConditions(value, summary) {
     if (typeof value !== "string") return false;
     const temperature = formatTemperature(summary);
     const ph = formatPh(summary);
-    let rest = databaseNoteText(value);
+    let rest = databaseNoteText(value).replace(NOTE_SOURCE_LABEL, "");
     let repeated = false;
     rest = rest.replace(/\bpH\s*(\d+(?:\.\d+)?)/gi, (match, number) => {
       if (ph === EMPTY_VALUE || Number(number) !== Number(ph)) return match;
@@ -6467,9 +6479,10 @@
     const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
-    const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)) && !noteRepeatsConditions(line, summary));
-    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const noteSource = recordSourceName(summary.source_db || detail.source_db);
+    const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)) && !noteRepeatsConditions(line, summary))
+      .map((line) => noteWithoutHeadingSource(line, noteSource));
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
       ? (noteSource === "Not recorded" ? "Database note" : `Note from ${noteSource}`)
       : "Earlier automated review: where the values are printed";

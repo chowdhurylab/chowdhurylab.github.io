@@ -2454,6 +2454,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span>Source<\/span><strong>BRENDA, SABIO-RK<\/strong>/, "named as the status line names them");
   assert.match(html, /<span>Name from<\/span><strong>BRENDA recommended name<\/strong>/);
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
+  // SKiD's notes as CatLog writes them ("SKiD: 55°C, pH 8.9"): hidden when they only repeat T and pH; otherwise shown
+  // without repeating the source the heading names.
+  html = render({ source_db: "skid", proof_kind: "source_note", has_proof_excerpt: false, temperature_display: "55", ph_display: "8.9" },
+    { proof_lines: ["SKiD: 55°C, pH 8.9"] });
+  assert.doesNotMatch(html, /Note from|55°C/);
+  html = render({ source_db: "skid", proof_kind: "source_note", has_proof_excerpt: false, temperature_display: "55", ph_display: "8.9" },
+    { proof_lines: ["SKiD: 37°C, pH 8.9"] });
+  assert.match(html, /<summary>Note from SKiD<\/summary>/);
+  assert.match(html, /<p class="evidence-note-plain">37°C, pH 8\.9<\/p>/);
+  html = render({ source_db: "skid;brenda", proof_kind: "source_note", has_proof_excerpt: false, temperature_display: "30", ph_display: "7" },
+    { proof_lines: ["pH 7.5, 30°C", "SKiD: 30°C, pH 7"] });
+  assert.match(html, /<p class="evidence-note-plain">pH 7\.5, 30°C<\/p>/);
+  assert.doesNotMatch(html, /SKiD: 30°C/, "the SKiD note repeats T and pH");
 }
 // The report email quotes the numbers as the record shows them; the paper's title and year lead Paper and review.
 {
