@@ -41,6 +41,8 @@
     // The record a #record= address names, until the index has loaded far enough to open it.
     pendingRecordKey: "",
     missingRecordKey: "",
+    // The page an address names (#browse?...&page=), until the records it counts have loaded.
+    pendingPage: 0,
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -329,6 +331,8 @@
   function viewFromLocation() {
     if (["#browse", "#guide", "#stats"].includes(window.location.hash)) return window.location.hash.slice(1);
     if (GUIDE_SECTION_HASH.test(window.location.hash)) return "guide";
+    // Browse with filters: #browse?q=...&ec=... (see browseParamsFromLocation).
+    if (/^#browse\?/.test(window.location.hash || "")) return "browse";
     return new URL(window.location.href).pathname.endsWith("/catlog-stats.html") ? "stats" : "browse";
   }
 
@@ -417,7 +421,8 @@
   function syncRecordUrl(key) {
     if (key === recordKeyFromLocation() || (!key && !RECORD_HASH.test(window.location.hash))) return;
     const url = new URL(window.location.href);
-    url.hash = key ? `record=${encodeURIComponent(key)}` : "";
+    // Closing the record gives the address back to the filters (#browse?..., or none).
+    url.hash = key ? `record=${encodeURIComponent(key)}` : browseHash();
     try {
       window.history.replaceState(window.history.state, "", url);
     } catch (_error) {
@@ -448,6 +453,8 @@
 
   function navigateTo(view) {
     const url = viewUrl(view);
+    // Back to Browse keeps the filters in the address.
+    if (view === "browse") url.hash = browseHash();
     if (window.location.href !== url.href) {
       window.history.pushState({ catlogView: view }, "", url);
     }
@@ -2703,22 +2710,203 @@
     return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((item) => item.value);
   }
 
-  function currentFilters() {
-    const q = foldSearch([
-      $("globalSearchInput").value,
-    ].join(" ").trim());
+  // The filter controls as typed and ticked (text trimmed, not folded). The address and the filter chips are written
+  // from this; currentFilters() prepares it for matching.
+  function filterControlState() {
+    const text = (id) => String($(id)?.value ?? "").trim();
+    // Before the checklists are built every review status counts as ticked.
+    const statesBuilt = (document.querySelectorAll?.('input[name="recordState"]') || []).length > 0;
+    return {
+      q: text("globalSearchInput"),
+      states: statesBuilt ? selectedCheckboxes("recordState") : recordStates.map((item) => item.value),
+      v2: Boolean($("sourceV2Filter")?.checked),
+      ec: text("ecFilterInput"),
+      enzyme: text("enzymeFilterInput"),
+      organism: text("organismFilterInput"),
+      substrate: text("substrateFilterInput"),
+      metrics: selectedCheckboxes("measurement"),
+      sort: $("sortSelect")?.value || "evidence",
+    };
+  }
+
+  function currentFilters(controls = filterControlState()) {
+    const q = foldSearch(controls.q);
     return {
       q,
       qWords: searchWords(q),
-      ec: foldSearch($("ecFilterInput").value.trim()),
-      enzyme: foldSearch($("enzymeFilterInput").value.trim()),
-      organism: foldSearch($("organismFilterInput").value.trim()),
-      substrate: foldSearch($("substrateFilterInput").value.trim()),
-      recordStates: selectedCheckboxes("recordState"),
-      v2Only: Boolean($("sourceV2Filter")?.checked),
-      metrics: selectedCheckboxes("measurement"),
-      sort: $("sortSelect").value,
+      ec: foldSearch(controls.ec),
+      enzyme: foldSearch(controls.enzyme),
+      organism: foldSearch(controls.organism),
+      substrate: foldSearch(controls.substrate),
+      recordStates: controls.states,
+      v2Only: controls.v2,
+      metrics: controls.metrics,
+      sort: controls.sort,
     };
+  }
+
+  // Browse with filters has the address #browse?key=value&... (keys: q, status, ec, enzyme, organism, substrate, metric,
+  // sort, rows, page; lists are comma separated; unknown keys are ignored). It is read when the page opens and on Back
+  // and Forward, and rewritten in place (never added to history) whenever the filters, search, sort, page size or page
+  // change, so a copied address opens the same records. Browse without filters has no hash. While a record is open the
+  // address is the record's (#record=); closing it gives the address back to the filters.
+  const BROWSE_HASH = /^#browse(?:\?(.*))?$/;
+  const PAGE_SIZES = [25, 50, 100];
+  const PAGE_SIZE_STORAGE_KEY = "catlog-rows-per-page";
+
+  function decodeBrowseText(value) {
+    try {
+      return decodeURIComponent(String(value).replace(/\+/g, " "));
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function parseBrowseParams(text) {
+    const params = new Map();
+    String(text || "").split("&").forEach((part) => {
+      const at = part.indexOf("=");
+      const key = decodeBrowseText(at < 0 ? part : part.slice(0, at)).trim().toLowerCase();
+      if (key) params.set(key, decodeBrowseText(at < 0 ? "" : part.slice(at + 1)));
+    });
+    return params;
+  }
+
+  // The filters the address names: a Map (empty for plain Browse), or null when the address is not about filters
+  // (another view, or an open record).
+  function browseParamsFromLocation() {
+    if (viewFromLocation() !== "browse") return null;
+    const hash = window.location.hash || "";
+    if (!hash || hash === "#") return new Map();
+    const match = hash.match(BROWSE_HASH);
+    return match ? parseBrowseParams(match[1]) : null;
+  }
+
+  function listParam(value, aliases = {}) {
+    return String(value ?? "").split(",")
+      .map((item) => item.trim().toLowerCase().replace(/[\s-]+/g, "_"))
+      .filter(Boolean)
+      .map((item) => aliases[item] || item);
+  }
+
+  const METRIC_ALIASES = { "kcat/km": "kcat_over_km", kcatkm: "kcat_over_km", kcat_km: "kcat_over_km", efficiency: "kcat_over_km" };
+
+  function encodeBrowseValue(value) {
+    return encodeURIComponent(value)
+      .replace(/%20/g, "+")
+      .replace(/%2C/gi, ",")
+      .replace(/%3A/gi, ":")
+      .replace(/%2F/gi, "/");
+  }
+
+  // The current controls as address keys, in a fixed order.
+  function browseParamsFromControls(controls = filterControlState()) {
+    const params = [];
+    const add = (key, value) => {
+      if (value !== "" && value != null) params.push([key, String(value)]);
+    };
+    add("q", controls.q);
+    const allStates = controls.states.length === recordStates.length;
+    if (!controls.states.length) params.push(["status", ""]);
+    else if (!allStates || controls.v2) add("status", [...(allStates ? [] : controls.states), ...(controls.v2 ? ["v2"] : [])].join(","));
+    add("ec", controls.ec);
+    add("enzyme", controls.enzyme);
+    add("organism", controls.organism);
+    add("substrate", controls.substrate);
+    add("metric", controls.metrics.join(","));
+    if (controls.sort && controls.sort !== "evidence") add("sort", controls.sort);
+    if (state.pageSize !== PAGE_SIZES[0]) add("rows", state.pageSize);
+    const page = state.pendingPage || state.page;
+    if (page > 1) add("page", page);
+    return params;
+  }
+
+  function browseHash(params = browseParamsFromControls()) {
+    return params.length ? `#browse?${params.map(([key, value]) => `${key}=${encodeBrowseValue(value)}`).join("&")}` : "";
+  }
+
+  function setCheckboxes(name, values) {
+    document.querySelectorAll?.(`input[name="${name}"]`).forEach((input) => {
+      input.checked = values.includes(input.value);
+    });
+  }
+
+  // Sets every control from an address (keys it leaves out are cleared); the caller applies the filters.
+  function applyBrowseParams(params) {
+    const setText = (id, value) => {
+      const input = $(id);
+      if (input) input.value = String(value ?? "").trim();
+    };
+    setText("globalSearchInput", params.get("q"));
+    const status = params.has("status") ? listParam(params.get("status")) : [];
+    const states = status.filter((value) => recordStates.some((item) => item.value === value));
+    const noStates = params.has("status") && !String(params.get("status")).trim();
+    document.querySelectorAll?.('input[name="recordState"]').forEach((input) => {
+      input.checked = !noStates && (!states.length || states.includes(input.value));
+    });
+    if ($("sourceV2Filter")) $("sourceV2Filter").checked = status.includes("v2");
+    setText("ecFilterInput", params.get("ec"));
+    setText("enzymeFilterInput", params.get("enzyme"));
+    setText("organismFilterInput", params.get("organism"));
+    setText("substrateFilterInput", params.get("substrate"));
+    setCheckboxes("measurement", listParam(params.get("metric"), METRIC_ALIASES));
+    if ($("sortSelect")) {
+      $("sortSelect").value = normalizedSortName(String(params.get("sort") || "evidence").trim().toLowerCase());
+      syncSortHeaders();
+    }
+    const rows = Number(params.get("rows"));
+    if (PAGE_SIZES.includes(rows)) setPageSize(rows);
+    const page = Number(params.get("page"));
+    state.pendingPage = Number.isInteger(page) && page > 1 ? page : 0;
+  }
+
+  // Back, Forward or an edited address: the controls follow the address, and the records follow when it changed them.
+  function applyLocationFilters() {
+    const params = browseParamsFromLocation();
+    if (!params) return false;
+    const before = browseHash();
+    applyBrowseParams(params);
+    if (browseHash() === before) return false;
+    if (state.records.length) applyFiltersInBackground({ resetPage: !state.pendingPage });
+    return true;
+  }
+
+  // Writes the current filters into the address, replacing the current history entry.
+  function syncBrowseUrl() {
+    if (!window.history?.replaceState || viewFromLocation() !== "browse") return;
+    if (state.selectedKey || state.pendingRecordKey || RECORD_HASH.test(window.location.hash || "")) return;
+    const url = viewUrl("browse");
+    url.hash = browseHash();
+    if (url.href === window.location.href) return;
+    try {
+      window.history.replaceState(window.history.state, "", url);
+    } catch (_error) {
+      // A page opened from a file may not allow it; the filters still apply.
+    }
+  }
+
+  // Rows per page: the address's rows= first, else the viewer's last choice (kept in this browser only).
+  function setPageSize(value) {
+    const size = PAGE_SIZES.includes(Number(value)) ? Number(value) : PAGE_SIZES[0];
+    state.pageSize = size;
+    if ($("pageSizeSelect")) $("pageSizeSelect").value = String(size);
+  }
+
+  function rememberPageSize(size) {
+    try {
+      window.localStorage?.setItem(PAGE_SIZE_STORAGE_KEY, String(size));
+    } catch (_error) {
+      // Storage can be blocked (private windows, previews); the page size still applies.
+    }
+  }
+
+  function restorePageSize() {
+    try {
+      const saved = Number(window.localStorage?.getItem(PAGE_SIZE_STORAGE_KEY));
+      if (PAGE_SIZES.includes(saved)) setPageSize(saved);
+    } catch (_error) {
+      // Nothing remembered.
+    }
   }
 
   function renderActiveFilterCount(filters) {
@@ -2983,6 +3171,10 @@
     renderActiveFilterCount(filters);
     state.filtered = orderedRecords.filter((row) => rowMatches(row, filters));
     if (resetPage) state.page = 1;
+    if (state.pendingPage && state.recordsReady) {
+      state.page = state.pendingPage;
+      state.pendingPage = 0;
+    }
     if (state.selectedKey && !state.filtered.some((row) => row.record_key === state.selectedKey)) {
       resetDetail();
     }
@@ -3058,6 +3250,7 @@
     document.body.classList.remove("catalog-load-failed");
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
     state.page = Math.min(Math.max(1, state.page), totalPages);
+    syncBrowseUrl();
     const start = (state.page - 1) * state.pageSize;
     const pageRows = currentPageRows();
     const activeRowKey = activeTableRowKey(pageRows);
@@ -4538,8 +4731,10 @@
 
   function applyPageSize(value) {
     resetDetail();
-    state.pageSize = Number(value) || 25;
+    setPageSize(value);
+    rememberPageSize(state.pageSize);
     state.page = 1;
+    state.pendingPage = 0;
     renderRows();
   }
 
@@ -4652,6 +4847,7 @@
       const view = viewFromLocation();
       if (view === "browse") ensureRecordsLoaded();
       renderView(view);
+      applyLocationFilters();
       const recordKey = recordKeyFromLocation();
       if (recordKey && recordKey !== state.selectedKey) {
         state.pendingRecordKey = recordKey;
@@ -4660,6 +4856,29 @@
     };
     window.addEventListener("popstate", showLocationView);
     window.addEventListener("hashchange", showLocationView);
+    // A link to Browse with filters (#browse?..., from Stats or the Guide) opens in this page, without reloading the
+    // records, and Back returns to where it was followed.
+    document.addEventListener("click", (event) => {
+      if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target?.closest?.("a[href]");
+      if (!link || (link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+      let target;
+      try {
+        target = new URL(link.href, window.location.href);
+      } catch (_error) {
+        return;
+      }
+      const here = new URL(window.location.href);
+      const folder = (path) => path.replace(/[^/]*$/, "");
+      const file = target.pathname.split("/").pop();
+      if (target.origin !== here.origin || folder(target.pathname) !== folder(here.pathname)) return;
+      if (!/^#browse\?/.test(target.hash) || ![here.pathname.split("/").pop(), "catlog-latest.html", "catlog-stats.html", "index.html", ""].includes(file)) return;
+      event.preventDefault();
+      const url = viewUrl("browse");
+      url.hash = target.hash;
+      window.history.pushState({ catlogView: "browse" }, "", url);
+      showLocationView();
+    });
     // From Stats or Guide, resting on the way back to Browse for a moment (pointer or keyboard focus), or focusing the
     // search box, starts the download. Passing over the link on the way to another tab does not.
     for (const id of ["browseButton", "brandHomeButton"]) {
@@ -4725,11 +4944,13 @@
     });
     $("prevButton").addEventListener("click", () => {
       resetDetail();
+      state.pendingPage = 0;
       state.page -= 1;
       renderRows();
     });
     $("nextButton").addEventListener("click", () => {
       resetDetail();
+      state.pendingPage = 0;
       state.page += 1;
       renderRows();
     });
@@ -4787,7 +5008,12 @@
       if (!["#browse", "#guide", "#stats"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
       bindControls();
+      // The checklists exist from the start, so an address with filters (#browse?...) can set them before the records load.
+      setupFilters();
+      restorePageSize();
       state.pendingRecordKey = recordKeyFromLocation();
+      const addressFilters = browseParamsFromLocation();
+      if (addressFilters?.size) applyBrowseParams(addressFilters);
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
