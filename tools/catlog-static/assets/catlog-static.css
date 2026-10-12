@@ -218,6 +218,9 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .human-checked-word { color:var(--checked); font-weight:500; white-space:nowrap }
 .human-checked-word .check-icon { margin-right:2px }
 .check-row strong { color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
+/* An option no current result has: grey, still clickable. */
+.check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--text-3) }
+.check-row.is-zero .human-checked-word { color:inherit }
 
 /* Source: three choices, each with a short help line under it; the databases fold under "By database". */
 .source-modes { display:grid; gap:4px }

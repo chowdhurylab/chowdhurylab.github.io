@@ -450,6 +450,7 @@ def check_filters(driver, browser, url, route_label):
         text = driver.find_element(By.CSS_SELECTOR, f'#catalogFilters [data-count="{key}"]').get_attribute("textContent").strip()
         return int(text.replace(",", "")) if re.fullmatch(r"[\d,]+", text) else None
 
+    total_records = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.total_rows") or 0
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         # 1. An address with filters opens with them set, writes itself back in the same order, and shows one chip per
@@ -595,6 +596,22 @@ def check_filters(driver, browser, url, route_label):
         """)
         assert forms and all(item["text"] and not item["text"].startswith("Variant") and item["below"] for item in forms), forms[:3]
         assert len({item["height"] for item in forms}) == 1, {item["height"] for item in forms}
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
+
+        # 7. Counts follow the results: after a search, an option's count is the number of records ticking it shows.
+        def summary_count():
+            return int(summary().split()[0].replace(",", ""))
+        open_page(base + "#browse?q=laccase")
+        found = summary_count()
+        driver.find_element(By.ID, "openFiltersButton").click()
+        wait.until(lambda d: count_of("source:all") == found and count_of("state:accepted") is not None)
+        accepted, paper = count_of("state:accepted"), count_of("source:paper")
+        assert accepted < total_records and paper <= found
+        open_page(base + "#browse?q=laccase&status=accepted")
+        assert summary_count() == accepted, (summary(), accepted)
+        open_page(base + "#browse?q=laccase&source=paper")
+        assert summary_count() == paper, (summary(), paper)
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
     except Exception:

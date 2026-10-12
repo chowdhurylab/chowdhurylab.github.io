@@ -2775,10 +2775,6 @@
     $("statsCharts").innerHTML = sections.join("");
   }
 
-  function countsByState() {
-    return recordStateCounts(state.records);
-  }
-
   function valueFromRow(row, field) {
     return String(row[field] || "").trim();
   }
@@ -2967,51 +2963,113 @@
     return text;
   }
 
-  // Counts beside the filters, over every record (like the review-status counts), worked out once per loaded index
-  // (Human-checked once per arrival of the marks).
-  const facetCountCache = { key: "", counts: null, checkedKey: "", checked: 0 };
-
-  function humanCheckedCount() {
-    const key = `${state.recordsGeneration}:${state.humanMarksVersion}`;
-    if (facetCountCache.checkedKey !== key) {
-      facetCountCache.checkedKey = key;
-      facetCountCache.checked = state.records.reduce((total, row) => total + (isHumanChecked(row) ? 1 : 0), 0);
-    }
-    return facetCountCache.checked;
-  }
-
-  function facetCounts() {
-    const key = String(state.recordsGeneration);
-    if (facetCountCache.key === key) return facetCountCache.counts;
-    const counts = {
-      temperature: 0, ph: 0,
+  // Counts beside the filters follow the current results: each option is counted over the records that match every
+  // other filter, its own group's set aside (ticking it would show that many, or add that many). One pass over the
+  // records, in idle moments and in slices, so typing never waits for it; a newer change restarts it.
+  function emptyFacetCounts() {
+    return {
+      temperature: 0, ph: 0, checked: 0,
+      state: Object.fromEntries(recordStates.map((item) => [item.value, 0])),
       metric: Object.fromEntries(measurementFilters.map((item) => [item.value, 0])),
       variant: { wild: 0, variant: 0, none: 0 },
       caution: Object.fromEntries(cautionFilters.map((item) => [item.value, 0])),
       source: Object.fromEntries([...sourceModes, ...sourceFilters].map((item) => [item.value, 0])),
     };
-    for (const row of state.records) {
-      counts.source.all += 1;
-      counts.source[isV2Row(row) ? "paper" : "databases"] += 1;
+  }
+
+  // Adds a record to the counts of one group (or of every group).
+  function addFacetCounts(counts, row, group) {
+    const every = group === undefined;
+    if (every || group === "state") counts.state[row._recordState || recordStateForRow(row)] += 1;
+    if ((every || group === "checked") && isHumanChecked(row)) counts.checked += 1;
+    if (every || group === "metric") {
       measurementFilters.forEach((item) => {
         if (row[item.field] != null) counts.metric[item.value] += 1;
       });
+    }
+    if (every || group === "variant") {
       const variant = rowVariantBits(row);
       counts.variant[variant === 1 ? "wild" : variant === 2 ? "variant" : "none"] += 1;
+    }
+    if ((every || group === "temperature") && (row._sortTemperature ?? temperatureValue(row)) != null) counts.temperature += 1;
+    if ((every || group === "ph") && (row._sortPh ?? phValue(row)) != null) counts.ph += 1;
+    if (every || group === "caution") {
       const caution = rowCautionBits(row);
       cautionFilters.forEach((item) => {
         if (caution & item.bit) counts.caution[item.value] += 1;
       });
-      const source = rowSourceBits(row);
-      sourceFilters.forEach((item) => {
-        if (source & item.bit) counts.source[item.value] += 1;
-      });
-      if ((row._sortTemperature ?? temperatureValue(row)) != null) counts.temperature += 1;
-      if ((row._sortPh ?? phValue(row)) != null) counts.ph += 1;
     }
-    facetCountCache.key = key;
-    facetCountCache.counts = counts;
-    return counts;
+    if (every || group === "source") {
+      counts.source.all += 1;
+      counts.source[isV2Row(row) ? "paper" : "databases"] += 1;
+      const source = rowSourceBits(row);
+      if (source) {
+        sourceFilters.forEach((item) => {
+          if (source & item.bit) counts.source[item.value] += 1;
+        });
+      }
+    }
+  }
+
+  // The counts of the given filters over every loaded record: { counts } once done, or null when a newer pass took over.
+  const facetCountJob = { key: "", counts: null, run: 0, pendingKey: "", waiting: [] };
+
+  function facetCountKey(controls) {
+    const { sort: _sort, ...filters } = controls;
+    return `${state.recordsGeneration}:${state.humanMarksVersion}:${JSON.stringify(filters)}`;
+  }
+
+  function scheduleIdle(callback) {
+    return typeof window.requestIdleCallback === "function"
+      ? window.requestIdleCallback(callback, { timeout: 600 })
+      : window.setTimeout(() => callback(null), 16);
+  }
+
+  function countFacets(controls, onDone) {
+    const key = facetCountKey(controls);
+    if (facetCountJob.key === key && facetCountJob.counts) {
+      onDone(facetCountJob.counts);
+      return;
+    }
+    if (facetCountJob.pendingKey === key) {
+      facetCountJob.waiting.push(onDone);
+      return;
+    }
+    const run = ++facetCountJob.run;
+    facetCountJob.pendingKey = key;
+    facetCountJob.waiting = [onDone];
+    const filters = currentFilters(controls);
+    const records = state.records;
+    const counts = emptyFacetCounts();
+    let index = 0;
+    const step = (deadline) => {
+      if (run !== facetCountJob.run) return;
+      // A slice of records per idle moment (more when the browser says it has time to spare).
+      let budget = deadline ? 2000 : 6000;
+      while (index < records.length) {
+        const end = Math.min(records.length, index + budget);
+        for (; index < end; index += 1) {
+          const row = records[index];
+          const failed = rowFacetFailures(row, filters);
+          if (failed === null) continue;
+          if (!failed.length) addFacetCounts(counts, row);
+          else if (failed.length === 1) addFacetCounts(counts, row, failed[0]);
+        }
+        if (!deadline || deadline.didTimeout || deadline.timeRemaining() < 4) break;
+        budget = 2000;
+      }
+      if (index < records.length) {
+        scheduleIdle(step);
+        return;
+      }
+      facetCountJob.key = key;
+      facetCountJob.counts = counts;
+      facetCountJob.pendingKey = "";
+      const waiting = facetCountJob.waiting;
+      facetCountJob.waiting = [];
+      waiting.forEach((callback) => callback(counts));
+    };
+    scheduleIdle(step);
   }
 
   function checkRowHtml({ name, value, label, labelHtml, title = "", checked = false, count, className = "", id = "" }) {
@@ -3086,40 +3144,39 @@
     if (searchWarmup.wanted && state.recordsReady) warmSearchText();
   }
 
-  function filterCountText(key) {
+  // A count's text: from the snapshot's counts before the records load (review results, measurement types), then from the
+  // counts of the current results; Only human-checked waits for the review marks.
+  function filterCountValue(key, counts) {
     const coverage = (manifest.summary || {}).coverage || {};
     const [group, value] = String(key).split(":");
-    if (group === "metric" && !state.recordsReady) {
-      return formatCount({ kcat: coverage.with_kcat, km: coverage.with_km, kcat_over_km: coverage.with_kcat_over_km }[value]);
+    if (!state.recordsReady) {
+      if (group === "metric") return { kcat: coverage.with_kcat, km: coverage.with_km, kcat_over_km: coverage.with_kcat_over_km }[value] ?? null;
+      if (group === "state") return recordStateCounts([])[value] ?? null;
+      if (group === "source" && value === "all") return Number(manifest.total_rows || 0) || null;
+      return null;
     }
-    if (!state.recordsReady || (group === "checked" && !state.humanMarksLoaded)) return EMPTY_VALUE;
-    if (group === "checked") return formatInteger(humanCheckedCount());
-    if (group === "state") return formatInteger(countsByState()[value] || 0);
-    const counts = facetCounts();
-    if (group === "range") return formatInteger(counts[value] || 0);
-    if (value === undefined) return formatInteger(counts[group] || 0);
-    return formatInteger(counts[group]?.[value] || 0);
+    if (!counts || (group === "checked" && !state.humanMarksLoaded)) return null;
+    if (group === "range") return counts[value] || 0;
+    if (value === undefined) return counts[group] || 0;
+    return counts[group]?.[value] || 0;
   }
 
-  // The counts are drawn when the panel is open, and otherwise in an idle moment, so they never hold up the table.
-  let filterCountsTimer = 0;
+  // Draws the counts: an option at 0 is greyed (it stays clickable).
+  function drawFilterCounts(counts) {
+    document.querySelectorAll?.("#catalogFilters [data-count]").forEach((element) => {
+      const count = filterCountValue(element.dataset.count, counts);
+      element.textContent = formatCount(count);
+      element.closest?.(".check-row, .range-row")?.classList.toggle("is-zero", count === 0);
+    });
+  }
 
-  function updateFilterCounts({ now = false } = {}) {
-    if (!now && state.recordsReady && !document.body.classList.contains("filters-open")) {
-      if (!filterCountsTimer) {
-        const run = () => {
-          filterCountsTimer = 0;
-          updateFilterCounts({ now: true });
-        };
-        filterCountsTimer = typeof window.requestIdleCallback === "function"
-          ? window.requestIdleCallback(run, { timeout: 3000 })
-          : window.setTimeout(run, 500);
-      }
+  // The counts follow every change of the records, the marks or the filters; they are worked out in idle moments.
+  function updateFilterCounts() {
+    if (!state.recordsReady) {
+      drawFilterCounts(null);
       return;
     }
-    document.querySelectorAll?.("#catalogFilters [data-count]").forEach((element) => {
-      element.textContent = filterCountText(element.dataset.count);
-    });
+    countFacets(filterControlState(), drawFilterCounts);
   }
 
   function selectedCheckboxes(name) {
@@ -3644,15 +3701,13 @@
     return words.every((word) => (COMMON_ORGANISM_WORDS.has(word) ? organismWordSet(row[field] || "").has(word) : value.includes(word)));
   }
 
-  function rowMatches(row, filters) {
+  // The search and the name fields: every count and every result needs them.
+  function rowBaseMatches(row, filters) {
     if (filters.q) {
       const words = filters.qWords || searchWords(filters.q);
       const text = searchText(row);
       if (!words.every((word) => wordMatches(row, word, text))) return false;
     }
-    if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
-    if (filters.sourceMode === "paper" && !isV2Row(row)) return false;
-    if (filters.sourceMode === "databases" && isV2Row(row)) return false;
     // The EC filter matches whole EC parts: "1.1.1" is EC 1.1.1 and every number under it.
     const ecQueries = filters.ecQueries || (filters.ec ? ecFilterQueries(filters.ec) : null);
     if (ecQueries?.length && !ecQueries.some((query) => (
@@ -3661,22 +3716,41 @@
     if (!fieldContains(row, "enzyme_display_name", filters.enzymeWords || fieldWords(filters.enzyme))) return false;
     if (!fieldContains(row, "organism", filters.organismWords || fieldWords(filters.organism))) return false;
     if (!fieldContains(row, "substrate_name", filters.substrateWords || fieldWords(filters.substrate))) return false;
-    // Has kcat, Has Km, Has kcat/Km: a record has every value ticked.
-    if (filters.metrics?.length) {
-      const metricFields = {
-        kcat: "kcat",
-        km: "km",
-        kcat_over_km: "kcat_over_km",
-      };
-      if (!filters.metrics.every((metric) => row[metricFields[metric]] != null)) return false;
-    }
-    if (filters.humanChecked && !isHumanChecked(row)) return false;
-    if (filters.variantBits && !(rowVariantBits(row) & filters.variantBits)) return false;
-    if (filters.temperature && !inRange(row._sortTemperature ?? temperatureValue(row), filters.temperature)) return false;
-    if (filters.ph && !inRange(row._sortPh ?? phValue(row), filters.ph)) return false;
-    if (filters.cautionBits && !(rowCautionBits(row) & filters.cautionBits)) return false;
-    if (filters.sourceBits && !(rowSourceBits(row) & filters.sourceBits)) return false;
     return true;
+  }
+
+  // The filter groups whose options are counted, each with its test.
+  const FACET_GROUP_TESTS = [
+    ["state", (row, filters) => filters.recordStates.includes(row._recordState || recordStateForRow(row))],
+    ["source", (row, filters) => (filters.sourceMode !== "paper" || isV2Row(row))
+      && (filters.sourceMode !== "databases" || !isV2Row(row))
+      && (!filters.sourceBits || Boolean(rowSourceBits(row) & filters.sourceBits))],
+    // Has kcat, Has Km, Has kcat/Km: a record has every value ticked.
+    ["metric", (row, filters) => !filters.metrics?.length || filters.metrics.every((metric) => row[metric] != null)],
+    ["checked", (row, filters) => !filters.humanChecked || isHumanChecked(row)],
+    ["variant", (row, filters) => !filters.variantBits || Boolean(rowVariantBits(row) & filters.variantBits)],
+    ["temperature", (row, filters) => !filters.temperature || inRange(row._sortTemperature ?? temperatureValue(row), filters.temperature)],
+    ["ph", (row, filters) => !filters.ph || inRange(row._sortPh ?? phValue(row), filters.ph)],
+    ["caution", (row, filters) => !filters.cautionBits || Boolean(rowCautionBits(row) & filters.cautionBits)],
+  ];
+
+  // The groups a record fails (stopping at two: it then counts nowhere), or null when the search or a name field rules
+  // it out.
+  function rowFacetFailures(row, filters) {
+    if (!rowBaseMatches(row, filters)) return null;
+    const failed = [];
+    for (const [group, test] of FACET_GROUP_TESTS) {
+      if (!test(row, filters)) {
+        failed.push(group);
+        if (failed.length > 1) break;
+      }
+    }
+    return failed;
+  }
+
+  function rowMatches(row, filters) {
+    if (!rowBaseMatches(row, filters)) return false;
+    return FACET_GROUP_TESTS.every(([, test]) => test(row, filters));
   }
 
   function ecSort(a, b) {
@@ -3891,6 +3965,7 @@
     renderSummary();
     renderRows();
     openRecordFromLocation();
+    updateFilterCounts();
     return true;
   }
 
@@ -4383,7 +4458,7 @@
     }
     document.body.classList.toggle("filters-open", shouldOpen);
     $("openFiltersButton")?.setAttribute("aria-expanded", String(shouldOpen));
-    if (shouldOpen && !wasOpen) updateFilterCounts({ now: true });
+    if (shouldOpen && !wasOpen) updateFilterCounts();
     const rail = $("catalogFilters");
     syncFilterRailRole();
     syncDetailPanelAccessibility();
@@ -5936,6 +6011,8 @@
       applyBrowseParams,
       browseHash,
       activeFilterItems,
+      countFacets,
+      filterControlState,
       humanCheckedHref,
       setHumanReviewMarks: (marks) => { humanReviewMarks = marks || {}; },
       reviewOutcome,

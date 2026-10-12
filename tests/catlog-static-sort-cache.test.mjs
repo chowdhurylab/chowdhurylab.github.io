@@ -2030,6 +2030,32 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.activeFilterItems().find((item) => item.key === "source:earlier_paper").clear();
   assert.equal(api.browseHash(), "");
   assert.deepEqual(await keysFor(""), ["src-earlier", "src-merged", "src-oed", "src-unknown", "src-v2"]);
+
+  // Filter counts follow the results: each option counted over the records that match every other filter.
+  const disputed = sourceRow("src-disputed", { source_db: "brenda", verification_status: "disputed", kcat: null });
+  const pending = sourceRow("src-pending", { source_db: "sabio_rk", verification_status: "manual_review_required" });
+  const unchecked = sourceRow("src-unchecked", { source_db: "unknown", verification_status: "unverified" });
+  api.indexLoadedRecords([fromPaper, oed, pending, unchecked, disputed]);
+  const countsFor = async (address) => {
+    api.applyBrowseParams(new Map(new URLSearchParams(address)));
+    await api.ensureCurrentFilters();
+    return new Promise((resolve) => api.countFacets(api.filterControlState(), resolve));
+  };
+  let counts = await countsFor("status=accepted");
+  assert.deepEqual({ ...counts.state }, { accepted: 2, curation_pending: 1, not_verified: 1, disputed: 1 },
+    "a review result counts with its own group set aside");
+  assert.deepEqual([counts.source.all, counts.source.paper, counts.source.databases, counts.source.oed, counts.source.brenda],
+    [2, 1, 1, 1, 0], "the source counts follow the review result chosen");
+  assert.equal(counts.metric.kcat, 2);
+  counts = await countsFor("source=brenda");
+  assert.deepEqual({ ...counts.state }, { accepted: 0, curation_pending: 0, not_verified: 0, disputed: 1 });
+  assert.equal(counts.source.all, 5, "the source options count with Source set aside");
+  assert.equal(counts.metric.kcat, 0, "the one BRENDA record has no kcat");
+  counts = await countsFor("source=brenda&status=accepted");
+  assert.equal(counts.source.brenda, 0, "ticking BRENDA with Accepted would give nothing");
+  assert.equal(counts.state.disputed, 1, "Disputed would give the BRENDA record back");
+  assert.equal(counts.metric.km, 0, "a record failing two groups counts nowhere");
+  await countsFor("");
 }
 
 api.indexLoadedRecords([row()]);

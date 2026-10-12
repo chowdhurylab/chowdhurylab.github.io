@@ -78,7 +78,11 @@ number (labelled fields), Measurement type
 that do not say are in neither), Assay conditions (temperature °C and pH, from
 and to, either may be empty; a bound that is not a number is outlined and
 ignored), then Cautions (grouped as the "!" notes), which starts closed and opens
-when one of its options is set. Every option shows its count over all records. Each active filter and the search is a chip
+when one of its options is set. Every option shows how many of the current
+results it covers, counted with its own group set aside (so ticking it shows, or
+adds, that many); an option at 0 is grey and stays clickable. The counts are
+worked out after each change in idle moments, in slices (never while typing),
+and a newer change restarts them. Each active filter and the search is a chip
 above the table that removes it, followed by Clear all; the count beside Filters
 is the number of chips. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
