@@ -618,10 +618,17 @@ def check(driver, browser, url):
     for fragment in ("#browse?status=accepted", "#browse?status=curation_pending", "#browse?status=not_verified"):
         assert any(href.endswith(fragment) for href in hrefs), f"Missing Stats link {fragment}"
 
-    # Main source: each record once.
+    # Main source: counted as the Browse source filter finds records (a record merged from several databases counts
+    # under each), so every record is counted at least once; the Guide's source list gives the same numbers.
     source_rows = stat_rows(".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li")
     if source_rows:
-        assert sum(source_rows.values()) == total, "Main-source rows must add up to all records"
+        assert sum(source_rows.values()) >= total and max(source_rows.values()) <= total, "Main-source rows must cover all records"
+        if overview:
+            listed = {("paper" if item.get("key") == "primary_paper_direct" else item.get("key")): item.get("row_count")
+                      for item in manifest.get("source_databases") or []}
+            for key, count in source_rows.items():
+                if isinstance(listed.get(key[len("source_"):]), int):
+                    assert count == listed[key[len("source_"):]], f"Stats and the Guide count {key} differently"
 
     # The overview, when this snapshot has one; otherwise no section or headline without its numbers.
     headline = driver.find_element(By.ID, "statsTotals").text

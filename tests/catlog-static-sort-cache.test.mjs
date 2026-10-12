@@ -1555,8 +1555,9 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No caution/);
-  assert.match(chart, /#browse\?source=paper">Primary literature/);
-  assert.doesNotMatch(chart, /source=other/, "Other or several has no single Browse filter");
+  assert.match(chart, /#browse\?source=paper">From paper \(CatLog v2 and other primary literature\)/);
+  assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
+  assert.doesNotMatch(chart, /earlier records read from papers/, "every paper record here is a CatLog v2 record");
   const breakdown = readBreakdown();
   assert.equal(breakdown.wild + breakdown.variant + breakdown.not_stated, 6);
   assert.equal(breakdown.source_paper + breakdown.source_brenda + breakdown.source_oed, 6);
@@ -1629,7 +1630,7 @@ function row(overrides = {}) {
   assert.equal(api.rowStatusLabel(prepared), "Not reviewed");
   assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
 
-  // An unfamiliar status is listed, not dropped; source groups are exclusive.
+  // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.
   delete runtimeManifest.summary.review_details;
   delete runtimeManifest.summary.overview;
   runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
@@ -1652,9 +1653,10 @@ function row(overrides = {}) {
     { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },
   ];
   api.renderStats();
-  assert.equal(readBreakdown().source_brenda, 2, "A multi-source record is not also in the BRENDA-only row");
+  assert.equal(readBreakdown().source_brenda, 3, "A multi-source record counts under BRENDA, as source=brenda finds it");
   assert.equal(readBreakdown().source_sabio_rk, 1);
-  assert.equal(readBreakdown().source_other, 1);
+  assert.equal(readBreakdown().source_uniprot, 1);
+  assert.equal(readBreakdown().source_other, undefined, "Every record names a known source");
   Object.assign(api.state, previous);
   Object.assign(runtimeManifest, previousManifest);
   window.location.href = previousHref;

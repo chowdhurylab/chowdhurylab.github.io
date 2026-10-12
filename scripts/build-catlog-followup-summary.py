@@ -10,6 +10,7 @@ import importlib.util
 import json
 import math
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -109,9 +110,23 @@ def build_review_details(manifest, download):
 # (catlog-static.js), so a count here is the count a Browse link with the same filter finds.
 EC_CLASS_NAMES = {1: "Oxidoreductases", 2: "Transferases", 3: "Hydrolases", 4: "Lyases", 5: "Isomerases",
                   6: "Ligases", 7: "Translocases"}
-# The record's main source (Browse `source=`): source_db, with paper for CatLog's own reading of the paper.
-SOURCE_KEYS = {"primary_paper_direct": "paper", "brenda": "brenda", "sabio_rk": "sabio_rk", "oed": "oed",
-               "uniprot": "uniprot", "skid": "skid"}
+# The record's source (Browse `source=`, rowSourceBits): each database source_db names, with paper for primary literature;
+# a merged value such as "sabio_rk;brenda" counts under each source it names.
+SOURCE_KEYS = ("paper", "brenda", "sabio_rk", "oed", "uniprot", "skid")
+SOURCE_TOKENS = {"primary_paper_direct": "paper", "primary_literature": "paper", "paper": "paper", "brenda": "brenda",
+                 "sabio_rk": "sabio_rk", "sabio": "sabio_rk", "sabiork": "sabio_rk", "oed": "oed",
+                 "open_enzyme_database": "oed", "uniprot": "uniprot", "skid": "skid"}
+# The Browse organism filter (foldSearch, compactSearch, organismSearchText, fieldWords, fieldContains): every word of
+# the name, folded, inside the record's folded organism with its short and common names.
+GREEK_NAMES = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon", "ζ": "zeta", "η": "eta",
+               "θ": "theta", "ι": "iota", "κ": "kappa", "λ": "lambda", "μ": "mu", "ν": "nu", "ξ": "xi", "ο": "omicron",
+               "π": "pi", "ρ": "rho", "σ": "sigma", "ς": "sigma", "τ": "tau", "υ": "upsilon", "φ": "phi", "χ": "chi",
+               "ψ": "psi", "ω": "omega"}
+COMMON_ORGANISM_NAMES = {"homo sapiens": "human", "rattus norvegicus": "rat", "mus musculus": "mouse",
+                         "oryctolagus cuniculus": "rabbit", "bos taurus": "bovine cow", "sus scrofa": "porcine pig",
+                         "canis lupus": "dog", "gallus gallus": "chicken", "zea mays": "maize", "sorghum bicolor": "sorghum",
+                         "saccharomyces cerevisiae": "yeast"}
+LOCANT_WORD = re.compile(r"^(?:\d{1,2}'*(?:,\d{1,2}'*)*|[dlpomn](?:,[dl])?|" + "|".join(sorted(set(GREEK_NAMES.values()))) + r")$")
 # Browse `caution=` groups of condition_flags.
 CAUTION_GROUPS = {
     "differs": ("kcat_over_km_quotient_mismatch",),
@@ -245,6 +260,87 @@ def paper_keys(row):
     return {f"id:{standin}"} if standin else set()
 
 
+def source_keys(value):
+    keys = set()
+    for part in re.split(r"[;,+/|]+", str(value or "").lower()):
+        key = SOURCE_TOKENS.get(re.sub(r"[\s-]+", "_", part.strip()))
+        if key:
+            keys.add(key)
+    return keys
+
+
+def fold_search(value):
+    text = str(value if value is not None else "").lower()
+    if re.search(r"[^\x00-\x7f]", text):
+        text = "".join(char for char in unicodedata.normalize("NFKD", text) if not unicodedata.category(char).startswith("M"))
+        text = text.replace("∆", "δ")
+        text = re.sub(r"[α-ω]", lambda match: GREEK_NAMES.get(match.group(0), match.group(0)), text)
+        text = re.sub(r"[‐-―⁃−﹘﹣－]", "-", text)
+        text = re.sub(r"[‘’‛′‵´`]", "'", text)
+    return re.sub(r"(^|[^a-z0-9])(?:micro|u)(?=-)", r"\1mu", text)
+
+
+def compact_search(text):
+    return re.sub(r"[\s\-_,]+", "", text)
+
+
+def organism_search_text(organism):
+    text = str(organism or "").strip()
+    if not text:
+        return ""
+    words = re.sub(r"[()]", " ", text).split()
+    genus, species = (words + ["", ""])[:2]
+    parts = []
+    if re.fullmatch(r"[A-Z][a-z]+", genus) and re.fullmatch(r"[a-z][a-z-]+", species) and species != "sp.":
+        parts += [f"{genus[0]}. {species}", f"{genus[0]}.{species}"]
+    common = COMMON_ORGANISM_NAMES.get(f"{genus} {species}".lower())
+    if common:
+        parts.append(common)
+    return "|".join(parts)
+
+
+def folded_organism(organism):
+    text = str(organism or "")
+    return compact_search(fold_search(f"{text}|{organism_search_text(text)}"))
+
+
+def field_words(text):
+    words = fold_search(text).split()
+    joined = []
+    index = 0
+    while index < len(words):
+        word = words[index]
+        while LOCANT_WORD.match(word) and index + 1 < len(words):
+            following = words[index + 1]
+            if not re.match(r"^[^\W_(]|^\(", following) or re.match(r"^(?:ec)?\d+(?:\.(?:\d+|-))*\.?$", following) \
+                    or re.match(r"^\d{3,}$", following):
+                break
+            word += following
+            index += 1
+        joined.append(word)
+        index += 1
+    return [compact_search(word) for word in joined if compact_search(word)]
+
+
+def top_organisms(spellings, raw_counts, limit=OVERVIEW_TOP):
+    """The most common organisms, each counted as the Browse organism filter finds it: every record whose organism holds
+    the name's words, so strains and other spellings of it count too. Names whose Browse results overlap (a strain and its
+    species, "human" and Homo sapiens) are listed once, under the name more records give."""
+    folded = {raw: folded_organism(raw) for raw in raw_counts}
+    chosen = []
+    for key, _count in top(Counter({key: sum(counter.values()) for key, counter in spellings.items()}), limit * 3):
+        name = most_common(spellings[key])
+        words = field_words(name)
+        own = folded_organism(name)
+        if not words or any(all(word in own for word in listed_words) or all(word in listed_own for word in words)
+                            for _name, listed_words, listed_own, _count in chosen):
+            continue
+        count = sum(number for raw, number in raw_counts.items() if all(word in folded[raw] for word in words))
+        chosen.append((name, words, own, count))
+    chosen.sort(key=lambda item: (-item[3], item[0]))
+    return [{"name": name, "count": count} for name, _words, _own, count in chosen[:limit]]
+
+
 def name_key(value):
     text = " ".join(str(value or "").split())
     return "" if text.lower() in PLACEHOLDER_NAMES else text.casefold()
@@ -307,12 +403,12 @@ def summarize_overview(rows, marks=None):
     ec_set = set()
     ec_classes = {number: {"count": 0, "accepted": 0} for number in EC_CLASS_NAMES}
     no_ec_class = multi_class = 0
-    organisms, ec_counts = Counter(), Counter()
+    ec_counts, raw_organisms = Counter(), Counter()
     ec_names, organism_spellings = defaultdict(Counter), defaultdict(Counter)
     forms = Counter({"wild": 0, "variant": 0, "not_stated": 0})
     conditions = Counter({"temperature": 0, "ph": 0, "both": 0})
     cautions = Counter({key: 0 for key in (*CAUTION_GROUPS, "temperature", "none")})
-    sources = Counter({key: 0 for key in (*SOURCE_KEYS.values(), "other")})
+    sources = Counter({key: 0 for key in (*SOURCE_KEYS, "other")})
     values = {metric: [] for metric in METRIC_UNITS}
     v2_records = with_paper = checked_accepted = marked = 0
     for row in rows:
@@ -335,9 +431,9 @@ def summarize_overview(rows, marks=None):
             key = name_key(row.get(field))
             if key:
                 seen.add(key)
+        raw_organisms[str(row.get("organism") or "")] += 1
         organism = " ".join(str(row.get("organism") or "").split())
         if name_key(organism):
-            organisms[name_key(organism)] += 1
             organism_spellings[name_key(organism)][organism] += 1
         numbers = ec_numbers(row)
         classes = {int(number[0]) for number in numbers if re.match(r"^[1-7]\.", number)}
@@ -361,7 +457,7 @@ def summarize_overview(rows, marks=None):
         conditions["both"] += has_temperature and has_ph
         found = caution_keys(row)
         cautions.update(found or {"none"})
-        sources[SOURCE_KEYS.get(str(row.get("source_db") or "").strip().lower(), "other")] += 1
+        sources.update(source_keys(row.get("source_db")) or {"other"})
         for metric, units in METRIC_UNITS.items():
             value = _number(row.get(metric))
             if value is not None and value > 0 and unit_key(row.get(f"{metric}_unit")) in units:
@@ -387,7 +483,7 @@ def summarize_overview(rows, marks=None):
         "ec_classes": [{"class": number, "name": EC_CLASS_NAMES[number], **counts} for number, counts in ec_classes.items()],
         "ec_class_none": no_ec_class,
         "ec_class_multiple": multi_class,
-        "top_organisms": [{"name": most_common(organism_spellings[key]), "count": count} for key, count in top(organisms)],
+        "top_organisms": top_organisms(organism_spellings, raw_organisms),
         "top_ec": [{"ec": number, "name": most_common(ec_names[number]), "count": count} for number, count in top(ec_counts)],
         "enzyme_form": dict(forms),
         "conditions": dict(conditions),

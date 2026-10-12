@@ -56,7 +56,13 @@ capitals, without "Unknown"; EC numbers are complete four-part numbers; a
 record naming EC numbers in two classes counts in each class (said in a note);
 wild type and variant follow the table's enzyme-form rule; cautions follow the
 record's own flags (a kcat/Km that agrees with kcat ÷ Km within its printed
-precision is not "differs").
+precision is not "differs"). A linked count is the number of records its link
+opens: an organism counts every record whose organism name contains it, as the
+Browse organism filter matches (strains with their species; names whose results
+overlap, such as "human" and Homo sapiens, are listed once), and a record merged
+from several databases counts under each source (so sources add up to more than
+all records, and match the Guide's source list). Stats and the filters use the
+same names for cautions and sources.
 
 Use white, unframed sections with light rules, within 1280px. Use normal page
 scrolling; never an independently scrolling chart panel. Search belongs to

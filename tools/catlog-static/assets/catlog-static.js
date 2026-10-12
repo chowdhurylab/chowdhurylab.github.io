@@ -142,9 +142,11 @@
     efficiency_above_diffusion_limit: 2,
   };
 
-  // A record's main source (source_db); a merged value such as "sabio_rk;brenda" counts for each source it names.
+  // A record's main source (source_db); a merged value such as "sabio_rk;brenda" counts for each source it names (Stats
+  // counts the same way).
+  const SOURCE_PAPER_LABEL = "From paper (CatLog v2 and other primary literature)";
   const sourceFilters = [
-    { value: "paper", label: "From paper (CatLog v2 / primary literature)", bit: 1, title: "Values read from the paper: CatLog v2 records and other primary-literature records" },
+    { value: "paper", label: SOURCE_PAPER_LABEL, bit: 1, title: "Values read from the paper: CatLog v2 records and other primary-literature records" },
     { value: "brenda", label: "BRENDA", bit: 2 },
     { value: "sabio_rk", label: "SABIO-RK", bit: 4 },
     { value: "oed", label: "Open Enzyme Database", bit: 8 },
@@ -2511,10 +2513,11 @@
     </figure>`;
   }
 
-  // Each record counts once, under its main source (Browse `source=`); several databases or none is Other.
+  // Records per source, counted as the Browse source filter finds them (rowSourceBits): a record merged from several
+  // databases counts under each; a record that names none of them is Other.
   const statsSourceNames = [
-    ["paper", PRIMARY_LITERATURE_NAME, "primary_paper_direct"], ["brenda", "BRENDA", "brenda"], ["oed", "Open Enzyme Database (OED)", "oed"],
-    ["uniprot", "UniProt", "uniprot"], ["sabio_rk", "SABIO-RK", "sabio_rk"], ["skid", "SKiD", "skid"],
+    ["paper", SOURCE_PAPER_LABEL], ["brenda", "BRENDA"], ["oed", "Open Enzyme Database (OED)"],
+    ["uniprot", "UniProt"], ["sabio_rk", "SABIO-RK"], ["skid", "SKiD"],
   ];
 
   function statsSources(overview) {
@@ -2524,16 +2527,20 @@
       for (const [key] of statsSourceNames) counts[key] = statsCount(given[key]) || 0;
       counts.other = statsCount(given.other) || 0;
     } else {
-      const recorded = manifestDistribution("source_db");
-      const keys = Object.fromEntries(statsSourceNames.map(([key, , sourceDb]) => [sourceDb, key]));
-      for (const [label, count] of Object.entries(recorded)) {
-        const key = keys[String(label).trim().toLowerCase()] || "other";
-        counts[key] = (counts[key] || 0) + count;
+      for (const [label, count] of Object.entries(manifestDistribution("source_db"))) {
+        const bits = rowSourceBits({ source_db: label });
+        const keys = sourceFilters.filter((item) => bits & item.bit).map((item) => item.value);
+        for (const key of keys.length ? keys : ["other"]) counts[key] = (counts[key] || 0) + count;
       }
     }
+    const v2 = statsCount(overview?.from_paper?.records, counts.paper || 0);
+    const paperNote = v2 !== null && counts.paper > v2
+      ? `${formatInteger(v2)} CatLog v2 records and ${formatInteger(counts.paper - v2)} earlier records read from papers.`
+      : "";
     return [
-      ...statsSourceNames.map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key } })),
-      { value: "source_other", label: "Other or several", note: "Several databases, STRENDA DB, or not recorded", count: counts.other || 0 },
+      ...statsSourceNames.map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key },
+        note: key === "paper" ? paperNote : "" })),
+      { value: "source_other", label: "Other", note: "Another database, or not recorded", count: counts.other || 0 },
     ].filter((item) => item.count > 0);
   }
 
@@ -2655,7 +2662,7 @@
       labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ec: String(item.ec || "") } }));
     if (organisms.length) {
       sections.push(statsSection("statsOrganismsTitle", "Most common organisms", statsBarRows(organisms, total, { scale: organisms[0].count }),
-        { note: "By the name each record gives; a strain named on its own counts on its own." }));
+        { note: "Records whose organism name contains this name, as Browse finds them, so strains count with their species." }));
     }
     if (ecNumbers.length) {
       sections.push(statsSection("statsEcTitle", "Most common EC numbers", statsBarRows(ecNumbers, total, { scale: ecNumbers[0].count }),
@@ -2683,21 +2690,19 @@
     // Cautions.
     const caution = overview?.cautions || {};
     const cautions = [
-      { value: "caution_differs", label: "kcat/Km differs from kcat ÷ Km", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> differs from <i>k</i><sub>cat</sub> ÷ <i>K</i><sub>m</sub>", count: statsCount(caution.differs, total), params: { caution: "differs" } },
-      { value: "caution_units", label: "A unit or magnitude to check", count: statsCount(caution.units, total), params: { caution: "units" } },
-      { value: "caution_unit_missing", label: "Unit not recorded", count: statsCount(caution.unit_missing, total), params: { caution: "unit_missing" } },
-      { value: "caution_temperature", label: "Temperature to check", count: statsCount(caution.temperature, total), params: { caution: "temperature" } },
-      { value: "caution_none", label: "No caution", count: statsCount(caution.none, total), params: { caution: "none" } },
+      // The same names as the Cautions filter.
+      ...cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
+        count: statsCount(caution[item.value], total), params: { caution: item.value } })),
     ];
     if (cautions.every((item) => item.count !== null)) {
       sections.push(statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
-        { note: "A caution marks a value to check against the paper; a record can carry more than one." }));
+        { note: "A caution marks a value to check against the source; a record can carry more than one." }));
     }
 
     // Main source.
     const sources = statsSources(overview);
     sections.push(statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
-      { note: "Each record counts once, under its main source. A record can also hold values from other databases; its Source details list them." }));
+      { note: "A record merged from several databases counts under each of them, so these counts add up to more than all records. Select a name to see those records in Browse." }));
 
     if (overview) {
       sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>

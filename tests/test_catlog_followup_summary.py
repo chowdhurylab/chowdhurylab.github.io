@@ -1,4 +1,5 @@
 import gzip
+from collections import Counter, defaultdict
 import hashlib
 import importlib.util
 import json
@@ -168,8 +169,8 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["conditions"], {"temperature": 2, "ph": 1, "both": 1})
         # Record a's kcat/Km agrees with 2.0 / 0.3 within its printed precision, so it is not flagged.
         self.assertEqual(result["cautions"], {"differs": 1, "units": 1, "unit_missing": 1, "temperature": 1, "none": 1})
-        self.assertEqual(result["sources"], {"paper": 1, "brenda": 1, "sabio_rk": 0, "oed": 1, "uniprot": 0, "skid": 0, "other": 1})
-        self.assertEqual(sum(result["sources"].values()), result["records"])
+        # A merged source ("sabio_rk;brenda") counts under each source it names, as the Browse source filter finds it.
+        self.assertEqual(result["sources"], {"paper": 1, "brenda": 2, "sabio_rk": 1, "oed": 1, "uniprot": 0, "skid": 0, "other": 0})
         kcat = result["metrics"]["kcat"]
         # The kcat without a unit is left out; 2 and 2e7 s^-1 remain.
         self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e7))
@@ -179,6 +180,26 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["metrics"]["km"]["n"], 2)
         self.assertEqual(result["metrics"]["kcat_over_km"]["n"], 1)
         self.assertLess(len(json.dumps(result, separators=(",", ":"))), 6000)
+
+    def test_top_organisms_count_as_the_browse_filter_finds_them(self):
+        raw = Counter({"Escherichia coli": 5, "Escherichia coli K-12": 3, "Saccharomyces cerevisiae": 4,
+                       "Saccharomyces cerevisiae (strain ATCC 204508 / S288c)": 2, "Homo sapiens": 2, "human": 1,
+                       "Escherichia  coli": 1, "Unknown": 2})
+        spellings = defaultdict(Counter)
+        for organism, count in raw.items():
+            name = " ".join(organism.split())
+            if followup.name_key(name):
+                spellings[followup.name_key(name)][name] += count
+        result = followup.top_organisms(spellings, raw)
+        # Strains count with their species and are not listed again; "human" (whose Browse results include Homo
+        # sapiens) is not listed beside the more common Homo sapiens; spacing does not matter.
+        self.assertEqual(result, [{"name": "Escherichia coli", "count": 9},
+                                  {"name": "Saccharomyces cerevisiae", "count": 6},
+                                  {"name": "Homo sapiens", "count": 2}])
+        self.assertEqual(followup.source_keys("brenda; skid"), {"brenda", "skid"})
+        self.assertEqual(followup.source_keys("sabio_rk/brenda+skid"), {"sabio_rk", "brenda", "skid"})
+        self.assertEqual(followup.source_keys("unknown"), set())
+        self.assertEqual(followup.field_words("β-Galactosidase  4 nitrophenyl"), ["betagalactosidase", "4nitrophenyl"])
 
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:
