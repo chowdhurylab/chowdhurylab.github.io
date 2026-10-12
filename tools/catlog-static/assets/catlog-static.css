@@ -501,6 +501,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .values-table tbody th { color:var(--text); font-size:var(--fs-table); font-weight:400; white-space:nowrap }
 .values-table thead th { padding-top:0; color:var(--text-3); font-weight:500 }
 .values-table small { display:block; color:var(--text-3); font-size:var(--fs-min) }
+.values-table small.unit-caution { display:flex; align-items:flex-start; gap:4px; color:var(--amber-text); font-weight:500 }
+.unit-caution .value-flag { flex:0 0 12px; align-self:flex-start; width:12px; height:12px; margin-top:1px }
 
 /* Stats and Guide pages. */
 .guide-view, .stats-view { flex:1; min-height:0; overflow:auto; border-bottom:1px solid var(--line); background:var(--surface) }

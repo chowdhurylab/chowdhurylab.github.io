@@ -5278,6 +5278,68 @@
     }).join(" ");
   }
 
+  // ---- Record panel: a printed unit CatLog did not use ----
+  // The concentration prefix of a unit (n, µ, m, "" for molar, p), or null when it names no molar concentration.
+  const CONCENTRATION_UNIT = /(?:^|[^A-Za-z])(n|µ|μ|u|m|p)?M(?![a-z])/;
+  const CONCENTRATION_POWER = { p: -12, n: -9, "µ": -6, m: -3, "": 0 };
+
+  function concentrationPrefix(unit) {
+    const match = String(unit || "").match(CONCENTRATION_UNIT);
+    if (!match) return null;
+    const prefix = match[1] || "";
+    return prefix === "μ" || prefix === "u" ? "µ" : prefix;
+  }
+
+  function foldWords(power) {
+    if (power === 3) return "1000-fold";
+    return `10${[...String(power)].map((character) => SUPERSCRIPT_DIGITS[character] ?? character).join("")}-fold`;
+  }
+
+  // Values whose printed concentration unit (µM) is not the unit CatLog read the number in (mM): an amber note each. When
+  // only one value was read that way and the record has a printed kcat, Km and kcat/Km, kcat ÷ Km shows which unit is
+  // right; otherwise the note says it cannot.
+  function unitPrefixCautions(summary, proof) {
+    if (!proof) return [];
+    const metricOf = (line) => (v2MetricLabels[line.metric] || [""])[0];
+    const changed = proof.lines.map((line, index) => {
+      const fact = proof.facts[index];
+      const readAs = (String(fact.conversion || "").match(/printed unit read as (.+)$/) || [])[1] || "";
+      const printedUnit = String(line.raw_unit || "").trim() || fact.printed;
+      const printedPrefix = concentrationPrefix(printedUnit);
+      const usedPrefix = concentrationPrefix(readAs);
+      if (!readAs || printedPrefix === null || usedPrefix === null || printedPrefix === usedPrefix) return null;
+      return { line, fact, field: metricOf(line), readAs, printedUnit, power: Math.abs(CONCENTRATION_POWER[printedPrefix] - CONCENTRATION_POWER[usedPrefix]) };
+    }).filter((item) => item && item.field);
+    if (!changed.length) return [];
+    const printedMetrics = new Set(proof.lines.map((line) => line.metric));
+    const check = kcatKmCheck(summary);
+    const confirmed = changed.length === 1 && check && check.fold < 1.3
+      && ["kcat", "Km", "kcat/Km"].every((metric) => printedMetrics.has(metric));
+    return changed.map(({ line, fact, field, readAs, printedUnit, power }) => {
+      const printed = unitText(printedUnit);
+      const used = unitText(readAs);
+      const metric = metricNames[field];
+      let text;
+      if (confirmed && field === "kcat_over_km") {
+        // kcat ÷ Km in the unit CatLog used: the stored quotient times what the printed number gains in that unit.
+        const printedNumber = (String(line.raw_value ?? "").match(/[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?/) || [""])[0];
+        const stored = Number(metricDisplay(summary, "kcat_over_km"));
+        const inUsedUnit = Number(printedNumber) > 0 && stored > 0 ? check.quotient * (Number(printedNumber) / stored) : NaN;
+        text = Number.isFinite(inUsedUnit)
+          ? `The paper prints ${printed}; CatLog uses ${used}, the unit in which the printed kcat/Km (${numberText(printedNumber)}) `
+            + `agrees with kcat ÷ Km (${numberText(inUsedUnit, { figures: quotientFigures(summary) })}).`
+          : `The paper prints ${printed}; CatLog uses ${used}, the unit in which the printed kcat/Km agrees with kcat ÷ Km.`;
+      } else if (confirmed) {
+        text = `The paper prints ${printed}; CatLog uses ${used}, the unit in which kcat ÷ Km (${check.quotientText} ${check.unit}) `
+          + `agrees with the paper's kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}).`;
+      } else {
+        const verb = /converted by code/.test(fact.conversion) ? "uses" : "stores";
+        text = `The paper prints ${printed}; CatLog ${verb} ${used}, ${foldWords(power)} apart, and kcat ÷ Km cannot show which is right.`;
+      }
+      return { field, metric, text, printed, used };
+    });
+  }
+
   // A CatLog v2 record's values, one row each: as printed, as stored in the catalog's units ("converted by code" when code
   // converted it) and what the second AI run found; under it each printed line once, with where it is printed. Facts
   // only (where, what was printed, what was corrected, how it was converted), never reasoning.
@@ -5307,7 +5369,7 @@
   // The values as the paper prints them, in Measurement right under the values: one row per value, "As printed" and
   // "In catalog units" (with how code converted it); a Check column only when the values' results differ (one result for
   // all is said once, in Paper and review). The place is in the heading when every value shares it.
-  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts)) {
+  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts), cautions = []) {
     const text = (value) => caretHtml(escapePublic(value));
     const places = new Set(lines.map(v2LinePlace));
     const shared = places.size === 1 ? [...places][0] : "";
@@ -5320,7 +5382,11 @@
         ? `${numberHtml(metricDisplay(summary, field))} ${unitHtml(metricUnit(summary, field))}`
         : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
       const place = !shared && v2LinePlace(line) ? `<small>${escapePublic(v2LinePlace(line))}</small>` : "";
-      const how = fact.conversion ? `<small>${text(fact.conversion)}</small>` : "";
+      // A unit CatLog did not take from the paper: amber, beside the value (its note is under the values).
+      const caution = cautions.find((item) => item.field === field);
+      const conversion = caution ? String(fact.conversion || "").replace(/,?\s*printed unit read as .+$/, "") : fact.conversion;
+      const how = (conversion ? `<small>${text(conversion)}</small>` : "")
+        + (caution ? `<small class="unit-caution"><span class="value-flag" aria-hidden="true"></span>${escapePublic(`CatLog uses ${caution.used}, not the printed ${caution.printed}`)}</small>` : "");
       return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(fact.check)}</td>` : ""}</tr>`;
     }).join("");
     // Each printed line once; a "line" that is only the printed number itself adds nothing.
@@ -5383,7 +5449,13 @@
     ];
     if (metricSummary.has_ki) metrics.push(["<i>K</i><sub>i</sub>", "ki"]);
     const consistent = consistentEfficiency(metricSummary, detail, flags);
+    // A record read from the paper: its values as printed, right under the values they give.
+    const proof = v2ProofFacts(summary, detail);
+    const unitCautions = unitPrefixCautions(metricSummary, proof);
     const notes = flagNotes(metricSummary, detail, flags, consistent);
+    unitCautions.forEach(({ field, text }) => {
+      notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
+    });
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
     // A record with three dashes says so in words (some keep a Ki only).
     const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !metricHasValue(metricSummary, field));
@@ -5392,8 +5464,6 @@
       : (metricSummary.has_ki && metricHasValue(metricSummary, "ki")
           ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
           : "No kcat, Km or kcat/Km is stored for this record.");
-    // A record read from the paper: its values as printed, right under the values they give.
-    const proof = v2ProofFacts(summary, detail);
     // The header shows the substrate; a long name it cuts short is given in full here.
     const substrate = String(summary.substrate_name || "").trim();
     // A merged older record's kcat/Km values as its sources list them, under the values.
@@ -5419,7 +5489,7 @@
         ${listed ? `<div class="detail-kv measurement-listed">${listed}</div>` : ""}
         ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
         ${flagNotesHtml(notes)}
-        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts) : ""}
+        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts, unitCautions) : ""}
       </section>
       <section class="detail-section conditions-section">
         <h3>Assay conditions</h3>

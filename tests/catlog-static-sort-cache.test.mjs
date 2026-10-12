@@ -2016,6 +2016,35 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: [line("kcat"), line("Km")] });
   assert.doesNotMatch(element("detailContent").innerHTML, /AI audit/, "no audit, no line");
 }
+// A printed unit 1000-fold from the unit CatLog used: an amber caution on that value, in place of the grey hint. kcat ÷ Km
+// confirms the unit when only one value was read that way; otherwise the note says it cannot.
+{
+  const v2 = (overrides) => row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name", ...overrides });
+  const confirmedSummary = v2({ record_key: "unit-confirmed", kcat: 0.2075, km: 0.22878, kcat_over_km: 0.9177,
+    kcat_display: "0.2075", km_display: "0.2288", kcat_over_km_display: "0.9177", kcat_unit: "s^(-1)", km_unit: "mM",
+    kcat_over_km_unit: "s^(-1)*mM^(-1)" });
+  const proofLine = (metric, raw_value, raw_unit, conversion) => ({ metric, table_label: "Table I", raw_value, raw_unit,
+    printed: `${raw_value} ${raw_unit}`, check: "confirmed", conversion });
+  const confirmedHtml = api.measurementSection(confirmedSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("Km", "228.78", "µM", "converted by code"), proofLine("kcat", "12.45", "min^-1", "converted by code"),
+      proofLine("kcat/Km", "55.06", "µM^-1 min^-1", "converted by code, printed unit read as mM^-1 min^-1")] });
+  assert.match(confirmedHtml, /The paper prints µM⁻¹ min⁻¹; CatLog uses mM⁻¹ min⁻¹, the unit in which the printed kcat\/Km \(55\.06\) agrees with kcat ÷ Km \(54\.41\)\./);
+  assert.match(confirmedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"[^>]*aria-label="kcat\/Km: printed unit differs\. Show the note\."/);
+  assert.match(confirmedHtml, /<small>converted by code<\/small><small class="unit-caution"><span class="value-flag" aria-hidden="true"><\/span>CatLog uses mM⁻¹ min⁻¹, not the printed µM⁻¹ min⁻¹<\/small>/);
+  assert.doesNotMatch(confirmedHtml, /printed unit read as/);
+  const bothSummary = v2({ record_key: "unit-both", kcat: 150, km: 2.9, kcat_over_km: 54, kcat_display: "150", km_display: "2.9",
+    kcat_over_km_display: "54", kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)" });
+  const bothHtml = api.measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
+      proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
+  assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
+  assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores s⁻¹ mM⁻¹, 1000-fold apart/);
+  // The same prefix read differently (M^-1 s^-1 for m^-1 s^-1) keeps the plain grey hint.
+  const sameHtml = api.measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
+  assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
+  assert.match(sameHtml, /<small>converted by code, printed unit read as 10<sup>3<\/sup> M-1 s-1<\/small>/);
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.

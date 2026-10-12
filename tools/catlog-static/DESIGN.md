@@ -276,10 +276,14 @@ says so (or that it stores a Ki only); a missing sequence or SMILES reads "None
 recorded"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
 link, and Report a problem names the DOI when there is no PMID. A flagged value
 carries a small "!" button that moves to its note; nothing is readable only on
-hover. The record writes numbers like the table (a × 10ⁿ at
-or above 10⁵ and below 10⁻³, the same display rule in the value strip, the stored
-digits in its values table); a kcat/Km CatLog calculated for an older record
-keeps the significant figures of kcat and Km. An older record whose
+hover. A value whose printed concentration unit is not the one CatLog read it in
+(µM printed, mM used) is such a caution: its note says whether kcat ÷ Km shows
+the unit used is right, and the values table says "CatLog uses mM, not the
+printed µM" in amber where other conversions keep a grey hint. The record writes
+numbers like the table (a × 10ⁿ at or above 10⁵ and below 10⁻³, the same display
+rule in the value strip, the stored digits in its values table); a kcat/Km CatLog
+calculated for an older record keeps the significant figures of kcat and Km. An
+older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number. Sequence and SMILES
 strings and an older record's review notes expand on request. Do not discard
