@@ -3103,7 +3103,7 @@
       sections.push(stack(sourceSection, `<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
-        <div><dt>Human-checked</dt><dd>Accepted records a human reviewer checked, as the status tag shows.</dd></div>
+        <div><dt>Human-checked</dt><dd>Accepted records where a human reviewer approved every value, as the tag shows.</dd></div>
         <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot; Human-checked also uses the human-review marks published with it.</dd></div>
       </dl></details>`));
     }
