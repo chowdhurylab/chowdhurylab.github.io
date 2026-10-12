@@ -3079,9 +3079,9 @@
   // by CatLog and the few earlier paper extractions.
   const statsSourceNames = [
     ["paper", "Read from papers"], ["brenda", "BRENDA"], ["oed", "Open Enzyme Database (OED)"],
-    ["uniprot", "UniProt"], ["sabio_rk", "SABIO-RK"], ["skid", "SKiD"],
+    ["uniprot", "UniProt"], ["sabio_rk", "SABIO-RK"], ["skid", "SKiD"], ["strenda", "STRENDA DB"],
   ];
-  const STATS_SOURCE_KEYS = { earlier_paper: "paper", strenda: "other", unrecorded: "other" };
+  const STATS_SOURCE_KEYS = { earlier_paper: "paper", unrecorded: "other" };
 
   function statsSources(overview) {
     const counts = {};
@@ -3089,6 +3089,8 @@
     if (given && typeof given === "object") {
       for (const [key] of statsSourceNames) counts[key] = statsCount(given[key]) || 0;
       counts.other = statsCount(given.other) || 0;
+      // An overview from before STRENDA DB had its own count holds it in "other".
+      if (!("strenda" in given)) counts.unsplit = true;
     } else {
       for (const [label, count] of Object.entries(manifestDistribution("source_db"))) {
         const bits = rowSourceBits({ source_db: label });
@@ -3107,7 +3109,9 @@
     return [
       ...paperItems,
       ...statsSourceNames.filter(([key]) => key !== "paper").map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key } })),
-      { value: "source_other", label: "Other", note: "Another database, or not recorded", count: counts.other || 0 },
+      counts.unsplit
+        ? { value: "source_other", label: "Other", note: "Another database, or not recorded", count: counts.other || 0 }
+        : { value: "source_unrecorded", label: "Source not recorded", count: counts.other || 0, params: { source: "unrecorded" } },
     ].filter((item) => item.count > 0);
   }
 
@@ -6706,7 +6710,8 @@
             v2Facts ? kv("Check", v2CheckText(v2Facts, v2CheckOptions(summary, detail, v2Proof))) : "",
             v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
           ]
-        : [kv("Review", reviewOutcome(summary, detail))]),
+        // The earlier review was an automated pipeline of AI models and code checks: the Guide's method section says so.
+        : [linkedKv("Review", `${escapePublic(reviewOutcome(summary, detail))} <a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →</span></a>`)]),
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
         ? `<div class="kv-line human-review-line"><span>Human review</span><strong>${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}</strong></div>`

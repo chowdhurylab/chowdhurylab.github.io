@@ -112,10 +112,10 @@ EC_CLASS_NAMES = {1: "Oxidoreductases", 2: "Transferases", 3: "Hydrolases", 4: "
                   6: "Ligases", 7: "Translocases"}
 # The record's source (Browse `source=`, rowSourceBits): each database source_db names, with paper for primary literature;
 # a merged value such as "sabio_rk;brenda" counts under each source it names.
-SOURCE_KEYS = ("paper", "brenda", "sabio_rk", "oed", "uniprot", "skid")
+SOURCE_KEYS = ("paper", "brenda", "sabio_rk", "oed", "uniprot", "skid", "strenda")
 SOURCE_TOKENS = {"primary_paper_direct": "paper", "primary_literature": "paper", "paper": "paper", "brenda": "brenda",
                  "sabio_rk": "sabio_rk", "sabio": "sabio_rk", "sabiork": "sabio_rk", "oed": "oed",
-                 "open_enzyme_database": "oed", "uniprot": "uniprot", "skid": "skid"}
+                 "open_enzyme_database": "oed", "uniprot": "uniprot", "skid": "skid", "strenda": "strenda"}
 # The Browse organism filter (foldSearch, compactSearch, organismSearchText, fieldWords, fieldContains): every word of
 # the name, folded, inside the record's folded organism with its short and common names.
 GREEK_NAMES = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon", "ζ": "zeta", "η": "eta",

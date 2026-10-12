@@ -173,7 +173,7 @@ class OverviewTests(unittest.TestCase):
         # Record a's kcat/Km agrees with 2.0 / 0.3 within its printed precision, so it is not flagged.
         self.assertEqual(result["cautions"], {"differs": 1, "units": 1, "unit_missing": 1, "temperature": 1, "none": 1})
         # A merged source ("sabio_rk;brenda") counts under each source it names, as the Browse source filter finds it.
-        self.assertEqual(result["sources"], {"paper": 1, "brenda": 2, "sabio_rk": 1, "oed": 1, "uniprot": 0, "skid": 0, "other": 0})
+        self.assertEqual(result["sources"], {"paper": 1, "brenda": 2, "sabio_rk": 1, "oed": 1, "uniprot": 0, "skid": 0, "strenda": 0, "other": 0})
         kcat = result["metrics"]["kcat"]
         # The kcat without a unit is left out; 2 and 2e9 s^-1 remain.
         self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e9))

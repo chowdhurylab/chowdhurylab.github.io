@@ -1085,7 +1085,9 @@ def check(driver, browser, url):
     for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] .stats-bars li",
                      ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_brenda']",
                      ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_catlog']",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_paper_earlier']"):
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_paper_earlier']",
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_strenda']",
+                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_unrecorded']"):
         found = driver.find_elements(By.CSS_SELECTOR, selector)
         if not found:
             continue
