@@ -88,8 +88,9 @@ as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
-right after Status. In a narrow window names give way first (two lines; the
-full name is on hover). Temperature and pH are two plain numeric columns, T (°C)
+right after Status. In a narrow window the names give way (two lines, broken
+between words while they can; the full name is on hover), and when that is not
+enough the table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
 and pH, with a dash when the value is missing. The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ with the stored digits (no
 rounding); the record and downloads keep the stored text. Every column fits from

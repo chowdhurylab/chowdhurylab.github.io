@@ -2056,7 +2056,7 @@
   }
 
   // The button's label; phones show "Download" (its accessible name stays "Download page").
-  const DOWNLOAD_PAGE_LABEL = 'Download<span class="download-page-detail"> page</span>';
+  const DOWNLOAD_PAGE_LABEL = '<span>Download<span class="download-page-detail"> page</span></span>';
 
   async function handlePageDownload() {
     const button = $("downloadPageButton");
@@ -3171,11 +3171,12 @@
   // column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Status. When the
-  // window is too narrow, names give way first (they wrap to two lines; the full name is in the tooltip), then EC.
-  // Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
+  // window is too narrow, the names give way (they wrap to two lines, between words while they can; the full name is in
+  // the tooltip); when even that is not enough, the table scrolls sideways. Phones show cards, and placeholder or empty
+  // tables keep the stylesheet's widths.
   const FIT_COLUMNS = [
     { key: "enzyme", cell: ".c-enzyme", min: 160, narrowMin: 150, cap: 340, shrink: 1 },
-    { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120, shrink: 2 },
+    { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120 },
     { key: "organism", cell: ".c-organism", min: 112, narrowMin: 104, cap: 200, shrink: 1 },
     { key: "substrate", cell: ".c-substrate", min: 120, narrowMin: 112, cap: 220, shrink: 1 },
     { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
@@ -3187,6 +3188,15 @@
   ];
   // A name column grows toward one line for its names up to this many times its cap; longer names keep two lines.
   const FIT_ONE_LINE_LIMIT = 2;
+  let fitTextContext = null;
+
+  // The widest word of a name, so a narrow window breaks names between words before it breaks a word.
+  function widestWordWidth(element) {
+    fitTextContext ??= document.createElement("canvas").getContext("2d");
+    const text = element.querySelector("strong") || element;
+    fitTextContext.font = window.getComputedStyle(text).font;
+    return Math.max(0, ...String(text.textContent || "").split(/\s+/).map((word) => fitTextContext.measureText(word).width));
+  }
 
   function fitTableColumns() {
     const table = $("recordTableWrap")?.querySelector?.("table");
@@ -3214,9 +3224,12 @@
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
       const width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
-      // A name column's width with every name on one line.
+      // A name column's width with every name on one line, and the narrowest that breaks no word.
       const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
-      return { ...column, min, width, oneLine };
+      const words = column.shrink
+        ? Math.min(width, Math.ceil(Math.max(...cells.map((cell) => widestWordWidth(cell.firstElementChild || cell))) + padding))
+        : min;
+      return { ...column, min, width, oneLine, words };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
@@ -3225,14 +3238,13 @@
     const shrinkable = widths.filter((column) => column.shrink);
     const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
     if (total() > available && available >= floor) {
-      // Too wide for the window: the names give way first, then EC, toward their minimums (they wrap to two lines).
-      for (const stage of [1, 2]) {
+      // Too wide for the window: the names give way, first to two lines broken between words, then to their minimums.
+      for (const target of [(column) => Math.max(column.min, column.words), (column) => column.min]) {
         const excess = total() - available;
-        const group = shrinkable.filter((column) => column.shrink === stage);
-        const slack = group.reduce((sum, column) => sum + column.width - column.min, 0);
+        const slack = shrinkable.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;
         const share = Math.min(1, excess / slack);
-        group.forEach((column) => { column.width = Math.floor(column.width - share * (column.width - column.min)); });
+        shrinkable.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
       }
     }
     const names = widths.filter((column) => column.shrink === 1);
