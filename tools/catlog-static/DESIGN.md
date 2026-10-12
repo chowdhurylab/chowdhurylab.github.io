@@ -38,7 +38,7 @@ typography:
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
   table:
     fontSize: 13px
-  scale: 12/16, 13/18, 14/20, 16/24, 18/24, 20/24, 24/28, 32/36px (size/line height; Stats rows keep 15px until its figure set replaces them)
+  scale: 12/16, 13/18, 14/20, 16/24, 18/24, 20/24, 24/28, 32/36px (size/line height)
   weights: 400, 500, 600
   numbers: tabular-nums lining-nums
 spacing: 4, 8, 12, 16, 24, 32, 48px
