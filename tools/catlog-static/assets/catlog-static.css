@@ -652,6 +652,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .snapshot-overview { min-height:40px; row-gap:6px }
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls) { display:none }
   .snapshot-more { display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-height:28px }
+  .snapshot-checked { align-self:center; padding:5px 0 }
   .summary-grid { gap:16px }
   .snapshot-meta { flex-basis:100%; flex-wrap:wrap; gap:4px 16px; border-left:0; padding-left:0 }
   .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }
