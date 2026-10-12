@@ -2742,7 +2742,7 @@
     // Main source.
     const sources = statsSources(overview);
     const sourceSection = statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
-      { note: "A record merged from several databases counts under each of them, so these counts add up to more than all records. Select a name to see those records in Browse." });
+      { note: "A record merged from several databases counts under each of them, so the counts can add up to more than all records. Select a name to see those records in Browse." });
 
     if (!overview) {
       sections.push(sourceSection);
