@@ -111,7 +111,10 @@ assert.equal(header.schema_version, 2);
 assert.equal(header.row_count, manifest.total_rows);
 assert.equal(header.order, "default_review_status");
 assert.equal(header.details_per_shard, manifest.details_per_shard);
-assert.deepEqual(header.fields, [...viewer.retained_fields, "s"]);
+// Paper identifiers (PMIDs, DOIs) from the Full data download, when the index was built with it.
+const paperFields = viewer.paper_id_fields || [];
+assert.ok(paperFields.length === 0 || paperFields.join() === "pmids,dois");
+assert.deepEqual(header.fields, [...viewer.retained_fields, ...paperFields, "s"]);
 const at = Object.fromEntries(header.fields.map((field, index) => [field, index]));
 const enums = header.enums;
 const texts = header.texts || {};
@@ -135,7 +138,26 @@ function decode(values) {
     if (row[field] === true) row[field] = row[source];
   }
   for (const [field, source] of Object.entries(viewer.derived_fields)) row[field] = row[source];
-  return { row, shard: values[at.s] };
+  const papers = paperFields.length
+    ? { pmids: [values[at.pmids]].flat().filter((value) => value != null),
+      dois: [values[at.dois]].flat().filter((value) => value != null).map((index) => header.dois[index]) }
+    : null;
+  return { row, shard: values[at.s], papers };
+}
+
+// Per record, the PMIDs and lower-case DOIs the Full data download gives it (the builder's _paper_ids).
+const enrichedIds = new Map();
+if (paperFields.length) {
+  for await (const line of lines(relative(`tools/catlog-static/${manifest.enriched_download.path}`))) {
+    const row = JSON.parse(line);
+    const pmids = [...new Set([row.pubmed_id, ...(row.supporting_pmids || [])]
+      .map((value) => String(value ?? "").trim()).filter((value) => /^[1-9][0-9]{0,9}$/.test(value)).map(Number))];
+    const dois = [...new Set([row.doi, ...(row.supporting_dois || [])]
+      .map((value) => String(value ?? "").trim().replace(/^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)/i, "").toLowerCase())
+      .filter((value) => value.startsWith("10.") && value.includes("/")))];
+    enrichedIds.set(row.record_key, { pmids, dois });
+  }
+  assert.equal(enrichedIds.size, manifest.total_rows, "the Full data download holds every record");
 }
 
 // rowComparator("evidence") from catlog-static.js, with localeCompare as the page uses it.
@@ -173,7 +195,7 @@ const viewerContentHash = createHash("sha256").update(`${headerLine}\n`);
 const recordKeys = new Set();
 let previousKey = null;
 for await (const line of viewerLines) {
-  const { row, shard } = decode(JSON.parse(line));
+  const { row, shard, papers } = decode(JSON.parse(line));
   rowCount += 1;
   assert.equal(recordKeys.has(row.record_key), false, `duplicate record_key at viewer row ${rowCount}`);
   recordKeys.add(row.record_key);
@@ -183,6 +205,7 @@ for await (const line of viewerLines) {
     assert.deepEqual(row[field], source.row[field], `${field} differs for ${row.record_key}`);
   }
   assert.equal(shard, Math.floor(source.position / header.details_per_shard), `detail shard of ${row.record_key}`);
+  if (papers) assert.deepEqual(papers, enrichedIds.get(row.record_key), `paper identifiers of ${row.record_key}`);
   assert.ok(manifest.detail_shards[shard], `detail shard ${shard} is not in the manifest`);
   const key = orderKey(row);
   if (previousKey) assert.ok(evidence(previousKey, key) <= 0, `viewer row ${rowCount} is out of the default order`);

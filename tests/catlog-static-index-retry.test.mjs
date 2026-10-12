@@ -330,7 +330,7 @@ async function runSchemaTwoCase() {
     "kcat_over_km", "ph_display", "temperature_k", "source_record_count", "enzyme_label_source", "source_db",
     "verification_status", "evidence_confidence_tier", "sequence_variant_status", "kcat_over_km_origin",
     "public_trust_basis", "temperature_display", "condition_flags", "kcat_unit", "km_unit", "kcat_over_km_unit",
-    "wild_type", "s",
+    "wild_type", "pmids", "dois", "s",
   ];
   const header = {
     kind: "catlog_viewer_index", schema_version: 2, row_count: 3, order: "default_review_status",
@@ -351,14 +351,15 @@ async function runSchemaTwoCase() {
       wild_type: [true, null],
     },
     texts: { organism: ["Homo sapiens"], kcat_over_km_display: ["Not reported"], kcat_display: ["Not reported"] },
+    dois: ["10.1021/bi101056m"],
   };
   const rows = [
     ["k1", true, "laccase", "1.10.3.2", 0, "ABTS", "Unknown", "P11509", true, "12.5", "0.25", "50", true, true, 50.0001,
-      7.5, 298.15, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      7.5, 298.15, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12514023, 0, 0],
     ["k2", "r2", "hexokinase", "2.7.1.1", "Escherichia coli", "glucose", "D10A", null, "Q99999", 0, "0.1", 0, null,
-      true, null, 7, null, 3, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0],
+      true, null, 7, null, 3, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, [2936344, 7999766], null, 0],
     ["k3", true, "esterase", "3.1.1.1", 0, "pNPA", "Unknown", null, null, 0, "2", 0, null, true, null, null, null, 1,
-      1, 1, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1],
+      1, 1, 2, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, null, null, 1],
   ];
   const text = `${[header, ...rows].map((line) => JSON.stringify(line)).join("\n")}\n`;
   const manifest = {
@@ -402,15 +403,15 @@ async function runSchemaTwoCase() {
     ensureCurrentFilters = async () => true;
     updateTableScrollControls = () => {};
     syncDetailPanelAccessibility = () => {};
-    window.loaderTest = {state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord};
+    window.loaderTest = {state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords};
   })();`, context);
-  const { state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord } = window.loaderTest;
+  const { state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords } = window.loaderTest;
   await loadRecordChunks();
-  return { state, delays, elements, orderedRecordsFor, publicSummaryRecord };
+  return { state, delays, elements, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords };
 }
 
 {
-  const { state, delays, orderedRecordsFor, publicSummaryRecord } = await runSchemaTwoCase();
+  const { state, delays, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords } = await runSchemaTwoCase();
   assert.equal(state.recordsReady, true);
   assert.deepEqual(delays, [], "a healthy schema-2 index needs no retry");
   assert.equal(state.indexOrder, "default_review_status");
@@ -440,5 +441,16 @@ async function runSchemaTwoCase() {
   assert.ok(!Object.keys(exported).some((key) => key.startsWith("_") || key === "detail_shard"),
     "downloads keep only public fields");
   assert.deepEqual(Array.from(await orderedRecordsFor("evidence"), (row) => row.record_key), ["k1", "k2", "k3"]);
+  // A PMID or a DOI (in full or its beginning) finds its paper's records; the identifiers stay out of downloads.
+  const found = (query) => Array.from(state.records.filter((row) => rowMatches(row, {
+    q: query, qWords: searchWords(query), recordStates: ["accepted", "curation_pending", "not_verified"], metrics: [],
+  })), (row) => row.record_key);
+  assert.deepEqual(found("12514023"), ["k1"]);
+  assert.deepEqual(found("pmid 7999766"), ["k2"]);
+  assert.deepEqual(found("doi:10.1021/bi101056m"), ["k1"]);
+  assert.deepEqual(found("https://doi.org/10.1021/bi1010"), ["k1"]);
+  assert.deepEqual(found("hexokinase 2936344"), ["k2"]);
+  assert.deepEqual(found("1.10.3.2"), ["k1"]);
+  assert.ok(!("_pmids" in exported) && !("pmids" in exported) && !("dois" in exported));
 }
 console.log("catlog-static-index-retry: ok");

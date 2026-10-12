@@ -1418,20 +1418,51 @@
       .some((ec) => ec === query || ec.startsWith(`${query}.`));
   }
 
+  // The DOIs of the loaded index (header.dois), which rows name by position.
+  let paperDois = Object.freeze([]);
+  const PMID_WORD = /^(pmid:)?([1-9]\d{0,9})$/;
+  const DOI_WORD = /^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:)?(10\.\d{4,9}\/\S+)$/;
+
+  function rowHasPmid(row, pmid) {
+    const value = row._pmids;
+    return value === pmid || (Array.isArray(value) && value.includes(pmid));
+  }
+
+  // A DOI typed in full or in part (its beginning) matches the records of that paper.
+  function rowHasDoi(row, doi) {
+    const value = row._dois;
+    if (value == null) return false;
+    return (Array.isArray(value) ? value : [value]).some((position) => paperDois[position]?.startsWith(doi));
+  }
+
   // Search words: every word must match, in any order. Words split at spaces only, so a chemical name keeps its commas
   // ("2,4-dinitrophenol" is one word); a comma or semicolon typed after a word is dropped. A word that is an EC number
-  // with at least two parts matches EC parts; "EC" in front of one is dropped.
+  // with at least two parts matches EC parts; "EC" in front of one is dropped. A number also matches the records of
+  // that PMID, and a DOI (10.xxxx/...) the records of that paper; "PMID" or "DOI" in front of one is dropped.
   function searchWords(query) {
     const words = String(query || "").split(/\s+/)
       .map((word) => word.replace(/^[,;]+|[,;]+$/g, ""))
       .filter((word) => /[\p{L}\p{N}]/u.test(word));
     const hasEcNumber = words.some((word) => ecQuery(word).includes("."));
+    const hasPaperId = words.some((word) => PMID_WORD.test(word) || DOI_WORD.test(word));
     return words
-      .filter((word) => !(hasEcNumber && word === "ec"))
+      .filter((word) => !(hasEcNumber && word === "ec") && !(hasPaperId && /^(pmid|doi):?$/.test(word)))
       .map((word) => {
         const ec = ecQuery(word);
-        return ec.includes(".") ? { ec } : { text: word };
+        if (ec.includes(".")) return { ec };
+        const doi = word.match(DOI_WORD);
+        if (doi) return { doi: doi[1].replace(/;.*$/, "") };
+        const pmid = word.match(PMID_WORD);
+        if (pmid) return pmid[1] ? { pmid: Number(pmid[2]) } : { pmid: Number(pmid[2]), text: word };
+        return { text: word };
       });
+  }
+
+  function wordMatches(row, word, text) {
+    if (word.ec) return ecMatches(row, word.ec);
+    if (word.doi) return rowHasDoi(row, word.doi);
+    if (word.pmid && rowHasPmid(row, word.pmid)) return true;
+    return word.text !== undefined && text.includes(word.text);
   }
 
   function loadProgressText() {
@@ -1599,6 +1630,10 @@
     "record_key", "review_key", ...VIEWER_INDEX_TEXT_FIELDS, "protein_accession", "kcat", "km", "kcat_over_km",
     "ph_display", "temperature_k", "source_record_count", ...VIEWER_INDEX_ENUM_FIELDS, "s",
   ];
+  // Optional paper identifiers (an index built with the Full data download next to the table): "pmids" holds a PMID, a
+  // list of them or null; "dois" an index into header.dois (lower-case DOIs), a list of them or null. The rows keep
+  // them as _pmids and _dois, for the search box only.
+  const VIEWER_INDEX_PAPER_FIELDS = ["pmids", "dois"];
   // Record-panel fields a schema-2 row leaves to the record's detail entry.
   const DETAIL_ONLY_FIELDS = [
     "identity_resolution_state", "uniprot_candidate_ids", "sequence_resolved", "has_proof_excerpt", "proof_kind",
@@ -1641,6 +1676,8 @@
     };
     const item = (field, v) => enums[field][v[at[field]]];
     const number = (field, v, display) => (v[at[field]] === true ? Number(display) : v[at[field]]);
+    const [pmidsAt, doisAt] = VIEWER_INDEX_PAPER_FIELDS.map((field) => header.fields.indexOf(field));
+    paperDois = Object.freeze(Array.isArray(header.dois) ? header.dois.map(String) : []);
     function ViewerRow(v) {
       this.record_key = v[at.record_key];
       this.review_key = v[at.review_key] === true ? this.record_key : v[at.review_key];
@@ -1688,6 +1725,8 @@
       this._sortTemperature = null;
       this._sortPh = null;
       this._search = null;
+      this._pmids = pmidsAt >= 0 ? v[pmidsAt] : null;
+      this._dois = doisAt >= 0 ? v[doisAt] : null;
     }
     return ViewerRow;
   }
@@ -1988,6 +2027,8 @@
       _sortPh,
       _search,
       _search_text,
+      _pmids,
+      _dois,
       next_best_action,
       next_best_action_reason,
       status_conflict_warning,
@@ -2700,7 +2741,7 @@
     if (filters.q) {
       const words = filters.qWords || searchWords(filters.q);
       const text = searchText(row);
-      if (!words.every((word) => (word.ec ? ecMatches(row, word.ec) : text.includes(word.text)))) return false;
+      if (!words.every((word) => wordMatches(row, word, text))) return false;
     }
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
     if (filters.v2Only && !isV2Row(row)) return false;
@@ -3230,8 +3271,8 @@
       ? `Record ${query} is not in this snapshot`
       : query ? `No records match "${query}"` : "No records match these filters";
     const hint = missingRecord
-      ? "Records change between snapshots. Search for the enzyme, organism or substrate to find the current ones."
-      : "Check the spelling, or try an EC number (1.1.1.1) or a UniProt accession (P11509).";
+      ? "Records change between snapshots. Search for the enzyme, organism, substrate or PMID to find the current ones."
+      : "Check the spelling, or try an EC number (1.1.1.1), a UniProt accession (P11509) or a PMID.";
     return `
       <tr class="empty-row">
         <td colspan="${tableColumnCount()}">

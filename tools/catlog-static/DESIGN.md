@@ -46,7 +46,10 @@ the bottom page controls compact, with page size left and navigation right.
 
 Filters open on request at every width. Search matches every word in any order,
 and common species names (human, mouse, yeast, E. coli); an EC number matches
-whole parts, so 1.1.1 is that subclass only. At 1180px and below the header is
+whole parts, so 1.1.1 is that subclass only. A number also finds the records of
+that PMID, and a DOI (in full or its beginning, with or without doi.org) those
+of its paper: the index carries each record's PMIDs and DOIs from the Full data
+download of the same snapshot. At 1180px and below the header is
 one grid on every view: brand and Download, the tabs on one line, then search
 (Browse only). A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details

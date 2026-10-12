@@ -4,6 +4,9 @@
 Schema 2 (``encoding: header_arrays_enums``): line 1 is a header naming the fields and the shared values of the
 low-cardinality fields; every further line is one JSON array per record, already in the page's default order
 (Review status), so the first rows can be shown while the rest of the file is still downloading.
+
+The search box also finds a paper's records by PMID or DOI: when the Full data download of the same snapshot sits
+next to the table (or is named), each row also carries its paper identifiers (PAPER_FIELDS).
 """
 
 from __future__ import annotations
@@ -196,6 +199,15 @@ TABLE_FIELDS = (
     "kcat_over_km_unit",
 )
 
+# Paper identifiers, from the Full data download (catlog-enriched.<id>.jsonl.gz: pubmed_id, supporting_pmids, doi,
+# supporting_dois), not the table. Written after VIEWER_FIELDS, before "s": "pmids" holds one PMID as a number, a list
+# of them, or null; "dois" one index into header["dois"] (the lower-case DOIs, sorted), a list of indexes, or null.
+# Without the Full data file of the same records the index has neither field and the page searches without them.
+PAPER_FIELDS = ("pmids", "dois")
+ENRICHED_NAME = re.compile(r"catlog-enriched\.[0-9a-f]{12}\.jsonl\.gz")
+PMID_TEXT = re.compile(r"[1-9][0-9]{0,9}")
+DOI_PREFIX = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
+
 if set(VIEWER_FIELDS) & set(OMITTED_FIELDS):
     raise RuntimeError("viewer and omitted fields overlap")
 if set(TABLE_FIELDS) != set(VIEWER_FIELDS) | set(OMITTED_FIELDS):
@@ -298,7 +310,63 @@ def shared_texts(source_path: Path) -> dict[str, list[str]]:
     }
 
 
-def build(source_path: Path, target: Path, details_per_shard: int = DETAILS_PER_SHARD) -> dict[str, object]:
+def _paper_ids(enriched_path: Path, record_keys: set[str]) -> dict[str, tuple[list[int], list[str]]] | None:
+    """Per record_key, its PMIDs (the paper's own first) and lower-case DOIs from one Full data download; None when
+    that download does not hold exactly these records (another snapshot's)."""
+    found: dict[str, tuple[list[int], list[str]]] = {}
+    with gzip.open(enriched_path, "rb") as source:
+        for raw_line in source:
+            if not raw_line.strip():
+                continue
+            row = json.loads(raw_line)
+            key = row.get("record_key")
+            if key not in record_keys or key in found:
+                return None
+            pmids: list[int] = []
+            for value in (row.get("pubmed_id"), *(row.get("supporting_pmids") or ())):
+                text = str(value or "").strip()
+                if PMID_TEXT.fullmatch(text) and int(text) not in pmids:
+                    pmids.append(int(text))
+            dois: list[str] = []
+            for value in (row.get("doi"), *(row.get("supporting_dois") or ())):
+                text = DOI_PREFIX.sub("", str(value or "").strip()).lower()
+                if text.startswith("10.") and "/" in text and text not in dois:
+                    dois.append(text)
+            found[key] = (pmids, dois)
+    return found if len(found) == len(record_keys) else None
+
+
+def paper_ids(source_path: Path, record_keys: set[str], enriched_path: Path | None = None):
+    """The Full data download of these records and its paper identifiers: the named file, else the newest
+    catlog-enriched.<id>.jsonl.gz next to the table that holds exactly the table's records; (None, {}) when the
+    folder has none."""
+    if enriched_path is not None:
+        ids = _paper_ids(enriched_path, record_keys)
+        if ids is None:
+            raise RuntimeError(f"{enriched_path.name} does not hold the table's records")
+        return enriched_path, ids
+    candidates = sorted(
+        (path for path in source_path.parent.iterdir() if ENRICHED_NAME.fullmatch(path.name)),
+        key=lambda path: (-path.stat().st_mtime, path.name),
+    )
+    for candidate in candidates:
+        ids = _paper_ids(candidate, record_keys)
+        if ids is not None:
+            return candidate, ids
+    return None, {}
+
+
+def _id_value(values: list[int]) -> object:
+    """One identifier as itself, several as a list, none as null."""
+    return values[0] if len(values) == 1 else (values or None)
+
+
+def build(
+    source_path: Path,
+    target: Path,
+    details_per_shard: int = DETAILS_PER_SHARD,
+    enriched_path: Path | None = None,
+) -> dict[str, object]:
     if type(details_per_shard) is not int or details_per_shard < 1:
         raise RuntimeError("details_per_shard must be a positive integer")
     texts = shared_texts(source_path)
@@ -306,7 +374,7 @@ def build(source_path: Path, target: Path, details_per_shard: int = DETAILS_PER_
     record_keys: set[str] = set()
     enum_values: dict[str, list] = {field: [] for field in ENUM_FIELDS}
     enum_index: dict[str, dict[str, int]] = {field: {} for field in ENUM_FIELDS}
-    rows: list[tuple[tuple, bytes, str]] = []
+    rows: list[tuple[tuple, list, str, int]] = []
     source_bytes = 0
     encoded_numbers = {field: 0 for field in (*NUMBER_FROM_DISPLAY, *SAME_AS)}
 
@@ -358,21 +426,32 @@ def build(source_path: Path, target: Path, details_per_shard: int = DETAILS_PER_
                     value = True
                     encoded_numbers[field] += 1
                 values.append(value)
-            values.append(position // details_per_shard)
-            encoded = (json.dumps(values, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
-            rows.append((default_order_key(row, position), encoded, record_key))
+            rows.append((default_order_key(row, position), values, record_key, position))
 
     rows.sort(key=lambda item: item[0])
+    papers_path, ids = paper_ids(source_path, record_keys, enriched_path)
+    paper_fields = PAPER_FIELDS if papers_path else ()
+    dois = sorted({doi for _pmids, row_dois in ids.values() for doi in row_dois})
+    doi_index = {doi: index for index, doi in enumerate(dois)}
+    encoded_rows: list[bytes] = []
+    for _order, values, record_key, position in rows:
+        if paper_fields:
+            row_pmids, row_dois = ids[record_key]
+            values += [_id_value(row_pmids), _id_value([doi_index[doi] for doi in row_dois])]
+        values.append(position // details_per_shard)
+        encoded_rows.append((json.dumps(values, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8"))
     header = {
         "kind": "catlog_viewer_index",
         "schema_version": SCHEMA_VERSION,
         "row_count": len(rows),
         "order": ROW_ORDER,
         "details_per_shard": details_per_shard,
-        "fields": [*VIEWER_FIELDS, "s"],
+        "fields": [*VIEWER_FIELDS, *paper_fields, "s"],
         "enums": enum_values,
         "texts": texts,
     }
+    if paper_fields:
+        header["dois"] = dois
     header_line = (json.dumps(header, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
     viewer_content_digest = hashlib.sha256()
     viewer_bytes = 0
@@ -384,7 +463,7 @@ def build(source_path: Path, target: Path, details_per_shard: int = DETAILS_PER_
             compresslevel=9,
             mtime=0,
         ) as compressed_output:
-            for encoded in (header_line, *(item[1] for item in rows)):
+            for encoded in (header_line, *encoded_rows):
                 compressed_output.write(encoded)
                 viewer_content_digest.update(encoded)
                 viewer_bytes += len(encoded)
@@ -407,6 +486,10 @@ def build(source_path: Path, target: Path, details_per_shard: int = DETAILS_PER_
         "viewer_uncompressed_bytes": viewer_bytes,
         "retained_fields": list(VIEWER_FIELDS),
         "omitted_fields": list(OMITTED_FIELDS),
+        "paper_id_fields": list(paper_fields),
+        "paper_ids_source": papers_path.name if papers_path else None,
+        "rows_with_pmid": sum(1 for row_pmids, _dois in ids.values() if row_pmids),
+        "rows_with_doi": sum(1 for _pmids, row_dois in ids.values() if row_dois),
     }
 
 
@@ -476,6 +559,7 @@ def viewer_descriptor(metadata: dict[str, object]) -> dict[str, object]:
         "shared_text_fields": list(SHARED_TEXT_FIELDS),
         "derived_fields": dict(DERIVED_FIELDS),
         "detail_only_fields": list(DETAIL_ONLY_FIELDS),
+        "paper_id_fields": list(metadata.get("paper_id_fields", [])),
     }
 
 
@@ -520,7 +604,12 @@ def main() -> int:
             temporary_name = temporary.name
         temporary_path = Path(temporary_name)
         details_per_shard = manifest.get("details_per_shard", DETAILS_PER_SHARD)
-        metadata = build(source_path, temporary_path, details_per_shard=details_per_shard)
+        enriched_descriptor = manifest.get("enriched_download")
+        enriched_path = (
+            manifest_data_path(enriched_descriptor.get("path"), field="enriched_download.path")
+            if isinstance(enriched_descriptor, dict) and enriched_descriptor.get("path") else None
+        )
+        metadata = build(source_path, temporary_path, details_per_shard=details_per_shard, enriched_path=enriched_path)
         if table_descriptor.get("sha256") != metadata["source_sha256"]:
             raise SystemExit("manifest table_download hash does not match the projection source")
         target = DATA_ROOT / f"catlog-viewer-index.{str(metadata['viewer_sha256'])[:12]}.jsonl.gz"

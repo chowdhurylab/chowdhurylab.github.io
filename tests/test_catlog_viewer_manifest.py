@@ -113,6 +113,37 @@ class ViewerManifestTests(unittest.TestCase):
         for field in ("path", "sha256", "content_sha256", "size_bytes", "source_table_sha256", "source_table_size_bytes"):
             self.assertIn(field, descriptor)
 
+    def test_paper_ids_come_from_the_full_data_of_the_same_records(self):
+        rows = [self.table_row("a", verification_status="verified"), self.table_row("b"), self.table_row("c")]
+        ids = {"a": ("12514023", ["12514023"], "10.1021/BI101056M", ["10.1021/BI101056M"]),
+               "b": ("2936344", ["2936344", "7999766"], None, []), "c": (None, [], None, [])}
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        table = root / "catlog-table.000000000000.jsonl.gz"
+        table.write_bytes(gzip.compress("".join(json.dumps(row) + "\n" for row in rows).encode(), mtime=0))
+        enriched = [dict(row, pubmed_id=ids[row["record_key"]][0], supporting_pmids=ids[row["record_key"]][1],
+                         doi=ids[row["record_key"]][2], supporting_dois=ids[row["record_key"]][3]) for row in rows]
+        (root / "catlog-enriched.111111111111.jsonl.gz").write_bytes(
+            gzip.compress("".join(json.dumps(row) + "\n" for row in enriched).encode(), mtime=0))
+        # another snapshot's Full data (other records) next to it is not used
+        (root / "catlog-enriched.222222222222.jsonl.gz").write_bytes(
+            gzip.compress((json.dumps(dict(enriched[0], record_key="z")) + "\n").encode(), mtime=0))
+        target = root / "viewer.jsonl.gz"
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            metadata = BUILD.build(table, target, details_per_shard=2)
+        lines = gzip.decompress(target.read_bytes()).decode().splitlines()
+        header = json.loads(lines[0])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, *BUILD.PAPER_FIELDS, "s"])
+        self.assertEqual(header["dois"], ["10.1021/bi101056m"])
+        decoded = {row[0]: dict(zip(header["fields"], row)) for row in map(json.loads, lines[1:])}
+        self.assertEqual((decoded["a"]["pmids"], decoded["a"]["dois"]), (12514023, 0))
+        self.assertEqual((decoded["b"]["pmids"], decoded["b"]["dois"]), ([2936344, 7999766], None))
+        self.assertEqual((decoded["c"]["pmids"], decoded["c"]["dois"]), (None, None))
+        self.assertEqual(metadata["paper_ids_source"], "catlog-enriched.111111111111.jsonl.gz")
+        metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
+        self.assertEqual(BUILD.viewer_descriptor(metadata)["paper_id_fields"], ["pmids", "dois"])
+
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
