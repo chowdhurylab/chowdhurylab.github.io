@@ -265,7 +265,8 @@ recorded"), then "corrected", "no paper linked" or "✓ human-checked" ("Accepte
 from paper · ✓ human-checked", "Accepted · BRENDA · corrected"). Then, in this order: Measurement (the values,
 each caution once as a plain note under them, and for a record read from the
 paper "As printed in the paper (Table 2)": one row per value with As printed and
-In catalog units, a Check column only when results differ, then each quoted
+In catalog units, an AI check column only when the values' results differ,
+in words that give the new state ("Unit set to mM", "Confirmed"), then each quoted
 line once, "Table 2 row, as extracted from the paper's text", with table
 markers removed and K_M set as K<sub>m</sub>; a row of more than four cells, or
 one whose ± signs extraction dropped, is folded under "Show the line as
@@ -274,7 +275,11 @@ extracted" with that warning); Assay conditions
 Paper and review (links; for a record read by CatLog a Method line, the short
 method sentence ending "units converted by code" or "values stored as printed"
 with a link to the Guide's method section, and a Check line, one result for
-every value or a pointer to the Check column, then an AI audit line with the
+every value ("All values confirmed.", "Unit set to mM for every value.") or a
+pointer to the AI check column, then once what the check changed on the record
+("The AI check also removed EC 2.7.2.12 and corrected the assay conditions"),
+and "as printed; see the note on kcat/Km" when a value carries a caution; then
+an AI audit line with the
 audit's date and verdict only when one re-checked the values; for an older
 record its Review line; a Human review line with the reviewer's facts-only note on every record
 that has a mark; merged rows; an older record's notes); Protein and structure; Source details,

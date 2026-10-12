@@ -5473,11 +5473,11 @@
   // The values as the paper prints them, in Measurement right under the values: one row per value, "As printed" and
   // "In catalog units" (with how code converted it); a Check column only when the values' results differ (one result for
   // all is said once, in Paper and review). The place is in the heading when every value shares it.
-  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts), cautions = []) {
+  function v2ValuesHtml(summary, lines, facts = lines.map(v2LineFacts), cautions = [], context = {}) {
     const text = (value) => caretHtml(escapePublic(value));
     const places = new Set(lines.map(v2LinePlace));
     const shared = places.size === 1 ? [...places][0] : "";
-    const checks = facts.some((fact) => fact.check) && !v2SharedCheck(facts);
+    const checks = facts.some((fact) => fact.check) && !v2SharedCheck(facts, context);
     const rows = lines.map((line, index) => {
       const fact = facts[index];
       const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
@@ -5491,7 +5491,7 @@
       const conversion = caution ? String(fact.conversion || "").replace(/,?\s*printed unit read as .+$/, "") : fact.conversion;
       const how = (conversion ? `<small>${text(conversion)}</small>` : "")
         + (caution ? `<small class="unit-caution"><span class="value-flag" aria-hidden="true"></span>${escapePublic(`CatLog uses ${caution.used}, not the printed ${caution.printed}`)}</small>` : "");
-      return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(fact.check)}</td>` : ""}</tr>`;
+      return `<tr><th scope="row">${label}</th><td>${text(fact.printed)}${place}</td><td>${stored.trim()}${how}</td>${checks ? `<td>${text(valueCheckText(fact, context))}</td>` : ""}</tr>`;
     }).join("");
     // Each printed line once; a "line" that is only the printed number itself adds nothing.
     const notes = lines.map((line, index) => [v2LinePlace(line), facts[index].printedLine, facts[index].printed])
@@ -5500,7 +5500,7 @@
       .map(([place, printedLine]) => printedLineNoteHtml(place, printedLine));
     const heading = `As printed in the paper${shared ? ` (${shared})` : ""}`;
     return `<div class="detail-values"><h4>${escapePublic(heading)}</h4>`
-      + `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">As printed</th><th scope="col">In catalog units</th>${checks ? '<th scope="col">Check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
+      + `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">As printed</th><th scope="col">In catalog units</th>${checks ? '<th scope="col">AI check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
       + notes.join("")
       + "</div>";
   }
@@ -5535,32 +5535,128 @@
       + `<p class="printed-line-note">Text extraction can drop symbols such as ±.</p></details>`;
   }
 
-  // The second run's result when it is the same for every value ("confirmed", "corrected: ..."), else "".
-  function v2SharedCheck(facts) {
-    const results = new Set(facts.map((fact) => fact.check));
+  // ---- Record panel: what the AI check found ----
+  // A check ("confirmed", "corrected: <what>; <what>", or plain phrases) as phrases that give the new state: those about
+  // a value ("unit set to mM") and those about the whole record ("EC 2.7.2.12 removed"). Older data name the fields
+  // ("unit used for the conversion (was none, now mM)"); they are said the same way.
+  const CHECK_FIELD_PHRASES = [
+    [/^unit used for the conversion \(was (.*), now (.*)\)$/, (was, now) => (now === "none" ? "unit for the conversion removed" : `unit set to ${now}`)],
+    [/^printed unit \(was (.*), now (.*)\)$/, (was, now) => `printed unit corrected to ${now}`],
+    [/^printed value \(was (.*), now (.*)\)$/, (was, now) => `printed value corrected to ${now}`],
+    [/^qualifier \(apparent, Hill fit or similar\)$/, () => "qualifier corrected"],
+    [/^(?:location in the paper|printed line)$/, () => "location in the paper corrected"],
+    [/^EC number \(was (.*), now (.*)\)$/, (was, now) => (now === "none" ? `EC ${was} removed` : (was === "none" ? `EC ${now} added` : `EC corrected to ${now}`))],
+    [/^pH \(was (.*), now (.*)\)$/, (was, now) => (now === "not printed" ? "pH removed (not printed in the paper)" : `pH corrected to ${now}`)],
+    [/^temperature \(was (.*), now (.*)\)$/, (was, now) => (now === "not printed" ? "temperature removed (not printed in the paper)" : `temperature corrected to ${now} °C`)],
+    [/^enzyme variant \(was (.*), now (.*)\)$/, (was, now) => (now === "none" ? "variant removed" : `variant corrected to ${now}`)],
+    [/^organism \(was (.*), now (.*)\)$/, (was, now) => `organism corrected to ${now}`],
+    [/^substrate name$/, () => "substrate name corrected"],
+    [/^cosubstrate$/, () => "cosubstrate corrected"],
+    [/^construct description$/, () => "construct description corrected (see Preparation)"],
+    [/^assay conditions$/, () => "assay conditions corrected (see Conditions)"],
+    [/^protein IDs$/, () => "UniProt ID corrected"],
+  ];
+  const VALUE_CHECK_PHRASE = /^(?:unit\b|printed (?:unit|value)\b|qualifier\b|location in the paper\b)/i;
+
+  function checkPhrases(check, { hasPreparation = true, hasConditions = true } = {}) {
+    const text = String(check || "").trim();
+    if (!text || /^confirmed$/i.test(text)) return { value: [], record: [] };
+    const items = text.replace(/^corrected(?::\s*|$)/i, "").split(/;\s*/).map((item) => item.trim().replace(/\.$/, "")).filter(Boolean);
+    const phrases = items.length ? items.map((item) => {
+      const known = CHECK_FIELD_PHRASES.find(([pattern]) => pattern.test(item));
+      return known ? known[1](...item.match(known[0]).slice(1)) : item;
+    }) : ["corrected"];
+    const placed = phrases
+      .map((phrase) => (hasPreparation ? phrase : phrase.replace(/ \(see Preparation\)$/, "")))
+      .map((phrase) => (hasConditions ? phrase : phrase.replace(/ \(see Conditions\)$/, "")));
+    const unique = [...new Set(placed)];
+    return { value: unique.filter((phrase) => VALUE_CHECK_PHRASE.test(phrase)), record: unique.filter((phrase) => !VALUE_CHECK_PHRASE.test(phrase)) };
+  }
+
+  // A record-level phrase as the AI check's action: "EC 2.7.2.12 removed" -> "removed EC 2.7.2.12", "assay conditions
+  // corrected (see Conditions)" -> "corrected the assay conditions (see Conditions)".
+  function checkAction(phrase) {
+    let match = phrase.match(/^(EC \S+) (removed|added)$/);
+    if (match) return `${match[2]} ${match[1]}`;
+    match = phrase.match(/^EC corrected to (.+)$/);
+    if (match) return `corrected the EC number to ${match[1]}`;
+    match = phrase.match(/^(.+?) (corrected|removed|added)(?: (to .+?))?( \(.+\))?$/);
+    if (match) return `${match[2]} the ${match[1]}${match[3] ? ` ${match[3]}` : ""}${match[4] || ""}`;
+    return phrase;
+  }
+
+  function sentenceList(items) {
+    return items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+  }
+
+  // The value-level result a value's Check cell shows: "Confirmed" or what was changed.
+  function valueCheckText(fact, context) {
+    const { value } = checkPhrases(fact.check, context);
+    const text = value.length ? value.join("; ") : (fact.check ? "confirmed" : "");
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+  }
+
+  // The value-level result when it is the same for every value, else "".
+  function v2SharedCheck(facts, context) {
+    const results = new Set(facts.map((fact) => valueCheckText(fact, context)));
     return results.size === 1 ? [...results][0] : "";
   }
 
-  // The Check line: one result for every value, or a pointer to the Check column when they differ.
-  function v2CheckText(facts) {
-    const shared = v2SharedCheck(facts);
+  // The Check line: one result for every value (or a pointer to the Check column when they differ), then once what the
+  // AI check changed on the record, and, when a value carries a caution, where its note is.
+  function v2CheckText(facts, { context = {}, cautionFields = [] } = {}) {
     if (!facts.some((fact) => fact.check)) return "";
-    if (!shared) return "The results differ by value: see the Check column under the values.";
-    if (shared === "confirmed") return "All values confirmed.";
-    const corrected = shared.match(/^corrected: (.+)$/);
-    return corrected ? `Corrected for every value: ${corrected[1]}.` : `${shared.charAt(0).toUpperCase()}${shared.slice(1)}.`;
+    const shared = v2SharedCheck(facts, context);
+    const note = cautionFields.length
+      ? `see the ${cautionFields.length > 1 ? "notes" : "note"} on ${sentenceList(cautionFields.map((field) => metricNames[field]))}`
+      : "";
+    let head;
+    if (!shared) head = "The results differ by value: see the AI check column under the values.";
+    else if (shared === "Confirmed") head = note ? `All values confirmed as printed; ${note}.` : "All values confirmed.";
+    else head = `${shared} for every value.`;
+    if (note && shared !== "Confirmed") head += ` See the ${cautionFields.length > 1 ? "notes" : "note"} on ${sentenceList(cautionFields.map((field) => metricNames[field]))}.`;
+    const record = [...new Set(facts.flatMap((fact) => checkPhrases(fact.check, context).record))];
+    // "corrected the cosubstrate and corrected the assay conditions" reads "corrected the cosubstrate and the assay conditions".
+    const actions = record.map(checkAction).reduce((merged, action) => {
+      const verb = (action.match(/^(?:corrected|removed|added) the /) || [""])[0];
+      const last = merged.at(-1);
+      if (verb && last?.verb === verb) last.objects.push(action.slice(verb.length));
+      else merged.push({ verb, objects: [verb ? action.slice(verb.length) : action] });
+      return merged;
+    }, []).map(({ verb, objects }) => `${verb}${sentenceList(objects.map((object, index) => (index && verb ? `the ${object}` : object)))}`);
+    return actions.length ? `${head} The AI check also ${sentenceList(actions)}.` : head;
   }
 
   // ---- Record panel: measurement and assay conditions ----
   // Two sections: Measurement (the values, each caution once, then, for a record read from the paper, the values as
   // printed) and Assay conditions (cosubstrate, temperature, pH, the other conditions and the preparation).
-  function measurementSection(summary, detail) {
-    const metricSummary = {
+  // The record's values with the Ki fields of its detail.
+  function metricSummaryFor(summary, detail) {
+    return {
       ...summary,
       has_ki: detail.has_ki ?? summary.has_ki,
       ki_display: detail.ki_display ?? summary.ki_display,
       ki_unit: detail.ki_unit ?? summary.ki_unit,
     };
+  }
+
+  // Every note under the values, each once: the flags, the sources' listed kcat/Km, a printed unit CatLog did not use.
+  function measurementNotes(summary, detail, { proof = v2ProofFacts(summary, detail) } = {}) {
+    const metricSummary = metricSummaryFor(summary, detail);
+    const flags = conditionFlags(summary, detail);
+    const consistent = consistentEfficiency(metricSummary, detail, flags);
+    const unitCautions = unitPrefixCautions(metricSummary, proof);
+    const notes = flagNotes(metricSummary, detail, flags, consistent);
+    const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
+    if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "listed values differ", text: listedNote });
+    unitCautions.forEach(({ field, text }) => {
+      notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
+    });
+    return { notes, unitCautions, consistent, flags };
+  }
+
+  function measurementSection(summary, detail) {
+    const metricSummary = metricSummaryFor(summary, detail);
     const temperature = formatTemperature(summary);
     const flags = conditionFlags(summary, detail);
     const hasTemperatureFlag = [...flags].some((flag) => flag.startsWith("temperature_"));
@@ -5582,17 +5678,11 @@
       ["<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat_over_km"],
     ];
     if (metricSummary.has_ki) metrics.push(["<i>K</i><sub>i</sub>", "ki"]);
-    const consistent = consistentEfficiency(metricSummary, detail, flags);
     // A record read from the paper: its values as printed, right under the values they give.
     const proof = v2ProofFacts(summary, detail);
-    const unitCautions = unitPrefixCautions(metricSummary, proof);
-    const notes = flagNotes(metricSummary, detail, flags, consistent);
-    const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
-    if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "listed values differ", text: listedNote });
-    unitCautions.forEach(({ field, text }) => {
-      notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
-    });
+    const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
+    const checkContext = { hasPreparation: Boolean(conditions.preparation), hasConditions: Boolean(conditions.conditions) };
     // A record with three dashes says so in words (some keep a Ki only).
     const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !metricHasValue(metricSummary, field));
     const emptyNote = !noKinetics
@@ -5625,7 +5715,7 @@
         ${listed ? `<div class="detail-kv measurement-listed">${listed}</div>` : ""}
         ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
         ${flagNotesHtml(notes)}
-        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts, unitCautions) : ""}
+        ${proof ? v2ValuesHtml(summary, proof.lines, proof.facts, unitCautions, checkContext) : ""}
       </section>
       <section class="detail-section conditions-section">
         <h3>Assay conditions</h3>
@@ -5954,6 +6044,17 @@
     });
   }
 
+  // What the Check line needs: whether Preparation and Conditions rows exist (corrections point to them) and which values
+  // carry a caution (the line points to their notes).
+  function v2CheckOptions(summary, detail, proof) {
+    const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
+    const { notes } = measurementNotes(summary, detail, { proof });
+    return {
+      context: { hasPreparation: Boolean(conditions.preparation), hasConditions: Boolean(conditions.conditions) },
+      cautionFields: ["kcat", "km", "kcat_over_km"].filter((field) => notes.some((note) => note.field === field)),
+    };
+  }
+
   function renderDetail(summary, detail) {
     const pmidsRaw = Array.isArray(detail.supporting_pmids)
       ? detail.supporting_pmids.filter(Boolean)
@@ -5996,7 +6097,7 @@
       ...(v2Record
         ? [
             linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
-            v2Facts ? kv("Check", v2CheckText(v2Facts)) : "",
+            v2Facts ? kv("Check", v2CheckText(v2Facts, v2CheckOptions(summary, detail, v2Proof))) : "",
             v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
           ]
         : [kv("Review", reviewOutcome(summary, detail))]),

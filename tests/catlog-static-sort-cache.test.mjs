@@ -1985,11 +1985,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
   assert.doesNotMatch(html, /<span>Review<\/span>|second, separate AI run|independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
-    proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: substrate name")] });
+    proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /compared each value with the paper; units converted by code\./);
-  assert.match(html, /<span>Check<\/span><strong>The results differ by value: see the Check column under the values\.<\/strong>/);
-  assert.match(html, /<th scope="col">Check<\/th>/);
+  assert.match(html, /<span>Check<\/span><strong>The results differ by value: see the AI check column under the values\.<\/strong>/);
+  assert.match(html, /<th scope="col">AI check<\/th>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
   assert.match(badge, /aria-label="Accepted, from paper"/);
@@ -2096,6 +2096,41 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
   /row, as extracted/, "only a table's line is a row");
+}
+// What the AI check found, in words that give the new state: per value in the AI check column ("Unit set to mM"), once
+// for the record in the Check line ("The AI check also removed EC 2.7.2.12 and corrected the assay conditions").
+{
+  const v2Summary = row({ record_key: "checks", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
+  const line = (metric, check) => ({ metric, table_label: "Table 2", printed: "1", check, conversion: "" });
+  const render = (lines, extra = {}) => {
+    api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: lines, ...extra });
+    return element("detailContent").innerHTML;
+  };
+  let html = render([line("kcat", "corrected: construct description"), line("Km", "corrected: construct description")],
+    { assay_conditions_summary: "50 mM Tris; preparation: His-tagged" });
+  assert.match(html, /<span>Check<\/span><strong>All values confirmed\. The AI check also corrected the construct description \(see Preparation\)\.<\/strong>/);
+  assert.doesNotMatch(html, /AI check<\/th>|second run|for every value:/);
+  html = render([line("kcat", "corrected: unit used for the conversion (was none, now mM)"), line("Km", "corrected: unit used for the conversion (was none, now mM)")]);
+  assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\.<\/strong>/);
+  html = render([line("kcat", "confirmed"), line("Km", "corrected: EC number (was 2.7.2.12, now none); assay conditions; qualifier (apparent, Hill fit or similar)")],
+    { assay_conditions_summary: "pH 7; 50 mM Tris" });
+  assert.match(html, /<th scope="col">AI check<\/th>/);
+  assert.match(html, /<td>Confirmed<\/td><\/tr>/);
+  assert.match(html, /<td>Qualifier corrected<\/td><\/tr>/);
+  assert.match(html, /The AI check also removed EC 2\.7\.2\.12 and corrected the assay conditions \(see Conditions\)\.<\/strong>/);
+  assert.doesNotMatch(html, /\(was |unit used for the conversion/);
+  // Phrases already in plain words pass through; a caution on a confirmed value is pointed to.
+  html = render([line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")]);
+  assert.match(html, /All values confirmed\.<\/strong>/);
+  api.renderDetail(row({ record_key: "checks-flag", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
+    condition_flags: ["kcat_over_km_quotient_mismatch"] }), { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")] });
+  assert.match(element("detailContent").innerHTML, /<span>Check<\/span><strong>All values confirmed as printed; see the note on kcat\/Km\.<\/strong>/);
+  html = render([line("kcat", "corrected: cosubstrate; assay conditions")], { assay_conditions_summary: "50 mM Tris" });
+  assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/strong>/);
+  html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.1 removed")]);
+  assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/strong>/);
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
