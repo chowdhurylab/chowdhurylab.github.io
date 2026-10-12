@@ -60,7 +60,7 @@ License
   A source_license that includes CC BY-NC-ND 4.0 (SKiD) allows non-commercial use only, without derivatives.
 
 Cite
-- CatLog snapshot 2026-10-12 (data ID 94c19d6af4), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html
+- CatLog snapshot 2026-10-12 (data ID 14ffa6600b), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html
 - Sajeevan, K. A., et al. (2026). CatRange enables robust prediction of enzyme variant kinetic regimes.
   PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309 (https://doi.org/10.1093/pnasnexus/pgag309)
   The CatRange paper describes CatLog-27k (27,176 kinetic records curated from BRENDA and SABIO-RK), the set its models
@@ -68,31 +68,31 @@ Cite
   Main fields.
 
 Snapshot details
-- Rows: 168401
-- Generated (UTC): 2026-10-12T03:43:35+00:00
+- Rows: 168765
+- Generated (UTC): 2026-10-12T09:46:03+00:00
 - Exporter commit: cc5d91d7be13c4e268ac2c1b783afc90386ed985
 - Source: verified_catlog.jsonl
-- Source SHA-256: cbe73863e0090a6879de48b620849ad6b0b8cc0ffefdcb1d1d4e7713b07272ed
-- Public content SHA-256 (decompressed all-public-data JSONL): 94c19d6af4037deafe16b6200d2d416bef2181defb0808c3c32e285929bad0ba
+- Source SHA-256: d07bba45c1d3b6754116bebc6fbfbc50511f14380738c2e11109b84b48785aa9
+- Public content SHA-256 (decompressed all-public-data JSONL): 14ffa6600b55a3896094f59d77c4a13cbedf202e3b142a4f3887d835e1cadd9b
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots and private review payloads are not bundled.
 - All public data: downloads all rows with available protein sequences, SMILES, references, and source details
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
 - Download page: exports the displayed rows with public molecular identity, references, and source details
-- All public data file: data/catlog-enriched.9827cfd0a6db.jsonl.gz
-- Rows with sequence: 86099
-- Rows with wild-type sequence: 81780
-- Rows with variant sequence: 25302
-- Rows with SMILES: 105219
+- All public data file: data/catlog-enriched.a553ca1de6e2.jsonl.gz
+- Rows with sequence: 86480
+- Rows with wild-type sequence: 82127
+- Rows with variant sequence: 25481
+- Rows with SMILES: 105937
 
 Data sources, licenses and attribution
-- BRENDA (brenda): 84178 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
-- Primary literature (direct extraction) (primary_paper_direct): 31817 rows; license as published (see paper)
-- Open Enzyme Database (OED) (oed): 20955 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
-- UniProt (uniprot): 14880 rows; license CC BY 4.0; https://www.uniprot.org/
-- SABIO-RK (sabio_rk): 12279 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
-- SKiD (Structure-Oriented Kinetics Database) (skid): 4224 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
+- BRENDA (brenda): 83759 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
+- Primary literature (direct extraction) (primary_paper_direct): 33778 rows; license as published (see paper)
+- Open Enzyme Database (OED) (oed): 19920 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
+- UniProt (uniprot): 14854 rows; license CC BY 4.0; https://www.uniprot.org/
+- SABIO-RK (sabio_rk): 12169 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
+- SKiD (Structure-Oriented Kinetics Database) (skid): 4217 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
 - STRENDA DB (strenda): 3 rows; license see source; https://www.beilstein-strenda-db.org/
 - Every row carries source_license, derived from the database(s) it was merged from.
 - SKiD-derived rows carry a NonCommercial-NoDerivatives license (CC BY-NC-ND 4.0); reuse them only under those terms.
