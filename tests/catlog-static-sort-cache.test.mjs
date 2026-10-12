@@ -1371,7 +1371,7 @@ assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
 }
 const emptyIdentityHtml = api.proteinSection({}, {});
 assert.match(emptyIdentityHtml, /<h3 id="detail-protein-title">Protein and substrate<\/h3>/);
-assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None<\/dd>/);
+assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None recorded<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Substrate<\/dt><dd>Not recorded<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
@@ -1473,7 +1473,7 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
     sequence_source: "manual_literature_uniprot_resolution",
     sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." });
   assert.match(unmatched, /<dt>UniProt<\/dt><dd>Not matched to UniProt<\/dd>/);
-  assert.match(unmatched, /<dt>Sequence<\/dt><dd>None<\/dd>/);
+  assert.match(unmatched, /<dt>Sequence<\/dt><dd>None recorded<\/dd>/);
   assert.doesNotMatch(unmatched, /shown as the variant sequence|from the cited paper/, "no note about a sequence that is not shown");
   assert.match(api.proteinSection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
     /\(from the cited paper\)/);
@@ -1794,7 +1794,7 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   assert.equal(api.reviewOutcome(prepared), "Not checked: taken from the source database as listed.");
   // An older record's review says it was the earlier automated review, and what it found.
   for (const [status, sentence] of [
-    ["corrected", "Corrected and accepted in the earlier automated review (the value before correction was not kept)."],
+    ["corrected", "Corrected and accepted in the earlier automated review; this snapshot does not list the changes."],
     ["verified", "Accepted as printed, in the earlier automated review."],
     ["manual_review_required", "Not confirmed: the earlier automated review left a question open on the value, unit, protein or substrate."],
     ["unverified", "Not checked: the earlier automated review recorded no final check."],
@@ -2194,7 +2194,7 @@ api.renderDetail(row({ record_key: "unknowns-v2", source_db: "primary_paper_dire
 assert.match(element("detailContent").innerHTML, /EC 1\.1\.1\.1 &middot; organism not stated in the paper<\/p>/);
 assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Not stated in the paper<\/span>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
-assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
+assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None recorded<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
 // The record (design spec 5): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values (with
@@ -2214,7 +2214,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const html = element("detailContent").innerHTML;
   assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><\/span><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
-  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>read from the paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
   const order = ['class="detail-top"', ">Values</h3>", ">Source</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
     ">Review and audit</h3>", 'id="downloadSelectedJson"', "<summary>Source details</summary>"];
@@ -2239,10 +2239,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // status in brackets.
   api.renderDetail(row({ record_key: "status-words", verification_status: "mathematically_inferred", source_db: "skid" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Not reviewed\)<\/span><span>SKiD<\/span>/);
+  // Its dot is the exact status's colour, as in the table: tan with its ring for Not reviewed, salmon with its ring for
+  // Not confirmed, slate for Unverified.
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--status-not-reviewed\);--status-ring:var\(--st-not-reviewed-ring, transparent\)">/);
   api.renderDetail(row({ record_key: "status-words-2", verification_status: "manual_review_required", source_db: "sabio_rk;brenda" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not confirmed<\/span><span>BRENDA, SABIO-RK<\/span>/);
+  assert.match(element("detailContent").innerHTML, /style="--status-color:var\(--status-pending\);--status-ring:var\(--st-pending-ring, transparent\)"/);
   api.renderDetail(row({ record_key: "status-words-3", verification_status: "unverified", source_db: "unknown" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Unverified\)<\/span><span>source not recorded<\/span>/);
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--status-unverified\)">/);
 }
 // A record read by CatLog: Method (with "values stored as printed" when code converted nothing) and Check; the EC the
 // paper does not print is said in the header. Badges are named by their words, not the method sentence.
@@ -2577,6 +2582,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(section, /<td class="cmp-catlog">549\.9 <small>mM<\/small><\/td>/);
   assert.match(section, /<p class="section-note">Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\. A different number can mean a different measurement\.<\/p>/);
   assert.ok(html.indexOf(">Paper</h3>") < html.indexOf(">Against the databases</h3>") && html.indexOf(">Against the databases</h3>") < html.indexOf(">Review and audit</h3>"));
+  // A correction of the database that is not a unit or a power of ten is a different number (brown), not red.
+  html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists the value of another row.", database_cause: "value_from_other_row" })]));
+  assert.match(html, /<span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><strong>Corrects the database<\/strong><\/span><span class="cmp-line">BRENDA lists the value of another row\.<\/span><small>Cause: a value from another row<\/small>/);
   // A local file named as evidence is never shown.
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
   assert.doesNotMatch(html, /Users\/someone|\.pdf/);
@@ -2609,19 +2617,21 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "smiles", old_value: "C", new_value: "CC" },
   ] });
   assert.match(html, /<th scope="col">Field<\/th><th scope="col">Before<\/th><th scope="col">After<\/th><th scope="col">Change<\/th>/);
-  assert.match(html, /<tr><th scope="row"><i>K<\/i><sub>m<\/sub><\/th><td>66 mM<small>as in OED for this paper<\/small><\/td><td>0\.066 mM<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span>unit or magnitude \(÷ 1000\)<\/span><\/td><\/tr>/);
-  assert.match(html, /<td>2\.7 s⁻¹<small>earlier catalog value<\/small><\/td><td>2\.67 s⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span>more digits \/ rounding<\/span>/);
+  assert.match(html, /<tr><th scope="row"><i>K<\/i><sub>m<\/sub><\/th><td>66 mM<small>as in OED for this paper<\/small><\/td><td>0\.066 mM<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude <span class="cmp-factor">\(÷ 1000\)<\/span><\/span><\/span><\/td><\/tr>/);
+  assert.match(html, /<td>2\.7 s⁻¹<small>earlier catalog value<\/small><\/td><td>2\.67 s⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span>/);
   assert.equal((html.match(/<td>5 s⁻¹/g) || []).length, 0, "a field whose number did not change is not listed");
-  assert.match(html, /<td>none<small>earlier catalog value<\/small><\/td><td>40 s⁻¹ mM⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span>added: the source had none<\/span>/);
+  assert.match(html, /<td>none<\/td><td>40 s⁻¹ mM⁻¹<\/td><td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><span>added: the source had none<\/span>/);
   assert.match(html, /<li>UniProt P00325 → P00326<\/li><li>SMILES replaced<\/li>/);
   assert.equal((html.match(/Why: /g) || []).length, 1, "the same reason once; a local path never");
   assert.match(html, /<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — Table 2, row 12-hydroxydodecanoic acid: Km 66 µM\.<\/p>/);
   assert.match(html, /<dt>Status<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Against the databases\./);
   assert.doesNotMatch(html, /value before correction was not kept/);
-  // Without its trail, a corrected record keeps the round-4 sentence and has no section.
+  // Without its trail, a corrected record says the snapshot does not list the changes (the earlier catalog keeps them)
+  // and has no section.
   html = render(corrected, { supporting_pmids: ["2226453"] });
   assert.doesNotMatch(html, /Against the databases/);
-  assert.match(html, /the value before correction was not kept/);
+  assert.match(html, /Corrected and accepted in the earlier automated review; this snapshot does not list the changes\./);
+  assert.doesNotMatch(html, /was not kept/);
 
   // A database record the earlier review did not settle: the values are the database's; accepted, disputed, no paper
   // linked or an earlier extraction: no section.

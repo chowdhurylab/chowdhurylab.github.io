@@ -937,8 +937,18 @@ def check_record_panel(driver, browser, url, route_label):
                     box.getBoundingClientRect().height > 0];
                 reveal.click();
             }
+            const status = content.querySelector('.detail-top .detail-status');
+            const selectedDot = document.querySelector('#recordsBody tr[aria-selected="true"] .state-label');
+            const databases = content.querySelector('.databases-section');
             return {
                 sections: [...content.querySelectorAll('.detail-section > h3, .detail-disclosure > summary')].map(e => e.textContent.trim()),
+                // The status line's dot and the selected row's dot (the same status colour), the definition lists' label
+                // column (112px, 96px on phones) and what section G says.
+                dotColor: status ? getComputedStyle(status, '::before').backgroundColor : null,
+                rowDotColor: selectedDot && selectedDot.getBoundingClientRect().width > 0
+                    ? getComputedStyle(selectedDot, '::before').backgroundColor : null,
+                labelColumn: getComputedStyle(content.querySelector('.detail-section .kv-line')).gridTemplateColumns.split(' ')[0],
+                databasesText: databases ? databases.innerText : null,
                 headingSize: getComputedStyle(content.querySelector('.detail-section > h3')).fontSize,
                 subtitle: content.querySelector('.detail-top .detail-subtitle')?.textContent || '',
                 substrate: content.querySelector('.detail-top .detail-substrate')?.textContent || '',
@@ -961,7 +971,8 @@ def check_record_panel(driver, browser, url, route_label):
     try:
         for label, width, height in sizes:
             set_browse_viewport(driver, browser, width, height)
-            for kind, address in (("from-paper", "#browse?source=paper&status=accepted"), ("database", "#browse?source=brenda")):
+            for kind, address in (("from-paper", "#browse?source=paper&status=accepted"), ("database", "#browse?source=brenda"),
+                                  ("database-pending", "#browse?source=brenda&status=curation_pending")):
                 panel = open_first_record(address)
                 expected = [name for name in RECORD_SECTIONS if name != "Against the databases" or name in panel["sections"]]
                 assert panel["sections"] == expected, panel["sections"]
@@ -976,8 +987,19 @@ def check_record_panel(driver, browser, url, route_label):
                 assert panel["dashes"] == 0, "A labelled row shows a bare dash"
                 assert not RECORD_PANEL_FORBIDDEN.search(panel["text"]), RECORD_PANEL_FORBIDDEN.search(panel["text"]).group(0)
                 assert not panel["overflow"], f"The {kind} record overflows sideways at {width}px"
+                assert panel["labelColumn"] == ("96px" if width <= 720 else "112px"), panel["labelColumn"]
+                assert panel["dotColor"] and panel["dotColor"] not in ("rgba(0, 0, 0, 0)", "transparent"), panel["dotColor"]
+                if panel["rowDotColor"]:
+                    assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
+                if kind.startswith("database") and panel["databasesText"] is not None:
+                    # Today's snapshot has no comparison for a database record: only an unsettled one says its values are
+                    # the database's.
+                    assert "Not yet checked against the paper: the values are the database's." in panel["databasesText"], panel["databasesText"]
+                if kind == "database-pending":
+                    assert panel["status"].startswith("Not confirmed"), panel["status"]
+                    assert "Against the databases" in panel["sections"], panel["sections"]
                 if kind == "from-paper":
-                    assert "from paper" in panel["status"], panel["status"]
+                    assert "read from the paper" in panel["status"], panel["status"]
                     assert panel["method"] and panel["method"].startswith(
                         "Read from the paper by an AI model; a second, separate AI check compared each value with the paper;"), panel["method"]
                     assert panel["methodLink"] == "#guide-method"

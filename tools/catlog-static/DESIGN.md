@@ -343,12 +343,14 @@ is left out, never an empty heading. The order (design spec 5):
   paper does not print reads "EC 2.3.1.183 (from enzyme databases; not printed
   in the paper)"); "Substrate: ..." (two lines at most; in full under Protein
   and substrate), with the record's condition note under it in grey; one status
-  line in the table's words and colours, the result word at 13px/600: the review
-  result ("Not checked (Unverified)" keeps the earlier status in brackets), the
-  source as the table names it ("from paper", "BRENDA", "earlier extraction",
-  "source not recorded"), then "corrected", "no paper linked" or "✓
-  human-checked"; last the record ID in 12px mono and Copy link (the page's
-  address with #record=).
+  line in the table's colours, the dot in the exact status's colour (slate for
+  Unverified, tan with its ring for Not reviewed, salmon with its ring for Not
+  confirmed), the result word at 13px/600: the review result ("Not checked
+  (Unverified)" keeps the earlier status in brackets), the source ("read from
+  the paper" for a record CatLog read, else as the table names it: "BRENDA",
+  "earlier extraction", "source not recorded"), then "corrected", "no paper
+  linked" or "✓ human-checked"; last the record ID in 12px mono and Copy link
+  (the page's address with #record=).
 - B. Values: one table, Parameter | Value | Unit | As printed | Where, in kcat,
   Km, kcat/Km, Ki order (a metric the record lacks is not a row); the value at
   16px/600 right-aligned, the unit 12px muted. A record read from the paper
@@ -390,8 +392,9 @@ is left out, never an empty heading. The order (design spec 5):
   and organism)") or "Sequence known, no UniProt entry", "Several possible
   UniProt entries", "Not matched to UniProt"; each sequence as "605 aa" with Show
   (opens it under the row) and Copy, the variant's named by its note ("489 aa,
-  UniProt P22498 with H150A"); without a sequence the row says why or "None";
-  the substrate in full; SMILES with Show and Copy, or "None".
+  UniProt P22498 with H150A"); without a sequence the row says why or "None
+  recorded"; the substrate in full; SMILES with Show and Copy, or "None
+  recorded".
 - F. Paper: the title and year when the record carries them; PubMed and DOI
   links (a stand-in ID is text); where the values are printed; an older
   record's notes on request: "Earlier automated review: where the values are
@@ -403,7 +406,8 @@ is left out, never an empty heading. The order (design spec 5):
   read from the paper, one row per value, Parameter | CatLog | (Databases for
   this paper) | Result, the result a 10px square in its comparison colour
   (`--cmp-same`, `--cmp-differs`, `--cmp-new`, `--chg-magnitude` for a database
-  CatLog corrects, `--bar-neutral` for the same number under another label)
+  CatLog corrects by a unit or a power of ten, `--cmp-differs` for any other
+  correction, `--bar-neutral` for the same number under another label)
   beside its word ("Same number", "Different number", "Not in the databases",
   "Corrects the database", "Other label", "Not compared") and the snapshot's own
   line, cause and evidence shown as given (a local path never); a paper-level
@@ -411,11 +415,14 @@ is left out, never an empty heading. The order (design spec 5):
   STRENDA DB list for the same paper. A different number can mean a different
   measurement." under it. An earlier corrected record with its correction trail:
   Field | Before | After | Change ("66 mM, as in OED for this paper" or "earlier
-  catalog value"; "unit or magnitude (÷ 1000)", "more digits / rounding",
+  catalog value", nothing under an added value's "none"; "unit or magnitude
+  (÷ 1000)" with the factor kept on one line, "more digits / rounding",
   "different number", "added: the source had none"; a field whose number did
   not change is not listed), identity changes as a list ("UniProt P00325 →
   P00326", "Sequence replaced"), then "Why: changed in the earlier automated
-  review to the value the paper prints — <the printed place>". A database record
+  review to the value the paper prints — <the printed place>". A corrected
+  record without its trail says so in its Status ("this snapshot does not list
+  the changes"; the earlier catalog keeps them) and has no section G. A database record
   the earlier review did not settle (Not confirmed, Not checked) with a paper:
   "Not yet checked against the paper: the values are the database's." Colour is
   never the only carrier: the word or phrase is always printed.
@@ -451,8 +458,8 @@ The record writes numbers like the table (a × 10ⁿ at or above 10⁵ and below
 them (135.0); a kcat/Km calculated for an older record keeps the significant
 figures of kcat and Km. Odd records read plainly: "Unknown" EC or organism
 reads "EC unknown" / "organism not recorded"; a record without kcat, Km or
-kcat/Km says so (or that it stores a Ki only); a missing sequence, SMILES or
-paper ID reads "None"; a paper's stand-in ID (NP and 8 hex digits) is text,
+kcat/Km says so (or that it stores a Ki only); a missing sequence or SMILES
+reads "None recorded" and a missing paper ID "None"; a paper's stand-in ID (NP and 8 hex digits) is text,
 never a PubMed link. Sentences are not hyphenated. A record that cannot be
 loaded says so ("This record could not be loaded.", or that the page is out of
 date, with Reload). Do not discard source text, hide scientific warnings,

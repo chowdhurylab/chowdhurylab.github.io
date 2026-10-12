@@ -1304,7 +1304,7 @@
   function reviewOutcomeBase(summary) {
     switch (summary.verification_status) {
       case "corrected":
-        return "Corrected and accepted in the earlier automated review (the value before correction was not kept).";
+        return "Corrected and accepted in the earlier automated review; this snapshot does not list the changes.";
       case "verified":
         return "Accepted as printed, in the earlier automated review.";
       case "manual_review_required":
@@ -6683,9 +6683,9 @@
       identityRow,
       sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : "",
       // No sequence: the row says why (the note) or None.
-      ...(hasSequence ? sequenceRows : [kv("Sequence", sequenceVariantNote || "None")]),
+      ...(hasSequence ? sequenceRows : [kv("Sequence", sequenceVariantNote || "None recorded")]),
       kv("Substrate", substrate),
-      smiles ? revealRowHtml("SMILES", smiles, "detailSmiles") : kv("SMILES", "None"),
+      smiles ? revealRowHtml("SMILES", smiles, "detailSmiles") : kv("SMILES", "None recorded"),
     ]));
   }
 
@@ -6771,22 +6771,24 @@
 
   // ---- Record panel: header and source details ----
   // The record's status as one line, in the table's words and colours: a dot, the review result (a Not checked record
-  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the source ("from paper", "BRENDA", ...), then
+  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the source ("read from the paper", "BRENDA", ...), then
   // "corrected", "no paper linked" or "human-checked".
   function detailStatusHtml(row, { v2Record = isV2Row(row) } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
     const identityOnly = hasNoPaperLinked(row);
-    const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value] || "unverified";
+    // The dot is the exact status's colour, as in the table: Not checked is slate (Unverified) or tan (Not reviewed).
+    const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value]
+      || (status === "mathematically_inferred" ? "not-reviewed" : "unverified");
     const words = [
       rowStatusLabel(row, { exact: true }),
-      v2Record ? "from paper" : sourceTagText(row),
+      v2Record ? "read from the paper" : sourceTagText(row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
     const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
-    // The light salmon dot gets its darker ring (design spec 2).
-    const ring = colour === "pending" ? ";--status-ring:var(--st-pending-ring, transparent)" : "";
+    // The light salmon and tan dots get their darker rings (design spec 2).
+    const ring = colour === "pending" || colour === "not-reviewed" ? `;--status-ring:var(--st-${colour}-ring, transparent)` : "";
     return `<p class="detail-status" style="--status-color:var(--status-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
   }
 
@@ -6995,7 +6997,8 @@
     const check = line?.database_check && typeof line.database_check === "object" ? line.database_check : {};
     const status = shownText(line?.database_status ?? check.status);
     const sentence = shownText(line?.database_line ?? check.line);
-    const cause = databaseCauseText(line?.database_cause ?? check.cause);
+    const causeCode = shownText(line?.database_cause ?? check.cause);
+    const cause = databaseCauseText(causeCode);
     const evidence = shownText(line?.database_evidence ?? check.evidence);
     if (!status && !sentence && !cause && !evidence) return null;
     const sources = Array.isArray(check.sources) ? check.sources.map((item) => shownText(item)).filter(Boolean).join(", ") : shownText(check.sources);
@@ -7003,7 +7006,7 @@
     const listed = number != null && number !== "" && Number.isFinite(Number(number))
       ? `${numberText(String(number))}${check.database_unit ? ` ${unitText(shownText(check.database_unit))}` : ""}`
       : "";
-    return { status, sentence, cause, evidence: looksLikeLocalPath(evidence) ? "" : evidence, databases: [sources, listed].filter(Boolean).join(": ") };
+    return { status, sentence, cause, causeCode, evidence: looksLikeLocalPath(evidence) ? "" : evidence, databases: [sources, listed].filter(Boolean).join(": ") };
   }
 
   // The side file's comparison of one parameter (["same", "BRENDA,SABIO-RK"], ["differs", "BRENDA", 3]) in the spec's
@@ -7024,8 +7027,14 @@
     return { status: String(status), sentence, cause: "", evidence: "", databases: "", phraseOnly: Boolean(sentence) };
   }
 
+  // The cause codes that are a unit or a power of ten (the red square of a unit or magnitude change); another correction
+  // of the database is a different number (brown).
+  const MAGNITUDE_CAUSES = new Set(["header_scale_inverted", "header_scale_ignored", "unit_not_converted", "uM_entered_as_mM",
+    "mM_entered_as_uM", "time_unit", "decimal_or_exponent_slip", "paper_unit_misprint"]);
+
   function databaseResultHtml(facts) {
-    const result = databaseResult(facts.status);
+    let result = databaseResult(facts.status);
+    if (result?.key === "magnitude" && facts.causeCode && !MAGNITUDE_CAUSES.has(facts.causeCode)) result = { ...result, key: "differs" };
     const mark = `<span class="cmp-mark${result?.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span>`;
     if (facts.phraseOnly) {
       const phrase = facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1);
@@ -7103,7 +7112,7 @@
     if (!kind) return { word: item.kind.replace(/_/g, " "), key: "" };
     if (kind.key === "magnitude" && before > 0 && after > 0) {
       const power = Math.round(Math.log10(after / before));
-      if (power && Math.abs(Math.log10(after / before) - power) < 0.01) return { word: `${kind.word} (${powerFactorText(power)})`, key: kind.key };
+      if (power && Math.abs(Math.log10(after / before) - power) < 0.01) return { word: kind.word, factor: `(${powerFactorText(power)})`, key: kind.key };
     }
     return kind;
   }
@@ -7136,11 +7145,13 @@
       ? `<table class="values-table compare-table"><thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>`
         + valueItems.map((item) => {
           const change = changeWords(item);
-          const where = item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value";
+          const hasBefore = item.before != null && item.before !== "";
+          const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value");
           return `<tr><th scope="row">${item.name}</th>`
-            + `<td>${escapePublic(correctionValueText(item.before, item.unit))}<small>${escapePublic(where)}</small></td>`
+            + `<td>${escapePublic(correctionValueText(item.before, item.unit))}${where ? `<small>${escapePublic(where)}</small>` : ""}</td>`
             + `<td>${escapePublic(correctionValueText(item.after, item.unit))}</td>`
-            + `<td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>${escapeHtml(change.word)}</span></td></tr>`;
+            + `<td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>`
+            + `<span>${escapeHtml(change.word)}${change.factor ? ` <span class="cmp-factor">${escapeHtml(change.factor)}</span>` : ""}</span></span></td></tr>`;
         }).join("")
         + "</tbody></table>"
       : "";

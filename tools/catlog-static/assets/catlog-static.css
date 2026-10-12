@@ -642,6 +642,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .compare-table td.cmp-catlog small { display:inline; color:var(--muted) }
 .cmp-result { display:inline-flex; align-items:baseline; gap:6px }
 .cmp-result strong { font-weight:600 }
+.cmp-factor { white-space:nowrap }
 .cmp-mark { flex:0 0 10px; width:10px; height:10px; border:1px solid var(--line-strong); background:var(--surface) }
 .cmp-mark.cmp-same { border-color:var(--cmp-same); background:var(--cmp-same) }
 .cmp-mark.cmp-differs { border-color:var(--cmp-differs); background:var(--cmp-differs) }
