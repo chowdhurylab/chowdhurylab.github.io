@@ -619,13 +619,12 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: fragment() == "browse?rows=50" and not chip_keys())
 
-        # 2. Human-checked: open the docked panel (wide screens: no dialog, the table stays usable), tick it, and every row
-        # shown carries the "human-checked" tag; the count beside it is the number of records.
-        driver.find_element(By.ID, "openFiltersButton").click()
+        # 2. Human-checked: the filter sidebar is open beside the table (no dialog, the table stays usable); tick it, and
+        # every row shown carries the "human-checked" tag; the count beside it is the number of records.
         wait.until(lambda d: d.find_element(By.ID, "humanCheckedFilter").is_displayed())
-        assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") is None, "Wide screens dock the filters"
+        assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") is None, "Wide screens show the filters as a sidebar"
         assert not driver.execute_script("return document.querySelector('.table-panel').inert")
-        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Docked filters overflow the page"
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "The filter sidebar overflows the page"
         wait.until(lambda d: count_of("checked") is not None)
         checked = count_of("checked")
         assert checked > 0, "No human-checked records counted"
@@ -651,9 +650,8 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.ID, "closeDetailButton").click()
         wait.until(lambda d: fragment() == "browse?checked=1")
 
-        # 3. A pH range typed into the panel: every row shown has a pH inside it, and the address carries it.
+        # 3. A pH range typed into the sidebar: every row shown has a pH inside it, and the address carries it.
         open_page(base)
-        driver.find_element(By.ID, "openFiltersButton").click()
         wait.until(lambda d: d.find_element(By.ID, "phMinInput").is_displayed())
         driver.find_element(By.ID, "phMinInput").send_keys("7")
         driver.find_element(By.ID, "phMaxInput").send_keys("7.5", Keys.TAB)
@@ -662,19 +660,24 @@ def check_filters(driver, browser, url, route_label):
         assert chip_keys() == ["ph"]
         ph_values = cells("c-ph")
         assert ph_values and all(7 <= float(value) <= 7.5 for value in ph_values), ph_values
+        # The sidebar is part of the page: Escape leaves it open (« collapses it).
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-        wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
+        assert driver.execute_script("return document.body.classList.contains('filters-open')")
         if browser == "chrome":
-            # Phones keep the filters as a sheet that ends with "Show N records".
+            # Phones keep the filters as a full-screen sheet that ends with "Show N records".
             set_browse_viewport(driver, browser, 390, 844)
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
             driver.find_element(By.ID, "openFiltersButton").click()
             wait.until(lambda d: d.find_element(By.ID, "showResultsButton").is_displayed())
             assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") == "dialog"
             assert driver.find_element(By.ID, "showResultsButton").text == f"Show {summary()}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+            sheet = driver.execute_script("const r = document.querySelector('#catalogFilters').getBoundingClientRect(); return [r.left, r.top, r.width, r.height]")
+            assert sheet == [0, 0, 390, 844], f"The phone sheet fills the screen: {sheet}"
             driver.find_element(By.ID, "showResultsButton").click()
             wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
             set_browse_viewport(driver, browser, 1440, 1000)
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('filters-open')"))
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
@@ -733,7 +736,6 @@ def check_filters(driver, browser, url, route_label):
             return int(summary().split()[0].replace(",", ""))
         open_page(base + "#browse?q=laccase")
         found = summary_count()
-        driver.find_element(By.ID, "openFiltersButton").click()
         wait.until(lambda d: count_of("source:all") == found and count_of("state:accepted") is not None)
         accepted, paper = count_of("state:accepted"), count_of("source:paper")
         assert accepted < total_records and paper <= found
@@ -761,6 +763,133 @@ def check_filters(driver, browser, url, route_label):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise
     return {"route": route_label, "human_checked": checked, "passed": True}
+
+
+def check_layout(driver, browser, url, route_label):
+    """The page grid: a 56px header, a 64px counts band (20px numbers, 13px labels), the filter sidebar beside the table
+    (open from 1024px, a 48px rail when collapsed, remembered; the rail while a record is open below 1600px; side by side
+    from 1600px; the rail on tablets) and the record as a column from 1024px, a dialog below."""
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
+    base = url.split("#", 1)[0]
+
+    def open_page(address=""):
+        driver.get("about:blank")
+        driver.get(base + address)
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+                   and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+
+    def box(selector):
+        return driver.execute_script("""
+            const e = document.querySelector(arguments[0]);
+            if (!e) return null;
+            const r = e.getBoundingClientRect();
+            return {left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), bottom: Math.round(r.bottom),
+                    width: Math.round(r.width), height: Math.round(r.height)};
+        """, selector)
+
+    def is_open():
+        return driver.execute_script("return document.body.classList.contains('filters-open')")
+
+    def detail_open():
+        return driver.execute_script("return document.body.classList.contains('detail-open')")
+
+    def stored():
+        return driver.execute_script("try { return localStorage.getItem('catlog.filtersCollapsed'); } catch (e) { return 'unavailable'; }")
+
+    def side_by_side(*selectors):
+        boxes = [box(selector) for selector in selectors]
+        return all(left["right"] <= right["left"] + 1 for left, right in zip(boxes, boxes[1:])), boxes
+
+    results = {}
+    try:
+        set_browse_viewport(driver, browser, 1440, 1000)
+        open_page()
+        driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
+        open_page()
+        # Header and counts band.
+        assert box(".app-header")["height"] == 56, box(".app-header")
+        band = box(".snapshot-band")
+        assert 64 <= band["height"] <= 66, f"The counts band is one 64px line: {band}"
+        sizes = driver.execute_script("""
+            const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
+                .map(e => getComputedStyle(e)[prop]);
+            return {numbers: px('.snapshot-overview strong', 'fontSize'), labels: px('.summary-card > span, .snapshot-paper > span, .snapshot-checked > span', 'fontSize'),
+                    th: px('#recordTableWrap thead th', 'fontSize'), thWeight: px('#recordTableWrap thead th', 'fontWeight'),
+                    td: px('#recordsBody td.c-organism', 'fontSize')};
+        """)
+        assert set(sizes["numbers"]) == {"20px"} and set(sizes["labels"]) == {"13px"}, sizes
+        assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
+        date, records = box("#snapshotDate"), box(".summary-card strong")
+        assert date["top"] < records["bottom"], "At 1440px the snapshot date stays on the counts' line"
+        # The sidebar: open beside the table, never over it.
+        assert is_open() and box(".filter-column")["width"] == 288, box(".filter-column")
+        ok, boxes = side_by_side(".filter-column", ".table-panel")
+        assert ok, f"The sidebar sits beside the table: {boxes}"
+        assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") is None
+        assert not driver.find_element(By.ID, "openFiltersButton").is_displayed()
+        # « collapses it to the 48px rail, remembered on reload; the rail's Filters opens it again.
+        driver.find_element(By.ID, "collapseFiltersButton").click()
+        wait.until(lambda d: not is_open())
+        assert box(".filter-column")["width"] == 48 and driver.find_element(By.ID, "filterRailButton").is_displayed()
+        assert driver.switch_to.active_element.get_attribute("id") == "filterRailButton"
+        assert stored() in ("1", "unavailable")
+        open_page()
+        if stored() == "1":
+            assert not is_open() and box(".filter-column")["width"] == 48, "A collapsed sidebar stays collapsed on reload"
+        if not is_open():
+            driver.find_element(By.ID, "filterRailButton").click()
+        wait.until(lambda d: is_open() and box(".filter-column")["width"] == 288)
+        assert stored() in (None, "unavailable")
+        results["sidebar-1440"] = True
+        # 1280: the sidebar is 272px; a record takes its place (the rail) and closing it brings it back.
+        set_browse_viewport(driver, browser, 1280, 900)
+        open_page()
+        assert is_open() and box(".filter-column")["width"] == 272, box(".filter-column")
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open() and not is_open())
+        assert box(".filter-column")["width"] == 48 and box("#detailPanel")["width"] == 440, (box(".filter-column"), box("#detailPanel"))
+        ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
+        assert ok, f"Rail, table and record sit side by side: {boxes}"
+        assert driver.find_element(By.ID, "detailPanel").get_attribute("role") is None, "From 1024px the record is a column"
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1280-record.png"))
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open() and is_open())
+        assert box(".filter-column")["width"] == 272
+        results["record-1280"] = True
+        # 1700: sidebar, table and record side by side.
+        set_browse_viewport(driver, browser, 1700, 1000)
+        open_page()
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open())
+        assert is_open() and box(".filter-column")["width"] == 288 and box("#detailPanel")["width"] == 480
+        ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
+        assert ok, f"Sidebar, table and record sit side by side: {boxes}"
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1700-record.png"))
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open())
+        results["record-1700"] = True
+        # Tablets: the rail; the record is a dialog.
+        set_browse_viewport(driver, browser, 800, 1000)
+        open_page()
+        assert not is_open() and box(".filter-column")["width"] == 48
+        driver.find_element(By.ID, "filterRailButton").click()
+        wait.until(lambda d: is_open() and box(".filter-column")["width"] == 256)
+        ok, boxes = side_by_side(".filter-column", ".table-panel")
+        assert ok and driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), boxes
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open())
+        assert driver.find_element(By.ID, "detailPanel").get_attribute("role") == "dialog"
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open())
+        results["tablet-800"] = True
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-failure.png"))
+        raise
+    finally:
+        driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
+        set_browse_viewport(driver, browser, 1440, 1000)
+    return {"route": route_label, "checked": results, "passed": True}
 
 
 # Words of the earlier pipeline and of CatLog's tooling that a record must never show.
@@ -1253,6 +1382,7 @@ def main():
                 browse.append(check_browse(driver, args.browser, browse_url, f"{environment}-{route}"))
                 browse[-1]["filters"] = check_filters(driver, args.browser, browse_url, f"{environment}-{route}")
                 browse[-1]["record_panel"] = check_record_panel(driver, args.browser, browse_url, f"{environment}-{route}")
+                browse[-1]["layout"] = check_layout(driver, args.browser, browse_url, f"{environment}-{route}")
         result["browse_routes"] = browse
         (OUTPUT / f"{args.browser}-result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result))
