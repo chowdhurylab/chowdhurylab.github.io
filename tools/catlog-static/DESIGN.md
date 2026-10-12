@@ -471,13 +471,27 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 ## Stats
 
-One plain page from the snapshot manifest (never the record index): two
-headline lines, then sections that each have a heading, at most one line of
-explanation and plain bars (name, bar, count, share of all records). Colour
-marks the review result only, with the status dot colours; other bars are one
-neutral grey (--bar-neutral). Names Browse can filter on link to `#browse?` with the shared filter
-keys. Value ranges show the median, the 10–90% range and a log histogram per
-metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
+One page from the snapshot manifest (never the record index): two headline
+lines (32px and 20px), then the agreement with human reviewers as the lead (the
+success measure), then numbered figures and tables, two to a row from 1024px:
+the review-result donut and its legend table, records by main source stacked
+by review result, the database comparison, earlier corrections and replaced
+records when the snapshot has their counts, the checks table, enzyme classes,
+value ranges, then the top organisms and EC numbers, what the records contain,
+wild type and variants, and cautions. Each has "Figure N." or "Table N." with
+one sentence and a 12px data line (snapshot, Data ID, definition); fills at 60%
+with 1px outlines in the review-result and comparison tokens. Names Browse can
+filter on link to `#browse?` with the shared filter keys. The full rules are in
+the site's DESIGN.md, "Stats".
+
+## Team
+
+"People behind CatLog" (#team): one line, then the loop of stations (Papers, AI
+reading, AI check, CatLog, Human check, Rules updated) with AI agents above
+and people below by first name, live numbers from the manifest, dots moving
+round it unless the viewer asks for less motion, and a legend whose lines
+light their stations on hover or focus. Upright below 960px. The full rules are
+in the site's DESIGN.md, "Team".
 
 ## Guide
 
@@ -488,7 +502,8 @@ points to the method ("How this catalog is built: see ..."). Then "On this
 page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: How CatLog reads and checks
 values (#guide-method: the only place the method is said in full, a definition
-list of Read from the paper, AI audits, Human review and Earlier catalog; the
+list of Read from the paper, AI audits, Human review, Earlier catalog and Who
+does it (linking to Team); the
 audit and human-review numbers are filled from the snapshot's overview when it
 has them, never typed, and the items read without numbers otherwise; badges,
 filters and Stats say it in one line and link here), Find records (#guide-find:
