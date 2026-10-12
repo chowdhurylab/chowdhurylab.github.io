@@ -408,16 +408,17 @@
             </figure>
 
             <h3 id="guide-cautions">Cautions</h3>
-            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span> beside a value marks one of the first four cautions below; in the record it moves to a note that says what. On phones its short words stand beside it. A missing unit shows as the words <em>no unit</em> after the value, and a temperature to check as a dash in the T column; the record explains both.</p>
+            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span> beside a value flags a possible problem; open the record to read what it is. On phones the short words below stand beside it. A value without a recorded unit shows <em>no unit</em>, and a questionable temperature shows as a dash.</p>
             <dl class="guide-term-list guide-caution-list">
-              <div><dt>values differ</dt><dd>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> printed in the paper (or listed by the source) and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ. The record gives both numbers, how far apart they are and, for a familiar factor such as 60 or 1000, the likely cause. All three values are kept.</dd></div>
-              <div><dt>check units</dt><dd><i>K</i><sub>m</sub> above 10 M or <i>k</i><sub>cat</sub> above 10<sup>7</sup> s<sup>-1</sup>: the unit or the magnitude may be off.</dd></div>
-              <div><dt>unit mismatch</dt><dd>The stored <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may be off by a unit factor such as 1000; where the source lists a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that agrees with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, the record shows that one.</dd></div>
-              <div><dt>above limit</dt><dd><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> is above the diffusion limit: check the units.</dd></div>
+              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</dt><dd>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> printed in the paper (or listed by the source) and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ. The record gives both numbers and how far apart they are; a factor near 60 usually means minutes against seconds, and one near 1000 a concentration unit. All three values are kept as the source gives them.</dd></div>
+              <div><dt><i>K</i><sub>m</sub> &gt; 10 M</dt><dd><i>K</i><sub>m</sub> above 10 M; the unit may be wrong.</dd></div>
+              <div><dt><i>k</i><sub>cat</sub> &gt; 10<sup>7</sup> s<sup>-1</sup></dt><dd><i>k</i><sub>cat</sub> above 10<sup>7</sup> s<sup>-1</sup>; the unit or the magnitude may be wrong.</dd></div>
+              <div><dt>possible 1000&times; unit error</dt><dd>The stored <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may be 1000-fold off through a concentration unit; where the source lists a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that agrees with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, the record shows that one.</dd></div>
+              <div><dt>above diffusion limit</dt><dd><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> above the diffusion limit; the unit or the value may be wrong.</dd></div>
               <div><dt>no unit</dt><dd>The source gives no unit, so the column unit does not apply.</dd></div>
-              <div><dt>Temperature</dt><dd>The stored temperature or its unit needs checking (for example a value of exactly 0 &deg;C); the record&rsquo;s note says which.</dd></div>
+              <div><dt>Temperature</dt><dd>The stored temperature or its unit is questionable, for example exactly 0 &deg;C, which may stand for a missing value; the record&rsquo;s note says which.</dd></div>
             </dl>
-            <p>The Cautions filter groups them as <em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values differ</em>, <em>Unit or magnitude to check</em> (check units, unit mismatch, above limit), <em>Unit not recorded</em> (no unit) and <em>Temperature to check</em>.</p>
+            <p>The Cautions filter groups them as <em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values differ</em>, <em>Possible unit or magnitude error</em> (<i>K</i><sub>m</sub> &gt; 10 M, <i>k</i><sub>cat</sub> &gt; 10<sup>7</sup> s<sup>-1</sup>, possible 1000&times; unit error, above diffusion limit), <em>No unit given</em> and <em>Temperature questionable</em>.</p>
           </section>
 
           <section class="guide-section" id="guide-status" aria-labelledby="guide-status-title">
@@ -483,7 +484,7 @@
             <p>On a from-paper record, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05) and long ones are rounded; the record shows the value as printed beside the stored one.</p>
             <dl class="guide-term-list">
               <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, not printed in the source; the table and the record show it with the significant figures of the less precise of the two (at least two).</dd></div>
-              <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; the record then gives both (<em>values differ</em>).</dd></div>
+              <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; the record then gives both (<em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</em>).</dd></div>
               <div><dt>Other units</dt><dd>A few older records keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               <div><dt>Large and small</dt><dd>Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>).</dd></div>
               <div><dt>Digits</dt><dd>The table and the record show at most 4 significant figures, and 3 where a conversion from per minute left repeating digits (30.333 shows as 30.3); a whole number keeps all its digits. The tooltip, the record&rsquo;s values table and the downloads keep the stored digits.</dd></div>

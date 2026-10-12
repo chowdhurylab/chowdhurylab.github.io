@@ -3089,7 +3089,7 @@
     ];
     sections.push(stack(formSection, cautions.every((item) => item.count !== null)
       ? statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
-        { note: "A caution marks a value to check against the source; a record can carry more than one." })
+        { note: "A caution marks a value that may be wrong; a record can carry more than one." })
       : ""));
 
     // Main source.

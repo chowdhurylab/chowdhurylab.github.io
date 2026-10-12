@@ -170,7 +170,9 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
   assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check."));
-  assert.ok(pageHtml.includes("beside a value marks one of the first four cautions below; in the record it moves to a note that says what."));
+  assert.ok(pageHtml.includes("beside a value flags a possible problem; open the record to read what it is."));
+  // Cautions state the problem; they give no orders.
+  assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   assert.ok(
     pageHtml.includes(
