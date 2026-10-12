@@ -212,7 +212,17 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .check-row.unresolved input { accent-color:var(--text-3) }
 .check-row strong { color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
 
-.check-row.source-v2 { border-top:1px solid var(--line-soft); padding-top:8px }
+/* Source: three choices, each with a short help line under it; the databases fold under "By database". */
+.source-modes { display:grid; gap:4px }
+.check-row.radio-row input { accent-color:var(--teal) }
+.source-help { margin:-4px 0 4px 22px }
+.source-help a { white-space:nowrap }
+.source-databases { margin-left:22px; color:var(--text-3); font-size:var(--fs-meta) }
+.source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--link); cursor:pointer; font-weight:500; list-style:none }
+.source-databases > summary::-webkit-details-marker { display:none }
+.source-databases > summary::after { content:"+"; color:var(--text-3); font-size:var(--fs-body); line-height:1 }
+.source-databases[open] > summary::after { content:"\2212" }
+.source-databases > .check-stack { padding-top:4px }
 .status-guide { margin-top:4px; border-top:1px solid var(--line-soft); padding-top:8px; color:var(--text-3); font-size:var(--fs-meta); line-height:1.45 }
 .status-guide summary { display:flex; align-items:center; justify-content:space-between; color:var(--link); cursor:pointer; font-weight:500; list-style:none }
 .status-guide summary::-webkit-details-marker { display:none }
@@ -755,21 +765,18 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }
-  #recordsBody td.c-status { order:6; flex:1 1 auto; align-self:center }
+  /* The status keeps its two lines (status, then the source and tags), with T and pH at the line's end. */
+  #recordsBody td.c-status { order:6; flex:1 1 0; align-self:center }
   #recordsBody :is(td.c-temp,td.c-ph) { order:7; flex:0 0 auto; align-self:center; color:var(--text-2); text-align:right }
   #recordsBody :is(td.c-temp,td.c-ph)[data-empty] { display:none }
   #recordsBody td.c-temp > span::after { content:"\00a0\00b0 C" }
   #recordsBody td.c-ph > span::before { content:"pH\00a0" }
 
-  #recordsBody .state-badge { display:flex; height:18px; align-items:center; gap:8px }
   /* A caution shows its short words beside the "!" (no tooltip on a touch screen). */
   #recordsBody .value-flag { display:inline-flex; flex:0 0 auto; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--amber-text); font-size:var(--fs-min); line-height:14px }
   #recordsBody .value-flag::before { display:grid; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--amber); color:var(--surface) }
   #recordsBody .value-flag .visually-hidden { position:static; width:auto; height:auto; clip:auto; clip-path:none }
   #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
-  /* A badge with two tags (from paper · human-checked) takes the card's line; T and pH follow at the next line's end. */
-  #recordsBody tr[data-key]:has(.state-tag + .state-tag) td.c-status { flex-basis:100% }
-  #recordsBody tr[data-key]:has(.state-tag + .state-tag) :is(td.c-temp:not([data-empty]), td.c-temp[data-empty] + td.c-ph) { margin-left:auto }
   #recordsBody tr.skeleton-row { padding:14px 16px }
   #recordsBody tr.skeleton-row td:not(.c-enzyme,.c-organism,.c-kcat) { display:none }
   #recordsBody tr.skeleton-row td { padding:3px 0 }

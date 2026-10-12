@@ -62,16 +62,20 @@ Beside them a name column is never narrower than its longest word (a line may
 break after a hyphen, comma or slash); a table still too wide scrolls sideways
 with the Columns control, edge shadows and Enzyme kept in view. Narrower than
 1440px (where a column would squeeze the names to a few letters), they are an
-overlay that ends with a "Show N records" button. The panel order: Review status (the
-three statuses, Read from the paper (CatLog v2), Human-checked: accepted records
-whose badge shows "human-checked"; its count waits for the review marks), Names
-and EC number (labelled fields), Measurement type (ticking several shows records
-with all of them), Wild type or variant (records that do not say are in
-neither), Assay conditions (temperature °C and pH, from and to, either may be
-empty; a bound that is not a number is outlined and ignored), then Cautions
-(grouped as the "!" notes) and Main source (a merged source counts for each it
-names), which start closed and open when one of theirs is set. Every option
-shows its count over all records. Each active filter and the search is a chip
+overlay that ends with a "Show N records" button. The panel order: Source (three
+radio buttons: All records, Read from the paper by CatLog and From enzyme
+databases, the last two with a one-line help under them, the first ending in a
+link to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
+earlier paper extractions and Source not recorded: ticking one selects From
+enzyme databases, a merged record counts under each database it names, and All
+records or Read from the paper clears them), Review status (the three statuses,
+Human-checked: accepted records whose badge shows "human-checked"; its count waits
+for the review marks), Names and EC number (labelled fields), Measurement type
+(ticking several shows records with all of them), Wild type or variant (records
+that do not say are in neither), Assay conditions (temperature °C and pH, from
+and to, either may be empty; a bound that is not a number is outlined and
+ignored), then Cautions (grouped as the "!" notes), which starts closed and opens
+when one of its options is set. Every option shows its count over all records. Each active filter and the search is a chip
 above the table that removes it, followed by Clear all; the count beside Filters
 is the number of chips. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
@@ -81,6 +85,9 @@ get focus.
 Browse with filters has the address #browse?key=value&... (q, status, checked,
 ec, enzyme, organism, substrate, metric, variant, tmin, tmax, phmin, phmax,
 caution, source, sort, rows, page, record; comma lists; unknown keys ignored).
+source=paper is Read from the paper by CatLog (the older status=v2 opens it
+too), source=databases From enzyme databases, and source=brenda,oed,... those
+databases (earlier_paper, unrecorded and strenda included).
 It is read on load and on Back and Forward, rewritten in place (never a new
 history entry) when the filters, search, sort, rows per page or page change, and
 gone when nothing is set, so a copied link opens the same records. An open
@@ -143,7 +150,9 @@ words are in its tooltip and the record, and on phone cards beside the "!"
 (they may wrap to the next line there).
 
 Status cells align left: a dot and one word, then whole-word tags on a second
-line. Columns are sized to the page's content: values, EC, T, pH and Status are
+line that always starts with the source: "from paper" (read by CatLog), the
+databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
+each), "earlier extraction" or "source not recorded". Columns are sized to the page's content: values, EC, T, pH and Status are
 as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
@@ -157,8 +166,8 @@ rounding); the record and downloads keep the stored text. Every column fits from
 about 1010px; narrower screens scroll the table sideways with the enzyme name
 kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name and EC;
-organism · substrate; kcat, Km and kcat/Km with their units as labels; status,
-°C and pH.
+organism · substrate; kcat, Km and kcat/Km with their units as labels; the
+two-line status badge, then °C and pH at the line's end.
 The filters overlay (below 1440px, phones included) ends with a "Show N
 records" button. Filter chips use the teal tint with a thin teal line, 12px
 text, and wrap within the page gutters.
@@ -170,15 +179,16 @@ marks cautions. Green (human-checked, 5.9:1 on white) is only for
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records
 only; it updates in place when the marks arrive (rows are not redrawn). On a
-phone card a badge with two tags takes its own line, T and pH at the next line's
-end. Use thin dividers, modest control radii, and
+phone card the badge keeps its two lines and T and pH sit at its right; a tag
+line too long for the room left ends in an ellipsis. Use thin dividers, modest
+control radii, and
 shadows only for overlays. No decorative gradients, statistic cards, or hero art.
 
 ## Record Details
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
-Order: name, EC · organism and one status line ("Accepted · read from the
-paper · ✓ human-checked"); Measurement (the values, then each flag once as a plain
+Order: name, EC · organism and one status line in the table's words ("Accepted ·
+from paper · ✓ human-checked", "Accepted · BRENDA · corrected"); Measurement (the values, then each flag once as a plain
 note under them, then substrate, cosubstrate, temperature, pH, conditions as a
 short list, preparation); Protein and substrate; Paper (links, the review
 outcome, a Human review line with the reviewer's facts-only note on every record

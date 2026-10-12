@@ -342,6 +342,13 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
+// Source: three radios (All records, Read from the paper by CatLog, From enzyme databases) and the databases.
+const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
+  value, type: "radio", name: "sourceMode", checked: value === "all",
+}));
+const sourceInputs = ["brenda", "sabio_rk", "oed", "uniprot", "skid", "strenda", "earlier_paper", "unrecorded"].map((value) => ({
+  value, type: "checkbox", name: "source", checked: false,
+}));
 const detailBackgroundSelector = [
   ".app-header",
   "#catalogLoadProgress",
@@ -371,6 +378,10 @@ const document = {
     }
     if (selector === 'input[name="recordState"]') return recordStateInputs;
     if (selector === 'input[name="measurement"]') return measurementInputs;
+    if (selector === 'input[name="sourceMode"]:checked') return sourceModeInputs.filter((input) => input.checked);
+    if (selector === 'input[name="sourceMode"]') return sourceModeInputs;
+    if (selector === 'input[name="source"]:checked') return sourceInputs.filter((input) => input.checked);
+    if (selector === 'input[name="source"]') return sourceInputs;
     if (selector === detailBackgroundSelector) return detailBackgroundElements;
     if (selector === filterBackgroundSelector) return [...detailBackgroundElements, element("detailPanel")];
     return [];
@@ -1539,14 +1550,14 @@ function row(overrides = {}) {
   api.renderStats();
   chart = element("statsCharts").innerHTML;
   const totalsHtml = element("statsTotals").innerHTML;
-  for (const [label, value] of [["Human-checked", 1], ["Read from the paper (CatLog v2)", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
+  for (const [label, value] of [["Human-checked", 1], ["Read from the paper by CatLog", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
     assert.match(totalsHtml, new RegExp(`${label.replace(/[()]/g, "\\$&")}</dt><dd>${value}`));
   }
   assert.match(totalsHtml, /from 1 papers/);
-  assert.deepEqual(headings(), ["Review status", "Read from the paper (CatLog v2)", "Human review", "What the records contain", "Enzyme classes",
+  assert.deepEqual(headings(), ["Review status", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
     "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
   assert.ok(chart.includes("Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units."));
-  assert.match(chart, /#browse\?status=v2">Browse these records/);
+  assert.match(chart, /#browse\?source=paper">Browse these records/);
   assert.match(chart, /#browse\?checked=1">Browse these records/);
   assert.match(chart, /#browse\?ec=1\.">EC 1/);
   assert.match(chart, /#browse\?ec=1\.1\.1\.1"/);
@@ -1555,9 +1566,10 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No caution/);
-  assert.match(chart, /#browse\?source=paper">From paper \(CatLog v2 and other primary literature\)/);
+  assert.match(chart, /#browse\?source=paper">Read from papers/);
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
-  assert.doesNotMatch(chart, /earlier records read from papers/, "every paper record here is a CatLog v2 record");
+  assert.doesNotMatch(chart, /from earlier paper extractions/, "every paper record here was read by CatLog");
+  assert.doesNotMatch(chart + element("statsTotals").innerHTML, /CatLog v2/, "The version name is never public");
   const breakdown = readBreakdown();
   assert.equal(breakdown.wild + breakdown.variant + breakdown.not_stated, 6);
   assert.equal(breakdown.source_paper + breakdown.source_brenda + breakdown.source_oed, 6);
@@ -1962,6 +1974,44 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.deepEqual(await organismsFor("ratt"), ["Rattus norvegicus"]);
   assert.deepEqual(await organismsFor("E. coli"), ["Escherichia coli K-12"]);
   element("organismFilterInput").value = "";
+}
+
+// Source: read from the paper by CatLog, or from the enzyme databases, narrowed by database; the status cell's second
+// line names the source. source=paper and the older status=v2 open the CatLog choice.
+{
+  const sourceRow = (key, overrides) => row({ record_key: key, measurement_key: key, ...overrides });
+  const fromPaper = sourceRow("src-v2", { source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
+  const earlier = sourceRow("src-earlier", { source_db: "primary_paper_direct", enzyme_label_source: "ec_name_fallback" });
+  const merged = sourceRow("src-merged", { source_db: "sabio_rk;brenda" });
+  const unknown = sourceRow("src-unknown", { source_db: "unknown" });
+  const oed = sourceRow("src-oed", { source_db: "oed", verification_status: "corrected" });
+  api.indexLoadedRecords([fromPaper, earlier, merged, unknown, oed]);
+  api.state.recordsReady = true;
+  assert.deepEqual([fromPaper, earlier, merged, unknown, oed].map(api.sourceTagText),
+    ["from paper", "earlier extraction", "BRENDA, SABIO-RK", "source not recorded", "OED"]);
+  assert.match(api.statusBadge(oed), /<span class="state-tags"><span class="state-tag">OED<\/span><span class="state-tag">corrected<\/span><\/span>/);
+  assert.match(api.statusBadge(fromPaper), /<span class="state-tag">from paper<\/span>/);
+  const keysFor = async (address) => {
+    api.applyBrowseParams(new Map(new URLSearchParams(address)));
+    await api.ensureCurrentFilters();
+    return api.state.filtered.map((item) => item.record_key).sort();
+  };
+  assert.deepEqual(await keysFor("source=paper"), ["src-v2"]);
+  assert.equal(api.browseHash(), "#browse?source=paper");
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: read from the paper by CatLog"]);
+  assert.deepEqual(await keysFor("status=v2"), ["src-v2"], "an older address keeps working");
+  assert.equal(api.browseHash(), "#browse?source=paper");
+  assert.deepEqual(await keysFor("source=databases"), ["src-earlier", "src-merged", "src-oed", "src-unknown"]);
+  assert.deepEqual(await keysFor("source=brenda"), ["src-merged"], "a merged record counts under each database");
+  assert.deepEqual(sourceModeInputs.filter((input) => input.checked).map((input) => input.value), ["databases"]);
+  assert.deepEqual(await keysFor("source=sabio_rk,unrecorded"), ["src-merged", "src-unknown"]);
+  assert.equal(api.browseHash(), "#browse?source=sabio_rk,unrecorded");
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.key), ["source:sabio_rk", "source:unrecorded"]);
+  assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
+  // Removing the last database chip removes the source filter.
+  api.activeFilterItems().find((item) => item.key === "source:earlier_paper").clear();
+  assert.equal(api.browseHash(), "");
+  assert.deepEqual(await keysFor(""), ["src-earlier", "src-merged", "src-oed", "src-unknown", "src-v2"]);
 }
 
 api.indexLoadedRecords([row()]);

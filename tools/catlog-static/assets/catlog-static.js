@@ -144,20 +144,35 @@
     efficiency_above_diffusion_limit: 2,
   };
 
-  // A record's main source (source_db); a merged value such as "sabio_rk;brenda" counts for each source it names (Stats
-  // counts the same way).
-  const SOURCE_PAPER_LABEL = "From paper (CatLog v2 and other primary literature)";
-  const sourceFilters = [
-    { value: "paper", label: SOURCE_PAPER_LABEL, bit: 1, title: "Values read from the paper: CatLog v2 records and other primary-literature records" },
-    { value: "brenda", label: "BRENDA", bit: 2 },
-    { value: "sabio_rk", label: "SABIO-RK", bit: 4 },
-    { value: "oed", label: "Open Enzyme Database", bit: 8 },
-    { value: "uniprot", label: "UniProt", bit: 16 },
-    { value: "skid", label: "SKiD", bit: 32 },
+  // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
+  // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
+  // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
+  const SOURCE_CATLOG_LABEL = "Read from the paper by CatLog";
+  const SOURCE_DATABASES_LABEL = "From enzyme databases";
+  const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
+  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt and SKiD, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline.";
+  const sourceModes = [
+    { value: "all", label: "All records" },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, help: SOURCE_CATLOG_HELP, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, help: SOURCE_DATABASES_HELP },
   ];
+  // The databases of the second group; tag is the word the status cell uses.
+  const sourceFilters = [
+    { value: "brenda", label: "BRENDA", tag: "BRENDA", bit: 2 },
+    { value: "sabio_rk", label: "SABIO-RK", tag: "SABIO-RK", bit: 4 },
+    { value: "oed", label: "Open Enzyme Database", tag: "OED", bit: 8 },
+    { value: "uniprot", label: "UniProt", tag: "UniProt", bit: 16 },
+    { value: "skid", label: "SKiD", tag: "SKiD", bit: 32 },
+    { value: "strenda", label: "STRENDA DB", tag: "STRENDA DB", bit: 64 },
+    { value: "earlier_paper", label: "Earlier paper extractions", tag: "earlier extraction", bit: 128,
+      title: "Records read from a paper by the earlier pipeline, not by CatLog" },
+    { value: "unrecorded", label: "Source not recorded", tag: "source not recorded", bit: 256 },
+  ];
+  const SOURCE_UNRECORDED_BIT = 256;
   const SOURCE_TOKENS = {
-    primary_paper_direct: "paper", primary_literature: "paper", paper: "paper", brenda: "brenda", sabio_rk: "sabio_rk",
-    sabio: "sabio_rk", sabiork: "sabio_rk", oed: "oed", open_enzyme_database: "oed", uniprot: "uniprot", skid: "skid",
+    primary_paper_direct: "earlier_paper", primary_literature: "earlier_paper", paper: "earlier_paper", brenda: "brenda",
+    sabio_rk: "sabio_rk", sabio: "sabio_rk", sabiork: "sabio_rk", oed: "oed", open_enzyme_database: "oed", uniprot: "uniprot",
+    skid: "skid", strenda: "strenda",
   };
 
   const tierOrder = {
@@ -1157,10 +1172,9 @@
     return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
   }
 
-  // One badge for the table and the record: a dot and the status word, then whole-word tags (from paper, corrected,
-  // no paper linked, human-checked). The tag line is always present, so every badge has the same height. In the record
-  // (long) the v2 tag reads "read from the paper".
-  function statusBadge(row, { long = false } = {}) {
+  // One badge for the table: a dot and the status word, then whole-word tags: the source (from paper, BRENDA, ...), then
+  // corrected, no paper linked, human-checked. The tag line is always present, so every badge has the same height.
+  function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isDisputed = row.verification_status === "disputed";
     const isCorrected = row.verification_status === "corrected";
@@ -1186,7 +1200,7 @@
     // every marked row.
     const checked = isHumanChecked(row);
     const tags = [
-      fromPaper ? (long ? "read from the paper" : "from paper") : "",
+      sourceTagText(row),
       isCorrected ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
@@ -2548,11 +2562,13 @@
   }
 
   // Records per source, counted as the Browse source filter finds them (rowSourceBits): a record merged from several
-  // databases counts under each; a record that names none of them is Other.
+  // databases counts under each; a record that names none of them is Other. Papers holds the records read from the paper
+  // by CatLog and the few earlier paper extractions.
   const statsSourceNames = [
-    ["paper", SOURCE_PAPER_LABEL], ["brenda", "BRENDA"], ["oed", "Open Enzyme Database (OED)"],
+    ["paper", "Read from papers"], ["brenda", "BRENDA"], ["oed", "Open Enzyme Database (OED)"],
     ["uniprot", "UniProt"], ["sabio_rk", "SABIO-RK"], ["skid", "SKiD"],
   ];
+  const STATS_SOURCE_KEYS = { earlier_paper: "paper", strenda: "other", unrecorded: "other" };
 
   function statsSources(overview) {
     const counts = {};
@@ -2563,13 +2579,13 @@
     } else {
       for (const [label, count] of Object.entries(manifestDistribution("source_db"))) {
         const bits = rowSourceBits({ source_db: label });
-        const keys = sourceFilters.filter((item) => bits & item.bit).map((item) => item.value);
+        const keys = [...new Set(sourceFilters.filter((item) => bits & item.bit).map((item) => STATS_SOURCE_KEYS[item.value] || item.value))];
         for (const key of keys.length ? keys : ["other"]) counts[key] = (counts[key] || 0) + count;
       }
     }
     const v2 = statsCount(overview?.from_paper?.records, counts.paper || 0);
     const paperNote = v2 !== null && counts.paper > v2
-      ? `${formatInteger(v2)} CatLog v2 records and ${formatInteger(counts.paper - v2)} earlier records read from papers.`
+      ? `${formatInteger(v2)} read from the paper by CatLog; ${formatInteger(counts.paper - v2)} from earlier paper extractions.`
       : "";
     return [
       ...statsSourceNames.map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key },
@@ -2599,7 +2615,7 @@
       ["Records", total],
       ["Accepted", accepted],
       ["Human-checked", humanChecked],
-      ["Read from the paper (CatLog v2)", fromPaper, statsCount(overview?.from_paper?.papers) !== null ? `from ${formatInteger(overview.from_paper.papers)} papers` : ""],
+      [SOURCE_CATLOG_LABEL, fromPaper, statsCount(overview?.from_paper?.papers) !== null ? `from ${formatInteger(overview.from_paper.papers)} papers` : ""],
     ].filter(([, value]) => value !== null && value !== undefined);
     const scope = [
       ["Papers", statsCount(overview?.papers)],
@@ -2631,9 +2647,9 @@
       ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one status. Select a linked name to see those records in Browse." }));
 
     if (fromPaper !== null && fromPaper !== undefined) {
-      sections.push(statsSection("statsV2Title", "Read from the paper (CatLog v2)", `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
+      sections.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
         <p>${escapeHtml(v2Sentence)}</p>
-        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ status: "v2" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
+        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
     }
     if (humanChecked !== null) {
       const marked = statsCount(overview.human_marked, total);
@@ -2916,7 +2932,10 @@
 
   const sourceBitsByValue = new Map();
 
+  // The databases a record comes from, as "By database" bits; 0 for a record read from the paper by CatLog. A source_db
+  // that names none of them ("unknown", "mixed", empty) is "Source not recorded".
   function rowSourceBits(row) {
+    if (isV2Row(row)) return 0;
     const value = String(row.source_db || "");
     let bits = sourceBitsByValue.get(value);
     if (bits === undefined) {
@@ -2925,9 +2944,25 @@
         const key = SOURCE_TOKENS[part.trim().replace(/[\s-]+/g, "_")];
         if (key) bits |= sourceFilters.find((item) => item.value === key).bit;
       });
-      sourceBitsByValue.set(value, bits);
+      sourceBitsByValue.set(value, bits || SOURCE_UNRECORDED_BIT);
+      bits = bits || SOURCE_UNRECORDED_BIT;
     }
     return bits;
+  }
+
+  // The status cell's second line names the source: "from paper" for CatLog's own records, otherwise the databases
+  // (BRENDA, SABIO-RK, OED, ...), "earlier extraction" or "source not recorded".
+  const sourceTagByBits = new Map();
+
+  function sourceTagText(row) {
+    if (isV2Row(row)) return "from paper";
+    const bits = rowSourceBits(row);
+    let text = sourceTagByBits.get(bits);
+    if (text === undefined) {
+      text = sourceFilters.filter((item) => bits & item.bit).map((item) => item.tag).join(", ");
+      sourceTagByBits.set(bits, text);
+    }
+    return text;
   }
 
   // Counts beside the filters, over every record (like the review-status counts), worked out once per loaded index
@@ -2947,14 +2982,15 @@
     const key = String(state.recordsGeneration);
     if (facetCountCache.key === key) return facetCountCache.counts;
     const counts = {
-      v2: 0, temperature: 0, ph: 0,
+      temperature: 0, ph: 0,
       metric: Object.fromEntries(measurementFilters.map((item) => [item.value, 0])),
       variant: { wild: 0, variant: 0, none: 0 },
       caution: Object.fromEntries(cautionFilters.map((item) => [item.value, 0])),
-      source: Object.fromEntries(sourceFilters.map((item) => [item.value, 0])),
+      source: Object.fromEntries([...sourceModes, ...sourceFilters].map((item) => [item.value, 0])),
     };
     for (const row of state.records) {
-      if (isV2Row(row)) counts.v2 += 1;
+      counts.source.all += 1;
+      counts.source[isV2Row(row) ? "paper" : "databases"] += 1;
       measurementFilters.forEach((item) => {
         if (row[item.field] != null) counts.metric[item.value] += 1;
       });
@@ -2995,9 +3031,6 @@
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
         checked: true, count: `state:${item.value}`, className: item.className,
       })).join("") + checkRowHtml({
-        name: "recordSource", value: "v2", id: "sourceV2Filter", label: "Read from the paper (CatLog v2)",
-        title: v2Sentence, count: "v2", className: "source-v2",
-      }) + checkRowHtml({
         name: "humanChecked", value: "1", id: "humanCheckedFilter", label: "Human-checked",
         title: "Accepted records a human reviewer checked.", count: "checked", className: "human-checked",
       }) + `
@@ -3023,9 +3056,22 @@
         })).join("");
       }
       if ($("sourceChecklist")) {
-        $("sourceChecklist").innerHTML = sourceFilters.map((item) => checkRowHtml({
-          name: "source", value: item.value, label: item.label, title: item.title || "", count: `source:${item.value}`,
-        })).join("");
+        $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
+          <label class="check-row radio-row">
+            <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""}${item.help ? ` aria-describedby="sourceHelp-${item.value}"` : ""} />
+            <span>${escapeHtml(item.label)}</span>
+            <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
+          </label>${item.help ? `
+          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a>` : ""}</p>` : ""}`).join("")}
+        </div>
+        <details class="source-databases" id="sourceDatabases">
+          <summary>By database</summary>
+          <div class="check-stack">${sourceFilters.map((item) => checkRowHtml({
+            name: "source", value: item.value, label: item.label, title: item.title || "", count: `source:${item.value}`,
+          })).join("")}
+            <p class="filter-note">A merged record counts under each database it came from.</p>
+          </div>
+        </details>`;
       }
     }
     updateFilterCounts();
@@ -3081,7 +3127,6 @@
     return {
       q: text("globalSearchInput"),
       states: statesBuilt ? selectedCheckboxes("recordState") : recordStates.map((item) => item.value),
-      v2: Boolean($("sourceV2Filter")?.checked),
       checked: Boolean($("humanCheckedFilter")?.checked),
       ec: text("ecFilterInput"),
       enzyme: text("enzymeFilterInput"),
@@ -3094,9 +3139,27 @@
       phmin: text("phMinInput"),
       phmax: text("phMaxInput"),
       cautions: selectedCheckboxes("caution"),
-      sources: selectedCheckboxes("source"),
+      ...sourceControlState(),
       sort: $("sortSelect")?.value || "evidence",
     };
+  }
+
+  // Source: one of All records, Read from the paper by CatLog or From enzyme databases; databases ticked under "By
+  // database" narrow the last (and select it).
+  function sourceControlState() {
+    const sources = selectedCheckboxes("source");
+    const mode = selectedCheckboxes("sourceMode")[0];
+    return { sourceMode: sources.length ? "databases" : (["paper", "databases"].includes(mode) ? mode : "all"), sources };
+  }
+
+  function setSourceControls(mode, sources = []) {
+    const databases = sources.filter((value) => sourceFilters.some((item) => item.value === value));
+    const nextMode = databases.length ? "databases" : (["paper", "databases"].includes(mode) ? mode : "all");
+    document.querySelectorAll?.('input[name="sourceMode"]').forEach((input) => {
+      input.checked = input.value === nextMode;
+    });
+    setCheckboxes("source", databases);
+    if (databases.length && $("sourceDatabases")) $("sourceDatabases").open = true;
   }
 
   // A typed bound: "25", "25.5", "25,5" or "-4"; null when empty, NaN when it is not a number.
@@ -3142,7 +3205,7 @@
       substrate: foldSearch(controls.substrate),
       substrateWords: fieldWords(controls.substrate),
       recordStates: controls.states,
-      v2Only: controls.v2,
+      sourceMode: controls.sourceMode,
       humanChecked: controls.checked,
       metrics: controls.metrics,
       variantBits: bitsFor(variantFilters, controls.variants),
@@ -3206,8 +3269,9 @@
     unit_not_recorded: "unit_missing", no_unit: "unit_missing", temp: "temperature", no_caution: "none",
   };
   const SOURCE_ALIASES = {
-    primary_paper_direct: "paper", primary_literature: "paper", v2: "paper", sabio: "sabio_rk", sabiork: "sabio_rk",
-    open_enzyme_database: "oed",
+    primary_paper_direct: "paper", primary_literature: "paper", v2: "paper", catlog: "paper", database: "databases",
+    db: "databases", sabio: "sabio_rk", sabiork: "sabio_rk", open_enzyme_database: "oed", earlier: "earlier_paper",
+    unknown: "unrecorded", not_recorded: "unrecorded", none: "unrecorded",
   };
 
   function encodeBrowseValue(value) {
@@ -3227,7 +3291,7 @@
     add("q", controls.q);
     const allStates = controls.states.length === recordStates.length;
     if (!controls.states.length) params.push(["status", ""]);
-    else if (!allStates || controls.v2) add("status", [...(allStates ? [] : controls.states), ...(controls.v2 ? ["v2"] : [])].join(","));
+    else if (!allStates) add("status", controls.states.join(","));
     if (controls.checked) add("checked", "1");
     add("ec", controls.ec);
     add("enzyme", controls.enzyme);
@@ -3244,7 +3308,7 @@
     add("phmin", bound(controls.phmin));
     add("phmax", bound(controls.phmax));
     add("caution", controls.cautions.join(","));
-    add("source", controls.sources.join(","));
+    add("source", controls.sources.length ? controls.sources.join(",") : (controls.sourceMode === "all" ? "" : controls.sourceMode));
     if (controls.sort && controls.sort !== "evidence") add("sort", controls.sort);
     if (state.pageSize !== PAGE_SIZES[0]) add("rows", state.pageSize);
     const page = state.pendingPage || state.page;
@@ -3277,9 +3341,10 @@
   // A section a filter is set in opens, so nothing active is hidden in a closed section.
   function openActiveFilterSections() {
     document.querySelectorAll?.("#catalogFilters .filter-section").forEach((section) => {
-      const active = [...section.querySelectorAll("input")].some((input) => (
-        input.type === "checkbox" ? input.checked && input.name !== "recordState" : Boolean(String(input.value || "").trim())
-      ));
+      const active = [...section.querySelectorAll("input")].some((input) => {
+        if (input.type === "radio") return input.checked && input.value !== "all";
+        return input.type === "checkbox" ? input.checked && input.name !== "recordState" : Boolean(String(input.value || "").trim());
+      });
       if (!active || section.classList.contains("open")) return;
       section.classList.add("open");
       section.querySelector(".filter-section-title")?.setAttribute("aria-expanded", "true");
@@ -3299,7 +3364,7 @@
     document.querySelectorAll?.('input[name="recordState"]').forEach((input) => {
       input.checked = !noStates && (!states.length || states.includes(input.value));
     });
-    if ($("sourceV2Filter")) $("sourceV2Filter").checked = status.includes("v2");
+
     if ($("humanCheckedFilter")) {
       $("humanCheckedFilter").checked = ["1", "true", "yes", "on"].includes(String(params.get("checked") ?? "").trim().toLowerCase());
     }
@@ -3315,7 +3380,11 @@
     setText("phMaxInput", params.get("phmax"));
     syncRangeValidity();
     setCheckboxes("caution", listParam(params.get("caution"), CAUTION_ALIASES));
-    setCheckboxes("source", listParam(params.get("source"), SOURCE_ALIASES));
+    // source=paper (or the older status=v2) is Read from the paper by CatLog; source=databases, or databases by name, the
+    // enzyme databases.
+    const sources = listParam(params.get("source"), SOURCE_ALIASES);
+    const databases = sources.filter((value) => sourceFilters.some((item) => item.value === value));
+    setSourceControls(databases.length || sources.includes("databases") ? "databases" : (sources.includes("paper") || status.includes("v2") ? "paper" : "all"), databases);
     openActiveFilterSections();
     if ($("sortSelect")) {
       $("sortSelect").value = normalizedSortName(String(params.get("sort") || "evidence").trim().toLowerCase());
@@ -3407,7 +3476,10 @@
       const names = controls.states.map((value) => stateConfig(value).label);
       add("status", `Status: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
     }
-    if (controls.v2) add("v2", "Read from the paper (CatLog v2)", () => uncheck("recordSource", "v2"));
+    if (controls.sourceMode !== "all" && !controls.sources.length) {
+      add(`source:${controls.sourceMode}`, `Source: ${controls.sourceMode === "paper" ? "read from the paper by CatLog" : "from enzyme databases"}`,
+        () => setSourceControls("all"));
+    }
     if (controls.checked) add("checked", "Human-checked", () => uncheck("humanChecked", "1"));
     if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
     if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
@@ -3429,7 +3501,8 @@
       add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
-      add(`source:${item.value}`, `Source: ${item.value === "paper" ? "from paper" : item.label}`, () => uncheck("source", item.value));
+      const others = controls.sources.filter((value) => value !== item.value);
+      add(`source:${item.value}`, `Source: ${item.label}`, () => setSourceControls(others.length ? "databases" : "all", others));
     });
     return items;
   }
@@ -3438,9 +3511,11 @@
   const FILTER_KEYS_BY_ID = {
     globalSearchInput: "q", ecFilterInput: "ec", enzymeFilterInput: "enzyme", organismFilterInput: "organism",
     substrateFilterInput: "substrate", temperatureMinInput: "temperature", temperatureMaxInput: "temperature",
-    phMinInput: "ph", phMaxInput: "ph", sourceV2Filter: "v2", humanCheckedFilter: "checked",
+    phMinInput: "ph", phMaxInput: "ph", humanCheckedFilter: "checked",
   };
-  const FILTER_KEY_PREFIXES = { recordState: "status", measurement: "metric", variant: "variant", caution: "caution", source: "source" };
+  const FILTER_KEY_PREFIXES = {
+    recordState: "status", measurement: "metric", variant: "variant", caution: "caution", source: "source", sourceMode: "source",
+  };
 
   function filterKeyForControl(element) {
     if (!element) return "";
@@ -3568,7 +3643,8 @@
       if (!words.every((word) => wordMatches(row, word, text))) return false;
     }
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
-    if (filters.v2Only && !isV2Row(row)) return false;
+    if (filters.sourceMode === "paper" && !isV2Row(row)) return false;
+    if (filters.sourceMode === "databases" && isV2Row(row)) return false;
     // The EC filter matches whole EC parts: "1.1.1" is EC 1.1.1 and every number under it.
     const ecQueries = filters.ecQueries || (filters.ec ? ecFilterQueries(filters.ec) : null);
     if (ecQueries?.length && !ecQueries.some((query) => (
@@ -4133,11 +4209,12 @@
     const [group, value] = key.split(":");
     const lists = { metric: "metrics", variant: "variants", caution: "cautions", source: "sources" };
     if (lists[group]) next[lists[group]] = controls[lists[group]].filter((item) => item !== value);
+    if (group === "source" && !next.sources.length) next.sourceMode = "all";
     else if (group === "status") next.states = recordStates.map((item) => item.value);
     else if (group === "temperature") Object.assign(next, { tmin: "", tmax: "" });
     else if (group === "ph") Object.assign(next, { phmin: "", phmax: "" });
     else if (["q", "ec", "enzyme", "organism", "substrate"].includes(group)) next[group] = "";
-    else if (group === "v2" || group === "checked") next[group] = false;
+    else if (group === "checked") next[group] = false;
     return next;
   }
 
@@ -5208,8 +5285,8 @@
   }
 
   // ---- Record panel: header and source details ----
-  // The record's status as one line, in the table's words and colours: a dot, the status, then "read from the paper",
-  // "corrected", "no paper linked" or "human-checked".
+  // The record's status as one line, in the table's words and colours: a dot, the status, the source ("from paper",
+  // "BRENDA", ...), then "corrected", "no paper linked" or "human-checked".
   function detailStatusHtml(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
@@ -5221,7 +5298,7 @@
           : ({ accepted: "accepted", curation_pending: "pending" }[config.value] || "unverified"));
     const words = [
       identityOnly ? "Accepted" : rowStatusLabel(row),
-      isV2Row(row) ? "read from the paper" : "",
+      sourceTagText(row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
@@ -5455,10 +5532,10 @@
     document.querySelectorAll('input[name="measurement"]').forEach((input) => {
       input.checked = false;
     });
-    ["variant", "caution", "source"].forEach((name) => setCheckboxes(name, []));
+    ["variant", "caution"].forEach((name) => setCheckboxes(name, []));
     clearInputs(...RANGE_INPUT_IDS);
     if ($("humanCheckedFilter")) $("humanCheckedFilter").checked = false;
-    if ($("sourceV2Filter")) $("sourceV2Filter").checked = false;
+    setSourceControls("all");
     $("sortSelect").value = "evidence";
     syncSortHeaders();
     resetDetail();
@@ -5675,8 +5752,15 @@
     $("measurementChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
     });
-    ["variantChecklist", "cautionChecklist", "sourceChecklist"].forEach((id) => {
+    ["variantChecklist", "cautionChecklist"].forEach((id) => {
       $(id)?.addEventListener("change", () => applyFiltersInBackground());
+    });
+    // Source: ticking a database selects From enzyme databases; All records or Read from the paper clears the databases.
+    $("sourceChecklist")?.addEventListener("change", (event) => {
+      const input = event.target;
+      if (input?.name === "sourceMode" && input.value !== "databases") setCheckboxes("source", []);
+      if (input?.name === "source" && input.checked) setSourceControls("databases", selectedCheckboxes("source"));
+      applyFiltersInBackground();
     });
     // Range bounds apply a moment after typing stops, and at once on Enter or when the field is left.
     RANGE_INPUT_IDS.forEach((id) => {
@@ -5837,6 +5921,10 @@
       renderDetail,
       rowStatusLabel,
       statusBadge,
+      sourceTagText,
+      applyBrowseParams,
+      browseHash,
+      activeFilterItems,
       humanCheckedHref,
       setHumanReviewMarks: (marks) => { humanReviewMarks = marks || {}; },
       reviewOutcome,

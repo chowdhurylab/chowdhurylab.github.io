@@ -547,6 +547,24 @@ def check_filters(driver, browser, url, route_label):
             set_browse_viewport(driver, browser, 1440, 1000)
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
+
+        # 4. Source: the older status=v2 opens Read from the paper by CatLog (source=paper), every row tagged "from
+        # paper"; a database narrows the enzyme databases, and the status cell names it.
+        def first_tags():
+            return driver.execute_script(
+                "return [...document.querySelectorAll('#recordsBody tr[data-key] .state-tags > .state-tag:first-child')].map(e => e.textContent)")
+        overview = stats_overview(driver.execute_script("return window.CATLOG_STATIC_MANIFEST"))
+        open_page(base + "#browse?status=v2")
+        wait.until(lambda d: fragment() == "browse?source=paper")
+        if overview:
+            assert summary() == f"{overview['from_paper']['records']:,} records", summary()
+        assert first_tags() and all(tag == "from paper" for tag in first_tags()), first_tags()
+        assert chip_keys() == ["source:paper"]
+        open_page(base + "#browse?source=skid")
+        assert driver.execute_script("return document.querySelector('input[name=\"sourceMode\"][value=\"databases\"]').checked")
+        assert first_tags() and all("SKiD" in tag for tag in first_tags()), first_tags()
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise
@@ -656,7 +674,7 @@ def check(driver, browser, url):
             assert "Human-checked" in headline and f"{human:,}" in headline
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
-        assert any(href.endswith("#browse?status=v2") for href in hrefs)
+        assert any(href.endswith("#browse?source=paper") for href in hrefs)
         forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] .stats-bars li")
         assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
         classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] .stats-bars li")

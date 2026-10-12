@@ -17,7 +17,7 @@ An older manifest without an overview shows what it has: never an empty
 heading, a headline without its number, or a count above the record total.
 
 Order: two headline lines (Records, Accepted, Human-checked, Read from the
-paper (CatLog v2) with its papers; then Papers, Enzymes, EC numbers,
+paper by CatLog with its papers; then Papers, Enzymes, EC numbers,
 Organisms, Substrates), then sections, each a heading, at most one line of
 plain explanation and its chart: Review status (full width); Read from the
 paper and Human review (two short boxes; the v2 box reuses the page's
