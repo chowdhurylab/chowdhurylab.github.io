@@ -124,7 +124,7 @@
   // Each caution states the problem; the record's note gives the numbers.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000×, or kcat/Km above the diffusion limit" },
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000× or kcat/Km above the diffusion limit" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
     { value: "none", label: "No cautions", bit: 16, title: "Records without any caution" },
@@ -3278,7 +3278,7 @@
       if ($("variantChecklist")) {
         $("variantChecklist").innerHTML = variantFilters.map((item) => checkRowHtml({
           name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
-        })).join("") + `<p class="filter-note">Records that do not say are in neither (<span data-count="variant:none">${EMPTY_VALUE}</span>).</p>`;
+        })).join("") + `<p class="filter-note"><span data-count="variant:none">${EMPTY_VALUE}</span> records do not state wild type or variant.</p>`;
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
@@ -4346,7 +4346,8 @@
   const FIT_COLUMNS = [
     { key: "enzyme", cell: ".c-enzyme", min: 160, narrowMin: 150, cap: 340, shrink: 1 },
     { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120 },
-    { key: "organism", cell: ".c-organism", min: 112, narrowMin: 104, cap: 200, shrink: 1 },
+    // About 13 characters, so a genus such as Chromobacterium is not cut mid-word.
+    { key: "organism", cell: ".c-organism", min: 124, narrowMin: 118, cap: 200, shrink: 1 },
     { key: "substrate", cell: ".c-substrate", min: 120, narrowMin: 112, cap: 220, shrink: 1 },
     { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
     { key: "km", cell: ".c-km", min: 60, narrowMin: 56, cap: 200 },
@@ -4815,7 +4816,7 @@
     uniprot_accession: "UniProt accession",
     source_record: "Source database",
     uniprot_accession_inactive_uniparc: "UniProt / UniParc archive",
-    uniprot_ec_organism_mutation_ranked_match: "UniProt accession inferred from EC, organism, and variant",
+    uniprot_ec_organism_mutation_ranked_match: "UniProt accession inferred from EC, organism and variant",
     unresolved_ec_organism: "No sequence match from EC and organism",
     manual_literature_uniprot_resolution: "UniProt match from the cited paper",
     manual_literature_structure_uniprot_resolution: "UniProt match from the cited paper's structure",
@@ -5317,7 +5318,7 @@
         ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
         ${flagNotesHtml(notes)}
         <div class="detail-kv measurement-conditions">
-          ${kv("Substrate", summary.substrate_name)}
+          ${kv("Substrate", /^unknown$/i.test(String(summary.substrate_name || "").trim()) ? "Not recorded" : summary.substrate_name)}
           ${conditions.cosubstrate}
           ${kv("Temperature", temperatureValue)}
           ${kv("pH", phValue)}

@@ -88,10 +88,10 @@ records or Read from the paper clears them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted, its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; then Status definitions: the four results
-and the tags, the method in one line with a link to #guide-method), Names and EC
-number (labelled fields), Measurement type
-(ticking several shows records with all of them), Wild type or variant (records
-that do not say are in neither), Assay conditions (temperature °C and pH, from
+and the tags, the method in one line with a link to #guide-method), Enzyme, organism and
+substrate (labelled fields, the EC number first), Measurement type
+(ticking several shows records with all of them), Wild type or variant (a note
+says how many records state neither), Assay conditions (temperature °C and pH, from
 and to, either may be empty; a bound that is not a number is outlined and
 ignored), then Cautions (grouped as the "!" notes), which starts closed and opens
 when one of its options is set. Every option shows how many of the current
@@ -139,9 +139,12 @@ that PMID, and a DOI (in full or its beginning, with or without doi.org) those
 of its paper: the index carries each record's PMIDs and DOIs from the Full data
 download of the same snapshot. When nothing matches, the table names the
 filters that are on and offers to remove the one set last that brings records
-back (with how many) or to clear everything. At 1180px and below the header is
-one grid on every view: brand and Download, the tabs on one line, then search
-(Browse only). A selected record uses a separate right
+back (with how many) or to clear everything. The header's tabs are the
+catalog's own views, Browse · Stats · Guide; the links out, "CatRange paper ↗"
+and "Chowdhury Lab ↗", sit apart at the right (beside Download; on phones the
+first reads "Paper ↗"). At 1180px and below the header is one grid on every
+view: brand and Download, the tabs with the links out at the line's end, then
+search (Browse only). A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details
 below the table or cover desktop measurement columns. Keep 25 rows per page,
 scrolling within the table, and the page controls reachable. An open record's
@@ -170,7 +173,11 @@ Not checked, as the index arrives).
 
 ## Type And Color
 
-Use the existing system font, tabular numerals, and zero letter spacing. One
+Use the existing system font, tabular numerals, and zero letter spacing. Table
+names break between words and hyphenate a word longer than its column (a break
+inside a word only as a last resort; the Organism column is at least about 13
+characters wide); only SMILES and sequences break anywhere. No serial comma;
+tags are lower case, filter labels and headings sentence case. One
 type scale (front matter) and weights 400/500/600 only; no text below 11px.
 Colours are tokens in the stylesheet's :root, the only place hex values appear.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
@@ -279,7 +286,7 @@ metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
 ## Guide
 
 One reading column (72ch, 16px body). The introduction says what CatLog is and,
-in one sentence, that the CatRange paper (PNAS Nexus, the Paper tab) describes
+in one sentence, that the CatRange paper (PNAS Nexus, linked from the header) describes
 CatLog-27k and that this site is the growing catalog that followed. Then "On
 this page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: Find records (#guide-find:

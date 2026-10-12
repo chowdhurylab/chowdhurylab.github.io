@@ -1257,9 +1257,12 @@ const navMarkup = indexHtml.match(/<nav class="top-nav"[^>]*>([\s\S]*?)<\/nav>/)
 for (const view of ["browse", "guide", "stats"]) {
   assert.match(navMarkup, new RegExp(`<a id="${view}Button"[^>]*href="#${view}"`));
 }
-assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
-  ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
-assert.match(navMarkup, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*aria-label="Open the CatRange paper \(PNAS Nexus\)"\s*>Paper</);
+// The catalog's own tabs (Browse, Stats, Guide), then the links out on their own, right of them.
+assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Stats)<\//g)].map((match) => match[1]), ["Browse", "Stats", "Guide"]);
+const externalNav = indexHtml.match(/<nav class="external-nav" aria-label="Related sites">([\s\S]*?)<\/nav>/)[1];
+assert.match(externalNav, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*target="_blank"[^>]*aria-label="CatRange paper \(PNAS Nexus\), opens in a new tab"\s*><span class="nav-external-long">CatRange paper<\/span>/);
+assert.match(externalNav, /href="https:\/\/chowdhurylab\.github\.io\/"[^>]*>Chowdhury Lab&nbsp;<span aria-hidden="true">&#8599;<\/span>/);
+assert.doesNotMatch(indexHtml, /ChowdhuryLab</);
 // Guide: a contents list whose links reach every section; the search help keeps its examples; filtered views are linked
 // in the #browse? format the table reads; no images.
 const guideHtml = indexHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0];

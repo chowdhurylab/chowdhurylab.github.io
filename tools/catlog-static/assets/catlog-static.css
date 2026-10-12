@@ -103,7 +103,7 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 #catalogView { display:flex; flex-direction:column; flex:1; min-height:0 }
 
 /* Header: brand, tabs, search, Download. */
-.app-header { display:grid; grid-template-columns:minmax(220px,max-content) auto minmax(200px,1fr) max-content; grid-template-areas:"brand nav search actions"; min-height:64px; align-items:center; gap:24px; border-bottom:1px solid var(--line); background:var(--surface); padding:0 24px }
+.app-header { display:grid; grid-template-columns:minmax(220px,max-content) auto minmax(200px,1fr) max-content max-content; grid-template-areas:"brand nav search links actions"; min-height:64px; align-items:center; gap:24px; border-bottom:1px solid var(--line); background:var(--surface); padding:0 24px }
 .brand-lockup { display:flex; min-width:max-content; align-items:baseline; gap:8px; border:0; background:transparent; cursor:pointer; padding:0; text-align:left }
 .brand-lockup strong { color:var(--text); font-size:var(--fs-stat); font-weight:600 }
 .brand-lockup span { color:var(--text-3); font-size:var(--fs-meta) }
@@ -112,6 +112,12 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 .nav-tab { display:inline-flex; align-items:center; justify-content:center; min-width:64px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--text-2); cursor:pointer; padding:3px 8px 0; font-size:var(--fs-ui); font-weight:500; text-decoration:none }
 .nav-tab:hover { color:var(--text); text-decoration:none }
 .nav-tab.active { border-bottom-color:var(--link); color:var(--text); font-weight:600 }
+/* The CatRange paper and the lab's site: links out, right of the catalog's own tabs. */
+.external-nav { display:flex; align-items:center; gap:16px; white-space:nowrap }
+.nav-external { color:var(--text-2); font-size:var(--fs-table); font-weight:500; text-decoration:none }
+.nav-external:hover { color:var(--link); text-decoration:underline }
+.nav-external > span[aria-hidden] { color:var(--text-3) }
+.nav-external-short { display:none }
 .global-search { display:grid; grid-template-columns:minmax(0,1fr) auto; justify-self:end; width:min(460px,100%); align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); padding:0 8px 0 12px }
 .global-search:focus-within { border-color:var(--teal); box-shadow:0 0 0 3px rgba(40,115,106,0.2) }
 .global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-ui) }
@@ -314,8 +320,9 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
 
-/* Names wrap to two lines; the full name is in the tooltip. */
-.clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere; white-space:normal }
+/* Names wrap to two lines between words (hyphenated where a word is longer than the column; a break inside a word only
+   as a last resort); the full name is in the tooltip. SMILES and sequences alone may break anywhere. */
+.clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:break-word; -webkit-hyphens:auto; hyphens:auto; white-space:normal }
 /* While the script measures each cell's natural width (one layout,never painted). */
 table.measuring .sort-button { width:max-content }
 table.measuring .clamp-2 { display:inline-block; max-width:none; white-space:nowrap }
@@ -632,9 +639,10 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* Stats and Guide: no search row. */
 body:is(.stats-open,.guide-open) .global-search { display:none }
-body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content minmax(0,1fr) max-content; grid-template-areas:"brand nav actions" }
+body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content max-content minmax(0,1fr) max-content max-content; grid-template-areas:"brand nav . links actions" }
 .brand-lockup { grid-area:brand }
 .top-nav { grid-area:nav }
+.external-nav { grid-area:links }
 .global-search { grid-area:search }
 .header-actions { grid-area:actions }
 .detail-empty { display:none }
@@ -675,8 +683,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 
 /* Laptops and tablets: header in rows, overlays for filters and the record, a table that can scroll sideways. */
 @media (max-width: 1180px) {
-  .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav nav" "search search"; column-gap:12px; row-gap:6px; padding:8px 16px 10px }
-  body:is(.stats-open,.guide-open) .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav nav" }
+  .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" "search search"; column-gap:12px; row-gap:6px; padding:8px 16px 10px }
+  body:is(.stats-open,.guide-open) .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" }
   .top-nav { justify-self:stretch; flex-wrap:nowrap; gap:4px; min-width:0; overflow-x:auto; scrollbar-width:none }
   .top-nav::-webkit-scrollbar { display:none }
   .nav-tab { flex:0 0 auto; min-width:0; min-height:40px; padding:3px 10px 0 }
@@ -755,6 +763,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .app-header { row-gap:4px; padding:6px 16px 8px }
   .top-nav { gap:2px }
   .nav-tab { min-height:36px; padding:3px 6px 0 }
+  .external-nav { gap:10px }
+  .nav-external { font-size:var(--fs-meta) }
+  .nav-external-long { display:none }
+  .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-h3) }
   .snapshot-overview { min-height:40px; row-gap:6px }
@@ -839,7 +851,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   @page { size:landscape; margin:10mm }
   html, body, .static-app, .table-panel, .table-wrap, tbody tr { background:var(--surface) !important }
   .static-app, #catalogView, .workbench { display:block; height:auto; min-height:0; overflow:visible }
-  .top-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more { display:none !important }
+  .top-nav, .external-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more { display:none !important }
   .app-header { display:block; min-height:0; padding:0 0 8px }
   .table-wrap, .table-panel, .stats-view { overflow:visible; border:0 }
   table { min-width:0 !important }

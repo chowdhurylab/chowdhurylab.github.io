@@ -26,17 +26,19 @@
         </button>
         <nav class="top-nav" aria-label="Catalog sections">
           <a id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page">Browse</a>
+          <a id="statsButton" class="nav-tab" href="catlog-stats.html" aria-controls="statsView">Stats</a>
           <a id="guideButton" class="nav-tab" href="catlog-latest.html#guide">Guide</a>
+        </nav>
+        <nav class="external-nav" aria-label="Related sites">
           <a
-            class="nav-tab"
+            class="nav-external"
             href="https://doi.org/10.1093/pnasnexus/pgag309"
             target="_blank"
             rel="noopener noreferrer"
             title="CatRange (PNAS Nexus, 2026) describes CatLog-27k, the curated set behind its models"
-            aria-label="Open the CatRange paper (PNAS Nexus)"
-          >Paper</a>
-          <a class="nav-tab" href="https://chowdhurylab.github.io/" aria-label="Open the Chowdhury Lab website">ChowdhuryLab</a>
-          <a id="statsButton" class="nav-tab" href="catlog-stats.html" aria-controls="statsView">Stats</a>
+            aria-label="CatRange paper (PNAS Nexus), opens in a new tab"
+          ><span class="nav-external-long">CatRange paper</span><span class="nav-external-short">Paper</span>&nbsp;<span aria-hidden="true">&#8599;</span></a>
+          <a class="nav-external" href="https://chowdhurylab.github.io/" aria-label="Chowdhury Lab website">Chowdhury Lab&nbsp;<span aria-hidden="true">&#8599;</span></a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
           <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC number, organism, substrate, UniProt ID or PMID" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
@@ -122,7 +124,7 @@
               <div class="check-stack" id="statusChecklist"></div>
             </div>
             <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Names and EC number <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="filter-section-title" type="button" aria-expanded="true">Enzyme, organism and substrate <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               <div class="field-grid">
                 <label for="ecFilterInput">EC number</label>
                 <input id="ecFilterInput" type="search" placeholder="e.g. 1.1.1" autocomplete="off" />

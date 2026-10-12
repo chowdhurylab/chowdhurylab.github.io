@@ -72,8 +72,9 @@ scrolling; never an independently scrolling chart panel. Search belongs to
 Browse, not Stats or Guide. Keep Browse's filtered state when navigating away
 and back. Do not publish project token statistics on this page.
 
-Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Browse, Guide
-and Stats are real links; normal clicks retain the loaded table, while
+Navigation order is Browse, Stats, Guide, then, apart at the right, the links
+out "CatRange paper ↗" and "Chowdhury Lab ↗". Browse, Guide and Stats are real
+links; normal clicks retain the loaded table, while
 modified clicks and copying work normally. Strip only deployment-check query
 tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
 catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
