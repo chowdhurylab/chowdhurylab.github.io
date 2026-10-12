@@ -887,7 +887,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:var(--sp-2); padding:var(--sp-2) var(--sp-4) }
   .records-title { display:contents }
   #openFiltersButton { display:inline-flex; grid-column:1; grid-row:1 }
-  .records-tools { grid-column:2; grid-row:1 }
+  .records-tools { grid-column:2; grid-row:1; flex-wrap:nowrap; min-width:0 }
   #pageSummary, #clearResultsButton, #activeFilters { grid-column:1 / -1; grid-row:auto; justify-self:start }
   /* "Sort" stays visible beside the menu, so it never reads as a review-result filter. */
   .records-tools label { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
