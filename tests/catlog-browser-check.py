@@ -701,6 +701,12 @@ def check_team(driver, browser, url):
                 return [...document.querySelectorAll('svg.team-loop-narrow text')].every(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a >= 11);
             """), "Team labels read at phone width"
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
+            # The phone header as on Stats: the links out beside Download, the four tabs on their own line under it.
+            assert driver.execute_script("""
+                const top = (s) => document.querySelector(s).getBoundingClientRect();
+                const links = top('.external-nav'), actions = top('.header-actions'), nav = top('.top-nav');
+                return Math.abs(links.top - actions.top) < 24 && nav.top >= links.bottom - 1;
+            """), "Team header: links out beside Download, tabs below"
             driver.save_screenshot(str(OUTPUT / f"{browser}-team-mobile.png"))
         finally:
             driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": []})

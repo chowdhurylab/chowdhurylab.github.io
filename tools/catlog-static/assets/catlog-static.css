@@ -1029,8 +1029,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* Phones: a compact header and counts, one toolbar row, and each record as a card instead of a wide table. */
 @media (max-width: 640px) {
   /* Brand, the links out and Download; then the four tabs across the width; then search (Browse only). */
-  .app-header, body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content minmax(0,1fr) max-content; grid-template-areas:"brand links actions" "nav nav nav" "search search search"; column-gap:var(--sp-3); row-gap:var(--sp-1); padding:var(--sp-2) var(--sp-4) }
-  body:is(.stats-open,.guide-open) .app-header { grid-template-areas:"brand links actions" "nav nav nav" }
+  .app-header, body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:max-content minmax(0,1fr) max-content; grid-template-areas:"brand links actions" "nav nav nav" "search search search"; column-gap:var(--sp-3); row-gap:var(--sp-1); padding:var(--sp-2) var(--sp-4) }
+  body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-areas:"brand links actions" "nav nav nav" }
   .top-nav { gap:0 }
   .nav-tab { flex:1 1 0; min-height:40px; padding:2px var(--sp-1) 0 }
   .external-nav { justify-self:end; gap:var(--sp-3); border-left:0; padding-left:0 }
