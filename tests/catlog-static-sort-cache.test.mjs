@@ -2708,6 +2708,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.deepEqual(await keysFor("source=sabio_rk,unrecorded"), ["src-merged", "src-unknown"]);
   assert.equal(api.browseHash(), "#browse?source=sabio_rk,unrecorded");
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.key), ["source:sabio_rk", "source:unrecorded"]);
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: SABIO-RK", "Source: not recorded"]);
   assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
   // Removing the last database chip removes the source filter.
   api.activeFilterItems().find((item) => item.key === "source:earlier_paper").clear();

@@ -4185,7 +4185,9 @@
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);
-      add(`source:${item.value}`, `Source: ${item.label}`, () => setSourceControls(others.length ? "databases" : "all", others));
+      // "Source: BRENDA", "Source: earlier paper extractions", "Source: not recorded" (names keep their capitals).
+      const chip = item.value === "unrecorded" ? "not recorded" : item.value === "earlier_paper" ? "earlier paper extractions" : item.label;
+      add(`source:${item.value}`, `Source: ${chip}`, () => setSourceControls(others.length ? "databases" : "all", others));
     });
     return items;
   }
