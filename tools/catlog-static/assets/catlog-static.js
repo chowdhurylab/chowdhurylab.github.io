@@ -43,6 +43,8 @@
     missingRecordKey: "",
     // The page an address names (#browse?...&page=), until the records it counts have loaded.
     pendingPage: 0,
+    // Active filter keys, the one changed last at the end.
+    filterOrder: [],
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
@@ -3236,13 +3238,86 @@
     return items;
   }
 
-  function renderActiveFilterCount() {
-    const count = activeFilterItems().length;
+  // The control a change came from, as the key of its filter (activeFilterItems).
+  const FILTER_KEYS_BY_ID = {
+    globalSearchInput: "q", ecFilterInput: "ec", enzymeFilterInput: "enzyme", organismFilterInput: "organism",
+    substrateFilterInput: "substrate", temperatureMinInput: "temperature", temperatureMaxInput: "temperature",
+    phMinInput: "ph", phMaxInput: "ph", sourceV2Filter: "v2", humanCheckedFilter: "checked",
+  };
+  const FILTER_KEY_PREFIXES = { recordState: "status", measurement: "metric", variant: "variant", caution: "caution", source: "source" };
+
+  function filterKeyForControl(element) {
+    if (!element) return "";
+    if (FILTER_KEYS_BY_ID[element.id]) return FILTER_KEYS_BY_ID[element.id];
+    const prefix = FILTER_KEY_PREFIXES[element.name];
+    if (!prefix) return "";
+    return prefix === "status" ? prefix : `${prefix}:${element.value}`;
+  }
+
+  // The filter changed last goes to the end of the order, so "remove the last filter" removes it.
+  function noteFilterChange(element) {
+    const key = filterKeyForControl(element);
+    state.pendingPage = 0;
+    if (!key) return;
+    state.filterOrder = state.filterOrder.filter((item) => item !== key);
+    state.filterOrder.push(key);
+  }
+
+  const CHIP_CLOSE_ICON = '<svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+  // The count beside Filters and one removable chip per active filter above the table, with Clear all.
+  function renderActiveFilters(items = activeFilterItems()) {
+    const keys = items.map((item) => item.key);
+    state.filterOrder = state.filterOrder.filter((key) => keys.includes(key));
+    keys.forEach((key) => {
+      if (!state.filterOrder.includes(key)) state.filterOrder.push(key);
+    });
+    const count = items.length;
     const badge = $("activeFilterCount");
-    if (!badge) return;
-    badge.textContent = count ? String(count) : "";
-    badge.classList.toggle("hidden", count === 0);
+    if (badge) {
+      badge.textContent = count ? String(count) : "";
+      badge.classList.toggle("hidden", count === 0);
+    }
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
+    const bar = $("activeFilters");
+    if (!bar) return;
+    const html = count
+      ? items.map((item) => `<button class="filter-chip" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove this filter" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
+        + `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>`
+      : "";
+    if (html === renderedChipsHtml) return;
+    // A chip with focus keeps it when the chips are redrawn (or the one now in its place takes it).
+    const focused = bar.contains?.(document.activeElement) ? document.activeElement : null;
+    const focusedKey = focused?.dataset?.filterKey || "";
+    const focusedIndex = focused ? [...bar.querySelectorAll("button")].indexOf(focused) : -1;
+    renderedChipsHtml = html;
+    bar.hidden = !count;
+    bar.innerHTML = html;
+    if (focused) {
+      const buttons = [...bar.querySelectorAll("button")];
+      const target = (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey))
+        || buttons[Math.min(focusedIndex, buttons.length - 1)]
+        || $("openFiltersButton");
+      target?.focus({ preventScroll: true });
+    }
+  }
+
+  let renderedChipsHtml = "";
+
+  // Removing a filter (a chip, or the empty-results button): focus stays in the chips, or returns to Filters.
+  function removeActiveFilter(key, { focusIndex = -1 } = {}) {
+    const item = activeFilterItems().find((candidate) => candidate.key === key);
+    if (!item) return;
+    item.clear();
+    state.pendingPage = 0;
+    renderActiveFilters();
+    const chips = [...($("activeFilters")?.querySelectorAll?.(".filter-chip") || [])];
+    if (focusIndex >= 0) (chips[Math.min(focusIndex, chips.length - 1)] || $("openFiltersButton"))?.focus({ preventScroll: true });
+    applyFiltersInBackground();
+  }
+
+  function renderActiveFilterCount() {
+    renderActiveFilters();
   }
 
   // Field filters fold each distinct value once per loaded generation (not once per row and keystroke).
@@ -5276,6 +5351,23 @@
       });
     });
     $("clearButton").addEventListener("click", clearFilters);
+    $("activeFilters")?.addEventListener("click", (event) => {
+      const chip = event.target?.closest?.("[data-filter-key]");
+      if (chip) {
+        const chips = [...$("activeFilters").querySelectorAll(".filter-chip")];
+        removeActiveFilter(chip.dataset.filterKey, { focusIndex: chips.indexOf(chip) });
+        return;
+      }
+      if (event.target?.closest?.("[data-filter-clear]")) {
+        clearFilters();
+        $("openFiltersButton")?.focus({ preventScroll: true });
+      }
+    });
+    // The filter changed last is the one the empty-results note offers to remove.
+    for (const type of ["input", "change"]) {
+      $("catalogFilters").addEventListener(type, (event) => noteFilterChange(event.target));
+      $("globalSearchInput").addEventListener(type, (event) => noteFilterChange(event.target));
+    }
     $("clearResultsButton")?.addEventListener("click", () => {
       clearFilters();
       $("globalSearchInput").focus({ preventScroll: true });
@@ -5364,6 +5456,7 @@
       state.pendingRecordKey = recordKeyFromLocation();
       const addressFilters = browseParamsFromLocation();
       if (addressFilters?.size) applyBrowseParams(addressFilters);
+      renderActiveFilters();
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();
