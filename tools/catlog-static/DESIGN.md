@@ -32,13 +32,19 @@ spacing: 4, 8, 12, 16, 24, 32px
 
 ## Layout
 
-Start with the table, not a landing page. Keep Records, Accepted, Human-checked
-and the three Rows with values counts in one 48px line, labels and counts on one
-baseline, the snapshot date and View stats at its end; from 641 to 1023px it
-takes two lines (Records, Accepted, Human-checked; then the rows with values and
-the date, with no divider at the start of a line); on phones the line keeps
-Records and Accepted, Human-checked takes the next line with the More button,
-and More shows the rest. Human-checked N is a link to those records
+Start with the table, not a landing page. Keep Records, Accepted, Read from the
+paper, Human-checked and the three "With kcat · Km · kcat/Km" counts in one 48px
+line, labels and counts on one baseline, the snapshot date at its end (its title
+is the Data ID; Stats is a tab, not a band link); from 1181 to 1339px the gaps
+tighten, and a window still too narrow wraps the date to a second line; from 641
+to 1023px it takes two lines (Records, Accepted, Read from the paper,
+Human-checked; then the With counts and the date, with no divider at the start of
+a line); on phones the line keeps Records and Accepted, Human-checked takes the
+next line with the More button, and More shows the rest (Read from the paper
+first). Read from the paper N links to those records (#browse?source=paper plus
+the filters set now, from page 1); N is the snapshot's
+summary.overview.from_paper.records on an unfiltered view until the records
+load, then the count among the current results; 0 is plain text. Human-checked N is a link to those records
 (#browse?checked=1 plus the filters set now, from page 1); N is the snapshot's
 summary.overview.human_checked_accepted (only when it is bound to this
 snapshot, as Stats checks) until the records and marks load, then the count
@@ -105,7 +111,11 @@ open one. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
-Search matches every word in any order, ignoring case, accents, Greek letters
+The search box's placeholder names what it finds (enzyme, EC number, organism,
+substrate, UniProt ID or PMID). Empty, it offers one fixed line of examples
+("Try: hexokinase · 1.1.1.1 · Escherichia coli · NADH · P00330 · PMID
+15989682"), each a search with results; the name fields offer three of their
+own; nothing is drawn at random. Search matches every word in any order, ignoring case, accents, Greek letters
 against their names (β = beta), µ/micro/u-, dash and prime variants, and
 hyphens, spaces, commas or underscores inside a name (4-nitrophenyl = 4
 nitrophenyl; a locant, a D/L/p/o/m/n prefix or a Greek name typed as its own

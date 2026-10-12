@@ -412,12 +412,13 @@
     substrateFilterInput: "substrate_name",
   };
 
-  const suggestionTitles = {
-    mixed: "Suggestions",
-    ec_number: "EC number suggestions",
-    enzyme_display_name: "Enzyme suggestions",
-    organism: "Organism suggestions",
-    substrate_name: "Substrate suggestions",
+  // An empty search box (or name field) offers one fixed line of examples, each a search that finds records.
+  const searchExamples = {
+    mixed: ["hexokinase", "1.1.1.1", "Escherichia coli", "NADH", "P00330", "PMID 15989682"],
+    ec_number: ["1.1.1.1", "2.7.1.1", "3.2.1"],
+    enzyme_display_name: ["hexokinase", "laccase", "lipase"],
+    organism: ["Escherichia coli", "human", "yeast"],
+    substrate_name: ["NADH", "ATP", "glucose"],
   };
 
   const $ = (id) => document.getElementById(id);
@@ -2463,14 +2464,42 @@
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
     $("snapshotMeta").innerHTML = `
-      <span class="snapshot-title">Rows with values</span>
+      <span class="snapshot-title">With</span>
       <span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>
       <span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>
       <span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>
     `;
+    renderFromPaperCount(rows);
     renderHumanCheckedCount(rows);
     $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
-    $("snapshotDate").title = manifest.content_sha256 || manifest.source_sha256 || "";
+    const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
+    $("snapshotDate").title = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
+  }
+
+  // "Read from the paper N" in the counts band: the records read from the paper by CatLog among the current results, a
+  // link to them (the filters set now, Source: Read from the paper by CatLog). Before the records load, N is the
+  // snapshot's own count (summary.overview.from_paper, bound to this snapshot) on an unfiltered view; a count of 0 (or
+  // none yet) is plain text.
+  function fromPaperHref() {
+    const params = browseParamsFromControls({ ...filterControlState(), sourceMode: "paper", sources: [] }).filter(([key]) => key !== "page");
+    return browseHash(params);
+  }
+
+  function renderFromPaperCount(rows) {
+    const link = $("fromPaperLink");
+    if (!link) return;
+    const snapshotCount = statsCount(statsOverview(Number(manifest.total_rows || 0))?.from_paper?.records);
+    let count;
+    if (state.recordsReady) count = rows.reduce((total, row) => total + (isV2Row(row) ? 1 : 0), 0);
+    else count = activeFilterItems().length ? null : snapshotCount;
+    if (count === null && snapshotCount === null && !state.recordsReady) {
+      link.hidden = true;
+      return;
+    }
+    link.hidden = false;
+    if (count) link.setAttribute("href", fromPaperHref());
+    else link.removeAttribute("href");
+    if ($("fromPaperCount")) $("fromPaperCount").textContent = formatCount(count);
   }
 
   // "Human-checked N" in the counts band links to the human-checked records among the current results. Before the
@@ -2849,40 +2878,6 @@
     $("statsCharts").innerHTML = sections.join("");
   }
 
-  function valueFromRow(row, field) {
-    return String(row[field] || "").trim();
-  }
-
-  function isSuggestibleValue(value) {
-    const key = value.toLowerCase();
-    return Boolean(value)
-      && key !== "n/a"
-      && key !== "unknown"
-      && key !== "not reported"
-      && key !== "not_reported"
-      && key !== EMPTY_VALUE;
-  }
-
-  function randomSuggestions(kind, limit = 5) {
-    if (!state.records.length) return [];
-    const fields = kind === "mixed"
-      ? ["enzyme_display_name", "ec_number", "organism", "substrate_name"]
-      : [kind];
-    const seen = new Set();
-    const values = [];
-    const maxAttempts = Math.min(state.records.length * fields.length, limit * 80);
-    for (let attempt = 0; attempt < maxAttempts && values.length < limit; attempt += 1) {
-      const row = state.records[Math.floor(Math.random() * state.records.length)];
-      const field = fields[Math.floor(Math.random() * fields.length)];
-      const value = valueFromRow(row, field);
-      const key = value.toLowerCase();
-      if (!isSuggestibleValue(value) || seen.has(key)) continue;
-      seen.add(key);
-      values.push(value);
-    }
-    return values;
-  }
-
   function hideSuggestions() {
     window.clearTimeout(state.suggestionHideTimer);
     const box = $("searchSuggestions");
@@ -2952,15 +2947,12 @@
     }
     window.clearTimeout(state.suggestionHideTimer);
     if (state.suggestionInputId && state.suggestionInputId !== input.id) hideSuggestions();
-    const suggestions = randomSuggestions(kind);
+    const suggestions = searchExamples[kind] || [];
     if (!suggestions.length) return;
     positionSuggestions(input, box);
-    box.innerHTML = `
-      <div class="suggestion-title">${escapeHtml(suggestionTitles[kind] || "Try a search")}</div>
-      ${suggestions.map((value, index) => (
-        `<button id="catlog-suggestion-${index}" type="button" role="option" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
-      )).join("")}
-    `;
+    box.innerHTML = `<span class="suggestion-title" aria-hidden="true">Try:</span>${suggestions.map((value, index) => (
+      `${index ? '<span class="suggestion-sep" aria-hidden="true">·</span>' : ""}<button id="catlog-suggestion-${index}" type="button" role="option" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
+    )).join("")}`;
     box.classList.remove("hidden");
     state.suggestionIndex = -1;
     state.suggestionInputId = input.id;
@@ -5819,13 +5811,14 @@
       event.currentTarget.setAttribute("aria-expanded", String(expanded));
       event.currentTarget.firstChild.textContent = expanded ? "Less " : "More ";
     });
-    // The Human-checked count keeps the current filters in its link (read again when it is used: rows per page can
-    // change without a new count).
-    const humanCheckedLink = $("humanCheckedLink");
-    for (const type of ["pointerenter", "focus", "click"]) {
-      humanCheckedLink?.addEventListener(type, () => {
-        if (humanCheckedLink.hasAttribute("href")) humanCheckedLink.setAttribute("href", humanCheckedHref());
-      });
+    // The Human-checked and Read from the paper counts keep the current filters in their links (read again when used:
+    // rows per page can change without a new count).
+    for (const [link, href] of [[$("humanCheckedLink"), humanCheckedHref], [$("fromPaperLink"), fromPaperHref]]) {
+      for (const type of ["pointerenter", "focus", "click"]) {
+        link?.addEventListener(type, () => {
+          if (link.hasAttribute("href")) link.setAttribute("href", href());
+        });
+      }
     }
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     for (const view of ["browse", "guide", "stats"]) {
@@ -5837,7 +5830,6 @@
         navigateTo(view);
       });
     }
-    $("snapshotStatsButton").addEventListener("click", () => navigateTo("stats"));
     document.addEventListener("click", (event) => {
       const menu = $("downloadMenu");
       if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
@@ -6115,6 +6107,7 @@
       countFacets,
       filterControlState,
       humanCheckedHref,
+      fromPaperHref,
       setHumanReviewMarks: (marks) => { humanReviewMarks = marks || {}; },
       reviewOutcome,
       recordIndexPath,

@@ -128,9 +128,11 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 .download-options strong { font-size:var(--fs-table) }
 .download-options span { color:var(--text-3); font-size:var(--fs-meta); line-height:1.4 }
 .download-options .corpus-request-link { margin-top:4px; border-top:1px solid var(--line); border-radius:0 0 4px 4px; padding-top:12px }
-.search-suggestions { position:fixed; z-index:85; display:grid; gap:4px; max-height:min(320px,calc(100vh - 80px)); overflow:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); padding:8px }
-.suggestion-title { color:var(--text-3); padding:2px 4px 4px; font-size:var(--fs-meta); font-weight:600 }
-.search-suggestions button { min-height:30px; border:0; border-radius:4px; background:transparent; color:var(--text); cursor:pointer; padding:4px 8px; text-align:left; font-size:var(--fs-table) }
+/* An empty search box offers one line of examples: "Try: hexokinase · 1.1.1.1 · ..." (it wraps in a narrow box). */
+.search-suggestions { position:fixed; z-index:85; display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; max-height:min(320px,calc(100vh - 80px)); overflow:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); padding:6px 8px }
+.suggestion-title { color:var(--text-3); padding:4px 4px 4px 2px; font-size:var(--fs-table) }
+.suggestion-sep { color:var(--text-3); font-size:var(--fs-table) }
+.search-suggestions button { min-height:30px; border:0; border-radius:4px; background:transparent; color:var(--link); cursor:pointer; padding:4px 6px; text-align:left; font-size:var(--fs-table); white-space:nowrap }
 .search-suggestions button:hover, .search-suggestions button:focus, .search-suggestions button[aria-selected="true"] { background:var(--hover); outline:0 }
 
 /* Buttons */
@@ -153,7 +155,7 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
 
 /* Counts band: one 48px line. */
 .snapshot-band { min-width:0; border-bottom:1px solid var(--line); background:var(--surface); padding:0 24px }
-.snapshot-overview { display:flex; min-height:48px; align-items:center; gap:8px 24px }
+.snapshot-overview { display:flex; flex-wrap:wrap; min-height:48px; align-items:center; gap:8px 24px; padding:4px 0 }
 .summary-grid, .snapshot-meta, .snapshot-controls { display:flex; min-width:0; align-items:baseline; gap:24px }
 .snapshot-meta { gap:16px; border-left:1px solid var(--line); padding-left:24px }
 .summary-card, .snapshot-line { display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap }
@@ -167,9 +169,22 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
 .snapshot-checked:hover { text-decoration:none }
 .snapshot-checked[href]:hover > span { text-decoration:underline }
 .snapshot-checked .check-icon { margin-right:3px }
+/* Read from the paper N: a link to those records, a label like the others. */
+.snapshot-paper { display:inline-flex; align-items:baseline; gap:6px; color:var(--text); white-space:nowrap }
+.snapshot-paper > span { color:var(--text-3); font-size:var(--fs-meta) }
+.snapshot-paper > strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
+.snapshot-paper:hover { text-decoration:none }
+.snapshot-paper[href] > span { color:var(--link) }
+.snapshot-paper[href]:hover > span { text-decoration:underline }
 .snapshot-controls { gap:16px; margin-left:auto }
 .snapshot-date { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
 .snapshot-more { display:none }
+/* Laptops: tighter gaps keep the counts on one line. */
+@media (min-width: 1181px) and (max-width: 1339px) {
+  .snapshot-overview { column-gap:16px }
+  .summary-grid { gap:16px }
+  .snapshot-meta { gap:12px; padding-left:16px }
+}
 
 /* Workbench: filters (overlay), table, open record. */
 .workbench { display:grid; grid-template-columns:minmax(0,1fr); align-items:stretch; flex:1; min-height:340px }
@@ -739,9 +754,9 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-h3) }
   .snapshot-overview { min-height:40px; row-gap:6px }
-  .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls) { display:none }
+  .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }
   .snapshot-more { display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-height:28px }
-  .snapshot-checked { align-self:center; padding:5px 0 }
+  .snapshot-checked, .snapshot-paper { align-self:center; padding:5px 0 }
   .summary-grid { gap:16px }
   .snapshot-meta { flex-basis:100%; flex-wrap:wrap; gap:4px 16px; border-left:0; padding-left:0 }
   .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }

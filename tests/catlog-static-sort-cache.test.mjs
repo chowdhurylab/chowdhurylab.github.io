@@ -1992,6 +1992,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderSummary();
   assert.equal(element("humanCheckedCount").textContent, "0");
   assert.equal(link.getAttribute("href"), null);
+  // Read from the paper N: the records read by CatLog among the results, a link to them with the filters set now.
+  assert.equal(element("fromPaperCount").textContent, "0");
+  assert.equal(element("fromPaperLink").getAttribute("href"), null, "0 is plain text");
+  const readByCatlog = row({ record_key: "fp-1", measurement_key: "fp-1", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
+  api.state.filtered = [readByCatlog, pending];
+  api.renderSummary();
+  assert.equal(element("fromPaperCount").textContent, "1");
+  assert.equal(element("fromPaperLink").getAttribute("href"), "#browse?source=paper");
+  api.state.filtered = [pending, noted];
   api.setHumanReviewMarks({});
   api.renderSummary();
   assert.equal(element("humanCheckedCount").textContent, "—", "a filtered view without the marks has no count yet");
@@ -2150,6 +2159,9 @@ assert.match(
 searchInput.value = "";
 api.showSuggestions(searchInput);
 assert.equal(suggestions.classList.contains("hidden"), false, "blank fields can still offer samples");
+assert.deepEqual([...suggestions.innerHTML.matchAll(/data-value="([^"]+)"/g)].map((match) => match[1]),
+  ["hexokinase", "1.1.1.1", "Escherichia coli", "NADH", "P00330", "PMID 15989682"], "one fixed line of examples, never random values");
+assert.match(suggestions.innerHTML, /^<span class="suggestion-title" aria-hidden="true">Try:<\/span>/);
 
 // Suggestions stay reachable beside narrow screens and bottom-of-panel fields.
 {

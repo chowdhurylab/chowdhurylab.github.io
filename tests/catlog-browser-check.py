@@ -162,8 +162,8 @@ def check_human_checked(driver, url):
     driver.execute_script("return new Promise(resolve => setTimeout(resolve, 500))")
     count = driver.find_element(By.ID, "humanCheckedCount").text
     assert count and count.replace(",", "").isdigit() and int(count.replace(",", "")) > 0
-    # The search box keeps focus after "Clear search and filters", and an empty search box shows its "Try a search"
-    # list over the counts band: leave the box first, as a visitor clicking elsewhere would.
+    # The search box keeps focus after "Clear search and filters", and an empty search box shows its "Try:" line of
+    # examples over the counts band: leave the box first, as a visitor clicking elsewhere would.
     driver.execute_script("document.activeElement && document.activeElement.blur()")
     wait.until(lambda d: "hidden" in (d.find_element(By.ID, "searchSuggestions").get_attribute("class") or "").split())
     link.click()
@@ -394,6 +394,14 @@ def check_browse(driver, browser, url, route_label):
             }
         """)
     try:
+        # The counts band: Read from the paper N opens those records (source=paper), N being their number; the snapshot
+        # date's title is the Data ID.
+        paper_link = driver.find_element(By.ID, "fromPaperLink")
+        overview = stats_overview(manifest)
+        if overview:
+            assert paper_link.is_displayed() and driver.find_element(By.ID, "fromPaperCount").text == f"{overview['from_paper']['records']:,}"
+            assert urlsplit(paper_link.get_attribute("href")).fragment == "browse?source=paper"
+        assert re.fullmatch(r"Data ID [0-9a-f]{10}", driver.find_element(By.ID, "snapshotDate").get_attribute("title") or "")
         human_checked = check_human_checked(driver, url)
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-human-checked-failure.png"))
