@@ -880,7 +880,10 @@
 
   function metricDisplayWithUnitHtml(row, field, { table = false } = {}) {
     const display = metricDisplay(row, field);
-    const displayHtml = table ? tableNumberHtml(display) : scientificValueHtml(display);
+    // A calculated kcat/Km is shown with the significant figures of its inputs, as in the record (the stored digits stay
+    // in the tooltip, the sort and the downloads).
+    const figures = display === EMPTY_VALUE ? 0 : calculatedFigures(row, field);
+    const displayHtml = figures ? numberHtml(display, { figures }) : table ? tableNumberHtml(display) : scientificValueHtml(display);
     if (display === EMPTY_VALUE) return displayHtml;
     if (metricUnitMissing(row, field)) return `${displayHtml}${unitMissingHtml()}`;
     return storedUnitDiffers(row, field) ? `${displayHtml}${storedUnitHtml(row, field)}` : displayHtml;
@@ -4676,12 +4679,16 @@
     return Math.max(2, Math.min(...figures));
   }
 
-  // A value as the panel shows it. A kcat/Km CatLog calculated from kcat and Km in an older record keeps their
-  // significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³); CatLog v2 values arrive rounded as the paper prints them.
+  // A kcat/Km calculated from kcat and Km keeps their significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³): the
+  // number of figures to show, or 0 for any other value (shown as stored).
+  function calculatedFigures(row, field) {
+    return field === "kcat_over_km" && row.kcat_over_km_origin === "calculated" ? quotientFigures(row) : 0;
+  }
+
+  // A value as the panel shows it (as the table does).
   function panelValueHtml(row, field) {
-    const display = metricDisplay(row, field);
-    const calculated = field === "kcat_over_km" && row.kcat_over_km_origin === "calculated" && !isV2Row(row);
-    return numberHtml(display, calculated ? { figures: quotientFigures(row) } : undefined);
+    const figures = calculatedFigures(row, field);
+    return numberHtml(metricDisplay(row, field), figures ? { figures } : undefined);
   }
 
   function sourceEfficiencyRow(summary, detail) {
@@ -5819,6 +5826,7 @@
       molecularIdentitySection,
       numberHtml,
       numberText,
+      metricDisplayWithUnitHtml,
       printedValueText,
       v2LineFacts,
       conditionLines,

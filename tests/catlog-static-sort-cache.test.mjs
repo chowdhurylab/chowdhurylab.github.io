@@ -1681,6 +1681,16 @@ assert.equal(api.numberText("8.5"), "8.5");
 assert.equal(api.numberText("6.004e+7"), "6.004 × 10⁷");
 assert.equal(api.numberText(5038.4615, { figures: 2 }), "5.0 × 10³");
 assert.equal(api.numberText(8.5 / 320, { figures: 2 }), "0.027");
+// The table rounds a calculated kcat/Km the same way (197 ÷ 2 × 10⁻⁵ is 9.9 × 10⁶, not 9.85 × 10⁶); a printed one keeps its digits.
+{
+  const calculated = row({ kcat: 197, km: 2e-5, kcat_over_km: 9.85e6, kcat_display: "197", km_display: "2e-05",
+    kcat_over_km_display: "9.85e+6", kcat_over_km_origin: "calculated", kcat_over_km_unit: "s^(-1)*mM^(-1)" });
+  const tableCell = api.metricDisplayWithUnitHtml(calculated, "kcat_over_km", { table: true });
+  assert.match(tableCell, /9\.9/);
+  assert.doesNotMatch(tableCell, /9\.85/);
+  const printed = api.metricDisplayWithUnitHtml({ ...calculated, kcat_over_km_origin: "printed" }, "kcat_over_km", { table: true });
+  assert.match(printed, /9\.85/);
+}
 assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
 assert.equal(api.printedValueText("320", "mM"), "320 mM");
 // A flag is said once: a marker button on the value and one note under the values, no second list.
