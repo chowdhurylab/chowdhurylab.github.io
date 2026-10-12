@@ -496,6 +496,7 @@ async function runSchemaTwoCase() {
   assert.deepEqual(ecFound("1."), ["1.1.1.1", "1.1.1.10", "1.1.11.1"]);
   assert.deepEqual(ecFound("ec:2"), ["2.1.1.1"]);
   assert.deepEqual(ecFound("1.1.1.1, 2.1.1.1"), ["1.1.1.1", "2.1.1.1"]);
+  assert.deepEqual(ecFound("EC "), ["1.1.1.1", "1.1.1.10", "1.1.11.1", "2.1.1.1"], "EC alone filters nothing yet");
   // Address values: + and %20 are spaces, unknown keys stay (and are ignored by the page), and a range reads either way.
   const params = parseBrowseParams("q=lactate+dehydrogenase&organism=E.%20coli&status=accepted%2Cv2&bad=%E0");
   assert.equal(params.get("q"), "lactate dehydrogenase");

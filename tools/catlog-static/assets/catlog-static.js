@@ -1626,7 +1626,8 @@
   // The EC field: one or more EC numbers or classes ("1.1.1", "1.1.1.1 1.1.1.2"); a record matches any of them. Text
   // that is not a number is looked for in the EC as written.
   function ecFilterQueries(text) {
-    return joinEcWords(foldSearch(text).split(/[\s,;]+/).filter(Boolean)).map((word) => {
+    // "EC" typed on its own (on the way to "EC 1.1") filters nothing yet.
+    return joinEcWords(foldSearch(text).split(/[\s,;]+/).filter(Boolean)).filter((word) => !EC_WORD.test(word)).map((word) => {
       const ec = ecQuery(word, { anyNumber: true });
       return ec ? { ec } : { text: compactSearch(word) };
     }).filter((query) => query.ec || query.text);
@@ -3361,7 +3362,7 @@
     }
     if (controls.v2) add("v2", "Read from the paper (CatLog v2)", () => uncheck("recordSource", "v2"));
     if (controls.checked) add("checked", "Human-checked", () => uncheck("humanChecked", "1"));
-    if (controls.ec) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
+    if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
     if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
     if (controls.organism) add("organism", `Organism: ${controls.organism}`, () => clearInputs("organismFilterInput"));
     if (controls.substrate) add("substrate", `Substrate: ${controls.substrate}`, () => clearInputs("substrateFilterInput"));
