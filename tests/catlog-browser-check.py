@@ -17,6 +17,7 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -146,7 +147,7 @@ def check_guide(driver, wait):
 def check_human_checked(driver, url):
     """Human-checked: the counts band links to those records (#browse?checked=1), and every record that link shows
     carries the human-checked tag with its check."""
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
     snapshot_count = ((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted")
     link = driver.find_element(By.ID, "humanCheckedLink")
@@ -178,7 +179,7 @@ def check_human_checked(driver, url):
 
 def check_browse(driver, browser, url, route_label):
     """Exercise public Browse, using only rendered rows and generated JSON Blobs."""
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         driver.get(url)
@@ -417,7 +418,7 @@ def stats_overview(manifest):
 
 def check_filters(driver, browser, url, route_label):
     """Filters in the address (#browse?...), the Human-checked filter and a range filter, on fresh page loads."""
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     base = url.split("#", 1)[0]
 
     def open_page(address):
@@ -553,7 +554,7 @@ def check_filters(driver, browser, url, route_label):
 
 
 def check(driver, browser, url):
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
     driver.set_window_size(1440, 1000)
     driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
@@ -736,11 +737,12 @@ def check(driver, browser, url):
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
         parent = element.find_element(By.XPATH, "..")
         was_open = parent.get_attribute("open") is not None
+        toggled = WebDriverWait(driver, 10)
         element.click()
-        assert (parent.get_attribute("open") is not None) != was_open
+        toggled.until(lambda _d: (parent.get_attribute("open") is not None) != was_open)
         check_panel_width()
         element.click()
-        assert (parent.get_attribute("open") is not None) == was_open
+        toggled.until(lambda _d: (parent.get_attribute("open") is not None) == was_open)
     driver.execute_script("window.scrollTo(0, 0)")
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
     for identifier in ("enrichedDataButton", "exportSnapshotButton"):
