@@ -8276,6 +8276,14 @@
     state.page = 1;
     state.pendingPage = 0;
     renderRows();
+    showTableTop();
+  }
+
+  // A new page (Previous, Next, another page size) opens at its first row: the table scrolls inside its own box, so
+  // its offset would otherwise carry over and show the new page near its bottom. The sideways offset stays.
+  function showTableTop() {
+    const wrap = $("recordTableWrap");
+    if (wrap) wrap.scrollTop = 0;
   }
 
   function bindControls() {
@@ -8554,12 +8562,14 @@
       state.pendingPage = 0;
       state.page -= 1;
       renderRows();
+      showTableTop();
     });
     $("nextButton").addEventListener("click", () => {
       resetDetail();
       state.pendingPage = 0;
       state.page += 1;
       renderRows();
+      showTableTop();
     });
     $("downloadPageButton").addEventListener("click", handlePageDownload);
     $("exportAllCsvButton")?.addEventListener("click", () => handleCsvExport("all"));

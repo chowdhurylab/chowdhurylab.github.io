@@ -358,8 +358,12 @@ def check_browse(driver, browser, url, route_label):
             assert not driver.find_element(By.ID, "prevButton").is_enabled()
             screenshots = [capture(viewport, "browse")]
             check_status_column(width)
+            # A new page opens at its first row, wherever the table was scrolled to.
+            scroll_table_to_bottom = "const w = document.getElementById('recordTableWrap'); w.scrollTop = w.scrollHeight; return w.scrollTop"
+            driver.execute_script(scroll_table_to_bottom)
             driver.find_element(By.ID, "nextButton").click()
             wait.until(lambda _d: row_keys() != first_keys)
+            assert driver.execute_script("return document.getElementById('recordTableWrap').scrollTop") == 0
             page_keys = row_keys()
             assert len(page_keys) == len(set(page_keys)) == 25 and not set(first_keys) & set(page_keys)
             assert driver.find_element(By.ID, "pageLabel").text == f"26–50 of {total:,}"
@@ -377,8 +381,10 @@ def check_browse(driver, browser, url, route_label):
             header, csv_rows = downloaded_csv("exportPageCsvButton")
             assert header[0] == "record_key" and {"kcat_unit", "review_result", "source", "pubmed_id", "doi"} <= set(header)
             assert [line.split(",", 1)[0] for line in csv_rows] == page_keys
+            driver.execute_script(scroll_table_to_bottom)
             driver.find_element(By.ID, "prevButton").click()
             wait.until(lambda _d: row_keys() == first_keys)
+            assert driver.execute_script("return document.getElementById('recordTableWrap').scrollTop") == 0
 
             # Roving row focus, keyboard activation, loaded exact-key details,
             # and Escape must all refer to the same displayed identity.
