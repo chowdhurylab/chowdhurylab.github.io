@@ -92,8 +92,8 @@ number and several at once. A number also finds the records of
 that PMID, and a DOI (in full or its beginning, with or without doi.org) those
 of its paper: the index carries each record's PMIDs and DOIs from the Full data
 download of the same snapshot. When nothing matches, the table names the
-filters that are on and offers to remove the one set last (with how many
-records that shows) or to clear everything. At 1180px and below the header is
+filters that are on and offers to remove the one set last that brings records
+back (with how many) or to clear everything. At 1180px and below the header is
 one grid on every view: brand and Download, the tabs on one line, then search
 (Browse only). A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details

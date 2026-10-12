@@ -4064,8 +4064,8 @@
     return next;
   }
 
-  // No record matches: say so in the table, name the filters that are on, and offer to remove the one set last (with
-  // how many records that shows) or to clear everything.
+  // No record matches: say so in the table, name the filters that are on, and offer to remove the one set last that
+  // brings records back (with how many) or to clear everything.
   function emptyResultsHtml() {
     const query = String($("globalSearchInput")?.value || "").trim();
     // A shared record link (#record=) whose record this snapshot does not have.
@@ -4083,13 +4083,19 @@
         : searchOnly || !items.length
           ? "Check the spelling, or try an EC number (1.1.1.1), a UniProt accession (P11509) or a PMID."
           : `Filter on: ${items[0].label}.`;
+    // The filter set last whose removal shows records (of the last four set), if there is one.
     let removeLast = "";
     if (!missingRecord && items.length > 1) {
-      const lastKey = [...state.filterOrder].reverse().find((key) => items.some((item) => item.key === key)) || items[items.length - 1].key;
-      const last = items.find((item) => item.key === lastKey);
-      const filters = currentFilters(controlsWithout(controls, lastKey));
-      const count = state.records.reduce((total, row) => total + (rowMatches(row, filters) ? 1 : 0), 0);
-      removeLast = `<button class="button secondary" type="button" data-action="remove-last-filter" data-filter-key="${escapeHtml(lastKey)}">Remove ${escapeHtml(last.label)} (${formatInteger(count)} ${count === 1 ? "record" : "records"})</button>`;
+      const order = [...state.filterOrder.filter((key) => items.some((item) => item.key === key)),
+        ...items.map((item) => item.key).filter((key) => !state.filterOrder.includes(key))];
+      for (const key of order.reverse().slice(0, 4)) {
+        const filters = currentFilters(controlsWithout(controls, key));
+        const count = state.records.reduce((total, row) => total + (rowMatches(row, filters) ? 1 : 0), 0);
+        if (!count) continue;
+        const item = items.find((candidate) => candidate.key === key);
+        removeLast = `<button class="button secondary" type="button" data-action="remove-last-filter" data-filter-key="${escapeHtml(key)}">Remove ${escapeHtml(item.label)} (${formatInteger(count)} ${count === 1 ? "record" : "records"})</button>`;
+        break;
+      }
     }
     return `
       <tr class="empty-row">
