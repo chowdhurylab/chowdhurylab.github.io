@@ -68,9 +68,12 @@ databases, the last two with a one-line help under them, the first ending in a
 link to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
 earlier paper extractions and Source not recorded: ticking one selects From
 enzyme databases, a merged record counts under each database it names, and All
-records or Read from the paper clears them), Review status (the three statuses,
-Human-checked: accepted records whose badge shows "human-checked"; its count waits
-for the review marks), Names and EC number (labelled fields), Measurement type
+records or Read from the paper clears them), Review result (Accepted, Not
+confirmed, Not checked and Disputed, each tick in its status colour; "Only
+human-checked" sits under Accepted, its tick green, and ticking it ticks Accepted;
+its count waits for the review marks; then Status definitions: the four results
+and the tags, the method in one line with a link to #guide-method), Names and EC
+number (labelled fields), Measurement type
 (ticking several shows records with all of them), Wild type or variant (records
 that do not say are in neither), Assay conditions (temperature °C and pH, from
 and to, either may be empty; a bound that is not a number is outlined and
@@ -134,7 +137,8 @@ then, never a provisional top 25). Stats and
 Guide never download the record index. kcat, Km, kcat/Km, T and pH sort both
 ways, from the Sort menu or by clicking the column header (high to low first,
 then low to high); the header's arrow shows the direction, and records without
-the value stay last. Review status stays the default order.
+the value stay last. Review result stays the default order (Disputed sorts with
+Not checked, as the index arrives).
 
 ## Type And Color
 
@@ -149,8 +153,9 @@ hover and in the record. Every table row has the same height. Value markers
 words are in its tooltip and the record, and on phone cards beside the "!"
 (they may wrap to the next line there).
 
-Status cells align left: a dot and one word, then whole-word tags on a second
-line that always starts with the source: "from paper" (read by CatLog), the
+Status cells align left: a dot and the review result (Accepted, Not confirmed,
+Not checked or Disputed: words that define themselves and promise no further
+work), then whole-word tags on a second line that always starts with the source: "from paper" (read by CatLog), the
 databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
 each), "earlier extraction" or "source not recorded". Columns are sized to the page's content: values, EC, T, pH and Status are
 as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
@@ -173,8 +178,10 @@ records" button. Filter chips use the teal tint with a thin teal line, 12px
 text, and wrap within the page gutters.
 
 White and neutral surfaces carry the data. Teal marks selection and actions;
-status uses a coloured dot (the Stats outcome colours) and ink words; amber
-marks cautions. Green (human-checked, 5.9:1 on white) is only for
+status uses a coloured dot (the Stats outcome colours) and ink words: accepted
+blue, not confirmed orange, not checked grey (Unverified and Not reviewed
+alike), disputed red; the filter's ticks use the same colours. Amber marks
+cautions. Green (human-checked, 5.9:1 on white) is only for
 "human-checked": a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records
@@ -188,7 +195,8 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
 Order: name, EC · organism and one status line in the table's words ("Accepted ·
-from paper · ✓ human-checked", "Accepted · BRENDA · corrected"); Measurement (the values, then each flag once as a plain
+from paper · ✓ human-checked", "Accepted · BRENDA · corrected"; a Not checked
+record names its exact value, "Not checked (Unverified)"); Measurement (the values, then each flag once as a plain
 note under them, then substrate, cosubstrate, temperature, pH, conditions as a
 short list, preparation); Protein and substrate; Paper (links, the review
 outcome, a Human review line with the reviewer's facts-only note on every record

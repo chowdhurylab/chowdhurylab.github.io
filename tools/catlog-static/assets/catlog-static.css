@@ -208,8 +208,15 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .check-stack { display:grid; gap:4px }
 .check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:8px; color:var(--text); font-size:var(--fs-table) }
 .check-row input { width:14px; height:14px; margin:0; accent-color:var(--teal) }
-.check-row.review input { accent-color:var(--amber) }
-.check-row.unresolved input { accent-color:var(--text-3) }
+/* Review result ticks in the status colours; green only for human-checked. */
+.check-row.accepted input { accent-color:var(--status-accepted) }
+.check-row.review input { accent-color:var(--status-pending) }
+.check-row.unresolved input { accent-color:var(--status-unverified) }
+.check-row.disputed input { accent-color:var(--status-disputed) }
+.check-row.human-checked input { accent-color:var(--checked) }
+.check-row.nested { margin-left:22px }
+.human-checked-word { color:var(--checked); font-weight:500; white-space:nowrap }
+.human-checked-word .check-icon { margin-right:2px }
 .check-row strong { color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
 
 /* Source: three choices, each with a short help line under it; the databases fold under "By database". */
@@ -231,6 +238,7 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .status-guide-body { display:grid; gap:6px; padding-top:8px }
 .status-guide-body p { margin:0 }
 .status-guide-body strong { color:var(--text) }
+.status-guide-body a { white-space:nowrap }
 
 /* "Show N records": the filters overlay (below 1440px) ends with it. */
 .filter-footer { display:none }
@@ -350,7 +358,6 @@ td.c-status { text-align:left }
 .state-badge.accepted { --status-color:var(--status-accepted) }
 .state-badge.review { --status-color:var(--status-pending) }
 .state-badge.unresolved { --status-color:var(--status-unverified) }
-.state-badge[data-status="mathematically_inferred"] { --status-color:var(--status-not-reviewed) }
 .state-badge.disputed { --status-color:var(--status-disputed) }
 .state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; padding-left:14px; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
 

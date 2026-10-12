@@ -565,6 +565,23 @@ def check_filters(driver, browser, url, route_label):
         assert first_tags() and all("SKiD" in tag for tag in first_tags()), first_tags()
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
+
+        # 5. Review result: four words, Disputed apart from Not checked (Unverified and Not reviewed); the counts are the
+        # manifest's.
+        statuses = {item["label"]: item["count"] for item in
+                    driver.execute_script("return window.CATLOG_STATIC_MANIFEST").get("summary", {}).get("distributions", {}).get("verification_status", [])}
+        open_page(base + "#browse?status=disputed")
+        assert summary() == f"{statuses.get('disputed', 0):,} records", summary()
+        labels = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-label')].map(e => e.textContent)")
+        assert all(label == "Disputed" for label in labels), labels
+        open_page(base + "#browse?status=not_verified")
+        not_checked = sum(count for label, count in statuses.items()
+                          if label not in ("verified", "corrected", "manual_review_required", "disputed"))
+        assert summary() == f"{not_checked:,} records", summary()
+        labels = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-label')].map(e => e.textContent)")
+        assert labels and all(label == "Not checked" for label in labels), labels
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise

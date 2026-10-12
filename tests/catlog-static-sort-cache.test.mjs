@@ -334,7 +334,7 @@ const element = (id) => {
   if (!elements.has(id)) elements.set(id, makeElement(id));
   return elements.get(id);
 };
-const recordStateInputs = ["accepted", "curation_pending", "not_verified"].map((value) => ({
+const recordStateInputs = ["accepted", "curation_pending", "not_verified", "disputed"].map((value) => ({
   value,
   checked: true,
 }));
@@ -1639,7 +1639,21 @@ function row(overrides = {}) {
   runtimeManifest.summary.review_details.download_sha256 = "wrong";
   assert.equal(api.statsCohortData("unverified", 1), null, "Exact frozen download required");
   const prepared = row({verification_status: "mathematically_inferred"});
-  assert.equal(api.rowStatusLabel(prepared), "Not reviewed");
+  assert.equal(api.rowStatusLabel(prepared), "Not checked");
+  assert.equal(api.rowStatusLabel(prepared, { exact: true }), "Not checked (Not reviewed)", "the record names the exact earlier value");
+  assert.equal(api.rowStatusLabel(row({ verification_status: "unverified" }), { exact: true }), "Not checked (Unverified)");
+  assert.equal(api.rowStatusLabel(row({ verification_status: "manual_review_required" })), "Not confirmed");
+  assert.equal(api.rowStatusLabel(row({ verification_status: "disputed" })), "Disputed");
+  assert.equal(api.rowStatusLabel(row({ verification_status: "corrected" }), { exact: true }), "Accepted");
+  // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title.
+  const badge = api.statusBadge(row({ verification_status: "corrected" }));
+  assert.match(badge, /aria-label="Accepted, BRENDA, corrected"/);
+  assert.match(badge, /title="Accepted by the earlier automated review after a correction\."/);
+  assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, BRENDA"/);
+  assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
+  const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
+  assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
+  assert.doesNotMatch(paperBadge, /independent|run\b|code converted/);
   assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.

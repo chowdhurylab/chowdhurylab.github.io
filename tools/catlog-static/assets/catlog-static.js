@@ -80,40 +80,32 @@
   ].join(", ");
   const FILTER_INERT_SELECTOR = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
 
+  // Review result: the four words the filter, the badges, the definitions, the Guide and Stats use. The address keys
+  // stay (status=accepted,curation_pending,not_verified,disputed). Not checked holds Unverified, Not reviewed and any
+  // other status the earlier review left; the record names the exact one ("Not checked (Unverified)").
   const recordStates = [
-    {
-      value: "accepted",
-      label: "Accepted",
-      shortLabel: "Accepted",
-      className: "accepted",
-    },
-    {
-      value: "curation_pending",
-      label: "Checks pending",
-      shortLabel: "Checks pending",
-      className: "review",
-    },
-    {
-      value: "not_verified",
-      label: "Other records",
-      shortLabel: "Other",
-      className: "unresolved",
-    },
+    { value: "accepted", label: "Accepted", className: "accepted" },
+    { value: "curation_pending", label: "Not confirmed", className: "review" },
+    { value: "not_verified", label: "Not checked", className: "unresolved" },
+    { value: "disputed", label: "Disputed", className: "disputed" },
   ];
 
   const stateDescriptions = {
-    accepted: "Accepted as reported or after a correction.",
-    curation_pending: "Not accepted: at least one check is still open, for example on the value, protein or substrate.",
-    not_verified: "Unverified, Not reviewed or Disputed; each row says which.",
+    accepted: "Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.",
+    curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
+    not_verified: "No review result. Unverified: the earlier review recorded no final check. Not reviewed: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed.",
+    disputed: "A check found a problem; not accepted.",
   };
+  const HUMAN_CHECKED_DESCRIPTION = "A human reviewer approved every value shown.";
 
+  // The verification_status values; label is the exact value a record names after its review result.
   const reviewStatuses = [
-    { value: "verified", label: "Verified", description: "Accepted as reported." },
-    { value: "corrected", label: "Corrected", description: "Accepted after a correction." },
-    { value: "manual_review_required", label: "Checks pending", description: "At least one check is still open." },
-    { value: "unverified", label: "Unverified", description: "No accepted result is recorded." },
-    { value: "mathematically_inferred", label: "Not reviewed", description: "Prepared from source records, without an accepted review outcome." },
-    { value: "disputed", label: "Disputed", description: "Flagged during review; not accepted." },
+    { value: "verified", label: "Verified", description: "Accepted by the earlier automated review as printed." },
+    { value: "corrected", label: "Corrected", description: "Accepted by the earlier automated review after a correction." },
+    { value: "manual_review_required", label: "Not confirmed", description: stateDescriptions.curation_pending },
+    { value: "unverified", label: "Unverified", description: "The earlier review recorded no final check." },
+    { value: "mathematically_inferred", label: "Not reviewed", description: "A database record without a PMID or DOI that was never reviewed." },
+    { value: "disputed", label: "Disputed", description: stateDescriptions.disputed },
   ];
 
   const measurementFilters = [
@@ -219,7 +211,7 @@
     identity_unresolved: "Unresolved",
   };
 
-  const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be checked against a paper.";
+  const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper.";
 
   const conditionFlagLabels = {
     kcat_over_km_quotient_mismatch: "Reported kcat/Km differs from kcat ÷ Km",
@@ -989,6 +981,7 @@
     const status = row.verification_status;
     if (status === "verified" || status === "corrected") return "accepted";
     if (status === "manual_review_required") return "curation_pending";
+    if (status === "disputed") return "disputed";
     return "not_verified";
   }
 
@@ -1003,8 +996,9 @@
       const statuses = manifestDistribution("verification_status");
       counts.accepted = (statuses.verified || 0) + (statuses.corrected || 0);
       counts.curation_pending = statuses.manual_review_required || 0;
+      counts.disputed = statuses.disputed || 0;
       counts.not_verified = Object.entries(statuses).reduce(
-        (total, [status, count]) => total + (["verified", "corrected", "manual_review_required"].includes(status) ? 0 : count),
+        (total, [status, count]) => total + (["verified", "corrected", "manual_review_required", "disputed"].includes(status) ? 0 : count),
         0,
       );
       return counts;
@@ -1161,41 +1155,40 @@
     return isIdentityOnlyAccepted(summary) ? `${outcome} No PMID or DOI is linked, so the value cannot be checked against a paper.` : outcome;
   }
 
-  function rowStatusLabel(row) {
-    if (row.verification_status === "disputed") return "Disputed";
-    if (row.verification_status === "mathematically_inferred") return "Not reviewed";
-    if (row.verification_status === "unverified") return "Unverified";
-    if (isIdentityOnlyAccepted(row)) return "Accepted (no paper linked)";
-    if (row.verification_status === "corrected") return "Accepted";
-    if (row.verification_status === "verified") return "Accepted";
-    if (row.verification_status === "manual_review_required") return "Checks pending";
-    return stateConfig(row._recordState || recordStateForRow(row)).shortLabel;
+  // The review result; with exact, a Not checked record also names its own status ("Not checked (Unverified)").
+  function rowStatusLabel(row, { exact = false } = {}) {
+    const result = stateConfig(row._recordState || recordStateForRow(row)).label;
+    if (!exact || result !== "Not checked") return result;
+    const status = String(row.verification_status || "").trim();
+    const own = reviewStatuses.find((item) => item.value === status)?.label
+      || (status ? status.replace(/_/g, " ").replace(/^./, (letter) => letter.toUpperCase()) : "");
+    return own ? `${result} (${own})` : result;
   }
 
-  // One badge for the table: a dot and the status word, then whole-word tags: the source (from paper, BRENDA, ...), then
-  // corrected, no paper linked, human-checked. The tag line is always present, so every badge has the same height.
+  // The short method line a from-paper badge carries in its title (the Guide's #guide-method says it in full).
+  const FROM_PAPER_SHORT = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
+
+  // One badge for the table: a dot and the review result, then whole-word tags: the source (from paper, BRENDA, ...), then
+  // corrected, no paper linked, human-checked. The tag line is always present, so every badge has the same height. Its
+  // title says what the result means for this record; its accessible name is the words alone ("Accepted, from paper").
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
-    const isDisputed = row.verification_status === "disputed";
     const isCorrected = row.verification_status === "corrected";
     const identityOnly = isIdentityOnlyAccepted(row);
-    // CatLog v2 rows (read from the paper) carry "from paper"; their description is the v2 sentence.
     const fromPaper = isV2Row(row);
-    // Other records (Unverified, Not reviewed, ...) describe their own status, not the whole group.
+    // A Not checked record describes its own status (Unverified, Not reviewed).
     const ownStatus = config.value === "not_verified"
       ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
       : "";
     const description = fromPaper
-      ? v2Sentence
-      : (isDisputed
-          ? "Disputed: flagged during review; not accepted."
-          : (identityOnly
-              ? identityOnlyTrustNote
-              : (isCorrected
-                  ? "Accepted after a correction."
-                  : (ownStatus || stateDescriptions[config.value] || config.label))));
+      ? FROM_PAPER_SHORT
+      : (identityOnly
+          ? identityOnlyTrustNote
+          : (config.value === "accepted"
+              ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
+              : (ownStatus ? `${rowStatusLabel(row, { exact: true })}: ${ownStatus}` : stateDescriptions[config.value])))
+      || config.label;
     const label = rowStatusLabel(row);
-    const visibleLabel = identityOnly ? "Accepted" : label;
     // "human-checked" only on accepted rows, with a check in its own colour; the record's Human review line shows for
     // every marked row.
     const checked = isHumanChecked(row);
@@ -1205,12 +1198,13 @@
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
     const fullDescription = checked
-      ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value it shows."}`
+      ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value shown."}`
       : description;
-    const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
+    const className = `${config.className}${identityOnly ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
       + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
-    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(`${label}. ${fullDescription}`)}"><span class="state-label">${escapeHtml(visibleLabel)}</span><span class="state-tags">${tagsHtml}</span></span>`;
+    const name = [label, ...tags, checked ? "human-checked" : ""].filter(Boolean).join(", ");
+    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
   function isContentHashedDataAsset(src) {
@@ -1464,7 +1458,8 @@
     state.recordsGeneration += 1;
     state.filterRunId += 1;
     state.sortCache.clear();
-    const stateRanks = Object.fromEntries(recordStates.map((item, index) => [item.value, index]));
+    // Disputed sorts with Not checked, as the index's Review-status order has it.
+    const stateRanks = { accepted: 0, curation_pending: 1, not_verified: 2, disputed: 2 };
     state.records.forEach((row, index) => {
       row._loadIndex = index;
       row._recordState = recordStateForRow(row);
@@ -3027,17 +3022,23 @@
   function setupFilters() {
     if (!filterChecklistsBuilt) {
       filterChecklistsBuilt = true;
+      // Review result: the four results, "Only human-checked" nested under Accepted, then their definitions and the
+      // tags' (the method in one line, with the Guide's full account a link away).
       $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
         checked: true, count: `state:${item.value}`, className: item.className,
-      })).join("") + checkRowHtml({
-        name: "humanChecked", value: "1", id: "humanCheckedFilter", label: "Human-checked",
-        title: "Accepted records a human reviewer checked.", count: "checked", className: "human-checked",
-      }) + `
+      }) + (item.value === "accepted" ? checkRowHtml({
+        name: "humanChecked", value: "1", id: "humanCheckedFilter", labelHtml: `Only <span class="human-checked-word">${CHECK_ICON_HTML}human-checked</span>`,
+        label: "Only human-checked", title: HUMAN_CHECKED_DESCRIPTION, count: "checked", className: "human-checked nested",
+      }) : "")).join("") + `
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (no paper linked):</strong> ${escapeHtml(identityOnlyTrustNote)}</p><p><strong>Human-checked:</strong> Accepted records a human reviewer checked.</p>` : ""}`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>`).join("")}
+          <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
+          <p><strong>from paper:</strong> ${escapeHtml(FROM_PAPER_SHORT)} <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a></p>
+          <p><strong>corrected:</strong> Accepted by the earlier automated review after a correction.</p>
+          <p><strong>no paper linked:</strong> ${escapeHtml(identityOnlyTrustNote)}</p>
         </div>
       </details>
     `;
@@ -3480,7 +3481,7 @@
       add(`source:${controls.sourceMode}`, `Source: ${controls.sourceMode === "paper" ? "read from the paper by CatLog" : "from enzyme databases"}`,
         () => setSourceControls("all"));
     }
-    if (controls.checked) add("checked", "Human-checked", () => uncheck("humanChecked", "1"));
+    if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"));
     if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
     if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
     if (controls.organism) add("organism", `Organism: ${controls.organism}`, () => clearInputs("organismFilterInput"));
@@ -5291,13 +5292,9 @@
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
     const identityOnly = isIdentityOnlyAccepted(row);
-    const colour = status === "disputed"
-      ? "disputed"
-      : (status === "mathematically_inferred"
-          ? "not-reviewed"
-          : ({ accepted: "accepted", curation_pending: "pending" }[config.value] || "unverified"));
+    const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value] || "unverified";
     const words = [
-      identityOnly ? "Accepted" : rowStatusLabel(row),
+      rowStatusLabel(row, { exact: true }),
       sourceTagText(row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
@@ -5746,7 +5743,12 @@
     });
     dockedFiltersMedia.addEventListener?.("change", syncFilterPanel);
     filtersBesideRecordMedia.addEventListener?.("change", syncFilterPanel);
-    $("statusChecklist").addEventListener("change", () => {
+    // "Only human-checked" sits under Accepted: ticking it ticks Accepted too.
+    $("statusChecklist").addEventListener("change", (event) => {
+      if (event.target?.id === "humanCheckedFilter" && event.target.checked) {
+        const accepted = [...document.querySelectorAll('input[name="recordState"]')].find((input) => input.value === "accepted");
+        if (accepted) accepted.checked = true;
+      }
       applyFiltersInBackground();
     });
     $("measurementChecklist").addEventListener("change", () => {
