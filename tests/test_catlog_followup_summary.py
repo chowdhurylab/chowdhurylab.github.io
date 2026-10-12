@@ -174,6 +174,14 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["cautions"], {"differs": 1, "units": 1, "unit_missing": 1, "temperature": 1, "none": 1})
         # A merged source ("sabio_rk;brenda") counts under each source it names, as the Browse source filter finds it.
         self.assertEqual(result["sources"], {"paper": 1, "brenda": 2, "sabio_rk": 1, "oed": 1, "uniprot": 0, "skid": 0, "strenda": 0, "other": 0})
+        # The main source counts each record once, with its review status: CatLog's own reading, one database, or
+        # several databases (Stats figure 2).
+        self.assertEqual(result["main_sources"], {"catlog": {"verified": 1}, "brenda": {"corrected": 1}, "oed": {"unverified": 1},
+                                                  "several": {"manual_review_required": 1}})
+        self.assertEqual(sum(sum(item.values()) for item in result["main_sources"].values()), result["records"])
+        self.assertEqual(followup.main_source({"source_db": "primary_paper_direct"}), "earlier_paper")
+        self.assertEqual(followup.main_source({"source_db": "unknown"}), "unrecorded")
+        self.assertEqual(followup.main_source({"source_db": "brenda; skid"}), "several")
         kcat = result["metrics"]["kcat"]
         # The kcat without a unit is left out; 2 and 2e9 s^-1 remain.
         self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e9))
@@ -247,6 +255,28 @@ class OverviewTests(unittest.TestCase):
                                                             {"audit_values": "742", "as_of": "2026-10-11"})
             self.assertNotIn("quality", followup.build_overview(manifest, path, marks_path))
             self.assertIsNone(followup.marks_quality({"quality": [1, 2]}))
+
+    def test_overview_copies_the_agreement_headline_and_figure_counts(self):
+        # The agreement fields the page renders (catlog-v2 human_review.AGREEMENT_DEFINITIONS), the headline percentage
+        # among them; a percentage the CatLog side could not compute (None) is left out, not guessed.
+        agreement = {"papers_compared": 98, "values_approved": 2489, "first_agree": 2100, "first_agree_pct": 84.4,
+                     "agree": 2232, "agree_pct": 89.7, "fixed_after_comparison": 132, "papers_exposed": 40,
+                     "first_agree_unexposed_pct": 84.8, "catlog_value_wrong": 3, "rejected_values": 20,
+                     "rejected_catlog_also_without": 12, "rejected_catlog_has_same": 6, "rejected_dropped_after_audit": 2,
+                     "differ": 257, "definitions": {"agree": "text"}, "unknown_field": 4, "first_agree_pct_blind": None}
+        figures = {"db_compare": {"kcat": {"same": 9, "differs": 1, "absent": 0}, "papers_all_absent": 2, "note": "text"},
+                   "earlier_corrections": {"records": 5, "values": {"kcat": {"rounding": 1, "different": 2, "magnitude": 0,
+                                                                            "added": 1}}, "before_listed": [3, 4]},
+                   "replaced": {"records": 7, "values": {"kcat": [5, 6], "km": [1, "x"]}}}
+        quality = {"as_of": "2026-10-12", "audit_values": 973, "audit_wrong": 2, "agreement": agreement, **figures}
+        result = followup.marks_quality({"quality": quality})
+        self.assertEqual(result["agreement"], {key: value for key, value in agreement.items()
+                                               if key not in ("definitions", "unknown_field", "first_agree_pct_blind")})
+        self.assertEqual(result["db_compare"], {"kcat": {"same": 9, "differs": 1, "absent": 0}, "papers_all_absent": 2})
+        self.assertEqual(result["earlier_corrections"], figures["earlier_corrections"])
+        # A list with anything but whole counts is dropped whole.
+        self.assertEqual(result["replaced"], {"records": 7, "values": {"kcat": [5, 6]}})
+        self.assertNotIn("db_compare", followup.marks_quality({"quality": {"audit_values": 1, "db_compare": [1]}}))
 
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:

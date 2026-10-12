@@ -281,6 +281,25 @@ def paper_keys(row):
     return {f"id:{standin}"} if standin else set()
 
 
+# Records by main source (Stats figure 2): each record once, under the source its source_db names: records read from the
+# paper by CatLog apart from the earlier paper extractions, a record naming several databases under "several" and one
+# naming none under "unrecorded"; each with its review statuses (verification_status counts).
+MAIN_SOURCE_KEYS = ("catlog", "earlier_paper", "brenda", "oed", "uniprot", "sabio_rk", "skid", "strenda", "several",
+                    "unrecorded")
+
+
+def main_source(row):
+    if str(row.get("verification_method") or "").startswith("catlog_v2_read"):
+        return "catlog"
+    keys = source_keys(row.get("source_db"))
+    if not keys:
+        return "unrecorded"
+    if len(keys) > 1:
+        return "several"
+    key = next(iter(keys))
+    return "earlier_paper" if key == "paper" else key
+
+
 def source_keys(value):
     keys = set()
     for part in re.split(r"[;,+/|]+", str(value or "").lower()):
@@ -449,6 +468,7 @@ def summarize_overview(rows, marks=None):
     conditions = Counter({"temperature": 0, "ph": 0, "both": 0})
     cautions = Counter({key: 0 for key in (*CAUTION_GROUPS, "temperature", "none")})
     sources = Counter({key: 0 for key in (*SOURCE_KEYS, "other")})
+    main_sources = defaultdict(Counter)
     values = {metric: [] for metric in METRIC_UNITS}
     v2_records = with_paper = checked_accepted = marked = 0
     for row in rows:
@@ -498,6 +518,7 @@ def summarize_overview(rows, marks=None):
         found = caution_keys(row)
         cautions.update(found or {"none"})
         sources.update(source_keys(row.get("source_db")) or {"other"})
+        main_sources[main_source(row)][status] += 1
         for metric, units in METRIC_UNITS.items():
             value = _number(row.get(metric))
             if value is not None and value > 0 and unit_key(row.get(f"{metric}_unit")) in units:
@@ -530,6 +551,7 @@ def summarize_overview(rows, marks=None):
         "cautions": dict(cautions),
         "metrics": {metric: metric_summary(found, METRIC_LABELS[metric]) for metric, found in values.items()},
         "sources": dict(sources),
+        "main_sources": {key: dict(sorted(main_sources[key].items())) for key in MAIN_SOURCE_KEYS if main_sources[key]},
     })
     return overview, dict(statuses)
 
@@ -540,12 +562,36 @@ QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared
                   "label_or_annotation_v1", "v2_found", "v2_approved_total", "v2_differences_checked", "v2_wrong")
 
 
-AGREEMENT_FIELDS = ("papers_compared", "values_approved", "agree", "agree_pct", "differ", "differ_catlog_right",
+AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_agree_pct", "agree", "agree_pct",
+                    "fixed_after_comparison", "papers_exposed", "first_agree_unexposed_pct", "catlog_value_wrong",
+                    "differ", "differ_catlog_right",
                     "differ_earlier_value_error", "differ_earlier_label_error", "differ_same_value_other_name",
                     "differ_rounding", "differ_catlog_wrong", "differ_not_comparable", "differ_not_adjudicated",
-                    "stated_values", "stated_values_catlog_has", "direct_records_reviewed", "direct_values_reviewed",
+                    "stated_values", "stated_values_catlog_has", "rejected_values", "rejected_catlog_also_without",
+                    "rejected_catlog_has_same", "rejected_kept_after_audit", "rejected_dropped_after_audit",
+                    "rejected_cleared_by_paper_check", "rejected_pending", "rejected_not_value",
+                    "direct_records_reviewed", "direct_values_reviewed",
                     "direct_values_agree", "direct_values_disagree", "direct_values_other",
                     "direct_disagree_wrong_after_audit", "direct_disagree_audit_pending")
+# Stats figures 3-5 (design spec section 6), when the CatLog side writes them into the quality object: nested objects of
+# whole counts only (anything else in them is dropped), copied as they are; the page checks how they add up.
+QUALITY_FIGURES = ("db_compare", "earlier_corrections", "replaced")
+
+
+def whole_counts(value, depth=0):
+    """A copy of an object of whole counts (nested objects and lists of whole counts kept), or None when nothing is left."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, list) and depth:
+        kept = [whole_counts(item, depth + 1) for item in value]
+        return kept if kept and all(item is not None for item in kept) else None
+    if isinstance(value, dict) and depth < 4:
+        kept = {key: whole_counts(item, depth + 1) for key, item in value.items() if isinstance(key, str)}
+        kept = {key: item for key, item in kept.items() if item is not None}
+        return kept or None
+    return None
 
 
 def marks_quality(payload):
@@ -563,6 +609,10 @@ def marks_quality(payload):
                   and isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0}
         if isinstance(counts.get("values_approved"), int) and isinstance(counts.get("agree"), int):
             kept["agreement"] = counts
+    for key in QUALITY_FIGURES:
+        figure = whole_counts(quality.get(key)) if isinstance(quality.get(key), dict) else None
+        if figure:
+            kept[key] = figure
     as_of = quality.get("as_of")
     if kept and isinstance(as_of, str) and re.match(r"^\d{4}-\d{2}-\d{2}", as_of):
         kept = {"as_of": as_of[:10], **kept}
