@@ -542,6 +542,8 @@ body.detail-open .detail-panel { display:block }
 .values-table :is(.vt-value,.vt-unit) small { display:inline }
 .values-table small.vt-where-inline { display:none }
 .values-table .vt-printed { overflow-wrap:break-word }
+/* An exponent (min⁻¹, 10⁶) stays on the line of its unit or number. */
+.values-table sup { white-space:nowrap }
 .values-empty { margin:0; color:var(--text-2); font-size:var(--fs-13) }
 .value-notes { display:grid; gap:4px; margin:12px 0 0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .value-notes .metric-origin { margin-right:4px; font-size:var(--fs-12) }
