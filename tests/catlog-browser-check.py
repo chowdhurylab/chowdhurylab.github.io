@@ -137,6 +137,18 @@ def check_guide(driver, wait):
     for identifier, part in (("guideFullDataLink", "full"), ("enrichedDataButton", "full"), ("exportSnapshotButton", "table")):
         assert driver.find_element(By.ID, identifier).get_attribute("download") == f"catlog-{day}-{part}.jsonl.gz", identifier
     assert driver.find_element(By.ID, "guideDataIdFile").get_attribute("textContent") == f"catlog-{day}-full.jsonl.gz"
+    # Sources and licenses: the records read by CatLog have the count Browse and Stats give them, with CatLog's licence;
+    # the earlier paper extractions are a row of their own.
+    from_paper = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.summary?.overview?.from_paper?.records ?? null")
+    source_rows = driver.execute_script("""
+        return Object.fromEntries([...document.querySelectorAll('#guideSourceList > div')]
+            .map(row => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.trim()]));
+    """)
+    if isinstance(from_paper, int):
+        assert f"{from_paper:,} records in this snapshot" in source_rows.get("Read from the paper by CatLog", ""), source_rows
+        assert "CC BY 4.0" in source_rows["Read from the paper by CatLog"]
+        if "Earlier paper extractions" in source_rows:
+            assert "as published (see paper)" in source_rows["Earlier paper extractions"]
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
     assert driver.execute_script("""

@@ -6550,15 +6550,39 @@
       : name;
   }
 
+  // The paper-read records are two groups, as Browse and Stats name them: read from the paper by CatLog (its own
+  // licence) and the earlier paper extractions (licensed as their papers are). Without the snapshot's count of the first,
+  // one row names both.
+  const EARLIER_EXTRACTIONS_LABEL = "Earlier paper extractions";
+  const EARLIER_EXTRACTIONS_LICENSE = "as published (see paper)";
+  function sourceAttributionRows(sources) {
+    const fromPaper = Number(statsOverview(Number(manifest.total_rows || 0))?.from_paper?.records);
+    return sources.flatMap((item) => {
+      if (item.key !== "primary_paper_direct") return [item];
+      const total = Number(item.row_count);
+      if (!Number.isFinite(fromPaper) || !Number.isFinite(total) || fromPaper > total) {
+        return [{ ...item, name: "Read from the paper (by CatLog, or earlier extractions)",
+          licenseText: `${PRIMARY_LITERATURE_LICENSE} for the records CatLog read; earlier extractions: ${EARLIER_EXTRACTIONS_LICENSE}` }];
+      }
+      return [
+        { ...item, row_count: fromPaper, licenseText: PRIMARY_LITERATURE_LICENSE },
+        ...(total > fromPaper ? [{ ...item, name: EARLIER_EXTRACTIONS_LABEL, row_count: total - fromPaper,
+          licenseText: `License: ${EARLIER_EXTRACTIONS_LICENSE}` }] : []),
+      ];
+    });
+  }
+
   function renderSourceAttribution() {
-    const sources = sourceDatabases();
+    const sources = sourceAttributionRows(sourceDatabases());
     const guideList = $("guideSourceList");
     if (guideList) {
       guideList.innerHTML = sources.map((item) => {
-        const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} rows in this snapshot`;
-        const license = item.key === "primary_paper_direct"
-          ? escapeHtml(PRIMARY_LITERATURE_LICENSE)
-          : (item.license && !/^see source$/i.test(item.license) ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms");
+        const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} records in this snapshot`;
+        const license = item.licenseText
+          ? escapeHtml(item.licenseText)
+          : (item.key === "primary_paper_direct"
+              ? escapeHtml(PRIMARY_LITERATURE_LICENSE)
+              : (item.license && !/^see source$/i.test(item.license) ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms"));
         return `
           <div>
             <dt>${sourceNameHtml(item)}</dt>
@@ -7055,6 +7079,7 @@
       renderStats,
       renderDownloadMetadata,
       renderGuideMethod,
+      sourceAttributionRows,
       humanComparisonText,
       statsCohortData,
       statsOverview,

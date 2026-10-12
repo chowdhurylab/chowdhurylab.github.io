@@ -3360,4 +3360,24 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   }
 }
 
+// The Guide's sources list: the paper-read records as two rows, with the counts and licences Browse and the records give.
+{
+  const saved = { total: runtimeManifest.total_rows, summary: runtimeManifest.summary, enriched: runtimeManifest.enriched_download, source: runtimeManifest.source_sha256 };
+  runtimeManifest.total_rows = 100;
+  runtimeManifest.source_sha256 = "source";
+  runtimeManifest.enriched_download = { sha256: "full" };
+  runtimeManifest.summary = { overview: { download_sha256: "full", source_sha256: "source", records: 100, from_paper: { records: 74, papers: 3 } } };
+  const paperSource = { key: "primary_paper_direct", name: "Read from the paper by CatLog", license: "as published (see paper)", row_count: 80 };
+  const rows = api.sourceAttributionRows([paperSource, { key: "brenda", name: "BRENDA", license: "CC BY 4.0", row_count: 20 }]);
+  assert.deepEqual(rows.map((item) => [item.name, item.row_count, item.licenseText || item.license]), [
+    ["Read from the paper by CatLog", 74, "CatLog compilation CC BY 4.0; quoted paper text remains the publisher’s"],
+    ["Earlier paper extractions", 6, "License: as published (see paper)"],
+    ["BRENDA", 20, "CC BY 4.0"],
+  ]);
+  runtimeManifest.summary = {};
+  assert.deepEqual(api.sourceAttributionRows([paperSource]).map((item) => item.name), ["Read from the paper (by CatLog, or earlier extractions)"],
+    "without the snapshot's count, one row names both groups");
+  Object.assign(runtimeManifest, { total_rows: saved.total, summary: saved.summary, enriched_download: saved.enriched, source_sha256: saved.source });
+}
+
 console.log("CatLog viewer behavior checks passed.");
