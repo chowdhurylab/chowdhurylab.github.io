@@ -368,6 +368,7 @@ body.detail-open .detail-panel { display:block }
 .condition-flag-line { align-items:start }
 .condition-flag-list { display:flex; flex-wrap:wrap; gap:4px; margin:0; padding:0; list-style:none }
 .condition-flag-list li { border:1px solid var(--amber-line); border-radius:999px; background:var(--amber-soft); padding:2px 8px; color:var(--amber-ink); font-size:var(--fs-meta); font-weight:500; line-height:1.3 }
+li.flag-note { border-radius:6px }
 .source-efficiency-value { display:grid; gap:2px; white-space:nowrap }
 .identity-section { display:grid; gap:12px }
 .identity-section h3 { margin-bottom:0 }
@@ -536,7 +537,7 @@ body.detail-open .detail-panel { display:block }
 .stats-detail-table { margin-top:12px; width:100%; min-width:0; table-layout:auto; border-collapse:collapse; font-size:var(--fs-stats-meta) }
 .stats-detail-table tr { height:auto }
 .stats-detail-table th, .stats-detail-table td { position:static; height:auto; background:transparent; padding:8px 12px; border-bottom:1px solid var(--line-soft); color:var(--text); text-align:right; font-size:var(--fs-stats-meta); line-height:1.5; font-weight:400; white-space:normal }
-.stats-detail-table th:first-child { text-align:left; padding-left:0 }
+.stats-detail-table th:first-child, .values-table :is(th,td) { text-align:left; padding-left:0 }
 .stats-detail-table thead th { font-weight:500 }
 .stats-detail-table :is(th,td):last-child { padding-right:0 }
 .stats-database-section .stats-review-layout { max-width:900px }
