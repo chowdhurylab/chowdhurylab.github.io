@@ -145,7 +145,7 @@ same names for cautions and sources.
 Use white, unframed sections with light rules, in one centred column at most
 1200px wide (32px 24px padding; the lead alone sits in a light box). Use normal page
 scrolling; never an independently scrolling chart panel. Search belongs to
-Browse, not Stats or Guide. Keep Browse's filtered state when navigating away
+Browse, not Stats, Guide or Team. Keep Browse's filtered state when navigating away
 and back. Do not publish project token statistics on this page.
 
 Navigation order is Browse, Stats, Guide, Team, then, set apart by a thin rule,
