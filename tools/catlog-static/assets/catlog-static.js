@@ -134,6 +134,7 @@
   ];
   const CAUTION_FLAG_BITS = {
     kcat_over_km_quotient_mismatch: 1,
+    kcat_over_km_source_mismatch: 1,
     km_magnitude_needs_check: 2,
     kcat_magnitude_needs_check: 2,
     kcat_over_km_unit_mismatch: 2,
@@ -226,6 +227,7 @@
   const conditionFlagLabels = {
     kcat_over_km_quotient_mismatch: "kcat/Km differs from kcat ÷ Km",
     kcat_over_km_unit_mismatch: "kcat/Km unit may be off by 1000×",
+    kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown",
     km_magnitude_needs_check: "Km above 10 M; the unit may be wrong",
     kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹; the unit may be wrong",
     efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
@@ -245,6 +247,7 @@
   // Flags that question the value itself; each is surfaced beside the metric it concerns.
   const valueIntegrityFlags = {
     kcat_over_km_quotient_mismatch: { field: "kcat_over_km", short: "kcat/Km mismatch" },
+    kcat_over_km_source_mismatch: { field: "kcat_over_km", short: "kcat/Km mismatch" },
     kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "possible 1000× unit error" },
     efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above diffusion limit" },
     km_magnitude_needs_check: { field: "km", short: "Km > 10 M" },
@@ -3238,7 +3241,8 @@
           || (flag.startsWith("unit_not_recorded") ? 4 : 0)
           || (flag.startsWith("temperature_") ? 8 : 0);
       });
-      row._cautionBits = flags.size ? bits : 16;
+      // A record whose flags belong to no group (a pH flag) has no caution, as Stats counts it.
+      row._cautionBits = bits || 16;
     }
     return row._cautionBits;
   }
@@ -3655,7 +3659,7 @@
   const METRIC_ALIASES = { "kcat/km": "kcat_over_km", kcatkm: "kcat_over_km", kcat_km: "kcat_over_km", efficiency: "kcat_over_km" };
   const VARIANT_ALIASES = { wild_type: "wild", wildtype: "wild", wt: "wild", mutant: "variant", variants: "variant" };
   const CAUTION_ALIASES = {
-    differ: "differs", kcat_over_km_quotient_mismatch: "differs", unit: "units", magnitude: "units",
+    differ: "differs", kcat_over_km_quotient_mismatch: "differs", kcat_over_km_source_mismatch: "differs", unit: "units", magnitude: "units",
     unit_not_recorded: "unit_missing", no_unit: "unit_missing", temp: "temperature", no_caution: "none",
   };
   const SOURCE_ALIASES = {
@@ -5429,6 +5433,7 @@
   const metricNames = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", ki: "Ki" };
   const flagNoteTexts = {
     efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit; a unit may be wrong.",
+    kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown.",
   };
 
   // Each flag on the record once, as a plain sentence; the value it questions gets a marker that points to it. A
@@ -5446,6 +5451,8 @@
         if (unitField && metricUnitMissing(summary, unitField, flags)) return;
         // With the source's own kcat/Km shown, the stored value's diffusion-limit flag is the same unit factor.
         if (consistent && flag === "efficiency_above_diffusion_limit") return;
+        // The listed values' own note (both numbers and the fold, measurementNotes) says it better when it applies.
+        if (flag === "kcat_over_km_source_mismatch" && listedEfficiencyNote(summary, detail, flags)) return;
         let text = magnitudeBound(flag, summary)?.note || flagNoteTexts[flag] || conditionFlagLabel(flag, summary, detail);
         if (unitField) text = `No unit is recorded for ${metricNames[unitField] || unitField}.`;
         if (consistent && KCAT_KM_FLAGS.has(flag)) {
@@ -6934,6 +6941,7 @@
       applyFiltersInBackground,
       applyPageSize,
       conditionFlags,
+      rowCautionBits,
       valueFlagBadgeHtml,
       publicLoadMessage,
       enzymeFormLabel,

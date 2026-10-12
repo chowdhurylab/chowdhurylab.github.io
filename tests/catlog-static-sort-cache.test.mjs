@@ -2188,6 +2188,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km: kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
+  // CatLog's flag for the same conflict: a kcat/Km mismatch caution in the table and the filter; the record's note is the
+  // one above, never the flag's name.
+  const flagged = Object.assign(row({ ...merged, condition_flags: ["kcat_over_km_source_mismatch"] }), {});
+  assert.equal(api.rowCautionBits(flagged), 1, "counted under kcat/Km mismatch, not under No cautions");
+  assert.match(api.valueFlagBadgeHtml(api.conditionFlags(flagged), "kcat_over_km", flagged), /title="Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown"/);
+  const flaggedHtml = api.measurementSection(flagged, { source_kcat_over_km_values: listed });
+  assert.match(flaggedHtml, /is 2\.4–4\.9-fold above every kcat\/Km OED lists/);
+  assert.doesNotMatch(flaggedHtml, /Kcat over km|source mismatch|more than 2-fold from the kcat\/Km shown/);
+  assert.match(api.measurementSection(flagged, {}), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
+  assert.equal(api.rowCautionBits(row({ record_key: "ph-only", condition_flags: ["ph_outside_0_14"] })), 16, "a flag of no group is no caution, as Stats counts it");
   const close = api.measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(close, /kcat\/Km listed by BRENDA/);
   assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");

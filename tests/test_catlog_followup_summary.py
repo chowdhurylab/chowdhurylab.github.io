@@ -184,6 +184,13 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["metrics"]["kcat_over_km"]["n"], 1)
         self.assertLess(len(json.dumps(result, separators=(",", ":"))), 6000)
 
+    def test_listed_kcat_over_km_mismatch_is_a_kcat_over_km_caution(self):
+        # CatLog's flag for an older record whose every listed kcat/Km is more than 2-fold from the one shown (plan P7)
+        # counts where Browse's caution=differs finds it, not under No cautions.
+        self.assertEqual(followup.caution_keys({"condition_flags": ["kcat_over_km_source_mismatch"]}), {"differs"})
+        self.assertEqual(followup.caution_keys({"condition_flags": ["km_magnitude_needs_check", "kcat_over_km_source_mismatch"]}),
+                         {"differs", "units"})
+
     def test_top_organisms_count_as_the_browse_filter_finds_them(self):
         raw = Counter({"Escherichia coli": 5, "Escherichia coli K-12": 3, "Saccharomyces cerevisiae": 4,
                        "Saccharomyces cerevisiae (strain ATCC 204508 / S288c)": 2, "Homo sapiens": 2, "human": 1,
