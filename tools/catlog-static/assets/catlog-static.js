@@ -732,9 +732,15 @@
       .trim();
   }
 
-  // Source text in the record panel: caret exponents as superscripts, and "1.3 x 10^-2" written 1.3 × 10^-2.
+  // Source text in the record panel: caret exponents as superscripts, "1.3 x 10^-2" written 1.3 × 10^-2, the earlier
+  // pipeline's code quotes (`Butanol`) and arrows (->) as plain text.
   function evidenceTextHtml(text) {
-    return caretHtml(escapePublic(String(text).replace(/(\d)\s*[x×]\s*10\^/g, "$1 × 10^")));
+    const plain = String(text)
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/`/g, "")
+      .replace(/\s*->\s*/g, " → ")
+      .replace(/(\d)\s*[x×]\s*10\^/g, "$1 × 10^");
+    return caretHtml(escapePublic(plain));
   }
 
   function evidenceNoteHtml(value) {
@@ -749,9 +755,9 @@
       || (!value.normalized_value_unit_evidence ? value.column_label : ""));
     const normalized = publicEvidenceString(value.normalized_value_unit_evidence);
     const rows = [
-      location ? ["Location", location] : null,
-      reported ? ["Reported", cleanEvidenceValue(reported)] : null,
-      normalized ? ["Normalized", cleanEvidenceValue(normalized)] : null,
+      location ? ["Where", location] : null,
+      reported ? ["As printed", cleanEvidenceValue(reported)] : null,
+      normalized ? ["Conversion", cleanEvidenceValue(normalized)] : null,
     ].filter(Boolean);
 
     if (!rows.length) {
@@ -1070,12 +1076,12 @@
   }
 
   function evidenceLabel(row, proofLines = []) {
-    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "Paper excerpt";
+    if (row.proof_kind === "paper_evidence" || row.has_proof_excerpt) return "Located in the paper";
     if (row.proof_kind === "source_note" || proofLines.length) return "Database note";
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Several database records";
     }
-    return row.has_literature_id ? "Paper linked" : "Database record only";
+    return row.has_literature_id ? "Paper cited (values not located)" : "Database record only";
   }
 
   function sourceLicense(summary, detail) {
@@ -6073,7 +6079,7 @@
     const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)));
     const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
       ? "Database note"
-      : "Values in source";
+      : "Earlier automated review: where the values are printed";
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
     // What stands behind an older record's values (a CatLog v2 record's status already says "read from the paper").

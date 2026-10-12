@@ -212,11 +212,11 @@ assert.match(
   indexHtml,
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
-assert.ok(indexHtml.includes(">Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value."));
+assert.ok(indexHtml.includes(">Located in the paper</dt><dd>The earlier automated review saved where the paper prints the values; the text may describe context rather than this value."));
 assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
 assert.match(
   sourceCode,
-  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Paper excerpt";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Database note";/,
+  /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Located in the paper";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Database note";/,
 );
 assert.match(
   indexHtml,
@@ -224,7 +224,7 @@ assert.match(
 );
 assert.match(
   sourceCode,
-  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Values in source";/,
+  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Earlier automated review: where the values are printed";/,
 );
 assert.match(sourceCode, /const heading = `As printed in the paper\$\{shared \? ` \(\$\{shared\}\)` : ""\}`;/);
 
@@ -2131,6 +2131,24 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/strong>/);
   html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.1 removed")]);
   assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/strong>/);
+}
+// An older record's notes: under "Earlier automated review: where the values are printed", Where, As printed and the
+// Conversion line, without code quotes or "->".
+{
+  api.renderDetail(row({ record_key: "older-notes", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
+    proof_lines: [{ table_label: "Table III", row_label: "row `Butanol`",
+      raw_value_unit_evidence: "Table III, row `Butanol`: V1 = 5.2 (unit row: s^-1)",
+      normalized_value_unit_evidence: "kcat: paper V1 cell 5.2 s^-1 -> 5.2 s^-1; no unit conversion" }],
+  });
+  const html = element("detailContent").innerHTML;
+  assert.match(html, /<summary>Earlier automated review: where the values are printed<\/summary>/);
+  assert.match(html, /<span>Where<\/span><strong>Table III · row Butanol<\/strong>/);
+  assert.match(html, /<span>As printed<\/span><strong>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>-1<\/sup>\)<\/strong>/);
+  assert.match(html, /<span>Conversion<\/span><strong>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup>; no unit conversion<\/strong>/);
+  assert.match(html, /<span>Evidence<\/span><strong>Located in the paper<\/strong>/);
+  assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
+  api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
+  assert.match(element("detailContent").innerHTML, /<span>Evidence<\/span><strong>Paper cited \(values not located\)<\/strong>/);
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every

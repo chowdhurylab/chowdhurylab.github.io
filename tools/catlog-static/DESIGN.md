@@ -303,7 +303,11 @@ with kcat ÷ Km, and its note gives the stored number. A merged older record
 gives the kcat/Km its sources list right under the values, in the source's name
 and the catalog unit ("kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹, 5 values"), with
 an amber note when every one is more than 2-fold from kcat ÷ Km. Sequence and SMILES
-strings and an older record's review notes expand on request. Do not discard
+strings and an older record's review notes expand on request: "Earlier
+automated review: where the values are printed", with Where, As printed and
+the Conversion line, code quotes and "->" written as plain text and arrows. An
+older record's Evidence line reads "Located in the paper", "Paper cited (values
+not located)", "Several database records" or "Database record only". Do not discard
 source text, hide scientific warnings, recompute measurements, or weaken review
 definitions to make the page shorter. Database attribution belongs in Guide and
 dataset notes, not the Browse footer.
