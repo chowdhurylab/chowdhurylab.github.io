@@ -572,7 +572,7 @@ AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_
                     "differ_rounding", "differ_catlog_wrong", "differ_not_comparable", "differ_not_adjudicated",
                     "stated_values", "stated_values_catlog_has", "rejected_values", "rejected_catlog_also_without",
                     "rejected_catlog_has_same", "rejected_kept_after_audit", "rejected_dropped_after_audit",
-                    "rejected_cleared_by_paper_check", "rejected_pending", "rejected_not_value",
+                    "rejected_changed_since", "rejected_cleared_by_paper_check", "rejected_pending", "rejected_not_value",
                     "direct_records_reviewed", "direct_values_reviewed",
                     "direct_values_agree", "direct_values_disagree", "direct_values_other",
                     "direct_disagree_wrong_after_audit", "direct_disagree_audit_pending")

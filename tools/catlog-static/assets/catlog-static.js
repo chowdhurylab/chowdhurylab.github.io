@@ -3752,21 +3752,34 @@
     const rightText = valueError !== null && labelError !== null && valueError + labelError === right
       ? `In the ${formatInteger(right)} differences where the paper shows CatLog right, the earlier catalog's value is not printed in the paper (${formatInteger(valueError)}) or has a wrong enzyme, organism, substrate, variant or protein label (${formatInteger(labelError)}).`
       : "";
-    // Values reviewers called wrong, and what became of them (each part only when the counts add up).
+    // Values reviewers called wrong, at their first comparison: the ones CatLog did not have and the ones it had with the
+    // same number (rejected_catlog_also_without + rejected_catlog_has_same = rejected_values); what became of the latter
+    // (kept, dropped, cleared, changed, pending are parts of rejected_catlog_has_same), each part only when it is not zero
+    // and the parts add up to no more than the whole.
     const rejected = statsCount(a.rejected_values);
     let rejectedText = "";
     if (rejected) {
       const without = statsCount(a.rejected_catlog_also_without, rejected);
       const same = statsCount(a.rejected_catlog_has_same, rejected);
-      const dropped = statsCount(a.rejected_dropped_after_audit, rejected);
-      const kept = same !== null ? statsCount(a.rejected_kept_after_audit, same) : null;
-      const cleared = same !== null ? statsCount(a.rejected_cleared_by_paper_check, same) : null;
-      const pending = same !== null ? statsCount(a.rejected_pending, same) : null;
-      if (without !== null && same !== null && dropped !== null && without + same + dropped === rejected) {
-        const settled = kept !== null && cleared !== null && pending !== null && kept + cleared + pending <= same
-          ? ` (an AI audit kept ${formatInteger(kept)}, a check against the paper found ${formatInteger(cleared)} right${pending ? `, ${formatInteger(pending)} not settled yet` : ""})`
+      if (without !== null && same !== null && without + same === rejected) {
+        const plural = (n, one, many) => `${formatInteger(n)} ${n === 1 ? one : many}`;
+        const fates = [
+          ["rejected_kept_after_audit", (n) => `an AI audit kept ${formatInteger(n)}`],
+          ["rejected_dropped_after_audit", (n) => `${plural(n, "was dropped after an AI audit found it wrong", "were dropped after an AI audit found them wrong")}`],
+          ["rejected_cleared_by_paper_check", (n) => `a check against the paper found ${formatInteger(n)} right`],
+          ["rejected_changed_since", (n) => `CatLog has changed or removed ${formatInteger(n)} since`],
+          ["rejected_pending", (n) => `${plural(n, "is", "are")} not settled yet`],
+        ].map(([key, say]) => ({ count: same ? statsCount(a[key], same) : null, say }));
+        const known = fates.filter((fate) => fate.count !== null);
+        const shown = known.reduce((sum, fate) => sum + fate.count, 0) <= same ? known.filter((fate) => fate.count > 0) : [];
+        const fateText = shown.length
+          ? ` (${shown.length > 1 ? `${shown.slice(0, -1).map((fate) => fate.say(fate.count)).join(", ")} and ` : ""}${shown.at(-1).say(shown.at(-1).count)})`
           : "";
-        rejectedText = `Reviewers called ${formatInteger(rejected)} values wrong on these papers: CatLog does not have ${formatInteger(without)} of them; it has ${formatInteger(same)} with the same number${settled}; ${formatInteger(dropped)} it had were dropped after an AI audit found them wrong.`;
+        const one = rejected === 1;
+        const parts = !same ? [one ? "CatLog did not have it" : "CatLog did not have any of them"]
+          : !without ? [`CatLog had ${one ? "it" : `all ${formatInteger(same)}`} with the same number${fateText}`]
+          : [`CatLog did not have ${formatInteger(without)} of them`, `it had ${formatInteger(same)} with the same number${fateText}`];
+        rejectedText = `Reviewers called ${plural(rejected, "value", "values")} wrong on these papers: ${parts.join("; ")}.`;
       }
     }
     // Objections that dispute no value shown (a value missing, a duplicate, the DOI, a name): counted, never as failures.

@@ -52,7 +52,10 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   where the paper shows CatLog
   right what the earlier catalog had wrong (its value not printed in the paper,
   or a wrong label: the README's split), the values reviewers called
-  wrong and the direct review of CatLog's records when their counts add up
+  wrong (the ones CatLog did not have and the ones it had with the same
+  number, then what became of the latter: kept or dropped by an AI audit,
+  found right against the paper, changed since, not settled; zero parts left
+  out) and the direct review of CatLog's records when their counts add up
   (objections that dispute no value shown are said apart, never as failures), a
   data line with the definitions, and links to the Guide's method and to Team.
   No agreement counts, no lead.

@@ -1788,8 +1788,8 @@ function row(overrides = {}) {
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex/);
   const blindFixture = { ...agreementFixture, first_agree: 2110, first_agree_pct: 84.8, fixed_after_comparison: 122, papers_exposed: 40,
     first_agree_unexposed_pct: 84.7, catlog_value_wrong: 3, rejected_values: 20, rejected_catlog_also_without: 12,
-    rejected_catlog_has_same: 6, rejected_dropped_after_audit: 2, rejected_kept_after_audit: 2, rejected_cleared_by_paper_check: 1,
-    rejected_pending: 3, rejected_not_value: 4 };
+    rejected_catlog_has_same: 8, rejected_dropped_after_audit: 2, rejected_kept_after_audit: 2, rejected_cleared_by_paper_check: 1,
+    rejected_changed_since: 1, rejected_pending: 2, rejected_not_value: 4 };
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: blindFixture } };
   api.renderStats();
   lead = element("statsLead").innerHTML;
@@ -1798,7 +1798,8 @@ function row(overrides = {}) {
   assert.match(lead, /First comparison<\/dt><dd>2,110 the same \(84\.8%\)/);
   assert.match(lead, /Now, after fixes<\/dt><dd>2,232 \(89\.7%\)/);
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
-  assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog does not have 12 of them; it has 6 with the same number \(an AI audit kept 2, a check against the paper found 1 right, 3 not settled yet\); 2 it had were dropped after an AI audit found them wrong\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
+  // What became of the values reviewers called wrong that CatLog had with the same number: parts of that number.
+  assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog did not have 12 of them; it had 8 with the same number \(an AI audit kept 2, 2 were dropped after an AI audit found them wrong, a check against the paper found 1 right, CatLog has changed or removed 1 since and 2 are not settled yet\)\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
   assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
   // The headline is said with its 95% range and the papers behind it as the CatLog side counts them (papers_unexposed,
   // not papers_compared minus papers_exposed); the errors the first comparison found are named, and what was fixed is
@@ -1837,6 +1838,26 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_values_reviewed: 0 } } };
   api.renderStats();
   assert.doesNotMatch(element("statsLead").innerHTML, /Reviewers checked/);
+  // Zero parts are left out; none dropped yet still says the rest.
+  const rejectedLead = (fields) => {
+    runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_dropped_after_audit: 0,
+      rejected_changed_since: 0, rejected_pending: 0, ...fields } } };
+    api.renderStats();
+    return element("statsLead").innerHTML.match(/Reviewers called [^<]*/)?.[0] || "";
+  };
+  assert.match(rejectedLead({ rejected_values: 9, rejected_catlog_also_without: 0, rejected_catlog_has_same: 9,
+    rejected_kept_after_audit: 4, rejected_cleared_by_paper_check: 5 }),
+  /^Reviewers called 9 values wrong on these papers: CatLog had all 9 with the same number \(an AI audit kept 4 and a check against the paper found 5 right\)\. /);
+  assert.match(rejectedLead({ rejected_values: 9, rejected_catlog_also_without: 0, rejected_catlog_has_same: 9,
+    rejected_kept_after_audit: 4, rejected_cleared_by_paper_check: 4, rejected_dropped_after_audit: 1 }),
+  /\(an AI audit kept 4, 1 was dropped after an AI audit found it wrong and a check against the paper found 4 right\)/);
+  assert.match(rejectedLead({ rejected_values: 3, rejected_catlog_also_without: 3, rejected_catlog_has_same: 0 }),
+    /^Reviewers called 3 values wrong on these papers: CatLog did not have any of them\. /);
+  // An older build without rejected_changed_since still says the other parts; parts adding up to more than the whole are
+  // left out.
+  assert.match(rejectedLead({ rejected_changed_since: undefined, rejected_pending: 3 }),
+    /it had 8 with the same number \(an AI audit kept 2, a check against the paper found 1 right and 3 are not settled yet\)/);
+  assert.match(rejectedLead({ rejected_kept_after_audit: 5, rejected_pending: 4 }), /: CatLog did not have 12 of them; it had 8 with the same number\. /);
   // Rejections that do not add up are not summed.
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_values: 21 } } };
   api.renderStats();

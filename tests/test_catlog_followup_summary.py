@@ -264,7 +264,8 @@ class OverviewTests(unittest.TestCase):
         agreement = {"papers_compared": 98, "values_approved": 2489, "first_agree": 2100, "first_agree_pct": 84.4,
                      "agree": 2232, "agree_pct": 89.7, "fixed_after_comparison": 132, "papers_exposed": 40,
                      "first_agree_unexposed_pct": 84.8, "catlog_value_wrong": 3, "rejected_values": 20,
-                     "rejected_catlog_also_without": 12, "rejected_catlog_has_same": 6, "rejected_dropped_after_audit": 2,
+                     "rejected_catlog_also_without": 12, "rejected_catlog_has_same": 8, "rejected_dropped_after_audit": 2,
+                     "rejected_changed_since": 1,
                      "differ": 257, "definitions": {"agree": "text"}, "unknown_field": 4, "first_agree_pct_blind": None}
         figures = {"db_compare": {"kcat": {"same": 9, "differs": 1, "absent": 0}, "papers_all_absent": 2, "note": "text"},
                    "earlier_corrections": {"records": 5, "values": {"kcat": {"rounding": 1, "different": 2, "magnitude": 0,
