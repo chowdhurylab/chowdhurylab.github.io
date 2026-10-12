@@ -38,8 +38,6 @@
     suggestionHideTimer: null,
     suggestionIndex: -1,
     suggestionInputId: "",
-    statsCohort: "manual_review_required",
-    statsField: "",
     // The record a #record= address names, until the index has loaded far enough to open it.
     pendingRecordKey: "",
     missingRecordKey: "",
@@ -2158,64 +2156,61 @@
     return percent > 0 && percent < 0.1 ? "<0.1%" : `${percent.toFixed(1)}%`;
   }
 
-  function statsBarRows(items, total, { missing = false } = {}) {
-    return `<ol class="stats-bars${missing ? " stats-bars-coverage" : ""}">${items.map((item) => {
-      const width = total ? Math.max(0, Math.min(100, item.count / total * 100)) : 0;
-      return `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-        <span class="stats-bar-label">${escapeHtml(item.label)}${item.description ? `<small>${escapeHtml(item.description)}</small>` : ""}</span>
-        <span class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill stats-color-${item.color || "source"}" style="width:${width}%"></span></span>
+  // A whole count from 0 to max, or null (an older or damaged manifest never draws a bar from a wrong number).
+  function statsCount(value, max = Infinity) {
+    return Number.isInteger(value) && value >= 0 && value <= max ? value : null;
+  }
+
+  // The overview counted from the Full data download of this same snapshot (summary.overview), or null: an older
+  // manifest has none, and one counted from another download is not used.
+  function statsOverview(total) {
+    const overview = manifest.summary?.overview;
+    if (!overview || typeof overview !== "object" || !overview.download_sha256
+      || overview.download_sha256 !== manifest.enriched_download?.sha256
+      || overview.source_sha256 !== manifest.source_sha256 || overview.records !== total) return null;
+    return overview;
+  }
+
+  // A Browse address with filters (the shared #browse? contract); Stats links open Browse showing those records.
+  function statsBrowseHref(params) {
+    const url = viewUrl("browse");
+    const query = new URL("https://catlog.invalid/");
+    for (const [key, value] of Object.entries(params)) query.searchParams.set(key, value);
+    url.hash = `browse${query.search}`;
+    return url.href;
+  }
+
+  function statsNameHtml(item) {
+    const label = item.labelHtml || escapeHtml(item.label);
+    return item.params ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(item.params))}">${label}</a>` : label;
+  }
+
+  // One row per item: its name (a link into Browse when there is one) and an optional one-line meaning, a bar, the count,
+  // and its share of all records (or a second count). Bars are drawn against the total, or against `scale`.
+  function statsBarRows(items, total, { scale = total, extra = null, head = null } = {}) {
+    const header = head
+      ? `<div class="stats-bars-head" aria-hidden="true"><span></span><span></span>${head.map((text) => `<span>${escapeHtml(text)}</span>`).join("")}</div>`
+      : "";
+    return `${header}<ul class="stats-bars">${items.map((item) => {
+      const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
+      const last = extra
+        ? `<span class="stats-bar-share">${formatInteger(item[extra.key])}<span class="visually-hidden"> ${escapeHtml(extra.label)}</span></span>`
+        : `<span class="stats-bar-share">${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>`;
+      return `<li class="${item.sub ? "stats-bar-sub" : item.group ? "stats-bar-group" : ""}"${item.group ? ' data-group=""' : ""} data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+        <span class="stats-bar-label">${item.color ? `<i class="stats-dot stats-color-${item.color}" aria-hidden="true"></i>` : ""}<span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span>
+        <span class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill${item.color ? ` stats-color-${item.color}` : ""}" style="width:${width}%"></span></span>
         <span class="stats-bar-count">${formatInteger(item.count)}<span class="visually-hidden"> records</span></span>
-        <span class="stats-bar-share">${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>
-        ${missing ? `<span class="stats-bar-missing">${formatInteger(total - item.count)}<span class="visually-hidden"> not included</span></span>` : ""}
+        ${last}
       </li>`;
-    }).join("")}</ol>`;
+    }).join("")}</ul>`;
   }
 
-  function statsReviewRing(items, total, center = formatInteger(total), caption = "records") {
-    // Exact angular shares; tiny categories remain in the adjacent count list.
-    let offset = 0;
-    const slices = items.map((item) => {
-      const share = total > 0 ? item.count / total * 100 : 0;
-      const slice = `<circle class="stats-ring-${item.color}" cx="100" cy="100" r="82" pathLength="100" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-offset}"><title>${escapeHtml(item.label || (item.color === "base" ? "Without this field" : "Included"))}: ${formatInteger(item.count)} of ${formatInteger(total)}</title></circle>`;
-      offset += share;
-      return share > 0 ? slice : "";
-    }).join("");
-    const complete = items.reduce((sum, item) => sum + item.count, 0) === total;
-    return `<div class="stats-review-ring" aria-hidden="true">
-      <svg viewBox="0 0 200 200"><circle class="stats-ring-base" cx="100" cy="100" r="82" />${complete ? slices : ""}</svg>
-      <div><strong>${escapeHtml(center)}</strong><span>${escapeHtml(caption)}</span></div>
-    </div>`;
+  function statsSection(id, title, body, { note = "", wide = false, className = "" } = {}) {
+    return `<section class="stats-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}">
+      <h2 id="${id}">${title}</h2>${note ? `<p>${note}</p>` : ""}${body}</section>`;
   }
 
-  function statsLegend(items, total, className = "", scope = "of all records") {
-    return `<div class="stats-chart-legend ${className}"><div class="stats-outcome-head" aria-hidden="true"><span></span><span>Records</span><span>Share</span></div><ul>${items.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-      <span class="stats-outcome-label"><i class="stats-color-${item.color}" aria-hidden="true"></i>${className === "stats-review-legend" ? `<button type="button" class="stats-status-link" data-stats-cohort="${escapeHtml(item.value)}" aria-controls="statsReviewDetails" aria-pressed="${item.value === state.statsCohort}">${escapeHtml(item.label)}</button>` : className === "stats-combination-legend" ? `<button type="button" class="stats-status-link" data-stats-cohort="${escapeHtml(state.statsCohort)}" data-stats-field="${item.value}" aria-controls="statsReviewFigure" aria-pressed="${item.value === state.statsField}">${escapeHtml(item.label)}</button>` : escapeHtml(item.label)}</span>
-      <strong>${formatInteger(item.count)}<span class="visually-hidden"> records</span></strong>
-      <span>${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> ${escapeHtml(scope)}</span></span>
-    </li>`).join("")}</ul></div>`;
-  }
-
-  function statsFieldRings(fields, total) {
-    return `<div class="stats-field-rings">${fields.map((item) => `<figure data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}" data-total="${total}">
-      <figcaption>${escapeHtml(item.label)}</figcaption>
-      ${statsReviewRing([{ count: item.count, color: item.color }, { count: total - item.count, color: "base" }], total, statsShare(item.count, total), "included")}
-      <div class="stats-field-count">${formatInteger(item.count)} records</div>
-      <div class="stats-field-remainder">${formatInteger(total - item.count)} without this field</div>
-      <span class="visually-hidden">${escapeHtml(statsShare(item.count, total))} included, out of ${formatInteger(total)} records. Without this field means no value in this download.</span>
-    </figure>`).join("")}</div>`;
-  }
-
-  function statsFollowupCoverage(total) {
-    const audit = manifest.summary?.followup_coverage;
-    if (!audit || audit.cohort !== "manual_review_required" || !audit.source_sha256 || !audit.download_sha256 || audit.source_sha256 !== manifest.source_sha256
-      || audit.download_sha256 !== manifest.enriched_download?.sha256 || audit.total !== total) return "";
-    const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"], ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
-    if (!fields.every(([key]) => Number.isInteger(audit[key]) && audit[key] >= 0 && audit[key] <= total)) return "";
-    return `<div class="stats-followup-coverage"><p>All ${formatInteger(total)} records with checks pending.</p>
-      ${statsFieldRings(fields.map(([key, label, color]) => ({ value: key, label, color, count: audit[key] })), total)}
-      <p>Kinetic value: kcat, Km, Ki or kcat/Km. These fields do not give the reason checks are pending.</p></div>`;
-  }
-
+  // The hash-bound field counts of one review group (summary.review_details), or null.
   function statsCohortData(cohort, total) {
     const audit = manifest.summary?.review_details;
     if (!audit?.source_sha256 || !audit.download_sha256 || audit.source_sha256 !== manifest.source_sha256
@@ -2229,290 +2224,263 @@
     return group;
   }
 
-  function statsCoverageParts(group) {
-    const fields = [
-      ["sequence", "Protein sequence", "with_sequence", "protein"],
-      ["smiles", "Substrate SMILES", "with_smiles", "structure"],
-      ["paper_id", "Paper ID", "with_literature_id", "reference"],
-      ["kinetic_value", "Kinetic value", "with_kinetic_value", "measurement"],
-    ];
-    const combinations = group.field_combinations;
-    if (!Array.isArray(combinations)) return "";
-    const keys = new Set();
-    const valid = combinations.every((item) => {
-      if (!Array.isArray(item.missing) || !Number.isInteger(item.count) || item.count < 1
-        || new Set(item.missing).size !== item.missing.length
-        || !item.missing.every((key) => fields.some(([field]) => field === key))) return false;
-      const key = [...item.missing].sort().join("+");
-      if (keys.has(key)) return false;
-      keys.add(key);
-      return true;
-    });
-    if (!valid || combinations.reduce((sum, item) => sum + item.count, 0) !== group.total
-      || !fields.every(([key, , countKey]) => combinations.reduce((sum, item) => sum + (item.missing.includes(key) ? item.count : 0), 0) === group.total - group[countKey])) return "";
-    const complete = combinations.find((item) => !item.missing.length)?.count || 0;
-    const multiple = combinations.filter((item) => item.missing.length > 1).sort((a, b) => b.count - a.count);
-    const multipleCount = multiple.reduce((sum, item) => sum + item.count, 0);
-    const slices = [
-      { value: "complete", label: "All four fields available", count: complete, color: "kinetic" },
-      ...fields.map(([key, , , color]) => ({ value: `only_${key}`,
-        label: ({ sequence: "Only sequence missing", smiles: "Only SMILES missing", paper_id: "Only paper ID missing", kinetic_value: "Only kinetic value missing" })[key], color,
-        count: combinations.find((item) => item.missing.length === 1 && item.missing[0] === key)?.count || 0 })),
-      { value: "multiple", label: "Two or more fields missing", count: multipleCount, color: "calculated" },
-    ];
-    const names = Object.fromEntries(fields.map(([key, label]) => [key, label]));
-    return { fields, slices, multiple, multipleCount, names };
+  // The fields saved in records that are not accepted, per review group: a plain table in a disclosure.
+  function statsUnacceptedFields(counts) {
+    const cohorts = [["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Not reviewed"]]
+      .map(([value, label]) => ({ value, label, group: statsCohortData(value, counts[value] || 0) }))
+      .filter((item) => item.group && item.group.total > 0);
+    if (!cohorts.length) return "";
+    const fields = [["with_kinetic_value", "Kinetic value"], ["with_literature_id", "Paper ID"], ["with_sequence", "Protein sequence"], ["with_smiles", "Substrate SMILES"]];
+    return `<details class="stats-explanation stats-unaccepted-fields"><summary>Fields saved in records that are not accepted</summary>
+      <table class="stats-detail-table"><thead><tr><th scope="col">Field</th>${cohorts.map((item) => `<th scope="col">${escapeHtml(item.label)}<small>${formatInteger(item.group.total)}</small></th>`).join("")}</tr></thead>
+      <tbody>${fields.map(([key, label]) => `<tr data-field="${key}"><th scope="row">${label}</th>${cohorts.map((item) => `<td data-cohort="${item.value}" data-count="${item.group[key]}">${formatInteger(item.group[key])}<small>${escapeHtml(statsShare(item.group[key], item.group.total))}</small></td>`).join("")}</tr>`).join("")}</tbody></table>
+      <p>Kinetic value: kcat, Km, Ki or kcat/Km. Paper ID: PMID or DOI. Shares are of each group. A missing field does not give the reason for a status.</p></details>`;
   }
 
-  function statsCombinedCoverage(group) {
-    const parts = statsCoverageParts(group);
-    if (!parts) return "";
-    const { fields, slices, multiple, multipleCount, names } = parts;
-    return `${statsLegend(slices, group.total, "stats-combination-legend", "of this group")}
-      <p>Missing: no value for that field in the download.</p>
-      <details class="stats-explanation stats-missing-totals"><summary>Missing by field</summary><table class="stats-detail-table">
-        <thead><tr><th>Field</th><th>Records</th><th>Share</th></tr></thead><tbody>
-          ${fields.map(([key, label, countKey]) => `<tr data-field="${key}" data-missing="${group.total - group[countKey]}"><th scope="row">${label}</th><td>${formatInteger(group.total - group[countKey])}</td><td>${statsShare(group.total - group[countKey], group.total)}</td></tr>`).join("")}
-        </tbody></table><p>These totals overlap: a row can lack both a sequence and SMILES.</p>
-      </details>${multipleCount ? `<details class="stats-explanation stats-combination-details"><summary>Missing together: ${formatInteger(multipleCount)} records</summary>
-      <table class="stats-detail-table"><thead><tr><th>Missing fields</th><th>Records</th></tr></thead><tbody>
-        ${multiple.map((item) => `<tr><th scope="row">${item.missing.map((key) => names[key]).join(" + ")}</th><td>${formatInteger(item.count)}</td></tr>`).join("")}
-      </tbody></table></details>` : ""}`;
+  const STATS_METRICS = [
+    { key: "kcat", html: "<i>k</i><sub>cat</sub>", unit: "s⁻¹" },
+    { key: "km", html: "<i>K</i><sub>m</sub>", unit: "mM" },
+    { key: "kcat_over_km", html: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", unit: "s⁻¹ mM⁻¹" },
+  ];
+
+  function statsPowerOfTen(exponent) {
+    return `10${[...String(exponent)].map((character) => SUPERSCRIPT_DIGITS[character] ?? character).join("")}`;
   }
 
-  // The outer ring beside an outcome that has no field split (Accepted, Disputed): a pale band that says so, with the
-  // words along the band when they fit.
-  function statsUnsplitArc(item, start, share) {
-    const note = `${item.label}: not split by field`;
-    const band = `<circle class="stats-ring-unsplit" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(note)}</title></circle>`;
-    const words = "not split by field";
-    const radius = 104;
-    const arcLength = 2 * Math.PI * radius * share / 100;
-    if (arcLength < words.length * 6.5 + 12) return band;
-    const point = (percent) => {
-      const angle = percent / 100 * 2 * Math.PI;
-      return `${(120 + radius * Math.cos(angle)).toFixed(2)} ${(120 + radius * Math.sin(angle)).toFixed(2)}`;
-    };
-    const id = `statsUnsplit-${String(item.value).replace(/[^\w-]/g, "")}`;
-    return `${band}<path id="${id}" d="M ${point(start)} A ${radius} ${radius} 0 ${share > 50 ? 1 : 0} 1 ${point(start + share)}" fill="none" stroke="none" />
-      <text class="stats-ring-gap-label" font-size="11" dy="0.35em" aria-hidden="true"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${words}</textPath></text>`;
-  }
-
-  function statsNestedReviewRing(outcomes, total) {
-    if (!total || outcomes.reduce((sum, item) => sum + item.count, 0) !== total) return statsReviewRing(outcomes, total);
-    let offset = 0;
-    const arcs = outcomes.map((item) => {
-      const start = offset;
-      const share = item.count / total * 100;
-      offset += share;
-      if (!share) return "";
-      const group = statsCohortData(item.value, item.count);
-      const parts = group && statsCoverageParts(group);
-      const label = `${item.label}: ${formatInteger(item.count)} records, ${statsShare(item.count, total)} of all records`;
-      const inner = `<circle class="stats-ring-${item.color}" data-outcome="${escapeHtml(item.value)}" data-count="${item.count}" data-chart-cohort="${escapeHtml(item.value)}" role="button" tabindex="0" aria-controls="statsReviewDetails" aria-label="${escapeHtml(label)}" aria-pressed="${item.value === state.statsCohort}" cx="120" cy="120" r="73" pathLength="100" stroke-width="24" stroke-dasharray="${share} ${100 - share}" stroke-dashoffset="${-start}"><title>${escapeHtml(label)}</title></circle>`;
-      let fieldOffset = start;
-      const outer = parts ? parts.slices.map((field) => {
-        const fieldShare = field.count / total * 100;
-        const fieldStart = fieldOffset;
-        fieldOffset += fieldShare;
-        const fieldLabel = `${item.label}: ${field.label}, ${formatInteger(field.count)} records, ${statsShare(field.count, item.count)} of this group`;
-        return field.count ? `<circle class="stats-ring-${field.color}" data-field-group="${escapeHtml(item.value)}" data-field-slice="${field.value}" data-count="${field.count}" data-chart-cohort="${escapeHtml(item.value)}" data-chart-field="${field.value}" role="button" tabindex="0" aria-controls="statsReviewDetails" aria-label="${escapeHtml(fieldLabel)}" aria-pressed="${item.value === state.statsCohort && field.value === state.statsField}" cx="120" cy="120" r="104" pathLength="100" stroke-width="22" stroke-dasharray="${fieldShare} ${100 - fieldShare}" stroke-dashoffset="${-fieldStart}"><title>${escapeHtml(fieldLabel)}</title></circle>` : "";
-      }).join("") : "";
-      return `${inner}<g data-review-group="${escapeHtml(item.value)}" class="stats-outer-group${item.value === state.statsCohort ? " selected" : ""}">${outer}</g>${parts ? "" : statsUnsplitArc(item, start, share)}`;
-    }).join("");
-    return `<div class="stats-nested-ring"><svg viewBox="0 0 240 240" role="group" aria-label="Review outcomes and available fields">${arcs}</svg>
-      <div aria-hidden="true"><strong id="statsRingCount">${formatInteger(total)}</strong><span id="statsRingLabel">records</span></div></div>`;
-  }
-
-  function syncStatsRingSelection() {
-    document.querySelectorAll(".stats-outer-group").forEach((group) => {
-      group.classList.toggle("selected", group.dataset.reviewGroup === state.statsCohort);
-    });
-    document.querySelectorAll("[data-stats-cohort], [data-chart-cohort]").forEach((button) => {
-      const cohort = button.dataset.statsCohort || button.dataset.chartCohort;
-      const field = button.dataset.statsField || button.dataset.chartField;
-      button.setAttribute("aria-pressed", String(cohort === state.statsCohort && (!field || field === state.statsField)));
-    });
-    document.querySelectorAll(".stats-combination-legend li").forEach((row) => {
-      row.classList.toggle("is-selected", row.dataset.statKey === state.statsField);
-    });
-  }
-
-  function selectStatsGroup(cohort, field = "") {
-    const changed = cohort !== state.statsCohort;
-    state.statsCohort = cohort;
-    state.statsField = field;
-    const panel = $("statsReviewDetails");
-    if (changed) {
-      const openClasses = [...panel.querySelectorAll("details[open]")].map((item) => item.className);
-      panel.innerHTML = statsReviewDetails(manifestDistribution("verification_status"));
-      panel.querySelectorAll("details").forEach((item) => { item.open = openClasses.includes(item.className); });
-    }
-    panel.querySelectorAll('input[name="statsCohort"]').forEach((input) => { input.checked = input.value === cohort; });
-    if (field === "multiple") {
-      const details = panel.querySelector(".stats-combination-details");
-      if (details) details.open = true;
-    }
-    syncStatsRingSelection();
-    const arc = [...document.querySelectorAll("[data-chart-cohort]")].find((item) =>
-      item.dataset.chartCohort === cohort && (item.dataset.chartField || "") === field);
-    $("statsChartAnnouncement").textContent = arc?.getAttribute("aria-label") || "";
-    const legend = field ? ".stats-combination-legend" : ".stats-review-legend";
-    const row = [...document.querySelectorAll(`${legend} li`)].find((item) => item.dataset.statKey === (field || cohort));
-    if (row) {
-      $("statsRingCount").textContent = formatInteger(Number(row.dataset.count));
-      $("statsRingLabel").textContent = row.querySelector(".stats-status-link").textContent;
-    }
-  }
-
-  function statsReviewDetails(counts) {
-    if (state.statsCohort === "accepted") {
-      const accepted = (counts.verified || 0) + (counts.corrected || 0);
-      const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
-      return `<h3 id="fieldsGroupHeading">Accepted records</h3><p>${formatInteger(accepted)} records.</p>
-        <table class="stats-detail-table"><tbody>
-          <tr><th scope="row">Accepted as reported</th><td>${formatInteger(counts.verified || 0)}</td></tr>
-          <tr><th scope="row">Accepted after a change</th><td>${formatInteger(counts.corrected || 0)}</td></tr>
-        </tbody></table>
-        ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} of them have no PMID or DOI linked.</p>` : ""}`;
-    }
-    if (["disputed", "other_status"].includes(state.statsCohort)) {
-      const disputed = state.statsCohort === "disputed";
-      const known = new Set(reviewStatuses.map((item) => item.value));
-      const total = disputed ? counts.disputed || 0 : Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
-      return `<h3 id="fieldsGroupHeading">${disputed ? "Disputed records" : "Other review statuses"}</h3>
-        <p>${formatInteger(total)} records.</p><p>${disputed ? "Flagged during review; not accepted." : "Statuses not listed above."}</p>`;
-    }
-    const cohort = ["unverified", "mathematically_inferred"].includes(state.statsCohort) ? state.statsCohort : "manual_review_required";
-    const total = counts[cohort] || 0;
-    const group = statsCohortData(cohort, total);
-    const label = ({ unverified: "Unverified", mathematically_inferred: "Not reviewed", manual_review_required: "Checks pending" })[cohort];
-    const fields = [["with_kinetic_value", "Kinetic value", "kinetic"], ["with_literature_id", "Paper ID", "reference"],
-      ["with_sequence", "Protein sequence", "protein"], ["with_smiles", "Substrate SMILES", "structure"]];
-    return `<h3 id="fieldsGroupHeading">Fields in these records</h3><fieldset class="stats-cohort-switch"><legend class="visually-hidden">Record group</legend>
-      ${[["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Not reviewed"]].map(([value, name]) => `<label>
-        <input type="radio" name="statsCohort" value="${value}" ${cohort === value ? "checked" : ""}>
-        <span>${name}<small>${formatInteger(counts[value] || 0)}</small></span></label>`).join("")}</fieldset>
-      <div class="stats-followup-coverage" data-cohort="${cohort}">
-        <p class="stats-coverage-intro">${escapeHtml(label)}: ${formatInteger(total)} records. Percentages are of this group.</p>
-        ${group ? statsCombinedCoverage(group) || statsFieldRings(fields.map(([key, name, color]) => ({ value: key, label: name, color, count: group[key] })), total)
-          : cohort === "manual_review_required" ? statsFollowupCoverage(total) : "<p>This snapshot has no checked field breakdown for this group.</p>"}
+  // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
+  // the 10–90% range beneath. Returns "" for a summary that does not hold together.
+  function statsValueRange(metric, summary) {
+    const counts = summary?.counts;
+    const n = statsCount(summary?.n);
+    const start = summary?.log10_start;
+    if (!n || !Array.isArray(counts) || counts.length < 2 || !Number.isInteger(start)
+      || !counts.every((count) => statsCount(count) !== null) || counts.reduce((sum, count) => sum + count, 0) !== n
+      || ![summary.median, summary.p10, summary.p90].every((value) => Number.isFinite(value) && value > 0)
+      || !(summary.p10 <= summary.median && summary.median <= summary.p90)) return "";
+    const bins = counts.length;
+    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - start) / bins * 100));
+    const highest = Math.max(...counts);
+    const step = Math.ceil((bins - 1) / 5);
+    const ticks = [];
+    for (let edge = 1; edge < bins; edge += step) ticks.push(edge);
+    const median = position(summary.median);
+    const low = position(summary.p10);
+    const high = position(summary.p90);
+    const unit = escapeHtml(metric.unit);
+    const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${numberText(summary.median)} ${metric.unit}; `
+      + `10% of values are below ${numberText(summary.p10)} and 10% above ${numberText(summary.p90)}; ${formatInteger(n)} values.`;
+    return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}">
+      <figcaption>${metric.html} <span class="stats-range-unit">(${unit})</span></figcaption>
+      <dl class="stats-range-numbers">
+        <div><dt>Median</dt><dd>${numberHtml(summary.median)}</dd></div>
+        <div><dt>10–90%</dt><dd>${numberHtml(summary.p10)} – ${numberHtml(summary.p90)}</dd></div>
+      </dl>
+      <div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
+        <div class="stats-histogram-bars">${counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" title="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(start + 1) : index === bins - 1 ? statsPowerOfTen(start + index) + " and above" : `${statsPowerOfTen(start + index)} to ${statsPowerOfTen(start + index + 1)}`}: ${formatInteger(count)}`)}"></span>`).join("")}</div>
+        <div class="stats-histogram-range" aria-hidden="true"><span style="left:${low}%;width:${Math.max(high - low, 0.5)}%"></span><i style="left:${median}%"></i></div>
+        <div class="stats-histogram-axis" aria-hidden="true">${ticks.map((edge) => `<span style="left:${edge / bins * 100}%">10<sup>${String(start + edge).replace("-", "−")}</sup></span>`).join("")}</div>
       </div>
-      <p class="stats-cohort-meaning">${cohort === "mathematically_inferred"
-        ? "Prepared from source records, without an accepted review."
-        : cohort === "unverified"
-        ? "No accepted result is recorded; a review may have been attempted."
-        : "At least one check is still open, for example on the value, protein or substrate."}</p>
-      <details class="stats-explanation stats-cohort-example"><summary>Example checks</summary><dl class="stats-check-examples">
-          <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
-          <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>
-          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay, and stored as 0.00082 mM?</dd></div>
-        </dl><p>Examples only. The snapshot does not record which check is open for each record.</p></details>
-      <p class="stats-note">Paper ID: PMID or DOI. Kinetic value: kcat, Km, Ki or kcat/Km. These fields do not give the reason for a status.</p>`;
+      <p class="stats-range-count">${formatInteger(n)} values</p>
+    </figure>`;
+  }
+
+  // Each record counts once, under its main source (Browse `source=`); several databases or none is Other.
+  const statsSourceNames = [
+    ["paper", PRIMARY_LITERATURE_NAME, "primary_paper_direct"], ["brenda", "BRENDA", "brenda"], ["oed", "Open Enzyme Database (OED)", "oed"],
+    ["uniprot", "UniProt", "uniprot"], ["sabio_rk", "SABIO-RK", "sabio_rk"], ["skid", "SKiD", "skid"],
+  ];
+
+  function statsSources(overview) {
+    const counts = {};
+    const given = overview?.sources;
+    if (given && typeof given === "object") {
+      for (const [key] of statsSourceNames) counts[key] = statsCount(given[key]) || 0;
+      counts.other = statsCount(given.other) || 0;
+    } else {
+      const recorded = manifestDistribution("source_db");
+      const keys = Object.fromEntries(statsSourceNames.map(([key, , sourceDb]) => [sourceDb, key]));
+      for (const [label, count] of Object.entries(recorded)) {
+        const key = keys[String(label).trim().toLowerCase()] || "other";
+        counts[key] = (counts[key] || 0) + count;
+      }
+    }
+    return [
+      ...statsSourceNames.map(([key, label]) => ({ value: `source_${key}`, label, count: counts[key] || 0, params: { source: key } })),
+      { value: "source_other", label: "Other or several", note: "Several databases, STRENDA DB, or not recorded", count: counts.other || 0 },
+    ].filter((item) => item.count > 0);
   }
 
   function renderStats() {
-    // Immutable snapshot metadata: Stats must not mix filtered and full-download counts.
+    // Immutable snapshot metadata: Stats never mixes filtered and full-download counts, and never loads the record index.
     const total = Number(manifest.total_rows || 0);
-    const counts = manifestDistribution("verification_status");
-    const statuses = [...reviewStatuses];
-    const knownStatuses = new Set(statuses.map((item) => item.value));
-    const otherCount = Object.entries(counts).reduce((total, [key, count]) => total + (knownStatuses.has(key) ? 0 : count), 0);
-    if (otherCount) {
-      counts.other_status = otherCount;
-      statuses.push({ value: "other_status", label: "Other status", description: "Not one of the six statuses above." });
-    }
-    const colors = { verified: "verified", corrected: "corrected", manual_review_required: "pending", unverified: "neutral", mathematically_inferred: "calculated", disputed: "disputed" };
-    const accepted = (counts.verified || 0) + (counts.corrected || 0);
-    const outcomes = [
-      { value: "accepted", label: "Accepted", count: accepted, color: "verified", description: "Verified or corrected" },
-      ...statuses.filter((item) => !["verified", "corrected"].includes(item.value)).map((item) => ({
-        ...item,
-        description: item.value === "manual_review_required" ? "At least one check is still open" : item.value === "unverified" ? "No accepted result is recorded" : "",
-        count: counts[item.value] || 0, color: colors[item.value] || "neutral",
-      })),
-    ];
     const summary = manifest.summary || {};
-    const metrics = summary.coverage || {};
-    const fullCoverage = manifest.enriched_download?.coverage || {};
-    const fields = [
-      ["kcat", "kcat", metrics.with_kcat, "kinetic"], ["km", "Km", metrics.with_km, "kinetic"], ["kcat_over_km", "kcat/Km", metrics.with_kcat_over_km, "kinetic"],
-      ["sequence", "Protein sequence", fullCoverage.sequence, "protein"], ["smiles", "Substrate SMILES", fullCoverage.smiles, "structure"],
-    ].filter(([, , count]) => Number.isInteger(count) && count >= 0 && count <= total)
-      .map(([value, label, count, color]) => ({ value, label, count, color }));
-    const sequences = [["Protein sequence", fullCoverage.sequence], ["Wild-type sequence", fullCoverage.wild_type_sequence], ["Variant sequence", fullCoverage.variant_sequence]]
-      .filter(([, count]) => Number.isInteger(count) && count >= 0 && count <= total);
-    // Exclusive source_db values, not the overlapping source-database link totals.
-    const recordedSources = manifestDistribution("source_db");
-    const sourceNames = [["brenda", "BRENDA", "reference"], ["oed", "Open Enzyme Database", "kinetic"], ["uniprot", "UniProt", "protein"], ["sabio_rk", "SABIO-RK", "structure"], ["skid", "SKiD", "calculated"], ["primary_paper_direct", "Primary literature", "measurement"]];
-    const namedSources = new Set(sourceNames.map(([key]) => key));
-    // Primary literature is not a database, so it gets no " only".
-    const databases = sourceNames.filter(([key]) => recordedSources[key] > 0)
-      .map(([key, label, color]) => ({ value: `source_${key}`, label: key === "primary_paper_direct" ? label : `${label} only`, count: recordedSources[key], color }));
-    const otherSources = Object.entries(recordedSources).filter(([key, count]) => !namedSources.has(key) && count > 0);
-    const otherSourcesCount = otherSources.reduce((sum, [, count]) => sum + count, 0);
-    const otherSourceGroups = new Map();
-    for (const [key, count] of otherSources) {
-      const namedParts = key.split(/[;,/+\s]+/).filter(Boolean);
-      const label = ({ primary_paper_direct: "Primary literature", unknown: "Unspecified", strenda: "STRENDA DB", merged: "Mixed, without named databases", mixed: "Mixed, without named databases" })[key]
-        || (namedParts.length > 1 && namedParts.every((part) => namedSources.has(part)) ? "Multiple named databases" : key);
-      otherSourceGroups.set(label, (otherSourceGroups.get(label) || 0) + count);
-    }
-    if (otherSourcesCount) databases.push({ value: "source_other", label: "Other or multiple", count: otherSourcesCount, color: "neutral" });
-    const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
+    const counts = manifestDistribution("verification_status");
+    const overview = statsOverview(total);
     const totals = summary.totals || {};
+    const accepted = (counts.verified || 0) + (counts.corrected || 0);
+    const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
+    const known = new Set(reviewStatuses.map((item) => item.value));
+    const otherStatus = Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
+    const notVerified = (counts.unverified || 0) + (counts.mathematically_inferred || 0) + (counts.disputed || 0) + otherStatus;
+
     $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
-    $("statsTotals").innerHTML = [["Records", total], ["Accepted", accepted], ["Enzyme names", totals.unique_enzymes], ["EC numbers", totals.unique_ec_numbers], ["Organisms", totals.unique_organisms]]
-      .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatCount(value)}</dd></div>`).join("");
-    $("statsCharts").innerHTML = `
-      <section class="stats-section stats-review-section stats-wide" aria-labelledby="reviewChartTitle">
-        <h2 id="reviewChartTitle">Review outcomes</h2>
-        <p>Each record has one status.</p>
-        <div class="stats-review-workspace">
-          <div class="stats-review-overview"><div class="stats-review-layout">
-            <div class="stats-nested-figure"><div id="statsReviewFigure">${statsNestedReviewRing(outcomes, total)}</div>
-              <div id="statsChartAnnouncement" class="visually-hidden" role="status" aria-atomic="true"></div>
-              <p>Inner ring: review status. Outer ring: which fields the records have.</p>
-              <p class="stats-note">The outer ring is split only for Checks pending, Unverified and Not reviewed.</p>
-            </div>
-            ${statsLegend(outcomes, total, "stats-review-legend")}
-          </div>
-        <div class="stats-accepted-split"><h3>Both count as accepted</h3><dl>
-          <div data-stat-key="verified" data-count="${counts.verified || 0}"><dt>Accepted as reported</dt><dd>${formatInteger(counts.verified || 0)}</dd></div>
-          <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
-        </dl><p>The change can be to the value, the sequence or another field.</p></div>
-        <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.` : ""}</p>
-        <details class="stats-explanation"><summary>How these groups differ</summary><dl class="stats-check-examples">
-          <div><dt>Accepted</dt><dd>As reported, or after a correction.</dd></div>
-          <div><dt>Checks pending</dt><dd>At least one check is still open.</dd></div>
-          <div><dt>Unverified</dt><dd>No accepted result is recorded.</dd></div>
-          <div><dt>Not reviewed</dt><dd>Prepared from source records, without an accepted review.</dd></div>
-          <div><dt>Disputed</dt><dd>Flagged during review; not accepted.</dd></div>
-        </dl></details>
-          </div>
-          <div id="statsReviewDetails" class="stats-followup-section" aria-labelledby="fieldsGroupHeading">${statsReviewDetails(counts)}</div>
-        </div>
-      </section>
-      <section class="stats-section stats-field-section stats-wide" aria-labelledby="fieldsChartTitle">
-        <h2 id="fieldsChartTitle">Included in the full download</h2>
-        <p>All ${formatInteger(total)} records.</p>
-        ${statsFieldRings(fields, total)}
-        <details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table">
-          <thead><tr><th>Field</th><th>Included</th><th>Share of all records</th></tr></thead>
-          <tbody>${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}</tbody>
-        </table><p>These counts overlap: a variant record can have both a wild-type and a variant sequence.</p></details>
-      </section>
-      <section class="stats-section stats-database-section stats-wide" aria-labelledby="databaseChartTitle">
-        <h2 id="databaseChartTitle">Source database</h2>
-        <p>Each record is counted once, under its main source (source_db).</p>
-        ${databases.length ? `<div class="stats-review-layout">${statsReviewRing(databases, total)}${statsLegend(databases, total)}</div>` : "<p>Source breakdown unavailable in this snapshot.</p>"}
-        ${otherSourcesCount ? `<details class="stats-explanation"><summary>Other or multiple sources: ${formatInteger(otherSourcesCount)} records</summary><table class="stats-detail-table"><tbody>
-          ${[...otherSourceGroups].map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td></tr>`).join("")}
-        </tbody></table></details>` : ""}
-        <p class="stats-note">A record can also hold values from other databases; its Source details list them.</p>
-      </section>
-    `;
+    const humanChecked = statsCount(overview?.human_checked_accepted, accepted);
+    const fromPaper = overview?.from_paper && statsCount(overview.from_paper.records, total);
+    const main = [
+      ["Records", total],
+      ["Accepted", accepted],
+      ["Human-checked", humanChecked],
+      ["Read from the paper (CatLog v2)", fromPaper, statsCount(overview?.from_paper?.papers) !== null ? `from ${formatInteger(overview.from_paper.papers)} papers` : ""],
+    ].filter(([, value]) => value !== null && value !== undefined);
+    const scope = [
+      ["Papers", statsCount(overview?.papers)],
+      ["Enzymes", statsCount(overview?.enzymes) ?? statsCount(totals.unique_enzymes)],
+      ["EC numbers", statsCount(overview?.ec_numbers) ?? statsCount(totals.unique_ec_numbers)],
+      ["Organisms", statsCount(overview?.organisms) ?? statsCount(totals.unique_organisms)],
+      ["Substrates", statsCount(overview?.substrates) ?? statsCount(totals.unique_substrates)],
+    ].filter(([, value]) => value !== null);
+    const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(([label, value, note]) => `<div><dt>${escapeHtml(label)}</dt><dd>${formatCount(value)}${note ? `<small>${escapeHtml(note)}</small>` : ""}</dd></div>`).join("")}</dl>`;
+    $("statsTotals").innerHTML = totalsHtml(main, "stats-totals-main") + (scope.length ? totalsHtml(scope, "stats-totals-scope") : "");
+
+    const sections = [];
+    // Review status: the three groups Browse filters on, with the three kinds of other record listed under them.
+    const statusItems = [
+      { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" },
+        note: `As reported (${formatInteger(counts.verified || 0)}) or after a correction (${formatInteger(counts.corrected || 0)}).` },
+      { value: "manual_review_required", label: "Checks pending", color: "pending", count: counts.manual_review_required || 0,
+        params: { status: "curation_pending" }, note: "Not accepted: at least one check is still open." },
+      { value: "not_verified", label: "Other records", group: true, count: notVerified, params: { status: "not_verified" },
+        note: "Browse shows these together:" },
+      { value: "unverified", label: "Unverified", color: "neutral", sub: true, count: counts.unverified || 0, note: "No accepted result is recorded." },
+      { value: "mathematically_inferred", label: "Not reviewed", color: "calculated", sub: true, count: counts.mathematically_inferred || 0,
+        note: "Prepared from source records, without an accepted review outcome." },
+      { value: "disputed", label: "Disputed", color: "disputed", sub: true, count: counts.disputed || 0, note: "Flagged during review; not accepted." },
+      ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", sub: true, count: otherStatus, note: "Not one of the statuses above." }] : []),
+    ];
+    sections.push(statsSection("statsStatusTitle", "Review status", `${statsBarRows(statusItems, total)}
+      ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
+      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one status. Select a name to see those records in Browse." }));
+
+    if (fromPaper !== null && fromPaper !== undefined) {
+      sections.push(statsSection("statsV2Title", "Read from the paper (CatLog v2)", `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
+        <p>${escapeHtml(v2Sentence)}</p>
+        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ status: "v2" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
+    }
+    if (humanChecked !== null) {
+      const marked = statsCount(overview.human_marked, total);
+      sections.push(statsSection("statsHumanTitle", "Human review", `<p class="stats-figure"><strong>${formatInteger(humanChecked)}</strong> accepted records checked by a person</p>
+        <p>A human reviewer approved the values these records print; their status carries the tag human-checked.${marked !== null && marked > humanChecked ? ` Reviewers left a mark or a note on ${formatInteger(marked)} records in all; the tag shows only on accepted records whose values they approved.` : ""}</p>
+        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
+    }
+
+    // What the records contain.
+    const coverage = summary.coverage || {};
+    const download = manifest.enriched_download?.coverage || {};
+    const conditions = overview?.conditions || {};
+    const contents = [
+      { value: "kcat", label: "kcat", labelHtml: "<i>k</i><sub>cat</sub>", count: statsCount(coverage.with_kcat, total), params: { metric: "kcat" } },
+      { value: "km", label: "Km", labelHtml: "<i>K</i><sub>m</sub>", count: statsCount(coverage.with_km, total), params: { metric: "km" } },
+      { value: "kcat_over_km", label: "kcat/Km", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", count: statsCount(coverage.with_kcat_over_km, total), params: { metric: "kcat_over_km" } },
+      { value: "sequence", label: "Protein sequence", count: statsCount(download.sequence, total) },
+      { value: "smiles", label: "Substrate SMILES", count: statsCount(download.smiles, total) },
+      { value: "temperature", label: "Temperature", count: statsCount(conditions.temperature, total) },
+      { value: "ph", label: "pH", count: statsCount(conditions.ph, total) },
+    ].filter((item) => item.count !== null);
+    const calculated = statsCount(coverage.calculated_kcat_over_km, coverage.with_kcat_over_km);
+    const both = statsCount(conditions.both, total);
+    const sequences = [["Wild-type sequence", download.wild_type_sequence], ["Variant sequence", download.variant_sequence]]
+      .filter(([, count]) => statsCount(count, total) !== null);
+    if (contents.length) {
+      const notes = [
+        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
+        both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
+      ].filter(Boolean).join(" ");
+      sections.push(statsSection("statsContentsTitle", "What the records contain", `${statsBarRows(contents, total)}
+        ${notes ? `<p class="stats-note">${notes}</p>` : ""}
+        ${sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
+          ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
+        </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : ""}`,
+      { note: "Records with each value or field; a record usually has several." }));
+    }
+
+    // Enzyme classes.
+    const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
+      && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
+    if (classes.length) {
+      const none = statsCount(overview.ec_class_none, total);
+      const multiple = statsCount(overview.ec_class_multiple, total);
+      const items = classes.map((item) => ({ value: `ec_${item.class}`, label: `EC ${item.class} ${item.name || ""}`.trim(),
+        labelHtml: `EC ${item.class}<span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span>`, count: item.count, accepted: item.accepted, params: { ec: `${item.class}.` } }));
+      const notes = [
+        multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
+        none ? `${formatInteger(none)} records have no EC class.` : "",
+      ].filter(Boolean).join(" ");
+      sections.push(statsSection("statsClassesTitle", "Enzyme classes", `${statsBarRows(items, total, { extra: { key: "accepted", label: "accepted" }, head: ["Records", "Accepted"] })}
+        ${notes ? `<p class="stats-note">${notes}</p>` : ""}`));
+    }
+
+    // Most common organisms and EC numbers.
+    const topItems = (list, toItem) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, total) !== null).map(toItem);
+    const organisms = topItems(overview?.top_organisms, (item, index) => ({ value: `organism_${index}`, label: String(item.name || ""),
+      labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { organism: String(item.name || "") } }));
+    const ecNumbers = topItems(overview?.top_ec, (item) => ({ value: `ec_${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
+      labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ec: String(item.ec || "") } }));
+    if (organisms.length) {
+      sections.push(statsSection("statsOrganismsTitle", "Most common organisms", statsBarRows(organisms, total, { scale: organisms[0].count }),
+        { note: "By the name each record gives; a strain named on its own counts on its own." }));
+    }
+    if (ecNumbers.length) {
+      sections.push(statsSection("statsEcTitle", "Most common EC numbers", statsBarRows(ecNumbers, total, { scale: ecNumbers[0].count }),
+        { note: "Each with the enzyme name its records use most." }));
+    }
+
+    // Value ranges.
+    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
+    if (ranges.length) {
+      sections.push(statsSection("statsRangesTitle", "Value ranges", `<div class="stats-ranges">${ranges.join("")}</div>`, { wide: true,
+        note: "Catalog units on a log scale; the end bars include all values beyond them. Dot: median; line: middle 80% of values. Values without a recorded unit are left out." }));
+    }
+
+    // Wild type and variants.
+    const form = overview?.enzyme_form || {};
+    const forms = [
+      { value: "wild", label: "Wild type", count: statsCount(form.wild, total), params: { variant: "wild" } },
+      { value: "variant", label: "Variant", count: statsCount(form.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
+      { value: "not_stated", label: "Not stated", count: statsCount(form.not_stated, total) },
+    ];
+    if (forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total) {
+      sections.push(statsSection("statsFormTitle", "Wild type and variants", statsBarRows(forms, total)));
+    }
+
+    // Cautions.
+    const caution = overview?.cautions || {};
+    const cautions = [
+      { value: "caution_differs", label: "kcat/Km differs from kcat ÷ Km", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> differs from <i>k</i><sub>cat</sub> ÷ <i>K</i><sub>m</sub>", count: statsCount(caution.differs, total), params: { caution: "differs" } },
+      { value: "caution_units", label: "A unit or magnitude to check", count: statsCount(caution.units, total), params: { caution: "units" } },
+      { value: "caution_unit_missing", label: "Unit not recorded", count: statsCount(caution.unit_missing, total), params: { caution: "unit_missing" } },
+      { value: "caution_temperature", label: "Temperature to check", count: statsCount(caution.temperature, total), params: { caution: "temperature" } },
+      { value: "caution_none", label: "No caution", count: statsCount(caution.none, total), params: { caution: "none" } },
+    ];
+    if (cautions.every((item) => item.count !== null)) {
+      sections.push(statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
+        { note: "A caution marks a value to check against the paper; a record can carry more than one." }));
+    }
+
+    // Main source.
+    const sources = statsSources(overview);
+    sections.push(statsSection("statsSourcesTitle", "Main source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
+      { note: "Each record counts once, under its main source. A record can also hold values from other databases; its Source details list them." }));
+
+    if (overview) {
+      sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
+        <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
+        <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
+        <div><dt>Human-checked</dt><dd>Accepted records a human reviewer checked, as the status tag shows.</dd></div>
+        <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot.</dd></div>
+      </dl></details>`);
+    }
+    $("statsCharts").innerHTML = sections.join("");
   }
 
   function countsByState() {
@@ -4489,24 +4457,6 @@
   }
 
   function bindControls() {
-    $("statsCharts").addEventListener("change", (event) => {
-      if (event.target.name !== "statsCohort") return;
-      selectStatsGroup(event.target.value);
-      document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
-    });
-    $("statsCharts").addEventListener("click", (event) => {
-      const button = event.target.closest("[data-stats-cohort], [data-chart-cohort]");
-      if (!button) return;
-      selectStatsGroup(button.dataset.statsCohort || button.dataset.chartCohort, button.dataset.statsField || button.dataset.chartField || "");
-      if (button.hasAttribute("data-chart-cohort")) button.focus({ preventScroll: true });
-      else if (!button.hasAttribute("data-stats-field")) document.querySelector(`input[name="statsCohort"][value="${state.statsCohort}"]`)?.focus({ preventScroll: true });
-    });
-    $("statsCharts").addEventListener("keydown", (event) => {
-      const arc = event.target.closest("[data-chart-cohort]");
-      if (!arc || !["Enter", " "].includes(event.key)) return;
-      event.preventDefault();
-      arc.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
     [
       "globalSearchInput",
       "ecFilterInput",
@@ -4822,12 +4772,11 @@
       syncDetailPanelAccessibility,
       renderSummary,
       renderStats,
-      statsReviewRing,
-      statsFollowupCoverage,
       statsCohortData,
-      statsCombinedCoverage,
-      statsNestedReviewRing,
-      statsReviewDetails,
+      statsOverview,
+      statsBrowseHref,
+      statsValueRange,
+      statsUnacceptedFields,
       statsShare,
       statsBarRows,
       renderView,

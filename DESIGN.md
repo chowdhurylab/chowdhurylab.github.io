@@ -6,82 +6,73 @@ expanding summary that takes space from the table.
 
 ## Stats
 
-Use the current snapshot manifest, not filtered rows or new backend scans.
-Outcome and coverage charts use all records as their denominator. Any
-follow-up-only counts explicitly name that cohort and bind to the same frozen
-download. Show exact counts; a nonzero share below 0.1% must not print as zero.
-Review outcomes, saved source material, available fields and database links
-are different concepts. Never imply that a missing field explains a pending
-review or that a source excerpt establishes acceptance.
+Stats answers "what is in CatLog" in one plain page. It reads the snapshot
+manifest only (never the record index, detail shards or review marks): the
+summary counts and, when present, `summary.overview`, which
+`scripts/build-catlog-followup-summary.py` (`build_overview`) counts from the
+Full data download of the same snapshot (its sha256 must match
+`enriched_download`) and the human-review marks. Every count uses all records,
+before filtering. Show exact counts; a nonzero share below 0.1% prints <0.1%.
+An older manifest without an overview shows what it has: never an empty
+heading, a headline without its number, or a count above the record total.
 
-Use white, unframed sections with light rules and thin circular charts. Match
-the approved artifact palette: blue #339cff for accepted, orange #f3883b for
-follow-up, gray for unverified, and red for disputed. Green #5dc977 marks
-kinetics, blue protein sequences, orange substrate structures, and pink #eb77b1
-reference material. Browse status dots use the same outcome colors (purple
-#9b79ec for the legacy mathematically_inferred group), with the status words in
-ink, so Browse, Guide and Stats share one legend. Keep Stats content within
-1280px so charts and labels stay together on a wide monitor.
-Color is secondary to the written label and count. Keep labels readable,
-numerals aligned, and charts free of decorative imagery or confidence scores.
+Order: two headline lines (Records, Accepted, Human-checked, Read from the
+paper (CatLog v2) with its papers; then Papers, Enzymes, EC numbers,
+Organisms, Substrates), then sections, each a heading, at most one line of
+plain explanation and its chart: Review status (full width); Read from the
+paper and Human review (two short boxes; the v2 box reuses the page's
+v2Sentence); What the records contain; Enzyme classes (records and accepted);
+Most common organisms and EC numbers (top 10, the EC with the enzyme name its
+records use most); Value ranges (full width); Wild type and variants;
+Cautions; Main source; and a closed "How these numbers are counted".
 
-Keep the selected field counts directly beside the review circle down to
-721px-wide viewports, including the in-app browser. Put outcome counts beneath
-the circle, not between it and the field legend. Only phone layouts stack.
-Use normal page scrolling.
-Never add an independently scrolling chart panel.
-Keep Browse's filtered state when navigating away and back.
+Charts are plain horizontal bars: name, bar, count, share of all records.
+Colour marks review status only, with the Browse status dot colours (blue
+#339cff accepted, orange #f3883b checks pending, grey unverified, purple
+#9b79ec not reviewed, red #e02e2a disputed); every other bar is one teal
+(#277c86). Top-10 bars are drawn against the largest item, all others against
+all records. Value ranges show, per metric in catalog units (kcat s⁻¹, Km mM,
+kcat/Km s⁻¹ mM⁻¹), the median, the 10–90% range and a histogram per power of
+ten whose end bars hold every value beyond them; values without a recorded
+unit are left out. No rings, gauges, completion bars or confidence scores.
+Labels 15px, notes 14px; on phones each name sits above its bar.
 
-Search belongs to Browse, not Stats or Guide. On Stats, show exact percentages
-and aligned counts rather than progress-track styling. Keep the
-no-paper-linked caveat visible; put short definitions and examples in optional
-disclosures. Never invent a reason for a pending review from a blank field.
+Review status lists each record once: Accepted (with its as-reported and
+corrected counts), Checks pending, then Other records, the group Browse
+filters on, with Unverified, Not reviewed and Disputed under it. An unfamiliar
+status is listed, not dropped. Keep the no-paper-linked caveat visible. The
+fields saved in records that are not accepted (hash-bound `review_details`)
+sit in a closed table; never imply that a missing field explains a status or
+that the unaccepted records measure work remaining.
 
-Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Use one review
-section, followed by full-width field comparisons and the database source chart.
-Do not show the broad source-material categories as Stats charts; source text
-remains available in individual records and downloads.
-Put overlapping wild-type and variant sequence counts in a disclosure rather
-than adding more repeated rings. "Without this field" means no value in the
-public download; never imply rejection, data loss, or an incomplete review.
-Source-chart slices use exclusive recorded source groups, not overlapping
-database link counts. Do not publish project token statistics on this page.
+Every name Browse can filter on links to `catlog-latest.html#browse?` with the
+shared keys (status, checked, ec, organism, metric, variant, caution, source);
+a portable copy links within itself. Items with no single Browse filter
+(Unverified alone, Not stated, other sources, sequence, temperature, pH) stay
+plain text. Counting rules shared with the page: human-checked is an accepted
+record whose mark is checked (looked up as the badge does); papers are
+distinct PMIDs, else DOIs, else a stand-in id; names are distinct ignoring
+capitals, without "Unknown"; EC numbers are complete four-part numbers; a
+record naming EC numbers in two classes counts in each class (said in a note);
+wild type and variant follow the table's enzyme-form rule; cautions follow the
+record's own flags (a kcat/Km that agrees with kcat ÷ Km within its printed
+precision is not "differs").
+
+Use white, unframed sections with light rules, within 1280px. Use normal page
+scrolling; never an independently scrolling chart panel. Search belongs to
+Browse, not Stats or Guide. Keep Browse's filtered state when navigating away
+and back. Do not publish project token statistics on this page.
+
+Navigation order is Browse, Guide, Paper, ChowdhuryLab, Stats. Browse, Guide
+and Stats are real links; normal clicks retain the loaded table, while
+modified clicks and copying work normally. Strip only deployment-check query
+tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
+catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
 The Guide starts with three plain tasks and a real search example, not a
 numbered onboarding strip or a repeated workflow illustration.
-Browse, Guide and Stats are real links; normal clicks retain the loaded table,
-while modified clicks and copying work normally. Strip only deployment-check
-query tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
-catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
-Changing a review group must leave the surrounding explanations open.
-Use a single nested circle: outcomes inside and field combinations outside.
-Each outer group spans exactly its inner outcome angle, using the same total.
-Highlight the selected group and list its exact counts beside the chart.
-Use matching, higher-contrast field colors in the outer ring and its legend:
-green #349b55, blue #2586df, orange #da7024, pink #c74d90, teal #277c86 and
-purple #805bcc. Keep outcome colors unchanged. The selected outcome label
-must stay visibly and accessibly selected when the group changes.
-Only the three hash-bound review groups currently have field subdivisions;
-leave other outcomes unsplit, never infer accepted-record fields from status.
-Field groups are all four fields, exactly one absent field, or multiple absent
-fields. Calculate combinations from the
-same frozen public download, never from marginal totals. Show overlapping
-per-field totals separately and reconcile both views. Main chart labels use
-15px type and secondary text at least 14px; do not shrink text to fit a column.
 
-Group verified and corrected together as Accepted in the outcome ring, with
-their two subcounts alongside. The ring is a status distribution, never a
-completion gauge: unaccepted records are not a measure of work remaining.
-Do not enlarge tiny slices or quietly omit unknown categories. All slices
-have an accessible text count. Explain follow-up with explicitly illustrative
-protein, substrate and assay checks; do not infer a reason from missing data.
-Same-snapshot field presence can describe what is already saved in follow-up
-records, but cannot establish a completed check or the severity of the rest.
-Checks pending, Unverified and Not reviewed select the adjacent field breakdown
-without jumping down the desktop page. Each group uses its own hash-bound
-field counts. Keep the status meaning visible and the illustrative checks in
-a short disclosure; do not present these examples as counted reasons.
 Not reviewed is the label for the legacy mathematically_inferred record status
 (labelled Pre-review until October 2026): the importer also used it for
-source-derived records. Do not describe every
-value in that group as calculated. A calculated ratio field is separate from
-record acceptance; changing these labels must not alter the scientific data.
+source-derived records. Do not describe every value in that group as
+calculated. A calculated ratio field is separate from record acceptance;
+changing these labels must not alter the scientific data.

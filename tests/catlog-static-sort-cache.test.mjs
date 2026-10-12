@@ -1442,6 +1442,7 @@ function row(overrides = {}) {
 {
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady };
   const previousManifest = { total_rows: runtimeManifest.total_rows, summary: runtimeManifest.summary, enriched_download: runtimeManifest.enriched_download };
+  const previousHref = window.location.href;
   const records = [
     row({ proof_kind: "source_note" }),
     row({ verification_status: "corrected", has_proof_excerpt: false, proof_kind: "source_note" }),
@@ -1454,90 +1455,142 @@ function row(overrides = {}) {
     [...element("statsCharts").innerHTML.matchAll(/data-stat-key="([^"]+)" data-count="(\d+)"/g)]
       .map(([, key, count]) => [key, Number(count)]),
   );
+  const headings = () => [...element("statsCharts").innerHTML.matchAll(/<h2 id="[^"]+">([^<]+)<\/h2>/g)].map((match) => match[1]);
+  window.location.href = "https://example.test/tools/catlog-stats.html";
   api.state.records = records;
   api.state.filtered = records;
   api.state.recordsReady = true;
   runtimeManifest.total_rows = 6;
-  runtimeManifest.enriched_download = { sha256: "fixture-download", coverage: { sequence: 4, smiles: 5 } };
-  runtimeManifest.summary = { distributions: {
-    verification_status: [
-      { label: "verified", count: 2 }, { label: "corrected", count: 1 },
-      { label: "manual_review_required", count: 1 }, { label: "unverified", count: 1 }, { label: "disputed", count: 1 },
-    ],
-    public_evidence_group: [
-      { label: "paper_excerpt", count: 2 }, { label: "source_note", count: 2 },
-      { label: "paper_id", count: 1 }, { label: "database_record", count: 1 },
-    ],
-  } };
+  runtimeManifest.enriched_download = { sha256: "fixture-download", coverage: { sequence: 4, smiles: 5, wild_type_sequence: 3, variant_sequence: 1 } };
+  runtimeManifest.summary = {
+    totals: { unique_enzymes: 2, unique_ec_numbers: 3, unique_organisms: 4, unique_substrates: 5 },
+    coverage: { with_kcat: 5, with_km: 6, with_kcat_over_km: 2, calculated_kcat_over_km: 1 },
+    distributions: {
+      verification_status: [
+        { label: "verified", count: 2 }, { label: "corrected", count: 1 },
+        { label: "manual_review_required", count: 1 }, { label: "unverified", count: 1 }, { label: "disputed", count: 1 },
+      ],
+      public_trust_basis: [{ label: "identity_only", count: 1 }],
+    },
+  };
+  // An older manifest: no overview. Stats shows what the manifest has, without empty sections.
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 3, verified: 2, corrected: 1, manual_review_required: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
-    sequence: 4, smiles: 5,
-  }, "Snapshot charts use manifest counts with source-group precedence preserved");
+    accepted: 3, manual_review_required: 1, not_verified: 2, unverified: 1, mathematically_inferred: 0, disputed: 1,
+    kcat: 5, km: 6, kcat_over_km: 2, sequence: 4, smiles: 5,
+  }, "Stats uses the manifest's counts; the three other statuses sit under Other records");
+  assert.deepEqual(headings(), ["Review status", "What the records contain", "Main source"]);
   assert.match(element("statsScope").textContent, /All 6 records/);
-  const chart = element("statsCharts").innerHTML;
-  assert.doesNotMatch(chart, /stats-bar-track|stats-scale/, "Approved charts replace the previous repeated bars");
-  assert.match(chart, /of all records/);
-  assert.match(chart, /class="stats-outcome-head" aria-hidden="true"><span><\/span><span>Records<\/span><span>Share<\/span>/);
-  assert.match(chart, /class="stats-explanation"/);
-  assert.equal((chart.match(/<figure data-stat-key=/g) || []).length, 2, "Only available, valid fields get a ring");
-  assert.match(chart, /Both count as accepted/);
-  assert.match(chart, /Each record has one status/);
-  assert.match(chart, /does not record which check is open/);
-  assert.match(chart, /data-stats-cohort="manual_review_required"[^>]*>Checks pending<\/button>/);
-  assert.match(chart, /data-stats-cohort="mathematically_inferred"[^>]*>Not reviewed<\/button>/);
-  const reviewSection = chart.split('aria-labelledby="reviewChartTitle"')[1].split("</section>")[0];
-  assert.equal((reviewSection.match(/<circle class="stats-ring-verified"/g) || []).length, 1, "Verified and corrected share one accepted slice");
-  assert.match(chart, /stroke-dasharray="50 50"/);
-  assert.doesNotMatch(chart, /role="progressbar"/);
-  assert.doesNotMatch(chart, /Material attached|Source material in this group|Text note|stats-material-section/);
-  assert.match(chart, /its Source details list them/);
-  const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
-  assert.match(halfBar, /width:50%/);
-  assert.match(halfBar, /50\.0%/);
+  assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
+  assert.match(element("statsTotals").innerHTML, /Enzymes<\/dt><dd>2</);
+  let chart = element("statsCharts").innerHTML;
+  assert.match(chart, /Source breakdown unavailable/);
+  assert.match(chart, /1 accepted records have no PMID or DOI linked/);
+  assert.match(chart, /1 kcat\/Km values were calculated as kcat ÷ Km/);
+  assert.match(chart, /Wild-type sequence<\/th><td>3/);
+  assert.doesNotMatch(chart, /stats-nested-ring|stats-review-ring|not split by field|How these groups differ|Example checks|Fields in these records/,
+    "The two-ring chart and its explanations are gone");
+  assert.doesNotMatch(chart, /NaN|Infinity|undefined|Not saved|tokens/i);
+  // Links open Browse (catlog-latest.html) with the shared #browse? filters.
+  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#browse\?status=accepted">Accepted<\/a>/);
+  assert.match(chart, /#browse\?status=curation_pending">Checks pending<\/a>/);
+  assert.match(chart, /#browse\?status=not_verified">Other records<\/a>/);
+  assert.match(chart, /#browse\?metric=kcat_over_km"/);
+  assert.doesNotMatch(chart, /status=unverified|status=disputed/, "Browse filters the three other statuses together");
   for (const filtered of [records.slice(2, 4), []]) {
     api.state.filtered = filtered;
     api.renderSummary();
     api.renderStats();
     assert.equal(element("statsCharts").innerHTML, chart, "Browse filters never alter Stats denominators or field coverage");
   }
-  assert.match(chart, /stats-field-remainder">2 without this field/);
-  assert.match(chart, /stats-field-remainder">1 without this field/);
-  assert.doesNotMatch(chart, /Not saved|tokens|cached input/i);
+
+  // With the overview counted from this snapshot's download.
+  const overview = {
+    source_sha256: runtimeManifest.source_sha256, download_sha256: "fixture-download",
+    records: 6, accepted: 3, accepted_as_reported: 2, corrected: 1, from_paper: { records: 2, papers: 1 },
+    papers: 5, with_paper: 4, enzymes: 3, ec_numbers: 4, organisms: 2, substrates: 6,
+    human_checked_accepted: 1, human_marked: 2,
+    ec_classes: [{ class: 1, name: "Oxidoreductases", count: 4, accepted: 2 }, { class: 3, name: "Hydrolases", count: 2, accepted: 1 }],
+    ec_class_none: 0, ec_class_multiple: 0,
+    top_organisms: [{ name: "Homo sapiens", count: 4 }, { name: "<b>Escherichia</b> coli", count: 2 }],
+    top_ec: [{ ec: "1.1.1.1", name: "alcohol dehydrogenase", count: 4 }],
+    enzyme_form: { wild: 3, variant: 2, not_stated: 1 },
+    conditions: { temperature: 4, ph: 5, both: 3 },
+    cautions: { differs: 1, units: 0, unit_missing: 1, temperature: 0, none: 4 },
+    metrics: { kcat: { unit: "s^-1", n: 5, median: 4.5, p10: 0.036, p90: 240, log10_start: -2, counts: [1, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0] } },
+    sources: { paper: 2, brenda: 3, sabio_rk: 0, oed: 1, uniprot: 0, skid: 0, other: 0 },
+  };
+  runtimeManifest.summary.overview = overview;
+  api.renderStats();
+  chart = element("statsCharts").innerHTML;
+  const totalsHtml = element("statsTotals").innerHTML;
+  for (const [label, value] of [["Human-checked", 1], ["Read from the paper (CatLog v2)", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
+    assert.match(totalsHtml, new RegExp(`${label.replace(/[()]/g, "\\$&")}</dt><dd>${value}`));
+  }
+  assert.match(totalsHtml, /from 1 papers/);
+  assert.deepEqual(headings(), ["Review status", "Read from the paper (CatLog v2)", "Human review", "What the records contain", "Enzyme classes",
+    "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
+  assert.ok(chart.includes("Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units."));
+  assert.match(chart, /#browse\?status=v2">Browse these records/);
+  assert.match(chart, /#browse\?checked=1">Browse these records/);
+  assert.match(chart, /#browse\?ec=1\.">EC 1/);
+  assert.match(chart, /#browse\?ec=1\.1\.1\.1"/);
+  assert.match(chart, /#browse\?organism=Homo\+sapiens"><i>Homo sapiens<\/i>/);
+  assert.match(chart, /&lt;b&gt;Escherichia&lt;\/b&gt; coli/, "Names from the data are escaped");
+  assert.match(chart, /#browse\?variant=wild">Wild type/);
+  assert.match(chart, /#browse\?caution=differs"/);
+  assert.match(chart, /#browse\?caution=none">No caution/);
+  assert.match(chart, /#browse\?source=paper">Primary literature/);
+  assert.doesNotMatch(chart, /source=other/, "Other or several has no single Browse filter");
+  const breakdown = readBreakdown();
+  assert.equal(breakdown.wild + breakdown.variant + breakdown.not_stated, 6);
+  assert.equal(breakdown.source_paper + breakdown.source_brenda + breakdown.source_oed, 6);
+  assert.equal(breakdown.temperature, 4);
+  assert.equal(breakdown.ph, 5);
+  assert.match(chart, /3 records give both temperature and pH/);
+  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?2<span class="visually-hidden"> accepted/);
+  assert.equal((chart.match(/<figure class="stats-range"/g) || []).length, 1, "Only metrics with a usable summary get a histogram");
+  assert.match(chart, /aria-label="kcat: median 4\.5 s⁻¹; 10% of values are below 0\.036 and 10% above 240; 5 values\."/);
+  assert.equal((chart.match(/class="stats-histogram-bars">/g) || []).length, 1);
+  assert.match(chart, /How these numbers are counted/);
+  assert.doesNotMatch(chart, /NaN|Infinity|undefined/);
+
+  // A histogram that does not add up is not drawn.
+  assert.equal(api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, { n: 3, median: 1, p10: 1, p90: 1, log10_start: 0, counts: [1, 1] }), "");
+  assert.equal(api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, { n: 2, median: 2, p10: 3, p90: 4, log10_start: 0, counts: [1, 1] }), "");
+  assert.equal(api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, null), "");
+  const range = api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, { n: 4, median: 0.5, p10: 0.01, p90: 50, log10_start: -3, counts: [1, 0, 0, 2, 0, 1] });
+  assert.match(range, /data-metric="km" data-count="4"/);
+  assert.match(range, /style="height:50%"/);
+  assert.match(range, /<i style="left:[\d.]+%"><\/i>/);
+
+  // An overview from another download, or with another record count, is not used.
+  runtimeManifest.summary.overview = { ...overview, download_sha256: "other-download" };
+  api.renderStats();
+  assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked/);
+  assert.equal(api.statsOverview(6), null);
+  runtimeManifest.summary.overview = { ...overview, records: 7 };
+  assert.equal(api.statsOverview(6), null);
+  runtimeManifest.summary.overview = { ...overview, enzyme_form: { wild: 3, variant: 2, not_stated: 2 } };
+  api.renderStats();
+  assert.doesNotMatch(element("statsCharts").innerHTML, /Wild type and variants/, "Forms that do not add up to the records are not drawn");
+  runtimeManifest.summary.overview = overview;
+
+  // Bars, shares and links.
+  const halfBar = api.statsBarRows([{ value: "example", label: "Example", count: 3 }], 6);
+  assert.match(halfBar, /width:50%/);
+  assert.match(halfBar, /50\.0%/);
   assert.match(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /width:0%/);
   assert.doesNotMatch(api.statsBarRows([{ value: "test", label: "<unsafe>", count: 0 }], 0), /<unsafe>/);
   assert.equal(api.statsShare(8, 156431), "<0.1%", "A real nonzero outcome must never look like zero");
   assert.equal(api.statsShare(0, 156431), "0.0%");
   assert.equal(api.statsShare(0, 0), "—");
-  const emptyRing = api.statsReviewRing([{count: 0, color: "verified"}], 0);
-  assert.doesNotMatch(emptyRing, /NaN|Infinity|stroke-dasharray/);
-  const tinySlice = api.statsReviewRing([{count: 8, color: "disputed"}, {count: 156423, color: "neutral"}], 156431);
-  assert.match(tinySlice, new RegExp(`stroke-dasharray="${8 / 156431 * 100} `));
-  assert.doesNotMatch(api.statsReviewRing([{count: 1, color: "verified"}], 2), /stroke-dasharray/, "Do not draw an incomplete distribution as a full ring");
-  runtimeManifest.summary.followup_coverage = {
-    cohort: "manual_review_required",
-    source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
-    total: 1, with_literature_id: 1, with_sequence: 0, with_smiles: 1, with_kinetic_value: 1,
-  };
-  assert.equal((api.statsFollowupCoverage(1).match(/<figure data-stat-key=/g) || []).length, 4);
-  assert.match(api.statsFollowupCoverage(1), /data-stat-key="with_sequence" data-count="0" data-total="1"/);
-  assert.match(api.statsFollowupCoverage(1), /data-stat-key="with_smiles" data-count="1" data-total="1"/);
-  assert.doesNotMatch(api.statsFollowupCoverage(1), /NaN|Infinity|Not saved/);
-  assert.equal(api.statsFollowupCoverage(2), "", "Never mix follow-up denominators");
-  runtimeManifest.summary.followup_coverage.cohort = "unverified";
-  assert.equal(api.statsFollowupCoverage(1), "", "A same-sized cohort is not interchangeable");
-  delete runtimeManifest.summary.followup_coverage.cohort;
-  assert.equal(api.statsFollowupCoverage(1), "", "Require an explicit cohort");
-  runtimeManifest.summary.followup_coverage.cohort = "manual_review_required";
-  runtimeManifest.summary.followup_coverage.download_sha256 = "other-download";
-  assert.equal(api.statsFollowupCoverage(1), "", "Require the exact public download");
-  delete runtimeManifest.summary.followup_coverage.download_sha256;
-  delete runtimeManifest.enriched_download.sha256;
-  assert.equal(api.statsFollowupCoverage(1), "", "Missing hashes must not count as a match");
-  runtimeManifest.enriched_download.sha256 = "fixture-download";
-  runtimeManifest.summary.followup_coverage.download_sha256 = "fixture-download";
-  runtimeManifest.summary.followup_coverage.source_sha256 = "wrong-generation";
-  assert.equal(api.statsFollowupCoverage(1), "", "Reject coverage from another snapshot");
+  assert.equal(api.statsBrowseHref({ ec: "1." }), "https://example.test/tools/catlog-latest.html#browse?ec=1.");
+  window.location.href = "file:///tmp/CatLog%20snapshot/index.html?release=old#stats";
+  assert.equal(api.statsBrowseHref({ checked: "1" }), "file:///tmp/CatLog%20snapshot/index.html#browse?checked=1", "A portable copy links within itself");
+  window.location.href = "https://example.test/tools/catlog-stats.html";
+
+  // The fields of records that are not accepted: only the hash-bound group counts, in a plain table.
   runtimeManifest.summary.review_details = {
     source_sha256: runtimeManifest.source_sha256, download_sha256: runtimeManifest.enriched_download.sha256,
     groups: { unverified: { total: 1, with_kinetic_value: 1, with_literature_id: 0, with_sequence: 0, with_smiles: 1,
@@ -1546,67 +1599,28 @@ function row(overrides = {}) {
   };
   assert.equal(api.statsCohortData("unverified", 1).with_smiles, 1);
   assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
-  api.state.statsCohort = "unverified";
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /data-cohort="unverified"/);
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /Unverified: 1 records\. Percentages are of this group/);
-  assert.match(api.statsReviewDetails({ unverified: 1 }), /a review may have been attempted/);
-  const group = runtimeManifest.summary.review_details.groups.unverified;
-  assert.match(api.statsCombinedCoverage(group), /data-stat-key="multiple" data-count="1"/);
-  assert.match(api.statsCombinedCoverage(group), /data-field="sequence" data-missing="1"/);
-  assert.match(api.statsCombinedCoverage(group), /data-field="smiles" data-missing="0"/);
-  group.field_combinations = [{missing: ["sequence"], count: 1}];
-  assert.equal(api.statsCombinedCoverage(group), "", "Partition must reconcile with every marginal field count");
-  group.field_combinations = [{missing: ["paper_id", "sequence"], count: 1}, {missing: ["sequence", "paper_id"], count: 1}];
-  assert.equal(api.statsCombinedCoverage(group), "", "Duplicate combinations must not count twice");
-  group.field_combinations = [{missing: ["paper_id", "sequence", "sequence"], count: 1}];
-  assert.equal(api.statsCombinedCoverage(group), "", "A field cannot repeat within a combination");
-  group.field_combinations = [{missing: ["paper_id", "sequence", "unknown"], count: 1}];
-  assert.equal(api.statsCombinedCoverage(group), "", "Unknown fields cannot create slices");
-  group.field_combinations = [{missing: ["sequence", "paper_id"], count: 1}];
-  const completeGroup = {total: 1, with_sequence: 1, with_smiles: 1, with_kinetic_value: 1, with_literature_id: 1, field_combinations: [{missing: [], count: 1}]};
-  assert.match(api.statsCombinedCoverage(completeGroup), /data-stat-key="complete" data-count="1"/);
-  assert.match(api.statsCombinedCoverage(completeGroup), /All four fields available/);
-  assert.match(api.statsCombinedCoverage(completeGroup), /Missing: no value for that field in the download\./);
-  assert.doesNotMatch(api.statsCombinedCoverage(completeGroup), /stats-combination-details/);
-  const nested = api.statsNestedReviewRing([
-    { value: "accepted", label: "Accepted", color: "verified", count: 3 },
-    { value: "unverified", label: "Unverified", color: "neutral", count: 1 },
-  ], 4);
-  assert.match(nested, /data-outcome="accepted" data-count="3"[^>]*stroke-dasharray="75 25"/);
-  assert.match(nested, /data-outcome="unverified" data-count="1"[^>]*stroke-dasharray="25 75"[^>]*stroke-dashoffset="-75"/);
-  assert.match(nested, /data-field-group="unverified" data-field-slice="multiple" data-count="1"[^>]*stroke-dasharray="25 75"[^>]*stroke-dashoffset="-75"/);
-  assert.doesNotMatch(nested, /data-field-group="accepted"/, "No invented field split for an unaudited group");
-  assert.match(nested, /data-chart-cohort="accepted" role="button" tabindex="0"/);
-  assert.match(nested, /data-chart-cohort="unverified" data-chart-field="multiple" role="button" tabindex="0"/);
-  assert.match(nested, /aria-label="Unverified: Two or more fields missing, 1 records, 100.0% of this group"/);
-  assert.doesNotMatch(nested, /class="stats-nested-ring" aria-hidden/, "Interactive arcs must be exposed to assistive technology");
-  assert.match(api.statsCombinedCoverage(group), /data-stats-field="multiple" aria-controls="statsReviewFigure"/);
-  api.state.statsCohort = "accepted";
-  const acceptedDetails = api.statsReviewDetails({ verified: 2, corrected: 3 });
-  assert.match(acceptedDetails, /5 records\.<\/p>/);
-  assert.match(acceptedDetails, /Accepted as reported<\/th><td>2/);
-  assert.match(acceptedDetails, /Accepted after a change<\/th><td>3/);
-  assert.doesNotMatch(acceptedDetails, /stats-combination-legend/, "Do not invent accepted field combinations");
-  api.state.statsCohort = "disputed";
-  assert.match(api.statsReviewDetails({ disputed: 8 }), /8 records/);
-  api.state.statsCohort = "unverified";
-  assert.doesNotMatch(api.statsNestedReviewRing([{value: "unverified", label: "Unverified", color: "neutral", count: 1}], 2), /stroke-dasharray/, "Never draw mismatched totals as a complete circle");
+  const unaccepted = api.statsUnacceptedFields({ unverified: 1, manual_review_required: 1 });
+  assert.match(unaccepted, /<th scope="col">Unverified<small>1<\/small><\/th>/);
+  assert.doesNotMatch(unaccepted, /Checks pending/, "A group without its own counts gets no column");
+  assert.match(unaccepted, /<tr data-field="with_smiles"><th scope="row">Substrate SMILES<\/th><td data-cohort="unverified" data-count="1">1<small>100\.0%<\/small>/);
+  assert.match(unaccepted, /does not give the reason for a status/);
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
   assert.equal(api.statsCohortData("unverified", 1), null, "Material must be an exclusive whole-cohort partition");
+  assert.equal(api.statsUnacceptedFields({ unverified: 1 }), "");
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 0;
   runtimeManifest.summary.review_details.download_sha256 = "wrong";
   assert.equal(api.statsCohortData("unverified", 1), null, "Exact frozen download required");
-  api.state.statsCohort = "mathematically_inferred";
-  assert.match(api.statsReviewDetails({ mathematically_inferred: 1 }), /Prepared from source records, without an accepted review\./);
   const prepared = row({verification_status: "mathematically_inferred"});
   assert.equal(api.rowStatusLabel(prepared), "Not reviewed");
   assert.equal(api.reviewOutcome(prepared), "Prepared from source records; no accepted review outcome is recorded.");
-  api.state.statsCohort = "manual_review_required";
+
+  // An unfamiliar status is listed, not dropped; source groups are exclusive.
   delete runtimeManifest.summary.review_details;
-  delete runtimeManifest.summary.followup_coverage;
+  delete runtimeManifest.summary.overview;
   runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
   api.renderStats();
   assert.equal(readBreakdown().other_status, 1, "An unfamiliar outcome must not disappear");
+  assert.equal(readBreakdown().not_verified, 3);
   api.state.recordsReady = false;
   runtimeManifest.total_rows = 4;
   runtimeManifest.summary = { distributions: {
@@ -1614,26 +1628,21 @@ function row(overrides = {}) {
       { label: "verified", count: 1 }, { label: "corrected", count: 1 },
       { label: "manual_review_required", count: 1 }, { label: "disputed", count: 1 },
     ],
-    public_evidence_group: [
-      { label: "paper_excerpt", count: 1 }, { label: "source_note", count: 1 },
-      { label: "paper_id", count: 1 }, { label: "database_record", count: 1 },
-    ],
   } };
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 2, verified: 1, corrected: 1, manual_review_required: 1, unverified: 0, mathematically_inferred: 0, disputed: 1,
-    sequence: 4,
-  }, "Stats works before the index arrives; invalid coverage cannot become a negative missing count");
+    accepted: 2, manual_review_required: 1, not_verified: 1, unverified: 0, mathematically_inferred: 0, disputed: 1, sequence: 4,
+  }, "Stats works before the index arrives; a count above the total is not drawn");
   runtimeManifest.summary.distributions.source_db = [
     { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },
   ];
   api.renderStats();
-  assert.equal(readBreakdown().source_brenda, 2, "A multi-source record is not also in the BRENDA-only slice");
+  assert.equal(readBreakdown().source_brenda, 2, "A multi-source record is not also in the BRENDA-only row");
   assert.equal(readBreakdown().source_sabio_rk, 1);
   assert.equal(readBreakdown().source_other, 1);
-  assert.match(element("statsCharts").innerHTML, /Multiple named databases/);
   Object.assign(api.state, previous);
   Object.assign(runtimeManifest, previousManifest);
+  window.location.href = previousHref;
 }
 
 const kiMeasurementHtml = api.measurementSection(row(), {

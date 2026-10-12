@@ -330,12 +330,25 @@ def check_browse(driver, browser, url, route_label):
             "viewports": viewports, "passed": True}
 
 
+STATS_LINK_KEYS = {"q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric", "variant", "tmin", "tmax",
+                   "phmin", "phmax", "caution", "source", "sort"}
+
+
+def stats_overview(manifest):
+    """The overview the page uses: counted from this snapshot's own download, or None."""
+    overview = manifest["summary"].get("overview")
+    if not overview or overview.get("download_sha256") != manifest.get("enriched_download", {}).get("sha256") \
+            or overview.get("source_sha256") != manifest.get("source_sha256") or overview.get("records") != manifest["total_rows"]:
+        return None
+    return overview
+
+
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120)
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
     driver.set_window_size(1440, 1000)
     driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) >= 5)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
     wait.until(lambda d: parse_qsl(urlsplit(d.current_url).query, keep_blank_values=True) == expected_query)
     stats_path = urlsplit(url).path.replace("catlog-latest.html", "catlog-stats.html")
     assert urlsplit(driver.current_url).path == stats_path
@@ -372,44 +385,92 @@ def check(driver, browser, url):
     expected = {item["label"]: item["count"] for item in manifest["summary"]["distributions"]["verification_status"]}
     total = manifest["total_rows"]
     accepted = expected.get("verified", 0) + expected.get("corrected", 0)
-    accepted_row = driver.find_element(By.CSS_SELECTOR, '.stats-review-legend [data-stat-key="accepted"]')
-    assert int(accepted_row.get_attribute("data-count")) == accepted
-    assert f"{accepted / total * 100:.1f}%" in accepted_row.text
+    overview = stats_overview(manifest)
     assert not driver.find_element(By.ID, "globalSearchInput").is_displayed()
     assert driver.find_element(By.ID, "statsButton").get_attribute("aria-current") == "page"
-    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-review-legend li")) == total
-    def check_combined_coverage(group):
-        slices = {"complete": 0, "only_sequence": 0, "only_smiles": 0, "only_paper_id": 0, "only_kinetic_value": 0, "multiple": 0}
-        for item in group["field_combinations"]:
-            key = "complete" if not item["missing"] else "only_" + item["missing"][0] if len(item["missing"]) == 1 else "multiple"
-            slices[key] += item["count"]
-        displayed = {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
-                     for row in driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend li")}
-        assert displayed == slices and sum(displayed.values()) == group["total"]
-        assert "Missing: no value for that field in the download." in driver.find_element(By.CLASS_NAME, "stats-followup-coverage").text
-        assert not driver.find_elements(By.CSS_SELECTOR, ".stats-followup-coverage svg"), "Field split belongs in the outcome chart"
-        cohort = driver.find_element(By.CSS_SELECTOR, ".stats-followup-coverage").get_attribute("data-cohort")
-        outer = {row.get_attribute("data-field-slice"): int(row.get_attribute("data-count"))
-                 for row in driver.find_elements(By.CSS_SELECTOR, f'#statsReviewFigure [data-field-group="{cohort}"]')}
-        assert outer == {key: count for key, count in slices.items() if count}
-        assert sum(outer.values()) == group["total"]
-        for field, count_key in (("sequence", "with_sequence"), ("smiles", "with_smiles"), ("paper_id", "with_literature_id"), ("kinetic_value", "with_kinetic_value")):
-            row = driver.find_element(By.CSS_SELECTOR, f'.stats-missing-totals [data-field="{field}"]')
-            assert int(row.get_attribute("data-missing")) == group["total"] - group[count_key]
-        assert driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('.stats-combination-legend li')).fontSize)") >= 15
+    assert not driver.execute_script(
+        "return performance.getEntriesByType('resource').some(e => /catlog-viewer-index|catlog-table|details-\\d+|human-review-marks/.test(e.name))"
+    ), "Stats must not download the record index, detail shards or review marks"
 
-    check_combined_coverage(manifest["summary"]["review_details"]["groups"]["manual_review_required"])
-    assert "Examples only" in driver.find_element(By.CLASS_NAME, "stats-followup-section").get_attribute("textContent")
-    assert len(driver.find_elements(By.CSS_SELECTOR, "#statsCharts svg")) == 7
-    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, "#statsReviewFigure [data-outcome]")) == total
-    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-material-section, .stats-cohort-material"), "Remove material charts, not source records"
-    assert driver.execute_script("return document.querySelector('.stats-review-section').contains(document.querySelector('#statsReviewDetails'))")
-    assert sum(int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, ".stats-database-section li")) == total
+    def stat_rows(selector):
+        return {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
+                for row in driver.find_elements(By.CSS_SELECTOR, selector)}
+
+    # Review status: each record once; Other records groups Unverified, Not reviewed and Disputed as Browse does.
+    status_rows = stat_rows(".stats-status-section .stats-bars li:not([data-group])")
+    assert sum(status_rows.values()) == total, "Status rows must add up to all records"
+    assert status_rows["accepted"] == accepted
+    assert status_rows["manual_review_required"] == expected.get("manual_review_required", 0)
+    for key in ("unverified", "mathematically_inferred", "disputed"):
+        assert status_rows[key] == expected.get(key, 0)
+    group = driver.find_element(By.CSS_SELECTOR, '.stats-status-section li[data-group][data-stat-key="not_verified"]')
+    assert int(group.get_attribute("data-count")) == total - accepted - expected.get("manual_review_required", 0)
+    accepted_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="accepted"]')
+    assert f"{accepted / total * 100:.1f}%" in accepted_row.text
+    assert f"{expected.get('verified', 0):,}" in accepted_row.text and f"{expected.get('corrected', 0):,}" in accepted_row.text
+    identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
+    if identity_only:
+        assert f"{identity_only:,} accepted records have no PMID or DOI linked" in driver.find_element(By.CLASS_NAME, "stats-status-section").text
+
+    # Every Stats link opens Browse with the shared #browse? filters.
+    links = driver.find_elements(By.CSS_SELECTOR, "#statsCharts a.stats-link")
+    assert links, "Stats links into Browse"
+    for link in links:
+        target = urlsplit(link.get_attribute("href"))
+        assert target.path == urlsplit(url).path, f"Stats links open Browse: {target.path}"
+        assert target.fragment.startswith("browse?"), target.fragment
+        params = parse_qsl(target.fragment[len("browse?"):], keep_blank_values=True)
+        assert params and {key for key, _value in params} <= STATS_LINK_KEYS, f"Unknown Browse filter: {params}"
+    hrefs = [link.get_attribute("href") for link in links]
+    for fragment in ("#browse?status=accepted", "#browse?status=curation_pending", "#browse?status=not_verified"):
+        assert any(href.endswith(fragment) for href in hrefs), f"Missing Stats link {fragment}"
+
+    # Main source: each record once.
+    source_rows = stat_rows(".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li")
+    if source_rows:
+        assert sum(source_rows.values()) == total, "Main-source rows must add up to all records"
+
+    # The overview, when this snapshot has one; otherwise no section or headline without its numbers.
+    headline = driver.find_element(By.ID, "statsTotals").text
     stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
+    if overview:
+        human = overview.get("human_checked_accepted")
+        if human is not None:
+            assert "Human-checked" in headline and f"{human:,}" in headline
+            assert any(href.endswith("#browse?checked=1") for href in hrefs)
+        assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
+        assert any(href.endswith("#browse?status=v2") for href in hrefs)
+        forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] .stats-bars li")
+        assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
+        classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] .stats-bars li")
+        assert classes == {f"ec_{item['class']}": item["count"] for item in overview["ec_classes"]}
+        cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] .stats-bars li")
+        assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
+        ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range")
+        assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))
+        for figure in ranges:
+            summary = overview["metrics"][figure.get_attribute("data-metric")]
+            assert int(figure.get_attribute("data-count")) == summary["n"] == sum(summary["counts"])
+            assert len(figure.find_elements(By.CSS_SELECTOR, ".stats-histogram-bars > span")) == len(summary["counts"])
+            assert figure.find_element(By.CSS_SELECTOR, ".stats-histogram").get_attribute("aria-label").startswith(("kcat", "Km"))
+    else:
+        assert "Human-checked" not in headline and "CatLog v2" not in headline
+        assert not driver.find_elements(By.CSS_SELECTOR, ".stats-range")
+    for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2"):
+        section = heading.find_element(By.XPATH, "..")
+        assert section.find_elements(By.CSS_SELECTOR, "li, figure, p"), f"Empty Stats section: {heading.text}"
     assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
-    for key in ("verified", "corrected"):
-        row = driver.find_element(By.CSS_SELECTOR, f'.stats-accepted-split [data-stat-key="{key}"]')
-        assert int(row.get_attribute("data-count")) == expected[key]
+    for removed in ("not split by field", "How these groups differ", "Example checks", "Fields in these records"):
+        assert removed not in stats_text, f"Removed Stats text is back: {removed}"
+    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-nested-ring, .stats-review-ring, .stats-material-section, #statsCharts svg circle")
+    details = manifest["summary"].get("review_details")
+    if details and details.get("download_sha256") == manifest.get("enriched_download", {}).get("sha256") \
+            and details.get("source_sha256") == manifest.get("source_sha256"):
+        for cohort, group_counts in details["groups"].items():
+            for field in ("with_kinetic_value", "with_literature_id", "with_sequence", "with_smiles"):
+                cells = driver.find_elements(By.CSS_SELECTOR, f'.stats-unaccepted-fields tr[data-field="{field}"] td[data-cohort="{cohort}"]')
+                if cells:
+                    assert int(cells[0].get_attribute("data-count")) == group_counts[field]
 
     viewports = {}
 
@@ -424,14 +485,19 @@ def check(driver, browser, url):
                 .every(e => e.getBoundingClientRect().height >= 36);
         """), "Stats disclosures need a usable click target"
         assert driver.execute_script("""
-            return [...document.querySelectorAll('.stats-chart-legend')].every(legend => {
-                const head = legend.querySelector('.stats-outcome-head');
-                const row = legend.querySelector('li');
+            return [...document.querySelectorAll('.stats-bars-head')].every(head => {
+                const row = head.nextElementSibling?.querySelector('li');
                 if (!head.getBoundingClientRect().width || !row) return true;
-                return [1, 2].every(i => Math.abs(head.children[i].getBoundingClientRect().right
+                return [2, 3].every(i => Math.abs(head.children[i].getBoundingClientRect().right
                     - row.children[i].getBoundingClientRect().right) <= 1);
             });
         """), "Stats count headings must align with their values"
+        assert driver.execute_script("""
+            return [...document.querySelectorAll('.stats-bars li')].every(row => {
+                const style = getComputedStyle(row);
+                return parseFloat(style.fontSize) >= 15;
+            });
+        """), "Stats rows keep 15px labels"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
             return {width: innerWidth, height: innerHeight,
@@ -441,7 +507,7 @@ def check(driver, browser, url):
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         check_panel_width()
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-outcome-label, .stats-check-examples dt, .stats-check-examples dd, .stats-field-rings figure, .stats-field-remainder')]
+            return [...document.querySelectorAll('.stats-bar-label, .stats-bar-count, .stats-bar-share, .stats-totals dd, .stats-range-numbers dd')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)
@@ -449,101 +515,9 @@ def check(driver, browser, url):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{label}.png"))
 
     capture("stats-desktop")
-    assert driver.execute_script("""
-        const arc = document.querySelector('#statsReviewFigure [data-field-group="manual_review_required"]');
-        const rect = arc.ownerSVGElement.getBoundingClientRect();
-        const length = parseFloat(arc.getAttribute('stroke-dasharray'));
-        const start = -Number(arc.getAttribute('stroke-dashoffset'));
-        const angle = (start + length / 2) / 100 * Math.PI * 2 - Math.PI / 2;
-        const radius = Number(arc.getAttribute('r')) / 240 * rect.width;
-        return document.elementFromPoint(rect.left + rect.width / 2 + Math.cos(angle) * radius,
-            rect.top + rect.height / 2 + Math.sin(angle) * radius) === arc;
-    """), "The chart center must not block segment labels on hover"
-    examples = driver.find_element(By.CSS_SELECTOR, ".stats-review-overview details")
-    examples.find_element(By.TAG_NAME, "summary").click()
-    for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
-        driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').click()
-        group = manifest["summary"]["review_details"]["groups"][cohort]
-        radio = driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]')
-        assert radio.is_selected() and driver.switch_to.active_element == radio
-        assert examples.get_attribute("open") is not None, "Group selection must preserve open explanations"
-        check_combined_coverage(group)
-        assert driver.find_element(By.CSS_SELECTOR, ".stats-outer-group.selected").get_attribute("data-review-group") == cohort
-        assert driver.find_element(By.CSS_SELECTOR, f'[data-stats-cohort="{cohort}"]').get_attribute("aria-pressed") == "true"
-        capture("stats-" + cohort)
-    examples.find_element(By.TAG_NAME, "summary").click()
-    def click_arc(selector, touch=False):
-        arc = driver.find_element(By.CSS_SELECTOR, selector)
-        point = driver.execute_script("""
-            const arc = arguments[0];
-            arc.scrollIntoView({block: 'center'});
-            const rect = arc.ownerSVGElement.getBoundingClientRect();
-            const share = parseFloat(arc.getAttribute('stroke-dasharray'));
-            const start = -Number(arc.getAttribute('stroke-dashoffset'));
-            const angle = (start + share / 2) / 100 * Math.PI * 2 - Math.PI / 2;
-            const radius = Number(arc.getAttribute('r')) / 240 * rect.width;
-            const x = Math.round(rect.left + rect.width / 2 + Math.cos(angle) * radius);
-            const y = Math.round(rect.top + rect.height / 2 + Math.sin(angle) * radius);
-            return {x, y, hit: document.elementFromPoint(x, y) === arc};
-        """, arc)
-        assert point["hit"], f"Another element blocks the chart segment: {selector}"
-        if touch:
-            driver.execute_cdp_cmd("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": point["x"], "y": point["y"]}]})
-            driver.execute_cdp_cmd("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-        else:
-            actions = ActionChains(driver)
-            actions.w3c_actions.pointer_action.move_to_location(point["x"], point["y"])
-            actions.w3c_actions.pointer_action.click()
-            actions.perform()
-        assert arc.get_attribute("aria-pressed") == "true"
-        assert arc == driver.switch_to.active_element, "Keep chart focus on the selected segment"
-        assert driver.execute_script("return getComputedStyle(arguments[0]).outlineStyle", arc) == "none", "Do not draw a full-circle focus rectangle for pointer input"
-        return arc
-
-    click_arc('#statsReviewFigure [data-outcome="accepted"]')
-    assert driver.find_element(By.ID, "fieldsGroupHeading").text == "Accepted records"
-    assert f"{accepted:,} records" in driver.find_element(By.ID, "statsReviewDetails").text
-    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-combination-legend")
-    # Tiny outcomes remain keyboard accessible without inflating their visual share.
-    disputed = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-outcome="disputed"]')
-    driver.execute_script("arguments[0].focus({preventScroll: true})", disputed)
-    assert disputed == driver.switch_to.active_element
-    ActionChains(driver).send_keys(Keys.ENTER).perform()
-    assert driver.find_element(By.ID, "fieldsGroupHeading").text == "Disputed records"
-    for cohort in ("unverified", "mathematically_inferred", "manual_review_required"):
-        click_arc(f'#statsReviewFigure [data-outcome="{cohort}"]')
-        check_combined_coverage(manifest["summary"]["review_details"]["groups"][cohort])
-        for field in ("complete", "only_sequence", "multiple"):
-            selector = f'#statsReviewFigure [data-field-group="{cohort}"][data-field-slice="{field}"]'
-            if not driver.find_elements(By.CSS_SELECTOR, selector):
-                row = driver.find_element(By.CSS_SELECTOR, f'.stats-combination-legend [data-stat-key="{field}"]')
-                assert row.get_attribute("data-count") == "0", "Only zero-count categories may omit an arc"
-                continue
-            arc = click_arc(selector)
-            row = driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected")
-            assert row.get_attribute("data-stat-key") == field
-            assert row.get_attribute("data-count") == arc.get_attribute("data-count")
-            assert driver.find_element(By.ID, "statsChartAnnouncement").get_attribute("textContent") == arc.get_attribute("aria-label")
-            assert driver.find_element(By.ID, "statsRingCount").text == f"{int(arc.get_attribute('data-count')):,}"
-            if field == "multiple":
-                assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-details").get_attribute("open") is not None
-    capture("stats-chart-selection")
-    keyboard_arc = driver.find_element(By.CSS_SELECTOR, '#statsReviewFigure [data-field-group="unverified"][data-field-slice="only_sequence"]')
-    driver.execute_script("arguments[0].focus({preventScroll: true})", keyboard_arc)
-    assert keyboard_arc == driver.switch_to.active_element
-    before_scroll = driver.execute_script("return document.querySelector('#statsView').scrollTop")
-    ActionChains(driver).send_keys(Keys.SPACE).perform()
-    assert keyboard_arc.get_attribute("aria-pressed") == "true"
-    assert driver.execute_script("return getComputedStyle(arguments[0]).stroke", keyboard_arc) == "rgb(23, 44, 58)", "Keyboard focus must have a visible segment indicator"
-    assert driver.execute_script("return document.querySelector('#statsView').scrollTop") == before_scroll
-    assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
-    driver.find_element(By.CSS_SELECTOR, '.stats-review-legend [data-stats-cohort="manual_review_required"]').click()
-    selected = driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"]:checked')
-    selected.send_keys(Keys.ARROW_RIGHT)
-    assert driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="unverified"]').is_selected()
-    driver.find_element(By.CSS_SELECTOR, 'input[name="statsCohort"][value="manual_review_required"]').find_element(By.XPATH, "..").click()
     driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
         parent = element.find_element(By.XPATH, "..")
         was_open = parent.get_attribute("open") is not None
         element.click()
@@ -559,6 +533,16 @@ def check(driver, browser, url):
         with urllib.request.urlopen(urllib.request.Request(link.get_attribute("href"), method="HEAD"), timeout=30) as response:
             assert response.status == 200 and int(response.headers["Content-Length"]) > 1_000_000
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
+
+    # A Stats link opens Browse; Back returns to Stats.
+    pending_link = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"] a.stats-link')
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", pending_link)
+    pending_link.click()
+    wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
+    assert urlsplit(driver.current_url).path == urlsplit(url).path
+    driver.back()
+    wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
+               and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
 
     driver.find_element(By.ID, "browseButton").click()
     wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records")
@@ -605,52 +589,44 @@ def check(driver, browser, url):
     driver.execute_script("window.scrollTo(0, 0)")
     driver.set_window_size(1080, 900)
     capture("stats-compact")
-    for width in (1080, 884, 760):
+    for width in (1700, 1280, 884, 760):
         driver.set_window_size(width, 1000)
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         assert driver.execute_script("""
-            const chart = document.querySelector('.stats-nested-ring').getBoundingClientRect();
-            const fields = document.querySelector('.stats-combination-legend').getBoundingClientRect();
-            const first = document.querySelector('.stats-combination-legend li').getBoundingClientRect();
-            return fields.left >= chart.right && first.top < chart.bottom && fields.bottom > chart.top;
-        """), "Field counts must stay beside the chart at laptop and in-app browser widths"
-        assert driver.execute_script("""
-            const group = document.querySelector('.stats-followup-coverage').dataset.cohort;
-            return [...document.querySelectorAll('.stats-combination-legend li')].every(row => {
-                const arc = document.querySelector(`[data-field-group="${group}"][data-field-slice="${row.dataset.statKey}"]`);
-                return !arc || getComputedStyle(arc).stroke === getComputedStyle(row.querySelector('i')).backgroundColor;
+            return [...document.querySelectorAll('.stats-bars li')].filter(row => row.getBoundingClientRect().width).every(row => {
+                const label = row.querySelector('.stats-bar-label').getBoundingClientRect();
+                const track = row.querySelector('.stats-bar-track').getBoundingClientRect();
+                const count = row.querySelector('.stats-bar-count').getBoundingClientRect();
+                return label.right <= track.left + 1 && track.right <= count.left + 1;
             });
-        """), "Field colors must match between chart and count list"
-        capture(f"stats-adjacent-{width}")
+        """), "Each bar sits between its name and its count"
+        capture(f"stats-{width}")
     if browser == "chrome":
-        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True})
-        assert driver.execute_script("return innerWidth") == 390
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})
+        assert driver.execute_script("return innerWidth") == 375
         assert driver.execute_script("return matchMedia('(max-width: 520px)').matches")
-        driver.execute_cdp_cmd("Emulation.setTouchEmulationEnabled", {"enabled": True})
-        click_arc('#statsReviewFigure [data-field-group="manual_review_required"][data-field-slice="only_sequence"]', touch=True)
-        assert driver.find_element(By.CSS_SELECTOR, ".stats-combination-legend li.is-selected").get_attribute("data-stat-key") == "only_sequence"
-        capture("stats-mobile-chart-selection")
+        driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         capture("stats-mobile")
-        driver.execute_script("document.querySelector('.stats-followup-section').scrollIntoView()")
-        capture("stats-mobile-followup")
-        for cohort in ("unverified", "mathematically_inferred"):
-            driver.find_element(By.CSS_SELECTOR, f'input[name="statsCohort"][value="{cohort}"]').find_element(By.XPATH, "..").click()
-            driver.execute_script("document.querySelector('#statsReviewDetails').scrollIntoView()")
-            capture("stats-mobile-" + cohort)
-            for element in driver.find_elements(By.CSS_SELECTOR, "#statsReviewDetails details > summary"):
-                element.click()
-                check_panel_width()
-                element.click()
         assert driver.execute_script("""
-            const chart = document.querySelector('.stats-nested-figure').getBoundingClientRect();
-            const legend = document.querySelector('.stats-review-legend').getBoundingClientRect();
-            return legend.top >= chart.bottom;
-        """)
-        capture("stats-mobile-source-material")
+            return [...document.querySelectorAll('.stats-bars li:not([data-group])')].filter(row => row.getBoundingClientRect().width).every(row => {
+                const label = row.querySelector('.stats-bar-label').getBoundingClientRect();
+                const track = row.querySelector('.stats-bar-track').getBoundingClientRect();
+                return label.bottom <= track.top + 1;
+            });
+        """), "On phones each name sits above its bar"
+        for selector, label in ((".stats-ranges", "stats-mobile-ranges"), ("[aria-labelledby='statsSourcesTitle']", "stats-mobile-sources")):
+            if driver.find_elements(By.CSS_SELECTOR, selector):
+                driver.execute_script("document.querySelector(arguments[0]).scrollIntoView()", selector)
+                capture(label)
+        for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
+            element.click()
+            check_panel_width()
+            element.click()
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     # A clean Stats address must also survive a fresh page load, not just history navigation.
     driver.refresh()
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-combination-legend li")) == 6)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
     assert driver.find_element(By.ID, "statsView").is_displayed()
     assert not driver.find_element(By.ID, "catalogView").is_displayed()
     assert urlsplit(driver.current_url).path == stats_path and not urlsplit(driver.current_url).fragment
