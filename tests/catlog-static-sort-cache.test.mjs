@@ -1936,7 +1936,7 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title.
   const badge = api.statusBadge(row({ verification_status: "corrected" }));
   assert.match(badge, /aria-label="Accepted, BRENDA, corrected"/);
-  assert.match(badge, /title="Accepted after a correction in the earlier automated review; the value before the correction was not kept\."/);
+  assert.match(badge, /title="Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them\."/);
   assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, BRENDA"/);
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
