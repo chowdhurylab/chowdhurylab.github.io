@@ -556,8 +556,9 @@ body.detail-open .detail-panel { display:block }
 .kv-line { display:grid; grid-template-columns:112px minmax(0,1fr); column-gap:12px; align-items:baseline }
 .kv-line > dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .kv-line > dd { min-width:0; margin:0; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14); overflow-wrap:break-word }
-.reference-list { display:grid; gap:2px }
-.reference-link { text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
+.reference-list { display:grid; grid-template-columns:minmax(0,1fr); justify-items:start; gap:2px }
+/* A long DOI breaks inside the panel instead of widening it. */
+.reference-link { max-width:100%; overflow-wrap:anywhere; text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
 .reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }
 .identity-how { color:var(--text-2) }
 .method-link { white-space:nowrap }
