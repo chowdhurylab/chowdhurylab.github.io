@@ -1716,6 +1716,9 @@ function row(overrides = {}) {
   assert.match(totalsHtml, /from 1 papers/);
   assert.deepEqual(headings(), ["Review result", "Records by main source", "Checks on the values", "Enzyme classes", "Value ranges",
     "Most common organisms", "Most common EC numbers", "What the records contain", "Wild type and variants", "Cautions"]);
+  // Wild type and variants and Cautions have their data line under the caption, like every other figure and table.
+  assert.match(chart, /Records by enzyme form, as the table's tag says it\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
+  assert.match(chart, /a record can carry more than one\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value">3 <span class="stats-muted">0\.0%<\/span>/);
   assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper by CatLog<\/a>/);

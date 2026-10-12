@@ -4296,11 +4296,11 @@
     const cautionsOk = cautions.every((item) => item.count !== null);
     if (formOk) {
       tables.push({ id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table", stack: cautionsOk,
-        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table's tag says it.", data: "" });
+        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table's tag says it.", data: statsDataLine("Shares of all records.") });
     }
     if (cautionsOk) {
       tables.push({ id: "statsCautionsTitle", key: "cautions", title: "Cautions", kind: "Table", stacked: formOk,
-        body: statsTable(cautions, total, { head: "Caution" }), caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: "" });
+        body: statsTable(cautions, total, { head: "Caution" }), caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") });
     }
 
     // Number in reading order, Figures and Tables apart; place the half-width ones two to a row.
