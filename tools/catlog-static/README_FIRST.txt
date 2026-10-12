@@ -33,11 +33,15 @@ Main fields
   (no paper linked: no PMID or DOI, so the value cannot be checked against a paper).
 - CatLog v2 rows (verification_method starts with catlog_v2_read_and_independent_verify): read from the paper by an
   AI model (Claude, Anthropic) and checked against the paper by a second, separate AI run; code converted the units.
-  proof_lines gives each value as printed (raw_value, raw_unit, table_label).
+  proof_lines gives each value as printed (raw_value, raw_unit, table_label; printed joins the two), the printed
+  line it was read from (printed_line, given once per line), what the second run found (check: confirmed, or
+  corrected and what) and how code converted it (conversion; empty when the number is stored as printed). Their
+  kcat_over_km_quotient_mismatch flag means the printed kcat/Km differs from kcat / Km by more than CatLog allows
+  (1.5x, widened by printed uncertainties) and more than the printed figures explain; all three stay as printed.
 - Other rows come mostly from the enzyme databases listed below, checked by an earlier automated pipeline (AI
   models and code checks).
 - human-checked (on the page; data/human-review-marks.json, keyed by record_key): a human reviewer approved every
-  value the record shows in CatLog's 2026 review; on CatLog v2 rows, the same values of the earlier catalog.
+  value the record shows (on CatLog v2 rows, the same values in the earlier catalog).
 - condition_flags: checks to make before using a value (unit_not_recorded_kcat, unit_not_recorded_km,
   kcat_over_km_quotient_mismatch, kcat_over_km_unit_mismatch, km_magnitude_needs_check, kcat_magnitude_needs_check,
   efficiency_above_diffusion_limit, temperature_*_needs_check); empty when none applies.
@@ -50,42 +54,45 @@ Main fields
 License
 - CatLog's own compilation, the rows CatLog v2 read from the papers (source_db primary_paper_direct with a
   verification_method that starts with catlog_v2_read_and_independent_verify), is released under CC BY 4.0: cite the
-  CatLog paper and the snapshot below. Their source_license field reads "as published (see paper)": CC BY 4.0 covers
+  snapshot and the CatRange paper below. Their source_license field reads "as published (see paper)": CC BY 4.0 covers
   CatLog's compilation, and text quoted from a paper (the excerpts in proof_lines) remains the publisher's.
 - Rows from other databases keep their own license (source_license; "Data sources, licenses and attribution" below).
   A source_license that includes CC BY-NC-ND 4.0 (SKiD) allows non-commercial use only, without derivatives.
 
 Cite
-- CatLog snapshot 2026-10-11 (data ID f450cca254), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html
+- CatLog snapshot 2026-10-12 (data ID 94c19d6af4), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html
 - Sajeevan, K. A., et al. (2026). CatRange enables robust prediction of enzyme variant kinetic regimes.
   PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309 (https://doi.org/10.1093/pnasnexus/pgag309)
+  The CatRange paper describes CatLog-27k (27,176 kinetic records curated from BRENDA and SABIO-RK), the set its models
+  were trained on; CatLog is the growing catalog that followed. The current method (CatLog v2) is described under
+  Main fields.
 
 Snapshot details
-- Rows: 168611
-- Generated (UTC): 2026-10-11T21:37:39+00:00
+- Rows: 168401
+- Generated (UTC): 2026-10-12T03:43:35+00:00
 - Exporter commit: cc5d91d7be13c4e268ac2c1b783afc90386ed985
 - Source: verified_catlog.jsonl
-- Source SHA-256: 5eb7498bee2ccb699581a8b3590e3cae8f77813ea409717130b266995d8cbcbb
-- Public content SHA-256 (decompressed all-public-data JSONL): f450cca2549c5a001559c2aad32f72658b1a5a041c4e9e03325338bc103f46cc
+- Source SHA-256: cbe73863e0090a6879de48b620849ad6b0b8cc0ffefdcb1d1d4e7713b07272ed
+- Public content SHA-256 (decompressed all-public-data JSONL): 94c19d6af4037deafe16b6200d2d416bef2181defb0808c3c32e285929bad0ba
 - Package: compact_public
 - Contents: Full row coverage with compact public-facing fields. Raw source snapshots and private review payloads are not bundled.
 - All public data: downloads all rows with available protein sequences, SMILES, references, and source details
 - Analysis aliases: enzyme, substrate, uniprot, status, and source
 - Table index: downloads a smaller all-row index without protein or substrate structure strings
 - Download page: exports the displayed rows with public molecular identity, references, and source details
-- All public data file: data/catlog-enriched.a9fe6ec30eac.jsonl.gz
-- Rows with sequence: 86472
-- Rows with wild-type sequence: 82158
-- Rows with variant sequence: 25342
-- Rows with SMILES: 105208
+- All public data file: data/catlog-enriched.9827cfd0a6db.jsonl.gz
+- Rows with sequence: 86099
+- Rows with wild-type sequence: 81780
+- Rows with variant sequence: 25302
+- Rows with SMILES: 105219
 
 Data sources, licenses and attribution
-- BRENDA (brenda): 84605 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
-- Primary literature (direct extraction) (primary_paper_direct): 30568 rows; license as published (see paper)
-- Open Enzyme Database (OED) (oed): 21801 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
-- UniProt (uniprot): 14966 rows; license CC BY 4.0; https://www.uniprot.org/
-- SABIO-RK (sabio_rk): 12378 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
-- SKiD (Structure-Oriented Kinetics Database) (skid): 4225 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
+- BRENDA (brenda): 84178 rows; license CC BY 4.0; https://www.brenda-enzymes.org/
+- Primary literature (direct extraction) (primary_paper_direct): 31817 rows; license as published (see paper)
+- Open Enzyme Database (OED) (oed): 20955 rows; license CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
+- UniProt (uniprot): 14880 rows; license CC BY 4.0; https://www.uniprot.org/
+- SABIO-RK (sabio_rk): 12279 rows; license SABIO-RK terms (free for academic use; see sabiork.h-its.org); https://sabiork.h-its.org/
+- SKiD (Structure-Oriented Kinetics Database) (skid): 4224 rows; license CC BY-NC-ND 4.0; https://zenodo.org/records/15355031
 - STRENDA DB (strenda): 3 rows; license see source; https://www.beilstein-strenda-db.org/
 - Every row carries source_license, derived from the database(s) it was merged from.
 - SKiD-derived rows carry a NonCommercial-NoDerivatives license (CC BY-NC-ND 4.0); reuse them only under those terms.
