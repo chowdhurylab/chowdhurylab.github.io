@@ -3026,7 +3026,7 @@
       .filter(([, count]) => statsCount(count, total) !== null);
     if (contents.length) {
       const notes = [
-        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
+        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table, as is an older kcat/Km of unstated origin that equals kcat ÷ Km).` : "",
         both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
       ].filter(Boolean).join(" ");
       sections.push(statsSection("statsContentsTitle", "What the records contain", `${statsBarRows(contents, total)}
@@ -3859,7 +3859,7 @@
     if (controls.q) add("q", `Search: ${controls.q}`, () => clearInputs("globalSearchInput"));
     if (controls.states.length !== recordStates.length) {
       const names = controls.states.map((value) => stateConfig(value).label);
-      add("status", `Status: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
+      add("status", `Review result: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
     }
     if (controls.sourceMode !== "all" && !controls.sources.length) {
       add(`source:${controls.sourceMode}`, `Source: ${controls.sourceMode === "paper" ? "read from the paper by CatLog" : "from enzyme databases"}`,
