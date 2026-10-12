@@ -368,12 +368,15 @@
             <h2 id="guide-record-title">Read a record</h2>
             <p>Click a record in the table, or press Enter on it, to open it.</p>
             <dl class="guide-term-list">
-              <div><dt>Header</dt><dd>The enzyme name; EC number, organism and variant; the substrate; and the status line, the review result and its tags, for example <em>Accepted &middot; from paper &middot; human-checked</em>.</dd></div>
-              <div><dt>Measurement</dt><dd>The values in catalog units with any cautions. A record read by CatLog then lists each value as printed in the paper and in catalog units.</dd></div>
-              <div><dt>Assay conditions</dt><dd>Cosubstrate, temperature, pH and the other assay conditions.</dd></div>
-              <div><dt>Paper and review</dt><dd>PubMed and DOI links and how the values were read and checked. <strong>Human review</strong> says what a human reviewer approved.</dd></div>
-              <div><dt>Protein and structure</dt><dd>Wild type or variant, UniProt accession, protein sequence and substrate SMILES, where CatLog has them.</dd></div>
-              <div><dt>Source details</dt><dd>Where the enzyme name comes from, the source, the license and the CatLog record ID.</dd></div>
+              <div><dt>Header</dt><dd>The enzyme name; EC number, organism and form (wild type or the variant); the substrate; the status line, the review result and its tags, for example <em>Accepted &middot; from paper &middot; human-checked</em>; and the record ID with <em>Copy link</em>.</dd></div>
+              <div><dt>Values</dt><dd>Each value in catalog units with its unit and any caution. A record read by CatLog also gives each number as printed in the paper and where it is printed.</dd></div>
+              <div><dt>Source</dt><dd>Where the values come from, how they were read and checked, the license and the snapshot&rsquo;s data ID.</dd></div>
+              <div><dt>Conditions</dt><dd>Temperature, pH, the other assay conditions, cosubstrate and preparation.</dd></div>
+              <div><dt>Protein and substrate</dt><dd>Wild type or variant, UniProt accession, protein sequence, substrate and SMILES, where CatLog has them.</dd></div>
+              <div><dt>Paper</dt><dd>The title, PubMed and DOI links, and where in the paper the values are printed.</dd></div>
+              <div><dt>Against the databases</dt><dd>Where the snapshot has it: how the values compare with the numbers the enzyme databases list for the same paper, or what an earlier review changed. A database record not yet checked against its paper says so.</dd></div>
+              <div><dt>Review and audit</dt><dd>The review result in one sentence, any AI audit and what a human reviewer approved; then <em>Download record</em> and <em>Report a problem</em>.</dd></div>
+              <div><dt>Source details</dt><dd>Where the enzyme name comes from and which databases a merged record combines.</dd></div>
             </dl>
 
             <figure class="guide-record-example">
@@ -403,12 +406,14 @@
                 <section class="guide-example-level research">
                   <header>
                     <span>In the open record</span>
-                    <h3>As printed in the paper (Table 1)</h3>
+                    <h3>Values</h3>
                   </header>
-                  <table class="stats-detail-table values-table">
-                    <thead><tr><th>Value</th><th>As printed</th><th>In catalog units</th></tr></thead>
-                    <tbody><tr><th scope="row"><i>K</i><sub>m</sub></th><td>0.82 (0.1) &micro;M</td><td><span class="scientific-number" aria-label="8.2 times 10 to the power of -4"><span aria-hidden="true">8.2 &times; 10<sup>-4</sup></span></span> mM <small>converted by code</small></td></tr></tbody>
+                  <table class="values-table guide-values-table">
+                    <caption>Printed in Table 1</caption>
+                    <thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th><th scope="col">Unit</th><th scope="col">As printed</th></tr></thead>
+                    <tbody><tr><th scope="row"><i>K</i><sub>m</sub></th><td class="vt-value"><span class="vt-number"><span class="scientific-number" aria-label="8.2 times 10 to the power of -4"><span aria-hidden="true">8.2 &times; 10<sup>-4</sup></span></span></span></td><td class="vt-unit">mM</td><td class="vt-printed">0.82 (0.1) &micro;M</td></tr></tbody>
                   </table>
+                  <ul class="value-notes"><li>Km: converted by code from the printed unit.</li></ul>
                   <p class="evidence-note-plain">Table 1 row, as extracted from the paper&rsquo;s text: &ldquo;4-Aminoacetophenone<sup>b</sup> 0.82 (0.1) 12.7 (0.7) 15,000&rdquo;</p>
                 </section>
               </div>

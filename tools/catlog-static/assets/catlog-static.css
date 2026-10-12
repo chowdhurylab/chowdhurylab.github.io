@@ -1107,6 +1107,9 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }
 /* Guide example (R2 content): the open record's values table at the record panel's size, its printed line below it. */
 .guide-view .guide-example-level .evidence-note-plain { margin:12px 0 0; font-size:var(--fs-stats-meta) }
+/* The example's Values table and note, as the open record draws them. */
+.guide-view .guide-example-level .value-notes { margin:12px 0 0; padding:0 }
+.guide-view .guide-example-level .value-notes li { margin:0; font-size:var(--fs-13); line-height:var(--lh-13) }
 
 @media (max-width: 640px) {
   .guide-view .guide-shell { padding:24px 16px 40px }

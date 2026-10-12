@@ -5888,7 +5888,7 @@
       .map((flag) => ({ flag, field: valueIntegrityFlags[flag]?.field || "" }))
       .sort((a, b) => (a.field ? order.indexOf(a.field) : 9) - (b.field ? order.indexOf(b.field) : 9))
       .forEach(({ flag, field }) => {
-        // A temperature or pH flag is said on its own row, under Assay conditions.
+        // A temperature or pH flag is said on its own row, under Conditions.
         if (/^(?:temperature|ph)_/.test(flag)) return;
         const unitField = (String(flag).match(/^unit_not_recorded_(\w+)$/) || [])[1];
         if (unitField && metricUnitMissing(summary, unitField, flags)) return;
@@ -6397,9 +6397,7 @@
     return actions.length ? `${head} The AI check also ${sentenceList(actions)}.` : head;
   }
 
-  // ---- Record panel: measurement and assay conditions ----
-  // Two sections: Measurement (the values, each caution once, then, for a record read from the paper, the values as
-  // printed) and Assay conditions (cosubstrate, temperature, pH, the other conditions and the preparation).
+  // ---- Record panel: conditions ----
   // The Temperature and pH rows: the value, or why there is none, said on the row itself. A record read from the paper
   // says "Not stated in the paper", a database record "Not recorded"; a value a flag holds back says why, with what the
   // source's note gives ("Not shown, the source's temperature unit is unclear (source note: 30 °C)").
