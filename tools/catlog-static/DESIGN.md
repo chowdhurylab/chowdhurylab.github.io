@@ -61,11 +61,12 @@ then [filter sidebar | table | open record]. Rules are 1px --line between region
 and --line-soft inside them; there are no gradients, and shadows only on the phone
 sheet, dialogs and menus.
 
-The header is one line from 1181px: brand ("CatLog", enzyme kinetics catalog),
-the catalog's tabs Browse · Stats · Guide · Team, the links out set apart by a
-thin rule, the search box (at most 560px) and Download. From 1181 to 1259px the
-brand shows "CatLog" alone, so the search box's placeholder fits. Tabs are
-14px/500, the current one 600 with a 2px accent rule under it.
+The header is one 56px line from 1024px: brand ("CatLog", enzyme kinetics
+catalog), the catalog's tabs Browse · Stats · Guide · Team, the links out set
+apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
+1279px the brand drops its tagline and the links out read "Paper ↗" and "Lab ↗",
+so the search box keeps room for its placeholder. Tabs are 14px/500, the current
+one 600 with a 2px accent rule under it.
 
 Keep Records, Accepted, Read from the paper, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
@@ -73,8 +74,8 @@ kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
 Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
 From 1181 to 1439px "With" is read out but not shown; a window still too narrow
 (or "Matching records") moves the date under the counts, inside the same 64px.
-From 641 to 1180px, where the header is in rows, the band always takes the same
-two lines (Records, Accepted, Read from the paper, Human-checked; then the With
+From 641 to 1180px, too narrow for the counts on one line, the band always takes
+the same two lines (Records, Accepted, Read from the paper, Human-checked; then the With
 counts and the date, with no divider at the start of a line); below about 740px
 Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px;
 a filtered "Matching records" count too wide for one line puts Accepted under it),
@@ -206,7 +207,7 @@ filters that are on and offers to remove the one set last that brings records
 back (with how many) or to clear everything. The header's tabs are the
 catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
 behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
-them, set apart by a thin rule. From 641 to 1180px the header is one grid on
+them, set apart by a thin rule. From 641 to 1023px the header is one grid on
 every view: brand and Download, the tabs with the links out at the line's end,
 then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
 and Download share the first line, the four tabs share the second across the

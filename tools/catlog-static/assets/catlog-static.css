@@ -121,13 +121,16 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
 .global-search { display:grid; grid-template-columns:minmax(0,1fr) auto; justify-self:end; width:min(560px,100%); align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-3) }
 .global-search:focus-within { border-color:var(--accent); outline:2px solid var(--accent); outline-offset:2px }
 /* Laptops: closer header areas leave the search box room for its placeholder. */
-@media (min-width: 1181px) and (max-width: 1439px) {
+@media (min-width: 1024px) and (max-width: 1439px) {
   .app-header { column-gap:var(--sp-4) }
   .external-nav { gap:var(--sp-3); padding-left:var(--sp-4) }
 }
-/* Below 1260px the brand shows "CatLog" alone (the tagline is still read out), so the placeholder is never cut. */
-@media (min-width: 1181px) and (max-width: 1259px) {
-  .brand-lockup span:not(.visually-hidden) { display:none }
+/* 1024-1279px: still one 56px line, the brand without its tagline and the short links out ("Paper ↗ Lab ↗"), so the
+   search box keeps room for its placeholder. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .app-header { grid-template-columns:max-content max-content max-content minmax(160px,1fr) max-content }
+  .brand-lockup span:not(.visually-hidden), .nav-external-long { display:none }
+  .nav-external-short { display:inline }
 }
 .global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-14) }
 .global-search input::placeholder { color:var(--muted) }
@@ -984,16 +987,19 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
 }
 
-/* Laptops and tablets: the header in rows (brand and Download; tabs and the links out; search). */
 @media (max-width: 1180px) {
+  .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
+  .guide-citation-links { grid-column:1 / -1 }
+}
+
+/* Tablets: the header in rows (brand and Download; tabs and the links out; search). */
+@media (max-width: 1023px) {
   .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" "search search"; column-gap:var(--sp-3); row-gap:6px; padding:var(--sp-2) var(--sp-4) 10px }
   body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" }
   .top-nav { justify-self:stretch; flex-wrap:nowrap; gap:var(--sp-1); min-width:0; overflow-x:auto; scrollbar-width:none }
   .top-nav::-webkit-scrollbar { display:none }
   .nav-tab { flex:0 0 auto; min-width:0; min-height:40px; padding:2px 10px 0 }
   .global-search { justify-self:stretch; width:100% }
-  .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
-  .guide-citation-links { grid-column:1 / -1 }
 }
 
 /* A table with little room (beside the sidebar or a record, or on a tablet): tighter cells; a table still too wide
@@ -1028,9 +1034,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .col-open { width:20px }
 }
 
-/* Tablets and laptops up to 1180px (the header in rows): the counts band always takes two lines, Records, Accepted, Read
-   from the paper and Human-checked, then the rows with values and the snapshot date, so the second line never starts
-   with a divider and the band keeps one height. */
+/* Tablets and laptops up to 1180px (too narrow for the counts on one line): the counts band always takes two lines,
+   Records, Accepted, Read from the paper and Human-checked, then the rows with values and the snapshot date, so the
+   second line never starts with a divider and the band keeps one height. */
 @media (min-width: 641px) and (max-width: 1180px) {
   .snapshot-overview { row-gap:0 }
   .snapshot-overview::before { content:""; order:1; flex-basis:100%; height:0 }

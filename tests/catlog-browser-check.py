@@ -1103,8 +1103,8 @@ def check_layout(driver, browser, url, route_label):
             assert heights["tagged"] and heights["noted"] and heights["heights"] == [44], (
                 f"At {width}px rows with a variant tag or a condition note stay 44px: {heights}")
         results["row-height"] = True
-        # The one-line header (from 1181px) never cuts the search box's placeholder.
-        for width in (1181, 1259, 1260, 1280, 1440):
+        # The one-line header (from 1024px) never cuts the search box's placeholder.
+        for width in (1024, 1180, 1181, 1259, 1260, 1279, 1280, 1440):
             set_browse_viewport(driver, browser, width, 900)
             fit = driver.execute_script("""
                 const input = document.getElementById('globalSearchInput');
@@ -1192,6 +1192,15 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open())
         driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
         results["record-1024"] = True
+        # 1024: the header is still one 56px line (the short links out, no tagline), on Browse and on Team.
+        set_browse_viewport(driver, browser, 1024, 768)
+        open_page()
+        assert box(".app-header")["height"] == 56, f"At 1024px the header is one line: {box('.app-header')}"
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+        driver.execute_script("location.hash = '#team'")
+        wait.until(lambda d: d.execute_script("return document.body.classList.contains('team-open')"))
+        assert box(".app-header")["height"] == 56, f"At 1024px the Team header is one line: {box('.app-header')}"
+        results["header-1024"] = True
         # 1700: sidebar, table and record side by side (Safari only where the screen is that wide).
         if browser == "chrome" or driver.execute_script("return screen.availWidth") >= 1720:
             set_browse_viewport(driver, browser, 1700, 1000)
