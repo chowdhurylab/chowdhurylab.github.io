@@ -471,9 +471,10 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 ## Stats
 
-One page from the snapshot manifest (never the record index): two headline
-lines (32px and 20px), then the agreement with human reviewers as the lead (the
-success measure), then numbered figures and tables, two to a row from 1024px:
+One page from the snapshot manifest (never the record index): the agreement
+with human reviewers first, as the lead (the success measure), then two
+headline lines (32px and 20px), then numbered figures and tables, two to a row
+from 1024px:
 the review-result donut and its legend table, records by main source stacked
 by review result, the database comparison, earlier corrections and replaced
 records when the snapshot has their counts, the checks table, enzyme classes,

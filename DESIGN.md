@@ -16,26 +16,33 @@ before filtering. Show exact counts; a nonzero share below 0.1% prints <0.1%.
 An older manifest without an overview shows what it has: never an empty
 heading, a headline without its number, or a count above the record total.
 
-Order: the title (24px) with the snapshot line, two headline lines (32px:
-Records, Accepted with its share, Read from the paper by CatLog with its
-papers, Human-checked; 20px: Papers, Enzymes, EC numbers, Organisms,
-Substrates; 24/18px on phones), then the lead and numbered figures and tables
-on a 12-column grid (max 1200px, gap 24px), two to a row from 1024px (an odd
-one out spans the row), one below:
+Order: the title (24px) with the snapshot line, then the lead (the agreement
+with human reviewers, first on the page: the user's headline success measure),
+then two headline lines (32px: Records, Accepted with its share, Read from the
+paper by CatLog with its papers, Human-checked; 20px: Papers, Enzymes, EC
+numbers, Organisms, Substrates; 24/18px on phones), then numbered figures and
+tables on a 12-column grid (max 1200px, gap 24px), two to a row from 1024px (an
+odd one out spans the row; a bar chart that spans it keeps its labels within
+240px of the bars), one below:
 
-- Lead, full width: Agreement with human reviewers, the success measure (the
-  user, 2026-10-12), from `overview.quality.agreement` (catlog-v2
+- Lead (`#statsLead`, above the headline counts, full width): Agreement with
+  human reviewers, the success measure (the user, 2026-10-12), from
+  `overview.quality.agreement` (catlog-v2
   human_review.AGREEMENT_DEFINITIONS; `build_overview` copies the fields listed
   in AGREEMENT_FIELDS). The headline is `first_agree_unexposed_pct` (the first
   comparison on papers CatLog read without database or earlier-catalog values
-  in view) when present, else agree of values_approved. Then one sentence, a
+  in view) when present, else agree of values_approved; under the number, what
+  it counts ("of the values human reviewers approved are the same in CatLog",
+  or the same value at the first comparison on papers read without database
+  values in view). Then one sentence, a
   100% bar of the approved values (the same value, then the differences as
   CatLog's own check against the paper split them: CatLog right, the same
   printed value under another name or rounded, left out by its reading rules,
   CatLog wrong, not checked yet) with its legend, the facts (values approved,
   first comparison and now after fixes when present, fixes, wrong number or
   unit in CatLog, missing values reviewers named), the values reviewers called
-  wrong and the direct review of CatLog's records when their counts add up, a
+  wrong and the direct review of CatLog's records when their counts add up
+  (objections that dispute no value shown are said apart, never as failures), a
   data line with the definitions, and links to the Guide's method and to Team.
   No agreement counts, no lead.
 - Figure 1, Review result: a donut (outer r 88, inner r 56, 12 o'clock,
@@ -156,8 +163,8 @@ Human check, Rules updated and back to Papers (clockwise, small arrows), with
 Website and The paper branching off CatLog. AI agents stand above their
 stations (Download agent at Papers, Reading agents at AI reading, Checking
 agents at AI check, Audit agents at CatLog; navy rectangles), people below
-(Supantha at Rules updated, Aarna and Erin at Human check, Mohammad at The
-paper; brown pills). First names only: no titles, ranks, model or vendor
+(Supantha at Rules updated, also lighting Papers, CatLog and Website; Aarna and
+Erin at Human check; Mohammad at The paper; brown pills). First names only: no titles, ranks, model or vendor
 names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
 values re-checked by AI audits at CatLog, human-checked records and the
