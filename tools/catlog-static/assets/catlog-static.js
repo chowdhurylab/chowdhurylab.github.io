@@ -40,6 +40,9 @@
     suggestionInputId: "",
     statsCohort: "manual_review_required",
     statsField: "",
+    // The record a #record= address names, until the index has loaded far enough to open it.
+    pendingRecordKey: "",
+    missingRecordKey: "",
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -388,6 +391,52 @@
       if (view === "stats") url.hash = "";
     }
     return url;
+  }
+
+  // A record's own address is #record=<record_key>, so an open record can be shared. Opening a record writes it into
+  // the address (replacing the entry, so Back still leaves the page) and closing the record removes it.
+  const RECORD_HASH = /^#record=([^&#]+)$/;
+
+  function recordKeyFromLocation() {
+    const match = window.location.hash.match(RECORD_HASH);
+    if (!match) return "";
+    try {
+      return decodeURIComponent(match[1]).trim();
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function syncRecordUrl(key) {
+    if (key === recordKeyFromLocation() || (!key && !RECORD_HASH.test(window.location.hash))) return;
+    const url = new URL(window.location.href);
+    url.hash = key ? `record=${encodeURIComponent(key)}` : "";
+    try {
+      window.history.replaceState(window.history.state, "", url);
+    } catch (_error) {
+      // A page opened from a file may not allow it; the record still opens.
+    }
+  }
+
+  // Opens the record a #record= address names once the loaded index holds it, on the table page that shows it. A key
+  // the snapshot does not have goes into the search box, so the table says that no record matches it.
+  function openRecordFromLocation() {
+    const key = state.pendingRecordKey;
+    if (!key || viewFromLocation() !== "browse") return;
+    const position = state.filtered.findIndex((row) => row.record_key === key);
+    if (position < 0 && !state.recordsReady) return;
+    state.pendingRecordKey = "";
+    if (position >= 0) {
+      state.page = Math.floor(position / state.pageSize) + 1;
+      selectRecord(key);
+    } else if (state.records.some((row) => row.record_key === key)) {
+      selectRecord(key);
+    } else {
+      syncRecordUrl("");
+      state.missingRecordKey = key;
+      $("globalSearchInput").value = key;
+      applyFiltersInBackground();
+    }
   }
 
   function navigateTo(view) {
@@ -2878,6 +2927,7 @@
     }
     renderSummary();
     renderRows();
+    openRecordFromLocation();
     return true;
   }
 
@@ -3171,13 +3221,20 @@
   // No record matches: say so in the table, with a way back to every record.
   function emptyResultsHtml() {
     const query = String($("globalSearchInput")?.value || "").trim();
-    const heading = query ? `No records match "${query}"` : "No records match these filters";
+    // A shared record link (#record=) whose record this snapshot does not have.
+    const missingRecord = Boolean(query) && query === state.missingRecordKey;
+    const heading = missingRecord
+      ? `Record ${query} is not in this snapshot`
+      : query ? `No records match "${query}"` : "No records match these filters";
+    const hint = missingRecord
+      ? "Records change between snapshots. Search for the enzyme, organism or substrate to find the current ones."
+      : "Check the spelling, or try an EC number (1.1.1.1) or a UniProt accession (P11509).";
     return `
       <tr class="empty-row">
         <td colspan="${tableColumnCount()}">
           <div class="load-notice empty-notice">
             <strong>${escapeHtml(heading)}</strong>
-            <span>Check the spelling, or try an EC number (1.1.1.1) or a UniProt accession (P11509).</span>
+            <span>${escapeHtml(hint)}</span>
             <button class="button secondary" type="button" data-action="clear-filters">Clear search and filters</button>
           </div>
         </td>
@@ -3304,6 +3361,7 @@
   }
 
   function resetDetail() {
+    if (state.selectedKey) syncRecordUrl("");
     state.selectedKey = "";
     state.selectedShard = "";
     state.selectedDetail = null;
@@ -3330,6 +3388,7 @@
       return;
     }
     state.selectedKey = key;
+    syncRecordUrl(key);
     state.selectedShard = row.detail_shard || "";
     state.activeRowKey = key;
     setFiltersOpen(false);
@@ -4495,6 +4554,11 @@
       const view = viewFromLocation();
       if (view === "browse") ensureRecordsLoaded();
       renderView(view);
+      const recordKey = recordKeyFromLocation();
+      if (recordKey && recordKey !== state.selectedKey) {
+        state.pendingRecordKey = recordKey;
+        openRecordFromLocation();
+      }
     };
     window.addEventListener("popstate", showLocationView);
     window.addEventListener("hashchange", showLocationView);
@@ -4625,6 +4689,7 @@
       if (!["#browse", "#guide", "#stats"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
       bindControls();
+      state.pendingRecordKey = recordKeyFromLocation();
       renderView(viewFromLocation());
       syncFilterPanel();
       syncDetailPanelAccessibility();

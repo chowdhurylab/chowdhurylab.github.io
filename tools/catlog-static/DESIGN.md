@@ -51,7 +51,11 @@ one grid on every view: brand and Download, the tabs on one line, then search
 (Browse only). A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details
 below the table or cover desktop measurement columns. Keep 25 rows per page,
-scrolling within the table, and the page controls reachable.
+scrolling within the table, and the page controls reachable. An open record's
+address ends in #record=<record key> (replaced, not added to history, and
+removed when the record closes), so it can be shared; opening such an address
+shows the record on its table page once the index has it, and a key the
+snapshot lacks is put in the search box with a note that it is not there.
 
 While records load, placeholder rows keep the table's shape and, until the first
 rows appear, the count beside Filters says how many have loaded. Page 1 appears
