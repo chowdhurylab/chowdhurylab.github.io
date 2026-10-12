@@ -54,6 +54,16 @@ snapshot has no such count. Counts follow the current filtered
 results; measurement coverage overlaps and must not form a stacked chart. The
 count beside Filters is shown only when it says more than the page range.
 
+Export results (a menu beside Sort, "Export" on phones, opening to the right)
+offers "All N matching records (CSV)", "This page (CSV)" and "This page (JSON)".
+The CSV is built in the page from the loaded index, a slice at a time: the
+table's columns with their units and stored digits, review result (the exact
+value), human-checked, source, PMIDs, DOIs, UniProt ID and record ID, one line
+per record (RFC 4180, UTF-8 with a byte-order mark; a cell a spreadsheet would
+read as a formula starts with an apostrophe). The JSON page export keeps every
+field from the records' detail files. Files are named catlog-<snapshot
+date>-results.csv, -page-N.csv and -page-N.json.
+
 Expanded counts separate review status from saved source material. Show the
 denominator, record count, and share in aligned tables. Each record belongs to
 one category per table; source categories follow the stored evidence precedence,

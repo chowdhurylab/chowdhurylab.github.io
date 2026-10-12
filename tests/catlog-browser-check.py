@@ -270,8 +270,32 @@ def check_browse(driver, browser, url, route_label):
         if width >= 1024:
             assert len(set(geometry["rowHeights"])) == 1, f"Table rows differ in height: {set(geometry['rowHeights'])}"
 
+    def open_menu_for(button_id):
+        # Export results is a menu: open it (a scripted click on its summary, which every driver supports).
+        driver.execute_script("""
+            const menu = document.getElementById(arguments[0]).closest('details');
+            if (menu && !menu.open) menu.querySelector('summary').click();
+        """, button_id)
+        wait.until(lambda d: d.find_element(By.ID, button_id).is_displayed())
+
+    def downloaded_csv(button_id):
+        index = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length")
+        open_menu_for(button_id)
+        driver.find_element(By.ID, button_id).click()
+        wait.until(lambda d: d.execute_script("""
+            const item = window.__catlogBrowserDownloadCapture.downloads[arguments[0]];
+            return Boolean(item && (typeof item.text === 'string' || item.error));
+        """, index))
+        download = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads[arguments[0]]", index)
+        assert not download.get("error")
+        assert download["type"].startswith("text/csv")
+        assert re.fullmatch(r"catlog-\d{4}-\d{2}-\d{2}-(results|page-\d+)\.csv", download.get("filename", "")), download.get("filename")
+        lines = [line for line in download["text"].lstrip("\ufeff").split("\r\n") if line]
+        return lines[0].split(","), lines[1:]
+
     def downloaded_payload(button_id):
         index = driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length")
+        open_menu_for(button_id)
         driver.find_element(By.ID, button_id).click()
         wait.until(lambda d: d.execute_script("""
             const item = window.__catlogBrowserDownloadCapture.downloads[arguments[0]];
@@ -318,6 +342,10 @@ def check_browse(driver, browser, url, route_label):
             assert page_payload["metadata"]["export_scope"] == "current_page_public_records"
             assert page_payload["metadata"]["source_sha256"] == manifest["source_sha256"]
             assert page_payload["metadata"]["snapshot_generated_at"] == manifest["generated_at"]
+            # Export results as CSV: this page, one line per record shown, in order.
+            header, csv_rows = downloaded_csv("exportPageCsvButton")
+            assert header[0] == "record_key" and {"kcat_unit", "review_result", "source", "pubmed_id", "doi"} <= set(header)
+            assert [line.split(",", 1)[0] for line in csv_rows] == page_keys
             driver.find_element(By.ID, "prevButton").click()
             wait.until(lambda _d: row_keys() == first_keys)
 
@@ -360,13 +388,18 @@ def check_browse(driver, browser, url, route_label):
             wait.until(lambda _d: selected_key in row_keys() and row_keys() != first_keys)
             assert search.get_attribute("value") == selected_pair[0]
             assert driver.find_element(By.ID, "activeSummary").text.endswith((" record", " records"))
+            # Export results as CSV: every matching record, as many lines as the count says.
+            matching = int(driver.find_element(By.ID, "activeSummary").text.split()[0].replace(",", ""))
+            assert driver.find_element(By.ID, "exportAllCsvLabel").get_attribute("textContent").startswith(f"All {matching:,} matching")
+            _header, csv_rows = downloaded_csv("exportAllCsvButton")
+            assert len(csv_rows) == matching and selected_key in {line.split(",", 1)[0] for line in csv_rows}
             screenshots.append(capture(viewport, "search"))
             search.clear()
             search.send_keys("zzzz-no-match-catlog-browser-check", Keys.TAB)
             wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records")
             assert row_keys() == []
             assert driver.find_element(By.ID, "pageLabel").text == "No records"
-            for identifier in ("downloadPageButton", "prevButton", "nextButton"):
+            for identifier in ("downloadPageButton", "exportPageCsvButton", "exportAllCsvButton", "prevButton", "nextButton"):
                 assert not driver.find_element(By.ID, identifier).is_enabled()
             screenshots.append(capture(viewport, "empty"))
             driver.find_element(By.ID, "clearResultsButton").click()
@@ -396,6 +429,7 @@ def check_browse(driver, browser, url, route_label):
     try:
         # The counts band: Read from the paper N opens those records (source=paper), N being their number; the snapshot
         # date's title is the Data ID.
+        set_browse_viewport(driver, browser, 1440, 1000)
         paper_link = driver.find_element(By.ID, "fromPaperLink")
         overview = stats_overview(manifest)
         if overview:

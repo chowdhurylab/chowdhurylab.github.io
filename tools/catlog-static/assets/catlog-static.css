@@ -128,6 +128,10 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 .download-options strong { font-size:var(--fs-table) }
 .download-options span { color:var(--text-3); font-size:var(--fs-meta); line-height:1.4 }
 .download-options .corpus-request-link { margin-top:4px; border-top:1px solid var(--line); border-radius:0 0 4px 4px; padding-top:12px }
+/* Export results: three choices under the button (opening to the right, so a phone keeps it on screen). */
+.export-menu .download-options { right:auto; left:0; width:min(320px,calc(100vw - 32px)) }
+.download-options button { display:grid; gap:2px; width:100%; border:0; border-radius:4px; background:transparent; color:var(--text); cursor:pointer; padding:8px 10px; text-align:left }
+.download-options button:hover:not(:disabled), .download-options button:focus-visible { background:var(--teal-soft); outline:0 }
 /* An empty search box offers one line of examples: "Try: hexokinase · 1.1.1.1 · ..." (it wraps in a narrow box). */
 .search-suggestions { position:fixed; z-index:85; display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; max-height:min(320px,calc(100vh - 80px)); overflow:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); padding:6px 8px }
 .suggestion-title { color:var(--text-3); padding:4px 4px 4px 2px; font-size:var(--fs-table) }
@@ -769,6 +773,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .records-tools label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
   .records-tools select { width:100% }
   .download-page-detail { display:none }
+  /* Export results opens across the toolbar, inside the page's gutters. */
+  .records-header { position:relative }
+  .export-menu { position:static }
+  .export-menu .download-options { top:calc(100% - 4px); left:16px; right:16px; width:auto }
   .table-scroll-controls { display:none }
   #recordTableWrap table, #recordTableWrap tbody { display:block; width:100%; min-width:0 !important }
   #recordTableWrap colgroup { display:none }

@@ -1915,6 +1915,8 @@
     $("prevButton").disabled = true;
     $("nextButton").disabled = true;
     $("downloadPageButton").disabled = true;
+    if ($("exportAllCsvButton")) $("exportAllCsvButton").disabled = true;
+    if ($("exportPageCsvButton")) $("exportPageCsvButton").disabled = true;
     const rail = $("catalogLoadProgress");
     if (rail) {
       rail.classList.add("stalled");
@@ -2318,8 +2320,8 @@
     updateTableScrollControls();
   }
 
-  function triggerBlobDownload(filename, payload) {
-    const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+  function triggerBlobDownload(filename, payload, type = "application/json;charset=utf-8") {
+    const blob = new Blob(Array.isArray(payload) ? payload : [payload], { type });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -2376,8 +2378,105 @@
     return detail;
   }
 
-  // The button's label; phones show "Download" (its accessible name stays "Download page").
-  const DOWNLOAD_PAGE_LABEL = '<span>Download<span class="download-page-detail"> page</span></span>';
+  // Export results: the filtered records as CSV (all of them, or this page) built here from the loaded index, or this
+  // page as JSON with every field (from the records' detail files). The CSV keeps the stored digits, the catalog units
+  // and the words the table shows.
+  const DOWNLOAD_PAGE_LABEL = "<strong>This page (JSON)</strong><span>Every field of the records on this page</span>";
+  const CSV_COLUMNS = [
+    ["record_key", (row) => row.record_key],
+    ["enzyme_display_name", (row) => row.enzyme_display_name],
+    ["ec_number", (row) => row.ec_number],
+    ["organism", (row) => row.organism],
+    ["substrate_name", (row) => row.substrate_name],
+    ["variant", (row) => enzymeFormText(row) || (rowVariantBits(row) === 1 ? "wild type" : "")],
+    ...["kcat", "km", "kcat_over_km"].flatMap((field) => [
+      [field, (row) => (metricHasValue(row, field) ? metricDisplay(row, field) : "")],
+      [`${field}_unit`, (row) => (metricHasValue(row, field) ? plainUnit(metricUnit(row, field)) : "")],
+    ]),
+    ["kcat_over_km_origin", (row) => (metricHasValue(row, "kcat_over_km") ? row.kcat_over_km_origin : "")],
+    ["temperature_c", (row) => csvCondition(formatTemperature(row))],
+    ["ph", (row) => csvCondition(formatPh(row))],
+    ["review_result", (row) => rowStatusLabel(row, { exact: true })],
+    ["human_checked", (row) => (state.humanMarksLoaded ? (isHumanChecked(row) ? "yes" : "no") : "")],
+    ["source", (row) => sourceTagText(row)],
+    ["source_db", (row) => row.source_db],
+    ["pubmed_id", (row) => paperIdsOf(row._pmids, (value) => String(value))],
+    ["doi", (row) => paperIdsOf(row._dois, (position) => paperDois[position] || "")],
+    ["primary_uniprot_id", (row) => row.primary_uniprot_id],
+  ];
+
+  function csvCondition(value) {
+    return value === EMPTY_VALUE ? "" : value;
+  }
+
+  function paperIdsOf(value, toText) {
+    if (value == null) return "";
+    return (Array.isArray(value) ? value : [value]).map(toText).filter(Boolean).join("; ");
+  }
+
+  // One CSV cell (RFC 4180); a cell a spreadsheet would read as a formula starts with an apostrophe.
+  function csvCell(value) {
+    let text = value == null ? "" : String(value);
+    if (/^[=@\t\r]/.test(text)) text = `'${text}`;
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function csvLine(row) {
+    return `${CSV_COLUMNS.map(([, value]) => csvCell(value(row))).join(",")}\r\n`;
+  }
+
+  function exportFileStem() {
+    const date = manifest.generated_at ? String(manifest.generated_at).slice(0, 10) : new Date().toISOString().slice(0, 10);
+    return `catlog-${date}`;
+  }
+
+  // The CSV of the given rows, in parts (a slice at a time, the page staying responsive for 169k records).
+  async function csvParts(rows) {
+    const parts = ["\ufeff", `${CSV_COLUMNS.map(([name]) => name).join(",")}\r\n`];
+    for (let start = 0; start < rows.length; start += 5000) {
+      let chunk = "";
+      for (const row of rows.slice(start, start + 5000)) chunk += csvLine(row);
+      parts.push(chunk);
+      if (start + 5000 < rows.length) await yieldToBrowser();
+    }
+    return parts;
+  }
+
+  async function handleCsvExport(scope) {
+    const button = $(scope === "all" ? "exportAllCsvButton" : "exportPageCsvButton");
+    const rows = scope === "all" ? state.filtered : currentPageRows();
+    if (!rows.length || button?.disabled) return;
+    const label = button?.querySelector?.("strong");
+    const original = label?.textContent || "";
+    if (button) button.disabled = true;
+    if (label) label.textContent = "Preparing…";
+    try {
+      const parts = await csvParts(rows);
+      const name = scope === "all" ? `${exportFileStem()}-results.csv` : `${exportFileStem()}-page-${state.page}.csv`;
+      triggerBlobDownload(name, parts, "text/csv;charset=utf-8");
+      $("exportMenu")?.removeAttribute("open");
+    } finally {
+      if (label) label.textContent = original;
+      syncExportControls();
+    }
+  }
+
+  // The export choices follow the results: "All N matching records (CSV)", each disabled when it has nothing to give.
+  function syncExportControls(pageRows = currentPageRows()) {
+    const count = state.filtered.length;
+    const all = $("exportAllCsvButton");
+    if (all) {
+      all.disabled = !state.recordsReady || !count;
+      const label = $("exportAllCsvLabel");
+      if (label && label.textContent !== "Preparing…") {
+        label.textContent = state.recordsReady
+          ? `All ${formatInteger(count)} matching ${count === 1 ? "record" : "records"} (CSV)`
+          : "All matching records (CSV)";
+      }
+    }
+    if ($("exportPageCsvButton")) $("exportPageCsvButton").disabled = !pageRows.length;
+    if ($("downloadPageButton")) $("downloadPageButton").disabled = state.pageDownloadPending || !pageRows.length;
+  }
 
   async function handlePageDownload() {
     const button = $("downloadPageButton");
@@ -2388,7 +2487,7 @@
     state.pageDownloadPending = true;
     if (button) {
       button.disabled = true;
-      button.textContent = "Preparing...";
+      button.innerHTML = "<strong>Preparing…</strong>";
     }
     let failed = false;
     try {
@@ -2412,13 +2511,13 @@
         },
         records,
       };
-      const filenameDate = String(manifest.generated_at || new Date().toISOString()).replace(/[:]/g, "-");
-      triggerBlobDownload(`catlog-page-${page}-${filenameDate}.json`, JSON.stringify(payload, null, 2));
+      triggerBlobDownload(`${exportFileStem()}-page-${page}.json`, JSON.stringify(payload, null, 2));
+      $("exportMenu")?.removeAttribute("open");
     } catch (error) {
       failed = true;
       if (button) {
-        button.textContent = "Download failed";
-        button.title = error?.message || "Could not prepare this page download.";
+        button.innerHTML = "<strong>This page could not be exported</strong><span>Try again in a moment.</span>";
+        button.title = publicLoadMessage(error?.message);
       }
     } finally {
       state.pageDownloadPending = false;
@@ -4146,7 +4245,7 @@
     $("nextButton").disabled = loading
       ? sortWaits || (state.page + 1) * state.pageSize > state.filtered.length
       : state.page >= totalPages;
-    $("downloadPageButton").disabled = state.pageDownloadPending || !pageRows.length;
+    syncExportControls(pageRows);
     const body = $("recordsBody");
     if (state.preserveRenderedRows && pageRows.length) {
       // The complete index arrived: the page drawn from its first rows stays (focus, hover and selection intact)
@@ -5831,8 +5930,9 @@
       });
     }
     document.addEventListener("click", (event) => {
-      const menu = $("downloadMenu");
-      if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
+      for (const menu of [$("downloadMenu"), $("exportMenu")]) {
+        if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
+      }
     });
     const showLocationView = () => {
       const view = viewFromLocation();
@@ -6004,6 +6104,8 @@
       renderRows();
     });
     $("downloadPageButton").addEventListener("click", handlePageDownload);
+    $("exportAllCsvButton")?.addEventListener("click", () => handleCsvExport("all"));
+    $("exportPageCsvButton")?.addEventListener("click", () => handleCsvExport("page"));
     // "Skip to records" moves focus to the table without changing the address (the hash names the view).
     document.querySelector(".skip-link")?.addEventListener("click", (event) => {
       event.preventDefault();
@@ -6014,9 +6116,10 @@
     $("scrollTableLeftButton").addEventListener("click", () => scrollTableColumns(-1));
     $("scrollTableRightButton").addEventListener("click", () => scrollTableColumns(1));
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && $("downloadMenu")?.open) {
-        $("downloadMenu").removeAttribute("open");
-        $("downloadMenu").querySelector("summary")?.focus();
+      const openMenu = [$("downloadMenu"), $("exportMenu")].find((menu) => menu?.open);
+      if (event.key === "Escape" && openMenu) {
+        openMenu.removeAttribute("open");
+        openMenu.querySelector("summary")?.focus();
         return;
       }
       if (event.key === "Escape" && document.body.classList.contains("filters-open")) {
@@ -6097,6 +6200,8 @@
       detailForRow,
       selectRecord,
       handlePageDownload,
+      handleCsvExport,
+      csvParts,
       renderDetail,
       rowStatusLabel,
       statusBadge,

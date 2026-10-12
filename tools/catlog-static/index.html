@@ -186,13 +186,23 @@
                 </div>
               </div>
               <div class="records-tools">
-                <button
-                  id="downloadPageButton"
-                  class="button secondary"
-                  type="button"
-                  title="Download the rows shown on this page with available molecular identity, references, and source details."
-                  aria-label="Download page"
-                ><span>Download<span class="download-page-detail"> page</span></span></button>
+                <details id="exportMenu" class="download-menu export-menu">
+                  <summary class="button secondary"><span>Export<span class="download-page-detail"> results</span></span><svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <div class="download-options export-options">
+                    <button id="exportAllCsvButton" type="button">
+                      <strong id="exportAllCsvLabel">All matching records (CSV)</strong>
+                      <span>The table&rsquo;s columns with units, review result, source, PMID, DOI, UniProt ID and record ID</span>
+                    </button>
+                    <button id="exportPageCsvButton" type="button">
+                      <strong>This page (CSV)</strong>
+                      <span>The same columns, for the records on this page</span>
+                    </button>
+                    <button id="downloadPageButton" type="button">
+                      <strong>This page (JSON)</strong>
+                      <span>Every field of the records on this page</span>
+                    </button>
+                  </div>
+                </details>
                 <label for="sortSelect">Sort by</label>
                 <select id="sortSelect">
                   <option value="evidence">Review result</option>
@@ -477,7 +487,7 @@
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every row and field, including sequences, SMILES, PMID and DOI.</dd></div>
               <div><dt>Table</dt><dd>The same rows without sequences, SMILES, paper IDs or other assay conditions (pH and temperature are kept); join it to Full data on record_key.</dd></div>
-              <div><dt>Page, record</dt><dd><strong>Download page</strong> saves the rows on screen and <strong>Download record</strong> the open record, as JSON.</dd></div>
+              <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON with every field; <strong>Download record</strong> saves the open record as JSON.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind older rows: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by e-mail</a>.</dd></div>
             </dl>
