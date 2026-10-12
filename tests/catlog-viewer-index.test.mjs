@@ -91,13 +91,17 @@ let tableFields = null;
 let tableUncompressedBytes = 0;
 for await (const line of lines(tableUrl)) {
   const row = JSON.parse(line);
-  if (!tableFields) tableFields = Object.keys(row);
+  // Every field any row has (an optional field such as condition_note is only on the rows that carry one).
+  if (!tableFields) tableFields = new Set();
+  Object.keys(row).forEach((field) => tableFields.add(field));
   assert.equal(tableRows.has(row.record_key), false, `duplicate record_key in the table: ${row.record_key}`);
   tableRows.set(row.record_key, { position: tableRows.size, row });
   tableUncompressedBytes += Buffer.byteLength(line) + 1;
 }
+// Optional text fields (condition_note) are in the index only when the snapshot carries them.
+const optionalFields = viewer.optional_fields || [];
 assert.deepEqual(
-  [...viewer.retained_fields, ...viewer.omitted_fields].sort(),
+  [...viewer.retained_fields, ...viewer.omitted_fields, ...optionalFields].sort(),
   [...tableFields].sort(),
   "viewer fields and omissions must partition the public table schema",
 );
@@ -114,7 +118,7 @@ assert.equal(header.details_per_shard, manifest.details_per_shard);
 // Paper identifiers (PMIDs, DOIs) from the Full data download, when the index was built with it.
 const paperFields = viewer.paper_id_fields || [];
 assert.ok(paperFields.length === 0 || paperFields.join() === "pmids,dois");
-assert.deepEqual(header.fields, [...viewer.retained_fields, ...paperFields, "s"]);
+assert.deepEqual(header.fields, [...viewer.retained_fields, ...optionalFields, ...paperFields, "s"]);
 const at = Object.fromEntries(header.fields.map((field, index) => [field, index]));
 const enums = header.enums;
 const texts = header.texts || {};
@@ -138,6 +142,8 @@ function decode(values) {
     if (row[field] === true) row[field] = row[source];
   }
   for (const [field, source] of Object.entries(viewer.derived_fields)) row[field] = row[source];
+  // An optional field is null for records without one, as the table leaves it out or empty.
+  for (const field of optionalFields) row[field] = values[at[field]] ?? null;
   const papers = paperFields.length
     ? { pmids: [values[at.pmids]].flat().filter((value) => value != null),
       dois: [values[at.dois]].flat().filter((value) => value != null).map((index) => header.dois[index]) }
@@ -203,6 +209,10 @@ for await (const line of viewerLines) {
   assert.ok(source, `viewer row ${rowCount} is not in the table: ${row.record_key}`);
   for (const field of [...viewer.retained_fields, ...Object.keys(viewer.derived_fields)]) {
     assert.deepEqual(row[field], source.row[field], `${field} differs for ${row.record_key}`);
+  }
+  for (const field of optionalFields) {
+    const tableValue = typeof source.row[field] === "string" && source.row[field].trim() ? source.row[field].trim() : null;
+    assert.equal(row[field], tableValue, `${field} differs for ${row.record_key}`);
   }
   assert.equal(shard, Math.floor(source.position / header.details_per_shard), `detail shard of ${row.record_key}`);
   if (papers) assert.deepEqual(papers, enrichedIds.get(row.record_key), `paper identifiers of ${row.record_key}`);
