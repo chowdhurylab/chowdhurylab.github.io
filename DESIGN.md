@@ -62,10 +62,11 @@ that the unaccepted records measure work remaining.
 Every name Browse can filter on links to `catlog-latest.html#browse?` with the
 shared keys (status, checked, ec, organism, metric, variant, caution, source);
 a portable copy links within itself. Items with no single Browse filter
-(Unverified alone, Not stated, earlier paper extractions, other sources,
-sequence, temperature, pH) stay plain text. Source lists the records read from
-the paper by CatLog (linked as #browse?status=v2, which opens exactly them)
-apart from the earlier paper extractions, then each database. Counting rules shared with the page: human-checked is an accepted
+(Unverified alone, Not reviewed alone, Not stated, other sources, sequence,
+temperature, pH) stay plain text. Source lists the records read from the paper
+by CatLog (linked as #browse?source=paper, which opens exactly them) apart from
+the earlier paper extractions (#browse?source=earlier_paper), then each
+database. Counting rules shared with the page: human-checked is an accepted
 record whose mark is checked (looked up as the badge does); papers are
 distinct PMIDs, else DOIs, else a stand-in id; names are distinct ignoring
 capitals, without "Unknown"; EC numbers are complete four-part numbers; a

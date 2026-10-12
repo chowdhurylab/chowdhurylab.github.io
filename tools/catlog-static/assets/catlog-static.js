@@ -145,22 +145,26 @@
   // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
   const SOURCE_CATLOG_LABEL = "Read from the paper by CatLog";
   const SOURCE_DATABASES_LABEL = "From enzyme databases";
-  const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
+  // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
+  // full (#guide-method).
+  const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
+  const SOURCE_CATLOG_HELP = v2Sentence;
   const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt and SKiD, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline.";
   const sourceModes = [
     { value: "all", label: "All records" },
     { value: "paper", label: SOURCE_CATLOG_LABEL, help: SOURCE_CATLOG_HELP, guide: true },
     { value: "databases", label: SOURCE_DATABASES_LABEL, help: SOURCE_DATABASES_HELP },
   ];
-  // The databases of the second group; tag is the word the status cell uses.
+  // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
+  // absent).
   const sourceFilters = [
     { value: "brenda", label: "BRENDA", tag: "BRENDA", bit: 2 },
     { value: "sabio_rk", label: "SABIO-RK", tag: "SABIO-RK", bit: 4 },
-    { value: "oed", label: "Open Enzyme Database", tag: "OED", bit: 8 },
+    { value: "oed", label: "Open Enzyme Database", tag: "OED", name: "Open Enzyme Database (OED)", bit: 8 },
     { value: "uniprot", label: "UniProt", tag: "UniProt", bit: 16 },
     { value: "skid", label: "SKiD", tag: "SKiD", bit: 32 },
     { value: "strenda", label: "STRENDA DB", tag: "STRENDA DB", bit: 64 },
-    { value: "earlier_paper", label: "Earlier paper extractions", tag: "earlier extraction", bit: 128,
+    { value: "earlier_paper", label: "Earlier paper extractions", tag: "earlier extraction", name: "Earlier paper extraction", bit: 128,
       title: "Records read from a paper by the earlier pipeline, not by CatLog" },
     { value: "unrecorded", label: "Source not recorded", tag: "source not recorded", bit: 256 },
   ];
@@ -200,7 +204,7 @@
     skid: "SKiD",
     uniprot: "UniProt",
     strenda: "STRENDA DB",
-    primary_paper_direct: "Primary literature",
+    primary_paper_direct: "Earlier paper extraction",
   };
 
   function sourceDatabaseLabel(value) {
@@ -388,7 +392,7 @@
   const CURATION_LICENSE_NOTE = "For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.";
 
   // CatLog's own compilation (the rows CatLog read from papers) is CC BY 4.0; quoted paper text remains the publisher's.
-  const PRIMARY_LITERATURE_NAME = "Primary literature (read by CatLog)";
+  const PRIMARY_LITERATURE_NAME = SOURCE_CATLOG_LABEL;
   const PRIMARY_LITERATURE_LICENSE = "CatLog compilation CC BY 4.0; quoted paper text remains the publisher’s";
 
   const fallbackSourceDatabases = [
@@ -613,7 +617,7 @@
   function publicText(value) {
     return String(value == null ? "" : value)
       .replace(/\bpaper[- ]backed\b/gi, "paper linked")
-      .replace(/\bclaim\s+status\b/gi, "review status")
+      .replace(/\bclaim\s+status\b/gi, "review result")
       .replace(/\bclaim[- ]verified\b/gi, "accepted")
       .replace(/\bverified\s+or\s+corrected\b/gi, "accepted or updated")
       .replace(/\baccepted\s+as[- ]is\b/gi, "accepted")
@@ -1151,10 +1155,8 @@
   }
 
   // CatLog v2 rows: every value read from the paper by an AI model, and a second, separate AI check compared each value
-  // with the paper. The short form (badges, filter); the Guide says it in full (#guide-method). The method token is the
-  // exporter's and stays as it is.
+  // with the paper (v2Sentence, defined with the Source filter). The method token is the exporter's and stays as it is.
   const v2Method = "catlog_v2_read_and_independent_verify";
-  const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
 
   // A CatLog v2 row in the table index (no verification_method there). The frozen Oct 7 base's own paper-read rows
   // carry ec_name_fallback, so the enzyme-name source tells them apart.
@@ -2967,13 +2969,15 @@
     const statusItems = [
       { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" }, note: acceptedNote },
       { value: "manual_review_required", label: "Not confirmed", color: "pending", count: counts.manual_review_required || 0,
-        params: { status: "curation_pending" }, note: "The earlier automated review left a question open on the value, unit, protein or substrate." },
+        params: { status: "curation_pending" }, note: stateDescriptions.curation_pending },
       { value: "not_verified", label: "Not checked", color: "neutral", group: true, count: notChecked, params: { status: "not_verified" },
         note: "No review result." },
-      { value: "unverified", label: "Unverified", color: "neutral", sub: true, count: counts.unverified || 0, note: "The earlier review recorded no final check." },
-      { value: "mathematically_inferred", label: "Not reviewed", color: "neutral", sub: true, count: counts.mathematically_inferred || 0,
-        note: "A database record without a PMID or DOI that was never reviewed." },
-      { value: "disputed", label: "Disputed", color: "disputed", count: counts.disputed || 0, note: "A check found a problem; not accepted." },
+      ...["unverified", "mathematically_inferred"].map((value) => {
+        const status = reviewStatuses.find((item) => item.value === value);
+        return { value, label: status.label, color: "neutral", sub: true, count: counts[value] || 0, note: status.description };
+      }),
+      { value: "disputed", label: "Disputed", color: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
+        note: stateDescriptions.disputed },
       ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
     sections.push(statsSection("statsStatusTitle", "Review result", `${statsBarRows(statusItems, total)}
@@ -5860,7 +5864,8 @@
     };
   }
 
-  // Every note under the values, each once: the flags, the sources' listed kcat/Km, a printed unit CatLog did not use.
+  // Every note under the values, each once: the flags, the sources' listed kcat/Km, a printed unit CatLog did not use. Their
+  // short words are the Guide's caution names (a listed kcat/Km far from kcat ÷ Km is a kcat/Km mismatch too).
   function measurementNotes(summary, detail, { proof = v2ProofFacts(summary, detail) } = {}) {
     const metricSummary = metricSummaryFor(summary, detail);
     const flags = conditionFlags(summary, detail);
@@ -5868,7 +5873,7 @@
     const unitCautions = unitPrefixCautions(metricSummary, proof);
     const notes = flagNotes(metricSummary, detail, flags, consistent);
     const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
-    if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "listed values differ", text: listedNote });
+    if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "kcat/Km mismatch", text: listedNote });
     unitCautions.forEach(({ field, text }) => {
       notes.push({ id: `detailFlagNote${notes.length + 1}`, field, short: "printed unit differs", text });
     });
@@ -6163,23 +6168,14 @@
     window.setTimeout(() => { button.textContent = "Copy"; }, copied ? 1200 : 3000);
   }
 
-  // A record's source in words: "The paper (read by CatLog)" for a record CatLog read, else the database(s), each named
-  // ("sabio_rk;brenda" is "SABIO-RK, BRENDA"), never a raw key.
-  const recordSourceNames = {
-    ...sourceDatabaseLabels,
-    sabiork: "SABIO-RK",
-    open_enzyme_database: "Open Enzyme Database (OED)",
-    primary_paper_direct: "Earlier paper extraction",
-    primary_literature: "Earlier paper extraction",
-    mixed: "Several databases",
-  };
-
+  // A record's source in words: "The paper (read by CatLog)" for a record CatLog read, else the databases by name, read
+  // from source_db as Browse's Source filter and the status line read it (rowSourceBits: "sabio_rk;brenda" is "BRENDA,
+  // SABIO-RK"), never a raw key.
   function recordSourceName(value, v2Record = false) {
     if (v2Record) return "The paper (read by CatLog)";
-    const names = [...new Set(String(value || "").toLowerCase().split(/[;,/+\s]+/)
-      .map((token) => recordSourceNames[token.replace(/-/g, "_")] || "")
-      .filter(Boolean))];
-    return names.length ? names.join(", ") : "Not recorded";
+    const bits = rowSourceBits({ source_db: value });
+    if (bits === SOURCE_UNRECORDED_BIT) return "Not recorded";
+    return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
   }
 
   // The databases a record merges, unless that only repeats its Source.

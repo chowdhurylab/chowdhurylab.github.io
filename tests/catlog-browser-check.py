@@ -916,7 +916,10 @@ def check(driver, browser, url):
         params = parse_qsl(target.fragment[len("browse?"):], keep_blank_values=True)
         assert params and {key for key, _value in params} <= STATS_LINK_KEYS, f"Unknown Browse filter: {params}"
     hrefs = [link.get_attribute("href") for link in links]
-    for fragment in ("#browse?status=accepted", "#browse?status=curation_pending", "#browse?status=not_verified"):
+    fragments = ["#browse?status=accepted", "#browse?status=curation_pending", "#browse?status=not_verified"]
+    if expected.get("disputed", 0):
+        fragments.append("#browse?status=disputed")
+    for fragment in fragments:
         assert any(href.endswith(fragment) for href in hrefs), f"Missing Stats link {fragment}"
 
     # Main source: counted as the Browse source filter finds records (a record merged from several databases counts

@@ -314,11 +314,12 @@ bottom in this order:
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one
-CatLog read it in (µM printed, mM used) is such a caution: its note says whether
+CatLog read it in (µM printed, mM used) is such a caution ("printed unit
+differs"): its note says whether
 kcat ÷ Km shows the unit used is right, and the values table says "CatLog uses
 mM, not the printed µM" in amber where other conversions keep a grey hint. A
 merged older record whose listed kcat/Km values are all more than 2-fold from
-kcat ÷ Km gets a note saying so. An older record whose stored kcat/Km is a unit
+kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"). An older record whose stored kcat/Km is a unit
 factor off shows the source's own kcat/Km that agrees with kcat ÷ Km, and its
 note gives the stored number.
 

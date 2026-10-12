@@ -1586,7 +1586,9 @@ function row(overrides = {}) {
   assert.match(chart, /2 as printed, 1 after a correction\./, "Without an overview, Accepted splits as the manifest does");
   assert.doesNotMatch(chart, /Checks pending|Other records/);
   assert.match(chart, /#browse\?metric=kcat_over_km"/);
-  assert.doesNotMatch(chart, /status=unverified|status=disputed/, "Unverified, Not reviewed and Disputed have no single Browse filter here");
+  assert.doesNotMatch(chart, /status=unverified|status=mathematically_inferred/, "Unverified and Not reviewed have no single Browse filter here");
+  // Disputed has its own Browse key (status=not_verified opens Not checked only).
+  assert.match(chart, /#browse\?status=disputed">Disputed<\/a>/);
   for (const filtered of [records.slice(2, 4), []]) {
     api.state.filtered = filtered;
     api.renderSummary();
@@ -2184,11 +2186,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const html = api.measurementSection(merged, { source_kcat_over_km_values: listed });
   assert.match(html, /<span>kcat\/Km listed by OED<\/span><strong><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/strong>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
-  assert.match(html, /aria-label="kcat\/Km: listed values differ\. Show the note\."/);
+  assert.match(html, /aria-label="kcat\/Km: kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
   const close = api.measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(close, /kcat\/Km listed by BRENDA/);
-  assert.doesNotMatch(close, /fold above|listed values differ/, "one listed value agrees: no note");
+  assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");
 }
 // Records of one paper that read alike: the export's condition note under the substrate (table and record); without
 // one, look-alikes on the page that share a paper say their conditions differ.
@@ -2301,7 +2303,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /Raw STRENDA|<span>Evidence<\/span><strong>Database note/);
   html = render({ source_db: "sabio_rk;brenda", enzyme_label_source: "brenda_recommended_name", proof_kind: "source_note",
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7.5" }, { proof_lines: ["pH 7.5, 25°C"] });
-  assert.match(html, /<span>Source<\/span><strong>SABIO-RK, BRENDA<\/strong>/);
+  assert.match(html, /<span>Source<\/span><strong>BRENDA, SABIO-RK<\/strong>/, "named as the status line names them");
   assert.match(html, /<span>Name from<\/span><strong>BRENDA recommended name<\/strong>/);
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
 }
