@@ -40,7 +40,9 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   printed value under another name or rounded, left out by its reading rules,
   CatLog wrong, not checked yet) with its legend, the facts (values approved,
   first comparison and now after fixes when present, fixes, wrong number or
-  unit in CatLog, missing values reviewers named), the values reviewers called
+  unit in CatLog, missing values reviewers named), where the paper shows CatLog
+  right what the earlier catalog had wrong (its value not printed in the paper,
+  or a wrong label: the README's split), the values reviewers called
   wrong and the direct review of CatLog's records when their counts add up
   (objections that dispute no value shown are said apart, never as failures), a
   data line with the definitions, and links to the Guide's method and to Team.

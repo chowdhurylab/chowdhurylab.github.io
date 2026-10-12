@@ -3504,6 +3504,13 @@
         ${statsTrack(shown.map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
         ${statsLegend(shown)}
       </div>`;
+    // Where the paper shows CatLog right, what was wrong in the earlier catalog (as the README says it).
+    const right = statsCount(a.differ_catlog_right, approved);
+    const valueError = right ? statsCount(a.differ_earlier_value_error, right) : null;
+    const labelError = right ? statsCount(a.differ_earlier_label_error, right) : null;
+    const rightText = valueError !== null && labelError !== null && valueError + labelError === right
+      ? `In the ${formatInteger(right)} differences where the paper shows CatLog right, the earlier catalog's value is not printed in the paper (${formatInteger(valueError)}) or has a wrong enzyme, organism, substrate, variant or protein label (${formatInteger(labelError)}).`
+      : "";
     // Values reviewers called wrong, and what became of them (each part only when the counts add up).
     const rejected = statsCount(a.rejected_values);
     let rejectedText = "";
@@ -3548,6 +3555,7 @@
           <p class="stats-lead-sentence">${escapeHtml(lead)}</p>
           ${bar}
           <dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>
+          ${rightText ? `<p class="stats-lead-note">${escapeHtml(rightText)}</p>` : ""}
           ${rejectedText ? `<p class="stats-lead-note">${escapeHtml(rejectedText)}</p>` : ""}
           ${directText ? `<p class="stats-lead-note">${escapeHtml(directText)}</p>` : ""}
           <p class="stats-fig-data">${statsDataLine(`${a && overview.quality.as_of ? `Counted ${formatDate(String(overview.quality.as_of).slice(0, 10))}. ` : ""}Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection in the 2026 review of the earlier catalog, on papers CatLog has since read. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%. Differences are split by CatLog's own check against the paper, not by the reviewers.`)}</p>

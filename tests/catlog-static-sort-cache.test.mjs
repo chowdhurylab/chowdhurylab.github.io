@@ -1761,6 +1761,9 @@ function row(overrides = {}) {
   }
   assert.doesNotMatch(lead, /stats-part-magnitude" style/, "No segment for a zero count");
   assert.match(lead, /Missing values reviewers named<\/dt><dd>58; CatLog has 53/);
+  // Where the paper shows CatLog right, what the earlier catalog had wrong (the README's split).
+  assert.match(lead, /In the 109 differences where the paper shows CatLog right, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);
+  assert.doesNotMatch(lead, /Same value<\/dt>/, "Without a first comparison the big number already gives the same-value count");
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex/);
   const blindFixture = { ...agreementFixture, first_agree: 2110, first_agree_pct: 84.8, fixed_after_comparison: 122, papers_exposed: 40,
