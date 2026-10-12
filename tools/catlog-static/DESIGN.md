@@ -200,8 +200,9 @@ order: the tooltip is the record's note ("Printed kcat/Km (2.2 s⁻¹ mM⁻¹) i
 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
 them."; a familiar factor is named as a fact, and on a record read from the
 paper the printed numbers' own arithmetic says when they agree in one unit); the
-short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM, kcat > 10⁷ s⁻¹ (10⁸
-for a larger value), possible 1000× unit error and above diffusion limit. The
+short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the stored
+value on older snapshots too), kcat > 10⁸ s⁻¹ (an older snapshot's flag on a kcat
+up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit error and above diffusion limit. The
 Cautions filter names kcat/Km mismatch, Possible unit or magnitude error, No
 unit given, Temperature questionable and No cautions.
 

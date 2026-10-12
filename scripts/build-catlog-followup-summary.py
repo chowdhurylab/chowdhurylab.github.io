@@ -200,12 +200,33 @@ def efficiency_matches_reported_precision(row):
     return max(ratio_low, 0) <= high and low <= ratio_high
 
 
+# The magnitude cautions' bounds (website plan P8; the page's KM_LOW_BOUND_MM and KCAT_HIGH_BOUND_PER_S).
+KM_LOW_BOUND_MM = 1e-6
+KCAT_HIGH_BOUND_PER_S = 1e8
+
+
+def catalog_value(row, field):
+    """A value in the catalog unit, as the page reads it (its *_display text), or None."""
+    if unit_key(row.get(f"{field}_unit")) not in METRIC_UNITS[field]:
+        return None
+    display = row.get(f"{field}_display")
+    value = _number(display) if isinstance(display, str) and display.strip() else None
+    return value if value is not None else (_number(row.get(field)) if display is None else None)
+
+
 def condition_flags(row):
     """The flags a record shows (conditionFlags): a kcat/Km that agrees with kcat / Km within printed precision is not
-    flagged as differing."""
+    flagged as differing; Km below 1 nM is flagged and kcat only above 10^8 s^-1 (an older snapshot's flags brought to
+    CatLog's bounds)."""
     flags = {str(flag).strip() for flag in row.get("condition_flags") or [] if str(flag or "").strip()}
     if "kcat_over_km_quotient_mismatch" in flags and efficiency_matches_reported_precision(row):
         flags.discard("kcat_over_km_quotient_mismatch")
+    km = catalog_value(row, "km")
+    if km is not None and 0 < km < KM_LOW_BOUND_MM:
+        flags.add("km_magnitude_needs_check")
+    kcat = catalog_value(row, "kcat")
+    if kcat is not None and kcat <= KCAT_HIGH_BOUND_PER_S:
+        flags.discard("kcat_magnitude_needs_check")
     return flags
 
 

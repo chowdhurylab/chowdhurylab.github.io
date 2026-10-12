@@ -132,7 +132,7 @@
   // Each caution states the problem; the record's note gives the numbers.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000× or kcat/Km above the diffusion limit" },
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000× or kcat/Km above the diffusion limit" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
     { value: "none", label: "No cautions", bit: 16, title: "Records without any caution" },
@@ -249,7 +249,7 @@
     kcat_over_km_unit_mismatch: "kcat/Km unit may be off by 1000×",
     kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown",
     km_magnitude_needs_check: "Km above 10 M; the unit may be wrong",
-    kcat_magnitude_needs_check: "kcat above 10⁷ s⁻¹; the unit may be wrong",
+    kcat_magnitude_needs_check: "kcat above 10⁸ s⁻¹; the unit may be wrong",
     efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
     temperature_value_needs_check: "Temperature value questionable",
     temperature_unit_needs_check: "Temperature unit questionable",
@@ -271,7 +271,7 @@
     kcat_over_km_unit_mismatch: { field: "kcat_over_km", short: "possible 1000× unit error" },
     efficiency_above_diffusion_limit: { field: "kcat_over_km", short: "above diffusion limit" },
     km_magnitude_needs_check: { field: "km", short: "Km > 10 M" },
-    kcat_magnitude_needs_check: { field: "kcat", short: "kcat > 10⁷ s⁻¹" },
+    kcat_magnitude_needs_check: { field: "kcat", short: "kcat > 10⁸ s⁻¹" },
   };
 
   // A magnitude caution says which bound the stored value passes: Km above 10 M (or below 1 nM), kcat above 10⁷ s⁻¹ (or
@@ -294,6 +294,12 @@
     return magnitudeBound(flag, row)?.short || valueIntegrityFlags[flag]?.short || "";
   }
 
+  // The magnitude cautions' bounds (website plan P8): Km below 1 nM is flagged too, and kcat only above 10⁸ s⁻¹ (catalase
+  // and carbonic anhydrases are measured at 1-3 × 10⁷). CatLog's export applies them to every record; an older snapshot's
+  // flags are brought to the same bounds here, from values in catalog units (Stats counts the same way).
+  const KM_LOW_BOUND_MM = 1e-6;
+  const KCAT_HIGH_BOUND_PER_S = 1e8;
+
   function conditionFlags(...rows) {
     const flags = new Set();
     rows.forEach((row) => {
@@ -302,6 +308,14 @@
         if (key) flags.add(key);
       });
     });
+    const valueRow = rows.find((row) => row && typeof row === "object" && "km_display" in row) || rows[0];
+    const catalogValue = (field) => (valueRow && canonicalMetricUnitKeys[field].has(normalizedUnitKey(metricUnit(valueRow, field)))
+      ? Number(metricDisplay(valueRow, field))
+      : NaN);
+    const km = catalogValue("km");
+    if (km > 0 && km < KM_LOW_BOUND_MM) flags.add("km_magnitude_needs_check");
+    const kcat = catalogValue("kcat");
+    if (flags.has("kcat_magnitude_needs_check") && Number.isFinite(kcat) && kcat <= KCAT_HIGH_BOUND_PER_S) flags.delete("kcat_magnitude_needs_check");
     if (
       flags.has("kcat_over_km_quotient_mismatch")
       && rows.some((row) => efficiencyMatchesReportedPrecision(row))
@@ -1282,11 +1296,14 @@
 
   // A record read by CatLog: the method in one line, ending with whether code converted any value's unit (facts: the
   // record's proof-line facts; without them nothing is said about units).
-  function v2MethodSentence(facts = null) {
+  // unitChanged: a value is stored in another concentration unit than the paper prints (its caution note says which), so
+  // "values stored as printed" would not be true.
+  function v2MethodSentence(facts = null, { unitChanged = false } = {}) {
     const base = v2Sentence.replace(/\.$/, "");
     if (!facts?.length) return `${base}.`;
-    return facts.some((fact) => /converted by code/.test(fact.conversion || ""))
-      ? `${base}; units converted by code.`
+    if (facts.some((fact) => /converted by code/.test(fact.conversion || ""))) return `${base}; units converted by code.`;
+    return unitChanged
+      ? `${base}; not every value is stored in the unit the paper prints (see the notes).`
       : `${base}; values stored as printed.`;
   }
 
@@ -6479,7 +6496,7 @@
       // A record read by CatLog: how (Method) and what the second check found (Check); an older record: its review.
       ...(v2Record
         ? [
-            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
+            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts, { unitChanged: measurementNotes(summary, detail).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
             v2Facts ? kv("Check", v2CheckText(v2Facts, v2CheckOptions(summary, detail, v2Proof))) : "",
             v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
           ]

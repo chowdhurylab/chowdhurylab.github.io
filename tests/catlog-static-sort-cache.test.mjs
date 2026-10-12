@@ -1998,6 +1998,17 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.match(low, /aria-label="Km: Km &lt; 1 nM\. Show the note\."/);
   const high = api.measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
   assert.match(high, /kcat is above 10⁸ s⁻¹; the unit may be wrong\./);
+  // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
+  const unflaggedLow = row({ km: 2e-14, km_display: "2e-14", km_unit: "mM", condition_flags: [] });
+  assert.ok(api.conditionFlags(unflaggedLow).has("km_magnitude_needs_check"));
+  assert.equal(api.rowCautionBits(unflaggedLow), 2, "counted under Possible unit or magnitude error");
+  assert.match(api.valueFlagBadgeHtml(api.conditionFlags(unflaggedLow), "km", unflaggedLow), /Km below 1 nM; the unit may be wrong/);
+  assert.ok(!api.conditionFlags(row({ km: 2e-6, km_display: "2e-06", km_unit: "mM" })).has("km_magnitude_needs_check"));
+  const catalase = row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "s^(-1)", condition_flags: ["kcat_magnitude_needs_check"] });
+  assert.equal(api.conditionFlags(catalase).size, 0, "kcat at 3 × 10⁷ s⁻¹ is no caution");
+  assert.equal(api.rowCautionBits(catalase), 16);
+  assert.ok(api.conditionFlags(row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "min^(-1)", condition_flags: ["kcat_magnitude_needs_check"] }))
+    .has("kcat_magnitude_needs_check"), "a kcat in another unit keeps its flag");
 }
 // An older record's kcat/Km off by a unit factor shows the source's own value that agrees with kcat ÷ Km.
 const unitFlagHtml = api.measurementSection(row({
@@ -2262,6 +2273,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
   assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores s⁻¹ mM⁻¹, 1000-fold apart/);
+  // The Method line never says "values stored as printed" above such a note (0f2107bac841d82f).
+  api.renderDetail(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
+      proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
+  const methodHtml = element("detailContent").innerHTML;
+  assert.doesNotMatch(methodHtml, /values stored as printed/);
+  assert.match(methodHtml, /compared each value with the paper; not every value is stored in the unit the paper prints \(see the notes\)\./);
   // The same prefix read differently (M^-1 s^-1 for m^-1 s^-1) keeps the plain grey hint.
   const sameHtml = api.measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });

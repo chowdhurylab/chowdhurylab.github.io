@@ -119,7 +119,7 @@ def overview_rows():
         # Unverified, no paper; a printed variant; magnitude caution; a large kcat.
         {"record_key": "d", "verification_status": "unverified", "source_db": "oed", "ec_number": "3.5.2.6",
          "enzyme_display_name": "beta-lactamase", "organism": "Escherichia coli", "substrate_name": "ampicillin",
-         "mutation_signature": "S70A", "kcat": 2e7, "kcat_unit": "s^-1", "condition_flags": ["kcat_magnitude_needs_check"]},
+         "mutation_signature": "S70A", "kcat": 2e9, "kcat_unit": "s^-1", "condition_flags": ["kcat_magnitude_needs_check"]},
     ]
 
 
@@ -175,8 +175,8 @@ class OverviewTests(unittest.TestCase):
         # A merged source ("sabio_rk;brenda") counts under each source it names, as the Browse source filter finds it.
         self.assertEqual(result["sources"], {"paper": 1, "brenda": 2, "sabio_rk": 1, "oed": 1, "uniprot": 0, "skid": 0, "other": 0})
         kcat = result["metrics"]["kcat"]
-        # The kcat without a unit is left out; 2 and 2e7 s^-1 remain.
-        self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e7))
+        # The kcat without a unit is left out; 2 and 2e9 s^-1 remain.
+        self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e9))
         self.assertTrue(12 <= len(kcat["counts"]) <= 16)
         self.assertEqual(sum(kcat["counts"]), kcat["n"])
         # A zero Km has no logarithm: only the two positive Km values count.
@@ -190,6 +190,18 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(followup.caution_keys({"condition_flags": ["kcat_over_km_source_mismatch"]}), {"differs"})
         self.assertEqual(followup.caution_keys({"condition_flags": ["km_magnitude_needs_check", "kcat_over_km_source_mismatch"]}),
                          {"differs", "units"})
+
+    def test_magnitude_cautions_use_catlogs_bounds(self):
+        # Km below 1 nM is a magnitude caution; kcat is one only above 10^8 s^-1 (an older snapshot flagged it from 10^7).
+        self.assertEqual(followup.caution_keys({"km": 2e-14, "km_display": "2e-14", "km_unit": "mM", "condition_flags": []}), {"units"})
+        self.assertEqual(followup.caution_keys({"km": 2e-6, "km_display": "2e-06", "km_unit": "mM", "condition_flags": []}), set())
+        self.assertEqual(followup.caution_keys({"kcat": 3e7, "kcat_display": "3e+7", "kcat_unit": "s^(-1)",
+                                                "condition_flags": ["kcat_magnitude_needs_check"]}), set())
+        self.assertEqual(followup.caution_keys({"kcat": 7e12, "kcat_display": "7e+12", "kcat_unit": "s^(-1)",
+                                                "condition_flags": ["kcat_magnitude_needs_check"]}), {"units"})
+        # A kcat in another unit cannot be judged here: its flag stays.
+        self.assertEqual(followup.caution_keys({"kcat": 3e7, "kcat_unit": "min^(-1)", "condition_flags": ["kcat_magnitude_needs_check"]}),
+                         {"units"})
 
     def test_top_organisms_count_as_the_browse_filter_finds_them(self):
         raw = Counter({"Escherichia coli": 5, "Escherichia coli K-12": 3, "Saccharomyces cerevisiae": 4,
