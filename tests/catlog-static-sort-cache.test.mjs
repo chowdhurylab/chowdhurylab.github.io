@@ -1583,7 +1583,7 @@ function row(overrides = {}) {
   assert.match(api.statsCombinedCoverage(group), /data-stats-field="multiple" aria-controls="statsReviewFigure"/);
   api.state.statsCohort = "accepted";
   const acceptedDetails = api.statsReviewDetails({ verified: 2, corrected: 3 });
-  assert.match(acceptedDetails, /5 records: verified or corrected/);
+  assert.match(acceptedDetails, /5 records\.<\/p>/);
   assert.match(acceptedDetails, /Accepted as reported<\/th><td>2/);
   assert.match(acceptedDetails, /Accepted after a change<\/th><td>3/);
   assert.doesNotMatch(acceptedDetails, /stats-combination-legend/, "Do not invent accepted field combinations");

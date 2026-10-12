@@ -595,13 +595,8 @@ li.flag-note { border-radius:6px }
   .stats-detail-table th, .stats-detail-table td { padding:8px 5px }
 }
 
-.guide-step-grid { grid-template-columns:repeat(3,minmax(0,1fr)); list-style:none }
-.guide-record-depth-heading { grid-template-columns:minmax(220px,0.7fr) minmax(0,1.3fr); gap:48px; align-items:start }
-.guide-record-example { grid-template-columns:minmax(0,1fr); gap:16px; align-items:start }
-.guide-record-example figcaption { grid-template-columns:minmax(0,1fr) max-content; column-gap:24px }
 .guide-record-example figcaption > span { display:block; font-weight:600 }
 .guide-record-example figcaption > strong { display:block; line-height:1.35 }
-.guide-record-example figcaption > .guide-example-source { grid-column:2; grid-row:1 / span 2; align-self:end; justify-content:flex-end; flex-wrap:wrap; gap:4px 12px }
 .guide-example-compare { align-items:center }
 .guide-example-level { display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; border:1px solid var(--line); border-top-width:3px; border-radius:var(--radius) }
 .guide-example-level.public { border-top-color:var(--teal); background:var(--teal-tint) }
@@ -613,7 +608,6 @@ li.flag-note { border-radius:6px }
 .guide-example-level dt, .guide-example-level dd { margin:0 }
 .guide-example-level dt { color:var(--text-3) }
 .guide-choice-link { grid-row:4; align-self:end; justify-self:start; white-space:nowrap }
-.guide-reference-grid { grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr) }
 .guide-reference dl { display:grid }
 .guide-reference dl > div { display:grid; gap:3px }
 .guide-reference dd, .guide-note { margin:0 }
@@ -792,13 +786,6 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .clamp-2 { display:block; max-height:none }
   .stats-charts { grid-template-columns:repeat(2,minmax(0,1fr)) }
   .stats-section { break-inside:avoid }
-}
-
-@media (max-width: 640px) {
-  .guide-citation {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
 }
 
 /* Guide: one reading column (72ch, body 16px/1.6), the same status badges as the table, plain section rules. Every rule is scoped to .guide-view, so it wins over the older Guide rules above. */

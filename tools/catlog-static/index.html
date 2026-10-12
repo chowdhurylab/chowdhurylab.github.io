@@ -276,7 +276,7 @@
               </div>
               <div class="guide-step">
                 <h3>Download</h3>
-                <p><strong>Full data</strong> has every row, with sequences and SMILES where known. <strong>Download page</strong> and <strong>Download record</strong> save what is on screen.</p>
+                <p><strong>Full data</strong> has every row, with sequences and SMILES where known. <strong>Download page</strong> saves the rows on screen; <strong>Download record</strong> saves the open record.</p>
               </div>
             </div>
           </section>
@@ -284,8 +284,8 @@
           <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
             <header class="guide-record-depth-heading">
               <h2 id="guide-record-depth-title">Where the values come from</h2>
-              <p>Rows marked <strong>from paper</strong> are CatLog v2: an AI model (Claude, Anthropic) read each value from the paper, a second, separate AI run checked it against the paper, and code converted the units. Older rows come mostly from enzyme databases and were checked by an earlier automated pipeline (AI models and code checks).</p>
-              <p>Accepted records whose every value a human reviewer approved are marked <strong>human-checked</strong>; most records have not been checked by a person. Papers are being re-read; once a paper is re-read, its from-paper rows replace its older rows.</p>
+              <p>Rows marked <strong>from paper</strong> are CatLog v2: an AI model (Claude, Anthropic) read each value from the paper, a second, separate AI run checked it against the paper, and code converted the units. Older rows come mostly from enzyme databases and were checked by an earlier automated pipeline of AI models and code checks.</p>
+              <p>An accepted record is marked <strong>human-checked</strong> when a human reviewer approved every value it shows; most records have not been checked by a person. Papers are being re-read, and a re-read paper&rsquo;s from-paper rows replace its older rows.</p>
             </header>
 
             <figure class="guide-record-example">
@@ -338,31 +338,32 @@
               <dl class="guide-term-list">
                 <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
                 <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
-                <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>). <em>calc.</em> marks <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> worked out from the two values; the source does not print it.</dd></div>
+                <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>). <em>calc.</em> marks a <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> worked out from the two values, not printed in the source.</dd></div>
                 <div><dt>T (°C)</dt><dd>Assay temperature.</dd></div>
                 <div><dt>pH</dt><dd>Assay pH. The record lists the other conditions.</dd></div>
                 <div><dt>Unknown</dt><dd>Not stated in the paper or the source database.</dd></div>
               </dl>
               <p class="guide-note">A dash means a value is missing or hidden after a data check. Open the row to see why.</p>
+              <p class="guide-note">A warning marks a value to check against its source. Open the row for the reason.</p>
+              <p class="guide-note"><em>no unit</em>: the source gives no unit, so the column unit does not apply.</p>
               <p class="guide-note">Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>), with the same digits.</p>
-              <p class="guide-note"><em>no unit</em>: the source gives no unit, so the column unit does not apply. A warning marks a value to check against its source. Open the row for the reason.</p>
             </section>
 
             <section class="guide-reference" aria-labelledby="guide-status-title">
               <h2 id="guide-status-title">Review status</h2>
-              <p>The Status column shows one of these for each record. Status describes CatLog&rsquo;s checks on the record.</p>
+              <p>Each record has one status, set by CatLog&rsquo;s checks.</p>
               <dl class="guide-status-list">
                 <div>
                   <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"></span></span></dt>
-                  <dd>Accepted as reported, or after a correction (marked <em>corrected</em>).</dd>
+                  <dd>As reported, or after a correction (tagged <em>corrected</em>).</dd>
                 </div>
                 <div>
                   <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">from paper</span></span></span></dt>
-                  <dd>A CatLog v2 row: read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units. The filter <strong>Read from the paper (CatLog v2)</strong> lists only these.</dd>
+                  <dd>A CatLog v2 row, read from the paper and checked against it (see <em>Where the values come from</em>). The filter <strong>Read from the paper (CatLog v2)</strong> lists only these.</dd>
                 </div>
                 <div>
                   <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">human-checked</span></span></span></dt>
-                  <dd>On accepted records: a human reviewer approved every value the record shows in CatLog&rsquo;s 2026 review (on a from-paper row, the same values in the earlier catalog).</dd>
+                  <dd>A human reviewer approved every value the record shows (on a from-paper row, the same values in the earlier catalog).</dd>
                 </div>
                 <div>
                   <dt><span class="state-badge accepted identity-only" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">no paper linked</span></span></span></dt>
@@ -370,7 +371,7 @@
                 </div>
                 <div>
                   <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Checks pending</span><span class="state-tags"></span></span></dt>
-                  <dd>Not accepted: at least one check is still open, for example on the value, protein or substrate.</dd>
+                  <dd>At least one check is still open, for example on the value, protein or substrate.</dd>
                 </div>
                 <div>
                   <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Unverified</span><span class="state-tags"></span></span></dt>
@@ -403,7 +404,7 @@
             <dl class="guide-download-list">
               <div><dt>Units</dt><dd>A few older rows keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
-              <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence carries its mutations only when one was built; otherwise it is the wild-type reference.</dd></div>
+              <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence includes its mutations only where CatLog could build it; otherwise the record gives the wild-type reference.</dd></div>
               <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
             </dl>
           </section>
@@ -440,7 +441,7 @@
 
           <section class="guide-sources" aria-labelledby="guide-sources-title">
             <h2 id="guide-sources-title">Data sources and licenses</h2>
-            <p class="guide-note">CatLog&rsquo;s own compilation, the rows CatLog read from papers, is released under CC BY 4.0; text quoted from a paper remains the publisher&rsquo;s. Rows from the databases below keep their own license, named in each row&rsquo;s source_license field. SKiD rows (CC BY-NC-ND 4.0) are for non-commercial use, without derivatives.</p>
+            <p class="guide-note">Rows from the databases keep their own license, named in each row&rsquo;s source_license field. SKiD rows are for non-commercial use only, without derivatives.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
               <div><dt>Primary literature (read by CatLog)</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
               <div><dt><a href="https://www.brenda-enzymes.org/" target="_blank" rel="noreferrer">BRENDA</a></dt><dd>License: CC BY 4.0</dd></div>

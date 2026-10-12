@@ -2238,7 +2238,7 @@
     if (state.statsCohort === "accepted") {
       const accepted = (counts.verified || 0) + (counts.corrected || 0);
       const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
-      return `<h3 id="fieldsGroupHeading">Accepted records</h3><p>${formatInteger(accepted)} records: verified or corrected.</p>
+      return `<h3 id="fieldsGroupHeading">Accepted records</h3><p>${formatInteger(accepted)} records.</p>
         <table class="stats-detail-table"><tbody>
           <tr><th scope="row">Accepted as reported</th><td>${formatInteger(counts.verified || 0)}</td></tr>
           <tr><th scope="row">Accepted after a change</th><td>${formatInteger(counts.corrected || 0)}</td></tr>
@@ -2275,7 +2275,7 @@
       <details class="stats-explanation stats-cohort-example"><summary>Example checks</summary><dl class="stats-check-examples">
           <div><dt>Protein</dt><dd>For L431F, does the sequence contain that change?</dd></div>
           <div><dt>Substrate</dt><dd>Does the SMILES match the named compound and isomer?</dd></div>
-          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay? In mM, it is 0.00082.</dd></div>
+          <div><dt>Measurement</dt><dd>Is 0.82 &micro;M from the same enzyme and assay, and stored as 0.00082 mM?</dd></div>
         </dl><p>Examples only. The snapshot does not record which check is open for each record.</p></details>
       <p class="stats-note">Paper ID: PMID or DOI. Kinetic value: kcat, Km, Ki or kcat/Km. These fields do not give the reason for a status.</p>`;
   }
@@ -2352,7 +2352,13 @@
           <div data-stat-key="corrected" data-count="${counts.corrected || 0}"><dt>Accepted after a change</dt><dd>${formatInteger(counts.corrected || 0)}</dd></div>
         </dl><p>The change can be to the value, the sequence or another field.</p></div>
         <p class="stats-note">${identityOnly ? `${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.` : ""}</p>
-        <details class="stats-explanation"><summary>How these groups differ</summary><p>Accepted: accepted as reported (Verified) or after a correction (Corrected). Checks pending: at least one check is still open. Unverified: no accepted result is recorded. Not reviewed: prepared from source records without an accepted review (formerly labelled Calculated). Disputed: flagged during review.</p></details>
+        <details class="stats-explanation"><summary>How these groups differ</summary><dl class="stats-check-examples">
+          <div><dt>Accepted</dt><dd>As reported, or after a correction.</dd></div>
+          <div><dt>Checks pending</dt><dd>At least one check is still open.</dd></div>
+          <div><dt>Unverified</dt><dd>No accepted result is recorded.</dd></div>
+          <div><dt>Not reviewed</dt><dd>Prepared from source records, without an accepted review.</dd></div>
+          <div><dt>Disputed</dt><dd>Flagged during review; not accepted.</dd></div>
+        </dl></details>
           </div>
           <div id="statsReviewDetails" class="stats-followup-section" aria-labelledby="fieldsGroupHeading">${statsReviewDetails(counts)}</div>
         </div>
