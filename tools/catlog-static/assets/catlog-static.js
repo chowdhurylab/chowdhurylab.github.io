@@ -5800,11 +5800,14 @@
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
     const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
-    if (total() > available && (available >= floor || docked)) {
-      // Too wide for the window: the names give way, first to two lines broken between words, then (not beside docked
-      // filters) to their minimums.
+    if (total() > available) {
+      // Too wide for the window: the names give way, first to two lines broken between words, then to their minimums.
+      // When the table scrolls sideways anyway (beside docked filters, or with less room than every column's minimum,
+      // as beside a record from 1024px) they stop at their longest word: the sticky Enzyme column stays narrow and the
+      // values come into view sooner, and no word is broken for room the table cannot win.
+      const scrolls = docked || available < floor;
       const targets = [(column) => Math.max(column.min, column.words), (column) => column.min];
-      for (const target of docked ? targets.slice(0, 1) : targets) {
+      for (const target of scrolls ? targets.slice(0, 1) : targets) {
         const excess = total() - available;
         const slack = shrinkable.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;

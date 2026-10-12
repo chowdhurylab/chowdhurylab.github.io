@@ -1132,6 +1132,19 @@ def check_layout(driver, browser, url, route_label):
                     cue: wrap.classList.contains('can-scroll-right')};
         """)
         assert table_scroll["overflow"] == table_scroll["controls"] == table_scroll["cue"] == True, table_scroll
+        # The table scrolls anyway, so the sticky Enzyme column narrows to its 160px minimum or its longest word.
+        enzyme = driver.execute_script("""
+            const names = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme strong')];
+            const font = getComputedStyle(names[0]);
+            const context = document.createElement('canvas').getContext('2d');
+            context.font = `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
+            const word = Math.max(...names.flatMap(name => name.textContent.split(/\\s+|(?<=[-,/])/)).map(part => context.measureText(part).width));
+            const cell = getComputedStyle(document.querySelector('#recordsBody td.c-enzyme'));
+            const padding = parseFloat(cell.paddingLeft) + parseFloat(cell.paddingRight) + 2;
+            return {width: document.querySelector('#recordTableWrap thead th.c-enzyme').getBoundingClientRect().width,
+                    limit: Math.max(160, Math.ceil(word + padding))};
+        """)
+        assert enzyme["width"] <= enzyme["limit"] + 1, enzyme
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open())
         driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")

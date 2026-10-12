@@ -126,8 +126,10 @@ as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
 "Filters · Clear all · ×" at the top and "Show N records" (accent, 44px) at the
 bottom; Esc, × or that button close it, and Escape never closes the sidebar.
-Beside the sidebar a name column is never narrower than its longest word (a line
-may break after a hyphen, comma or slash); a table still too wide scrolls
+Beside the sidebar, and whenever the table scrolls sideways anyway (beside a
+record from 1024px, on a tablet with the rail), the name columns narrow to their
+longest word and no further (a line may break after a hyphen, comma or slash), so
+Enzyme stays near its 160px minimum; a table still too wide scrolls
 sideways with the Columns control, edge shadows and Enzyme kept in view. The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
 its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
