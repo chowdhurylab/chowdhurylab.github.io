@@ -470,25 +470,36 @@
     return url;
   }
 
-  // A record's own address is #record=<record_key>, so an open record can be shared. Opening a record writes it into
-  // the address (replacing the entry, so Back still leaves the page) and closing the record removes it.
+  // An open record is in the address, so it can be shared and reloaded: #record=<record_key> when no filter is set, else
+  // after the filters (#browse?checked=1&...&record=<record_key>), so reloading or copying it keeps them. The page is left
+  // out: the record's place in the results decides it. Opening a record writes the address (replacing the entry, so Back
+  // still leaves the page) and closing the record gives it back to the filters (#browse?..., or none).
   const RECORD_HASH = /^#record=([^&#]+)$/;
 
   function recordKeyFromLocation() {
     const match = window.location.hash.match(RECORD_HASH);
-    if (!match) return "";
-    try {
-      return decodeURIComponent(match[1]).trim();
-    } catch (_error) {
-      return "";
+    if (match) {
+      try {
+        return decodeURIComponent(match[1]).trim();
+      } catch (_error) {
+        return "";
+      }
     }
+    const params = BROWSE_HASH.test(window.location.hash || "") ? browseParamsFromLocation() : null;
+    return String(params?.get("record") || "").trim();
+  }
+
+  function recordHash(key) {
+    const params = browseParamsFromControls().filter(([name]) => name !== "page");
+    const record = encodeURIComponent(key);
+    return params.length ? `${browseHash(params)}&record=${record}` : `#record=${record}`;
   }
 
   function syncRecordUrl(key) {
-    if (key === recordKeyFromLocation() || (!key && !RECORD_HASH.test(window.location.hash))) return;
+    if (!key && !recordKeyFromLocation()) return;
     const url = new URL(window.location.href);
-    // Closing the record gives the address back to the filters (#browse?..., or none).
-    url.hash = key ? `record=${encodeURIComponent(key)}` : browseHash();
+    url.hash = key ? recordHash(key) : browseHash();
+    if (url.href === window.location.href) return;
     try {
       window.history.replaceState(window.history.state, "", url);
     } catch (_error) {
@@ -502,7 +513,9 @@
     const key = state.pendingRecordKey;
     if (!key || viewFromLocation() !== "browse") return;
     const position = state.filtered.findIndex((row) => row.record_key === key);
-    if (position < 0 && !state.recordsReady) return;
+    // Human-checked results wait for the review marks: the record opens on its page once they are here.
+    const awaitingMarks = Boolean($("humanCheckedFilter")?.checked) && !state.humanMarksLoaded;
+    if (position < 0 && (!state.recordsReady || awaitingMarks)) return;
     state.pendingRecordKey = "";
     if (position >= 0) {
       state.page = Math.floor(position / state.pageSize) + 1;
@@ -1063,9 +1076,15 @@
       if (row && badge) badge.outerHTML = statusBadge(row);
     });
     fitTableColumns();
-    // a record opened before the marks arrived (a deep link) gets its human-review note too
-    if (state.selectedKey && document.body.classList.contains("detail-open")) {
-      selectRecord(state.selectedKey, { focusDetail: false });
+    // A record opened before the marks arrived (a deep link) gets its human-review lines too, redrawn in place: the rows
+    // stay, and focus inside the record stays there. A record still loading draws them when it arrives.
+    const row = state.selectedKey && document.body.classList.contains("detail-open") && state.selectedDetail
+      ? state.records.find((item) => item.record_key === state.selectedKey)
+      : null;
+    if (row) {
+      const focusInside = $("detailContent").contains(document.activeElement);
+      renderDetail(summaryWithDetail(row, state.selectedDetail), state.selectedDetail);
+      if (focusInside) $("detailHeading")?.focus({ preventScroll: true });
     }
   }
 
@@ -3113,11 +3132,11 @@
   }
 
   // Browse with filters has the address #browse?key=value&... (keys: q, status, checked, ec, enzyme, organism, substrate,
-  // metric, variant, tmin, tmax, phmin, phmax, caution, source, sort, rows, page; lists are comma separated; unknown
-  // keys are ignored). It is read when the page opens and on Back
+  // metric, variant, tmin, tmax, phmin, phmax, caution, source, sort, rows, page, record; lists are comma separated;
+  // unknown keys are ignored). It is read when the page opens and on Back
   // and Forward, and rewritten in place (never added to history) whenever the filters, search, sort, page size or page
   // change, so a copied address opens the same records. Browse without filters has no hash. While a record is open the
-  // address is the record's (#record=); closing it gives the address back to the filters.
+  // address names it after the filters (recordHash); closing it gives the address back to the filters.
   const BROWSE_HASH = /^#browse(?:\?(.*))?$/;
   const PAGE_SIZES = [25, 50, 100];
   const PAGE_SIZE_STORAGE_KEY = "catlog-rows-per-page";
@@ -3299,9 +3318,10 @@
   // Writes the current filters into the address, replacing the current history entry.
   function syncBrowseUrl() {
     if (!window.history?.replaceState || viewFromLocation() !== "browse") return;
-    if (state.selectedKey || state.pendingRecordKey || RECORD_HASH.test(window.location.hash || "")) return;
+    // A record the address names waits for the index; until it opens, the address keeps it.
+    if (state.pendingRecordKey || (!state.selectedKey && recordKeyFromLocation())) return;
     const url = viewUrl("browse");
-    url.hash = browseHash();
+    url.hash = state.selectedKey ? recordHash(state.selectedKey) : browseHash();
     if (url.href === window.location.href) return;
     try {
       window.history.replaceState(window.history.state, "", url);
@@ -5499,6 +5519,10 @@
       if (recordKey && recordKey !== state.selectedKey) {
         state.pendingRecordKey = recordKey;
         openRecordFromLocation();
+      } else if (!recordKey && state.selectedKey && view === "browse") {
+        // An address without a record (Back, Forward, a link to filtered Browse) closes the open one.
+        resetDetail();
+        if (state.records.length) renderRows();
       }
     };
     window.addEventListener("popstate", showLocationView);

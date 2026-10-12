@@ -37,10 +37,12 @@ and the three Rows with values counts in one 48px line, labels and counts on one
 baseline, the snapshot date and View stats at its end; on phones the line keeps
 Records and Accepted, Human-checked takes the next line with the More button,
 and More shows the rest. Human-checked N is a link to those records
-(#browse?checked=1, plus the filters in the address); N is the snapshot's
-summary.overview.human_checked_accepted until the records and marks load, then
-the count among the current results, and the item is hidden when the snapshot
-has no such count. Counts follow the current filtered
+(#browse?checked=1 plus the filters set now, from page 1); N is the snapshot's
+summary.overview.human_checked_accepted (only when it is bound to this
+snapshot, as Stats checks) until the records and marks load, then the count
+among the current results; a filtered view shows a dash until the marks arrive,
+N = 0 or a dash is plain text, not a link, and the item is hidden when the
+snapshot has no such count. Counts follow the current filtered
 results; measurement coverage overlaps and must not form a stacked chart. The
 count beside Filters is shown only when it says more than the page range.
 
@@ -72,11 +74,14 @@ get focus.
 
 Browse with filters has the address #browse?key=value&... (q, status, checked,
 ec, enzyme, organism, substrate, metric, variant, tmin, tmax, phmin, phmax,
-caution, source, sort, rows, page; comma lists; unknown keys ignored). It is
-read on load and on Back and Forward, rewritten in place (never a new history
-entry) when the filters, search, sort, rows per page or page change, and gone
-when nothing is set, so a copied link opens the same records. An open record's
-#record= address takes its place until the record closes. A link to #browse?
+caution, source, sort, rows, page, record; comma lists; unknown keys ignored).
+It is read on load and on Back and Forward, rewritten in place (never a new
+history entry) when the filters, search, sort, rows per page or page change, and
+gone when nothing is set, so a copied link opens the same records. An open
+record is added after the filters (#browse?...&record=<key>, without page: the
+record's place decides it), or is #record=<key> when nothing is set, so reload,
+a copied link and Esc keep the filters. An address without a record closes the
+open one. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
@@ -99,10 +104,12 @@ one grid on every view: brand and Download, the tabs on one line, then search
 column on desktop and a full-height dialog on smaller screens. Never put details
 below the table or cover desktop measurement columns. Keep 25 rows per page,
 scrolling within the table, and the page controls reachable. An open record's
-address ends in #record=<record key> (replaced, not added to history, and
+address names it (record=<record key>, replaced, not added to history, and
 removed when the record closes), so it can be shared; opening such an address
-shows the record on its table page once the index has it, and a key the
-snapshot lacks is put in the search box with a note that it is not there.
+shows the record on its table page once the index (and, with Human-checked on,
+the review marks) has it, and a key the snapshot lacks is put in the search box
+with a note that it is not there. Marks that arrive after a record opened redraw
+its panel in place (the rows and focus stay).
 
 While records load, placeholder rows keep the table's shape and, until the first
 rows appear, the count beside Filters says how many have loaded. Page 1 appears
