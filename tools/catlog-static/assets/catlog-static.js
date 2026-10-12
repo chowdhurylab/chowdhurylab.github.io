@@ -2618,7 +2618,7 @@
     ];
     sections.push(statsSection("statsStatusTitle", "Review status", `${statsBarRows(statusItems, total)}
       ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
-      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one status. Select a name to see those records in Browse." }));
+      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one status. Select a linked name to see those records in Browse." }));
 
     if (fromPaper !== null && fromPaper !== undefined) {
       sections.push(statsSection("statsV2Title", "Read from the paper (CatLog v2)", `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
@@ -2697,7 +2697,7 @@
     const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
     if (ranges.length) {
       sections.push(statsSection("statsRangesTitle", "Value ranges", `<div class="stats-ranges">${ranges.join("")}</div>`, { wide: true,
-        note: "Catalog units on a log scale; the end bars include all values beyond them. Dot: median; line: middle 80% of values. Values without a recorded unit are left out." }));
+        note: "Catalog units on a log scale; the end bars include all values beyond them. Dot: median; line: middle 80% of values. Values without a recorded unit, or in a unit other than the catalog's, are left out." }));
     }
 
     // Wild type and variants.
@@ -2733,7 +2733,7 @@
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records a human reviewer checked, as the status tag shows.</dd></div>
-        <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot.</dd></div>
+        <div><dt>Source</dt><dd>All numbers come from the Full data download of this snapshot; Human-checked also uses the human-review marks published with it.</dd></div>
       </dl></details>`);
     }
     $("statsCharts").innerHTML = sections.join("");

@@ -384,7 +384,7 @@ def metric_summary(values, unit):
     for value in ordered:
         counts[min(max(math.floor(math.log10(value)) - low, 0), len(counts) - 1)] += 1
     return {"unit": unit, "n": len(ordered), "median": significant(percentile(ordered, 0.5)),
-            "p10": significant(percentile(ordered, 0.1)), "p90": significant(percentile(ordered, 0.9)),
+            "p10": significant(percentile(ordered, 0.1), 2), "p90": significant(percentile(ordered, 0.9), 2),
             "log10_start": low, "counts": counts}
 
 

@@ -34,7 +34,8 @@ Colour marks review status only, with the Browse status dot colours (blue
 all records. Value ranges show, per metric in catalog units (kcat s⁻¹, Km mM,
 kcat/Km s⁻¹ mM⁻¹), the median, the 10–90% range and a histogram per power of
 ten whose end bars hold every value beyond them; values without a recorded
-unit are left out. No rings, gauges, completion bars or confidence scores.
+unit or in another unit are left out, and the 10–90% bounds have two
+significant figures. No rings, gauges, completion bars or confidence scores.
 Labels 15px, notes 14px; on phones each name sits above its bar.
 
 Review status lists each record once: Accepted (with its as-reported and
