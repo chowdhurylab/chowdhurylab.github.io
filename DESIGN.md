@@ -94,7 +94,8 @@ Figure style: every figure and table has a heading (18px), the plot, then
 apart) with one sentence (13px) and a 12px data line (snapshot, Data ID,
 definition). Bars 16px thick, 8px apart, square ends; fills at 60% of their
 colour with a 1px opaque outline; legends inline above the plot with 10px
-swatches in segment order; one shared scale per chart with axis ticks of
+swatches in segment order (a name that wraps keeps its count right after it);
+one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ); no gridlines except 1px
 reference lines. Category labels 13px, value labels and ticks 12px, tabular
 numbers. Table rows 13px with an 80px bar (48px on phones); the counts
@@ -177,7 +178,9 @@ agent, on the figure or in the legend under it (People and AI agents, one
 plain phrase each and where they work), lights their stations and fades the
 rest. Below 960px the loop stands upright (the people and agents are in the
 legend beside it, under it on phones) so its labels stay 11px or more at
-375px. The Guide's method section links to it.
+375px. Printed, the wide loop with its people and agents stays whole on one
+page and the legend follows in two columns. The Guide's method section links
+to it.
 
 Not reviewed is the label for the legacy mathematically_inferred record status
 (labelled Pre-review until October 2026): the importer also used it for
