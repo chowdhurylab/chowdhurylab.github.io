@@ -2200,6 +2200,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span>Conversion<\/span><strong>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup>; no unit conversion<\/strong>/);
   assert.match(html, /<span>Evidence<\/span><strong>Located in the paper<\/strong>/);
   assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
+  api.renderDetail(row({ record_key: "older-normalized", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
+    proof_lines: [{ table_label: "Table 1", normalized_value_unit_evidence: "Normalized paper Km: 14.29 uM = 0.01429 mM" }] });
+  assert.match(element("detailContent").innerHTML, /<span>Conversion<\/span><strong>paper Km: 14\.29 uM = 0\.01429 mM<\/strong>/);
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<span>Evidence<\/span><strong>Paper cited \(values not located\)<\/strong>/);
 }

@@ -791,7 +791,8 @@
     const rows = [
       location ? ["Where", location] : null,
       reported ? ["As printed", cleanEvidenceValue(reported)] : null,
-      normalized ? ["Conversion", cleanEvidenceValue(normalized)] : null,
+      // The earlier pipeline's own word for it ("Normalized paper Km: ...") is the label's.
+      normalized ? ["Conversion", cleanEvidenceValue(normalized).replace(/^normali[sz]ed:?\s+/i, "")] : null,
     ].filter(Boolean);
 
     if (!rows.length) {
