@@ -941,8 +941,9 @@ def check_filters(driver, browser, url, route_label):
 
 def check_layout(driver, browser, url, route_label):
     """The page grid: a 56px header, a 64px counts band (20px numbers, 13px labels), the filter sidebar beside the table
-    (open from 1024px, a 48px rail when collapsed, remembered; the rail while a record is open below 1600px; side by side
-    from 1600px; the rail on tablets) and the record as a column from 1024px, a dialog below."""
+    (open from 1200px and the rail from 1024 to 1199px, a viewer's other choice remembered; the rail while a record is
+    open below 1600px; side by side from 1600px; the rail on tablets) and the record as a column from 1024px, a dialog
+    below."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     base = url.split("#", 1)[0]
 
@@ -1082,6 +1083,26 @@ def check_layout(driver, browser, url, route_label):
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             wait.until(lambda d: not detail_open())
             results["record-1700"] = True
+        # 1100: the table's columns do not fit beside the sidebar, so it starts as the rail and the table fits; a viewer
+        # who opens it keeps it open, and collapsing it again goes back to the default.
+        set_browse_viewport(driver, browser, 1100, 900)
+        driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
+        open_page()
+        assert not is_open() and box(".filter-column")["width"] == 48, box(".filter-column")
+        assert driver.execute_script("""
+            const wrap = document.getElementById('recordTableWrap');
+            return wrap.scrollWidth <= wrap.clientWidth + 2;
+        """), "Beside the rail at 1100px the first page fits without scrolling sideways"
+        driver.find_element(By.ID, "filterRailButton").click()
+        wait.until(lambda d: is_open() and box(".filter-column")["width"] == 256)
+        assert stored() in ("0", "unavailable")
+        open_page()
+        if stored() == "0":
+            assert is_open(), "A sidebar opened below 1200px stays open on reload"
+            driver.find_element(By.ID, "collapseFiltersButton").click()
+            wait.until(lambda d: not is_open())
+            assert stored() is None, "Collapsing it again below 1200px goes back to the default"
+        results["laptop-1100"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)
         open_page()

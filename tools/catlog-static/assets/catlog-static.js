@@ -77,11 +77,17 @@
   // From 641px the filters are a sidebar column beside the table, never over it: open, or a 48px rail when collapsed.
   // Phones (640px and below) get a full-screen sheet instead.
   const sidebarFiltersMedia = window.matchMedia("(min-width: 641px)");
-  // From 1024px the sidebar starts open (unless this viewer collapsed it); tablets start with the rail.
+  // From 1024px the sidebar is a desktop sidebar (a viewer's choice to open or collapse it is kept); tablets start with
+  // the rail.
   const desktopMedia = window.matchMedia("(min-width: 1024px)");
+  // From 1200px the sidebar starts open (unless this viewer collapsed it). From 1024 to 1199px the table's columns do not
+  // fit beside it (about 905px with every name broken between words), so it starts as the rail unless this viewer
+  // opened it.
+  const filtersOpenByDefaultMedia = window.matchMedia("(min-width: 1200px)");
   // From 1600px the sidebar stays open beside an open record; from 1024 to 1599px the record takes its place.
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
-  // A viewer's choice to collapse the sidebar on a desktop screen (a convenience: storage may be unavailable).
+  // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
+  // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
   const DETAIL_INERT_SELECTOR = [
     ".app-header",
@@ -5851,28 +5857,33 @@
     return Boolean(desktopMedia.matches) && !filtersBesideRecordMedia.matches;
   }
 
-  // The viewer's own choice on a desktop screen: open unless they collapsed it (kept in this browser when it can be).
-  function storedFiltersCollapsed() {
+  // The viewer's own choice on a desktop screen (kept in this browser when it can be): true open, false collapsed, null
+  // none (the width decides).
+  function storedFiltersOpen() {
     try {
-      return window.localStorage?.getItem(FILTERS_COLLAPSED_STORAGE_KEY) === "1";
+      const stored = window.localStorage?.getItem(FILTERS_COLLAPSED_STORAGE_KEY);
+      return stored === "1" ? false : stored === "0" ? true : null;
     } catch (_error) {
-      return false;
+      return null;
     }
   }
 
-  function storeFiltersCollapsed(collapsed) {
+  // Only a choice that differs from this width's default is kept: collapsing at 1440px keeps the rail everywhere,
+  // opening at 1100px keeps the sidebar open everywhere, and going back to the default forgets the choice.
+  function storeFiltersOpen(open) {
     try {
-      if (collapsed) window.localStorage?.setItem(FILTERS_COLLAPSED_STORAGE_KEY, "1");
-      else window.localStorage?.removeItem(FILTERS_COLLAPSED_STORAGE_KEY);
+      if (open === Boolean(filtersOpenByDefaultMedia.matches)) window.localStorage?.removeItem(FILTERS_COLLAPSED_STORAGE_KEY);
+      else window.localStorage?.setItem(FILTERS_COLLAPSED_STORAGE_KEY, open ? "0" : "1");
     } catch (_error) {
-      // Storage unavailable (private window, blocked site data): the sidebar simply starts open next time.
+      // Storage unavailable (private window, blocked site data): the sidebar simply starts as its width has it.
     }
   }
 
-  // Where the sidebar should be with no record in the way: open on a desktop screen unless collapsed by this viewer,
-  // the rail on a tablet, closed on a phone.
+  // Where the sidebar should be with no record in the way: on a desktop screen the viewer's choice, else open from
+  // 1200px and the rail below; the rail on a tablet; closed on a phone.
   function preferredFiltersOpen() {
-    return Boolean(desktopMedia.matches) && !storedFiltersCollapsed();
+    if (!desktopMedia.matches) return false;
+    return storedFiltersOpen() ?? Boolean(filtersOpenByDefaultMedia.matches);
   }
 
   // The visible control that opens or collapses the filters (focus returns to it).
@@ -5974,7 +5985,7 @@
     if (shouldOpen && filtersDocked() && recordTakesSidebarPlace() && document.body.classList.contains("detail-open")) {
       resetDetail();
     }
-    if (remember && desktopMedia.matches) storeFiltersCollapsed(!shouldOpen);
+    if (remember && desktopMedia.matches) storeFiltersOpen(shouldOpen);
     document.body.classList.toggle("filters-open", shouldOpen);
     for (const id of ["openFiltersButton", "filterRailButton", "collapseFiltersButton"]) {
       $(id)?.setAttribute("aria-expanded", String(shouldOpen));
@@ -8458,6 +8469,7 @@
     // Crossing into a phone, tablet or desktop width puts the filters where that width has them.
     sidebarFiltersMedia.addEventListener?.("change", applyFiltersLayout);
     desktopMedia.addEventListener?.("change", applyFiltersLayout);
+    filtersOpenByDefaultMedia.addEventListener?.("change", applyFiltersLayout);
     filtersBesideRecordMedia.addEventListener?.("change", syncFilterPanel);
     // "Only human-checked" sits under Accepted: ticking it ticks Accepted too, and unticking Accepted unticks it (only
     // accepted records are human-checked, so it would leave no results).
@@ -8616,7 +8628,7 @@
       if (addressFilters?.size) applyBrowseParams(addressFilters);
       renderActiveFilters();
       renderView(viewFromLocation());
-      // The sidebar starts open on a desktop screen (unless this viewer collapsed it), as the rail on a tablet.
+      // The sidebar starts open from 1200px (unless this viewer collapsed it), as the rail below (unless they opened it).
       applyFiltersLayout();
       syncDetailPanelAccessibility();
       // Stats and Guide never download the record index; it loads when Browse is first shown or about to be.

@@ -108,10 +108,14 @@ the bottom page controls compact, with page size left and navigation right.
 
 Filters are a persistent sidebar, a grid column left of the table and never
 over it, and the results follow each change (no "Show N records" button beside
-the table). From 1024px it is open by default (256px to 1279px, 272px to 1439px,
-288px from 1440px); « in its heading collapses it to a 48px rail, a tall
-"Filters" button set vertically with the active-filter count, and a viewer's
-choice is kept in their browser (localStorage, optional). From 1024 to 1599px an
+the table). From 1200px it is open by default (256px to 1279px, 272px to 1439px,
+288px from 1440px); from 1024 to 1199px it starts as the rail, because the
+table's columns (about 905px with every name broken between words) do not fit
+beside it. « in its heading collapses it to a 48px rail, a tall "Filters"
+button set vertically with the active-filter count. A viewer's choice that
+differs from their width's default (collapsed from 1200px, opened below) is kept
+in their browser (localStorage, optional) and applies at every desktop width;
+going back to the default forgets it. From 1024 to 1599px an
 open record takes the sidebar's place: it becomes the rail and comes back where
 it was when the record closes (opening it closes the record); from 1600px the
 sidebar, the table and the record sit side by side. From 641 to 1023px it starts
