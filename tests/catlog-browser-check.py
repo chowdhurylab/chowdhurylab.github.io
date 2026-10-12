@@ -8,6 +8,7 @@ import http.server
 import json
 import os
 from pathlib import Path
+import re
 import threading
 import urllib.request
 from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
@@ -410,6 +411,131 @@ def stats_overview(manifest):
     return overview
 
 
+def check_filters(driver, browser, url, route_label):
+    """Filters in the address (#browse?...), the Human-checked filter and a range filter, on fresh page loads."""
+    wait = WebDriverWait(driver, 120)
+    base = url.split("#", 1)[0]
+
+    def open_page(address):
+        # A blank page first, so a new fragment is a full load (read on load), not an in-page jump.
+        driver.get("about:blank")
+        driver.get(address)
+        wait.until(lambda d: d.execute_script("return Boolean(window.CATLOG_STATIC_MANIFEST?.total_rows)"))
+        wait_ready()
+
+    def wait_ready():
+        wait.until(lambda d: re.fullmatch(r"[\d,]+ records?", d.find_element(By.ID, "activeSummary").text or ""))
+
+    def summary():
+        return driver.find_element(By.ID, "activeSummary").text
+
+    def fragment():
+        return urlsplit(driver.current_url).fragment
+
+    def cells(column):
+        return driver.execute_script("""
+            return [...document.querySelectorAll('#recordsBody tr[data-key] td.' + arguments[0])]
+                .map(cell => cell.textContent.trim());
+        """, column)
+
+    def chip_keys():
+        return driver.execute_script("return [...document.querySelectorAll('#activeFilters [data-filter-key]')].map(e => e.dataset.filterKey)")
+
+    def count_of(key):
+        text = driver.find_element(By.CSS_SELECTOR, f'#catalogFilters [data-count="{key}"]').get_attribute("textContent").strip()
+        return int(text.replace(",", "")) if re.fullmatch(r"[\d,]+", text) else None
+
+    try:
+        set_browse_viewport(driver, browser, 1440, 1000)
+        # 1. An address with filters opens with them set, writes itself back in the same order, and shows one chip per
+        # filter; every row fits the filters.
+        address = "#browse?ec=1.1.1&tmin=20&tmax=30&sort=kcat&rows=50"
+        open_page(base + address)
+        assert fragment() == address[1:], f"The address changed: {fragment()}"
+        values = driver.execute_script("""
+            return ['ecFilterInput', 'temperatureMinInput', 'temperatureMaxInput', 'sortSelect', 'pageSizeSelect']
+                .map(id => document.getElementById(id).value);
+        """)
+        assert values == ["1.1.1", "20", "30", "kcat", "50"], values
+        assert driver.find_element(By.CSS_SELECTOR, "th.c-kcat").get_attribute("aria-sort") == "descending"
+        assert chip_keys() == ["ec", "temperature"]
+        rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+        assert 0 < len(rows) <= 50
+        assert all(any(part == "1.1.1" or part.startswith("1.1.1.") for part in re.split(r"[;,\s]+", ec)) for ec in cells("c-ec"))
+        assert all(20 <= float(value) <= 30 for value in cells("c-temp")), cells("c-temp")
+        filtered = summary()
+        first_keys = [row.get_attribute("data-key") for row in rows]
+        # The copied address opens the same records.
+        copied = driver.current_url
+        open_page(copied)
+        assert summary() == filtered
+        assert [row.get_attribute("data-key") for row in driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")] == first_keys
+        # Back and Forward bring the filters back with the address.
+        driver.find_element(By.ID, "statsButton").click()
+        wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed())
+        driver.back()
+        wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
+        wait_ready()
+        assert summary() == filtered and fragment() == address[1:]
+        # Removing a chip removes its filter from the table and the address.
+        driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="temperature"]').click()
+        wait.until(lambda d: "tmin" not in fragment() and summary() != filtered)
+        assert chip_keys() == ["ec"]
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: fragment() == "rows=50" and not chip_keys())
+
+        # 2. Human-checked: open the docked panel (wide screens: no dialog, the table stays usable), tick it, and every row
+        # shown carries the "human-checked" tag; the count beside it is the number of records.
+        driver.find_element(By.ID, "openFiltersButton").click()
+        wait.until(lambda d: d.find_element(By.ID, "humanCheckedFilter").is_displayed())
+        assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") is None, "Wide screens dock the filters"
+        assert not driver.execute_script("return document.querySelector('.table-panel').inert")
+        assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Docked filters overflow the page"
+        wait.until(lambda d: count_of("checked") is not None)
+        checked = count_of("checked")
+        assert checked > 0, "No human-checked records counted"
+        driver.find_element(By.ID, "humanCheckedFilter").click()
+        wait.until(lambda d: summary() == f"{checked:,} records")
+        assert "checked=1" in fragment()
+        badges = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(b => b.textContent)")
+        assert badges and all("human-checked" in badge for badge in badges), "A row without the human-checked tag"
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-human-checked.png"))
+        # The marks load after the index: an address with checked=1 still opens with the same records.
+        open_page(base + "#browse?checked=1")
+        wait.until(lambda d: summary() == f"{checked:,} records")
+
+        # 3. A pH range typed into the panel: every row shown has a pH inside it, and the address carries it.
+        open_page(base)
+        driver.find_element(By.ID, "openFiltersButton").click()
+        wait.until(lambda d: d.find_element(By.ID, "phMinInput").is_displayed())
+        driver.find_element(By.ID, "phMinInput").send_keys("7")
+        driver.find_element(By.ID, "phMaxInput").send_keys("7.5", Keys.TAB)
+        wait.until(lambda d: fragment() == "browse?phmin=7&phmax=7.5")
+        wait_ready()
+        assert chip_keys() == ["ph"]
+        ph_values = cells("c-ph")
+        assert ph_values and all(7 <= float(value) <= 7.5 for value in ph_values), ph_values
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
+        if browser == "chrome":
+            # Phones keep the filters as a sheet that ends with "Show N records".
+            set_browse_viewport(driver, browser, 390, 844)
+            driver.find_element(By.ID, "openFiltersButton").click()
+            wait.until(lambda d: d.find_element(By.ID, "showResultsButton").is_displayed())
+            assert driver.find_element(By.ID, "catalogFilters").get_attribute("role") == "dialog"
+            assert driver.find_element(By.ID, "showResultsButton").text == f"Show {summary()}"
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+            driver.find_element(By.ID, "showResultsButton").click()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
+            set_browse_viewport(driver, browser, 1440, 1000)
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
+        raise
+    return {"route": route_label, "human_checked": checked, "passed": True}
+
+
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120)
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
@@ -738,6 +864,7 @@ def main():
                 if environment == "live":
                     browse_url = cache_tagged(browse_url, os.environ["GITHUB_SHA"][:12])
                 browse.append(check_browse(driver, args.browser, browse_url, f"{environment}-{route}"))
+                browse[-1]["filters"] = check_filters(driver, args.browser, browse_url, f"{environment}-{route}")
         result["browse_routes"] = browse
         (OUTPUT / f"{args.browser}-result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result))

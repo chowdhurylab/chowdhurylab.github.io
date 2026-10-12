@@ -50,12 +50,50 @@ one category per table; source categories follow the stored evidence precedence,
 not an acceptance score. Explain the categories in a native disclosure. Keep
 the bottom page controls compact, with page size left and navigation right.
 
-Filters open on request at every width. Search matches every word in any order,
-and common species names (human, mouse, yeast, E. coli); an EC number matches
-whole parts, so 1.1.1 is that subclass only. A number also finds the records of
+Filters open on request at every width. From 1280px they are a column beside
+the table (248px, 288px from 1440px; no overlay, the table stays usable) and
+the results follow each change; from 1600px they stay open beside an open
+record, below that opening one closes the other. Narrower, they are an overlay
+that ends with a "Show N records" button. The panel order: Review status (the
+three statuses, Read from the paper (CatLog v2), Human-checked: accepted records
+whose badge shows "human-checked"; its count waits for the review marks), Names
+and EC number (labelled fields), Measurement type (ticking several shows records
+with all of them), Wild type or variant (records that do not say are in
+neither), Assay conditions (temperature °C and pH, from and to, either may be
+empty; a bound that is not a number is outlined and ignored), then Cautions
+(grouped as the "!" notes) and Main source (a merged source counts for each it
+names), which start closed and open when one of theirs is set. Every option
+shows its count over all records. Each active filter and the search is a chip
+above the table that removes it, followed by Clear all; the count beside Filters
+is the number of chips. Esc closes the panel (beside an open record, the one
+holding the focus). Typing filters 180ms after the last key; the search text of
+every record is prepared in idle moments once the search box or the filters
+get focus.
+
+Browse with filters has the address #browse?key=value&... (q, status, checked,
+ec, enzyme, organism, substrate, metric, variant, tmin, tmax, phmin, phmax,
+caution, source, sort, rows, page; comma lists; unknown keys ignored). It is
+read on load and on Back and Forward, rewritten in place (never a new history
+entry) when the filters, search, sort, rows per page or page change, and gone
+when nothing is set, so a copied link opens the same records. An open record's
+#record= address takes its place until the record closes. A link to #browse?
+from Stats or the Guide opens in the page without reloading the records. Rows
+per page is remembered in this browser (localStorage, optional).
+
+Search matches every word in any order, ignoring case, accents, Greek letters
+against their names (β = beta), µ/micro/u-, dash and prime variants, and
+hyphens, spaces, commas or underscores inside a name (4-nitrophenyl = 4
+nitrophenyl; a locant, a D/L/p/o/m/n prefix or a Greek name typed as its own
+word joins the next). It also knows common species names (human, mouse, yeast,
+E. coli), as does the Organism field; an EC number matches whole parts, so
+1.1.1 is that subclass only and 1.1.1.1 never 1.1.1.10. EC 1.1.1.1, ec:1.1.1.1,
+1.1.1.- and "1." (a class) work in the search box; the EC field takes any
+number and several at once. A number also finds the records of
 that PMID, and a DOI (in full or its beginning, with or without doi.org) those
 of its paper: the index carries each record's PMIDs and DOIs from the Full data
-download of the same snapshot. At 1180px and below the header is
+download of the same snapshot. When nothing matches, the table names the
+filters that are on and offers to remove the one set last (with how many
+records that shows) or to clear everything. At 1180px and below the header is
 one grid on every view: brand and Download, the tabs on one line, then search
 (Browse only). A selected record uses a separate right
 column on desktop and a full-height dialog on smaller screens. Never put details
@@ -105,7 +143,9 @@ kept in view. With a record open, EC, T, pH and the arrow give way; Status
 stays. On phones (640px and below) each record is a card: name and EC;
 organism · substrate; kcat, Km and kcat/Km with their units as labels; status,
 °C and pH.
-Filters on phones end with a "Show N records" button.
+The filters overlay (below 1280px, phones included) ends with a "Show N
+records" button. Filter chips use the teal tint with a thin teal line, 12px
+text, and wrap within the page gutters.
 
 White and neutral surfaces carry the data. Teal marks selection and actions;
 status uses a coloured dot (the Stats outcome colours) and ink words; amber
