@@ -271,7 +271,12 @@ line once, "Table 2 row, as extracted from the paper's text", with table
 markers removed and K_M set as K<sub>m</sub>; a row of more than four cells, or
 one whose ± signs extraction dropped, is folded under "Show the line as
 extracted" with that warning); Assay conditions
-(cosubstrate, temperature, pH, other conditions as a short list, preparation);
+(cosubstrate, temperature, pH, other conditions as a short list, preparation; a
+missing temperature or pH reads "Not stated in the paper" on a record read from
+the paper and "Not recorded" on a database record, a value a flag holds back
+says why on its own row, "Not shown, the source's temperature unit is unclear
+(source note: 30 °C)", and a cofactor that is the substrate is not repeated; a
+labelled row never shows a bare dash);
 Paper and review (links; for a record read by CatLog a Method line, the short
 method sentence ending "units converted by code" or "values stored as printed"
 with a link to the Guide's method section, and a Check line, one result for

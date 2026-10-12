@@ -4834,8 +4834,10 @@
     return summary;
   }
 
+  // A labelled row of the record; a missing value reads "Not recorded", never a bare dash.
   function kv(label, value) {
-    return `<div class="kv-line"><span>${escapePublic(label)}</span><strong>${escapePublic(compactValue(value))}</strong></div>`;
+    const text = compactValue(value);
+    return `<div class="kv-line"><span>${escapePublic(label)}</span><strong>${escapePublic(text === EMPTY_VALUE ? "Not recorded" : text)}</strong></div>`;
   }
 
   function doiLink(value) {
@@ -5297,6 +5299,8 @@
       .map((flag) => ({ flag, field: valueIntegrityFlags[flag]?.field || "" }))
       .sort((a, b) => (a.field ? order.indexOf(a.field) : 9) - (b.field ? order.indexOf(b.field) : 9))
       .forEach(({ flag, field }) => {
+        // A temperature or pH flag is said on its own row, under Assay conditions.
+        if (/^(?:temperature|ph)_/.test(flag)) return;
         const unitField = (String(flag).match(/^unit_not_recorded_(\w+)$/) || [])[1];
         if (unitField && metricUnitMissing(summary, unitField, flags)) return;
         // With the source's own kcat/Km shown, the stored value's diffusion-limit flag is the same unit factor.
@@ -5669,6 +5673,51 @@
   // ---- Record panel: measurement and assay conditions ----
   // Two sections: Measurement (the values, each caution once, then, for a record read from the paper, the values as
   // printed) and Assay conditions (cosubstrate, temperature, pH, the other conditions and the preparation).
+  // The Temperature and pH rows: the value, or why there is none, said on the row itself. A record read from the paper
+  // says "Not stated in the paper", a database record "Not recorded"; a value a flag holds back says why, with what the
+  // source's note gives ("Not shown, the source's temperature unit is unclear (source note: 30 °C)").
+  const conditionFlagReasons = {
+    temperature_unit_needs_check: "the source's temperature unit is unclear",
+    temperature_value_needs_check: "the source's value is questionable",
+    temperature_invalid: "the source's value is not usable",
+    temperature_zero_celsius_needs_check: "recorded as exactly 0 °C, which may stand for a missing value",
+    ph_outside_0_14: "the source's value is outside 0–14",
+    ph_invalid: "the source's value is not usable",
+  };
+
+  function sourceNoteTemperatures(detail) {
+    const notes = (Array.isArray(detail.proof_lines) ? detail.proof_lines : []).filter((line) => typeof line === "string");
+    return [...new Set(notes.flatMap((note) => [...publicEvidenceString(note).matchAll(/(-?\d+(?:\.\d+)?)\s*°\s*C\b/g)].map((match) => `${match[1]} °C`)))];
+  }
+
+  function conditionRowValues(summary, detail, flags, reasons = {}) {
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const missing = v2Record ? "Not stated in the paper" : "Not recorded";
+    const sentence = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+    const flagged = (prefix) => [...flags].map((flag) => (flag.startsWith(prefix) ? conditionFlagReasons[flag] : "")).find(Boolean) || "";
+    const temperature = formatTemperature(summary);
+    let temperatureText = temperature !== EMPTY_VALUE ? `${temperature} °C` : "";
+    const temperatureFlag = flagged("temperature_");
+    if (!temperatureText && temperatureFlag) {
+      const kelvin = detail.temperature_k ?? summary.temperature_k;
+      const noted = sourceNoteTemperatures(detail);
+      temperatureText = kelvin != null && kelvin !== ""
+        ? `${compactValue(kelvin)} K (as recorded); ${temperatureFlag}`
+        : `Not shown, ${temperatureFlag}${noted.length ? ` (source note: ${noted.join(", ")})` : ""}`;
+    }
+    const ph = formatPh(summary);
+    let phText = ph !== EMPTY_VALUE ? ph : "";
+    const phFlag = flagged("ph_");
+    if (!phText && phFlag) {
+      const stored = detail.ph ?? summary.ph;
+      phText = stored != null && stored !== "" ? `${compactValue(stored)} (as recorded); ${phFlag}` : `Not shown, ${phFlag}`;
+    }
+    return {
+      temperature: temperatureText || (reasons.temperature ? sentence(reasons.temperature) : missing),
+      ph: phText || (reasons.ph ? sentence(reasons.ph) : missing),
+    };
+  }
+
   // The record's values with the Ki fields of its detail.
   function metricSummaryFor(summary, detail) {
     return {
@@ -5696,21 +5745,7 @@
 
   function measurementSection(summary, detail) {
     const metricSummary = metricSummaryFor(summary, detail);
-    const temperature = formatTemperature(summary);
     const flags = conditionFlags(summary, detail);
-    const hasTemperatureFlag = [...flags].some((flag) => flag.startsWith("temperature_"));
-    const hasPhFlag = [...flags].some((flag) => flag.startsWith("ph_"));
-    const temperatureValue = temperature !== EMPTY_VALUE
-      ? `${temperature} °C`
-      : (hasTemperatureFlag && (detail.temperature_k ?? summary.temperature_k) != null
-          ? `${compactValue(detail.temperature_k ?? summary.temperature_k)} K (stored)`
-          : EMPTY_VALUE);
-    const ph = formatPh(summary);
-    const phValue = ph !== EMPTY_VALUE
-      ? ph
-      : (hasPhFlag && (detail.ph ?? summary.ph) != null
-          ? `${compactValue(detail.ph ?? summary.ph)} (stored)`
-          : EMPTY_VALUE);
     const metrics = [
       ["<i>k</i><sub>cat</sub>", "kcat"],
       ["<i>K</i><sub>m</sub>", "km"],
@@ -5722,6 +5757,7 @@
     const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
     const checkContext = { hasPreparation: Boolean(conditions.preparation), hasConditions: Boolean(conditions.conditions) };
+    const { temperature: temperatureValue, ph: phValue } = conditionRowValues(summary, detail, flags, conditions.reasons);
     // A record with three dashes says so in words (some keep a Ki only).
     const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !metricHasValue(metricSummary, field));
     const emptyNote = !noKinetics
@@ -5796,10 +5832,21 @@
     const preparations = [];
     const rest = [];
     const qualified = new Map();
+    const reasons = { ph: "", temperature: "" };
     const ph = formatPh(summary);
     const temperature = formatTemperature(summary);
     conditionSegments(String(compactValue(text) === EMPTY_VALUE ? "" : compactValue(text)).trim()).forEach((segment) => {
-      let match = segment.match(/^preparation:\s*(.+)$/i);
+      // Why a pH or temperature was left blank goes on that row ("pH: not confirmed in the paper text"); a segment that
+      // only says it is not stated repeats the row.
+      let match = segment.match(/^(pH|temperature) left blank: (.+)$/i);
+      if (match) {
+        const reason = match[2].replace(/^the printed value could not be confirmed in the paper text$/i, "not confirmed in the paper text");
+        reasons[match[1].toLowerCase() === "ph" ? "ph" : "temperature"] = reason;
+        return;
+      }
+      match = segment.match(/^(?:assay )?(pH|temperature)(?: of (?:the )?(?:kinetic )?assays?)? not stated(?: in (?:this|the) paper)?$/i);
+      if (match && (match[1].toLowerCase() === "ph" ? ph : temperature) === EMPTY_VALUE) return;
+      match = segment.match(/^preparation:\s*(.+)$/i);
       if (match) {
         preparations.push(match[1]);
         return;
@@ -5829,9 +5876,13 @@
     });
     const items = rest.map((item) => (typeof item === "string" ? item : `${item.qualifier} ${item.metrics.join(", ")}`));
     const html = (value) => caretHtml(escapePublic(value));
+    // A cofactor that is the substrate itself (NADH for NADH) is already the substrate.
+    const substrate = String(summary.substrate_name || "").trim().toLowerCase();
+    const ownCofactors = cofactors.filter((item) => item.trim().toLowerCase() !== substrate);
     return {
       cosubstrate: (cosubstrates.length ? linkedKv("Cosubstrate", html(cosubstrates.join("; "))) : "")
-        + (cofactors.length ? linkedKv("Cofactor", html(cofactors.join("; "))) : ""),
+        + (ownCofactors.length ? linkedKv("Cofactor", html(ownCofactors.join("; "))) : ""),
+      reasons,
       conditions: !items.length
         ? ""
         : (items.length === 1
@@ -6137,7 +6188,7 @@
             pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
             standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
           ]
-        : [kv("PMID or DOI", "None recorded")]),
+        : [kv("PMID or DOI", "None")]),
       evidenceRow,
       // A record read by CatLog: how (Method) and what the second check found (Check); an older record: its review.
       ...(v2Record

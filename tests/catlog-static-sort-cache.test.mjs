@@ -1873,11 +1873,28 @@ const withheldMeasurementHtml = api.measurementSection(withheldConditions, {
   ph: null,
   condition_flags: withheldConditions.condition_flags,
 });
-assert.match(withheldMeasurementHtml, /Temperature recorded as exactly 0 °C; may stand for a missing value/);
-assert.match(withheldMeasurementHtml, /pH outside 0–14/);
-assert.ok(withheldMeasurementHtml.includes("<span>Temperature</span><strong>—</strong>"));
-assert.ok(withheldMeasurementHtml.includes("<span>pH</span><strong>—</strong>"));
+// A flag on the temperature or pH is said on its row, never as a bare dash; the kinetic notes stay about the values.
+assert.ok(withheldMeasurementHtml.includes("<span>Temperature</span><strong>Not shown, recorded as exactly 0 °C, which may stand for a missing value</strong>"));
+assert.ok(withheldMeasurementHtml.includes("<span>pH</span><strong>Not shown, the source&#39;s value is outside 0–14</strong>"));
+assert.doesNotMatch(withheldMeasurementHtml, /class="flag-notes"|<strong>—<\/strong>/);
 assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
+{
+  // The source's note gives the temperature it printed; a record read from the paper says what the paper does not state.
+  const unitFlag = api.measurementSection(row({ temperature_k: null, temperature_display: "n/a", condition_flags: ["temperature_unit_needs_check"] }),
+    { proof_lines: ["pH 7.4, 30°C, recombinant mutant"] });
+  assert.ok(unitFlag.includes("<span>Temperature</span><strong>Not shown, the source&#39;s temperature unit is unclear (source note: 30 °C)</strong>"));
+  const v2Missing = api.measurementSection(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null, substrate_name: "NADH" }),
+  { verification_method: "catlog_v2_read_and_independent_verify",
+    assay_conditions_summary: "pH left blank: the printed value could not be confirmed in the paper text; assay temperature not stated; buffer not stated; cofactor NADH" });
+  assert.ok(v2Missing.includes("<span>Temperature</span><strong>Not stated in the paper</strong>"));
+  assert.ok(v2Missing.includes("<span>pH</span><strong>Not confirmed in the paper text</strong>"));
+  assert.match(v2Missing, /<span>Conditions<\/span><strong>buffer not stated<\/strong>/);
+  assert.doesNotMatch(v2Missing, /left blank|assay temperature not stated|<span>Cofactor<\/span>/);
+  const dbMissing = api.measurementSection(row({ temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null }), {});
+  assert.ok(dbMissing.includes("<span>Temperature</span><strong>Not recorded</strong>"));
+  assert.ok(dbMissing.includes("<span>pH</span><strong>Not recorded</strong>"));
+}
 assert.deepEqual(withheldConditions, withheldConditionsBefore);
 
 const mergedPageRecord = api.publicSummaryRecord({
