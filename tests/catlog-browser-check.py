@@ -1899,6 +1899,20 @@ def check(driver, browser, url):
             });
         """), "Bars of one chart share one scale"
         assert driver.execute_script(STATS_AXIS_EVEN), f"Axis labels sit unevenly or touch at {width}px"
+        spacing = driver.execute_script("""
+            // 16px bars 8px apart: rows whose name fits on one line are exactly as tall as their bar.
+            const gaps = [];
+            for (const list of document.querySelectorAll('.stats-chart-rows')) {
+                const rows = [...list.children].filter(row => row.getBoundingClientRect().width);
+                rows.slice(1).forEach((row, index) => {
+                    if (rows[index].getBoundingClientRect().height > 16.5 || row.getBoundingClientRect().height > 16.5) return;
+                    gaps.push(row.querySelector('.stats-track').getBoundingClientRect().top
+                        - rows[index].querySelector('.stats-track').getBoundingClientRect().bottom);
+                });
+            }
+            return gaps;
+        """)
+        assert spacing and all(abs(gap - 8) <= 0.5 for gap in spacing), f"Bars of one-line rows sit 8px apart at {width}px: {spacing}"
         capture(f"stats-{width}")
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})

@@ -706,10 +706,11 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 /* A chart that spans the row keeps its labels near their bars. */
 .stats-wide .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
 .stats-chart-percent { --label-w:88px }
+/* Labels set on 16px lines, the bar's height, so bars of one-line rows sit 8px apart. */
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
 .stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) 96px; align-items:center; column-gap:12px }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
-.stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:anywhere }
+.stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-chart-value { color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
 .stats-track { position:relative; display:block; height:16px }
