@@ -1675,8 +1675,14 @@
     return word.text !== undefined && text.includes(word.text);
   }
 
+  // A value sort (from an address) waits for every record: a top 25 of the records loaded so far would change.
+  function sortWaitsForRecords() {
+    return !state.recordsReady && ($("sortSelect")?.value || "evidence") !== "evidence";
+  }
+
   function loadProgressText() {
-    return `Loading ${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "records" : "data chunks"}`;
+    const text = `Loading ${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "records" : "data chunks"}`;
+    return sortWaitsForRecords() ? `${text}, then sorting` : text;
   }
 
   function updateLoadProgress() {
@@ -3873,10 +3879,11 @@
     state.page = Math.min(Math.max(1, state.page), totalPages);
     syncBrowseUrl();
     const start = (state.page - 1) * state.pageSize;
-    const pageRows = currentPageRows();
+    const loading = !state.recordsReady;
+    const sortWaits = sortWaitsForRecords();
+    const pageRows = sortWaits ? [] : currentPageRows();
     const activeRowKey = activeTableRowKey(pageRows);
     state.activeRowKey = activeRowKey;
-    const loading = !state.recordsReady;
     // While the index loads in the default order with nothing filtered, the pages already drawn are final: count them
     // against every record. Otherwise the count is what has loaded so far.
     const finalPages = loading && showsWholeIndexOrder();
@@ -3900,7 +3907,7 @@
     if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0 || awaitingMarks;
     $("pageLabel").textContent = pageRows.length
       ? range
-      : "No records";
+      : state.recordsReady ? "No records" : "Loading";
     // The count beside Filters is read out when it changes; it is shown only when it says more than the page range.
     $("pageSummary").classList.toggle("visually-hidden", $("pageSummary").textContent === $("pageLabel").textContent);
     const showResults = $("showResultsButton");
@@ -3912,7 +3919,7 @@
     $("prevButton").disabled = state.page <= 1;
     // While loading, the next page opens once its rows have loaded.
     $("nextButton").disabled = loading
-      ? (state.page + 1) * state.pageSize > state.filtered.length
+      ? sortWaits || (state.page + 1) * state.pageSize > state.filtered.length
       : state.page >= totalPages;
     $("downloadPageButton").disabled = state.pageDownloadPending || !pageRows.length;
     const body = $("recordsBody");
@@ -3925,7 +3932,7 @@
       }
     }
     const focusedRowKey = state.preserveRenderedRows && body.contains?.(document.activeElement) ? state.activeRowKey : "";
-    if ((loading && !pageRows.length && !state.records.length) || awaitingMarks) {
+    if ((loading && !pageRows.length && !state.records.length) || awaitingMarks || sortWaits) {
       body.innerHTML = skeletonRowsHtml();
       fitTableColumns();
       return;
