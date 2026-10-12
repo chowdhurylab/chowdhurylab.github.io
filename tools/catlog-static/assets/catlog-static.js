@@ -3147,7 +3147,7 @@
   }
 
   function listParam(value, aliases = {}) {
-    return String(value ?? "").split(",")
+    return String(value ?? "").split(/[,|]/)
       .map((item) => item.trim().toLowerCase().replace(/[\s-]+/g, "_"))
       .filter(Boolean)
       .map((item) => aliases[item] || item);

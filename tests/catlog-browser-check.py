@@ -482,7 +482,7 @@ def check_filters(driver, browser, url, route_label):
         wait.until(lambda d: "tmin" not in fragment() and summary() != filtered)
         assert chip_keys() == ["ec"]
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
-        wait.until(lambda d: fragment() == "rows=50" and not chip_keys())
+        wait.until(lambda d: fragment() == "browse?rows=50" and not chip_keys())
 
         # 2. Human-checked: open the docked panel (wide screens: no dialog, the table stays usable), tick it, and every row
         # shown carries the "human-checked" tag; the count beside it is the number of records.
