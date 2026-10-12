@@ -1,100 +1,152 @@
-/* Design tokens: the only place colours are written as hex. Spacing uses 4/8/12/16/24/32px. */
+/* Design tokens: the only place colours are written as hex (DESIGN.md "Type And Color"). One type scale, a 4px spacing
+   grid, a neutral page with one accent, review status in the Nature BPG palette (ggsci NPG "nrc"). */
 :root {
   color-scheme:light;
-  /* Type */
-  --fs-min:11px;
-  --fs-meta:12px;
-  --fs-table:13px;
-  --fs-ui:14px;
-  --fs-stats-meta:14px;
+  /* Type: one family (the system stack), sizes 12-32px with their line heights, weights 400/500/600. */
+  --font:-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  --font-mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-12:12px; --lh-12:16px;   /* units, axis ticks, captions' data line, counts in filter options, record key */
+  --fs-13:13px; --lh-13:18px;   /* table cells, chips, record labels, figure captions, filter options */
+  --fs-14:14px; --lh-14:20px;   /* UI text, record values, record section headings, tabs */
+  --fs-16:16px; --lh-16:24px;   /* Guide body, record values-table numbers */
+  --fs-18:18px; --lh-18:24px;   /* Stats section headings */
+  --fs-20:20px; --lh-20:24px;   /* counts band numbers, record title, Stats headline line 2 */
+  --fs-24:24px; --lh-24:28px;   /* Stats page title, donut centre total */
+  --fs-32:32px; --lh-32:36px;   /* Stats headline line 1 */
+  /* Older names, on the scale. */
+  --fs-min:var(--fs-12);
+  --fs-meta:var(--fs-12);
+  --fs-table:var(--fs-13);
+  --fs-ui:var(--fs-14);
+  --fs-body:var(--fs-16);
+  --fs-h3:var(--fs-18);
+  --fs-stat:var(--fs-20);
+  --fs-h2:var(--fs-20);
+  --fs-h1:var(--fs-24);
+  /* Stats rows and notes keep their sizes until the Stats figure set replaces them. */
+  --fs-stats-meta:var(--fs-14);
   --fs-stats-label:15px;
-  --fs-body:16px;
-  --fs-h3:18px;
-  --fs-stat:20px;
-  --fs-h2:22px;
-  --fs-h1:28px;
-  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
-  --font-mono:ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
-  /* Spacing */
+  /* Spacing: a 4px grid. Radius 4px for controls, 0 for bars. */
   --sp-1:4px;
   --sp-2:8px;
   --sp-3:12px;
   --sp-4:16px;
   --sp-5:24px;
   --sp-6:32px;
-  --radius:6px;
-  /* Neutrals (green-grey) */
+  --sp-7:48px;
+  --radius:4px;
+  /* Layout: header 56px, counts band 64px, sidebar and record columns (DESIGN.md "Layout"). */
+  --header-h:56px;
+  --band-h:64px;
+  --gutter:24px;
+  --sidebar-w:288px;
+  --rail-w:48px;
+  --panel-w:480px;
+  /* Neutrals (WCAG 2.x on white: text 16.5:1, text-2 9.5:1, muted 5.8:1). */
   --text:#172120;
   --text-2:#3d4845;
-  --text-3:#5f6b68;
+  --muted:#5c6865;
   --line:#d3dcd7;
   --line-soft:#e7ece9;
-  --line-strong:#aebdb7;
-  --bg:#f4f6f5;
-  --surface:#ffffff;
-  --surface-2:#f8faf9;
-  --surface-3:#fafbfa;
-  --hover:#f1f8f6;
-  /* Brand */
-  --link:#245f58;
-  --teal:#28736a;
-  --teal-dark:#1f6f66;
-  --teal-darker:#195c55;
-  --teal-soft:#e6f1ee;
-  --teal-line:#b5d3cc;
-  --teal-tint:#f5faf8;
-  --focus:#2d766d;
-  --amber:#a96d28;
-  --amber-soft:#fff3e4;
-  --amber-tint:#fffbf5;
-  --amber-line:#e3c08a;
-  --amber-text:#8a5a14;
-  --amber-ink:#4f3a21;
-  --red-text:#a94448;
+  --line-strong:#aebdb7;      /* control outlines */
+  --bg:#ffffff;
+  --surface-2:#f6f8f7;
+  --surface-3:#fafbfa;        /* every other table row */
+  --hover:#f1f6f4;
+  /* One accent: links, selection, buttons, focus (7.4:1; white on it 7.4:1). */
+  --accent:#245f58;
+  --accent-hover:#1b4a44;
+  --accent-tint:#e8f2ef;      /* accent on tint 6.4:1, text on tint 14.4:1 */
+  --accent-line:#b5d3cc;
+  /* Review status: a dot (opaque) beside the word; figure fills are the same hex at alpha 0.6 (…99) with a 1px opaque
+     outline. Salmon and tan dots get a darker 1px ring. */
+  --st-accepted:#3C5488;      /* BPG navy 7.5:1 */
+  --st-pending:#F39B7F;       /* BPG salmon 2.1:1 */
+  --st-pending-ring:#c4664a;  /* 3.9:1 */
+  --st-unverified:#8491B4;    /* BPG slate 3.1:1 */
+  --st-not-reviewed:#B09C85;  /* BPG tan 2.6:1 */
+  --st-not-reviewed-ring:#8c7a64; /* 4.1:1 */
+  --st-disputed:#DC0000;      /* BPG dark red 5.2:1 */
+  --st-accepted-fill:#3C548899;
+  --st-pending-fill:#F39B7F99;
+  --st-unverified-fill:#8491B499;
+  --st-not-reviewed-fill:#B09C8599;
+  --st-disputed-fill:#DC000099;
+  /* Filter ticks: the status colour, or a darker form where it is light (3:1 or more on white). */
+  --tick-unverified:#6a7499;  /* 4.6:1 */
+  /* Human-checked: a check and the word in green (5.9:1 on white). */
+  --checked:#17733a;
+  /* Cautions: the "!" and caution notes (5.9:1; on the tint 5.5:1). */
+  --caution:#8a5a14;
+  --caution-tint:#fff6e8;
+  --caution-line:#e3c08a;
+  --caution-ink:#4f3a21;
+  /* Database comparison and kinds of change (Stats figures 3-5, the record's comparison with the databases). */
+  --cmp-same:#00A087;         /* BPG green: same number as a database */
+  --cmp-differs:#7E6148;      /* BPG brown 5.7:1: a different number / value changed */
+  --cmp-new:#4DBBD5;          /* BPG cyan: no database value / value added */
+  --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
+  --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
+  --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
+  --cmp-same-fill:#00A08799;
+  --cmp-differs-fill:#7E614899;
+  --cmp-new-fill:#4DBBD599;
+  --chg-magnitude-fill:#E64B3599;
+  --chg-precision-fill:#91D1C299;
+  --bar-neutral-fill:#7d888599;
+  /* Shadows only on the phone sheet, dialogs and menus. */
   --overlay:rgba(20,34,31,0.24);
   --shadow:0 10px 26px rgba(20,34,31,0.09);
   --shadow-panel:0 0 36px rgba(20,34,31,0.16);
-  /* Status dots: the Stats outcome colours */
-  --status-accepted:#339cff;
-  --status-pending:#f3883b;
-  --status-unverified:#858f8c;
-  --status-not-reviewed:#9b79ec;
-  --status-disputed:#e02e2a;
-  /* Filter ticks: darker forms of the status colours, so a ticked box stands out on white (4.5:1 or more) and never
-     looks disabled (a white check sits on the fill in Safari) */
-  --tick-accepted:#1f6fc5;
-  --tick-pending:#b85d12;
-  --tick-unverified:#6b7572;
-  /* Human-checked: a check and the tag in green (5.9:1 on white, 5.1:1 on the selected row) */
-  --checked:#17733a;
-  /* Stats palette */
-  --stats-blue:#339cff;
-  --stats-orange:#f3883b;
-  --stats-grey-dark:#858f8c;
-  --stats-purple:#9b79ec;
-  --stats-red:#e02e2a;
-  --stats-teal:#277c86;
-  /* Older names */
+  /* Older names. */
+  --text-3:var(--muted);
+  --surface:var(--bg);
+  --link:var(--accent);
+  --teal:var(--accent);
+  --teal-dark:var(--accent);
+  --teal-darker:var(--accent-hover);
+  --teal-soft:var(--accent-tint);
+  --teal-line:var(--accent-line);
+  --teal-tint:var(--accent-tint);
+  --focus:var(--accent);
+  --amber:var(--caution);
+  --amber-soft:var(--caution-tint);
+  --amber-tint:var(--caution-tint);
+  --amber-line:var(--caution-line);
+  --amber-text:var(--caution);
+  --amber-ink:var(--caution-ink);
+  --red-text:var(--st-disputed);
+  --status-accepted:var(--st-accepted);
+  --status-pending:var(--st-pending);
+  --status-unverified:var(--st-unverified);
+  --status-not-reviewed:var(--st-not-reviewed);
+  --status-disputed:var(--st-disputed);
+  --tick-accepted:var(--st-accepted);
+  --tick-pending:var(--st-pending-ring);
+  --stats-blue:var(--st-accepted);
+  --stats-orange:var(--st-pending);
+  --stats-grey-dark:var(--st-unverified);
+  --stats-purple:var(--st-not-reviewed);
+  --stats-red:var(--st-disputed);
+  --stats-teal:var(--bar-neutral);
   --ink:var(--text);
-  --muted:var(--text-3);
-  --quiet:var(--text-3);
-  --blue:var(--link);
-  --accent:var(--link);
-  --panel:var(--surface);
+  --quiet:var(--muted);
+  --blue:var(--accent);
+  --panel:var(--bg);
   --panel-muted:var(--surface-2);
-  --orange:var(--amber);
-  --orange-soft:var(--amber-soft);
-  --red:var(--red-text);
+  --orange:var(--caution);
+  --orange-soft:var(--caution-tint);
+  --red:var(--st-disputed);
 }
 * { box-sizing:border-box }
 html, body { background:var(--bg) }
-body { margin:0; color:var(--text); font-family:var(--font); font-size:var(--fs-ui); font-variant-numeric:tabular-nums; line-height:1.45 }
+body { margin:0; color:var(--text); font-family:var(--font); font-size:var(--fs-14); font-variant-numeric:tabular-nums lining-nums; line-height:var(--lh-14); letter-spacing:0 }
 button, input, select { font:inherit }
 strong, b { font-weight:600 }
 sub, sup { font-size:max(var(--fs-min),0.75em); line-height:0 }
 a { color:var(--link); text-decoration:none }
 a:hover { text-decoration:underline }
-:where(a,button,input,select,summary):focus-visible { outline:3px solid var(--focus); outline-offset:2px }
+:where(a,button,input,select,summary):focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 [hidden], .hidden { display:none !important }
 .muted { color:var(--text-3) }
 .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
@@ -124,7 +176,7 @@ body:is(.stats-open,.guide-open,.filters-open) .skip-link { display:none }
 .nav-external > span[aria-hidden] { color:var(--text-3) }
 .nav-external-short { display:none }
 .global-search { display:grid; grid-template-columns:minmax(0,1fr) auto; justify-self:end; width:min(460px,100%); align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); padding:0 8px 0 12px }
-.global-search:focus-within { border-color:var(--teal); box-shadow:0 0 0 3px rgba(40,115,106,0.2) }
+.global-search:focus-within { border-color:var(--accent); outline:2px solid var(--accent); outline-offset:2px }
 .global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-ui) }
 .global-search input::placeholder { color:var(--text-3) }
 .global-search kbd { min-width:20px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); color:var(--text-3); text-align:center; font:var(--fs-meta)/18px var(--font-mono) }
@@ -335,7 +387,7 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 .c-substrate, .c-ph { border-right:1px solid var(--line) }
 /* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
 .c-substrate.has-note .clamp-2 { max-height:17px; -webkit-line-clamp:1 }
-.condition-note { display:block; overflow:hidden; color:var(--text-3); font-size:var(--fs-min); line-height:14px; text-overflow:ellipsis; white-space:nowrap }
+.condition-note { display:block; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
 
@@ -352,7 +404,7 @@ th.c-open, td.c-open { padding-left:0; padding-right:12px; text-align:right }
 tbody tr { height:44px; cursor:pointer; transition:background-color 120ms ease }
 tbody tr:nth-child(even) { background:var(--surface-3) }
 tbody tr:hover, tbody tr:focus-visible { background:var(--hover) }
-tbody tr:focus-visible { position:relative; z-index:1; outline:3px solid var(--teal); outline-offset:-2px }
+tbody tr:focus-visible { position:relative; z-index:1; outline:2px solid var(--accent); outline-offset:-2px }
 
 /* The open record's row (painted on the cells,so the sticky column carries it). */
 tbody tr.selected td { background:var(--teal-soft) }
@@ -362,7 +414,7 @@ tbody tr.selected .row-arrow { color:var(--teal-dark) }
 .primary-cell strong { color:var(--link); font-weight:500 }
 /* A variant's mutation: its own line under the name, never clipped by it; the name then keeps one line, so every row
    keeps one height. Phones show it after organism · substrate (td.c-form, hidden in the table). */
-.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--teal-line); border-radius:4px; background:var(--teal-soft); padding:1px 4px; color:var(--link); font-size:var(--fs-min); font-weight:500; line-height:12px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--teal-line); border-radius:4px; background:var(--teal-soft); padding:1px 4px; color:var(--accent); font-size:var(--fs-12); font-weight:500; line-height:13px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
 td.c-form { display:none }
@@ -405,14 +457,16 @@ td.c-form { display:none }
 
 /* Status: a coloured dot and the word, then whole-word tags on a second line; a fixed height keeps rows even. */
 td.c-status { text-align:left }
-.state-badge { display:grid; grid-template-rows:18px auto; align-content:center; justify-items:start; height:32px; min-width:0; max-width:100%; color:var(--text); font-size:var(--fs-table); line-height:18px; white-space:nowrap }
+.state-badge { display:grid; grid-template-rows:18px auto; align-content:center; justify-items:start; height:34px; min-width:0; max-width:100%; color:var(--text); font-size:var(--fs-table); line-height:18px; white-space:nowrap }
 .state-label { display:inline-flex; align-items:center; gap:6px; font-weight:500 }
-.state-label::before { content:""; flex:0 0 8px; height:8px; border-radius:50%; background:var(--status-color,var(--status-unverified)) }
-.state-badge.accepted { --status-color:var(--status-accepted) }
-.state-badge.review { --status-color:var(--status-pending) }
-.state-badge.unresolved { --status-color:var(--status-unverified) }
-.state-badge.disputed { --status-color:var(--status-disputed) }
-.state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; padding-left:14px; color:var(--text-3); font-size:var(--fs-min); line-height:14px }
+.state-label::before { content:""; flex:0 0 8px; height:8px; border-radius:50%; background:var(--status-color,var(--st-unverified)); box-shadow:inset 0 0 0 1px var(--status-ring,transparent) }
+/* The dot is the exact status's colour (Not checked: Unverified slate, Not reviewed tan); the word says the group. */
+.state-badge.accepted { --status-color:var(--st-accepted) }
+.state-badge.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
+.state-badge.unresolved { --status-color:var(--st-unverified) }
+.state-badge.unresolved[data-status="mathematically_inferred"] { --status-color:var(--st-not-reviewed); --status-ring:var(--st-not-reviewed-ring) }
+.state-badge.disputed { --status-color:var(--st-disputed) }
+.state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; padding-left:14px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 
 /* No spaces in the separator, so each tag stays one box. */
 .state-tag + .state-tag::before { content:"\00b7"; margin:0 3px }
@@ -447,7 +501,7 @@ body.detail-open .detail-panel { display:block }
 .kv-line > span { color:var(--text-3); font-size:var(--fs-meta) }
 .kv-line > strong { min-width:0; color:var(--text); font-weight:400; overflow-wrap:break-word; hyphens:auto }
 .reference-list { display:grid; gap:2px }
-.reference-link { text-decoration-line:underline; text-decoration-color:rgba(36,95,88,0.34); text-underline-offset:2px }
+.reference-link { text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
 .reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--text-3); font-size:var(--fs-min); text-decoration:none }
 
 .measurement-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid var(--line); border-bottom:1px solid var(--line) }
