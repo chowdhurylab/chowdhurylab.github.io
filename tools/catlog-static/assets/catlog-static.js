@@ -43,6 +43,9 @@
     missingRecordKey: "",
     // The page an address names (#browse?...&page=), until the records it counts have loaded.
     pendingPage: 0,
+    // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
+    humanMarksLoaded: false,
+    humanMarksVersion: 0,
   };
   const EMPTY_VALUE = "—";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
@@ -109,6 +112,42 @@
     { value: "km", label: "Has Km", labelHtml: "Has <i>K</i><sub>m</sub>", field: "km" },
     { value: "kcat_over_km", label: "Has kcat/Km", labelHtml: "Has <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", field: "kcat_over_km" },
   ];
+
+  // Wild type or variant, as the table's enzyme-form tag says it; records that do not say are in neither.
+  const variantFilters = [
+    { value: "wild", label: "Wild type", bit: 1 },
+    { value: "variant", label: "Variant", bit: 2 },
+  ];
+
+  // Cautions, grouped as the table's "!" markers and the record's notes show them (conditionFlags).
+  const cautionFilters = [
+    { value: "differs", label: "kcat/Km values differ", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values differ", bit: 1, title: "The printed kcat/Km and kcat ÷ Km differ" },
+    { value: "units", label: "Unit or magnitude to check", bit: 2, title: "Km above 10 M, kcat above 10⁷ s⁻¹, a kcat/Km unit that may be off by 1000×, or kcat/Km above the diffusion limit" },
+    { value: "unit_missing", label: "Unit not recorded", bit: 4, title: "A kcat or Km without a recorded unit" },
+    { value: "temperature", label: "Temperature to check", bit: 8, title: "A temperature value or unit to check against the source" },
+    { value: "none", label: "No caution", bit: 16, title: "Records without any caution" },
+  ];
+  const CAUTION_FLAG_BITS = {
+    kcat_over_km_quotient_mismatch: 1,
+    km_magnitude_needs_check: 2,
+    kcat_magnitude_needs_check: 2,
+    kcat_over_km_unit_mismatch: 2,
+    efficiency_above_diffusion_limit: 2,
+  };
+
+  // A record's main source (source_db); a merged value such as "sabio_rk;brenda" counts for each source it names.
+  const sourceFilters = [
+    { value: "paper", label: "From paper (CatLog v2 / primary literature)", bit: 1, title: "Values read from the paper: CatLog v2 records and other primary-literature records" },
+    { value: "brenda", label: "BRENDA", bit: 2 },
+    { value: "sabio_rk", label: "SABIO-RK", bit: 4 },
+    { value: "oed", label: "Open Enzyme Database", bit: 8 },
+    { value: "uniprot", label: "UniProt", bit: 16 },
+    { value: "skid", label: "SKiD", bit: 32 },
+  ];
+  const SOURCE_TOKENS = {
+    primary_paper_direct: "paper", primary_literature: "paper", paper: "paper", brenda: "brenda", sabio_rk: "sabio_rk",
+    sabio: "sabio_rk", sabiork: "sabio_rk", oed: "oed", open_enzyme_database: "oed", uniprot: "uniprot", skid: "skid",
+  };
 
   const tierOrder = {
     paper_grounded_high_confidence: 0,
@@ -1015,7 +1054,10 @@
           { actionLabel: "Try again", onAction: reloadCatalogPage },
         );
       });
-      loadHumanReviewMarks().then(applyHumanReviewMarks).catch(() => {});
+      loadHumanReviewMarks().then(() => {
+        humanReviewMarksArrived();
+        applyHumanReviewMarks();
+      }).catch(() => {});
     }
     return recordsLoad;
   }
@@ -1752,6 +1794,8 @@
       this._sortTemperature = null;
       this._sortPh = null;
       this._search = null;
+      this._variantBits = null;
+      this._cautionBits = null;
       this._pmids = pmidsAt >= 0 ? v[pmidsAt] : null;
       this._dois = doisAt >= 0 ? v[doisAt] : null;
     }
@@ -2054,6 +2098,8 @@
       _sortPh,
       _search,
       _search_text,
+      _variantBits,
+      _cautionBits,
       _pmids,
       _dois,
       next_best_action,
@@ -2665,45 +2711,168 @@
     });
   }
 
+  // Human-checked: accepted records a human reviewer checked, the same rule as the status badge's "human-checked" tag
+  // (statusBadge). The marks arrive after the index; until then the count waits.
+  function isHumanChecked(row) {
+    return (row._recordState || recordStateForRow(row)) === "accepted" && Boolean(humanReviewMark(row)?.checked);
+  }
+
+  function humanReviewMarksArrived() {
+    state.humanMarksLoaded = true;
+    state.humanMarksVersion += 1;
+    updateFilterCounts();
+    if ($("humanCheckedFilter")?.checked && state.records.length) applyFiltersInBackground({ resetPage: false });
+  }
+
+  function rowVariantBits(row) {
+    if (row._variantBits == null) {
+      const label = enzymeFormLabel(row);
+      row._variantBits = label === "Wild type" ? 1 : label.startsWith("Variant") ? 2 : 0;
+    }
+    return row._variantBits;
+  }
+
+  // The caution groups of a record's flags (as the table shows them), or "No caution" when it has none.
+  function rowCautionBits(row) {
+    if (row._cautionBits == null) {
+      const flags = conditionFlags(row);
+      let bits = 0;
+      flags.forEach((flag) => {
+        bits |= CAUTION_FLAG_BITS[flag]
+          || (flag.startsWith("unit_not_recorded") ? 4 : 0)
+          || (flag.startsWith("temperature_") ? 8 : 0);
+      });
+      row._cautionBits = flags.size ? bits : 16;
+    }
+    return row._cautionBits;
+  }
+
+  const sourceBitsByValue = new Map();
+
+  function rowSourceBits(row) {
+    const value = String(row.source_db || "");
+    let bits = sourceBitsByValue.get(value);
+    if (bits === undefined) {
+      bits = 0;
+      value.toLowerCase().split(/[;,+/|]+/).forEach((part) => {
+        const key = SOURCE_TOKENS[part.trim().replace(/[\s-]+/g, "_")];
+        if (key) bits |= sourceFilters.find((item) => item.value === key).bit;
+      });
+      sourceBitsByValue.set(value, bits);
+    }
+    return bits;
+  }
+
+  // Counts beside the filters, over every record (like the review-status counts), worked out once per loaded index.
+  const facetCountCache = { key: "", counts: null };
+
+  function facetCounts() {
+    const key = `${state.recordsGeneration}:${state.humanMarksVersion}`;
+    if (facetCountCache.key === key) return facetCountCache.counts;
+    const counts = {
+      v2: 0, checked: 0, temperature: 0, ph: 0,
+      metric: Object.fromEntries(measurementFilters.map((item) => [item.value, 0])),
+      variant: { wild: 0, variant: 0, none: 0 },
+      caution: Object.fromEntries(cautionFilters.map((item) => [item.value, 0])),
+      source: Object.fromEntries(sourceFilters.map((item) => [item.value, 0])),
+    };
+    for (const row of state.records) {
+      if (isV2Row(row)) counts.v2 += 1;
+      if (state.humanMarksLoaded && isHumanChecked(row)) counts.checked += 1;
+      measurementFilters.forEach((item) => {
+        if (row[item.field] != null) counts.metric[item.value] += 1;
+      });
+      const variant = rowVariantBits(row);
+      counts.variant[variant === 1 ? "wild" : variant === 2 ? "variant" : "none"] += 1;
+      const caution = rowCautionBits(row);
+      cautionFilters.forEach((item) => {
+        if (caution & item.bit) counts.caution[item.value] += 1;
+      });
+      const source = rowSourceBits(row);
+      sourceFilters.forEach((item) => {
+        if (source & item.bit) counts.source[item.value] += 1;
+      });
+      if ((row._sortTemperature ?? temperatureValue(row)) != null) counts.temperature += 1;
+      if ((row._sortPh ?? phValue(row)) != null) counts.ph += 1;
+    }
+    facetCountCache.key = key;
+    facetCountCache.counts = counts;
+    return counts;
+  }
+
+  function checkRowHtml({ name, value, label, labelHtml, title = "", checked = false, count, className = "", id = "" }) {
+    return `
+      <label class="check-row${className ? ` ${className}` : ""}"${title ? ` title="${escapeHtml(title)}"` : ""}>
+        <input${id ? ` id="${id}"` : ""} type="checkbox" name="${name}" value="${escapeHtml(value)}"${checked ? " checked" : ""} />
+        <span>${labelHtml || escapeHtml(label)}</span>
+        <strong data-count="${escapeHtml(count)}">${EMPTY_VALUE}</strong>
+      </label>`;
+  }
+
+  // The checklists are built once (so a ticked box keeps its focus); their counts follow the loaded records.
+  let filterChecklistsBuilt = false;
+
   function setupFilters() {
-    const hadStateFilters = Boolean(document.querySelector('input[name="recordState"]'));
-    const hadMeasurementFilters = Boolean(document.querySelector('input[name="measurement"]'));
-    const selectedStates = new Set(selectedCheckboxes("recordState"));
-    const selectedMeasurements = new Set(selectedCheckboxes("measurement"));
-    const v2Only = Boolean($("sourceV2Filter")?.checked);
-    const stateCounts = countsByState();
-    $("statusChecklist").innerHTML = recordStates.map((item) => `
-      <label class="check-row ${item.className}" title="${escapeHtml(stateDescriptions[item.value])}">
-        <input type="checkbox" name="recordState" value="${escapeHtml(item.value)}" ${!hadStateFilters || selectedStates.has(item.value) ? "checked" : ""} />
-        <span>${escapeHtml(item.label)}</span>
-        <strong>${state.recordsReady ? formatInteger(stateCounts[item.value] || 0) : EMPTY_VALUE}</strong>
-      </label>
-    `).join("") + `
-      <label class="check-row source-v2" title="${escapeHtml(v2Sentence)}">
-        <input id="sourceV2Filter" type="checkbox" name="recordSource" value="v2" ${v2Only ? "checked" : ""} />
-        <span>Read from the paper (CatLog v2)</span>
-        <strong>${state.recordsReady ? formatInteger(state.records.filter(isV2Row).length) : EMPTY_VALUE}</strong>
-      </label>
+    if (!filterChecklistsBuilt) {
+      filterChecklistsBuilt = true;
+      $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
+        name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
+        checked: true, count: `state:${item.value}`, className: item.className,
+      })).join("") + checkRowHtml({
+        name: "recordSource", value: "v2", id: "sourceV2Filter", label: "Read from the paper (CatLog v2)",
+        title: v2Sentence, count: "v2", className: "source-v2",
+      }) + checkRowHtml({
+        name: "humanChecked", value: "1", id: "humanCheckedFilter", label: "Human-checked",
+        title: "Accepted records a human reviewer checked.", count: "checked", className: "human-checked",
+      }) + `
       <details class="status-guide">
         <summary>Status definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (no paper linked):</strong> ${escapeHtml(identityOnlyTrustNote)}</p>` : ""}`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>${item.value === "accepted" ? `<p><strong>Accepted · from paper:</strong> ${escapeHtml(v2Sentence)}</p><p><strong>Accepted (no paper linked):</strong> ${escapeHtml(identityOnlyTrustNote)}</p><p><strong>Human-checked:</strong> Accepted records a human reviewer checked.</p>` : ""}`).join("")}
         </div>
       </details>
     `;
+      $("measurementChecklist").innerHTML = measurementFilters.map((item) => checkRowHtml({
+        name: "measurement", value: item.value, labelHtml: item.labelHtml, count: `metric:${item.value}`,
+      })).join("") + `<p class="filter-note">Ticking more than one shows records with all of them.</p>`;
+      if ($("variantChecklist")) {
+        $("variantChecklist").innerHTML = variantFilters.map((item) => checkRowHtml({
+          name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
+        })).join("") + `<p class="filter-note">Records that do not say are in neither (<span data-count="variant:none">${EMPTY_VALUE}</span>).</p>`;
+      }
+      if ($("cautionChecklist")) {
+        $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
+          name: "caution", value: item.value, label: item.label, labelHtml: item.labelHtml, title: item.title,
+          count: `caution:${item.value}`,
+        })).join("");
+      }
+      if ($("sourceChecklist")) {
+        $("sourceChecklist").innerHTML = sourceFilters.map((item) => checkRowHtml({
+          name: "source", value: item.value, label: item.label, title: item.title || "", count: `source:${item.value}`,
+        })).join("");
+      }
+    }
+    updateFilterCounts();
+  }
+
+  function filterCountText(key) {
     const coverage = (manifest.summary || {}).coverage || {};
-    const manifestMetricCounts = {
-      kcat: coverage.with_kcat,
-      km: coverage.with_km,
-      kcat_over_km: coverage.with_kcat_over_km,
-    };
-    $("measurementChecklist").innerHTML = measurementFilters.map((item) => `
-      <label class="check-row">
-        <input type="checkbox" name="measurement" value="${escapeHtml(item.value)}" ${hadMeasurementFilters && selectedMeasurements.has(item.value) ? "checked" : ""} />
-        <span>${item.labelHtml}</span>
-        <strong>${formatCount(state.recordsReady ? metricCoverage(state.records, item.field) : manifestMetricCounts[item.field])}</strong>
-      </label>
-    `).join("");
+    const [group, value] = String(key).split(":");
+    if (group === "metric" && !state.recordsReady) {
+      return formatCount({ kcat: coverage.with_kcat, km: coverage.with_km, kcat_over_km: coverage.with_kcat_over_km }[value]);
+    }
+    if (!state.recordsReady || (group === "checked" && !state.humanMarksLoaded)) return EMPTY_VALUE;
+    if (group === "state") return formatInteger(countsByState()[value] || 0);
+    const counts = facetCounts();
+    if (group === "range") return formatInteger(counts[value] || 0);
+    if (value === undefined) return formatInteger(counts[group] || 0);
+    return formatInteger(counts[group]?.[value] || 0);
+  }
+
+  function updateFilterCounts() {
+    document.querySelectorAll?.("#catalogFilters [data-count]").forEach((element) => {
+      element.textContent = filterCountText(element.dataset.count);
+    });
   }
 
   function selectedCheckboxes(name) {
@@ -2720,13 +2889,50 @@
       q: text("globalSearchInput"),
       states: statesBuilt ? selectedCheckboxes("recordState") : recordStates.map((item) => item.value),
       v2: Boolean($("sourceV2Filter")?.checked),
+      checked: Boolean($("humanCheckedFilter")?.checked),
       ec: text("ecFilterInput"),
       enzyme: text("enzymeFilterInput"),
       organism: text("organismFilterInput"),
       substrate: text("substrateFilterInput"),
       metrics: selectedCheckboxes("measurement"),
+      variants: selectedCheckboxes("variant"),
+      tmin: text("temperatureMinInput"),
+      tmax: text("temperatureMaxInput"),
+      phmin: text("phMinInput"),
+      phmax: text("phMaxInput"),
+      cautions: selectedCheckboxes("caution"),
+      sources: selectedCheckboxes("source"),
       sort: $("sortSelect")?.value || "evidence",
     };
+  }
+
+  // A typed bound: "25", "25.5", "25,5" or "-4"; null when empty, NaN when it is not a number.
+  function parseFilterNumber(text) {
+    const value = String(text ?? "").trim().replace(/\s+/g, "").replace(/[\u2212\u2013]/g, "-").replace(",", ".")
+      .replace(/(°c|°|c)$/i, "");
+    if (!value) return null;
+    return /^-?(\d+\.?\d*|\.\d+)$/.test(value) ? Number(value) : Number.NaN;
+  }
+
+  // A range from two typed bounds (either may be empty), low to high whichever way they were typed; null when neither
+  // is a number.
+  function numberRange(minText, maxText) {
+    let min = parseFilterNumber(minText);
+    let max = parseFilterNumber(maxText);
+    if (!Number.isFinite(min)) min = null;
+    if (!Number.isFinite(max)) max = null;
+    if (min == null && max == null) return null;
+    if (min != null && max != null && min > max) [min, max] = [max, min];
+    return { min, max };
+  }
+
+  function inRange(value, range) {
+    if (value == null || !Number.isFinite(value)) return false;
+    return (range.min == null || value >= range.min - 1e-9) && (range.max == null || value <= range.max + 1e-9);
+  }
+
+  function bitsFor(items, values) {
+    return items.reduce((bits, item) => bits | (values.includes(item.value) ? item.bit : 0), 0);
   }
 
   function currentFilters(controls = filterControlState()) {
@@ -2740,13 +2946,20 @@
       substrate: foldSearch(controls.substrate),
       recordStates: controls.states,
       v2Only: controls.v2,
+      humanChecked: controls.checked,
       metrics: controls.metrics,
+      variantBits: bitsFor(variantFilters, controls.variants),
+      temperature: numberRange(controls.tmin, controls.tmax),
+      ph: numberRange(controls.phmin, controls.phmax),
+      cautionBits: bitsFor(cautionFilters, controls.cautions),
+      sourceBits: bitsFor(sourceFilters, controls.sources),
       sort: controls.sort,
     };
   }
 
-  // Browse with filters has the address #browse?key=value&... (keys: q, status, ec, enzyme, organism, substrate, metric,
-  // sort, rows, page; lists are comma separated; unknown keys are ignored). It is read when the page opens and on Back
+  // Browse with filters has the address #browse?key=value&... (keys: q, status, checked, ec, enzyme, organism, substrate,
+  // metric, variant, tmin, tmax, phmin, phmax, caution, source, sort, rows, page; lists are comma separated; unknown
+  // keys are ignored). It is read when the page opens and on Back
   // and Forward, and rewritten in place (never added to history) whenever the filters, search, sort, page size or page
   // change, so a copied address opens the same records. Browse without filters has no hash. While a record is open the
   // address is the record's (#record=); closing it gives the address back to the filters.
@@ -2790,6 +3003,15 @@
   }
 
   const METRIC_ALIASES = { "kcat/km": "kcat_over_km", kcatkm: "kcat_over_km", kcat_km: "kcat_over_km", efficiency: "kcat_over_km" };
+  const VARIANT_ALIASES = { wild_type: "wild", wildtype: "wild", wt: "wild", mutant: "variant", variants: "variant" };
+  const CAUTION_ALIASES = {
+    differ: "differs", kcat_over_km_quotient_mismatch: "differs", unit: "units", magnitude: "units",
+    unit_not_recorded: "unit_missing", no_unit: "unit_missing", temp: "temperature", no_caution: "none",
+  };
+  const SOURCE_ALIASES = {
+    primary_paper_direct: "paper", primary_literature: "paper", v2: "paper", sabio: "sabio_rk", sabiork: "sabio_rk",
+    open_enzyme_database: "oed",
+  };
 
   function encodeBrowseValue(value) {
     return encodeURIComponent(value)
@@ -2809,11 +3031,23 @@
     const allStates = controls.states.length === recordStates.length;
     if (!controls.states.length) params.push(["status", ""]);
     else if (!allStates || controls.v2) add("status", [...(allStates ? [] : controls.states), ...(controls.v2 ? ["v2"] : [])].join(","));
+    if (controls.checked) add("checked", "1");
     add("ec", controls.ec);
     add("enzyme", controls.enzyme);
     add("organism", controls.organism);
     add("substrate", controls.substrate);
     add("metric", controls.metrics.join(","));
+    add("variant", controls.variants.join(","));
+    const bound = (text) => {
+      const value = parseFilterNumber(text);
+      return Number.isFinite(value) ? String(value) : "";
+    };
+    add("tmin", bound(controls.tmin));
+    add("tmax", bound(controls.tmax));
+    add("phmin", bound(controls.phmin));
+    add("phmax", bound(controls.phmax));
+    add("caution", controls.cautions.join(","));
+    add("source", controls.sources.join(","));
     if (controls.sort && controls.sort !== "evidence") add("sort", controls.sort);
     if (state.pageSize !== PAGE_SIZES[0]) add("rows", state.pageSize);
     const page = state.pendingPage || state.page;
@@ -2831,6 +3065,30 @@
     });
   }
 
+  const RANGE_INPUT_IDS = ["temperatureMinInput", "temperatureMaxInput", "phMinInput", "phMaxInput"];
+
+  // A bound that is not a number is marked (and left out of the filter).
+  function syncRangeValidity() {
+    RANGE_INPUT_IDS.forEach((id) => {
+      const input = $(id);
+      if (!input) return;
+      if (Number.isNaN(parseFilterNumber(input.value))) input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+    });
+  }
+
+  // A section a filter is set in opens, so nothing active is hidden in a closed section.
+  function openActiveFilterSections() {
+    document.querySelectorAll?.("#catalogFilters .filter-section").forEach((section) => {
+      const active = [...section.querySelectorAll("input")].some((input) => (
+        input.type === "checkbox" ? input.checked && input.name !== "recordState" : Boolean(String(input.value || "").trim())
+      ));
+      if (!active || section.classList.contains("open")) return;
+      section.classList.add("open");
+      section.querySelector(".filter-section-title")?.setAttribute("aria-expanded", "true");
+    });
+  }
+
   // Sets every control from an address (keys it leaves out are cleared); the caller applies the filters.
   function applyBrowseParams(params) {
     const setText = (id, value) => {
@@ -2845,11 +3103,23 @@
       input.checked = !noStates && (!states.length || states.includes(input.value));
     });
     if ($("sourceV2Filter")) $("sourceV2Filter").checked = status.includes("v2");
+    if ($("humanCheckedFilter")) {
+      $("humanCheckedFilter").checked = ["1", "true", "yes", "on"].includes(String(params.get("checked") ?? "").trim().toLowerCase());
+    }
     setText("ecFilterInput", params.get("ec"));
     setText("enzymeFilterInput", params.get("enzyme"));
     setText("organismFilterInput", params.get("organism"));
     setText("substrateFilterInput", params.get("substrate"));
     setCheckboxes("measurement", listParam(params.get("metric"), METRIC_ALIASES));
+    setCheckboxes("variant", listParam(params.get("variant"), VARIANT_ALIASES));
+    setText("temperatureMinInput", params.get("tmin"));
+    setText("temperatureMaxInput", params.get("tmax"));
+    setText("phMinInput", params.get("phmin"));
+    setText("phMaxInput", params.get("phmax"));
+    syncRangeValidity();
+    setCheckboxes("caution", listParam(params.get("caution"), CAUTION_ALIASES));
+    setCheckboxes("source", listParam(params.get("source"), SOURCE_ALIASES));
+    openActiveFilterSections();
     if ($("sortSelect")) {
       $("sortSelect").value = normalizedSortName(String(params.get("sort") || "evidence").trim().toLowerCase());
       syncSortHeaders();
@@ -2909,11 +3179,65 @@
     }
   }
 
-  function renderActiveFilterCount(filters) {
-    const textFilterCount = [filters.q, filters.ec, filters.enzyme, filters.organism, filters.substrate]
-      .filter(Boolean).length;
-    const statusFilterCount = filters.recordStates.length === recordStates.length ? 0 : 1;
-    const count = textFilterCount + statusFilterCount + (filters.v2Only ? 1 : 0) + filters.metrics.length;
+  function rangeLabel(name, range, unit = "") {
+    if (range.min != null && range.max != null) {
+      return range.min === range.max ? `${name} ${range.min}${unit}` : `${name} ${range.min}–${range.max}${unit}`;
+    }
+    return range.min != null ? `${name} ≥ ${range.min}${unit}` : `${name} ≤ ${range.max}${unit}`;
+  }
+
+  function uncheck(name, value) {
+    document.querySelectorAll?.(`input[name="${name}"]`).forEach((input) => {
+      if (input.value === value) input.checked = false;
+    });
+  }
+
+  function clearInputs(...ids) {
+    ids.forEach((id) => {
+      if ($(id)) $(id).value = "";
+    });
+    syncRangeValidity();
+  }
+
+  // Every active filter and the search, in panel order, each with a way to remove it (the chips above the table, the
+  // count beside Filters and the empty-results note).
+  function activeFilterItems(controls = filterControlState()) {
+    const items = [];
+    const add = (key, label, clear, labelHtml = "") => items.push({ key, label, labelHtml: labelHtml || escapeHtml(label), clear });
+    if (controls.q) add("q", `Search: ${controls.q}`, () => clearInputs("globalSearchInput"));
+    if (controls.states.length !== recordStates.length) {
+      const names = controls.states.map((value) => stateConfig(value).label);
+      add("status", `Status: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
+    }
+    if (controls.v2) add("v2", "Read from the paper (CatLog v2)", () => uncheck("recordSource", "v2"));
+    if (controls.checked) add("checked", "Human-checked", () => uncheck("humanChecked", "1"));
+    if (controls.ec) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
+    if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
+    if (controls.organism) add("organism", `Organism: ${controls.organism}`, () => clearInputs("organismFilterInput"));
+    if (controls.substrate) add("substrate", `Substrate: ${controls.substrate}`, () => clearInputs("substrateFilterInput"));
+    measurementFilters.filter((item) => controls.metrics.includes(item.value)).forEach((item) => {
+      add(`metric:${item.value}`, item.label, () => uncheck("measurement", item.value), item.labelHtml);
+    });
+    variantFilters.filter((item) => controls.variants.includes(item.value)).forEach((item) => {
+      add(`variant:${item.value}`, item.label, () => uncheck("variant", item.value));
+    });
+    const temperature = numberRange(controls.tmin, controls.tmax);
+    if (temperature) add("temperature", rangeLabel("T", temperature, " °C"), () => clearInputs("temperatureMinInput", "temperatureMaxInput"));
+    const ph = numberRange(controls.phmin, controls.phmax);
+    if (ph) add("ph", rangeLabel("pH", ph), () => clearInputs("phMinInput", "phMaxInput"));
+    cautionFilters.filter((item) => controls.cautions.includes(item.value)).forEach((item) => {
+      const label = item.value === "none" ? item.label : `Caution: ${item.label}`;
+      const labelHtml = item.value === "none" ? "" : `Caution: ${item.labelHtml || escapeHtml(item.label)}`;
+      add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
+    });
+    sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
+      add(`source:${item.value}`, `Source: ${item.value === "paper" ? "from paper" : item.label}`, () => uncheck("source", item.value));
+    });
+    return items;
+  }
+
+  function renderActiveFilterCount() {
+    const count = activeFilterItems().length;
     const badge = $("activeFilterCount");
     if (!badge) return;
     badge.textContent = count ? String(count) : "";
@@ -2958,14 +3282,21 @@
     if (!fieldContains(row, "enzyme_display_name", filters.enzyme)) return false;
     if (!fieldContains(row, "organism", filters.organism)) return false;
     if (!fieldContains(row, "substrate_name", filters.substrate)) return false;
-    if (filters.metrics.length) {
+    // Has kcat, Has Km, Has kcat/Km: a record has every value ticked.
+    if (filters.metrics?.length) {
       const metricFields = {
         kcat: "kcat",
         km: "km",
         kcat_over_km: "kcat_over_km",
       };
-      if (!filters.metrics.some((metric) => row[metricFields[metric]] != null)) return false;
+      if (!filters.metrics.every((metric) => row[metricFields[metric]] != null)) return false;
     }
+    if (filters.humanChecked && !isHumanChecked(row)) return false;
+    if (filters.variantBits && !(rowVariantBits(row) & filters.variantBits)) return false;
+    if (filters.temperature && !inRange(row._sortTemperature ?? temperatureValue(row), filters.temperature)) return false;
+    if (filters.ph && !inRange(row._sortPh ?? phValue(row), filters.ph)) return false;
+    if (filters.cautionBits && !(rowCautionBits(row) & filters.cautionBits)) return false;
+    if (filters.sourceBits && !(rowSourceBits(row) & filters.sourceBits)) return false;
     return true;
   }
 
@@ -3168,7 +3499,7 @@
     ) return false;
 
     state.filterFailure = "";
-    renderActiveFilterCount(filters);
+    renderActiveFilterCount();
     state.filtered = orderedRecords.filter((row) => rowMatches(row, filters));
     if (resetPage) state.page = 1;
     if (state.pendingPage && state.recordsReady) {
@@ -3271,10 +3602,12 @@
     $("activeSummary").textContent = state.recordsReady
       ? `${formatInteger(state.filtered.length)} records`
       : `${formatInteger(state.filtered.length)} available`;
+    // Human-checked needs the review marks, which arrive after the index: until then the table waits for them.
+    const awaitingMarks = !pageRows.length && state.recordsReady && !state.humanMarksLoaded && Boolean($("humanCheckedFilter")?.checked);
     $("pageSummary").textContent = pageRows.length
       ? (loading ? loadingSummary : range)
-      : (state.recordsReady ? "No matching records" : loadProgressText());
-    if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0;
+      : (awaitingMarks ? "Loading review marks" : state.recordsReady ? "No matching records" : loadProgressText());
+    if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0 || awaitingMarks;
     $("pageLabel").textContent = pageRows.length
       ? range
       : "No records";
@@ -3302,7 +3635,7 @@
       }
     }
     const focusedRowKey = state.preserveRenderedRows && body.contains?.(document.activeElement) ? state.activeRowKey : "";
-    if (loading && !pageRows.length && !state.records.length) {
+    if ((loading && !pageRows.length && !state.records.length) || awaitingMarks) {
       body.innerHTML = skeletonRowsHtml();
       fitTableColumns();
       return;
@@ -3371,10 +3704,8 @@
 
   function showsWholeIndexOrder() {
     if (state.indexOrder !== DEFAULT_INDEX_ORDER) return false;
-    const filters = currentFilters();
-    return filters.sort === "evidence"
-      && !filters.q && !filters.ec && !filters.enzyme && !filters.organism && !filters.substrate
-      && filters.recordStates.length === recordStates.length && !filters.v2Only && !filters.metrics.length;
+    const controls = filterControlState();
+    return controls.sort === "evidence" && !activeFilterItems(controls).length;
   }
 
   // Column widths follow the page. Values, EC, T, pH and Status are as wide as their widest entry and never wrap. A name
@@ -4722,6 +5053,9 @@
     document.querySelectorAll('input[name="measurement"]').forEach((input) => {
       input.checked = false;
     });
+    ["variant", "caution", "source"].forEach((name) => setCheckboxes(name, []));
+    clearInputs(...RANGE_INPUT_IDS);
+    if ($("humanCheckedFilter")) $("humanCheckedFilter").checked = false;
     if ($("sourceV2Filter")) $("sourceV2Filter").checked = false;
     $("sortSelect").value = "evidence";
     syncSortHeaders();
@@ -4924,6 +5258,22 @@
     });
     $("measurementChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
+    });
+    ["variantChecklist", "cautionChecklist", "sourceChecklist"].forEach((id) => {
+      $(id)?.addEventListener("change", () => applyFiltersInBackground());
+    });
+    // Range bounds apply a moment after typing stops, and at once on Enter or when the field is left.
+    RANGE_INPUT_IDS.forEach((id) => {
+      const input = $(id);
+      if (!input) return;
+      input.addEventListener("input", () => {
+        syncRangeValidity();
+        scheduleFilters();
+      });
+      input.addEventListener("change", () => {
+        window.clearTimeout(state.filterTimer);
+        applyFiltersInBackground();
+      });
     });
     $("clearButton").addEventListener("click", clearFilters);
     $("clearResultsButton")?.addEventListener("click", () => {

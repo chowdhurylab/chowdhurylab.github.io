@@ -118,24 +118,52 @@
               <div class="check-stack" id="statusChecklist"></div>
             </div>
             <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">EC number <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <input id="ecFilterInput" type="search" placeholder="Filter by EC number" aria-label="Filter by EC number" />
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Enzyme <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <input id="enzymeFilterInput" type="search" placeholder="Filter by enzyme" aria-label="Filter by enzyme" />
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Organism <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <input id="organismFilterInput" type="search" placeholder="Filter by organism" aria-label="Filter by organism" />
-            </div>
-            <div class="filter-section open">
-              <button class="filter-section-title" type="button" aria-expanded="true">Substrate <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <input id="substrateFilterInput" type="search" placeholder="Filter by substrate" aria-label="Filter by substrate" />
+              <button class="filter-section-title" type="button" aria-expanded="true">Names and EC number <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div class="field-grid">
+                <label for="ecFilterInput">EC number</label>
+                <input id="ecFilterInput" type="search" placeholder="1.1.1 or 1.1.1.1" autocomplete="off" />
+                <label for="enzymeFilterInput">Enzyme</label>
+                <input id="enzymeFilterInput" type="search" placeholder="Any part of the name" autocomplete="off" />
+                <label for="organismFilterInput">Organism</label>
+                <input id="organismFilterInput" type="search" placeholder="E. coli, human, ..." autocomplete="off" />
+                <label for="substrateFilterInput">Substrate</label>
+                <input id="substrateFilterInput" type="search" placeholder="Any part of the name" autocomplete="off" />
+              </div>
             </div>
             <div class="filter-section open">
               <button class="filter-section-title" type="button" aria-expanded="true">Measurement type <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               <div class="check-stack" id="measurementChecklist"></div>
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Wild type or variant <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div class="check-stack" id="variantChecklist"></div>
+            </div>
+            <div class="filter-section open">
+              <button class="filter-section-title" type="button" aria-expanded="true">Assay conditions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div class="range-stack">
+                <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
+                  <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
+                  <strong data-count="range:temperature" title="Records that give an assay temperature">—</strong>
+                  <input id="temperatureMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="Temperature from, °C" />
+                  <span class="range-dash" aria-hidden="true">–</span>
+                  <input id="temperatureMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="Temperature to, °C" />
+                </div>
+                <div class="range-row" role="group" aria-labelledby="phRangeLabel">
+                  <span id="phRangeLabel" class="range-label">pH</span>
+                  <strong data-count="range:ph" title="Records that give an assay pH">—</strong>
+                  <input id="phMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="pH from" />
+                  <span class="range-dash" aria-hidden="true">–</span>
+                  <input id="phMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="pH to" />
+                </div>
+              </div>
+            </div>
+            <div class="filter-section">
+              <button class="filter-section-title" type="button" aria-expanded="false">Cautions <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div class="check-stack" id="cautionChecklist"></div>
+            </div>
+            <div class="filter-section">
+              <button class="filter-section-title" type="button" aria-expanded="false">Main source <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div class="check-stack" id="sourceChecklist"></div>
             </div>
             <div class="filter-footer">
               <button id="showResultsButton" class="button" type="button">Show records</button>

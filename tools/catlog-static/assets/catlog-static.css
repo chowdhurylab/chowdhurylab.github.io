@@ -191,9 +191,20 @@ body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-even
 .chevron { flex:0 0 12px; width:12px; height:12px; transition:transform 160ms ease }
 .filter-section-title .chevron { color:var(--text-3) }
 .filter-section:not(.open) .chevron, .download-menu[open] .chevron, .snapshot-band.expanded .chevron { transform:rotate(180deg) }
-.filter-section:not(.open) .check-stack, .filter-section:not(.open) input { display:none }
-.filter-section input[type="search"], .records-tools select, .pagination select { width:100%; min-height:34px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); color:var(--text); padding:6px 8px; font-size:var(--fs-table) }
-.filter-section input[type="search"]:focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--teal) }
+.filter-section:not(.open) > :not(.filter-section-title) { display:none }
+.filter-section input:is([type="search"],[type="text"]), .records-tools select, .pagination select { width:100%; min-width:0; min-height:34px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); color:var(--text); padding:6px 8px; font-size:var(--fs-table) }
+.filter-section input:is([type="search"],[type="text"]):focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--teal) }
+.filter-section input[aria-invalid="true"] { border-color:var(--red-text) }
+/* Names and EC number: a label beside each field. */
+.field-grid { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:6px 8px }
+.field-grid label { color:var(--text-2); font-size:var(--fs-table) }
+/* Assay conditions: a label and its count, then from and to. */
+.range-stack { display:grid; gap:10px }
+.range-row { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:4px 6px }
+.range-label { grid-column:1 / 3; color:var(--text); font-size:var(--fs-table) }
+.range-row > strong { grid-column:3; justify-self:end; color:var(--text-3); font-size:var(--fs-meta); font-weight:400 }
+.range-dash { color:var(--text-3); font-size:var(--fs-table) }
+.filter-note { margin:0; color:var(--text-3); font-size:var(--fs-meta); line-height:1.4 }
 .check-stack { display:grid; gap:4px }
 .check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:8px; color:var(--text); font-size:var(--fs-table) }
 .check-row input { width:14px; height:14px; margin:0; accent-color:var(--teal) }
