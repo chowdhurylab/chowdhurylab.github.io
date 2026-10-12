@@ -52,6 +52,9 @@
     filtersAwayForRecord: null,
   };
   const EMPTY_VALUE = "—";
+  // What a reader sees when a record's file cannot be used: it belongs to another snapshot, or lacks the record.
+  const PAGE_OUT_OF_DATE = "This page is out of date. Reload to update it.";
+  const RECORD_NOT_LOADED = "This record could not be loaded.";
   const SOURCE_LICENSE_NOTE = "Source licenses are recorded in source_license; merged records may list multiple licenses. Check those terms before reuse.";
   const LOAD_RETRY_DELAYS = [2000, 5000, 10000];
   const SORT_RUN_SIZE = 4096;
@@ -1366,7 +1369,7 @@
           if (!expectedGeneration || actualGeneration !== expectedGeneration) {
             discardDetailShard(src);
             script.remove();
-            reject(new Error(`Detail shard ${src} does not match the CatLog source generation`));
+            reject(new Error(PAGE_OUT_OF_DATE));
             return;
           }
         }
@@ -1408,7 +1411,7 @@
       throw new Error(`Detail shard ${src} has an invalid header`);
     }
     if (header.source_sha256 !== String(manifest.source_sha256 || "")) {
-      throw new Error(`Detail shard ${src} does not match the CatLog source generation`);
+      throw new Error(PAGE_OUT_OF_DATE);
     }
 
     const shard = Object.create(null);
@@ -1920,15 +1923,14 @@
     return document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
   }
 
-  // What a visitor reads when loading fails: a page older than the data it finds says so plainly; the technical detail
-  // (which file, which check) stays in the console.
-  const OUT_OF_DATE_MESSAGE = "This page is out of date. Reload to update it.";
+  // What a visitor reads when loading fails: a page older than the data it finds says so plainly (PAGE_OUT_OF_DATE);
+  // the technical detail (which file, which check) stays in the console.
 
   function publicLoadMessage(message) {
     const text = String(message || "");
     if (/does not match the CatLog source generation|cannot read CatLog index version|use different shard sizes|CatLog index is missing/.test(text)) {
-      if (text !== OUT_OF_DATE_MESSAGE) console.warn(`CatLog: ${text}`);
-      return OUT_OF_DATE_MESSAGE;
+      if (text !== PAGE_OUT_OF_DATE) console.warn(`CatLog: ${text}`);
+      return PAGE_OUT_OF_DATE;
     }
     if (/^Detail shard /.test(text)) {
       console.warn(`CatLog: ${text}`);
@@ -2420,7 +2422,7 @@
     const detail = shard[row.record_key];
     if (!detail || typeof detail !== "object") {
       state.loadedScripts.delete(row.detail_shard);
-      throw new Error(`Detail shard ${row.detail_shard} does not contain ${row.record_key}`);
+      throw new Error(RECORD_NOT_LOADED);
     }
     return detail;
   }
@@ -4835,6 +4837,8 @@
     } catch (error) {
       if (state.selectedKey !== key) return;
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
+      // A record file from another snapshot needs the page reloaded; anything else can be tried again.
+      const outOfDate = String(error?.message || "") === PAGE_OUT_OF_DATE;
       $("detailContent").innerHTML = `
         <div class="detail-top">
           <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
@@ -4842,13 +4846,13 @@
           ${detailSubtitleHtml(row)}
         </div>
         <div class="detail-load-error" role="alert">
-          <strong>Record details could not be loaded.</strong>
-          <span>The summary row is still available in the table.</span>
-          <button id="retryDetailButton" class="button secondary" type="button">Try again</button>
+          <strong>${escapeHtml(outOfDate ? PAGE_OUT_OF_DATE : RECORD_NOT_LOADED)}</strong>
+          <span>The table still shows its values.</span>
+          <button id="retryDetailButton" class="button secondary" type="button">${outOfDate ? "Reload" : "Try again"}</button>
         </div>
       `;
       $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
-      $("retryDetailButton").addEventListener("click", () => selectRecord(key));
+      $("retryDetailButton").addEventListener("click", () => (outOfDate ? reloadCatalogPage() : selectRecord(key)));
       if (restoreFocus) focusDetailHeading(key);
     }
   }
@@ -6744,7 +6748,7 @@
           window.location.replace(url.href);
           return;
         }
-        throw new Error(OUT_OF_DATE_MESSAGE);
+        throw new Error(PAGE_OUT_OF_DATE);
       }
       renderSummary();
       renderDownloadMetadata();

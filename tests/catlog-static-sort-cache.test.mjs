@@ -708,7 +708,7 @@ window.setTimeout = (callback) => {
 const scriptsBeforeGenerationFailure = injectedScriptCount;
 await assert.rejects(
   api.detailForRow({ detail_shard: generationCheckedShard, record_key: "checked" }),
-  /does not match the CatLog source generation/,
+  /This page is out of date\. Reload to update it\./,
 );
 window.setTimeout = originalSetTimeout;
 assert.equal(injectedScriptCount, scriptsBeforeGenerationFailure + 4, "generation mismatch should use the existing retry budget");
@@ -981,7 +981,7 @@ window.setTimeout = (callback, delay) => {
 try {
   await assert.rejects(
     api.detailForRow({ detail_shard: compressedWrongGenerationShard, record_key: "wrong-generation" }),
-    /does not match the CatLog source generation/,
+    /This page is out of date\. Reload to update it\./,
   );
 } finally {
   window.setTimeout = originalSetTimeout;
@@ -1071,7 +1071,7 @@ for (let index = 0; index < api.DETAIL_SHARD_CACHE_LIMIT; index += 1) {
 }
 await assert.rejects(
   api.detailForRow({ detail_shard: "data/details-missing-0.js", record_key: "not-present" }),
-  /does not contain not-present/,
+  /This record could not be loaded\./,
 );
 assert.equal(api.state.loadedScripts.has("data/details-missing-0.js"), false, "a missing record should remain reloadable");
 assert.equal(Object.keys(window.CATLOG_DETAIL_SHARDS).length, api.DETAIL_SHARD_CACHE_LIMIT);
