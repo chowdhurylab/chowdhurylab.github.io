@@ -202,6 +202,12 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
   .summary-grid { gap:16px }
   .snapshot-meta { gap:12px; padding-left:16px }
 }
+/* Just above the tablet layout, with a filter on ("Matching records"), tighter still, so the date keeps its line. */
+@media (min-width: 1181px) and (max-width: 1239px) {
+  .snapshot-overview { column-gap:12px }
+  .summary-grid { gap:12px }
+  .snapshot-meta { gap:8px; padding-left:12px }
+}
 
 /* Workbench: filters (overlay), table, open record. */
 .workbench { display:grid; grid-template-columns:minmax(0,1fr); align-items:stretch; flex:1; min-height:340px }
