@@ -155,6 +155,7 @@
     kcat_magnitude_needs_check: 2,
     kcat_over_km_unit_mismatch: 2,
     efficiency_above_diffusion_limit: 2,
+    printed_unit_prefix_differs: 2,
   };
 
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
@@ -262,6 +263,8 @@
     km_magnitude_needs_check: "Km above 10 M; the unit may be wrong",
     kcat_magnitude_needs_check: "kcat above 10⁸ s⁻¹; the unit may be wrong",
     efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
+    // CatLog's flag for a value stored in another concentration unit than the paper prints (name to be confirmed).
+    printed_unit_prefix_differs: "The paper prints another concentration unit than the one CatLog uses (printed unit differs).",
     temperature_value_needs_check: "Temperature value questionable",
     temperature_unit_needs_check: "Temperature unit questionable",
     temperature_invalid: "Temperature value is not usable",
@@ -6460,7 +6463,9 @@
     const flags = conditionFlags(summary, detail);
     const consistent = consistentEfficiency(metricSummary, detail, flags);
     const unitCautions = unitPrefixCautions(metricSummary, proof);
-    const notes = flagNotes(metricSummary, detail, flags, consistent);
+    // CatLog's flag for a printed unit that differs: the notes on each such value (below) say which and why.
+    const noteFlags = unitCautions.length ? new Set([...flags].filter((flag) => flag !== "printed_unit_prefix_differs")) : flags;
+    const notes = flagNotes(metricSummary, detail, noteFlags, consistent);
     const listedNote = listedEfficiencyNote(metricSummary, detail, flags);
     if (listedNote) notes.push({ id: `detailFlagNote${notes.length + 1}`, field: "kcat_over_km", short: "kcat/Km mismatch", text: listedNote });
     // Named by its value ("Km: The paper prints µM; ..."), as the other notes name theirs.

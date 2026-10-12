@@ -2316,6 +2316,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
   assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores s⁻¹ mM⁻¹, 1000-fold apart/);
+  // CatLog's own flag for it (printed_unit_prefix_differs) is a unit caution; the per-value notes say it, once.
+  const flaggedBoth = { ...bothSummary, condition_flags: ["printed_unit_prefix_differs"] };
+  assert.equal(api.rowCautionBits(flaggedBoth), 2, "counted under Possible unit or magnitude error");
+  const flaggedBothHtml = api.valuesSection(flaggedBoth, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM")] });
+  assert.doesNotMatch(flaggedBothHtml, /another concentration unit/);
+  assert.match(flaggedBothHtml, /Km: The paper prints μM; CatLog stores mM/);
+  assert.match(api.valuesSection(row({ record_key: "flag-only", condition_flags: ["printed_unit_prefix_differs"] }), {}),
+    /<li id="detailFlagNote1"[^>]*><span class="value-flag" aria-hidden="true"><\/span><span>The paper prints another concentration unit than the one CatLog uses \(printed unit differs\)\.<\/span><\/li>/);
   // The Method line never says "values stored as printed" above such a note (0f2107bac841d82f).
   api.renderDetail(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
