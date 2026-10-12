@@ -1664,7 +1664,8 @@ function row(overrides = {}) {
   assert.match(qualityChart, /--stats-boxes:3/);
   api.renderGuideMethod();
   assert.equal(element("guideMethodAudits").textContent, "742 values re-checked against their papers by a separate AI auditor that tries to find errors; 2 were wrong (0.3%) and removed. As of Oct 11, 2026.");
-  assert.match(element("guideMethodHuman").textContent, /^1 accepted records are human-checked: a human reviewer approved every value they show\. In the earlier catalog, 9 of 2,431 values/);
+  // the comparison with human reviewers comes first, then the human-checked count
+  assert.match(element("guideMethodHuman").textContent, /^In the earlier catalog, 9 of 2,431 values.* 1 accepted records are human-checked: a human reviewer approved every value they show\.$/);
   // Numbers that do not hold together are not shown: the share correct never appears without the label errors.
   runtimeManifest.summary.overview = { ...overview, quality: { audit_values: 5, audit_wrong: 6, compared_values_v1: 10, wrong_v1: 1,
     v2_approved_total: 4, v2_found: 3, v2_differences_checked: 2, v2_wrong: 2 } };
