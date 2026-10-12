@@ -2431,6 +2431,10 @@
   // page as JSON with every field (from the records' detail files). The CSV keeps the stored digits, the catalog units
   // and the words the table shows.
   const DOWNLOAD_PAGE_LABEL = "<strong>This page (JSON)</strong><span>Every field of the records on this page</span>";
+  // Plain-text unit for a file: s^(-1)*mM^(-1) -> s^-1 mM^-1.
+  function plainUnit(value) {
+    return String(value || "").replace(/\^\(([−-]?\d+(?:\.\d+)?)\)/g, "^$1").replace(/\*/g, " ").trim();
+  }
   const CSV_COLUMNS = [
     ["record_key", (row) => row.record_key],
     ["enzyme_display_name", (row) => row.enzyme_display_name],
@@ -5215,6 +5219,12 @@
     return numberHtml(metricDisplay(row, field), figures ? { figures } : undefined);
   }
 
+  // The same, as text (the report email quotes the numbers the record shows).
+  function panelValueText(row, field) {
+    const figures = displayFigures(row, field);
+    return numberText(metricDisplay(row, field), figures ? { figures } : undefined);
+  }
+
   // ---- Record panel: kcat/Km as the sources list it ----
   // A merged older record whose sources list their own kcat/Km: those values, by source and unit, in the source's name.
   const LISTED_EFFICIENCY_UNIT_KEYS = new Set(["s-1mm-1", "mm-1s-1", "1/mm1/s", "1/s1/mm", "1/mm/s", "1/(mms)", "1/(smm)"]);
@@ -6100,17 +6110,15 @@
     `;
   }
 
-  // Plain-text unit for an e-mail: s^(-1)*mM^(-1) -> s^-1 mM^-1.
-  function plainUnit(value) {
-    return String(value || "").replace(/\^\(([−-]?\d+(?:\.\d+)?)\)/g, "^$1").replace(/\*/g, " ").trim();
-  }
 
-  // "Report a problem": an e-mail to the lab with the record ID, the snapshot and the values shown.
-  function reportProblemHref(summary, pmids, { dois = [], standInIds = [] } = {}) {
+
+  // "Report a problem": an email to the lab with the record ID, the snapshot and the values as the record shows them
+  // (shown: a value the record shows in place of the stored one, such as the source's own kcat/Km).
+  function reportProblemHref(summary, pmids, { dois = [], standInIds = [], shown = {} } = {}) {
     const key = summary.record_key || summary.measurement_key || "";
     const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"]]
       .filter(([field]) => metricHasValue(summary, field))
-      .map(([field, label]) => [label, metricDisplay(summary, field), plainUnit(metricUnit(summary, field))].filter(Boolean).join(" "));
+      .map(([field, label]) => [label, field in shown ? numberText(shown[field]) : panelValueText(summary, field), unitText(metricUnit(summary, field))].filter(Boolean).join(" "));
     const about = [
       summary.enzyme_display_name,
       summary.organism,
@@ -6194,6 +6202,14 @@
     return license && !/^see source$/i.test(license) ? license : "See the source database's terms";
   }
 
+  // The paper's title and year, when the record carries them (paper_title; paper_year, year or publication_year).
+  function paperTitleText(summary, detail) {
+    const title = publicEvidenceString(String(detail.paper_title ?? summary.paper_title ?? "")).trim();
+    if (!title) return "";
+    const year = String(detail.paper_year ?? detail.year ?? detail.publication_year ?? summary.paper_year ?? "").trim();
+    return /^\d{4}$/.test(year) ? `${title} (${year})` : title;
+  }
+
   // What the Check line needs: whether Preparation and Conditions rows exist (corrections point to them) and which values
   // carry a caution (the line points to their notes).
   function v2CheckOptions(summary, detail, proof) {
@@ -6235,7 +6251,9 @@
     // A CatLog v2 record's values are one table, in Measurement; an older record keeps its notes, here.
     const v2Proof = v2ProofFacts(summary, detail);
     const v2Facts = v2Proof?.facts || null;
+    const paperTitle = paperTitleText(summary, detail);
     const paperRows = [
+      paperTitle ? kv("Paper", paperTitle) : "",
       ...(paperIds.length || dois.length
         ? [
             dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
@@ -6267,6 +6285,9 @@
       ? ""
       : `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(proofHeading)}</summary><div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`;
     const dataOrigin = publicEvidenceString(detail.data_origin);
+    // The values the record shows where they differ from the stored ones (the source's own kcat/Km), for the report email.
+    const consistentShown = measurementNotes(summary, detail).consistent;
+    const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
     // The order: what was measured (values, cautions, the paper's own numbers), under which conditions, where it comes
     // from and how it was checked, which protein and substrate structure, then the source details.
     $("detailContent").innerHTML = `
@@ -6297,7 +6318,7 @@
 
       <div class="detail-actions">
         <button id="downloadSelectedJson" class="button secondary" type="button">Download record</button>
-        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids, { dois, standInIds }))}">Report a problem</a>
+        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids, { dois, standInIds, shown: shownValues }))}">Report a problem</a>
       </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);

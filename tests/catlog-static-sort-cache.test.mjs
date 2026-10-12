@@ -2226,6 +2226,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span>Name from<\/span><strong>BRENDA recommended name<\/strong>/);
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
 }
+// The report email quotes the numbers as the record shows them; the paper's title and year lead Paper and review.
+{
+  api.renderDetail(row({ record_key: "report-numbers", kcat: 7.333, km: 0.5, kcat_over_km: 14.666, kcat_display: "7.333",
+    km_display: "0.5", kcat_over_km_display: "14.666", kcat_over_km_origin: "calculated", kcat_unit: "s^(-1)", km_unit: "mM",
+    kcat_over_km_unit: "s^(-1)*mM^(-1)" }), { supporting_pmids: ["2936344"], paper_title: "Probing an invariant His", paper_year: 2019 });
+  const html = element("detailContent").innerHTML;
+  const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  assert.match(body, /kcat 7\.333 s⁻¹; Km 0\.5 mM; kcat\/Km 15 s⁻¹ mM⁻¹; PMID 2936344/);
+  assert.doesNotMatch(body, /14\.666/);
+  assert.match(html, /<h3>Paper and review<\/h3>\s*<div class="detail-kv"><div class="kv-line"><span>Paper<\/span><strong>Probing an invariant His \(2019\)<\/strong><\/div>/);
+  api.renderDetail(row({ record_key: "no-title" }), {});
+  assert.doesNotMatch(element("detailContent").innerHTML, /<span>Paper<\/span>/);
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.

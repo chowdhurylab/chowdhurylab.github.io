@@ -277,7 +277,8 @@ the paper and "Not recorded" on a database record, a value a flag holds back
 says why on its own row, "Not shown, the source's temperature unit is unclear
 (source note: 30 °C)", and a cofactor that is the substrate is not repeated; a
 labelled row never shows a bare dash);
-Paper and review (links; for a record read by CatLog a Method line, the short
+Paper and review (the paper's title and year when the record carries them;
+links; for a record read by CatLog a Method line, the short
 method sentence ending "units converted by code" or "values stored as printed"
 with a link to the Guide's method section, and a Check line, one result for
 every value ("All values confirmed.", "Unit set to mM for every value.") or a
@@ -303,7 +304,8 @@ at 16px so the header that stays in view stays short; "Unknown" EC or organism
 reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
 says so (or that it stores a Ki only); a missing sequence or SMILES reads
 "None"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
-link, and Report a problem names the DOI when there is no PMID. A flagged value
+link, and Report a problem names the DOI when there is no PMID and quotes the
+values as the record shows them. A flagged value
 carries a small "!" button that moves to its note; nothing is readable only on
 hover. A value whose printed concentration unit is not the one CatLog read it in
 (µM printed, mM used) is such a caution: its note says whether kcat ÷ Km shows
