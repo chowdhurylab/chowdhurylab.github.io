@@ -2985,7 +2985,7 @@
     const boxes = [];
     if (fromPaper !== null && fromPaper !== undefined) {
       boxes.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
-        <p>${escapeHtml(v2Sentence)} <a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers →</a></p>
+        <p>${escapeHtml(v2Sentence)} <a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers <span aria-hidden="true">→</span></a></p>
         <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
     }
     const audit = auditFacts(overview);

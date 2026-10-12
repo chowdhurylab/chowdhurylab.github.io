@@ -1621,7 +1621,7 @@ function row(overrides = {}) {
   assert.deepEqual(headings(), ["Review result", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
     "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Source"]);
   assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
-  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads papers →<\/a>/);
+  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads papers <span aria-hidden="true">→<\/span><\/a>/);
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /#browse\?source=paper">Browse these records/);
   assert.match(chart, /#browse\?checked=1">Browse these records/);
