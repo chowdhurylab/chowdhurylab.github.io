@@ -1280,6 +1280,8 @@ assert.equal(document.title, "Team | CatLog");
   assert.doesNotMatch(team, /Claude|Codex|Anthropic|OpenAI|GPT|Dr\.|Prof|PhD|independent/);
   assert.match(team, /<strong>Supantha<\/strong> builds CatLog and turns findings into better rules/);
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
+  // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
+  assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
   assert.match(team, /<animateMotion dur="24s"/, "Dots move round the loop unless the viewer asks for less motion");
   assert.equal((team.match(/class="team-loop team-loop-(wide|narrow)"/g) || []).length, 2);
   const numbers = api.teamNumbers();
@@ -1621,6 +1623,8 @@ function row(overrides = {}) {
   assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2"[\s\S]*?As printed/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers/, "No lead without agreement counts");
+  assert.equal(element("statsLead").innerHTML, "", "No lead without agreement counts");
+  assert.equal(element("statsLead").hidden, true, "An empty lead takes no room");
   assert.equal(element("statsScope").textContent, "All 6 records in this snapshot. Select a name to see those records in Browse.");
   assert.equal((element("statsCharts").innerHTML.match(/Select a (linked )?name/g) || []).length, 0, "Said once, under the heading");
   assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
@@ -1744,9 +1748,12 @@ function row(overrides = {}) {
     stated_values_catlog_has: 53 };
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", audit_values: 973, audit_wrong: 2, agreement: agreementFixture } };
   api.renderStats();
-  let lead = element("statsCharts").innerHTML;
-  assert.ok(lead.indexOf("Agreement with human reviewers") < lead.indexOf("Review result"), "Agreement comes first");
-  assert.match(lead, /<div class="stats-lead-figure"><strong>89\.7%<\/strong><span>agreement with human reviewers<\/span><\/div>/);
+  // The lead has its own slot above the headline counts: the first thing on the page after the title.
+  let lead = element("statsLead").innerHTML;
+  assert.equal(element("statsLead").hidden, false);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers/, "The lead is not repeated among the figures");
+  assert.match(lead, /<h2 id="statsAgreementTitle">Agreement with human reviewers<\/h2>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>89\.7%<\/strong><span>of the values human reviewers approved are the same in CatLog<\/span><\/div>/);
   assert.match(lead, /CatLog has the same value for 2,232 of the 2,489 values human reviewers approved, on 98 papers they checked that CatLog has since read\./);
   // The bar splits the approved values: the same, then the differences as CatLog's check against the paper found them.
   for (const [part, width] of [["same", "89\\.6746"], ["differs", "4\\.3793"], ["rounding", "0\\.7634"], ["neutral", "0\\.9642"], ["open", "4\\.2186"]]) {
@@ -1759,21 +1766,22 @@ function row(overrides = {}) {
   const blindFixture = { ...agreementFixture, first_agree: 2110, first_agree_pct: 84.8, fixed_after_comparison: 122, papers_exposed: 40,
     first_agree_unexposed_pct: 84.7, catlog_value_wrong: 3, rejected_values: 20, rejected_catlog_also_without: 12,
     rejected_catlog_has_same: 6, rejected_dropped_after_audit: 2, rejected_kept_after_audit: 2, rejected_cleared_by_paper_check: 1,
-    rejected_pending: 3 };
+    rejected_pending: 3, rejected_not_value: 4 };
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: blindFixture } };
   api.renderStats();
-  lead = element("statsCharts").innerHTML;
-  assert.match(lead, /<strong>84\.7%<\/strong><span>agreement with human reviewers, at the first comparison<\/span>/);
+  lead = element("statsLead").innerHTML;
+  assert.match(lead, /<strong>84\.7%<\/strong><span>the same value as the reviewers at the first comparison, on papers read without database values in view<\/span>/);
   assert.match(lead, /At the first comparison, on the 58 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for 84\.7% of the values they approved\./);
   assert.match(lead, /First comparison<\/dt><dd>2,110 the same \(84\.8%\)/);
   assert.match(lead, /Now, after fixes<\/dt><dd>2,232 \(89\.7%\)/);
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
-  assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog does not have 12 of them; it has 6 with the same number \(an AI audit kept 2, a check against the paper found 1 right, 3 not settled yet\); 2 it had were dropped after an AI audit found them wrong\./);
+  assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog does not have 12 of them; it has 6 with the same number \(an AI audit kept 2, a check against the paper found 1 right, 3 not settled yet\); 2 it had were dropped after an AI audit found them wrong\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
   assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
   // Rejections that do not add up are not summed.
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_values: 21 } } };
   api.renderStats();
-  assert.doesNotMatch(element("statsCharts").innerHTML, /Reviewers called/);
+  assert.doesNotMatch(element("statsLead").innerHTML, /Reviewers called/);
+  assert.match(element("statsLead").innerHTML, /4 other objections dispute no value shown/, "Objections that dispute no value are said on their own");
   // Figures 3-5 when the CatLog side's counts are in overview.quality; numbered after figure 2.
   runtimeManifest.summary.overview = { ...overview, quality: {
     db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, km: { same: 3, differs: 0, absent: 1 }, calculated: 2, papers_all_absent: 1, papers_some_absent: 2 },
@@ -1798,7 +1806,7 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   differ_catlog_wrong: 0, differ_not_adjudicated: 105 }),
   "On 98 papers human reviewers checked that CatLog has since read, CatLog has the same value for 2,232 of the 2,489 values the reviewers approved (89.7%). Of the 257 that differ, 152 were checked against the paper: CatLog was right in 109 and wrong in none; 43 are the same value under another name, a rounding, or a value CatLog leaves out by its reading rules. 105 are not checked yet.");
   assert.equal(api.humanComparisonText({ quality: { compared_values_v1: 1000, wrong_v1: 0, label_or_annotation_v1: 0 } }),
-    "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate or protein label.");
+    "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate, variant or protein label.");
   runtimeManifest.summary.overview = overview;
   api.renderStats();
   assert.match(chart, /#browse\?ec=1\.">EC 1/);

@@ -496,6 +496,14 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
                    "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0}
 
 
+LEAD_FIRST_JS = """
+    const lead = document.getElementById('statsLead'), totals = document.getElementById('statsTotals');
+    return Boolean(lead && !lead.hidden && lead.querySelector('[data-figure="agreement"]')
+        && (lead.compareDocumentPosition(totals) & Node.DOCUMENT_POSITION_FOLLOWING)
+        && !document.querySelector('#statsCharts [data-figure="agreement"]'));
+"""
+
+
 def check_quality(driver, browser, url, quality=None):
     """Stats' checks table and the Guide's method section give the audit and human-review numbers of overview.quality;
     the agreement with human reviewers leads Stats when the snapshot has it. Without a quality object in the snapshot, a
@@ -531,11 +539,11 @@ def check_quality(driver, browser, url, quality=None):
             earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='earlier']").text
             assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
         if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
-            assert driver.find_element(By.CSS_SELECTOR, "#statsCharts > *").get_attribute("data-figure") == "agreement"
+            assert driver.execute_script(LEAD_FIRST_JS), "The agreement leads Stats, above the headline counts"
             assert f"{agreement['agree']:,}" in driver.find_element(By.CSS_SELECTOR, "tr[data-check='agreement']").text
         else:
             assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without agreement counts"
-        stats_text = driver.find_element(By.ID, "statsCharts").text
+        stats_text = driver.find_element(By.ID, "statsLead").text + driver.find_element(By.ID, "statsCharts").text
         for word in ("independent", "AI run", "Claude", "Codex", "CatLog v2"):
             assert word not in stats_text, f"Stats says {word}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
@@ -588,6 +596,10 @@ def check_team(driver, browser, url):
     driver.execute_script("arguments[0].focus()", legend)
     lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
     assert lit == ["human"], lit
+    # Supantha's line meets Rules updated; his legend line also lights Papers, CatLog and the website.
+    driver.execute_script("arguments[0].focus()", driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='supantha']"))
+    lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
+    assert sorted(lit) == ["catlog", "papers", "rules", "website"], lit
     # Pointing at an agent on the figure lights its station.
     chip = wide.find_element(By.CSS_SELECTOR, ".team-actor[data-actor='reading'] rect")
     if browser == "chrome":
@@ -1264,9 +1276,8 @@ def check(driver, browser, url):
         # The lead: agreement with human reviewers comes first, when the snapshot has its counts.
         agreement = (overview.get("quality") or {}).get("agreement") or {}
         if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"] > 0:
-            lead = driver.find_element(By.CSS_SELECTOR, ".stats-lead")
-            first = driver.find_element(By.CSS_SELECTOR, "#statsCharts > *")
-            assert first.get_attribute("data-figure") == "agreement", "Agreement comes first on Stats"
+            lead = driver.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead")
+            assert driver.execute_script(LEAD_FIRST_JS), "Agreement comes first on Stats, above the headline counts"
             blind = agreement.get("first_agree_unexposed_pct")
             headline = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").text == headline

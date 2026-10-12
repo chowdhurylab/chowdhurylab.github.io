@@ -3430,7 +3430,7 @@
     const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
     const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
     if (!compared || wrong === null || labels === null) return "";
-    return `In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate or protein label.`;
+    return `In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate, variant or protein label.`;
   }
 
   function humanComparisonText(overview) {
@@ -3490,7 +3490,8 @@
     const facts = [
       ["Values approved", `${formatInteger(approved)}${papers ? ` on ${formatInteger(papers)} papers` : ""}`],
       first !== null ? ["First comparison", `${formatInteger(first)} the same (${qualityShare(first, approved)})`] : null,
-      [first !== null || headline.blind ? "Now, after fixes" : "Same value", `${formatInteger(agree)} (${qualityShare(agree, approved)})`],
+      // (without a first comparison, the big number and the sentence already give the same value count)
+      first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} (${qualityShare(agree, approved)})`] : null,
       fixed !== null ? ["Fixed after the comparison", formatInteger(fixed)] : null,
       wrong !== null ? ["Wrong number or unit in CatLog", formatInteger(wrong)] : null,
       stated && statedHas !== null ? ["Missing values reviewers named", `${formatInteger(stated)}; CatLog has ${formatInteger(statedHas)}`] : null,
@@ -3520,6 +3521,11 @@
         rejectedText = `Reviewers called ${formatInteger(rejected)} values wrong on these papers: CatLog does not have ${formatInteger(without)} of them; it has ${formatInteger(same)} with the same number${settled}; ${formatInteger(dropped)} it had were dropped after an AI audit found them wrong.`;
       }
     }
+    // Objections that dispute no value shown (a value missing, a duplicate, the DOI, a name): counted, never as failures.
+    const notValue = statsCount(a.rejected_not_value);
+    if (notValue) {
+      rejectedText += `${rejectedText ? " " : ""}${formatInteger(notValue)} other ${notValue === 1 ? "objection disputes" : "objections dispute"} no value shown (a value missing, a duplicate, the DOI or a name).`;
+    }
     // Records read by CatLog that reviewers checked directly.
     const direct = statsCount(a.direct_values_reviewed);
     let directText = "";
@@ -3535,7 +3541,9 @@
     return `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsAgreementTitle" data-figure="agreement">
       <h2 id="statsAgreementTitle">Agreement with human reviewers</h2>
       <div class="stats-lead-body">
-        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong><span>agreement with human reviewers${headline.blind ? ", at the first comparison" : ""}</span></div>
+        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong><span>${headline.blind
+          ? "the same value as the reviewers at the first comparison, on papers read without database values in view"
+          : "of the values human reviewers approved are the same in CatLog"}</span></div>
         <div class="stats-lead-text">
           <p class="stats-lead-sentence">${escapeHtml(lead)}</p>
           ${bar}
@@ -4000,7 +4008,15 @@
     const halves = figures.filter((item) => !item.wide);
     if (halves.length % 2) halves[halves.length - 1].wide = true;
     const html = (item) => statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] });
-    const parts = [agreementLeadHtml(overview), ...figures.map(html)];
+    // The agreement with human reviewers stands first, above the headline counts (the user's success measure); a page
+    // without its slot keeps it at the top of the figures.
+    const lead = agreementLeadHtml(overview);
+    const leadSlot = $("statsLead");
+    if (leadSlot) {
+      leadSlot.innerHTML = lead;
+      leadSlot.hidden = !lead;
+    }
+    const parts = [leadSlot ? "" : lead, ...figures.map(html)];
     if (rangesFigure) parts.push(html(rangesFigure));
     const tableHtml = [];
     for (let index = 0; index < tables.length; index += 1) {
@@ -4034,7 +4050,7 @@
     rules: "Rules updated", website: "Website", paper: "The paper",
   };
   const TEAM_ACTORS = [
-    { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
+    { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
     { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and docs" },

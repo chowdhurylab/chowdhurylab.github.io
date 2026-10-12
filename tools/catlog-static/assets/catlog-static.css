@@ -740,6 +740,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* Bar charts: label, a 16px bar (rows 8px apart), value label; an axis under the bars. */
 .stats-chart { --label-w:minmax(96px,30%) }
+/* A chart that spans the row keeps its labels near their bars. */
+.stats-wide .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
 .stats-chart-percent { --label-w:88px }
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
 .stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) 96px; align-items:center; column-gap:12px }
@@ -802,7 +804,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-checks-table td { color:var(--text-2) }
 .stats-checks-table th[scope="row"] { font-weight:600 }
 
-/* The lead: agreement with human reviewers, the success measure. */
+/* The lead: agreement with human reviewers, the success measure; first on the page, above the headline counts. */
+.stats-lead-slot { margin-top:24px }
 .stats-lead { border:1px solid var(--line); border-radius:4px; background:var(--surface-2); padding:24px }
 .stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
 .stats-lead-figure { display:grid; gap:4px }
