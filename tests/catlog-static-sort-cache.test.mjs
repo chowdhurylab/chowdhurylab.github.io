@@ -2076,6 +2076,27 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(row({ record_key: "not-noted" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /detail-condition-note/);
 }
+// The line quoted from the paper: where it is ("Table 2 row"), table markers gone, K_M and k_{cat} as K<sub>m</sub> and
+// k<sub>cat</sub>; a long table row or one whose ± signs were lost is folded away with a warning.
+{
+  const v2Summary = row({ record_key: "printed-lines", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
+  const quoted = (printed_line, metric = "Km") => api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [{ metric, table_label: "Table 2", printed: "1 mM", printed_line, check: "confirmed", conversion: "" }] });
+  let html = quoted("mpCAR [rowspan] | K_m [mm] | 20±4*");
+  assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
+  assert.doesNotMatch(html, /rowspan|<details class="printed-line-disclosure"/);
+  html = quoted("We fitted K_M = 4.6 ± 1.0 μM, k_{cat} = 9.7 s^{−1} and K_{m L}-methionine");
+  assert.match(html, /<i>K<\/i><sub>m<\/sub> = 4\.6/);
+  assert.match(html, /<i>k<\/i><sub>cat<\/sub> = 9\.7 s<sup>−1<\/sup>/);
+  assert.match(html, /<i>K<\/i><sub>m L<\/sub>-methionine/);
+  html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
+  assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">Table 2 row, as extracted/);
+  assert.match(html, /<p class="printed-line-note">Text extraction can drop symbols such as ±\.<\/p><\/details>/);
+  assert.match(quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9"), /<details class="printed-line-disclosure">/, "more than four cells");
+  assert.doesNotMatch(api.measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
+  /row, as extracted/, "only a table's line is a row");
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.

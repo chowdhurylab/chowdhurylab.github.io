@@ -265,7 +265,11 @@ recorded"), then "corrected", "no paper linked" or "✓ human-checked" ("Accepte
 from paper · ✓ human-checked", "Accepted · BRENDA · corrected"). Then, in this order: Measurement (the values,
 each caution once as a plain note under them, and for a record read from the
 paper "As printed in the paper (Table 2)": one row per value with As printed and
-In catalog units, a Check column only when results differ); Assay conditions
+In catalog units, a Check column only when results differ, then each quoted
+line once, "Table 2 row, as extracted from the paper's text", with table
+markers removed and K_M set as K<sub>m</sub>; a row of more than four cells, or
+one whose ± signs extraction dropped, is folded under "Show the line as
+extracted" with that warning); Assay conditions
 (cosubstrate, temperature, pH, other conditions as a short list, preparation);
 Paper and review (links; for a record read by CatLog a Method line, the short
 method sentence ending "units converted by code" or "values stored as printed"

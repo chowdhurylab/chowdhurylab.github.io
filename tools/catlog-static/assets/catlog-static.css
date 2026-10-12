@@ -505,6 +505,12 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .values-table tbody th { color:var(--text); font-size:var(--fs-table); font-weight:400; white-space:nowrap }
 .values-table thead th { padding-top:0; color:var(--text-3); font-weight:500 }
 .values-table small { display:block; color:var(--text-3); font-size:var(--fs-min) }
+.printed-line-disclosure > summary { width:max-content; max-width:100%; cursor:pointer; color:var(--link); font-size:var(--fs-meta); font-weight:500; list-style:none }
+.printed-line-disclosure > summary::-webkit-details-marker { display:none }
+.printed-line-disclosure > summary::before { content:"+"; display:inline-block; width:12px; color:var(--text-3) }
+.printed-line-disclosure[open] > summary::before { content:"\2212" }
+.printed-line-disclosure > :not(summary) { margin-top:6px }
+.printed-line-note { margin:4px 0 0; color:var(--text-3); font-size:var(--fs-meta) }
 .values-table small.unit-caution { display:flex; align-items:flex-start; gap:4px; color:var(--amber-text); font-weight:500 }
 .unit-caution .value-flag { flex:0 0 12px; align-self:flex-start; width:12px; height:12px; margin-top:1px }
 

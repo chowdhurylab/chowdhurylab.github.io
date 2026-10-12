@@ -5497,12 +5497,42 @@
     const notes = lines.map((line, index) => [v2LinePlace(line), facts[index].printedLine, facts[index].printed])
       .filter(([, printedLine, printed], index, all) => printedLine && !printed.startsWith(printedLine)
         && all.findIndex(([, other]) => other === printedLine) === index)
-      .map(([place, printedLine]) => `${place ? `${place}, printed line` : "Printed line"}: “${printedLine}”`);
+      .map(([place, printedLine]) => printedLineNoteHtml(place, printedLine));
     const heading = `As printed in the paper${shared ? ` (${shared})` : ""}`;
     return `<div class="detail-values"><h4>${escapePublic(heading)}</h4>`
       + `<table class="values-table"><thead><tr><th scope="col">Value</th><th scope="col">As printed</th><th scope="col">In catalog units</th>${checks ? '<th scope="col">Check</th>' : ""}</tr></thead><tbody>${rows}</tbody></table>`
-      + notes.map((note) => `<p class="evidence-note-plain">${text(note)}</p>`).join("")
+      + notes.join("")
       + "</div>";
+  }
+
+  // A line quoted from the paper's text, as extraction left it, made readable: table markers ([rowspan]) go, _{...} and
+  // ^{...} become sub- and superscripts, K_M and k_cat read as K<sub>m</sub> and k<sub>cat</sub>, and LaTeX symbols
+  // their characters. The characters themselves are not changed.
+  function printedLineHtml(value) {
+    const text = String(value ?? "")
+      .replace(/\s*\[(?:rowspan|colspan)[^\]]*\]/gi, "")
+      .replace(/\\pm\b\s*/g, "± ")
+      .replace(/\\times\b\s*/g, "× ")
+      .replace(/\\(?:mu|micro)\b\s*/g, "µ")
+      .replace(/\$/g, "");
+    const sub = (content) => content.replace(/^M(?=$|\s)/, "m");
+    return caretHtml(escapePublic(text)
+      .replace(/\b([Kk])_\{((?:cat|m|M|i|d)\b[^{}]*)\}/g, (_match, letter, content) => `<i>${letter}</i><sub>${sub(content)}</sub>`)
+      .replace(/\b([Kk])_(cat|m|M|i|d)\b/g, (_match, letter, content) => `<i>${letter}</i><sub>${sub(content)}</sub>`)
+      .replace(/_\{([^{}]{1,24})\}/g, "<sub>$1</sub>")
+      .replace(/\^\{([^{}]{1,12})\}/g, "<sup>$1</sup>"));
+  }
+
+  // Where the line is, "Table 2 row" for a table, then the line; a long table row (more than four cells) or one whose
+  // ± signs extraction dropped ("1.1 ( 0.070") is folded away, with that warning.
+  function printedLineNoteHtml(place, printedLine) {
+    const where = /^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place;
+    const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
+    const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(printedLine)}”</p>`;
+    const cells = String(printedLine).split("|").length;
+    if (cells <= 4 && !/\d \( \d/.test(printedLine)) return quote;
+    return `<details class="printed-line-disclosure"><summary>Show the line as extracted</summary>${quote}`
+      + `<p class="printed-line-note">Text extraction can drop symbols such as ±.</p></details>`;
   }
 
   // The second run's result when it is the same for every value ("confirmed", "corrected: ..."), else "".
