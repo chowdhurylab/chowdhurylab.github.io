@@ -195,12 +195,14 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .snapshot-controls { gap:var(--sp-4); margin-left:auto }
 .snapshot-date { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); white-space:nowrap }
 .snapshot-more { display:none }
-/* Laptops: tighter gaps and no visible "With" keep the counts on one line; a window still too narrow (or "Matching
-   records") moves the date under them, inside the same 64px. */
-@media (min-width: 1024px) and (max-width: 1439px) {
+/* Laptops and tablets: tighter gaps. From 1181px, with no visible "With", the counts keep one line; a window still too
+   narrow (or "Matching records") moves the date under them, inside the same 64px. */
+@media (min-width: 641px) and (max-width: 1439px) {
   .snapshot-overview { gap:var(--sp-1) var(--sp-3) }
   .summary-grid { gap:var(--sp-3) }
   .snapshot-meta { gap:var(--sp-3); padding-left:var(--sp-3) }
+}
+@media (min-width: 1181px) and (max-width: 1439px) {
   .snapshot-title { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
 }
 
@@ -1004,9 +1006,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .col-open { width:20px }
 }
 
-/* Tablets: the counts band takes two lines, Records, Accepted and Human-checked, then the rows with values and the
-   snapshot date, so the second line never starts with a divider. */
-@media (min-width: 641px) and (max-width: 1023px) {
+/* Tablets and laptops up to 1180px (the header in rows): the counts band always takes two lines, Records, Accepted, Read
+   from the paper and Human-checked, then the rows with values and the snapshot date, so the second line never starts
+   with a divider and the band keeps one height. */
+@media (min-width: 641px) and (max-width: 1180px) {
   .snapshot-overview { row-gap:0 }
   .snapshot-overview::before { content:""; order:1; flex-basis:100%; height:0 }
   .snapshot-meta, .snapshot-controls { order:2; margin-top:8px }

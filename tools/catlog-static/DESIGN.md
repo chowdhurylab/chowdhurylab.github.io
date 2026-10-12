@@ -70,12 +70,13 @@ brand shows "CatLog" alone, so the search box's placeholder fits. Tabs are
 Keep Records, Accepted, Read from the paper, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
 --muted, on one baseline, the snapshot date (12px) at its end (its title is the
-Data ID; Stats is a tab, not a band link). From 1024 to 1439px the gaps tighten
-and "With" is read out but not shown; a window still too narrow (or "Matching
-records") moves the date under the counts, inside the same 64px. From 641 to
-1023px the band takes two lines (Records, Accepted, Read from the paper,
-Human-checked; then the With counts and the date, with no divider at the start of
-a line); on phones the line keeps Records and Accepted (numbers still 20px),
+Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
+From 1181 to 1439px "With" is read out but not shown; a window still too narrow
+(or "Matching records") moves the date under the counts, inside the same 64px.
+From 641 to 1180px, where the header is in rows, the band always takes the same
+two lines (Records, Accepted, Read from the paper, Human-checked; then the With
+counts and the date, with no divider at the start of a line); below about 740px
+Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px),
 Human-checked takes the next line with the More button, and More shows the rest
 (Read from the paper first). Read from the paper N links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's

@@ -1125,6 +1125,23 @@ def check_layout(driver, browser, url, route_label):
             wait.until(lambda d: not is_open())
             assert stored() is None, "Collapsing it again below 1200px goes back to the default"
         results["laptop-1100"] = True
+        # While the header is in rows (641-1180px) the counts band always takes the same two lines: Records to
+        # Human-checked, then the With counts and the date, with no divider at the start of a line.
+        band_heights = set()
+        for width in (1180, 1024, 744):
+            set_browse_viewport(driver, browser, width, 900)
+            band = driver.execute_script("""
+                const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
+                return {height: Math.round(document.querySelector('.snapshot-band').getBoundingClientRect().height),
+                        records: top('.summary-card'), checked: top('#humanCheckedLink'), meta: top('#snapshotMeta .snapshot-line'),
+                        date: top('#snapshotDate'), divider: getComputedStyle(document.getElementById('snapshotMeta')).borderLeftWidth};
+            """)
+            assert (band["checked"] == band["records"] and band["meta"] > band["records"] + 12
+                    and abs(band["date"] - band["meta"]) < 12 and band["divider"] == "0px"), (
+                f"At {width}px the counts band takes two lines: {band}")
+            band_heights.add(band["height"])
+        assert len(band_heights) == 1, f"The two-line counts band keeps one height: {band_heights}"
+        results["band-two-lines"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)
         open_page()
