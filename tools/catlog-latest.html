@@ -360,7 +360,7 @@
 
           <section class="guide-section guide-record" id="guide-record" aria-labelledby="guide-record-title">
             <h2 id="guide-record-title">Read a record</h2>
-            <p>Click a row, or press Enter on it, to open the record.</p>
+            <p>Click a record in the table, or press Enter on it, to open it.</p>
             <dl class="guide-term-list">
               <div><dt>Status line</dt><dd>The review result and its tags, for example <em>Accepted &middot; from paper &middot; human-checked</em>.</dd></div>
               <div><dt>Measurement</dt><dd>The values in catalog units with any cautions, then substrate, cosubstrate, temperature, pH and other assay conditions.</dd></div>
@@ -379,7 +379,7 @@
                 <section class="guide-example-level public">
                   <header>
                     <span>In the table</span>
-                    <h3>Catalog row</h3>
+                    <h3>Catalog record</h3>
                   </header>
                   <div class="guide-example-value">
                     <strong><span class="scientific-number" aria-label="8.2 times 10 to the power of -4"><span aria-hidden="true">8.2 &times; 10<sup>-4</sup></span></span> mM</strong>
@@ -481,7 +481,7 @@
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>).</dd></div>
               <div><dt>T (°C), pH</dt><dd>Assay temperature and pH; the record lists the other conditions.</dd></div>
             </dl>
-            <p>On a from-paper record, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05) and long ones are rounded; the record shows the value as printed beside the stored one.</p>
+            <p>On a record read by CatLog, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05) and long ones are rounded; the record shows the value as printed beside the stored one.</p>
             <dl class="guide-term-list">
               <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, not printed in the source; the table and the record show it with the significant figures of the less precise of the two (at least two).</dd></div>
               <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; the record then gives both (<em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</em>).</dd></div>
@@ -499,7 +499,7 @@
               <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
               <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON with every field; <strong>Download record</strong> saves the open record as JSON.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
-              <div><dt>Review files</dt><dd>Source records and review notes behind older rows: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by e-mail</a>.</dd></div>
+              <div><dt>Review files</dt><dd>Source records and review notes behind older records: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
             </dl>
             <a
               id="guideFullDataLink"
@@ -515,7 +515,7 @@
               <div><dt>Review result</dt><dd>Only Accepted records passed review: Not confirmed records have an open question and Not checked records have no review result. Most records have not been checked by a person.</dd></div>
               <div><dt>Units</dt><dd>Read the unit beside each value: a few older records keep another unit or none (see <a href="#guide-units">Units</a>).</dd></div>
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>See the caution <a href="#guide-cautions"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</a>.</dd></div>
-              <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
+              <div><dt>Merged records</dt><dd>Some older records merge several database entries; the record says how many and lists their papers.</dd></div>
               <div><dt>Training sets</dt><dd>Records of one paper share its PMID: split training and test sets by paper or by UniProt accession.</dd></div>
             </dl>
           </section>
@@ -558,11 +558,11 @@
             <h2 id="guide-questions-title">Questions</h2>
             <details class="guide-details">
               <summary>Why does a value differ from BRENDA?</summary>
-              <p>A from-paper value is read from the paper itself and converted by code, so it can differ from a database entry for the same paper: the database may give it in another unit, round it, or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Older records keep their source database&rsquo;s value.</p>
+              <p>A value read from the paper by CatLog is converted by code where needed, so it can differ from a database entry for the same paper: the database may give it in another unit, round it or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Older records keep their source database&rsquo;s value.</p>
             </details>
             <details class="guide-details">
               <summary>Why is a sequence or SMILES missing?</summary>
-              <p>CatLog adds a sequence only when it can match the enzyme to a protein entry, and a SMILES only when the substrate name resolves to one structure; otherwise the field stays empty rather than guessed, and the record says <em>None recorded</em> or gives a sequence note. A variant gets its own sequence only where its mutations could be placed; otherwise the record gives the wild-type reference.</p>
+              <p>CatLog adds a sequence only when it can match the enzyme to a protein entry, and a SMILES only when the substrate name resolves to one structure; otherwise the field stays empty rather than guessed, and the record says so or gives a sequence note. A variant gets its own sequence only where its mutations could be placed; otherwise the record gives the wild-type reference.</p>
             </details>
             <details class="guide-details">
               <summary>What does Not confirmed mean?</summary>
@@ -570,7 +570,7 @@
             </details>
             <details class="guide-details">
               <summary>How do I report an error?</summary>
-              <p>Open the record and choose <strong>Report a problem</strong>: it starts an e-mail to the lab with the record ID and the snapshot. For anything else, use <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>.</p>
+              <p>Open the record and choose <strong>Report a problem</strong>: it starts an email to the lab with the record ID and the snapshot. For anything else, use <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>.</p>
             </details>
           </section>
         </div>

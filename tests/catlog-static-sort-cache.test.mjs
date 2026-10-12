@@ -1281,6 +1281,7 @@ assert.match(guideMethod, /An AI model \(Claude, Anthropic\) reads each/);
 assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
 assert.doesNotMatch(guideHtml, /CatLog v2|independent|AI run|guide-note">Older records/);
+assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.match(guideFind, /laccase/);
