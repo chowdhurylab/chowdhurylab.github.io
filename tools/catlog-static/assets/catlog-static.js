@@ -970,6 +970,8 @@
   // When the marks arrive, the visible status badges are updated in place (rows are not redrawn: a reader, or a test,
   // holding a row keeps it).
   function applyHumanReviewMarks() {
+    // The counts band's Human-checked count follows the results once the marks are here.
+    if (Object.keys(humanReviewMarks).length) renderSummary();
     if (!state.filtered.length || !Object.keys(humanReviewMarks).length
       || document.body.classList.contains("catalog-load-failed")) return;
     const pageRows = new Map(currentPageRows().map((row) => [row.record_key, row]));
@@ -1007,9 +1009,19 @@
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
     return mark?.note || (mark?.checked
-      ? (accepted ? "Checked by a human reviewer." : "A human reviewer approved these values in CatLog's 2026 review; other checks on this record are still open.")
+      ? (accepted
+          ? "A human reviewer approved every value this record shows, in CatLog's 2026 review."
+          : "A human reviewer approved these values in CatLog's 2026 review; other checks on this record are still open.")
       : "");
   }
+
+  // "human-checked" is shown only on accepted records a human reviewer checked.
+  function isHumanChecked(row) {
+    return (row._recordState || recordStateForRow(row)) === "accepted" && Boolean(humanReviewMark(row)?.checked);
+  }
+
+  // The small check drawn before "human-checked" (badges, the record's status line, the counts band, the Guide).
+  const CHECK_ICON_HTML = '<svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function reviewOutcome(summary, detail = {}) {
     const method = String(detail.verification_method || "");
@@ -1059,17 +1071,18 @@
                   : (ownStatus || stateDescriptions[config.value] || config.label))));
     const label = rowStatusLabel(row);
     const visibleLabel = identityOnly ? "Accepted" : label;
-    // "human-checked" only on accepted rows; the Review-notes note shows for every row.
-    const checked = config.value === "accepted" && Boolean(humanReviewMark(row)?.checked);
+    // "human-checked" only on accepted rows, with a check in its own colour; the record's Human review line shows for
+    // every marked row.
+    const checked = isHumanChecked(row);
     const tags = [
       fromPaper ? (long ? "read from the paper" : "from paper") : "",
       isCorrected ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
-      checked ? "human-checked" : "",
     ].filter(Boolean);
-    const fullDescription = checked ? `${description} Checked by a human reviewer.` : description;
+    const fullDescription = checked ? `${description} Human-checked: a human reviewer approved every value it shows.` : description;
     const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
-    const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("");
+    const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
+      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
     return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(`${label}. ${fullDescription}`)}"><span class="state-label">${escapeHtml(visibleLabel)}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
@@ -2146,8 +2159,35 @@
       <span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>
       <span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>
     `;
+    renderHumanCheckedCount(rows);
     $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     $("snapshotDate").title = manifest.content_sha256 || manifest.source_sha256 || "";
+  }
+
+  // "Human-checked N" in the counts band links to the human-checked records among the current results. Before the
+  // records and marks load, N is the snapshot's count (summary.overview.human_checked_accepted); without that field the
+  // item is hidden.
+  function humanCheckedHref() {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.startsWith("#browse?") ? hash.slice("#browse?".length) : "");
+    params.set("checked", "1");
+    return `#browse?${params.toString()}`;
+  }
+
+  function renderHumanCheckedCount(rows) {
+    const link = $("humanCheckedLink");
+    if (!link) return;
+    const snapshotCount = Number(manifest.summary?.overview?.human_checked_accepted);
+    if (!Number.isFinite(snapshotCount) || snapshotCount < 0) {
+      link.hidden = true;
+      return;
+    }
+    const count = state.recordsReady && Object.keys(humanReviewMarks).length
+      ? rows.reduce((total, row) => total + (isHumanChecked(row) ? 1 : 0), 0)
+      : snapshotCount;
+    link.hidden = false;
+    link.setAttribute("href", humanCheckedHref());
+    if ($("humanCheckedCount")) $("humanCheckedCount").textContent = formatCount(count);
   }
 
   function statsShare(count, total) {
@@ -3424,7 +3464,7 @@
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-        <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Enzyme name not recorded")}</h2>
+        ${detailHeadingHtml(row)}
       </div>
       <p id="detailLoadStatus" class="muted" role="status">Loading record...</p>
     `;
@@ -3448,7 +3488,7 @@
       $("detailContent").innerHTML = `
         <div class="detail-top">
           <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-          <h2 id="detailHeading" tabindex="-1">${escapePublic(row.enzyme_display_name || "Enzyme name not recorded")}</h2>
+          ${detailHeadingHtml(row)}
           ${detailSubtitleHtml(row)}
         </div>
         <div class="detail-load-error" role="alert">
@@ -3485,9 +3525,15 @@
     return `<a class="reference-link" href="${escapeHtml(href)}" target="_blank" rel="noreferrer" aria-label="Open DOI ${escapeHtml(doi)}">${escapeHtml(doi)}</a>`;
   }
 
+  // A PubMed ID is digits only; other paper IDs (CatLog's stand-in NP ids) get no PubMed link.
+  function isPubMedId(value) {
+    return /^\d+$/.test(String(value ?? "").trim());
+  }
+
   function pmidLink(value) {
     const pmid = String(value || "").trim();
     if (!pmid) return EMPTY_VALUE;
+    if (!isPubMedId(pmid)) return escapeHtml(pmid);
     return `<a class="reference-link" href="https://pubmed.ncbi.nlm.nih.gov/${escapeHtml(pmid)}/" target="_blank" rel="noreferrer" aria-label="Open PubMed record ${escapeHtml(pmid)}">${escapeHtml(pmid)}</a>`;
   }
 
@@ -3954,6 +4000,13 @@
     const consistent = consistentEfficiency(metricSummary, detail, flags);
     const notes = flagNotes(metricSummary, detail, flags, consistent);
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
+    // A record with three dashes says so in words (some keep a Ki only).
+    const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !metricHasValue(metricSummary, field));
+    const emptyNote = !noKinetics
+      ? ""
+      : (metricSummary.has_ki && metricHasValue(metricSummary, "ki")
+          ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
+          : "No kcat, Km or kcat/Km is stored for this record.");
     return `
       <section class="detail-section measurement-section">
         <h3>Measurement</h3>
@@ -3972,6 +4025,7 @@
           `;
           }).join("")}
         </div>
+        ${emptyNote ? `<p class="measurement-empty-note">${escapeHtml(emptyNote)}</p>` : ""}
         ${flagNotesHtml(notes)}
         <div class="detail-kv measurement-conditions">
           ${kv("Substrate", summary.substrate_name)}
@@ -4128,6 +4182,8 @@
           ${sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : ""}
           ${!proteinAccession && accessionCandidates.length ? linkedKv("Candidate UniProt IDs", referenceList(accessionCandidates, uniprotLink)) : ""}
           ${sequenceSource ? kv("Sequence source", sequenceSource) : ""}
+          ${!sequenceHtml.trim() && !/sequence/i.test(sequenceVariantNote || "") ? kv("Sequence", "None recorded") : ""}
+          ${smiles ? "" : kv("SMILES", "None recorded")}
         </div>
         ${sequenceHtml}
         ${smiles ? `
@@ -4196,7 +4252,7 @@
   }
 
   // "Report a problem": an e-mail to the lab with the record ID, the snapshot and the values shown.
-  function reportProblemHref(summary, pmids) {
+  function reportProblemHref(summary, pmids, { dois = [], standInIds = [] } = {}) {
     const key = summary.record_key || summary.measurement_key || "";
     const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"]]
       .filter(([field]) => metricHasValue(summary, field))
@@ -4207,6 +4263,8 @@
       summary.substrate_name,
       ...values,
       pmids.length ? `PMID ${pmids.slice(0, 5).join(", ")}${pmids.length > 5 ? ` and ${pmids.length - 5} more` : ""}` : "",
+      // Without a PMID the paper is named by its DOI (and a paper's stand-in ID).
+      pmids.length ? "" : [...dois.slice(0, 3).map((doi) => `DOI ${doi}`), ...standInIds.slice(0, 3).map((id) => `paper ${id}`)].join(", "),
     ].map((part) => String(part || "").trim()).filter(Boolean).join("; ");
     const snapshot = manifest.generated_at ? String(manifest.generated_at).slice(0, 10) : "";
     const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
@@ -4226,20 +4284,33 @@
       : (status === "mathematically_inferred"
           ? "not-reviewed"
           : ({ accepted: "accepted", curation_pending: "pending" }[config.value] || "unverified"));
-    const checked = config.value === "accepted" && Boolean(humanReviewMark(row)?.checked);
     const words = [
       identityOnly ? "Accepted" : rowStatusLabel(row),
       isV2Row(row) ? "read from the paper" : "",
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
-      checked ? "human-checked" : "",
     ].filter(Boolean);
-    return `<p class="detail-status" style="--status-color:var(--status-${colour})">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}</p>`;
+    const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
+    return `<p class="detail-status" style="--status-color:var(--status-${colour})">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
   }
 
-  // "EC · organism", leaving out what is not recorded.
+  // The record's name; a long one (several names in brackets) is set smaller, so the header that stays in view while the
+  // record scrolls does not fill the panel. The whole name is always shown.
+  const LONG_DETAIL_NAME = 64;
+  function detailHeadingHtml(row) {
+    const name = String(row.enzyme_display_name || "").trim() || "Enzyme name not recorded";
+    return `<h2 id="detailHeading" tabindex="-1"${name.length > LONG_DETAIL_NAME ? ' class="long-name"' : ""}>${escapePublic(name)}</h2>`;
+  }
+
+  // "EC · organism", leaving out what is not recorded; "Unknown" (not stated in the paper or the source database) says
+  // which of the two it is.
   function detailSubtitleHtml(row) {
-    const parts = [row.ec_number, row.organism].map((value) => String(value || "").trim()).filter(hasDisplayValue);
+    const parts = [[row.ec_number, "EC unknown"], [row.organism, "organism unknown"]]
+      .map(([value, unknown]) => {
+        const text = String(value || "").trim();
+        return /^unknown$/i.test(text) ? unknown : text;
+      })
+      .filter(hasDisplayValue);
     return parts.length ? `<p>${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
   }
 
@@ -4270,7 +4341,10 @@
     const doisRaw = Array.isArray(detail.supporting_dois)
       ? detail.supporting_dois.filter(Boolean)
       : (detail.doi ? [detail.doi] : []);
-    const pmids = uniqueReferenceValues(pmidsRaw);
+    // A paper without a PMID has a stand-in ID (NP and 8 hex digits): shown as text, never as a PubMed link.
+    const paperIds = uniqueReferenceValues(pmidsRaw);
+    const pmids = paperIds.filter(isPubMedId);
+    const standInIds = paperIds.filter((value) => !isPubMedId(value));
     const dois = uniqueReferenceValues(doisRaw, { caseInsensitive: true });
     const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
@@ -4290,22 +4364,26 @@
     const v2Facts = v2Record && proofLines.every((line) => typeof line === "object" && line.metric) ? proofLines.map(v2LineFacts) : null;
     const paperRows = [
       evidenceRow,
-      ...(pmids.length || dois.length
+      ...(paperIds.length || dois.length
         ? [
             dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
             pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
+            standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
           ]
         : [kv("PMID or DOI", "None recorded")]),
       // How many database rows a record merges is said once, here; Source details then names the databases only when
       // they are not just the source.
       mergedRows > 1
-        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${pmids.length ? `, ${formatInteger(pmids.length)} ${pmids.length === 1 ? "paper" : "papers"}` : ""}`)
+        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
         : "",
       kv("Review", [
         reviewOutcome(summary, detail),
         v2Facts ? v2CheckSentence(v2SharedCheck(v2Facts)) : "",
-        humanNote,
       ].filter(Boolean).join(" ")),
+      // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
+      humanNote
+        ? `<div class="kv-line human-review-line"><span>Human review</span><strong>${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}</strong></div>`
+        : "",
     ];
     // An older record's notes (the earlier catalog's review text) expand on request.
     const valuesHtml = !proofLines.length
@@ -4317,7 +4395,7 @@
     $("detailContent").innerHTML = `
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
-        <h2 id="detailHeading" tabindex="-1">${escapePublic(summary.enzyme_display_name || "Enzyme name not recorded")}</h2>
+        ${detailHeadingHtml(summary)}
         ${detailSubtitleHtml(summary)}
         ${detailStatusHtml(summary)}
       </div>
@@ -4342,7 +4420,7 @@
 
       <div class="detail-actions">
         <button id="downloadSelectedJson" class="button secondary" type="button">Download record</button>
-        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids))}">Report a problem</a>
+        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids, { dois, standInIds }))}">Report a problem</a>
       </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
@@ -4541,6 +4619,11 @@
       event.currentTarget.setAttribute("aria-expanded", String(expanded));
       event.currentTarget.firstChild.textContent = expanded ? "Less " : "More ";
     });
+    // The Human-checked count keeps the current filters in its link (read when it is used, so it is never stale).
+    const humanCheckedLink = $("humanCheckedLink");
+    for (const type of ["pointerenter", "focus", "click"]) {
+      humanCheckedLink?.addEventListener(type, () => humanCheckedLink.setAttribute("href", humanCheckedHref()));
+    }
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
     for (const view of ["browse", "guide", "stats"]) {
       const link = $(`${view}Button`);
@@ -4726,6 +4809,9 @@
       handlePageDownload,
       renderDetail,
       rowStatusLabel,
+      statusBadge,
+      humanCheckedHref,
+      setHumanReviewMarks: (marks) => { humanReviewMarks = marks || {}; },
       reviewOutcome,
       recordIndexPath,
       loadRecordChunks,

@@ -60,6 +60,8 @@
   --status-unverified:#a9b1ae;
   --status-not-reviewed:#9b79ec;
   --status-disputed:#e02e2a;
+  /* Human-checked: a check and the tag in green (5.9:1 on white, 5.1:1 on the selected row) */
+  --checked:#17733a;
   /* Stats palette */
   --stats-blue:#339cff;
   --stats-orange:#f3883b;
@@ -158,6 +160,13 @@ body:is(.stats-open,.guide-open) .catalog-load-progress { display:none }
 .summary-card span, .snapshot-title, .snapshot-line > span { color:var(--text-3); font-size:var(--fs-meta) }
 .snapshot-line > span { color:var(--text-2) }
 .summary-card strong, .snapshot-line strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
+/* Human-checked N: a link to those records, its label in the human-checked green. */
+.snapshot-checked { display:inline-flex; align-items:baseline; gap:6px; color:var(--text); white-space:nowrap }
+.snapshot-checked > span { color:var(--checked); font-size:var(--fs-meta); font-weight:500 }
+.snapshot-checked > strong { color:var(--text); font-size:var(--fs-body); font-weight:600; line-height:1.25 }
+.snapshot-checked:hover { text-decoration:none }
+.snapshot-checked:hover > span { text-decoration:underline }
+.snapshot-checked .check-icon { margin-right:3px }
 .snapshot-controls { gap:16px; margin-left:auto }
 .snapshot-date { color:var(--text-3); font-size:var(--fs-meta); white-space:nowrap }
 .snapshot-more { display:none }
@@ -311,6 +320,11 @@ td.c-status { text-align:left }
 
 /* No spaces in the separator, so each tag stays one box. */
 .state-tag + .state-tag::before { content:"\00b7"; margin:0 3px }
+/* human-checked: a small check and the tag in green; the separator before it stays grey. */
+.check-icon { display:inline-block; width:1em; height:1em; vertical-align:-0.14em }
+.state-tag.human-checked { color:var(--checked); font-weight:500 }
+.state-tag.human-checked::before { color:var(--text-3); font-weight:400 }
+.state-tag.human-checked .check-icon { margin-right:2px }
 
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-table) }
 .pagination select { width:64px }
@@ -322,6 +336,7 @@ body.detail-open .detail-panel { display:block }
 #detailContent { padding:16px 20px 20px }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:6px; border-bottom:1px solid var(--line); background:var(--surface); margin:-16px -20px 0; padding:16px 56px 14px 20px }
 .detail-top h2 { margin:0; color:var(--text); font-size:var(--fs-h2); font-weight:600; line-height:1.25; overflow-wrap:anywhere }
+.detail-top h2.long-name { font-size:var(--fs-body); line-height:1.35 }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--teal); outline-offset:2px }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-table) }
@@ -384,6 +399,10 @@ body.detail-open .detail-panel { display:block }
 .detail-status::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--status-color) }
 .detail-status > span { white-space:nowrap }
 .detail-status-word { color:var(--text); font-weight:500 }
+.detail-status > .detail-status-checked { color:var(--checked); font-weight:500 }
+.detail-status-checked .check-icon { margin-right:3px }
+.human-review-line > strong .check-icon { margin-right:4px; color:var(--checked) }
+.measurement-empty-note { margin:12px 0 0; color:var(--text-2); font-size:var(--fs-table) }
 .detail-status > span:not(:last-child)::after { content:"\00b7"; margin-left:6px }
 button.value-flag { border:0; padding:0; cursor:pointer }
 .flag-notes { display:grid; gap:6px; margin:12px 0 0; padding:0; list-style:none }
@@ -688,6 +707,9 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   #recordsBody .value-flag::before { display:grid; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--amber); color:var(--surface) }
   #recordsBody .value-flag .visually-hidden { position:static; width:auto; height:auto; clip:auto; clip-path:none }
   #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
+  /* A badge with two tags (from paper · human-checked) takes the card's line; T and pH follow at the next line's end. */
+  #recordsBody tr[data-key]:has(.state-tag + .state-tag) td.c-status { flex-basis:100% }
+  #recordsBody tr[data-key]:has(.state-tag + .state-tag) :is(td.c-temp:not([data-empty]), td.c-temp[data-empty] + td.c-ph) { margin-left:auto }
   #recordsBody tr.skeleton-row { padding:14px 16px }
   #recordsBody tr.skeleton-row td:not(.c-enzyme,.c-organism,.c-kcat) { display:none }
   #recordsBody tr.skeleton-row td { padding:3px 0 }

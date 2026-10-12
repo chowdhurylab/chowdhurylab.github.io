@@ -487,6 +487,7 @@ vm.runInNewContext(sourceCode, {
   DecompressionStream,
   TextDecoder,
   URL: RuntimeURL,
+  URLSearchParams,
   Intl,
   Date,
   Math,
@@ -1780,6 +1781,75 @@ const doiHrefs = [...referenceHtml.matchAll(/href="(https:\/\/doi.org\/[^\"]+)"/
 assert.deepEqual(doiHrefs, ["https://doi.org/10.1128/AEM.03151-20", "https://doi.org/10.1000/Second"]);
 assert.match(referenceHtml, /<span>DOIs<\/span>/);
 
+// A stand-in paper ID (a paper without a PMID) is shown as text, never as a PubMed link; the e-mail names the DOI.
+api.renderDetail(row({ record_key: "stand-in-paper" }), {
+  pubmed_id: "NP1a2b3c4d",
+  supporting_pmids: ["NP1a2b3c4d"],
+  supporting_dois: ["10.1000/standin"],
+});
+referenceHtml = element("detailContent").innerHTML;
+assert.doesNotMatch(referenceHtml, /pubmed\.ncbi\.nlm\.nih\.gov\/NP/);
+assert.match(referenceHtml, /<span>Paper ID<\/span><strong>NP1a2b3c4d \(no PMID\)<\/strong>/);
+assert.match(decodeURIComponent(referenceHtml.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1]), /DOI 10\.1000\/standin, paper NP1a2b3c4d/);
+// An EC or organism stated nowhere says which of the two is unknown; a record without values says so.
+api.renderDetail(row({ record_key: "unknowns", ec_number: "Unknown", organism: "Unknown", kcat: null, km: null, kcat_over_km: null,
+  kcat_display: "Not reported", km_display: "Not reported", kcat_over_km_display: "Not reported" }), {});
+referenceHtml = element("detailContent").innerHTML;
+assert.match(referenceHtml, /<p>EC unknown &middot; organism unknown<\/p>/);
+assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
+assert.match(referenceHtml, /<span>SMILES<\/span><strong>None recorded<\/strong>/);
+assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
+
+// Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
+// marked record; the counts band links to the human-checked records.
+{
+  api.setHumanReviewMarks({
+    "hc-accepted": { checked: true },
+    "hc-pending": { checked: true },
+    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of the earlier catalog." },
+  });
+  const accepted = row({ record_key: "hc-accepted", measurement_key: "hc-accepted", verification_status: "verified" });
+  const pending = row({ record_key: "hc-pending", measurement_key: "hc-pending", verification_status: "manual_review_required" });
+  const noted = row({ record_key: "hc-note", measurement_key: "hc-note", verification_status: "corrected" });
+  assert.match(api.statusBadge(accepted), /<span class="state-tag human-checked"><svg class="check-icon"[^>]*>.*<\/svg>human-checked<\/span>/);
+  assert.doesNotMatch(api.statusBadge(pending), /human-checked/);
+  assert.doesNotMatch(api.statusBadge(noted), /human-checked/);
+  api.renderDetail(accepted, {});
+  let html = element("detailContent").innerHTML;
+  assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
+  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value this record shows, in CatLog&#39;s 2026 review\.<\/strong><\/div>/);
+  api.renderDetail(pending, {});
+  html = element("detailContent").innerHTML;
+  assert.doesNotMatch(html, /detail-status-checked/);
+  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values in CatLog&#39;s 2026 review; other checks on this record are still open\.<\/strong>/);
+  api.renderDetail(noted, {});
+  assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km/);
+
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, summary: runtimeManifest.summary };
+  const link = element("humanCheckedLink");
+  api.state.records = [accepted, pending, noted];
+  api.state.filtered = [accepted, pending, noted];
+  api.state.recordsReady = true;
+  runtimeManifest.summary = { ...(previous.summary || {}) };
+  delete runtimeManifest.summary.overview;
+  api.renderSummary();
+  assert.equal(link.hidden, true, "no overview count, no Human-checked item");
+  runtimeManifest.summary.overview = { human_checked_accepted: 1798 };
+  api.renderSummary();
+  assert.equal(link.hidden, false);
+  assert.equal(element("humanCheckedCount").textContent, "1", "the count follows the loaded results");
+  assert.equal(link.getAttribute("href"), "#browse?checked=1");
+  window.location.hash = "#browse?ec=1.1.1&variant=wild";
+  assert.equal(api.humanCheckedHref(), "#browse?ec=1.1.1&variant=wild&checked=1", "the link keeps the current filters");
+  window.location.hash = "";
+  api.setHumanReviewMarks({});
+  api.renderSummary();
+  assert.equal(element("humanCheckedCount").textContent, "1,798", "before the marks load, the snapshot's count");
+  runtimeManifest.summary = previous.summary;
+  Object.assign(api.state, { records: previous.records, filtered: previous.filtered, recordsReady: previous.recordsReady });
+  api.renderSummary();
+}
+
 async function recordDownloadPayload(summary, detail) {
   elements.set("downloadSelectedJson", makeElement("downloadSelectedJson"));
   api.renderDetail(summary, detail);
@@ -2073,10 +2143,11 @@ assert.equal(
 );
 
 assert.equal(
-  (sourceCode.match(/<h2 id="detailHeading" tabindex="-1">/g) || []).length,
+  (sourceCode.match(/\$\{detailHeadingHtml\((?:row|summary)\)\}/g) || []).length,
   3,
   "loading, success, and error details should expose a programmatically focusable heading",
 );
+assert.equal((sourceCode.match(/<h2 id="detailHeading" tabindex="-1"/g) || []).length, 1, "one heading helper");
 assert.equal(
   (sourceCode.match(/if \(focusDetail\) focusDetailHeading\(key\);/g) || []).length,
   1,

@@ -13,6 +13,7 @@ colors:
   status-unverified: "#a9b1ae"
   status-not-reviewed: "#9b79ec"
   status-disputed: "#e02e2a"
+  human-checked: "#17733a"
 typography:
   body:
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif'
@@ -31,10 +32,15 @@ spacing: 4, 8, 12, 16, 24, 32px
 
 ## Layout
 
-Start with the table, not a landing page. Keep Records, Accepted, and the three
-Rows with values counts in one 48px line, labels and counts on one baseline, the
-snapshot date and View stats at its end; on phones the line keeps Records and
-Accepted and a More button shows the rest. Counts follow the current filtered
+Start with the table, not a landing page. Keep Records, Accepted, Human-checked
+and the three Rows with values counts in one 48px line, labels and counts on one
+baseline, the snapshot date and View stats at its end; on phones the line keeps
+Records and Accepted, Human-checked takes the next line with the More button,
+and More shows the rest. Human-checked N is a link to those records
+(#browse?checked=1, plus the filters in the address); N is the snapshot's
+summary.overview.human_checked_accepted until the records and marks load, then
+the count among the current results, and the item is hidden when the snapshot
+has no such count. Counts follow the current filtered
 results; measurement coverage overlaps and must not form a stacked chart. The
 count beside Filters is shown only when it says more than the page range.
 
@@ -103,20 +109,33 @@ Filters on phones end with a "Show N records" button.
 
 White and neutral surfaces carry the data. Teal marks selection and actions;
 status uses a coloured dot (the Stats outcome colours) and ink words; amber
-marks cautions. Use thin dividers, modest control radii, and
+marks cautions. Green (human-checked, 5.9:1 on white) is only for
+"human-checked": a small check drawn before the tag, weight 500, no pill or
+background, in table badges, phone cards, the record's status line and Human
+review line, the counts band and the Guide. The tag shows on accepted records
+only; it updates in place when the marks arrive (rows are not redrawn). On a
+phone card a badge with two tags takes its own line, T and pH at the next line's
+end. Use thin dividers, modest control radii, and
 shadows only for overlays. No decorative gradients, statistic cards, or hero art.
 
 ## Record Details
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
 Order: name, EC · organism and one status line ("Accepted · read from the
-paper · human-checked"); Measurement (the values, then each flag once as a plain
+paper · ✓ human-checked"); Measurement (the values, then each flag once as a plain
 note under them, then substrate, cosubstrate, temperature, pH, conditions as a
 short list, preparation); Protein and substrate; Paper (links, the review
-outcome, and a CatLog v2 record's values as one table: printed, stored, second
-check only when results differ); Source details, collapsed, with one licence
-line. A flagged value carries a small "!" button that moves to its note; nothing
-is readable only on hover. The record writes numbers like the table (a × 10ⁿ at
+outcome, a Human review line with the reviewer's facts-only note on every record
+that has a mark, and a CatLog v2 record's values as one table: printed, stored,
+second check only when results differ); Source details, collapsed, with one
+licence line. Odd records read plainly: a name longer than 64 characters is set
+at 16px so the header that stays in view stays short; "Unknown" EC or organism
+reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
+says so (or that it stores a Ki only); a missing sequence or SMILES reads "None
+recorded"; a paper's stand-in ID (NP and 8 hex digits) is text, never a PubMed
+link, and Report a problem names the DOI when there is no PMID. A flagged value
+carries a small "!" button that moves to its note; nothing is readable only on
+hover. The record writes numbers like the table (a × 10ⁿ at
 or above 10⁵ and below 10⁻³, stored digits); a kcat/Km CatLog calculated for an
 older record keeps the significant figures of kcat and Km. An older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees

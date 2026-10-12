@@ -109,6 +109,68 @@ def set_browse_viewport(driver, browser, width, height):
     assert driver.execute_script("return [innerWidth, innerHeight]") == [width, height], "Requested viewport is not the actual viewport"
 
 
+GUIDE_SECTIONS = ("guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads", "guide-caveats",
+                  "guide-cite", "guide-sources", "guide-questions")
+
+
+def check_guide(driver, wait):
+    """Guide: the contents list reaches every section, a section's link keeps the Guide open at that section, the
+    example views use the #browse? links Browse reads, and human-checked is drawn as in the table."""
+    links = driver.find_elements(By.CSS_SELECTOR, ".guide-contents a")
+    assert [urlsplit(link.get_attribute("href")).fragment for link in links] == list(GUIDE_SECTIONS)
+    for section in GUIDE_SECTIONS:
+        assert driver.find_element(By.ID, section).is_displayed(), f"Guide section {section} is not shown"
+    examples = [urlsplit(link.get_attribute("href")).fragment
+                for link in driver.find_elements(By.CSS_SELECTOR, "#guide-find .guide-link-list a")]
+    assert "browse?checked=1" in examples and all(fragment.startswith("browse?") for fragment in examples)
+    tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
+    assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
+    assert driver.execute_script("""
+        const checked = getComputedStyle(arguments[0]).color;
+        return [...document.querySelectorAll('#guide-status .state-tag:not(.human-checked)')]
+            .every(other => getComputedStyle(other).color !== checked);
+    """, tag), "human-checked needs its own colour"
+    links[GUIDE_SECTIONS.index("guide-units")].click()
+    wait.until(lambda d: urlsplit(d.current_url).fragment == "guide-units")
+    assert driver.find_element(By.ID, "guideView").is_displayed()
+    assert not driver.find_element(By.ID, "catalogView").is_displayed()
+    wait.until(lambda d: d.execute_script("""
+        const view = document.querySelector('#guideView').getBoundingClientRect();
+        const top = document.querySelector('#guide-units').getBoundingClientRect().top;
+        return top >= view.top - 1 && top <= view.top + 48;
+    """))
+    assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
+
+
+def check_human_checked(driver, url):
+    """Human-checked: the counts band links to those records (#browse?checked=1), and every record that link shows
+    carries the human-checked tag with its check."""
+    wait = WebDriverWait(driver, 120)
+    manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+    snapshot_count = ((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted")
+    link = driver.find_element(By.ID, "humanCheckedLink")
+    if not isinstance(snapshot_count, int):
+        assert not link.is_displayed(), "Without a snapshot count the Human-checked item stays hidden"
+        return None
+    assert link.is_displayed() and link.find_elements(By.CSS_SELECTOR, "svg.check-icon")
+    assert urlsplit(link.get_attribute("href")).fragment == "browse?checked=1"
+    # Once the marks have loaded, the count is the loaded records' own.
+    wait.until(lambda d: d.execute_script(
+        "return performance.getEntriesByType('resource').some(entry => entry.name.includes('human-review-marks.json'))"))
+    driver.execute_script("return new Promise(resolve => setTimeout(resolve, 500))")
+    count = driver.find_element(By.ID, "humanCheckedCount").text
+    assert count and count.replace(",", "").isdigit() and int(count.replace(",", "")) > 0
+    link.click()
+    wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count} records")
+    rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+    assert rows, "The human-checked link shows no records"
+    wait.until(lambda d: all(
+        row.find_elements(By.CSS_SELECTOR, ".state-badge .state-tag.human-checked svg.check-icon")
+        for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
+    assert all(row.find_element(By.CSS_SELECTOR, ".state-label").text == "Accepted" for row in rows)
+    return int(count.replace(",", ""))
+
+
 def check_browse(driver, browser, url, route_label):
     """Exercise public Browse, using only rendered rows and generated JSON Blobs."""
     wait = WebDriverWait(driver, 120)
@@ -325,9 +387,14 @@ def check_browse(driver, browser, url, route_label):
                 delete window.__catlogBrowserDownloadCapture;
             }
         """)
+    try:
+        human_checked = check_human_checked(driver, url)
+    except Exception:
+        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-human-checked-failure.png"))
+        raise
     return {"url": url, "route": route_label, "total": total,
             "source_sha256": manifest["source_sha256"], "asset_sha256": asset_hashes,
-            "viewports": viewports, "passed": True}
+            "viewports": viewports, "human_checked": human_checked, "passed": True}
 
 
 STATS_LINK_KEYS = {"q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric", "variant", "tmin", "tmax",
