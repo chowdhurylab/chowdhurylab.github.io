@@ -33,6 +33,7 @@ def synthetic_page(tracker: str = "") -> str:
         '  <a id="browseButton" class="nav-tab active" href="#browse" aria-current="page">Browse</a>\n'
         '  <a id="guideButton" class="nav-tab" href="#guide">Guide</a>\n'
         '  <a id="statsButton" class="nav-tab" href="#stats">Stats</a>\n'
+        '  <a id="teamButton" class="nav-tab" href="#team">Team</a>\n'
         '  <main id="catalogView"></main>\n'
         '  <main id="statsView" class="stats-view" hidden></main>\n'
         '  <img src="assets/mark.svg" alt="">\n'
@@ -208,6 +209,9 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.assertNotIn('class="stats-view" hidden', stats)
         self.assertIn('href="catlog-stats.html"', stats)
         self.assertIn('href="catlog-latest.html#guide"', stats)
+        # The Team page lives in the Browse entry page, as the Guide does.
+        self.assertIn('id="teamButton" class="nav-tab" href="catlog-latest.html#team"', stats)
+        self.assertIn('href="catlog-latest.html#team"', self.sync.build_alias(source))
         self.assertIn('id="statsButton" class="nav-tab active" aria-current="page"', stats)
         self.assertIn('id="browseButton" class="nav-tab" href="catlog-latest.html">', stats)
         self.assertNotIn('aria-current="page">Browse', stats)

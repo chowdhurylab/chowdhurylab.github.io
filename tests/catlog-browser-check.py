@@ -128,6 +128,8 @@ def check_guide(driver, wait):
     # The method is said once, in full, in its own section; the from-paper tag points to it.
     method = driver.find_element(By.ID, "guide-method").text
     assert "Claude, Anthropic" in method and "A second, separate AI check compares every value with the paper." in method
+    assert driver.find_elements(By.CSS_SELECTOR, '#guide-method a[href="#team"], #guide-method a[href$="catlog-latest.html#team"]'), \
+        "The method section links to the Team page"
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("CatLog v2", "independent", "AI run", "Checks pending", "Exporter", "exporter"):
@@ -495,9 +497,10 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
 
 
 def check_quality(driver, browser, url, quality=None):
-    """Stats' AI audits and Human review boxes and the Guide's method section give the audit and human-review numbers
-    of overview.quality. Without a quality object in the snapshot, a copy of the manifest with QUALITY_FIXTURE (set in
-    Chrome before the page starts; the data files are not changed) is checked instead."""
+    """Stats' checks table and the Guide's method section give the audit and human-review numbers of overview.quality;
+    the agreement with human reviewers leads Stats when the snapshot has it. Without a quality object in the snapshot, a
+    copy of the manifest with QUALITY_FIXTURE (set in Chrome before the page starts; the data files are not changed) is
+    checked instead."""
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
     injected = None
     if quality is None:
@@ -513,23 +516,28 @@ def check_quality(driver, browser, url, quality=None):
     compared = all(isinstance(quality.get(key), int) for key in ("compared_values_v1", "wrong_v1", "label_or_annotation_v1")) \
         and quality["compared_values_v1"] > 0
     correct = f"{(quality['compared_values_v1'] - quality['wrong_v1']) / quality['compared_values_v1'] * 100:.1f}% correct" if compared else ""
+    agreement = quality.get("agreement") or {}
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         driver.get("about:blank")
         driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
-        wait.until(lambda d: d.find_elements(By.ID, "statsHumanTitle"))
+        wait.until(lambda d: d.find_elements(By.ID, "statsChecksTitle"))
         if audited:
-            audit = driver.find_element(By.CSS_SELECTOR, "[aria-labelledby='statsAuditTitle']").text
-            assert f"{quality['audit_values']:,} values re-checked against their papers" in audit, audit
+            audit = driver.find_element(By.CSS_SELECTOR, "tr[data-check='audit']").text
+            assert f"{quality['audit_values']:,} values" in audit and f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit, audit
             assert "independent" not in audit.lower(), audit
-        human = driver.find_element(By.CSS_SELECTOR, "[aria-labelledby='statsHumanTitle']").text
         if compared:
             # The share correct is shown only with the label errors beside it.
-            assert correct in human and f"and {quality['label_or_annotation_v1']:,} had a wrong enzyme, organism" in human, human
-        boxes = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-boxes > .stats-section')].map(box => box.getBoundingClientRect().top);
-        """)
-        assert len(boxes) == 2 + audited and max(boxes) - min(boxes) < 2, f"The boxes stand side by side: {boxes}"
+            earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='earlier']").text
+            assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
+        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
+            assert driver.find_element(By.CSS_SELECTOR, "#statsCharts > *").get_attribute("data-figure") == "agreement"
+            assert f"{agreement['agree']:,}" in driver.find_element(By.CSS_SELECTOR, "tr[data-check='agreement']").text
+        else:
+            assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without agreement counts"
+        stats_text = driver.find_element(By.ID, "statsCharts").text
+        for word in ("independent", "AI run", "Claude", "Codex", "CatLog v2"):
+            assert word not in stats_text, f"Stats says {word}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
         driver.get("about:blank")
         driver.get(url + "#guide-method")
@@ -542,6 +550,68 @@ def check_quality(driver, browser, url, quality=None):
     finally:
         if injected:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+
+
+TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "rules", "website", "paper")
+
+
+def check_team(driver, browser, url):
+    """Team (#team): its own view from the Team tab, never loading the record index; the loop names every station, its
+    numbers come from the manifest, a person or agent lights their stations when pointed at or focused, it reads at
+    375px with no sideways scroll, and the dots stay still when the viewer asks for less motion."""
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    set_browse_viewport(driver, browser, 1440, 1000)
+    driver.get("about:blank")
+    driver.get(url + "#team")
+    wait.until(lambda d: d.find_element(By.ID, "teamView").is_displayed() and d.find_elements(By.CSS_SELECTOR, ".team-legend-item"))
+    assert driver.title == "Team | CatLog"
+    assert driver.find_element(By.ID, "teamButton").get_attribute("aria-current") == "page"
+    assert not driver.find_element(By.ID, "catalogView").is_displayed()
+    assert not driver.execute_script(
+        "return performance.getEntriesByType('resource').some(e => /catlog-viewer-index|catlog-table|details-\\d+|human-review-marks/.test(e.name))"
+    ), "Team must not download the record index, detail shards or review marks"
+    assert driver.find_element(By.ID, "teamHeading").text == "People behind CatLog"
+    text = driver.find_element(By.ID, "teamView").text
+    for word in ("Claude", "Codex", "Anthropic", "OpenAI", "independent", "Dr.", "Professor"):
+        assert word not in text, f"Team says {word}"
+    wide = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide")
+    assert wide.is_displayed()
+    assert sorted(g.get_attribute("data-station") for g in wide.find_elements(By.CSS_SELECTOR, "[data-station]")) == sorted(TEAM_STATIONS)
+    manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+    overview = stats_overview(manifest)
+    if overview:
+        reading = wide.find_element(By.CSS_SELECTOR, "[data-station='reading']").get_attribute("aria-label")
+        assert f"{overview['from_paper']['records']:,} records" in reading and f"{overview['from_paper']['papers']:,} papers read" in reading
+    assert f"{manifest['total_rows']:,} records" in wide.find_element(By.CSS_SELECTOR, "[data-station='website']").get_attribute("aria-label")
+    # Focus on a legend line (Aarna and Erin) lights Human check only.
+    legend = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='aarna erin']")
+    driver.execute_script("arguments[0].focus()", legend)
+    lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
+    assert lit == ["human"], lit
+    # Pointing at an agent on the figure lights its station.
+    ActionChains(driver).move_to_element(wide.find_element(By.CSS_SELECTOR, ".team-actor[data-actor='reading'] rect")).perform()
+    wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
+    driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
+    if browser == "chrome":
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
+        try:
+            driver.get("about:blank")
+            driver.get(url + "#team")
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, ".team-legend-item"))
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Team overflows sideways"
+            narrow = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-narrow")
+            assert narrow.is_displayed() and not driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide").is_displayed()
+            assert narrow.size["width"] <= 375 and narrow.size["width"] >= 300
+            assert driver.execute_script("""
+                return [...document.querySelectorAll('svg.team-loop-narrow text')].every(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a >= 11);
+            """), "Team labels read at phone width"
+            assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
+            driver.save_screenshot(str(OUTPUT / f"{browser}-team-mobile.png"))
+        finally:
+            driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": []})
+            driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"route": "team", "passed": True}
 
 
 def check_filters(driver, browser, url, route_label):
@@ -1046,7 +1116,7 @@ def check(driver, browser, url):
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
     driver.set_window_size(1440, 1000)
     driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
     wait.until(lambda d: parse_qsl(urlsplit(d.current_url).query, keep_blank_values=True) == expected_query)
     stats_path = urlsplit(url).path.replace("catlog-latest.html", "catlog-stats.html")
     assert urlsplit(driver.current_url).path == stats_path
@@ -1060,7 +1130,7 @@ def check(driver, browser, url):
         assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute("content") == driver.title
 
     check_metadata("stats")
-    for view in ("browse", "guide", "stats"):
+    for view in ("browse", "guide", "stats", "team"):
         link = driver.find_element(By.ID, view + "Button")
         reported_tag = link.tag_name
         print(f"{browser} {view} link tag: {reported_tag!r}", flush=True)
@@ -1068,13 +1138,13 @@ def check(driver, browser, url):
         target = urlsplit(link.get_attribute("href"))
         assert target.path == (stats_path if view == "stats" else urlsplit(url).path)
         assert parse_qsl(target.query, keep_blank_values=True) == expected_query
-        assert target.fragment == ("guide" if view == "guide" else "")
-    # The catalog's own tabs (Browse · Stats · Guide · Team), then the links out.
+        assert target.fragment == (view if view in ("guide", "team") else "")
+    # The catalog's own tabs (Browse · Stats · Guide · Team), then the links out apart at the right.
     assert [link.text for link in driver.find_elements(By.CSS_SELECTOR, ".top-nav a")] == ["Browse", "Stats", "Guide", "Team"]
     assert urlsplit(driver.find_element(By.ID, "teamButton").get_attribute("href")).fragment == "team"
     external = driver.find_elements(By.CSS_SELECTOR, ".external-nav a")
     assert [link.text.replace("\u00a0", " ") for link in external] == ["CatRange paper ↗", "Chowdhury Lab ↗"]
-    assert external[0].location["x"] > driver.find_element(By.ID, "guideButton").location["x"]
+    assert external[0].location["x"] > driver.find_element(By.ID, "teamButton").location["x"]
     assets = AssetReferences()
     assets.feed((ROOT / "tools/catlog-stats.html").read_text())
     loaded_urls = driver.execute_script("return [...document.querySelectorAll('script[src], link[href]')].map(e => e.src || e.href)")
@@ -1101,29 +1171,40 @@ def check(driver, browser, url):
                 for row in driver.find_elements(By.CSS_SELECTOR, selector)}
 
     # Review result: each record once; Not checked groups Unverified and Not reviewed, as Browse does.
-    status_rows = stat_rows(".stats-status-section .stats-bars li:not([data-group])")
+    status_rows = stat_rows(".stats-status-section tr[data-stat-key]:not(.stats-row-group)")
     assert sum(status_rows.values()) == total, "Status rows must add up to all records"
     assert status_rows["accepted"] == accepted
     assert status_rows["manual_review_required"] == expected.get("manual_review_required", 0)
     for key in ("unverified", "mathematically_inferred", "disputed"):
         assert status_rows[key] == expected.get(key, 0)
-    group = driver.find_element(By.CSS_SELECTOR, '.stats-status-section li[data-group][data-stat-key="not_verified"]')
+    group = driver.find_element(By.CSS_SELECTOR, '.stats-status-section tr.stats-row-group[data-stat-key="not_verified"]')
     assert int(group.get_attribute("data-count")) == expected.get("unverified", 0) + expected.get("mathematically_inferred", 0)
     assert "Not checked" in group.text and "Other records" not in driver.find_element(By.CLASS_NAME, "stats-status-section").text
     pending_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"]')
     assert "Not confirmed" in pending_row.text and "Checks pending" not in pending_row.text
     accepted_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="accepted"]')
     assert f"{accepted / total * 100:.1f}%" in accepted_row.text
-    assert f"{expected.get('corrected', 0):,} after a correction" in accepted_row.text
+    # Accepted is split in the rows under it; the row's title says the split in words.
+    accepted_split = accepted_row.get_attribute("title") or ""
+    assert f"{expected.get('corrected', 0):,} after a correction" in accepted_split
+    detail_rows = {row.get_attribute("data-part"): int(row.get_attribute("data-count"))
+                   for row in driver.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-part]")}
+    assert sum(detail_rows.values()) == accepted, f"Accepted's parts add up to Accepted: {detail_rows}"
+    # The donut: one slice per review result with records, in the snapshot's numbers.
+    donut = driver.find_element(By.CSS_SELECTOR, ".stats-status-section svg.stats-donut")
+    assert donut.get_attribute("role") == "img" and f"{total:,} records" in donut.get_attribute("aria-label")
+    assert len(donut.find_elements(By.CSS_SELECTOR, "path")) == sum(1 for key in ("manual_review_required", "unverified",
+        "mathematically_inferred", "disputed") if expected.get(key, 0)) + bool(accepted)
     if overview:
         # Accepted splits into the records read from the paper by CatLog and the earlier catalog's.
         read = overview["from_paper"]["records"]
-        assert f"{read:,} read from the paper by CatLog; {accepted - read:,} from the earlier catalog" in accepted_row.text
+        assert f"{read:,} read from the paper by CatLog; {accepted - read:,} from the earlier catalog" in accepted_split
         # records accepted on a human review (accepted_basis "human review") are named apart from "as printed"
         human = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("accepted_basis", [])}.get("human review", 0)
-        assert f"({expected.get('verified', 0) - read - human:,} as printed" in accepted_row.text
+        assert f"({expected.get('verified', 0) - read - human:,} as printed" in accepted_split
+        assert detail_rows.get("accepted_catlog") == read
     else:
-        assert f"{expected.get('verified', 0):,}" in accepted_row.text
+        assert f"{expected.get('verified', 0):,}" in accepted_split
     identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
     if identity_only:
         # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them
@@ -1147,7 +1228,7 @@ def check(driver, browser, url):
 
     # Main source: counted as the Browse source filter finds records (a record merged from several databases counts
     # under each), so every record is counted at least once; the Guide's source list gives the same numbers.
-    source_rows = stat_rows(".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li")
+    source_rows = stat_rows(".stats-section[aria-labelledby='statsSourcesTitle'] .stats-by-database li[data-stat-key]")
     if source_rows:
         assert sum(source_rows.values()) >= total and max(source_rows.values()) <= total, "Main-source rows must cover all records"
         if overview:
@@ -1167,11 +1248,25 @@ def check(driver, browser, url):
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
         assert any(href.endswith("#browse?source=paper") for href in hrefs)
-        forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] .stats-bars li")
+        forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] tr[data-stat-key]")
         assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
-        classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] .stats-bars li")
+        classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] [data-stat-key]")
         assert classes == {f"ec_{item['class']}": item["count"] for item in overview["ec_classes"]}
-        cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] .stats-bars li")
+        cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] tr[data-stat-key]")
+        # Figure 2: each record once under its main source (its bars add up to all records).
+        main_rows = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
+                     for row in driver.find_elements(By.CSS_SELECTOR, ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-chart-row")}
+        assert sum(main_rows.values()) == total, f"Main sources add up to all records: {main_rows}"
+        # The lead: agreement with human reviewers comes first, when the snapshot has its counts.
+        agreement = (overview.get("quality") or {}).get("agreement") or {}
+        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"] > 0:
+            lead = driver.find_element(By.CSS_SELECTOR, ".stats-lead")
+            first = driver.find_element(By.CSS_SELECTOR, "#statsCharts > *")
+            assert first.get_attribute("data-figure") == "agreement", "Agreement comes first on Stats"
+            blind = agreement.get("first_agree_unexposed_pct")
+            headline = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").text == headline
+            assert f"{agreement['values_approved']:,}" in lead.text
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
         ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range")
         assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))
@@ -1186,6 +1281,11 @@ def check(driver, browser, url):
     for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2"):
         section = heading.find_element(By.XPATH, "..")
         assert section.find_elements(By.CSS_SELECTOR, "li, figure, p"), f"Empty Stats section: {heading.text}"
+    # Figures and tables are numbered in reading order, each with one caption and a data line.
+    for kind in ("Figure", "Table"):
+        numbers = [int(match) for match in re.findall(kind + r" (\d+)\.", " ".join(
+            caption.text for caption in driver.find_elements(By.CSS_SELECTOR, ".stats-fig > figcaption .stats-fig-caption")))]
+        assert numbers == list(range(1, len(numbers) + 1)), f"{kind} numbers: {numbers}"
     assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
     for removed in ("not split by field", "How these groups differ", "Example checks", "Fields in these records"):
         assert removed not in stats_text, f"Removed Stats text is back: {removed}"
@@ -1212,19 +1312,21 @@ def check(driver, browser, url):
                 .every(e => e.getBoundingClientRect().height >= 36);
         """), "Stats disclosures need a usable click target"
         assert driver.execute_script("""
-            return [...document.querySelectorAll('.stats-bars-head')].every(head => {
-                const row = head.nextElementSibling?.querySelector('li');
-                if (!head.getBoundingClientRect().width || !row) return true;
-                return [2, 3].every(i => Math.abs(head.children[i].getBoundingClientRect().right
-                    - row.children[i].getBoundingClientRect().right) <= 1);
+            return [...document.querySelectorAll('#statsCharts .stats-table')].every(table => {
+                const head = table.querySelector('thead tr'), row = table.querySelector('tbody tr:not(.stats-row-detail)');
+                if (!table.getBoundingClientRect().width || !head || !row) return true;
+                return [...head.children].every((cell, i) => !cell.classList.contains('stats-num') || !row.children[i]
+                    || Math.abs(cell.getBoundingClientRect().right - row.children[i].getBoundingClientRect().right) <= 1);
             });
         """), "Stats count headings must align with their values"
         assert driver.execute_script("""
-            return [...document.querySelectorAll('.stats-bars li')].every(row => {
-                const style = getComputedStyle(row);
-                return parseFloat(style.fontSize) >= 15;
-            });
-        """), "Stats rows keep 15px labels"
+            return [...document.querySelectorAll('#statsCharts .stats-table tbody tr:not(.stats-row-detail) th, #statsCharts .stats-chart-label, .stats-fig-caption')]
+                .every(cell => parseFloat(getComputedStyle(cell).fontSize) >= 12.9);
+        """), "Stats labels and captions keep 13px"
+        assert driver.execute_script("""
+            const size = (selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
+            return size('.stats-totals-main dd') >= (innerWidth <= 640 ? 24 : 32) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
+        """), "Stats headline numbers keep the type scale"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
             return {width: innerWidth, height: innerHeight,
@@ -1234,7 +1336,7 @@ def check(driver, browser, url):
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
         check_panel_width()
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-bar-label, .stats-bar-count, .stats-bar-share, .stats-totals dd, .stats-range-numbers dd')]
+            return [...document.querySelectorAll('.stats-chart-label, .stats-chart-value, .stats-table .stats-num, .stats-totals dd, .stats-range-numbers dd, .stats-lead-figure strong')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)
@@ -1265,12 +1367,12 @@ def check(driver, browser, url):
     # A linked Stats count is the number of records its link opens: the most common organism (with its strains),
     # BRENDA (records merged from several databases count under each), the records read from the paper by CatLog and
     # the earlier paper extractions.
-    for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] .stats-bars li",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_brenda']",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_catlog']",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_paper_earlier']",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_strenda']",
-                     ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-bars li[data-stat-key='source_unrecorded']"):
+    for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] tr[data-stat-key]",
+                     ".stats-by-database li[data-stat-key='source_brenda']",
+                     ".stats-by-database li[data-stat-key='source_catlog']",
+                     ".stats-by-database li[data-stat-key='source_paper_earlier']",
+                     ".stats-by-database li[data-stat-key='source_strenda']",
+                     ".stats-by-database li[data-stat-key='source_unrecorded']"):
         found = driver.find_elements(By.CSS_SELECTOR, selector)
         if not found:
             continue
@@ -1281,7 +1383,7 @@ def check(driver, browser, url):
         wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count:,} records")
         driver.back()
         wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
-                   and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
+                   and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
 
     # A Stats link opens Browse; Back returns to Stats.
     pending_link = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"] a.stats-link')
@@ -1291,7 +1393,7 @@ def check(driver, browser, url):
     assert urlsplit(driver.current_url).path == urlsplit(url).path
     driver.back()
     wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
-               and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
+               and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
 
     # Browse keeps the filters the Stats link set (shown as chips); Clear all shows every record again.
     pending = expected.get("manual_review_required", 0)
@@ -1350,13 +1452,20 @@ def check(driver, browser, url):
         driver.set_window_size(width, 1000)
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         assert driver.execute_script("""
-            return [...document.querySelectorAll('.stats-bars li')].filter(row => row.getBoundingClientRect().width).every(row => {
-                const label = row.querySelector('.stats-bar-label').getBoundingClientRect();
-                const track = row.querySelector('.stats-bar-track').getBoundingClientRect();
-                const count = row.querySelector('.stats-bar-count').getBoundingClientRect();
+            return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).every(row => {
+                const label = row.querySelector('.stats-chart-label').getBoundingClientRect();
+                const track = row.querySelector('.stats-track').getBoundingClientRect();
+                const count = row.querySelector('.stats-chart-value').getBoundingClientRect();
                 return label.right <= track.left + 1 && track.right <= count.left + 1;
             });
         """), "Each bar sits between its name and its count"
+        assert driver.execute_script("""
+            // Within a chart every bar shares one scale: the tracks are equally wide and start at one x.
+            return [...document.querySelectorAll('.stats-chart')].every(chart => {
+                const tracks = [...chart.querySelectorAll('.stats-track')].map(track => track.getBoundingClientRect());
+                return tracks.every(box => Math.abs(box.left - tracks[0].left) <= 1 && Math.abs(box.width - tracks[0].width) <= 1);
+            });
+        """), "Bars of one chart share one scale"
         capture(f"stats-{width}")
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})
@@ -1365,12 +1474,18 @@ def check(driver, browser, url):
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         capture("stats-mobile")
         assert driver.execute_script("""
-            return [...document.querySelectorAll('.stats-bars li:not([data-group])')].filter(row => row.getBoundingClientRect().width).every(row => {
-                const label = row.querySelector('.stats-bar-label').getBoundingClientRect();
-                const track = row.querySelector('.stats-bar-track').getBoundingClientRect();
+            return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).every(row => {
+                const label = row.querySelector('.stats-chart-label').getBoundingClientRect();
+                const track = row.querySelector('.stats-track').getBoundingClientRect();
                 return label.bottom <= track.top + 1;
             });
         """), "On phones each name sits above its bar"
+        assert driver.execute_script("""
+            return [...document.querySelectorAll('.stats-chart')].every(chart => {
+                const tracks = [...chart.querySelectorAll('.stats-track')].map(track => track.getBoundingClientRect());
+                return tracks.every(box => Math.abs(box.left - tracks[0].left) <= 1 && Math.abs(box.width - tracks[0].width) <= 1);
+            });
+        """), "Bars of one chart share one scale on phones"
         for selector, label in ((".stats-ranges", "stats-mobile-ranges"), ("[aria-labelledby='statsSourcesTitle']", "stats-mobile-sources")):
             if driver.find_elements(By.CSS_SELECTOR, selector):
                 driver.execute_script("document.querySelector(arguments[0]).scrollIntoView()", selector)
@@ -1383,7 +1498,7 @@ def check(driver, browser, url):
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     # A clean Stats address must also survive a fresh page load, not just history navigation.
     driver.refresh()
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section .stats-bars li")) >= 5)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
     assert driver.find_element(By.ID, "statsView").is_displayed()
     assert not driver.find_element(By.ID, "catalogView").is_displayed()
     assert urlsplit(driver.current_url).path == stats_path and not urlsplit(driver.current_url).fragment
@@ -1420,6 +1535,7 @@ def main():
         quality = (stats_overview(manifest) or {}).get("quality")
         if quality or args.browser == "chrome":
             check_quality(driver, args.browser, url, quality)
+        result["team"] = check_team(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":

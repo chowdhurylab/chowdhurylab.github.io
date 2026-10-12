@@ -27,6 +27,8 @@
     indexOrder: "",
     preserveRenderedRows: false,
     statsRendered: false,
+    teamRendered: false,
+    teamBound: false,
     recordsGeneration: 0,
     sortCache: new Map(),
     filterRunId: 0,
@@ -521,7 +523,7 @@
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
 
   function viewFromLocation() {
-    if (["#browse", "#guide", "#stats"].includes(window.location.hash)) return window.location.hash.slice(1);
+    if (["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) return window.location.hash.slice(1);
     if (GUIDE_SECTION_HASH.test(window.location.hash)) return "guide";
     // Browse with filters: #browse?q=...&ec=... (see browseParamsFromLocation).
     if (/^#browse\?/.test(window.location.hash || "")) return "browse";
@@ -531,26 +533,36 @@
   function renderView(view, { scroll = false } = {}) {
     const guideOpen = view === "guide";
     const statsOpen = view === "stats";
-    const browseOpen = !guideOpen && !statsOpen;
+    const teamOpen = view === "team";
+    const browseOpen = !guideOpen && !statsOpen && !teamOpen;
     $("catalogView").hidden = !browseOpen;
     $("guideView").hidden = !guideOpen;
     $("statsView").hidden = !statsOpen;
+    if ($("teamView")) $("teamView").hidden = !teamOpen;
     // Stats come from the manifest alone: drawn the first time they are shown, never from the record index.
     if (statsOpen && !state.statsRendered) {
       renderStats();
       state.statsRendered = true;
     }
+    // The Team page too: drawn from the manifest the first time it is shown.
+    if (teamOpen && !state.teamRendered && $("teamFigure")) {
+      renderTeam();
+      state.teamRendered = true;
+    }
     document.body.classList.toggle("guide-open", guideOpen);
     document.body.classList.toggle("stats-open", statsOpen);
+    document.body.classList.toggle("team-open", teamOpen);
     // The catalog's tabs: Browse · Stats · Guide · Team.
     for (const name of ["browse", "stats", "guide", "team"]) {
+      const link = $(`${name}Button`);
+      if (!link) continue;
       const active = name === view;
-      $(`${name}Button`)?.classList.toggle("active", active);
-      $(`${name}Button`)?.setAttribute("aria-current", active ? "page" : "false");
+      link.classList.toggle("active", active);
+      link.setAttribute("aria-current", active ? "page" : "false");
     }
     document.title = guideOpen
       ? "Guide | CatLog"
-      : statsOpen ? "Stats | CatLog" : "CatLog | Enzyme Kinetics Catalog";
+      : statsOpen ? "Stats | CatLog" : teamOpen ? "Team | CatLog" : "CatLog | Enzyme Kinetics Catalog";
     const currentUrl = new URL(window.location.href);
     if (/^https?:$/.test(currentUrl.protocol) && /\/catlog-(latest|stats)\.html$/.test(currentUrl.pathname)) {
       const publicUrl = new URL(statsOpen ? "./catlog-stats.html" : "./catlog-latest.html", currentUrl);
@@ -575,6 +587,10 @@
     if (guideSection) window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
     if (scroll) {
       if (guideOpen) $("guideView").scrollTop = 0;
+      if (teamOpen && $("teamView")) {
+        $("teamView").scrollTop = 0;
+        $("teamHeading")?.focus({ preventScroll: true });
+      }
       if (statsOpen) {
         $("statsView").scrollTop = 0;
         $("statsHeading").focus({ preventScroll: true });
@@ -3044,29 +3060,135 @@
     return item.params ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(item.params))}">${label}</a>` : label;
   }
 
-  // One row per item: its name (a link into Browse when there is one) and an optional one-line meaning, a bar, the count,
-  // and its share of all records (or a second count). Bars are drawn against the total, or against `scale`.
-  function statsBarRows(items, total, { scale = total, extra = null, head = null } = {}) {
-    const header = head
-      ? `<div class="stats-bars-head" aria-hidden="true"><span></span><span></span>${head.map((text) => `<span>${escapeHtml(text)}</span>`).join("")}</div>`
-      : "";
-    return `${header}<ul class="stats-bars">${items.map((item) => {
-      const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
-      const last = extra
-        ? `<span class="stats-bar-share">${formatInteger(item[extra.key])}<span class="visually-hidden"> ${escapeHtml(extra.label)}</span></span>`
-        : `<span class="stats-bar-share">${escapeHtml(statsShare(item.count, total))}<span class="visually-hidden"> of all records</span></span>`;
-      return `<li class="${item.sub ? "stats-bar-sub" : item.group ? "stats-bar-group" : ""}"${item.group ? ' data-group=""' : ""} data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-        <span class="stats-bar-label">${item.color ? `<i class="stats-dot stats-color-${item.color}" aria-hidden="true"></i>` : ""}<span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span>
-        <span class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill${item.color ? ` stats-color-${item.color}` : ""}" style="width:${width}%"></span></span>
-        <span class="stats-bar-count">${formatInteger(item.count)}<span class="visually-hidden"> records</span></span>
-        ${last}
-      </li>`;
-    }).join("")}</ul>`;
+  // Stats (design spec section 6): the agreement with human reviewers first, then numbered figures and tables. Every
+  // count is exact and counted over all records. Colours are stylesheet tokens, named by the stats-part-* classes:
+  // review results (stats-part-accepted, -pending, -unverified, -not-reviewed, -not-checked, -disputed), comparisons
+  // (-same, -differs, -new, -rounding, -magnitude), -neutral and -open. Figures fill at 60% with a 1px opaque outline.
+  function statsDataLine(definition = "") {
+    const id = snapshotDataId();
+    return [manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "", id ? `Data ID ${id}` : "", definition]
+      .filter(Boolean).map(escapeHtml).join(" · ");
   }
 
-  function statsSection(id, title, body, { note = "", wide = false, className = "" } = {}) {
-    return `<section class="stats-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}">
-      <h2 id="${id}">${title}</h2>${note ? `<p>${note}</p>` : ""}${body}</section>`;
+  // One numbered figure or table: its heading, the plot, then "Figure N." with one sentence and a data line (snapshot,
+  // data ID, definition), then anything that belongs under it (a note, a disclosure).
+  function statsFigureHtml({ id, key, title, body, caption, data = "", wide = false, kind = "Figure", number = 0, after = "", className = "" }) {
+    return `<section class="stats-section stats-figure-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}" data-figure="${key}">
+      <h2 id="${id}">${title}</h2>
+      <figure class="stats-fig" aria-labelledby="${id}" aria-describedby="${id}Caption">
+        ${body}
+        <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${kind} ${number}.</strong> ${caption}</span>${data ? `<span class="stats-fig-data">${data}</span>` : ""}</figcaption>
+      </figure>${after}</section>`;
+  }
+
+  // An axis of three to five steps of 1, 2, 2.5, 3 or 5 × 10ⁿ: the one that ends closest above the largest value.
+  function statsNiceScale(max) {
+    if (!(max > 0)) return { max: 1, step: 1 };
+    let best = null;
+    for (let power = 10 ** (Math.floor(Math.log10(max)) - 2); power <= 10 ** Math.ceil(Math.log10(max)); power *= 10) {
+      for (const factor of [1, 2, 2.5, 3, 5]) {
+        const step = factor * power;
+        if (!Number.isInteger(step)) continue;
+        const steps = Math.ceil(max / step - 1e-9);
+        if (steps < 3 || steps > 5) continue;
+        const end = steps * step;
+        if (!best || end < best.max - 1e-9 || (Math.abs(end - best.max) < 1e-9 && step > best.step)) best = { max: end, step };
+      }
+    }
+    return best || { max, step: max };
+  }
+
+  // A 16px bar: segments left to right (or each from the left, `overlay`), each a share of `scale`, over 1px reference
+  // lines at `refs` (percent of the axis).
+  function statsTrack(segments, scale, { refs = [0], overlay = false } = {}) {
+    let left = 0;
+    const parts = segments.map((segment) => {
+      const start = overlay ? 0 : left;
+      const width = scale > 0 ? Math.max(0, Math.min(100 - start, segment.count / scale * 100)) : 0;
+      if (!overlay) left += width;
+      return width > 0
+        ? `<span class="stats-seg stats-part-${segment.part}" style="left:${+start.toFixed(4)}%;width:${+width.toFixed(4)}%"${segment.title ? ` title="${escapeHtml(segment.title)}"` : ""}></span>`
+        : "";
+    }).join("");
+    return `<span class="stats-track" aria-hidden="true">${refs.map((ref) => `<i class="stats-ref" style="left:${ref}%"></i>`).join("")}${parts}</span>`;
+  }
+
+  // Legend above a plot, in segment order: a 10×10 swatch and the name (and a count, when given).
+  function statsLegend(items) {
+    return `<ul class="stats-legend">${items.map((item) => `<li><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${item.label}${item.count !== undefined ? ` <span class="stats-legend-count">${formatInteger(item.count)}</span>` : ""}</li>`).join("")}</ul>`;
+  }
+
+  function statsAxis(scale, step, { percent = false } = {}) {
+    const ticks = [];
+    for (let value = 0; value <= scale + step / 2; value += step) ticks.push(value);
+    return `<div class="stats-chart-axis" aria-hidden="true"><span></span><span class="stats-axis-ticks">${ticks.map((value) => `<span style="left:${+(value / scale * 100).toFixed(4)}%">${percent ? `${Math.round(value)}%` : formatInteger(value)}</span>`).join("")}</span><span></span></div>`;
+  }
+
+  // Horizontal bars: per row a label (a link into Browse when one filter opens exactly those records), a bar of one or
+  // more segments and a value label; the legend above, an axis below. Percent charts draw each row as 100% of itself.
+  function statsBarChart({ key, rows, scale = 0, legend = [], axis = "", percent = false, overlay = false }) {
+    const refs = percent ? [0, 25, 50, 75, 100] : [0];
+    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}" data-chart="${key}">
+      ${legend.length ? statsLegend(legend) : ""}
+      <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}">
+        <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
+        ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay })}
+        <span class="stats-chart-value">${row.value}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
+      </li>`).join("")}</ul>
+      ${axis}
+    </div>`;
+  }
+
+  // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre.
+  function statsDonut(parts, total, { title, unit = "records" } = {}) {
+    const cx = 100, cy = 100, outer = 88, inner = 56, full = 2 * Math.PI;
+    const point = (radius, angle) => `${+(cx + radius * Math.sin(angle)).toFixed(3)} ${+(cy - radius * Math.cos(angle)).toFixed(3)}`;
+    const arc = (from, to) => {
+      const large = to - from > Math.PI ? 1 : 0;
+      return `M${point(outer, from)}A${outer} ${outer} 0 ${large} 1 ${point(outer, to)}L${point(inner, to)}A${inner} ${inner} 0 ${large} 0 ${point(inner, from)}Z`;
+    };
+    let angle = 0;
+    const paths = [];
+    const cuts = new Set();
+    for (const part of parts) {
+      if (!(part.count > 0) || !(total > 0)) continue;
+      const sweep = part.count / total * full;
+      const whole = sweep >= full - 1e-9;
+      // A whole ring is drawn as two halves: an arc cannot start and end at the same point.
+      const d = whole ? `${arc(0, Math.PI)}${arc(Math.PI, full)}` : arc(angle, Math.min(full, angle + sweep));
+      paths.push(`<path class="stats-part-${part.part}" d="${d}"><title>${escapeHtml(`${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`)}</title></path>`);
+      if (!whole) {
+        cuts.add(+angle.toFixed(6));
+        cuts.add(+Math.min(full, angle + sweep).toFixed(6) % +full.toFixed(6));
+      }
+      angle += sweep;
+    }
+    const gaps = [...cuts].map((cut) => {
+      const [x1, y1] = point(inner - 1, cut).split(" ");
+      const [x2, y2] = point(outer + 1, cut).split(" ");
+      return `<line class="stats-donut-gap" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    }).join("");
+    const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
+    return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
+      ${paths.join("")}${gaps}
+      <text class="stats-donut-total" x="100" y="100">${formatInteger(total)}</text>
+      <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
+    </svg>`;
+  }
+
+  // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
+  // an 80px bar, the count, and its share of all records (or a second count). Bars are drawn against `scale`.
+  function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral" } = {}) {
+    return `<table class="stats-table">
+      <thead><tr><th scope="col">${escapeHtml(head)}</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">${escapeHtml(extra ? extra.head : "Share")}</th></tr></thead>
+      <tbody>${items.map((item) => {
+        const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
+        const last = extra ? formatInteger(item[extra.key]) : escapeHtml(statsShare(item.count, total));
+        return `<tr class="${item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
+          <th scope="row"><span class="stats-name"><span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
+          <td class="stats-col-bar" aria-hidden="true">${item.group ? "" : `<span class="stats-minibar"><span class="stats-seg stats-part-${item.part || part}" style="width:${+width.toFixed(4)}%"></span></span>`}</td>
+          <td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${last}</td></tr>`;
+      }).join("")}</tbody></table>`;
   }
 
   // The hash-bound field counts of one review group (summary.review_details), or null.
@@ -3184,6 +3306,56 @@
     ].filter((item) => item.count > 0);
   }
 
+  // The main source of each record (figure 2), as build_overview counts it (main_sources): CatLog's own reading, one
+  // database, several databases, or none. Without those counts in the snapshot, the same groups from the manifest's
+  // source_db counts (no review result per group).
+  const STATS_MAIN_SOURCES = [
+    ["catlog", SOURCE_CATLOG_LABEL], ["brenda", "BRENDA"], ["oed", "OED"], ["uniprot", "UniProt"],
+    ["sabio_rk", "SABIO-RK"], ["skid", "SKiD"], ["strenda", "STRENDA DB"], ["earlier_paper", "Earlier paper extractions"],
+    ["several", "Several databases"], ["unrecorded", "Source not recorded"],
+  ];
+  // Groups too small for a bar of their own are counted together as Other (their counts are named in its note).
+  const STATS_MAIN_OTHER = new Set(["strenda", "earlier_paper", "unrecorded"]);
+
+  function statsMainSources(overview, total, counts) {
+    const given = overview?.main_sources;
+    const known = new Set(STATS_MAIN_SOURCES.map(([key]) => key));
+    if (given && typeof given === "object" && Object.keys(given).every((key) => known.has(key))) {
+      const statusSums = {};
+      let sum = 0;
+      const groups = {};
+      for (const [key, statuses] of Object.entries(given)) {
+        if (!statuses || typeof statuses !== "object") return null;
+        const group = {};
+        for (const [status, count] of Object.entries(statuses)) {
+          if (statsCount(count, total) === null) return null;
+          group[status] = count;
+          statusSums[status] = (statusSums[status] || 0) + count;
+          sum += count;
+        }
+        groups[key] = group;
+      }
+      const matches = sum === total && Object.entries(counts).every(([status, count]) => (statusSums[status] || 0) === count)
+        && Object.keys(statusSums).every((status) => status in counts);
+      if (matches) return { groups, byStatus: true };
+    }
+    // Fallback: the manifest's source_db counts, grouped the same way (CatLog's records are the from-paper count).
+    const groups = {};
+    const v2 = statsCount(overview?.from_paper?.records, total);
+    for (const [label, count] of Object.entries(manifestDistribution("source_db"))) {
+      const keys = [...new Set(String(label || "").toLowerCase().split(/[;,+/|]+/)
+        .map((part) => SOURCE_TOKENS[part.trim().replace(/[\s-]+/g, "_")]).filter(Boolean))];
+      const key = !keys.length ? "unrecorded" : keys.length > 1 ? "several" : keys[0];
+      groups[key] = { records: (groups[key]?.records || 0) + count };
+    }
+    if (v2 !== null && (groups.earlier_paper?.records || 0) >= v2) {
+      groups.earlier_paper.records -= v2;
+      if (v2) groups.catlog = { records: v2 };
+    }
+    const sum = Object.values(groups).reduce((total_, group) => total_ + group.records, 0);
+    return sum === total && total > 0 ? { groups, byStatus: false } : null;
+  }
+
   // Audit and human-review results (overview.quality: copied at build time from the human-review marks file, which the
   // CatLog side writes from its audit record and review results). Each part is shown only when its numbers hold
   // together; Stats and the Guide's method section use the same sentences.
@@ -3208,14 +3380,37 @@
     return `${formatInteger(audit.wrong)} ${audit.wrong === 1 ? "was" : "were"} wrong (${qualityShare(audit.wrong, audit.values)}) and removed`;
   }
 
+  // The headline of the agreement with human reviewers (the user's success measure): the first comparison on the papers
+  // CatLog read without any database or earlier-catalog values in view (first_agree_unexposed_pct), when the snapshot
+  // has it; else the share of approved values CatLog has now. Null without agreement counts.
+  function agreementHeadline(a) {
+    const approved = statsCount(a?.values_approved);
+    const agree = approved ? statsCount(a.agree, approved) : null;
+    if (agree === null) return null;
+    const blind = a.first_agree_unexposed_pct;
+    const papers = statsCount(a.papers_compared);
+    const exposed = papers ? statsCount(a.papers_exposed, papers) : null;
+    if (typeof blind === "number" && Number.isFinite(blind) && blind >= 0 && blind <= 100) {
+      return { percent: `${blind.toFixed(1)}%`, blind: true, blindPapers: exposed !== null ? papers - exposed : null, approved, agree, papers };
+    }
+    return { percent: qualityShare(agree, approved), blind: false, approved, agree, papers };
+  }
+
   // How often CatLog and human reviewers agree (quality.agreement, catlog-v2 human_review.AGREEMENT_DEFINITIONS): the
   // reviewers' approved values CatLog has too, and what CatLog's own check against the paper found where they differ.
   function agreementText(a) {
-    const approved = statsCount(a?.values_approved);
-    const agree = approved ? statsCount(a.agree, approved) : null;
-    if (agree === null) return "";
-    const papers = statsCount(a.papers_compared);
-    let text = `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
+    const headline = agreementHeadline(a);
+    if (!headline) return "";
+    const { approved, agree, papers } = headline;
+    const first = statsCount(a.first_agree, approved);
+    let text = headline.blind
+      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent} of the values they approved. `
+      : "";
+    if (headline.blind || first !== null) {
+      text += `${papers ? `On all ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, ` : ""}${first !== null ? `CatLog had ${formatInteger(first)} of the ${formatInteger(approved)} approved values at the first comparison (${qualityShare(first, approved)}) and has ${formatInteger(agree)} now, after fixes (${qualityShare(agree, approved)}).` : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`}`;
+    } else {
+      text += `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
+    }
     const differ = statsCount(a.differ, approved);
     const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
     const right = differ !== null ? statsCount(a.differ_catlog_right, differ) : null;
@@ -3230,15 +3425,19 @@
 
   // What reviewers found when they compared values with their papers. The share correct is never shown without the
   // label errors beside it.
+  function earlierCatalogText(quality) {
+    const compared = statsCount(quality?.compared_values_v1);
+    const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
+    const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
+    if (!compared || wrong === null || labels === null) return "";
+    return `In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate or protein label.`;
+  }
+
   function humanComparisonText(overview) {
     const quality = overview?.quality || {};
     const parts = [];
-    const compared = statsCount(quality.compared_values_v1);
-    const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
-    const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
-    if (compared && wrong !== null && labels !== null) {
-      parts.push(`In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate or protein label.`);
-    }
+    const earlier = earlierCatalogText(quality);
+    if (earlier) parts.push(earlier);
     const agreement = agreementText(quality.agreement);
     if (agreement) return [agreement, ...parts].join(" ");
     const approved = statsCount(quality.v2_approved_total);
@@ -3252,6 +3451,102 @@
       parts.push(`CatLog found ${formatInteger(found)} of the ${formatInteger(approved)} values reviewers approved${differences}.`);
     }
     return parts.join(" ");
+  }
+
+  // The parts of the reviewers' approved values (the lead's bar): the same value, then the differences as CatLog's own
+  // check against the paper split them. Null when the split does not add up (the bar then shows same and different only).
+  function agreementParts(a, approved, agree) {
+    const differ = statsCount(a.differ, approved);
+    if (differ === null || agree + differ !== approved) return null;
+    const pick = (key) => statsCount(a[key], differ);
+    const parts = [
+      { part: "same", label: "Same value", count: agree },
+      { part: "differs", label: "The paper shows CatLog right", count: pick("differ_catlog_right") },
+      { part: "rounding", label: "The same printed value, another name or rounded",
+        count: pick("differ_same_value_other_name") === null || pick("differ_rounding") === null ? null : pick("differ_same_value_other_name") + pick("differ_rounding") },
+      { part: "neutral", label: "Left out by CatLog's reading rules", count: pick("differ_not_comparable") },
+      { part: "magnitude", label: "The paper shows CatLog wrong", count: pick("differ_catlog_wrong") },
+      { part: "open", label: "Not checked against the paper yet", count: pick("differ_not_adjudicated") },
+    ];
+    if (parts.some((item) => item.count === null) || parts.slice(1).reduce((sum, item) => sum + item.count, 0) !== differ) return null;
+    return parts;
+  }
+
+  // The lead of Stats (the user's headline measure, 2026-10-12): how often CatLog and human reviewers agree. Empty when
+  // the snapshot has no agreement counts.
+  function agreementLeadHtml(overview) {
+    const a = overview?.quality?.agreement;
+    const headline = agreementHeadline(a);
+    if (!headline) return "";
+    const { approved, agree, papers } = headline;
+    const first = statsCount(a.first_agree, approved);
+    const fixed = statsCount(a.fixed_after_comparison, approved);
+    const wrong = statsCount(a.catlog_value_wrong);
+    const stated = statsCount(a.stated_values);
+    const statedHas = stated ? statsCount(a.stated_values_catlog_has, stated) : null;
+    const lead = headline.blind
+      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent} of the values they approved.`
+      : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values human reviewers approved${papers ? `, on ${formatInteger(papers)} papers they checked that CatLog has since read` : ""}.`;
+    const facts = [
+      ["Values approved", `${formatInteger(approved)}${papers ? ` on ${formatInteger(papers)} papers` : ""}`],
+      first !== null ? ["First comparison", `${formatInteger(first)} the same (${qualityShare(first, approved)})`] : null,
+      [first !== null || headline.blind ? "Now, after fixes" : "Same value", `${formatInteger(agree)} (${qualityShare(agree, approved)})`],
+      fixed !== null ? ["Fixed after the comparison", formatInteger(fixed)] : null,
+      wrong !== null ? ["Wrong number or unit in CatLog", formatInteger(wrong)] : null,
+      stated && statedHas !== null ? ["Missing values reviewers named", `${formatInteger(stated)}; CatLog has ${formatInteger(statedHas)}`] : null,
+    ].filter(Boolean);
+    const parts = agreementParts(a, approved, agree)
+      || [{ part: "same", label: "Same value", count: agree }, { part: "neutral", label: "Different or missing", count: approved - agree }];
+    const shown = parts.filter((item) => item.count > 0);
+    const bar = `<div class="stats-lead-bar">
+        <p class="stats-lead-bar-title">${first !== null || headline.blind ? "Approved values now" : "Approved values"} <span class="stats-muted">(${formatInteger(approved)})</span>: the same in CatLog, or where CatLog differs, what its check against the paper found</p>
+        ${statsTrack(shown.map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
+        ${statsLegend(shown)}
+      </div>`;
+    // Values reviewers called wrong, and what became of them (each part only when the counts add up).
+    const rejected = statsCount(a.rejected_values);
+    let rejectedText = "";
+    if (rejected) {
+      const without = statsCount(a.rejected_catlog_also_without, rejected);
+      const same = statsCount(a.rejected_catlog_has_same, rejected);
+      const dropped = statsCount(a.rejected_dropped_after_audit, rejected);
+      const kept = same !== null ? statsCount(a.rejected_kept_after_audit, same) : null;
+      const cleared = same !== null ? statsCount(a.rejected_cleared_by_paper_check, same) : null;
+      const pending = same !== null ? statsCount(a.rejected_pending, same) : null;
+      if (without !== null && same !== null && dropped !== null && without + same + dropped === rejected) {
+        const settled = kept !== null && cleared !== null && pending !== null && kept + cleared + pending <= same
+          ? ` (an AI audit kept ${formatInteger(kept)}, a check against the paper found ${formatInteger(cleared)} right${pending ? `, ${formatInteger(pending)} not settled yet` : ""})`
+          : "";
+        rejectedText = `Reviewers called ${formatInteger(rejected)} values wrong on these papers: CatLog does not have ${formatInteger(without)} of them; it has ${formatInteger(same)} with the same number${settled}; ${formatInteger(dropped)} it had were dropped after an AI audit found them wrong.`;
+      }
+    }
+    // Records read by CatLog that reviewers checked directly.
+    const direct = statsCount(a.direct_values_reviewed);
+    let directText = "";
+    if (direct) {
+      const yes = statsCount(a.direct_values_agree, direct);
+      const no = statsCount(a.direct_values_disagree, direct);
+      const audited = no ? statsCount(a.direct_disagree_wrong_after_audit, no) : null;
+      const waiting = no ? statsCount(a.direct_disagree_audit_pending, no) : null;
+      if (yes !== null && no !== null && yes + no <= direct) {
+        directText = `Reviewers checked ${formatInteger(direct)} values of CatLog's own records directly: they approved ${formatInteger(yes)} and disputed ${formatInteger(no)}${audited !== null && waiting !== null && audited + waiting <= no ? `; an AI audit found ${formatInteger(audited)} of those wrong${waiting ? ` and ${formatInteger(waiting)} are not audited yet` : ""}` : ""}.`;
+      }
+    }
+    return `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsAgreementTitle" data-figure="agreement">
+      <h2 id="statsAgreementTitle">Agreement with human reviewers</h2>
+      <div class="stats-lead-body">
+        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong><span>agreement with human reviewers${headline.blind ? ", at the first comparison" : ""}</span></div>
+        <div class="stats-lead-text">
+          <p class="stats-lead-sentence">${escapeHtml(lead)}</p>
+          ${bar}
+          <dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>
+          ${rejectedText ? `<p class="stats-lead-note">${escapeHtml(rejectedText)}</p>` : ""}
+          ${directText ? `<p class="stats-lead-note">${escapeHtml(directText)}</p>` : ""}
+          <p class="stats-fig-data">${statsDataLine(`${a && overview.quality.as_of ? `Counted ${formatDate(String(overview.quality.as_of).slice(0, 10))}. ` : ""}Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection in the 2026 review of the earlier catalog, on papers CatLog has since read. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%. Differences are split by CatLog's own check against the paper, not by the reviewers.`)}</p>
+          <p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>
+        </div>
+      </div>
+    </section>`;
   }
 
   // The Guide's method section: the audit and human-review items get this snapshot's numbers when it has them (they
@@ -3274,6 +3569,118 @@
     }
   }
 
+  // Figures 3-5 (design spec section 6) read counts the CatLog side computes at build time (overview.quality); each is
+  // drawn only when its counts hold together, and an older snapshot shows none of them (never an empty heading).
+  const STATS_PARAMETERS = [
+    ["kcat", "<i>k</i><sub>cat</sub>", "kcat"], ["km", "<i>K</i><sub>m</sub>", "Km"],
+    ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "kcat/Km"],
+  ];
+
+  function statsPercentRows(groups, partsOf) {
+    return groups.map(([key, labelHtml, label, values]) => {
+      const parts = partsOf(values);
+      const count = parts.reduce((sum, item) => sum + item.count, 0);
+      return {
+        key, count, label: labelHtml,
+        segments: parts.map((item) => ({ part: item.part, count: item.count, title: `${label}, ${item.label}: ${formatInteger(item.count)} (${statsShare(item.count, count)})` })),
+        value: `${formatInteger(count)}`,
+        text: `${label}: ${parts.map((item) => `${item.label} ${formatInteger(item.count)} (${statsShare(item.count, count)})`).join(", ")}.`,
+        shares: parts,
+      };
+    });
+  }
+
+  // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text).
+  function statsShareLines(rows) {
+    return `<dl class="stats-share-lines">${rows.map((row) => `<div><dt>${row.label}</dt><dd>${row.shares.map((item) => `<span><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(statsShare(item.count, row.count))}</span>`).join("")}</dd></div>`).join("")}</dl>`;
+  }
+
+  function statsDbCompareFigure(quality) {
+    const data = quality?.db_compare;
+    if (!data || typeof data !== "object") return null;
+    const groups = [];
+    const all = { same: 0, differs: 0, absent: 0 };
+    for (const [key, html, label] of STATS_PARAMETERS) {
+      const item = data[key];
+      if (!item) continue;
+      const values = ["same", "differs", "absent"].map((part) => statsCount(item[part]));
+      if (values.includes(null)) return null;
+      if (!values.some(Boolean)) continue;
+      groups.push([key, html, label, values]);
+      ["same", "differs", "absent"].forEach((part, index) => { all[part] += values[index]; });
+    }
+    if (!groups.length) return null;
+    groups.push(["all", "All values", "All values", [all.same, all.differs, all.absent]]);
+    const names = [["same", "Same number in a database"], ["differs", "A different number"], ["new", "No database value"]];
+    const rows = statsPercentRows(groups, (values) => names.map(([part, label], index) => ({ part, label, count: values[index] })));
+    const calculated = statsCount(data.calculated ?? data.calculated_not_compared);
+    const papersNone = statsCount(data.papers_all_absent);
+    const papersSome = statsCount(data.papers_some_absent);
+    const notes = [
+      "Numbers compared for the same paper and parameter; substrate, variant and conditions are not compared, and a different number does not mean the database is wrong.",
+      calculated ? `${formatInteger(calculated)} kcat/Km calculated by CatLog are not compared.` : "",
+      papersNone !== null && papersSome !== null ? `No database lists any of these parameters for ${formatInteger(papersNone)} papers, and at least one of them for ${formatInteger(papersSome)} more.` : "",
+    ].filter(Boolean).join(" ");
+    return {
+      id: "statsDbCompareTitle", key: "db-compare", title: "Values read from the paper against the databases",
+      body: statsBarChart({ key: "db-compare", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
+      caption: "Values CatLog read from the paper, compared with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper and parameter.",
+      data: statsDataLine(notes),
+    };
+  }
+
+  function statsCorrectionsFigure(quality) {
+    const data = quality?.earlier_corrections;
+    const records = statsCount(data?.records);
+    if (!records || !data.values || typeof data.values !== "object") return null;
+    const names = [["rounding", "More digits or rounding"], ["differs", "A different number"], ["magnitude", "Unit or magnitude (× or ÷ 10ⁿ)"], ["new", "Added: the source had none"]];
+    const fields = ["rounding", "different", "magnitude", "added"];
+    const groups = [];
+    for (const [key, html, label] of STATS_PARAMETERS) {
+      const item = data.values[key];
+      if (!item) continue;
+      const values = fields.map((field) => statsCount(item[field]));
+      if (values.includes(null)) return null;
+      if (values.some(Boolean)) groups.push([key, html, label, values]);
+    }
+    if (!groups.length) return null;
+    const rows = statsPercentRows(groups, (values) => names.map(([part, label], index) => ({ part, label, count: values[index] })));
+    const listed = Array.isArray(data.before_listed) && data.before_listed.length === 2 ? data.before_listed : null;
+    const listedText = listed && statsCount(listed[1]) && statsCount(listed[0], listed[1]) !== null
+      ? `The value before the change equals a number a database lists for that paper for ${formatInteger(listed[0])} of ${formatInteger(listed[1])} changed values (${qualityShare(listed[0], listed[1])}).`
+      : "";
+    return {
+      id: "statsCorrectionsTitle", key: "earlier-corrections", title: "Corrections on records accepted after a correction",
+      body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
+      caption: `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} records accepted after a correction, by kind of change.`,
+      data: statsDataLine(listedText),
+    };
+  }
+
+  function statsReplacedFigure(quality) {
+    const data = quality?.replaced;
+    const records = statsCount(data?.records);
+    if (!records || !data.values || typeof data.values !== "object") return null;
+    const groups = [];
+    for (const [key, html, label] of STATS_PARAMETERS) {
+      const pair = data.values[key];
+      if (!pair) continue;
+      if (!Array.isArray(pair) || pair.length !== 2 || statsCount(pair[1]) === null || statsCount(pair[0], pair[1]) === null) return null;
+      if (pair[1]) groups.push([key, html, label, [pair[0], pair[1] - pair[0]]]);
+    }
+    if (!groups.length) return null;
+    const names = [["same", "Same number in CatLog's reading"], ["differs", "Not found by CatLog"]];
+    const rows = statsPercentRows(groups, (values) => names.map(([part, label], index) => ({ part, label, count: values[index] })));
+    const accepted = statsCount(data.accepted, records);
+    const papers = statsCount(data.papers);
+    return {
+      id: "statsReplacedTitle", key: "replaced", title: "Earlier records of papers CatLog has read",
+      body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
+      caption: `The ${formatInteger(records)} earlier records${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} papers` : " of the papers"} CatLog has read: whether CatLog's reading has the same number for that paper and parameter.`,
+      data: statsDataLine("CatLog's records replace a paper's earlier ones. kcat/Km calculated from kcat and Km are left out."),
+    };
+  }
+
   function renderStats() {
     // Immutable snapshot metadata: Stats never mixes filtered and full-download counts, and never loads the record index.
     const total = Number(manifest.total_rows || 0);
@@ -3291,11 +3698,12 @@
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     const humanChecked = statsCount(overview?.human_checked_accepted, accepted);
     const fromPaper = overview?.from_paper && statsCount(overview.from_paper.records, total);
+    const papersRead = statsCount(overview?.from_paper?.papers);
     const main = [
       ["Records", total],
-      ["Accepted", accepted],
+      ["Accepted", accepted, total ? `${statsShare(accepted, total)} of records` : ""],
+      [SOURCE_CATLOG_LABEL, fromPaper, papersRead !== null ? `from ${formatInteger(papersRead)} papers` : ""],
       ["Human-checked", humanChecked],
-      [SOURCE_CATLOG_LABEL, fromPaper, statsCount(overview?.from_paper?.papers) !== null ? `from ${formatInteger(overview.from_paper.papers)} papers` : ""],
     ].filter(([, value]) => value !== null && value !== undefined);
     const scope = [
       ["Papers", statsCount(overview?.papers)],
@@ -3307,63 +3715,219 @@
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(([label, value, note]) => `<div><dt>${escapeHtml(label)}</dt><dd>${formatCount(value)}${note ? `<small>${escapeHtml(note)}</small>` : ""}</dd></div>`).join("")}</dl>`;
     $("statsTotals").innerHTML = totalsHtml(main, "stats-totals-main") + (scope.length ? totalsHtml(scope, "stats-totals-scope") : "");
 
-    const sections = [];
-    // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
-    // Browse uses. Accepted says how many were read from the paper by CatLog (all of them accepted as printed).
+    // Figures in reading order; half-width ones stand two to a row from 1024px (an odd one out spans the row).
+    const figures = [];
+
+    // Figure 1. Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed,
+    // the words Browse uses; a donut (the one partition that is a true whole) and its legend table.
     const fromPaperAccepted = statsCount(overview?.from_paper?.records, counts.verified || 0);
-    // Records a human reviewer's approval accepted (accepted_basis "human review") are verified records too.
+    const noPaperRule = followsReviewRules();
+    const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
+    const acceptedParts = (fromPaperAccepted !== null
+      ? [[SOURCE_CATLOG_LABEL, fromPaperAccepted, "accepted_catlog", { source: "paper" }],
+        ["Earlier catalog, as printed", (counts.verified || 0) - fromPaperAccepted - humanAccepted, "accepted_printed"],
+        ["Earlier catalog, after a correction", counts.corrected || 0, "accepted_corrected"],
+        ["Earlier catalog, every value approved by a human reviewer", humanAccepted, "accepted_human"]]
+      : [["As printed", (counts.verified || 0) - humanAccepted, "accepted_printed"], ["After a correction", counts.corrected || 0, "accepted_corrected"],
+        ["Every value approved by a human reviewer", humanAccepted, "accepted_human"]])
+      .filter(([, count]) => count > 0);
+    // Accepted is split in the rows under it (the sentence is the row's title, for a copy of the numbers in words).
     const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} after a human reviewer approved every value` : "";
     const acceptedNote = fromPaperAccepted !== null
       ? `${formatInteger(fromPaperAccepted)} read from the paper by CatLog; ${formatInteger(accepted - fromPaperAccepted)} from the earlier catalog (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
       : `${formatInteger((counts.verified || 0) - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}.`;
-    const noPaperRule = followsReviewRules();
-    const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
+    const notReviewed = reviewStatuses.find((item) => item.value === "mathematically_inferred");
     const statusItems = [
-      { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" }, note: acceptedNote },
-      { value: "manual_review_required", label: "Not confirmed", color: "pending", count: counts.manual_review_required || 0,
+      { value: "accepted", label: "Accepted", part: "accepted", count: accepted, params: { status: "accepted" }, note: acceptedNote, splitNote: true },
+      ...acceptedParts.map(([label, count, value, params]) => ({ value, label, count, params, sub: true, part: "accepted", detail: true })),
+      { value: "manual_review_required", label: "Not confirmed", part: "pending", count: counts.manual_review_required || 0,
         params: { status: "curation_pending" }, note: stateDescriptions.curation_pending },
-      { value: "not_verified", label: "Not checked", color: "neutral", group: true, count: notChecked, params: { status: "not_verified" },
+      { value: "not_verified", label: "Not checked", part: "not-checked", group: true, count: notChecked, params: { status: "not_verified" },
         note: "No review result." },
-      ...["unverified", "mathematically_inferred"].map((value) => {
-        const status = reviewStatuses.find((item) => item.value === value);
+      { value: "unverified", label: "Unverified", part: "unverified", sub: true, count: counts.unverified || 0,
+        note: reviewStatuses.find((item) => item.value === "unverified").description },
+      { value: "mathematically_inferred", label: "Not reviewed", part: "not-reviewed", sub: true, count: counts.mathematically_inferred || 0,
         // Under the review rules, Not reviewed also holds the records accepted earlier that have no linked paper.
-        const note = value === "mathematically_inferred" && noPaperRule && identityOnly
-          ? `${status.description} Also ${formatInteger(identityOnly)} records the earlier review accepted that have no PMID or DOI linked (no paper linked).`
-          : status.description;
-        return { value, label: status.label, color: "neutral", sub: true, count: counts[value] || 0, note };
-      }),
-      { value: "disputed", label: "Disputed", color: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
+        note: noPaperRule && identityOnly
+          ? `${notReviewed.description} Also ${formatInteger(identityOnly)} records the earlier review accepted that have no PMID or DOI linked (no paper linked).`
+          : notReviewed.description },
+      { value: "disputed", label: "Disputed", part: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
         note: stateDescriptions.disputed },
-      ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
+      ...(otherStatus ? [{ value: "other_status", label: "Other status", part: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
-    sections.push(statsSection("statsStatusTitle", "Review result", `${statsBarRows(statusItems, total)}
-      ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} ${noPaperRule ? "records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted." : "accepted records have no PMID or DOI linked, so their values cannot be traced to a paper."}</p>` : ""}
-      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result." }));
+    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, label: item.label, count: item.count }));
+    const statusTable = `<table class="stats-table stats-status-table">
+      <thead><tr><th scope="col">Review result</th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">Share</th></tr></thead>
+      <tbody>${statusItems.map((item) => `<tr class="${item.detail ? "stats-row-detail" : item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" ${item.detail ? `data-part="${item.value}"` : `data-stat-key="${item.value}"`} data-count="${item.count}"${item.splitNote ? ` title="${escapeHtml(item.note)}"` : ""}>
+        <th scope="row"><span class="stats-name">${item.detail ? "" : `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>`}<span>${statsNameHtml(item)}${item.note && !item.splitNote ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
+        <td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, total))}</td></tr>`).join("")}</tbody></table>`;
+    figures.push({
+      id: "statsStatusTitle", key: "status", className: "stats-status-section", title: "Review result",
+      body: `<div class="stats-donut-layout">${statsDonut(donutParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
+      caption: "Review result of every record in this snapshot; each record has exactly one.",
+      data: statsDataLine("Shares of all records."),
+      after: `${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} ${noPaperRule ? "records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted." : "accepted records have no PMID or DOI linked, so their values cannot be traced to a paper."}</p>` : ""}
+        ${statsUnacceptedFields(counts)}`,
+    });
 
-    // Three short boxes: read from the paper by CatLog, AI audits and human review (the Guide's method section gives the
-    // same numbers). A box whose numbers this snapshot does not have is left out.
-    const boxes = [];
-    if (fromPaper !== null && fromPaper !== undefined) {
-      boxes.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>
-        <p>${escapeHtml(v2Sentence)} <a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers <span aria-hidden="true">→</span></a></p>
-        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
+    // Figure 2. Records by main source: each record once, coloured by review result when the snapshot counts it so.
+    const mainSources = statsMainSources(overview, total, counts);
+    const sources = statsSources(overview);
+    const byDatabase = sources.length
+      ? `<div class="stats-by-database"><p>In Browse, a record merged from several databases counts under each of them:</p>
+        <ul>${sources.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">${statsNameHtml(item)} <span class="stats-num">${formatInteger(item.count)}</span></li>`).join("")}</ul></div>`
+      : "<p class=\"stats-note\">Source breakdown unavailable in this snapshot.</p>";
+    if (mainSources) {
+      const { groups, byStatus } = mainSources;
+      const statusParts = [
+        ["accepted", "Accepted", ["verified", "corrected"]], ["pending", "Not confirmed", ["manual_review_required"]],
+        ["not-checked", "Not checked", ["unverified", "mathematically_inferred"]], ["disputed", "Disputed", ["disputed"]],
+      ];
+      const sumOf = (group, statuses) => statuses.reduce((sum, status) => sum + (group[status] || 0), 0);
+      const known = new Set(statusParts.flatMap(([, , statuses]) => statuses));
+      const otherKeys = STATS_MAIN_SOURCES.filter(([key]) => STATS_MAIN_OTHER.has(key) && groups[key]);
+      const merged = {};
+      for (const [key] of STATS_MAIN_SOURCES) {
+        if (!groups[key]) continue;
+        const target = STATS_MAIN_OTHER.has(key) && otherKeys.length > 1 ? "other" : key;
+        merged[target] = merged[target] || {};
+        for (const [status, count] of Object.entries(groups[key])) merged[target][status] = (merged[target][status] || 0) + count;
+      }
+      const recordsOf = (group) => Object.values(group).reduce((sum, count) => sum + count, 0);
+      const labels = Object.fromEntries(STATS_MAIN_SOURCES);
+      const order = Object.keys(merged).sort((a, b) => {
+        const last = (key) => (key === "other" ? 2 : key === "several" ? 1 : 0);
+        return last(a) - last(b) || recordsOf(merged[b]) - recordsOf(merged[a]);
+      });
+      const largest = Math.max(...order.map((key) => recordsOf(merged[key])));
+      const { max, step } = statsNiceScale(largest);
+      const rows = order.map((key) => {
+        const group = merged[key];
+        const records = recordsOf(group);
+        const label = key === "other" ? "Other" : labels[key];
+        const note = key === "other" ? otherKeys.map(([part, name]) => `${name} ${formatInteger(recordsOf(groups[part]))}`).join(", ") : "";
+        // Only CatLog's records have one Browse filter that opens exactly them.
+        const labelHtml = key === "catlog" && fromPaper === records
+          ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${escapeHtml(label)}</a>` : escapeHtml(label);
+        if (!byStatus) {
+          return { key, count: records, label: labelHtml, note: escapeHtml(note), segments: [{ part: "neutral", count: records }],
+            value: formatInteger(records), text: `${label}: ${formatInteger(records)} records.` };
+        }
+        const other = Object.entries(group).reduce((sum, [status, count]) => sum + (known.has(status) ? 0 : count), 0);
+        const parts = [...statusParts.map(([part, name, statuses]) => ({ part, name, count: sumOf(group, statuses) })),
+          ...(other ? [{ part: "neutral", name: "Other status", count: other }] : [])];
+        const acceptedCount = parts[0].count;
+        return {
+          key, count: records, label: labelHtml, note: escapeHtml(note),
+          segments: parts.map((item) => ({ part: item.part, count: item.count, title: `${label}, ${item.name}: ${formatInteger(item.count)}` })),
+          value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(acceptedCount, records))}</span>`,
+          text: `${label}: ${formatInteger(records)} records; ${parts.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.`,
+        };
+      });
+      figures.push({
+        id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Records by main source",
+        body: statsBarChart({
+          key: "main-source", rows, scale: max, axis: statsAxis(max, step),
+          legend: byStatus ? statusParts.map(([part, label]) => ({ part, label })) : [],
+        }),
+        caption: byStatus
+          ? "Records by main source, coloured by review result; each label gives the records, then the share accepted."
+          : "Records by main source.",
+        data: statsDataLine("Main source: CatLog's own reading of the paper, or the database a record came from; a record merged from several databases counts once, under Several databases."),
+        after: byDatabase,
+      });
+    } else {
+      figures.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
+        caption: "Records per source.", data: statsDataLine() });
     }
+
+    // Figures 3-5: CatLog against the databases, the earlier corrections, and the earlier records CatLog replaced.
+    for (const build of [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]) {
+      const figure = build(overview?.quality);
+      if (figure) figures.push(figure);
+    }
+
+    // Checks on the records read from the paper: one row per kind of check, with a small bar.
     const audit = auditFacts(overview);
-    if (audit) {
-      boxes.push(statsSection("statsAuditTitle", "AI audits", `<p class="stats-figure"><strong>${formatInteger(audit.values)}</strong> values re-checked against their papers</p>
-        <p>A separate AI auditor tries to find errors in them; ${escapeHtml(auditOutcomeText(audit))}.${audit.date ? ` As of ${escapeHtml(audit.date)}.` : ""}</p>`, { className: "stats-box-section" }));
+    const agreement = agreementHeadline(overview?.quality?.agreement);
+    const marked = statsCount(overview?.human_marked, total);
+    const quality = overview?.quality || {};
+    const compared = statsCount(quality.compared_values_v1);
+    const comparedWrong = compared ? statsCount(quality.wrong_v1, compared) : null;
+    const labelErrors = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
+    // An older snapshot without the agreement counts: what CatLog found of the reviewers' approved values.
+    const approvedV2 = statsCount(quality.v2_approved_total);
+    const found = approvedV2 ? statsCount(quality.v2_found, approvedV2) : null;
+    const differed = statsCount(quality.v2_differences_checked);
+    const foundWrong = differed ? statsCount(quality.v2_wrong, differed) : null;
+    const checkRows = [
+      fromPaper ? { key: "second_check", name: "Second AI check", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)} records</a>${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
+        result: "Every value compared with the paper", share: 1 } : null,
+      audit ? { key: "audit", name: "AI audits", count: `${formatInteger(audit.values)} values`,
+        result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}`, share: (audit.values - audit.wrong) / audit.values } : null,
+      agreement ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(agreement.approved)} values`,
+        result: `${formatInteger(agreement.agree)} the same in CatLog (${qualityShare(agreement.agree, agreement.approved)})`, share: agreement.agree / agreement.approved }
+        : found !== null ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(approvedV2)} values`,
+          result: `CatLog found ${formatInteger(found)}${foundWrong !== null ? `; ${foundWrong ? formatInteger(foundWrong) : "none"} of the ${formatInteger(differed)} where it differed ${foundWrong > 1 ? "were" : "was"} wrong against the paper` : ""}`, share: found / approvedV2 } : null,
+      humanChecked !== null ? { key: "human_checked", name: "Human-checked records", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} accepted records</a>`,
+        result: marked !== null && marked >= humanChecked ? `A reviewer approved every value; reviewers looked at ${formatInteger(marked)} records` : "A reviewer approved every value",
+        share: marked ? humanChecked / marked : null } : null,
+      compared && comparedWrong !== null && labelErrors !== null ? { key: "earlier", name: "Human review of the earlier catalog", count: `${formatInteger(compared)} values`,
+        result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label`, share: (compared - comparedWrong) / compared } : null,
+    ].filter(Boolean);
+    if (checkRows.length) {
+      figures.push({
+        id: "statsChecksTitle", key: "checks", className: "stats-checks-section", title: "Checks on the values", kind: "Table",
+        body: `<table class="stats-table stats-checks-table">
+          <thead><tr><th scope="col">Check</th><th scope="col">Checked</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Share</span></th><th scope="col">Result</th></tr></thead>
+          <tbody>${checkRows.map((row) => `<tr data-check="${row.key}"><th scope="row">${escapeHtml(row.name)}</th><td>${row.count}</td>
+            <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined ? `<span class="stats-minibar"><span class="stats-seg stats-part-${row.key === "earlier" ? "neutral" : "same"}" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td>
+            <td>${escapeHtml(row.result)}</td></tr>`).join("")}</tbody></table>`,
+        caption: `${escapeHtml(v2Sentence)} AI audits and human reviewers then check samples against the papers.`,
+        data: statsDataLine(),
+        after: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers <span aria-hidden="true">→</span></a></p>`,
+      });
     }
-    if (humanChecked !== null) {
-      const marked = statsCount(overview.human_marked, total);
-      const comparison = humanComparisonText(overview);
-      boxes.push(statsSection("statsHumanTitle", "Human review", `<p class="stats-figure"><strong>${formatInteger(humanChecked)}</strong> accepted records are human-checked</p>
-        <p>${marked !== null && marked > humanChecked ? `Human reviewers looked at ${formatInteger(marked)} records; the accepted ones where they approved every value carry human-checked.` : "A human reviewer approved every value these records show."}</p>
-        ${comparison ? `<p>${escapeHtml(comparison)}</p>` : ""}
-        <p><a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">Browse these records</a></p>`, { className: "stats-box-section" }));
-    }
-    if (boxes.length) sections.push(`<div class="stats-boxes stats-wide" style="--stats-boxes:${boxes.length}">${boxes.join("")}</div>`);
 
-    // What the records contain.
+    // Enzyme classes: records, with the accepted ones drawn over them.
+    const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
+      && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
+    if (classes.length) {
+      const none = statsCount(overview.ec_class_none, total);
+      const multiple = statsCount(overview.ec_class_multiple, total);
+      const { max, step } = statsNiceScale(Math.max(...classes.map((item) => item.count)));
+      const rows = classes.map((item) => ({
+        key: `ec_${item.class}`, count: item.count,
+        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
+        segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
+          { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted` }],
+        value: `${formatInteger(item.count)} <span class="stats-muted">${formatInteger(item.accepted)}</span>`,
+        text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted.`,
+      }));
+      const notes = [
+        multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
+        none ? `${formatInteger(none)} records have no EC class.` : "",
+      ].filter(Boolean).join(" ");
+      figures.push({
+        id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes",
+        body: statsBarChart({ key: "ec-classes", rows, scale: max, overlay: true, axis: statsAxis(max, step),
+          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }] }),
+        caption: "Records per enzyme class, with the accepted ones; each label gives the records, then the accepted.",
+        data: statsDataLine(notes),
+      });
+    }
+
+    // Value ranges (full width).
+    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
+    const rangesFigure = ranges.length ? {
+      id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
+      body: `<div class="stats-ranges">${ranges.join("")}</div>`,
+      caption: "Values in catalog units on a log scale, one bar per power of ten; the end bars include all values beyond them. Dot: median; line: middle 80% of values.",
+      data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out."),
+    } : null;
+
+    // Tables: what the records contain, the most common organisms and EC numbers, wild type and variants, cautions.
+    const tables = [];
     const coverage = summary.coverage || {};
     const download = manifest.enriched_download?.coverage || {};
     const conditions = overview?.conditions || {};
@@ -3380,102 +3944,250 @@
     const both = statsCount(conditions.both, total);
     const sequences = [["Wild-type sequence", download.wild_type_sequence], ["Variant sequence", download.variant_sequence]]
       .filter(([, count]) => statsCount(count, total) !== null);
-    if (contents.length) {
-      const notes = [
-        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table, as is an older kcat/Km of unstated origin that equals kcat ÷ Km).` : "",
-        both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
-      ].filter(Boolean).join(" ");
-      sections.push(statsSection("statsContentsTitle", "What the records contain", `${statsBarRows(contents, total)}
-        ${notes ? `<p class="stats-note">${notes}</p>` : ""}
-        ${sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
-          ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
-        </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : ""}`,
-      { note: "Records with each value or field; a record usually has several." }));
-    }
-
-    // Enzyme classes.
-    const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
-      && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
-    if (classes.length) {
-      const none = statsCount(overview.ec_class_none, total);
-      const multiple = statsCount(overview.ec_class_multiple, total);
-      const items = classes.map((item) => ({ value: `ec_${item.class}`, label: `EC ${item.class} ${item.name || ""}`.trim(),
-        labelHtml: `EC ${item.class}<span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span>`, count: item.count, accepted: item.accepted, params: { ec: `${item.class}.` } }));
-      const notes = [
-        multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
-        none ? `${formatInteger(none)} records have no EC class.` : "",
-      ].filter(Boolean).join(" ");
-      sections.push(statsSection("statsClassesTitle", "Enzyme classes", `${statsBarRows(items, total, { extra: { key: "accepted", label: "accepted" }, head: ["Records", "Accepted"] })}
-        ${notes ? `<p class="stats-note">${notes}</p>` : ""}`));
-    }
-
-    // Most common organisms and EC numbers.
     const topItems = (list, toItem) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, total) !== null).map(toItem);
     const organisms = topItems(overview?.top_organisms, (item, index) => ({ value: `organism_${index}`, label: String(item.name || ""),
       labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { organism: String(item.name || "") } }));
     const ecNumbers = topItems(overview?.top_ec, (item) => ({ value: `ec_${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
       labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ec: String(item.ec || "") } }));
     if (organisms.length) {
-      sections.push(statsSection("statsOrganismsTitle", "Most common organisms", statsBarRows(organisms, total, { scale: organisms[0].count }),
-        { note: "Strains are counted with their species." }));
+      tables.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
+        body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
+        caption: `The ${formatInteger(organisms.length)} organisms with the most records; strains are counted with their species.`, data: statsDataLine("Bars against the most common organism.") });
     }
     if (ecNumbers.length) {
-      sections.push(statsSection("statsEcTitle", "Most common EC numbers", statsBarRows(ecNumbers, total, { scale: ecNumbers[0].count }),
-        { note: "Each with the enzyme name its records use most." }));
+      tables.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
+        body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
+        caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, data: statsDataLine("Bars against the most common EC number.") });
     }
-
-    // Value ranges.
-    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
-    if (ranges.length) {
-      sections.push(statsSection("statsRangesTitle", "Value ranges", `<div class="stats-ranges">${ranges.join("")}</div>`, { wide: true,
-        note: "Catalog units on a log scale; the end bars include all values beyond them. Dot: median; line: middle 80% of values. Values without a recorded unit, or in a unit other than the catalog's, are left out." }));
+    if (contents.length) {
+      const notes = [
+        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table, as is an older kcat/Km of unstated origin that equals kcat ÷ Km).` : "",
+        both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
+      ].filter(Boolean).join(" ");
+      tables.push({
+        id: "statsContentsTitle", key: "contents", title: "What the records contain", kind: "Table",
+        body: statsTable(contents, total, { head: "Value or field" }),
+        caption: "Records with each value or field; a record usually has several.",
+        data: statsDataLine(notes),
+        after: sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
+          ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
+        </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : "",
+      });
     }
-
-    // Wild type and variants.
     const form = overview?.enzyme_form || {};
     const forms = [
       { value: "wild", label: "Wild type", count: statsCount(form.wild, total), params: { variant: "wild" } },
       { value: "variant", label: "Variant", count: statsCount(form.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
       { value: "not_stated", label: "Not stated", count: statsCount(form.not_stated, total) },
     ];
-    // The last four sections stand two to a column (each column one grid item), so a short section leaves no gap
-    // beside a taller one.
-    const stack = (...items) => {
-      const present = items.filter(Boolean);
-      return present.length > 1 ? `<div class="stats-stack">${present.join("")}</div>` : present.join("");
-    };
-    const formSection = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total
-      ? statsSection("statsFormTitle", "Wild type and variants", statsBarRows(forms, total))
-      : "";
-
-    // Cautions.
     const caution = overview?.cautions || {};
-    const cautions = [
-      // The same names as the Cautions filter.
-      ...cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
-        count: statsCount(caution[item.value], total), params: { caution: item.value } })),
-    ];
-    sections.push(stack(formSection, cautions.every((item) => item.count !== null)
-      ? statsSection("statsCautionsTitle", "Cautions", statsBarRows(cautions, total),
-        { note: "A caution marks a value that may be wrong; a record can carry more than one." })
-      : ""));
+    // The same names as the Cautions filter.
+    const cautions = cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
+      count: statsCount(caution[item.value], total), params: { caution: item.value }, part: item.value === "none" ? "neutral" : "caution" }));
+    const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
+    const cautionsOk = cautions.every((item) => item.count !== null);
+    if (formOk) {
+      tables.push({ id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table", stack: cautionsOk,
+        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table's tag says it.", data: "" });
+    }
+    if (cautionsOk) {
+      tables.push({ id: "statsCautionsTitle", key: "cautions", title: "Cautions", kind: "Table", stacked: formOk,
+        body: statsTable(cautions, total, { head: "Caution" }), caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: "" });
+    }
 
-    // Source.
-    const sources = statsSources(overview);
-    const sourceSection = statsSection("statsSourcesTitle", "Source", sources.length ? statsBarRows(sources, total) : "<p>Source breakdown unavailable in this snapshot.</p>",
-      { note: "A record merged from several databases counts under each of them, so the counts can add up to more than all records." });
-
-    if (!overview) {
-      sections.push(sourceSection);
-    } else {
-      sections.push(stack(sourceSection, `<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
+    // Number in reading order, Figures and Tables apart; place the half-width ones two to a row.
+    const numbers = { Figure: 0, Table: 0 };
+    const halves = figures.filter((item) => !item.wide);
+    if (halves.length % 2) halves[halves.length - 1].wide = true;
+    const html = (item) => statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] });
+    const parts = [agreementLeadHtml(overview), ...figures.map(html)];
+    if (rangesFigure) parts.push(html(rangesFigure));
+    const tableHtml = [];
+    for (let index = 0; index < tables.length; index += 1) {
+      const item = tables[index];
+      // Wild type and variants stand above Cautions in one column, so a short table leaves no gap.
+      if (item.stack && tables[index + 1]?.stacked) {
+        tableHtml.push(`<div class="stats-stack">${html(item)}${html(tables[index + 1])}</div>`);
+        index += 1;
+      } else {
+        tableHtml.push(html(item));
+      }
+    }
+    if (tableHtml.length % 2 && tableHtml.length > 1) tableHtml[tableHtml.length - 1] = tableHtml[tableHtml.length - 1].replace('class="stats-section stats-figure-section', 'class="stats-section stats-figure-section stats-wide');
+    parts.push(...tableHtml);
+    if (overview) {
+      parts.push(`<details class="stats-explanation stats-method stats-wide"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records where a human reviewer approved every value, as the tag shows.</dd></div>
+        <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database, or several databases merged into one record.</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
-      </dl></details>`));
+      </dl></details>`);
     }
-    $("statsCharts").innerHTML = sections.join("");
+    $("statsCharts").innerHTML = parts.filter(Boolean).join("");
+  }
+
+  // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time
+  // it is shown, like Stats; never loads the record index. No model or vendor names, first names only, no titles.
+  const TEAM_STATIONS = {
+    papers: "Papers", reading: "AI reading", check: "AI check", catlog: "CatLog", human: "Human check",
+    rules: "Rules updated", website: "Website", paper: "The paper",
+  };
+  const TEAM_ACTORS = [
+    { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
+    { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
+    { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
+    { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and docs" },
+    { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value" },
+    { key: "checking", name: "Checking agents", kind: "ai", stations: ["check"], phrase: "check it again, separately" },
+    { key: "audit", name: "Audit agents", kind: "ai", stations: ["catlog"], phrase: "re-check samples" },
+    { key: "download", name: "Download agent", kind: "ai", stations: ["papers"], phrase: "fetches papers" },
+  ];
+  // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
+  const TEAM_LEGEND = [
+    { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and turns findings into better rules" },
+    { actors: ["aarna", "erin"], text: "<strong>Aarna</strong> and <strong>Erin</strong> check values against the papers" },
+    { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and docs" },
+    { actors: ["reading"], text: "<strong>Reading agents</strong> (AI) read each value" },
+    { actors: ["checking"], text: "<strong>Checking agents</strong> (AI) check it again, separately" },
+    { actors: ["audit"], text: "<strong>Audit agents</strong> (AI) re-check samples" },
+    { actors: ["download"], text: "<strong>Download agent</strong> (AI) fetches papers" },
+  ];
+
+  // Two drawings of one loop: wide (stations along a racetrack, AI agents above, people below) and narrow (an upright
+  // track for phones and tablets, with the people and agents in the legend beside or under it).
+  const TEAM_LAYOUTS = {
+    wide: {
+      viewBox: "0 0 1000 480",
+      track: "M270 140 H670 A110 110 0 0 1 670 360 H270 A110 110 0 0 1 270 140 Z",
+      stations: {
+        papers: { x: 290, y: 140, label: [290, 172, "middle"] },
+        reading: { x: 470, y: 140, label: [470, 172, "middle"] },
+        check: { x: 650, y: 140, label: [650, 172, "middle"] },
+        catlog: { x: 780, y: 250, label: [762, 230, "end"] },
+        // stations on the lower straight: their name and numbers stand just above the track
+        human: { x: 560, y: 360, label: [560, 0, "middle"], above: true },
+        rules: { x: 380, y: 360, label: [380, 0, "middle"], above: true },
+        website: { x: 870, y: 160, label: [886, 165, "start"], branch: true },
+        paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
+      },
+      arrows: [[380, 140, 0], [470, 360, 180], [160, 250, 270]],
+      actors: {
+        download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [810, 58],
+        supantha: [380, 438], aarna: [515, 438], erin: [605, 438], mohammad: [870, 418],
+      },
+    },
+    narrow: {
+      viewBox: "0 0 360 720",
+      track: "M80 170 A100 100 0 0 1 280 170 V480 A100 100 0 0 1 80 480 Z",
+      stations: {
+        papers: { x: 180, y: 70, label: [180, 44, "middle"] },
+        reading: { x: 280, y: 210, label: [264, 206, "end"] },
+        check: { x: 280, y: 370, label: [264, 366, "end"] },
+        catlog: { x: 180, y: 580, label: [180, 508, "middle"] },
+        human: { x: 80, y: 440, label: [96, 436, "start"] },
+        rules: { x: 80, y: 285, label: [96, 281, "start"] },
+        website: { x: 90, y: 650, label: [90, 678, "middle"], branch: true },
+        paper: { x: 270, y: 650, label: [270, 678, "middle"], branch: true },
+      },
+      arrows: [[280, 290, 90], [80, 360, 270]],
+      actors: null,
+    },
+  };
+
+  // Live numbers at the stations, from this snapshot's manifest; a number the snapshot does not have is left out.
+  function teamNumbers() {
+    const total = Number(manifest.total_rows || 0);
+    const overview = statsOverview(total);
+    const numbers = {};
+    const papers = statsCount(overview?.from_paper?.papers);
+    const records = statsCount(overview?.from_paper?.records, total);
+    numbers.reading = [papers !== null ? `${formatInteger(papers)} papers read` : "", records !== null ? `${formatInteger(records)} records` : ""].filter(Boolean);
+    const audit = auditFacts(overview);
+    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked`, "by AI audits"] : [];
+    const counts = manifestDistribution("verification_status");
+    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
+    const headline = agreementHeadline(overview?.quality?.agreement);
+    numbers.human = [humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : "", headline ? `${headline.percent} agreement` : ""].filter(Boolean);
+    numbers.website = total ? [`${formatInteger(total)} records`] : [];
+    return numbers;
+  }
+
+  function teamFigureSvg(layoutKey, numbers) {
+    const layout = TEAM_LAYOUTS[layoutKey];
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const trackId = `teamTrack-${layoutKey}`;
+    const actorsFor = (station) => TEAM_ACTORS.filter((actor) => actor.stations.includes(station)).map((actor) => actor.key).join(" ");
+    const branches = Object.entries(layout.stations).filter(([, station]) => station.branch)
+      .map(([, station]) => `<line class="team-branch" x1="${layout.stations.catlog.x}" y1="${layout.stations.catlog.y}" x2="${station.x}" y2="${station.y}"/>`).join("");
+    const arrows = layout.arrows.map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
+    const stations = Object.entries(layout.stations).map(([key, station]) => {
+      const lines = numbers[key] || [];
+      const [lx, at, anchor] = station.label;
+      const ly = station.above ? station.y - 22 - lines.length * 18 : at;
+      const name = escapeHtml(TEAM_STATIONS[key]);
+      const text = `<text class="team-station-name" x="${lx}" y="${ly}" text-anchor="${anchor}">${name}</text>${lines.map((line, index) => `<text class="team-station-number" x="${lx}" y="${ly + (index + 1) * (layoutKey === "wide" ? 18 : 16)}" text-anchor="${anchor}">${escapeHtml(line)}</text>`).join("")}`;
+      return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${lines.length ? `: ${lines.join(", ")}` : ""}`)}">
+        <circle class="team-station-dot" cx="${station.x}" cy="${station.y}" r="${station.branch ? 6 : 8}"/>${text}</g>`;
+    }).join("");
+    const actors = layout.actors ? TEAM_ACTORS.map((actor) => {
+      const [x, y] = layout.actors[actor.key];
+      const width = Math.round(actor.name.length * 8.2 + 28);
+      const height = 28;
+      // A thin line from the chip to each of its stations on the track (Supantha's to Rules updated only).
+      const target = layout.stations[actor.stations[0]];
+      const fromY = target.y < y ? y - height / 2 : y + height / 2;
+      return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${actor.stations.map((key) => TEAM_STATIONS[key]).join(", ")}.`)}">
+        <line class="team-link" x1="${x}" y1="${fromY}" x2="${target.x}" y2="${target.y + (target.y < y ? 9 : -9)}"/>
+        <rect x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
+        <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text></g>`;
+    }).join("") : "";
+    const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
+    const [, , width, height] = layout.viewBox.split(" ");
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-labelledby="teamFigureTitle-${layoutKey}">
+      <title id="teamFigureTitle-${layoutKey}">CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated, and back to papers; CatLog also feeds the website and the paper.</title>
+      <path id="${trackId}" class="team-track" d="${layout.track}"/>
+      ${arrows}${branches}${dots}${stations}${actors}
+    </svg>`;
+  }
+
+  function renderTeam() {
+    const numbers = teamNumbers();
+    const legendItem = (item) => `<li class="team-legend-item team-legend-${TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind}" tabindex="0" data-actor="${item.actors.join(" ")}" data-stations="${[...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].join(" ")}">
+      <i class="team-legend-mark" aria-hidden="true"></i><span>${item.text}<small>At ${escapeHtml([...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].map((key) => TEAM_STATIONS[key]).join(", "))}</small></span></li>`;
+    const people = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "person");
+    const agents = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "ai");
+    $("teamFigure").innerHTML = `${teamFigureSvg("wide", numbers)}${teamFigureSvg("narrow", numbers)}`;
+    $("teamLegend").innerHTML = `<div><h2 id="teamPeopleTitle">People</h2><ul aria-labelledby="teamPeopleTitle">${people.map(legendItem).join("")}</ul></div>
+      <div><h2 id="teamAgentsTitle">AI agents</h2><ul aria-labelledby="teamAgentsTitle">${agents.map(legendItem).join("")}</ul></div>`;
+    const figure = $("teamFigure");
+    const view = $("teamView");
+    const light = (source) => {
+      const actors = new Set(String(source?.dataset?.actor || "").split(" ").filter(Boolean));
+      const stations = new Set(String(source?.dataset?.stations || "").split(" ").filter(Boolean));
+      view.classList.toggle("team-highlight", Boolean(actors.size));
+      for (const element of view.querySelectorAll("[data-station]")) element.classList.toggle("is-lit", stations.has(element.dataset.station));
+      for (const element of view.querySelectorAll("[data-actor]")) {
+        element.classList.toggle("is-lit", String(element.dataset.actor).split(" ").some((key) => actors.has(key)));
+      }
+    };
+    if (!state.teamBound) {
+      state.teamBound = true;
+      for (const type of ["pointerover", "focusin"]) {
+        view.addEventListener(type, (event) => {
+          const source = event.target?.closest?.("[data-actor]");
+          if (source && view.contains(source)) light(source);
+        });
+      }
+      view.addEventListener("pointerout", (event) => {
+        const source = event.target?.closest?.("[data-actor]");
+        if (source && !source.contains(event.relatedTarget)) light(view.contains(document.activeElement) ? document.activeElement.closest?.("[data-actor]") : null);
+      });
+      view.addEventListener("focusout", (event) => {
+        if (!event.relatedTarget?.closest?.("[data-actor]")) light(null);
+      });
+    }
+    figure.dataset.ready = "true";
   }
 
   function hideSuggestions() {
@@ -7610,8 +8322,9 @@
       }
     }
     $("brandHomeButton").addEventListener("click", () => navigateTo("browse"));
-    for (const view of ["browse", "guide", "stats"]) {
+    for (const view of ["browse", "guide", "stats", "team"]) {
       const link = $(`${view}Button`);
+      if (!link) continue;
       link.setAttribute("href", viewUrl(view).href);
       link.addEventListener("click", (event) => {
         if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -7860,7 +8573,7 @@
       renderSourceAttribution();
       renderGuideMethod();
       const cleanUrl = viewUrl(viewFromLocation());
-      if (!["#browse", "#guide", "#stats"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
+      if (!["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
       bindControls();
       // The checklists exist from the start, so an address with filters (#browse?...) can set them before the records load.
@@ -7986,7 +8699,15 @@
       statsValueRange,
       statsUnacceptedFields,
       statsShare,
-      statsBarRows,
+      statsTable,
+      statsBarChart,
+      statsDonut,
+      statsNiceScale,
+      statsMainSources,
+      agreementHeadline,
+      agreementLeadHtml,
+      renderTeam,
+      teamNumbers,
       renderView,
       navigateTo,
       viewUrl,

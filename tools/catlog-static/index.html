@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/" />
     <link rel="icon" href="/images/rz.png" />
     <link rel="stylesheet" href="assets/catlog-static.css?v=ec9f66bff23b56f0" />
-    <script data-src="data/catlog-viewer-index.dcab74572662.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||/^#guide(-|$)/.test(h)||h==="#stats")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
+    <script data-src="data/catlog-viewer-index.dcab74572662.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||/^#guide(-|$)/.test(h)||h==="#stats"||h==="#team")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
   </head>
   <body>
     <a class="skip-link" href="#recordTableWrap">Skip to records</a>
@@ -313,6 +313,22 @@
         </div>
       </main>
 
+      <main id="teamView" class="team-view" hidden aria-labelledby="teamHeading">
+        <div class="team-shell">
+          <header class="team-heading">
+            <h1 id="teamHeading" tabindex="-1">People behind CatLog</h1>
+            <p>CatLog is built by people and AI agents working in a loop: each round, what people find in the checks improves how the next papers are read.</p>
+          </header>
+          <div class="team-body">
+            <figure class="team-figure">
+              <div id="teamFigure" class="team-figure-art"></div>
+              <figcaption>Papers go round the loop clockwise. Point at or tab to a person or an agent to see where they work.</figcaption>
+            </figure>
+            <div id="teamLegend" class="team-legend"></div>
+          </div>
+        </div>
+      </main>
+
       <main id="guideView" class="guide-view" hidden aria-labelledby="guideHeading">
         <div class="guide-shell">
           <header class="guide-heading">
@@ -345,6 +361,7 @@
               <div><dt>AI audits</dt><dd id="guideMethodAudits">A separate AI auditor re-checks sampled values against their papers and tries to find errors; values found wrong are removed.</dd></div>
               <div><dt>Human review</dt><dd id="guideMethodHuman">Human reviewers compared values with their papers in a review of the earlier catalog. Accepted records where a reviewer approved every value carry human-checked.</dd></div>
               <div><dt>Earlier catalog</dt><dd>The other records come from BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, and from earlier paper extractions, screened by an earlier automated pipeline of AI models and code checks. When CatLog reads a paper, its records replace that paper&rsquo;s earlier ones.</dd></div>
+              <div><dt>Who does it</dt><dd>People and AI agents work in a loop: what people find in the checks improves how the next papers are read. See <a href="#team">People behind CatLog</a>.</dd></div>
             </dl>
           </section>
 
