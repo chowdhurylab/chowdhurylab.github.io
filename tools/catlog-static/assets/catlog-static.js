@@ -3819,14 +3819,32 @@
     </section>`;
   }
 
-  // The Guide's method section: the audit and human-review items get this snapshot's numbers when it has them (they
-  // read without numbers otherwise). The Guide reads only the manifest, never the record index.
+  // The Guide's method section opens with the agreement with human reviewers (the user's headline measure, first on
+  // Stats too): one sentence with the headline percent and a link to Stats. Empty without agreement counts.
+  function guideAgreementLeadHtml(overview) {
+    const headline = agreementHeadline(overview?.quality?.agreement);
+    if (!headline) return "";
+    const percent = `<strong>${escapeHtml(headline.percent)}</strong>`;
+    const sentence = headline.blind
+      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as human reviewers for ${percent} of the values they approved.`
+      : `CatLog has the same value as human reviewers for ${percent} of the values they approved: ${formatInteger(headline.agree)} of ${formatInteger(headline.approved)}${headline.papers ? `, on ${formatInteger(headline.papers)} papers they checked that CatLog has since read` : ""}.`;
+    return `<span class="guide-method-lead-title">Agreement with human reviewers</span> ${sentence} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
+  }
+
+  // The Guide's method section: the agreement lead, then the audit and human-review items get this snapshot's numbers
+  // when it has them (they read without numbers otherwise). The Guide reads only the manifest, never the record index.
   function renderGuideMethod() {
     // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
     if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
     if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
     const overview = statsOverview(Number(manifest.total_rows || 0));
+    const lead = $("guideMethodLead");
+    if (lead) {
+      const html = guideAgreementLeadHtml(overview);
+      lead.innerHTML = html;
+      lead.hidden = !html;
+    }
     const audit = auditFacts(overview);
     if ($("guideMethodAudits") && audit) {
       $("guideMethodAudits").textContent = `${formatInteger(audit.values)} values re-checked against their papers by a separate AI auditor that tries to find errors; ${auditOutcomeText(audit)}.${audit.date ? ` As of ${audit.date}.` : ""}`;

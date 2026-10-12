@@ -357,6 +357,7 @@
 
           <section class="guide-section guide-method" id="guide-method" aria-labelledby="guide-method-title">
             <h2 id="guide-method-title">How CatLog reads and checks values</h2>
+            <p class="guide-method-lead" id="guideMethodLead" hidden></p>
             <dl class="guide-term-list guide-method-list">
               <div><dt>Read from the paper</dt><dd>CatLog reads papers directly. An AI model (Claude, Anthropic) reads each <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> with its unit, enzyme, organism, substrate and assay conditions. A second, separate AI check compares every value with the paper. Code confirms that the quoted line is in the paper text, and converts units where the paper&rsquo;s differ from the catalog&rsquo;s. Each value keeps where it is printed and the number as printed. A person has not checked these values unless the record is marked human-checked.</dd></div>
               <div><dt>AI audits</dt><dd id="guideMethodAudits">A separate AI auditor re-checks sampled values against their papers and tries to find errors; values found wrong are removed.</dd></div>

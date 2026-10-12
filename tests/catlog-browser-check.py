@@ -521,6 +521,15 @@ LEAD_FIRST_JS = """
 """
 
 
+# The Guide's agreement line, when shown: its text, whether it comes right after the section's heading, its Stats link.
+GUIDE_LEAD_JS = """
+    const lead = document.getElementById('guideMethodLead');
+    if (!lead || lead.hidden || !lead.getClientRects().length) return null;
+    return {text: lead.textContent, first: lead.previousElementSibling?.id === 'guide-method-title',
+            stats: Boolean(lead.querySelector('a[href$="catlog-stats.html"], a[href$="#stats"]'))};
+"""
+
+
 def check_quality(driver, browser, url, quality=None):
     """Stats' checks table and the Guide's method section give the audit and human-review numbers of overview.quality;
     the agreement with human reviewers leads Stats when the snapshot has it. Without a quality object in the snapshot, a
@@ -567,6 +576,14 @@ def check_quality(driver, browser, url, quality=None):
         driver.get("about:blank")
         driver.get(url + "#guide-method")
         wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+        # The method section opens with the agreement, as Stats does (the user's headline measure).
+        lead = driver.execute_script(GUIDE_LEAD_JS)
+        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
+            blind = agreement.get("first_agree_unexposed_pct")
+            percent = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
+            assert lead and lead["first"] and percent in lead["text"] and lead["stats"], lead
+        else:
+            assert not lead, "No agreement line in the Guide without agreement counts"
         if audited:
             guide = driver.find_element(By.ID, "guideMethodAudits").text
             assert guide.startswith(f"{quality['audit_values']:,} values re-checked against their papers by a separate AI auditor"), guide

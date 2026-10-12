@@ -594,9 +594,11 @@ CatLog-27k and that this site is the growing catalog that followed, then
 points to the method ("How this catalog is built: see ..."). Then "On this
 page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: How CatLog reads and checks
-values (#guide-method: the only place the method is said in full, a definition
-list of Read from the paper, AI audits, Human review, Earlier catalog and Who
-does it (linking to Team); the
+values (#guide-method: the only place the method is said in full; it opens
+with the agreement with human reviewers in a light box, the Stats lead's
+headline percent in one sentence linked to Stats, left out without agreement
+counts; then a definition list of Read from the paper, AI audits, Human
+review, Earlier catalog and Who does it (linking to Team); the
 audit and human-review numbers are filled from the snapshot's overview when it
 has them, never typed, and the items read without numbers otherwise; badges,
 filters and Stats say it in one line and link here), Find records (#guide-find:

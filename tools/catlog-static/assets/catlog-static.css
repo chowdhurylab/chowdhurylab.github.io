@@ -1295,6 +1295,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-status-list) > div:last-child { border-bottom:0 }
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dt { color:var(--text); font-weight:600 }
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd { margin:0; color:var(--text); font-weight:400 }
+/* The method section opens with the agreement with human reviewers, in a light box like the lead of Stats. */
+.guide-view .guide-shell .guide-method-lead { max-width:none; margin:4px 0 16px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); padding:12px 16px; color:var(--text) }
+.guide-view .guide-method-lead-title { display:block; margin-bottom:4px; color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+.guide-view .guide-method-lead strong { font-weight:600 }
 .guide-view .guide-citation p { max-width:none; margin:0 0 12px; color:var(--text) }
 .guide-view .guide-citation-meta { display:block; margin:8px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view .guide-data-id-note { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }

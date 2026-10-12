@@ -1733,6 +1733,7 @@ function row(overrides = {}) {
   element("guideMethodAudits").textContent = "static audits";
   element("guideMethodHuman").textContent = "static human";
   api.renderGuideMethod();
+  assert.equal(element("guideMethodLead").hidden, true, "No agreement line without agreement counts");
   assert.equal(element("guideMethodAudits").textContent, "static audits");
   assert.equal(element("guideMethodHuman").textContent, "1 accepted records are human-checked: a human reviewer approved every value they show.");
   // With the audit and review results (overview.quality, copied from the human-review marks file at build time).
@@ -1786,6 +1787,10 @@ function row(overrides = {}) {
   assert.doesNotMatch(lead, /Same value<\/dt>/, "Without a first comparison the big number already gives the same-value count");
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex/);
+  // The Guide's method section opens with the same agreement, in one sentence linked to Stats.
+  api.renderGuideMethod();
+  assert.equal(element("guideMethodLead").hidden, false);
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Agreement with human reviewers</span> CatLog has the same value as human reviewers for <strong>89.7%</strong> of the values they approved: 2,232 of 2,489, on 98 papers they checked that CatLog has since read. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
   const blindFixture = { ...agreementFixture, first_agree: 2110, first_agree_pct: 84.8, fixed_after_comparison: 122, papers_exposed: 40,
     first_agree_unexposed_pct: 84.7, catlog_value_wrong: 3, rejected_values: 20, rejected_catlog_also_without: 12,
     rejected_catlog_has_same: 8, rejected_dropped_after_audit: 2, rejected_kept_after_audit: 2, rejected_cleared_by_paper_check: 1,
@@ -1800,6 +1805,8 @@ function row(overrides = {}) {
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
   // What became of the values reviewers called wrong that CatLog had with the same number: parts of that number.
   assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog did not have 12 of them; it had 8 with the same number \(an AI audit kept 2, 2 were dropped after an AI audit found them wrong, a check against the paper found 1 right, CatLog has changed or removed 1 since and 2 are not settled yet\)\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
+  api.renderGuideMethod();
+  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, on the 58 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as human reviewers for <strong>84\.7%<\/strong> of the values they approved\. <a /);
   assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
   // The headline is said with its 95% range and the papers behind it as the CatLog side counts them (papers_unexposed,
   // not papers_compared minus papers_exposed); the errors the first comparison found are named, and what was fixed is
