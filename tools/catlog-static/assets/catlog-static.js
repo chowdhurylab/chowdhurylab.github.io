@@ -5817,12 +5817,17 @@
   }
 
   // A record-level phrase as the AI check's action: "EC 2.7.2.12 removed" -> "removed EC 2.7.2.12", "assay conditions
-  // corrected (see Conditions)" -> "corrected the assay conditions (see Conditions)".
+  // corrected (see Conditions)" -> "corrected the assay conditions (see Conditions)", CatLog's "pH left blank" -> "left the
+  // pH blank" and "organism set to Carica papaya" (the reader gave none) -> "set the organism to Carica papaya".
   function checkAction(phrase) {
     let match = phrase.match(/^(EC \S+) (removed|added)$/);
     if (match) return `${match[2]} ${match[1]}`;
-    match = phrase.match(/^EC corrected to (.+)$/);
-    if (match) return `corrected the EC number to ${match[1]}`;
+    match = phrase.match(/^EC (corrected|set) to (.+)$/);
+    if (match) return `${match[1]} the EC number to ${match[2]}`;
+    match = phrase.match(/^(.+?) left blank( \(.+\))?$/);
+    if (match) return `left the ${match[1]} blank${match[2] || ""}`;
+    match = phrase.match(/^(.+?) set to (.+)$/);
+    if (match) return `set the ${match[1]} to ${match[2]}`;
     match = phrase.match(/^(.+?) (corrected|removed|added)(?: (to .+?))?( \(.+\))?$/);
     if (match) return `${match[2]} the ${match[1]}${match[3] ? ` ${match[3]}` : ""}${match[4] || ""}`;
     return phrase;
@@ -5859,11 +5864,12 @@
     else head = `${shared} for every value.`;
     if (note && shared !== "Confirmed") head += ` See the ${cautionFields.length > 1 ? "notes" : "note"} on ${sentenceList(cautionFields.map((field) => metricNames[field]))}.`;
     const record = [...new Set(facts.flatMap((fact) => checkPhrases(fact.check, context).record))];
-    // "corrected the cosubstrate and corrected the assay conditions" reads "corrected the cosubstrate and the assay conditions".
+    // "corrected the cosubstrate and corrected the assay conditions" reads "corrected the cosubstrate and the assay conditions";
+    // actions with one verb are said together, in the order the verbs first appear.
     const actions = record.map(checkAction).reduce((merged, action) => {
-      const verb = (action.match(/^(?:corrected|removed|added) the /) || [""])[0];
-      const last = merged.at(-1);
-      if (verb && last?.verb === verb) last.objects.push(action.slice(verb.length));
+      const verb = (action.match(/^(?:corrected|removed|added|set|left) the /) || [""])[0];
+      const same = verb ? merged.find((item) => item.verb === verb) : null;
+      if (same) same.objects.push(action.slice(verb.length));
       else merged.push({ verb, objects: [verb ? action.slice(verb.length) : action] });
       return merged;
     }, []).map(({ verb, objects }) => `${verb}${sentenceList(objects.map((object, index) => (index && verb ? `the ${object}` : object)))}`);

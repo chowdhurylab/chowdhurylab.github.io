@@ -2341,6 +2341,17 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/strong>/);
   html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.1 removed")]);
   assert.match(html, /<span>Check<\/span><strong>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/strong>/);
+  // CatLog's words for a field the reader left empty ("set to") or the check emptied ("left blank") read as actions too.
+  html = render([line("kcat", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected"),
+    line("Km", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected")]);
+  assert.match(html, /All values confirmed\. The AI check also left the pH blank and the temperature blank, set the EC number to 3\.2\.1\.23 and corrected the protein IDs\.<\/strong>/);
+  html = render([line("kcat", "corrected: organism set to Carica papaya")]);
+  assert.match(html, /All values confirmed\. The AI check also set the organism to Carica papaya\.<\/strong>/);
+  html = render([line("kcat", "corrected: pH set to 7.5; variant set to K12A; temperature set to 30 °C")]);
+  assert.match(html, /The AI check also set the pH to 7\.5, the variant to K12A and the temperature to 30 °C\.<\/strong>/);
+  html = render([line("kcat", "corrected: pH corrected to 7.0; variant removed; organism removed")]);
+  assert.match(html, /The AI check also corrected the pH to 7\.0 and removed the variant and the organism\.<\/strong>/);
+  assert.doesNotMatch(html, /also (?:pH|EC|organism|temperature|variant) /);
 }
 // An older record's notes: under "Earlier automated review: where the values are printed", Where, As printed and the
 // Conversion line, without code quotes or "->".
