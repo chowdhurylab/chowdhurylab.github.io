@@ -2801,6 +2801,39 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-lice
   assert.deepEqual(v2Payload.pubmed_ids, ["31072150"]);
   const text = JSON.stringify(v2Payload);
   assert.doesNotMatch(text, /independent|AI run|catlog_v2|accession_resolved|normali[sz]ed|proof_lines|verification_method/);
+  assert.ok(!("database_comparison" in v2Payload) && !("database_note" in v2Payload) && !("earlier_corrections" in v2Payload),
+    "no comparison in the snapshot, none in the download");
+  assert.ok("ai_audit" in v2Payload && v2Payload.ai_audit === null, "a record read from the paper always names its AI audit");
+}
+// Against the databases goes into the download as the record says it: each value's result for a record read from the
+// paper; the earlier review's changes for a corrected record (a local path never).
+{
+  const v2Summary = row({ record_key: "record-v2-db", measurement_key: "record-v2-db", source_db: "primary_paper_direct",
+    enzyme_label_source: "explicit_enzyme_name", kcat: 30.4, kcat_display: "30.4", kcat_unit: "s^(-1)", km: 549.9, km_display: "549.9", km_unit: "mM" });
+  const payload = await recordDownloadPayload(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
+    database_note: "All 12 BRENDA Km values for this paper are 1000× lower than printed.",
+    proof_lines: [
+      { metric: "kcat", table_label: "Table 1", printed: "30.4 s^-1", check: "confirmed", conversion: "", database_status: "confirmed", database_line: "Same as BRENDA, SABIO-RK." },
+      { metric: "Km", table_label: "Table 1", printed: "549.9 mM", check: "confirmed", conversion: "", database_status: "corrected",
+        database_line: "BRENDA lists 0.5499 mM, 1,000× lower.", database_cause: "mM_entered_as_uM", database_evidence: "/Users/someone/p.pdf" },
+    ] });
+  assert.deepEqual(payload.database_comparison, [
+    { metric: "kcat", result: "Same number", line: "Same as BRENDA, SABIO-RK.", databases: null, cause: null, evidence: null },
+    { metric: "Km", result: "Corrects the database", line: "BRENDA lists 0.5499 mM, 1,000× lower.", databases: null, cause: "an mM value entered as µM", evidence: null },
+  ]);
+  assert.equal(payload.database_note, "All 12 BRENDA Km values for this paper are 1000× lower than printed.");
+  const corrected = await recordDownloadPayload(row({ record_key: "record-corrected-trail", verification_status: "corrected", source_db: "oed", km: 0.066, km_display: "0.066", km_unit: "mM" }), {
+    supporting_pmids: ["2226453"], corrections: [
+      { field: "km", old_value: 66, new_value: 0.066, unit: "mM", kind: "magnitude", listed: "OED", evidence_table_row: "Table 2, row 12-hydroxydodecanoic acid: Km 66 µM" },
+      { field: "kcat_over_km", old_value: null, new_value: 40, unit: "s^(-1)*mM^(-1)", kind: "added", evidence_table_row: "C:\\papers\\x.pdf" },
+      { field: "uniprot_id", old_value: "P00325", new_value: "P00326" },
+    ] });
+  assert.deepEqual(corrected.earlier_corrections, [
+    { field: "km", before: 66, after: 0.066, unit: "mM", change: "unit or magnitude (÷ 1000)", evidence: "Table 2, row 12-hydroxydodecanoic acid: Km 66 µM" },
+    { field: "kcat_over_km", before: null, after: 40, unit: "s^-1 mM^-1", change: "added: the source had none", evidence: null },
+    { field: "uniprot_id", before: "P00325", after: "P00326", unit: null, change: null, evidence: null },
+  ]);
+  assert.ok(!("ai_audit" in corrected) && !("database_comparison" in corrected));
 }
 const detailFalseKiHtml = measurementSection(row({
   has_ki: true,

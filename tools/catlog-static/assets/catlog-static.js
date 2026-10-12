@@ -2600,6 +2600,36 @@
     const unit = (field) => (metricHasValue(metricSummary, field) ? plainUnit(metricUnit(metricSummary, field)) || null : null);
     const temperature = formatTemperature(summary);
     const ph = formatPh(summary);
+    // Against the databases (section G), as the record says it: each value's result, or the earlier review's changes.
+    const check = recordCheck(summary);
+    const databaseComparison = (v2Record && proof ? proof.lines : []).map((line) => {
+      const facts = databaseFacts(line) || sideFileDatabaseFacts(check?.db?.[line.metric], line.metric);
+      if (!facts) return null;
+      const result = databaseResult(facts.status);
+      const phrase = facts.phraseOnly ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
+      return {
+        metric: line.metric,
+        result: phrase || result?.word || null,
+        line: phrase ? null : facts.sentence || null,
+        databases: facts.databases || null,
+        cause: facts.cause || null,
+        evidence: facts.evidence || null,
+      };
+    }).filter(Boolean);
+    const databaseNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
+      .map((note) => shownText(note)).filter(Boolean);
+    const earlierCorrections = v2Record ? [] : correctionItems(detail, check).map((item) => {
+      const field = CORRECTION_FIELDS[item.field.toLowerCase().replace(/\s+/g, "")];
+      const change = field ? changeWords(item) : null;
+      return {
+        field: item.field,
+        before: item.before ?? null,
+        after: item.after ?? null,
+        unit: item.unit ? plainUnit(item.unit) || item.unit : null,
+        change: change ? [change.word, change.factor].filter(Boolean).join(" ") : null,
+        evidence: item.why && !looksLikeLocalPath(item.why) ? item.why : null,
+      };
+    });
     const record = {
       record_key: summary.record_key || summary.measurement_key || null,
       enzyme_display_name: text(summary.enzyme_display_name),
@@ -2631,7 +2661,7 @@
         ? v2MethodSentence(proof?.facts, { unitChanged: unitCautions.length > 0 })
         : reviewOutcome(summary, detail),
       check: proof ? v2CheckText(proof.facts, v2CheckOptions(summary, detail, proof)) || null : null,
-      ai_audit: proof ? v2AuditText(proof.lines, proof.facts) || null : null,
+      ai_audit: (proof && v2AuditText(proof.lines, proof.facts)) || sideFileAuditText(check) || null,
       values_as_printed: proof ? proof.lines.map((line, index) => {
         const fact = proof.facts[index];
         return {
@@ -2642,6 +2672,9 @@
           check: valueCheckText(fact, {}) || null,
         };
       }) : null,
+      database_comparison: databaseComparison,
+      database_note: databaseNotes.join(" ") || null,
+      earlier_corrections: earlierCorrections,
       human_review: humanReviewNote(summary) || null,
       paper_title: paperTitleText(summary, detail) || null,
       pubmed_ids: ids(detail.supporting_pmids, detail.pubmed_id),
@@ -2654,9 +2687,14 @@
     };
     if (!proof) {
       delete record.check;
-      delete record.ai_audit;
       delete record.values_as_printed;
     }
+    // An older record has an AI audit line only when the snapshot's record checks give one.
+    if (!proof && !record.ai_audit) delete record.ai_audit;
+    // Only what the snapshot carries: no empty comparison or corrections.
+    if (!databaseComparison.length) delete record.database_comparison;
+    if (!record.database_note) delete record.database_note;
+    if (!earlierCorrections.length) delete record.earlier_corrections;
     return record;
   }
 
