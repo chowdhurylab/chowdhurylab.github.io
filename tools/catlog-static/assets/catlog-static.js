@@ -5331,12 +5331,16 @@
     return Math.max(2, Math.min(...figures));
   }
 
-  // A kcat/Km calculated from kcat and Km keeps their significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³): the
-  // number of figures to show, or 0 for any other value. A kcat/Km that only equals kcat ÷ Km counts as calculated.
+  // A kcat/Km calculated from kcat and Km keeps their significant figures (5038.5 from 65.5 ÷ 0.013 is 5.0 × 10³), at
+  // most DISPLAY_FIGURES: the number of figures to show, or 0 for any other value. A kcat/Km that only equals kcat ÷ Km
+  // counts as calculated, but never shows more figures than it is stored with (0.56 stays 0.56, not 0.56000).
   function calculatedFigures(row, field) {
-    return field === "kcat_over_km" && (row.kcat_over_km_origin === "calculated" || efficiencyLooksCalculated(row))
-      ? quotientFigures(row)
-      : 0;
+    if (field !== "kcat_over_km") return 0;
+    const figures = Math.min(quotientFigures(row), DISPLAY_FIGURES);
+    if (row.kcat_over_km_origin === "calculated") return figures;
+    if (!efficiencyLooksCalculated(row)) return 0;
+    const stored = numberParts(metricDisplay(row, field))?.significant || 0;
+    return figures < stored ? figures : 0;
   }
 
   // The display rule: no more precision than was measured. A stored value shows at most 4 significant figures, 3 when its
@@ -5346,8 +5350,11 @@
   // digits.
   const DISPLAY_FIGURES = 4;
   const DIVIDED_BY_60_TAIL = /^(?:3{2,}|6{2,}|6+7)$/;
+  // A per-minute value stored with 4 figures shows its ÷60 repeat only in its ending: 7.333 (440/60), 0.1833 (11/60),
+  // 4.167 (250/60). kcat and kcat/Km only (Km is never divided by 60).
+  const DIVIDED_BY_60_ENDING = /(?:333|667|833|167)$/;
 
-  function roundingFigures(value) {
+  function roundingFigures(value, { perMinute = false } = {}) {
     const text = compactValue(value).trim();
     const match = text.match(/^[+-]?(\d*)(?:\.(\d*))?(?:[eE][+-]?\d+)?$/);
     const magnitude = Math.abs(Number(text));
@@ -5356,26 +5363,57 @@
     const digits = `${match[1] || ""}${fraction}`.replace(/^0+/, "");
     // Trailing zeros of a plain integer are not printed digits.
     const significant = fraction || /e/i.test(text) ? digits : digits.replace(/0+$/, "");
-    if (significant.length <= DISPLAY_FIGURES) return 0;
-    let figures = DIVIDED_BY_60_TAIL.test(significant.slice(3)) ? 3 : DISPLAY_FIGURES;
+    if (significant.length < DISPLAY_FIGURES) return 0;
+    if (significant.length === DISPLAY_FIGURES && !(perMinute && DIVIDED_BY_60_ENDING.test(significant))) return 0;
+    let figures = significant.length === DISPLAY_FIGURES || DIVIDED_BY_60_TAIL.test(significant.slice(3)) ? 3 : DISPLAY_FIGURES;
     if (magnitude >= 1 && magnitude < 1e5) figures = Math.max(figures, Math.floor(Math.log10(magnitude)) + 1);
     return figures < significant.length ? figures : 0;
   }
 
   function displayFigures(row, field) {
-    return calculatedFigures(row, field) || roundingFigures(metricDisplay(row, field));
+    return calculatedFigures(row, field)
+      || roundingFigures(metricDisplay(row, field), { perMinute: field === "kcat" || field === "kcat_over_km" });
   }
 
-  // A value as the panel shows it (as the table does).
+  // CatLog's own text of a value it read from the paper, to the figures printed ("135.0" stays "135.0"; the proof line's
+  // value_display), as a number this page writes ("8.20 × 10^-4" is 8.20e-4); "" when absent or not a number.
+  function valueDisplayText(value) {
+    const match = String(value ?? "").trim().match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?:\s*[×x]\s*10\^?\(?([+\-−]?\d+)\)?)?$/);
+    if (!match) return "";
+    return match[2] ? `${match[1]}e${match[2].replace("−", "-")}` : match[1];
+  }
+
+  // Per value field, the record's value_display when it is the stored number (a record read by CatLog).
+  function printedFigureDisplays(summary, detail) {
+    const displays = {};
+    (Array.isArray(detail?.proof_lines) ? detail.proof_lines : []).forEach((line) => {
+      if (!line || typeof line !== "object") return;
+      const field = (v2MetricLabels[line.metric] || [])[0];
+      const text = valueDisplayText(line.value_display);
+      if (!field || !text || field in displays) return;
+      const stored = Number(metricDisplay(summary, field));
+      if (Number.isFinite(stored) && Math.abs(Number(text) - stored) <= Math.abs(stored) * 1e-9) displays[field] = text;
+    });
+    return displays;
+  }
+
+  // The value text the record shows: CatLog's figures as printed when it gives them, else the stored digits.
+  function shownValueText(row, field) {
+    return row._valueDisplays?.[field] || metricDisplay(row, field);
+  }
+
+  // A value as the panel shows it (as the table does; a value CatLog gives to the figures printed keeps them).
   function panelValueHtml(row, field) {
-    const figures = displayFigures(row, field);
-    return numberHtml(metricDisplay(row, field), figures ? { figures } : undefined);
+    const own = row._valueDisplays?.[field];
+    const figures = own ? roundingFigures(own) : displayFigures(row, field);
+    return numberHtml(shownValueText(row, field), figures ? { figures } : undefined);
   }
 
   // The same, as text (the report email quotes the numbers the record shows).
   function panelValueText(row, field) {
-    const figures = displayFigures(row, field);
-    return numberText(metricDisplay(row, field), figures ? { figures } : undefined);
+    const own = row._valueDisplays?.[field];
+    const figures = own ? roundingFigures(own) : displayFigures(row, field);
+    return numberText(shownValueText(row, field), figures ? { figures } : undefined);
   }
 
   // ---- Record panel: kcat/Km as the sources list it ----
@@ -5588,6 +5626,7 @@
       conversion: "conversion" in line
         ? clean(line.conversion)
         : (/converted by code/.test(normalized) ? "converted by code" : (readAs ? `printed unit read as ${readAs[1]}` : "")),
+      valueDisplay: valueDisplayText(clean(line.value_display)),
       audit,
     };
   }
@@ -5725,8 +5764,12 @@
       const fact = facts[index];
       const [field, label] = v2MetricLabels[line.metric] || ["", escapePublic(line.metric)];
       const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
+      // In catalog units: the stored digits, or CatLog's text of them to the figures printed (135.0).
+      const storedText = fact.valueDisplay && Math.abs(Number(fact.valueDisplay) - Number(metricDisplay(summary, field))) <= Math.abs(Number(metricDisplay(summary, field))) * 1e-9
+        ? fact.valueDisplay
+        : metricDisplay(summary, field);
       const stored = field && metricHasValue(summary, field)
-        ? `${numberHtml(metricDisplay(summary, field))} ${unitHtml(metricUnit(summary, field))}`
+        ? `${numberHtml(storedText)} ${unitHtml(metricUnit(summary, field))}`
         : `${numberHtml(clean(line.normalized_value))} ${unitHtml(clean(line.normalized_unit))}`;
       const place = !shared && v2LinePlace(line) ? `<small>${escapePublic(v2LinePlace(line))}</small>` : "";
       // A unit CatLog did not take from the paper: amber, beside the value (its note is under the values).
@@ -5928,6 +5971,7 @@
   function metricSummaryFor(summary, detail) {
     return {
       ...summary,
+      _valueDisplays: printedFigureDisplays(summary, detail),
       has_ki: detail.has_ki ?? summary.has_ki,
       ki_display: detail.ki_display ?? summary.ki_display,
       ki_unit: detail.ki_unit ?? summary.ki_unit,
@@ -6488,7 +6532,7 @@
 
       <div class="detail-actions">
         <button id="downloadSelectedJson" class="button secondary" type="button">Download record</button>
-        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(summary, pmids, { dois, standInIds, shown: shownValues }))}">Report a problem</a>
+        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportProblemHref(metricSummaryFor(summary, detail), pmids, { dois, standInIds, shown: shownValues }))}">Report a problem</a>
       </div>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);

@@ -1915,6 +1915,46 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   const fromPaperRow = { ...quotientRow, source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" };
   assert.equal(api.efficiencyOriginHtml(fromPaperRow, { short: true }), "", "a value read from the paper is never called calculated");
 }
+// A per-minute value stored with 4 figures shows its ÷60 repeat in its ending (7.333 = 440/60, 0.1833 = 11/60): 3 figures
+// for kcat and kcat/Km; other 4-figure values, and Km, stay as stored.
+assert.deepEqual(["7.333", "0.1833", "4.167", "0.003333", "3.333e-4", "7.334", "1333", "45.83"]
+  .map((value) => api.roundingFigures(value, { perMinute: true })), [3, 3, 3, 3, 3, 0, 0, 0]);
+assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
+{
+  const shown = (field, display) => api.metricDisplayWithUnitHtml(row({ kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)",
+    kcat_over_km_origin: "paper_reported", [`${field}_display`]: display }), field, { table: true });
+  assert.equal(shown("kcat", "7.333"), "7.33");
+  assert.equal(shown("kcat_over_km", "0.3333"), "0.333");
+  assert.equal(shown("km", "0.3333"), "0.3333");
+}
+// A calc. kcat/Km never shows more than 4 figures, and one that only equals kcat ÷ Km never more than it is stored with.
+{
+  const base = { kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)" };
+  const equal = row({ ...base, kcat_display: "230.65", km_display: "411.85", kcat_over_km_display: "0.56", kcat: 230.65, km: 411.85,
+    kcat_over_km: 0.56, kcat_over_km_origin: "not_specified" });
+  assert.equal(api.metricDisplayWithUnitHtml(equal, "kcat_over_km", { table: true }), "0.56");
+  assert.equal(api.panelValueHtml(equal, "kcat_over_km"), "0.56");
+  const calculated = row({ ...base, kcat_display: "79.002", km_display: "60.001", kcat_over_km_display: "1.3167", kcat: 79.002, km: 60.001,
+    kcat_over_km: 1.3167, kcat_over_km_origin: "calculated" });
+  assert.equal(api.panelValueHtml(calculated, "kcat_over_km"), "1.317");
+}
+// A value CatLog gives to the figures printed (value_display "135.0") keeps its trailing zero in the value strip, under
+// In catalog units and in the report email; another number in that field is not used.
+{
+  const v2 = row({ record_key: "printed-zero", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 135, kcat_display: "135", km: 0.03, km_display: "0.03", kcat_over_km: 4500, kcat_over_km_display: "4500",
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "paper_reported" });
+  const line = (metric, printed, value_display) => ({ metric, table_label: "Table 1", printed, check: "confirmed", conversion: "", value_display });
+  api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
+    proof_lines: [line("kcat", "135.0 ± 15.1 sec−1", "135.0"), line("Km", "30 µM", "0.030"), line("kcat/Km", "4.5 × 10^3", "4501")] });
+  const html = element("detailContent").innerHTML;
+  assert.match(html, /<strong>135\.0<\/strong>|<strong>135\.0</, "the value strip keeps the printed zero");
+  assert.match(html, /<td>135\.0 s<sup>-1<\/sup>/, "In catalog units keeps it too");
+  assert.match(html, /<td>0\.030 mM/);
+  assert.match(html, /<td>4500 s<sup>-1<\/sup> mM<sup>-1<\/sup>/, "a value_display that is not the stored number is not used");
+  const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.030 mM/);
+}
 assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
 assert.equal(api.printedValueText("320", "mM"), "320 mM");
 // A flag is said once: a marker button on the value and one note under the values, no second list.
@@ -2404,8 +2444,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_unit: "s^(-1)*mM^(-1)" }), { supporting_pmids: ["2936344"], paper_title: "Probing an invariant His", paper_year: 2019 });
   const html = element("detailContent").innerHTML;
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
-  assert.match(body, /kcat 7\.333 s⁻¹; Km 0\.5 mM; kcat\/Km 15 s⁻¹ mM⁻¹; PMID 2936344/);
-  assert.doesNotMatch(body, /14\.666/);
+  assert.match(body, /kcat 7\.33 s⁻¹; Km 0\.5 mM; kcat\/Km 15 s⁻¹ mM⁻¹; PMID 2936344/, "440/60 stored as 7.333 shows 3 figures");
+  assert.doesNotMatch(body, /14\.666|7\.333/);
   assert.match(html, /<h3>Paper and review<\/h3>\s*<div class="detail-kv"><div class="kv-line"><span>Paper<\/span><strong>Probing an invariant His \(2019\)<\/strong><\/div>/);
   api.renderDetail(row({ record_key: "no-title" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /<span>Paper<\/span>/);
