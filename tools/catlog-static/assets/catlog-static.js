@@ -3115,7 +3115,8 @@
 
   // Legend above a plot, in segment order: a 10×10 swatch and the name (and a count, when given).
   function statsLegend(items) {
-    return `<ul class="stats-legend">${items.map((item) => `<li><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${item.label}${item.count !== undefined ? ` <span class="stats-legend-count">${formatInteger(item.count)}</span>` : ""}</li>`).join("")}</ul>`;
+    // Name and count share one span, so a name that wraps keeps its count right after it.
+    return `<ul class="stats-legend">${items.map((item) => `<li><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i><span>${item.label}${item.count !== undefined ? ` <span class="stats-legend-count">${formatInteger(item.count)}</span>` : ""}</span></li>`).join("")}</ul>`;
   }
 
   function statsAxis(scale, step, { percent = false } = {}) {

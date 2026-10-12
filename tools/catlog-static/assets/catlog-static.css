@@ -735,7 +735,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* Legends: inline above the plot, in segment order. */
 .stats-legend { display:flex; flex-wrap:wrap; gap:4px 16px; margin:0 0 12px; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-12); line-height:16px }
-.stats-legend li { display:inline-flex; align-items:center; gap:6px }
+.stats-legend li { display:inline-flex; align-items:flex-start; gap:6px }
+.stats-legend li > .stats-swatch { margin-top:3px }
 .stats-legend-count { color:var(--text-3) }
 
 /* Bar charts: label, a 16px bar (rows 8px apart), value label; an axis under the bars. */
