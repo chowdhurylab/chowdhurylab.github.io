@@ -403,15 +403,16 @@ async function runSchemaTwoCase() {
     ensureCurrentFilters = async () => true;
     updateTableScrollControls = () => {};
     syncDetailPanelAccessibility = () => {};
-    window.loaderTest = {state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords};
+    window.loaderTest = {state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords,
+      foldSearch, compactSearch, parseBrowseParams, numberRange};
   })();`, context);
   const { state, loadRecordChunks, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords } = window.loaderTest;
   await loadRecordChunks();
-  return { state, delays, elements, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords };
+  return { state, delays, elements, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords, helpers: window.loaderTest };
 }
 
 {
-  const { state, delays, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords } = await runSchemaTwoCase();
+  const { state, delays, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords, helpers } = await runSchemaTwoCase();
   assert.equal(state.recordsReady, true);
   assert.deepEqual(delays, [], "a healthy schema-2 index needs no retry");
   assert.equal(state.indexOrder, "default_review_status");
@@ -452,5 +453,57 @@ async function runSchemaTwoCase() {
   assert.deepEqual(found("hexokinase 2936344"), ["k2"]);
   assert.deepEqual(found("1.10.3.2"), ["k1"]);
   assert.ok(!("_pmids" in exported) && !("pmids" in exported) && !("dois" in exported));
+
+  // Search edge cases: case, spaces, accents, word order, hyphens and spaces inside a name, common organism names, and
+  // EC numbers written in every usual way; an EC class or subclass matches whole parts only.
+  assert.deepEqual(found("  LACCASE "), ["k1"]);
+  assert.deepEqual(found("lāccase"), ["k1"]);
+  assert.deepEqual(found("coli hexokinase"), ["k2"]);
+  assert.deepEqual(found("hexo-kinase"), ["k2"]);
+  assert.deepEqual(found("hexo kinase e.coli"), ["k2"]);
+  assert.deepEqual(found("human"), ["k1", "k3"]);
+  for (const query of ["EC 2.7.1.1", "ec:2.7.1.1", "EC2.7.1.1", "E.C. 2.7", "2.7.1.-", "ec 2"]) {
+    assert.deepEqual(found(query), ["k2"], query);
+  }
+  assert.deepEqual(found("1."), ["k1"], "a class typed with its dot is an EC class");
+  assert.deepEqual(found("1.1"), [], "EC 1.1 is not EC 1.10");
+  const { foldSearch, compactSearch, parseBrowseParams, numberRange } = helpers;
+  const same = (a, b) => assert.equal(compactSearch(foldSearch(a)), compactSearch(foldSearch(b)), `${a} = ${b}`);
+  same("β-Galactosidase", "beta galactosidase");
+  same("α-amylase", "Alpha-Amylase");
+  same("κ-casein", "kappa casein");
+  same("µ-calpain", "micro-calpain");
+  same("μ-calpain", "u-calpain");
+  same("5′-AMP", "5'-AMP");
+  same("4–nitrophenyl phosphate", "4-nitrophenyl phosphate");
+  same("4 nitrophenyl", "4-nitrophenyl");
+  same("∆1-pyrroline", "Δ1-pyrroline");
+  same("Ñ-acétyl", "n-acetyl");
+  // A locant or prefix typed as its own word belongs to the next word.
+  const words = (query) => JSON.stringify(searchWords(query));
+  assert.equal(words("4 nitrophenyl phosphate"), words("4-nitrophenyl phosphate"));
+  assert.equal(words("beta galactosidase"), words("β-galactosidase"));
+  assert.equal(words("2,4 dinitrophenol"), words("2,4-dinitrophenol"));
+  assert.equal(words("D glucose"), words("D-glucose"));
+  assert.equal(words("hexokinase 2936344"), JSON.stringify([{ text: "hexokinase" }, { pmid: 2936344, text: "2936344" }]));
+  // The EC field matches whole parts: 1.1.1.1 is not 1.1.1.10, and 1.1.1 covers both.
+  const ecRow = (ec) => ({ record_key: ec, ec_number: ec, verification_status: "verified" });
+  const ecFound = (ec) => ["1.1.1.1", "1.1.1.10", "1.1.11.1", "2.1.1.1"].filter((value) => rowMatches(ecRow(value), {
+    ec, recordStates: ["accepted", "curation_pending", "not_verified"], metrics: [],
+  }));
+  assert.deepEqual(ecFound("1.1.1.1"), ["1.1.1.1"]);
+  assert.deepEqual(ecFound("EC 1.1.1"), ["1.1.1.1", "1.1.1.10"]);
+  assert.deepEqual(ecFound("1."), ["1.1.1.1", "1.1.1.10", "1.1.11.1"]);
+  assert.deepEqual(ecFound("ec:2"), ["2.1.1.1"]);
+  assert.deepEqual(ecFound("1.1.1.1, 2.1.1.1"), ["1.1.1.1", "2.1.1.1"]);
+  // Address values: + and %20 are spaces, unknown keys stay (and are ignored by the page), and a range reads either way.
+  const params = parseBrowseParams("q=lactate+dehydrogenase&organism=E.%20coli&status=accepted%2Cv2&bad=%E0");
+  assert.equal(params.get("q"), "lactate dehydrogenase");
+  assert.equal(params.get("organism"), "E. coli");
+  assert.equal(params.get("status"), "accepted,v2");
+  assert.equal(params.get("bad"), "");
+  assert.deepEqual({ ...numberRange("37", "20") }, { min: 20, max: 37 });
+  assert.deepEqual({ ...numberRange("7,5", "") }, { min: 7.5, max: null });
+  assert.equal(numberRange("abc", ""), null);
 }
 console.log("catlog-static-index-retry: ok");

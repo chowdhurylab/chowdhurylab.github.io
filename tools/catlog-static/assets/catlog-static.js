@@ -63,6 +63,7 @@
   const SORT_LOADING_TITLE = "Sorting is available when all records have loaded";
   const DEFAULT_INDEX_ORDER = "default_review_status";
   const FILTER_FAILURE_MAX_LENGTH = 160;
+  const FILTER_TYPING_DELAY_MS = 180;
   const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
   // Wide screens: the filters are a column beside the table (not an overlay), and from 1600px they stay open beside
   // an open record.
@@ -366,9 +367,27 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // Search text: lower case, Greek letters spelled out, so β-lactamase and beta-lactamase match each other.
-  const greekNames = { α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", κ: "kappa", λ: "lambda", μ: "mu", µ: "mu", ω: "omega", σ: "sigma", θ: "theta" };
-  const foldSearch = (s) => String(s ?? "").toLowerCase().replace(/[α-ωµ]/g, (c) => greekNames[c] || c);
+  // Search text: lower case, accents dropped, Greek letters spelled out (β-lactamase = beta-lactamase), µ, "micro-" and
+  // "u-" as "mu-", every dash a hyphen and every prime an apostrophe. Words are then matched with spaces, hyphens and
+  // underscores (and commas) left out (compactSearch), so "4-nitrophenyl" and "4nitrophenyl" find each other.
+  const greekNames = {
+    α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", ζ: "zeta", η: "eta", θ: "theta", ι: "iota", κ: "kappa",
+    λ: "lambda", μ: "mu", ν: "nu", ξ: "xi", ο: "omicron", π: "pi", ρ: "rho", σ: "sigma", ς: "sigma", τ: "tau", υ: "upsilon",
+    φ: "phi", χ: "chi", ψ: "psi", ω: "omega",
+  };
+  function foldSearch(value) {
+    let text = String(value ?? "").toLowerCase();
+    if (/[^\x00-\x7f]/.test(text)) {
+      text = text.normalize("NFKD")
+        .replace(/\p{M}/gu, "")
+        .replace(/∆/g, "δ")
+        .replace(/[α-ω]/g, (letter) => greekNames[letter] || letter)
+        .replace(/[‐-―⁃−﹘﹣－]/g, "-")
+        .replace(/[‘’‛′‵´`]/g, "'");
+    }
+    return text.replace(/(^|[^a-z0-9])(?:micro|u)(?=-)/g, "$1mu");
+  }
+  const compactSearch = (text) => String(text ?? "").replace(/[\s\-_,]+/g, "");
 
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
@@ -1455,7 +1474,7 @@
       }
       const common = commonOrganismNames[`${genus} ${species}`.toLowerCase()];
       if (common) parts.push(common);
-      extra = parts.join(" ");
+      extra = parts.join("|");
       organismSearchExtras.set(text, extra);
     }
     return extra;
@@ -1463,7 +1482,7 @@
 
   // The folded text the search box matches, built the first time a search needs it.
   function searchText(row) {
-    row._search ??= foldSearch(row._search_text || [
+    row._search ??= compactSearch(foldSearch(row._search_text || [
       row.measurement_key,
       row.review_key,
       row.ec_number,
@@ -1475,17 +1494,87 @@
       row.source_db,
       row.primary_uniprot_id,
       row.protein_accession,
-    ].join(" "));
+    ].join("|")));
     return row._search;
   }
 
-  // An EC number or class typed in full parts ("1.1.1", "EC 2.7.1.1"): it matches that number and every number under it,
-  // never 3.1.1.1 or 1.1.11.x.
-  const EC_QUERY = /^(?:ec)?(\d+(?:\.(?:\d+|-)){0,3})\.?$/;
+  // The search text of every record is prepared in idle moments once a search looks likely (the search box or the
+  // filters get focus), so the first word typed is filtered as fast as the next.
+  const searchWarmup = { wanted: false, generation: -1, index: 0, running: false };
 
-  function ecQuery(word) {
-    const match = String(word || "").match(EC_QUERY);
-    return match ? match[1] : "";
+  function warmSearchText() {
+    searchWarmup.wanted = true;
+    if (searchWarmup.running || !state.recordsReady) return;
+    if (searchWarmup.generation !== state.recordsGeneration) {
+      searchWarmup.generation = state.recordsGeneration;
+      searchWarmup.index = 0;
+    }
+    if (searchWarmup.index >= state.records.length) return;
+    searchWarmup.running = true;
+    const schedule = (callback) => (typeof window.requestIdleCallback === "function"
+      ? window.requestIdleCallback(callback, { timeout: 400 })
+      : window.setTimeout(callback, 16));
+    const step = () => {
+      const records = state.records;
+      if (searchWarmup.generation !== state.recordsGeneration) {
+        searchWarmup.running = false;
+        warmSearchText();
+        return;
+      }
+      const end = Math.min(records.length, searchWarmup.index + 5000);
+      for (; searchWarmup.index < end; searchWarmup.index += 1) searchText(records[searchWarmup.index]);
+      if (searchWarmup.index < records.length) schedule(step);
+      else searchWarmup.running = false;
+    };
+    schedule(step);
+  }
+
+  // An EC number or class typed in full parts ("1.1.1", "EC 2.7.1.1", "ec:1.1.1.1", "1.", "1.1.1.-"): it matches that
+  // number and every number under it, never 3.1.1.1 or 1.1.1.10 for 1.1.1.1. In the search box a number is an EC number
+  // when it has two parts or more, a dot after it ("1.") or EC in front ("EC 1"); in the EC field every number is.
+  const EC_QUERY = /^(e\.?c\.?:?)?(\d+(?:\.(?:\d+|-)){0,3})(\.)?$/;
+  const EC_WORD = /^e\.?c\.?:?$/;
+
+  function ecQuery(word, { anyNumber = false } = {}) {
+    const match = String(word || "").toLowerCase().match(EC_QUERY);
+    if (!match) return "";
+    const number = match[2].replace(/(\.-)+$/, "");
+    return anyNumber || match[1] || match[3] || number.includes(".") ? number : "";
+  }
+
+  // A locant or prefix typed as its own word joins the word after it, so "4 nitrophenyl" is "4-nitrophenyl",
+  // "beta galactosidase" is "β-galactosidase" and "D glucose" is "D-glucose" (in "galactosidase beta" the words stay
+  // apart and match in any order).
+  const LOCANT_WORD = new RegExp(`^(?:\\d{1,2}'*(?:,\\d{1,2}'*)*|[dlpomn](?:,[dl])?|${[...new Set(Object.values(greekNames))].join("|")})$`);
+
+  function joinLocantWords(words) {
+    const joined = [];
+    for (let index = 0; index < words.length; index += 1) {
+      let word = words[index];
+      while (LOCANT_WORD.test(word) && index + 1 < words.length) {
+        const next = words[index + 1];
+        if (!/^[\p{L}\p{N}(]/u.test(next) || ecQuery(next) || DOI_WORD.test(next) || /^\d{3,}$/.test(next)) break;
+        word += next;
+        index += 1;
+      }
+      joined.push(word);
+    }
+    return joined;
+  }
+
+  // "EC 1.1.1.1" and "E.C.: 2.7" typed as two words become one.
+  function joinEcWords(words) {
+    const joined = [];
+    for (let index = 0; index < words.length; index += 1) {
+      const next = words[index + 1];
+      if (EC_WORD.test(words[index]) && next !== undefined && /^\d+(?:\.(?:\d+|-))*\.?$/.test(next)) {
+        joined.push(`ec${next}`);
+        index += 1;
+      } else {
+        joined.push(words[index]);
+      }
+    }
+    return joined;
   }
 
   function ecMatches(row, query) {
@@ -1510,27 +1599,42 @@
     return (Array.isArray(value) ? value : [value]).some((position) => paperDois[position]?.startsWith(doi));
   }
 
-  // Search words: every word must match, in any order. Words split at spaces only, so a chemical name keeps its commas
-  // ("2,4-dinitrophenol" is one word); a comma or semicolon typed after a word is dropped. A word that is an EC number
-  // with at least two parts matches EC parts; "EC" in front of one is dropped. A number also matches the records of
-  // that PMID, and a DOI (10.xxxx/...) the records of that paper; "PMID" or "DOI" in front of one is dropped.
+  // Search words: every word must match, in any order, and in any case, with or without accents, hyphens or spaces
+  // inside a name (foldSearch). Words split at spaces only, so a chemical name keeps its commas ("2,4-dinitrophenol" is
+  // one word); a comma or semicolon typed after a word is dropped. An EC number matches EC parts (ecQuery); "EC" in
+  // front of one is part of it. A number also matches the records of that PMID, and a DOI (10.xxxx/...) the records of
+  // that paper; "PMID" or "DOI" in front of one is dropped.
   function searchWords(query) {
-    const words = String(query || "").split(/\s+/)
+    const words = joinLocantWords(joinEcWords(foldSearch(query).split(/\s+/)
       .map((word) => word.replace(/^[,;]+|[,;]+$/g, ""))
-      .filter((word) => /[\p{L}\p{N}]/u.test(word));
-    const hasEcNumber = words.some((word) => ecQuery(word).includes("."));
+      .filter((word) => /[\p{L}\p{N}]/u.test(word))));
     const hasPaperId = words.some((word) => PMID_WORD.test(word) || DOI_WORD.test(word));
     return words
-      .filter((word) => !(hasEcNumber && word === "ec") && !(hasPaperId && /^(pmid|doi):?$/.test(word)))
+      .filter((word) => !(hasPaperId && /^(pmid|doi):?$/.test(word)))
       .map((word) => {
         const ec = ecQuery(word);
-        if (ec.includes(".")) return { ec };
+        if (ec) return { ec };
         const doi = word.match(DOI_WORD);
         if (doi) return { doi: doi[1].replace(/;.*$/, "") };
         const pmid = word.match(PMID_WORD);
         if (pmid) return pmid[1] ? { pmid: Number(pmid[2]) } : { pmid: Number(pmid[2]), text: word };
-        return { text: word };
-      });
+        return { text: compactSearch(word) };
+      })
+      .filter((word) => word.ec || word.doi || word.pmid || word.text);
+  }
+
+  // The EC field: one or more EC numbers or classes ("1.1.1", "1.1.1.1 1.1.1.2"); a record matches any of them. Text
+  // that is not a number is looked for in the EC as written.
+  function ecFilterQueries(text) {
+    return joinEcWords(foldSearch(text).split(/[\s,;]+/).filter(Boolean)).map((word) => {
+      const ec = ecQuery(word, { anyNumber: true });
+      return ec ? { ec } : { text: compactSearch(word) };
+    }).filter((query) => query.ec || query.text);
+  }
+
+  // A field filter (enzyme, organism, substrate): every word typed is in the field, in any order.
+  function fieldWords(text) {
+    return joinLocantWords(foldSearch(text).split(/\s+/).filter(Boolean)).map(compactSearch).filter(Boolean);
   }
 
   function wordMatches(row, word, text) {
@@ -2859,6 +2963,7 @@
       }
     }
     updateFilterCounts();
+    if (searchWarmup.wanted && state.recordsReady) warmSearchText();
   }
 
   function filterCountText(key) {
@@ -2947,9 +3052,13 @@
       q,
       qWords: searchWords(q),
       ec: foldSearch(controls.ec),
+      ecQueries: ecFilterQueries(controls.ec),
       enzyme: foldSearch(controls.enzyme),
+      enzymeWords: fieldWords(controls.enzyme),
       organism: foldSearch(controls.organism),
+      organismWords: fieldWords(controls.organism),
       substrate: foldSearch(controls.substrate),
+      substrateWords: fieldWords(controls.substrate),
       recordStates: controls.states,
       v2Only: controls.v2,
       humanChecked: controls.checked,
@@ -3327,22 +3436,25 @@
   // Field filters fold each distinct value once per loaded generation (not once per row and keystroke).
   const foldedFields = { generation: -1, values: new Map() };
 
-  function foldedField(value) {
+  function foldedField(value, field = "") {
     if (foldedFields.generation !== state.recordsGeneration) {
       foldedFields.generation = state.recordsGeneration;
       foldedFields.values = new Map();
     }
-    let folded = foldedFields.values.get(value);
+    // An organism also answers to its short and common names ("E. coli", "human").
+    const key = field === "organism" ? `organism|${value}` : value;
+    let folded = foldedFields.values.get(key);
     if (folded === undefined) {
-      folded = foldSearch(value);
-      foldedFields.values.set(value, folded);
+      folded = compactSearch(foldSearch(field === "organism" ? `${value}|${organismSearchText(value)}` : value));
+      foldedFields.values.set(key, folded);
     }
     return folded;
   }
 
-  function fieldContains(row, field, value) {
-    if (!value) return true;
-    return foldedField(row[field] || "").includes(value);
+  function fieldContains(row, field, words) {
+    if (!words?.length) return true;
+    const value = foldedField(row[field] || "", field);
+    return words.every((word) => value.includes(word));
   }
 
   function rowMatches(row, filters) {
@@ -3353,14 +3465,14 @@
     }
     if (!filters.recordStates.includes(row._recordState || recordStateForRow(row))) return false;
     if (filters.v2Only && !isV2Row(row)) return false;
-    if (filters.ec) {
-      // The EC filter matches whole EC parts: "1.1.1" is EC 1.1.1 and every number under it.
-      const query = filters.ec.replace(/^ec\s*/, "").replace(/\.$/, "");
-      if (query && !ecMatches(row, query)) return false;
-    }
-    if (!fieldContains(row, "enzyme_display_name", filters.enzyme)) return false;
-    if (!fieldContains(row, "organism", filters.organism)) return false;
-    if (!fieldContains(row, "substrate_name", filters.substrate)) return false;
+    // The EC filter matches whole EC parts: "1.1.1" is EC 1.1.1 and every number under it.
+    const ecQueries = filters.ecQueries || (filters.ec ? ecFilterQueries(filters.ec) : null);
+    if (ecQueries?.length && !ecQueries.some((query) => (
+      query.ec ? ecMatches(row, query.ec) : foldedField(row.ec_number || "").includes(query.text)
+    ))) return false;
+    if (!fieldContains(row, "enzyme_display_name", filters.enzymeWords || fieldWords(filters.enzyme))) return false;
+    if (!fieldContains(row, "organism", filters.organismWords || fieldWords(filters.organism))) return false;
+    if (!fieldContains(row, "substrate_name", filters.substrateWords || fieldWords(filters.substrate))) return false;
     // Has kcat, Has Km, Has kcat/Km: a record has every value ticked.
     if (filters.metrics?.length) {
       const metricFields = {
@@ -3629,9 +3741,10 @@
   function scheduleFilters() {
     window.clearTimeout(state.filterTimer);
     const runId = ++state.filterRunId;
+    // Typing waits this long after the last key, so 169k records are filtered once per pause, not per keystroke.
     state.filterTimer = window.setTimeout(() => {
       applyFiltersInBackground({ runId });
-    }, 120);
+    }, FILTER_TYPING_DELAY_MS);
   }
 
   function activeTableRowKey(pageRows) {
@@ -5338,7 +5451,11 @@
       $(id).addEventListener("pointerleave", cancelPrefetch);
       $(id).addEventListener("blur", cancelPrefetch);
     }
-    $("globalSearchInput").addEventListener("focus", () => ensureRecordsLoaded());
+    $("globalSearchInput").addEventListener("focus", () => {
+      ensureRecordsLoaded();
+      warmSearchText();
+    });
+    $("catalogFilters").addEventListener("focusin", warmSearchText);
     window.addEventListener("scroll", hideSuggestions, { passive: true });
     $("catalogFilters").addEventListener("scroll", () => {
       const rail = $("catalogFilters");
