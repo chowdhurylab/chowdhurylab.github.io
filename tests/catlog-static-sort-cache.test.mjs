@@ -1753,7 +1753,7 @@ function row(overrides = {}) {
   assert.match(unaccepted, /<th scope="col">Unverified<small>1<\/small><\/th>/);
   assert.doesNotMatch(unaccepted, /Not confirmed/, "A group without its own counts gets no column");
   assert.match(unaccepted, /<tr data-field="with_smiles"><th scope="row">Substrate SMILES<\/th><td data-cohort="unverified" data-count="1">1<small>100\.0%<\/small>/);
-  assert.match(unaccepted, /does not give the reason for a status/);
+  assert.match(unaccepted, /does not give the reason for a review result/);
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
   assert.equal(api.statsCohortData("unverified", 1), null, "Material must be an exclusive whole-cohort partition");
   assert.equal(api.statsUnacceptedFields({ unverified: 1 }), "");
@@ -1770,7 +1770,7 @@ function row(overrides = {}) {
   // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title.
   const badge = api.statusBadge(row({ verification_status: "corrected" }));
   assert.match(badge, /aria-label="Accepted, BRENDA, corrected"/);
-  assert.match(badge, /title="Accepted by the earlier automated review after a correction\."/);
+  assert.match(badge, /title="Accepted after a correction in the earlier automated review; the value before the correction was not kept\."/);
   assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, BRENDA"/);
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
@@ -1781,7 +1781,7 @@ function row(overrides = {}) {
   for (const [status, sentence] of [
     ["corrected", "Corrected and accepted in the earlier automated review (the value before correction was not kept)."],
     ["verified", "Accepted as printed, in the earlier automated review."],
-    ["manual_review_required", "Not confirmed: the earlier automated review left a question open on the value, protein or substrate."],
+    ["manual_review_required", "Not confirmed: the earlier automated review left a question open on the value, unit, protein or substrate."],
     ["unverified", "Not checked: the earlier automated review recorded no final check."],
     ["disputed", "Disputed in the earlier automated review; not accepted (no reason recorded)."],
   ]) assert.equal(api.reviewOutcome(row({ verification_status: status })), sentence);
@@ -2169,7 +2169,11 @@ assert.match(decodeURIComponent(referenceHtml.match(/id="reportRecordProblem" cl
 api.renderDetail(row({ record_key: "unknowns", ec_number: "Unknown", organism: "Unknown", kcat: null, km: null, kcat_over_km: null,
   kcat_display: "Not reported", km_display: "Not reported", kcat_over_km_display: "Not reported" }), {});
 referenceHtml = element("detailContent").innerHTML;
-assert.match(referenceHtml, /<p class="detail-subtitle">EC unknown &middot; organism unknown<\/p>/);
+assert.match(referenceHtml, /<p class="detail-subtitle">EC unknown &middot; organism not recorded<\/p>/);
+api.renderDetail(row({ record_key: "unknowns-v2", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+  organism: "Unknown", substrate_name: "Unknown" }), {});
+assert.match(element("detailContent").innerHTML, /EC 1\.1\.1\.1 &middot; organism not stated in the paper<\/p>/);
+assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Not stated in the paper<\/span>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
 assert.match(referenceHtml, /<span>SMILES<\/span><strong>None<\/strong>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
@@ -2222,7 +2226,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify; ec_from_databases",
     proof_lines: [line("kcat", ""), line("Km", "")] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<span>Method<\/span><strong>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers →<\/a><\/strong>/);
+  assert.match(html, /<span>Method<\/span><strong>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →<\/span><\/a><\/strong>/);
   assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
   assert.doesNotMatch(html, /<span>Review<\/span>|second, separate AI run|independent/);
@@ -2247,13 +2251,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { audit_date: "2026-10-11", audit_result: "kept" }), line("Km", { audit_date: "2026-10-11", audit_result: "kept" })] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong><\/div><div class="kv-line"><span>AI audit<\/span><strong>11 Oct 2026: re-checked against the paper and kept\.<\/strong>/);
+  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong><\/div><div class="kv-line"><span>AI audit<\/span><strong>Oct 11, 2026: re-checked against the paper and kept\.<\/strong>/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { check: "confirmed; re-checked in an independent audit (2026-10-11)" }),
       line("Km", { check: "confirmed; unit corrected in an independent audit (2026-10-11)" })] });
   html = element("detailContent").innerHTML;
   assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/, "the audit suffix does not hide the check");
-  assert.match(html, /<span>AI audit<\/span><strong>11 Oct 2026: kcat re-checked against the paper and kept\. 11 Oct 2026: Km re-checked against the paper; the unit was corrected\.<\/strong>/);
+  assert.match(html, /<span>AI audit<\/span><strong>Oct 11, 2026: kcat re-checked against the paper and kept\. Oct 11, 2026: Km re-checked against the paper; the unit was corrected\.<\/strong>/);
   assert.doesNotMatch(html, /independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: [line("kcat"), line("Km")] });
   assert.doesNotMatch(element("detailContent").innerHTML, /AI audit/, "no audit, no line");
@@ -2705,6 +2709,11 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.activeFilterItems().find((item) => item.key === "source:earlier_paper").clear();
   assert.equal(api.browseHash(), "");
   assert.deepEqual(await keysFor(""), ["src-earlier", "src-merged", "src-oed", "src-unknown", "src-v2"]);
+  // Older links: the paper with a database (either one) opens all records; the three results of their day, all four.
+  assert.deepEqual(await keysFor("source=paper,brenda"), ["src-earlier", "src-merged", "src-oed", "src-unknown", "src-v2"]);
+  assert.equal(api.browseHash(), "");
+  api.applyBrowseParams(new Map(new URLSearchParams("status=accepted,curation_pending,not_verified")));
+  assert.equal(api.browseHash(), "", "every review result ticked");
 
   // Filter counts follow the results: each option counted over the records that match every other filter.
   const disputed = sourceRow("src-disputed", { source_db: "brenda", verification_status: "disputed", kcat: null });
@@ -2753,6 +2762,10 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.ok(lines[1].endsWith(",BRENDA,brenda,123; 456,,P00330"), lines[1]);
   assert.match(lines[2], /^csv-2,Enzyme,1\.1\.1\.1,Organism,Substrate,wild type,,,1,mM,/, "a missing value is an empty cell");
   assert.match(lines[2], /,Accepted,[^,]*,from paper,primary_paper_direct,/);
+  // A cell starting with + or - is a formula to a spreadsheet unless it is a plain number (variant "+G212").
+  const signed = (await api.csvParts([row({ record_key: "csv-3", mutation_signature: "+G212", wild_type: false, organism: "-Organism",
+    kcat_display: "-5", kcat_unit: "s^(-1)", km_display: "+0.5", km_unit: "mM" })])).join("").replace(/^\ufeff/, "").split("\r\n")[1];
+  assert.match(signed, /^csv-3,Enzyme,1\.1\.1\.1,'-Organism,Substrate,'\+G212,-5,s\^-1,\+0\.5,mM,/, signed);
 }
 
 api.indexLoadedRecords([row()]);

@@ -96,7 +96,7 @@
           <div class="snapshot-overview">
             <div class="summary-grid" id="summaryGrid"></div>
             <a id="fromPaperLink" class="snapshot-paper" href="#browse?source=paper" title="Show the records read from the paper by CatLog" hidden><span>Read from the paper</span><strong id="fromPaperCount"></strong></a>
-            <a id="humanCheckedLink" class="snapshot-checked" href="#browse?checked=1" title="Show the accepted records a human reviewer checked" hidden><span><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Human-checked</span><strong id="humanCheckedCount"></strong></a>
+            <a id="humanCheckedLink" class="snapshot-checked" href="#browse?checked=1" title="Show the accepted records a human reviewer approved" hidden><span><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Human-checked</span><strong id="humanCheckedCount"></strong></a>
             <button id="snapshotMoreButton" class="text-button snapshot-more" type="button" aria-expanded="false" aria-controls="snapshotMeta">More <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <div class="snapshot-meta" id="snapshotMeta"></div>
             <div class="snapshot-controls">
@@ -178,7 +178,7 @@
                 <button id="openFiltersButton" class="button filter-toggle" type="button" aria-controls="catalogFilters" aria-expanded="false">
                   Filters <span id="activeFilterCount" class="filter-count hidden"></span>
                 </button>
-                <strong id="activeSummary" class="visually-hidden">Loading CatLog records...</strong>
+                <strong id="activeSummary" class="visually-hidden">Loading records…</strong>
                 <span id="pageSummary">Loading records</span>
                 <button id="clearResultsButton" class="text-button" type="button" hidden>Clear search and filters</button>
                 <div class="table-scroll-controls hidden" aria-label="Table columns">
@@ -272,7 +272,7 @@
               </table>
             </div>
             <div class="pagination">
-              <label for="pageSizeSelect">Rows<span class="pagination-label-detail"> per page</span>:</label>
+              <label for="pageSizeSelect">Records<span class="pagination-label-detail"> per page</span>:</label>
               <select id="pageSizeSelect">
                 <option value="25" selected>25</option>
                 <option value="50">50</option>
@@ -286,7 +286,7 @@
 
           <aside id="detailPanel" class="detail-panel" tabindex="-1" aria-label="Record details">
             <p id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
-            <div id="detailEmpty" class="detail-empty">Select a row to view its measurement and sources.</div>
+            <div id="detailEmpty" class="detail-empty">Select a record to view its measurement and sources.</div>
             <div id="detailContent" class="hidden"></div>
           </aside>
         </section>
@@ -483,7 +483,7 @@
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>).</dd></div>
               <div><dt>T (°C), pH</dt><dd>Assay temperature and pH; the record lists the other conditions.</dd></div>
             </dl>
-            <p>On a record read by CatLog, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05) and long ones are rounded; the record shows the value as printed beside the value in catalog units.</p>
+            <p>On a record read by CatLog, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05); the record shows the value as printed beside the value in catalog units.</p>
             <dl class="guide-term-list">
               <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, not printed in the source; the table and the record show it with the significant figures of the less precise of the two (at least two). An older <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> whose source does not say how it was obtained, and that equals <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, is marked <em>calc.</em> too.</dd></div>
               <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; the record then gives both (<em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</em>).</dd></div>

@@ -87,8 +87,9 @@ enzyme databases, a merged record counts under each database it names, and All
 records or Read from the paper clears them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted, its tick green, and ticking it ticks Accepted;
-its count waits for the review marks; then Status definitions: the four results
-and the tags, the method in one line with a link to #guide-method), Enzyme, organism and
+its count waits for the review marks; unticking Accepted unticks it; then Review
+result definitions: the four results and the tags (earlier extraction included),
+the method in one line with a link to #guide-method), Enzyme, organism and
 substrate (labelled fields, the EC number first), Measurement type
 (ticking several shows records with all of them), Wild type or variant (a note
 says how many records state neither), Assay conditions (temperature °C and pH, from

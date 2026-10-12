@@ -93,6 +93,10 @@
     { value: "disputed", label: "Disputed", className: "disputed" },
   ];
 
+  // Tag definitions, said the same way in the filter, the badges and the Guide.
+  const CORRECTED_DEFINITION = "Accepted after a correction in the earlier automated review; the value before the correction was not kept.";
+  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by the earlier automated pipeline of AI models and code checks, not by CatLog.";
+
   const stateDescriptions = {
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
     get accepted() {
@@ -109,7 +113,7 @@
   // The verification_status values; label is the exact value a record names after its review result.
   const reviewStatuses = [
     { value: "verified", label: "Verified", description: "Accepted by the earlier automated review as printed." },
-    { value: "corrected", label: "Corrected", description: "Accepted by the earlier automated review after a correction." },
+    { value: "corrected", label: "Corrected", description: CORRECTED_DEFINITION },
     { value: "manual_review_required", label: "Not confirmed", description: stateDescriptions.curation_pending },
     { value: "unverified", label: "Unverified", description: "The earlier review recorded no final check." },
     { value: "mathematically_inferred", label: "Not reviewed", description: "A database record without a PMID or DOI that was never reviewed." },
@@ -154,8 +158,8 @@
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_CATLOG_HELP = v2Sentence;
-  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt and SKiD, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline.";
+  const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
+  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
   const sourceModes = [
     { value: "all", label: "All records" },
     { value: "paper", label: SOURCE_CATLOG_LABEL, help: SOURCE_CATLOG_HELP, guide: true },
@@ -171,7 +175,7 @@
     { value: "skid", label: "SKiD", tag: "SKiD", bit: 32 },
     { value: "strenda", label: "STRENDA DB", tag: "STRENDA DB", bit: 64 },
     { value: "earlier_paper", label: "Earlier paper extractions", tag: "earlier extraction", name: "Earlier paper extraction", bit: 128,
-      title: "Records read from a paper by the earlier pipeline, not by CatLog" },
+      title: EARLIER_EXTRACTION_DEFINITION },
     { value: "unrecorded", label: "Source not recorded", tag: "source not recorded", bit: 256 },
   ];
   const SOURCE_UNRECORDED_BIT = 256;
@@ -1278,7 +1282,7 @@
       case "verified":
         return "Accepted as printed, in the earlier automated review.";
       case "manual_review_required":
-        return "Not confirmed: the earlier automated review left a question open on the value, protein or substrate.";
+        return "Not confirmed: the earlier automated review left a question open on the value, unit, protein or substrate.";
       case "mathematically_inferred":
         return "Not checked: taken from the source database as listed.";
       case "disputed":
@@ -2135,7 +2139,7 @@
     if (action && typeof onAction === "function") {
       action.addEventListener("click", () => {
         action.disabled = true;
-        action.textContent = "Trying again...";
+        action.textContent = "Trying again…";
         onAction();
       }, { once: true });
     }
@@ -2742,8 +2746,18 @@
 
   async function handleCsvExport(scope) {
     const button = $(scope === "all" ? "exportAllCsvButton" : "exportPageCsvButton");
+    if (button?.disabled) return;
+    // A search typed a moment ago (still waiting for its pause) is applied first, so the file holds what it finds.
+    if (state.filterTimerPending && state.recordsReady) {
+      window.clearTimeout(state.filterTimer);
+      state.filterTimerPending = false;
+      await ensureCurrentFilters();
+    }
     const rows = scope === "all" ? state.filtered : currentPageRows();
-    if (!rows.length || button?.disabled) return;
+    if (!rows.length) {
+      syncExportControls();
+      return;
+    }
     const label = button?.querySelector?.("strong");
     const original = label?.textContent || "";
     if (button) button.disabled = true;
@@ -3010,7 +3024,7 @@
     return `<details class="stats-explanation stats-unaccepted-fields"><summary>Fields saved in records that are not accepted</summary>
       <table class="stats-detail-table"><thead><tr><th scope="col">Field</th>${cohorts.map((item) => `<th scope="col">${escapeHtml(item.label)}<small>${formatInteger(item.group.total)}</small></th>`).join("")}</tr></thead>
       <tbody>${fields.map(([key, label]) => `<tr data-field="${key}"><th scope="row">${label}</th>${cohorts.map((item) => `<td data-cohort="${item.value}" data-count="${item.group[key]}">${formatInteger(item.group[key])}<small>${escapeHtml(statsShare(item.group[key], item.group.total))}</small></td>`).join("")}</tr>`).join("")}</tbody></table>
-      <p>Kinetic value: kcat, Km, Ki or kcat/Km. Paper ID: PMID or DOI. Shares are of each group. A missing field does not give the reason for a status.</p></details>`;
+      <p>Kinetic value: kcat, Km, Ki or kcat/Km. Paper ID: PMID or DOI. Shares are of each group. A missing field does not give the reason for a review result.</p></details>`;
   }
 
   const STATS_METRICS = [
@@ -3654,13 +3668,14 @@
         label: "Only human-checked", title: HUMAN_CHECKED_DESCRIPTION, count: "checked", className: "human-checked nested",
       }) : "")).join("") + `
       <details class="status-guide">
-        <summary>Status definitions</summary>
+        <summary>Review result definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "passed review; "))}</p>`).join("")}
+          <p><strong>earlier extraction</strong>: ${escapeHtml(EARLIER_EXTRACTION_DEFINITION)}</p>
           <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
-          <p><strong>from paper:</strong> ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a></p>
-          <p><strong>corrected:</strong> Accepted by the earlier automated review after a correction.</p>
-          <p><strong>no paper linked:</strong> ${escapeHtml(noPaperDefinition())}</p>
+          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads papers<span aria-hidden="true">&nbsp;&rarr;</span></a></p>
+          <p><strong>corrected</strong>: ${escapeHtml(CORRECTED_DEFINITION)}</p>
+          <p><strong>no paper linked</strong>: ${escapeHtml(noPaperDefinition())}</p>
         </div>
       </details>
     `;
@@ -3685,7 +3700,7 @@
             <span>${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>${item.help ? `
-          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a>` : ""}</p>` : ""}`).join("")}
+          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads papers<span aria-hidden="true">&nbsp;&rarr;</span></a>` : ""}</p>` : ""}`).join("")}
         </div>
         <details class="source-databases" id="sourceDatabases">
           <summary>By database</summary>
@@ -3990,11 +4005,15 @@
       if (input) input.value = String(value ?? "").trim();
     };
     setText("globalSearchInput", params.get("q"));
+    // A search the address fills needs no examples over it.
+    if ($("globalSearchInput")?.value) hideSuggestions();
     const status = params.has("status") ? listParam(params.get("status")) : [];
     const states = status.filter((value) => recordStates.some((item) => item.value === value));
     const noStates = params.has("status") && !String(params.get("status")).trim();
+    // An older link that ticked the three results of its day (Disputed was then inside not_verified) meant all records.
+    const olderAll = states.length === 3 && ["accepted", "curation_pending", "not_verified"].every((value) => states.includes(value));
     document.querySelectorAll?.('input[name="recordState"]').forEach((input) => {
-      input.checked = !noStates && (!states.length || states.includes(input.value));
+      input.checked = !noStates && (!states.length || olderAll || states.includes(input.value));
     });
 
     if ($("humanCheckedFilter")) {
@@ -4016,7 +4035,11 @@
     // enzyme databases.
     const sources = listParam(params.get("source"), SOURCE_ALIASES);
     const databases = sources.filter((value) => sourceFilters.some((item) => item.value === value));
-    setSourceControls(databases.length || sources.includes("databases") ? "databases" : (sources.includes("paper") || status.includes("v2") ? "paper" : "all"), databases);
+    const anyDatabase = databases.length > 0 || sources.includes("databases");
+    // An older link that combined the paper with databases (source=paper,brenda: either one) opens all records.
+    const paper = sources.includes("paper") || status.includes("v2");
+    if (paper && anyDatabase) setSourceControls("all", []);
+    else setSourceControls(anyDatabase ? "databases" : (paper ? "paper" : "all"), databases);
     openActiveFilterSections();
     if ($("sortSelect")) {
       $("sortSelect").value = normalizedSortName(String(params.get("sort") || "evidence").trim().toLowerCase());
@@ -4572,8 +4595,10 @@
   function scheduleFilters() {
     window.clearTimeout(state.filterTimer);
     const runId = ++state.filterRunId;
+    state.filterTimerPending = true;
     // Typing waits this long after the last key, so 169k records are filtered once per pause, not per keystroke.
     state.filterTimer = window.setTimeout(() => {
+      state.filterTimerPending = false;
       applyFiltersInBackground({ runId });
     }, FILTER_TYPING_DELAY_MS);
   }
@@ -4726,8 +4751,8 @@
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong></span>${enzymeForm}</td>
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
-        <td class="c-organism"><span class="clamp-2" title="${escapePublic(row.organism || "")}">${escapePublic(row.organism || EMPTY_VALUE)}</span></td>
-        <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(row.substrate_name || "")}">${escapePublic(row.substrate_name || EMPTY_VALUE)}</span>${substrateNote}</td>
+        <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${escapePublic(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
+        <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${escapePublic(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
@@ -5166,7 +5191,7 @@
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
         ${detailHeadingHtml(row)}
       </div>
-      <p id="detailLoadStatus" class="muted" role="status">Loading record...</p>
+      <p id="detailLoadStatus" class="muted" role="status">Loading record…</p>
     `;
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
     if (focusDetail) focusDetailHeading(key);
@@ -5822,17 +5847,17 @@
     };
   }
 
-  // "11 Oct 2026" from an ISO date (or the text as it is).
+  // "Oct 11, 2026" (the snapshot's and Stats' date style) from an ISO date, or the text as it is.
   function auditDateText(value) {
     const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!match) return String(value || "").trim();
     const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
     return Number.isNaN(date.getTime())
       ? String(value).trim()
-      : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+      : formatDate(date.toISOString());  // as the snapshot and Stats write dates
   }
 
-  // The AI audit line: the date and the verdict only ("11 Oct 2026: re-checked against the paper and kept."), naming
+  // The AI audit line: the date and the verdict only ("Oct 11, 2026: re-checked against the paper and kept."), naming
   // the values when the audit did not cover them all alike.
   function v2AuditText(lines, facts) {
     const groups = new Map();
@@ -6525,9 +6550,9 @@
       .filter(([field]) => metricHasValue(summary, field))
       .map(([field, label]) => [label, field in shown ? numberText(shown[field]) : panelValueText(summary, field), unitText(metricUnit(summary, field))].filter(Boolean).join(" "));
     const about = [
-      summary.enzyme_display_name,
-      summary.organism,
-      summary.substrate_name,
+      recordedName(summary.enzyme_display_name) || "Name not recorded",
+      recordedName(summary.organism) || "organism not recorded",
+      recordedName(summary.substrate_name) || "substrate not recorded",
       ...values,
       pmids.length ? `PMID ${pmids.slice(0, 5).join(", ")}${pmids.length > 5 ? ` and ${pmids.length - 5} more` : ""}` : "",
       // Without a PMID the paper is named by its DOI (and a paper's stand-in ID).
@@ -6576,14 +6601,15 @@
 
   // "EC 1.4.1.20 · Bacillus sphaericus · N145A variant", leaving out what is not recorded, so records of one paper
   // differ at the top; "Unknown" (not stated in the paper or the source database) says which of the two it is.
-  function detailSubtitleHtml(row, { ecFromDatabases = false } = {}) {
+  function detailSubtitleHtml(row, { ecFromDatabases = false, v2Record = isV2Row(row) } = {}) {
     const ec = String(row.ec_number || "").trim();
     const organism = String(row.organism || "").trim();
+    const missing = v2Record ? "not stated in the paper" : "not recorded";
     // A record read from a paper that prints no EC number: the EC the enzyme databases list for this paper's values.
     const ecNote = ecFromDatabases ? " (from enzyme databases; not printed in the paper)" : "";
     const parts = [
       /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? `EC ${ec}${ecNote}` : ""),
-      /^unknown$/i.test(organism) ? "organism unknown" : (hasDisplayValue(organism) ? organism : ""),
+      /^unknown$/i.test(organism) ? `organism ${missing}` : (hasDisplayValue(organism) ? organism : ""),
       detailVariantText(row),
     ].filter(Boolean);
     return parts.length ? `<p class="detail-subtitle">${parts.map(escapePublic).join(" &middot; ")}</p>` : "";
@@ -6591,9 +6617,14 @@
 
   // "Substrate: ...", under the EC line. A long name is cut to two lines here and given in full under Assay conditions.
   const LONG_DETAIL_SUBSTRATE = 90;
+  // A name as the record gives it; "" when blank or "Unknown" (a missing name: a dash in the table, words in the record).
+  function recordedName(value) {
+    const text = String(value ?? "").trim();
+    return hasDisplayValue(text) && !/^unknown$/i.test(text) ? text : "";
+  }
+
   function detailSubstrateHtml(row, detail = {}) {
-    const text = String(row.substrate_name || "").trim();
-    const name = hasDisplayValue(text) && !/^unknown$/i.test(text) ? text : "Not recorded";
+    const name = recordedName(row.substrate_name) || (isV2Row(row) ? "Not stated in the paper" : "Not recorded");
     // What tells this record from others of its paper that read the same (condition_note), in grey under it.
     const note = conditionNoteText(row, detail);
     return `<p class="detail-substrate"><span>Substrate:</span> <span class="detail-substrate-name">${escapePublic(name)}</span></p>`
@@ -6671,7 +6702,7 @@
       // A record read by CatLog: how (Method) and what the second check found (Check); an older record: its review.
       ...(v2Record
         ? [
-            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts, { unitChanged: measurementNotes(summary, detail).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
+            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts, { unitChanged: measurementNotes(summary, detail).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →</span></a>`),
             v2Facts ? kv("Check", v2CheckText(v2Facts, v2CheckOptions(summary, detail, v2Proof))) : "",
             v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
           ]
@@ -6683,7 +6714,7 @@
       // How many database rows a record merges is said once, here; Source details then names the databases only when
       // they are not just the source.
       mergedRows > 1
-        ? kv("Merged from", `${formatInteger(mergedRows)} database rows${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
+        ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperIds.length ? `, ${formatInteger(paperIds.length)} ${paperIds.length === 1 ? "paper" : "papers"}` : ""}`)
         : "",
     ];
     // An older record's notes (the earlier catalog's review text) expand on request.
@@ -7063,12 +7094,12 @@
     });
     dockedFiltersMedia.addEventListener?.("change", syncFilterPanel);
     filtersBesideRecordMedia.addEventListener?.("change", syncFilterPanel);
-    // "Only human-checked" sits under Accepted: ticking it ticks Accepted too.
+    // "Only human-checked" sits under Accepted: ticking it ticks Accepted too, and unticking Accepted unticks it (only
+    // accepted records are human-checked, so it would leave no results).
     $("statusChecklist").addEventListener("change", (event) => {
-      if (event.target?.id === "humanCheckedFilter" && event.target.checked) {
-        const accepted = [...document.querySelectorAll('input[name="recordState"]')].find((input) => input.value === "accepted");
-        if (accepted) accepted.checked = true;
-      }
+      const accepted = [...document.querySelectorAll('input[name="recordState"]')].find((input) => input.value === "accepted");
+      if (event.target?.id === "humanCheckedFilter" && event.target.checked && accepted) accepted.checked = true;
+      if (event.target === accepted && !accepted.checked && $("humanCheckedFilter")) $("humanCheckedFilter").checked = false;
       applyFiltersInBackground();
     });
     $("measurementChecklist").addEventListener("change", () => {
