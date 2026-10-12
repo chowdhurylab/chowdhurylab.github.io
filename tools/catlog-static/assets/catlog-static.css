@@ -212,7 +212,7 @@ body:is(.stats-open,.guide-open) .skip-link { display:none }
 
 /* Buttons */
 .button, .text-button, .icon-button { border-radius:var(--radius); cursor:pointer }
-.button { display:inline-flex; min-height:34px; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line-strong); background:var(--surface); color:var(--text); padding:6px 12px; font-size:var(--fs-table); font-weight:500; text-decoration:none }
+.button { display:inline-flex; min-height:32px; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line-strong); background:var(--surface); color:var(--text); padding:6px 12px; font-size:var(--fs-table); font-weight:500; text-decoration:none }
 .button.secondary:hover:not(:disabled) { border-color:var(--teal-line); background:var(--teal-soft); text-decoration:none }
 .text-button, .icon-button { border:0; background:transparent; font-size:var(--fs-table) }
 .text-button { color:var(--link); padding:0; font-weight:500 }
@@ -631,7 +631,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 /* Stats and Guide pages. */
 .guide-view, .stats-view { flex:1; min-height:0; overflow:auto; border-bottom:1px solid var(--line); background:var(--surface) }
 .stats-view { position:relative }
-.stats-shell { max-width:1280px; margin:0 auto; padding:24px 28px 28px }
+.stats-shell { max-width:1200px; margin:0 auto; padding:var(--sp-6) var(--sp-5) }
 .stats-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px 24px }
 .stats-heading h1 { margin:0; font-size:var(--fs-h1); font-weight:600; line-height:1.25 }
 .stats-heading .snapshot-date { font-size:var(--fs-stats-meta); line-height:1.5 }
@@ -978,18 +978,18 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .stats-section { break-inside:avoid }
 }
 
-/* Guide: one reading column (72ch, body 16px/1.6), the same status badges as the table, plain section rules. Every rule is scoped to .guide-view, so it wins over the older Guide rules above. */
-.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:72ch; margin:0 auto; padding:32px 24px 56px; color:var(--ink); font-size:16px; line-height:1.6 }
-.guide-view .guide-shell :is(p, dd, dt, li, summary) { font-size:16px; line-height:1.6 }
+/* Guide: one reading column (72ch, body 16px/24px), the same status badges as the table, plain section rules. Every rule is scoped to .guide-view, so it wins over the older Guide rules above. */
+.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:72ch; margin:0 auto; padding:32px 24px 56px; color:var(--ink); font-size:var(--fs-16); line-height:var(--lh-16) }
+.guide-view .guide-shell :is(p, dd, dt, li, summary) { font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell :is(h1, h2, h3) { color:var(--ink); font-weight:600; letter-spacing:0 }
 .guide-view .guide-heading { max-width:none }
-.guide-view .guide-heading h1 { margin:0; font-size:28px; line-height:1.25 }
+.guide-view .guide-heading h1 { margin:0; font-size:var(--fs-24); line-height:var(--lh-24) }
 .guide-view .guide-heading > h1 ~ p { max-width:none; margin:12px 0 0; color:var(--ink) }
-.guide-view .guide-shell h2 { margin:0 0 12px; font-size:22px; line-height:1.3 }
-.guide-view .guide-shell h3 { margin:0 0 6px; font-size:18px; line-height:1.35 }
+.guide-view .guide-shell h2 { margin:0 0 12px; font-size:var(--fs-20); line-height:var(--lh-20) }
+.guide-view .guide-shell h3 { margin:0 0 6px; font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell p { margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-shell :is(sub, sup) { line-height:0 }
-.guide-view .guide-shell code { font-family:ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size:14px; overflow-wrap:anywhere }
+.guide-view .guide-shell code { font-family:var(--font-mono); font-size:var(--fs-14); overflow-wrap:anywhere }
 /* Sections stack in one column, divided by a rule. */
 .guide-view :is(.guide-section, .guide-downloads, .guide-citation, .guide-sources) { display:block; margin:36px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
 .guide-view .guide-shell .guide-section > h3 { margin:28px 0 8px }
@@ -998,40 +998,40 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view [id^="guide-"] { scroll-margin-top:16px }
 /* Contents: one short list of the sections, three columns (two on phones). */
 .guide-view .guide-contents { margin:24px 0 0; border-top:1px solid var(--line); padding:16px 0 0 }
-.guide-view .guide-shell .guide-contents h2 { margin:0 0 8px; color:var(--muted); font-size:14px; font-weight:500; line-height:1.4 }
+.guide-view .guide-shell .guide-contents h2 { margin:0 0 8px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:1.4 }
 .guide-view .guide-contents ul { columns:3 9.5em; column-gap:24px; margin:0; padding:0; list-style:none }
-.guide-view .guide-shell .guide-contents li { break-inside:avoid; padding:2px 0; font-size:16px; line-height:1.5 }
+.guide-view .guide-shell .guide-contents li { break-inside:avoid; padding:2px 0; font-size:var(--fs-16); line-height:var(--lh-16) }
 /* Example views: the link, then its address in small type. */
-.guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:14px; font-weight:500; line-height:1.4 }
+.guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:1.4 }
 .guide-view .guide-link-list { display:grid; gap:8px; margin:0; padding:0; list-style:none }
 .guide-view .guide-shell .guide-link-list li { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px }
-.guide-view .guide-shell .guide-link-list code { color:var(--muted); font-size:13px }
+.guide-view .guide-shell .guide-link-list code { color:var(--muted); font-size:var(--fs-13) }
 .guide-view .guide-flag { vertical-align:-2px; cursor:default }
 .guide-view .guide-questions .guide-details > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
 /* The worked example: two stacked cards; the open-record card has a neutral border. */
 .guide-view .guide-record-example { display:block; margin:20px 0 0 }
 .guide-view .guide-record-example figcaption { display:block; margin:0 0 12px }
-.guide-view .guide-record-example figcaption > span:first-child { margin:0; color:var(--teal-dark); font-size:14px; font-weight:600 }
-.guide-view .guide-record-example figcaption > strong { font-size:18px; font-weight:600 }
-.guide-view .guide-record-example figcaption > .guide-example-source { display:block; margin:4px 0 0; color:var(--muted); font-size:16px }
+.guide-view .guide-record-example figcaption > span:first-child { margin:0; color:var(--teal-dark); font-size:var(--fs-14); font-weight:600 }
+.guide-view .guide-record-example figcaption > strong { font-size:var(--fs-18); font-weight:600 }
+.guide-view .guide-record-example figcaption > .guide-example-source { display:block; margin:4px 0 0; color:var(--muted); font-size:var(--fs-16) }
 .guide-view .guide-example-compare { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px }
 .guide-view .guide-example-level { height:auto; padding:16px 20px 18px }
 .guide-view .guide-example-level.research { border-color:var(--line); background:var(--panel) }
-.guide-view .guide-example-level header > span { color:var(--muted); font-size:14px; font-weight:500 }
-.guide-view .guide-example-level header > h3 { margin:2px 0 12px; font-size:18px }
-.guide-view .guide-example-value strong { font-size:22px; font-weight:600 }
-.guide-view .guide-example-value span { font-size:16px }
+.guide-view .guide-example-level header > span { color:var(--muted); font-size:var(--fs-14); font-weight:500 }
+.guide-view .guide-example-level header > h3 { margin:2px 0 12px; font-size:var(--fs-18) }
+.guide-view .guide-example-value strong { font-size:var(--fs-20); font-weight:600 }
+.guide-view .guide-example-value span { font-size:var(--fs-16) }
 .guide-view .guide-example-value strong span { color:inherit; font-size:inherit }
 .guide-view .guide-example-level dl > div { grid-template-columns:8em minmax(0, 1fr); gap:4px 16px; padding:8px 0 }
-.guide-view .guide-example-level :is(dt, dd) { font-size:16px; line-height:1.5 }
+.guide-view .guide-example-level :is(dt, dd) { font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-example-level dd { color:var(--ink); font-weight:500 }
-.guide-view .guide-choice-link { margin-top:16px; font-size:14px }
+.guide-view .guide-choice-link { margin-top:16px; font-size:var(--fs-14) }
 .guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
 /* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
 .guide-view .guide-status-list { margin:16px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view .guide-status-list > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; align-items:start; border-bottom:1px solid var(--line-soft); padding:10px 0 }
 .guide-view .guide-status-list dt { display:block }
-.guide-view .guide-status-list .state-badge { display:inline-grid; height:auto; justify-items:start; align-content:start; max-width:100%; color:var(--ink); font-size:16px; line-height:1.6; white-space:nowrap }
+.guide-view .guide-status-list .state-badge { display:inline-grid; height:auto; justify-items:start; align-content:start; max-width:100%; color:var(--ink); font-size:var(--fs-16); line-height:var(--lh-16); white-space:nowrap }
 .guide-view .guide-status-list .state-badge.accepted { --guide-status-dot:var(--teal-dark) }
 .guide-view .guide-status-list .state-badge.review { --guide-status-dot:var(--orange) }
 .guide-view .guide-status-list .state-badge.unresolved { --guide-status-dot:var(--quiet) }
@@ -1039,7 +1039,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-status-list .state-label { display:inline-flex; align-items:center; gap:8px; font-weight:500 }
 /* The table's status colour when the badge defines one (--status-color), otherwise the Guide's own. */
 .guide-view .guide-status-list .state-label::before { content:""; flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:var(--status-color, var(--guide-status-dot)) }
-.guide-view .guide-status-list .state-tags { padding-left:16px; color:var(--muted); font-size:14px; line-height:1.4 }
+.guide-view .guide-status-list .state-tags { padding-left:16px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-status-list .state-tags:empty { display:none }
 .guide-view .guide-status-list .state-tag + .state-tag::before { content:" · " }
 .guide-view .guide-status-list dd { margin:0 }
@@ -1047,7 +1047,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-details > summary { color:var(--blue); font-weight:500; cursor:pointer }
 .guide-view .guide-details > dl { margin:12px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
 /* Tags: the table's tag words beside their meaning; human-checked keeps its check and colour. */
-.guide-view .guide-tag-list .state-tag { color:var(--muted); font-size:16px; font-weight:500; white-space:nowrap }
+.guide-view .guide-tag-list .state-tag { color:var(--muted); font-size:var(--fs-16); font-weight:500; white-space:nowrap }
 .guide-view .guide-tag-list .state-tag.human-checked { color:var(--checked) }
 .guide-view .guide-tag-list .check-icon { width:14px; height:14px; margin-right:4px; vertical-align:-1px }
 /* Lists of terms (caveats, downloads, sources, citation details): term left, meaning right. */
@@ -1058,9 +1058,9 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd { margin:0; color:var(--ink); font-weight:400 }
 .guide-view .guide-citation p { max-width:none; margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-citation-meta { display:block; margin:8px 0 0; border-top:1px solid var(--line-soft) }
-.guide-view .guide-data-id-note { display:block; margin-top:4px; color:var(--muted); font-size:14px; line-height:1.5 }
+.guide-view .guide-data-id-note { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-data-id-note code { overflow-wrap:anywhere }
-.guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:16px; font-weight:500 }
+.guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:var(--fs-16); font-weight:500 }
 .guide-view .guide-shell .guide-sources .guide-note { max-width:none; margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }
 /* Guide example (R2 content): the open record's values table at the record panel's size, its printed line below it. */
