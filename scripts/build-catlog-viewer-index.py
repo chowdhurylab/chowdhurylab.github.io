@@ -199,6 +199,12 @@ TABLE_FIELDS = (
     "kcat_over_km_unit",
 )
 
+# Table fields a snapshot may or may not carry. A row may hold them anywhere among its keys; the other keys must still be
+# TABLE_FIELDS in order. When any row holds one, the index writes it after VIEWER_FIELDS (null on rows without it), as
+# inline text: condition_note is what tells a record read by CatLog from a sibling of its paper that reads the same
+# ("+10 mM FBP"), under the substrate in the table (about 100 records, so it is not a shared text).
+OPTIONAL_TEXT_FIELDS = ("condition_note",)
+
 # Paper identifiers, from the Full data download (catlog-enriched.<id>.jsonl.gz: pubmed_id, supporting_pmids, doi,
 # supporting_dois), not the table. Written after VIEWER_FIELDS, before "s": "pmids" holds one PMID as a number, a list
 # of them, or null; "dois" one index into header["dois"] (the lower-case DOIs, sorted), a list of indexes, or null.
@@ -208,6 +214,8 @@ ENRICHED_NAME = re.compile(r"catlog-enriched\.[0-9a-f]{12}\.jsonl\.gz")
 PMID_TEXT = re.compile(r"[1-9][0-9]{0,9}")
 DOI_PREFIX = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
 
+if set(OPTIONAL_TEXT_FIELDS) & set(TABLE_FIELDS):
+    raise RuntimeError("an optional field is also a required table field")
 if set(VIEWER_FIELDS) & set(OMITTED_FIELDS):
     raise RuntimeError("viewer and omitted fields overlap")
 if set(TABLE_FIELDS) != set(VIEWER_FIELDS) | set(OMITTED_FIELDS):
@@ -375,6 +383,7 @@ def build(
     enum_values: dict[str, list] = {field: [] for field in ENUM_FIELDS}
     enum_index: dict[str, dict[str, int]] = {field: {} for field in ENUM_FIELDS}
     rows: list[tuple[tuple, list, str, int]] = []
+    optional_values: dict[str, dict[str, str]] = {field: {} for field in OPTIONAL_TEXT_FIELDS}
     source_bytes = 0
     encoded_numbers = {field: 0 for field in (*NUMBER_FROM_DISPLAY, *SAME_AS)}
 
@@ -384,6 +393,7 @@ def build(
                 continue
             source_bytes += len(raw_line)
             row = json.loads(raw_line)
+            optional = {field: row.pop(field) for field in OPTIONAL_TEXT_FIELDS if field in row}
             if tuple(row) != TABLE_FIELDS:
                 missing = sorted(set(TABLE_FIELDS) - set(row))
                 extra = sorted(set(row) - set(TABLE_FIELDS))
@@ -397,6 +407,11 @@ def build(
             if record_key in record_keys:
                 raise RuntimeError(f"duplicate record_key at line {line_number}: {record_key}")
             record_keys.add(record_key)
+            for field, value in optional.items():
+                if value is not None and not isinstance(value, str):
+                    raise RuntimeError(f"{field} is not text at line {line_number}: {value!r}")
+                if value and value.strip():
+                    optional_values[field][record_key] = value.strip()
             for field, source_field in DERIVED_FIELDS.items():
                 value, source_value = row[field], row[source_field]
                 if value != source_value or isinstance(value, bool) != isinstance(source_value, bool):
@@ -431,10 +446,12 @@ def build(
     rows.sort(key=lambda item: item[0])
     papers_path, ids = paper_ids(source_path, record_keys, enriched_path)
     paper_fields = PAPER_FIELDS if papers_path else ()
+    optional_fields = tuple(field for field in OPTIONAL_TEXT_FIELDS if optional_values[field])
     dois = sorted({doi for _pmids, row_dois in ids.values() for doi in row_dois})
     doi_index = {doi: index for index, doi in enumerate(dois)}
     encoded_rows: list[bytes] = []
     for _order, values, record_key, position in rows:
+        values += [optional_values[field].get(record_key) for field in optional_fields]
         if paper_fields:
             row_pmids, row_dois = ids[record_key]
             values += [_id_value(row_pmids), _id_value([doi_index[doi] for doi in row_dois])]
@@ -446,7 +463,7 @@ def build(
         "row_count": len(rows),
         "order": ROW_ORDER,
         "details_per_shard": details_per_shard,
-        "fields": [*VIEWER_FIELDS, *paper_fields, "s"],
+        "fields": [*VIEWER_FIELDS, *optional_fields, *paper_fields, "s"],
         "enums": enum_values,
         "texts": texts,
     }
@@ -486,6 +503,8 @@ def build(
         "viewer_uncompressed_bytes": viewer_bytes,
         "retained_fields": list(VIEWER_FIELDS),
         "omitted_fields": list(OMITTED_FIELDS),
+        "optional_fields": list(optional_fields),
+        "rows_with_optional": {field: len(optional_values[field]) for field in optional_fields},
         "paper_id_fields": list(paper_fields),
         "paper_ids_source": papers_path.name if papers_path else None,
         "rows_with_pmid": sum(1 for row_pmids, _dois in ids.values() if row_pmids),
@@ -537,7 +556,7 @@ def manifest_data_path(value: object, *, field: str) -> Path:
 
 
 def viewer_descriptor(metadata: dict[str, object]) -> dict[str, object]:
-    return {
+    descriptor = {
         "path": metadata["viewer_path"],
         "sha256": metadata["viewer_sha256"],
         "content_sha256": metadata["viewer_content_sha256"],
@@ -561,6 +580,9 @@ def viewer_descriptor(metadata: dict[str, object]) -> dict[str, object]:
         "detail_only_fields": list(DETAIL_ONLY_FIELDS),
         "paper_id_fields": list(metadata.get("paper_id_fields", [])),
     }
+    if metadata.get("optional_fields"):  # only then: an index without them keeps its earlier descriptor
+        descriptor["optional_fields"] = list(metadata["optional_fields"])
+    return descriptor
 
 
 def main() -> int:

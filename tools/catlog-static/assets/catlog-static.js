@@ -2009,6 +2009,9 @@
   // list of them or null; "dois" an index into header.dois (lower-case DOIs), a list of them or null. The rows keep
   // them as _pmids and _dois, for the search box only.
   const VIEWER_INDEX_PAPER_FIELDS = ["pmids", "dois"];
+  // Optional text a snapshot may carry (an older index has no such column; rows without it hold null): condition_note
+  // tells a record read by CatLog from a sibling of its paper that reads the same ("+10 mM FBP").
+  const VIEWER_INDEX_OPTIONAL_TEXT_FIELDS = ["condition_note"];
   // Record-panel fields a schema-2 row leaves to the record's detail entry.
   const DETAIL_ONLY_FIELDS = [
     "identity_resolution_state", "uniprot_candidate_ids", "sequence_resolved", "has_proof_excerpt", "proof_kind",
@@ -2052,6 +2055,7 @@
     const item = (field, v) => enums[field][v[at[field]]];
     const number = (field, v, display) => (v[at[field]] === true ? Number(display) : v[at[field]]);
     const [pmidsAt, doisAt] = VIEWER_INDEX_PAPER_FIELDS.map((field) => header.fields.indexOf(field));
+    const [conditionNoteAt] = VIEWER_INDEX_OPTIONAL_TEXT_FIELDS.map((field) => header.fields.indexOf(field));
     paperDois = Object.freeze(Array.isArray(header.dois) ? header.dois.map(String) : []);
     function ViewerRow(v) {
       this.record_key = v[at.record_key];
@@ -2085,6 +2089,7 @@
       this.km_unit = item("km_unit", v);
       this.kcat_over_km_unit = item("kcat_over_km_unit", v);
       this.wild_type = item("wild_type", v);
+      this.condition_note = conditionNoteAt >= 0 && typeof v[conditionNoteAt] === "string" ? v[conditionNoteAt] : null;
       this.detail_shard = detailShards[v[at.s]] || "";
       this.measurement_key = this.record_key;
       this.ph = this.ph_display;

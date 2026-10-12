@@ -144,6 +144,36 @@ class ViewerManifestTests(unittest.TestCase):
         metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
         self.assertEqual(BUILD.viewer_descriptor(metadata)["paper_id_fields"], ["pmids", "dois"])
 
+    def test_condition_note_is_optional_and_read_when_present(self):
+        # The exporter adds condition_note to the Table rows of records read by CatLog that read the same as a sibling
+        # (website plan P12); it may sit anywhere among the keys, and most rows have none.
+        plain = self.table_row("a", verification_status="verified")
+        noted = {}
+        for field, value in self.table_row("b", verification_status="verified").items():
+            if field == "kcat_unit":
+                noted["condition_note"] = "+10 mM FBP"
+            noted[field] = value
+        blank = dict(self.table_row("c"), condition_note=None)
+        metadata, header, encoded = self.build_rows([plain, noted, blank])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "condition_note", "s"])
+        decoded = {row[0]: dict(zip(header["fields"], row)) for row in encoded}
+        self.assertEqual(decoded["b"]["condition_note"], "+10 mM FBP")
+        self.assertIsNone(decoded["a"]["condition_note"])
+        self.assertIsNone(decoded["c"]["condition_note"])
+        self.assertEqual(metadata["optional_fields"], ["condition_note"])
+        metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
+        self.assertEqual(BUILD.viewer_descriptor(metadata)["optional_fields"], ["condition_note"])
+        # without any note the index and its descriptor are as before
+        metadata, header, _encoded = self.build_rows([plain, blank])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "s"])
+        metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
+        self.assertNotIn("optional_fields", BUILD.viewer_descriptor(metadata))
+        # a note that is not text, and any other new key, still stop the build
+        with self.assertRaisesRegex(RuntimeError, "condition_note is not text"):
+            self.build_rows([dict(plain, condition_note=5)])
+        with self.assertRaisesRegex(RuntimeError, "source schema changed"):
+            self.build_rows([dict(plain, other_note="x")])
+
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

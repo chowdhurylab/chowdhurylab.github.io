@@ -2206,6 +2206,23 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Substrate<\/span><\/p><p class="detail-condition-note">with 10 mM FBP<\/p>/);
   api.renderDetail(row({ record_key: "not-noted" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /detail-condition-note/);
+  // The record index carries the note as an optional column; an index without it gives every row null.
+  const enumFields = ["enzyme_label_source", "source_db", "verification_status", "evidence_confidence_tier", "sequence_variant_status",
+    "kcat_over_km_origin", "public_trust_basis", "temperature_display", "condition_flags", "kcat_unit", "km_unit", "kcat_over_km_unit", "wild_type"];
+  const textFields = ["enzyme_display_name", "ec_number", "organism", "substrate_name", "mutation_signature", "primary_uniprot_id",
+    "kcat_display", "km_display", "kcat_over_km_display"];
+  const baseFields = ["record_key", "review_key", ...textFields, "protein_accession", "kcat", "km", "kcat_over_km", "ph_display",
+    "temperature_k", "source_record_count", ...enumFields];
+  const enums = Object.fromEntries(enumFields.map((field) => [field, [null]]));
+  const values = (key) => baseFields.map((field) => (field === "record_key" ? key : enumFields.includes(field) ? 0 : field === "review_key" ? true : null));
+  const withNote = api.checkedViewerIndexHeader({ schema_version: 2, details_per_shard: 250, enums, texts: {},
+    fields: [...baseFields, "condition_note", "s"] }, 250);
+  const NotedRow = api.viewerRowConstructor(withNote, ["details-000.js"]);
+  assert.equal(new NotedRow([...values("x"), "+10 mM FBP", 0]).condition_note, "+10 mM FBP");
+  assert.equal(new NotedRow([...values("y"), null, 0]).condition_note, null);
+  assert.match(api.substrateNoteHtml(new NotedRow([...values("x"), "+10 mM FBP", 0]), new Set()), />\+10 mM FBP<\/small>/);
+  const without = api.checkedViewerIndexHeader({ schema_version: 2, details_per_shard: 250, enums, texts: {}, fields: [...baseFields, "s"] }, 250);
+  assert.equal(new (api.viewerRowConstructor(without, ["details-000.js"]))([...values("z"), 0]).condition_note, null);
 }
 // The line quoted from the paper: where it is ("Table 2 row"), table markers gone, K_M and k_{cat} as K<sub>m</sub> and
 // k<sub>cat</sub>; a long table row or one whose ± signs were lost is folded away with a warning.
