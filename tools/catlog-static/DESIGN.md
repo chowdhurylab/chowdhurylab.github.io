@@ -477,7 +477,9 @@ with kcat ÷ Km, and its note gives the stored number.
 
 The record writes numbers like the table (a × 10ⁿ at or above 10⁵ and below
 10⁻³, the same display rule); a value CatLog gives to the figures printed keeps
-them (135.0); a kcat/Km calculated for an older record keeps the significant
+them (135.0), but never more figures than the paper prints: zeros of a printed
+integer are not figures, so "47,000 M⁻¹ s⁻¹" or "9440 µM" shows 47 or 9.44 as
+in the table, not 47.000 or 9.440; a kcat/Km calculated for an older record keeps the significant
 figures of kcat and Km. Odd records read plainly: "Unknown" EC or organism
 reads "EC unknown" / "organism not recorded"; a record without kcat, Km or
 kcat/Km says so (or that it stores a Ki only); a missing sequence or SMILES

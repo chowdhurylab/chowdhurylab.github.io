@@ -2123,12 +2123,41 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
     proof_lines: [line("kcat", "135.0 ± 15.1 sec−1", "135.0"), line("Km", "30 µM", "0.030"), line("kcat/Km", "4.5 × 10^3", "4501")] });
   const html = element("detailContent").innerHTML;
   assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
-  assert.match(html, /<span class="vt-number">0\.030<\/span><\/td><td class="vt-unit">mM<\/td>/);
+  assert.match(html, /<span class="vt-number">0\.03<\/span><\/td><td class="vt-unit">mM<\/td>/,
+    "a printed integer's zero (30 µM) is no printed figure: the stored digits show, as in the table");
   assert.match(html, /<span class="vt-number">4500<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup> mM<sup>-1<\/sup><\/td>/, "a value_display that is not the stored number is not used");
   assert.match(html, /<caption>Printed in Table 1<\/caption>/, "a place every value shares is said once");
   assert.doesNotMatch(html, /class="vt-where/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
-  assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.030 mM/);
+  assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.03 mM/);
+}
+// A value_display with more figures than the paper prints is not used: "47.000" from a printed "47,000 M⁻¹ s⁻¹" (a
+// thousands separator) and "9.440" from "9440 ± 780 µM" show the stored digits, as the table does; "0.0300" from a
+// printed "30.0 µM" keeps its zero.
+{
+  const v2 = row({ record_key: "grouped-zeros", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 8, kcat_display: "8", km: 9.44, km_display: "9.44", kcat_over_km: 47, kcat_over_km_display: "47",
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "paper_reported" });
+  const line = (metric, raw_value, raw_unit, value_display) => ({ metric, table_label: "Table IV", raw_value, raw_unit,
+    printed: `${raw_value} ${raw_unit}`, check: "confirmed", conversion: "converted by code", value_display });
+  api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["15863831"],
+    proof_lines: [line("kcat", "8", "s^-1", "8"), line("Km", "9440 ± 780", "µM", "9.440"), line("kcat/Km", "47,000", "M^-1 s^-1", "47.000")] });
+  const html = element("detailContent").innerHTML;
+  assert.match(html, /<span class="vt-number">9\.44<\/span><\/td><td class="vt-unit">mM<\/td><td class="vt-printed">9440 ± 780 µM/);
+  assert.match(html, /<span class="vt-number">47<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup> mM<sup>-1<\/sup><\/td><td class="vt-printed">47,000 M/);
+  const zero = row({ record_key: "decimal-zero", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    km: 0.03, km_display: "0.03", km_unit: "mM" });
+  api.renderDetail(zero, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["15863831"],
+    proof_lines: [line("Km", "30.0", "µM", "0.0300")] });
+  assert.match(element("detailContent").innerHTML, /<span class="vt-number">0\.0300<\/span><\/td><td class="vt-unit">mM<\/td>/);
+  assert.equal(api.printedNumberText("47,000"), "47000");
+  assert.equal(api.printedNumberText("23 200"), "23200");
+  assert.equal(api.printedNumberText("(1,500.5)"), "1500.5");
+  assert.equal(api.printedNumberText("0,250"), "0.250", "a decimal comma");
+  assert.equal(api.printedNumberText("1,5 ± 0,2"), "1.5");
+  assert.equal(api.printedNumberText("0.000 812 ± 0.000 090"), "0.000812");
+  assert.equal(api.printedNumberText("6.3 × 10^3"), "6.3");
+  assert.equal(api.printedNumberText("n.d."), "");
 }
 assert.equal(api.printedValueText("0.002", "10^6 M^-1 min^-1"), "0.002 × 10^6 M^-1 min^-1");
 assert.equal(api.printedValueText("320", "mM"), "320 mM");

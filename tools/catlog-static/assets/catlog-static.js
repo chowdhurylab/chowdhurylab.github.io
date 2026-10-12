@@ -6600,7 +6600,22 @@
     return match[2] ? `${match[1]}e${match[2].replace("−", "-")}` : match[1];
   }
 
-  // Per value field, the record's value_display when it is the stored number (a record read by CatLog).
+  // The first number of a printed cell as plain digits ("47,000" and "23 200" are 47000 and 23200, "9440 ± 780" is 9440,
+  // a decimal comma "0,25" is 0.25, "0.000 812" is 0.000812); "" when there is none. Only its figures are used.
+  function printedNumberText(value) {
+    const text = String(value ?? "").trim().replace(/^[\s([<>≤≥~≈∼]+/, "");
+    const match = text.match(/^[+\-−]?([1-9]\d{0,2}(?:([,   ])\d{3})(?:\2\d{3})*(?!\d)|\d+)(?:([.,])(\d{3}(?:[   ]\d{1,3})+(?!\d)|\d+))?/);
+    if (!match) return "";
+    const whole = match[1].replace(/[,   ]/g, "");
+    const fraction = (match[4] || "").replace(/[   ]/g, "");
+    // "1,500.5" groups its thousands; "1,5" or "0,250" is a decimal comma.
+    if (match[3] === "," && match[2] === ",") return "";
+    return fraction ? `${whole}.${fraction}` : whole;
+  }
+
+  // Per value field, the record's value_display when it is the stored number (a record read by CatLog) and has no more
+  // significant figures than the paper prints: "47.000" from a printed "47,000 M⁻¹ s⁻¹" or "9.440" from "9440 µM" carry
+  // the printed integer's zeros, which are not printed figures (as the table counts them), so the stored digits show.
   function printedFigureDisplays(summary, detail) {
     const displays = {};
     (Array.isArray(detail?.proof_lines) ? detail.proof_lines : []).forEach((line) => {
@@ -6609,7 +6624,10 @@
       const text = valueDisplayText(line.value_display);
       if (!field || !text || field in displays) return;
       const stored = Number(metricDisplay(summary, field));
-      if (Number.isFinite(stored) && Math.abs(Number(text) - stored) <= Math.abs(stored) * 1e-9) displays[field] = text;
+      if (!Number.isFinite(stored) || Math.abs(Number(text) - stored) > Math.abs(stored) * 1e-9) return;
+      const printed = numberParts(printedNumberText(String(line.raw_value ?? "").trim() || line.printed))?.significant || 0;
+      if (printed && (numberParts(text)?.significant || 0) > printed) return;
+      displays[field] = text;
     });
     return displays;
   }
@@ -8807,6 +8825,7 @@
       panelValueHtml,
       efficiencyOriginHtml,
       printedValueText,
+      printedNumberText,
       v2LineFacts,
       conversionFacts,
       conditionLines,
