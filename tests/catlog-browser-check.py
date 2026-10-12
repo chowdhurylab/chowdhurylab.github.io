@@ -812,7 +812,7 @@ def check(driver, browser, url):
         return {row.get_attribute("data-stat-key"): int(row.get_attribute("data-count"))
                 for row in driver.find_elements(By.CSS_SELECTOR, selector)}
 
-    # Review status: each record once; Other records groups Unverified, Not reviewed and Disputed as Browse does.
+    # Review result: each record once; Not checked groups Unverified and Not reviewed, as Browse does.
     status_rows = stat_rows(".stats-status-section .stats-bars li:not([data-group])")
     assert sum(status_rows.values()) == total, "Status rows must add up to all records"
     assert status_rows["accepted"] == accepted
@@ -820,10 +820,20 @@ def check(driver, browser, url):
     for key in ("unverified", "mathematically_inferred", "disputed"):
         assert status_rows[key] == expected.get(key, 0)
     group = driver.find_element(By.CSS_SELECTOR, '.stats-status-section li[data-group][data-stat-key="not_verified"]')
-    assert int(group.get_attribute("data-count")) == total - accepted - expected.get("manual_review_required", 0)
+    assert int(group.get_attribute("data-count")) == expected.get("unverified", 0) + expected.get("mathematically_inferred", 0)
+    assert "Not checked" in group.text and "Other records" not in driver.find_element(By.CLASS_NAME, "stats-status-section").text
+    pending_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"]')
+    assert "Not confirmed" in pending_row.text and "Checks pending" not in pending_row.text
     accepted_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="accepted"]')
     assert f"{accepted / total * 100:.1f}%" in accepted_row.text
-    assert f"{expected.get('verified', 0):,}" in accepted_row.text and f"{expected.get('corrected', 0):,}" in accepted_row.text
+    assert f"{expected.get('corrected', 0):,} after a correction" in accepted_row.text
+    if overview:
+        # Accepted splits into the records read from the paper by CatLog and the earlier catalog's.
+        read = overview["from_paper"]["records"]
+        assert f"{read:,} read from the paper by CatLog; {accepted - read:,} from the earlier catalog" in accepted_row.text
+        assert f"({expected.get('verified', 0) - read:,} as printed" in accepted_row.text
+    else:
+        assert f"{expected.get('verified', 0):,}" in accepted_row.text
     identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
     if identity_only:
         assert f"{identity_only:,} accepted records have no PMID or DOI linked" in driver.find_element(By.CLASS_NAME, "stats-status-section").text

@@ -29,9 +29,9 @@ counted" in the other (stacked, so a short section leaves no gap). On phones a
 second count column ("Accepted") is wide enough for its heading.
 
 Charts are plain horizontal bars: name, bar, count, share of all records.
-Colour marks review status only, with the Browse status dot colours (blue
-#339cff accepted, orange #f3883b checks pending, grey unverified, purple
-#9b79ec not reviewed, red #e02e2a disputed); every other bar is one teal
+Colour marks the review result only, with the Browse status dot colours (blue
+#339cff accepted, orange #f3883b not confirmed, grey #a9b1ae not checked, for
+Unverified and Not reviewed alike, red #e02e2a disputed); every other bar is one teal
 (#277c86). Top-10 bars are drawn against the largest item, all others against
 all records. Value ranges show, per metric in catalog units (kcat s⁻¹, Km mM,
 kcat/Km s⁻¹ mM⁻¹), the median, the 10–90% range and a histogram per power of
@@ -40,10 +40,11 @@ unit or in another unit are left out, and the 10–90% bounds have two
 significant figures. No rings, gauges, completion bars or confidence scores.
 Labels 15px, notes 14px; on phones each name sits above its bar.
 
-Review status lists each record once: Accepted (with its as-reported and
-corrected counts), Checks pending, then Other records, the group Browse
-filters on, with Unverified, Not reviewed and Disputed under it. An unfamiliar
-status is listed, not dropped. Keep the no-paper-linked caveat visible. The
+Review result lists each record once, in the words Browse uses: Accepted (its
+note splits it into the records read from the paper by CatLog and the earlier
+catalog's, as printed or after a correction), Not confirmed, Not checked (the
+group Browse filters on, with Unverified and Not reviewed under it), then
+Disputed. An unfamiliar status is listed, not dropped. Keep the no-paper-linked caveat visible. The
 fields saved in records that are not accepted (hash-bound `review_details`)
 sit in a closed table; never imply that a missing field explains a status or
 that the unaccepted records measure work remaining.

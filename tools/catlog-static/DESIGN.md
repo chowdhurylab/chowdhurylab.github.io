@@ -356,8 +356,9 @@ sections, in this order and with these addresses: Find records (#guide-find:
 search, filters, sort, sharing a view, and example views linked in the
 #browse? format), Read a record (#guide-record: the panel's parts, one worked
 from-paper record drawn as the table and the panel draw it, and Cautions, one
-line per short caution word), Review status (#guide-status: each status with the
-table's own badge, then each tag, human-checked with its check and green),
+line per short caution word), Review result (#guide-status: Accepted, Not confirmed, Not checked and
+Disputed, each with the table's own badge, then each tag, human-checked with
+its check and green),
 Units (#guide-units), Downloads (#guide-downloads), Before you use the values
 (#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
 Questions (#guide-questions, native disclosures). A section's address opens the

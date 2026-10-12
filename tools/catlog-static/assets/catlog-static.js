@@ -2761,7 +2761,7 @@
 
   // The fields saved in records that are not accepted, per review group: a plain table in a disclosure.
   function statsUnacceptedFields(counts) {
-    const cohorts = [["manual_review_required", "Checks pending"], ["unverified", "Unverified"], ["mathematically_inferred", "Not reviewed"]]
+    const cohorts = [["manual_review_required", "Not confirmed"], ["unverified", "Unverified"], ["mathematically_inferred", "Not reviewed"]]
       .map(([value, label]) => ({ value, label, group: statsCohortData(value, counts[value] || 0) }))
       .filter((item) => item.group && item.group.total > 0);
     if (!cohorts.length) return "";
@@ -2863,7 +2863,6 @@
     const identityOnly = manifestDistribution("public_trust_basis").identity_only || 0;
     const known = new Set(reviewStatuses.map((item) => item.value));
     const otherStatus = Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
-    const notVerified = (counts.unverified || 0) + (counts.mathematically_inferred || 0) + (counts.disputed || 0) + otherStatus;
 
     $("statsScope").textContent = `All ${formatInteger(total)} records, before filtering.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
@@ -2886,23 +2885,28 @@
     $("statsTotals").innerHTML = totalsHtml(main, "stats-totals-main") + (scope.length ? totalsHtml(scope, "stats-totals-scope") : "");
 
     const sections = [];
-    // Review status: the three groups Browse filters on, with the three kinds of other record listed under them.
+    // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
+    // Browse uses. Accepted says how many were read from the paper by CatLog (all of them accepted as printed).
+    const fromPaperAccepted = statsCount(overview?.from_paper?.records, counts.verified || 0);
+    const acceptedNote = fromPaperAccepted !== null
+      ? `${formatInteger(fromPaperAccepted)} read from the paper by CatLog; ${formatInteger(accepted - fromPaperAccepted)} from the earlier catalog (${formatInteger((counts.verified || 0) - fromPaperAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction).`
+      : `${formatInteger(counts.verified || 0)} as printed, ${formatInteger(counts.corrected || 0)} after a correction.`;
+    const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
     const statusItems = [
-      { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" },
-        note: `As reported (${formatInteger(counts.verified || 0)}) or after a correction (${formatInteger(counts.corrected || 0)}).` },
-      { value: "manual_review_required", label: "Checks pending", color: "pending", count: counts.manual_review_required || 0,
-        params: { status: "curation_pending" }, note: "Not accepted: at least one check is still open." },
-      { value: "not_verified", label: "Other records", group: true, count: notVerified, params: { status: "not_verified" },
-        note: "Browse shows these together:" },
-      { value: "unverified", label: "Unverified", color: "neutral", sub: true, count: counts.unverified || 0, note: "No accepted result is recorded." },
-      { value: "mathematically_inferred", label: "Not reviewed", color: "calculated", sub: true, count: counts.mathematically_inferred || 0,
-        note: "Prepared from source records, without an accepted review outcome." },
-      { value: "disputed", label: "Disputed", color: "disputed", sub: true, count: counts.disputed || 0, note: "Flagged during review; not accepted." },
-      ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", sub: true, count: otherStatus, note: "Not one of the statuses above." }] : []),
+      { value: "accepted", label: "Accepted", color: "verified", count: accepted, params: { status: "accepted" }, note: acceptedNote },
+      { value: "manual_review_required", label: "Not confirmed", color: "pending", count: counts.manual_review_required || 0,
+        params: { status: "curation_pending" }, note: "The earlier automated review left a question open on the value, unit, protein or substrate." },
+      { value: "not_verified", label: "Not checked", color: "neutral", group: true, count: notChecked, params: { status: "not_verified" },
+        note: "No review result." },
+      { value: "unverified", label: "Unverified", color: "neutral", sub: true, count: counts.unverified || 0, note: "The earlier review recorded no final check." },
+      { value: "mathematically_inferred", label: "Not reviewed", color: "neutral", sub: true, count: counts.mathematically_inferred || 0,
+        note: "A database record without a PMID or DOI that was never reviewed." },
+      { value: "disputed", label: "Disputed", color: "disputed", count: counts.disputed || 0, note: "A check found a problem; not accepted." },
+      ...(otherStatus ? [{ value: "other_status", label: "Other status", color: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
-    sections.push(statsSection("statsStatusTitle", "Review status", `${statsBarRows(statusItems, total)}
+    sections.push(statsSection("statsStatusTitle", "Review result", `${statsBarRows(statusItems, total)}
       ${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be checked against a paper.</p>` : ""}
-      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one status. Select a linked name to see those records in Browse." }));
+      ${statsUnacceptedFields(counts)}`, { wide: true, className: "stats-status-section", note: "Each record has one review result. Select a linked name to see those records in Browse." }));
 
     if (fromPaper !== null && fromPaper !== undefined) {
       sections.push(statsSection("statsV2Title", SOURCE_CATLOG_LABEL, `<p class="stats-figure"><strong>${formatInteger(fromPaper)}</strong> records${statsCount(overview.from_paper.papers) !== null ? ` from <strong>${formatInteger(overview.from_paper.papers)}</strong> papers` : ""}</p>

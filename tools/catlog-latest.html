@@ -320,7 +320,7 @@
             <ul>
               <li><a href="#guide-find">Find records</a></li>
               <li><a href="#guide-record">Read a record</a></li>
-              <li><a href="#guide-status">Review status</a></li>
+              <li><a href="#guide-status">Review result</a></li>
               <li><a href="#guide-units">Units</a></li>
               <li><a href="#guide-downloads">Downloads</a></li>
               <li><a href="#guide-caveats">Before you use the values</a></li>
@@ -334,8 +334,8 @@
             <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
-              <div><dt>Filters</dt><dd>Review status, human-checked records, records read from the paper, EC number (1.1.1 lists the whole subclass), enzyme, organism, substrate, measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>), wild type or variant, temperature and pH range, cautions and main source.</dd></div>
-              <div><dt>Sort</dt><dd>By review status (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
+              <div><dt>Filters</dt><dd>Source (read from the paper by CatLog or from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.</dd></div>
+              <div><dt>Sort</dt><dd>By review result (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
               <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record: the address adds <code>record=</code> and the record ID to the filters.</dd></div>
             </dl>
             <p class="guide-list-title" id="guideExamplesTitle">Example views</p>
@@ -350,7 +350,7 @@
             <h2 id="guide-record-title">Read a record</h2>
             <p>Click a row, or press Enter on it, to open the record.</p>
             <dl class="guide-term-list">
-              <div><dt>Status line</dt><dd>The review status and its tags, for example <em>Accepted &middot; read from the paper &middot; human-checked</em>.</dd></div>
+              <div><dt>Status line</dt><dd>The review result and its tags, for example <em>Accepted &middot; from paper &middot; human-checked</em>.</dd></div>
               <div><dt>Measurement</dt><dd>The values in catalog units, each caution once in words, then substrate, cosubstrate, temperature, pH and the other assay conditions.</dd></div>
               <div><dt>Protein and substrate</dt><dd>Wild type or variant, UniProt accession, protein sequence and substrate SMILES, where CatLog has them.</dd></div>
               <div><dt>Paper</dt><dd>PubMed and DOI links and the review outcome. A from-paper record lists each value as printed in the paper and as stored. <strong>Human review</strong> says what a human reviewer checked, on the records they looked at.</dd></div>
@@ -409,28 +409,24 @@
           </section>
 
           <section class="guide-section" id="guide-status" aria-labelledby="guide-status-title">
-            <h2 id="guide-status-title">Review status</h2>
-            <p>Each record has one status, set by CatLog&rsquo;s checks, and may carry tags.</p>
+            <h2 id="guide-status-title">Review result</h2>
+            <p>Each record has one review result and may carry tags.</p>
             <dl class="guide-status-list">
               <div>
                 <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"></span></span></dt>
-                <dd>Accepted as reported, or after a correction.</dd>
+                <dd>Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.</dd>
               </div>
               <div>
-                <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Checks pending</span><span class="state-tags"></span></span></dt>
-                <dd>At least one check is still open, for example on the value, protein or substrate.</dd>
+                <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Not confirmed</span><span class="state-tags"></span></span></dt>
+                <dd>The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.</dd>
               </div>
               <div>
-                <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Unverified</span><span class="state-tags"></span></span></dt>
-                <dd>No accepted result is recorded.</dd>
-              </div>
-              <div>
-                <dt><span class="state-badge unresolved" data-status="mathematically_inferred"><span class="state-label">Not reviewed</span><span class="state-tags"></span></span></dt>
-                <dd>Prepared from source records, without an accepted review.</dd>
+                <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Not checked</span><span class="state-tags"></span></span></dt>
+                <dd>No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed. The record shows which, for example <em>Not checked (Unverified)</em>.</dd>
               </div>
               <div>
                 <dt><span class="state-badge disputed" data-status="disputed"><span class="state-label">Disputed</span><span class="state-tags"></span></span></dt>
-                <dd>Flagged during review; not accepted.</dd>
+                <dd>A check found a problem; not accepted.</dd>
               </div>
             </dl>
             <h3>Tags</h3>
@@ -441,7 +437,7 @@
               </div>
               <div>
                 <dt><span class="state-tag">corrected</span></dt>
-                <dd>Accepted after a correction in an earlier review.</dd>
+                <dd>Accepted after a correction in the earlier automated review; the value before the correction was not kept.</dd>
               </div>
               <div>
                 <dt><span class="state-tag">no paper linked</span></dt>
@@ -503,7 +499,7 @@
           <section class="guide-section guide-downloads guide-caveats" id="guide-caveats" aria-labelledby="guide-caveats-title">
             <h2 id="guide-caveats-title">Before you use the values</h2>
             <dl class="guide-download-list">
-              <div><dt>Review status</dt><dd>Only Accepted records have an accepted review result; the others have open checks or none. Most records have not been checked by a person.</dd></div>
+              <div><dt>Review result</dt><dd>Only Accepted records passed review: Not confirmed records have an open question and Not checked records have no review result. Most records have not been checked by a person.</dd></div>
               <div><dt>Units</dt><dd>Read the unit beside each value: a few older records keep another unit or none (see <a href="#guide-units">Units</a>).</dd></div>
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
               <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence includes its mutations only where CatLog could build it; otherwise the record gives the wild-type reference.</dd></div>
@@ -557,8 +553,8 @@
               <p>CatLog adds a sequence only when it can match the enzyme to a protein entry, and a SMILES only when the substrate name resolves to one structure; otherwise the field stays empty rather than guessed, and the record says <em>None recorded</em> or gives a sequence note. A variant gets its own sequence only where its mutations could be placed; otherwise the record gives the wild-type reference.</p>
             </details>
             <details class="guide-details">
-              <summary>What does Checks pending mean?</summary>
-              <p>The record is not accepted yet: at least one check on it is still open, for example on the value, the protein or the substrate. Use its values with that in mind, or filter to Accepted records.</p>
+              <summary>What does Not confirmed mean?</summary>
+              <p>The earlier automated review left a question open on the value, unit, protein or substrate, so the record is not accepted. It is replaced when CatLog reads its paper. Use its values with that in mind, or filter to Accepted records.</p>
             </details>
             <details class="guide-details">
               <summary>How do I report an error?</summary>

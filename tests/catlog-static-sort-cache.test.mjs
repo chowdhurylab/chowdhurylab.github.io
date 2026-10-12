@@ -1548,10 +1548,10 @@ function row(overrides = {}) {
   // An older manifest: no overview. Stats shows what the manifest has, without empty sections.
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 3, manual_review_required: 1, not_verified: 2, unverified: 1, mathematically_inferred: 0, disputed: 1,
+    accepted: 3, manual_review_required: 1, not_verified: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
     kcat: 5, km: 6, kcat_over_km: 2, sequence: 4, smiles: 5,
-  }, "Stats uses the manifest's counts; the three other statuses sit under Other records");
-  assert.deepEqual(headings(), ["Review status", "What the records contain", "Main source"]);
+  }, "Stats uses the manifest's counts; Unverified and Not reviewed sit under Not checked");
+  assert.deepEqual(headings(), ["Review result", "What the records contain", "Main source"]);
   assert.match(element("statsScope").textContent, /All 6 records/);
   assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
   assert.match(element("statsTotals").innerHTML, /Enzymes<\/dt><dd>2</);
@@ -1565,10 +1565,12 @@ function row(overrides = {}) {
   assert.doesNotMatch(chart, /NaN|Infinity|undefined|Not saved|tokens/i);
   // Links open Browse (catlog-latest.html) with the shared #browse? filters.
   assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#browse\?status=accepted">Accepted<\/a>/);
-  assert.match(chart, /#browse\?status=curation_pending">Checks pending<\/a>/);
-  assert.match(chart, /#browse\?status=not_verified">Other records<\/a>/);
+  assert.match(chart, /#browse\?status=curation_pending">Not confirmed<\/a>/);
+  assert.match(chart, /#browse\?status=not_verified">Not checked<\/a>/);
+  assert.match(chart, /2 as printed, 1 after a correction\./, "Without an overview, Accepted splits as the manifest does");
+  assert.doesNotMatch(chart, /Checks pending|Other records/);
   assert.match(chart, /#browse\?metric=kcat_over_km"/);
-  assert.doesNotMatch(chart, /status=unverified|status=disputed/, "Browse filters the three other statuses together");
+  assert.doesNotMatch(chart, /status=unverified|status=disputed/, "Unverified, Not reviewed and Disputed have no single Browse filter here");
   for (const filtered of [records.slice(2, 4), []]) {
     api.state.filtered = filtered;
     api.renderSummary();
@@ -1600,7 +1602,7 @@ function row(overrides = {}) {
     assert.match(totalsHtml, new RegExp(`${label.replace(/[()]/g, "\\$&")}</dt><dd>${value}`));
   }
   assert.match(totalsHtml, /from 1 papers/);
-  assert.deepEqual(headings(), ["Review status", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
+  assert.deepEqual(headings(), ["Review result", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
     "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
   assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
   assert.match(chart, /#browse\?source=paper">Browse these records/);
@@ -1675,7 +1677,7 @@ function row(overrides = {}) {
   assert.equal(api.statsCohortData("unverified", 2), null, "Exact cohort denominator required");
   const unaccepted = api.statsUnacceptedFields({ unverified: 1, manual_review_required: 1 });
   assert.match(unaccepted, /<th scope="col">Unverified<small>1<\/small><\/th>/);
-  assert.doesNotMatch(unaccepted, /Checks pending/, "A group without its own counts gets no column");
+  assert.doesNotMatch(unaccepted, /Not confirmed/, "A group without its own counts gets no column");
   assert.match(unaccepted, /<tr data-field="with_smiles"><th scope="row">Substrate SMILES<\/th><td data-cohort="unverified" data-count="1">1<small>100\.0%<\/small>/);
   assert.match(unaccepted, /does not give the reason for a status/);
   runtimeManifest.summary.review_details.groups.unverified.material.paper_id = 1;
@@ -1718,7 +1720,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.distributions.verification_status.push({ label: "future_status", count: 1 });
   api.renderStats();
   assert.equal(readBreakdown().other_status, 1, "An unfamiliar outcome must not disappear");
-  assert.equal(readBreakdown().not_verified, 3);
+  assert.equal(readBreakdown().not_verified, 1, "Not checked is Unverified and Not reviewed only");
   api.state.recordsReady = false;
   runtimeManifest.total_rows = 4;
   runtimeManifest.summary = { distributions: {
@@ -1729,7 +1731,7 @@ function row(overrides = {}) {
   } };
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 2, manual_review_required: 1, not_verified: 1, unverified: 0, mathematically_inferred: 0, disputed: 1, sequence: 4,
+    accepted: 2, manual_review_required: 1, not_verified: 0, unverified: 0, mathematically_inferred: 0, disputed: 1, sequence: 4,
   }, "Stats works before the index arrives; a count above the total is not drawn");
   runtimeManifest.summary.distributions.source_db = [
     { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },
