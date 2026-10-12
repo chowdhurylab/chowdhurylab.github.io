@@ -1097,6 +1097,27 @@ def check_layout(driver, browser, url, route_label):
             assert cues["scrollLeft"] == 0 and cues["overflow"] == cues["right"] == cues["controls"] == cues["sticky"], (
                 f"The scroll cues follow the table's width once the marks are in: {cues}")
             results["scroll-cues-1280"] = True
+        # 1024 with the sidebar collapsed: the table fits until a record opens beside it; then it scrolls sideways, and the
+        # Columns control and the right edge cue say so at once (not only after the window is resized).
+        set_browse_viewport(driver, browser, 1024, 900)
+        driver.execute_script("try { localStorage.setItem('catlog.filtersCollapsed', '1'); } catch (e) {}")
+        open_page()
+        if is_open():
+            driver.find_element(By.ID, "collapseFiltersButton").click()
+            wait.until(lambda d: not is_open())
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open())
+        table_scroll = driver.execute_script("""
+            const wrap = document.getElementById('recordTableWrap');
+            return {overflow: wrap.scrollWidth > wrap.clientWidth + 2, scrollWidth: wrap.scrollWidth, clientWidth: wrap.clientWidth,
+                    controls: !document.querySelector('.table-scroll-controls').classList.contains('hidden'),
+                    cue: wrap.classList.contains('can-scroll-right')};
+        """)
+        assert table_scroll["overflow"] == table_scroll["controls"] == table_scroll["cue"] == True, table_scroll
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open())
+        driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
+        results["record-1024"] = True
         # 1700: sidebar, table and record side by side (Safari only where the screen is that wide).
         if browser == "chrome" or driver.execute_script("return screen.availWidth") >= 1720:
             set_browse_viewport(driver, browser, 1700, 1000)
