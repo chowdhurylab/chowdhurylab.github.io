@@ -1996,6 +1996,26 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(badge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\."/);
   assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, BRENDA, corrected"/);
 }
+// An AI audit: the date and the verdict, from the audit fields or from the check's older suffix (never the word
+// "independent"); values audited differently are named.
+{
+  const v2Summary = row({ record_key: "v2-audit", measurement_key: "v2-audit", source_db: "primary_paper_direct",
+    enzyme_label_source: "explicit_enzyme_name" });
+  const line = (metric, extra = {}) => ({ metric, table_label: "Table 2", printed: "1", check: "confirmed", conversion: "", ...extra });
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [line("kcat", { audit_date: "2026-10-11", audit_result: "kept" }), line("Km", { audit_date: "2026-10-11", audit_result: "kept" })] });
+  let html = element("detailContent").innerHTML;
+  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong><\/div><div class="kv-line"><span>AI audit<\/span><strong>11 Oct 2026: re-checked against the paper and kept\.<\/strong>/);
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [line("kcat", { check: "confirmed; re-checked in an independent audit (2026-10-11)" }),
+      line("Km", { check: "confirmed; unit corrected in an independent audit (2026-10-11)" })] });
+  html = element("detailContent").innerHTML;
+  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/, "the audit suffix does not hide the check");
+  assert.match(html, /<span>AI audit<\/span><strong>11 Oct 2026: kcat re-checked against the paper and kept\. 11 Oct 2026: Km re-checked against the paper; the unit was corrected\.<\/strong>/);
+  assert.doesNotMatch(html, /independent/);
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: [line("kcat"), line("Km")] });
+  assert.doesNotMatch(element("detailContent").innerHTML, /AI audit/, "no audit, no line");
+}
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
 // marked record; the counts band links to the human-checked records.

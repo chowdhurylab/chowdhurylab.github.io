@@ -265,8 +265,9 @@ In catalog units, a Check column only when results differ); Assay conditions
 Paper and review (links; for a record read by CatLog a Method line, the short
 method sentence ending "units converted by code" or "values stored as printed"
 with a link to the Guide's method section, and a Check line, one result for
-every value or a pointer to the Check column; for an older record its Review
-line; a Human review line with the reviewer's facts-only note on every record
+every value or a pointer to the Check column, then an AI audit line with the
+audit's date and verdict only when one re-checked the values; for an older
+record its Review line; a Human review line with the reviewer's facts-only note on every record
 that has a mark; merged rows; an older record's notes); Protein and structure; Source details,
 collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism

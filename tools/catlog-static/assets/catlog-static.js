@@ -5209,20 +5209,73 @@
 
   // A CatLog v2 proof line's facts: from the fields CatLog writes (printed, printed_line, check, conversion) or, in older
   // data, from the two sentences it wrote before (same facts, fixed wording).
+  // An AI audit of a value, from its own fields (audit_date, audit_result: "kept" or "unit corrected") or, in data written
+  // before them, from the end of the check or of the reported sentence; null when the value was not audited.
+  const AUDIT_CHECK_SUFFIX = /;\s*(unit corrected|re-checked) in an? (?:independent |AI )?audit \(([^()]+)\)\s*$/;
+  const AUDIT_SENTENCE = /\s*An? (?:independent |AI )?audit re-checked it against the paper \(([^()]+)\)( and corrected its unit)?\.\s*$/;
+
   function v2LineFacts(line) {
     const clean = (value) => publicEvidenceString(String(value ?? "")).trim();
-    const reported = clean(line.raw_value_unit_evidence);
+    let reported = clean(line.raw_value_unit_evidence);
     const normalized = clean(line.normalized_value_unit_evidence);
+    let audit = clean(line.audit_date) || clean(line.audit_result)
+      ? { date: clean(line.audit_date), result: clean(line.audit_result) }
+      : null;
+    const auditSentence = reported.match(AUDIT_SENTENCE);
+    if (auditSentence) {
+      reported = reported.slice(0, auditSentence.index);
+      audit = audit || { date: auditSentence[1], result: auditSentence[2] ? "unit corrected" : "kept" };
+    }
+    let check = "check" in line ? clean(line.check) : "";
+    const auditSuffix = check.match(AUDIT_CHECK_SUFFIX);
+    if (auditSuffix) {
+      check = check.slice(0, auditSuffix.index);
+      audit = audit || { date: auditSuffix[2], result: auditSuffix[1] === "unit corrected" ? "unit corrected" : "kept" };
+    }
     const result = reported.match(/A second, separate AI run (confirmed it|corrected: (.+?))\.?$/);
     const readAs = normalized.match(/in units of (.+)\)$/);
     return {
       printed: clean(line.printed) || printedValueText(line.raw_value, line.raw_unit),
       printedLine: "printed_line" in line ? clean(line.printed_line) : ((reported.match(/in the line “(.+)”/) || [])[1] || ""),
-      check: "check" in line ? clean(line.check) : (result ? (result[2] ? `corrected: ${result[2]}` : "confirmed") : ""),
+      check: "check" in line ? check : (result ? (result[2] ? `corrected: ${result[2]}` : "confirmed") : ""),
       conversion: "conversion" in line
         ? clean(line.conversion)
         : (/converted by code/.test(normalized) ? "converted by code" : (readAs ? `printed unit read as ${readAs[1]}` : "")),
+      audit,
     };
+  }
+
+  // "11 Oct 2026" from an ISO date (or the text as it is).
+  function auditDateText(value) {
+    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return String(value || "").trim();
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    return Number.isNaN(date.getTime())
+      ? String(value).trim()
+      : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  }
+
+  // The AI audit line: the date and the verdict only ("11 Oct 2026: re-checked against the paper and kept."), naming
+  // the values when the audit did not cover them all alike.
+  function v2AuditText(lines, facts) {
+    const groups = new Map();
+    facts.forEach((fact, index) => {
+      if (!fact.audit) return;
+      const key = JSON.stringify([fact.audit.date, fact.audit.result]);
+      if (!groups.has(key)) groups.set(key, { ...fact.audit, metrics: [] });
+      groups.get(key).metrics.push(lines[index].metric);
+    });
+    if (!groups.size) return "";
+    const everyValueAlike = groups.size === 1 && facts.every((fact) => fact.audit);
+    return [...groups.values()].map(({ date, result, metrics }) => {
+      const verdict = /^unit corrected$/i.test(result)
+        ? "re-checked against the paper; the unit was corrected."
+        : (/^kept$/i.test(result) ? "re-checked against the paper and kept." : "re-checked against the paper.");
+      const names = everyValueAlike ? "" : `${[...new Set(metrics)].join(" and ").replace(/ and (?=.* and )/g, ", ")} `;
+      const when = auditDateText(date);
+      const text = `${when ? `${when}: ` : ""}${names}${verdict}`;
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }).join(" ");
   }
 
   // A CatLog v2 record's values, one row each: as printed, as stored in the catalog's units ("converted by code" when code
@@ -5719,7 +5772,8 @@
       : kv("Evidence", String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines));
     const humanNote = humanReviewNote(summary);
     // A CatLog v2 record's values are one table, in Measurement; an older record keeps its notes, here.
-    const v2Facts = v2ProofFacts(summary, detail)?.facts || null;
+    const v2Proof = v2ProofFacts(summary, detail);
+    const v2Facts = v2Proof?.facts || null;
     const paperRows = [
       ...(paperIds.length || dois.length
         ? [
@@ -5734,6 +5788,7 @@
         ? [
             linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
             v2Facts ? kv("Check", v2CheckText(v2Facts)) : "",
+            v2Facts && v2AuditText(v2Proof.lines, v2Facts) ? kv("AI audit", v2AuditText(v2Proof.lines, v2Facts)) : "",
           ]
         : [kv("Review", reviewOutcome(summary, detail))]),
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
