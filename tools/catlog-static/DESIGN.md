@@ -249,7 +249,9 @@ shadows only for overlays. No decorative gradients, statistic cards, or hero art
 
 Keep values, units, warnings, protein form, identifiers, and paper links visible.
 The header tells records of one paper apart: the name; "EC 1.4.1.20 · Bacillus
-sphaericus · N145A variant" (nothing for wild type); "Substrate: ..." (two lines
+sphaericus · N145A variant" (nothing for wild type; an EC the paper does not
+print reads "EC 2.3.1.183 (from enzyme databases; not printed in the paper)");
+"Substrate: ..." (two lines
 at most; a longer name is also given in full under Assay conditions); one status
 line in the table's words and colours: the review result ("Not checked
 (Unverified)" keeps the earlier status in brackets), the source ("from paper", or
@@ -260,9 +262,12 @@ each caution once as a plain note under them, and for a record read from the
 paper "As printed in the paper (Table 2)": one row per value with As printed and
 In catalog units, a Check column only when results differ); Assay conditions
 (cosubstrate, temperature, pH, other conditions as a short list, preparation);
-Paper and review (links, how the values were read and checked, a Human review
-line with the reviewer's facts-only note on every record that has a mark, merged
-rows, an older record's notes); Protein and structure; Source details,
+Paper and review (links; for a record read by CatLog a Method line, the short
+method sentence ending "units converted by code" or "values stored as printed"
+with a link to the Guide's method section, and a Check line, one result for
+every value or a pointer to the Check column; for an older record its Review
+line; a Human review line with the reviewer's facts-only note on every record
+that has a mark; merged rows; an older record's notes); Protein and structure; Source details,
 collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism
 reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km

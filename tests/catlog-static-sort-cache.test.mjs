@@ -1577,7 +1577,7 @@ function row(overrides = {}) {
   assert.match(totalsHtml, /from 1 papers/);
   assert.deepEqual(headings(), ["Review status", "Read from the paper by CatLog", "Human review", "What the records contain", "Enzyme classes",
     "Most common organisms", "Most common EC numbers", "Value ranges", "Wild type and variants", "Cautions", "Main source"]);
-  assert.ok(chart.includes("Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units."));
+  assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
   assert.match(chart, /#browse\?source=paper">Browse these records/);
   assert.match(chart, /#browse\?checked=1">Browse these records/);
   assert.match(chart, /#browse\?ec=1\.">EC 1/);
@@ -1970,6 +1970,31 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not confirmed<\/span><span>BRENDA, SABIO-RK<\/span>/);
   api.renderDetail(row({ record_key: "status-words-3", verification_status: "unverified", source_db: "unknown" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Unverified\)<\/span><span>source not recorded<\/span>/);
+}
+// A record read by CatLog: Method (with "values stored as printed" when code converted nothing) and Check; the EC the
+// paper does not print is said in the header. Badges are named by their words, not the method sentence.
+{
+  const v2Summary = row({ record_key: "v2-method", measurement_key: "v2-method", source_db: "primary_paper_direct",
+    enzyme_label_source: "explicit_enzyme_name", ec_number: "2.3.1.183" });
+  const line = (metric, conversion, check = "confirmed") => ({ metric, table_label: "Table 2", printed: "1", check, conversion });
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify; ec_from_databases",
+    proof_lines: [line("kcat", ""), line("Km", "")] });
+  let html = element("detailContent").innerHTML;
+  assert.match(html, /<span>Method<\/span><strong>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers →<\/a><\/strong>/);
+  assert.match(html, /<span>Check<\/span><strong>All values confirmed\.<\/strong>/);
+  assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
+  assert.doesNotMatch(html, /<span>Review<\/span>|second, separate AI run|independent/);
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: substrate name")] });
+  html = element("detailContent").innerHTML;
+  assert.match(html, /compared each value with the paper; units converted by code\./);
+  assert.match(html, /<span>Check<\/span><strong>The results differ by value: see the Check column under the values\.<\/strong>/);
+  assert.match(html, /<th scope="col">Check<\/th>/);
+  assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
+  const badge = api.statusBadge(v2Summary);
+  assert.match(badge, /aria-label="Accepted, from paper"/);
+  assert.match(badge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\."/);
+  assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, BRENDA, corrected"/);
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every

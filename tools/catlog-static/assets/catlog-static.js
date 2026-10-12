@@ -1104,10 +1104,11 @@
     }
   }
 
-  // CatLog v2 rows: every value read from the paper by an AI model and checked against the paper by a second, separate AI
-  // run; code converted the units. The method token is the exporter's and stays as it is.
+  // CatLog v2 rows: every value read from the paper by an AI model, and a second, separate AI check compared each value
+  // with the paper. The short form (badges, filter); the Guide says it in full (#guide-method). The method token is the
+  // exporter's and stays as it is.
   const v2Method = "catlog_v2_read_and_independent_verify";
-  const v2Sentence = "Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units.";
+  const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
 
   // A CatLog v2 row in the table index (no verification_method there). The frozen Oct 7 base's own paper-read rows
   // carry ec_name_fallback, so the enzyme-name source tells them apart.
@@ -1203,14 +1204,24 @@
   // The small check drawn before "human-checked" (badges, the record's status line, the counts band, the Guide).
   const CHECK_ICON_HTML = '<svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // A record read by CatLog: the method in one line, ending with whether code converted any value's unit (facts: the
+  // record's proof-line facts; without them nothing is said about units).
+  function v2MethodSentence(facts = null) {
+    const base = v2Sentence.replace(/\.$/, "");
+    if (!facts?.length) return `${base}.`;
+    return facts.some((fact) => /converted by code/.test(fact.conversion || ""))
+      ? `${base}; units converted by code.`
+      : `${base}; values stored as printed.`;
+  }
+
+  // The paper prints no EC number: the EC shown is the one the enzyme databases list for this paper's values.
+  function ecFromDatabases(detail = {}) {
+    return String(detail.verification_method || "").includes("ec_from_databases");
+  }
+
   function reviewOutcome(summary, detail = {}) {
     const method = String(detail.verification_method || "");
-    if (summary.verification_status === "verified" && method.startsWith(v2Method)) {
-      const ec = method.includes("ec_from_databases")
-        ? " The paper prints no EC number; the EC shown is the one the enzyme databases list for this paper's values."
-        : "";
-      return `${v2Sentence}${ec}`;
-    }
+    if (summary.verification_status === "verified" && method.startsWith(v2Method)) return v2MethodSentence();
     const outcome = reviewOutcomeBase(summary);
     return isIdentityOnlyAccepted(summary) ? `${outcome} No PMID or DOI is linked, so the value cannot be checked against a paper.` : outcome;
   }
@@ -1225,9 +1236,6 @@
     return own ? `${result} (${own})` : result;
   }
 
-  // The short method line a from-paper badge carries in its title (the Guide's #guide-method says it in full).
-  const FROM_PAPER_SHORT = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-
   // One badge for the table: a dot and the review result, then whole-word tags: the source (from paper, BRENDA, ...), then
   // corrected, no paper linked, human-checked. The tag line is always present, so every badge has the same height. Its
   // title says what the result means for this record; its accessible name is the words alone ("Accepted, from paper").
@@ -1241,7 +1249,7 @@
       ? reviewStatuses.find((item) => item.value === row.verification_status)?.description
       : "";
     const description = fromPaper
-      ? FROM_PAPER_SHORT
+      ? v2Sentence
       : (identityOnly
           ? identityOnlyTrustNote
           : (config.value === "accepted"
@@ -3266,7 +3274,7 @@
         <div class="status-guide-body">
           ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(stateDescriptions[item.value])}</p>`).join("")}
           <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
-          <p><strong>from paper:</strong> ${escapeHtml(FROM_PAPER_SHORT)} <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a></p>
+          <p><strong>from paper:</strong> ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads papers&nbsp;&rarr;</a></p>
           <p><strong>corrected:</strong> Accepted by the earlier automated review after a correction.</p>
           <p><strong>no paper linked:</strong> ${escapeHtml(identityOnlyTrustNote)}</p>
         </div>
@@ -5280,10 +5288,14 @@
     return results.size === 1 ? [...results][0] : "";
   }
 
-  function v2CheckSentence(check) {
-    if (check === "confirmed") return "The second run confirmed every value.";
-    const corrected = check.match(/^corrected: (.+)$/);
-    return corrected ? `The second run corrected, for every value: ${corrected[1]}.` : "";
+  // The Check line: one result for every value, or a pointer to the Check column when they differ.
+  function v2CheckText(facts) {
+    const shared = v2SharedCheck(facts);
+    if (!facts.some((fact) => fact.check)) return "";
+    if (!shared) return "The results differ by value: see the Check column under the values.";
+    if (shared === "confirmed") return "All values confirmed.";
+    const corrected = shared.match(/^corrected: (.+)$/);
+    return corrected ? `Corrected for every value: ${corrected[1]}.` : `${shared.charAt(0).toUpperCase()}${shared.slice(1)}.`;
   }
 
   // ---- Record panel: measurement and assay conditions ----
@@ -5639,11 +5651,13 @@
 
   // "EC 1.4.1.20 · Bacillus sphaericus · N145A variant", leaving out what is not recorded, so records of one paper
   // differ at the top; "Unknown" (not stated in the paper or the source database) says which of the two it is.
-  function detailSubtitleHtml(row) {
+  function detailSubtitleHtml(row, { ecFromDatabases = false } = {}) {
     const ec = String(row.ec_number || "").trim();
     const organism = String(row.organism || "").trim();
+    // A record read from a paper that prints no EC number: the EC the enzyme databases list for this paper's values.
+    const ecNote = ecFromDatabases ? " (from enzyme databases; not printed in the paper)" : "";
     const parts = [
-      /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? `EC ${ec}` : ""),
+      /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? `EC ${ec}${ecNote}` : ""),
       /^unknown$/i.test(organism) ? "organism unknown" : (hasDisplayValue(organism) ? organism : ""),
       detailVariantText(row),
     ].filter(Boolean);
@@ -5715,10 +5729,13 @@
           ]
         : [kv("PMID or DOI", "None recorded")]),
       evidenceRow,
-      kv("Review", [
-        reviewOutcome(summary, detail),
-        v2Facts ? v2CheckSentence(v2SharedCheck(v2Facts)) : "",
-      ].filter(Boolean).join(" ")),
+      // A record read by CatLog: how (Method) and what the second check found (Check); an older record: its review.
+      ...(v2Record
+        ? [
+            linkedKv("Method", `${escapePublic(v2MethodSentence(v2Facts))} <a class="method-link" href="#guide-method">How CatLog reads papers →</a>`),
+            v2Facts ? kv("Check", v2CheckText(v2Facts)) : "",
+          ]
+        : [kv("Review", reviewOutcome(summary, detail))]),
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
         ? `<div class="kv-line human-review-line"><span>Human review</span><strong>${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}</strong></div>`
@@ -5740,7 +5757,7 @@
       <div class="detail-top">
         <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
         ${detailHeadingHtml(summary)}
-        ${detailSubtitleHtml(summary)}
+        ${detailSubtitleHtml(summary, { ecFromDatabases: v2Record && ecFromDatabases(detail) })}
         ${detailSubstrateHtml(summary)}
         ${detailStatusHtml(summary, { v2Record })}
       </div>

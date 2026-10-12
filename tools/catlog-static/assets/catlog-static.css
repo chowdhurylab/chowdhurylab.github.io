@@ -484,6 +484,7 @@ body.detail-open .detail-panel { display:block }
 .detail-status > .detail-status-checked { color:var(--checked); font-weight:500 }
 .detail-status-checked .check-icon { margin-right:3px }
 .human-review-line > strong .check-icon { margin-right:4px; color:var(--checked) }
+.method-link { white-space:nowrap }
 .measurement-empty-note { margin:12px 0 0; color:var(--text-2); font-size:var(--fs-table) }
 .detail-status > span:not(:last-child)::after { content:"\00b7"; margin-left:6px }
 button.value-flag { border:0; padding:0; cursor:pointer }
