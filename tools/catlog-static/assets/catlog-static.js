@@ -1117,10 +1117,12 @@
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
-    return mark?.note || (mark?.checked
+    // Facts only: a note's review year is left out.
+    const note = String(mark?.note || "").replace(/\bCatLog(['’]s) (?:19|20)\d\d review\b/g, "CatLog$1 review");
+    return note || (mark?.checked
       ? (accepted
-          ? "A human reviewer approved every value this record shows, in CatLog's 2026 review."
-          : "A human reviewer approved these values in CatLog's 2026 review; other checks on this record are still open.")
+          ? "A human reviewer approved every value this record shows, in CatLog's review of the catalog."
+          : "A human reviewer approved these values in CatLog's review of the catalog; other checks on this record are still open.")
       : "");
   }
 
@@ -1188,7 +1190,9 @@
       isCorrected ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
-    const fullDescription = checked ? `${description} Human-checked: a human reviewer approved every value it shows.` : description;
+    const fullDescription = checked
+      ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value it shows."}`
+      : description;
     const className = `${isDisputed ? "disputed" : config.className}${identityOnly ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
       + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");

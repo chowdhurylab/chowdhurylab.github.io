@@ -833,6 +833,7 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-example-level header > h3 { margin:2px 0 12px; font-size:18px }
 .guide-view .guide-example-value strong { font-size:22px; font-weight:600 }
 .guide-view .guide-example-value span { font-size:16px }
+.guide-view .guide-example-value strong span { color:inherit; font-size:inherit }
 .guide-view .guide-example-level dl > div { grid-template-columns:8em minmax(0, 1fr); gap:4px 16px; padding:8px 0 }
 .guide-view .guide-example-level :is(dt, dd) { font-size:16px; line-height:1.5 }
 .guide-view .guide-example-level dd { color:var(--ink); font-weight:500 }

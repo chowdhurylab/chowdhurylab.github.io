@@ -170,7 +170,7 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
   assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check."));
-  assert.ok(pageHtml.includes("beside a value marks something to check against the source; in the record it moves to a note that says what."));
+  assert.ok(pageHtml.includes("beside a value marks one of the first four cautions below; in the record it moves to a note that says what."));
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   assert.ok(
     pageHtml.includes(
@@ -1843,13 +1843,14 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
-  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value this record shows, in CatLog&#39;s 2026 review\.<\/strong><\/div>/);
+  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value this record shows, in CatLog&#39;s review of the catalog\.<\/strong><\/div>/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
-  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values in CatLog&#39;s 2026 review; other checks on this record are still open\.<\/strong>/);
+  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values in CatLog&#39;s review of the catalog; other checks on this record are still open\.<\/strong>/);
   api.renderDetail(noted, {});
-  assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km/);
+  // A note's review year is not shown (facts only).
+  assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km in CatLog&#39;s review of the earlier catalog\./);
 
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
     summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
