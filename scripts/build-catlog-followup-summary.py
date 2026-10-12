@@ -540,6 +540,14 @@ QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared
                   "label_or_annotation_v1", "v2_found", "v2_approved_total", "v2_differences_checked", "v2_wrong")
 
 
+AGREEMENT_FIELDS = ("papers_compared", "values_approved", "agree", "agree_pct", "differ", "differ_catlog_right",
+                    "differ_earlier_value_error", "differ_earlier_label_error", "differ_same_value_other_name",
+                    "differ_rounding", "differ_catlog_wrong", "differ_not_comparable", "differ_not_adjudicated",
+                    "stated_values", "stated_values_catlog_has", "direct_records_reviewed", "direct_values_reviewed",
+                    "direct_values_agree", "direct_values_disagree", "direct_values_other",
+                    "direct_disagree_wrong_after_audit", "direct_disagree_audit_pending")
+
+
 def marks_quality(payload):
     """The marks file's quality object, reduced to its known fields (the page checks how they relate), or None."""
     quality = payload.get("quality") if isinstance(payload, dict) else None
@@ -547,6 +555,14 @@ def marks_quality(payload):
         return None
     kept = {key: quality[key] for key in QUALITY_FIELDS
             if isinstance(quality.get(key), int) and not isinstance(quality.get(key), bool) and quality[key] >= 0}
+    # the agreement of CatLog with human reviewers (catlog-v2 human_review.AGREEMENT_DEFINITIONS): whole counts and one
+    # percentage; its definitions map stays in the marks file
+    agreement = quality.get("agreement")
+    if isinstance(agreement, dict):
+        counts = {key: value for key, value in agreement.items() if key in AGREEMENT_FIELDS
+                  and isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0}
+        if isinstance(counts.get("values_approved"), int) and isinstance(counts.get("agree"), int):
+            kept["agreement"] = counts
     as_of = quality.get("as_of")
     if kept and isinstance(as_of, str) and re.match(r"^\d{4}-\d{2}-\d{2}", as_of):
         kept = {"as_of": as_of[:10], **kept}
