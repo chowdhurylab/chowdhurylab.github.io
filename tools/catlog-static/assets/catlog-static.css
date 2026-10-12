@@ -692,12 +692,12 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   body.filters-open .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
 }
 
-/* A record open on desktop: EC, T, pH and the arrow give way; Status stays, as one word. */
+/* A record open on desktop: EC, T, pH and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
+   and without the other tags. */
 @media (min-width: 1181px) {
   body.detail-open :is(.col-ec,.col-temp,.col-ph,.col-open,.c-ec,.c-temp,.c-ph,.c-open) { display:none }
   body.detail-open .c-eff { border-right:1px solid var(--line) }
-  body.detail-open #recordsBody .state-tags { display:none }
-  body.detail-open #recordsBody .state-badge { grid-template-rows:18px }
+  body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
 }
 
 /* Laptops and tablets: header in rows, overlays for filters and the record, a table that can scroll sideways. */

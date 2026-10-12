@@ -2124,7 +2124,15 @@ const pageRecordsByKey = Object.fromEntries(
 assert.equal(pageRecordsByKey["page-mixed"].source_license, mixedSourceLicenses);
 assert.equal(pageRecordsByKey["page-summary-fallback"].source_license, "CC BY 4.0");
 assert.equal(pageRecordsByKey["page-empty-summary"].source_license, "CC BY-NC-ND 4.0");
-assert.equal(pageRecordsByKey["page-missing-license"].source_license, null);
+assert.equal(pageRecordsByKey["page-missing-license"].source_license, "See the source database's terms", "the license as the record shows it");
+// Each record is the flat object Download record saves: the record's words, no internal fields.
+for (const record of pagePayload.records) {
+  assert.equal(record.review_result, "Accepted");
+  for (const internal of ["detail_shard", "review_key", "ui_record_key", "verification_method", "identity_resolution_state",
+    "evidence_confidence_tier", "paper_grounding_status", "public_trust_basis", "proof_kind", "normalized_value"]) {
+    assert.ok(!(internal in record), `${internal} is internal`);
+  }
+}
 
 // R15: keep the first DOI spelling, collapse case variants, and retain
 // genuinely different identifiers in their original order.
@@ -2596,30 +2604,46 @@ async function recordDownloadPayload(summary, detail) {
   return JSON.parse(await download.blob.text());
 }
 
+// Download record: one flat object, the license written once as the record shows it.
 const detailPreferredPayload = await recordDownloadPayload(
   row({ record_key: "record-detail-preferred", source_license: "CC BY 4.0", summary_marker: true }),
   { source_license: mixedSourceLicenses, detail_marker: true },
 );
-assert.equal(detailPreferredPayload.metadata.license_note, licenseNote);
-assert.equal(detailPreferredPayload.metadata.source_license, mixedSourceLicenses);
-assert.equal(detailPreferredPayload.summary.source_license, "CC BY 4.0");
-assert.equal(detailPreferredPayload.summary.summary_marker, true);
-assert.equal(detailPreferredPayload.detail.source_license, mixedSourceLicenses);
-assert.equal(detailPreferredPayload.detail.detail_marker, true);
-
-const summaryFallbackPayload = await recordDownloadPayload(
-  row({ record_key: "record-summary-fallback", source_license: "CC BY 4.0" }),
-  { source_license: "" },
-);
-assert.equal(summaryFallbackPayload.metadata.source_license, "CC BY 4.0");
-assert.equal(summaryFallbackPayload.detail.source_license, "");
-
-const missingLicensePayload = await recordDownloadPayload(
-  row({ record_key: "record-missing-license", source_license: undefined }),
-  {},
-);
-assert.equal(missingLicensePayload.metadata.source_license, null);
-assert.equal(missingLicensePayload.summary.source_license, undefined);
+assert.equal(detailPreferredPayload.license_note, licenseNote);
+assert.equal(detailPreferredPayload.source_license, mixedSourceLicenses);
+assert.equal(detailPreferredPayload.record_key, "record-detail-preferred");
+assert.ok(!("summary" in detailPreferredPayload) && !("detail" in detailPreferredPayload) && !("metadata" in detailPreferredPayload));
+assert.ok(!("summary_marker" in detailPreferredPayload) && !("detail_marker" in detailPreferredPayload), "only the public fields");
+assert.equal((await recordDownloadPayload(row({ record_key: "record-summary-fallback", source_license: "CC BY 4.0" }), { source_license: "" })).source_license,
+  "CC BY 4.0");
+assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-license", source_license: undefined }), {})).source_license,
+  "See the source database's terms");
+// A record read by CatLog: the method, the check and the values as printed in the record's words; CatLog's licence; none
+// of the pipeline's words.
+{
+  const v2Payload = await recordDownloadPayload(
+    row({ record_key: "record-v2", measurement_key: "record-v2", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+      kcat: 135, kcat_display: "135", kcat_unit: "s^(-1)", km: 24.7, km_display: "24.7", km_unit: "mM", kcat_over_km: 5.5,
+      kcat_over_km_display: "5.5", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "paper_reported", source_license: "as published (see paper)" }),
+    { verification_method: "catlog_v2_read_and_independent_verify", source_license: "as published (see paper)", supporting_pmids: ["31072150"],
+      supporting_dois: ["10.1080/14756366.2019.1608198"], identity_resolution_state: "accession_resolved",
+      proof_lines: [
+        { metric: "kcat", table_label: "Table 1", printed: "135.0 ± 15.1 sec−1", check: "confirmed", conversion: "", value_display: "135.0",
+          raw_value_unit_evidence: "kcat printed as 135.0 ± 15.1 sec−1. A second, separate AI run confirmed it.", normalized_value: 135 },
+        { metric: "Km", table_label: "Table 1", printed: "24.7 mM", check: "confirmed", conversion: "" },
+      ] },
+  );
+  assert.equal(v2Payload.kcat, 135);
+  assert.equal(v2Payload.kcat_unit, "s^-1");
+  assert.equal(v2Payload.source, "Read from the paper by CatLog");
+  assert.equal(v2Payload.source_license, "CC BY 4.0 (CatLog compilation)");
+  assert.match(v2Payload.method, /^Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\.$/);
+  assert.equal(v2Payload.check, "All values confirmed.");
+  assert.deepEqual(v2Payload.values_as_printed[0], { metric: "kcat", as_printed: "135.0 ± 15.1 sec−1", location: "Table 1", conversion: null, check: "Confirmed" });
+  assert.deepEqual(v2Payload.pubmed_ids, ["31072150"]);
+  const text = JSON.stringify(v2Payload);
+  assert.doesNotMatch(text, /independent|AI run|catlog_v2|accession_resolved|normali[sz]ed|proof_lines|verification_method/);
+}
 const detailFalseKiHtml = api.measurementSection(row({
   has_ki: true,
   ki_display: "0.5",

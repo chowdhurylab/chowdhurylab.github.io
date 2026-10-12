@@ -332,10 +332,15 @@ def check_browse(driver, browser, url, route_label):
         assert driver.execute_script("return window.__catlogBrowserDownloadCapture.downloads.length") == index + 1
         return json.loads(download["text"])
 
-    def exact_pair(record):
-        pair = [record.get("measurement_key"), record.get("review_key")]
-        assert all(isinstance(value, str) and value and value == value.strip() for value in pair)
-        return pair
+    def exact_key(record):
+        key = record.get("record_key")
+        assert isinstance(key, str) and key and key == key.strip()
+        # One flat public object: the record's words, none of the earlier pipeline's internal fields or words.
+        for internal in ("review_key", "verification_method", "identity_resolution_state", "evidence_confidence_tier",
+                         "proof_lines", "summary", "detail"):
+            assert internal not in record, internal
+        assert not re.search(r"independent|AI run|catlog_v2|accession_resolved", json.dumps(record)), key
+        return key
 
     try:
         sizes = [("desktop-1440x1000", 1440, 1000)]
@@ -360,8 +365,8 @@ def check_browse(driver, browser, url, route_label):
             screenshots.append(capture(viewport, "page-2"))
             page_payload = downloaded_payload("downloadPageButton")
             assert [record.get("record_key") for record in page_payload["records"]] == page_keys
-            page_pairs = [exact_pair(record) for record in page_payload["records"]]
-            assert len({tuple(pair) for pair in page_pairs}) == 25
+            page_ids = [exact_key(record) for record in page_payload["records"]]
+            assert len(set(page_ids)) == 25 and all(record.get("review_result") for record in page_payload["records"])
             assert page_payload["metadata"]["page"] == 2 and page_payload["metadata"]["row_count"] == 25
             assert page_payload["metadata"]["export_scope"] == "current_page_public_records"
             assert page_payload["metadata"]["source_sha256"] == manifest["source_sha256"]
@@ -393,24 +398,23 @@ def check_browse(driver, browser, url, route_label):
             assert loaded_detail is not None, "The selected exact key has no loaded detail"
             screenshots.append(capture(viewport, "detail"))
             record_payload = downloaded_payload("downloadSelectedJson")
-            assert record_payload["summary"]["record_key"] == selected_key
-            selected_pair = exact_pair(record_payload["summary"])
-            assert exact_pair(record_payload["detail"]) == exact_pair(loaded_detail) == selected_pair
+            assert exact_key(record_payload) == selected_key == loaded_detail.get("measurement_key")
+            assert record_payload.get("source_license") and record_payload.get("review_result")
             displayed_id = driver.execute_script("""
                 return [...document.querySelectorAll('#detailContent .kv-line')]
                     .filter(e => e.querySelector('span')?.textContent === 'CatLog record ID')
                     .map(e => e.querySelector('strong').textContent);
             """)
-            assert displayed_id == [selected_pair[0]]
+            assert displayed_id == [selected_key]
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
             assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
             assert "hidden" in driver.find_element(By.ID, "detailContent").get_attribute("class").split()
 
             search = driver.find_element(By.ID, "globalSearchInput")
-            search.send_keys(selected_pair[0], Keys.TAB)
+            search.send_keys(selected_key, Keys.TAB)
             wait.until(lambda _d: selected_key in row_keys() and row_keys() != first_keys)
-            assert search.get_attribute("value") == selected_pair[0]
+            assert search.get_attribute("value") == selected_key
             assert driver.find_element(By.ID, "activeSummary").text.endswith((" record", " records"))
             # Export results as CSV: every matching record, as many lines as the count says.
             matching = int(driver.find_element(By.ID, "activeSummary").text.split()[0].replace(",", ""))
@@ -435,8 +439,8 @@ def check_browse(driver, browser, url, route_label):
             screenshots.append(capture(viewport, "cleared"))
             viewports[viewport] = {"width": width, "height": height, "rows": 25,
                 "first_page_keys": first_keys, "second_page_keys": page_keys,
-                "selected_record_key": selected_key, "selected_identity": selected_pair,
-                "page_download_identities": page_pairs, "screenshots": screenshots, "passed": True}
+                "selected_record_key": selected_key, "selected_identity": selected_key,
+                "page_download_identities": page_ids, "screenshots": screenshots, "passed": True}
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-{viewport}-failure.png"))
         raise
@@ -823,11 +827,35 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["review"] is None
                 else:
                     assert panel["method"] is None and "earlier automated review" in (panel["review"] or ""), panel["review"]
+                if label == "desktop":
+                    # With a record open the table's Status cells keep their source line (innerText: what is shown).
+                    status_lines = driver.execute_script("""
+                        return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].slice(0, 5)
+                            .map(badge => badge.innerText.trim().split('\\n').map(line => line.trim()).filter(Boolean));
+                    """)
+                    assert status_lines and all(len(lines) >= 2 for lines in status_lines), status_lines
+                    if kind == "from-paper":
+                        assert all(lines[1] == "from paper" for lines in status_lines), status_lines
                 driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-{kind}-{label}.png"))
                 results[f"{kind}-{label}"] = True
                 ActionChains(driver).send_keys(Keys.ESCAPE).perform()
                 wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
         set_browse_viewport(driver, browser, 1440, 1000)
+        # A link to filtered results with a record, followed inside the open page, opens that record on its page.
+        driver.get("about:blank")
+        driver.get(base + "#browse?status=disputed")
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+                   and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row")
+                   and re.fullmatch(r"[\d,]+ records?", d.find_element(By.ID, "activeSummary").text))
+        disputed = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")[-1].get_attribute("data-key")
+        driver.execute_script("location.hash = '#browse?q=hexokinase'")
+        wait.until(lambda d: disputed not in [row.get_attribute("data-key") for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")])
+        driver.execute_script("location.hash = arguments[0]", f"#browse?status=disputed&record={disputed}")
+        wait.until(lambda d: d.execute_script(
+            "return document.body.classList.contains('detail-open') && Boolean(document.querySelector('#detailContent .detail-section'))"))
+        assert f"record={disputed}" in driver.current_url, driver.current_url
+        assert driver.find_element(By.CSS_SELECTOR, '#recordsBody tr[aria-selected="true"]').get_attribute("data-key") == disputed
+        results["in-page-record-link"] = True
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))
         raise

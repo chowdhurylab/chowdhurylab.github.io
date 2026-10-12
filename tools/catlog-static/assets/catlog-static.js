@@ -685,6 +685,12 @@
     return String(value || "").trim().slice(0, 10) || EMPTY_VALUE;
   }
 
+  // The snapshot's data ID (as the counts band and Cite give it), or null.
+  function snapshotDataId() {
+    const id = shortHash(manifest.content_sha256 || manifest.source_sha256);
+    return id === EMPTY_VALUE ? null : id;
+  }
+
   function renderDownloadMetadata() {
     const total = formatCount(manifest.total_rows || 0);
     const enrichedSize = formatFileSize(manifest.enriched_download?.size_bytes);
@@ -2540,6 +2546,85 @@
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  // One record as the downloads give it (Download record, This page as JSON): one flat object with the Full data's
+  // field names for the data, the record's own words for its review result, method, check, cautions and human review,
+  // and the license the record shows. The earlier pipeline's internal fields stay in the Full data only.
+  function publicRecordObject(row, detail = {}) {
+    const summary = summaryWithDetail({ ...detail, ...row }, detail);
+    const metricSummary = metricSummaryFor(summary, detail);
+    const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const proof = v2ProofFacts(summary, detail);
+    const { notes, unitCautions } = measurementNotes(summary, detail, { proof });
+    const text = (value) => {
+      const clean = publicEvidenceString(value == null ? "" : String(value)).trim();
+      return clean && !/^(?:unknown|not reported|n\/a)$/i.test(clean) ? clean : null;
+    };
+    const ids = (list, single) => uniqueReferenceValues(Array.isArray(list) ? list.filter(Boolean) : (single ? [single] : []),
+      { caseInsensitive: list === detail.supporting_dois });
+    const value = (field) => (metricHasValue(metricSummary, field) ? Number(shownValueText(metricSummary, field)) : null);
+    const unit = (field) => (metricHasValue(metricSummary, field) ? plainUnit(metricUnit(metricSummary, field)) || null : null);
+    const temperature = formatTemperature(summary);
+    const ph = formatPh(summary);
+    const record = {
+      record_key: summary.record_key || summary.measurement_key || null,
+      enzyme_display_name: text(summary.enzyme_display_name),
+      ec_number: text(summary.ec_number),
+      organism: text(summary.organism),
+      substrate_name: text(summary.substrate_name),
+      mutation_signature: mutationSignature(summary) || null,
+      enzyme_form: enzymeFormLabel(summary) || null,
+      kcat: value("kcat"),
+      kcat_unit: unit("kcat"),
+      km: value("km"),
+      km_unit: unit("km"),
+      kcat_over_km: value("kcat_over_km"),
+      kcat_over_km_unit: unit("kcat_over_km"),
+      kcat_over_km_origin: metricHasValue(metricSummary, "kcat_over_km") ? summary.kcat_over_km_origin || null : null,
+      temperature_c: temperature === EMPTY_VALUE ? null : Number(temperature),
+      ph: ph === EMPTY_VALUE ? null : Number(ph),
+      assay_conditions_summary: text(detail.assay_conditions_summary),
+      condition_note: conditionNoteText(summary, detail) || null,
+      cautions: notes.map((note) => note.text),
+      review_result: rowStatusLabel(summary, { exact: true }),
+      source: v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(summary.source_db || detail.source_db),
+      tags: [
+        summary.verification_status === "corrected" ? "corrected" : "",
+        hasNoPaperLinked(summary) ? "no paper linked" : "",
+        isHumanChecked(summary) ? "human-checked" : "",
+      ].filter(Boolean),
+      method: v2Record
+        ? v2MethodSentence(proof?.facts, { unitChanged: unitCautions.length > 0 })
+        : reviewOutcome(summary, detail),
+      check: proof ? v2CheckText(proof.facts, v2CheckOptions(summary, detail, proof)) || null : null,
+      ai_audit: proof ? v2AuditText(proof.lines, proof.facts) || null : null,
+      values_as_printed: proof ? proof.lines.map((line, index) => {
+        const fact = proof.facts[index];
+        return {
+          metric: line.metric,
+          as_printed: fact.printed || null,
+          location: v2LinePlace(line) || null,
+          conversion: fact.conversion || null,
+          check: valueCheckText(fact, {}) || null,
+        };
+      }) : null,
+      human_review: humanReviewNote(summary) || null,
+      paper_title: paperTitleText(summary, detail) || null,
+      pubmed_ids: ids(detail.supporting_pmids, detail.pubmed_id),
+      dois: ids(detail.supporting_dois, detail.doi),
+      primary_uniprot_id: text(summary.primary_uniprot_id || detail.uniprot_id),
+      sequence: text(detail.sequence),
+      smiles: text(detail.smiles),
+      source_db: summary.source_db || detail.source_db || null,
+      source_license: detailLicense(summary, detail, v2Record),
+    };
+    if (!proof) {
+      delete record.check;
+      delete record.ai_audit;
+      delete record.values_as_printed;
+    }
+    return record;
+  }
+
   function publicSummaryRecord(row) {
     const {
       detail_shard,
@@ -2587,9 +2672,9 @@
   }
 
   // Export results: the filtered records as CSV (all of them, or this page) built here from the loaded index, or this
-  // page as JSON with every field (from the records' detail files). The CSV keeps the stored digits, the catalog units
-  // and the words the table shows.
-  const DOWNLOAD_PAGE_LABEL = "<strong>This page (JSON)</strong><span>Every field of the records on this page</span>";
+  // page as JSON, each record as Download record saves it (publicRecordObject, from the records' detail files). The CSV
+  // keeps the stored digits, the catalog units and the words the table shows.
+  const DOWNLOAD_PAGE_LABEL = "<strong>This page (JSON)</strong><span>Each record on this page as Download record saves it</span>";
   // Plain-text unit for a file: s^(-1)*mM^(-1) -> s^-1 mM^-1.
   function plainUnit(value) {
     return String(value || "").replace(/\^\(([−-]?\d+(?:\.\d+)?)\)/g, "^$1").replace(/\*/g, " ").trim();
@@ -2629,7 +2714,8 @@
   // One CSV cell (RFC 4180); a cell a spreadsheet would read as a formula starts with an apostrophe.
   function csvCell(value) {
     let text = value == null ? "" : String(value);
-    if (/^[=@\t\r]/.test(text)) text = `'${text}`;
+    // A leading + or - is a formula too ("+G212"), unless the cell is a plain number.
+    if (/^[=+\-@\t\r]/.test(text) && !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(text)) text = `'${text}`;
     return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   }
 
@@ -2704,11 +2790,7 @@
     let failed = false;
     try {
       const details = await Promise.all(rows.map(detailForRow));
-      const records = rows.map((row, index) => publicSummaryRecord({
-        ...details[index],
-        ...row,
-        source_license: sourceLicense(row, details[index]) || null,
-      }));
+      const records = rows.map((row, index) => publicRecordObject(row, details[index] || {}));
       const payload = {
         metadata: {
           name: "CatLog page export",
@@ -2718,7 +2800,8 @@
           export_scope: "current_page_public_records",
           page,
           row_count: records.length,
-          note: "Database source records are not included.",
+          data_id: snapshotDataId(),
+          note: "One object per record, as Download record saves it. The Full data holds every field.",
           license_note: SOURCE_LICENSE_NOTE,
         },
         records,
@@ -6653,14 +6736,12 @@
     });
     $("downloadSelectedJson").addEventListener("click", () => {
       const payload = {
-        metadata: {
-          source_license: sourceLicense(summary, detail) || null,
-          license_note: SOURCE_LICENSE_NOTE,
-        },
-        summary: publicSummaryRecord(summary),
-        detail: publicSummaryRecord(detail),
+        ...publicRecordObject(summary, detail),
+        snapshot: manifest.generated_at || null,
+        data_id: snapshotDataId(),
+        license_note: SOURCE_LICENSE_NOTE,
       };
-      triggerBlobDownload(`${summary.record_key || "catlog-row"}.json`, JSON.stringify(payload, null, 2));
+      triggerBlobDownload(`${summary.record_key || "catlog-record"}.json`, JSON.stringify(payload, null, 2));
     });
   }
 
@@ -7184,6 +7265,7 @@
       checkedViewerIndexHeader,
       viewerRowConstructor,
       publicSummaryRecord,
+      publicRecordObject,
       sourceLicense,
       indexLoadedRecords,
       rowComparator,

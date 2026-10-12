@@ -122,8 +122,10 @@ open one. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
-The search box's placeholder names what it finds (enzyme, EC number, organism,
-substrate, UniProt ID or PMID). Empty, it offers one fixed line of examples
+The search box's placeholder is short enough to fit on a laptop ("Search enzyme,
+EC, organism or substrate"); its accessible name says all it finds (enzyme, EC
+number, organism, substrate, UniProt ID or PMID), and so does the line of
+examples. Empty, it offers one fixed line of examples
 ("Try: hexokinase · 1.1.1.1 · Escherichia coli · NADH · P00330 · PMID
 15989682"), each a search with results; the name fields offer three of their
 own; nothing is drawn at random. Search matches every word in any order, ignoring case, accents, Greek letters
@@ -238,7 +240,7 @@ to the figures the paper printed when CatLog gives them (value_display: 135.0).
 Every column fits from
 about 1010px; narrower screens scroll the table sideways with the enzyme name
 kept in view. With a record open, EC, T, pH and the arrow give way; Status
-stays. On phones (640px and below) each record is a card: name and EC;
+stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
 organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge, then °C and pH at the line's end.
 The filters overlay (below 1440px, phones included) ends with a "Show N
@@ -321,7 +323,12 @@ bottom in this order:
   key), one licence line, the CatLog record ID.
 - Download record and Report a problem (prefilled with the record ID, the
   snapshot and the values as the record shows them; the DOI when there is no
-  PMID).
+  PMID). Download record (and This page as JSON) saves one flat object: the Full
+  data's field names for the values, units, conditions, paper IDs, UniProt ID,
+  sequence and SMILES; the record's own words for review result, source, method,
+  check, values as printed, AI audit, cautions and human review; the license as
+  the record shows it, once. The earlier pipeline's internal fields stay in the
+  Full data.
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one

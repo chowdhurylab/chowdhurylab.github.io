@@ -41,7 +41,7 @@
           <a class="nav-external" href="https://chowdhurylab.github.io/" aria-label="Chowdhury Lab website">Chowdhury Lab&nbsp;<span aria-hidden="true">&#8599;</span></a>
         </nav>
         <label class="global-search" aria-label="Search catalog">
-          <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC number, organism, substrate, UniProt ID or PMID" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
+          <input id="globalSearchInput" type="search" placeholder="Search enzyme, EC, organism or substrate" aria-label="Search by enzyme, EC number, organism, substrate, UniProt ID or PMID" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
           <kbd>/</kbd>
         </label>
         <div class="header-actions">
@@ -201,7 +201,7 @@
                     </button>
                     <button id="downloadPageButton" type="button">
                       <strong>This page (JSON)</strong>
-                      <span>Every field of the records on this page</span>
+                      <span>Each record on this page as Download record saves it</span>
                     </button>
                   </div>
                 </details>
@@ -499,7 +499,7 @@
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, including sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
-              <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON with every field; <strong>Download record</strong> saves the open record as JSON.</dd></div>
+              <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON; <strong>Download record</strong> saves the open record as JSON: its values with units, review result, method, check, cautions, human review, paper IDs, sequence, SMILES and license. Full data holds every field.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind older records: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
             </dl>
