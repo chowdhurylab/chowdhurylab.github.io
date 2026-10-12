@@ -939,12 +939,15 @@ def check(driver, browser, url):
         # Accepted splits into the records read from the paper by CatLog and the earlier catalog's.
         read = overview["from_paper"]["records"]
         assert f"{read:,} read from the paper by CatLog; {accepted - read:,} from the earlier catalog" in accepted_row.text
-        assert f"({expected.get('verified', 0) - read:,} as printed" in accepted_row.text
+        # records accepted on a human review (accepted_basis "human review") are named apart from "as printed"
+        human = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("accepted_basis", [])}.get("human review", 0)
+        assert f"({expected.get('verified', 0) - read - human:,} as printed" in accepted_row.text
     else:
         assert f"{expected.get('verified', 0):,}" in accepted_row.text
     identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
     if identity_only:
-        assert f"{identity_only:,} accepted records have no PMID or DOI linked" in driver.find_element(By.CLASS_NAME, "stats-status-section").text
+        # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them
+        assert f"{identity_only:,} records have no PMID or DOI linked" in driver.find_element(By.CLASS_NAME, "stats-status-section").text
 
     # Every Stats link opens Browse with the shared #browse? filters.
     links = driver.find_elements(By.CSS_SELECTOR, "#statsCharts a.stats-link")
