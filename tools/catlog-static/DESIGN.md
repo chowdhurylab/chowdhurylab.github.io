@@ -157,16 +157,26 @@ metric in catalog units. The full rules are in the site's DESIGN.md, "Stats".
 
 ## Guide
 
-One reading column (72ch, 16px body). The introduction says in one sentence
-that the CatRange paper (PNAS Nexus, the Paper tab) describes CatLog-27k and
-that this site is the growing catalog that followed. Show three plain tasks,
-then where the values come from with one worked from-paper record (its row with
-the table's own columns, and its values table drawn as the record panel draws
-it), field meanings, review status drawn with the table's own status badges,
-what to check before using the values, downloads, citation and source licenses.
+One reading column (72ch, 16px body). The introduction says what CatLog is and,
+in one sentence, that the CatRange paper (PNAS Nexus, the Paper tab) describes
+CatLog-27k and that this site is the growing catalog that followed. Then "On
+this page", a short contents list (three columns, two on phones) linking to the
+sections, in this order and with these addresses: Find records (#guide-find:
+search, filters, sort, sharing a view, and example views linked in the
+#browse? format), Read a record (#guide-record: the panel's parts, one worked
+from-paper record drawn as the table and the panel draw it, and Cautions, one
+line per short caution word), Review status (#guide-status: each status with the
+table's own badge, then each tag, human-checked with its check and green),
+Units (#guide-units), Downloads (#guide-downloads), Before you use the values
+(#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
+Questions (#guide-questions, native disclosures). A section's address opens the
+Guide at that section; the Guide never downloads the record index. Terms and
+meanings are two-column lists, one line each where they fit; no walls of text.
 Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel
-changes, the Guide's wording and example change with it.
+changes, the Guide's wording and example change with it. The page keeps exactly
+two Full data links (Download menu and Downloads) and one Table link: the
+release script rewrites them by count.
 
 ## Verification
 

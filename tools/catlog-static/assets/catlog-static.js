@@ -323,8 +323,12 @@
   const greekNames = { α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", κ: "kappa", λ: "lambda", μ: "mu", µ: "mu", ω: "omega", σ: "sigma", θ: "theta" };
   const foldSearch = (s) => String(s ?? "").toLowerCase().replace(/[α-ωµ]/g, (c) => greekNames[c] || c);
 
+  // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
+  const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
+
   function viewFromLocation() {
     if (["#browse", "#guide", "#stats"].includes(window.location.hash)) return window.location.hash.slice(1);
+    if (GUIDE_SECTION_HASH.test(window.location.hash)) return "guide";
     return new URL(window.location.href).pathname.endsWith("/catlog-stats.html") ? "stats" : "browse";
   }
 
@@ -364,6 +368,11 @@
     } else {
       window.requestAnimationFrame(updateTableScrollControls);
     }
+    // A section address (#guide-units) shows that section, also when the page opens at it.
+    const guideSection = guideOpen && GUIDE_SECTION_HASH.test(window.location.hash)
+      ? document.getElementById(window.location.hash.slice(1))
+      : null;
+    if (guideSection) window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
     if (scroll) {
       if (guideOpen) $("guideView").scrollTop = 0;
       if (statsOpen) {

@@ -12,8 +12,8 @@
     <meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-latest.html" />
     <link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-latest.html" />
     <link rel="icon" href="/images/rz.png" />
-    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=6821a8d7c1f66f1a" />
-    <script data-src="catlog-static/data/catlog-viewer-index.049b073559b4.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||h==="#guide"||h==="#stats")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
+    <link rel="stylesheet" href="catlog-static/assets/catlog-static.css?v=f68b5c2ddb4cafc9" />
+    <script data-src="catlog-static/data/catlog-viewer-index.38c50efa2d9d.jsonl.gz">(function(s){var p=location.pathname,h=location.hash;if(/catlog-stats\.html$/.test(p)||/^#guide(-|$)/.test(h)||h==="#stats")return;var l=document.createElement("link");l.rel="preload";l.as="fetch";l.crossOrigin="anonymous";l.href=s.getAttribute("data-src");document.head.appendChild(l);})(document.currentScript);</script>
   </head>
   <body>
     <a class="skip-link" href="#recordTableWrap">Skip to records</a>
@@ -265,39 +265,55 @@
         </div>
       </main>
 
-      <main id="guideView" class="guide-view" hidden>
+      <main id="guideView" class="guide-view" hidden aria-labelledby="guideHeading">
         <div class="guide-shell">
           <header class="guide-heading">
-            <h1>Using CatLog</h1>
+            <h1 id="guideHeading">Using CatLog</h1>
             <p>CatLog lists enzyme kinetic constants (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>), each with its enzyme, organism, substrate, assay conditions and source paper. It is maintained by the Chowdhury Lab at Iowa State University.</p>
-            <p>The CatRange paper (PNAS Nexus, 2026) describes CatLog-27k, 27,176 kinetic records curated from BRENDA and SABIO-RK on which its models were trained; this site is the growing catalog that followed. How its values are read and checked now is described below, under <em>Where the values come from</em>.</p>
+            <p>The CatRange paper (PNAS Nexus, 2026) describes CatLog-27k, 27,176 kinetic records curated from BRENDA and SABIO-RK on which its models were trained; this site is the growing catalog that followed. How its values are read and checked is described under <a href="#guide-status">Review status</a>.</p>
           </header>
 
-          <section class="guide-workflow" aria-labelledby="guide-workflow-title">
-            <h2 id="guide-workflow-title">How to use CatLog</h2>
-            <div class="guide-step-grid">
-              <div class="guide-step">
-                <h3>Search and filter</h3>
-                <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
-                <p><strong>Filters</strong> combine review status, EC number, enzyme, organism, substrate and measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); in Filters, EC 1.1.1 lists the whole subclass. The table sorts by status, EC number, name or value, ascending or descending.</p>
-              </div>
-              <div class="guide-step">
-                <h3>Open a row</h3>
-                <p>The record gives the values and units, assay conditions, protein sequence, substrate SMILES and paper, and the address bar then holds a link to that record, to share or bookmark. On a from-paper row, <strong>Review notes</strong> show each value as printed in the paper, as stored, and what the second check found. <strong>Report a problem</strong> e-mails the lab about the record.</p>
-              </div>
-              <div class="guide-step">
-                <h3>Download</h3>
-                <p><strong>Full data</strong> has every row, with sequences and SMILES where known. <strong>Download page</strong> saves the rows on screen; <strong>Download record</strong> saves the open record.</p>
-              </div>
-            </div>
+          <nav class="guide-contents" aria-labelledby="guideContentsTitle">
+            <h2 id="guideContentsTitle">On this page</h2>
+            <ul>
+              <li><a href="#guide-find">Find records</a></li>
+              <li><a href="#guide-record">Read a record</a></li>
+              <li><a href="#guide-status">Review status</a></li>
+              <li><a href="#guide-units">Units</a></li>
+              <li><a href="#guide-downloads">Downloads</a></li>
+              <li><a href="#guide-caveats">Before you use the values</a></li>
+              <li><a href="#guide-cite">Cite</a></li>
+              <li><a href="#guide-sources">Sources and licenses</a></li>
+              <li><a href="#guide-questions">Questions</a></li>
+            </ul>
+          </nav>
+
+          <section class="guide-section guide-find" id="guide-find" aria-labelledby="guide-find-title">
+            <h2 id="guide-find-title">Find records</h2>
+            <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
+            <dl class="guide-term-list">
+              <div><dt>Filters</dt><dd>Review status, human-checked records, records read from the paper, EC number (1.1.1 lists the whole subclass), enzyme, organism, substrate, measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>), wild type or variant, temperature and pH range, cautions and main source.</dd></div>
+              <div><dt>Sort</dt><dd>By review status (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
+              <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record (the address ends in <code>#record=</code> and the record ID).</dd></div>
+            </dl>
+            <p class="guide-list-title" id="guideExamplesTitle">Example views</p>
+            <ul class="guide-link-list" aria-labelledby="guideExamplesTitle">
+              <li><a href="#browse?checked=1">Human-checked records</a> <code>#browse?checked=1</code></li>
+              <li><a href="#browse?ec=1.1.1&amp;variant=wild&amp;tmin=25&amp;tmax=37">EC 1.1.1, wild type, measured at 25&ndash;37 &deg;C</a> <code>#browse?ec=1.1.1&amp;variant=wild&amp;tmin=25&amp;tmax=37</code></li>
+              <li><a href="#browse?metric=kcat_over_km&amp;caution=none&amp;sort=kcat_over_km"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values without a caution, highest first</a> <code>#browse?metric=kcat_over_km&amp;caution=none&amp;sort=kcat_over_km</code></li>
+            </ul>
           </section>
 
-          <section class="guide-record-depth" aria-labelledby="guide-record-depth-title">
-            <header class="guide-record-depth-heading">
-              <h2 id="guide-record-depth-title">Where the values come from</h2>
-              <p>Rows marked <strong>from paper</strong> are CatLog v2: an AI model (Claude, Anthropic) read each value from the paper, a second, separate AI run checked it against the paper, and code converted the units. Older rows come mostly from enzyme databases and were checked by an earlier automated pipeline of AI models and code checks.</p>
-              <p>An accepted record is marked <strong>human-checked</strong> when a human reviewer approved every value it shows; most records have not been checked by a person. Papers are being re-read, and a re-read paper&rsquo;s from-paper rows replace its older rows.</p>
-            </header>
+          <section class="guide-section guide-record" id="guide-record" aria-labelledby="guide-record-title">
+            <h2 id="guide-record-title">Read a record</h2>
+            <p>Click a row, or press Enter on it, to open the record.</p>
+            <dl class="guide-term-list">
+              <div><dt>Status line</dt><dd>The review status and its tags, for example <em>Accepted &middot; read from the paper &middot; human-checked</em>.</dd></div>
+              <div><dt>Measurement</dt><dd>The values in catalog units, each caution once in words, then substrate, cosubstrate, temperature, pH and the other assay conditions.</dd></div>
+              <div><dt>Protein and substrate</dt><dd>Wild type or variant, UniProt accession, protein sequence and substrate SMILES, where CatLog has them.</dd></div>
+              <div><dt>Paper</dt><dd>PubMed and DOI links and the review outcome. A from-paper record lists each value as printed in the paper and as stored. <strong>Human review</strong> says what a human reviewer checked, on the records they looked at.</dd></div>
+              <div><dt>Source details</dt><dd>Where the enzyme name comes from, the source database, the license and the CatLog record ID.</dd></div>
+            </dl>
 
             <figure class="guide-record-example">
               <figcaption>
@@ -321,116 +337,138 @@
                     <div><dt>Organism</dt><dd><i>Pseudomonas fluorescens</i>, wild type</dd></div>
                     <div><dt>Status</dt><dd>Accepted · from paper</dd></div>
                   </dl>
-                  <a
-                    class="button secondary guide-choice-link"
-                    href="catlog-static/data/catlog-enriched.a553ca1de6e2.jsonl.gz"
-                    download="catlog-enriched.jsonl.gz"
-                  >Download full data</a>
                 </section>
 
                 <section class="guide-example-level research">
                   <header>
                     <span>In the open record</span>
-                    <h3>Review notes</h3>
+                    <h3>Values in source</h3>
                   </header>
                   <table class="stats-detail-table values-table">
-                    <thead><tr><th>Value</th><th>Printed in paper</th><th>Stored as</th><th>Second check</th></tr></thead>
-                    <tbody><tr><th scope="row"><i>K</i><sub>m</sub></th><td>0.82 (0.1) &micro;M</td><td>0.00082 mM <small>converted by code</small></td><td>confirmed</td></tr></tbody>
+                    <thead><tr><th>Value</th><th>Printed in paper</th><th>Stored as</th></tr></thead>
+                    <tbody><tr><th scope="row"><i>K</i><sub>m</sub></th><td>0.82 (0.1) &micro;M</td><td>0.00082 mM <small>converted by code</small></td></tr></tbody>
                   </table>
                   <p class="evidence-note-plain">Table 1, printed line: &ldquo;4-Aminoacetophenone<sup>b</sup> 0.82 (0.1) 12.7 (0.7) 15,000&rdquo;</p>
                 </section>
               </div>
             </figure>
-          </section>
 
-          <div class="guide-reference-grid">
-            <section class="guide-reference" aria-labelledby="guide-fields-title">
-              <h2 id="guide-fields-title">Field meanings</h2>
-              <dl class="guide-term-list">
-                <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
-                <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
-                <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>). <em>calc.</em> marks a <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> worked out from the two values, not printed in the source.</dd></div>
-                <div><dt>T (°C)</dt><dd>Assay temperature.</dd></div>
-                <div><dt>pH</dt><dd>Assay pH. The record lists the other conditions.</dd></div>
-                <div><dt>Unknown</dt><dd>Not stated in the paper or the source database.</dd></div>
-              </dl>
-              <p class="guide-note">A dash means a value is missing or hidden after a data check. Open the row to see why.</p>
-              <p class="guide-note">A warning marks a value to check against its source. Open the row for the reason.</p>
-              <p class="guide-note"><em>no unit</em>: the source gives no unit, so the column unit does not apply.</p>
-              <p class="guide-note">Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>), with the same digits.</p>
-            </section>
-
-            <section class="guide-reference" aria-labelledby="guide-status-title">
-              <h2 id="guide-status-title">Review status</h2>
-              <p>Each record has one status, set by CatLog&rsquo;s checks.</p>
-              <dl class="guide-status-list">
-                <div>
-                  <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"></span></span></dt>
-                  <dd>As reported, or after a correction (tagged <em>corrected</em>).</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">from paper</span></span></span></dt>
-                  <dd>A CatLog v2 row, read from the paper and checked against it (see <em>Where the values come from</em>). The filter <strong>Read from the paper (CatLog v2)</strong> lists only these.</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">human-checked</span></span></span></dt>
-                  <dd>A human reviewer approved every value the record shows (on a from-paper row, the same values in the earlier catalog).</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge accepted identity-only" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"><span class="state-tag">no paper linked</span></span></span></dt>
-                  <dd>No PMID or DOI is linked, so the value cannot be checked against a paper.</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Checks pending</span><span class="state-tags"></span></span></dt>
-                  <dd>At least one check is still open, for example on the value, protein or substrate.</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Unverified</span><span class="state-tags"></span></span></dt>
-                  <dd>No accepted result is recorded.</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge unresolved" data-status="mathematically_inferred"><span class="state-label">Not reviewed</span><span class="state-tags"></span></span></dt>
-                  <dd>Prepared from source records, without an accepted review.</dd>
-                </div>
-                <div>
-                  <dt><span class="state-badge disputed" data-status="disputed"><span class="state-label">Disputed</span><span class="state-tags"></span></span></dt>
-                  <dd>Flagged during review; not accepted.</dd>
-                </div>
-              </dl>
-              <details class="guide-details">
-                <summary>Evidence labels on older records</summary>
-                <dl>
-                  <div><dt>Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value. An excerpt alone does not mean Accepted.</dd></div>
-                  <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
-                  <div><dt>Several database records</dt><dd>The record merges several database entries; no paper text is saved.</dd></div>
-                  <div><dt>Paper linked</dt><dd>A PMID or DOI is linked; no paper text is saved.</dd></div>
-                  <div><dt>Database record only</dt><dd>Only the source database record is saved.</dd></div>
-                </dl>
-              </details>
-            </section>
-          </div>
-
-          <section class="guide-downloads guide-caveats" aria-labelledby="guide-caveats-title">
-            <h2 id="guide-caveats-title">Before you use the values</h2>
-            <dl class="guide-download-list">
-              <div><dt>Units</dt><dd>A few older rows keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
-              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
-              <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence includes its mutations only where CatLog could build it; otherwise the record gives the wild-type reference.</dd></div>
-              <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
+            <h3 id="guide-cautions">Cautions</h3>
+            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span> beside a value marks something to check against the source; in the record it moves to a note that says what. On phones its short words stand beside it.</p>
+            <dl class="guide-term-list guide-caution-list">
+              <div><dt>values differ</dt><dd>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> printed in the paper (or listed by the source) and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ. The record gives both numbers, how far apart they are and, for a familiar factor such as 60 or 1000, the likely cause. All three values are kept.</dd></div>
+              <div><dt>check units</dt><dd><i>K</i><sub>m</sub> above 10 M or <i>k</i><sub>cat</sub> above 10<sup>7</sup> s<sup>-1</sup>: the unit or the magnitude may be off.</dd></div>
+              <div><dt>unit mismatch</dt><dd>The stored <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may be off by a unit factor such as 1000; where the source lists a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that agrees with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, the record shows that one.</dd></div>
+              <div><dt>above limit</dt><dd><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> is above the diffusion limit: check the units.</dd></div>
+              <div><dt>no unit</dt><dd>The source gives no unit, so the column unit does not apply.</dd></div>
+              <div><dt>Temperature</dt><dd>The stored temperature or its unit needs checking (for example a value of exactly 0 &deg;C); the record&rsquo;s note says which.</dd></div>
             </dl>
           </section>
 
-          <section class="guide-downloads" aria-labelledby="guide-downloads-title">
+          <section class="guide-section" id="guide-status" aria-labelledby="guide-status-title">
+            <h2 id="guide-status-title">Review status</h2>
+            <p>Each record has one status, set by CatLog&rsquo;s checks, and may carry tags.</p>
+            <dl class="guide-status-list">
+              <div>
+                <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"></span></span></dt>
+                <dd>Accepted as reported, or after a correction.</dd>
+              </div>
+              <div>
+                <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Checks pending</span><span class="state-tags"></span></span></dt>
+                <dd>At least one check is still open, for example on the value, protein or substrate.</dd>
+              </div>
+              <div>
+                <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Unverified</span><span class="state-tags"></span></span></dt>
+                <dd>No accepted result is recorded.</dd>
+              </div>
+              <div>
+                <dt><span class="state-badge unresolved" data-status="mathematically_inferred"><span class="state-label">Not reviewed</span><span class="state-tags"></span></span></dt>
+                <dd>Prepared from source records, without an accepted review.</dd>
+              </div>
+              <div>
+                <dt><span class="state-badge disputed" data-status="disputed"><span class="state-label">Disputed</span><span class="state-tags"></span></span></dt>
+                <dd>Flagged during review; not accepted.</dd>
+              </div>
+            </dl>
+            <h3>Tags</h3>
+            <dl class="guide-status-list guide-tag-list">
+              <div>
+                <dt><span class="state-tag">from paper</span></dt>
+                <dd>CatLog v2. Read from the paper by an AI model and checked against the paper by a second, separate AI run; code converted the units. The model is Claude (Anthropic).</dd>
+              </div>
+              <div>
+                <dt><span class="state-tag">corrected</span></dt>
+                <dd>Accepted after a correction in an earlier review.</dd>
+              </div>
+              <div>
+                <dt><span class="state-tag">no paper linked</span></dt>
+                <dd>Accepted, but no PMID or DOI is linked, so the value cannot be checked against a paper.</dd>
+              </div>
+              <div>
+                <dt><span class="state-tag human-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span></dt>
+                <dd>A human reviewer approved every value the record prints, in CatLog&rsquo;s review of the catalog (on a from-paper record: the same values in the earlier catalog). Shown on accepted records only; most records have not been checked by a person.</dd>
+              </div>
+            </dl>
+            <p class="guide-note">Older records come mostly from enzyme databases and were checked by an earlier automated pipeline of AI models and code checks. Papers are being re-read, and a re-read paper&rsquo;s from-paper records replace its older ones.</p>
+            <details class="guide-details">
+              <summary>Evidence labels on older records</summary>
+              <dl>
+                <div><dt>Paper excerpt</dt><dd>Saved paper text; it may describe context rather than this value. An excerpt alone does not mean Accepted.</dd></div>
+                <div><dt>Database note</dt><dd>A database note is saved; no paper-value excerpt is attached.</dd></div>
+                <div><dt>Several database records</dt><dd>The record merges several database entries; no paper text is saved.</dd></div>
+                <div><dt>Paper linked</dt><dd>A PMID or DOI is linked; no paper text is saved.</dd></div>
+                <div><dt>Database record only</dt><dd>Only the source database record is saved.</dd></div>
+              </dl>
+            </details>
+          </section>
+
+          <section class="guide-section" id="guide-units" aria-labelledby="guide-units-title">
+            <h2 id="guide-units-title">Units</h2>
+            <dl class="guide-term-list">
+              <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
+              <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
+              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>).</dd></div>
+              <div><dt>T (°C), pH</dt><dd>Assay temperature and pH; the record lists the other conditions.</dd></div>
+            </dl>
+            <p>On a from-paper record, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>) and keeps the significant figures the paper printed, at least two. The record shows the value as printed beside the stored one.</p>
+            <dl class="guide-term-list">
+              <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, not printed in the source; it keeps the significant figures of the less precise of the two.</dd></div>
+              <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>; the record then gives both (<em>values differ</em>).</dd></div>
+              <div><dt>Other units</dt><dd>A few older records keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
+              <div><dt>Large and small</dt><dd>Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>), with the same digits.</dd></div>
+              <div><dt>Dash, Unknown</dt><dd>A dash means a value is missing or hidden after a data check. <em>Unknown</em> means not stated in the paper or the source database.</dd></div>
+            </dl>
+          </section>
+
+          <section class="guide-section guide-downloads" id="guide-downloads" aria-labelledby="guide-downloads-title">
             <h2 id="guide-downloads-title">Downloads</h2>
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every row and field, including sequences, SMILES, PMID and DOI.</dd></div>
               <div><dt>Table</dt><dd>The same rows without sequences, SMILES, paper IDs or other assay conditions (pH and temperature are kept); join it to Full data on record_key.</dd></div>
-              <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. Page and record downloads are JSON. The Dataset notes (below) list every field and unit.</dd></div>
+              <div><dt>Page, record</dt><dd><strong>Download page</strong> saves the rows on screen and <strong>Download record</strong> the open record, as JSON.</dd></div>
+              <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind older rows: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by e-mail</a>.</dd></div>
+            </dl>
+            <a
+              class="button secondary guide-choice-link"
+              href="catlog-static/data/catlog-enriched.a9fe6ec30eac.jsonl.gz"
+              download="catlog-enriched.jsonl.gz"
+            >Download full data</a>
+          </section>
+
+          <section class="guide-section guide-downloads guide-caveats" id="guide-caveats" aria-labelledby="guide-caveats-title">
+            <h2 id="guide-caveats-title">Before you use the values</h2>
+            <dl class="guide-download-list">
+              <div><dt>Review status</dt><dd>Only Accepted records have an accepted review result; the others have open checks or none. Most records have not been checked by a person.</dd></div>
+              <div><dt>Units</dt><dd>Read the unit beside each value: a few older records keep another unit or none (see <a href="#guide-units">Units</a>).</dd></div>
+              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>A printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> is kept and flagged. The record gives both numbers, how far apart they are and, for a familiar factor such as 1000, the likely cause.</dd></div>
+              <div><dt>Sequences</dt><dd>A variant&rsquo;s sequence includes its mutations only where CatLog could build it; otherwise the record gives the wild-type reference.</dd></div>
+              <div><dt>Merged rows</dt><dd>Some older records merge several database rows; the record says how many and lists their papers.</dd></div>
+              <div><dt>Training sets</dt><dd>Records of one paper share its PMID: split training and test sets by paper or by UniProt accession.</dd></div>
             </dl>
           </section>
 
-          <section class="guide-citation" aria-labelledby="guide-citation-title">
+          <section class="guide-citation" id="guide-cite" aria-labelledby="guide-citation-title">
             <div>
               <h2 id="guide-citation-title">Cite this snapshot</h2>
               <p>Cite the paper and the snapshot you used:</p>
@@ -450,8 +488,8 @@
             </div>
           </section>
 
-          <section class="guide-sources" aria-labelledby="guide-sources-title">
-            <h2 id="guide-sources-title">Data sources and licenses</h2>
+          <section class="guide-sources" id="guide-sources" aria-labelledby="guide-sources-title">
+            <h2 id="guide-sources-title">Sources and licenses</h2>
             <p class="guide-note">Rows from the databases keep their own license, named in each row&rsquo;s source_license field. SKiD rows are for non-commercial use only, without derivatives.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
               <div><dt>Primary literature (read by CatLog)</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
@@ -462,6 +500,26 @@
               <div><dt><a href="https://www.uniprot.org/" target="_blank" rel="noreferrer">UniProt</a></dt><dd>License: CC BY 4.0</dd></div>
             </dl>
             <p id="guideCurationLicense" class="guide-note guide-curation-license">For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.</p>
+          </section>
+
+          <section class="guide-section guide-questions" id="guide-questions" aria-labelledby="guide-questions-title">
+            <h2 id="guide-questions-title">Questions</h2>
+            <details class="guide-details">
+              <summary>Why does a value differ from BRENDA?</summary>
+              <p>A from-paper value is read from the paper itself and converted by code, so it can differ from a database entry for the same paper: the database may give it in another unit, round it, or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Older records keep their source database&rsquo;s value.</p>
+            </details>
+            <details class="guide-details">
+              <summary>Why is a sequence or SMILES missing?</summary>
+              <p>CatLog adds a sequence only when it can match the enzyme to a protein entry (and, for a variant, place the mutations in it), and a SMILES only when the substrate name resolves to one structure. Otherwise the field stays empty rather than guessed; the record says <em>None recorded</em> or gives a sequence note.</p>
+            </details>
+            <details class="guide-details">
+              <summary>What does Checks pending mean?</summary>
+              <p>The record is not accepted yet: at least one check on it is still open, for example on the value, the protein or the substrate. Use its values with that in mind, or filter to Accepted records.</p>
+            </details>
+            <details class="guide-details">
+              <summary>How do I report an error?</summary>
+              <p>Open the record and choose <strong>Report a problem</strong>: it starts an e-mail to the lab with the record ID and the snapshot. For anything else, use <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue">Report a data issue</a>.</p>
+            </details>
           </section>
         </div>
       </main>

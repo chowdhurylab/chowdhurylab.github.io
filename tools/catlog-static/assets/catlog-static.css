@@ -549,9 +549,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .guide-example-level dt, .guide-example-level dd { margin:0 }
 .guide-example-level dt { color:var(--text-3) }
 .guide-choice-link { grid-row:4; align-self:end; justify-self:start; white-space:nowrap }
-.guide-reference dl { display:grid }
-.guide-reference dl > div { display:grid; gap:3px }
-.guide-reference dd, .guide-note { margin:0 }
+.guide-note { margin:0 }
 .guide-status-list dt { align-items:center; gap:7px }
 .guide-citation { grid-template-columns:minmax(230px,0.75fr) minmax(360px,1fr) max-content; gap:28px; align-items:start }
 .guide-citation-meta { gap:7px }
@@ -616,7 +614,6 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
   tbody tr:hover td.c-enzyme, tbody tr:focus-visible td.c-enzyme { background:var(--hover) }
   tbody tr.selected td.c-enzyme { background:var(--teal-soft); box-shadow:inset 3px 0 0 var(--teal), 1px 0 0 var(--line), 8px 0 12px rgba(20,34,31,0.05) }
-  .guide-record-depth-heading { grid-template-columns:1fr; gap:10px }
   .guide-citation { grid-template-columns:repeat(2,minmax(0,1fr)) }
   .guide-citation-links { grid-column:1 / -1 }
 }
@@ -641,10 +638,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
   .pagination-label-detail { display:none }
   #pageLabel { margin-left:0; min-width:0; font-size:var(--fs-meta) }
   .kv-line { grid-template-columns:96px minmax(0,1fr) }
-  .guide-step-grid { grid-template-columns:1fr }
   .guide-record-example figcaption { grid-template-columns:1fr }
   .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start }
-  .guide-reference-grid { grid-template-columns:1fr }
 }
 
 /* Phones: a compact header and counts, one toolbar row, and each record as a card instead of a wide table. */
@@ -758,12 +753,23 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-shell :is(sub, sup) { line-height:0 }
 .guide-view .guide-shell code { font-family:ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size:14px; overflow-wrap:anywhere }
 /* Sections stack in one column, divided by a rule. */
-.guide-view :is(.guide-workflow, .guide-record-depth, .guide-reference, .guide-downloads, .guide-citation, .guide-sources) { display:block; margin:36px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
-.guide-view :is(.guide-reference-grid, .guide-step-grid, .guide-record-depth-heading) { display:block; border:0 }
-.guide-view .guide-reference, .guide-view .guide-reference:first-child, .guide-view .guide-reference:last-child { padding:28px 0 0 }
-.guide-view .guide-step, .guide-view .guide-step:first-child, .guide-view .guide-step:last-child { margin:20px 0 0; border:0; padding:0 }
-.guide-view .guide-step p:last-child { margin-bottom:0 }
-.guide-view .guide-record-depth-heading p { max-width:none; margin:0 0 12px; color:var(--ink) }
+.guide-view :is(.guide-section, .guide-downloads, .guide-citation, .guide-sources) { display:block; margin:36px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
+.guide-view .guide-shell .guide-section > h3 { margin:28px 0 8px }
+.guide-view .guide-shell .guide-section > dl + p { margin-top:16px }
+/* A section reached from the contents (or its own address, #guide-units) keeps a little room above its rule. */
+.guide-view [id^="guide-"] { scroll-margin-top:16px }
+/* Contents: one short list of the sections, three columns (two on phones). */
+.guide-view .guide-contents { margin:24px 0 0; border-top:1px solid var(--line); padding:16px 0 0 }
+.guide-view .guide-shell .guide-contents h2 { margin:0 0 8px; color:var(--muted); font-size:14px; font-weight:500; line-height:1.4 }
+.guide-view .guide-contents ul { columns:3 9.5em; column-gap:24px; margin:0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-contents li { break-inside:avoid; padding:2px 0; font-size:16px; line-height:1.5 }
+/* Example views: the link, then its address in small type. */
+.guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:14px; font-weight:500; line-height:1.4 }
+.guide-view .guide-link-list { display:grid; gap:8px; margin:0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-link-list li { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px }
+.guide-view .guide-shell .guide-link-list code { color:var(--muted); font-size:13px }
+.guide-view .guide-flag { vertical-align:-2px; cursor:default }
+.guide-view .guide-questions .guide-details > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
 /* The worked example: two stacked cards; the open-record card has a neutral border. */
 .guide-view .guide-record-example { display:block; margin:20px 0 0 }
 .guide-view .guide-record-example figcaption { display:block; margin:0 0 12px }
@@ -781,10 +787,6 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-example-level :is(dt, dd) { font-size:16px; line-height:1.5 }
 .guide-view .guide-example-level dd { color:var(--ink); font-weight:500 }
 .guide-view .guide-choice-link { margin-top:16px; font-size:14px }
-/* Field meanings and labels: term above its meaning. */
-.guide-view .guide-reference dl { gap:14px; margin:0 }
-.guide-view .guide-reference dt { color:var(--ink); font-weight:600 }
-.guide-view .guide-reference dd { color:var(--ink) }
 .guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
 /* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
 .guide-view .guide-status-list { margin:16px 0 0; border-top:1px solid var(--line-soft) }
@@ -805,6 +807,10 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view .guide-details { margin:20px 0 0 }
 .guide-view .guide-details > summary { color:var(--blue); font-weight:500; cursor:pointer }
 .guide-view .guide-details > dl { margin:12px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
+/* Tags: the table's tag words beside their meaning; human-checked keeps its check and colour. */
+.guide-view .guide-tag-list .state-tag { color:var(--muted); font-size:16px; font-weight:500; white-space:nowrap }
+.guide-view .guide-tag-list .state-tag.human-checked { color:var(--checked) }
+.guide-view .guide-tag-list .check-icon { width:14px; height:14px; margin-right:4px; vertical-align:-1px }
 /* Lists of terms (caveats, downloads, sources, citation details): term left, meaning right. */
 .guide-view :is(.guide-download-list, .guide-term-list) { display:block; margin:4px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; border-bottom:1px solid var(--line-soft); padding:10px 0 }

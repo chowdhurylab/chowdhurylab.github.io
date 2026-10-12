@@ -169,8 +169,8 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check. Open the row to see why."));
-  assert.ok(pageHtml.includes("A warning marks a value to check against its source. Open the row for the reason."));
+  assert.ok(pageHtml.includes("A dash means a value is missing or hidden after a data check."));
+  assert.ok(pageHtml.includes("beside a value marks something to check against the source; in the record it moves to a note that says what."));
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   assert.ok(
     pageHtml.includes(
@@ -1235,10 +1235,24 @@ for (const view of ["browse", "guide", "stats"]) {
 assert.deepEqual([...navMarkup.matchAll(/>(Browse|Guide|Paper|ChowdhuryLab|Stats)<\//g)].map((match) => match[1]),
   ["Browse", "Guide", "Paper", "ChowdhuryLab", "Stats"]);
 assert.match(navMarkup, /href="https:\/\/doi\.org\/10\.1093\/pnasnexus\/pgag309"[^>]*aria-label="Open the CatRange paper \(PNAS Nexus\)"\s*>Paper</);
-const guideStart = indexHtml.match(/<section class="guide-workflow"[^>]*>([\s\S]*?)<\/section>/)[1];
-assert.equal((guideStart.match(/class="guide-step"/g) || []).length, 3);
-assert.doesNotMatch(guideStart, /<span>[1-4]<\/span>|<ol|<img/);
-assert.match(guideStart, /laccase/);
+// Guide: a contents list whose links reach every section; the search help keeps its examples; filtered views are linked
+// in the #browse? format the table reads; no images.
+const guideHtml = indexHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0];
+const guideContents = guideHtml.match(/<nav class="guide-contents"[^>]*>([\s\S]*?)<\/nav>/)[1];
+const guideAnchors = [...guideContents.matchAll(/href="#(guide-[a-z-]+)"/g)].map((match) => match[1]);
+assert.deepEqual(guideAnchors, ["guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads",
+  "guide-caveats", "guide-cite", "guide-sources", "guide-questions"]);
+for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
+const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
+assert.match(guideFind, /laccase/);
+assert.match(guideFind, /href="#browse\?checked=1"/);
+for (const [, href] of guideFind.matchAll(/<a href="(#browse[^"]*)"/g)) {
+  const params = new URLSearchParams(href.replace(/&amp;/g, "&").slice("#browse?".length));
+  assert.ok([...params.keys()].every((key) => ["q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric",
+    "variant", "tmin", "tmax", "phmin", "phmax", "caution", "source", "sort"].includes(key)), `${href} uses the shared keys`);
+}
+assert.doesNotMatch(guideHtml, /<img/);
+assert.match(guideHtml, /class="state-tag human-checked"><svg class="check-icon"/, "Guide shows the human-checked tag as the table does");
 
 assert.equal(api.enzymeFormLabel({ wild_type: true }), "Wild type");
 assert.equal(api.enzymeFormLabel({ mutation_signature: "A12G" }), "Variant: A12G");
@@ -2571,7 +2585,7 @@ assert.equal(
 embeddedDetailPanel = false;
 
 // Stats and Guide are drawn from the manifest: opening either never downloads the record index or the marks.
-for (const hash of ["#stats", "#guide"]) {
+for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const originalFetch = window.fetch;
   const requests = [];
   window.fetch = (url, ...rest) => {

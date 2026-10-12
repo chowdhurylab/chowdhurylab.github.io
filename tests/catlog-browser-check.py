@@ -652,6 +652,8 @@ def check(driver, browser, url):
     driver.find_element(By.ID, "guideButton").click()
     assert driver.find_element(By.ID, "guideView").is_displayed()
     check_metadata("guide")
+    check_guide(driver, wait)
+    check_metadata("guide")
     driver.find_element(By.ID, "statsButton").click()
     driver.execute_script("window.scrollTo(0, 0)")
     driver.set_window_size(1080, 900)
