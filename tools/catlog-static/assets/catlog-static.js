@@ -2883,14 +2883,24 @@
     return bits;
   }
 
-  // Counts beside the filters, over every record (like the review-status counts), worked out once per loaded index.
-  const facetCountCache = { key: "", counts: null };
+  // Counts beside the filters, over every record (like the review-status counts), worked out once per loaded index
+  // (Human-checked once per arrival of the marks).
+  const facetCountCache = { key: "", counts: null, checkedKey: "", checked: 0 };
+
+  function humanCheckedCount() {
+    const key = `${state.recordsGeneration}:${state.humanMarksVersion}`;
+    if (facetCountCache.checkedKey !== key) {
+      facetCountCache.checkedKey = key;
+      facetCountCache.checked = state.records.reduce((total, row) => total + (isHumanChecked(row) ? 1 : 0), 0);
+    }
+    return facetCountCache.checked;
+  }
 
   function facetCounts() {
-    const key = `${state.recordsGeneration}:${state.humanMarksVersion}`;
+    const key = String(state.recordsGeneration);
     if (facetCountCache.key === key) return facetCountCache.counts;
     const counts = {
-      v2: 0, checked: 0, temperature: 0, ph: 0,
+      v2: 0, temperature: 0, ph: 0,
       metric: Object.fromEntries(measurementFilters.map((item) => [item.value, 0])),
       variant: { wild: 0, variant: 0, none: 0 },
       caution: Object.fromEntries(cautionFilters.map((item) => [item.value, 0])),
@@ -2898,7 +2908,6 @@
     };
     for (const row of state.records) {
       if (isV2Row(row)) counts.v2 += 1;
-      if (state.humanMarksLoaded && isHumanChecked(row)) counts.checked += 1;
       measurementFilters.forEach((item) => {
         if (row[item.field] != null) counts.metric[item.value] += 1;
       });
@@ -2983,6 +2992,7 @@
       return formatCount({ kcat: coverage.with_kcat, km: coverage.with_km, kcat_over_km: coverage.with_kcat_over_km }[value]);
     }
     if (!state.recordsReady || (group === "checked" && !state.humanMarksLoaded)) return EMPTY_VALUE;
+    if (group === "checked") return formatInteger(humanCheckedCount());
     if (group === "state") return formatInteger(countsByState()[value] || 0);
     const counts = facetCounts();
     if (group === "range") return formatInteger(counts[value] || 0);
@@ -2990,7 +3000,22 @@
     return formatInteger(counts[group]?.[value] || 0);
   }
 
-  function updateFilterCounts() {
+  // The counts are drawn when the panel is open, and otherwise in an idle moment, so they never hold up the table.
+  let filterCountsTimer = 0;
+
+  function updateFilterCounts({ now = false } = {}) {
+    if (!now && state.recordsReady && !document.body.classList.contains("filters-open")) {
+      if (!filterCountsTimer) {
+        const run = () => {
+          filterCountsTimer = 0;
+          updateFilterCounts({ now: true });
+        };
+        filterCountsTimer = typeof window.requestIdleCallback === "function"
+          ? window.requestIdleCallback(run, { timeout: 3000 })
+          : window.setTimeout(run, 500);
+      }
+      return;
+    }
     document.querySelectorAll?.("#catalogFilters [data-count]").forEach((element) => {
       element.textContent = filterCountText(element.dataset.count);
     });
@@ -4171,6 +4196,7 @@
     }
     document.body.classList.toggle("filters-open", shouldOpen);
     $("openFiltersButton")?.setAttribute("aria-expanded", String(shouldOpen));
+    if (shouldOpen && !wasOpen) updateFilterCounts({ now: true });
     const rail = $("catalogFilters");
     syncFilterRailRole();
     syncDetailPanelAccessibility();
