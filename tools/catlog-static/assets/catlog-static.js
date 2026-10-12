@@ -4058,7 +4058,7 @@
   // track for phones and tablets, with the people and agents in the legend beside or under it).
   const TEAM_LAYOUTS = {
     wide: {
-      viewBox: "0 0 1000 480",
+      viewBox: "130 30 870 440",
       track: "M270 140 H670 A110 110 0 0 1 670 360 H270 A110 110 0 0 1 270 140 Z",
       stations: {
         papers: { x: 290, y: 140, label: [290, 172, "middle"] },

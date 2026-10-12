@@ -869,7 +869,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-figure { margin:0; border:1px solid var(--line); border-radius:4px; background:var(--surface); padding:16px }
 .team-figure figcaption { margin-top:8px; color:var(--text-3); font-size:var(--fs-12); line-height:16px }
 .team-loop { display:block; width:100%; height:auto; margin:0 auto; overflow:visible; font-family:var(--font); font-variant-numeric:tabular-nums lining-nums }
-.team-loop-wide { max-width:1000px }
+.team-loop-wide { max-width:960px }
 .team-loop-narrow { display:none; max-width:400px }
 .team-track { fill:none; stroke:var(--line-strong); stroke-width:3 }
 .team-arrow { fill:none; stroke:var(--text-3); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round }
