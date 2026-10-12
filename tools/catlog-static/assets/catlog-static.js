@@ -667,15 +667,10 @@
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
     const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);
-    const exportId = shortHash(manifest.exporter_commit);
     if ($("guideSnapshotDate")) $("guideSnapshotDate").textContent = snapshotDate;
     if ($("guideSourceId")) {
       $("guideSourceId").textContent = sourceId;
       $("guideSourceId").title = manifest.content_sha256 || manifest.source_sha256 || "";
-    }
-    if ($("guideExportId")) {
-      $("guideExportId").textContent = exportId;
-      $("guideExportId").title = manifest.exporter_commit || "";
     }
     // One citation line, selectable as a whole (no copy button): snapshot date (UTC) and the Data ID shown above.
     const generated = manifest.generated_at ? new Date(manifest.generated_at) : null;

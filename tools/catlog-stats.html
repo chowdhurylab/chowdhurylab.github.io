@@ -495,8 +495,8 @@
           <section class="guide-section guide-downloads" id="guide-downloads" aria-labelledby="guide-downloads-title">
             <h2 id="guide-downloads-title">Downloads</h2>
             <dl class="guide-download-list">
-              <div><dt>Full data</dt><dd>Every row and field, including sequences, SMILES, PMID and DOI.</dd></div>
-              <div><dt>Table</dt><dd>The same rows without sequences, SMILES, paper IDs or other assay conditions (pH and temperature are kept); join it to Full data on record_key.</dd></div>
+              <div><dt>Full data</dt><dd>Every record and field, including sequences, SMILES and paper links.</dd></div>
+              <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
               <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON with every field; <strong>Download record</strong> saves the open record as JSON.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind older rows: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by e-mail</a>.</dd></div>
@@ -531,7 +531,6 @@
             <dl class="guide-citation-meta">
               <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
               <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code></dd></div>
-              <div><dt>Exporter commit</dt><dd><code id="guideExportId">—</code></dd></div>
             </dl>
             <div class="guide-citation-links">
               <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>

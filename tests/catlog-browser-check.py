@@ -130,7 +130,7 @@ def check_guide(driver, wait):
     assert "Claude, Anthropic" in method and "A second, separate AI check compares every value with the paper." in method
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
     guide_text = driver.find_element(By.ID, "guideView").text
-    for word in ("CatLog v2", "independent", "AI run", "Checks pending"):
+    for word in ("CatLog v2", "independent", "AI run", "Checks pending", "Exporter", "exporter"):
         assert word not in guide_text, f"The Guide still says {word}"
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"

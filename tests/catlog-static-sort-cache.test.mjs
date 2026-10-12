@@ -194,9 +194,11 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   assert.ok(citationSection.includes("Sajeevan, K. A., et al. (2026)."));
   assert.ok(citationSection.includes("CatRange enables robust prediction of enzyme variant kinetic regimes."));
   assert.ok(citationSection.includes("PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309."));
-  for (const id of ["guideSnapshotDate", "guideSourceId", "guideExportId"]) {
+  for (const id of ["guideSnapshotDate", "guideSourceId"]) {
     assert.ok(citationSection.includes(`id="${id}"`), `${id} must remain in Guide`);
   }
+  // The exporter commit names a private repository no reader can open: it stays in the README only.
+  assert.doesNotMatch(pageHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0], /guideExportId|Exporter commit|exporter/i);
   assert.ok(citationSection.includes('href="https://doi.org/10.1093/pnasnexus/pgag309"'));
   assert.ok(citationSection.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
   const notesPath = pageHtml === indexHtml ? "README_FIRST.txt" : "catlog-static/README_FIRST.txt";
