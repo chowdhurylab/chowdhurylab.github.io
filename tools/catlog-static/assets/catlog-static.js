@@ -1194,12 +1194,12 @@
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
-    // Facts only: a note's review year is left out.
-    const note = String(mark?.note || "").replace(/\bCatLog(['’]s) (?:19|20)\d\d review\b/g, "CatLog$1 review");
+    // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review").
+    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review");
     return note || (mark?.checked
       ? (accepted
-          ? "A human reviewer approved every value this record shows, in CatLog's review of the catalog."
-          : "A human reviewer approved these values in CatLog's review of the catalog; other checks on this record are still open.")
+          ? "A human reviewer approved every value on this record."
+          : "A human reviewer approved these values; the record's status comes from the automated review.")
       : "");
   }
 

@@ -2168,6 +2168,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     "hc-accepted": { checked: true },
     "hc-pending": { checked: true },
     "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of the earlier catalog." },
+    "hc-note-2": { checked: false, note: "A human reviewer approved the same kcat and Km for this paper in the 2026 review of the earlier catalog; kcat/Km was not reviewed." },
   });
   const accepted = row({ record_key: "hc-accepted", measurement_key: "hc-accepted", verification_status: "verified" });
   const pending = row({ record_key: "hc-pending", measurement_key: "hc-pending", verification_status: "manual_review_required" });
@@ -2178,14 +2179,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
-  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value this record shows, in CatLog&#39;s review of the catalog\.<\/strong><\/div>/);
+  assert.match(html, /<div class="kv-line human-review-line"><span>Human review<\/span><strong><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value on this record\.<\/strong><\/div>/);
+  assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every value shown\."/);
+  assert.match(api.statusBadge(accepted), /aria-label="Accepted, BRENDA, human-checked"/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
-  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values in CatLog&#39;s review of the catalog; other checks on this record are still open\.<\/strong>/);
+  assert.match(html, /<span>Human review<\/span><strong>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/strong>/);
   api.renderDetail(noted, {});
   // A note's review year is not shown (facts only).
   assert.match(element("detailContent").innerHTML, /<span>Human review<\/span><strong>A human reviewer checked the same Km in CatLog&#39;s review of the earlier catalog\./);
+  api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
+  assert.match(element("detailContent").innerHTML, /<strong>A human reviewer approved the same kcat and Km for this paper in the review of the earlier catalog; kcat\/Km was not reviewed\.<\/strong>/);
 
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
     summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
