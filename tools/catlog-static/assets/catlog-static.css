@@ -963,6 +963,8 @@ body:is(.stats-open,.guide-open) .app-header { grid-template-columns:max-content
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd { margin:0; color:var(--ink); font-weight:400 }
 .guide-view .guide-citation p { max-width:none; margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-citation-meta { display:block; margin:8px 0 0; border-top:1px solid var(--line-soft) }
+.guide-view .guide-data-id-note { display:block; margin-top:4px; color:var(--muted); font-size:14px; line-height:1.5 }
+.guide-view .guide-data-id-note code { overflow-wrap:anywhere }
 .guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:16px; font-weight:500 }
 .guide-view .guide-shell .guide-sources .guide-note { max-width:none; margin:0 0 12px; color:var(--ink) }
 .guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }

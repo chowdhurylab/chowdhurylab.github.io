@@ -502,6 +502,7 @@
               <div><dt>Review files</dt><dd>Source records and review notes behind older rows: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by e-mail</a>.</dd></div>
             </dl>
             <a
+              id="guideFullDataLink"
               class="button secondary guide-choice-link"
               href="catlog-static/data/catlog-enriched.a553ca1de6e2.jsonl.gz"
               download="catlog-enriched.jsonl.gz"
@@ -525,11 +526,13 @@
               <p>Cite the paper and the snapshot you used:</p>
               <p id="guidePaperCitation">Sajeevan, K. A., et al. (2026). <cite>CatRange enables robust prediction of enzyme variant kinetic regimes.</cite> PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309.</p>
               <p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the catalog loads)</code></p>
-              <p>For one value, add its CatLog record ID (in Source details); search finds it. IDs of from-paper rows can change in later snapshots.</p>
+              <p>For one value, add its CatLog record ID (in Source details); search finds it. IDs of records read by CatLog can change in later snapshots.</p>
+              <p>Keep the file you used: older snapshots leave this site over time.</p>
+              <p>If you use rows from a database, cite that database as it asks: BRENDA, SABIO-RK, SKiD (Zenodo 15355031), the Open Enzyme Database or UniProt (links under <a href="#guide-sources">Sources and licenses</a>).</p>
             </div>
             <dl class="guide-citation-meta">
               <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
-              <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code></dd></div>
+              <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code><span class="guide-data-id-note">The first 10 characters of the SHA-256 of the decompressed Full data file: <code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code></span></dd></div>
             </dl>
             <div class="guide-citation-links">
               <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>

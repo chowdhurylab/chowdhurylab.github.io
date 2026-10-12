@@ -674,8 +674,17 @@
     }
     // One citation line, selectable as a whole (no copy button): snapshot date (UTC) and the Data ID shown above.
     const generated = manifest.generated_at ? new Date(manifest.generated_at) : null;
-    if ($("guideCitationLine") && generated && !Number.isNaN(generated.getTime()) && sourceId !== EMPTY_VALUE) {
-      $("guideCitationLine").textContent = `CatLog snapshot ${generated.toISOString().slice(0, 10)} (data ID ${sourceId}), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html`;
+    const day = generated && !Number.isNaN(generated.getTime()) ? generated.toISOString().slice(0, 10) : "";
+    if ($("guideCitationLine") && day && sourceId !== EMPTY_VALUE) {
+      $("guideCitationLine").textContent = `CatLog snapshot ${day} (data ID ${sourceId}), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html`;
+    }
+    // Downloads save under the snapshot's date (catlog-2026-10-12-full.jsonl.gz), so a kept file says which snapshot it
+    // is; the Guide's Data ID check names the same file.
+    if (day) {
+      for (const [id, part] of [["enrichedDataButton", "full"], ["guideFullDataLink", "full"], ["exportSnapshotButton", "table"]]) {
+        $(id)?.setAttribute("download", `catlog-${day}-${part}.jsonl.gz`);
+      }
+      if ($("guideDataIdFile")) $("guideDataIdFile").textContent = `catlog-${day}-full.jsonl.gz`;
     }
   }
 
@@ -6961,6 +6970,7 @@
       syncDetailPanelAccessibility,
       renderSummary,
       renderStats,
+      renderDownloadMetadata,
       renderGuideMethod,
       humanComparisonText,
       statsCohortData,

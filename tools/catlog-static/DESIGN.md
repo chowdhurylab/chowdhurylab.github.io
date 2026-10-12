@@ -374,7 +374,12 @@ Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel
 changes, the Guide's wording and example change with it. The page keeps exactly
 two Full data links (Download menu and Downloads) and one Table link: the
-release script rewrites them by count.
+release script rewrites them by count. They save as
+catlog-<snapshot date>-full.jsonl.gz and catlog-<snapshot date>-table.jsonl.gz
+(set from the manifest when the page starts). Cite gives the snapshot date and
+the Data ID with the command that checks it (the first 10 characters of the
+SHA-256 of the decompressed Full data file), says to keep the file used and to
+cite a database whose rows are used; the exporter commit stays in the README.
 
 ## Verification
 

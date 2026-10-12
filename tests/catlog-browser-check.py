@@ -132,6 +132,11 @@ def check_guide(driver, wait):
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("CatLog v2", "independent", "AI run", "Checks pending", "Exporter", "exporter"):
         assert word not in guide_text, f"The Guide still says {word}"
+    # Cite: the downloads save under the snapshot's date, and the Data ID check names that file.
+    day = driver.execute_script("return new Date(window.CATLOG_STATIC_MANIFEST.generated_at).toISOString().slice(0, 10)")
+    for identifier, part in (("guideFullDataLink", "full"), ("enrichedDataButton", "full"), ("exportSnapshotButton", "table")):
+        assert driver.find_element(By.ID, identifier).get_attribute("download") == f"catlog-{day}-{part}.jsonl.gz", identifier
+    assert driver.find_element(By.ID, "guideDataIdFile").get_attribute("textContent") == f"catlog-{day}-full.jsonl.gz"
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
     assert driver.execute_script("""

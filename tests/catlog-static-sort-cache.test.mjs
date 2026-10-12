@@ -1804,6 +1804,21 @@ function row(overrides = {}) {
   window.location.href = previousHref;
 }
 
+// Cite: downloads save under the snapshot's date, and the Data ID check names that file.
+{
+  const saved = { generated_at: runtimeManifest.generated_at, content_sha256: runtimeManifest.content_sha256 };
+  runtimeManifest.generated_at = "2026-10-12T09:46:03+00:00";
+  runtimeManifest.content_sha256 = "14ffa6600b55a3896094f59d77c4a13cbedf202e3b142a4f3887d835e1cadd9b";
+  api.renderDownloadMetadata();
+  assert.equal(element("enrichedDataButton").getAttribute("download"), "catlog-2026-10-12-full.jsonl.gz");
+  assert.equal(element("guideFullDataLink").getAttribute("download"), "catlog-2026-10-12-full.jsonl.gz");
+  assert.equal(element("exportSnapshotButton").getAttribute("download"), "catlog-2026-10-12-table.jsonl.gz");
+  assert.equal(element("guideDataIdFile").textContent, "catlog-2026-10-12-full.jsonl.gz");
+  assert.equal(element("guideSourceId").textContent, "14ffa6600b");
+  assert.match(element("guideCitationLine").textContent, /^CatLog snapshot 2026-10-12 \(data ID 14ffa6600b\), Chowdhury Lab, /);
+  Object.assign(runtimeManifest, saved);
+}
+
 const kiMeasurementHtml = api.measurementSection(row(), {
   has_ki: true,
   ki_display: "0.25",
