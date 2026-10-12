@@ -5321,7 +5321,7 @@
       ${detailTopHtml(row, {}, { withDetail: false })}
       <p id="detailLoadStatus" class="muted detail-load-status" role="status">Loading record…</p>
     `;
-    $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+    bindDetailTop();
     if (focusDetail) focusDetailHeading(key);
     try {
       const detail = await detailForRow(row, {
@@ -5357,7 +5357,7 @@
           <button id="retryDetailButton" class="button secondary" type="button">${outOfDate ? "Reload" : "Try again"}</button>
         </div>
       `;
-      $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+      bindDetailTop();
       $("retryDetailButton").addEventListener("click", () => (outOfDate ? reloadCatalogPage() : selectRecord(key)));
       if (restoreFocus) focusDetailHeading(key);
     }
@@ -7313,11 +7313,11 @@
         dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
       ])}
     `;
-    $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+    bindDetailTop();
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
       button.addEventListener("click", () => showFlagNote(button.dataset.flagNote));
     });
-    document.querySelectorAll("#detailContent .copy-button").forEach((button) => {
+    document.querySelectorAll("#detailContent .detail-section .copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));
     });
     document.querySelectorAll("#detailContent [data-reveal-target]").forEach((button) => {
@@ -7331,6 +7331,14 @@
         license_note: SOURCE_LICENSE_NOTE,
       };
       triggerBlobDownload(`${summary.record_key || "catlog-record"}.json`, JSON.stringify(payload, null, 2));
+    });
+  }
+
+  // The header's buttons (close, Copy link), in every state of the record (loading, loaded, not loaded).
+  function bindDetailTop() {
+    $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
+    document.querySelectorAll("#detailContent .detail-top .copy-button").forEach((button) => {
+      button.addEventListener("click", () => copyDetailValue(button));
     });
   }
 
