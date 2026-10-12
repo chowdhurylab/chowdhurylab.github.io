@@ -64,6 +64,10 @@
   const DEFAULT_INDEX_ORDER = "default_review_status";
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const narrowDetailMedia = window.matchMedia("(max-width: 1180px)");
+  // Wide screens: the filters are a column beside the table (not an overlay), and from 1600px they stay open beside
+  // an open record.
+  const dockedFiltersMedia = window.matchMedia("(min-width: 1280px)");
+  const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
   const DETAIL_INERT_SELECTOR = [
     ".app-header",
     "#catalogLoadProgress",
@@ -3853,7 +3857,9 @@
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
     const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
-    if (total() > available && available >= floor) {
+    // Beside docked filters the names give way as far as they can even when the table must still scroll sideways.
+    const docked = filtersDocked() && document.body.classList.contains("filters-open");
+    if (total() > available && (available >= floor || docked)) {
       // Too wide for the window: the names give way, first to two lines broken between words, then to their minimums.
       for (const target of [(column) => Math.max(column.min, column.words), (column) => column.min]) {
         const excess = total() - available;
@@ -3920,8 +3926,17 @@
     loadDetailShard(row.detail_shard).then(() => retainDetailShard(row.detail_shard)).catch(() => {});
   }
 
+  function filtersDocked() {
+    return Boolean(dockedFiltersMedia.matches);
+  }
+
+  // Docked filters and an open record share the screen from 1600px; below that, opening one closes the other.
+  function filtersFitBesideRecord() {
+    return filtersDocked() && Boolean(filtersBesideRecordMedia.matches);
+  }
+
   function setDetailOpen(isOpen) {
-    if (isOpen) setFiltersOpen(false);
+    if (isOpen && !filtersFitBesideRecord()) setFiltersOpen(false);
     document.body.classList.toggle("detail-open", Boolean(isOpen));
     syncDetailPanelAccessibility();
   }
@@ -3929,7 +3944,9 @@
   function syncDetailPanelAccessibility() {
     const panel = $("detailPanel");
     const filtersOpen = document.body.classList.contains("filters-open");
-    const isModal = Boolean(!filtersOpen && narrowDetailMedia.matches && document.body.classList.contains("detail-open"));
+    // Docked filters (wide screens) leave the table usable; the overlay is a modal dialog.
+    const filtersModal = filtersOpen && !filtersDocked();
+    const isModal = Boolean(!filtersModal && narrowDetailMedia.matches && document.body.classList.contains("detail-open"));
     if (isModal) {
       panel?.setAttribute("role", "dialog");
       panel?.setAttribute("aria-modal", "true");
@@ -3941,7 +3958,7 @@
       element.inert = isModal;
     });
     document.querySelectorAll(FILTER_INERT_SELECTOR).forEach((element) => {
-      element.inert = filtersOpen || (element.id !== "detailPanel" && isModal);
+      element.inert = filtersModal || (element.id !== "detailPanel" && isModal);
     });
     const rail = $("catalogFilters");
     if (rail) rail.inert = !filtersOpen;
@@ -3969,23 +3986,38 @@
     else focusCurrentHeading();
   }
 
+  function syncFilterRailRole() {
+    const rail = $("catalogFilters");
+    if (!rail) return;
+    const isOpen = document.body.classList.contains("filters-open");
+    rail.setAttribute("aria-hidden", String(!isOpen));
+    if (isOpen && !filtersDocked()) {
+      rail.setAttribute("role", "dialog");
+      rail.setAttribute("aria-modal", "true");
+    } else {
+      rail.removeAttribute("role");
+      rail.removeAttribute("aria-modal");
+    }
+  }
+
   function setFiltersOpen(isOpen) {
     const shouldOpen = Boolean(isOpen);
+    const wasOpen = document.body.classList.contains("filters-open");
     hideSuggestions();
+    // Docked filters below 1600px take the record's place.
+    if (shouldOpen && filtersDocked() && !filtersFitBesideRecord() && document.body.classList.contains("detail-open")) {
+      resetDetail();
+    }
     document.body.classList.toggle("filters-open", shouldOpen);
     $("openFiltersButton")?.setAttribute("aria-expanded", String(shouldOpen));
     const rail = $("catalogFilters");
-    if (rail) {
-      rail.setAttribute("aria-hidden", String(!shouldOpen));
-      if (shouldOpen) {
-        rail.setAttribute("role", "dialog");
-        rail.setAttribute("aria-modal", "true");
-      } else {
-        rail.removeAttribute("role");
-        rail.removeAttribute("aria-modal");
-      }
-    }
+    syncFilterRailRole();
     syncDetailPanelAccessibility();
+    // A docked panel changes the table's width.
+    if (wasOpen !== shouldOpen && filtersDocked()) {
+      fitTableColumns();
+      updateTableScrollControls();
+    }
     if (shouldOpen) {
       window.setTimeout(() => {
         if (document.body.classList.contains("filters-open") && !rail?.contains(document.activeElement)) {
@@ -3996,8 +4028,13 @@
   }
 
   function syncFilterPanel() {
-    const isOpen = document.body.classList.contains("filters-open");
-    $("catalogFilters")?.setAttribute("aria-hidden", String(!isOpen));
+    // A window narrowed below 1600px with docked filters and a record both open keeps the record.
+    if (document.body.classList.contains("filters-open") && document.body.classList.contains("detail-open")
+      && filtersDocked() && !filtersFitBesideRecord()) {
+      setFiltersOpen(false);
+      return;
+    }
+    syncFilterRailRole();
     syncDetailPanelAccessibility();
   }
 
@@ -4063,7 +4100,6 @@
     syncRecordUrl(key);
     state.selectedShard = row.detail_shard || "";
     state.activeRowKey = key;
-    setFiltersOpen(false);
     setDetailOpen(true);
     if (focusDetail) announceOpenedRecord(row);
     renderRows();
@@ -5328,6 +5364,8 @@
       syncFilterPanel();
       syncDetailPanelAccessibility();
     });
+    dockedFiltersMedia.addEventListener?.("change", syncFilterPanel);
+    filtersBesideRecordMedia.addEventListener?.("change", syncFilterPanel);
     $("statusChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
     });
@@ -5372,7 +5410,10 @@
       clearFilters();
       $("globalSearchInput").focus({ preventScroll: true });
     });
-    $("openFiltersButton").addEventListener("click", () => setFiltersOpen(true));
+    // On wide screens the Filters button opens and closes the docked panel.
+    $("openFiltersButton").addEventListener("click", () => {
+      setFiltersOpen(!(filtersDocked() && document.body.classList.contains("filters-open")));
+    });
     $("closeFiltersButton").addEventListener("click", () => {
       setFiltersOpen(false);
       $("openFiltersButton")?.focus();
@@ -5415,9 +5456,14 @@
       if (event.key === "Escape" && document.body.classList.contains("filters-open")) {
         const activeElement = document.activeElement;
         if (activeElement?.matches?.('input[type="search"]') && activeElement.value) return;
-        setFiltersOpen(false);
-        $("openFiltersButton")?.focus();
-        return;
+        // Docked beside an open record, Escape closes whichever holds the focus (the record when neither does).
+        const recordFirst = filtersDocked() && document.body.classList.contains("detail-open")
+          && !$("catalogFilters")?.contains(activeElement);
+        if (!recordFirst) {
+          setFiltersOpen(false);
+          $("openFiltersButton")?.focus();
+          return;
+        }
       }
       if (event.key === "Escape" && document.body.classList.contains("detail-open")) {
         closeDetailAndRestoreFocus();
