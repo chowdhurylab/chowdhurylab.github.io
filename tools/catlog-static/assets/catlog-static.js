@@ -644,15 +644,15 @@
     const tableSize = formatFileSize(manifest.table_download?.size_bytes);
     if ($("enrichedDataDescription")) {
       $("enrichedDataDescription").textContent = [
+        "Every field, including sequences, SMILES and paper links",
         `${total} rows`,
-        "available sequences, SMILES, references, and source details",
         enrichedSize,
       ].filter(Boolean).join(" · ");
     }
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
+        "Table columns only: no sequences, SMILES or paper links",
         `${total} rows`,
-        "with pH and temperature; without sequences, SMILES, paper IDs or other assay conditions",
         tableSize,
       ].filter(Boolean).join(" · ");
     }
@@ -1749,8 +1749,10 @@
   }
 
   function loadProgressText() {
-    const text = `Loading ${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "records" : "data chunks"}`;
-    return sortWaitsForRecords() ? `${text}, then sorting` : text;
+    const text = state.loadProgressUnit === "records"
+      ? `Loading ${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} records`
+      : "Loading records";
+    return sortWaitsForRecords() ? `${text}, then sorting` : `${text}${state.loadProgressUnit === "records" ? "" : "…"}`;
   }
 
   function updateLoadProgress() {
@@ -1766,7 +1768,9 @@
         "aria-valuetext",
         state.recordsReady
           ? "CatLog ready"
-          : `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} ${state.loadProgressUnit === "records" ? "CatLog records" : "data chunks"} loaded`,
+          : (state.loadProgressUnit === "records"
+              ? `${formatInteger(state.recordChunksLoaded)} of ${formatInteger(state.recordChunksTotal)} CatLog records loaded`
+              : "Loading CatLog records"),
       );
       rail.classList.toggle("complete", state.recordsReady);
       if (state.recordChunksLoaded || state.recordsReady) rail.classList.remove("stalled");
@@ -1868,7 +1872,25 @@
     return document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
   }
 
-  function showLoadNotice(title, message, { actionLabel = "", onAction = null } = {}) {
+  // What a visitor reads when loading fails: a page older than the data it finds says so plainly; the technical detail
+  // (which file, which check) stays in the console.
+  const OUT_OF_DATE_MESSAGE = "This page is out of date. Reload to update it.";
+
+  function publicLoadMessage(message) {
+    const text = String(message || "");
+    if (/does not match the CatLog source generation|cannot read CatLog index version|use different shard sizes|CatLog index is missing/.test(text)) {
+      if (text !== OUT_OF_DATE_MESSAGE) console.warn(`CatLog: ${text}`);
+      return OUT_OF_DATE_MESSAGE;
+    }
+    if (/^Detail shard /.test(text)) {
+      console.warn(`CatLog: ${text}`);
+      return "This record could not be loaded.";
+    }
+    return text;
+  }
+
+  function showLoadNotice(title, rawMessage, { actionLabel = "", onAction = null } = {}) {
+    const message = publicLoadMessage(rawMessage);
     document.body.classList.add("catalog-load-failed");
     const body = $("recordsBody");
     if (body) {
@@ -2257,8 +2279,8 @@
           );
         } else {
           showLoadNotice(
-            "This browser cannot open the CatLog index",
-            "Use a current version of Safari, Chrome, Edge, or Firefox, or download the table index.",
+            "This browser cannot open the CatLog records",
+            "Use a current version of Safari, Chrome, Edge or Firefox, or use the Table download.",
           );
         }
       } else {
@@ -4114,7 +4136,7 @@
     const awaitingMarks = !pageRows.length && state.recordsReady && !state.humanMarksLoaded && Boolean($("humanCheckedFilter")?.checked);
     $("pageSummary").textContent = pageRows.length
       ? (loading ? loadingSummary : range)
-      : (awaitingMarks ? "Loading review marks" : state.recordsReady ? "No matching records" : loadProgressText());
+      : (awaitingMarks ? "Loading human-review results" : state.recordsReady ? "No matching records" : loadProgressText());
     if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0 || awaitingMarks;
     $("pageLabel").textContent = pageRows.length
       ? range
@@ -4164,7 +4186,7 @@
     }
     body.innerHTML = pageRows.map((row) => {
       const flags = conditionFlags(row);
-      const enzymeName = row.enzyme_display_name || "Name not preserved";
+      const enzymeName = row.enzyme_display_name || "Name not recorded";
       // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
       const enzymeForm = enzymeFormHtml(row);
       const enzymeTitle = [enzymeName, enzymeFormText(row)].filter(Boolean).join(" · ");
@@ -6039,7 +6061,7 @@
           window.location.replace(url.href);
           return;
         }
-        throw new Error("This tab has an older CatLog page. Reload to get the current layout.");
+        throw new Error(OUT_OF_DATE_MESSAGE);
       }
       renderSummary();
       renderDownloadMetadata();
@@ -6112,6 +6134,7 @@
       applyPageSize,
       conditionFlags,
       valueFlagBadgeHtml,
+      publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,
       sequenceSourceLabel,

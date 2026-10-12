@@ -527,10 +527,24 @@ assert.ok(api, "test API should be exposed without starting the application");
   window.location.href = navigations[0];
   await api.init();
   assert.equal(navigations.length, 1, "A failed refresh must not loop");
-  assert.match(element("pageSummary").textContent, /older CatLog page/);
+  assert.equal(element("pageSummary").textContent, "This page is out of date. Reload to update it.");
   document.getElementById = originalGetElement;
   window.location.href = originalHref;
   window.location.replace = originalReplace;
+}
+// Load failures speak plainly: no shard, chunk or generation in the notice.
+{
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    assert.equal(api.publicLoadMessage("Detail shard data/details-001.js does not match the CatLog source generation"),
+      "This page is out of date. Reload to update it.");
+    assert.equal(api.publicLoadMessage("This page cannot read CatLog index version 3. Reload the page."), "This page is out of date. Reload to update it.");
+    assert.equal(api.publicLoadMessage("Detail shard data/details-001.js does not contain abc"), "This record could not be loaded.");
+    assert.equal(api.publicLoadMessage("The table data could not be downloaded (HTTP 404)"), "The table data could not be downloaded (HTTP 404)");
+  } finally {
+    console.warn = originalWarn;
+  }
 }
 assert.equal(api.recordIndexPath(), "data/catlog-viewer-index.jsonl.gz");
 delete runtimeManifest.viewer_index;
@@ -550,8 +564,8 @@ assert.doesNotMatch(element("pageSummary").textContent, /use the offline snapsho
 window.location.protocol = "https:";
 window.DecompressionStream = undefined;
 await api.loadRecordChunks();
-assert.equal(element("activeSummary").textContent, "This browser cannot open the CatLog index");
-assert.match(element("pageSummary").textContent, /current version of Safari, Chrome, Edge, or Firefox/);
+assert.equal(element("activeSummary").textContent, "This browser cannot open the CatLog records");
+assert.match(element("pageSummary").textContent, /current version of Safari, Chrome, Edge or Firefox/);
 assert.doesNotMatch(element("pageSummary").textContent, /offline|zip|serve this folder/);
 await api.applyFilters();
 assert.equal(document.body.classList.contains("catalog-load-failed"), false, "rendering results should restore the normal table layout");

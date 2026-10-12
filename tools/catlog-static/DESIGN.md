@@ -133,7 +133,11 @@ with a note that it is not there. Marks that arrive after a record opened redraw
 its panel in place (the rows and focus stay).
 
 While records load, placeholder rows keep the table's shape and, until the first
-rows appear, the count beside Filters says how many have loaded. Page 1 appears
+rows appear, the count beside Filters says how many have loaded ("Loading
+records…" when only the files are counted). Loading and failure notices use
+plain words, never file, shard or chunk names: a page older than its data says
+"This page is out of date. Reload to update it."; the technical detail goes to
+the console. Page 1 appears
 from the first rows of the index, which arrives in Review-status order, and
 stays in place when the rest arrives; sorting waits for all records (an address
 with a value sort keeps the placeholder rows and says "then sorting" until
