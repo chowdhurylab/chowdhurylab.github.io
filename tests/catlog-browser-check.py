@@ -1579,6 +1579,20 @@ def check(driver, browser, url):
                 return tracks.every(box => Math.abs(box.left - tracks[0].left) <= 1 && Math.abs(box.width - tracks[0].width) <= 1);
             });
         """), "Bars of one chart share one scale on phones"
+        assert driver.execute_script("""
+            // A legend name that wraps keeps its count right after its last line, not pushed to the far edge.
+            return [...document.querySelectorAll('.stats-legend li')].filter(item => item.querySelector('.stats-legend-count')).every(item => {
+                const count = item.querySelector('.stats-legend-count');
+                const range = document.createRange();
+                range.setStart(item.querySelector('.stats-swatch').nextSibling, 0);
+                range.setEndBefore(count);
+                const lines = [...range.getClientRects()].filter(box => box.width > 0);
+                const last = lines[lines.length - 1];
+                const box = count.getBoundingClientRect();
+                return last && box.left - last.right <= 12 && Math.abs(box.top - last.top) <= 4
+                    || last && box.left <= item.getBoundingClientRect().left + 40;
+            });
+        """), "A legend count follows its name on phones"
         for selector, label in ((".stats-ranges", "stats-mobile-ranges"), ("[aria-labelledby='statsSourcesTitle']", "stats-mobile-sources")):
             if driver.find_elements(By.CSS_SELECTOR, selector):
                 driver.execute_script("document.querySelector(arguments[0]).scrollIntoView()", selector)
