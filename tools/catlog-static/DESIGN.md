@@ -294,7 +294,11 @@ how it was found, "(inferred from EC number and organism)", or "Sequence known,
 no UniProt entry", "Several possible UniProt entries", "Not matched to UniProt";
 the variant sequence named by its note, "Variant sequence (UniProt P22498 with
 H150A)"; a note that only says "UniProt canonical sequence" is not shown); Source details,
-collapsed, with one licence line; the actions. Odd records read plainly: a name longer than 64 characters is set
+collapsed (Name from "Paper" or "BRENDA recommended name"; Source "The paper
+(read by CatLog)" or the databases by name, never a raw key; one licence line);
+the actions. An older record's database note is headed by its source ("Note from
+BRENDA"), without an importer's label, and is not shown when it only repeats the
+temperature and pH rows. Odd records read plainly: a name longer than 64 characters is set
 at 16px so the header that stays in view stays short; "Unknown" EC or organism
 reads "EC unknown" / "organism unknown"; a record without kcat, Km or kcat/Km
 says so (or that it stores a Ki only); a missing sequence or SMILES reads

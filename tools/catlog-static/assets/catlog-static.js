@@ -176,17 +176,17 @@
     candidate_only: 4,
   };
 
-  // Where a record's enzyme name comes from, read after "Enzyme name from" (a CatLog v2 record's: the paper).
+  // Where a record's enzyme name comes from, read after "Name from" (a CatLog v2 record's: the paper).
   const sourceLabels = {
-    source_record: "the source record",
-    explicit_enzyme_name: "the source record",
-    brenda_recommended_name: "BRENDA (recommended name)",
-    protein_name_fallback: "the protein name",
+    source_record: "Source record",
+    explicit_enzyme_name: "Source record",
+    brenda_recommended_name: "BRENDA recommended name",
+    protein_name_fallback: "Protein name",
     uniprot_name_fallback: "UniProt",
-    ec_accepted_name_fallback: "the EC list (accepted name)",
-    ec_name_fallback: "the EC list",
+    ec_accepted_name_fallback: "EC list (accepted name)",
+    ec_name_fallback: "EC list",
     uniprot_fallback: "UniProt (accession only)",
-    name_not_preserved: "not recorded",
+    name_not_preserved: "Not recorded",
   };
 
   const sourceDatabaseLabels = {
@@ -196,6 +196,7 @@
     sabio: "SABIO-RK",
     skid: "SKiD",
     uniprot: "UniProt",
+    strenda: "STRENDA DB",
     primary_paper_direct: "Primary literature",
   };
 
@@ -744,10 +745,39 @@
     return caretHtml(escapePublic(plain));
   }
 
+  // A database note as the record shows it: without an importer's "Raw STRENDA Extraction:" label, "(+/-)" as ±.
+  function databaseNoteText(value) {
+    return publicEvidenceString(String(value))
+      .replace(/^\s*Raw STRENDA Extraction:\s*/i, "")
+      .replace(/\s*\(\+\/-\)\s*/g, " ± ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // A database note that says only the temperature and pH the record's rows already give ("25°C", "pH 7.5, 30 °C").
+  function noteRepeatsConditions(value, summary) {
+    if (typeof value !== "string") return false;
+    const temperature = formatTemperature(summary);
+    const ph = formatPh(summary);
+    let rest = databaseNoteText(value);
+    let repeated = false;
+    rest = rest.replace(/\bpH\s*(\d+(?:\.\d+)?)/gi, (match, number) => {
+      if (ph === EMPTY_VALUE || Number(number) !== Number(ph)) return match;
+      repeated = true;
+      return "";
+    });
+    rest = rest.replace(/(-?\d+(?:\.\d+)?)\s*°\s*C\b/g, (match, number) => {
+      if (temperature === EMPTY_VALUE || Number(number) !== Number(temperature)) return match;
+      repeated = true;
+      return "";
+    });
+    return repeated && !rest.replace(/\b(?:at|and)\b/gi, "").replace(/[\s,;.]/g, "");
+  }
+
   function evidenceNoteHtml(value) {
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
-      const text = publicEvidenceString(String(value));
+      const text = databaseNoteText(value);
       return text ? `<p class="evidence-note-plain">${evidenceTextHtml(text)}</p>` : "";
     }
 
@@ -6031,10 +6061,29 @@
     window.setTimeout(() => { button.textContent = "Copy"; }, copied ? 1200 : 3000);
   }
 
+  // A record's source in words: "The paper (read by CatLog)" for a record CatLog read, else the database(s), each named
+  // ("sabio_rk;brenda" is "SABIO-RK, BRENDA"), never a raw key.
+  const recordSourceNames = {
+    ...sourceDatabaseLabels,
+    sabiork: "SABIO-RK",
+    open_enzyme_database: "Open Enzyme Database (OED)",
+    primary_paper_direct: "Earlier paper extraction",
+    primary_literature: "Earlier paper extraction",
+    mixed: "Several databases",
+  };
+
+  function recordSourceName(value, v2Record = false) {
+    if (v2Record) return "The paper (read by CatLog)";
+    const names = [...new Set(String(value || "").toLowerCase().split(/[;,/+\s]+/)
+      .map((token) => recordSourceNames[token.replace(/-/g, "_")] || "")
+      .filter(Boolean))];
+    return names.length ? names.join(", ") : "Not recorded";
+  }
+
   // The databases a record merges, unless that only repeats its Source.
   function mergedDatabasesRow(summary, detail) {
-    const names = [...new Set((detail.source_databases_merged || []).map(sourceDatabaseLabel))];
-    if (!names.length || (names.length === 1 && names[0] === sourceDatabaseLabel(summary.source_db || detail.source_db))) return "";
+    const names = [...new Set((detail.source_databases_merged || []).map((value) => recordSourceName(value)).filter((name) => name !== "Not recorded"))];
+    if (!names.length || names.join(", ") === recordSourceName(summary.source_db || detail.source_db)) return "";
     return kv("Databases", names.join(", "));
   }
 
@@ -6167,16 +6216,17 @@
     const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
-    const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)));
-    const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
-      ? "Database note"
-      : "Earlier automated review: where the values are printed";
+    const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)) && !noteRepeatsConditions(line, summary));
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
+    const noteSource = recordSourceName(summary.source_db || detail.source_db);
+    const proofHeading = (summary.proof_kind || detail.proof_kind) === "source_note"
+      ? (noteSource === "Not recorded" ? "Database note" : `Note from ${noteSource}`)
+      : "Earlier automated review: where the values are printed";
     const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
-    // What stands behind an older record's values (a CatLog v2 record's status already says "read from the paper").
-    const evidenceRow = isV2Row(summary)
-      ? ""
-      : kv("Evidence", String(detail.verification_method || "").startsWith(v2Method) ? "Read from the paper" : evidenceLabel(summary, proofLines));
+    // What stands behind an older record's values (a CatLog v2 record's status already says "from paper"); a database
+    // note is named by its own heading instead.
+    const evidence = v2Record ? "" : evidenceLabel(summary, proofLines);
+    const evidenceRow = evidence && evidence !== "Database note" ? kv("Evidence", evidence) : "";
     const humanNote = humanReviewNote(summary);
     // A CatLog v2 record's values are one table, in Measurement; an older record keeps its notes, here.
     const v2Proof = v2ProofFacts(summary, detail);
@@ -6232,8 +6282,8 @@
       </section>
       ${molecularIdentitySection(summary, detail)}
       ${detailDisclosure("Source details", [
-        kv("Enzyme name from", v2Record ? "the paper" : sourceLabels[summary.enzyme_label_source] || summary.enzyme_label_source || "not recorded"),
-        kv("Source", sourceDatabaseLabel(summary.source_db || detail.source_db)),
+        kv("Name from", v2Record ? "Paper" : sourceLabels[summary.enzyme_label_source] || "Not recorded"),
+        kv("Source", recordSourceName(summary.source_db || detail.source_db, v2Record)),
         kv("License", detailLicense(summary, detail, v2Record)),
         kv("CatLog record ID", summary.measurement_key || detail.measurement_key),
         mergedDatabasesRow(summary, detail),

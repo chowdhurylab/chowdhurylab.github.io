@@ -213,7 +213,7 @@ assert.match(
   /id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"/,
 );
 assert.ok(indexHtml.includes(">Located in the paper</dt><dd>The earlier automated review saved where the paper prints the values; the text may describe context rather than this value."));
-assert.ok(indexHtml.includes(">Database note</dt><dd>A database note is saved; no paper-value excerpt is attached."));
+assert.ok(indexHtml.includes(">Note from BRENDA</dt><dd>The record shows the source database&rsquo;s own note under this heading; no paper text is saved."));
 assert.match(
   sourceCode,
   /if \(row\.proof_kind === "paper_evidence" \|\| row\.has_proof_excerpt\) return "Located in the paper";\s+if \(row\.proof_kind === "source_note" \|\| proofLines\.length\) return "Database note";/,
@@ -222,10 +222,7 @@ assert.match(
   indexHtml,
   /<main id="statsView"[^>]*hidden/,
 );
-assert.match(
-  sourceCode,
-  /const proofHeading = \(summary\.proof_kind \|\| detail\.proof_kind\) === "source_note"\s+\? "Database note"\s+: "Earlier automated review: where the values are printed";/,
-);
+assert.match(sourceCode, /: "Earlier automated review: where the values are printed";/);
 assert.match(sourceCode, /const heading = `As printed in the paper\$\{shared \? ` \(\$\{shared\}\)` : ""\}`;/);
 
 function makeClassList() {
@@ -2205,6 +2202,29 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<span>Evidence<\/span><strong>Paper cited \(values not located\)<\/strong>/);
+}
+// Source names: a record CatLog read says so; databases by name, never a raw key; a database note is headed by its
+// source, without an importer's label, and is not shown when it only repeats the temperature and pH.
+{
+  const render = (summary, detail = {}) => {
+    api.renderDetail(row({ record_key: "sources", ...summary }), detail);
+    return element("detailContent").innerHTML;
+  };
+  let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
+    { verification_method: "catlog_v2_read_and_independent_verify" });
+  assert.match(html, /<span>Source<\/span><strong>The paper \(read by CatLog\)<\/strong>/);
+  assert.match(html, /<span>Name from<\/span><strong>Paper<\/strong>/);
+  html = render({ source_db: "strenda", proof_kind: "source_note", has_proof_excerpt: false },
+    { proof_lines: ["Raw STRENDA Extraction: kcat/Km\t4200.0 (+/-) 290.0 M⁻¹ s⁻¹"] });
+  assert.match(html, /<summary>Note from STRENDA DB<\/summary>/);
+  assert.match(html, /<p class="evidence-note-plain">kcat\/Km 4200\.0 ± 290\.0 M⁻¹ s⁻¹<\/p>/);
+  assert.match(html, /<span>Source<\/span><strong>STRENDA DB<\/strong>/);
+  assert.doesNotMatch(html, /Raw STRENDA|<span>Evidence<\/span><strong>Database note/);
+  html = render({ source_db: "sabio_rk;brenda", enzyme_label_source: "brenda_recommended_name", proof_kind: "source_note",
+    has_proof_excerpt: false, temperature_display: "25", ph_display: "7.5" }, { proof_lines: ["pH 7.5, 25°C"] });
+  assert.match(html, /<span>Source<\/span><strong>SABIO-RK, BRENDA<\/strong>/);
+  assert.match(html, /<span>Name from<\/span><strong>BRENDA recommended name<\/strong>/);
+  assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
 }
 
 // Human review: "human-checked" (with its check) only on accepted records; the record's Human review line on every
