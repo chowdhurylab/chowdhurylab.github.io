@@ -503,6 +503,18 @@ def check_filters(driver, browser, url, route_label):
         # The marks load after the index: an address with checked=1 still opens with the same records.
         open_page(base + "#browse?checked=1")
         wait.until(lambda d: summary() == f"{checked:,} records")
+        # An open record keeps the filters in the address: a reload shows the same record with the same filters, and
+        # closing it leaves the filters.
+        record_key = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]").get_attribute("data-key")
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: fragment() == f"browse?checked=1&record={record_key}")
+        driver.refresh()
+        wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')")
+                   and summary() == f"{checked:,} records")
+        assert chip_keys() == ["checked"] and fragment() == f"browse?checked=1&record={record_key}"
+        assert driver.find_element(By.CSS_SELECTOR, '#recordsBody tr[aria-selected="true"]').get_attribute("data-key") == record_key
+        driver.find_element(By.ID, "closeDetailButton").click()
+        wait.until(lambda d: fragment() == "browse?checked=1")
 
         # 3. A pH range typed into the panel: every row shown has a pH inside it, and the address carries it.
         open_page(base)
