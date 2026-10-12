@@ -2643,6 +2643,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(sectionOf(row({ record_key: "db-disputed", verification_status: "disputed", source_db: "brenda" })), null);
   assert.equal(sectionOf(row({ record_key: "db-no-paper", verification_status: "unverified", source_db: "skid", public_trust_basis: "identity_only" })), null);
   assert.equal(sectionOf(row({ record_key: "earlier-extraction", verification_status: "unverified", source_db: "primary_paper_direct" })), null);
+  // A database record that names no paper (no PMID, DOI or paper ID) has nothing to be checked against: no section.
+  assert.doesNotMatch(render(row({ record_key: "db-no-pmid", verification_status: "unverified", source_db: "strenda" }), {}), /Against the databases/);
+  assert.match(render(row({ record_key: "db-doi-only", verification_status: "unverified", source_db: "strenda" }), { supporting_dois: ["10.1/x"] }),
+    /Against the databases/);
 }
 // Show opens a sequence under its row and says Hide; Copy link copies the record's address.
 {

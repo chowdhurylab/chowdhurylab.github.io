@@ -7199,7 +7199,7 @@
       + reasons.map((why) => `<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — ${caretHtml(escapePublic(why.replace(/[.\s]+$/, "")))}.</p>`).join("");
   }
 
-  function databasesSection(summary, detail, { proof = null, check = null, v2Record = false } = {}) {
+  function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, hasPaper = true } = {}) {
     let body = "";
     if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check);
     else {
@@ -7208,8 +7208,9 @@
       else {
         const result = summary._recordState || recordStateForRow(summary);
         const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);
-        // A database record the earlier review did not settle, with a paper to check it against.
-        if (fromDatabase && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
+        // A database record the earlier review did not settle, with a paper to check it against (a record that names no
+        // paper gets no such line: its Paper section says None).
+        if (fromDatabase && hasPaper && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
           body = `<p class="section-text">${escapeHtml(DATABASE_VALUES_NOTE)}</p>`;
         }
       }
@@ -7353,7 +7354,7 @@
       ${conditionsSection(summary, detail)}
       ${proteinSection(summary, detail)}
       ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
-      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record })}
+      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, hasPaper: paperIds.length + dois.length > 0 })}
       ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref })}
       ${detailDisclosure("Source details", [
         kv("Name from", v2Record ? "Paper" : sourceLabels[summary.enzyme_label_source] || "Not recorded"),
