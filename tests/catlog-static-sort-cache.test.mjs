@@ -362,7 +362,7 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
-// Source: three radios (All records, CatLog v2: read from the paper, CatLog v1: earlier entries) and the databases.
+// Source: three radios (All records, CatLog v2, CatLog v1) and the databases.
 const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
   value, type: "radio", name: "sourceMode", checked: value === "all",
 }));
@@ -1757,7 +1757,7 @@ function row(overrides = {}) {
   api.renderStats();
   chart = element("statsCharts").innerHTML;
   const totalsHtml = element("statsTotals").innerHTML;
-  for (const [label, value] of [["Human-checked", 1], ["CatLog v2: read from the paper", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
+  for (const [label, value] of [["Human-checked", 1], ["CatLog v2", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
     assert.match(totalsHtml, new RegExp(`${label.replace(/[()]/g, "\\$&")}</dt><dd>${value}`));
   }
   assert.match(totalsHtml, /from 1 papers/);
@@ -1768,7 +1768,7 @@ function row(overrides = {}) {
   assert.match(chart, /a record can carry more than one\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value">3 <span class="stats-muted">0\.0%<\/span>/);
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2: read from the paper<\/a>/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2<\/a>/);
   assert.match(chart, /data-row="oed" data-count="1"[\s\S]*?class="stats-seg stats-part-accepted" style="left:0%;width:33\.3333%"/);
   assert.match(chart, /BRENDA, Not confirmed: 1/);
   // Main-source counts that do not add up to the review results are not drawn by status.
@@ -1971,7 +1971,7 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No cautions/);
-  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2: read from the paper<\/a>/);
+  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2<\/a>/);
   assert.doesNotMatch(chart, /source_paper_earlier/, "No earlier paper extractions here");
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
   assert.doesNotMatch(chart + element("statsTotals").innerHTML, /earlier catalog|old catalog/i, "CatLog v1 and v2 are named by version");
@@ -3819,7 +3819,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", 
   assert.ok(!("source_kcat_over_km_values" in v2Payload), "no listed kcat/Km, no field");
   assert.equal(v2Payload.kcat, 135);
   assert.equal(v2Payload.kcat_unit, "s^-1");
-  assert.equal(v2Payload.source, "CatLog v2: read from the paper");
+  assert.equal(v2Payload.source, "CatLog v2");
   assert.equal(v2Payload.source_license, "CC BY 4.0 (CatLog compilation)");
   assert.match(v2Payload.method, /^Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\.$/);
   assert.equal(v2Payload.check, "All values confirmed.");
@@ -3935,7 +3935,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   };
   assert.deepEqual(await keysFor("source=paper"), ["src-v2"]);
   assert.equal(api.browseHash(), "#browse?source=paper");
-  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: CatLog v2, read from the paper"]);
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: CatLog v2"]);
   assert.deepEqual(await keysFor("status=v2"), ["src-v2"], "an older address keeps working");
   assert.equal(api.browseHash(), "#browse?source=paper");
   assert.deepEqual(await keysFor("source=databases"), ["src-earlier", "src-merged", "src-oed", "src-unknown"]);
@@ -5100,16 +5100,15 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 {
   const source = element("sourceChecklist").innerHTML;
   // CatLog v2 and v1 entries by name (the user, 2026-10-13).
-  assert.match(source, /<span>CatLog v2: <span class="source-mode-what">read from the paper<\/span><\/span>/);
-  assert.match(source, /<span>CatLog v1: <span class="source-mode-what">earlier entries<\/span><\/span>/);
+  assert.match(source, /<span>CatLog v2 <span class="source-mode-what">current<\/span><\/span>/);
+  assert.match(source, /<span>CatLog v1 <span class="source-mode-what">earlier<\/span><\/span>/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.
   assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
-  assert.match(element("aboutSource").innerHTML, /the Open Enzyme Database \(OED\)/);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2: read from the paper<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1: earlier entries<\/strong>: From enzyme databases \(BRENDA, SABIO-RK/);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2<\/strong>: Current version: values read straight from the paper by an AI model and checked by a second, separate AI check\./);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1<\/strong>: Earlier version, same goal: it started from enzyme database entries/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);

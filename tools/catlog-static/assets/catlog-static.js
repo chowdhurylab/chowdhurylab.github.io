@@ -235,20 +235,20 @@
   // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
   // CatLog v2 entries are read from the paper by CatLog; CatLog v1 entries come from the enzyme databases, screened by
   // the earlier automated pipeline (v2 is the revision of v1; the user, 2026-10-13).
-  const SOURCE_CATLOG_LABEL = "CatLog v2: read from the paper";
-  const SOURCE_DATABASES_LABEL = "CatLog v1: earlier entries";
+  const SOURCE_CATLOG_LABEL = "CatLog v2";
+  const SOURCE_DATABASES_LABEL = "CatLog v1";
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "From enzyme databases (BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB) and earlier paper extractions; the earlier automated pipeline checked part of them against their papers, and the accepted ones say so.";
+  const SOURCE_CATLOG_HELP = "Current version: values read straight from the paper by an AI model and checked by a second, separate AI check.";
+  const SOURCE_DATABASES_HELP = "Earlier version, same goal: it started from enzyme database entries and checked them against their papers. The review result shows which were checked.";
   // The sidebar's labels are short; where the sidebar is too narrow for one line, the version stays on the first line and
   // what it means moves whole to the next (.source-mode-what). The help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'CatLog v2: <span class="source-mode-what">read from the paper</span>',
+    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'CatLog v2 <span class="source-mode-what">current</span>',
       help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1: <span class="source-mode-what">earlier entries</span>',
+    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1 <span class="source-mode-what">earlier</span>',
       help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
@@ -5401,7 +5401,7 @@
     };
   }
 
-  // Source: one of All records, CatLog v2: read from the paper or CatLog v1: earlier entries; databases ticked under "By
+  // Source: one of All records, CatLog v2 (current) or CatLog v1 (earlier, same goal); databases ticked under "By
   // database" narrow the last (and select it).
   function sourceControlState() {
     const sources = selectedCheckboxes("source");

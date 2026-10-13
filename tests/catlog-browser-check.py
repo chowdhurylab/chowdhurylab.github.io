@@ -161,8 +161,8 @@ def check_guide(driver, wait):
             .map(row => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.trim()]));
     """)
     if isinstance(from_paper, int):
-        assert f"{from_paper:,} records in this snapshot" in source_rows.get("CatLog v2: read from the paper", ""), source_rows
-        assert "CC BY 4.0" in source_rows["CatLog v2: read from the paper"]
+        assert f"{from_paper:,} records in this snapshot" in source_rows.get("CatLog v2", ""), source_rows
+        assert "CC BY 4.0" in source_rows["CatLog v2"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]
     # Every database's licence is said one way, "License: ...", a database without one "License: see the source's terms"
@@ -1184,7 +1184,7 @@ def check_filters(driver, browser, url, route_label):
             assert driver.execute_script("return document.querySelectorAll('#databaseChecklist .check-row').length") >= 5
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
-        # 4. Source: the older status=v2 opens CatLog v2: read from the paper (source=paper), every row tagged "from
+        # 4. Source: the older status=v2 opens CatLog v2 (source=paper), every row tagged "from
         # paper"; a database narrows the enzyme databases, and the status cell names it.
         def first_tags():
             return driver.execute_script(
