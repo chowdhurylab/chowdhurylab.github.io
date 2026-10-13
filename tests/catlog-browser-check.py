@@ -248,6 +248,10 @@ def check_human_checked(driver, url):
     for key in no_ratio:
         # (Safari redraws the table after the previous record closes: back on the same page, wait for the row, click it.)
         driver.execute_script("if (!document.querySelector(`#recordsBody tr[data-key='${arguments[1]}']`)) location.hash = arguments[0]", page_hash, key)
+        # The last rows of a page sit under the sticky pagination bar, where Safari's driver clicks the bar instead: bring
+        # the row to the middle first, as the other checks do.
+        cell = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme'))
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", cell)
         wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme').click() is None)
         wait.until(lambda d: d.execute_script(
             "return document.querySelector('#detailContent #detailRecordKey')?.textContent === arguments[0]"
