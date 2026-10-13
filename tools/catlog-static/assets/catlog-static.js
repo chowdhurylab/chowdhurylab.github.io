@@ -3683,6 +3683,14 @@
     const stated = statsCount(a.stated_values);
     const statedHas = stated ? statsCount(a.stated_values_catlog_has, stated) : null;
     const errors = firstComparisonErrors(a, approved);
+    // How many differences CatLog's own check against the paper has covered, and in how many the paper shows CatLog
+    // wrong ("152 of 257; CatLog wrong in none"), when the counts hold together.
+    const differ = statsCount(a.differ, approved);
+    const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
+    const wrongInDiffer = differ !== null ? statsCount(a.differ_catlog_wrong, differ) : null;
+    const checkedDifferences = differ && open !== null && wrongInDiffer !== null && wrongInDiffer <= differ - open
+      ? `${formatInteger(differ - open)} of ${formatInteger(differ)}; CatLog wrong in ${wrongInDiffer ? formatInteger(wrongInDiffer) : "none"}`
+      : "";
     const lead = headline.blind
       ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent}${headline.range ? ` (95% range ${headline.range})` : ""} of the values they approved.`
       : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values human reviewers approved${papers ? `, on ${formatInteger(papers)} papers they checked that CatLog has since read` : ""}.`;
@@ -3691,17 +3699,20 @@
       first !== null ? ["First comparison", `${formatInteger(first)} the same (${qualityShare(first, approved)})`] : null,
       // (without a first comparison, the big number and the sentence already give the same value count)
       first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} (${qualityShare(agree, approved)})`] : null,
+      checkedDifferences ? ["Differences checked against the paper", checkedDifferences] : null,
       errors ? ["Errors found at the first comparison", errors.text] : null,
       fixed !== null ? ["Fixed after the comparison", fixedAfterComparisonText(fixed, errors)] : null,
       wrong !== null ? ["Wrong number or unit in CatLog", formatInteger(wrong)] : null,
       stated && statedHas !== null ? ["Missing values reviewers named", `${formatInteger(stated)}; CatLog has ${formatInteger(statedHas)}`] : null,
     ].filter(Boolean);
-    const parts = agreementParts(a, approved, agree)
+    const split = agreementParts(a, approved, agree);
+    const parts = split
       || [{ part: "same", label: "Same value", count: agree }, { part: "neutral", label: "Different or missing", count: approved - agree }];
-    const shown = parts.filter((item) => item.count > 0);
+    // A zero count draws no segment and has no legend row, except "The paper shows CatLog wrong": its 0 is a result.
+    const shown = parts.filter((item) => item.count > 0 || (split && item.part === "magnitude"));
     const bar = `<div class="stats-lead-bar">
         <p class="stats-lead-bar-title">${first !== null || headline.blind ? "Approved values now" : "Approved values"} <span class="stats-muted">(${formatInteger(approved)})</span>: the same in CatLog, or where CatLog differs, what its check against the paper found</p>
-        ${statsTrack(shown.map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
+        ${statsTrack(shown.filter((item) => item.count > 0).map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
         ${statsLegend(shown)}
       </div>`;
     // Where the paper shows CatLog right, what was wrong in the earlier catalog (as the README says it).

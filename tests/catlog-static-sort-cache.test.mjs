@@ -1765,6 +1765,9 @@ function row(overrides = {}) {
     assert.match(lead, new RegExp(`stats-seg stats-part-${part}" style="left:[0-9.]+%;width:${width}%`), part);
   }
   assert.doesNotMatch(lead, /stats-part-magnitude" style/, "No segment for a zero count");
+  // ... but the legend still says the paper shows CatLog wrong in none of the differences, and how many were checked.
+  assert.match(lead, /<i class="stats-swatch stats-part-magnitude" aria-hidden="true"><\/i><span>The paper shows CatLog wrong <span class="stats-legend-count">0<\/span>/);
+  assert.match(lead, /Differences checked against the paper<\/dt><dd>152 of 257; CatLog wrong in none<\/dd>/);
   assert.match(lead, /Missing values reviewers named<\/dt><dd>58; CatLog has 53/);
   // Where the paper shows CatLog right, what the earlier catalog had wrong (the README's split).
   assert.match(lead, /In the 109 differences where the paper shows CatLog right, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);

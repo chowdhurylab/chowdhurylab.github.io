@@ -1597,6 +1597,15 @@ def check(driver, browser, url):
             headline = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").text == headline
             assert f"{agreement['values_approved']:,}" in lead.text
+            # The headline's 95% range under the number when the snapshot gives one.
+            ci95 = agreement.get("first_agree_unexposed_ci95")
+            if isinstance(blind, (int, float)) and isinstance(ci95, str) and re.match(r"^\d+(\.\d+)?-\d+(\.\d+)?$", ci95):
+                assert "95% range" in lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
+            # How many differences were checked against the paper, and CatLog wrong in them, even when that is none.
+            if all(isinstance(agreement.get(key), int) for key in ("differ", "differ_not_adjudicated", "differ_catlog_wrong")) \
+                    and agreement["differ"] > 0 and agreement["differ_catlog_wrong"] <= agreement["differ"] - agreement["differ_not_adjudicated"]:
+                checked = agreement["differ"] - agreement["differ_not_adjudicated"]
+                assert f"{checked:,} of {agreement['differ']:,}; CatLog wrong in" in lead.text, lead.text
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
         ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range")
         assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))

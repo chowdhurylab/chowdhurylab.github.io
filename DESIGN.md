@@ -41,8 +41,11 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   100% bar of the approved values (the same value, then the differences as
   CatLog's own check against the paper split them: CatLog right, the same
   printed value under another name or rounded, left out by its reading rules,
-  CatLog wrong, not checked yet) with its legend, the facts (values approved,
-  first comparison and now after fixes when present, the errors the first
+  CatLog wrong, not checked yet) with its legend (a zero count has no segment
+  and no row, except CatLog wrong: its 0 is a result), the facts (values
+  approved, first comparison and now after fixes when present, differences
+  checked against the paper with CatLog wrong in them ("152 of 257; CatLog
+  wrong in none"), the errors the first
   comparison found ("68 wrong labels, 1 missed value, 0 wrong numbers or
   units", from `first_catlog_errors` and its split), fixes said against them
   ("all 69"), wrong number or unit in CatLog, missing values reviewers named),
