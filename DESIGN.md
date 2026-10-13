@@ -220,9 +220,14 @@ agents at AI check, Audit agents at CatLog; rectangles on the accent tint), peop
 Erin at Human check; Mohammad at The paper; grey pills). First names only: no titles, ranks, model or vendor
 names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
-values re-checked by AI audits at CatLog, human-checked records and the
-agreement headline at Human check, records at Website), each left out when
-its field is absent. Small dots move round the track (SVG animateMotion),
+values re-checked by AI audits at CatLog, the agreement headline and
+human-checked records at Human check, records at Website), each left out when
+its field is absent. Human check says the Stats lead's headline shortened, never
+a bare "agreement": "85.6% matched (95% range 80.9–89.9%)" over "first
+comparison, 271 papers read blind" (five short lines on the upright loop), its
+label one phrase; without the blind headline, "89.7% of approved values
+matched". On the wide loop Human check stands right of the lower straight's
+middle so its lines keep clear of Rules updated. Small dots move round the track (SVG animateMotion),
 not drawn for prefers-reduced-motion. Its text is on the type scale (station names 16,
 numbers 13, chips 14; upright 14 and 12) and the caption 13px like Stats'; the
 chips leave the status navy and the comparison brown to their own meanings, and

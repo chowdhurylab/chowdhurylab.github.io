@@ -616,6 +616,15 @@ BLIND_SENTENCE = ("At the first comparison, before any fix, CatLog matched 85.3%
                   "reviewers approved on the 122 papers read blind (CatLog's readers never opened database or earlier-catalog files).")
 
 
+# Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
+TEAM_TEXT_APART = """
+    const texts = [...document.querySelectorAll(`svg.team-loop-${arguments[0]} .team-station text`)]
+        .map(text => ({station: text.closest('[data-station]').dataset.station, box: text.getBoundingClientRect()}));
+    return texts.every(a => texts.every(b => a.station === b.station || a.box.right + 2 <= b.box.left
+        || b.box.right + 2 <= a.box.left || a.box.bottom <= b.box.top || b.box.bottom <= a.box.top));
+"""
+
+
 def check_blind_headline(driver, browser, url):
     """With the blind headline in the snapshot, Stats' lead and the Guide's method section say the same sentence: the first
     comparison on the papers read blind, its 95% range and what read blind means; after fixes only as a secondary line.
@@ -645,7 +654,18 @@ def check_blind_headline(driver, browser, url):
         guide = driver.execute_script(GUIDE_LEAD_JS)
         assert guide and BLIND_SENTENCE in guide["text"], guide
         assert_document_stays(driver, "Guide with the blind headline")
+        # Team's Human check says it shortened, on the wide and the upright loop, and its lines touch no other station's.
+        for width, height, layout in ((1440, 1000, "wide"), (375, 812, "narrow")):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1,
+                                                                          "mobile": width < 768})
+            driver.get("about:blank")
+            driver.get(url + "#team")
+            human = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
+            assert "85.3% matched (95% range 79.7\u201390.6%) at the first comparison, on 122 papers read blind" \
+                in human.get_attribute("aria-label"), human.get_attribute("aria-label")
+            assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
         driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
 
 

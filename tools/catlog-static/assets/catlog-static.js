@@ -4429,7 +4429,8 @@
         check: { x: 650, y: 140, label: [650, 172, "middle"] },
         catlog: { x: 780, y: 250, label: [762, 230, "end"] },
         // stations on the lower straight: their name and numbers stand just above the track
-        human: { x: 560, y: 360, label: [560, 0, "middle"], above: true },
+        // Human check sits right of the straight's middle, so its agreement lines keep clear of Rules updated's name
+        human: { x: 590, y: 360, label: [590, 0, "middle"], above: true },
         rules: { x: 380, y: 360, label: [380, 0, "middle"], above: true },
         website: { x: 870, y: 160, label: [886, 165, "start"], branch: true },
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
@@ -4439,7 +4440,7 @@
       // Website branch instead of running beside the arc.
       actors: {
         download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [850, 58],
-        supantha: [380, 438], aarna: [515, 438], erin: [605, 438], mohammad: [870, 418],
+        supantha: [380, 438], aarna: [545, 438], erin: [635, 438], mohammad: [870, 418],
       },
     },
     narrow: {
@@ -4450,7 +4451,8 @@
         reading: { x: 280, y: 210, label: [264, 206, "end"] },
         check: { x: 280, y: 370, label: [264, 366, "end"] },
         catlog: { x: 180, y: 580, label: [180, 508, "middle"] },
-        human: { x: 80, y: 440, label: [96, 436, "start"] },
+        // up from the arc so Human check's six lines end above CatLog's name
+        human: { x: 80, y: 405, label: [96, 401, "start"] },
         rules: { x: 80, y: 285, label: [96, 281, "start"] },
         website: { x: 90, y: 650, label: [90, 678, "middle"], branch: true },
         paper: { x: 270, y: 650, label: [270, 678, "middle"], branch: true },
@@ -4461,7 +4463,8 @@
   };
 
   // Live numbers at the stations, from this snapshot's manifest; a number the snapshot does not have is left out. One
-  // entry per fact; a "\n" wraps a fact onto a second drawn line, and the station's label reads it as one phrase.
+  // entry per fact; a "\n" wraps a fact onto a second drawn line, and the station's label reads it as one phrase. A fact
+  // that wraps differently on the wide and the upright loop is { label, wide: [lines], narrow: [lines] }.
   function teamNumbers() {
     const total = Number(manifest.total_rows || 0);
     const overview = statsOverview(total);
@@ -4473,10 +4476,28 @@
     numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked\nby AI audits`] : [];
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
-    const headline = agreementHeadline(overview?.quality?.agreement);
-    numbers.human = [humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : "", headline ? `${headline.percent} agreement` : ""].filter(Boolean);
+    // the agreement first: the records line is the shortest, so on the wide loop it is the one level with Rules updated
+    numbers.human = [teamAgreementFact(overview), humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : ""].filter(Boolean);
     numbers.website = total ? [`${formatInteger(total)} records`] : [];
     return numbers;
+  }
+
+  // Human check's agreement: the Stats lead's headline, shortened (matched at the first comparison, its 95% range, the
+  // papers read blind); an older snapshot without the blind headline gives the share matched of the approved values.
+  function teamAgreementFact(overview) {
+    const headline = agreementHeadline(overview?.quality?.agreement);
+    if (!headline) return null;
+    if (!headline.blind) {
+      const label = `${headline.percent} of approved values matched`;
+      return { label, wide: [label], narrow: [`${headline.percent} of approved`, "values matched"] };
+    }
+    const range = headline.range ? `95% range ${headline.range}` : "";
+    const papers = headline.blindPapers !== null ? `${formatInteger(headline.blindPapers)} papers read blind` : "papers read blind";
+    return {
+      label: `${headline.percent} matched${range ? ` (${range})` : ""} at the first comparison, on ${papers}`,
+      wide: [`${headline.percent} matched${range ? ` (${range})` : ""}`, `first comparison, ${papers}`],
+      narrow: [`${headline.percent} matched`, range, "first comparison,", papers].filter(Boolean),
+    };
   }
 
   function teamFigureSvg(layoutKey, numbers) {
@@ -4489,12 +4510,12 @@
     const arrows = layout.arrows.map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
     const stations = Object.entries(layout.stations).map(([key, station]) => {
       const facts = numbers[key] || [];
-      const lines = facts.flatMap((fact) => fact.split("\n"));
+      const lines = facts.flatMap((fact) => typeof fact === "string" ? fact.split("\n") : fact[layoutKey]);
       const [lx, at, anchor] = station.label;
       const ly = station.above ? station.y - 22 - lines.length * 18 : at;
       const name = escapeHtml(TEAM_STATIONS[key]);
       const text = `<text class="team-station-name" x="${lx}" y="${ly}" text-anchor="${anchor}">${name}</text>${lines.map((line, index) => `<text class="team-station-number" x="${lx}" y="${ly + (index + 1) * (layoutKey === "wide" ? 18 : 16)}" text-anchor="${anchor}">${escapeHtml(line)}</text>`).join("")}`;
-      return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${facts.length ? `: ${facts.map((fact) => fact.replace(/\n/g, " ")).join(", ")}` : ""}`)}">
+      return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${facts.length ? `: ${facts.map((fact) => typeof fact === "string" ? fact.replace(/\n/g, " ") : fact.label).join(", ")}` : ""}`)}">
         <circle class="team-station-dot" cx="${station.x}" cy="${station.y}" r="${station.branch ? 6 : 8}"/>${text}</g>`;
     }).join("");
     const actors = layout.actors ? TEAM_ACTORS.map((actor) => {

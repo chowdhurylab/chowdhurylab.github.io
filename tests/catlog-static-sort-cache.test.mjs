@@ -1806,6 +1806,9 @@ function row(overrides = {}) {
   api.renderTeam();
   assert.match(element("teamFigure").innerHTML, /aria-label="CatLog: 973 values re-checked by AI audits"/);
   assert.match(element("teamFigure").innerHTML, />973 values re-checked<\/text><text class="team-station-number"[^>]*>by AI audits<\/text>/);
+  // Without the blind headline, Human check gives the share of approved values matched (never "agreement" alone).
+  assert.match(element("teamFigure").innerHTML, /aria-label="Human check: 89\.7% of approved values matched[",]/);
+  assert.doesNotMatch(element("teamFigure").innerHTML, /% agreement/);
   api.renderStats();
   // The lead has its own slot above the headline counts: the first thing on the page after the title.
   let lead = element("statsLead").innerHTML;
@@ -1871,6 +1874,15 @@ function row(overrides = {}) {
   assert.match(lead, /<strong>85\.3%<\/strong><span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched/);
   assert.match(lead, /At the first comparison, before any fix, CatLog matched 85\.3% \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\./);
   assert.match(lead, /<span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched at the first comparison, on the 122 papers read blind<\/span>/);
+  // Team's Human check says it shortened, the range and the papers read blind included: two drawn lines on the wide
+  // loop, four on the upright one, one phrase for its label.
+  api.renderTeam();
+  const teamHtml = element("teamFigure").innerHTML;
+  assert.equal((teamHtml.match(/aria-label="Human check: 85\.3% matched \(95% range 79\.7–90\.6%\) at the first comparison, on 122 papers read blind[",]/g) || []).length, 2);
+  const humanLines = (layout) => [...teamHtml.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0]
+    .match(/data-station="human"[\s\S]*?<\/g>/)[0].matchAll(/class="team-station-number"[^>]*>([^<]*)</g)].map((match) => match[1]);
+  assert.deepEqual(humanLines("wide").slice(0, 2), ["85.3% matched (95% range 79.7–90.6%)", "first comparison, 122 papers read blind"]);
+  assert.deepEqual(humanLines("narrow").slice(0, 4), ["85.3% matched", "95% range 79.7–90.6%", "first comparison,", "122 papers read blind"]);
   // The Guide's lead says the same sentence, the range included.
   api.renderGuideMethod();
   assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, before any fix, CatLog matched <strong>85\.3%<\/strong> \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\. <a /);
