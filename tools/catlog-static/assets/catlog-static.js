@@ -235,24 +235,28 @@
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
   // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
   // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
-  // CatLog v2 entries are read from the paper by CatLog; CatLog v1 entries come from the enzyme databases, screened by
-  // the earlier automated pipeline (v2 is the revision of v1; the user, 2026-10-13).
-  const SOURCE_CATLOG_LABEL = "CatLog v2";
-  const SOURCE_DATABASES_LABEL = "CatLog v1";
+  // CatLog is the one name (the user, 2026-10-13, round 8): each record is labelled by what happened to it. Read from the
+  // paper: CatLog read it from the paper (the main source "catlog"); Not yet re-read: every other record, from CatLog's
+  // earlier version, which started from enzyme database entries. "v1", "v2" and "CatLog v1/v2" are never shown; the
+  // earlier version is named only in help texts and the Guide's method section.
+  const SOURCE_CATLOG_LABEL = "Read from the paper";
+  const SOURCE_DATABASES_LABEL = "Not yet re-read";
+  // The source both downloads give a record read from the paper (the field names stay).
+  const SOURCE_CATLOG_EXPORT = "CatLog (read from the paper)";
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-  // What each version is, after its name in the Source "?" ("CatLog v1: the earlier version ..."), and as the radio's
-  // title. Only part of the CatLog v1 entries were checked against their papers (most are Not confirmed or Not checked).
-  const SOURCE_CATLOG_HELP = "the current version, read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "the earlier version with the same goal, started from enzyme database entries; part of them were checked against their papers (the review result says which).";
-  // The sidebar says what each version is in a few words: the version beside its count, what it holds on a second,
-  // quieter line under both (what; read out after the version), short enough for the 256px sidebar with a wide font, so
-  // no label wraps on its own. The help is behind the group's "?".
+  // What each label means, after its name in the Source "?" and as the radio's title (capitalised there). The earlier
+  // version's help is said once per place: the Source "?", Stats' How these numbers are counted, the Guide's method section.
+  // Only part of its entries were checked against their papers (most are Not confirmed or Not checked).
+  const SOURCE_CATLOG_HELP = "by an AI model; a second, separate AI check compared each value with the paper.";
+  const SOURCE_DATABASES_HELP = "from CatLog's earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these.";
+  // One line each in the 256px sidebar, also with a wide font (DejaVu Sans): the label beside its count. The help is
+  // behind the group's "?" and in each radio's title.
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, what: "read from the paper", help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, what: "from enzyme databases", help: SOURCE_DATABASES_HELP },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, help: SOURCE_CATLOG_HELP, title: v2Sentence, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
   // absent), shortHtml the sidebar's one-line label at 256px, with a wide font too (the table's tag, its name read out).
@@ -3512,8 +3516,9 @@
     $("snapshotDate").title = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
   }
 
-  // "CatLog v2 N" in the counts band (the name Stats and the Source filter give that count): the records read from the
-  // paper by CatLog among the current results, a link to them (the filters set now, Source: CatLog v2). Before the records load, N is the
+  // "Read from the paper N" in the counts band (the name Stats and the Source filter give that count): the records read
+  // from the paper by CatLog among the current results, a link to them (the filters set now, Source: Read from the
+  // paper). Before the records load, N is the
   // snapshot's own count (summary.overview.from_paper, bound to this snapshot) on an unfiltered view; a count of 0 (or
   // none yet) is plain text.
   function fromPaperHref() {
@@ -4752,7 +4757,7 @@
       { key: "records", label: "Records", value: formatInteger(total) },
       { key: "accepted", label: "Accepted", value: formatInteger(accepted), note: total ? `${statsShare(accepted, total)} of records` : "",
         params: accepted ? { status: "accepted" } : null },
-      fromPaper !== null ? { key: "catlog", label: `${SOURCE_CATLOG_LABEL} entries`, value: formatInteger(fromPaper),
+      fromPaper !== null ? { key: "catlog", label: SOURCE_CATLOG_LABEL, value: formatInteger(fromPaper),
         note: papersRead !== null ? `from ${formatInteger(papersRead)} papers` : "", params: fromPaper ? { source: "paper" } : null } : null,
       reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note } : null,
     ].filter(Boolean);
@@ -4826,16 +4831,17 @@
     const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
     const acceptedParts = (fromPaperAccepted !== null
       ? [[SOURCE_CATLOG_LABEL, fromPaperAccepted, "accepted_catlog", { source: "paper" }],
-        ["CatLog v1, as printed", (counts.verified || 0) - fromPaperAccepted - humanAccepted, "accepted_printed"],
-        ["CatLog v1, after a correction", counts.corrected || 0, "accepted_corrected"],
-        ["CatLog v1, approved by a human reviewer", humanAccepted, "accepted_human"]]
+        [`${SOURCE_DATABASES_LABEL}, as printed`, (counts.verified || 0) - fromPaperAccepted - humanAccepted, "accepted_printed"],
+        [`${SOURCE_DATABASES_LABEL}, after a correction`, counts.corrected || 0, "accepted_corrected"],
+        [`${SOURCE_DATABASES_LABEL}, approved by a human reviewer`, humanAccepted, "accepted_human"]]
       : [["As printed", (counts.verified || 0) - humanAccepted, "accepted_printed"], ["After a correction", counts.corrected || 0, "accepted_corrected"],
         ["Approved by a human reviewer", humanAccepted, "accepted_human"]])
       .filter(([, count]) => count > 0);
-    // Accepted is split in the rows under it (the sentence is the row's title, for a copy of the numbers in words).
+    // Accepted is split in the rows under it (the sentence is the row's title, for a copy of the numbers in words): read
+    // from the paper, then not yet re-read as printed, after a correction or on a human reviewer's approval.
     const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} on a human reviewer's approval` : "";
     const acceptedNote = fromPaperAccepted !== null
-      ? `${formatInteger(fromPaperAccepted)} CatLog v2 entries, read from the paper; ${formatInteger(accepted - fromPaperAccepted)} CatLog v1 entries (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
+      ? `${formatInteger(fromPaperAccepted)} read from the paper; ${formatInteger(accepted - fromPaperAccepted)} not yet re-read (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
       : `${formatInteger((counts.verified || 0) - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}.`;
     const notReviewed = reviewStatuses.find((item) => item.value === "mathematically_inferred");
     const statusItems = [
@@ -4951,7 +4957,8 @@
         caption: "Records per source.", data: statsDataLine() });
     }
 
-    // CatLog v2 and CatLog v1 entries by review result (CatLog v2: the main source "catlog"; CatLog v1: every other record).
+    // Records read from the paper and those not yet re-read, by review result (read from the paper: the main source
+    // "catlog"; not yet re-read: every other record).
     const v2Group = mainSources?.byStatus ? mainSources.groups.catlog : null;
     let versions = null;
     if (v2Group && fromPaper && Object.values(v2Group).reduce((sum, count) => sum + count, 0) === fromPaper) {
@@ -4959,8 +4966,8 @@
       for (const [status, count] of Object.entries(counts)) v1Group[status] = count - (v2Group[status] || 0);
       if (Object.values(v1Group).every((count) => count >= 0)) {
         const rows = [
-          ["catlog", `${SOURCE_CATLOG_LABEL} entries`, v2Group, { source: "paper" }],
-          ["v1", `${SOURCE_DATABASES_LABEL} entries`, v1Group, { source: "databases" }],
+          ["catlog", SOURCE_CATLOG_LABEL, v2Group, { source: "paper" }],
+          ["v1", SOURCE_DATABASES_LABEL, v1Group, { source: "databases" }],
         ].map(([key, label, group, params]) => {
           const raw = statusSegments(label, group);
           const records = raw.reduce((sum, item) => sum + item.count, 0);
@@ -4971,11 +4978,11 @@
         });
         const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
         versions = {
-          id: "statsVersionsTitle", key: "versions", title: "CatLog v2 and CatLog v1 entries",
+          id: "statsVersionsTitle", key: "versions", title: "Read from the paper and not yet re-read",
           body: statsBarChart({ key: "versions", rows, scale: max, step, axis: statsAxis(max, step),
             legend: statusParts.map(([part, label]) => ({ part, label })) }),
-          caption: "CatLog v2 and CatLog v1 entries by review result; each label gives the entries, then the share accepted.",
-          data: statsDataLine("CatLog v2: read from the paper by CatLog, the current version; CatLog v1: the earlier version, from enzyme database entries."),
+          caption: "Records read from the paper by CatLog and records not yet re-read, by review result; each label gives the records, then the share accepted.",
+          data: statsDataLine("Together they are all records; How these numbers are counted says what each means."),
         };
       }
     }
@@ -5179,7 +5186,8 @@
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).</dd></div>
         <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
-        <div><dt>CatLog v2 entries</dt><dd>Records read from the paper by CatLog, the current version; CatLog v1 entries are all the others.</dd></div>
+        <div><dt>${escapeHtml(SOURCE_CATLOG_LABEL)}</dt><dd>Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}</dd></div>
+        <div><dt>${escapeHtml(SOURCE_DATABASES_LABEL)}</dt><dd>All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`);
     }
@@ -5906,10 +5914,9 @@
       }
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
-          <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
+          <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
-            <span>${escapeHtml(item.label)}</span>${item.what ? `
-            <span class="source-mode-what">${escapeHtml(item.what)}</span>` : ""}
+            <span>${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
         </div>
@@ -9561,23 +9568,23 @@
     window.setTimeout(() => { button.textContent = label; }, copied ? 1200 : 3000);
   }
 
-  // A record's source in words: "Read from the paper by CatLog" for a record CatLog read (the design spec's words, 5C.1),
+  // A record's source in words: "The paper (read by CatLog)" for a record CatLog read (round 8),
   // else the databases by name, read from source_db as Browse's Source filter and the status line read it
   // (rowSourceBits: "sabio_rk;brenda" is "BRENDA, SABIO-RK"), never a raw key.
   function recordSourceName(value, v2Record = false) {
-    // A record read by CatLog: the paper, as the Source filter names the version (the Method row under it says how it
-    // was read, so "Read from the paper" is not said twice).
-    if (v2Record) return `The paper (${SOURCE_CATLOG_LABEL})`;
+    // A record read by CatLog: the paper, read by CatLog (the Method row under it says how it was read, so "Read from the
+    // paper" is not said twice).
+    if (v2Record) return "The paper (read by CatLog)";
     const bits = rowSourceBits({ source_db: value });
     if (bits === SOURCE_UNRECORDED_BIT) return "Not recorded";
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
   }
 
   // A record's source as both exports name it (the "source" of Export results' CSV, This page (JSON) and Download
-  // record): "CatLog v2" for a record read from the paper by CatLog, as the Source filter says, otherwise its databases by
-  // name, as the record's Source line says ("BRENDA, SABIO-RK", "Open Enzyme Database (OED)").
+  // record): "CatLog (read from the paper)" for a record read from the paper by CatLog, otherwise its databases by name,
+  // as the record's Source line says ("BRENDA, SABIO-RK", "Open Enzyme Database (OED)").
   function exportSourceName(row, detail = {}, v2Record = isV2Row(row)) {
-    return v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(recordSourceDb(row, detail));
+    return v2Record ? SOURCE_CATLOG_EXPORT : recordSourceName(recordSourceDb(row, detail));
   }
 
   // The source a record's panel names: its source_db, or, when that names no database ("mixed", the one record merged

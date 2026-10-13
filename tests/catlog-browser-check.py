@@ -163,14 +163,14 @@ def check_guide(driver, wait):
             .map(row => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.trim()]));
     """)
     if isinstance(from_paper, int):
-        assert f"{from_paper:,} records in this snapshot" in source_rows.get("CatLog v2", ""), source_rows
-        assert "CC BY 4.0" in source_rows["CatLog v2"]
+        assert f"{from_paper:,} records in this snapshot" in source_rows.get("Read from the paper", ""), source_rows
+        assert "CC BY 4.0" in source_rows["Read from the paper"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]
     # Every database's licence is said one way, "License: ...", a database without one "License: see the source's terms"
     # (as a record from it reads).
     for name, text in source_rows.items():
-        if not name.startswith(("CatLog v2", "Read from the paper")):
+        if name != "Read from the paper":
             assert text.startswith("License: "), (name, text)
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
@@ -445,7 +445,8 @@ def check_browse(driver, browser, url, route_label):
             header, csv_rows = downloaded_csv("exportPageCsvButton")
             assert header[0] == "record_key" and {"kcat_unit", "review_result", "source", "pubmed_id", "doi"} <= set(header)
             assert [line.split(",", 1)[0] for line in csv_rows] == page_keys
-            # Both exports name each record's source the same way ("CatLog v2" for a record read from the paper by CatLog).
+            # Both exports name each record's source the same way ("CatLog (read from the paper)" for a record read from
+            # the paper by CatLog).
             csv_sources = {cells[0]: cells[header.index("source")] for cells in csv.reader(csv_rows)}
             assert csv_sources == {record["record_key"]: record.get("source") for record in page_payload["records"]}, csv_sources
             driver.execute_script(scroll_table_to_bottom)
@@ -538,11 +539,11 @@ def check_browse(driver, browser, url, route_label):
             }
         """)
     try:
-        # The counts band: CatLog v2 N (the name Stats and the Source filter give that count) opens those records
-        # (source=paper), N being their number; the snapshot date's title is the Data ID.
+        # The counts band: Read from the paper N (the name Stats and the Source filter give that count) opens those
+        # records (source=paper), N being their number; the snapshot date's title is the Data ID.
         set_browse_viewport(driver, browser, 1440, 1000)
         paper_link = driver.find_element(By.ID, "fromPaperLink")
-        assert driver.execute_script("return arguments[0].querySelector('span').innerText.trim()", paper_link) == "CatLog v2"
+        assert driver.execute_script("return arguments[0].querySelector('span').innerText.trim()", paper_link) == "Read from the paper"
         overview = stats_overview(manifest)
         if overview:
             assert paper_link.is_displayed() and driver.find_element(By.ID, "fromPaperCount").text == f"{overview['from_paper']['records']:,}"
@@ -1652,7 +1653,7 @@ def check_filters(driver, browser, url, route_label):
             assert driver.execute_script("return document.querySelectorAll('#databaseChecklist .check-row').length") >= 5
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
-        # 4. Source: the older status=v2 opens CatLog v2 (source=paper), every row tagged "from
+        # 4. Source: the older status=v2 opens Read from the paper (source=paper), every row tagged "from
         # paper"; a database narrows the enzyme databases, and the status cell names it.
         def first_tags():
             return driver.execute_script(
@@ -1866,9 +1867,8 @@ def check_layout(driver, browser, url, route_label):
             return bad;
         """)
         assert not misaligned, f"Group chevron or '?' off its title's first line: {misaligned}"
-        # The Source radios say what each version is: "CatLog v2" beside its count with "read from the paper" on one
-        # quieter line under it, "CatLog v1" with "from enzyme databases"; neither line wraps, also in a wide font at the
-        # sidebar's 256px (1280px window).
+        # The Source radios name what happened to each record, Read from the paper and Not yet re-read, one line each
+        # beside its count, also in a wide font at the sidebar's 256px (1280px window); the help is behind the "?".
         set_browse_viewport(driver, browser, 1280, 1000)
         source_rows = driver.execute_script("""
             const style = document.createElement('style');
@@ -1877,23 +1877,23 @@ def check_layout(driver, browser, url, route_label):
             document.head.appendChild(style);
             const lines = (e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
             const rows = [...document.querySelectorAll('#sourceChecklist .radio-row')].map(row => {
-                const [label, what] = [row.querySelector(':scope > span:not(.source-mode-what)'), row.querySelector('.source-mode-what')];
-                return {label: label.innerText, labelLines: lines(label), what: what ? what.innerText : null, whatLines: what ? lines(what) : 0,
+                const label = row.querySelector(':scope > span');
+                return {label: label.innerText.trim(), labelLines: lines(label), spans: row.querySelectorAll(':scope > span').length,
                         countLevel: Math.abs(row.querySelector('strong').getBoundingClientRect().top - label.getBoundingClientRect().top) < 3};
             });
             style.remove();
             return rows;
         """)
-        assert [(row["label"], row["what"]) for row in source_rows] == [
-            ("All records", None), ("CatLog v2", "read from the paper"), ("CatLog v1", "from enzyme databases")], source_rows
-        assert all(row["labelLines"] == 1 and row["whatLines"] in (0, 1) and row["countLevel"] for row in source_rows), source_rows
+        assert [row["label"] for row in source_rows] == ["All records", "Read from the paper", "Not yet re-read"], source_rows
+        assert all(row["labelLines"] == 1 and row["spans"] == 1 and row["countLevel"] for row in source_rows), source_rows
         set_browse_viewport(driver, browser, 1440, 1000)
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
         assert not driver.find_element(By.ID, "aboutSource").is_displayed()
         about.click()
         assert about.get_attribute("aria-expanded") == "true" and driver.find_element(By.ID, "aboutSource").is_displayed()
         about_text = driver.execute_script("return document.getElementById('aboutSource').innerText")
-        assert "a second, separate AI check" in about_text and "part of them were checked against their papers" in about_text, about_text
+        assert "a second, separate AI check" in about_text and "checked part of them against their papers" in about_text, about_text
+        assert "when CatLog reads a paper, its records replace these" in about_text and not re.search(r"\bv[12]\b", about_text), about_text
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
         # In a short window, opening Review result's "?" scrolls the sidebar just enough to keep its options in view, never
@@ -3251,9 +3251,9 @@ def check(driver, browser, url):
     assert len(donut.find_elements(By.CSS_SELECTOR, "path")) == sum(1 for key in ("manual_review_required", "unverified",
         "mathematically_inferred", "disputed") if expected.get(key, 0)) + bool(accepted)
     if overview:
-        # Accepted splits into the CatLog v2 entries (read from the paper by CatLog) and the CatLog v1 entries.
+        # Accepted splits into the records read from the paper by CatLog and those not yet re-read.
         read = overview["from_paper"]["records"]
-        assert f"{read:,} CatLog v2 entries, read from the paper; {accepted - read:,} CatLog v1 entries" in accepted_split
+        assert f"{read:,} read from the paper; {accepted - read:,} not yet re-read" in accepted_split
         # records accepted on a human review (accepted_basis "human review") are named apart from "as printed"
         human = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("accepted_basis", [])}.get("human review", 0)
         assert f"({expected.get('verified', 0) - read - human:,} as printed" in accepted_split
@@ -3305,7 +3305,7 @@ def check(driver, browser, url):
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
         assert any(href.endswith("#browse?source=paper") for href in hrefs)
-        # The band's key numbers link into Browse: Accepted and the CatLog v2 entries.
+        # The band's key numbers link into Browse: Accepted and Read from the paper.
         band_links = {item.get_attribute("data-total"): urlsplit(item.find_element(By.CSS_SELECTOR, "a.stats-total-value").get_attribute("href")).fragment
                       for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
         assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
@@ -3350,7 +3350,7 @@ def check(driver, browser, url):
             assert sum(int(re.search(r": ([\d,]+) values$", bar.get_attribute("data-tip")).group(1).replace(",", "")) for bar in bars) == summary["n"]
             assert figure.find_element(By.CSS_SELECTOR, ".stats-histogram").get_attribute("aria-label").startswith(("kcat", "Km"))
     else:
-        assert "Human-checked" not in headline and "CatLog v2" not in headline
+        assert "Human-checked" not in headline and "Read from the paper" not in headline
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-range")
     for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2, #statsCharts h3"):
         section = heading.find_element(By.XPATH, "..")

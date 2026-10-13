@@ -362,7 +362,7 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
-// Source: three radios (All records, CatLog v2, CatLog v1) and the databases.
+// Source: three radios (All records, Read from the paper, Not yet re-read) and the databases.
 const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
   value, type: "radio", name: "sourceMode", checked: value === "all",
 }));
@@ -1382,8 +1382,8 @@ assert.match(guideHtml, /<summary>Evidence labels on CatLog v1 entries<\/summary
 // Guide says so where it says the table has no temperature or pH column.
 assert.match(guideHtml, /The table has no temperature or pH column: they show under the substrate only to tell apart records of one paper that differ in them/);
 assert.doesNotMatch(guideHtml, /table does not show (?:temperature|them)/);
-// The counts band names the records read from the paper by CatLog as Stats and the Source filter do: CatLog v2.
-assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the CatLog v2 entries, read from the paper by CatLog"[^>]*><span>CatLog v2<\/span><strong id="fromPaperCount">/);
+// The counts band names the records read from the paper by CatLog as Stats and the Source filter do: Read from the paper.
+assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the records read from the paper by CatLog"[^>]*><span>Read from the paper<\/span><strong id="fromPaperCount">/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -1715,7 +1715,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers|stats-lead/, "No lead without agreement counts");
   assert.equal(element("statsScope").textContent, "All 6 records in this snapshot. Select a name to see those records in Browse.");
   assert.equal((element("statsCharts").innerHTML.match(/Select a (linked )?name/g) || []).length, 0, "Said once, under the heading");
-  assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|CatLog v2/, "No headline without its number");
+  assert.doesNotMatch(element("statsTotals").innerHTML, /Human-checked|Papers|Read from the paper/, "No headline without its number");
   assert.match(element("statsTotals").innerHTML, /Enzymes<\/dt><dd><span class="stats-total-value">2</);
   // The key numbers: Records plain, Accepted linked to its Browse filter.
   assert.match(element("statsTotals").innerHTML, /<div class="stats-total" data-total="records"><dt>Records<\/dt><dd><span class="stats-total-value">6<\/span>/);
@@ -1780,32 +1780,39 @@ function row(overrides = {}) {
   api.renderStats();
   chart = element("statsCharts").innerHTML;
   const totalsHtml = element("statsTotals").innerHTML;
-  for (const [label, value] of [["CatLog v2 entries", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
+  for (const [label, value] of [["Read from the paper", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
     assert.match(totalsHtml, new RegExp(`${label}</dt><dd>(<a class="stats-total-value" [^>]+>|<span class="stats-total-value">)${value}<`));
   }
   assert.match(totalsHtml, /#browse\?source=paper">2<\/a><small>from 1 papers<\/small>/);
   // Human-checked is a check under Quality; the band has no Human review without the review's counts.
   assert.doesNotMatch(totalsHtml, /Human-checked|Human review/);
   assert.deepEqual(partTitles(), ["1 At a glance", "2 Quality", "3 What is in the catalog", "4 Biology", "5 Values", "6 Cautions"]);
-  assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "CatLog v2 and CatLog v1 entries",
+  assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "Read from the paper and not yet re-read",
     "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms", "Most common EC numbers", "Value ranges",
     "Cautions on values"]);
-  // An odd figure out in a part shares a column: the fields stand over the forms beside CatLog v2 and v1.
+  // An odd figure out in a part shares a column: the fields stand over the forms beside Read from the paper and not yet
+  // re-read.
   assert.match(chart, /<div class="stats-stack"><section class="stats-section stats-figure-section" aria-labelledby="statsContentsTitle"/);
   // Wild type and variants and Cautions have their data line under the caption, like every other figure and table.
   assert.match(chart, /Records by enzyme form, as the table tags it\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   assert.match(chart, /a record can carry more than one\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">3<\/span><span class="stats-value-part stats-muted" data-sizer="[^"]+"><span>0\.0%<\/span><\/span><\/span>/);
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2<\/a>/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>/);
   assert.match(chart, /data-row="oed" data-count="1"[\s\S]*?class="stats-seg stats-part-accepted is-start is-end" style="left:0%;width:33\.3333%" data-records="0,33\.3333" data-share="0,100"/);
   // Records | Share: each segment carries both places, and the share axis waits hidden.
   assert.match(chart, /<button type="button" class="stats-switch-button" data-stats-mode="records" aria-pressed="true">Records<\/button><button type="button" class="stats-switch-button" data-stats-mode="share" aria-pressed="false">Share<\/button>/);
   assert.match(chart, /data-axis-mode="share" hidden/);
-  // CatLog v2 and CatLog v1 entries by review result: v2 is the main source catlog, v1 every other record.
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2 entries<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">2<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>100\.0%<\/span>/);
-  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">CatLog v1 entries<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>25\.0%<\/span>/);
-  assert.match(chart, /data-tip="CatLog v1 entries, Not confirmed: 1 \(25\.0%\)"/);
+  // Read from the paper and not yet re-read by review result: the first is the main source catlog, the second every
+  // other record. CatLog is the one name: no v1 or v2 anywhere on Stats.
+  assert.doesNotMatch((chart + totalsHtml).replace(/<[^>]*>/g, " "), /\bv[12]\b/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">2<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>100\.0%<\/span>/);
+  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">Not yet re-read<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>25\.0%<\/span>/);
+  assert.match(chart, /data-tip="Not yet re-read, Not confirmed: 1 \(25\.0%\)"/);
+  // How these numbers are counted says what each means, the earlier version once, in its help.
+  assert.match(chart, /<dt>Read from the paper<\/dt><dd>Records read from the paper by an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
+  assert.match(chart, /<dt>Not yet re-read<\/dt><dd>All other records: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.equal((chart.match(/earlier version/g) || []).length, 1, "the earlier version is named once on Stats");
   assert.match(chart, /BRENDA, Not confirmed: 1/);
   // Main-source counts that do not add up to the review results are not drawn by status.
   runtimeManifest.summary.overview = { ...overview, main_sources: { catlog: { verified: 9 } } };
@@ -2034,10 +2041,10 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No cautions/);
-  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2<\/a>/);
+  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>/);
   assert.doesNotMatch(chart, /source_paper_earlier/, "No earlier paper extractions here");
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
-  assert.doesNotMatch(chart + element("statsTotals").innerHTML, /earlier catalog|old catalog/i, "CatLog v1 and v2 are named by version");
+  assert.doesNotMatch(chart + element("statsTotals").innerHTML, /earlier catalog|old catalog/i, "Records are named by what happened to them");
   // With earlier paper extractions, they are their own row, linked to their By database choice.
   runtimeManifest.summary.overview = { ...overview, sources: { ...overview.sources, paper: 3 }, from_paper: { records: 2, papers: 1 } };
   api.renderStats();
@@ -2149,7 +2156,7 @@ function row(overrides = {}) {
     // Accepted, CatLog v2), in ch (a wider font widens it), with 6px between the columns, at least 96px.
     assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(24ch \+ 18px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.
-    assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "CatLog v2 and CatLog v1 entries",
+    assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "Read from the paper and not yet re-read",
       "Values per paper in CatLog v2", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
       "Most common EC numbers", "Organisms with the most CatLog v2 entries", "EC numbers with the most CatLog v2 entries", "Value ranges",
       "Values by enzyme class", "Cautions on values"]);
@@ -3459,8 +3466,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  // The paper, as the Source filter names the version; the Method row says how it was read ("Read from the paper" once).
-  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(CatLog v2\)<\/dd>/);
+  // The paper, read by CatLog; the Method row says how it was read ("Read from the paper" once).
+  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
   assert.equal((html.match(/Read from the paper/g) || []).length, 1, "Read from the paper is said once in the record's Source");
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
   assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: Values from says so");
@@ -4153,7 +4160,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", 
   assert.ok(!("source_kcat_over_km_values" in v2Payload), "no listed kcat/Km, no field");
   assert.equal(v2Payload.kcat, 135);
   assert.equal(v2Payload.kcat_unit, "s^-1");
-  assert.equal(v2Payload.source, "CatLog v2");
+  assert.equal(v2Payload.source, "CatLog (read from the paper)");
   assert.equal(v2Payload.source_license, "CC BY 4.0 (CatLog compilation)");
   assert.match(v2Payload.method, /^Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\.$/);
   assert.equal(v2Payload.check, "All values confirmed.");
@@ -4269,7 +4276,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   };
   assert.deepEqual(await keysFor("source=paper"), ["src-v2"]);
   assert.equal(api.browseHash(), "#browse?source=paper");
-  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: CatLog v2"]);
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: Read from the paper"]);
   assert.deepEqual(await keysFor("status=v2"), ["src-v2"], "an older address keeps working");
   assert.equal(api.browseHash(), "#browse?source=paper");
   assert.deepEqual(await keysFor("source=databases"), ["src-earlier", "src-merged", "src-oed", "src-unknown"]);
@@ -4537,9 +4544,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.ok(lines[1].startsWith('csv-1,"alcohol dehydrogenase, class I",1.1.1.1,"Homo ""sapiens""",\'=SUM(A1),\'+10 mM FBP,D102E,30.333,s^-1,0.05,mM,606.66,s^-1 mM^-1,calculated,25,7,Not checked (Unverified),'), lines[1]);
   assert.ok(lines[1].endsWith(",BRENDA,brenda,123; 456,,P00330"), lines[1]);
   assert.match(lines[2], /^csv-2,Enzyme,1\.1\.1\.1,Organism,Substrate,,wild type,,,1,mM,/, "a missing value is an empty cell");
-  // The source as This page (JSON) and Download record name it: CatLog v2 for a record read from the paper by CatLog,
-  // as the Source filter says; the databases by name otherwise.
-  assert.match(lines[2], /,Accepted,[^,]*,CatLog v2,primary_paper_direct,/);
+  // The source as This page (JSON) and Download record name it: CatLog (read from the paper) for a record read from the
+  // paper by CatLog; the databases by name otherwise.
+  assert.match(lines[2], /,Accepted,[^,]*,CatLog \(read from the paper\),primary_paper_direct,/);
   const sourceLines = (await api.csvParts([row({ record_key: "csv-oed", source_db: "oed" }), row({ record_key: "csv-merged", source_db: "sabio_rk;brenda" }),
     row({ record_key: "csv-mixed", source_db: "mixed" })])).join("").split("\r\n").slice(1, -1);
   assert.deepEqual(sourceLines.map((line) => line.match(/,(Open Enzyme Database \(OED\)|"BRENDA, SABIO-RK"|Not recorded),(?:oed|sabio_rk;brenda|mixed),/)?.[1]),
@@ -5452,10 +5459,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 // The sidebar keeps one short line per option; the explanations are behind each group's "?" (aboutSource, aboutStatus).
 {
   const source = element("sourceChecklist").innerHTML;
-  // CatLog v2 and v1 entries by name (the user, 2026-10-13), each saying what it holds in a few words on its own line
-  // (read out after the version, before the count).
-  assert.match(source, /value="paper" \/>\s*<span>CatLog v2<\/span>\s*<span class="source-mode-what">read from the paper<\/span>\s*<strong data-count="source:paper">/);
-  assert.match(source, /value="databases" \/>\s*<span>CatLog v1<\/span>\s*<span class="source-mode-what">from enzyme databases<\/span>\s*<strong data-count="source:databases">/);
+  // Each record by what happened to it (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read, one line
+  // each beside its count; CatLog is the one name, never v1 or v2.
+  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
+  assert.match(source, /value="databases" \/>\s*<span>Not yet re-read<\/span>\s*<strong data-count="source:databases">/);
+  assert.doesNotMatch(source + element("aboutSource").innerHTML, /\bv[12]\b|source-mode-what/);
   assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
@@ -5464,11 +5472,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
-  // What each version is: only part of the CatLog v1 entries were checked against their papers.
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2<\/strong>: the current version, read from the paper by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1<\/strong>: the earlier version with the same goal, started from enzyme database entries; part of them were checked against their papers \(the review result says which\)\./);
-  assert.match(source, /<label class="check-row radio-row" title="The earlier version with the same goal, started from enzyme database entries; part of them were checked/);
-  assert.doesNotMatch(element("aboutSource").innerHTML + source, /checked them against their papers/);
+  // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
+  // against their papers).
+  assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper<\/strong>: by an AI model; a second, separate AI check compared each value with the paper\./);
+  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong>: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\./);
+  assert.match(source, /<label class="check-row radio-row" title="From CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
