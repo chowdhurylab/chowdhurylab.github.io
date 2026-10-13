@@ -597,8 +597,9 @@ GUIDE_LEAD_JS = """
 """
 
 # The strict wording the user dropped on 2026-10-13 (first comparison, read blind, the 95% range) and the catalog names
-# that CatLog v1 and v2 replace; no human-review text says them.
-DROPPED_WORDING = ("first comparison", "read blind", "fully blind", "95% range", "earlier catalog", "old catalog")
+# round 8 dropped (CatLog is the one name; records say what happened to them); no human-review text says them.
+DROPPED_WORDING = ("first comparison", "read blind", "fully blind", "95% range", "earlier catalog", "old catalog", "CatLog v1",
+                   "CatLog v2")
 
 
 def review_share(part, whole):
@@ -612,8 +613,9 @@ def review_share(part, whole):
 
 
 def review_headline(quality):
-    """The share the human-review lead gives: the values correct in CatLog v1 entries (quality.review.v1), else the
-    reviewers' approved values CatLog v2 has (quality.agreement, else v2_found of v2_approved_total); None without them."""
+    """The share the human-review lead gives: the values correct of the earlier version's entries (quality.review.v1),
+    else the reviewers' approved values the same, read from the paper again (quality.agreement, else v2_found of
+    v2_approved_total); None without them."""
     review = (quality.get("review") or {}).get("v1") or {}
     entries, disputed = review.get("entries"), review.get("value_disputed")
     if isinstance(entries, int) and entries > 0 and isinstance(disputed, int) and 0 <= disputed <= entries:
@@ -725,13 +727,14 @@ REVIEW_FIXTURE = {
                   "papers_unexposed": 291, "first_agree_unexposed_pct": 85.9, "first_agree_unexposed_ci95": "81.6-89.7",
                   "catlog_value_wrong": 0, "stated_values": 58, "stated_values_catlog_has": 53},
 }
-REVIEW_SENTENCE = ("Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km "
-                   "value on 3 of them, and all 3 are as printed in the paper.")
+# Round 8's headline: "Human review: 99.9% values correct" with its base; the sentence under it does not repeat the base.
+REVIEW_BASE = "of 2,674 entries from the earlier version (408 papers)"
+REVIEW_SENTENCE = "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper."
 # The Guide's Human review item, under the Guide's lead that already says how many entries reviewers checked, starts with
 # what the lead does not say (never the same sentence twice).
-REVIEW_ITEM_START = "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper."
-REVIEW_SIDE_LINE = ("CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved "
-                    "values (89.0%); wrong CatLog values found: 0.")
+REVIEW_ITEM_START = REVIEW_SENTENCE
+REVIEW_SIDE_LINE = ("Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); "
+                    "wrong CatLog values found: 0.")
 
 
 # Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
@@ -787,8 +790,9 @@ TEAM_LABELS_CLEAR = """
 
 
 def check_review_headline(driver, browser, url):
-    """With the reviewers' own counts in the snapshot, Stats' lead says the human review of CatLog v1 entries (values
-    correct, values missing, other disagreements by kind) with CatLog v2's match as a side line; the Guide's method
+    """With the reviewers' own counts in the snapshot, Stats' lead says the human review of the earlier version's entries
+    (values correct, values missing, other disagreements by kind) with the match read from the paper again as a side
+    line; the Guide's method
     section and Team's Human check say it shortened; the first-comparison and blind fields are never shown. The fixture
     is set in Chrome before the page starts (the data files are not changed)."""
     if browser != "chrome":
@@ -809,15 +813,18 @@ def check_review_headline(driver, browser, url):
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead"))
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review of CatLog v1 entries"
+            assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
-            assert "99.9%" in band and "values correct in CatLog v1 entries" in band, band
+            assert "99.9%" in band and f"values correct {REVIEW_BASE}" in band, band
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
+            figure = " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").get_attribute("innerText").split())
+            assert figure == f"99.9% values correct {REVIEW_BASE}", figure
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").strip() == REVIEW_SENTENCE
             # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
-            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure i + sub, .stats-lead-sentence i + sub")) >= 7
+            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-sentence i + sub")) >= 4
             text = lead.get_attribute("innerText")
-            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog v2 has 53 of the 58 values reviewers named" in text, text
+            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog has read 53 of the 58 values reviewers named from the paper" in text, text
+            assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
             assert "could not find the value 153, organism name 13, DOI 5" in text, text
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").strip() == REVIEW_SIDE_LINE
             for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
@@ -827,13 +834,13 @@ def check_review_headline(driver, browser, url):
             driver.get(url + "#guide-method")
             wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
             guide = driver.execute_script(GUIDE_LEAD_JS)
-            assert guide and "values correct (kcat, Km, kcat/Km) 99.9%" in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
+            assert guide and f"99.9% values correct {REVIEW_BASE}." in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
             human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
             assert human.startswith(REVIEW_ITEM_START) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
             assert "Human reviewers checked 2,674" not in human, "The Human review item repeats the Guide's lead"
-            # kcat, Km and kcat/Km in the site's italic markup in the lead and the Human review item, as Stats' lead
-            assert driver.execute_script("""return ['guideMethodLead', 'guideMethodHuman'].every((id) =>
-                document.getElementById(id).querySelectorAll('i + sub').length >= 3)"""), "kcat, Km and kcat/Km are in italics"
+            # kcat, Km and kcat/Km in the site's italic markup in the Human review item, as Stats' lead
+            assert driver.execute_script("""return document.getElementById('guideMethodHuman').querySelectorAll('i + sub').length >= 3"""), \
+                "kcat, Km and kcat/Km are in italics"
             assert_document_stays(driver, "Guide with the human review")
             # Team's Human check says the values correct, on the wide and the upright loop, and its lines touch no other
             # station's.
@@ -841,7 +848,7 @@ def check_review_headline(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "99.9% values correct in 2,674 CatLog v1 entries" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "99.9% values correct of 2,674 entries from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
