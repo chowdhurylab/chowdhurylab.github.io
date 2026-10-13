@@ -87,6 +87,8 @@ a:hover { text-decoration:underline }
 :where(a,button,input,select,summary):focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 [hidden], .hidden { display:none !important }
 .muted { color:var(--muted) }
+/* A number and its unit, or a range with its power of ten ("1–3 × 10⁷ s⁻¹"), kept on one line. */
+.nowrap { white-space:nowrap }
 /* Read by screen readers only. Its box is 1px inside the nearest positioned ancestor; every scrolling view below is
    positioned, so hidden text deep in a long page never sits at the foot of the document and makes it scroll. */
 .visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; border:0; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }

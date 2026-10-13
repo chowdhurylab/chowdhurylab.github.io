@@ -179,6 +179,11 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // Cautions state the problem; they give no orders.
   assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
+  // A number stays with its unit, and a range with its power of ten, on one line.
+  const cautionsHtml = pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0];
+  assert.ok(cautionsHtml.includes("exactly 0&nbsp;&deg;C"));
+  assert.ok(cautionsHtml.includes('<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>-1</sup></span>'));
+  assert.doesNotMatch(cautionsHtml, /\d (?:&deg;C|M\b|nM\b|s<sup>)/);
   // The release tool writes both descriptions: its earlier wording, or the site's words (records, review results, no
   // serial comma) once it uses them.
   assert.ok(
