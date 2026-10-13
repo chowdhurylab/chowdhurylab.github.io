@@ -1656,6 +1656,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    (it read "Review res"), so the toolbar's buttons are narrower there too; "Sort" stays. */
 @media (min-width: 360px) and (max-width: 389px) {
   .records-header:has(#activeFilterCount:not(.hidden)) :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
+  /* Linux's wider DejaVu font still left it 2px short at 360px: the toolbar's gaps close up a little too. */
+  .records-header:has(#activeFilterCount:not(.hidden)) { column-gap:6px }
+  .records-header:has(#activeFilterCount:not(.hidden)) .sort-control { gap:var(--sp-1) }
 }
 
 @media (prefers-reduced-motion: reduce) {

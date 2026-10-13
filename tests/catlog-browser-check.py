@@ -235,14 +235,19 @@ def check_human_checked(driver, url):
     # A human-checked record that shows no kcat/Km: its Human review line names only the values it shows ("A human
     # reviewer approved the Km shown."), never the rule's kcat/Km. Sorted by kcat/Km, those records come last.
     total = int(count.replace(",", ""))
-    driver.execute_script("location.hash = arguments[0]", f"#browse?checked=1&sort=kcat_over_km&rows=100&page={(total + 99) // 100}")
+    # Sorting waits for the whole index (the Sort menu is disabled until then): pick rows only once the page is sorted,
+    # or a slower browser (Safari on CI) reorders the page under the test.
+    wait.until(lambda d: not d.find_element(By.ID, "sortSelect").get_attribute("disabled"))
+    page_hash = f"#browse?checked=1&sort=kcat_over_km&rows=100&page={(total + 99) // 100}"
+    driver.execute_script("location.hash = arguments[0]", page_hash)
     wait.until(lambda d: d.find_element(By.ID, "pageLabel").text.endswith(f"of {count}"))
     no_ratio = driver.execute_script("""
         return [...document.querySelectorAll('#recordsBody tr[data-key]')]
             .filter(tr => tr.querySelector('td.c-eff .metric-with-note')?.innerText.trim() === '—').map(tr => tr.dataset.key).slice(-3);
     """)
     for key in no_ratio:
-        # (Safari redraws the table after the previous record closes: wait for the row before clicking it.)
+        # (Safari redraws the table after the previous record closes: back on the same page, wait for the row, click it.)
+        driver.execute_script("if (!document.querySelector(`#recordsBody tr[data-key='${arguments[1]}']`)) location.hash = arguments[0]", page_hash, key)
         wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme').click() is None)
         wait.until(lambda d: d.execute_script(
             "return document.querySelector('#detailContent #detailRecordKey')?.textContent === arguments[0]"
