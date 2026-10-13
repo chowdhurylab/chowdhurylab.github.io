@@ -156,11 +156,18 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual((result["human_checked_accepted"], result["human_marked"]), (1, 3))
         # Names fold case and spacing; Unknown and blank are not names.
         self.assertEqual((result["enzymes"], result["organisms"], result["substrates"], result["ec_numbers"]), (2, 2, 2, 3))
-        classes = {item["class"]: (item["count"], item["accepted"]) for item in result["ec_classes"]}
-        self.assertEqual(classes[1], (2, 2))
-        self.assertEqual(classes[2], (1, 1))
-        self.assertEqual(classes[3], (1, 0))
-        self.assertEqual(classes[7], (0, 0))
+        classes = {item["class"]: (item["count"], item["accepted"], item["from_paper"]) for item in result["ec_classes"]}
+        self.assertEqual(classes[1], (2, 2, 1))
+        self.assertEqual(classes[2], (1, 1, 0))
+        self.assertEqual(classes[3], (1, 0, 0))
+        self.assertEqual(classes[7], (0, 0, 0))
+        # CatLog v2 entries alone: their organisms and EC numbers (Browse: source=paper with the organism or EC filter)
+        # and how many values were read from each paper (record a: kcat, Km and the printed kcat/Km).
+        self.assertEqual(result["top_organisms_from_paper"], [{"name": "Homo sapiens", "count": 1}])
+        self.assertEqual(result["top_ec_from_paper"], [{"ec": "1.1.1.1", "name": "alcohol dehydrogenase", "count": 1}])
+        self.assertEqual(result["from_paper_values"], {"values": 3, "bins": [1, 2, 5, 10, 20, 50, 100, 200, 500],
+                                                       "papers": [0, 1, 0, 0, 0, 0, 0, 0, 0]})
+        self.assertEqual(sum(result["from_paper_values"]["papers"]), result["from_paper"]["papers"])
         self.assertEqual((result["ec_class_none"], result["ec_class_multiple"]), (1, 1))
         # One organism whatever its capitals (the Browse organism filter ignores them).
         self.assertEqual(result["top_organisms"][0], {"name": "Homo sapiens", "count": 2})
@@ -192,7 +199,17 @@ class OverviewTests(unittest.TestCase):
         # A zero Km has no logarithm: only the two positive Km values count.
         self.assertEqual(result["metrics"]["km"]["n"], 2)
         self.assertEqual(result["metrics"]["kcat_over_km"]["n"], 1)
-        self.assertLess(len(json.dumps(result, separators=(",", ":"))), 6000)
+        # Per enzyme class on one half-decade grid per metric: record b's Km counts in classes 1 and 2 (as ec_classes
+        # counts it); record c has no class; record d's kcat is in class 3.
+        km = result["metrics"]["km"]["by_class"]
+        self.assertEqual((km["bin_width"], [item["class"] for item in km["classes"]]), (0.5, [1, 2]))
+        self.assertEqual([(item["n"], item["median"]) for item in km["classes"]], [(2, 1.15), (1, 2.0)])
+        for metric in ("kcat", "km", "kcat_over_km"):
+            grid = result["metrics"][metric]["by_class"]
+            self.assertTrue(all(14 <= len(item["counts"]) <= 18 and sum(item["counts"]) == item["n"] for item in grid["classes"]))
+            self.assertEqual(len({len(item["counts"]) for item in grid["classes"]}), 1, "One grid for every class")
+        self.assertEqual([item["class"] for item in result["metrics"]["kcat"]["by_class"]["classes"]], [1, 3])
+        self.assertLess(len(json.dumps(result, separators=(",", ":"))), 8000)
 
     def test_listed_kcat_over_km_mismatch_is_a_kcat_over_km_caution(self):
         # CatLog's flag for an older record whose every listed kcat/Km is more than 2-fold from the one shown (plan P7)
@@ -356,6 +373,27 @@ class OverviewTests(unittest.TestCase):
             manifest["enriched_download"]["sha256"] = "different"
             with self.assertRaisesRegex(ValueError, "hash"):
                 followup.build_overview(manifest, path)
+
+    def test_class_histograms_share_one_grid(self):
+        values = [10.0 ** (exponent / 4) for exponent in range(-12, 13)] + [1e-12, 1e12]
+        start, bins = followup.class_grid(sorted(values))
+        self.assertTrue(14 <= bins <= 18)
+        self.assertEqual(start * 2, round(start * 2), "Edges on half decades")
+        grid = followup.by_class(values, {1: values, 4: values[:5], 6: []})
+        self.assertEqual([item["class"] for item in grid["classes"]], [1, 4], "A class without values is left out")
+        whole = grid["classes"][0]
+        self.assertEqual(sum(whole["counts"]), len(values), "Values beyond the grid go into the end bins")
+        self.assertEqual((whole["counts"][0] > 0, whole["counts"][-1] > 0), (True, True))
+        # 1 sits at the start of its own bin, not the one below.
+        one = followup.class_summary([1.0], start, bins)["counts"]
+        self.assertEqual(one.index(1), round((0 - start) / 0.5))
+        self.assertIsNone(followup.by_class([], {}))
+        # Values per paper: papers in bins from 1, 2, 5, 10 ... values; a paper with none is counted apart.
+        self.assertEqual(followup.values_per_paper({"p1": 1, "p2": 4, "p3": 5, "p4": 600, "p5": 0}),
+                         {"values": 610, "bins": [1, 2, 5, 10, 20, 50, 100, 200, 500], "papers": [1, 1, 1, 0, 0, 0, 0, 0, 1],
+                          "no_values": 1})
+        self.assertEqual(followup.paper_values({"kcat": 1, "km": 2, "kcat_over_km": 3, "kcat_over_km_origin": "calculated"}), 2)
+        self.assertEqual(followup.paper_values({"kcat": 0, "km": None, "kcat_over_km": 3}), 2)
 
     def test_metric_histogram_bins(self):
         values = [10.0 ** exponent for exponent in range(-3, 3)] + [5e9]

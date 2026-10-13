@@ -448,6 +448,73 @@ def metric_summary(values, unit):
             "log10_start": low, "counts": counts}
 
 
+# Values by enzyme class (Stats section 5, small multiples): per metric, one grid of half-decade bins shared by every
+# class (14-18 bins around the middle 99% of all that metric's values; the end bins also hold every value beyond them),
+# and per class its values' count, median, 10th and 90th percentiles and bin counts. A record in several classes counts
+# in each, as ec_classes counts it.
+CLASS_BIN_WIDTH = 0.5
+CLASS_BINS = (14, 18)
+
+
+def class_grid(ordered):
+    """(first bin's lower edge in log10, bins) for a sorted list of positive values."""
+    low = math.floor(math.log10(percentile(ordered, 0.005)) / CLASS_BIN_WIDTH) * CLASS_BIN_WIDTH
+    high = math.ceil(math.log10(percentile(ordered, 0.995)) / CLASS_BIN_WIDTH) * CLASS_BIN_WIDTH
+    bins = max(1, round((high - low) / CLASS_BIN_WIDTH))
+    widen = True
+    while bins < CLASS_BINS[0] or bins > CLASS_BINS[1]:
+        grow = bins < CLASS_BINS[0]
+        if widen == grow:
+            low += -CLASS_BIN_WIDTH if grow else CLASS_BIN_WIDTH
+        bins += 1 if grow else -1
+        widen = not widen
+    return round(low, 1), bins
+
+
+def class_summary(values, start, bins):
+    ordered = sorted(values)
+    counts = [0] * bins
+    for value in ordered:
+        counts[min(max(math.floor((math.log10(value) - start) / CLASS_BIN_WIDTH + 1e-9), 0), bins - 1)] += 1
+    return {"n": len(ordered), "median": significant(percentile(ordered, 0.5)),
+            "p10": significant(percentile(ordered, 0.1), 2), "p90": significant(percentile(ordered, 0.9), 2),
+            "counts": counts}
+
+
+def by_class(all_values, per_class):
+    """The per-class summaries of one metric on one shared grid, or None without values."""
+    if not all_values:
+        return None
+    start, bins = class_grid(sorted(all_values))
+    classes = [{"class": number, **class_summary(values, start, bins)} for number, values in sorted(per_class.items()) if values]
+    return {"log10_start": start, "bin_width": CLASS_BIN_WIDTH, "classes": classes} if classes else None
+
+
+# CatLog v2 values per paper (Stats section 3): papers by how many kcat, Km and printed kcat/Km values CatLog v2 read
+# from them (a kcat/Km calculated from kcat and Km is not a value read), in bins starting at these counts.
+VALUES_PER_PAPER_BINS = (1, 2, 5, 10, 20, 50, 100, 200, 500)
+
+
+def paper_values(row):
+    origin = str(row.get("kcat_over_km_origin") or "")
+    return sum(row.get(field) is not None for field in ("kcat", "km")) + (
+        row.get("kcat_over_km") is not None and origin != "calculated")
+
+
+def values_per_paper(counts):
+    papers = [0] * len(VALUES_PER_PAPER_BINS)
+    none = 0
+    for value in counts.values():
+        if value < 1:
+            none += 1
+            continue
+        papers[max(index for index, low in enumerate(VALUES_PER_PAPER_BINS) if value >= low)] += 1
+    result = {"values": sum(counts.values()), "bins": list(VALUES_PER_PAPER_BINS), "papers": papers}
+    if none:
+        result["no_values"] = none
+    return result
+
+
 def top(counter, limit=OVERVIEW_TOP):
     return sorted(counter.items(), key=lambda item: (-item[1], item[0]))[:limit]
 
@@ -461,16 +528,20 @@ def summarize_overview(rows, marks=None):
     papers, v2_papers = set(), set()
     names = {field: set() for field in ("enzyme_display_name", "organism", "substrate_name")}
     ec_set = set()
-    ec_classes = {number: {"count": 0, "accepted": 0} for number in EC_CLASS_NAMES}
+    ec_classes = {number: {"count": 0, "accepted": 0, "from_paper": 0} for number in EC_CLASS_NAMES}
     no_ec_class = multi_class = 0
     ec_counts, raw_organisms = Counter(), Counter()
     ec_names, organism_spellings = defaultdict(Counter), defaultdict(Counter)
+    # the same for CatLog v2 entries alone (Browse: source=paper with the organism or EC filter)
+    v2_ec_counts, v2_raw_organisms, v2_organism_spellings = Counter(), Counter(), defaultdict(Counter)
+    v2_paper_values = Counter()
     forms = Counter({"wild": 0, "variant": 0, "not_stated": 0})
     conditions = Counter({"temperature": 0, "ph": 0, "both": 0})
     cautions = Counter({key: 0 for key in (*CAUTION_GROUPS, "temperature", "none")})
     sources = Counter({key: 0 for key in (*SOURCE_KEYS, "other")})
     main_sources = defaultdict(Counter)
     values = {metric: [] for metric in METRIC_UNITS}
+    class_values = {metric: defaultdict(list) for metric in METRIC_UNITS}
     v2_records = with_paper = checked_accepted = marked = 0
     for row in rows:
         status = row.get("verification_status")
@@ -481,9 +552,12 @@ def summarize_overview(rows, marks=None):
         keys = paper_keys(row)
         papers |= keys
         with_paper += bool(keys)
-        if str(row.get("verification_method") or "").startswith("catlog_v2_read"):
+        v2 = str(row.get("verification_method") or "").startswith("catlog_v2_read")
+        if v2:
             v2_records += 1
             v2_papers |= keys
+            for key in keys:
+                v2_paper_values[key] += paper_values(row)
         if marks is not None:
             mark = marks.get(str(row.get("measurement_key") or row.get("record_key") or ""))
             marked += mark is not None
@@ -496,6 +570,10 @@ def summarize_overview(rows, marks=None):
         organism = " ".join(str(row.get("organism") or "").split())
         if name_key(organism):
             organism_spellings[name_key(organism)][organism] += 1
+        if v2:
+            v2_raw_organisms[str(row.get("organism") or "")] += 1
+            if name_key(organism):
+                v2_organism_spellings[name_key(organism)][organism] += 1
         numbers = ec_numbers(row)
         classes = {int(number[0]) for number in numbers if re.match(r"^[1-7]\.", number)}
         no_ec_class += not classes
@@ -503,10 +581,12 @@ def summarize_overview(rows, marks=None):
         for number in classes:
             ec_classes[number]["count"] += 1
             ec_classes[number]["accepted"] += accepted
+            ec_classes[number]["from_paper"] += v2
         complete = {number for number in numbers if EC_NUMBER.match(number)}
         ec_set |= complete
         for number in complete:
             ec_counts[number] += 1
+            v2_ec_counts[number] += v2
         if len(numbers) == 1 and complete:
             enzyme = " ".join(str(row.get("enzyme_display_name") or "").split())
             if name_key(enzyme):
@@ -524,6 +604,8 @@ def summarize_overview(rows, marks=None):
             value = _number(row.get(metric))
             if value is not None and value > 0 and unit_key(row.get(f"{metric}_unit")) in units:
                 values[metric].append(value)
+                for number in classes:
+                    class_values[metric][number].append(value)
     total = sum(statuses.values())
     overview = {
         "records": total,
@@ -551,9 +633,17 @@ def summarize_overview(rows, marks=None):
         "conditions": dict(conditions),
         "cautions": dict(cautions),
         "metrics": {metric: metric_summary(found, METRIC_LABELS[metric]) for metric, found in values.items()},
+        "top_organisms_from_paper": top_organisms(v2_organism_spellings, v2_raw_organisms),
+        "top_ec_from_paper": [{"ec": number, "name": most_common(ec_names[number]), "count": count}
+                              for number, count in top(+v2_ec_counts)],
+        "from_paper_values": values_per_paper(v2_paper_values),
         "sources": dict(sources),
         "main_sources": {key: dict(sorted(main_sources[key].items())) for key in MAIN_SOURCE_KEYS if main_sources[key]},
     })
+    for metric, summary in overview["metrics"].items():
+        grid = by_class(values[metric], class_values[metric])
+        if grid and summary.get("n"):
+            summary["by_class"] = grid
     return overview, dict(statuses)
 
 
