@@ -367,9 +367,12 @@ table scrolls sideways. The table has no temperature or pH columns (the user,
 2026-10-13: the rows stay about the enzyme and its values); the records of one
 paper's temperature or pH series on the page (the same enzyme, variant, EC,
 organism, substrate and source, whatever their values or review result) say
-which is theirs under the substrate ("pH 6.5", "37 °C", "pH not stated"; only
-the part that differs in the series; the tooltip adds "this paper also measured
-this enzyme and substrate at another pH"). The table writes
+which is theirs under the substrate ("pH 6.5", "37 °C", "pH not stated",
+"temperature not stated", "pH and temperature not stated": spelled out, as the
+table has no T column; only the
+part that differs in the series; the tooltip adds "this paper also measured this
+enzyme and substrate at another pH", or, for records whose values another record
+shares, "otherwise the same as another record of this paper"). The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from
 the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat or

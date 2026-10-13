@@ -2932,9 +2932,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(notes.get("t1"), "pH 7 · 25 °C");
   assert.equal(notes.get("t2"), "pH not stated · 37 °C");
   assert.equal(notes.get("t3"), "pH 7 · 37 °C");
+  // A temperature the paper does not state is spelled out: the table has no T column to explain "T".
+  const noTemperature = api.lookAlikeRowKeys([twin("n1", { substrate_name: "serine", temperature_display: "", kcat_display: "3" }),
+    twin("n2", { substrate_name: "serine", temperature_display: "60", ph_display: "8" })]);
+  assert.deepEqual(["n1", "n2"].map((key) => noTemperature.get(key)), ["pH 7 · temperature not stated", "pH 8 · 60 °C"]);
+  const neither = api.lookAlikeRowKeys([twin("m1", { substrate_name: "serine", temperature_display: "", ph_display: "", kcat_display: "3" }),
+    twin("m2", { substrate_name: "serine", temperature_display: "60", ph_display: "8" })]);
+  assert.deepEqual(["m1", "m2"].map((key) => neither.get(key)), ["pH and temperature not stated", "pH 8 · 60 °C"]);
   assert.equal(notes.get("same1"), "", "a record that shares its temperature and pH with another still reads alike");
   assert.equal(notes.get("same3"), "pH 8");
-  assert.equal(api.substrateNoteHtml(assay[0], notes), '<small class="condition-note" title="pH 6.5; the other values as another record of this paper">pH 6.5</small>');
+  assert.equal(api.substrateNoteHtml(assay[0], notes), '<small class="condition-note" title="pH 6.5; otherwise the same as another record of this paper">pH 6.5</small>');
   assert.match(api.substrateNoteHtml(assay[6], notes), />like another record<\/small>/);
   // A pH or temperature series whose values differ (cruzain at pH 3.5 to 7.5, PMID 29336553): each record says its own
   // pH; records that read alike in every column, pH included, still say so; another variant or paper is another series.

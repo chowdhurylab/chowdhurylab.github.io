@@ -6180,8 +6180,8 @@
   // Records of one paper that read the same in every column but differ in their assay: the short condition note the
   // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, records with values
   // on this page of one paper's temperature or pH series (the same enzyme, variant, EC, organism, substrate and source,
-  // whatever their values) say which temperature or pH is theirs, "pH 6.5" or "37 °C", when those differ in the series
-  // (the table shows neither). Records that read alike in every column, values included, and share their temperature
+  // whatever their values) say which temperature or pH is theirs, "pH 6.5" or "37 °C" (or "temperature not stated", in
+  // full: the table has no T column), when those differ in the series (the table shows neither). Records that read alike in every column, values included, and share their temperature
   // and pH too say only that they read alike (the table cannot tell whether their conditions, protein or nothing at all
   // differ).
   const VISIBLE_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name",
@@ -6228,10 +6228,12 @@
       const other = differs[0] && differs[1] ? "pH or temperature" : differs[0] ? "pH" : "temperature";
       rows.forEach((row) => {
         const [ph, temperature] = condition(row);
-        const note = [
-          differs[0] ? (ph === EMPTY_VALUE ? "pH not stated" : `pH ${ph}`) : "",
-          differs[1] ? (temperature === EMPTY_VALUE ? "T not stated" : `${temperature} °C`) : "",
-        ].filter(Boolean).join(" · ");
+        const note = differs[0] && differs[1] && ph === EMPTY_VALUE && temperature === EMPTY_VALUE
+          ? "pH and temperature not stated"
+          : [
+            differs[0] ? (ph === EMPTY_VALUE ? "pH not stated" : `pH ${ph}`) : "",
+            differs[1] ? (temperature === EMPTY_VALUE ? "temperature not stated" : `${temperature} °C`) : "",
+          ].filter(Boolean).join(" · ");
         notes.set(row.record_key, note);
         notes.titles.set(row.record_key, `${note}; this paper also measured this enzyme and substrate at another ${other}`);
       });
@@ -6262,7 +6264,7 @@
     const assay = lookAlikes.get?.(row.record_key) || "";
     const note = condition || assay || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
     const title = condition || lookAlikes.titles?.get(row.record_key)
-      || (assay ? `${assay}; the other values as another record of this paper` : LOOK_ALIKE_TITLE);
+      || (assay ? `${assay}; otherwise the same as another record of this paper` : LOOK_ALIKE_TITLE);
     const temperatureFlag = temperatureFlagBadgeHtml(flags);
     if (!temperatureFlag) return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
     return `<small class="condition-note">${temperatureFlag}${note ? ` <span title="${escapePublic(title)}">· ${escapePublic(note)}</span>` : ""}</small>`;
