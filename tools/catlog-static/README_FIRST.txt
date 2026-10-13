@@ -2,8 +2,8 @@ CatLog dataset notes
 
 CatLog in brief
 - CatLog is a catalog of enzyme kinetic values (kcat, Km, kcat/Km and Ki), each with its enzyme, organism, substrate,
-  variant, assay conditions and source. This snapshot (2026-10-12) holds 169,060 records, 51,485 of them accepted.
-- 41,156 records were read from the paper by CatLog (1,630 papers); the other 127,904 come from enzyme databases (the
+  variant, assay conditions and source. This snapshot (2026-10-13) holds 169,413 records, 53,545 of them accepted.
+- 44,627 records were read from the paper by CatLog (1,919 papers); the other 124,786 come from enzyme databases (the
   earlier catalog).
 
 How the values were obtained and checked
@@ -16,26 +16,30 @@ How the values were obtained and checked
   plus earlier paper extractions and rows with no source recorded. An earlier automated pipeline of AI models and code
   checks screened them; it stopped on 2026-10-09. When CatLog reads a paper, its records replace that paper's earlier
   ones.
-- Review result (verification_status): verified or corrected = Accepted (51,485); manual_review_required = Not
+- Review result (verification_status): verified or corrected = Accepted (53,545); manual_review_required = Not
   confirmed (the earlier review left a question open); unverified or mathematically_inferred = Not checked; disputed =
   Disputed. An accepted record has a linked paper: 173 older records that the earlier review accepted but that have no
-  PMID or DOI (public_trust_basis identity_only) are mathematically_inferred, not accepted. 121 older records are
+  PMID or DOI (public_trust_basis identity_only) are mathematically_inferred, not accepted. 58 older records are
   accepted because a human reviewer approved every value, although the earlier review had not accepted them
   (accepted_basis "human review").
 
 Quality checks
-- AI audits: 973 values re-checked against their papers by a separate AI auditor that tries to find errors; 2 (0.2%)
+- AI audits: 1,081 values re-checked against their papers by a separate AI auditor that tries to find errors; 3 (0.3%)
   were wrong and removed.
-- Human review: 1,861 accepted records are human-checked: a human reviewer approved every value shown. In the earlier
-  catalog, 9 of 2,538 values reviewers compared had a wrong number or unit (99.6% correct), and 114 had a wrong
+- Human review: 1,543 accepted records are human-checked: a human reviewer approved every value shown. In the earlier
+  catalog, 19 of 3,887 values reviewers compared had a wrong number or unit (99.5% correct), and 137 had a wrong
   enzyme, organism, substrate, variant or protein label.
-- Agreement with human reviewers (as of 2026-10-12): reviewers checked 98 papers of the earlier catalog that CatLog
-  has since read, and approved 2,489 values on them. CatLog has the same value for 2,232 (89.7%). Of the 257 that
-  differ, CatLog's own check against the paper (not the reviewers') has covered 152: CatLog right in 109 (the earlier
-  catalog had a wrong value in 9 and a wrong enzyme, organism, substrate, variant or protein label in 100); the same
-  printed value under another name in 16; rounding in 3; CatLog wrong in 0; not comparable in 24 (CatLog left the
-  value out under its reading rules). The other 105 are not checked yet. Reviewers also named 58 values the earlier
-  catalog lacked; CatLog has 53 of them. No record read by CatLog has been reviewed directly yet.
+- Agreement with human reviewers (as of 2026-10-12): reviewers checked 291 papers of the earlier catalog that CatLog
+  has since read, and approved 3,838 values on them. At the first comparison, before any fix it prompted, CatLog had
+  the same value for 85.6% of those on the 271 papers it read fully blind (95% range 80.9-89.9; 86.8% on all of them).
+  That comparison found 68 label or annotation errors in CatLog (a UniProt entry, substrate structure or variant
+  field) and 1 missed value, and 0 wrong kcat or Km numbers; after fixing them CatLog has the same value for 3,412
+  (88.9%). Of the 426 that still differ, CatLog's own check against the paper (not the reviewers') has covered 323:
+  CatLog right in 142 (the earlier catalog had a wrong value in 19 and a wrong enzyme, organism, substrate, variant or
+  protein label in 123); the same printed value under another name in 134; rounding in 3; CatLog wrong in 0; not
+  comparable in 44 (CatLog left the value out under its reading rules). The other 103 are not checked yet. Reviewers
+  also named 58 values the earlier catalog lacked; CatLog has 53 of them. No record read by CatLog has been reviewed
+  directly yet.
 
 Files
 - Full data (catlog-enriched.<id>.jsonl.gz): gzip-compressed JSON Lines, one row per line, every field below.
@@ -108,32 +112,32 @@ Fields (* = Full data only)
   identity_resolution_state, data_origin*, review_key.
 
 License
-- Read from the paper by CatLog: 41,156 rows, CatLog compilation, CC BY 4.0: cite the snapshot and the CatRange paper
+- Read from the paper by CatLog: 44,627 rows, CatLog compilation, CC BY 4.0: cite the snapshot and the CatRange paper
   below. Text quoted from a paper (the printed lines in proof_lines) remains the publisher's. Their source_license
   reads "CC BY 4.0 (CatLog compilation); quoted paper text remains the publisher's".
 - The other rows keep the license of the database they came from; source_license names each license of a merged row:
-  - CC BY 4.0: 110,705 rows from BRENDA, OED and UniProt.
-  - SABIO-RK terms (free for academic use): 11,254 rows, alone or merged with a CC BY 4.0 row.
-  - CC BY-NC-ND 4.0, non-commercial use only, no derivatives: 5,766 rows, every row whose source_license includes it:
-    4,195 with SKiD as their source and 1,571 BRENDA, SABIO-RK or UniProt rows a SKiD record was merged into. Filter
+  - CC BY 4.0: 107,860 rows from BRENDA, OED and UniProt.
+  - SABIO-RK terms (free for academic use): 11,039 rows, alone or merged with a CC BY 4.0 row.
+  - CC BY-NC-ND 4.0, non-commercial use only, no derivatives: 5,709 rows, every row whose source_license includes it:
+    4,181 with SKiD as their source and 1,528 BRENDA, SABIO-RK or UniProt rows a SKiD record was merged into. Filter
     on source_license, not on source_db.
-  - As published (see paper): 25 rows from earlier paper extractions. See source: 154 rows.
+  - As published (see paper): 24 rows from earlier paper extractions. See source: 154 rows.
 - For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.
 - Sources (source_db; a row merged from several databases counts under each):
-  - BRENDA (brenda): 81,418 rows; CC BY 4.0; https://www.brenda-enzymes.org/
-  - Read from the paper by CatLog (primary_paper_direct): 41,156 rows, CatLog compilation CC BY 4.0, text quoted from
-    a paper remains the publisher's; 25 earlier paper extractions: as published (see paper).
-  - Open Enzyme Database (OED) (oed): 15,834 rows; CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
-  - UniProt (uniprot): 14,686 rows; CC BY 4.0; https://www.uniprot.org/
-  - SABIO-RK (sabio_rk): 11,669 rows; SABIO-RK terms (free for academic use; see sabiork.h-its.org);
+  - BRENDA (brenda): 80,276 rows; CC BY 4.0; https://www.brenda-enzymes.org/
+  - Read from the paper by CatLog (primary_paper_direct): 44,627 rows, CatLog compilation CC BY 4.0, text quoted from
+    a paper remains the publisher's; 24 earlier paper extractions: as published (see paper).
+  - Open Enzyme Database (OED) (oed): 14,531 rows; CC BY 4.0; https://openenzymedb.platform.moleculemaker.org/
+  - UniProt (uniprot): 14,243 rows; CC BY 4.0; https://www.uniprot.org/
+  - SABIO-RK (sabio_rk): 11,452 rows; SABIO-RK terms (free for academic use; see sabiork.h-its.org);
     https://sabiork.h-its.org/
-  - SKiD (Structure-Oriented Kinetics Database) (skid): 4,195 rows; CC BY-NC-ND 4.0;
+  - SKiD (Structure-Oriented Kinetics Database) (skid): 4,181 rows; CC BY-NC-ND 4.0;
     https://zenodo.org/records/15355031
   - STRENDA DB (strenda): 3 rows; see source; https://www.beilstein-strenda-db.org/
   - No source recorded (unknown): 151 rows; see source.
 
 Cite
-- CatLog snapshot 2026-10-12 (data ID 7a8dd50c1e), Chowdhury Lab,
+- CatLog snapshot 2026-10-13 (data ID 3df64d5f0c), Chowdhury Lab,
   https://chowdhurylab.github.io/tools/catlog-latest.html
 - Sajeevan, K. A., et al. (2026). CatRange enables robust prediction of enzyme variant kinetic regimes. PNAS Nexus,
   pgag309. doi: 10.1093/pnasnexus/pgag309 (https://doi.org/10.1093/pnasnexus/pgag309). The CatRange paper describes
@@ -144,13 +148,13 @@ Cite
 - Keep the file you used: older snapshots leave the site over time.
 
 Snapshot details
-- Rows: 169,060. Generated (UTC): 2026-10-12T19:16:42+00:00.
-- Data ID 7a8dd50c1e: the first 10 characters of the SHA-256 of the decompressed Full data (gunzip -c
-  catlog-enriched.<id>.jsonl.gz | shasum -a 256): 7a8dd50c1e727a3c1dd2cabf87f8674760be34dadd3adec3d1004011d748390c.
-- Full data file catlog-enriched.6075bf41d0a0.jsonl.gz, SHA-256
-  6075bf41d0a0fd01d4ba256cbefb3f4742f277e0fceb1a6cb6c3841801b707bd.
-- Table file catlog-table.230e522b8971.jsonl.gz, SHA-256
-  230e522b8971045a7cb88c248d5a19ff56bffb8bfe472b4760e3ac8b60aafc32.
+- Rows: 169,413. Generated (UTC): 2026-10-13T02:09:44+00:00.
+- Data ID 3df64d5f0c: the first 10 characters of the SHA-256 of the decompressed Full data (gunzip -c
+  catlog-enriched.<id>.jsonl.gz | shasum -a 256): 3df64d5f0cb26948c9a1134aad1aba0d441b1e3147ead25dea80475a1faa830c.
+- Full data file catlog-enriched.70f39d7a4285.jsonl.gz, SHA-256
+  70f39d7a428597c679117c0e200c2cb126ba45b53f628bc0341ace750f81f3ec.
+- Table file catlog-table.f43d7c60b121.jsonl.gz, SHA-256
+  f43d7c60b1210e987ddad1064feb1f161e470c2265e9cf11ac04c4e44a0398b0.
 - SHA-256 of the catalog file this snapshot was built from:
-  a75ddcac8a9a43bcedfd132bce83dbd323d85a51aacd9a09945e315465a999c0.
-- Rows with a sequence: 86,236 (wild-type sequence 81,868, variant sequence 25,287); rows with SMILES: 106,993.
+  7c910e56933b1164f286171a959f31b06da4d076aebd81a23b59c1e4ed1040e2.
+- Rows with a sequence: 86,117 (wild-type sequence 81,888, variant sequence 25,111); rows with SMILES: 107,655.
