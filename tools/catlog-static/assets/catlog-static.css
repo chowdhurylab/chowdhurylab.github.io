@@ -1055,7 +1055,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }
   .snapshot-more { display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-height:28px }
   .snapshot-checked, .snapshot-paper { align-self:center; padding:5px 0 }
-  .summary-grid { gap:16px }
+  /* A filtered count ("Matching records") that does not fit beside Accepted puts Accepted on the next line. */
+  .summary-grid { flex-wrap:wrap; gap:6px 16px }
   .snapshot-meta { flex-basis:100%; flex-wrap:wrap; gap:4px 16px; border-left:0; padding-left:0 }
   .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }
   body.filters-open { overflow:hidden }
