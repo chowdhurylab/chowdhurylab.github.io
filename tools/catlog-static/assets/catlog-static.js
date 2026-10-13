@@ -8843,10 +8843,10 @@
     return merged && rowSourceBits({ source_db: merged }) !== SOURCE_UNRECORDED_BIT ? merged : value;
   }
 
-  // The databases a record merges, unless that only repeats its Source.
+  // The databases a record merges, unless that only repeats its source (the Values from row).
   function mergedDatabasesRow(summary, detail) {
     const merged = (Array.isArray(detail.source_databases_merged) ? detail.source_databases_merged : []).filter(Boolean);
-    // The same databases in another order ("sabio_rk, brenda" under Source "BRENDA, SABIO-RK") only repeat the Source.
+    // The same databases in another order ("sabio_rk, brenda" under Values from "BRENDA, SABIO-RK") only repeat it.
     const bits = merged.reduce((all, value) => all | rowSourceBits({ source_db: value }), 0) & ~SOURCE_UNRECORDED_BIT;
     if (!bits || bits === rowSourceBits({ source_db: recordSourceDb(summary, detail) })) return "";
     return kv("Databases", sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", "));
@@ -9474,15 +9474,16 @@
   }
 
   // ---- Record panel: C. Source ----
-  // The source and its own details in one list (each row wraps; nothing to open): the source, what it merges, where the
-  // enzyme name comes from (an older record; a record read from the paper takes it from the paper), how the values were
-  // read or what stands behind them, the license and the snapshot.
+  // The source and its own details in one list (each row wraps; nothing to open): where the values come from (named
+  // "Values from", so the list does not repeat the section's heading), what it merges, where the enzyme name comes from
+  // (an older record; a record read from the paper takes it from the paper), how the values were read or what stands
+  // behind them, the license and the snapshot.
   function sourceSection(summary, detail, { v2Record, proof, mergedRows, paperCount, evidence, sourceNoteHtml }) {
     const facts = proof?.facts || null;
     const dataId = snapshotDataId();
     const dataOrigin = publicEvidenceString(detail.data_origin);
     return detailSection("source", "Source", kvList([
-      kv("Source", recordSourceName(recordSourceDb(summary, detail), v2Record)),
+      kv("Values from", recordSourceName(recordSourceDb(summary, detail), v2Record)),
       // How many database rows a record merges is said once, here.
       mergedRows > 1
         ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)

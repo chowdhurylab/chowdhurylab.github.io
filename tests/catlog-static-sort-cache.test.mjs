@@ -3174,23 +3174,24 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  assert.match(html, /<dt>Source<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
-  assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: the Source says so");
+  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
+  assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
+  assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: Values from says so");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).
   assert.doesNotMatch(html, /Source details|<details class="detail-disclosure"/);
   html = render({ source_db: "strenda", proof_kind: "source_note", has_proof_excerpt: false },
     { proof_lines: ["Raw STRENDA Extraction: kcat/Km\t4200.0 (+/-) 290.0 M⁻¹ s⁻¹"] });
   assert.match(html, /<summary>Note from STRENDA DB<\/summary>/);
   assert.match(html, /<p class="evidence-note-plain">kcat\/Km 4200\.0 ± 290\.0 M⁻¹ s⁻¹<\/p>/);
-  assert.match(html, /<dt>Source<\/dt><dd>STRENDA DB<\/dd>/);
+  assert.match(html, /<dt>Values from<\/dt><dd>STRENDA DB<\/dd>/);
   assert.doesNotMatch(html, /Raw STRENDA|<dt>Evidence<\/dt><dd>Database note/);
   html = render({ source_db: "sabio_rk;brenda", enzyme_label_source: "brenda_recommended_name", proof_kind: "source_note",
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7.5" }, { proof_lines: ["pH 7.5, 25°C"] });
-  assert.match(html, /<dt>Source<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "named as the status line names them");
+  assert.match(html, /<dt>Values from<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "named as the status line names them");
   assert.match(html, /<dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/);
   assert.match(html.slice(html.indexOf('class="detail-section source-section"'), html.indexOf('class="detail-section conditions-section"')),
-    /<dt>Source<\/dt><dd>BRENDA, SABIO-RK<\/dd><\/div><div class="kv-line"><dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/,
-    "Name from follows the Source in its section");
+    /<dt>Values from<\/dt><dd>BRENDA, SABIO-RK<\/dd><\/div><div class="kv-line"><dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/,
+    "Name from follows Values from in its section");
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
   // SKiD's notes as CatLog writes them ("SKiD: 55°C, pH 8.9"): hidden when they only repeat T and pH; otherwise shown
   // without repeating the source the heading names.
@@ -3210,7 +3211,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = render({ source_db: "sabio_rk;brenda;skid", enzyme_label_source: "ec_name_fallback", proof_kind: "source_note",
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7" },
   { source_databases_merged: ["sabio_rk", "brenda", "skid"], proof_lines: ["liver mevalonate kinase", "SKiD: 25°C, pH 7"] });
-  assert.match(html, /<dt>Source<\/dt><dd>BRENDA, SABIO-RK, SKiD<\/dd>/);
+  assert.match(html, /<dt>Values from<\/dt><dd>BRENDA, SABIO-RK, SKiD<\/dd>/);
   assert.match(html, /<summary>Database note<\/summary><div class="evidence-note-list"><p class="evidence-note-plain">liver mevalonate kinase<\/p><\/div>/);
   assert.doesNotMatch(html, /Note from|<dt>Databases<\/dt>/);
   assert.match(html, /<dt>Name from<\/dt><dd>The EC list&#39;s accepted name<\/dd>/);

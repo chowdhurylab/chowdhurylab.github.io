@@ -563,14 +563,15 @@ found at once: A, B, G, C, D, E, F, H.
   a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
-- C. Source: Source ("The paper (read by CatLog)" or the databases by name,
-  never a raw key); Merged from (database entries and papers); the source's own
-  details as rows of the same list, each wrapping (nothing to open at the
-  record's end): Databases, the databases a merged record combines when they are
-  not the Source's own (compared as a set, named in the Source's order); Name
+- C. Source: Values from ("The paper (read by CatLog)" or the databases by
+  name, never a raw key; not "Source", which would repeat the heading); Merged
+  from (database entries and papers); the source's own details as rows of the
+  same list, each wrapping (nothing to open at the record's end): Databases, the
+  databases a merged record combines when they are not those Values from names
+  (compared as a set, named in its order); Name
   from on an older record ("BRENDA recommended name", "The source database's
   entry", "The EC list's accepted name"; a record read from the paper takes its
-  name from the paper, which its Source says); Data origin when it is a plain
+  name from the paper, which its Values from says); Data origin when it is a plain
   word other than "experimental"; for a record read
   by CatLog a Method line (the short method sentence ending "units converted by
   code" or "values stored as printed", with "How CatLog reads and checks values
