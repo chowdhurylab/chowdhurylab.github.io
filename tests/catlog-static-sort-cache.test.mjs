@@ -3208,7 +3208,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
+  assert.match(html, /<dt>Values from<\/dt><dd>Read from the paper by CatLog<\/dd>/);
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
   assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: Values from says so");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).

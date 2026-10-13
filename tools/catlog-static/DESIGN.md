@@ -573,7 +573,7 @@ found at once: A, B, G, C, D, E, F, H.
   a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
-- C. Source: Values from ("The paper (read by CatLog)" or the databases by
+- C. Source: Values from ("Read from the paper by CatLog" or the databases by
   name, never a raw key; not "Source", which would repeat the heading); Merged
   from (database entries and papers); the source's own details as rows of the
   same list, each wrapping (nothing to open at the record's end): Databases, the

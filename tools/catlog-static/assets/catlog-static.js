@@ -8981,11 +8981,11 @@
     window.setTimeout(() => { button.textContent = label; }, copied ? 1200 : 3000);
   }
 
-  // A record's source in words: "The paper (read by CatLog)" for a record CatLog read, else the databases by name, read
-  // from source_db as Browse's Source filter and the status line read it (rowSourceBits: "sabio_rk;brenda" is "BRENDA,
-  // SABIO-RK"), never a raw key.
+  // A record's source in words: "Read from the paper by CatLog" for a record CatLog read (the design spec's words, 5C.1),
+  // else the databases by name, read from source_db as Browse's Source filter and the status line read it
+  // (rowSourceBits: "sabio_rk;brenda" is "BRENDA, SABIO-RK"), never a raw key.
   function recordSourceName(value, v2Record = false) {
-    if (v2Record) return "The paper (read by CatLog)";
+    if (v2Record) return "Read from the paper by CatLog";
     const bits = rowSourceBits({ source_db: value });
     if (bits === SOURCE_UNRECORDED_BIT) return "Not recorded";
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
