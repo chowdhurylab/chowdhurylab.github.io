@@ -5145,7 +5145,7 @@
       sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
-        <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(HUMAN_CHECKED_SENTENCE)}, as the tag shows.</dd></div>
+        <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).</dd></div>
         <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
         <div><dt>CatLog v2 entries</dt><dd>Records read from the paper by CatLog, the current version; CatLog v1 entries are all the others.</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>

@@ -1833,6 +1833,8 @@ function row(overrides = {}) {
   // The second AI check covers every value: no completion bar, only its place kept (the cards align).
   assert.match(chart, /data-check="second_check">[\s\S]*?<span class="stats-meter is-blank" aria-hidden="true"><\/span>[\s\S]*?data-check="human_checked"/);
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
+  // How these numbers are counted: human-checked's rule as one clause after "where".
+  assert.match(chart, /<dt>Human-checked<\/dt><dd>Accepted records where a human reviewer approved every kcat and Km shown and the kcat\/Km was approved too or agrees with kcat ÷ Km \(the human-checked tag\)\.<\/dd>/);
   // The Guide's method section gets the same human-review number; its audit item keeps the words without numbers.
   element("guideMethodAudits").textContent = "static audits";
   element("guideMethodHuman").innerHTML = "static human";
