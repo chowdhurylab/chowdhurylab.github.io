@@ -2255,15 +2255,21 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
 // A magnitude caution names the bound the value passes.
 {
   const low = measurementSection(row({ km: 1e-14, km_display: "1e-14", condition_flags: ["km_magnitude_needs_check"] }), {});
-  assert.match(low, /Km is below 1 nM; the unit may be wrong\./);
+  assert.match(low, /Km is below 1 nM; the unit or the value may be wrong\./);
   assert.match(low, /aria-label="Km &lt; 1 nM\. Show the note\."/);
   const high = measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
-  assert.match(high, /kcat is above 10⁸ s⁻¹; the unit may be wrong\./);
+  assert.match(high, /kcat is above 10⁸ s⁻¹; the unit or the value may be wrong\./);
+  // Every magnitude caution ends as the Guide's does.
+  const diffusion = measurementSection(row({ kcat_over_km: 5e9, kcat_over_km_display: "5e+9", condition_flags: ["efficiency_above_diffusion_limit"] }), {});
+  assert.match(diffusion, /kcat\/Km is above the diffusion limit; the unit or the value may be wrong\./);
+  const guideCautions = indexHtml.match(/<dl class="guide-term-list guide-caution-list">[\s\S]*?<\/dl>/)[0];
+  assert.equal((guideCautions.match(/the unit or the value may be wrong\./g) || []).length, 3, "Km, kcat and diffusion limit say it alike");
+  assert.doesNotMatch(guideCautions, /the unit may be wrong|magnitude may be wrong/);
   // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
   const unflaggedLow = row({ km: 2e-14, km_display: "2e-14", km_unit: "mM", condition_flags: [] });
   assert.ok(api.conditionFlags(unflaggedLow).has("km_magnitude_needs_check"));
   assert.equal(api.rowCautionBits(unflaggedLow), 2, "counted under Possible unit or magnitude error");
-  assert.match(api.valueFlagBadgeHtml(api.conditionFlags(unflaggedLow), "km", unflaggedLow), /Km below 1 nM; the unit may be wrong/);
+  assert.match(api.valueFlagBadgeHtml(api.conditionFlags(unflaggedLow), "km", unflaggedLow), /Km below 1 nM; the unit or the value may be wrong/);
   assert.ok(!api.conditionFlags(row({ km: 2e-6, km_display: "2e-06", km_unit: "mM" })).has("km_magnitude_needs_check"));
   const catalase = row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "s^(-1)", condition_flags: ["kcat_magnitude_needs_check"] });
   assert.equal(api.conditionFlags(catalase).size, 0, "kcat at 3 × 10⁷ s⁻¹ is no caution");

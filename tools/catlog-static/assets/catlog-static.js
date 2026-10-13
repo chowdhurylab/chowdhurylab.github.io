@@ -279,9 +279,10 @@
     kcat_over_km_quotient_mismatch: "kcat/Km differs from kcat ÷ Km",
     kcat_over_km_unit_mismatch: "kcat/Km unit may be off by 1000×",
     kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown",
-    km_magnitude_needs_check: "Km above 10 M; the unit may be wrong",
-    kcat_magnitude_needs_check: "kcat above 10⁸ s⁻¹; the unit may be wrong",
-    efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit",
+    // The magnitude cautions end alike, here, in the record's notes and in the Guide: "the unit or the value may be wrong".
+    km_magnitude_needs_check: "Km above 10 M; the unit or the value may be wrong",
+    kcat_magnitude_needs_check: "kcat above 10⁸ s⁻¹; the unit or the value may be wrong",
+    efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit; the unit or the value may be wrong",
     // CatLog's flag for a value stored in another concentration unit than the paper prints (name to be confirmed).
     printed_unit_prefix_differs: "The paper prints another concentration unit than the one CatLog uses (printed unit differs).",
     temperature_value_needs_check: "Temperature value questionable",
@@ -313,12 +314,12 @@
     const value = Number(row ? metricDisplay(row, valueIntegrityFlags[flag]?.field || "") : NaN);
     if (flag === "km_magnitude_needs_check") {
       return Number.isFinite(value) && value > 0 && value < 1e-6
-        ? { short: "Km < 1 nM", label: "Km below 1 nM; the unit may be wrong", note: "Km is below 1 nM; the unit may be wrong." }
-        : { short: "Km > 10 M", label: conditionFlagLabels.km_magnitude_needs_check, note: "Km is above 10 M; the unit may be wrong." };
+        ? { short: "Km < 1 nM", label: "Km below 1 nM; the unit or the value may be wrong", note: "Km is below 1 nM; the unit or the value may be wrong." }
+        : { short: "Km > 10 M", label: conditionFlagLabels.km_magnitude_needs_check, note: "Km is above 10 M; the unit or the value may be wrong." };
     }
     if (flag === "kcat_magnitude_needs_check") {
       const power = Number.isFinite(value) && value > 1e8 ? "10⁸" : "10⁷";
-      return { short: `kcat > ${power} s⁻¹`, label: `kcat above ${power} s⁻¹; the unit may be wrong`, note: `kcat is above ${power} s⁻¹; the unit may be wrong.` };
+      return { short: `kcat > ${power} s⁻¹`, label: `kcat above ${power} s⁻¹; the unit or the value may be wrong`, note: `kcat is above ${power} s⁻¹; the unit or the value may be wrong.` };
     }
     return null;
   }
@@ -7046,7 +7047,7 @@
 
   const metricNames = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", ki: "Ki" };
   const flagNoteTexts = {
-    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit; a unit may be wrong.",
+    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit; the unit or the value may be wrong.",
     kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown.",
   };
 
