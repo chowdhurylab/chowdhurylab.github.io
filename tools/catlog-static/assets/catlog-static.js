@@ -6419,13 +6419,13 @@
   // A name column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
-  // the window is too narrow the table gives way, one step after another and each only as far as needed: the names wrap
-  // to two lines between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a
-  // word longer than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's
-  // word. Before the names go below their longest word, Review result's human-checked tag gives up its word and keeps its
-  // green check (the word stays in the badge's tooltip and accessible name), so the names win that room back (beside the
-  // open sidebar at 1280px one human-checked row had kept Review result at 194px and cut every enzyme name). So beside
-  // the open sidebar from 1280px every column, Review result included, stays in view. Only when even
+  // the window is too narrow the table gives way, one step after another and each only as far as needed: first Review
+  // result's human-checked tag keeps its green check alone (the word stays in the badge's tooltip and accessible name),
+  // all at once, and the names get back what that frees beyond the need (one human-checked row had held Review result at
+  // 194px beside the open sidebar at 1280px and cut every enzyme name above its variant tag); the names wrap to two lines
+  // between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a word longer
+  // than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's word. So
+  // beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even
   // that is not enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at
   // their longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's
   // widths unless those leave Enzyme narrower than its heading (fitHeadingsOnly).
@@ -6525,10 +6525,11 @@
     // Organism goes below its longest word last among the names: a genus is capitalized, so it would break without a
     // hyphen (Chlamydomona-s), where an enzyme or a substrate is usually hyphenated.
     const organism = shrinkable.filter((column) => column.key === "organism");
-    // The human-checked word goes whole (true): whatever room it frees beyond the need goes back to the names below.
+    // The human-checked word goes first and whole (true): whatever room it frees beyond the need goes back to the names
+    // below. It is one word on a few rows; an enzyme name above a variant tag has one line and is cut at its longest word.
     const steps = [
-      [shrinkable, (column) => Math.max(column.min, column.words)],
       [status, (column) => column.compact, true],
+      [shrinkable, (column) => Math.max(column.min, column.words)],
       [shrinkable.filter((column) => column.key !== "organism"), (column) => column.min],
       [organism, (column) => column.min],
       [status, (column) => column.floor],
