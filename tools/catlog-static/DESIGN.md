@@ -422,8 +422,9 @@ is left out, never an empty heading. The order (design spec 5):
   EC the header still shows says where the shown one comes from, "removed EC
   1.1.1.25 (not printed in the paper; the EC shown comes from the enzyme
   databases)" or "... from the UniProt entry A0A5H2WVH6"); for an
-  older record an Evidence line ("Located in the paper", "Paper cited (values
-  not located)", "Several database records" or "Database record only"); one
+  older record an Evidence line ("Located in the paper", "Paper cited" on an
+  accepted record or "Paper cited (values not located)" on one that is not,
+  "Several database records" or "Database record only"); one
   license line; the snapshot's data ID; a database note on request, headed by
   its source ("Note from BRENDA"), without an importer's label and not shown
   when it only repeats the temperature and pH rows.

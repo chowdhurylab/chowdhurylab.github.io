@@ -2855,7 +2855,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A place, enzyme or abbreviation that only looks like a route stays (an ACS row, a substrate-label image, K_m=).
   assert.match(note({ table_label: "ACS Table 1", row_label: "Official substrate-label image", raw_value_unit_evidence: "K_m=2.2 mM; 1,5-AF_NADPH=49.0 mM" }),
     /^\|Where\|ACS Table 1 · Official substrate-label image\|As printed\|K_m=2\.2 mM; 1,5-AF_NADPH=49\.0 mM\|$/);
+  // An accepted record's values were checked: its Evidence line does not say they were not located.
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
+  assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited<\/dd>/);
+  api.renderDetail(row({ record_key: "older-cited-unverified", verification_status: "unverified", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited \(values not located\)<\/dd>/);
 }
 // Source names: a record CatLog read says so; databases by name, never a raw key; a database note is headed by its

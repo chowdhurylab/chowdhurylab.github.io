@@ -1456,7 +1456,9 @@
     if (row.evidence_confidence_tier === "cross_source_supported") {
       return "Several database records";
     }
-    return row.has_literature_id ? "Paper cited (values not located)" : "Database record only";
+    if (!row.has_literature_id) return "Database record only";
+    // An accepted record's values were checked; only where the paper prints them was not saved.
+    return (row._recordState || recordStateForRow(row)) === "accepted" ? "Paper cited" : "Paper cited (values not located)";
   }
 
   function sourceLicense(summary, detail) {
