@@ -430,7 +430,8 @@ is left out, never an empty heading. The order (design spec 5):
   printed" (Where, As printed and Conversion, code quotes and "->" written as
   plain text and arrows; the Conversion line keeps each value's printed number
   and arithmetic and says "(no conversion)" for the earlier pipeline's
-  reasoning, uM reads µM).
+  reasoning, right after the value it is about and never after a unit
+  conversion such as "/ 1000" or "converts to", uM reads µM).
 - G. Against the databases (only when there is something to say): for a record
   read from the paper, one row per value, Parameter | CatLog | (Databases for
   this paper) | Result, the result a 10px square in its comparison colour

@@ -914,6 +914,9 @@
   const CONVERSION_ASIDE = /\s*\((?=[^()]*(?:\bso no\b|is involved|this article prints|already|canonical|normali[sz]ed?))[^()]*\)/gi;
   const CONVERSION_FIELDS = /metric:\s*([^;]+?);\s*(?:raw value:\s*([^;]+?);\s*)?(?:raw unit:\s*([^;]+?);\s*)?normali[sz]ed value:\s*([^;]+?)(?:;\s*normali[sz]ed unit:\s*([^;.]+))?(?=;|\.?$)/gi;
   const CONVERSION_VALUE_DIGIT = /(?<![\^\-−⁻\w.])\d/;
+  // A part that converts a unit: "14.8 / 1000", "0.09 x 1000", "140 / 60", "x 0.001", "converts to" (a printed
+  // "5.0 x 10^3" is a number, not a conversion).
+  const CONVERSION_FACTOR = /\d\s*[\/x×*]\s*(?:1,?000|60|0\.001)(?![\d.,])|\bconverts?\b(?:\s*\([^()]*\))?\s+to\b/i;
 
   function conversionFirstNumber(text) {
     return (String(text).match(/\d+(?:\.\d+)?/) || [""])[0];
@@ -926,7 +929,17 @@
       .replace(/,\s*(?:an |also )?exact(?: conversion)?(?: with no repeating decimal)?/gi, "");
     const parts = body.split(/;\s+|\.\s+(?=[a-z0-9])/i).map((part) => part.trim().replace(/[.;,]+$/, "")).filter(Boolean);
     const kept = [];
-    let none = false;
+    // "(no conversion)" goes right after the part it is about: the part's own printed value, else the part before it (a
+    // "no conversion" that opens the clause stands alone), never at the end of a clause that goes on to convert another
+    // value ("kcat: printed cell 140 s-1 (no conversion); printed efficiency cell 16.0 x 10^3 M-1 s-1 converts to ..."), and
+    // never after a unit conversion ("343.3 / 1000 = 0.3433 mM is the canonical paper value" keeps its arithmetic only).
+    const noConversion = (head) => {
+      if (head) kept.push(CONVERSION_FACTOR.test(head) ? head : `${head} (no conversion)`);
+      else if (!kept.length) kept.push("no conversion");
+      else if (!/no conversion\)?$/.test(kept.at(-1)) && CONVERSION_VALUE_DIGIT.test(kept.at(-1)) && !CONVERSION_FACTOR.test(kept.at(-1))) {
+        kept[kept.length - 1] += " (no conversion)";
+      }
+    };
     for (let part of parts) {
       part = part.replace(/^the printed (.*?)\b(cell|value)s? is\s+/i, "printed $1$2 ").replace(/^the (?:paper's own )?printed\b/i, "printed");
       // "1 uM is 0.001 mM, so 14.8 / 1000 = 0.0148 mM", "the turnover column is per minute, so 1 / 60 = 0.0167": the arithmetic.
@@ -937,14 +950,12 @@
       const at = part.search(CONVERSION_NONE);
       if (at >= 0) {
         const head = part.slice(0, at).trim().replace(/[,;:]+$/, "");
-        if (head && CONVERSION_VALUE_DIGIT.test(head) && !/^(?:the|1|one)\b/i.test(head)) kept.push(head);
-        none = true;
+        noConversion(head && CONVERSION_VALUE_DIGIT.test(head) && !/^(?:the|1|one)\b/i.test(head) ? head : "");
         continue;
       }
       kept.push(part);
     }
-    let text = kept.join("; ");
-    if (none) text = text ? `${text} (no conversion)` : "no conversion";
+    const text = kept.join("; ");
     const result = `${label} ${text}`.replace(/\s+/g, " ").trim();
     const first = conversionFirstNumber(clause.slice(colon + 1));
     return !first || result.includes(first) ? result : clause.trim();

@@ -2718,6 +2718,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(api.conversionFacts("kcat: printed cell 22 +/- 0.6 s^-1 is already in canonical units, 22.0 s^(-1)."), "kcat: printed cell 22 +/- 0.6 s^-1 (no conversion).");
   // A clause whose printed number would go is kept as it was.
   assert.match(api.conversionFacts("kcat: the column is per second, so no unit conversion applies"), /^kcat: no conversion\.$/);
+  // "(no conversion)" sits after the value it is about, never after a value the clause goes on to convert.
+  assert.equal(api.conversionFacts("Km: printed Table 3 cell 8739 uM; 8739 / 1000 = 8.739 mM; kcat: printed Table 3 cell 140 s^-1; already in s^-1, no unit conversion applies; the paper's own printed efficiency cell 16.0 x 10^3 M^-1 s^-1 converts to 16.0 s^-1 mM^-1 because 1 M^-1 s^-1 is 0.001 s^-1 mM^-1."),
+    "Km: printed Table 3 cell 8739 µM; 8739 / 1000 = 8.739 mM. kcat: printed Table 3 cell 140 s^-1 (no conversion); printed efficiency cell 16.0 x 10^3 M^-1 s^-1 converts to 16.0 s^-1 mM^-1 because 1 M^-1 s^-1 is 0.001 s^-1 mM^-1.");
+  assert.equal(api.conversionFacts("Km: printed cell 60.8 uM; 60.8 / 1000 = 0.0608 mM. kcat: printed cell 2.5 s^-1; the cell is already in s^-1, so no unit conversion applies. 1 M^-1 s^-1 is 0.001 s^-1 mM^-1, so 0.41 x 10^5 / 1000 = 41.0 s^-1 mM^-1."),
+    "Km: printed cell 60.8 µM; 60.8 / 1000 = 0.0608 mM. kcat: printed cell 2.5 s^-1 (no conversion); 0.41 x 10^5 / 1000 = 41.0 s^-1 mM^-1.");
+  // A converted value the source calls canonical gets no tag; a printed 5.0 x 10^3 is a number, not a conversion.
+  assert.equal(api.conversionFacts("Km: printed Table 2 cell 343.3 uM; 343.3 / 1000 = 0.3433 mM is the canonical paper value."),
+    "Km: printed Table 2 cell 343.3 µM; 343.3 / 1000 = 0.3433 mM.");
+  assert.equal(api.conversionFacts("Km: printed Table 2 cell 5.0 x 10^3 mM; the Km column of this table is already millimolar, so the paper value is 5000.0 mM."),
+    "Km: printed Table 2 cell 5.0 x 10^3 mM (no conversion).");
   assert.match(html, /<dt>Evidence<\/dt><dd>Located in the paper<\/dd>/);
   assert.doesNotMatch(html, /`|-&gt;|Normalized|Reported|Values in source/);
   api.renderDetail(row({ record_key: "older-normalized", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
