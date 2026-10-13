@@ -2163,7 +2163,7 @@ def check_layout(driver, browser, url, route_label):
                 tag["icon"] and tag["named"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
                 f"At 1024px beside the sidebar human-checked is a check after the review result: {tags}")
             # Beside an open record the tag line keeps only the source; human-checked stays as the check after Accepted.
-            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]").click()
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()  # (Safari cannot click a whole row)
             wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')"))
             tags = checked_tags()
             assert tags["tags"] and all(tag["icon"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
