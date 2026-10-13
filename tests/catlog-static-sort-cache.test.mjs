@@ -2685,14 +2685,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const quoted = (printed_line, metric = "Km") => measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric, table_label: "Table 2", printed: "1 mM", printed_line, check: "confirmed", conversion: "" }] });
   let html = quoted("mpCAR [rowspan] | K_m [mm] | 20±4*");
-  assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
+  // The caption above the table names the place, so the line does not repeat it.
+  assert.match(html, /<caption>Printed in Table 2<\/caption>/);
+  assert.match(html, /<p class="evidence-note-plain">As extracted from the paper’s text: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
   assert.doesNotMatch(html, /rowspan|<details class="printed-line-disclosure"/);
   html = quoted("We fitted K_M = 4.6 ± 1.0 μM, k_{cat} = 9.7 s^{−1} and K_{m L}-methionine");
   assert.match(html, /<i>K<\/i><sub>m<\/sub> = 4\.6/);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub> = 9\.7 s<sup>−1<\/sup>/);
   assert.match(html, /<i>K<\/i><sub>m L<\/sub>-methionine/);
   html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
-  assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">Table 2 row, as extracted/);
+  assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">As extracted/);
   assert.match(html, /<p class="printed-line-note">Text extraction dropped the ± signs from this line\.<\/p><\/details>/);
   const longRow = quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9");
   assert.match(longRow, /<details class="printed-line-disclosure">/, "more than four cells");
@@ -2700,6 +2702,23 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
   /row, as extracted/, "only a table's line is a row");
+  const lines = (...entries) => measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: entries.map(([metric, table_label, printed_line, printed = "1 mM"]) => ({ metric, table_label, printed, printed_line, check: "confirmed", conversion: "" })) });
+  // One line, places that differ: the line gives its place (the Where column has both).
+  html = lines(["kcat", "Table 2", "wt | 1 | 2", "1 s^-1"], ["Km", "Table 3", "1 mM"]);
+  assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “wt/);
+  // More than one line: each names its values, and a line another value's line continues is quoted once, the longer.
+  const excerpt = "kcat = 4.0 ± 0.4 s–1 and Km = 3.1 mM catalyze the conversion";
+  html = lines(["kcat", "Results", excerpt, "4.0 ± 0.4 s^-1"], ["Km", "Results", "a Km of 3.1 ± 0.3 mM was found"],
+    ["kcat/Km", "Results", `${excerpt} of this peptide …`, "1.4 mM^-1 s^-1"]);
+  assert.equal((html.match(/class="evidence-note-plain"/g) || []).length, 2);
+  assert.match(html, /<p class="evidence-note-plain">kcat and kcat\/Km line, as extracted from the paper’s text: “kcat = 4\.0 ± 0\.4 s–1 and Km = 3\.1 mM catalyze the conversion of this peptide …”<\/p>/);
+  assert.match(html, /<p class="evidence-note-plain">Km line, as extracted from the paper’s text: “a Km of 3\.1/);
+  assert.doesNotMatch(html, /Results, as extracted/, "the caption names the place");
+  // Folded lines name their values, so two toggles never read alike.
+  html = lines(["kcat", "Table 2", "kcat | 1 | 2 | 3 | 4", "1 s^-1"], ["Km", "Table 2", "Km | 1 | 2 | 3 | 4"]);
+  assert.match(html, /<summary>Show the kcat line as extracted<\/summary><p class="evidence-note-plain">kcat line, as extracted/);
+  assert.match(html, /<summary>Show the Km line as extracted<\/summary>/);
 }
 // What the AI check found, in words that give the new state: per value in the AI check column ("Unit set to mM"), once
 // for the record in the Check line ("The AI check also removed EC 2.7.2.12 and corrected the assay conditions").

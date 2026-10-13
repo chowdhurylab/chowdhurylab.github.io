@@ -7362,11 +7362,29 @@
         ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`
         : "",
     ].filter(Boolean);
-    // Each printed line once; a "line" that is only the printed number itself adds nothing.
-    const quotes = !proof ? [] : proof.lines.map((line, index) => [v2LinePlace(line), proof.facts[index].printedLine, proof.facts[index].printed])
-      .filter(([, printedLine, printed], index, all) => printedLine && !printed.startsWith(printedLine)
-        && all.findIndex(([, other]) => other === printedLine) === index)
-      .map(([place, printedLine]) => printedLineNoteHtml(place, printedLine));
+    // Each printed line once; a "line" that is only the printed number itself adds nothing, and a line another value's
+    // line continues (one excerpt cut at two lengths, a trailing "…" aside) is quoted once, the longer, for both values.
+    const quoted = [];
+    (proof ? proof.lines : []).forEach((line, index) => {
+      const { printedLine, printed } = proof.facts[index];
+      if (!printedLine || printed.startsWith(printedLine)) return;
+      const text = printedLine.replace(/\s*…$/, "");
+      if (!text) return;
+      const place = v2LinePlace(line);
+      const same = quoted.find((item) => item.text.startsWith(text) || text.startsWith(item.text));
+      if (!same) {
+        quoted.push({ text, printedLine, place, metrics: [line.metric] });
+        return;
+      }
+      if (!same.metrics.includes(line.metric)) same.metrics.push(line.metric);
+      if (same.place !== place) same.mixed = true;
+      if (text.length > same.text.length) Object.assign(same, { text, printedLine });
+    });
+    // More than one line: each names its values ("kcat line"), whose places the table gives. One line: its place, unless
+    // the caption above the table already names it.
+    const quotes = quoted.map((item) => printedLineNoteHtml(item.printedLine, quoted.length > 1 || item.mixed
+      ? { metrics: item.metrics }
+      : { place: sharedPlace ? "" : item.place }));
     const table = rows.length
       ? `<table class="values-table">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
         + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th>`
@@ -7414,15 +7432,18 @@
     return `${(cut > PRINTED_LINE_MAX / 2 ? head.slice(0, cut) : head).replace(/[\s|,;]+$/, "")}…`;
   }
 
-  function printedLineNoteHtml(place, printedLine) {
-    const where = /^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place;
+  // The label names the values ("kcat and kcat/Km line, as extracted ...") when it is given them, else the place; a
+  // folded line names its values too ("Show the kcat line as extracted").
+  function printedLineNoteHtml(printedLine, { place = "", metrics = [] } = {}) {
+    const what = metrics.length ? `${sentenceList(metrics)} line` : "";
+    const where = what || (/^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place);
     const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
     const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
     const cells = String(printedLine).split("|").length;
     const lostPlusMinus = /\d \( \d/.test(printedLine);
     if (cells <= 4 && !lostPlusMinus) return quote;
     // The warning only where the ± signs were lost; a long row is folded without it.
-    return `<details class="printed-line-disclosure"><summary>Show the line as extracted</summary>${quote}`
+    return `<details class="printed-line-disclosure"><summary>${escapePublic(`Show the ${what || "line"} as extracted`)}</summary>${quote}`
       + `${lostPlusMinus ? '<p class="printed-line-note">Text extraction dropped the ± signs from this line.</p>' : ""}</details>`;
   }
 

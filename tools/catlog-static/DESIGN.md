@@ -397,10 +397,15 @@ is left out, never an empty heading. The order (design spec 5):
   s⁻¹.", "calc. kcat ÷ Km, calculated by CatLog; not printed in the paper."; an
   older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists a
   different kcat/Km (above)." when its sources list one, never "not printed"),
-  then each quoted line once, "Table 2 row, as extracted from the paper's text"
-  (at most 240 characters, table markers removed, K_M set as K<sub>m</sub>); a
-  row of more than four cells, or one whose ± signs extraction dropped, is
-  folded under "Show the line as extracted" with that warning.
+  then each quoted line once (a line another value's line continues, one excerpt
+  cut at two lengths, is quoted once, the longer): one line gives its place,
+  "Table 2 row, as extracted from the paper's text", or "As extracted from the
+  paper's text" when the caption already names it; more than one line name
+  their values instead, "kcat and kcat/Km line, as extracted from the paper's
+  text" (at most 240 characters, table markers removed, K_M set as
+  K<sub>m</sub>); a row of more than four cells, or one whose ± signs extraction
+  dropped, is folded under "Show the line as extracted" ("Show the kcat line as
+  extracted" when the lines name their values) with that warning.
 - C. Source: Source ("The paper (read by CatLog)" or the databases by name,
   never a raw key); Merged from (database entries and papers); for a record read
   by CatLog a Method line (the short method sentence ending "units converted by
