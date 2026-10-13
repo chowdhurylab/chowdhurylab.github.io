@@ -1908,13 +1908,22 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             assert re.match(r"browse\?q=(?:pmid|doi):\S+&record=" + re.escape(key) + "$", href), href
             count = re.match(r"([\d,]+) records from this paper", link[0].text)
             query = re.match(r"browse\?q=([^&]+)", href).group(1)
+            page_before = driver.find_element(By.ID, "pageLabel").text
             link[0].click()
             wait.until(lambda d: d.find_element(By.ID, "globalSearchInput").get_attribute("value") == unquote_plus(query))
             if count:
                 wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count.group(1)} records")
             wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')")
                        and d.find_element(By.ID, "detailRecordKey").text == key)
+            # The open record's row is shown, on its page of the paper's records, and Back gives the table its page again.
+            selected_key = ("return document.querySelector('#recordsBody tr[aria-selected=\"true\"]')?.dataset.key || ''")
+            wait.until(lambda d: d.execute_script(selected_key) == key)
             results["paper-records-link"] = True
+            driver.back()
+            wait.until(lambda d: urlsplit(d.current_url).fragment == f"record={key}")
+            wait.until(lambda d: d.execute_script(selected_key) == key
+                       and d.find_element(By.ID, "pageLabel").text == page_before)
+            results["paper-records-back"] = True
         break
     return results
 

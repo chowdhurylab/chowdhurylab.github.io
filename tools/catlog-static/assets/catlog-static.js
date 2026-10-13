@@ -720,7 +720,9 @@
     state.pendingRecordKey = "";
     if (position >= 0) {
       state.page = Math.floor(position / state.pageSize) + 1;
-      selectRecord(key);
+      // The record already open stays as it is (its place in the panel, the focus); only the table moves to its page.
+      if (key === state.selectedKey) renderRows();
+      else selectRecord(key);
     } else if (state.records.some((row) => row.record_key === key)) {
       selectRecord(key);
     } else {
@@ -9606,9 +9608,10 @@
       renderView(view);
       const filtering = applyLocationFilters() && state.records.length > 0;
       const recordKey = recordKeyFromLocation();
-      if (recordKey && recordKey !== state.selectedKey) {
+      if (recordKey && (filtering || recordKey !== state.selectedKey)) {
         // With new filters the record opens when their results are ready (applyFilters ends by opening it), on the
-        // page that shows it; looking it up now would use the previous results.
+        // page that shows it; looking it up now would use the previous results. The record already open counts too:
+        // following its paper's link, or Back from there, shows its row on its page of the new results, not page 1.
         state.pendingRecordKey = recordKey;
         if (!filtering) openRecordFromLocation();
       } else if (!recordKey && state.selectedKey && view === "browse") {
