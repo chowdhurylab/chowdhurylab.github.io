@@ -124,7 +124,7 @@
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
     get accepted() {
       return followsReviewRules()
-        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or with every value approved by a human reviewer."
+        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or approved by a human reviewer (human-checked)."
         : "Passed review: read from the paper by CatLog or accepted by the earlier automated review (as printed or after a correction).";
     },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
@@ -147,7 +147,13 @@
     if (value === "not_verified") return "No review result.";
     return stateDescriptions[value];
   }
-  const HUMAN_CHECKED_DESCRIPTION = "A human reviewer approved every value shown.";
+  // human-checked (the user, 2026-10-13; catlog-v2 WEBSITE.md "Human review on the site"): a reviewer approved every kcat
+  // and Km the record shows, and its kcat/Km was approved too or follows from them (agrees with kcat ÷ Km and nobody
+  // disputed it); no whole-row rule. Said the same way in the filter, the badges, the record, the Guide and Stats.
+  const HUMAN_CHECKED_RULE = "a human reviewer approved every kcat and Km";
+  const HUMAN_CHECKED_RATIO = "the kcat/Km was approved too or agrees with kcat ÷ Km";
+  const HUMAN_CHECKED_SENTENCE = `${HUMAN_CHECKED_RULE} shown; ${HUMAN_CHECKED_RATIO}`;
+  const HUMAN_CHECKED_DESCRIPTION = `${HUMAN_CHECKED_SENTENCE.charAt(0).toUpperCase()}${HUMAN_CHECKED_SENTENCE.slice(1)}.`;
 
   // The verification_status values; label is the exact value a record names after its review result.
   const reviewStatuses = [
@@ -227,19 +233,20 @@
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
   // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
   // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
-  const SOURCE_CATLOG_LABEL = "Read from the paper by CatLog";
-  const SOURCE_DATABASES_LABEL = "From enzyme databases";
+  // CatLog v2 entries are read from the paper by CatLog; CatLog v1 entries come from the enzyme databases, screened by
+  // the earlier automated pipeline (v2 is the revision of v1; the user, 2026-10-13).
+  const SOURCE_CATLOG_LABEL = "CatLog v2: read from the paper";
+  const SOURCE_DATABASES_LABEL = "CatLog v1: from enzyme databases";
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
-  // The sidebar's labels are short, one line each ("by CatLog" is read out); the help is behind the group's "?".
+  // The sidebar's labels are short, one line each; the help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'Read from the paper<span class="visually-hidden"> by CatLog</span>',
-      help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: "Enzyme databases", help: SOURCE_DATABASES_HELP },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: "CatLog v2: read from the paper", help: SOURCE_CATLOG_HELP, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: "CatLog v1: enzyme databases", help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
   // absent), shortHtml the sidebar's one-line label (the table's tag, its name read out and on hover).
@@ -311,7 +318,8 @@
   const identityOnlyTrustNote = "Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper.";
   // The user's review rules (website plan D1, D2), followed by an export that lists accepted_basis among its counts: an
   // accepted record needs a linked paper (a record without one is Not checked, tagged "no paper linked"), and a record
-  // whose every value a human reviewer approved is accepted ("human review"). An older snapshot has neither rule.
+  // a human reviewer checked (human-checked's rule: HUMAN_CHECKED_SENTENCE) is accepted ("human review"). An older
+  // snapshot has neither rule.
   function followsReviewRules() {
     return Array.isArray(manifest?.summary?.distributions?.accepted_basis);
   }
@@ -326,7 +334,7 @@
       ? "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed, or that the earlier review accepted (tag: <em>no paper linked</em>). The record shows which, for example <em>Not checked (Unverified)</em>; a record with no paper linked reads <em>Not checked</em> with that tag."
       : "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed. The record shows which, for example <em>Not checked (Unverified)</em>.";
   }
-  // Records accepted because a human reviewer approved every value (accepted_basis "human review").
+  // Records accepted on a human reviewer's approval (accepted_basis "human review", human-checked's rule).
   function humanAcceptedCount() {
     return manifestDistribution("accepted_basis")["human review"] || 0;
   }
@@ -1793,8 +1801,10 @@
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
-    // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review").
-    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review");
+    // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review"), and the catalog
+    // reviewed is named as the site names it ("the earlier catalog": CatLog v1 entries).
+    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review")
+      .replace(/\breview of the earlier catalog\b/g, "review of CatLog v1 entries");
     // A mark that lists the approved values and says nothing else: which values, in words.
     const listed = !note && !mark?.checked && Array.isArray(mark?.approved)
       ? VALUE_FIELDS.filter(([field]) => humanApprovedFields(row).has(field)).map(([field]) => ({ kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" })[field])
@@ -1802,7 +1812,7 @@
     if (listed.length) return `A human reviewer approved the ${sentenceList(listed)} on this record.`;
     return note || (mark?.checked
       ? (accepted
-          ? "A human reviewer approved every value on this record."
+          ? HUMAN_CHECKED_DESCRIPTION
           : "A human reviewer approved these values; the record's status comes from the automated review.")
       : "");
   }
@@ -1893,7 +1903,7 @@
     if (summary.verification_status === "verified" && method.startsWith(v2Method)) return v2MethodSentence();
     if (String(detail.accepted_basis || summary.accepted_basis || "").trim() === "human review"
       && (summary._recordState || recordStateForRow(summary)) === "accepted") {
-      return "Accepted because a human reviewer approved every value; the earlier automated review had not accepted it.";
+      return "Accepted on a human reviewer's approval (human-checked); the earlier automated review had not accepted it.";
     }
     if (isIdentityOnlyAccepted(summary)) {
       return "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.";
@@ -1933,7 +1943,7 @@
     // Under the review rules a human-checked record may be accepted for that approval alone (the table does not say
     // which), so its title does not name the earlier review.
     const acceptedHow = checked && !fromPaper && row.verification_status === "verified" && humanAcceptedCount()
-      ? "Accepted as printed by the earlier automated review, or because a human reviewer approved every value."
+      ? "Accepted as printed by the earlier automated review, or on a human reviewer's approval."
       : reviewStatuses.find((item) => item.value === row.verification_status)?.description;
     const description = fromPaper
       ? v2Sentence
@@ -1951,8 +1961,10 @@
       isCorrected ? "corrected" : "",
       noPaper ? "no paper linked" : "",
     ].filter(Boolean);
+    // A record read by CatLog is human-checked for the same values of the same paper, enzyme, substrate and variant in
+    // the review of CatLog v1 entries.
     const fullDescription = checked
-      ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value shown."}`
+      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of CatLog v1 entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
@@ -3872,284 +3884,188 @@
     return `${formatInteger(audit.wrong)} ${audit.wrong === 1 ? "was" : "were"} wrong (${qualityShare(audit.wrong, audit.values)}) and removed`;
   }
 
-  // The headline of the agreement with human reviewers (the user's success measure): the first comparison on the papers
-  // CatLog read without any database or earlier-catalog values in view (first_agree_unexposed_pct), when the snapshot
-  // has it; else the share of approved values CatLog has now. Null without agreement counts.
-  function agreementHeadline(a) {
-    const approved = statsCount(a?.values_approved);
-    const agree = approved ? statsCount(a.agree, approved) : null;
-    if (agree === null) return null;
-    const blind = a.first_agree_unexposed_pct;
-    const papers = statsCount(a.papers_compared);
-    const exposed = papers ? statsCount(a.papers_exposed, papers) : null;
-    if (typeof blind === "number" && Number.isFinite(blind) && blind >= 0 && blind <= 100) {
-      // The papers behind it as the CatLog side counts them (papers_unexposed), else the papers no reading agent was exposed on.
-      const unexposed = statsCount(a.papers_unexposed, papers || Infinity);
-      const blindPapers = unexposed !== null ? unexposed : exposed !== null ? papers - exposed : null;
-      return { percent: `${blind.toFixed(1)}%`, blind: true, blindPapers, range: agreementRange(a.first_agree_unexposed_ci95),
-        approved, agree, papers };
+  // Human review, as the reviewers' own files say it (the user's headline since 2026-10-13; catlog-v2 HUMAN_REVIEW.md
+  // "Measuring CatLog against the reviewers"): overview.quality.review.v1 for the CatLog v1 entries reviewers checked
+  // (review.v2 for CatLog v2 entries once reviewers check them). Each entry counts once, by its final verdict: values
+  // correct (no reviewer disputed a kcat, Km or kcat/Km number or its unit), values missing (the paper prints a value the
+  // entry lacks) and other disagreements, by kind. Shares are worked out from the counts; null when they do not hold
+  // together. Stats' lead, the Guide's method section and Team's Human check say it the same way.
+  function reviewFacts(review) {
+    const entries = statsCount(review?.entries);
+    const disputed = entries ? statsCount(review.value_disputed, entries) : null;
+    if (!entries || disputed === null) return null;
+    const missing = statsCount(review.value_missing, entries);
+    const other = statsCount(review.other_disputed, entries);
+    const byKind = review.other_by_kind && typeof review.other_by_kind === "object" && !Array.isArray(review.other_by_kind)
+      ? Object.entries(review.other_by_kind) : [];
+    return {
+      entries,
+      papers: statsCount(review.papers),
+      disputed,
+      // the disputed values a check against the paper found as printed (CatLog's own check, not the reviewers')
+      asPrinted: disputed ? statsCount(review.value_disputed_checked_as_printed, disputed) : null,
+      correctShare: qualityShare(entries - disputed, entries),
+      missing,
+      other,
+      // the kinds of other disagreement with their entries, most first (the order the files give on a tie)
+      kinds: other ? byKind.filter(([kind, count]) => String(kind).trim() && statsCount(count, other) !== null && count > 0)
+        .sort((a, b) => b[1] - a[1]) : [],
+    };
+  }
+
+  const REVIEW_VALUES = "kcat, Km or kcat/Km";
+
+  // "Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km value on
+  // 3 of them, and all 3 are as printed in the paper." With share, the values correct come first ("...: values correct
+  // (kcat, Km, kcat/Km) 99.9%; a reviewer disputed ...").
+  function reviewSentence(facts, { catalog = "CatLog v1", share = false } = {}) {
+    const { disputed, asPrinted } = facts;
+    const checked = disputed && asPrinted === disputed
+      ? `, and ${disputed === 1 ? "it is" : `all ${formatInteger(disputed)} are`} as printed in the paper`
+      : (disputed && asPrinted ? `; ${formatInteger(asPrinted)} of these ${asPrinted === 1 ? "is" : "are"} as printed in the paper` : "");
+    const result = disputed
+      ? `a reviewer disputed a ${REVIEW_VALUES} value on ${formatInteger(disputed)} of them${checked}`
+      : `no reviewer disputed a ${REVIEW_VALUES} value`;
+    return `Human reviewers checked ${formatInteger(facts.entries)} ${catalog} ${facts.entries === 1 ? "entry" : "entries"}${facts.papers ? ` from ${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"}` : ""}: ${share ? `values correct (kcat, Km, kcat/Km) ${facts.correctShare}; ` : ""}${result}.`;
+  }
+
+  function entriesText(count, entries) {
+    return `${formatInteger(count)} ${count === 1 ? "entry" : "entries"} (${qualityShare(count, entries)})`;
+  }
+
+  // Values missing in words, with how many of the values reviewers named CatLog v2 has (quality.agreement
+  // stated_values_catlog_has of stated_values): "31 entries (1.2%) lacked a value the paper prints, mostly the kcat;
+  // CatLog v2 has 53 of the 58 values reviewers named". "" without the count.
+  function reviewMissingText(facts, agreement) {
+    if (facts.missing === null) return "";
+    const stated = statsCount(agreement?.stated_values);
+    const has = stated ? statsCount(agreement.stated_values_catlog_has, stated) : null;
+    const missing = facts.missing
+      ? `${entriesText(facts.missing, facts.entries)} lacked a value the paper prints, mostly the kcat`
+      : "no entry lacked a value the paper prints";
+    return `${missing}${has !== null ? `; CatLog v2 has ${formatInteger(has)} of the ${formatInteger(stated)} values reviewers named` : ""}`;
+  }
+
+  // "could not find the value 153, organism name 13, DOI 5"
+  function reviewKindsText(facts) {
+    return facts.kinds.map(([kind, count]) => `${String(kind).trim()} ${formatInteger(count)}`).join(", ");
+  }
+
+  // CatLog v2 against the review, one side line (the user, 2026-10-13): the reviewers' approved values CatLog v2 has as it
+  // is now, after fixes (quality.agreement agree of values_approved; in a snapshot without them quality.v2_found of
+  // v2_approved_total, which hold the same count from 2026-10-13), on the papers it has re-read (papers_compared), and
+  // the wrong CatLog values found (agreement.catlog_value_wrong, else v2_wrong). Null without the counts.
+  function v2MatchFacts(quality) {
+    const a = quality?.agreement || {};
+    let approved = statsCount(a.values_approved);
+    let same = approved ? statsCount(a.agree, approved) : null;
+    if (same === null) {
+      approved = statsCount(quality?.v2_approved_total);
+      same = approved ? statsCount(quality.v2_found, approved) : null;
     }
-    return { percent: qualityShare(agree, approved), blind: false, approved, agree, papers };
+    if (!approved || same === null) return null;
+    const wrong = statsCount(a.catlog_value_wrong);
+    return { approved, same, papers: statsCount(a.papers_compared), wrong: wrong !== null ? wrong : statsCount(quality.v2_wrong) };
   }
 
-  // The headline's 95% range (first_agree_unexposed_ci95, "79.7-90.6": papers resampled) as the page writes it,
-  // "79.7–90.6%"; empty when it is missing or not two percentages in order.
-  function agreementRange(value) {
-    const match = typeof value === "string" ? value.trim().match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/) : null;
-    if (!match) return "";
-    const [low, high] = [Number(match[1]), Number(match[2])];
-    return low <= high && high <= 100 ? `${low.toFixed(1)}–${high.toFixed(1)}%` : "";
+  // "CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved values
+  // (89.0%); wrong CatLog values found: 0." ("of these papers" after the review's own numbers.)
+  function v2MatchSentence(match, { ofThese = false } = {}) {
+    const papers = match.papers !== null
+      ? `CatLog v2 has re-read ${formatInteger(match.papers)} ${ofThese ? "of these papers" : `${match.papers === 1 ? "paper" : "papers"} human reviewers checked`}: the same value`
+      : "CatLog v2 has the same value";
+    return `${papers} as the reviewers for ${formatInteger(match.same)} of ${formatInteger(match.approved)} approved values (${qualityShare(match.same, match.approved)})${match.wrong !== null ? `; wrong CatLog values found: ${formatInteger(match.wrong)}` : ""}.`;
   }
 
-  // The blind headline in one sentence, said the same way in Stats' lead, the Guide's method section and (shortened) on
-  // Team: the first comparison, before any fix, its 95% range and the papers read blind, with what "read blind" means
-  // (catlog-v2 AGREEMENT_DEFINITIONS first_agree_unexposed_pct). No reason is given for any gap to other papers.
-  // Plain text, or HTML with the percent bolded when `html` is set (the Guide).
-  const BLIND_DEFINITION = "CatLog's readers never opened database or earlier-catalog files";
-  function blindHeadlineSentence(headline, { html = false } = {}) {
-    const text = html ? escapeHtml : (value) => value;
-    const percent = html ? `<strong>${escapeHtml(headline.percent)}</strong>` : headline.percent;
-    const papers = headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers";
-    return `${text("At the first comparison, before any fix, CatLog matched ")}${percent}${text(`${headline.range ? ` (95% range ${headline.range})` : ""} of the values human reviewers approved on ${papers} read blind (${BLIND_DEFINITION}).`)}`;
-  }
-
-  // What the first comparison showed CatLog had wrong (first_catlog_errors and its split), as words: "68 wrong labels,
-  // 1 missed value, 0 wrong numbers or units"; the total alone when the split is missing or does not add up; null without.
-  function firstComparisonErrors(a, approved) {
-    const total = statsCount(a.first_catlog_errors, approved);
-    const [labels, missed, numbers] = ["first_catlog_errors_label", "first_catlog_errors_missed", "first_catlog_errors_value"]
-      .map((key) => statsCount(a[key], approved));
-    if (labels !== null && missed !== null && numbers !== null && (total === null || labels + missed + numbers === total)) {
-      return {
-        total: labels + missed + numbers,
-        labels,
-        missed,
-        numbers,
-        text: `${formatInteger(labels)} wrong ${labels === 1 ? "label" : "labels"}, ${formatInteger(missed)} missed ${missed === 1 ? "value" : "values"}, ${formatInteger(numbers)} wrong ${numbers === 1 ? "number or unit" : "numbers or units"}`,
-      };
-    }
-    return total !== null ? { total, text: formatInteger(total) } : null;
-  }
-
-  // "69 fixed since": the errors fixed after the comparison, said against what it found ("all 69", "60 of 69").
-  function fixedAfterComparisonText(fixed, errors) {
-    if (!errors || fixed > errors.total) return formatInteger(fixed);
-    return fixed === errors.total ? `all ${formatInteger(fixed)}` : `${formatInteger(fixed)} of ${formatInteger(errors.total)}`;
-  }
-
-  // How often CatLog and human reviewers agree (quality.agreement, catlog-v2 human_review.AGREEMENT_DEFINITIONS): the
-  // reviewers' approved values CatLog has too, and what CatLog's own check against the paper found where they differ.
-  function agreementText(a) {
-    const headline = agreementHeadline(a);
-    if (!headline) return "";
-    const { approved, agree, papers } = headline;
-    const first = statsCount(a.first_agree, approved);
-    let text = headline.blind ? `${blindHeadlineSentence(headline)} ` : "";
-    if (headline.blind || first !== null) {
-      text += `${papers ? `On all ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, ` : ""}${first !== null ? `CatLog matched ${formatInteger(first)} of the ${formatInteger(approved)} approved values at the first comparison (${qualityShare(first, approved)}) and matches ${formatInteger(agree)} now, after fixes (${qualityShare(agree, approved)}).` : `CatLog matches ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved now, after fixes (${qualityShare(agree, approved)}).`}`;
-    } else {
-      text += `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
-    }
-    // What the first comparison found wrong in CatLog, the label errors named (as the README says it).
-    const errors = firstComparisonErrors(a, approved);
-    if (errors?.labels !== undefined) {
-      const fixed = statsCount(a.fixed_after_comparison, errors.total);
-      text += ` The first comparison found ${formatInteger(errors.labels)} label or annotation ${errors.labels === 1 ? "error" : "errors"} in CatLog (a UniProt entry, substrate structure or variant field), ${formatInteger(errors.missed)} missed ${errors.missed === 1 ? "value" : "values"} and ${formatInteger(errors.numbers)} wrong ${errors.numbers === 1 ? "number or unit" : "numbers or units"}${fixed !== null && errors.total ? `; ${fixedAfterComparisonText(fixed, errors)} ${fixed === 1 ? "is" : "are"} fixed since` : ""}.`;
-    }
-    const differ = statsCount(a.differ, approved);
-    const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
-    const right = differ !== null ? statsCount(a.differ_catlog_right, differ) : null;
-    const wrong = differ !== null ? statsCount(a.differ_catlog_wrong, differ) : null;
-    if (differ && open !== null && right !== null && wrong !== null && right + wrong <= differ - open) {
-      const checked = differ - open;
-      const other = checked - right - wrong;
-      text += ` Of the ${formatInteger(differ)} that differ, ${formatInteger(checked)} were checked against the paper: CatLog was right in ${formatInteger(right)} and wrong in ${wrong ? formatInteger(wrong) : "none"}${other ? `; ${formatInteger(other)} are the same value under another name, a rounding or a value CatLog leaves out by its reading rules` : ""}${open ? `. ${formatInteger(open)} are not checked yet` : ""}.`;
-    }
-    return text;
-  }
-
-  // What reviewers found when they compared values with their papers. The share correct is never shown without the
-  // label errors beside it.
-  function earlierCatalogText(quality) {
+  // A snapshot without the reviewers' own counts: what reviewers found when they compared CatLog v1 entries' values with
+  // their papers (compared_values_v1). The share correct is never shown without the label errors beside it.
+  function v1ComparedText(quality) {
     const compared = statsCount(quality?.compared_values_v1);
     const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
     const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
     if (!compared || wrong === null || labels === null) return "";
-    return `In the earlier catalog, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate, variant or protein label.`;
+    return `In CatLog v1 entries, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate, variant or protein label.`;
   }
 
+  // The Guide's Human review item: the review in full (values correct, missing and other disagreements, and the review of
+  // CatLog v2 entries when there is one), or, without the reviewers' own counts, what reviewers found in CatLog v1 entries.
   function humanComparisonText(overview) {
     const quality = overview?.quality || {};
-    const parts = [];
-    const earlier = earlierCatalogText(quality);
-    if (earlier) parts.push(earlier);
-    const agreement = agreementText(quality.agreement);
-    if (agreement) return [agreement, ...parts].join(" ");
-    const approved = statsCount(quality.v2_approved_total);
-    const found = approved ? statsCount(quality.v2_found, approved) : null;
-    const differed = statsCount(quality.v2_differences_checked);
-    const differedWrong = differed ? statsCount(quality.v2_wrong, differed) : null;
-    if (approved && found !== null) {
-      const differences = differedWrong !== null
-        ? `; ${differedWrong ? formatInteger(differedWrong) : "none"} of the ${formatInteger(differed)} values where it differed ${differedWrong > 1 ? "were" : "was"} wrong against the paper`
-        : "";
-      parts.push(`CatLog found ${formatInteger(found)} of the ${formatInteger(approved)} values reviewers approved${differences}.`);
-    }
-    return parts.join(" ");
+    const review = reviewFacts(quality.review?.v1);
+    if (!review) return v1ComparedText(quality);
+    const missing = reviewMissingText(review, quality.agreement);
+    const v2Review = reviewFacts(quality.review?.v2);
+    return [
+      reviewSentence(review),
+      missing ? `Values missing: ${missing}.` : "",
+      review.other !== null ? `Other disagreements: ${entriesText(review.other, review.entries)}.` : "",
+      v2Review ? reviewSentence(v2Review, { catalog: "CatLog v2", share: true }) : "",
+    ].filter(Boolean).join(" ");
   }
 
-  // The parts of the reviewers' approved values (the lead's bar): the same value, then the differences as CatLog's own
-  // check against the paper split them. Null when the split does not add up (the bar then shows same and different only).
-  function agreementParts(a, approved, agree) {
-    const differ = statsCount(a.differ, approved);
-    if (differ === null || agree + differ !== approved) return null;
-    const pick = (key) => statsCount(a[key], differ);
-    const parts = [
-      { part: "same", label: "Same value", count: agree },
-      { part: "differs", label: "The paper shows CatLog right", count: pick("differ_catlog_right") },
-      { part: "rounding", label: "Same printed value: another name or rounding",
-        count: pick("differ_same_value_other_name") === null || pick("differ_rounding") === null ? null : pick("differ_same_value_other_name") + pick("differ_rounding") },
-      { part: "neutral", label: "Left out by CatLog's reading rules", count: pick("differ_not_comparable") },
-      { part: "magnitude", label: "The paper shows CatLog wrong", count: pick("differ_catlog_wrong") },
-      { part: "open", label: "Not checked against the paper yet", count: pick("differ_not_adjudicated") },
-    ];
-    if (parts.some((item) => item.count === null) || parts.slice(1).reduce((sum, item) => sum + item.count, 0) !== differ) return null;
-    return parts;
-  }
-
-  // The lead of Stats (the user's headline measure, 2026-10-12): how often CatLog and human reviewers agree. Empty when
-  // the snapshot has no agreement counts.
-  function agreementLeadHtml(overview) {
-    const a = overview?.quality?.agreement;
-    const headline = agreementHeadline(a);
-    if (!headline) return "";
-    const { approved, agree, papers } = headline;
-    const first = statsCount(a.first_agree, approved);
-    const fixed = statsCount(a.fixed_after_comparison, approved);
-    const wrong = statsCount(a.catlog_value_wrong);
-    const stated = statsCount(a.stated_values);
-    const statedHas = stated ? statsCount(a.stated_values_catlog_has, stated) : null;
-    const errors = firstComparisonErrors(a, approved);
-    // How many differences CatLog's own check against the paper has covered, and in how many the paper shows CatLog
-    // wrong ("152 of 257; CatLog wrong in none"), when the counts hold together.
-    const differ = statsCount(a.differ, approved);
-    const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
-    const wrongInDiffer = differ !== null ? statsCount(a.differ_catlog_wrong, differ) : null;
-    const checkedDifferences = differ && open !== null && wrongInDiffer !== null && wrongInDiffer <= differ - open
-      ? `${formatInteger(differ - open)} of ${formatInteger(differ)}; CatLog wrong in ${wrongInDiffer ? formatInteger(wrongInDiffer) : "none"}`
-      : "";
-    const lead = headline.blind
-      ? blindHeadlineSentence(headline)
-      : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values human reviewers approved${papers ? `, on ${formatInteger(papers)} papers they checked that CatLog has since read` : ""}.`;
-    const facts = [
-      ["Values approved", `${formatInteger(approved)}${papers ? ` on ${formatInteger(papers)} papers` : ""}`],
-      // Beside the blind headline, the first comparison on every compared paper and the count after fixes are secondary.
-      first !== null ? [headline.blind ? "First comparison, all papers" : "First comparison", `${formatInteger(first)} matched (${qualityShare(first, approved)})`] : null,
-      // (without a first comparison, the big number and the sentence already give the same value count)
-      first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} matched (${qualityShare(agree, approved)})`] : null,
-      checkedDifferences ? ["Differences checked against the paper", checkedDifferences] : null,
-      errors ? ["Errors found at the first comparison", errors.text] : null,
-      fixed !== null ? ["Fixed after the comparison", fixedAfterComparisonText(fixed, errors)] : null,
-      wrong !== null ? ["Wrong number or unit in CatLog", formatInteger(wrong)] : null,
-      stated && statedHas !== null ? ["Missing values reviewers named", `${formatInteger(stated)}; CatLog has ${formatInteger(statedHas)}`] : null,
-    ].filter(Boolean);
-    const split = agreementParts(a, approved, agree);
-    const parts = split
-      || [{ part: "same", label: "Same value", count: agree }, { part: "neutral", label: "Different or missing", count: approved - agree }];
-    // A zero count draws no segment and has no legend row, except "The paper shows CatLog wrong": its 0 is a result.
-    const shown = parts.filter((item) => item.count > 0 || (split && item.part === "magnitude"));
-    const bar = `<div class="stats-lead-bar">
-        <p class="stats-lead-bar-title">${first !== null || headline.blind ? "Approved values now" : "Approved values"} <span class="stats-muted">(${formatInteger(approved)})</span>: the same in CatLog or, where CatLog differs, what its check against the paper found</p>
-        ${statsTrack(shown.filter((item) => item.count > 0).map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
-        ${statsLegend(shown)}
-      </div>`;
-    // Where the paper shows CatLog right, what was wrong in the earlier catalog (as the README says it).
-    const right = statsCount(a.differ_catlog_right, approved);
-    const valueError = right ? statsCount(a.differ_earlier_value_error, right) : null;
-    const labelError = right ? statsCount(a.differ_earlier_label_error, right) : null;
-    const rightText = valueError !== null && labelError !== null && valueError + labelError === right
-      ? `The paper shows CatLog right in ${formatInteger(right)} of the approved values that differ; of ${right === 1 ? "this one" : `these ${formatInteger(right)}`}, the earlier catalog's value is not printed in the paper (${formatInteger(valueError)}) or has a wrong enzyme, organism, substrate, variant or protein label (${formatInteger(labelError)}).`
-      : "";
-    // Values reviewers called wrong, at their first comparison: the ones CatLog did not have and the ones it had with the
-    // same number (rejected_catlog_also_without + rejected_catlog_has_same = rejected_values); what became of the latter
-    // (kept, dropped, cleared, changed, pending are parts of rejected_catlog_has_same), each part only when it is not zero
-    // and the parts add up to no more than the whole.
-    const rejected = statsCount(a.rejected_values);
-    let rejectedText = "";
-    if (rejected) {
-      const without = statsCount(a.rejected_catlog_also_without, rejected);
-      const same = statsCount(a.rejected_catlog_has_same, rejected);
-      if (without !== null && same !== null && without + same === rejected) {
-        const plural = (n, one, many) => `${formatInteger(n)} ${n === 1 ? one : many}`;
-        const fates = [
-          ["rejected_kept_after_audit", (n) => `an AI audit kept ${formatInteger(n)}`],
-          ["rejected_dropped_after_audit", (n) => `${plural(n, "was dropped after an AI audit found it wrong", "were dropped after an AI audit found them wrong")}`],
-          ["rejected_cleared_by_paper_check", (n) => `a check against the paper found ${formatInteger(n)} right`],
-          ["rejected_changed_since", (n) => `CatLog has changed or removed ${formatInteger(n)} since`],
-          ["rejected_pending", (n) => `${plural(n, "is", "are")} not settled yet`],
-        ].map(([key, say]) => ({ count: same ? statsCount(a[key], same) : null, say }));
-        const known = fates.filter((fate) => fate.count !== null);
-        const shown = known.reduce((sum, fate) => sum + fate.count, 0) <= same ? known.filter((fate) => fate.count > 0) : [];
-        const fateText = shown.length
-          ? ` (${shown.length > 1 ? `${shown.slice(0, -1).map((fate) => fate.say(fate.count)).join(", ")} and ` : ""}${shown.at(-1).say(shown.at(-1).count)})`
-          : "";
-        const one = rejected === 1;
-        const parts = !same ? [one ? "CatLog did not have it" : "CatLog did not have any of them"]
-          : !without ? [`CatLog had ${one ? "it" : `all ${formatInteger(same)}`} with the same number${fateText}`]
-          : [`CatLog did not have ${formatInteger(without)} of them`, `it had ${formatInteger(same)} with the same number${fateText}`];
-        rejectedText = `Reviewers called ${plural(rejected, "value", "values")} wrong on these papers: ${parts.join("; ")}.`;
-      }
-    }
-    // Objections that dispute no value shown (a value missing, a duplicate, the DOI, a name): counted, never as failures.
-    const notValue = statsCount(a.rejected_not_value);
-    if (notValue) {
-      rejectedText += `${rejectedText ? " " : ""}${formatInteger(notValue)} other ${notValue === 1 ? "objection disputes" : "objections dispute"} no value shown (a value missing, a duplicate, the DOI or a name).`;
-    }
-    // Records read by CatLog that reviewers checked directly.
-    const direct = statsCount(a.direct_values_reviewed);
-    let directText = "";
-    if (direct) {
-      const yes = statsCount(a.direct_values_agree, direct);
-      const no = statsCount(a.direct_values_disagree, direct);
-      const audited = no ? statsCount(a.direct_disagree_wrong_after_audit, no) : null;
-      const waiting = no ? statsCount(a.direct_disagree_audit_pending, no) : null;
-      if (yes !== null && no !== null && yes + no <= direct) {
-        directText = `Reviewers checked ${formatInteger(direct)} values of CatLog's own records directly: they approved ${formatInteger(yes)} and disputed ${formatInteger(no)}${audited !== null && waiting !== null && audited + waiting <= no ? `; an AI audit found ${formatInteger(audited)} of those wrong${waiting ? ` and ${formatInteger(waiting)} are not audited yet` : ""}` : ""}.`;
-      }
-    }
-    return `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsAgreementTitle" data-figure="agreement">
-      <h2 id="statsAgreementTitle">Agreement with human reviewers</h2>
+  // The lead of Stats (the user's headline, 2026-10-13): the human review of CatLog v1 entries as the reviewers' own
+  // files say it, then CatLog v2's match as a side line. A snapshot without the review's counts leads with CatLog v2's
+  // match; one with neither has no lead.
+  function reviewLeadHtml(overview) {
+    const quality = overview?.quality || {};
+    const review = reviewFacts(quality.review?.v1);
+    const match = v2MatchFacts(quality);
+    if (!review && !match) return "";
+    const asOf = /^\d{4}-\d{2}-\d{2}/.test(String(quality.as_of || "")) ? `Counted ${formatDate(String(quality.as_of).slice(0, 10))}. ` : "";
+    const sameDefinition = "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection; the same value: the same paper, metric, protein, variant and substrate, and a value within 2%.";
+    const links = `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>`;
+    const section = (title, figure, body) => `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsReviewTitle" data-figure="review">
+      <h2 id="statsReviewTitle">${escapeHtml(title)}</h2>
       <div class="stats-lead-body">
-        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong>${headline.range ? `<span class="stats-lead-range">95% range ${escapeHtml(headline.range)}</span>` : ""}<span>${headline.blind
-          ? `of approved values matched at the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} read blind`
-          : "of the values human reviewers approved are the same in CatLog"}</span></div>
-        <div class="stats-lead-text">
-          <p class="stats-lead-sentence">${escapeHtml(lead)}</p>
-          ${bar}
-          <dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>
-          ${rightText ? `<p class="stats-lead-note">${escapeHtml(rightText)}</p>` : ""}
-          ${rejectedText ? `<p class="stats-lead-note">${escapeHtml(rejectedText)}</p>` : ""}
-          ${directText ? `<p class="stats-lead-note">${escapeHtml(directText)}</p>` : ""}
-          <p class="stats-fig-data">${statsDataLine(`${a && overview.quality.as_of ? `Counted ${formatDate(String(overview.quality.as_of).slice(0, 10))}. ` : ""}Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection in the 2026 review of the earlier catalog, on papers CatLog has since read. Matched (the same value): the same paper, metric, protein, variant and substrate, and a value within 2%. Differences are split by CatLog's own check against the paper, not by the reviewers.`)}</p>
-          <p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>
-        </div>
+        <div class="stats-lead-figure">${figure}</div>
+        <div class="stats-lead-text">${body}${links}</div>
       </div>
     </section>`;
+    if (!review) {
+      // CatLog v2's match alone, with what reviewers found in CatLog v1 entries when the snapshot has it.
+      const earlier = v1ComparedText(quality);
+      return section("Human review",
+        `<strong>${escapeHtml(qualityShare(match.same, match.approved))}</strong><span>of the values human reviewers approved are the same in CatLog v2</span>`,
+        `<p class="stats-lead-sentence">${escapeHtml(v2MatchSentence(match))}</p>
+          ${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}
+          <p class="stats-fig-data">${statsDataLine(`${asOf}${sameDefinition}`)}</p>`);
+    }
+    const missing = reviewMissingText(review, quality.agreement);
+    const kinds = reviewKindsText(review);
+    const facts = [
+      review.missing !== null ? ["Values missing", entriesText(review.missing, review.entries)] : null,
+      review.other !== null ? ["Other disagreements", entriesText(review.other, review.entries)] : null,
+    ].filter(Boolean);
+    const notes = [
+      missing ? `Values missing: ${missing}.` : "",
+      kinds ? `Other disagreements, by kind: ${kinds}.` : "",
+    ].filter(Boolean);
+    const v2Review = reviewFacts(quality.review?.v2);
+    return section("Human review of CatLog v1 entries",
+      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct (kcat, Km, kcat/Km)</span>`,
+      `<p class="stats-lead-sentence">${escapeHtml(reviewSentence(review))}</p>
+          ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
+          ${notes.length ? `<p class="stats-lead-note">${escapeHtml(notes.join(" "))}</p>` : ""}
+          ${v2Review ? `<p class="stats-lead-note">${escapeHtml(reviewSentence(v2Review, { catalog: "CatLog v2", share: true }))}</p>` : ""}
+          ${match ? `<p class="stats-lead-side">${escapeHtml(v2MatchSentence(match, { ofThese: true }))}</p>` : ""}
+          <p class="stats-fig-data">${statsDataLine(`${asOf}From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict. Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.${review.missing !== null ? " Values missing: the reviewer says the paper prints a value the entry lacks." : ""}${match ? ` ${sameDefinition}` : ""}`)}</p>`);
   }
 
-  // The Guide's method section opens with the agreement with human reviewers (the user's headline measure, first on
-  // Stats too): one sentence with the headline percent and a link to Stats. Empty without agreement counts.
-  function guideAgreementLeadHtml(overview) {
-    const headline = agreementHeadline(overview?.quality?.agreement);
-    if (!headline) return "";
-    const percent = `<strong>${escapeHtml(headline.percent)}</strong>`;
-    const sentence = headline.blind
-      ? blindHeadlineSentence(headline, { html: true })
-      : `CatLog has the same value as human reviewers for ${percent} of the values they approved: ${formatInteger(headline.agree)} of ${formatInteger(headline.approved)}${headline.papers ? `, on ${formatInteger(headline.papers)} papers they checked that CatLog has since read` : ""}.`;
-    return `<span class="guide-method-lead-title">Agreement with human reviewers</span> ${sentence} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
+  // The Guide's method section opens with the human review (the user's headline, first on Stats too): the values correct
+  // in CatLog v1 entries and CatLog v2's match, linked to Stats. Empty without either.
+  function guideReviewLeadHtml(overview) {
+    const quality = overview?.quality || {};
+    const review = reviewFacts(quality.review?.v1);
+    const match = v2MatchFacts(quality);
+    if (!review && !match) return "";
+    const headline = review
+      ? `Human reviewers checked ${formatInteger(review.entries)} CatLog v1 ${review.entries === 1 ? "entry" : "entries"}${review.papers ? ` from ${formatInteger(review.papers)} ${review.papers === 1 ? "paper" : "papers"}` : ""}: values correct (kcat, Km, kcat/Km) <strong>${escapeHtml(review.correctShare)}</strong>.`
+      : "";
+    const side = match ? escapeHtml(v2MatchSentence(match, { ofThese: Boolean(review) })) : "";
+    return `<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
   }
 
-  // The Guide's method section: the agreement lead, then the audit and human-review items get this snapshot's numbers
+  // The Guide's method section: the human-review lead, then the audit and human-review items get this snapshot's numbers
   // when it has them (they read without numbers otherwise). The Guide reads only the manifest, never the record index.
   function renderGuideMethod() {
     // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
@@ -4159,7 +4075,7 @@
     const overview = statsOverview(Number(manifest.total_rows || 0));
     const lead = $("guideMethodLead");
     if (lead) {
-      const html = guideAgreementLeadHtml(overview);
+      const html = guideReviewLeadHtml(overview);
       lead.innerHTML = html;
       lead.hidden = !html;
     }
@@ -4171,8 +4087,8 @@
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     if ($("guideMethodHuman") && humanChecked !== null) {
       const comparison = humanComparisonText(overview);
-      // the agreement of CatLog with human reviewers comes first (the user, 2026-10-12)
-      $("guideMethodHuman").textContent = `${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: a human reviewer approved every value they show.`;
+      // what the review found comes first (the user, 2026-10-12), then the human-checked records and their rule
+      $("guideMethodHuman").textContent = `${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`;
     }
   }
 
@@ -4299,11 +4215,11 @@
     const accepted = statsCount(data.accepted, records);
     const papers = statsCount(data.papers);
     return {
-      id: "statsReplacedTitle", key: "replaced", title: "Earlier records of papers CatLog has read",
+      id: "statsReplacedTitle", key: "replaced", title: "CatLog v1 entries of papers CatLog v2 has read",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      // papers: the papers CatLog has read that the earlier catalog also had (fewer than the papers CatLog has read).
-      caption: `The ${formatInteger(records)} earlier ${records === 1 ? "record" : "records"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog has read and the earlier catalog also had` : " of the papers CatLog has read"}: whether CatLog's reading has the same number for that paper and parameter.`,
-      data: statsDataLine("CatLog's records replace a paper's earlier ones. kcat/Km calculated from kcat and Km are left out."),
+      // papers: the papers CatLog v2 has read that CatLog v1 also had (fewer than the papers CatLog has read).
+      caption: `The ${formatInteger(records)} CatLog v1 ${records === 1 ? "entry" : "entries"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog v2 has read and CatLog v1 also had` : " of the papers CatLog v2 has read"}: whether CatLog v2's reading has the same number for that paper and parameter.`,
+      data: statsDataLine("A paper's CatLog v2 entries replace its CatLog v1 entries. kcat/Km calculated from kcat and Km are left out."),
     };
   }
 
@@ -4351,16 +4267,16 @@
     const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
     const acceptedParts = (fromPaperAccepted !== null
       ? [[SOURCE_CATLOG_LABEL, fromPaperAccepted, "accepted_catlog", { source: "paper" }],
-        ["Earlier catalog, as printed", (counts.verified || 0) - fromPaperAccepted - humanAccepted, "accepted_printed"],
-        ["Earlier catalog, after a correction", counts.corrected || 0, "accepted_corrected"],
-        ["Earlier catalog, every value approved by a human reviewer", humanAccepted, "accepted_human"]]
+        ["CatLog v1, as printed", (counts.verified || 0) - fromPaperAccepted - humanAccepted, "accepted_printed"],
+        ["CatLog v1, after a correction", counts.corrected || 0, "accepted_corrected"],
+        ["CatLog v1, approved by a human reviewer", humanAccepted, "accepted_human"]]
       : [["As printed", (counts.verified || 0) - humanAccepted, "accepted_printed"], ["After a correction", counts.corrected || 0, "accepted_corrected"],
-        ["Every value approved by a human reviewer", humanAccepted, "accepted_human"]])
+        ["Approved by a human reviewer", humanAccepted, "accepted_human"]])
       .filter(([, count]) => count > 0);
     // Accepted is split in the rows under it (the sentence is the row's title, for a copy of the numbers in words).
-    const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} after a human reviewer approved every value` : "";
+    const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} on a human reviewer's approval` : "";
     const acceptedNote = fromPaperAccepted !== null
-      ? `${formatInteger(fromPaperAccepted)} read from the paper by CatLog; ${formatInteger(accepted - fromPaperAccepted)} from the earlier catalog (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
+      ? `${formatInteger(fromPaperAccepted)} CatLog v2 entries, read from the paper; ${formatInteger(accepted - fromPaperAccepted)} CatLog v1 entries (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
       : `${formatInteger((counts.verified || 0) - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}.`;
     const notReviewed = reviewStatuses.find((item) => item.value === "mathematically_inferred");
     const statusItems = [
@@ -4479,36 +4395,36 @@
     // Checks on the records read from the paper: one row per kind of check, with a small grey bar like the other tables
     // (the comparison colours belong to the database comparison).
     const audit = auditFacts(overview);
-    const agreement = agreementHeadline(overview?.quality?.agreement);
-    // Beside a lead that gives the first comparison, the agreement row says its count is the one after fixes.
-    const afterFixes = agreement && (agreement.blind || statsCount(overview.quality.agreement.first_agree, agreement.approved) !== null);
     const marked = statsCount(overview?.human_marked, total);
     const quality = overview?.quality || {};
-    const compared = statsCount(quality.compared_values_v1);
+    // The human review of CatLog v1 entries as the reviewers' own files say it, as the lead says it; a snapshot without
+    // those counts gives every value reviewers compared on CatLog v1 entries' papers, approved or not.
+    const review = reviewFacts(quality.review?.v1);
+    const compared = review ? null : statsCount(quality.compared_values_v1);
     const comparedWrong = compared ? statsCount(quality.wrong_v1, compared) : null;
     const labelErrors = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
-    // Every value reviewers compared, approved or not (the lead counts only the approved ones).
     const comparedPapers = compared ? statsCount(quality.compared_papers_v1) : null;
-    // An older snapshot without the agreement counts: what CatLog found of the reviewers' approved values.
-    const approvedV2 = statsCount(quality.v2_approved_total);
-    const found = approvedV2 ? statsCount(quality.v2_found, approvedV2) : null;
-    const differed = statsCount(quality.v2_differences_checked);
-    const foundWrong = differed ? statsCount(quality.v2_wrong, differed) : null;
+    const match = v2MatchFacts(quality);
     const checkRows = [
       fromPaper ? { key: "second_check", name: "Second AI check", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)} records</a>${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
         result: "Every value compared with the paper", share: 1 } : null,
       audit ? { key: "audit", name: "AI audits", count: `${formatInteger(audit.values)} values`,
         result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}`, share: (audit.values - audit.wrong) / audit.values } : null,
-      agreement ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(agreement.approved)} values`,
-        result: `${formatInteger(agreement.agree)} the same in CatLog${afterFixes ? " now, after fixes" : ""} (${qualityShare(agreement.agree, agreement.approved)})`, share: agreement.agree / agreement.approved }
-        : found !== null ? { key: "agreement", name: "Human reviewers' approved values", count: `${formatInteger(approvedV2)} values`,
-          result: `CatLog found ${formatInteger(found)}${foundWrong !== null ? `; ${foundWrong ? formatInteger(foundWrong) : "none"} of the ${formatInteger(differed)} where it differed ${foundWrong > 1 ? "were" : "was"} wrong against the paper` : ""}`, share: found / approvedV2 } : null,
+      review ? { key: "review", name: "Human review of CatLog v1 entries",
+        count: `${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"}${review.papers ? ` from ${formatInteger(review.papers)} ${review.papers === 1 ? "paper" : "papers"}` : ""}`,
+        result: [`Values correct ${review.correctShare}`, review.missing !== null ? `values missing ${qualityShare(review.missing, review.entries)}` : "",
+          review.other !== null ? `other disagreements ${qualityShare(review.other, review.entries)}` : ""].filter(Boolean).join("; "),
+        share: (review.entries - review.disputed) / review.entries }
+        : compared && comparedWrong !== null && labelErrors !== null ? { key: "review", name: "Human review of CatLog v1 entries",
+          count: `${formatInteger(compared)} values${comparedPapers ? ` on ${formatInteger(comparedPapers)} ${comparedPapers === 1 ? "paper" : "papers"}` : ""}, approved or not`,
+          result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label`, share: (compared - comparedWrong) / compared } : null,
+      match ? { key: "agreement", name: "Reviewers' approved values in CatLog v2",
+        count: `${formatInteger(match.approved)} values${match.papers !== null ? ` on ${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"}` : ""}`,
+        result: `${formatInteger(match.same)} the same in CatLog v2 (${qualityShare(match.same, match.approved)})${match.wrong !== null ? `; wrong CatLog values found: ${formatInteger(match.wrong)}` : ""}`,
+        share: match.same / match.approved } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked records", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} accepted records</a>`,
-        result: marked !== null && marked >= humanChecked ? `A reviewer approved every value; reviewers looked at ${formatInteger(marked)} records` : "A reviewer approved every value",
+        result: `${HUMAN_CHECKED_DESCRIPTION}${marked !== null && marked >= humanChecked ? ` Reviewers looked at ${formatInteger(marked)} records.` : ""}`,
         share: marked ? humanChecked / marked : null } : null,
-      compared && comparedWrong !== null && labelErrors !== null ? { key: "earlier", name: "Human review of the earlier catalog",
-        count: `${formatInteger(compared)} values${comparedPapers ? ` on ${formatInteger(comparedPapers)} ${comparedPapers === 1 ? "paper" : "papers"}` : ""}, approved or not`,
-        result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label`, share: (compared - comparedWrong) / compared } : null,
     ].filter(Boolean);
     if (checkRows.length) {
       figures.push({
@@ -4636,9 +4552,9 @@
     const halves = figures.filter((item) => !item.wide);
     if (halves.length % 2) halves[halves.length - 1].wide = true;
     const html = (item) => statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] });
-    // The agreement with human reviewers stands first, above the headline counts (the user's success measure); a page
-    // without its slot keeps it at the top of the figures.
-    const lead = agreementLeadHtml(overview);
+    // The human review stands first, above the headline counts (the user's headline); a page without its slot keeps it
+    // at the top of the figures.
+    const lead = reviewLeadHtml(overview);
     const leadSlot = $("statsLead");
     if (leadSlot) {
       leadSlot.innerHTML = lead;
@@ -4663,7 +4579,7 @@
       parts.push(`<details class="stats-explanation stats-method stats-wide"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
-        <div><dt>Human-checked</dt><dd>Accepted records where a human reviewer approved every value, as the tag shows.</dd></div>
+        <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(HUMAN_CHECKED_SENTENCE)}, as the tag shows.</dd></div>
         <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`);
@@ -4784,28 +4700,28 @@
     numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked\nby AI audits`] : [];
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
-    // the agreement first: the records line is the shortest, so on the wide loop it is the one level with Rules updated
-    numbers.human = [teamAgreementFact(overview), humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : ""].filter(Boolean);
+    // the review first: the records line is the shortest, so on the wide loop it is the one level with Rules updated
+    numbers.human = [teamReviewFact(overview), humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : ""].filter(Boolean);
     numbers.website = total ? [`${formatInteger(total)} records`] : [];
     return numbers;
   }
 
-  // Human check's agreement: the Stats lead's headline, shortened (matched at the first comparison, its 95% range, the
-  // papers read blind); an older snapshot without the blind headline gives the share matched of the approved values.
-  function teamAgreementFact(overview) {
-    const headline = agreementHeadline(overview?.quality?.agreement);
-    if (!headline) return null;
-    if (!headline.blind) {
-      const label = `${headline.percent} of approved values matched`;
-      return { label, wide: [label], narrow: [`${headline.percent} of approved`, "values matched"] };
+  // Human check's headline, the Stats lead's shortened: the values correct in the CatLog v1 entries reviewers checked; a
+  // snapshot without the review's counts gives the share of approved values CatLog v2 has. The upright loop's lines are
+  // broken within its 23 characters (TEAM_LAYOUTS.narrow.wrap), so no word is left alone on a line.
+  function teamReviewFact(overview) {
+    const quality = overview?.quality || {};
+    const review = reviewFacts(quality.review?.v1);
+    if (review) {
+      const entries = `${formatInteger(review.entries)} CatLog v1 ${review.entries === 1 ? "entry" : "entries"}`;
+      return { label: `${review.correctShare} values correct in ${entries}`,
+        wide: [`${review.correctShare} values correct`, `in ${entries}`], narrow: [`${review.correctShare} values correct in`, entries] };
     }
-    const range = headline.range ? `95% range ${headline.range}` : "";
-    const papers = headline.blindPapers !== null ? `${formatInteger(headline.blindPapers)} papers read blind` : "papers read blind";
-    return {
-      label: `${headline.percent} matched${range ? ` (${range})` : ""} at the first comparison, on ${papers}`,
-      wide: [`${headline.percent} matched${range ? ` (${range})` : ""}`, `first comparison, ${papers}`],
-      narrow: [`${headline.percent} matched`, range, "first comparison,", papers].filter(Boolean),
-    };
+    const match = v2MatchFacts(quality);
+    if (!match) return null;
+    const share = qualityShare(match.same, match.approved);
+    return { label: `${share} of approved values the same in CatLog v2`,
+      wide: [`${share} of approved values`, "the same in CatLog v2"], narrow: [`${share} of approved`, "values the same", "in CatLog v2"] };
   }
 
   function teamFigureSvg(layoutKey, numbers) {
@@ -5482,7 +5398,7 @@
     };
   }
 
-  // Source: one of All records, Read from the paper by CatLog or From enzyme databases; databases ticked under "By
+  // Source: one of All records, CatLog v2: read from the paper or CatLog v1: from enzyme databases; databases ticked under "By
   // database" narrow the last (and select it).
   function sourceControlState() {
     const sources = selectedCheckboxes("source");
@@ -5839,7 +5755,7 @@
       add("status", `Review result: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
     }
     if (controls.sourceMode !== "all" && !controls.sources.length) {
-      add(`source:${controls.sourceMode}`, `Source: ${controls.sourceMode === "paper" ? "read from the paper by CatLog" : "from enzyme databases"}`,
+      add(`source:${controls.sourceMode}`, `Source: ${(controls.sourceMode === "paper" ? SOURCE_CATLOG_LABEL : SOURCE_DATABASES_LABEL).replace(": ", ", ")}`,
         () => setSourceControls("all"));
     }
     if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"));
@@ -9593,7 +9509,7 @@
     const rows = [
       ...valueItems.map((item) => {
         const hasBefore = item.before != null && item.before !== "";
-        const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value");
+        const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "CatLog v1 value before the correction");
         return comparisonItemHtml(item.name,
           `${escapePublic(correctionValueText(item.before, item.unit))}${arrow}<strong>${escapePublic(correctionValueText(item.after, item.unit))}</strong>`,
           changeHtml(item)
@@ -10647,7 +10563,10 @@
       sourceAttributionRows,
       humanComparisonText,
       printedFigureDisplays,
-      agreementText,
+      reviewFacts,
+      reviewSentence,
+      v2MatchFacts,
+      v2MatchSentence,
       statsCohortData,
       statsOverview,
       statsBrowseHref,
@@ -10659,8 +10578,7 @@
       statsDonut,
       statsNiceScale,
       statsMainSources,
-      agreementHeadline,
-      agreementLeadHtml,
+      reviewLeadHtml,
       renderTeam,
       teamNumbers,
       teamWrappedLines,

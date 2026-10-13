@@ -328,7 +328,9 @@ class OverviewTests(unittest.TestCase):
                                    r"|matched_later_other)$")
         read = {key for key in re.findall(r"\ba\.([a-z][a-z0-9_]*)|\"([a-z][a-z0-9_]*)\"", script) for key in key if key}
         read = {key for key in read if agreement_key.match(key)}
-        self.assertIn("first_agree_unexposed_ci95", read)
+        # The first-comparison and blind fields are reference only (the user, 2026-10-13): the page reads none of them.
+        self.assertFalse({key for key in read if key.startswith("first_") or "unexposed" in key}, read)
+        self.assertIn("agree", read)
         self.assertEqual(read - set(followup.AGREEMENT_FIELDS), set())
         fresh = {"papers_compared": 291, "values_approved": 3838, "first_agree": 3332, "first_agree_pct": 86.8, "agree": 3412,
                  "agree_pct": 88.9, "first_catlog_errors": 69, "first_catlog_errors_value": 0,

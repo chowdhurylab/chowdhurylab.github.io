@@ -362,7 +362,7 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
-// Source: three radios (All records, Read from the paper by CatLog, From enzyme databases) and the databases.
+// Source: three radios (All records, CatLog v2: read from the paper, CatLog v1: from enzyme databases) and the databases.
 const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
   value, type: "radio", name: "sourceMode", checked: value === "all",
 }));
@@ -1374,7 +1374,8 @@ assert.match(guideHtml, /<em>Possible unit or magnitude error<\/em> \([^)]*above
 assert.doesNotMatch(guideHtml, /not in the table or the Cautions filter/);
 assert.match(sourceCode, /value: "units", label: "Possible unit or magnitude error", bit: 2, title: "[^"]*a printed unit that differs[^"]*"/);
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
-assert.doesNotMatch(guideHtml, /CatLog v2|independent|AI run|guide-note">Older records/);
+// CatLog v1 and v2 entries are named as such (the user, 2026-10-13), never "the earlier catalog" or "the old catalog".
+assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -1723,7 +1724,7 @@ function row(overrides = {}) {
     const ruled = element("statsCharts").innerHTML;
     assert.match(ruled, /1 records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted\./);
     assert.doesNotMatch(ruled, /accepted records have no PMID/);
-    assert.match(ruled, /1 as printed, 1 after a correction, 1 after a human reviewer approved every value\./);
+    assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer&#39;s approval\./);
     assert.match(ruled, /data-part="accepted_human" data-count="1"/);
     runtimeManifest.summary.distributions = saved;
     api.renderStats();
@@ -1756,7 +1757,7 @@ function row(overrides = {}) {
   api.renderStats();
   chart = element("statsCharts").innerHTML;
   const totalsHtml = element("statsTotals").innerHTML;
-  for (const [label, value] of [["Human-checked", 1], ["Read from the paper by CatLog", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
+  for (const [label, value] of [["Human-checked", 1], ["CatLog v2: read from the paper", 2], ["Papers", 5], ["Enzymes", 3], ["EC numbers", 4], ["Organisms", 2], ["Substrates", 6]]) {
     assert.match(totalsHtml, new RegExp(`${label.replace(/[()]/g, "\\$&")}</dt><dd>${value}`));
   }
   assert.match(totalsHtml, /from 1 papers/);
@@ -1767,7 +1768,7 @@ function row(overrides = {}) {
   assert.match(chart, /a record can carry more than one\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value">3 <span class="stats-muted">0\.0%<\/span>/);
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper by CatLog<\/a>/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2: read from the paper<\/a>/);
   assert.match(chart, /data-row="oed" data-count="1"[\s\S]*?class="stats-seg stats-part-accepted" style="left:0%;width:33\.3333%"/);
   assert.match(chart, /BRENDA, Not confirmed: 1/);
   // Main-source counts that do not add up to the review results are not drawn by status.
@@ -1787,15 +1788,15 @@ function row(overrides = {}) {
   assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads and checks values <span aria-hidden="true">→<\/span><\/a>/);
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /<tr data-check="second_check">[\s\S]*?#browse\?source=paper">2 records<\/a> from 1 papers/);
-  assert.match(chart, /<tr data-check="human_checked">[\s\S]*?#browse\?checked=1">1 accepted records<\/a>[\s\S]*?A reviewer approved every value; reviewers looked at 2 records/);
+  assert.match(chart, /<tr data-check="human_checked">[\s\S]*?#browse\?checked=1">1 accepted records<\/a>[\s\S]*?<td>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\. Reviewers looked at 2 records\.<\/td>/);
   assert.doesNotMatch(chart, /AI audits<\/th>|data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit row and no accuracy");
   // The Guide's method section gets the same human-review number; its audit item keeps the words without numbers.
   element("guideMethodAudits").textContent = "static audits";
   element("guideMethodHuman").textContent = "static human";
   api.renderGuideMethod();
-  assert.equal(element("guideMethodLead").hidden, true, "No agreement line without agreement counts");
+  assert.equal(element("guideMethodLead").hidden, true, "No human-review line without its counts");
   assert.equal(element("guideMethodAudits").textContent, "static audits");
-  assert.equal(element("guideMethodHuman").textContent, "1 accepted records are human-checked: a human reviewer approved every value they show.");
+  assert.equal(element("guideMethodHuman").textContent, "1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
   // With the audit and review results (overview.quality, copied from the human-review marks file at build time).
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-11", audit_values: 742, audit_wrong: 2,
     compared_values_v1: 2431, compared_papers_v1: 312, wrong_v1: 9, label_or_annotation_v1: 114, v2_found: 2160,
@@ -1805,22 +1806,23 @@ function row(overrides = {}) {
   assert.deepEqual(headings().slice(0, 3), ["Review result", "Records by main source", "Checks on the values"]);
   assert.match(qualityChart, /<tr data-check="audit"><th scope="row">AI audits<\/th><td>742 values<\/td>[\s\S]*?<td>740 kept; 2 were wrong \(0\.3%\) and removed \(as of Oct 11, 2026\)<\/td>/);
   // The share correct is never shown without the label errors beside it.
-  assert.match(qualityChart, /<tr data-check="earlier"><th scope="row">Human review of the earlier catalog<\/th><td>2,431 values on 312 papers, approved or not<\/td>/);
+  assert.match(qualityChart, /<tr data-check="review"><th scope="row">Human review of CatLog v1 entries<\/th><td>2,431 values on 312 papers, approved or not<\/td>/);
   assert.match(qualityChart, /<td>9 wrong number or unit \(99\.6% correct\); 114 wrong label<\/td>/);
-  assert.match(qualityChart, /<tr data-check="agreement">[\s\S]*?<td>2,380 values<\/td>[\s\S]*?CatLog found 2,160; none of the 504 where it differed was wrong against the paper<\/td>/);
+  // v2_found of v2_approved_total: the reviewers' approved values CatLog v2 has (a snapshot without quality.agreement).
+  assert.match(qualityChart, /<tr data-check="agreement">[\s\S]*?<td>2,380 values<\/td>[\s\S]*?<td>2,160 the same in CatLog v2 \(90\.8%\); wrong CatLog values found: 0<\/td>/);
   api.renderGuideMethod();
   assert.equal(element("guideMethodAudits").textContent, "742 values re-checked against their papers by a separate AI auditor that tries to find errors; 2 were wrong (0.3%) and removed. As of Oct 11, 2026.");
   // the comparison with human reviewers comes first, then the human-checked count
-  assert.match(element("guideMethodHuman").textContent, /^In the earlier catalog, 9 of 2,431 values.* 1 accepted records are human-checked: a human reviewer approved every value they show\.$/);
+  assert.match(element("guideMethodHuman").textContent, /^In CatLog v1 entries, 9 of 2,431 values.* 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat\/Km was approved too or agrees with kcat ÷ Km\.$/);
   // Numbers that do not hold together are not shown: the share correct never appears without the label errors.
   runtimeManifest.summary.overview = { ...overview, quality: { audit_values: 5, audit_wrong: 6, compared_values_v1: 10, wrong_v1: 1,
     v2_approved_total: 4, v2_found: 3, v2_differences_checked: 2, v2_wrong: 2 } };
   api.renderStats();
   const partialChart = element("statsCharts").innerHTML;
   assert.doesNotMatch(partialChart, /AI audits<\/th>|% correct/);
-  assert.match(partialChart, /CatLog found 3; 2 of the 2 where it differed were wrong against the paper/);
-  // The lead: agreement with human reviewers (overview.quality.agreement), shown first; the first comparison on papers
-  // read without database values in view is the headline when the snapshot has it.
+  assert.match(partialChart, /<td>3 the same in CatLog v2 \(75\.0%\); wrong CatLog values found: 2<\/td>/);
+  // The lead: the human review (the user's headline from 2026-10-13). A snapshot without the reviewers' own counts
+  // (overview.quality.review) leads with CatLog v2's match of the reviewers' approved values.
   const agreementFixture = { papers_compared: 98, values_approved: 2489, agree: 2232, agree_pct: 89.7, differ: 257,
     differ_catlog_right: 109, differ_earlier_value_error: 9, differ_earlier_label_error: 100, differ_same_value_other_name: 16,
     differ_rounding: 3, differ_catlog_wrong: 0, differ_not_comparable: 24, differ_not_adjudicated: 105, stated_values: 58,
@@ -1830,137 +1832,90 @@ function row(overrides = {}) {
   api.renderTeam();
   assert.match(element("teamFigure").innerHTML, /aria-label="CatLog: 973 values re-checked by AI audits"/);
   assert.match(element("teamFigure").innerHTML, />973 values re-checked<\/text><text class="team-station-number"[^>]*>by AI audits<\/text>/);
-  // Without the blind headline, Human check gives the share of approved values matched (never "agreement" alone).
-  assert.match(element("teamFigure").innerHTML, /aria-label="Human check: 89\.7% of approved values matched[",]/);
+  // Without the review's counts, Human check gives the share of approved values CatLog v2 has (never "agreement" alone).
+  assert.match(element("teamFigure").innerHTML, /aria-label="Human check: 89\.7% of approved values the same in CatLog v2[",]/);
   assert.doesNotMatch(element("teamFigure").innerHTML, /% agreement/);
   api.renderStats();
   // The lead has its own slot above the headline counts: the first thing on the page after the title.
   let lead = element("statsLead").innerHTML;
   assert.equal(element("statsLead").hidden, false);
-  assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers/, "The lead is not repeated among the figures");
-  assert.match(lead, /<h2 id="statsAgreementTitle">Agreement with human reviewers<\/h2>/);
-  assert.match(lead, /<div class="stats-lead-figure"><strong>89\.7%<\/strong><span>of the values human reviewers approved are the same in CatLog<\/span><\/div>/);
-  assert.match(lead, /CatLog has the same value for 2,232 of the 2,489 values human reviewers approved, on 98 papers they checked that CatLog has since read\./);
-  // The bar splits the approved values: the same, then the differences as CatLog's check against the paper found them.
-  for (const [part, width] of [["same", "89\\.6746"], ["differs", "4\\.3793"], ["rounding", "0\\.7634"], ["neutral", "0\\.9642"], ["open", "4\\.2186"]]) {
-    assert.match(lead, new RegExp(`stats-seg stats-part-${part}" style="left:[0-9.]+%;width:${width}%`), part);
-  }
-  assert.doesNotMatch(lead, /stats-part-magnitude" style/, "No segment for a zero count");
-  // ... but the legend still says the paper shows CatLog wrong in none of the differences, and how many were checked.
-  assert.match(lead, /<i class="stats-swatch stats-part-magnitude" aria-hidden="true"><\/i><span>The paper shows CatLog wrong <span class="stats-legend-count">0<\/span>/);
-  assert.match(lead, /Differences checked against the paper<\/dt><dd>152 of 257; CatLog wrong in none<\/dd>/);
-  assert.match(lead, /Missing values reviewers named<\/dt><dd>58; CatLog has 53/);
-  // Where the paper shows CatLog right, what the earlier catalog had wrong (the README's split).
-  // The 100 label errors belong to these 109 approved values, not to Table 1's count of every value compared.
-  assert.match(lead, /The paper shows CatLog right in 109 of the approved values that differ; of these 109, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);
-  assert.doesNotMatch(lead, /Same value<\/dt>/, "Without a first comparison the big number already gives the same-value count");
-  assert.match(element("statsCharts").innerHTML, /<td>2,232 the same in CatLog \(89\.7%\)<\/td>/, "No first comparison: the count stands alone");
+  assert.doesNotMatch(element("statsCharts").innerHTML, /data-figure="review"/, "The lead is not repeated among the figures");
+  assert.match(lead, /<h2 id="statsReviewTitle">Human review<\/h2>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>89\.7%<\/strong><span>of the values human reviewers approved are the same in CatLog v2<\/span><\/div>/);
+  assert.match(lead, /<p class="stats-lead-sentence">CatLog v2 has re-read 98 papers human reviewers checked: the same value as the reviewers for 2,232 of 2,489 approved values \(89\.7%\)\.<\/p>/);
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
-  assert.doesNotMatch(lead, /independent|AI run|Claude|Codex/);
-  // The Guide's method section opens with the same agreement, in one sentence linked to Stats.
+  assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
+  assert.match(element("statsCharts").innerHTML, /<tr data-check="agreement"><th scope="row">Reviewers&#39; approved values in CatLog v2<\/th><td>2,489 values on 98 papers<\/td>[\s\S]*?<td>2,232 the same in CatLog v2 \(89\.7%\)<\/td>/);
+  // The Guide's method section opens with the same, in one sentence linked to Stats.
   api.renderGuideMethod();
   assert.equal(element("guideMethodLead").hidden, false);
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Agreement with human reviewers</span> CatLog has the same value as human reviewers for <strong>89.7%</strong> of the values they approved: 2,232 of 2,489, on 98 papers they checked that CatLog has since read. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
-  const blindFixture = { ...agreementFixture, first_agree: 2110, first_agree_pct: 84.8, fixed_after_comparison: 122, papers_exposed: 40,
-    first_agree_unexposed_pct: 84.7, catlog_value_wrong: 3, rejected_values: 20, rejected_catlog_also_without: 12,
-    rejected_catlog_has_same: 8, rejected_dropped_after_audit: 2, rejected_kept_after_audit: 2, rejected_cleared_by_paper_check: 1,
-    rejected_changed_since: 1, rejected_pending: 2, rejected_not_value: 4 };
-  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: blindFixture } };
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> CatLog v2 has re-read 98 papers human reviewers checked: the same value as the reviewers for 2,232 of 2,489 approved values (89.7%). <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  // With the reviewers' own counts (quality.review.v1, as the marks file has them on 2026-10-13) the lead is the human
+  // review of CatLog v1 entries; the first-comparison and blind fields are reference only and never read.
+  const reviewV1 = { entries: 2674, papers: 408, entries_without_paper: 166, approved: 2464, rejected: 210, value_disputed: 3,
+    value_correct_pct: 99.9, value_disputed_checked_as_printed: 3, value_missing: 31, value_missing_pct: 1.2, value_missing_named: 32,
+    other_disputed: 177, other_disputed_pct: 6.6, other_by_kind: { "could not find the value": 153, "organism name": 13, DOI: 5,
+      "substrate name": 3, duplicate: 2, "paper evidence mismatch": 1 } };
+  const currentAgreement = { papers_compared: 311, values_approved: 4074, first_agree: 3545, first_agree_pct: 87.0, agree: 3625,
+    agree_pct: 89.0, papers_exposed: 14, first_agree_unexposed_pct: 85.9, papers_unexposed: 291, first_agree_unexposed_ci95: "81.6-89.7",
+    first_catlog_errors: 69, first_catlog_errors_value: 0, first_catlog_errors_label: 68, first_catlog_errors_missed: 1,
+    fixed_after_comparison: 69, catlog_value_wrong: 0, stated_values: 58, stated_values_catlog_has: 53 };
+  const reviewQuality = { as_of: "2026-10-13", audit_values: 1331, audit_wrong: 30, v2_found: 3625, v2_approved_total: 4074,
+    review: { v1: reviewV1 }, agreement: currentAgreement };
+  runtimeManifest.summary.overview = { ...overview, quality: reviewQuality };
   api.renderStats();
   lead = element("statsLead").innerHTML;
-  // The blind headline is said one way (Stats' lead, the Guide, Team): the first comparison, before any fix, on the papers
-  // read blind, with what that means; the first comparison on all papers and the count after fixes come after it.
-  assert.match(lead, /<strong>84\.7%<\/strong><span>of approved values matched at the first comparison, on the 58 papers read blind<\/span>/);
-  assert.match(lead, /<p class="stats-lead-sentence">At the first comparison, before any fix, CatLog matched 84\.7% of the values human reviewers approved on the 58 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\.<\/p>/);
-  assert.match(lead, /First comparison, all papers<\/dt><dd>2,110 matched \(84\.8%\)/);
-  assert.match(lead, /Now, after fixes<\/dt><dd>2,232 matched \(89\.7%\)/);
-  assert.match(lead, /Matched \(the same value\): the same paper/);
-  // Table 1 beside that lead says its agreement count is the one after fixes; its bars are grey, as in the other tables.
-  assert.match(element("statsCharts").innerHTML, /<tr data-check="agreement">[\s\S]*?<td>2,232 the same in CatLog now, after fixes \(89\.7%\)<\/td>/);
-  const checksTable = element("statsCharts").innerHTML.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0];
+  assert.match(lead, /<h2 id="statsReviewTitle">Human review of CatLog v1 entries<\/h2>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct \(kcat, Km, kcat\/Km\)<\/span><\/div>/);
+  assert.match(lead, /<p class="stats-lead-sentence">Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat\/Km value on 3 of them, and all 3 are as printed in the paper\.<\/p>/);
+  assert.match(lead, /<dt>Values missing<\/dt><dd>31 entries \(1\.2%\)<\/dd><\/div><div><dt>Other disagreements<\/dt><dd>177 entries \(6\.6%\)<\/dd>/);
+  assert.match(lead, /<p class="stats-lead-note">Values missing: 31 entries \(1\.2%\) lacked a value the paper prints, mostly the kcat; CatLog v2 has 53 of the 58 values reviewers named\. Other disagreements, by kind: could not find the value 153, organism name 13, DOI 5, substrate name 3, duplicate 2, paper evidence mismatch 1\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-side">CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved values \(89\.0%\); wrong CatLog values found: 0\.<\/p>/);
+  assert.match(lead, /Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\./);
+  assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
+  let checksTable = element("statsCharts").innerHTML.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0];
+  assert.match(checksTable, /<tr data-check="review"><th scope="row">Human review of CatLog v1 entries<\/th><td>2,674 entries from 408 papers<\/td>[\s\S]*?<td>Values correct 99\.9%; values missing 1\.2%; other disagreements 6\.6%<\/td>/);
+  assert.match(checksTable, /<tr data-check="agreement">[\s\S]*?<td>4,074 values on 311 papers<\/td>[\s\S]*?<td>3,625 the same in CatLog v2 \(89\.0%\); wrong CatLog values found: 0<\/td>/);
+  // The checks table's bars are grey, as in the other tables.
   assert.match(checksTable, /stats-minibar"><span class="stats-seg stats-part-neutral"/);
   assert.doesNotMatch(checksTable, /stats-minibar"><span class="stats-seg stats-part-(?!neutral)/);
-  assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
-  // What became of the values reviewers called wrong that CatLog had with the same number: parts of that number.
-  assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog did not have 12 of them; it had 8 with the same number \(an AI audit kept 2, 2 were dropped after an AI audit found them wrong, a check against the paper found 1 right, CatLog has changed or removed 1 since and 2 are not settled yet\)\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
+  // The Guide: the headline and CatLog v2's match in the lead, the review in full under Human review.
   api.renderGuideMethod();
-  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, before any fix, CatLog matched <strong>84\.7%<\/strong> of the values human reviewers approved on the 58 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\. <a /);
-  assert.match(api.agreementText(blindFixture), /^At the first comparison, before any fix, CatLog matched 84\.7% of the values human reviewers approved on the 58 papers read blind \(CatLog's readers never opened database or earlier-catalog files\)\. On all 98 papers .*CatLog matched 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and matches 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
-  // The headline is said with its 95% range and the papers behind it as the CatLog side counts them (papers_unexposed,
-  // not papers_compared minus papers_exposed); the errors the first comparison found are named, and what was fixed is
-  // said against them.
-  const rangeFixture = { ...blindFixture, papers_compared: 160, papers_exposed: 30, papers_unexposed: 122,
-    first_agree_unexposed_pct: 85.3, first_agree_unexposed_ci95: "79.7-90.6", first_catlog_errors: 69,
-    first_catlog_errors_value: 0, first_catlog_errors_label: 68, first_catlog_errors_missed: 1, fixed_after_comparison: 69 };
-  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: rangeFixture } };
-  api.renderStats();
-  lead = element("statsLead").innerHTML;
-  assert.match(lead, /<strong>85\.3%<\/strong><span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched/);
-  assert.match(lead, /At the first comparison, before any fix, CatLog matched 85\.3% \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\./);
-  assert.match(lead, /<span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched at the first comparison, on the 122 papers read blind<\/span>/);
-  // Team's Human check says it shortened, the range and the papers read blind included: two drawn lines on the wide
-  // loop, four on the upright one, one phrase for its label.
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> Human reviewers checked 2,674 CatLog v1 entries from 408 papers: values correct (kcat, Km, kcat/Km) <strong>99.9%</strong>. CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong CatLog values found: 0. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  assert.equal(element("guideMethodHuman").textContent, "Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km value on 3 of them, and all 3 are as printed in the paper. Values missing: 31 entries (1.2%) lacked a value the paper prints, mostly the kcat; CatLog v2 has 53 of the 58 values reviewers named. Other disagreements: 177 entries (6.6%). 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
+  // Team's Human check: the values correct, on two lines on both loops, one phrase for its label.
   api.renderTeam();
   const teamHtml = element("teamFigure").innerHTML;
-  assert.equal((teamHtml.match(/aria-label="Human check: 85\.3% matched \(95% range 79\.7–90\.6%\) at the first comparison, on 122 papers read blind[",]/g) || []).length, 2);
+  assert.equal((teamHtml.match(/aria-label="Human check: 99\.9% values correct in 2,674 CatLog v1 entries, 1 human-checked records"/g) || []).length, 2);
   const humanLines = (layout) => [...teamHtml.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0]
     .match(/data-station="human"[\s\S]*?<\/g>/)[0].matchAll(/class="team-station-number"[^>]*>([^<]*)</g)].map((match) => match[1]);
-  assert.deepEqual(humanLines("wide").slice(0, 2), ["85.3% matched (95% range 79.7–90.6%)", "first comparison, 122 papers read blind"]);
-  assert.deepEqual(humanLines("narrow").slice(0, 4), ["85.3% matched", "95% range 79.7–90.6%", "first comparison,", "122 papers read blind"]);
-  // The Guide's lead says the same sentence, the range included.
-  api.renderGuideMethod();
-  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, before any fix, CatLog matched <strong>85\.3%<\/strong> \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\. <a /);
-  assert.match(lead, /Errors found at the first comparison<\/dt><dd>68 wrong labels, 1 missed value, 0 wrong numbers or units<\/dd>/);
-  assert.match(lead, /Fixed after the comparison<\/dt><dd>all 69<\/dd>/);
-  assert.match(api.agreementText(rangeFixture), /matched 85\.3% \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind .* The first comparison found 68 label or annotation errors in CatLog \(a UniProt entry, substrate structure or variant field\), 1 missed value and 0 wrong numbers or units; all 69 are fixed since\. Of the 257/);
-  // A range that is not two percentages in order, or a split that does not add up, is not shown (the total stays).
-  const unsure = { ...rangeFixture, first_agree_unexposed_ci95: "90.6-79.7", first_catlog_errors_label: 60, fixed_after_comparison: 40 };
-  runtimeManifest.summary.overview = { ...overview, quality: { agreement: unsure } };
+  assert.deepEqual(humanLines("wide"), ["99.9% values correct", "in 2,674 CatLog v1 entries", "1 human-checked records"]);
+  // The upright loop's lines keep within its 23 characters, broken where the phrase reads on.
+  assert.deepEqual(humanLines("narrow"), ["99.9% values correct in", "2,674 CatLog v1 entries", "1 human-checked records"]);
+  assert.doesNotMatch(teamHtml, /first comparison|blind|95% range/);
+  // No dispute, a dispute only partly checked against the paper, and a review of CatLog v2 entries.
+  assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10, value_disputed: 0 })),
+    "Human reviewers checked 10 CatLog v1 entries: no reviewer disputed a kcat, Km or kcat/Km value.");
+  assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10, papers: 1, value_disputed: 2, value_disputed_checked_as_printed: 1 })),
+    "Human reviewers checked 10 CatLog v1 entries from 1 paper: a reviewer disputed a kcat, Km or kcat/Km value on 2 of them; 1 of these is as printed in the paper.");
+  assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10000, papers: 40, value_disputed: 1, value_disputed_checked_as_printed: 1 }), { catalog: "CatLog v2", share: true }),
+    "Human reviewers checked 10,000 CatLog v2 entries from 40 papers: values correct (kcat, Km, kcat/Km) >99.9%; a reviewer disputed a kcat, Km or kcat/Km value on 1 of them, and it is as printed in the paper.");
+  runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: reviewV1,
+    v2: { entries: 40, papers: 3, value_disputed: 1, value_disputed_checked_as_printed: 0 } } } };
+  api.renderStats();
+  assert.match(element("statsLead").innerHTML, /<p class="stats-lead-note">Human reviewers checked 40 CatLog v2 entries from 3 papers: values correct \(kcat, Km, kcat\/Km\) 97\.5%; a reviewer disputed a kcat, Km or kcat\/Km value on 1 of them\.<\/p>/);
+  // Counts that do not hold together are not shown: a dispute count above the entries drops the review (the lead falls
+  // back to CatLog v2's match), kinds that are not whole counts are left out.
+  runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: { ...reviewV1, value_disputed: 3000 } } } };
+  api.renderStats();
+  assert.match(element("statsLead").innerHTML, /<h2 id="statsReviewTitle">Human review<\/h2>/);
+  assert.doesNotMatch(element("statsLead").innerHTML, /CatLog v1 entries from|values correct/);
+  runtimeManifest.summary.overview = { ...overview, quality: { review: { v1: { ...reviewV1, value_missing: undefined,
+    other_by_kind: { "organism name": 13, DOI: "5", "": 2, duplicate: 400 } } } } };
   api.renderStats();
   lead = element("statsLead").innerHTML;
-  assert.doesNotMatch(lead, /95% range|stats-lead-range|wrong labels/);
-  assert.match(lead, /Errors found at the first comparison<\/dt><dd>69<\/dd>/);
-  assert.match(lead, /Fixed after the comparison<\/dt><dd>40 of 69<\/dd>/);
-  assert.doesNotMatch(api.agreementText(unsure), /The first comparison found/);
-  // Values of CatLog's own records that reviewers checked directly, with what an AI audit then found.
-  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_records_reviewed: 12,
-    direct_values_reviewed: 30, direct_values_agree: 26, direct_values_disagree: 3, direct_values_other: 1,
-    direct_disagree_wrong_after_audit: 1, direct_disagree_audit_pending: 2 } } };
-  api.renderStats();
-  assert.match(element("statsLead").innerHTML, /Reviewers checked 30 values of CatLog&#39;s own records directly: they approved 26 and disputed 3; an AI audit found 1 of those wrong and 2 are not audited yet\./);
-  // Direct counts that do not add up say no audit split, and none at all are not mentioned.
-  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_values_reviewed: 30,
-    direct_values_agree: 26, direct_values_disagree: 3, direct_disagree_wrong_after_audit: 3, direct_disagree_audit_pending: 2 } } };
-  api.renderStats();
-  assert.match(element("statsLead").innerHTML, /they approved 26 and disputed 3\./);
-  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_values_reviewed: 0 } } };
-  api.renderStats();
-  assert.doesNotMatch(element("statsLead").innerHTML, /Reviewers checked/);
-  // Zero parts are left out; none dropped yet still says the rest.
-  const rejectedLead = (fields) => {
-    runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_dropped_after_audit: 0,
-      rejected_changed_since: 0, rejected_pending: 0, ...fields } } };
-    api.renderStats();
-    return element("statsLead").innerHTML.match(/Reviewers called [^<]*/)?.[0] || "";
-  };
-  assert.match(rejectedLead({ rejected_values: 9, rejected_catlog_also_without: 0, rejected_catlog_has_same: 9,
-    rejected_kept_after_audit: 4, rejected_cleared_by_paper_check: 5 }),
-  /^Reviewers called 9 values wrong on these papers: CatLog had all 9 with the same number \(an AI audit kept 4 and a check against the paper found 5 right\)\. /);
-  assert.match(rejectedLead({ rejected_values: 9, rejected_catlog_also_without: 0, rejected_catlog_has_same: 9,
-    rejected_kept_after_audit: 4, rejected_cleared_by_paper_check: 4, rejected_dropped_after_audit: 1 }),
-  /\(an AI audit kept 4, 1 was dropped after an AI audit found it wrong and a check against the paper found 4 right\)/);
-  assert.match(rejectedLead({ rejected_values: 3, rejected_catlog_also_without: 3, rejected_catlog_has_same: 0 }),
-    /^Reviewers called 3 values wrong on these papers: CatLog did not have any of them\. /);
-  // An older build without rejected_changed_since still says the other parts; parts adding up to more than the whole are
-  // left out.
-  assert.match(rejectedLead({ rejected_changed_since: undefined, rejected_pending: 3 }),
-    /it had 8 with the same number \(an AI audit kept 2, a check against the paper found 1 right and 3 are not settled yet\)/);
-  assert.match(rejectedLead({ rejected_kept_after_audit: 5, rejected_pending: 4 }), /: CatLog did not have 12 of them; it had 8 with the same number\. /);
-  // Rejections that do not add up are not summed.
-  runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, rejected_values: 21 } } };
-  api.renderStats();
-  assert.doesNotMatch(element("statsLead").innerHTML, /Reviewers called/);
-  assert.match(element("statsLead").innerHTML, /4 other objections dispute no value shown/, "Objections that dispute no value are said on their own");
+  assert.doesNotMatch(lead, /Values missing|stats-lead-side|DOI|duplicate/);
+  assert.match(lead, /Other disagreements, by kind: organism name 13\./);
   // Figures 3-5 when the CatLog side's counts are in overview.quality; numbered after figure 2.
   runtimeManifest.summary.overview = { ...overview, quality: {
     db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, km: { same: 3, differs: 0, absent: 1 }, calculated: 2, papers_all_absent: 1, papers_some_absent: 2 },
@@ -1969,12 +1924,12 @@ function row(overrides = {}) {
   api.renderStats();
   const figures = element("statsCharts").innerHTML;
   assert.deepEqual(headings().slice(0, 5), ["Review result", "Records by main source", "Values read from the paper against the databases",
-    "Corrections on records accepted after a correction", "Earlier records of papers CatLog has read"]);
+    "Corrections on records accepted after a correction", "CatLog v1 entries of papers CatLog v2 has read"]);
   assert.match(figures, /<strong>Figure 3\.<\/strong> Values CatLog read from the paper/);
   assert.match(figures, /data-row="all" data-count="14"/);
   assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of the parameters CatLog read from it; for 2 more, the databases list some of them but not all\./);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
-  assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 paper that CatLog has read and the earlier catalog also had: /);
+  assert.match(figures, /The 7 CatLog v1 entries \(2 accepted\) of the 1 paper that CatLog v2 has read and CatLog v1 also had: /);
   // Figure 4 counted for another snapshot names both counts of records accepted after a correction (figure 1 has the
   // snapshot's own); with the same count it names one.
   const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
@@ -1996,13 +1951,17 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
   api.renderStats();
-  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|Earlier records of papers/);
-  assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "CatLog found 3 of the 4 values reviewers approved.");
-assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agree: 2232, differ: 257, differ_catlog_right: 109,
-  differ_catlog_wrong: 0, differ_not_adjudicated: 105 }),
-  "On 98 papers human reviewers checked that CatLog has since read, CatLog has the same value for 2,232 of the 2,489 values the reviewers approved (89.7%). Of the 257 that differ, 152 were checked against the paper: CatLog was right in 109 and wrong in none; 43 are the same value under another name, a rounding or a value CatLog leaves out by its reading rules. 105 are not checked yet.");
+  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|CatLog v1 entries of papers/);
+  // CatLog v2's match is the lead's (and the Guide lead's) side line; the Guide's Human review item adds nothing for it.
+  assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "");
+  assert.equal(api.v2MatchSentence(api.v2MatchFacts({ v2_approved_total: 4, v2_found: 3, v2_wrong: 1 })),
+    "CatLog v2 has the same value as the reviewers for 3 of 4 approved values (75.0%); wrong CatLog values found: 1.");
+  // quality.agreement's counts come first; catlog_value_wrong is the wrong values found.
+  assert.equal(api.v2MatchSentence(api.v2MatchFacts({ v2_approved_total: 4, v2_found: 3, v2_wrong: 1,
+    agreement: { papers_compared: 1, values_approved: 10, agree: 9, catlog_value_wrong: 0 } }), { ofThese: true }),
+    "CatLog v2 has re-read 1 of these papers: the same value as the reviewers for 9 of 10 approved values (90.0%); wrong CatLog values found: 0.");
   assert.equal(api.humanComparisonText({ quality: { compared_values_v1: 1000, wrong_v1: 0, label_or_annotation_v1: 0 } }),
-    "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate, variant or protein label.");
+    "In CatLog v1 entries, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate, variant or protein label.");
   runtimeManifest.summary.overview = overview;
   api.renderStats();
   assert.match(chart, /#browse\?ec=1\.">EC 1/);
@@ -2012,10 +1971,10 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none">No cautions/);
-  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper by CatLog<\/a>/);
-  assert.doesNotMatch(chart, /source_paper_earlier|CatLog v2/, "No earlier paper extractions here; no version name");
+  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2: read from the paper<\/a>/);
+  assert.doesNotMatch(chart, /source_paper_earlier/, "No earlier paper extractions here");
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
-  assert.doesNotMatch(chart + element("statsTotals").innerHTML, /CatLog v2/, "The version name is never public");
+  assert.doesNotMatch(chart + element("statsTotals").innerHTML, /earlier catalog|old catalog/i, "CatLog v1 and v2 are named by version");
   // With earlier paper extractions, they are their own row, linked to their By database choice.
   runtimeManifest.summary.overview = { ...overview, sources: { ...overview.sources, paper: 3 }, from_paper: { records: 2, papers: 1 } };
   api.renderStats();
@@ -2160,9 +2119,10 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
     assert.match(element("guideNotCheckedDefinition").innerHTML, /never reviewed, or that the earlier review accepted \(tag: <em>no paper linked<\/em>\)\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>; a record with no paper linked reads <em>Not checked<\/em> with that tag\.$/);
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
     api.setHumanReviewMarks({ approved: { checked: true } });
-    assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or because a human reviewer approved every value\. Human-checked: a human reviewer approved every value shown\."/);
+    // human-checked's rule (the user, 2026-10-13): every kcat and Km, and the kcat/Km approved too or agreeing with kcat ÷ Km.
+    assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or on a human reviewer&#39;s approval\. Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
     assert.equal(api.reviewOutcome(approved, { accepted_basis: "human review" }),
-      "Accepted because a human reviewer approved every value; the earlier automated review had not accepted it.");
+      "Accepted on a human reviewer's approval (human-checked); the earlier automated review had not accepted it.");
     assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed, in the earlier automated review.");
     api.setHumanReviewMarks({});
     runtimeManifest.summary = savedSummary;
@@ -3476,7 +3436,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const trail = html.slice(html.indexOf('class="detail-section databases-section"'), html.indexOf('class="detail-section review-section"'));
   assert.doesNotMatch(trail, /<table/);
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude <span class="cmp-factor">\(÷ 1000\)<\/span><\/span><\/span><small class="cmp-before">Before: as in OED for this paper<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
-  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: earlier catalog value<\/small>/);
+  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: CatLog v1 value before the correction<\/small>/);
   assert.equal((trail.match(/>5 s⁻¹/g) || []).length, 0, "a field whose number did not change is not listed");
   assert.match(trail, /<span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>40 s⁻¹ mM⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><span>added: the source had none<\/span><\/span><\/dd>/);
   assert.match(trail, /<dt>pH<\/dt><dd><span class="cmp-value">7<span class="cmp-arrow"> → <\/span><strong>7\.5<\/strong><\/span>/);
@@ -3652,18 +3612,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
-  assert.match(html, /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every value on this record\.<\/dd><\/div>/);
-  assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every value shown\."/);
+  assert.match(html, /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.<\/dd><\/div>/);
+  assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
   assert.match(api.statusBadge(accepted), /aria-label="Accepted, BRENDA, human-checked"/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
   assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/dd>/);
   api.renderDetail(noted, {});
-  // A note's review year is not shown (facts only).
-  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier catalog\./);
+  // A note's review year is not shown (facts only), and the catalog reviewed is named CatLog v1 entries.
+  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of CatLog v1 entries\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
-  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier catalog; kcat\/Km was not reviewed\.<\/dd>/);
+  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of CatLog v1 entries; kcat\/Km was not reviewed\.<\/dd>/);
   // A correction made after human review is said as given, in the Human review line.
   api.renderDetail(row({ record_key: "hc-fixed", measurement_key: "hc-fixed", verification_status: "verified" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);
@@ -3859,7 +3819,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", 
   assert.ok(!("source_kcat_over_km_values" in v2Payload), "no listed kcat/Km, no field");
   assert.equal(v2Payload.kcat, 135);
   assert.equal(v2Payload.kcat_unit, "s^-1");
-  assert.equal(v2Payload.source, "Read from the paper by CatLog");
+  assert.equal(v2Payload.source, "CatLog v2: read from the paper");
   assert.equal(v2Payload.source_license, "CC BY 4.0 (CatLog compilation)");
   assert.match(v2Payload.method, /^Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\.$/);
   assert.equal(v2Payload.check, "All values confirmed.");
@@ -3975,7 +3935,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   };
   assert.deepEqual(await keysFor("source=paper"), ["src-v2"]);
   assert.equal(api.browseHash(), "#browse?source=paper");
-  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: read from the paper by CatLog"]);
+  assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: CatLog v2, read from the paper"]);
   assert.deepEqual(await keysFor("status=v2"), ["src-v2"], "an older address keeps working");
   assert.equal(api.browseHash(), "#browse?source=paper");
   assert.deepEqual(await keysFor("source=databases"), ["src-earlier", "src-merged", "src-oed", "src-unknown"]);
@@ -5139,16 +5099,17 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 // The sidebar keeps one short line per option; the explanations are behind each group's "?" (aboutSource, aboutStatus).
 {
   const source = element("sourceChecklist").innerHTML;
-  assert.match(source, /<span>Read from the paper<span class="visually-hidden"> by CatLog<\/span><\/span>/);
-  assert.match(source, /<span>Enzyme databases<\/span>/);
+  // CatLog v2 and v1 entries by name (the user, 2026-10-13).
+  assert.match(source, /<span>CatLog v2: read from the paper<\/span>/);
+  assert.match(source, /<span>CatLog v1: enzyme databases<\/span>/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.
   assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   assert.match(element("aboutSource").innerHTML, /the Open Enzyme Database \(OED\)/);
-  assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper by CatLog<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>From enzyme databases<\/strong>: BRENDA, SABIO-RK/);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2: read from the paper<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1: from enzyme databases<\/strong>: BRENDA, SABIO-RK/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
@@ -5160,7 +5121,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(aboutStatus, /<strong>Not confirmed<\/strong>: The earlier automated review left a question open\./);
   assert.match(aboutStatus, /<strong>Not checked<\/strong>: No review result\./);
   assert.match(aboutStatus, /<strong>Disputed<\/strong>: A check found a problem; not accepted\./);
-  assert.match(aboutStatus, /<strong>human-checked<\/strong>: A human reviewer approved every value shown\./);
+  assert.match(aboutStatus, /<strong>human-checked<\/strong>: A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\./);
   assert.match(aboutStatus, /href="#guide-status">Review result and tags in the Guide/);
   assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
   assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);

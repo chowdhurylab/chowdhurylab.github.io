@@ -361,10 +361,10 @@
             <h2 id="guide-method-title">How CatLog reads and checks values</h2>
             <p class="guide-method-lead" id="guideMethodLead" hidden></p>
             <dl class="guide-term-list guide-method-list">
-              <div><dt>Read from the paper</dt><dd>CatLog reads papers directly. An AI model (Claude, Anthropic) reads each <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> with its unit, enzyme, organism, substrate and assay conditions. A second, separate AI check compares every value with the paper. Code confirms that the quoted line is in the paper text, and converts units where the paper&rsquo;s differ from the catalog&rsquo;s. Each value keeps where it is printed and the number as printed. A person has not checked these values unless the record is marked human-checked.</dd></div>
+              <div><dt>CatLog v2: read from the paper</dt><dd>CatLog reads papers directly. An AI model (Claude, Anthropic) reads each <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> with its unit, enzyme, organism, substrate and assay conditions. A second, separate AI check compares every value with the paper. Code confirms that the quoted line is in the paper text, and converts units where the paper&rsquo;s differ from the catalog&rsquo;s. Each value keeps where it is printed and the number as printed. A person has not checked these values unless the record is marked human-checked.</dd></div>
               <div><dt>AI audits</dt><dd id="guideMethodAudits">A separate AI auditor re-checks sampled values against their papers and tries to find errors; values found wrong are removed.</dd></div>
-              <div><dt>Human review</dt><dd id="guideMethodHuman">Human reviewers compared values with their papers in a review of the earlier catalog. Accepted records where a reviewer approved every value carry human-checked.</dd></div>
-              <div><dt>Earlier catalog</dt><dd>The other records come from BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, and from earlier paper extractions, screened by an earlier automated pipeline of AI models and code checks. When CatLog reads a paper, its records replace that paper&rsquo;s earlier ones.</dd></div>
+              <div><dt>Human review</dt><dd id="guideMethodHuman">Human reviewers checked CatLog v1 entries against their papers. Accepted records carry human-checked when a human reviewer approved every kcat and Km they show and the kcat/Km was approved too or agrees with kcat &divide; Km.</dd></div>
+              <div><dt>CatLog v1: from enzyme databases</dt><dd>The other records, CatLog v1 entries, come from BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, and from earlier paper extractions, screened by an earlier automated pipeline of AI models and code checks. When CatLog reads a paper, its CatLog v2 entries replace that paper&rsquo;s CatLog v1 entries.</dd></div>
               <div><dt>Who does it</dt><dd>People and AI agents work in a loop: what people find in the checks improves how the next papers are read. See <a href="catlog-latest.html#team">People behind CatLog</a>.</dd></div>
             </dl>
           </section>
@@ -373,7 +373,7 @@
             <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
-              <div><dt>Filters</dt><dd>Source (read from the paper by CatLog or from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds the records whose values CatLog corrected against an enzyme database, those that differ from one (not yet resolved), the same, or values no database lists for the paper.</span></dd></div>
+              <div><dt>Filters</dt><dd>Source (CatLog v2 entries, read from the paper by CatLog, or CatLog v1 entries, from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds the records whose values CatLog corrected against an enzyme database, those that differ from one (not yet resolved), the same, or values no database lists for the paper.</span></dd></div>
               <div><dt>Sort</dt><dd>By review result (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
               <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record: the address adds <code>record=</code> and the record ID to the filters.</dd></div>
             </dl>
@@ -477,7 +477,7 @@
             <dl class="guide-status-list guide-tag-list">
               <div>
                 <dt><span class="state-tag">from paper</span></dt>
-                <dd>Read from the paper by CatLog (see <a href="#guide-method">How CatLog reads and checks values</a>).</dd>
+                <dd>Read from the paper by CatLog, a CatLog v2 entry (see <a href="#guide-method">How CatLog reads and checks values</a>).</dd>
               </div>
               <div>
                 <dt><span class="state-tag">earlier extraction</span></dt>
@@ -493,7 +493,7 @@
               </div>
               <div>
                 <dt><span class="state-tag human-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span></dt>
-                <dd>A human reviewer approved every value on the record (on a record read by CatLog: the same values in the earlier catalog). Shown on accepted records only; most records have not been checked by a person.</dd>
+                <dd>A human reviewer approved every kcat and Km shown; the kcat/Km was approved too or agrees with kcat &divide; Km (on a record read by CatLog: the same values, in the review of CatLog v1 entries). Shown on accepted records only; most records have not been checked by a person.</dd>
               </div>
             </dl>
             <details class="guide-details">
@@ -580,7 +580,7 @@
             <h2 id="guide-sources-title">Sources and licenses</h2>
             <p class="guide-note">Records from the databases keep their own license, named in each record&rsquo;s source_license field (in the downloads). SKiD records are for non-commercial use only, without derivatives.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
-              <div><dt>Read from the paper by CatLog</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
+              <div><dt>CatLog v2: read from the paper</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
               <div><dt>Earlier paper extractions</dt><dd>License: as published (see paper)</dd></div>
               <div><dt><a href="https://www.brenda-enzymes.org/" target="_blank" rel="noreferrer">BRENDA</a></dt><dd>License: CC BY 4.0</dd></div>
               <div><dt><a href="https://sabiork.h-its.org/" target="_blank" rel="noreferrer">SABIO-RK</a></dt><dd>License: see the source&rsquo;s terms</dd></div>
