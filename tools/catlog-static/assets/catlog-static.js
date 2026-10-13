@@ -127,6 +127,18 @@
     },
     disputed: "A check found a problem; not accepted.",
   };
+  // The same results in one short sentence each, for the Review result group's "?" (the Guide and each option's title
+  // give stateDescriptions in full).
+  function stateShortDescription(value) {
+    if (value === "accepted") {
+      return followsReviewRules()
+        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
+        : "Passed review: read from the paper by CatLog or accepted by the earlier automated review.";
+    }
+    if (value === "curation_pending") return "The earlier automated review left a question open.";
+    if (value === "not_verified") return "No review result.";
+    return stateDescriptions[value];
+  }
   const HUMAN_CHECKED_DESCRIPTION = "A human reviewer approved every value shown.";
 
   // The verification_status values; label is the exact value a record names after its review result.
@@ -5127,8 +5139,9 @@
   function setupFilters() {
     if (!filterChecklistsBuilt) {
       filterChecklistsBuilt = true;
-      // Review result: the four results, "Only human-checked" nested under Accepted. Their definitions and the tags' (the
-      // method in one line, with the Guide's full account a link away) are behind the group's "?".
+      // Review result: the four results, "Only human-checked" nested under Accepted. A short line for each is behind the
+      // group's "?" (the box stays small, so the options stay in view); each option's full definition is its title, and
+      // the Guide has them with the tags, a link away.
       $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
         checked: true, count: `state:${item.value}`, className: item.className,
@@ -5139,14 +5152,9 @@
       }) : "")).join("");
       if ($("aboutStatus")) {
         $("aboutStatus").innerHTML = `
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "Passed review; "))}</p>`).join("")}
-          <p class="filter-about-tags">Tags</p>
-          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)}</p>
-          <p><strong>earlier extraction</strong>: ${escapeHtml(EARLIER_EXTRACTION_DEFINITION)}</p>
-          <p><strong>corrected</strong>: ${escapeHtml(CORRECTED_DEFINITION)}</p>
-          <p><strong>no paper linked</strong>: ${escapeHtml(noPaperDefinition())}</p>
-          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
-          <p><a href="#guide-status">Review result in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateShortDescription(item.value))}</p>`).join("")}
+          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)}</p>
+          <p><a href="#guide-status">Review result and tags in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       $("measurementChecklist").innerHTML = measurementFilters.map((item) => checkRowHtml({
         name: "measurement", value: item.value, labelHtml: item.labelHtml, count: `metric:${item.value}`,

@@ -4715,8 +4715,17 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
   assert.match(status, /<span class="visually-hidden">Only <\/span><span class="human-checked-word">/);
-  assert.match(element("aboutStatus").innerHTML, /<strong>Not confirmed<\/strong>: The earlier automated review left a question open/);
-  assert.match(element("aboutStatus").innerHTML, /<strong>human-checked<\/strong>: A human reviewer approved every value shown\./);
+  // The Review result "?" is a short line per result and for human-checked, then the Guide (the tags are defined there),
+  // so the box never pushes the options out of view.
+  const aboutStatus = element("aboutStatus").innerHTML;
+  assert.match(aboutStatus, /<strong>Accepted<\/strong>: Passed review: read from the paper by CatLog/);
+  assert.match(aboutStatus, /<strong>Not confirmed<\/strong>: The earlier automated review left a question open\./);
+  assert.match(aboutStatus, /<strong>Not checked<\/strong>: No review result\./);
+  assert.match(aboutStatus, /<strong>Disputed<\/strong>: A check found a problem; not accepted\./);
+  assert.match(aboutStatus, /<strong>human-checked<\/strong>: A human reviewer approved every value shown\./);
+  assert.match(aboutStatus, /href="#guide-status">Review result and tags in the Guide/);
+  assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
+  assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);
 }
 console.log("CatLog viewer behavior checks passed.");
 

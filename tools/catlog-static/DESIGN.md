@@ -176,8 +176,9 @@ confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"), its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
-the four results and the tags (earlier extraction included, the method in one
-line) with a link to the Guide's #guide-status), Enzyme, organism,
+the four results and human-checked in one short sentence each (each option's
+title has the full definition) with a link to the Guide's #guide-status, where
+the tags are defined, so the box stays small and the options stay in view), Enzyme, organism,
 substrate (labelled fields, the EC number first), Measurement type
 (ticking several shows records with all of them), Wild type or variant (a note
 says how many records state neither), Assay conditions (temperature °C and pH, from

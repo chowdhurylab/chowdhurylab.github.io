@@ -258,7 +258,6 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-about { display:grid; gap:6px; border-radius:var(--radius); background:var(--surface-2); padding:var(--sp-2) 10px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-about p { margin:0 }
 .filter-about strong { color:var(--text); font-weight:600 }
-.filter-about .filter-about-tags { margin-top:2px; color:var(--muted); font-weight:600 }
 
 /* 12px chevrons; they turn over when their group opens or closes. */
 .chevron { flex:0 0 12px; width:12px; height:12px; transition:transform 160ms ease }
