@@ -414,7 +414,10 @@ is left out, never an empty heading. The order (design spec 5):
   Second check line (one result for every value, "All values confirmed." or
   "Unit set to mM for every value.", or each value's result, "kcat: confirmed;
   Km: unit set to mM."; then once what the check changed on the record, "The AI
-  check also removed EC 2.7.2.12 and corrected the assay conditions"); for an
+  check also removed EC 2.7.2.12 and corrected the assay conditions"; a removed
+  EC the header still shows says where the shown one comes from, "removed EC
+  1.1.1.25 (not printed in the paper; the EC shown comes from the enzyme
+  databases)" or "... from the UniProt entry A0A5H2WVH6"); for an
   older record an Evidence line ("Located in the paper", "Paper cited (values
   not located)", "Several database records" or "Database record only"); one
   license line; the snapshot's data ID; a database note on request, headed by

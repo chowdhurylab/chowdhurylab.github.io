@@ -2754,8 +2754,20 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(element("detailContent").innerHTML, /<dt>Second check<\/dt><dd>All values confirmed as printed; see the note on kcat\/Km\.<\/dd>/);
   html = render([line("kcat", "corrected: cosubstrate; assay conditions")], { assay_conditions_summary: "50 mM Tris" });
   assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/dd>/);
-  html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.1 removed")]);
-  assert.match(html, /<dt>Second check<\/dt><dd>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.1\.<\/dd>/);
+  html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.25 removed")]);
+  assert.match(html, /<dt>Second check<\/dt><dd>Unit set to mM for every value\. The AI check also removed EC 1\.1\.1\.25\.<\/dd>/);
+  // A removed EC the header still shows (the record's EC is 1.1.1.1 here) says where the shown one comes from.
+  const removedShown = (summary, method = "catlog_v2_read_and_independent_verify") => {
+    api.renderDetail(row({ record_key: "checks-ec", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name", ...summary }),
+      { verification_method: method, proof_lines: [line("kcat", "corrected: EC 1.1.1.1 removed")] });
+    return element("detailContent").innerHTML;
+  };
+  html = removedShown({}, "catlog_v2_read_and_independent_verify; ec_from_databases");
+  assert.match(html, /EC 1\.1\.1\.1 \(from enzyme databases; not printed in the paper\)/);
+  assert.match(html, /All values confirmed\. The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the enzyme databases\)\.<\/dd>/);
+  assert.match(removedShown({ primary_uniprot_id: "A0A5H2WVH6" }),
+    /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the UniProt entry A0A5H2WVH6\)\.<\/dd>/);
+  assert.match(removedShown({ primary_uniprot_id: null }), /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper\)\.<\/dd>/);
   // CatLog's words for a field the reader left empty ("set to") or the check emptied ("left blank") read as actions too.
   html = render([line("kcat", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected"),
     line("Km", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected")]);

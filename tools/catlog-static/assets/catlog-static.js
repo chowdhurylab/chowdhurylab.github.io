@@ -7491,9 +7491,16 @@
   // A record-level phrase as the AI check's action: "EC 2.7.2.12 removed" -> "removed EC 2.7.2.12", "assay conditions
   // corrected (see Conditions)" -> "corrected the assay conditions (see Conditions)", CatLog's "pH left blank" -> "left the
   // pH blank" and "organism set to Carica papaya" (the reader gave none) -> "set the organism to Carica papaya".
-  function checkAction(phrase) {
+  // An EC the check removed that the header still shows says where the shown one comes from: "removed EC 1.1.1.25 (not
+  // printed in the paper; the EC shown comes from the enzyme databases)" when the header says so, else the protein's
+  // UniProt entry (CatLog's only other source for an EC the paper does not print).
+  function checkAction(phrase, { shownEc = "", shownEcSource = "" } = {}) {
     let match = phrase.match(/^(EC \S+) (removed|added)$/);
-    if (match) return `${match[2]} ${match[1]}`;
+    if (match) {
+      const shown = match[2] === "removed" && shownEc && match[1] === `EC ${shownEc}`;
+      const why = shown ? ` (not printed in the paper${shownEcSource ? `; the EC shown comes from ${shownEcSource}` : ""})` : "";
+      return `${match[2]} ${match[1]}${why}`;
+    }
     match = phrase.match(/^EC (corrected|set) to (.+)$/);
     if (match) return `${match[1]} the EC number to ${match[2]}`;
     match = phrase.match(/^(.+?) left blank( \(.+\))?$/);
@@ -7547,7 +7554,7 @@
     const record = [...new Set(facts.flatMap((fact) => checkPhrases(fact.check, context).record))];
     // "corrected the cosubstrate and corrected the assay conditions" reads "corrected the cosubstrate and the assay conditions";
     // actions with one verb are said together, in the order the verbs first appear.
-    const actions = record.map(checkAction).reduce((merged, action) => {
+    const actions = record.map((phrase) => checkAction(phrase, context)).reduce((merged, action) => {
       const verb = (action.match(/^(?:corrected|removed|added|set|left) the /) || [""])[0];
       const same = verb ? merged.find((item) => item.verb === verb) : null;
       if (same) same.objects.push(action.slice(verb.length));
@@ -8057,8 +8064,17 @@
   function v2CheckOptions(summary, detail, proof) {
     const conditions = conditionLines(publicEvidenceString(detail.assay_conditions_summary), summary);
     const { notes } = measurementNotes(summary, detail, { proof });
+    const uniprot = String(summary.primary_uniprot_id || detail.uniprot_id || "").trim();
     return {
-      context: { hasPreparation: Boolean(conditions.preparation), hasConditions: Boolean(conditions.conditions) },
+      context: {
+        hasPreparation: Boolean(conditions.preparation),
+        hasConditions: Boolean(conditions.conditions),
+        // The EC the header shows, and where it comes from when it is not the paper's.
+        shownEc: String(summary.ec_number || "").trim(),
+        shownEcSource: ecFromDatabases(detail)
+          ? "the enzyme databases"
+          : (uniprot ? `the UniProt entry ${uniprot}` : ""),
+      },
       cautionFields: ["kcat", "km", "kcat_over_km"].filter((field) => notes.some((note) => note.field === field)),
     };
   }
