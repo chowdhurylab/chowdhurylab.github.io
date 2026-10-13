@@ -715,10 +715,18 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-track .stats-seg { position:absolute; top:0; bottom:0 }
 .stats-ref { position:absolute; top:-4px; bottom:-4px; width:0; border-left:1px solid var(--line-soft) }
 .stats-chart-axis { margin-top:4px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-axis-ticks { position:relative; height:16px }
+/* Each tick label is centred on its place, the end one too (it reaches into the axis row's empty value column), so the
+   labels sit evenly; "0" starts at the axis. An axis 240px wide or less keeps 0, the middle and the end of five ticks,
+   one 300px or less only the ends of six (four always fit, also at 320px). */
+.stats-axis-ticks { position:relative; height:16px; container:axis / inline-size }
 .stats-axis-ticks > span { position:absolute; top:0; transform:translateX(-50%); white-space:nowrap }
 .stats-axis-ticks > span:first-child { transform:none }
-.stats-axis-ticks > span:last-child:not(:first-child) { transform:translateX(-100%) }
+@container axis (max-width: 240px) {
+  .stats-axis-ticks > span:first-child:nth-last-child(5) ~ span:nth-child(even) { visibility:hidden }
+}
+@container axis (max-width: 300px) {
+  .stats-axis-ticks > span:first-child:nth-last-child(6) ~ span:not(:last-child) { visibility:hidden }
+}
 .stats-ec-name { color:var(--text-2) }
 .stats-ec-number { white-space:nowrap }
 .stats-share-lines { display:grid; gap:2px; margin:12px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -911,7 +919,6 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-chart-label { grid-column:1 / -1 }
   .stats-chart-axis > span:first-child { display:none }
   .stats-checks-table .stats-col-bar { display:none }
-  .stats-axis-ticks > span:nth-child(even):not(:last-child) { visibility:hidden }
   .stats-col-bar, .stats-minibar { width:48px }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }

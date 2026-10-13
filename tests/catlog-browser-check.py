@@ -588,6 +588,23 @@ FIGURE_TITLES = ("Values read from the paper against the databases", "Correction
                  "Earlier records of papers CatLog has read")
 
 
+# The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), and no two
+# labels touch.
+STATS_AXIS_EVEN = """
+    return [...document.querySelectorAll('.stats-axis-ticks')].filter(axis => axis.getBoundingClientRect().width).every(axis => {
+        const area = axis.getBoundingClientRect();
+        const shown = [...axis.children].filter(tick => getComputedStyle(tick).visibility === 'visible');
+        const places = shown.map(tick => parseFloat(tick.style.left));
+        const steps = places.slice(1).map((place, index) => place - places[index]);
+        const boxes = shown.map(tick => tick.getBoundingClientRect());
+        return steps.every(step => Math.abs(step - steps[0]) < 0.5)
+            && boxes.every((box, index) => index === 0
+                || Math.abs((box.left + box.right) / 2 - (area.left + area.width * places[index] / 100)) <= 1)
+            && boxes.every((box, index) => index === 0 || box.left >= boxes[index - 1].right + 4);
+    });
+"""
+
+
 def check_stats_figures(driver, browser, url):
     """Figures 3-5 and figure 2 by review result, from a copy of the manifest set in Chrome before the page starts (the
     data files are not changed): figures 3-5 follow figure 2 in order, their bars fill 100% per parameter with the shares
@@ -1850,6 +1867,7 @@ def check(driver, browser, url):
                 return tracks.every(box => Math.abs(box.left - tracks[0].left) <= 1 && Math.abs(box.width - tracks[0].width) <= 1);
             });
         """), "Bars of one chart share one scale"
+        assert driver.execute_script(STATS_AXIS_EVEN), f"Axis labels sit unevenly or touch at {width}px"
         capture(f"stats-{width}")
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})
@@ -1870,6 +1888,7 @@ def check(driver, browser, url):
                 return tracks.every(box => Math.abs(box.left - tracks[0].left) <= 1 && Math.abs(box.width - tracks[0].width) <= 1);
             });
         """), "Bars of one chart share one scale on phones"
+        assert driver.execute_script(STATS_AXIS_EVEN), "Axis labels sit unevenly or touch on phones"
         assert driver.execute_script("""
             // A legend name that wraps keeps its count right after its last line, not pushed to the far edge.
             return [...document.querySelectorAll('.stats-legend li')].filter(item => item.querySelector('.stats-legend-count')).every(item => {

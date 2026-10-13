@@ -105,8 +105,9 @@ definition). Bars 16px thick, 8px apart, square ends; fills at 60% of their
 colour with a 1px opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
-three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ); no gridlines except 1px
-reference lines. Category labels 13px, value labels and ticks 12px, tabular
+three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
+its tick, the end one too, so they sit evenly (a narrow axis keeps 0, the
+middle and the end of five ticks); no gridlines except 1px reference lines. Category labels 13px, value labels and ticks 12px, tabular
 numbers. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
