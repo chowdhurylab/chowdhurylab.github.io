@@ -2054,8 +2054,15 @@ function row(overrides = {}) {
     assert.match(more, /CatLog v2's 1 paper by how many kcat, Km and kcat\/Km values CatLog read from each/);
     // Values by enzyme class: a ridge per class, its median dot and 10–90% line, a link to the class in Browse.
     assert.match(more, /<h3 id="statsClassValuesTitle" class="stats-fig-title">Values by enzyme class<\/h3>/);
-    assert.equal((more.match(/<li class="stats-ridge-row"/g) || []).length, 2);
-    assert.match(more, /<li class="stats-ridge-row" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2 s⁻¹; 10–90% 0\.5–9 s⁻¹\.">/);
+    assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
+    // A class with fewer than 300 values is drawn lighter and dashed (is-few), and the data line says so.
+    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2 s⁻¹; 10–90% 0\.5–9 s⁻¹\.">/);
+    assert.match(more, /A record in several classes counts in each; a lighter, dashed curve has fewer than 300 values;/);
+    // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
+    assert.match(more, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span><\/p>/);
+    assert.deepEqual([...more.matchAll(/<span class="stats-ridge-n">([^<]+)<\/span>/g)].map((match) => match[1]), ["3", "1"]);
+    assert.match(more, /data-metric="kcat" style="--ridge-n:calc\(1ch \+ 4px\)"/);
+    assert.match(more, /n is the class's number of values\./);
     assert.match(more, /<svg class="stats-ridge-svg" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="EC 3 Hydrolases, kcat: 1 values; median 4\.5 s⁻¹/);
     assert.match(more, /fill:url\(#statsRidgeFill-kcat\)/);
     assert.match(more, /<linearGradient id="statsRidgeFill-kcat"/);
@@ -2084,6 +2091,13 @@ function row(overrides = {}) {
       assert.match(piled.body, /data-tip="EC 4 Lyases, kcat below 10⁰·⁵ s⁻¹: 5 values \(end bin, not in the curve\)"/);
       assert.match(piled.body, /data-tip="EC 4 Lyases, kcat 10¹·⁵ s⁻¹ and above: 100 values \(end bin, not in the curve\)"/);
       assert.match(piled.data, /each end bin also holds every value beyond it, so the curve leaves it out and a hatched stub marks it/);
+      // 300 values or more: drawn in full, n with thousands separators, no word about lighter curves.
+      const full = api.statsRidgeFigure({ metrics: { km: { by_class: { log10_start: 0, bin_width: 0.5,
+        classes: [{ class: 2, n: 18789, median: 3, p10: 1, p90: 10, counts: [0, 9000, 9789, 0] }] } } } });
+      assert.match(full.body, /<li class="stats-ridge-row" data-hl="ec_2"/);
+      assert.match(full.body, /<span class="stats-ridge-n">18,789<\/span>/);
+      assert.match(full.body, /style="--ridge-n:calc\(6ch \+ 4px\)"/);
+      assert.doesNotMatch(full.data, /lighter/);
     }
     // A count chart's value column fits its longest value label, in ch (a wider font widens it), at least 96px.
     assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(5ch \+ 6px\)\)"/);

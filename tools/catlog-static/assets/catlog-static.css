@@ -1022,11 +1022,12 @@ a.stats-total-value:focus-visible { outline:0 }
    pointer glows softly in the parameter's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
 .stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
-.stats-ridges { --ridge-label:44px; min-width:0 }
+.stats-ridges { --ridge-label:44px; --ridge-n:5ch; min-width:0 }
 .stats-ridge-defs { position:absolute; width:0; height:0; overflow:hidden }
-.stats-ridges-title, .stats-ridge-row, .stats-ridge-axis { display:grid; grid-template-columns:var(--ridge-label) minmax(0,1fr) 52px; column-gap:8px }
-.stats-ridges-title { align-items:baseline; margin:0 0 20px; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
-.stats-ridges-title > span:first-child { grid-column:1 / 3 }
+/* Label, plot, median, n: the title, the rows and the axis share these columns at 12px (the n column is in ch). */
+.stats-ridges-title, .stats-ridge-row, .stats-ridge-axis { display:grid; grid-template-columns:var(--ridge-label) minmax(0,1fr) 52px var(--ridge-n); column-gap:8px; font-size:var(--fs-12) }
+.stats-ridges-title { align-items:baseline; margin:0 0 20px; line-height:var(--lh-12) }
+.stats-ridges-title > span:first-child { grid-column:1 / 3; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-ridges-head { color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); text-align:right }
 .stats-ridge-rows { margin:0; padding:0; list-style:none }
 .stats-ridge-row { height:30px; align-items:end }
@@ -1045,13 +1046,18 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ridge-range { position:absolute; bottom:-1px; z-index:1; height:3px; border-radius:2px; background:color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-ridge-median { position:absolute; bottom:-4px; z-index:2; width:9px; height:9px; margin-left:-4.5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-ridge-value { padding-bottom:2px; color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
+.stats-ridge-n { padding-bottom:2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
+/* A class with few values (fewer than 300): a lighter fill and a dashed outline, so it does not look as solid as a big one. */
+.stats-ridge-row.is-few .stats-ridge-area { opacity:0.45 }
+.stats-ridge-row.is-few .stats-ridge-line { stroke-dasharray:3 2 }
 .stats-ridge-row.is-active .stats-ridge-svg { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 70%, transparent)) }
 .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)), 0 0 6px color-mix(in srgb, var(--part) 70%, transparent) }
 .stats-ridge-row.is-active .stats-ridge-label { font-weight:600 }
 .stats-ridge-axis { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-ridge-ticks { position:relative; height:16px; container:ridge-axis / inline-size }
 @container ridge-axis (max-width: 220px) {
-  .stats-ridge-ticks > .stats-ridge-tick-alt { font-size:0 }
+  /* every second label gives way, its power of ten too (the sup has its own size); its tick mark stays */
+  .stats-ridge-ticks > .stats-ridge-tick-alt, .stats-ridge-ticks > .stats-ridge-tick-alt sup { font-size:0 }
 }
 .stats-ridge-ticks > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap }
 .stats-ridge-ticks > span::before { content:""; position:absolute; left:50%; top:-8px; height:4px; border-left:1px solid var(--line-strong) }

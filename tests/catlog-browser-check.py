@@ -940,6 +940,11 @@ def check_stats_more(driver, browser, overview, total):
         for number, n in drawn.items():
             assert number not in classes or n <= classes[number]["count"], (number, n)
         assert all(svg.get_attribute("role") == "img" and svg.get_attribute("aria-label") for svg in panel.find_elements(By.CSS_SELECTOR, "svg.stats-ridge-svg"))
+        # each class's number of values in the n column; fewer than 300 draw lighter and dashed
+        ns = [int(cell.get_attribute("innerText").replace(",", "")) for cell in panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-n")]
+        assert ns == [item["n"] for item in grid["classes"]], ns
+        few = [int(row.get_attribute("data-class")) for row in panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-row.is-few")]
+        assert few == [item["class"] for item in grid["classes"] if item["n"] < 300], few
         # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
         stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
         assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
@@ -1044,7 +1049,7 @@ def check_stats_new_figures(driver, browser, url):
             wait.until(lambda d: d.find_elements(By.ID, "statsClassValuesTitle"))
             fit = driver.execute_script("""const t = document.querySelector('.stats-donut-total');
                 return {family: getComputedStyle(t).fontFamily, width: t.getComputedTextLength(), room: Number(t.getAttribute('data-room')),
-                        spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value')].filter(v =>
+                        spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value, .stats-ridge-n')].filter(v =>
                           v.getBoundingClientRect().right > v.closest('.stats-section').getBoundingClientRect().right + 1).map(v => v.innerText)};""")
             assert "Verdana" in fit["family"] and fit["width"] <= fit["room"] + 0.5 and not fit["spill"], fit
         finally:
