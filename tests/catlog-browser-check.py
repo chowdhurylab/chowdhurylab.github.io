@@ -1095,6 +1095,20 @@ RIDGE_TICKS_JS = """
 """
 
 
+# The lowest contrast against the page of the edges that give the value figures their shapes (each histogram bar's 1px
+# outline, each ridge line), as drawn: WCAG 1.4.11 asks 3:1, since the per-bin counts show only on pointing.
+STATS_EDGE_CONTRAST_JS = """
+    const paint = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    const rgb = (colour) => { paint.clearRect(0, 0, 1, 1); paint.fillStyle = '#000'; paint.fillStyle = colour; paint.fillRect(0, 0, 1, 1); return [...paint.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+    const lum = (colour) => rgb(colour).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const page = lum(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+    const ratio = (colour) => { const l = lum(colour); return (Math.max(l, page) + 0.05) / (Math.min(l, page) + 0.05); };
+    const edges = [...document.querySelectorAll('.stats-histogram-bars > span')].map((bar) => getComputedStyle(bar).boxShadow.match(/(?:rgba?|color)\\([^)]*\\)/)[0])
+      .concat([...document.querySelectorAll('.stats-ridge-line')].map((line) => getComputedStyle(line).stroke));
+    return edges.length ? Math.min(...edges.map(ratio)) : null;
+"""
+
+
 # A viewer whose system draws text wider (Verdana, letter-spacing 0.5px), set before the page's script runs.
 WIDE_FONT_JS = """
     new MutationObserver((list, observer) => {
@@ -1130,6 +1144,8 @@ def check_stats_new_figures(driver, browser, url):
             assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
+            edge = driver.execute_script(STATS_EDGE_CONTRAST_JS)
+            assert edge is None or edge >= 3, f"A histogram outline or ridge line has {edge:.2f}:1 against the page"
             # The ridges of one panel share one plot width; on phones the class number stands alone.
             widths = driver.execute_script("return [...document.querySelectorAll('.stats-ridges')].map(panel => [...panel.querySelectorAll('.stats-ridge-plot')].map(plot => Math.round(plot.getBoundingClientRect().width)))")
             assert all(len(set(panel)) == 1 and panel[0] >= 120 for panel in widths), widths
