@@ -119,8 +119,10 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   records (with human-checked's rule); a row whose numbers are missing is left
   out. Each card with a share (kept of the values audited; human-checked of the records reviewers looked at) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
-- Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a solid navy
-  stripe inside (`ec_classes[].from_paper`); each label gives records, accepted, then CatLog v2 entries (navy), each
+- Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a darker navy
+  stripe inside the accepted bar (70% navy, 30% text), set off from its fill by a 1px white gap above and below, so it
+  parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
+  accepted swatch with the stripe through it); a nonzero accepted or CatLog v2 count draws at least 2px wide; each label gives records, accepted, then CatLog v2 entries (navy), each
   number in its own right-aligned column under a 12px muted heading line (Records, Accepted, CatLog v2: the legend's
   order), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
   that heading line. On phones its bars and axis span the row (the end tick's label ends at its tick): the class name
@@ -193,8 +195,8 @@ single-series bars and table bars (Table 1 included) and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring; the glow stays soft (never neon) and only marks focus: at rest only the headline band's key
 numbers and the lead figure of Quality glow; a mark (bar, slice, ridge, median dot) glows only while pointed at or
-focused, so the part numbers, meters, the CatLog v2 stripe, the median dots, the ridges and the pressed switch button
-have plain 1px outlines at rest. Markup (a deliberate change from the design spec's
+focused, so the part numbers, meters, the median dots, the ridges and the pressed switch button have plain 1px
+outlines at rest, and the CatLog v2 stripe never glows (its accepted bar does). Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
 (role="img", its summary in aria-label, a title per part), each value-range
 histogram and each class ridge an image with its summary in aria-label; bar charts and table bars

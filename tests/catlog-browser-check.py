@@ -962,6 +962,21 @@ def check_stats_more(driver, browser, overview, total):
     if all(isinstance(item.get("from_paper"), int) for item in classes.values()) and classes:
         shown = [int(span.get_attribute("innerText").replace(",", "")) for span in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-v2-count")]
         assert shown == [item["from_paper"] for item in classes.values()] and all(item["from_paper"] <= item["count"] for item in classes.values()), shown
+        # The CatLog v2 stripe parts from its accepted bar by a 1px white gap above and below (not by lightness alone),
+        # never glows, not even in a lit row, and a nonzero count shows at least 2px wide within its accepted bar.
+        stripes = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].map((row) => {
+            const stripe = row.querySelector('.stats-part-catlog-mark'), accepted = row.querySelector('.stats-part-accepted');
+            if (!stripe || !accepted) return null;
+            const box = stripe.getBoundingClientRect(), bar = accepted.getBoundingClientRect();
+            row.classList.add('is-active'); const lit = getComputedStyle(stripe).filter; row.classList.remove('is-active');
+            return {row: row.dataset.row, width: box.width, inside: box.left >= bar.left - 0.5 && box.right <= bar.right + 0.5,
+                    gap: getComputedStyle(stripe).boxShadow, lit};
+        }).filter(Boolean)""")
+        assert len(stripes) == sum(item["from_paper"] > 0 for item in classes.values()), stripes
+        assert all(item["width"] >= 1.9 and item["lit"] == "none" and "rgb(255, 255, 255) 0px -1px 0px" in item["gap"]
+                   and "rgb(255, 255, 255) 0px 1px 0px" in item["gap"] for item in stripes), stripes
+        # (CatLog v2 entries are accepted, so a stripe ends within its accepted bar.)
+        assert all(item["inside"] for item in stripes if classes[int(item["row"][3:])]["from_paper"] <= classes[int(item["row"][3:])]["accepted"]), stripes
     if classes:
         # Figure 5 names its value columns in the legend's order, each heading over its numbers (STATS_VALUE_COLUMNS_JS
         # below checks they end at one x), and no class name runs into them.
@@ -1120,7 +1135,8 @@ MORE_FIXTURE_JS = """
         if (overview?.from_paper) {
           const papers = overview.from_paper.papers;
           overview.from_paper_values = { values: papers * 3, bins: [1, 2, 5], papers: [papers - 2, 1, 1] };
-          overview.ec_classes = (overview.ec_classes || []).map((item) => ({ ...item, from_paper: Math.floor(item.count / 4) }));
+          // CatLog v2 entries are accepted: a class has no more of them than accepted records
+          overview.ec_classes = (overview.ec_classes || []).map((item) => ({ ...item, from_paper: Math.min(item.accepted, Math.floor(item.count / 4)) }));
           const counts = (n) => { const list = new Array(16).fill(0); list[5] = n - 2; list[6] = 1; list[15] = 1; return list; };
           overview.metrics.kcat.by_class = { log10_start: -4, bin_width: 0.5, classes: (overview.ec_classes || []).slice(0, 3)
             .map((item) => ({ class: item.class, n: 20, median: 0.5, p10: 0.02, p90: 4, counts: counts(20) })) };

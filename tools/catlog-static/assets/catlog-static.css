@@ -841,15 +841,20 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
-/* CatLog v2 entries are accepted: navy, and on the enzyme classes a solid stripe inside the bar. */
+/* CatLog v2 entries are accepted: navy, and on the enzyme classes a darker stripe inside the accepted bar. */
 .stats-part-catlog, .stats-part-catlog-mark { --part:var(--st-accepted) }
 /* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
 .stats-seg, .stats-swatch { background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
-.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted) }
-.stats-legend .stats-swatch.stats-part-catlog-mark { height:4px; margin-top:6px; background:var(--st-accepted) }
+/* The CatLog v2 stripe (Figure 5) is a darker navy (70% navy, 30% text) inside the accepted bar, set off from the accepted
+   fill by a 1px white gap above and below, so it parts from that fill by more than lightness, in grey print too; it
+   never glows. A nonzero accepted or CatLog v2 count is drawn at least 2px wide, so EC 7's 44 entries show and the
+   stripe stays within its accepted bar. The legend's swatch is an accepted swatch with the stripe through it. */
+.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted); background:color-mix(in srgb, var(--st-accepted) 70%, var(--text)); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
+.stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
+.stats-legend .stats-swatch.stats-part-catlog-mark { background:var(--st-accepted); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, color-mix(in srgb, var(--st-accepted) 70%, var(--text)) 3px 7px, var(--bg) 7px 8px, transparent 8px), linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))) }
 .stats-v2-count { color:var(--st-accepted); font-weight:600 }
 /* Glow is for the key numbers (the headline band, the lead of Quality) and for the mark under the pointer only: at rest
    the marks of a figure have plain outlines. Pointing at a mark (or focusing the link in its row) lights it with a soft
@@ -857,7 +862,7 @@ a.stats-total-value:focus-visible { outline:0 }
    and end stubs); its exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
 .stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end),
 .stats-fig.has-active path[data-hl]:not(.is-active) { opacity:0.42 }
-.stats-chart-row.is-active .stats-seg:not(.stats-part-records), .stats-seg[data-tip]:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
+.stats-chart-row.is-active .stats-seg:not(.stats-part-records, .stats-part-catlog-mark), .stats-seg[data-tip]:not(.stats-part-catlog-mark):hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
 /* A lit row of the review-result table is tinted (more specific than the stats tables' transparent cells, which hid it). */
 .stats-status-table.stats-table tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
 @media (prefers-reduced-motion: no-preference) {
