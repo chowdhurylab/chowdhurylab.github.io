@@ -755,7 +755,9 @@ found at once: A, B, G, C, D, E, F, H.
   paper); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that
   has a mark (no review year; the notes are shown as written: they name "CatLog v1
-  entries" themselves; a checked record without a note says human-checked's rule); then Download record (the primary button) and
+  entries" themselves; a checked record without a note names the values it shows that a reviewer approved, "A human
+  reviewer approved the Km shown." or "... the kcat and Km shown; the kcat/Km agrees with kcat ÷ Km.", never a value
+  the record does not have; human-checked's whole rule only when it shows all three and the mark lists none); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
   the values as the record shows them, a Ki included, and the kcat/Km its
   sources list when the record shows one, "kcat/Km listed by OED 3.0–6.1 s⁻¹

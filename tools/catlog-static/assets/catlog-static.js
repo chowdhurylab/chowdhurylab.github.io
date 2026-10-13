@@ -1815,9 +1815,25 @@
     if (listed.length) return `A human reviewer approved the ${sentenceList(listed)} on this record.`;
     return note || (mark?.checked
       ? (accepted
-          ? HUMAN_CHECKED_DESCRIPTION
+          ? humanCheckedRecordSentence(row, mark)
           : "A human reviewer approved these values; the record's status comes from the automated review.")
       : "");
+  }
+
+  // A human-checked record without a note: human-checked's rule for the values this record shows, naming only those
+  // ("A human reviewer approved the Km shown.", never a kcat/Km the record does not have). With the mark's approved list:
+  // the approved values shown, and a kcat/Km that was not approved itself agrees with kcat ÷ Km (the rule). Without
+  // a list, a record showing all three keeps the rule as the badge says it.
+  const METRIC_WORDS = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" };
+  function humanCheckedRecordSentence(row, mark = humanReviewMark(row)) {
+    const shown = VALUE_FIELDS.map(([field]) => field).filter((field) => metricHasValue(row, field));
+    const listed = Array.isArray(mark?.approved);
+    const approved = humanApprovedFields(row);
+    const named = shown.filter((field) => !listed || approved.has(field));
+    const follows = listed && shown.includes("kcat_over_km") && !approved.has("kcat_over_km")
+      && shown.includes("kcat") && shown.includes("km");
+    if (!named.length || (!listed && named.length === 3)) return HUMAN_CHECKED_DESCRIPTION;
+    return `A human reviewer approved the ${sentenceList(named.map((field) => METRIC_WORDS[field]))} shown${follows ? "; the kcat/Km agrees with kcat ÷ Km" : ""}.`;
   }
 
   // "human-checked" is shown only on accepted records a human reviewer checked.

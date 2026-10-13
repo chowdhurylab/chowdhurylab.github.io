@@ -3948,6 +3948,34 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /value-approved/);
   assert.match(html, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub>, but it carries no check: the note above questions its unit or value\.<\/li>/);
   assert.ok(!("human_approved_values" in await recordDownloadPayload(onlyKm, {})), "no check shown, none listed");
+  // A human-checked record without a note names only the values it shows: a Km-only record says nothing of a kcat or a
+  // kcat/Km it does not have; with the mark's list, a kcat/Km that was not approved itself agrees with kcat ÷ Km.
+  const humanLine = (record) => {
+    api.renderDetail(record, {});
+    return element("detailContent").innerHTML.match(/<dt>Human review<\/dt><dd>(?:<svg[^>]*>.*?<\/svg>)?(.*?)<\/dd>/)?.[1];
+  };
+  api.setHumanReviewMarks({
+    "hc-km": { checked: true, approved: ["km"] },
+    "hc-kcat": { checked: true, approved: ["kcat"] },
+    "hc-pair": { checked: true, approved: ["kcat", "km"] },
+    "hc-all": { checked: true, approved: ["kcat", "km", "kcat_over_km"] },
+    "hc-only-km": { checked: true },
+  });
+  const kmOnly = { kcat: null, kcat_display: "", kcat_over_km: null, kcat_over_km_display: "" };
+  assert.equal(humanLine(row({ record_key: "hc-km", measurement_key: "hc-km", ...kmOnly })), "A human reviewer approved the Km shown.");
+  assert.equal(humanLine(row({ record_key: "hc-only-km", measurement_key: "hc-only-km", ...kmOnly })), "A human reviewer approved the Km shown.",
+    "a mark without a list: the values shown");
+  assert.equal(humanLine(row({ record_key: "hc-kcat", measurement_key: "hc-kcat", km: null, km_display: "", kcat_over_km: null, kcat_over_km_display: "" })),
+    "A human reviewer approved the kcat shown.");
+  assert.equal(humanLine(row({ record_key: "hc-pair", measurement_key: "hc-pair" })),
+    "A human reviewer approved the kcat and Km shown; the kcat/Km agrees with kcat ÷ Km.");
+  assert.equal(humanLine(row({ record_key: "hc-pair", measurement_key: "hc-pair", kcat_over_km: null, kcat_over_km_display: "" })),
+    "A human reviewer approved the kcat and Km shown.");
+  assert.equal(humanLine(row({ record_key: "hc-all", measurement_key: "hc-all" })), "A human reviewer approved the kcat, Km and kcat/Km shown.");
+  assert.equal((await recordDownloadPayload(row({ record_key: "hc-km", measurement_key: "hc-km", ...kmOnly }), {})).human_review,
+    "A human reviewer approved the Km shown.");
+  // The badge keeps human-checked's general rule.
+  assert.match(api.statusBadge(row({ record_key: "hc-km", measurement_key: "hc-km", ...kmOnly })), /Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
   api.setHumanReviewMarks({});
   api.renderDetail(accepted, {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved|Approved by a human reviewer/);

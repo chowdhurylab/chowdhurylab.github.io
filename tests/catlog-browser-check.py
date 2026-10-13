@@ -232,7 +232,25 @@ def check_human_checked(driver, url):
     assert titles and all(rule in title and "the kcat/Km was approved too or agrees with kcat \u00f7 Km." in title
                           for title in titles), titles[:3]
     assert not any("every value" in title or "earlier catalog" in title for title in titles), titles[:3]
-    return int(count.replace(",", ""))
+    # A human-checked record that shows no kcat/Km: its Human review line names only the values it shows ("A human
+    # reviewer approved the Km shown."), never the rule's kcat/Km. Sorted by kcat/Km, those records come last.
+    total = int(count.replace(",", ""))
+    driver.execute_script("location.hash = arguments[0]", f"#browse?checked=1&sort=kcat_over_km&rows=100&page={(total + 99) // 100}")
+    wait.until(lambda d: d.find_element(By.ID, "pageLabel").text.endswith(f"of {count}"))
+    no_ratio = driver.execute_script("""
+        return [...document.querySelectorAll('#recordsBody tr[data-key]')]
+            .filter(tr => tr.querySelector('td.c-eff .metric-with-note')?.innerText.trim() === '—').map(tr => tr.dataset.key).slice(-3);
+    """)
+    for key in no_ratio:
+        driver.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme').click()
+        wait.until(lambda d: d.execute_script(
+            "return document.querySelector('#detailContent #detailRecordKey')?.textContent === arguments[0]"
+            " && Boolean(document.querySelector('#detailContent .human-review-line dd'))", key))
+        line = driver.find_element(By.CSS_SELECTOR, "#detailContent .human-review-line dd").get_attribute("innerText")
+        assert "approved every kcat and Km" not in line and "agrees with kcat ÷ Km" not in line, (key, line)
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+    return total
 
 
 def check_browse(driver, browser, url, route_label):
