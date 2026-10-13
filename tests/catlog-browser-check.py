@@ -138,6 +138,13 @@ def check_guide(driver, wait):
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-method a[href="#team"], #guide-method a[href$="catlog-latest.html#team"]'), \
         "The method section links to the Team page"
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
+    # Against the databases (Browse's group and the record's section) is described only when the snapshot carries the
+    # comparison, as Browse shows the group.
+    comparison = driver.execute_script(
+        "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
+    database_lines = driver.execute_script(
+        "return [...document.querySelectorAll('#guideView [data-guide-databases]')].map(e => e.getClientRects().length > 0)")
+    assert len(database_lines) == 2 and all(shown == comparison for shown in database_lines), (comparison, database_lines)
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("CatLog v2", "independent", "AI run", "Checks pending", "Exporter", "exporter"):
         assert word not in guide_text, f"The Guide still says {word}"
@@ -1915,6 +1922,7 @@ def check_record_panel(driver, browser, url, route_label):
                 method: method ? method.textContent : null,
                 methodLink: method?.querySelector('a.method-link')?.getAttribute('href') || null,
                 review: row('Review result')[0]?.textContent || null,
+                paperCheck: row('Paper check')[0]?.textContent || null,
                 valuesHead: [...content.querySelectorAll('.values-section .values-table thead th')].map(e => e.textContent),
                 valueCells: [...content.querySelectorAll('.values-section .values-table td.vt-value')].map(e => getComputedStyle(e).textAlign),
                 revealed,
@@ -1952,13 +1960,15 @@ def check_record_panel(driver, browser, url, route_label):
                 assert panel["dotColor"] and panel["dotColor"] not in ("rgba(0, 0, 0, 0)", "transparent"), panel["dotColor"]
                 if panel["rowDotColor"]:
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
-                if kind.startswith("database") and panel["databasesText"] is not None:
-                    # Today's snapshot has no comparison for a database record: only an unsettled one says its values are
-                    # the database's.
-                    assert "Not yet checked against the paper: the values are the database's." in panel["databasesText"], panel["databasesText"]
+                if kind.startswith("database"):
+                    # A database record compares nothing with the databases: an unsettled one says its values are the
+                    # database's in Review and audit's Paper check row, never under Against the databases.
+                    assert panel["databasesText"] is None, panel["databasesText"]
                 if kind == "database-pending":
                     assert panel["status"].startswith("Not confirmed"), panel["status"]
-                    assert "Against the databases" in panel["sections"], panel["sections"]
+                    assert panel["paperCheck"] == "Not yet checked against the paper: the values are the database's.", panel["paperCheck"]
+                if kind == "from-paper":
+                    assert panel["paperCheck"] is None, panel["paperCheck"]
                 if kind == "from-paper":
                     assert "read from the paper" in panel["status"], panel["status"]
                     assert panel["method"] and panel["method"].startswith(

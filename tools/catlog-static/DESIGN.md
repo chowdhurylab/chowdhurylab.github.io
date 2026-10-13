@@ -679,14 +679,16 @@ found at once: A, B, G, C, D, E, F, H.
   automated review to what the paper prints." (and "More records like this:
   Corrected earlier" when Browse has that option). A corrected record without its
   trail says so in its Review result line ("this snapshot does not list the
-  changes"; the earlier catalog keeps them) and has no section G. A database
-  record the earlier review did not settle (Not confirmed, Not checked) with a
-  paper: "Not yet checked against the paper: the values are the database's."
-  (not on one whose Evidence reads "Located in the paper": it has no section
-  G). Colour is never the only carrier: the word or phrase is always printed.
+  changes"; the earlier catalog keeps them) and has no section G. Any other
+  record has no section G: a heading that compares nothing is never shown.
+  Colour is never the only carrier: the word or phrase is always printed.
 - H. Review and audit: Review result in one sentence ("Accepted: read from the paper
   by CatLog.", or the earlier automated review's result with "How the earlier
-  review worked →"); an AI audit line with the audit's date and verdict only; a
+  review worked →"); for a database record the earlier review did not settle
+  (Not confirmed, Not checked) with a paper, a Paper check row under it, "Not
+  yet checked against the paper: the values are the database's." (not on one
+  whose Evidence reads "Located in the paper", nor on one that names no
+  paper); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that
   has a mark (no review year); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
@@ -786,7 +788,10 @@ filters and Stats say it in one line and link here), Find records (#guide-find:
 search, filters, sort, sharing a view, and example views linked in the
 #browse? format), Read a record (#guide-record: the panel's sections, one worked
 from-paper record drawn as the table and the panel draw it, and Cautions, one
-line per short caution word), Review result (#guide-status: Accepted, Not confirmed, Not checked and
+line per short caution word; the Filters sentence and the section item on
+Against the databases, marked data-guide-databases, show only when the
+manifest's record index lists database_summary, as Browse's group does),
+Review result (#guide-status: Accepted, Not confirmed, Not checked and
 Disputed, each with the table's own badge, then each tag, human-checked with
 its check and green),
 Units (#guide-units), Downloads (#guide-downloads), Before you use the values

@@ -3447,24 +3447,53 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /Corrected and accepted in the earlier automated review; this snapshot does not list the changes\./);
   assert.doesNotMatch(html, /was not kept/);
 
-  // A database record the earlier review did not settle: the values are the database's; accepted, disputed, no paper
-  // linked or an earlier extraction: no section.
-  const sectionOf = (summary) => render(summary, { supporting_pmids: ["1"] }).match(/<h3 id="detail-databases-title">Against the databases<\/h3>(.*?)<\/section>/)?.[1] ?? null;
-  assert.equal(sectionOf(row({ record_key: "db-unverified", verification_status: "unverified", source_db: "brenda", has_proof_excerpt: false })),
-    '<p class="section-text">Not yet checked against the paper: the values are the database&#39;s.</p>');
-  assert.ok(sectionOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk", has_proof_excerpt: false })));
-  // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no section.
-  assert.equal(sectionOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);
+  // A database record the earlier review did not settle: the values are the database's, said in Review and audit's Paper
+  // check row, never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an
+  // earlier extraction: no such line.
+  const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked against the paper: the values are the database&#39;s.</dd>";
+  const paperCheckOf = (summary, detail = { supporting_pmids: ["1"] }) => {
+    const html = render(summary, detail);
+    assert.doesNotMatch(html, /Against the databases/, "no comparison, no section");
+    const review = html.match(/<h3 id="detail-review-title">Review and audit<\/h3>([\s\S]*?)<\/section>/)?.[1] ?? "";
+    return review.includes(NOT_YET) ? review : null;
+  };
+  const unverified = paperCheckOf(row({ record_key: "db-unverified", verification_status: "unverified", source_db: "brenda", has_proof_excerpt: false }));
+  assert.ok(unverified);
+  // Right after the review result.
+  assert.match(unverified, /<dt>Review result<\/dt><dd>Not checked: the earlier automated review recorded no final check\. <a class="method-link"[^>]*>How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/dd><\/div><div class="kv-line"><dt>Paper check<\/dt>/);
+  assert.ok(paperCheckOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk", has_proof_excerpt: false })));
+  // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no line.
+  assert.equal(paperCheckOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);
   assert.doesNotMatch(render(row({ record_key: "db-excerpt", verification_status: "manual_review_required", source_db: "brenda", has_proof_excerpt: false }),
-    { supporting_pmids: ["1"], has_proof_excerpt: true }), /Against the databases|values are the database/);
-  assert.equal(sectionOf(row({ record_key: "db-accepted", verification_status: "verified", source_db: "brenda" })), null);
-  assert.equal(sectionOf(row({ record_key: "db-disputed", verification_status: "disputed", source_db: "brenda" })), null);
-  assert.equal(sectionOf(row({ record_key: "db-no-paper", verification_status: "unverified", source_db: "skid", public_trust_basis: "identity_only" })), null);
-  assert.equal(sectionOf(row({ record_key: "earlier-extraction", verification_status: "unverified", source_db: "primary_paper_direct" })), null);
-  // A database record that names no paper (no PMID, DOI or paper ID) has nothing to be checked against: no section.
-  assert.doesNotMatch(render(row({ record_key: "db-no-pmid", verification_status: "unverified", source_db: "strenda" }), {}), /Against the databases/);
-  assert.match(render(row({ record_key: "db-doi-only", verification_status: "unverified", source_db: "strenda", has_proof_excerpt: false }), { supporting_dois: ["10.1/x"] }),
-    /Against the databases/);
+    { supporting_pmids: ["1"], has_proof_excerpt: true }), /Against the databases|values are the database|Paper check/);
+  assert.equal(paperCheckOf(row({ record_key: "db-accepted", verification_status: "verified", source_db: "brenda" })), null);
+  assert.equal(paperCheckOf(row({ record_key: "db-disputed", verification_status: "disputed", source_db: "brenda" })), null);
+  assert.equal(paperCheckOf(row({ record_key: "db-no-paper", verification_status: "unverified", source_db: "skid", public_trust_basis: "identity_only" })), null);
+  assert.equal(paperCheckOf(row({ record_key: "earlier-extraction", verification_status: "unverified", source_db: "primary_paper_direct" })), null);
+  // A database record that names no paper (no PMID, DOI or paper ID) has nothing to be checked against: no line.
+  assert.equal(paperCheckOf(row({ record_key: "db-no-pmid", verification_status: "unverified", source_db: "strenda" }), {}), null);
+  assert.ok(paperCheckOf(row({ record_key: "db-doi-only", verification_status: "unverified", source_db: "strenda", has_proof_excerpt: false }), { supporting_dois: ["10.1/x"] }));
+
+  // The Guide's two sentences on Against the databases show only when the snapshot carries the comparison (the
+  // manifest's record index lists database_summary), as Browse's group does.
+  {
+    const guideItems = [{ hidden: true }, { hidden: true }];
+    const previousAll = document.querySelectorAll;
+    document.querySelectorAll = (selector) => selector === "[data-guide-databases]" ? guideItems : previousAll(selector);
+    try {
+      api.renderGuideDatabases();
+      assert.deepEqual(guideItems.map((item) => item.hidden), [true, true], "no comparison in the snapshot: hidden");
+      runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+      api.renderGuideDatabases();
+      assert.deepEqual(guideItems.map((item) => item.hidden), [false, false]);
+      runtimeManifest.viewer_index.optional_fields = ["condition_note"];
+      api.renderGuideDatabases();
+      assert.deepEqual(guideItems.map((item) => item.hidden), [true, true]);
+    } finally {
+      document.querySelectorAll = previousAll;
+      delete runtimeManifest.viewer_index.optional_fields;
+    }
+  }
 }
 // The Paper section links to the paper's other records in Browse (the search box's pmid: or doi: form), this record
 // kept open; the count once the record index is loaded, "Only this record" when it is the paper's one.

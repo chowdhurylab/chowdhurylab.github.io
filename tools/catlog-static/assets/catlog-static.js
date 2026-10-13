@@ -5086,6 +5086,14 @@
     return (manifest.viewer_index?.optional_fields || []).includes("database_summary");
   }
 
+  // The Guide's sentences on Against the databases (Browse's filter group and the record's section) show only when the
+  // snapshot carries the comparison, as the group does; the Guide reads only the manifest, never the record index.
+  function renderGuideDatabases() {
+    if (typeof document.querySelectorAll !== "function") return;
+    const shown = databaseComparisonIndexed();
+    document.querySelectorAll("[data-guide-databases]").forEach((element) => { element.hidden = !shown; });
+  }
+
   function databaseComparisonShown() {
     const indexed = databaseComparisonIndexed();
     return state.recordsReady ? databaseOptionsSeen() !== 0 || indexed : indexed;
@@ -9054,10 +9062,10 @@
   // A record read from the paper: each value with what the enzyme databases list for the same paper (CatLog's fixed
   // phrases from the snapshot, shown as given), as the record's other lists are laid out: the parameter, then its value
   // and result, the line, and where the paper prints it, each wrapping at any width. An earlier "corrected" record: what
-  // its earlier review changed, before → after, the kind of change and where the paper prints it. Any other database
-  // record the earlier review did not settle: the values are the database's. Nothing else gets the section (never an
-  // empty heading). Under the comparison, links open Browse at the records with the same result (when Browse has that
-  // filter).
+  // its earlier review changed, before → after, the kind of change and where the paper prints it. Nothing else gets the
+  // section (never an empty heading; a database record the earlier review did not settle says its values are the
+  // database's under Review and audit). Under the comparison, links open Browse at the records with the same result
+  // (when Browse has that filter).
   const DATABASE_RESULTS = [
     { test: /other[\s_-]*label/i, word: "Other label", key: "neutral", filter: "other_label" },
     { test: /^(?:confirmed|same)/i, word: DATABASE_RESULT_NAMES.same, key: "same", filter: "same" },
@@ -9403,25 +9411,28 @@
       + databaseBrowseLinksHtml(new Set(["earlier"]), recordKey);
   }
 
-  function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, hasPaper = true } = {}) {
+  // The section shows only with a comparison to give: a record read from the paper whose values were compared, or an
+  // earlier record with its review's changes. A database record not yet checked against its paper says so under Review
+  // and audit (databaseValuesUnchecked), never under this heading: it compares nothing with the databases.
+  function databasesSection(summary, detail, { proof = null, check = null, v2Record = false } = {}) {
     let body = "";
     if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check);
     else {
       const corrections = correctionItems(detail, check);
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
-      else {
-        const result = summary._recordState || recordStateForRow(summary);
-        const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);
-        // A database record the earlier review did not settle, with a paper to check it against (a record that names no
-        // paper gets no such line: its Paper section says None). A record whose values the earlier review located in the
-        // paper (Evidence: Located in the paper, its notes under Paper) gets none either: it was checked against the paper.
-        const located = [summary, detail].some((item) => item?.proof_kind === "paper_evidence" || Boolean(item?.has_proof_excerpt));
-        if (fromDatabase && hasPaper && !located && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
-          body = `<p class="section-text">${escapeHtml(DATABASE_VALUES_NOTE)}</p>`;
-        }
-      }
     }
     return body ? detailSection("databases", "Against the databases", body) : "";
+  }
+
+  // A database record the earlier review did not settle, with a paper to check it against: its values are the database's
+  // (Review and audit's Paper check row). A record that names no paper gets no such line (its Paper section says None),
+  // nor does one whose values the earlier review located in the paper (Evidence: Located in the paper, its notes under
+  // Paper): it was checked against the paper.
+  function databaseValuesUnchecked(summary, detail, { hasPaper = true } = {}) {
+    const result = summary._recordState || recordStateForRow(summary);
+    const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);
+    const located = [summary, detail].some((item) => item?.proof_kind === "paper_evidence" || Boolean(item?.has_proof_excerpt));
+    return fromDatabase && hasPaper && !located && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified");
   }
 
   // ---- Record panel: explore ----
@@ -9517,7 +9528,7 @@
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
-  function reviewSection(summary, detail, { v2Record, proof, check, hasCorrections, reportHref }) {
+  function reviewSection(summary, detail, { v2Record, proof, check, hasCorrections, reportHref, hasPaper = true }) {
     const humanNote = humanReviewNote(summary);
     const status = v2Record
       ? escapePublic(V2_STATUS_SENTENCE)
@@ -9526,6 +9537,7 @@
     const audit = (proof && v2AuditText(proof.lines, proof.facts)) || sideFileAuditText(check);
     return detailSection("review", "Review and audit", kvList([
       linkedKv("Review result", status),
+      !v2Record && databaseValuesUnchecked(summary, detail, { hasPaper }) ? kv("Paper check", DATABASE_VALUES_NOTE) : "",
       audit ? kv("AI audit", audit) : "",
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
@@ -9611,12 +9623,12 @@
     $("detailContent").innerHTML = `
       ${detailTopHtml(summary, detail, { v2Record })}
       ${valuesSection(summary, detail, { proof: v2Proof, printedUnderPaper: Boolean(paperNotesHtml) })}
-      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, hasPaper: paperIds.length + dois.length > 0 })}
+      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record })}
       ${sourceSection(summary, detail, { v2Record, proof: v2Proof, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
       ${conditionsSection(summary, detail)}
       ${proteinSection(summary, detail)}
       ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
-      ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref })}
+      ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref, hasPaper: paperIds.length + dois.length > 0 })}
     `;
     bindDetailTop();
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
@@ -10206,6 +10218,7 @@
       renderDownloadMetadata();
       renderSourceAttribution();
       renderGuideMethod();
+      renderGuideDatabases();
       const cleanUrl = viewUrl(viewFromLocation());
       if (!["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
       // A record entry kept through a reload is this page load's own: × rewrites its address instead of stepping back to
@@ -10306,6 +10319,7 @@
       proteinSection,
       organismHtml,
       databasesSection,
+      renderGuideDatabases,
       toggleReveal,
       recordLink,
       numberHtml,
