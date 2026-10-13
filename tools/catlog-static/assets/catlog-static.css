@@ -70,10 +70,6 @@
   --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
   --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
   --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
-  /* Stats' value figures: one Nature BPG colour per parameter (direct labels name them; never a status). */
-  --fig-kcat:#E64B35;         /* BPG red */
-  --fig-km:#4DBBD5;           /* BPG cyan */
-  --fig-kcat-km:#00A087;      /* BPG green */
   /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
   --accent-glow:rgba(36,95,88,0.26);
   --accent-wash:rgba(36,95,88,0.07);
@@ -1002,11 +998,10 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-range-numbers dd { margin:2px 0 0; font-size:var(--fs-14); font-weight:500 }
 .stats-histogram { position:relative; padding-bottom:24px }
 .stats-histogram-bars { display:flex; align-items:flex-end; gap:2px; height:72px; border-bottom:1px solid var(--line) }
-/* One Nature BPG colour per parameter (value ranges and the per-class small multiples alike). */
+/* Value ranges and the per-class small multiples are single-series figures: --bar-neutral (design spec figure 7). Every
+   Nature BPG hue already has a meaning on this page (review results, the database comparison and kinds of change), so a
+   parameter colour would read as one of those; each panel's heading names its parameter. */
 .stats-range, .stats-ridges { --part:var(--bar-neutral) }
-:is(.stats-range, .stats-ridges)[data-metric="kcat"] { --part:var(--fig-kcat) }
-:is(.stats-range, .stats-ridges)[data-metric="km"] { --part:var(--fig-km) }
-:is(.stats-range, .stats-ridges)[data-metric="kcat_over_km"] { --part:var(--fig-kcat-km) }
 .stats-histogram-bars > span { flex:1 1 0; min-width:0; border-radius:2px 2px 0 0; background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 82%, var(--bg)), color-mix(in srgb, var(--part) 34%, var(--bg))); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--part) 85%, var(--bg)) }
 .stats-histogram-bars > span:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
 .stats-histogram-bars > span.has-values { min-height:1px }

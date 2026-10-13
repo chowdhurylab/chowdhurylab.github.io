@@ -122,8 +122,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them; values without a recorded
   unit or in another unit are left out; the 10–90% bounds have two significant
-  figures. Each parameter has its own Nature BPG colour (kcat --fig-kcat red, Km --fig-km cyan, kcat/Km
-  --fig-kcat-km green; never a review result), named by the panel's own heading.
+  figures. The value figures (these and the next) are single-series and use --bar-neutral: every Nature BPG hue
+  already means a review result, a database comparison or a kind of change on this page (green would read as "same
+  number as a database" in Part 7), so the panels' own headings name the parameter.
 - Values by enzyme class (full width, small multiples): per parameter a ridgeline panel, one ridge per EC class
   drawn through its half-decade bins (`overview.metrics.<metric>.by_class`: one grid of 14-18 bins per parameter
   shared by every class, the end bins holding every value beyond them; a record in several classes counts in

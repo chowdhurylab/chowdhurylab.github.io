@@ -811,8 +811,9 @@ organisms and EC numbers overall and among CatLog v2 entries), 5 Values (value r
 as ridgeline small multiples), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with one sentence and a 12px
 data line (snapshot, Data ID, definition); fills run from the colour to its tint with 1px outlines, in the
-review-result and comparison tokens and one Nature BPG colour per parameter for values; pointing at a mark lights
-it with a soft glow and gives its exact count. The donut, the histograms and the ridges are images with a summary;
+review-result and comparison tokens and --bar-neutral for the single-series value figures (every BPG hue already
+has a meaning on the page); pointing at a mark lights it with a soft glow and gives its exact count. The donut, the
+histograms and the ridges are images with a summary;
 the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
 DESIGN.md, "Stats".
