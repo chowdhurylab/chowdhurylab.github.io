@@ -2228,7 +2228,7 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         if link:
             href = urlsplit(link[0].get_attribute("href")).fragment
             assert re.match(r"browse\?q=(?:pmid|doi):\S+&record=" + re.escape(key) + "$", href), href
-            count = re.match(r"([\d,]+) records from this paper", link[0].text)
+            count = re.match(r"([\d,]+) records (?:from this paper|in CatLog)", link[0].text)
             query = re.match(r"browse\?q=([^&]+)", href).group(1)
             page_before = driver.find_element(By.ID, "pageLabel").text
             link[0].click()

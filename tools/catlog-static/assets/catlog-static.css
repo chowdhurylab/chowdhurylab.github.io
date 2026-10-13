@@ -555,6 +555,11 @@ body.detail-open .detail-panel { display:block }
 .kv-line > dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .kv-line > dd { min-width:0; margin:0; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14); overflow-wrap:break-word }
 .reference-list { display:grid; grid-template-columns:minmax(0,1fr); justify-items:start; gap:2px }
+/* A record that names several papers: each paper's ID, then how many records of it CatLog has; the link moves to the
+   next line whole when it does not fit beside the ID. */
+.paper-records-item { max-width:100%; overflow-wrap:anywhere }
+.paper-records-item .paper-records-link { display:inline-block; max-width:100%; white-space:normal }
+.paper-records-sep, .paper-records-only { color:var(--muted) }
 /* A long DOI breaks inside the panel instead of widening it. */
 .reference-link { max-width:100%; overflow-wrap:anywhere; text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
 .reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }

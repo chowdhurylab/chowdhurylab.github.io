@@ -9445,23 +9445,67 @@
   // ---- Record panel: explore ----
   // The other records of this record's paper in Browse (the search box finds a paper by "pmid:<PMID>" or "doi:<DOI>"),
   // with this record kept open; how many once the record index is loaded ("Only this record" when it is the paper's one).
+  // A record that names several papers (its PMIDs, else its DOIs) gives each its own count and link, beside the paper's ID
+  // in the PubMed IDs (or DOIs) row, so every cited paper can be explored and no ID is listed twice.
+  const LINKABLE_PMID = /^[1-9]\d{0,9}$/;
+
+  // The papers a record's links go by: its PMIDs when one can be searched for, else its DOIs.
+  function citedPapers(pmids, dois) {
+    const byPmid = pmids.some((value) => LINKABLE_PMID.test(String(value).trim()));
+    return { byPmid, papers: (byPmid ? pmids : dois).map((value) => String(value ?? "").trim()).filter(Boolean) };
+  }
+
   function paperRecordsRow(summary, pmids, dois) {
     const key = String(summary.record_key || "").trim();
-    const pmid = pmids.find((value) => /^[1-9]\d{0,9}$/.test(String(value).trim()));
-    const doi = pmid ? "" : String(dois[0] || "").trim();
-    if (!key || (!pmid && !doi)) return "";
-    let count = 0;
-    if (state.recordsReady && state.records.length) {
-      const folded = foldSearch(doi);
-      count = state.records.reduce((total, row) => total + (pmid ? rowHasPmid(row, Number(pmid)) : rowHasDoi(row, folded)), 0);
-    }
+    const { byPmid, papers } = citedPapers(pmids, dois);
+    if (!key || !papers.length) return "";
+    const linkable = (paper) => !byPmid || LINKABLE_PMID.test(paper);
+    const counts = paperRecordCounts(papers.filter(linkable), byPmid);
+    const href = (paper) => `${browseHash([["q", byPmid ? `pmid:${paper}` : `doi:${paper}`]])}&record=${encodeURIComponent(key)}`;
+    const arrow = '<span aria-hidden="true"> →</span>';
     const rowClass = { className: "paper-records-row" };
-    // A record that names several papers links to the first, by name.
-    const paper = (pmid ? pmids.length : dois.length) > 1 ? (pmid ? `PMID ${pmid}` : `DOI ${doi}`) : "this paper";
-    if (count === 1) return linkedKv("In CatLog", escapePublic(`Only this record${paper === "this paper" ? "" : ` from ${paper}`}`), rowClass);
-    const href = `${browseHash([["q", pmid ? `pmid:${pmid}` : `doi:${doi}`]])}&record=${encodeURIComponent(key)}`;
-    const words = escapePublic(count > 1 ? `${formatInteger(count)} records from ${paper}` : `Records from ${paper}`);
-    return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href)}">${words}<span aria-hidden="true"> →</span></a>`, rowClass);
+    if (papers.length === 1) {
+      const count = counts?.get(papers[0]) || 0;
+      if (count === 1) return linkedKv("In CatLog", "Only this record", rowClass);
+      const words = escapePublic(count > 1 ? `${formatInteger(count)} records from this paper` : "Records from this paper");
+      return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href(papers[0]))}">${words}${arrow}</a>`, rowClass);
+    }
+    const items = papers.map((paper) => {
+      const idHtml = byPmid ? pmidLink(paper) : doiLink(paper);
+      if (!linkable(paper)) return `<span class="paper-records-item">${idHtml}</span>`;
+      const count = counts?.get(paper) || 0;
+      const words = `${count > 1 ? `${formatInteger(count)} records` : "Records"} in CatLog`;
+      // Named with its paper, so a list of the page's links tells them apart.
+      const named = `${words} from ${byPmid ? "PMID" : "DOI"} ${paper}`;
+      const records = count === 1
+        ? '<span class="paper-records-only">only this record in CatLog</span>'
+        : `<a class="paper-records-link" href="${escapeHtml(href(paper))}" aria-label="${escapeHtml(named)}">${words}${arrow}</a>`;
+      return `<span class="paper-records-item">${idHtml}<span class="paper-records-sep" aria-hidden="true"> · </span>${records}</span>`;
+    });
+    return linkedKv(byPmid ? "PubMed IDs" : "DOIs", `<div class="reference-list">${items.join("")}</div>`, rowClass);
+  }
+
+  // How many records of the loaded index name each of these papers (PMIDs in one pass over the records; a DOI as the
+  // search box's doi: form finds it), keyed as given; null until the record index is loaded.
+  function paperRecordCounts(papers, byPmid) {
+    if (!state.recordsReady || !state.records.length || !papers.length) return null;
+    const counts = new Map(papers.map((paper) => [paper, 0]));
+    if (!byPmid) {
+      papers.forEach((paper) => {
+        const folded = foldSearch(paper);
+        counts.set(paper, state.records.reduce((total, row) => total + rowHasDoi(row, folded), 0));
+      });
+      return counts;
+    }
+    const wanted = new Map(papers.map((paper) => [Number(paper), paper]));
+    for (const row of state.records) {
+      const value = row._pmids;
+      for (const pmid of Array.isArray(value) ? new Set(value) : [value]) {
+        const paper = wanted.get(pmid);
+        if (paper !== undefined) counts.set(paper, counts.get(paper) + 1);
+      }
+    }
+    return counts;
   }
 
   // A record opened before the whole record index arrived gets its paper's count in place once it has (rows and focus
@@ -9508,14 +9552,19 @@
     const title = paperTitleText(summary, detail);
     const places = proof ? [...new Set(proof.lines.map((line) => v2LinePlace(line)).filter(Boolean))] : [];
     const noPaper = !pmids.length && !standInIds.length && !dois.length;
+    // Several papers: each one's records are linked beside its ID (paperRecordsRow), in place of the plain list.
+    const cited = citedPapers(pmids, dois);
+    const perPaper = cited.papers.length > 1 ? (cited.byPmid ? "pmid" : "doi") : "";
     return detailSection("paper", "Paper", kvList([
       title ? kv("Title", title) : "",
-      pmids.length ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
-      dois.length ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
+      pmids.length && perPaper !== "pmid" ? linkedKv(pmids.length === 1 ? "PubMed" : "PubMed IDs", referenceList(pmids, pmidLink)) : "",
+      perPaper === "pmid" ? paperRecordsRow(summary, pmids, dois) : "",
+      dois.length && perPaper !== "doi" ? linkedKv(dois.length === 1 ? "DOI" : "DOIs", referenceList(dois, doiLink)) : "",
+      perPaper === "doi" ? paperRecordsRow(summary, pmids, dois) : "",
       standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
       noPaper ? kv("PMID or DOI", "None") : "",
       places.length ? kv("Location", places.join("; ")) : "",
-      paperRecordsRow(summary, pmids, dois),
+      perPaper ? "" : paperRecordsRow(summary, pmids, dois),
     ]) + notesHtml);
   }
 

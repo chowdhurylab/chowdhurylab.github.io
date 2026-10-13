@@ -622,8 +622,12 @@ found at once: A, B, G, C, D, E, F, H.
   link to the paper's records in Browse with this record kept open
   (#browse?q=pmid:<PMID>&record=<key>, or doi:<DOI>), "89 records from this
   paper →" once the record index is loaded ("Only this record" when it is the
-  paper's one; a record naming several papers links to the first by name, "43
-  records from PMID 35008493"; up to 1023px, where the record covers the list,
+  paper's one; a record naming several papers, by PMID or else by DOI, gives
+  each its own count and link beside its ID in the PubMed IDs or DOIs row
+  instead, "35008493 · 43 records in CatLog →" or "· only this record in
+  CatLog", each link named with its paper for screen readers, so no ID is
+  listed twice and every cited paper can be explored; up to 1023px, where the
+  record covers the list,
   following it closes the record and shows the paper's records with focus on
   them, and Back opens the record again); an older
   record's notes on request: "Earlier automated review: where the values are

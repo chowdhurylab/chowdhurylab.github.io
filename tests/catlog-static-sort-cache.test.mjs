@@ -3519,10 +3519,32 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     assert.equal(api.hashWithoutRecord("#browse?q=x&record=other", "paper-a"), "#browse?q=x&record=other", "another record stays");
     api.renderDetail(summary, {});
     assert.doesNotMatch(element("detailContent").innerHTML, /In CatLog/, "no paper, no link");
-    // A record that names several papers links to the first by name.
-    api.state.records = [{ ...summary, _pmids: [12234181, 777] }, row({ record_key: "paper-c", _pmids: 12234181 })];
+    // A record that names several papers gives each its count and link beside its ID in the PubMed IDs row (one row,
+    // no ID listed twice, no separate In CatLog row); a paper with only this record says so without a link.
+    api.state.records = [{ ...summary, _pmids: [12234181, 777, 777] }, row({ record_key: "paper-c", _pmids: 12234181 }),
+      row({ record_key: "paper-d", _pmids: [5, 12234181] })];
     api.renderDetail(summary, { supporting_pmids: ["12234181", "777"] });
-    assert.match(element("detailContent").innerHTML, />2 records from PMID 12234181<span aria-hidden="true"> →</);
+    let paperHtml = element("detailContent").innerHTML;
+    assert.match(paperHtml, /<div class="kv-line paper-records-row"><dt>PubMed IDs<\/dt><dd><div class="reference-list"><span class="paper-records-item"><a class="reference-link" href="https:\/\/pubmed\.ncbi\.nlm\.nih\.gov\/12234181\/"[^>]*>12234181<\/a><span class="paper-records-sep" aria-hidden="true"> · <\/span><a class="paper-records-link" href="#browse\?q=pmid:12234181&amp;record=paper-a" aria-label="3 records in CatLog from PMID 12234181">3 records in CatLog<span aria-hidden="true"> →<\/span><\/a><\/span>/);
+    assert.match(paperHtml, />777<\/a><span class="paper-records-sep" aria-hidden="true"> · <\/span><span class="paper-records-only">only this record in CatLog<\/span>/,
+      "a PMID listed twice in a row's index entry counts the row once");
+    assert.doesNotMatch(paperHtml, /In CatLog<\/dt>/);
+    assert.equal((paperHtml.match(/>12234181<\/a>/g) || []).length, 1, "each ID is listed once");
+    // Before the record index is loaded each paper links without a count; the refresh fills them in place.
+    api.state.recordsReady = false;
+    api.renderDetail(summary, { supporting_pmids: ["12234181", "777"] });
+    paperHtml = element("detailContent").innerHTML;
+    assert.match(paperHtml, /href="#browse\?q=pmid:777&amp;record=paper-a" aria-label="Records in CatLog from PMID 777">Records in CatLog</);
+    // Several DOIs and no PMID: the DOIs row does the same; a single PMID with several DOIs keeps one In CatLog link.
+    api.state.recordsReady = true;
+    api.renderDetail(summary, { supporting_dois: ["10.1/a", "10.1/b"] });
+    paperHtml = element("detailContent").innerHTML;
+    assert.match(paperHtml, /<dt>DOIs<\/dt><dd><div class="reference-list"><span class="paper-records-item"><a class="reference-link" href="https:\/\/doi\.org\/10\.1\/a"/);
+    assert.match(paperHtml, /href="#browse\?q=doi:10\.1\/b&amp;record=paper-a" aria-label="Records in CatLog from DOI 10\.1\/b">Records in CatLog</);
+    api.renderDetail(summary, { supporting_pmids: ["12234181"], supporting_dois: ["10.1/a", "10.1/b"] });
+    paperHtml = element("detailContent").innerHTML;
+    assert.match(paperHtml, /<dt>DOIs<\/dt><dd><div class="reference-list"><a class="reference-link"/);
+    assert.match(paperHtml, /<dt>In CatLog<\/dt><dd><a class="paper-records-link" href="#browse\?q=pmid:12234181&amp;record=paper-a">3 records from this paper</);
     api.state.recordsReady = false;
     api.renderDetail(summary, { supporting_dois: ["10.1021/bi020196a"] });
     assert.match(element("detailContent").innerHTML, /href="#browse\?q=doi:10\.1021\/bi020196a&amp;record=paper-a">Records from this paper</);
