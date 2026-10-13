@@ -1550,6 +1550,9 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
   assert.match(unmatched, /<dt>UniProt<\/dt><dd>Not matched to UniProt<\/dd>/);
   assert.match(unmatched, /<dt>Sequence<\/dt><dd>None<\/dd>/);
   assert.doesNotMatch(unmatched, /shown as the variant sequence|from the cited paper/, "no note about a sequence that is not shown");
+  assert.match(api.proteinSection({ mutation_signature: "R269A/N270A" }, { sequence: "MA",
+    sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." }),
+    /The sequence already carries the mutant residues; shown as the variant sequence\./);
   assert.match(api.proteinSection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
     /\(from the cited paper\)/);
 }

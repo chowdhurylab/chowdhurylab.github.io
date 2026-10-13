@@ -6706,7 +6706,7 @@
     }
     match = text.match(/^Resolved sequence already matches the mutant residue\(s\)(?: after applying an inferred residue-numbering offset ([+-]\d+))?, so it is treated as a source-provided variant sequence\.?$/);
     if (match) {
-      return `The sequence already carries the mutant residue(s)${match[1] ? ` (residue numbering offset ${match[1]})` : ""}; shown as the variant sequence.`;
+      return `The sequence already carries the mutant residues${match[1] ? ` (residue numbering offset ${match[1]})` : ""}; shown as the variant sequence.`;
     }
     if (/^Source notes indicate a mutant or variant enzyme, but no machine-applicable substitution signature was available\.?$/.test(text)) {
       return "The source names a variant but no exact substitution, so no variant sequence was built.";
