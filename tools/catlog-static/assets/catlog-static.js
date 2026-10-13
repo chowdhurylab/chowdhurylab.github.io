@@ -3851,40 +3851,82 @@
     return html ? numberHtml(value, { figures }) : numberText(value, { figures });
   }
 
-  // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
-  // the 10–90% range beneath. The median reads to two significant figures, as in Values by enzyme class (4.4, 0.13, 17).
-  // Returns "" for a summary that does not hold together.
-  function statsValueRange(metric, summary) {
+  // A whole-distribution summary (overview.metrics.<metric>) that holds together: whole counts per power of ten from
+  // log10_start that add up to n, and positive percentiles in order.
+  function statsRangeHolds(summary) {
     const counts = summary?.counts;
     const n = statsCount(summary?.n);
-    const start = summary?.log10_start;
-    if (!n || !Array.isArray(counts) || counts.length < 2 || !Number.isInteger(start)
-      || !counts.every((count) => statsCount(count) !== null) || counts.reduce((sum, count) => sum + count, 0) !== n
-      || ![summary.median, summary.p10, summary.p90].every((value) => Number.isFinite(value) && value > 0)
-      || !(summary.p10 <= summary.median && summary.median <= summary.p90)) return "";
-    const bins = counts.length;
-    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - start) / bins * 100));
-    const highest = Math.max(...counts);
-    const step = Math.ceil((bins - 1) / 5);
+    return Boolean(n && Array.isArray(counts) && counts.length >= 2 && Number.isInteger(summary.log10_start)
+      && counts.every((count) => statsCount(count) !== null) && counts.reduce((sum, count) => sum + count, 0) === n
+      && [summary.median, summary.p10, summary.p90].every((value) => Number.isFinite(value) && value > 0)
+      && summary.p10 <= summary.median && summary.median <= summary.p90);
+  }
+
+  // Decade ticks of a log axis from 10^start to 10^end, the same in Value ranges and Values by enzyme class, so a power
+  // of ten stands at one x in both: a tick per decade, labelled every other decade on an axis of more than 7 ticks, at
+  // multiples of that step (10⁰ is labelled whenever it is on the axis); on a narrow axis every second label gives way
+  // with its power of ten (stats-tick-alt), its tick mark stays.
+  function statsDecadeTicks(start, end) {
+    const span = end - start;
     const ticks = [];
-    for (let edge = 1; edge < bins; edge += step) ticks.push(edge);
+    for (let decade = Math.ceil(start - 1e-9); decade <= end + 1e-9; decade += 1) ticks.push(decade);
+    const every = ticks.length > 7 ? 2 : 1;
+    return ticks.map((decade) => {
+      const labelled = decade % every === 0;
+      const kind = labelled ? ((decade / every) % 2 ? "stats-tick-alt" : "") : "stats-tick-minor";
+      return `<span${kind ? ` class="${kind}"` : ""} style="left:${+((decade - start) / span * 100).toFixed(3)}%">${labelled ? `10<sup>${String(decade).replace("-", "−")}</sup>` : ""}</span>`;
+    }).join("");
+  }
+
+  // One log axis per parameter for Value ranges and Values by enzyme class, so a reader can run an eye down from the
+  // whole distribution to the classes: the whole decades around the class grid (overview.metrics.<metric>.by_class),
+  // with the class panel's n column width, so both figures draw their plots in the same columns. Null without a class
+  // grid, or when the whole-distribution histogram does not reach that far (its end bars hold every value beyond them,
+  // so it can be drawn on a narrower axis but never on a wider one): then each figure keeps its own axis.
+  function statsValueAxis(summary) {
+    const grid = statsClassGrid(summary, {});
+    if (!grid || !statsRangeHolds(summary)) return null;
+    const first = summary.log10_start;
+    const bins = summary.counts.length;
+    const start = Math.floor(grid.start + 1e-9);
+    const end = Math.ceil(grid.start + grid.bins * grid.width - 1e-9);
+    if (first > start || first + bins < end) return null;
+    return { start, end, n: `calc(${Math.max(1, ...grid.classes.map((item) => formatInteger(item.n).length))}ch + 4px)` };
+  }
+
+  // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
+  // the 10–90% range beneath. The median reads to two significant figures, as in Values by enzyme class (4.4, 0.13, 17).
+  // With `axis` (statsValueAxis), drawn on that axis in the class panels' columns: the bars beyond it join its end bars.
+  // Returns "" for a summary that does not hold together.
+  function statsValueRange(metric, summary, axis = null) {
+    if (!statsRangeHolds(summary)) return "";
+    const { counts, log10_start: start } = summary;
+    const n = summary.n;
+    const aligned = axis && axis.start >= start && axis.end <= start + counts.length && axis.end - axis.start >= 2;
+    const first = aligned ? axis.start : start;
+    const bins = aligned ? axis.end - axis.start : counts.length;
+    const drawn = aligned ? Array(bins).fill(0) : counts;
+    if (aligned) counts.forEach((count, index) => { drawn[Math.max(0, Math.min(bins - 1, start + index - first))] += count; });
+    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - first) / bins * 100));
+    const highest = Math.max(...drawn);
     const median = position(summary.median);
     const low = position(summary.p10);
     const high = position(summary.p90);
     const unit = escapeHtml(metric.unit);
     const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${statsRangeNumber(summary.median, { figures: 2 })} ${metric.unit}; `
       + `10% of values are below ${statsRangeNumber(summary.p10)} and 10% above ${statsRangeNumber(summary.p90)}; ${formatInteger(n)} values.`;
-    return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}">
+    const histogram = `<div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
+        <div class="stats-histogram-bars">${drawn.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" data-tip="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(first + 1) : index === bins - 1 ? statsPowerOfTen(first + index) + " and above" : `${statsPowerOfTen(first + index)} to ${statsPowerOfTen(first + index + 1)}`} ${metric.unit}: ${formatInteger(count)} values`)}"></span>`).join("")}</div>
+        <div class="stats-histogram-range" aria-hidden="true"><span style="left:${low}%;width:${Math.max(high - low, 0.5)}%"></span><i style="left:${median}%"></i></div>
+        <div class="stats-histogram-axis" aria-hidden="true">${statsDecadeTicks(first, first + bins)}</div>
+      </div>`;
+    return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}"${aligned ? ` style="--ridge-n:${axis.n}"` : ""}>
       <figcaption>${metric.html} <span class="stats-range-unit">(${unit})</span></figcaption>
       <dl class="stats-range-numbers">
         <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true, figures: 2 })}</dd></div>
         <div><dt>10–90%</dt><dd>${statsRangeNumber(summary.p10, { html: true })} – ${statsRangeNumber(summary.p90, { html: true })}</dd></div>
       </dl>
-      <div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
-        <div class="stats-histogram-bars">${counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" data-tip="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(start + 1) : index === bins - 1 ? statsPowerOfTen(start + index) + " and above" : `${statsPowerOfTen(start + index)} to ${statsPowerOfTen(start + index + 1)}`} ${metric.unit}: ${formatInteger(count)} values`)}"></span>`).join("")}</div>
-        <div class="stats-histogram-range" aria-hidden="true"><span style="left:${low}%;width:${Math.max(high - low, 0.5)}%"></span><i style="left:${median}%"></i></div>
-        <div class="stats-histogram-axis" aria-hidden="true">${ticks.map((edge) => `<span style="left:${edge / bins * 100}%">10<sup>${String(start + edge).replace("-", "−")}</sup></span>`).join("")}</div>
-      </div>
+      ${aligned ? `<div class="stats-range-plot">${histogram}</div>` : histogram}
       <p class="stats-range-count">${formatInteger(n)} values</p>
     </figure>`;
   }
@@ -3962,15 +4004,18 @@
   // values is drawn lighter and dashed; a shared log axis under the panel. The two end bins hold every value beyond the grid
   // (open-ended, so a pile there is not a peak in the data): the curve covers the inner bins only, cut off level at an
   // outer edge with values beyond it (the fill ends in a straight edge, not a fall to zero), and each end bin with values
-  // gets a short hatched stub of fixed height instead, its count in the tooltip line.
-  function statsRidgePanel(metric, grid) {
-    const span = grid.bins * grid.width;
-    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - grid.start) / span * 100));
+  // gets a short hatched stub of fixed height instead, its count in the tooltip line. With `axis` (statsValueAxis: whole
+  // decades around the grid), drawn on that axis, as Value ranges is.
+  function statsRidgePanel(metric, grid, axis = null) {
+    const from = axis ? axis.start : grid.start;
+    const span = (axis ? axis.end : grid.start + grid.bins * grid.width) - from;
+    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - from) / span * 100));
     const unit = metric.unit;
     const ends = grid.bins >= 4;
     const first = ends ? 1 : 0;
     const last = ends ? grid.bins - 2 : grid.bins - 1;
-    const x = (edge) => +(edge / grid.bins * 100).toFixed(3);
+    const x = (edge) => +((grid.start + edge * grid.width - from) / span * 100).toFixed(3);
+    const binWidth = +(grid.width / span * 100).toFixed(3);
     const edgeText = (index) => statsPowerOfTen(+(grid.start + index * grid.width).toFixed(2));
     const rows = grid.classes.map((item) => {
       const name = `EC ${item.class}${item.name ? ` ${item.name}` : ""}`;
@@ -3986,7 +4031,7 @@
       const high = position(item.p90);
       const beyond = [below ? `${formatInteger(below)} below ${edgeText(1)} ${unit}` : "", above ? `${formatInteger(above)} at ${edgeText(grid.bins - 1)} ${unit} and above` : ""].filter(Boolean);
       const text = `${name}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median, { figures: 2 })} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}${beyond.length ? `; in the end bins, not in the curve: ${beyond.join(", ")}` : ""}.`;
-      const stub = (count, index, where) => (count ? `<i class="stats-ridge-end" style="left:${x(index)}%;width:${x(1)}%" data-tip="${escapeHtml(`${name}, ${metric.label} ${where}: ${formatInteger(count)} values (end bin, not in the curve)`)}"></i>` : "");
+      const stub = (count, index, where) => (count ? `<i class="stats-ridge-end" style="left:${x(index)}%;width:${binWidth}%" data-tip="${escapeHtml(`${name}, ${metric.label} ${where}: ${formatInteger(count)} values (end bin, not in the curve)`)}"></i>` : "");
       const stubs = ends ? stub(below, 0, `below ${edgeText(1)} ${unit}`) + stub(above, grid.bins - 1, `${edgeText(grid.bins - 1)} ${unit} and above`) : "";
       // The class's link opens Browse on its records with this parameter, which also lists values in another unit or
       // with none recorded, so Browse can count more than n: the tooltip line says so.
@@ -3998,22 +4043,13 @@
         <span class="stats-ridge-n">${formatInteger(item.n)}</span>
       </li>`;
     }).join("");
-    const ticks = [];
-    for (let decade = Math.ceil(grid.start); decade <= grid.start + span + 1e-9; decade += 1) ticks.push(decade);
-    // A tick per decade, labelled every other decade on a wide axis; every second label gives way on a narrow one.
-    const every = ticks.length > 7 ? 2 : 1;
-    const axis = ticks.map((decade, index) => {
-      const labelled = !(index % every);
-      const kind = labelled ? ((index / every) % 2 ? "stats-ridge-tick-alt" : "") : "stats-ridge-tick-minor";
-      return `<span${kind ? ` class="${kind}"` : ""} style="left:${+((decade - grid.start) / span * 100).toFixed(3)}%">${labelled ? `10<sup>${String(decade).replace("-", "−")}</sup>` : ""}</span>`;
-    }).join("");
     // The n column fits its longest count (in ch at the panel's 12px, so a wider font widens it).
     const longest = Math.max(1, ...grid.classes.map((item) => formatInteger(item.n).length));
     return `<div class="stats-ridges stats-metric-${metric.key}" data-metric="${metric.key}" style="--ridge-n:calc(${longest}ch + 4px)">
       <svg class="stats-ridge-defs" aria-hidden="true" focusable="false"><defs><linearGradient id="statsRidgeFill-${metric.key}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stats-ridge-stop-top"/><stop offset="1" class="stats-ridge-stop-bottom"/></linearGradient></defs></svg>
       <p class="stats-ridges-title"><span>${metric.html} <span class="stats-range-unit">(${escapeHtml(unit)})</span></span><span class="stats-ridges-head">Median</span><span class="stats-ridges-head">n</span></p>
       <ol class="stats-ridge-rows">${rows}</ol>
-      <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${axis}</span><span></span><span></span></div>
+      <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${statsDecadeTicks(from, from + span)}</span><span></span><span></span></div>
     </div>`;
   }
 
@@ -4029,7 +4065,8 @@
       if (!grid) continue;
       width = grid.width;
       few ||= grid.classes.some((item) => item.n < STATS_RIDGE_FEW);
-      panels.push(statsRidgePanel({ ...metric, label: metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat" }, grid));
+      panels.push(statsRidgePanel({ ...metric, label: metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat" }, grid,
+        statsValueAxis(overview?.metrics?.[metric.key])));
     }
     if (!panels.length) return null;
     const binWord = width === 0.5 ? "half-decade" : `${width}-decade`;
@@ -5024,7 +5061,9 @@
 
     // 5. Values: the overall ranges, then the same per enzyme class as small multiples.
     const values = [];
-    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
+    // Value ranges and Values by enzyme class share one log axis per parameter (statsValueAxis), drawn in the same columns.
+    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key], statsValueAxis(overview?.metrics?.[metric.key])))
+      .filter(Boolean);
     if (ranges.length) {
       values.push({
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
@@ -11090,6 +11129,8 @@
       statsOverview,
       statsBrowseHref,
       statsValueRange,
+      statsValueAxis,
+      statsDecadeTicks,
       statsUnacceptedFields,
       statsShare,
       statsTable,

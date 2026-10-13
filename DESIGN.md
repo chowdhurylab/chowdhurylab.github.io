@@ -125,7 +125,11 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   and its numbers share the first line, under the headings, 8px apart, and a long name hyphenates.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
-  ten whose end bars hold every value beyond them; values without a recorded
+  ten whose end bars hold every value beyond them, drawn on the log axis it shares with Values by enzyme class (the
+  whole decades around that parameter's class grid; bars beyond it join the end bars) in the class panels' columns
+  (their label, median and n columns left blank beside it), so a reader can run an eye down from the whole
+  distribution to the classes and 10⁰ stands at one x in all of Part 5; without a class grid, or when the histogram
+  does not reach that far, each keeps its own axis; values without a recorded
   unit or in another unit are left out; the median (here, in Values by enzyme class, in every tooltip line and in
   the figures' accessible text) and the 10–90% bounds have two significant figures. The value figures (these and the next) are single-series and use --bar-neutral: every Nature BPG hue
   already means a review result, a database comparison or a kind of change on this page (green would read as "same
@@ -143,7 +147,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   with the median as a dot, the median at the right to two significant figures and the class's number of values
   after it (a muted n column sized in ch to its longest count), a class with fewer than 300 values drawn lighter
   (fill at 45%) with a dashed outline so it does not look as solid as a big one (the data line says so when one is
-  shown), a shared log axis per panel (its labels thin out when narrow, the power of ten with them). EC N links into Browse with the panel's parameter (the
+  shown), a shared log axis per panel, the one Value ranges uses (a tick per decade, labelled at the even powers when there are more than 7 ticks, so
+  10⁰ is always labelled; every second label thins out when narrow, the power of ten with it). EC N links into Browse with the panel's parameter (the
   class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC

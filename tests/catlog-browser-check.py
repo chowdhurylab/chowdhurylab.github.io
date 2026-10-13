@@ -6,6 +6,7 @@ import hashlib
 from html.parser import HTMLParser
 import http.server
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -998,6 +999,19 @@ def check_stats_more(driver, browser, overview, total):
         # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
         stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
         assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
+    # Value ranges and Values by enzyme class share one log axis per parameter: the same ticks at the same x, so 10⁰
+    # stands at one x in both; each histogram then has a bar per decade of that axis, still holding every value.
+    for metric, range_ticks, ridge_ticks in driver.execute_script(STATS_SHARED_AXIS_JS):
+        summary = overview["metrics"][metric]
+        if stats_value_axis(summary):
+            start, end = stats_value_axis(summary)
+            assert range_ticks == ridge_ticks, (metric, range_ticks, ridge_ticks)
+            # 10⁰ (text "100": 10 and its exponent) is labelled whenever it is on the axis
+            assert not start <= 0 <= end or "100" in [text for text, _x in range_ticks], range_ticks
+            figure = driver.find_element(By.CSS_SELECTOR, f".stats-range[data-metric='{metric}']")
+            bars = figure.find_elements(By.CSS_SELECTOR, ".stats-histogram-bars > span")
+            assert len(bars) == end - start, (metric, len(bars))
+            assert sum(int(re.search(r": ([\d,]+) values$", bar.get_attribute("data-tip")).group(1).replace(",", "")) for bar in bars) == summary["n"]
     # A name with a breakdown under it (Figure 2's Other): beside the bar, the bar and its numbers stand on the name's
     # line, not on the breakdown's (on phones the name sits above its bar).
     off_line = driver.execute_script("""return [...document.querySelectorAll('.stats-chart-row.has-note')].filter((row) => row.offsetParent).filter((row) => {
@@ -1099,14 +1113,39 @@ MORE_FIXTURE_JS = """
 """
 
 
-# The ridge axes' labels as drawn: per axis, each tick's text from only the parts that take room on screen (the "10"
+# The value figures' log axes' labels as drawn (ridges and histograms): per axis, each tick's text from only the parts that take room on screen (the "10"
 # and its exponent are measured apart, so a hidden "10" with a visible exponent shows as the bare exponent).
 RIDGE_TICKS_JS = """
     const shown = (node) => { const range = document.createRange(); range.selectNodeContents(node);
       const box = range.getBoundingClientRect(); return box.width > 0.5 && box.height > 0.5; };
-    return [...document.querySelectorAll('.stats-ridge-ticks')].map((axis) => [...axis.children]
+    return [...document.querySelectorAll('.stats-ridge-ticks, .stats-histogram-axis')].map((axis) => [...axis.children]
       .map((tick) => [...tick.childNodes].filter(shown).map((node) => node.textContent).join('').trim()).filter(Boolean));
 """
+
+
+# Per parameter drawn in both Value ranges and Values by enzyme class: each axis's ticks as drawn (label, centre x), so
+# the two can be compared: one shared log axis puts every power of ten at one x in both figures.
+STATS_SHARED_AXIS_JS = """
+    const ticks = (axis) => [...axis.children].map((tick) => { const box = tick.getBoundingClientRect();
+      return [tick.textContent, Math.round((box.left + box.right) / 2 * 2) / 2]; });
+    return ['kcat', 'km', 'kcat_over_km'].map((metric) => {
+      const range = document.querySelector(`.stats-range[data-metric="${metric}"] .stats-histogram-axis`);
+      const ridges = document.querySelector(`.stats-ridges[data-metric="${metric}"] .stats-ridge-ticks`);
+      return range && ridges ? [metric, ticks(range), ticks(ridges)] : null;
+    }).filter(Boolean);
+"""
+
+
+def stats_value_axis(summary):
+    """The (start, end) decades of the log axis Value ranges shares with Values by enzyme class (statsValueAxis), or
+    None: the whole decades around the class grid, when the whole-distribution histogram reaches that far."""
+    grid = summary.get("by_class") or {}
+    if not grid.get("classes"):
+        return None
+    start = math.floor(grid["log10_start"] + 1e-9)
+    end = math.ceil(grid["log10_start"] + len(grid["classes"][0]["counts"]) * grid["bin_width"] - 1e-9)
+    first, bins = summary["log10_start"], len(summary["counts"])
+    return (start, end) if first <= start and first + bins >= end else None
 
 
 # The lowest contrast against the page of the edges that give the value figures their shapes (each histogram bar's 1px
@@ -3087,7 +3126,12 @@ def check(driver, browser, url):
         for figure in ranges:
             summary = overview["metrics"][figure.get_attribute("data-metric")]
             assert int(figure.get_attribute("data-count")) == summary["n"] == sum(summary["counts"])
-            assert len(figure.find_elements(By.CSS_SELECTOR, ".stats-histogram-bars > span")) == len(summary["counts"])
+            # On the axis it shares with Values by enzyme class, the bars beyond it join the end bars: a bar per decade
+            # of that axis, still holding every value.
+            axis = stats_value_axis(summary)
+            bars = figure.find_elements(By.CSS_SELECTOR, ".stats-histogram-bars > span")
+            assert len(bars) == (axis[1] - axis[0] if axis else len(summary["counts"]))
+            assert sum(int(re.search(r": ([\d,]+) values$", bar.get_attribute("data-tip")).group(1).replace(",", "")) for bar in bars) == summary["n"]
             assert figure.find_element(By.CSS_SELECTOR, ".stats-histogram").get_attribute("aria-label").startswith(("kcat", "Km"))
     else:
         assert "Human-checked" not in headline and "CatLog v2" not in headline

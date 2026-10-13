@@ -2073,6 +2073,17 @@ function row(overrides = {}) {
     assert.match(more, /<linearGradient id="statsRidgeFill-kcat"/);
     // the median of class 1 (2 s⁻¹ = 10^0.301) on a 7-decade grid from 10^-1: (0.301 + 1) / 7
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));
+    // Value ranges and Values by enzyme class share one axis per parameter: the whole decades around the class grid
+    // (10⁻¹ to 10⁶ here), with the same ticks, and the histogram in the class panels' columns (the same n column width).
+    // Its bars beyond that axis join its end bars: 1 below 10⁻¹ and 0 in 10⁻¹-10⁰ make the first bar (below 10⁰).
+    assert.match(more, /<figure class="stats-range" data-metric="kcat" data-count="5" style="--ridge-n:calc\(1ch \+ 4px\)">[\s\S]*?<div class="stats-range-plot"><div class="stats-histogram"/);
+    const bars = more.match(/<div class="stats-histogram-bars">([\s\S]*?)<\/div>/)[1];
+    assert.deepEqual([...bars.matchAll(/height:([\d.]+)%/g)].map((match) => Number(match[1])), [50, 100, 50, 50, 0, 0, 0]);
+    assert.match(bars, /data-tip="below 10⁰ s⁻¹: 1 values"/);
+    assert.match(bars, /<span style="height:0%" data-tip="10⁵ and above s⁻¹: 0 values"><\/span>$/);
+    const histogramTicks = more.match(/<div class="stats-histogram-axis" aria-hidden="true">([\s\S]*?)<\/div>/)[1];
+    assert.equal(histogramTicks, more.match(/<span class="stats-ridge-ticks">([\s\S]*?)<\/span><span><\/span><span><\/span><\/div>/)[1]);
+    assert.equal(histogramTicks, api.statsDecadeTicks(-1, 6));
     // The class's link opens its records with the panel's parameter (in any unit, so Browse can count more than n).
     assert.match(more, /#browse\?ec=1\.&amp;metric=kcat">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
     // The median column reads evenly: two significant figures, the same in the tooltip line and the accessible text.
@@ -2150,6 +2161,29 @@ function row(overrides = {}) {
     runtimeManifest.summary.overview = overview;
     api.renderStats();
   }
+
+  // Decade ticks: one per decade, labelled every other decade on an axis of more than 7 ticks, at multiples of 2 (10⁰
+  // always labelled), every second label marked to give way on a narrow axis; up to 7 ticks, every decade labelled.
+  const ticks = api.statsDecadeTicks(-5, 3);
+  assert.deepEqual([...ticks.matchAll(/<span(?: class="([^"]+)")? style="left:([\d.]+)%">(.*?)<\/span>/g)].map((match) => [match[1] || "", Number(match[2]), match[3].replace(/<\/?sup>/g, "")]),
+    [["stats-tick-minor", 0, ""], ["", 12.5, "10−4"], ["stats-tick-minor", 25, ""], ["stats-tick-alt", 37.5, "10−2"], ["stats-tick-minor", 50, ""],
+      ["", 62.5, "100"], ["stats-tick-minor", 75, ""], ["stats-tick-alt", 87.5, "102"], ["stats-tick-minor", 100, ""]]);
+  assert.deepEqual([...api.statsDecadeTicks(-2, 3).matchAll(/<span(?: class="([^"]+)")?/g)].map((match) => match[1] || ""), ["", "stats-tick-alt", "", "stats-tick-alt", "", "stats-tick-alt"]);
+  // The shared axis of a parameter: the whole decades around its class grid, when the whole-distribution histogram
+  // reaches that far; none without a class grid or when the histogram is narrower.
+  const kcatGrid = { log10_start: -4, bin_width: 0.5, classes: [{ class: 1, n: 29253, median: 5.2, p10: 0.04, p90: 300, counts: [1, ...Array(16).fill(0), 29252] }] };
+  const kcatSummary = { n: 3, median: 4.4, p10: 0.034, p90: 240, log10_start: -5, counts: [1, ...Array(10).fill(0), 2] };
+  assert.deepEqual({ ...api.statsValueAxis({ ...kcatSummary, by_class: kcatGrid }) }, { start: -4, end: 5, n: "calc(6ch + 4px)" });
+  assert.deepEqual({ ...api.statsValueAxis({ ...kcatSummary, by_class: { ...kcatGrid, log10_start: -4.5 } }) }, { start: -5, end: 5, n: "calc(6ch + 4px)" });
+  assert.equal(api.statsValueAxis({ ...kcatSummary, log10_start: -3, by_class: kcatGrid }), null);
+  assert.equal(api.statsValueAxis(kcatSummary), null);
+  assert.equal(api.statsValueAxis({ ...kcatSummary, n: 4, by_class: kcatGrid }), null);
+  // On that axis the histogram's bars beyond it join its end bars, and its median sits where the class panels' would.
+  const onAxis = api.statsValueRange({ key: "kcat", html: "kcat", unit: "s⁻¹" }, { ...kcatSummary, n: 4, counts: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1] }, { start: -4, end: 5, n: "calc(6ch + 4px)" });
+  assert.equal((onAxis.match(/<span(?: class="has-values")? style="height:/g) || []).length, 9);
+  assert.match(onAxis, /<span class="has-values" style="height:100%" data-tip="below 10⁻³ s⁻¹: 2 values"><\/span>/);
+  assert.match(onAxis, /<span class="has-values" style="height:100%" data-tip="10⁴ and above s⁻¹: 2 values"><\/span><\/div>/);
+  assert.match(onAxis, new RegExp(`<i style="left:${(Math.log10(4.4) + 4) / 9 * 100}%"><\\/i>`));
 
   // A histogram that does not add up is not drawn.
   assert.equal(api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, { n: 3, median: 1, p10: 1, p90: 1, log10_start: 0, counts: [1, 1] }), "");

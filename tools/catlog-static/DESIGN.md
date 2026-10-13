@@ -808,7 +808,7 @@ line; then the checks), 3 What is in the catalog (the review-result donut and it
 source with a Records | Share switch, CatLog v2 and CatLog v1 entries, values per paper in CatLog v2, what the
 records contain, wild type and variants), 4 Biology (enzyme classes with accepted and CatLog v2 entries, the top
 organisms and EC numbers overall and among CatLog v2 entries), 5 Values (value ranges, then values by enzyme class
-as ridgeline small multiples), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
+as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with one sentence and a 12px
 data line (snapshot, Data ID, definition); fills run from the colour to its tint with 1px outlines, in the
 review-result and comparison tokens and --bar-neutral for the single-series value figures (every BPG hue already
