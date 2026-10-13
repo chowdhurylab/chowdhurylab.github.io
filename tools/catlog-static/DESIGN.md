@@ -546,8 +546,9 @@ found at once: A, B, G, C, D, E, F, H.
   unit wraps before the table outgrows the section; a record with checks keeps
   each number of As printed (and each unit with its power, min-1) whole from
   361px up, and from 361 to 420px its
-  two-part unit may take two lines, so the check's 16px never breaks a printed
-  number such as 0.00048 in a wide font). Up to 360px the columns are fixed (Parameter
+  two-part unit may take two lines and its cells come 2px closer, so the
+  check's 16px never breaks a printed number such as 0.00048 in a wide font and
+  the table stays inside its section). Up to 360px the columns are fixed (Parameter
   24%, Value 34%, Unit 17%, As printed the rest), calc. and a "!" sit under
   the number at the right, the numbers are 14px, and a
   number too long for Value (1.28 × 10⁻⁴ in a wide font) wraps before "× 10"

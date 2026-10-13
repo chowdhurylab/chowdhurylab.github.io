@@ -1594,13 +1594,16 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 
 /* Phones from 361px, a record with checks and As printed: the check takes 16px of Value, so with a wide system font
    (Verdana, DejaVu) As printed once broke a printed number ("0.0004" over "8"). There each number of As printed (and
-   each unit with its power, min-1) stays whole, and up to 420px a two-part unit (s⁻¹ mM⁻¹) may take two lines, which
-   gives As printed back about 25px. */
+   each unit with its power, min-1) stays whole, and up to 420px a two-part unit (s⁻¹ mM⁻¹) may take two lines and the
+   cells come 2px closer (as at 360px), which gives As printed back about 35px: the table stays inside its section. */
 @media (min-width: 361px) {
   .values-table.vt-checks .vt-printed .vt-whole { white-space:nowrap }
 }
 @media (min-width: 361px) and (max-width: 420px) {
   .values-table.vt-checks:not(.vt-no-printed) .vt-unit { white-space:normal }
+  .values-table.vt-checks:not(.vt-no-printed) :is(th,td) { padding-right:4px; padding-left:4px }
+  .values-table.vt-checks:not(.vt-no-printed) :is(th,td):first-child { padding-left:0 }
+  .values-table.vt-checks:not(.vt-no-printed) :is(th,td):last-child { padding-right:0 }
 }
 
 /* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. The cells come
