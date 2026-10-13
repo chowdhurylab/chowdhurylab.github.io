@@ -1063,6 +1063,16 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
+        # Against the databases shows only when the snapshot carries the comparison; without it a db= address is ignored.
+        indexed = driver.execute_script(
+            "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
+        open_page(base + "#browse?db=corrects")
+        section_hidden = driver.execute_script("return document.getElementById('databaseFilterSection').hidden")
+        if indexed:
+            assert not section_hidden and chip_keys() == ["db:corrects"], (section_hidden, chip_keys())
+            assert driver.execute_script("return document.querySelectorAll('#databaseChecklist .check-row').length") >= 5
+        else:
+            assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
         # 4. Source: the older status=v2 opens Read from the paper by CatLog (source=paper), every row tagged "from
         # paper"; a database narrows the enzyme databases, and the status cell names it.
         def first_tags():

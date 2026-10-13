@@ -124,6 +124,12 @@
                 <div class="filter-about" id="aboutSource" hidden></div>
                 <div class="check-stack" id="sourceChecklist"></div>
               </details>
+              <details class="filter-section has-about" id="databaseFilterSection" open hidden>
+                <summary class="filter-section-title"><span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutDatabases" title="About the comparison with the databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the comparison with the databases</span></button>
+                <div class="filter-about" id="aboutDatabases" hidden></div>
+                <div class="check-stack" id="databaseChecklist"></div>
+              </details>
               <details class="filter-section has-about" open>
                 <summary class="filter-section-title"><span>Review result</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutStatus" title="About the review results"><span aria-hidden="true">?</span><span class="visually-hidden">About the review results</span></button>
@@ -367,7 +373,7 @@
             <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
-              <div><dt>Filters</dt><dd>Source (read from the paper by CatLog or from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.</dd></div>
+              <div><dt>Filters</dt><dd>Source (read from the paper by CatLog or from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions. Where the snapshot has it, <em>Against the databases</em> finds the records whose values CatLog corrected against an enzyme database, those that differ from one (not yet resolved), the same, or values no database lists for the paper.</dd></div>
               <div><dt>Sort</dt><dd>By review result (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
               <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record: the address adds <code>record=</code> and the record ID to the filters.</dd></div>
             </dl>

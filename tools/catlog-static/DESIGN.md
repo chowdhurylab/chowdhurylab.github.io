@@ -155,7 +155,16 @@ databases; its "?" says what each holds, that a merged record counts under each
 database and links to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
 earlier paper extractions and Source not recorded: ticking one selects From
 enzyme databases, a merged record counts under each database it names, and All
-records or Read from the paper clears them), Review result (Accepted, Not
+records or Read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
+the record index's optional database_summary, one number per record that
+scripts/build-catlog-viewer-index.py takes from the Table download's database
+fields, the CatLog side's per-value database_status, a record summary or the
+earlier review's corrections list; never an empty heading: Corrects a database,
+Differs, unresolved, Same as a database (every compared value), Adds a value (a
+value no database lists for the paper), Not in any database (none listed) and,
+when a record has one, Changed in earlier review; a record matches any option
+ticked; its "?" says what is compared and what each option means; address key
+db=corrects,differs,same,adds,new,earlier), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"), its tick green, and ticking it ticks Accepted;
@@ -183,7 +192,8 @@ get focus.
 
 Browse with filters has the address #browse?key=value&... (q, status, checked,
 ec, enzyme, organism, substrate, metric, variant, tmin, tmax, phmin, phmax,
-caution, source, sort, rows, page, record; comma lists; unknown keys ignored).
+caution, db, source, sort, rows, page, record; comma lists; unknown keys ignored;
+db only when the snapshot carries the comparison).
 source=paper is Read from the paper by CatLog (the older status=v2 opens it
 too), source=databases From enzyme databases, and source=brenda,oed,... those
 databases (earlier_paper, unrecorded and strenda included).

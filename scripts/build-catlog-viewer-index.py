@@ -205,6 +205,86 @@ TABLE_FIELDS = (
 # ("+10 mM FBP"), under the substrate in the table (about 100 records, so it is not a shared text).
 OPTIONAL_TEXT_FIELDS = ("condition_note",)
 
+# How a record compares with the enzyme databases (BRENDA, SABIO-RK, OED, SKiD, STRENDA DB for the same paper), for the
+# sidebar's "Against the databases" group. The Table download may carry it in any of these shapes (the CatLog side's
+# per-value database_status, a record-level summary, or the earlier review's corrections list); the index writes one
+# compact number per record, "database_summary" (after the optional text fields, null on rows without it), only when
+# some row has one. The per-value lines themselves stay in the record's detail file.
+DATABASE_FIELDS = (
+    "database_summary",
+    "database_statuses",
+    "database_status",
+    "kcat_database_status",
+    "km_database_status",
+    "kcat_over_km_database_status",
+    "corrections",
+    "corrections_count",
+    "database_note",
+)
+DATABASE_SUMMARY_FIELD = "database_summary"
+# The summary's bits: a value the same as a database lists (1), a value CatLog corrected against a database (2), a
+# different number not yet resolved (4), a value no database lists (8), the same number under another label (16), and
+# an earlier "corrected" record whose changes are listed (32). A calculated kcat/Km is not compared (0).
+DATABASE_STATUS_BITS = {
+    "confirmed": 1, "same": 1, "same_number": 1,
+    "corrected": 2,
+    "differs": 4, "different": 4, "differs_not_resolved": 4,
+    "new": 8, "new_paper_not_in_databases": 8, "paper_not_in_databases": 8, "not_in_databases": 8,
+    "same_number_other_label": 16, "other_label": 16,
+    "not_compared": 0, "calculated": 0,
+}
+DATABASE_EARLIER_CORRECTIONS_BIT = 32
+DATABASE_SUMMARY_MASK = 63
+
+
+def database_summary(values: dict, unknown: dict[str, int]) -> int | None:
+    """One record's comparison with the enzyme databases as DATABASE_STATUS_BITS (None when the row says nothing, or
+    only that nothing was compared).
+    A number is taken as it is (masked); statuses may be one text ("corrected", or "confirmed; new"), a list, or an
+    object keyed by parameter ({"kcat": "confirmed", "Km": {"status": "corrected"}}). A status this page does not know
+    counts in `unknown` and adds nothing."""
+    bits = 0
+
+    def add(status: object) -> None:
+        nonlocal bits
+        if isinstance(status, dict):
+            status = status.get("status", status.get("database_status"))
+        if status is None or status == "":
+            return
+        if isinstance(status, (list, tuple)):
+            for item in status:
+                add(item)
+            return
+        for part in re.split(r"[;,|]\s*", str(status)):
+            key = part.strip().lower().replace(" ", "_").replace("-", "_")
+            if not key:
+                continue
+            if key in DATABASE_STATUS_BITS:
+                bits |= DATABASE_STATUS_BITS[key]
+            else:
+                unknown[key] = unknown.get(key, 0) + 1
+
+    summary = values.get("database_summary")
+    if isinstance(summary, bool):
+        summary = None
+    if isinstance(summary, (int, float)) and math.isfinite(summary):
+        bits |= int(summary) & DATABASE_SUMMARY_MASK
+    elif isinstance(summary, dict):
+        for value in summary.values():
+            add(value)
+    else:
+        add(summary)
+    for field in ("database_statuses", "database_status", "kcat_database_status", "km_database_status",
+                  "kcat_over_km_database_status"):
+        value = values.get(field)
+        add(list(value.values()) if isinstance(value, dict) else value)
+    corrections = values.get("corrections")
+    count = values.get("corrections_count")
+    if (isinstance(corrections, list) and corrections) or (
+            isinstance(count, (int, float)) and not isinstance(count, bool) and count > 0):
+        bits |= DATABASE_EARLIER_CORRECTIONS_BIT
+    return bits or None
+
 # Paper identifiers, from the Full data download (catlog-enriched.<id>.jsonl.gz: pubmed_id, supporting_pmids, doi,
 # supporting_dois), not the table. Written after VIEWER_FIELDS, before "s": "pmids" holds one PMID as a number, a list
 # of them, or null; "dois" one index into header["dois"] (the lower-case DOIs, sorted), a list of indexes, or null.
@@ -214,7 +294,7 @@ ENRICHED_NAME = re.compile(r"catlog-enriched\.[0-9a-f]{12}\.jsonl\.gz")
 PMID_TEXT = re.compile(r"[1-9][0-9]{0,9}")
 DOI_PREFIX = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
 
-if set(OPTIONAL_TEXT_FIELDS) & set(TABLE_FIELDS):
+if (set(OPTIONAL_TEXT_FIELDS) | set(DATABASE_FIELDS)) & set(TABLE_FIELDS) or set(OPTIONAL_TEXT_FIELDS) & set(DATABASE_FIELDS):
     raise RuntimeError("an optional field is also a required table field")
 if set(VIEWER_FIELDS) & set(OMITTED_FIELDS):
     raise RuntimeError("viewer and omitted fields overlap")
@@ -384,6 +464,8 @@ def build(
     enum_index: dict[str, dict[str, int]] = {field: {} for field in ENUM_FIELDS}
     rows: list[tuple[tuple, list, str, int]] = []
     optional_values: dict[str, dict[str, str]] = {field: {} for field in OPTIONAL_TEXT_FIELDS}
+    database_values: dict[str, int] = {}
+    database_unknown: dict[str, int] = {}
     source_bytes = 0
     encoded_numbers = {field: 0 for field in (*NUMBER_FROM_DISPLAY, *SAME_AS)}
 
@@ -394,6 +476,7 @@ def build(
             source_bytes += len(raw_line)
             row = json.loads(raw_line)
             optional = {field: row.pop(field) for field in OPTIONAL_TEXT_FIELDS if field in row}
+            database = {field: row.pop(field) for field in DATABASE_FIELDS if field in row}
             if tuple(row) != TABLE_FIELDS:
                 missing = sorted(set(TABLE_FIELDS) - set(row))
                 extra = sorted(set(row) - set(TABLE_FIELDS))
@@ -412,6 +495,10 @@ def build(
                     raise RuntimeError(f"{field} is not text at line {line_number}: {value!r}")
                 if value and value.strip():
                     optional_values[field][record_key] = value.strip()
+            if database:
+                summary = database_summary(database, database_unknown)
+                if summary is not None:
+                    database_values[record_key] = summary
             for field, source_field in DERIVED_FIELDS.items():
                 value, source_value = row[field], row[source_field]
                 if value != source_value or isinstance(value, bool) != isinstance(source_value, bool):
@@ -447,11 +534,14 @@ def build(
     papers_path, ids = paper_ids(source_path, record_keys, enriched_path)
     paper_fields = PAPER_FIELDS if papers_path else ()
     optional_fields = tuple(field for field in OPTIONAL_TEXT_FIELDS if optional_values[field])
+    if database_values:
+        optional_fields += (DATABASE_SUMMARY_FIELD,)
     dois = sorted({doi for _pmids, row_dois in ids.values() for doi in row_dois})
     doi_index = {doi: index for index, doi in enumerate(dois)}
     encoded_rows: list[bytes] = []
     for _order, values, record_key, position in rows:
-        values += [optional_values[field].get(record_key) for field in optional_fields]
+        values += [database_values.get(record_key) if field == DATABASE_SUMMARY_FIELD else optional_values[field].get(record_key)
+                   for field in optional_fields]
         if paper_fields:
             row_pmids, row_dois = ids[record_key]
             values += [_id_value(row_pmids), _id_value([doi_index[doi] for doi in row_dois])]
@@ -504,7 +594,11 @@ def build(
         "retained_fields": list(VIEWER_FIELDS),
         "omitted_fields": list(OMITTED_FIELDS),
         "optional_fields": list(optional_fields),
-        "rows_with_optional": {field: len(optional_values[field]) for field in optional_fields},
+        "rows_with_optional": {field: len(database_values if field == DATABASE_SUMMARY_FIELD else optional_values[field])
+                               for field in optional_fields},
+        "database_summary_bits": {str(bit): sum(1 for value in database_values.values() if value & bit)
+                                  for bit in (1, 2, 4, 8, 16, 32)} if database_values else {},
+        "database_statuses_unknown": dict(sorted(database_unknown.items())),
         "paper_id_fields": list(paper_fields),
         "paper_ids_source": papers_path.name if papers_path else None,
         "rows_with_pmid": sum(1 for row_pmids, _dois in ids.values() if row_pmids),

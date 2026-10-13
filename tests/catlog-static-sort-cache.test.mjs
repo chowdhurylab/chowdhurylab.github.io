@@ -369,6 +369,10 @@ const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
 const sourceInputs = ["brenda", "sabio_rk", "oed", "uniprot", "skid", "strenda", "earlier_paper", "unrecorded"].map((value) => ({
   value, type: "checkbox", name: "source", checked: false,
 }));
+// Against the databases (shown when the snapshot has the comparison).
+const databaseInputs = ["corrects", "differs", "same", "adds", "new", "earlier"].map((value) => ({
+  value, type: "checkbox", name: "database", checked: false,
+}));
 const detailBackgroundSelector = [
   ".app-header",
   "#catalogLoadProgress",
@@ -402,6 +406,8 @@ const document = {
     if (selector === 'input[name="sourceMode"]') return sourceModeInputs;
     if (selector === 'input[name="source"]:checked') return sourceInputs.filter((input) => input.checked);
     if (selector === 'input[name="source"]') return sourceInputs;
+    if (selector === 'input[name="database"]:checked') return databaseInputs.filter((input) => input.checked);
+    if (selector === 'input[name="database"]') return databaseInputs;
     if (selector === detailBackgroundSelector) return detailBackgroundElements;
     if (selector === filterBackgroundSelector) return [...detailBackgroundElements, element("detailPanel")];
     return [];
@@ -3668,6 +3674,54 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   counts = await countsFor("status=curation_pending");
   assert.equal(counts.checked, 1, "the human-checked record that Not confirmed alone leaves out");
   api.setHumanReviewMarks({});
+  await countsFor("");
+  // Against the databases: each record's comparison (the index's number, or the Table download's fields) matches the
+  // options it shows; a record that was not compared matches none.
+  const compared = (key, extra) => sourceRow(key, { source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name", ...extra });
+  const dbRows = [
+    compared("db-same", { database_summary: 1 }),
+    compared("db-fixed", { kcat_database_status: "corrected", km_database_status: "confirmed", kcat_over_km_database_status: "not_compared" }),
+    compared("db-open", { database_status: { kcat: { status: "differs" }, Km: "new" } }),
+    compared("db-new", { database_statuses: ["new", "new_paper_not_in_databases"] }),
+    compared("db-label", { database_summary: 16 }),
+    sourceRow("db-earlier", { source_db: "brenda", verification_status: "corrected", corrections: [{ field: "km" }] }),
+    sourceRow("db-plain", { source_db: "brenda" }),
+  ];
+  assert.deepEqual(dbRows.map((item) => api.rowDatabaseBits(item)), [4, 1, 2 | 8, 8 | 16, 0, 32, 0]);
+  assert.deepEqual(dbRows.map((item) => api.databaseSummaryBits(item)), [1, 3, 12, 8, 16, 32, 0]);
+  api.indexLoadedRecords(dbRows);
+  counts = await countsFor("db=corrected,new");
+  assert.equal(databaseInputs.filter((input) => input.checked).length, 0, "db= is read only when the index carries the comparison");
+  runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+  counts = await countsFor("db=corrected,new");
+  assert.deepEqual({ ...counts.database }, { corrects: 1, differs: 1, same: 1, adds: 2, new: 1, earlier: 1 });
+  assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects", "new"], "db= takes the aliases");
+  assert.equal(api.browseHash(), "#browse?db=corrects,new");
+  assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), ["db-fixed", "db-new"]);
+  assert.deepEqual(JSON.parse(JSON.stringify(api.activeFilterItems().map((item) => [item.key, item.label]))),
+    [["db:corrects", "Corrects a database value"], ["db:new", "In no database"]]);
+  // The index carries the number as an optional column; an index without it gives every row null (the group stays hidden).
+  {
+    const enumFields = ["enzyme_label_source", "source_db", "verification_status", "evidence_confidence_tier", "sequence_variant_status",
+      "kcat_over_km_origin", "public_trust_basis", "temperature_display", "condition_flags", "kcat_unit", "km_unit", "kcat_over_km_unit", "wild_type"];
+    const textFields = ["enzyme_display_name", "ec_number", "organism", "substrate_name", "mutation_signature", "primary_uniprot_id",
+      "kcat_display", "km_display", "kcat_over_km_display"];
+    const baseFields = ["record_key", "review_key", ...textFields, "protein_accession", "kcat", "km", "kcat_over_km", "ph_display",
+      "temperature_k", "source_record_count", ...enumFields];
+    const enums = Object.fromEntries(enumFields.map((field) => [field, [null]]));
+    const values = (key) => baseFields.map((field) => (field === "record_key" ? key : enumFields.includes(field) ? 0 : field === "review_key" ? true : null));
+    const Row = api.viewerRowConstructor(api.checkedViewerIndexHeader({ schema_version: 2, details_per_shard: 250, enums, texts: {},
+      fields: [...baseFields, "condition_note", "database_summary", "s"] }, 250), ["details-000.js"]);
+    const fixed = new Row([...values("x"), null, 3, 0]);
+    assert.equal(fixed.database_summary, 3);
+    assert.equal(api.rowDatabaseBits(fixed), 1);
+    assert.equal(new Row([...values("y"), null, null, 0]).database_summary, null);
+    const Plain = api.viewerRowConstructor(api.checkedViewerIndexHeader({ schema_version: 2, details_per_shard: 250, enums, texts: {},
+      fields: [...baseFields, "s"] }, 250), ["details-000.js"]);
+    assert.equal(api.rowDatabaseBits(new Plain([...values("z"), 0])), 0);
+  }
+  databaseInputs.forEach((input) => { input.checked = false; });
+  delete runtimeManifest.viewer_index.optional_fields;
   await countsFor("");
 }
 

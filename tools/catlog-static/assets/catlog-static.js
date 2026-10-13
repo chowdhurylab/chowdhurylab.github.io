@@ -170,6 +170,30 @@
     printed_unit_prefix_differs: 2,
   };
 
+  // Against the databases: how a record's values compare with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB
+  // list for the same paper. The record index carries it as one number per record (database_summary, written by
+  // scripts/build-catlog-viewer-index.py when the Table download has the comparison; DATABASE_SUMMARY_BITS); the group
+  // shows only then. Each option is a test of that number (a record matches any option ticked).
+  const DATABASE_SUMMARY_BITS = { same: 1, corrected: 2, differs: 4, new: 8, otherLabel: 16, earlier: 32 };
+  const DATABASE_STATUS_BITS = {
+    confirmed: 1, same: 1, same_number: 1, corrected: 2, differs: 4, different: 4, differs_not_resolved: 4, new: 8,
+    new_paper_not_in_databases: 8, paper_not_in_databases: 8, not_in_databases: 8, same_number_other_label: 16, other_label: 16,
+  };
+  const databaseFilters = [
+    { value: "corrects", label: "Corrects a database", chip: "Corrects a database value", bit: 1,
+      title: "A database lists another number for a value, and the paper shows CatLog's" },
+    { value: "differs", label: "Differs, unresolved", chip: "Differs from a database, not yet resolved", bit: 2,
+      title: "A database lists another number for a value; not yet resolved" },
+    { value: "same", label: "Same as a database", chip: "Same as a database", bit: 4,
+      title: "Every value is the number a database lists for it" },
+    { value: "adds", label: "Adds a value", chip: "Adds a value to the databases", bit: 8,
+      title: "At least one value no database lists for this paper" },
+    { value: "new", label: "Not in any database", chip: "In no database", bit: 16,
+      title: "No database lists any of the values" },
+    { value: "earlier", label: "Changed in earlier review", chip: "Changed in the earlier review", bit: 32, optional: true,
+      title: "A database record the earlier automated review corrected; the record lists what changed" },
+  ];
+
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
   // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
   // each database it names (Stats counts the same way), and the table's status cell names them (sourceTagText).
@@ -2429,6 +2453,7 @@
     const number = (field, v, display) => (v[at[field]] === true ? Number(display) : v[at[field]]);
     const [pmidsAt, doisAt] = VIEWER_INDEX_PAPER_FIELDS.map((field) => header.fields.indexOf(field));
     const [conditionNoteAt] = VIEWER_INDEX_OPTIONAL_TEXT_FIELDS.map((field) => header.fields.indexOf(field));
+    const databaseSummaryAt = header.fields.indexOf("database_summary");
     paperDois = Object.freeze(Array.isArray(header.dois) ? header.dois.map(String) : []);
     function ViewerRow(v) {
       this.record_key = v[at.record_key];
@@ -2463,6 +2488,7 @@
       this.kcat_over_km_unit = item("kcat_over_km_unit", v);
       this.wild_type = item("wild_type", v);
       this.condition_note = conditionNoteAt >= 0 && typeof v[conditionNoteAt] === "string" ? v[conditionNoteAt] : null;
+      this.database_summary = databaseSummaryAt >= 0 && Number.isInteger(v[databaseSummaryAt]) ? v[databaseSummaryAt] : null;
       this.detail_shard = detailShards[v[at.s]] || "";
       this.measurement_key = this.record_key;
       this.ph = this.ph_display;
@@ -2480,6 +2506,7 @@
       this._search = null;
       this._variantBits = null;
       this._cautionBits = null;
+      this._databaseBits = null;
       this._pmids = pmidsAt >= 0 ? v[pmidsAt] : null;
       this._dois = doisAt >= 0 ? v[doisAt] : null;
     }
@@ -2915,6 +2942,9 @@
       _search_text,
       _variantBits,
       _cautionBits,
+      _databaseBits,
+      // The index's compact comparison number (the record's own fields say it in words).
+      database_summary,
       _pmids,
       _dois,
       next_best_action,
@@ -4736,6 +4766,93 @@
     return row._cautionBits;
   }
 
+  // A record's comparison with the databases as DATABASE_SUMMARY_BITS: the index's number, or (an older index whose rows
+  // are the Table download's own objects) worked out from the fields the index builder reads.
+  function databaseSummaryBits(row) {
+    const summary = row.database_summary;
+    if (Number.isInteger(summary)) return summary & 63;
+    let bits = 0;
+    const add = (status) => {
+      if (status == null || status === "") return;
+      if (Array.isArray(status)) {
+        status.forEach(add);
+        return;
+      }
+      if (typeof status === "object") {
+        if ("status" in status || "database_status" in status) add(status.status ?? status.database_status);
+        else Object.values(status).forEach(add);
+        return;
+      }
+      String(status).split(/[;,|]\s*/).forEach((part) => {
+        bits |= DATABASE_STATUS_BITS[part.trim().toLowerCase().replace(/[\s-]+/g, "_")] || 0;
+      });
+    };
+    add(summary);
+    ["database_statuses", "database_status", "kcat_database_status", "km_database_status", "kcat_over_km_database_status"]
+      .forEach((field) => add(row[field]));
+    if ((Array.isArray(row.corrections) && row.corrections.length) || Number(row.corrections_count) > 0) bits |= DATABASE_SUMMARY_BITS.earlier;
+    return bits;
+  }
+
+  // The "Against the databases" options a record matches, as databaseFilters bits: a value corrected against a database,
+  // a different number not yet resolved, every compared value the same as a database, a value no database lists, none
+  // listed at all, and an earlier record the earlier review changed. 0 for a record that was not compared.
+  function rowDatabaseBits(row) {
+    if (row._databaseBits == null) {
+      const { same, corrected, differs, new: added, otherLabel, earlier } = DATABASE_SUMMARY_BITS;
+      const summary = databaseSummaryBits(row);
+      const compared = summary & (same | corrected | differs | added | otherLabel);
+      let bits = 0;
+      if (summary & corrected) bits |= 1;
+      if (summary & differs) bits |= 2;
+      if (compared && !(compared & ~same)) bits |= 4;
+      if (summary & added) bits |= 8;
+      if (compared && !(compared & ~added)) bits |= 16;
+      if (summary & earlier) bits |= 32;
+      row._databaseBits = bits;
+    }
+    return row._databaseBits;
+  }
+
+  // Whether this snapshot carries the comparison (the group is shown only then), and which options any record matches
+  // (an option no record of the snapshot can match, such as the earlier review's changes, is left out).
+  const databaseComparison = { generation: -1, bits: 0 };
+
+  function databaseOptionsSeen() {
+    if (!state.recordsReady) return 0;
+    if (databaseComparison.generation !== state.recordsGeneration) {
+      let bits = 0;
+      for (const row of state.records) bits |= rowDatabaseBits(row);
+      databaseComparison.generation = state.recordsGeneration;
+      databaseComparison.bits = bits;
+    }
+    return databaseComparison.bits;
+  }
+
+  // The snapshot's record index says it carries the comparison (an address's db= is read only then).
+  function databaseComparisonIndexed() {
+    return (manifest.viewer_index?.optional_fields || []).includes("database_summary");
+  }
+
+  function databaseComparisonShown() {
+    const indexed = databaseComparisonIndexed();
+    return state.recordsReady ? databaseOptionsSeen() !== 0 || indexed : indexed;
+  }
+
+  // Shows the group (and its options) when the snapshot has the comparison; a ticked option stays visible.
+  function syncDatabaseFilters() {
+    const section = $("databaseFilterSection");
+    if (!section) return;
+    const shown = databaseComparisonShown();
+    const seen = databaseOptionsSeen();
+    section.hidden = !shown;
+    databaseFilters.filter((item) => item.optional).forEach((item) => {
+      const input = section.querySelector?.(`input[name="database"][value="${item.value}"]`);
+      const row = input?.closest?.(".check-row");
+      if (row) row.hidden = !(seen & item.bit) && !input.checked;
+    });
+  }
+
   const sourceBitsByValue = new Map();
 
   // The databases a record comes from, as "By database" bits; 0 for a record read from the paper by CatLog. A source_db
@@ -4781,6 +4898,7 @@
       metric: Object.fromEntries(measurementFilters.map((item) => [item.value, 0])),
       variant: { wild: 0, variant: 0, none: 0 },
       caution: Object.fromEntries(cautionFilters.map((item) => [item.value, 0])),
+      database: Object.fromEntries(databaseFilters.map((item) => [item.value, 0])),
       source: Object.fromEntries([...sourceModes, ...sourceFilters].map((item) => [item.value, 0])),
     };
   }
@@ -4806,6 +4924,14 @@
       cautionFilters.forEach((item) => {
         if (caution & item.bit) counts.caution[item.value] += 1;
       });
+    }
+    if (every || group === "database") {
+      const database = rowDatabaseBits(row);
+      if (database) {
+        databaseFilters.forEach((item) => {
+          if (database & item.bit) counts.database[item.value] += 1;
+        });
+      }
     }
     if (every || group === "source") {
       counts.source.all += 1;
@@ -4929,6 +5055,19 @@
           name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
         })).join("") + `<p class="filter-note"><span data-count="variant:none">${EMPTY_VALUE}</span> records do not state wild type or variant.</p>`;
       }
+      if ($("databaseChecklist")) {
+        $("databaseChecklist").innerHTML = databaseFilters.map((item) => checkRowHtml({
+          name: "database", value: item.value, label: item.label, title: item.title, count: `database:${item.value}`,
+        })).join("");
+      }
+      if ($("aboutDatabases")) {
+        $("aboutDatabases").innerHTML = `
+          <p>CatLog compares each value it reads from a paper with the numbers BRENDA, SABIO-RK, the Open Enzyme Database,
+            SKiD and STRENDA DB list for the same paper (same substrate, variant and organism). A different number can be a
+            different measurement.</p>
+          ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.title)}.</p>`).join("")}
+          <p>The record says which database lists what, and why a value differs.</p>`;
+      }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
           name: "caution", value: item.value, label: item.label, labelHtml: item.labelHtml, title: item.title,
@@ -4958,6 +5097,7 @@
           <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
     }
+    syncDatabaseFilters();
     updateFilterCounts();
     if (searchWarmup.wanted && state.recordsReady) warmSearchText();
   }
@@ -5032,6 +5172,7 @@
       phmin: text("phMinInput"),
       phmax: text("phMaxInput"),
       cautions: selectedCheckboxes("caution"),
+      databases: selectedCheckboxes("database"),
       ...sourceControlState(),
       sort: $("sortSelect")?.value || "evidence",
     };
@@ -5105,13 +5246,14 @@
       temperature: numberRange(controls.tmin, controls.tmax),
       ph: numberRange(controls.phmin, controls.phmax),
       cautionBits: bitsFor(cautionFilters, controls.cautions),
+      databaseBits: bitsFor(databaseFilters, controls.databases || []),
       sourceBits: bitsFor(sourceFilters, controls.sources),
       sort: controls.sort,
     };
   }
 
   // Browse with filters has the address #browse?key=value&... (keys: q, status, checked, ec, enzyme, organism, substrate,
-  // metric, variant, tmin, tmax, phmin, phmax, caution, source, sort, rows, page, record; lists are comma separated;
+  // metric, variant, tmin, tmax, phmin, phmax, caution, db, source, sort, rows, page, record; lists are comma separated;
   // unknown keys are ignored). It is read when the page opens and on Back
   // and Forward, and rewritten in place (never added to history) whenever the filters, search, sort, page size or page
   // change, so a copied address opens the same records. Browse without filters has no hash. While a record is open the
@@ -5161,6 +5303,11 @@
     differ: "differs", kcat_over_km_quotient_mismatch: "differs", kcat_over_km_source_mismatch: "differs", unit: "units", magnitude: "units",
     unit_not_recorded: "unit_missing", no_unit: "unit_missing", temp: "temperature", no_caution: "none",
   };
+  const DATABASE_ALIASES = {
+    corrected: "corrects", correct: "corrects", corrections: "corrects", differ: "differs", different: "differs",
+    confirmed: "same", adds_a_value: "adds", added: "adds", has_new: "adds", not_in_databases: "new", none: "new",
+    earlier_review: "earlier", changed: "earlier",
+  };
   const SOURCE_ALIASES = {
     primary_paper_direct: "paper", primary_literature: "paper", v2: "paper", catlog: "paper", database: "databases",
     db: "databases", sabio: "sabio_rk", sabiork: "sabio_rk", open_enzyme_database: "oed", earlier: "earlier_paper",
@@ -5201,6 +5348,7 @@
     add("phmin", bound(controls.phmin));
     add("phmax", bound(controls.phmax));
     add("caution", controls.cautions.join(","));
+    add("db", (controls.databases || []).join(","));
     add("source", controls.sources.length ? controls.sources.join(",") : (controls.sourceMode === "all" ? "" : controls.sourceMode));
     if (controls.sort && controls.sort !== "evidence") add("sort", controls.sort);
     if (state.pageSize !== PAGE_SIZES[0]) add("rows", state.pageSize);
@@ -5275,6 +5423,8 @@
     setText("phMaxInput", params.get("phmax"));
     syncRangeValidity();
     setCheckboxes("caution", listParam(params.get("caution"), CAUTION_ALIASES));
+    setCheckboxes("database", databaseComparisonIndexed() ? listParam(params.get("db"), DATABASE_ALIASES) : []);
+    syncDatabaseFilters();
     // source=paper (or the older status=v2) is Read from the paper by CatLog; source=databases, or databases by name, the
     // enzyme databases.
     const sources = listParam(params.get("source"), SOURCE_ALIASES);
@@ -5408,6 +5558,9 @@
       const labelHtml = item.value === "none" ? "" : `Caution: ${item.labelHtml || escapeHtml(item.label)}`;
       add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
     });
+    databaseFilters.filter((item) => (controls.databases || []).includes(item.value)).forEach((item) => {
+      add(`db:${item.value}`, item.chip, () => uncheck("database", item.value));
+    });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);
       // "Source: BRENDA", "Source: earlier paper extractions", "Source: not recorded" (names keep their capitals).
@@ -5424,7 +5577,7 @@
     phMinInput: "ph", phMaxInput: "ph", humanCheckedFilter: "checked",
   };
   const FILTER_KEY_PREFIXES = {
-    recordState: "status", measurement: "metric", variant: "variant", caution: "caution", source: "source", sourceMode: "source",
+    recordState: "status", measurement: "metric", variant: "variant", caution: "caution", database: "db", source: "source", sourceMode: "source",
   };
 
   function filterKeyForControl(element) {
@@ -5591,6 +5744,7 @@
     ["temperature", (row, filters) => !filters.temperature || inRange(row._sortTemperature ?? temperatureValue(row), filters.temperature)],
     ["ph", (row, filters) => !filters.ph || inRange(row._sortPh ?? phValue(row), filters.ph)],
     ["caution", (row, filters) => !filters.cautionBits || Boolean(rowCautionBits(row) & filters.cautionBits)],
+    ["database", (row, filters) => !filters.databaseBits || Boolean(rowDatabaseBits(row) & filters.databaseBits)],
   ];
 
   // The groups a record fails (stopping at two: it then counts nowhere), or null when the search or a name field rules
@@ -6262,7 +6416,7 @@
   function controlsWithout(controls, key) {
     const next = { ...controls };
     const [group, value] = key.split(":");
-    const lists = { metric: "metrics", variant: "variants", caution: "cautions", source: "sources" };
+    const lists = { metric: "metrics", variant: "variants", caution: "cautions", db: "databases", source: "sources" };
     if (lists[group]) next[lists[group]] = controls[lists[group]].filter((item) => item !== value);
     if (group === "source" && !next.sources.length) next.sourceMode = "all";
     else if (group === "status") next.states = recordStates.map((item) => item.value);
@@ -9049,7 +9203,7 @@
     document.querySelectorAll('input[name="measurement"]').forEach((input) => {
       input.checked = false;
     });
-    ["variant", "caution"].forEach((name) => setCheckboxes(name, []));
+    ["variant", "caution", "database"].forEach((name) => setCheckboxes(name, []));
     clearInputs(...RANGE_INPUT_IDS);
     if ($("humanCheckedFilter")) $("humanCheckedFilter").checked = false;
     setSourceControls("all");
@@ -9326,7 +9480,7 @@
     $("measurementChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
     });
-    ["variantChecklist", "cautionChecklist"].forEach((id) => {
+    ["variantChecklist", "cautionChecklist", "databaseChecklist"].forEach((id) => {
       $(id)?.addEventListener("change", () => applyFiltersInBackground());
     });
     // A group's "?" shows or hides its explanations, under the group's title.
@@ -9540,6 +9694,8 @@
       applyPageSize,
       conditionFlags,
       rowCautionBits,
+      rowDatabaseBits,
+      databaseSummaryBits,
       valueFlagBadgeHtml,
       publicLoadMessage,
       enzymeFormLabel,

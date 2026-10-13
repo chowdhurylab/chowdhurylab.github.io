@@ -174,6 +174,39 @@ class ViewerManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "source schema changed"):
             self.build_rows([dict(plain, other_note="x")])
 
+    def test_database_summary_is_optional_and_compact(self):
+        # The CatLog side may add how each record compares with the enzyme databases to the Table rows (per value,
+        # per record, or the earlier review's corrections); the index keeps one number per record for the sidebar.
+        v2 = dict(verification_status="verified", source_db="primary_paper_direct", enzyme_label_source="explicit_enzyme_name")
+        rows = [
+            self.table_row("same", **v2, database_summary="confirmed"),
+            self.table_row("fixed", **v2, kcat_database_status="corrected", km_database_status="confirmed",
+                           kcat_over_km_database_status="not_compared", database_note=None),
+            self.table_row("open", **v2, database_status={"kcat": {"status": "differs"}, "Km": "new"}),
+            self.table_row("new", **v2, database_statuses=["new_paper_not_in_databases", "new"]),
+            self.table_row("label", **v2, database_summary=16),
+            self.table_row("earlier", verification_status="corrected", corrections=[{"field": "km", "kind": "magnitude"}]),
+            self.table_row("odd", **v2, database_status="weird; confirmed"),
+            self.table_row("calc", **v2, database_status="not_compared"),
+            self.table_row("plain"),
+        ]
+        metadata, header, encoded = self.build_rows(rows)
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", "s"])
+        decoded = {row[0]: dict(zip(header["fields"], row))["database_summary"] for row in encoded}
+        self.assertEqual(decoded, {"same": 1, "fixed": 3, "open": 12, "new": 8, "label": 16, "earlier": 32, "odd": 1,
+                                   "calc": None, "plain": None})
+        self.assertEqual(metadata["optional_fields"], ["database_summary"])
+        self.assertEqual(metadata["rows_with_optional"], {"database_summary": 7})
+        self.assertEqual(metadata["database_summary_bits"], {"1": 3, "2": 1, "4": 1, "8": 2, "16": 1, "32": 1})
+        self.assertEqual(metadata["database_statuses_unknown"], {"weird": 1})
+        metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
+        self.assertEqual(BUILD.viewer_descriptor(metadata)["optional_fields"], ["database_summary"])
+        # with a condition note too, the summary comes after it; without any comparison the index is as before
+        metadata, header, _encoded = self.build_rows([dict(rows[0], condition_note="+10 mM FBP"), rows[-1]])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "condition_note", "database_summary", "s"])
+        metadata, header, _encoded = self.build_rows([rows[-2], rows[-1], dict(rows[-1], record_key="x", measurement_key="x", review_key="x", database_note="All 20 ...")])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "s"])
+
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
