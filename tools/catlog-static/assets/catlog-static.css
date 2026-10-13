@@ -1479,7 +1479,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-18) }
-  .detail-title .detail-title-buttons { top:8px }
   /* The record's values: calc. and "!" go under the number, so As printed keeps its room and the table its width. */
   .values-table :is(th,td) { padding-right:6px; padding-left:6px }
   .values-table td.vt-value .vt-number { display:block }
@@ -1573,6 +1572,19 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody tr.skeleton-row td.num span { width:30%; margin-left:0 }
   #recordsBody :is(tr.empty-row,tr.loading-row) td { padding:24px 16px }
   .load-notice.empty-notice { position:static; max-width:none }
+}
+
+/* Phones and touch screens: the record's ‹, › and × are 44px targets with 8px more before ×, so a near miss on › never
+   closes the record; the name keeps their 148px clear (the buttons' 140px and 4px on each side) and its line their
+   height, so the line under a one-line name starts below them. */
+@media (max-width: 640px), (pointer: coarse) {
+  .detail-title .detail-title-buttons { top:4px; right:4px }
+  .detail-title-buttons .icon-button { width:44px; height:44px }
+  .detail-title-buttons .close-detail { margin-left:8px }
+  .detail-title { min-height:32px; padding-right:92px }
+}
+@media (max-width: 640px), (max-height: 900px) and (pointer: coarse) {
+  .detail-title { padding-right:148px }
 }
 
 /* Phones below 390px: kcat/Km (s⁻¹ mM⁻¹) does not fit its card's third, so every value label puts its unit on a second

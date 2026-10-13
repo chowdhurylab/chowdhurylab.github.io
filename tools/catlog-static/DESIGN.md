@@ -514,7 +514,8 @@ found at once: A, B, G, C, D, E, F, H.
   across its pages, the table turning to the page that shows it and, beside the record from 1024px, scrolling its row
   into view; disabled at either end, while a sort waits for the records and when the results do not hold the record;
   the button pressed keeps the focus, the other one takes it at an end) and × close, the name's line keeping their
-  88px clear so a long name wraps before them; "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
+  88px clear so a long name wraps before them (on phones and touch screens all three are 44px targets with 8px more
+  before ×, so a near miss on › never closes the record, and the name keeps 148px clear); "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
   `N145A`" (the binomial in italics, a strain or "sp." roman; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
   paper does not print reads "EC 2.3.1.183 (from enzyme databases; not printed

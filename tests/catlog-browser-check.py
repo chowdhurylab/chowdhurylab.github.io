@@ -3123,9 +3123,13 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         const heading = document.getElementById('detailHeading').getBoundingClientRect();
         const buttons = [...document.querySelectorAll('#detailContent .detail-title-buttons button')].map(b => b.getBoundingClientRect());
         return {apart: buttons.every(b => b.left >= heading.right - 1), inside: buttons.every(b => b.right <= innerWidth && b.top >= title.top - 1),
-                sideways: document.getElementById('detailPanel').scrollWidth - document.getElementById('detailPanel').clientWidth};
+                sideways: document.getElementById('detailPanel').scrollWidth - document.getElementById('detailPanel').clientWidth,
+                targets: buttons.map(b => [Math.round(b.width), Math.round(b.height)]), closeGap: Math.round(buttons[2].left - buttons[1].right)};
     """)
     assert header["apart"] and header["inside"] and header["sideways"] <= 1, f"The record's ‹ › × overlap its name: {header}"
+    # On a phone ‹ › × are 44px targets and × stands 8px from ›, so a near miss on › never closes the record.
+    assert all(min(target) >= 44 for target in header["targets"]) and header["closeGap"] >= 8, (
+        f"The record's ‹ › × are 44px targets with 8px before × on a phone: {header}")
     driver.find_element(By.ID, "nextRecordButton").click()
     wait.until(lambda d: d.execute_script(loaded, page_one[1]))
     assert driver.execute_script("return document.body.classList.contains('detail-open')")
