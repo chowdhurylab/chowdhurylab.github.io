@@ -502,10 +502,11 @@ def check_browse(driver, browser, url, route_label):
             }
         """)
     try:
-        # The counts band: Read from the paper N opens those records (source=paper), N being their number; the snapshot
-        # date's title is the Data ID.
+        # The counts band: CatLog v2 N (the name Stats and the Source filter give that count) opens those records
+        # (source=paper), N being their number; the snapshot date's title is the Data ID.
         set_browse_viewport(driver, browser, 1440, 1000)
         paper_link = driver.find_element(By.ID, "fromPaperLink")
+        assert driver.execute_script("return arguments[0].querySelector('span').innerText.trim()", paper_link) == "CatLog v2"
         overview = stats_overview(manifest)
         if overview:
             assert paper_link.is_displayed() and driver.find_element(By.ID, "fromPaperCount").text == f"{overview['from_paper']['records']:,}"

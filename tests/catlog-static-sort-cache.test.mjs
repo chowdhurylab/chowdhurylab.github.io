@@ -1378,6 +1378,8 @@ assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full 
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
 assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says CatLog v1 entries, never older records");
 assert.match(guideHtml, /<summary>Evidence labels on CatLog v1 entries<\/summary>/);
+// The counts band names the records read from the paper by CatLog as Stats and the Source filter do: CatLog v2.
+assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the CatLog v2 entries, read from the paper by CatLog"[^>]*><span>CatLog v2<\/span><strong id="fromPaperCount">/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];

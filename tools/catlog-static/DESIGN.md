@@ -78,7 +78,7 @@ apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
 so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
-Keep Records, Accepted, Read from the paper, Human-checked and the three "With
+Keep Records, Accepted, CatLog v2, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
 --muted, on one baseline (Records, Accepted and Read from the paper in accent ink with the soft glow,
 Human-checked in its green; a linked count tints around itself on hover without moving the line), the snapshot date (12px) at its end (its title is the
@@ -86,12 +86,13 @@ Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
 From 1181 to 1439px "With" is read out but not shown; a window still too narrow
 (or "Matching records") moves the date under the counts, inside the same 64px.
 From 641 to 1180px, too narrow for the counts on one line, the band always takes
-the same two lines (Records, Accepted, Read from the paper, Human-checked; then the With
+the same two lines (Records, Accepted, CatLog v2, Human-checked; then the With
 counts and the date, with no divider at the start of a line); below about 740px
 Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px;
 a filtered "Matching records" count too wide for one line puts Accepted under it),
 Human-checked takes the next line with the More button, and More shows the rest
-(Read from the paper first). Read from the paper N links to those records (#browse?source=paper plus
+(CatLog v2 first). CatLog v2 N (the name Stats and the Source filter give that count; its title says "read
+from the paper by CatLog") links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's
 summary.overview.from_paper.records on an unfiltered view until the records
 load, then the count among the current results; 0 is plain text. Human-checked N is a link to those records
@@ -206,7 +207,7 @@ when one of its options is set. Every option shows how many of the current
 results it covers, counted with its own group set aside (so ticking it shows, or
 adds, that many); an option at 0 is grey and stays clickable. Before the record
 index arrives, Review result, Measurement type and the three Source choices show
-the snapshot's own counts (Read from the paper is the counts band's figure,
+the snapshot's own counts (CatLog v2 is the counts band's figure,
 Enzyme databases the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy

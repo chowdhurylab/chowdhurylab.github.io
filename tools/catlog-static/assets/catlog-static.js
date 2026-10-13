@@ -3463,8 +3463,8 @@
     $("snapshotDate").title = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
   }
 
-  // "Read from the paper N" in the counts band: the records read from the paper by CatLog among the current results, a
-  // link to them (the filters set now, Source: Read from the paper by CatLog). Before the records load, N is the
+  // "CatLog v2 N" in the counts band (the name Stats and the Source filter give that count): the records read from the
+  // paper by CatLog among the current results, a link to them (the filters set now, Source: CatLog v2). Before the records load, N is the
   // snapshot's own count (summary.overview.from_paper, bound to this snapshot) on an unfiltered view; a count of 0 (or
   // none yet) is plain text.
   function fromPaperHref() {
@@ -5867,7 +5867,7 @@
   }
 
   // A count's text: from the snapshot's counts before the records load (review results, measurement types, the three
-  // Source choices: Read from the paper is the counts band's figure of this same snapshot, the databases the rest), then
+  // Source choices: CatLog v2 is the counts band's figure of this same snapshot, the databases the rest), then
   // from the counts of the current results; Only human-checked waits for the review marks.
   function filterCountValue(key, counts) {
     const coverage = (manifest.summary || {}).coverage || {};
@@ -10655,7 +10655,7 @@
       event.currentTarget.setAttribute("aria-expanded", String(expanded));
       event.currentTarget.firstChild.textContent = expanded ? "Less " : "More ";
     });
-    // The Human-checked and Read from the paper counts keep the current filters in their links (read again when used:
+    // The Human-checked and CatLog v2 counts keep the current filters in their links (read again when used:
     // rows per page can change without a new count).
     for (const [link, href] of [[$("humanCheckedLink"), humanCheckedHref], [$("fromPaperLink"), fromPaperHref]]) {
       for (const type of ["pointerenter", "focus", "click"]) {
