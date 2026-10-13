@@ -834,7 +834,8 @@ def check_team(driver, browser, url):
     else:
         driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerover', {bubbles: true}))", chip)
     wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
-    caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption").text
+    # the visible text only (Safari's driver also returns the hidden phone sentence)
+    caption = driver.execute_script("return arguments[0].innerText", driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption"))
     assert "Point at or tab to a person" in caption and "The list of" not in caption, caption
     assert_document_stays(driver, "Team")
     driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
@@ -863,8 +864,8 @@ def check_team(driver, browser, url):
             assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels read at phone width: {driver.execute_script(labels_px)}px"
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
             # The upright loop draws no people or agents, so its caption points to the list instead.
-            caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption")
-            assert "The list of people and AI agents" in caption.text and "Point at" not in caption.text, caption.text
+            caption = driver.execute_script("return arguments[0].innerText", driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption"))
+            assert "The list of people and AI agents" in caption and "Point at" not in caption, caption
             # The phone header as on Stats: the links out beside Download, the four tabs on their own line under it.
             assert driver.execute_script("""
                 const top = (s) => document.querySelector(s).getBoundingClientRect();

@@ -570,9 +570,17 @@ body.detail-open .detail-panel { display:block }
 .values-table .vt-where.vt-short { white-space:nowrap }
 /* the narrowest phones (fonts differ by system): units may wrap, cells come closer, As printed breaks anywhere */
 @media (max-width: 360px) {
+  /* fixed columns: the table can never be wider than its section, whatever the system font */
+  .values-table { table-layout:fixed }
+  .values-table :is(thead th:first-child, tbody th) { width:24% }
+  .values-table :is(thead th:nth-child(2), .vt-value) { width:31% }
+  .values-table :is(thead th:nth-child(3), .vt-unit) { width:17% }
+  .values-table :is(th,td) { overflow-wrap:anywhere }
+  .values-table tbody th { white-space:normal }
   .values-table :is(th,td) { padding-left:4px; padding-right:4px }
   .values-table .vt-value { white-space:normal }
-  .values-table .vt-value .vt-number { white-space:nowrap }
+  .values-table .vt-value .vt-number { white-space:normal }
+  .values-table thead th { overflow-wrap:normal; hyphens:auto }
   .values-table td.vt-value :is(.metric-origin, .value-flag) { display:block; margin-left:0 }
   .values-table .vt-unit { white-space:normal }
   .values-table td:last-child { overflow-wrap:anywhere }
