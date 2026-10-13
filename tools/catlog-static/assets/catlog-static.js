@@ -5211,8 +5211,9 @@
     if (searchWarmup.wanted && state.recordsReady) warmSearchText();
   }
 
-  // A count's text: from the snapshot's counts before the records load (review results, measurement types), then from the
-  // counts of the current results; Only human-checked waits for the review marks.
+  // A count's text: from the snapshot's counts before the records load (review results, measurement types, the three
+  // Source choices: Read from the paper is the counts band's figure of this same snapshot, the databases the rest), then
+  // from the counts of the current results; Only human-checked waits for the review marks.
   function filterCountValue(key, counts) {
     const coverage = (manifest.summary || {}).coverage || {};
     const [group, value] = String(key).split(":");
@@ -5220,6 +5221,12 @@
       if (group === "metric") return { kcat: coverage.with_kcat, km: coverage.with_km, kcat_over_km: coverage.with_kcat_over_km }[value] ?? null;
       if (group === "state") return recordStateCounts([])[value] ?? null;
       if (group === "source" && value === "all") return Number(manifest.total_rows || 0) || null;
+      if (group === "source" && (value === "paper" || value === "databases")) {
+        const total = Number(manifest.total_rows || 0);
+        const paper = statsCount(statsOverview(total)?.from_paper?.records, total);
+        if (!total || paper === null) return null;
+        return value === "paper" ? paper : total - paper;
+      }
       return null;
     }
     if (!counts || (group === "checked" && !state.humanMarksLoaded)) return null;
@@ -9964,6 +9971,7 @@
       DETAIL_REQUEST_TIMEOUT_MS,
       state,
       init,
+      filterCountValue,
       loadScript,
       loadDetailShard,
       parseCompressedDetailShard,

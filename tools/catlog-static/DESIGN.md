@@ -186,7 +186,10 @@ and to, either may be empty; a bound that is not a number is outlined and
 ignored), then Cautions (grouped as the "!" notes), which starts closed and opens
 when one of its options is set. Every option shows how many of the current
 results it covers, counted with its own group set aside (so ticking it shows, or
-adds, that many); an option at 0 is grey and stays clickable. The counts are
+adds, that many); an option at 0 is grey and stays clickable. Before the record
+index arrives, Review result, Measurement type and the three Source choices show
+the snapshot's own counts (Read from the paper is the counts band's figure,
+Enzyme databases the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip

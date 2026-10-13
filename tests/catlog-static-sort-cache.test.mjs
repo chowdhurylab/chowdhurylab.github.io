@@ -4692,6 +4692,15 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
     ["Earlier paper extractions", 6, "License: as published (see paper)"],
     ["BRENDA", 20, "CC BY 4.0"],
   ]);
+  // Before the records load, the Source choices count from the same snapshot figure as the counts band (the databases
+  // the rest), so the group is complete at first paint; once loaded they count the records.
+  const ready = api.state.recordsReady;
+  api.state.recordsReady = false;
+  assert.deepEqual(["source:all", "source:paper", "source:databases", "source:brenda"].map((key) => api.filterCountValue(key, null)), [100, 74, 26, null]);
+  runtimeManifest.summary.overview = { ...runtimeManifest.summary.overview, records: 99 };
+  assert.deepEqual(["source:paper", "source:databases"].map((key) => api.filterCountValue(key, null)), [null, null],
+    "an overview counted from other records is not used");
+  api.state.recordsReady = ready;
   runtimeManifest.summary = {};
   assert.deepEqual(api.sourceAttributionRows([paperSource]).map((item) => item.name), ["Read from the paper (by CatLog, or earlier extractions)"],
     "without the snapshot's count, one row names both groups");
