@@ -806,7 +806,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-charts { display:block }
 .stats-part + .stats-part, .stats-part + .stats-method { margin-top:var(--sp-7) }
 .stats-part-title { display:flex; align-items:center; gap:var(--sp-3); margin:0 0 var(--sp-5); border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
-.stats-part-number { display:inline-grid; flex:0 0 26px; width:26px; height:26px; place-items:center; border-radius:50%; background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent-line), 0 0 12px var(--accent-glow); color:var(--accent); font-size:var(--fs-13); font-weight:600; line-height:1 }
+.stats-part-number { display:inline-grid; flex:0 0 26px; width:26px; height:26px; place-items:center; border-radius:50%; background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent-line); color:var(--accent); font-size:var(--fs-13); font-weight:600; line-height:1 }
 .stats-part-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:48px 32px; align-items:start }
 .stats-part-grid > * { grid-column:span 6; min-width:0 }
 .stats-part-grid > .stats-wide { grid-column:1 / -1 }
@@ -849,11 +849,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
-.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted); box-shadow:0 0 6px color-mix(in srgb, var(--st-accepted) 45%, transparent) }
+.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted) }
 .stats-legend .stats-swatch.stats-part-catlog-mark { height:4px; margin-top:6px; background:var(--st-accepted) }
 .stats-v2-count { color:var(--st-accepted); font-weight:600 }
-/* Pointing at a mark (or focusing the link in its row) lights it with a soft glow in its own colour and dims the rest of
-   its figure (data-hl); its exact count shows in the tooltip line. */
+/* Glow is for the key numbers (the headline band, the lead of Quality) and for the mark under the pointer only: at rest
+   the marks of a figure have plain outlines. Pointing at a mark (or focusing the link in its row) lights it with a soft
+   glow in its own colour and dims the rest of its figure (data-hl); its exact count shows in the tooltip line. */
 .stats-fig.has-active [data-hl]:not(.is-active) { opacity:0.42 }
 .stats-chart-row.is-active .stats-seg:not(.stats-part-records), .stats-seg[data-tip]:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
 .stats-status-table tr.is-active > * { background:var(--surface-2) }
@@ -882,7 +883,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-switch { display:inline-flex; flex:0 0 auto; gap:2px; border:1px solid var(--line); border-radius:6px; background:var(--surface-2); padding:2px }
 .stats-switch-button { min-height:28px; border:0; border-radius:4px; background:transparent; color:var(--text-2); cursor:pointer; padding:0 10px; font-size:var(--fs-12); font-weight:500; line-height:var(--lh-12) }
 .stats-switch-button:hover { color:var(--text) }
-.stats-switch-button[aria-pressed="true"] { background:var(--bg); box-shadow:0 0 0 1px var(--accent-line), 0 0 8px var(--accent-glow); color:var(--accent) }
+.stats-switch-button[aria-pressed="true"] { background:var(--bg); box-shadow:0 0 0 1px var(--accent-line); color:var(--accent) }
 .stats-fig:not([data-mode="share"]) .stats-ref-share, .stats-fig[data-mode="share"] .stats-ref-records { display:none }
 
 /* Bar charts: label, a 16px bar (rows 8px apart), value label; an axis under the bars. */
@@ -968,7 +969,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-check-number .stats-link { text-decoration-thickness:1px }
 .stats-check-unit { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-meter { display:block; height:4px; margin:8px 0 6px; border-radius:2px; background:var(--line-soft) }
-.stats-meter > span { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg, var(--accent-line), var(--accent)); box-shadow:0 0 6px var(--accent-glow) }
+.stats-meter > span { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg, var(--accent-line), var(--accent)) }
 /* A check that covers every value has no share to show (no completion bar); its place is kept, so the cards align. */
 .stats-meter.is-blank { visibility:hidden }
 .stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
@@ -1011,14 +1012,14 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-histogram-bars > span.has-values { min-height:1px }
 .stats-histogram-range { position:relative; height:12px }
 .stats-histogram-range > span { position:absolute; top:5px; height:2px; border-radius:1px; background:color-mix(in srgb, var(--part) 60%, var(--text)) }
-.stats-histogram-range > i { position:absolute; top:1px; width:10px; height:10px; margin-left:-5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2.5px color-mix(in srgb, var(--part) 60%, var(--text)), 0 0 8px color-mix(in srgb, var(--part) 70%, transparent) }
+.stats-histogram-range > i { position:absolute; top:1px; width:10px; height:10px; margin-left:-5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2.5px color-mix(in srgb, var(--part) 60%, var(--text)) }
 .stats-histogram-axis { position:absolute; left:0; right:0; bottom:0; height:22px; font-size:var(--fs-12); color:var(--muted) }
 .stats-histogram-axis > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap; line-height:1.2 }
 .stats-histogram-axis > span::before { content:""; position:absolute; left:50%; top:-16px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-histogram-axis sup { font-size:var(--fs-12) }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
-/* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above, with a soft glow in
-   the parameter's colour; the 10-90% line and the median dot sit on its baseline. Three panels side by side from
+/* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
+   pointer glows softly in the parameter's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
 .stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
 .stats-ridges { --ridge-label:44px; min-width:0 }
@@ -1033,15 +1034,16 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ridge-name { display:none; color:var(--text-2) }
 .stats-ridge-plot { position:relative; align-self:stretch }
 .stats-ridge-plot::after { content:""; position:absolute; left:0; right:0; bottom:0; border-bottom:1px solid var(--line) }
-.stats-ridge-svg { position:absolute; left:0; bottom:0; display:block; width:100%; height:40px; overflow:visible; filter:drop-shadow(0 0 3px color-mix(in srgb, var(--part) 40%, transparent)) }
+.stats-ridge-svg { position:absolute; left:0; bottom:0; display:block; width:100%; height:40px; overflow:visible }
 .stats-ridge-area { stroke:none }
 .stats-ridge-stop-top { stop-color:var(--part); stop-opacity:0.62 }
 .stats-ridge-stop-bottom { stop-color:var(--part); stop-opacity:0.1 }
 .stats-ridge-line { fill:none; stroke:var(--part); stroke-width:1.5; vector-effect:non-scaling-stroke; stroke-linejoin:round }
 .stats-ridge-range { position:absolute; bottom:-1px; z-index:1; height:3px; border-radius:2px; background:color-mix(in srgb, var(--part) 55%, var(--text)) }
-.stats-ridge-median { position:absolute; bottom:-4px; z-index:2; width:9px; height:9px; margin-left:-4.5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)), 0 0 6px color-mix(in srgb, var(--part) 70%, transparent) }
+.stats-ridge-median { position:absolute; bottom:-4px; z-index:2; width:9px; height:9px; margin-left:-4.5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-ridge-value { padding-bottom:2px; color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
 .stats-ridge-row.is-active .stats-ridge-svg { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 70%, transparent)) }
+.stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)), 0 0 6px color-mix(in srgb, var(--part) 70%, transparent) }
 .stats-ridge-row.is-active .stats-ridge-label { font-weight:600 }
 .stats-ridge-axis { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-ridge-ticks { position:relative; height:16px; container:ridge-axis / inline-size }
@@ -1199,8 +1201,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
   /* Paper: no glow, no wash, no tooltip or switch. */
   .stats-view *, .snapshot-band * { text-shadow:none !important; filter:none !important }
-  .stats-part-number { box-shadow:inset 0 0 0 1px var(--accent-line) }
-  .stats-meter > span, .stats-track .stats-seg.stats-part-catlog-mark { box-shadow:none }
+  .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
   .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
   .stats-tip, .stats-switch { display:none !important }
   .stats-part-title { break-after:avoid }

@@ -159,8 +159,10 @@ right-aligned under their headings. Colours are tokens: review results
 change in figure 4 (--chg-precision mint, --chg-magnitude red), --bar-neutral for
 single-series bars and table bars (Table 1 included) and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
-donut is the only ring; the glow stays soft (never neon) and only marks focus: the headline numbers, the part
-numbers, the active mark. Markup (a deliberate change from the design spec's
+donut is the only ring; the glow stays soft (never neon) and only marks focus: at rest only the headline band's key
+numbers and the lead figure of Quality glow; a mark (bar, slice, ridge, median dot) glows only while pointed at or
+focused, so the part numbers, meters, the CatLog v2 stripe, the median dots, the ridges and the pressed switch button
+have plain 1px outlines at rest. Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
 (role="img", its summary in aria-label, a title per part), each value-range
 histogram and each class ridge an image with its summary in aria-label; bar charts and table bars
