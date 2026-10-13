@@ -126,8 +126,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them; values without a recorded
-  unit or in another unit are left out; the 10–90% bounds have two significant
-  figures. The value figures (these and the next) are single-series and use --bar-neutral: every Nature BPG hue
+  unit or in another unit are left out; the median (here, in Values by enzyme class, in every tooltip line and in
+  the figures' accessible text) and the 10–90% bounds have two significant figures. The value figures (these and the next) are single-series and use --bar-neutral: every Nature BPG hue
   already means a review result, a database comparison or a kind of change on this page (green would read as "same
   number as a database" in Part 7), so the panels' own headings name the parameter. The light fills carry nothing on
   their own: the bars' 1px outline and the ridge lines, which give the shapes, are drawn darker than the colour (75% of

@@ -3852,7 +3852,8 @@
   }
 
   // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
-  // the 10–90% range beneath. Returns "" for a summary that does not hold together.
+  // the 10–90% range beneath. The median reads to two significant figures, as in Values by enzyme class (4.4, 0.13, 17).
+  // Returns "" for a summary that does not hold together.
   function statsValueRange(metric, summary) {
     const counts = summary?.counts;
     const n = statsCount(summary?.n);
@@ -3871,12 +3872,12 @@
     const low = position(summary.p10);
     const high = position(summary.p90);
     const unit = escapeHtml(metric.unit);
-    const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${statsRangeNumber(summary.median)} ${metric.unit}; `
+    const label = `${metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat"}: median ${statsRangeNumber(summary.median, { figures: 2 })} ${metric.unit}; `
       + `10% of values are below ${statsRangeNumber(summary.p10)} and 10% above ${statsRangeNumber(summary.p90)}; ${formatInteger(n)} values.`;
     return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}">
       <figcaption>${metric.html} <span class="stats-range-unit">(${unit})</span></figcaption>
       <dl class="stats-range-numbers">
-        <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true })}</dd></div>
+        <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true, figures: 2 })}</dd></div>
         <div><dt>10–90%</dt><dd>${statsRangeNumber(summary.p10, { html: true })} – ${statsRangeNumber(summary.p90, { html: true })}</dd></div>
       </dl>
       <div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
@@ -3984,7 +3985,7 @@
       const low = position(item.p10);
       const high = position(item.p90);
       const beyond = [below ? `${formatInteger(below)} below ${edgeText(1)} ${unit}` : "", above ? `${formatInteger(above)} at ${edgeText(grid.bins - 1)} ${unit} and above` : ""].filter(Boolean);
-      const text = `${name}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median)} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}${beyond.length ? `; in the end bins, not in the curve: ${beyond.join(", ")}` : ""}.`;
+      const text = `${name}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median, { figures: 2 })} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}${beyond.length ? `; in the end bins, not in the curve: ${beyond.join(", ")}` : ""}.`;
       const stub = (count, index, where) => (count ? `<i class="stats-ridge-end" style="left:${x(index)}%;width:${x(1)}%" data-tip="${escapeHtml(`${name}, ${metric.label} ${where}: ${formatInteger(count)} values (end bin, not in the curve)`)}"></i>` : "");
       const stubs = ends ? stub(below, 0, `below ${edgeText(1)} ${unit}`) + stub(above, grid.bins - 1, `${edgeText(grid.bins - 1)} ${unit} and above`) : "";
       // The class's link opens Browse on its records with this parameter, which also lists values in another unit or
@@ -5029,7 +5030,7 @@
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
         body: `<div class="stats-ranges">${ranges.join("")}</div>`,
         caption: "Values in catalog units on a log scale, one bar per power of ten (the end bars include all values beyond them), with the median as a dot and the middle 80% of values as a line.",
-        data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out."),
+        data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures."),
       });
     }
     const ridges = statsRidgeFigure(overview);

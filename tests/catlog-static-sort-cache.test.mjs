@@ -2061,7 +2061,7 @@ function row(overrides = {}) {
     assert.match(more, /<h3 id="statsClassValuesTitle" class="stats-fig-title">Values by enzyme class<\/h3>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
     // A class with fewer than 300 values is drawn lighter and dashed (is-few), and the data line says so.
-    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
+    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
     assert.match(more, /A record in several classes counts in each; a lighter, dashed curve has fewer than 300 values;/);
     // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
     assert.match(more, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span><\/p>/);
@@ -2075,8 +2075,9 @@ function row(overrides = {}) {
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));
     // The class's link opens its records with the panel's parameter (in any unit, so Browse can count more than n).
     assert.match(more, /#browse\?ec=1\.&amp;metric=kcat">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
-    // The median column reads evenly: two significant figures (the tooltip line keeps the stored median).
+    // The median column reads evenly: two significant figures, the same in the tooltip line and the accessible text.
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-value">([^<]+)<\/span>/g)].map((match) => match[1]), ["2.0", "4.5"]);
+    assert.match(more, /aria-label="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹;/);
     // The end bins hold every value beyond the grid: the curve covers the inner bins only (here bins 1-12 of 14, from
     // 7.143% to 92.857%), a class with values in an end bin gets a hatched stub there with the count in its tooltip line,
     // and its summary says so; class 1 has none in its end bins, so no stub and its curve falls to the baseline.
@@ -2162,8 +2163,12 @@ function row(overrides = {}) {
   const wide = api.statsValueRange({ key: "kcat_over_km", html: "kcat/Km", unit: "s⁻¹ mM⁻¹" }, { n: 3, median: 17, p10: 0.067, p90: 2300, log10_start: -2, counts: [1, 1, 0, 0, 0, 1] });
   assert.match(wide, /<dt>10–90%<\/dt><dd>0\.067 – 2,300<\/dd>/);
   assert.match(wide, /10% above 2,300; 3 values\./);
-  assert.match(api.statsValueRange({ key: "kcat", html: "kcat", unit: "s⁻¹" }, { n: 2, median: 1250.5, p10: 2, p90: 250000, log10_start: 0, counts: [1, 0, 0, 0, 0, 1] }),
-    /<dd>1,250\.5<\/dd>[\s\S]*<dd>2 – <span class="scientific-number"[^>]*><span aria-hidden="true">2\.5 &times;&nbsp;10<sup>5<\/sup>/);
+  // The median reads to two significant figures, as in Values by enzyme class (also in its accessible text).
+  const thousands = api.statsValueRange({ key: "kcat", html: "kcat", unit: "s⁻¹" }, { n: 2, median: 1250.5, p10: 2, p90: 250000, log10_start: 0, counts: [1, 0, 0, 0, 0, 1] });
+  assert.match(thousands, /<dd>1,300<\/dd>[\s\S]*<dd>2 – <span class="scientific-number"[^>]*><span aria-hidden="true">2\.5 &times;&nbsp;10<sup>5<\/sup>/);
+  assert.match(thousands, /aria-label="kcat: median 1,300 s⁻¹;/);
+  assert.match(api.statsValueRange({ key: "km", html: "Km", unit: "mM" }, { n: 2, median: 0.131, p10: 0.0028, p90: 7.3, log10_start: -3, counts: [1, 0, 0, 1] }),
+    /<dt>Median<\/dt><dd>0\.13<\/dd>[\s\S]*aria-label="Km: median 0\.13 mM;/);
 
   // An overview from another download, or with another record count, is not used.
   runtimeManifest.summary.overview = { ...overview, download_sha256: "other-download" };
