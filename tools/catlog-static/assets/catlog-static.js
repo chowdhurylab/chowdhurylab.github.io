@@ -4436,7 +4436,8 @@
     },
   };
 
-  // Live numbers at the stations, from this snapshot's manifest; a number the snapshot does not have is left out.
+  // Live numbers at the stations, from this snapshot's manifest; a number the snapshot does not have is left out. One
+  // entry per fact; a "\n" wraps a fact onto a second drawn line, and the station's label reads it as one phrase.
   function teamNumbers() {
     const total = Number(manifest.total_rows || 0);
     const overview = statsOverview(total);
@@ -4445,7 +4446,7 @@
     const records = statsCount(overview?.from_paper?.records, total);
     numbers.reading = [papers !== null ? `${formatInteger(papers)} papers read` : "", records !== null ? `${formatInteger(records)} records` : ""].filter(Boolean);
     const audit = auditFacts(overview);
-    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked`, "by AI audits"] : [];
+    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked\nby AI audits`] : [];
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     const headline = agreementHeadline(overview?.quality?.agreement);
@@ -4463,12 +4464,13 @@
       .map(([, station]) => `<line class="team-branch" x1="${layout.stations.catlog.x}" y1="${layout.stations.catlog.y}" x2="${station.x}" y2="${station.y}"/>`).join("");
     const arrows = layout.arrows.map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
     const stations = Object.entries(layout.stations).map(([key, station]) => {
-      const lines = numbers[key] || [];
+      const facts = numbers[key] || [];
+      const lines = facts.flatMap((fact) => fact.split("\n"));
       const [lx, at, anchor] = station.label;
       const ly = station.above ? station.y - 22 - lines.length * 18 : at;
       const name = escapeHtml(TEAM_STATIONS[key]);
       const text = `<text class="team-station-name" x="${lx}" y="${ly}" text-anchor="${anchor}">${name}</text>${lines.map((line, index) => `<text class="team-station-number" x="${lx}" y="${ly + (index + 1) * (layoutKey === "wide" ? 18 : 16)}" text-anchor="${anchor}">${escapeHtml(line)}</text>`).join("")}`;
-      return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${lines.length ? `: ${lines.join(", ")}` : ""}`)}">
+      return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${facts.length ? `: ${facts.map((fact) => fact.replace(/\n/g, " ")).join(", ")}` : ""}`)}">
         <circle class="team-station-dot" cx="${station.x}" cy="${station.y}" r="${station.branch ? 6 : 8}"/>${text}</g>`;
     }).join("");
     const actors = layout.actors ? TEAM_ACTORS.map((actor) => {
@@ -4490,8 +4492,8 @@
     }).join("") : "";
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-labelledby="teamFigureTitle-${layoutKey}">
-      <title id="teamFigureTitle-${layoutKey}">CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated, and back to papers; CatLog also feeds the website and the paper.</title>
+    // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated, and back to papers; CatLog also feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${dots}${stations}${actors}
     </svg>`;
@@ -4499,8 +4501,10 @@
 
   function renderTeam() {
     const numbers = teamNumbers();
-    const legendItem = (item) => `<li class="team-legend-item team-legend-${TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind}" tabindex="0" data-actor="${item.actors.join(" ")}" data-stations="${[...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].join(" ")}">
-      <i class="team-legend-mark" aria-hidden="true"></i><span>${item.text}<small>At ${escapeHtml(teamStationsText(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations)))}</small></span></li>`;
+    // Each legend line is a toggle button: pressing it (a click, a tap, Enter or Space) keeps its stations lit until it
+    // is pressed again or another line is; pointing at it lights them while the pointer stays.
+    const legendItem = (item) => `<li class="team-legend-item team-legend-${TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind}" data-actor="${item.actors.join(" ")}" data-stations="${[...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].join(" ")}">
+      <button type="button" class="team-legend-button" aria-pressed="false" aria-describedby="teamAt-${item.actors.join("-")}"><i class="team-legend-mark" aria-hidden="true"></i><span><span>${item.text}</span><small id="teamAt-${item.actors.join("-")}" aria-hidden="true">At ${escapeHtml(teamStationsText(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations)))}</small></span></button></li>`;
     const people = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "person");
     const agents = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "ai");
     $("teamFigure").innerHTML = `${teamFigureSvg("wide", numbers)}${teamFigureSvg("narrow", numbers)}`;
@@ -4517,20 +4521,33 @@
         element.classList.toggle("is-lit", String(element.dataset.actor).split(" ").some((key) => actors.has(key)));
       }
     };
+    // What stays lit when the pointer leaves: a focused person or agent on the figure, else the pressed legend line.
+    const pressed = () => view.querySelector('.team-legend-button[aria-pressed="true"]')?.closest("[data-actor]") || null;
+    const resting = () => (view.contains(document.activeElement) && document.activeElement.closest?.(".team-actor")) || pressed();
     if (!state.teamBound) {
       state.teamBound = true;
-      for (const type of ["pointerover", "focusin"]) {
-        view.addEventListener(type, (event) => {
-          const source = event.target?.closest?.("[data-actor]");
-          if (source && view.contains(source)) light(source);
-        });
-      }
+      view.addEventListener("pointerover", (event) => {
+        const source = event.target?.closest?.("[data-actor]");
+        if (source && view.contains(source)) light(source);
+      });
+      // Focus lights a chip on the figure; a legend line lights when pressed, so pressing it again visibly turns it off.
+      view.addEventListener("focusin", (event) => {
+        const source = event.target?.closest?.(".team-actor");
+        if (source && view.contains(source)) light(source);
+      });
       view.addEventListener("pointerout", (event) => {
         const source = event.target?.closest?.("[data-actor]");
-        if (source && !source.contains(event.relatedTarget)) light(view.contains(document.activeElement) ? document.activeElement.closest?.("[data-actor]") : null);
+        if (source && !source.contains(event.relatedTarget)) light(resting());
       });
       view.addEventListener("focusout", (event) => {
-        if (!event.relatedTarget?.closest?.("[data-actor]")) light(null);
+        if (!event.relatedTarget?.closest?.(".team-actor")) light(pressed());
+      });
+      view.addEventListener("click", (event) => {
+        const button = event.target?.closest?.(".team-legend-button");
+        if (!button || !view.contains(button)) return;
+        const press = button.getAttribute("aria-pressed") !== "true";
+        for (const other of view.querySelectorAll(".team-legend-button")) other.setAttribute("aria-pressed", String(press && other === button));
+        light(press ? button.closest("[data-actor]") : null);
       });
     }
     figure.dataset.ready = "true";

@@ -589,7 +589,7 @@ DESIGN.md, "Stats".
 reading, AI check, CatLog, Human check, Rules updated) with AI agents above
 and people below by first name, live numbers from the manifest, dots moving
 round it unless the viewer asks for less motion, and a legend whose lines
-light their stations on hover or focus. Upright below 960px. The full rules are
+light their stations on hover or while pressed (toggle buttons). Upright below 960px. The full rules are
 in the site's DESIGN.md, "Team".
 
 ## Guide

@@ -720,15 +720,29 @@ def check_team(driver, browser, url):
         reading = wide.find_element(By.CSS_SELECTOR, "[data-station='reading']").get_attribute("aria-label")
         assert f"{overview['from_paper']['records']:,} records" in reading and f"{overview['from_paper']['papers']:,} papers read" in reading
     assert f"{manifest['total_rows']:,} records" in wide.find_element(By.CSS_SELECTOR, "[data-station='website']").get_attribute("aria-label")
-    # Focus on a legend line (Aarna and Erin) lights Human check only.
-    legend = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='aarna erin']")
-    driver.execute_script("arguments[0].focus()", legend)
-    lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
-    assert lit == ["human"], lit
+    # The svg is named without a <title>, which would show as a tooltip over the whole drawing; a station's label reads
+    # a wrapped fact as one phrase.
+    assert not driver.find_elements(By.CSS_SELECTOR, "svg.team-loop > title") and wide.get_attribute("aria-label")
+    assert ", by " not in wide.find_element(By.CSS_SELECTOR, "[data-station='catlog']").get_attribute("aria-label")
+    # Legend lines are toggle buttons, not bare focusable list items: pressing Aarna and Erin's keeps Human check lit,
+    # pressing Supantha's moves the light to his stations, and pressing it again turns it off.
+    lit_js = "return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)"
+    assert not driver.find_elements(By.CSS_SELECTOR, ".team-legend-item[tabindex]")
+    legend = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='aarna erin'] button[aria-pressed]")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", legend)
+    legend.click()
+    driver.execute_script("document.querySelector('#teamHeading').focus()")
+    assert driver.execute_script(lit_js) == ["human"], driver.execute_script(lit_js)
+    assert legend.get_attribute("aria-pressed") == "true"
     # Supantha's line meets Rules updated; his legend line also lights Papers, CatLog and the website.
-    driver.execute_script("arguments[0].focus()", driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='supantha']"))
-    lit = driver.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)")
-    assert sorted(lit) == ["catlog", "papers", "rules", "website"], lit
+    supantha = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='supantha'] button")
+    supantha.click()
+    assert sorted(driver.execute_script(lit_js)) == ["catlog", "papers", "rules", "website"], driver.execute_script(lit_js)
+    assert legend.get_attribute("aria-pressed") == "false" and supantha.get_attribute("aria-pressed") == "true"
+    supantha.send_keys(Keys.SPACE)
+    wait.until(lambda d: supantha.get_attribute("aria-pressed") == "false")
+    driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerout', {bubbles: true}))", supantha)
+    assert driver.execute_script(lit_js) == [], driver.execute_script(lit_js)
     # Pointing at an agent on the figure lights its station.
     chip = wide.find_element(By.CSS_SELECTOR, ".team-actor[data-actor='reading'] rect")
     if browser == "chrome":

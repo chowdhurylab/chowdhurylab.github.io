@@ -1292,8 +1292,8 @@ assert.equal(document.title, "Team | CatLog");
   // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
   // Where each works, in the loop's order and mid-sentence case.
-  assert.match(team, /<small>At Papers, CatLog, Rules updated, Website<\/small>/);
-  assert.match(team, /<small>At the paper<\/small>/);
+  assert.match(team, /<small [^>]*>At Papers, CatLog, Rules updated, Website<\/small>/);
+  assert.match(team, /<small [^>]*>At the paper<\/small>/);
   assert.match(team, /aria-label="Supantha: builds CatLog and turns findings into better rules\. At Papers, CatLog, Rules updated, Website\."/);
   assert.doesNotMatch(team, /At The paper/);
   // Tab follows the drawing: the agents above, left to right, then the people below.
@@ -1306,6 +1306,14 @@ assert.equal(document.title, "Team | CatLog");
   const numbers = api.teamNumbers();
   assert.ok(numbers.website.every((line) => /^[\d,]+ records$/.test(line)));
   assert.ok(numbers.reading.every((line) => /^[\d,]+ (papers read|records)$/.test(line)));
+  // The drawing is named by aria-label (a <title> would show as a tooltip over all of it); a station's label reads a
+  // wrapped fact as one phrase; legend lines are toggle buttons, not bare focusable list items.
+  const figureHtml = element("teamFigure").innerHTML;
+  assert.doesNotMatch(figureHtml, /<title/);
+  assert.equal((figureHtml.match(/role="group" aria-label="CatLog's loop: /g) || []).length, 2);
+  if (numbers.catlog.length) assert.match(figureHtml, /aria-label="CatLog: [\d,]+ values re-checked by AI audits"/);
+  assert.doesNotMatch(element("teamLegend").innerHTML, /tabindex/);
+  assert.equal((element("teamLegend").innerHTML.match(/<button type="button" class="team-legend-button" aria-pressed="false" aria-describedby="(teamAt-[\w-]+)">[\s\S]*?<small id="\1" aria-hidden="true">At /g) || []).length, 7);
 }
 api.renderView("browse");
 assert.equal(element("teamView").hidden, true);
@@ -1789,6 +1797,10 @@ function row(overrides = {}) {
     differ_rounding: 3, differ_catlog_wrong: 0, differ_not_comparable: 24, differ_not_adjudicated: 105, stated_values: 58,
     stated_values_catlog_has: 53 };
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", audit_values: 973, audit_wrong: 2, agreement: agreementFixture } };
+  // The Team loop draws CatLog's number on two lines and its label reads it as one phrase.
+  api.renderTeam();
+  assert.match(element("teamFigure").innerHTML, /aria-label="CatLog: 973 values re-checked by AI audits"/);
+  assert.match(element("teamFigure").innerHTML, />973 values re-checked<\/text><text class="team-station-number"[^>]*>by AI audits<\/text>/);
   api.renderStats();
   // The lead has its own slot above the headline counts: the first thing on the page after the title.
   let lead = element("statsLead").innerHTML;
