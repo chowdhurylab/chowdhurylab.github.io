@@ -175,16 +175,21 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // Cautions state the problem; they give no orders.
   assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
+  // The release tool writes both descriptions: its earlier wording, or the site's words (records, review results, no
+  // serial comma) once it uses them.
   assert.ok(
-    pageHtml.includes(
+    [
       `<meta name="description" content="CatLog snapshot dated ${expectedSnapshotDate}: browse ${expectedRowCount} enzyme kinetics measurements with review status, source links, protein sequences, and substrate structures." />`,
-    ),
+      `<meta name="description" content="CatLog snapshot dated ${expectedSnapshotDate}: browse ${expectedRowCount} enzyme kinetics records with review results, source links, protein sequences and substrate structures." />`,
+    ].some((tag) => pageHtml.includes(tag)),
   );
-  assert.match(pageHtml, /<meta property="og:title" content="CatLog \| Enzyme Kinetics Catalog" \/>/);
+  assert.match(pageHtml, /<title>CatLog \| Enzyme kinetics catalog<\/title>/);
+  assert.match(pageHtml, /<meta property="og:title" content="CatLog \| Enzyme kinetics catalog" \/>/);
   assert.ok(
-    pageHtml.includes(
+    [
       `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics measurements, review status, source links, protein sequences, and substrate structures." />`,
-    ),
+      `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics records, review results, source links, protein sequences and substrate structures." />`,
+    ].some((tag) => pageHtml.includes(tag)),
   );
   assert.ok(pageHtml.includes(`<meta property="og:url" content="https://chowdhurylab.github.io/tools/${publicPath}" />`));
   assert.ok(pageHtml.includes(`<link rel="canonical" href="https://chowdhurylab.github.io/tools/${publicPath}" />`));

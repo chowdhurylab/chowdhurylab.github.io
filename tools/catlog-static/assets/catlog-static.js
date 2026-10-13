@@ -578,7 +578,7 @@
     }
     document.title = guideOpen
       ? "Guide | CatLog"
-      : statsOpen ? "Stats | CatLog" : teamOpen ? "Team | CatLog" : "CatLog | Enzyme Kinetics Catalog";
+      : statsOpen ? "Stats | CatLog" : teamOpen ? "Team | CatLog" : "CatLog | Enzyme kinetics catalog";
     const currentUrl = new URL(window.location.href);
     if (/^https?:$/.test(currentUrl.protocol) && /\/catlog-(latest|stats)\.html$/.test(currentUrl.pathname)) {
       const publicUrl = new URL(statsOpen ? "./catlog-stats.html" : "./catlog-latest.html", currentUrl);
