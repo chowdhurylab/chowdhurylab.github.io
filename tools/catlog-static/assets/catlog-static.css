@@ -887,6 +887,13 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .team-highlight .team-station, .team-highlight .team-actor { transition:none }
 }
 
+/* 1024-1279px: a half-width column is too narrow for the legend table beside the donut, so Figure 1 takes the row
+   (donut and table side by side) and Figure 2 the next one, as on tablets; the figures after them pair up as before. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .stats-charts > .stats-status-section, .stats-charts > .stats-status-section + .stats-figure-section { grid-column:1 / -1 }
+  .stats-charts > .stats-status-section + .stats-figure-section .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
+}
+
 @media (max-width: 1023px) {
   .stats-charts > * { grid-column:1 / -1 }
   .stats-shell { max-width:760px }

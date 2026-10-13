@@ -1880,9 +1880,23 @@ def check(driver, browser, url):
     driver.execute_script("window.scrollTo(0, 0)")
     driver.set_window_size(1080, 900)
     capture("stats-compact")
+    first_figures = """
+        const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+        const charts = box('#statsCharts'), status = box('.stats-status-section'), sources = box('.stats-sources-section');
+        const donut = box('.stats-status-section .stats-donut'), table = box('.stats-status-table');
+        return {wide: Math.abs(status.width - charts.width) <= 1 && Math.abs(sources.width - charts.width) <= 1 && sources.top >= status.bottom,
+                paired: Math.abs(status.top - sources.top) <= 1 && sources.left >= status.right,
+                beside: table.left >= donut.right && Math.abs(table.top - donut.top) <= 1, donut: [donut.width, donut.height]};
+    """
+    # 1024-1279px: Figure 1 takes the row (its legend table beside the 200px donut) and Figure 2 the next one.
+    layout = driver.execute_script(first_figures)
+    assert layout["wide"] and layout["beside"] and all(abs(size - 200) <= 0.5 for size in layout["donut"]), f"Figures 1 and 2 at 1080px: {layout}"
     for width in (1700, 1280, 884, 760):
         driver.set_window_size(width, 1000)
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
+        if width >= 1280:
+            layout = driver.execute_script(first_figures)
+            assert layout["paired"] and layout["beside"], f"Figures 1 and 2 stand side by side at {width}px: {layout}"
         assert driver.execute_script("""
             return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).every(row => {
                 const label = row.querySelector('.stats-chart-label').getBoundingClientRect();

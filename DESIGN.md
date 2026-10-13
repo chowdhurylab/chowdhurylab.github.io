@@ -23,7 +23,8 @@ paper by CatLog with its papers, Human-checked; 20px: Papers, Enzymes, EC
 numbers, Organisms, Substrates; 24/18px on phones), then numbered figures and
 tables on a 12-column grid (max 1200px, gap 24px), two to a row from 1024px (an
 odd one out spans the row; a bar chart that spans it keeps its labels within
-240px of the bars), one below:
+240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row each, so the
+legend table keeps its room beside the donut), one below:
 
 - Lead (`#statsLead`, above the headline counts, full width): Agreement with
   human reviewers, the success measure (the user, 2026-10-12), from
