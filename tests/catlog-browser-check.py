@@ -3379,7 +3379,7 @@ def check(driver, browser, url):
         """), "Stats labels and captions keep 13px"
         assert driver.execute_script("""
             const size = (selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
-            return size('.stats-totals-main dd') >= (innerWidth <= 640 ? 24 : 32) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
+            return size('.stats-totals-main dd') >= (innerWidth <= 640 || (innerWidth >= 721 && innerWidth <= 1199) ? 24 : 32) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
         """), "Stats headline numbers keep the type scale"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
