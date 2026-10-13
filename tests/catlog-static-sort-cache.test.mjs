@@ -3770,6 +3770,31 @@ assert.equal(
   25,
   "the 25-row option must render all 25 rows, not a short preview",
 );
+{
+  // Previous on the second page opens the first and disables itself: its focus moves to Next, not the page body. Next
+  // on the last page hands focus to Previous. A click that did not focus the button (Safari) moves no focus.
+  const originalActiveElement = document.activeElement;
+  const lastPage = Math.ceil(api.state.filtered.length / api.state.pageSize);
+  assert.ok(lastPage > 2);
+  api.state.page = 2;
+  element("prevButton").focus();
+  element("prevButton").click();
+  assert.equal(api.state.page, 1);
+  assert.equal(element("prevButton").disabled, true);
+  assert.equal(document.activeElement, element("nextButton"), "Previous gives its focus to Next on the first page");
+  api.state.page = lastPage - 1;
+  element("nextButton").click();
+  assert.equal(api.state.page, lastPage);
+  assert.equal(element("nextButton").disabled, true);
+  assert.equal(document.activeElement, element("prevButton"), "Next gives its focus to Previous on the last page");
+  document.activeElement = originalActiveElement;
+  element("prevButton").click();
+  assert.equal(api.state.page, lastPage - 1);
+  assert.equal(document.activeElement, originalActiveElement, "Previous that stays enabled keeps focus where it was");
+  api.state.page = 2;
+  element("prevButton").click();
+  assert.equal(document.activeElement, originalActiveElement, "an unfocused click moves no focus");
+}
 
 const detailShard = "details-test.js";
 {

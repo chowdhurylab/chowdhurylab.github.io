@@ -8338,6 +8338,22 @@
     showTableTop();
   }
 
+  // Previous (-1) or Next (1). A page button that the new page disables (the first or last page) hands its focus to the
+  // other one, or to the first row, so the keyboard does not land on the page body.
+  function turnPage(step) {
+    const button = $(step < 0 ? "prevButton" : "nextButton");
+    const other = $(step < 0 ? "nextButton" : "prevButton");
+    const hadFocus = document.activeElement === button;
+    resetDetail();
+    state.pendingPage = 0;
+    state.page += step;
+    renderRows();
+    showTableTop();
+    if (!hadFocus || !button.disabled) return;
+    const target = other && !other.disabled ? other : document.querySelector?.('#recordsBody tr[tabindex="0"]');
+    target?.focus?.({ preventScroll: true });
+  }
+
   // A new page (Previous, Next, another page size) opens at its first row: the table scrolls inside its own box, so
   // its offset would otherwise carry over and show the new page near its bottom. The sideways offset stays.
   function showTableTop() {
@@ -8621,20 +8637,8 @@
     $("pageSizeSelect").addEventListener("change", () => {
       applyPageSize($("pageSizeSelect").value);
     });
-    $("prevButton").addEventListener("click", () => {
-      resetDetail();
-      state.pendingPage = 0;
-      state.page -= 1;
-      renderRows();
-      showTableTop();
-    });
-    $("nextButton").addEventListener("click", () => {
-      resetDetail();
-      state.pendingPage = 0;
-      state.page += 1;
-      renderRows();
-      showTableTop();
-    });
+    $("prevButton").addEventListener("click", () => turnPage(-1));
+    $("nextButton").addEventListener("click", () => turnPage(1));
     $("downloadPageButton").addEventListener("click", handlePageDownload);
     $("exportAllCsvButton")?.addEventListener("click", () => handleCsvExport("all"));
     $("exportPageCsvButton")?.addEventListener("click", () => handleCsvExport("page"));
