@@ -2887,6 +2887,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<i>K<\/i><sub>m<\/sub> = 4\.6/);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub> = 9\.7 s<sup>−1<\/sup>/);
   assert.match(html, /<i>K<\/i><sub>m L<\/sub>-methionine/);
+  // A caret charge is a superscript too (NADP^+, Mn^2+, Mn^{2+}, CN^−, a bare "^-" extraction left), and an exponent
+  // extraction split ("min^− 1", "10^−^3") is read whole; exponents stay as they were.
+  html = quoted("Km[NADP^+] 4 mM with Mn^2+ or Mn^{2+}; CN^− → OAS; 590 min^− 1; 9.1 × 10^- ; 9.1 × 10^−^3; Cl^− 5 mM; k_{cat} 3 s^-1, 2 M^(-2)");
+  assert.match(html, /Km\[NADP<sup>\+<\/sup>\] 4 mM with Mn<sup>2\+<\/sup> or Mn<sup>2\+<\/sup>; CN<sup>−<\/sup> → OAS; 590 min<sup>−1<\/sup>; 9\.1 × 10<sup>-<\/sup> ; 9\.1 × 10<sup>−3<\/sup>;/);
+  assert.match(html, /Cl<sup>−<\/sup> 5 mM/, "an ion's charge before a concentration is not an exponent");
+  assert.match(html, /<i>k<\/i><sub>cat<\/sub> 3 s<sup>-1<\/sup>, 2 M<sup>-2<\/sup>/);
+  assert.equal(api.caretHtml("NAD^{+}-dependent, 10^3 M^-1 s^-1"), "NAD<sup>+</sup>-dependent, 10<sup>3</sup> M<sup>-1</sup> s<sup>-1</sup>");
   html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
   assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">As extracted/);
   assert.match(html, /<p class="printed-line-note">Text extraction dropped the ± signs from this line\.<\/p><\/details>/);

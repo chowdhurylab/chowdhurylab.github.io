@@ -429,7 +429,9 @@ is left out, never an empty heading. The order (design spec 5):
   when the caption already names it; more than one line name
   their values instead, "kcat and kcat/Km line, as extracted from the paper's
   text" (at most 240 characters, table markers removed, K_M set as
-  K<sub>m</sub>); a row of more than four cells, or one whose ± signs extraction
+  K<sub>m</sub>, caret exponents and charges set as superscripts: s^-1, mM^{−1},
+  NADP^+, Mn^2+, and an exponent extraction split, min^− 1 or 10^−^3, as one);
+  a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
 - C. Source: Source ("The paper (read by CatLog)" or the databases by name,

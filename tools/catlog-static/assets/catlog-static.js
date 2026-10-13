@@ -1230,11 +1230,19 @@
       .replace(/\*/g, " ");
   }
 
-  // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}): the exponent becomes a superscript; the numbers stay as printed.
+  // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}) and caret charges (NADP^+, Mn^2+, Mn^{2+}, CN^−): the exponent
+  // or charge becomes a superscript; the numbers stay as printed. A unit's exponent that extraction split from its minus
+  // ("min^− 1" or "10^−^3") is read whole; a dash in a charge reads as a minus sign.
+  const CARET_SPLIT_EXPONENT = /(?<![A-Za-z])(s|sec|min|h|hr|[mµμnp]?M|L)\^([−–—-])\s+(\d)(?![\d.,])/g;
+  const CARET_CHARGE = /\^(?:\{\s*(\d*[+−–—-])\s*\}|(\d*[+−–—-])(?![\d.(]))/g;
   function caretHtml(html) {
     return html
+      .replace(CARET_SPLIT_EXPONENT, (_m, unit, sign, digit) => `${unit}<sup>${sign.replace(/[–—]/, "−")}${digit}</sup>`)
+      .replace(CARET_CHARGE, (_m, braced, bare) => `<sup>${(braced ?? bare).replace(/[–—]/, "−")}</sup>`)
       .replace(/\^\(\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\)|\^\{\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\}|\^([−-]?\d+(?:\.\d+)?)/g,
         (_m, s1, d1, s2, d2, c) => `<sup>${c ?? `${s1 || s2 ? (s1 || s2).replace(/[–—]/, "−") : ""}${d1 ?? d2}`}</sup>`)
+      // An exponent extraction split in two ("10^−^3") is one superscript.
+      .replace(/<\/sup><sup>/g, "")
       .replace(/<\/sup>\*(?=[A-Za-zµμ])/g, "</sup> ");
   }
 
@@ -9452,6 +9460,7 @@
       recordLink,
       numberHtml,
       numberText,
+      caretHtml,
       metricDisplayWithUnitHtml,
       roundingFigures,
       panelValueHtml,
