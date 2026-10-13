@@ -144,10 +144,13 @@ histogram an image with its summary in aria-label; bar charts and table bars
 are HTML in a `<figure>`, so their names stay links into Browse that a keyboard
 reaches and every count is text a screen reader reads row by row and a viewer
 can copy. On phones each name sits above its bar. `@media
-print`: one column, no figure or headline count split across pages (the three
-value-range histograms stay side by side on any paper size, so their caption
-stays with them); bars, swatches and columns print in their colours even with
-the browser's background graphics off.
+print`: one column across the page's full width at 80% scale (a landscape
+page holds the title, the lead and the headline counts, and most pages two
+figures or tables), no figure or headline count split across pages (the lead
+alone may go on between its parts; the three value-range histograms stay side
+by side on any paper size, so their caption stays with them); bars, swatches
+and columns print in their colours even with the browser's background graphics
+off.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
 rows under it split it into the records read from the paper by CatLog and the

@@ -943,6 +943,17 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-charts { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
   .stats-totals { break-inside:avoid }
+  /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column) and
+     the lead keeps its number beside the text; the lead may continue on the next page between its parts, so page 1
+     is not the title alone. */
+  .stats-shell { max-width:none; padding:0; zoom:0.8 }
+  .stats-lead-body { grid-template-columns:200px minmax(0,1fr); gap:24px }
+  .stats-section.stats-lead { break-inside:auto; padding:16px 24px }
+  /* The headline counts keep one line each, also where the browser sizes the page as a phone (A4 measured upright). */
+  .stats-totals dl { grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); gap:0 }
+  .stats-totals dl > div:nth-child(n) { border-left:1px solid var(--line-soft); padding-left:var(--sp-5) }
+  .stats-totals dl > div:first-child { border:0; padding-left:0 }
+  .stats-lead-figure, .stats-lead-sentence, .stats-lead-bar, .stats-lead-facts > div, .stats-lead-note, .stats-lead-text > .stats-fig-data { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }
