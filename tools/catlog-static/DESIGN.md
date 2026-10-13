@@ -396,8 +396,10 @@ is left out, never an empty heading. The order (design spec 5):
   record carries them as source_kcat_over_km_values), each caution once as an amber note
   its value's "!" moves to, the grey notes ("kcat and Km: converted by code from
   the printed units.", "kcat/Km: converted by code, printed unit read as 10³ M⁻¹
-  s⁻¹.", "calc. kcat ÷ Km, calculated by CatLog; not printed in the paper."; an
-  older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists a
+  s⁻¹." (a unit in CatLog's own words, in these notes, the Second check and the
+  unit cautions, reads s⁻¹ whether the reader typed s^-1 or s-1; As printed
+  keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; not printed
+  in the paper."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists a
   different kcat/Km (above)." when its sources list one, never "not printed"),
   then each quoted line once (a line another value's line continues, one excerpt
   cut at two lengths, is quoted once, the longer): one line gives its place,

@@ -2529,6 +2529,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(badge, /aria-label="Accepted, from paper"/);
   assert.match(badge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\."/);
   assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, BRENDA, corrected"/);
+  // A unit in CatLog's own words reads as the page writes units, whether the exponent was typed with a caret or a hyphen.
+  api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [line("kcat", "converted by code, printed unit read as 10^3 s-1", "corrected: unit set to 10^3 s-1")] });
+  html = element("detailContent").innerHTML;
+  assert.match(html, /<dt>Second check<\/dt><dd>Unit set to 10³ s⁻¹ for every value\.<\/dd>/);
+  assert.match(html, /<li>kcat: converted by code, printed unit read as 10³ s⁻¹\.<\/li>/);
+  assert.equal(api.catlogUnitText("s-1 mM-1"), "s⁻¹ mM⁻¹");
+  assert.equal(api.catlogUnitText("M-1s-1"), "M⁻¹s⁻¹");
+  assert.equal(api.catlogUnitText("min-1 µM-1"), "min⁻¹ µM⁻¹");
+  assert.equal(api.catlogUnitText("mmol-1 L-1"), "mmol⁻¹ L⁻¹");
+  assert.equal(api.catlogUnitText("s^(-1)*mM^(-1)"), "s⁻¹ mM⁻¹");
+  assert.equal(api.catlogUnitText("mM"), "mM");
+  assert.equal(api.catlogUnitText("Ser-1 pH-7 mM-1.5"), "Ser-1 pH-7 mM-1.5", "only a unit's whole-number exponent");
 }
 // An AI audit: the date and the verdict, from the audit fields or from the check's older suffix (never the word
 // "independent"); values audited differently are named.
@@ -2606,7 +2619,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
-  assert.match(sameHtml, /<li>kcat\/Km: converted by code, printed unit read as 10<sup>3<\/sup> M-1 s-1\.<\/li>/);
+  assert.match(sameHtml, /<li>kcat\/Km: converted by code, printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
 // when every one is more than 2-fold from kcat ÷ Km, an amber note says so.

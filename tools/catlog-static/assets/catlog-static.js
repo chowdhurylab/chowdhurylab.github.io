@@ -1291,6 +1291,17 @@
       .trim();
   }
 
+  // A unit in CatLog's own words (a check, a conversion, a caution): unitText's superscripts, and an exponent typed with a
+  // plain hyphen ("s-1", "mM-1", "10^3 M-1 s-1") reads the same way ("s⁻¹", "mM⁻¹", "10³ M⁻¹ s⁻¹"). The As printed
+  // column keeps the paper's text as it was read.
+  const PLAIN_UNIT_EXPONENT = /([pnµμumk]?(?:M|mol|g|[lL])|sec|min|hr|s|h)[−-](\d+)(?![\d.])/g;
+
+  function catlogUnitText(value) {
+    return unitText(value).replace(PLAIN_UNIT_EXPONENT, (match, unit, power, offset, text) => (/[A-Za-zµμ]/.test(text[offset - 1] || "")
+      ? match
+      : `${unit}⁻${[...power].map((digit) => SUPERSCRIPT_DIGITS[digit]).join("")}`));
+  }
+
   // The stored value and its unit, for the tooltip of a table value.
   function valueTitle(row, field) {
     const display = metricDisplay(row, field);
@@ -7179,8 +7190,8 @@
     const confirmed = changed.length === 1 && check && check.fold < 1.3
       && ["kcat", "Km", "kcat/Km"].every((metric) => printedMetrics.has(metric));
     return changed.map(({ line, fact, field, readAs, printedUnit, power }) => {
-      const printed = unitText(printedUnit);
-      const used = unitText(readAs);
+      const printed = catlogUnitText(printedUnit);
+      const used = catlogUnitText(readAs);
       const metric = metricNames[field];
       let text;
       if (confirmed && field === "kcat_over_km") {
@@ -7276,7 +7287,8 @@
       if (/^converted by code$/i.test(conversion)) {
         if (!plain.includes(line.metric)) plain.push(line.metric);
       } else {
-        own.push(`${escapePublic(line.metric)}: ${caretHtml(escapePublic(conversion))}.`);
+        const said = conversion.replace(/(printed unit read as )(.+)$/, (_m, head, unit) => `${head}${catlogUnitText(unit)}`);
+        own.push(`${escapePublic(line.metric)}: ${caretHtml(escapePublic(said))}.`);
       }
     });
     const shared = plain.length
@@ -7479,6 +7491,8 @@
       return known ? known[1](...item.match(known[0]).slice(1)) : item;
     }) : ["corrected"];
     const placed = phrases
+      // The unit a value was set to is written as the page writes units ("unit set to 10³ s⁻¹").
+      .map((phrase) => phrase.replace(/^((?:printed )?unit (?:set|corrected) to )(.+)$/, (_m, head, unit) => `${head}${catlogUnitText(unit)}`))
       .map((phrase) => (hasPreparation ? phrase : phrase.replace(/ \(see Preparation\)$/, "")))
       .map((phrase) => (hasConditions ? phrase : phrase.replace(/ \(see Conditions\)$/, "")));
     const unique = [...new Set(placed)];
@@ -9156,6 +9170,7 @@
       printedValueText,
       printedNumberText,
       v2LineFacts,
+      catlogUnitText,
       conversionFacts,
       evidenceNoteHtml,
       conditionLines,
