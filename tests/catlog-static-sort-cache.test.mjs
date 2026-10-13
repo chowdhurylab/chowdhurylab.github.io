@@ -1816,6 +1816,8 @@ function row(overrides = {}) {
   assert.match(chart, /<li class="stats-check" data-check="second_check">[\s\S]*?#browse\?source=paper">2<\/a><\/span>\s*<span class="stats-check-unit">records from 1 papers<\/span>/);
   assert.match(chart, /<li class="stats-check" data-check="human_checked">[\s\S]*?#browse\?checked=1">1<\/a><\/span>\s*<span class="stats-check-unit">accepted records<\/span>[\s\S]*?<span class="stats-check-result">A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\. Reviewers looked at 2 records\.<\/span>/);
   assert.match(chart, /<span class="stats-meter" aria-hidden="true"><span style="width:50%"><\/span><\/span>/, "Human-checked of the records reviewers looked at");
+  // The second AI check covers every value: no completion bar, only its place kept (the cards align).
+  assert.match(chart, /data-check="second_check">[\s\S]*?<span class="stats-meter is-blank" aria-hidden="true"><\/span>[\s\S]*?data-check="human_checked"/);
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
   // The Guide's method section gets the same human-review number; its audit item keeps the words without numbers.
   element("guideMethodAudits").textContent = "static audits";

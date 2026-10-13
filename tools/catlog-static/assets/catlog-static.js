@@ -4591,7 +4591,7 @@
     const comparedPapers = compared ? statsCount(quality.compared_papers_v1) : null;
     const checkCards = [
       fromPaper ? { key: "second_check", name: "Second AI check", number: formatInteger(fromPaper), href: statsBrowseHref({ source: "paper" }),
-        unit: `records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`, result: "Every value compared with the paper.", share: 1 } : null,
+        unit: `records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`, result: "Every value compared with the paper.", share: null } : null,
       audit ? { key: "audit", name: "AI audits", number: formatInteger(audit.values), unit: "values re-checked against the paper",
         result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}.`,
         share: (audit.values - audit.wrong) / audit.values } : null,
@@ -4613,7 +4613,7 @@
           <span class="stats-check-name">${escapeHtml(card.name)}</span>
           <span class="stats-check-number">${card.href ? `<a class="stats-link" href="${escapeHtml(card.href)}">${card.number}</a>` : card.number}</span>
           <span class="stats-check-unit">${escapeHtml(card.unit)}</span>
-          ${card.share !== null && card.share !== undefined ? `<span class="stats-meter" aria-hidden="true"><span style="width:${+(Math.max(0, Math.min(1, card.share)) * 100).toFixed(4)}%"></span></span>` : ""}
+          ${card.share !== null && card.share !== undefined ? `<span class="stats-meter" aria-hidden="true"><span style="width:${+(Math.max(0, Math.min(1, card.share)) * 100).toFixed(4)}%"></span></span>` : `<span class="stats-meter is-blank" aria-hidden="true"></span>`}
           <span class="stats-check-result">${escapeHtml(card.result)}</span></li>`).join("")}</ul>
         ${lead ? "" : `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`}
         <p class="stats-fig-data">${statsDataLine()}</p></section>` });

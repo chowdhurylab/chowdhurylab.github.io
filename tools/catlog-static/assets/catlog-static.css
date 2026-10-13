@@ -969,6 +969,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-check-unit { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-meter { display:block; height:4px; margin:8px 0 6px; border-radius:2px; background:var(--line-soft) }
 .stats-meter > span { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg, var(--accent-line), var(--accent)); box-shadow:0 0 6px var(--accent-glow) }
+/* A check that covers every value has no share to show (no completion bar); its place is kept, so the cards align. */
+.stats-meter.is-blank { visibility:hidden }
 .stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 
 /* The lead of Quality: the human review of CatLog v1 entries, its share in accent ink with a soft glow. */
