@@ -182,6 +182,8 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(followup.main_source({"source_db": "primary_paper_direct"}), "earlier_paper")
         self.assertEqual(followup.main_source({"source_db": "unknown"}), "unrecorded")
         self.assertEqual(followup.main_source({"source_db": "brenda; skid"}), "several")
+        self.assertEqual(followup.main_source({"source_db": "mixed", "source_databases_merged": ["brenda", "skid"]}), "several")
+        self.assertEqual(followup.main_source({"source_db": "mixed"}), "several")
         kcat = result["metrics"]["kcat"]
         # The kcat without a unit is left out; 2 and 2e9 s^-1 remain.
         self.assertEqual((kcat["unit"], kcat["n"], kcat["median"]), ("s^-1", 2, 1e9))

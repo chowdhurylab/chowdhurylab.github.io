@@ -2834,7 +2834,7 @@
       condition_note: conditionNoteText(summary, detail) || null,
       cautions: notes.map((note) => note.text),
       review_result: rowStatusLabel(summary, { exact: true }),
-      source: v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(summary.source_db || detail.source_db),
+      source: v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(recordSourceDb(summary, detail)),
       tags: [
         summary.verification_status === "corrected" ? "corrected" : "",
         hasNoPaperLinked(summary) ? "no paper linked" : "",
@@ -3522,7 +3522,8 @@
     for (const [label, count] of Object.entries(manifestDistribution("source_db"))) {
       const keys = [...new Set(String(label || "").toLowerCase().split(/[;,+/|]+/)
         .map((part) => SOURCE_TOKENS[part.trim().replace(/[\s-]+/g, "_")]).filter(Boolean))];
-      const key = !keys.length ? "unrecorded" : keys.length > 1 ? "several" : keys[0];
+      // "mixed" names no database but is a record merged from several (build_overview's main_source).
+      const key = !keys.length ? (/^mixed$/i.test(String(label || "").trim()) ? "several" : "unrecorded") : keys.length > 1 ? "several" : keys[0];
       groups[key] = { records: (groups[key]?.records || 0) + count };
     }
     if (v2 !== null && (groups.earlier_paper?.records || 0) >= v2) {
@@ -7966,12 +7967,21 @@
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
   }
 
+  // The source a record's panel names: its source_db, or, when that names no database ("mixed", the one record merged
+  // from BRENDA and SKiD), the databases the record lists as merged (source_databases_merged).
+  function recordSourceDb(summary, detail = {}) {
+    const value = summary.source_db || detail.source_db || "";
+    if (rowSourceBits({ source_db: value }) !== SOURCE_UNRECORDED_BIT) return value;
+    const merged = (Array.isArray(detail.source_databases_merged) ? detail.source_databases_merged : []).filter(Boolean).join(";");
+    return merged && rowSourceBits({ source_db: merged }) !== SOURCE_UNRECORDED_BIT ? merged : value;
+  }
+
   // The databases a record merges, unless that only repeats its Source.
   function mergedDatabasesRow(summary, detail) {
     const merged = (Array.isArray(detail.source_databases_merged) ? detail.source_databases_merged : []).filter(Boolean);
     // The same databases in another order ("sabio_rk, brenda" under Source "BRENDA, SABIO-RK") only repeat the Source.
     const bits = merged.reduce((all, value) => all | rowSourceBits({ source_db: value }), 0) & ~SOURCE_UNRECORDED_BIT;
-    if (!bits || bits === rowSourceBits({ source_db: summary.source_db || detail.source_db })) return "";
+    if (!bits || bits === rowSourceBits({ source_db: recordSourceDb(summary, detail) })) return "";
     return kv("Databases", sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", "));
   }
 
@@ -8020,7 +8030,7 @@
   // The record's status as one line, in the table's words and colours: a dot, the review result (a Not checked record
   // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the source ("read from the paper", "BRENDA", ...), then
   // "corrected", "no paper linked" or "human-checked".
-  function detailStatusHtml(row, { v2Record = isV2Row(row) } = {}) {
+  function detailStatusHtml(row, { v2Record = isV2Row(row), detail = null } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
     const identityOnly = hasNoPaperLinked(row);
@@ -8029,7 +8039,8 @@
       || (status === "mathematically_inferred" ? "not-reviewed" : "unverified");
     const words = [
       rowStatusLabel(row, { exact: true }),
-      v2Record ? "read from the paper" : sourceTagText(row),
+      // With the record's detail, the databases it merges when its source_db names none (recordSourceDb).
+      v2Record ? "read from the paper" : sourceTagText(detail ? { source_db: recordSourceDb(row, detail) } : row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
@@ -8465,7 +8476,7 @@
     const facts = proof?.facts || null;
     const dataId = snapshotDataId();
     return detailSection("source", "Source", kvList([
-      kv("Source", recordSourceName(summary.source_db || detail.source_db, v2Record)),
+      kv("Source", recordSourceName(recordSourceDb(summary, detail), v2Record)),
       // How many database rows a record merges is said once, here.
       mergedRows > 1
         ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
@@ -8544,7 +8555,7 @@
         </div>
         ${detailSubtitleHtml(summary, { ecFromDatabases: withDetail && v2Record && ecFromDatabases(detail) })}
         ${withDetail ? detailSubstrateHtml(summary, detail) : ""}
-        ${withDetail ? detailStatusHtml(summary, { v2Record }) : ""}
+        ${withDetail ? detailStatusHtml(summary, { v2Record, detail }) : ""}
         ${detailKeyHtml(summary)}
       </div>`;
   }
@@ -8564,7 +8575,7 @@
     const rawProofLines = Array.isArray(detail.proof_lines)
       ? detail.proof_lines.filter(Boolean)
       : (Array.isArray(detail.paper_mentions) ? detail.paper_mentions.filter(Boolean) : []);
-    const noteSource = recordSourceName(summary.source_db || detail.source_db);
+    const noteSource = recordSourceName(recordSourceDb(summary, detail));
     const proofLines = rawProofLines.filter((line) => Boolean(evidenceNoteHtml(line)) && !noteRepeatsConditions(line, summary))
       .map((line) => noteWithoutHeadingSource(line, noteSource));
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
@@ -8586,7 +8597,7 @@
     const paperNotes = isSourceNote
       ? proofLines.filter((line) => earlierReviewNote(line) && /\bTable\s+[A-Z0-9]+\b/i.test(line)).map(withoutEvidenceRoute)
       : proofLines;
-    const sourceBits = rowSourceBits({ source_db: summary.source_db || detail.source_db });
+    const sourceBits = rowSourceBits({ source_db: recordSourceDb(summary, detail) });
     const oneDatabase = sourceBits !== SOURCE_UNRECORDED_BIT && !(sourceBits & (sourceBits - 1));
     const several = Math.min(databaseNotes.length, 3) > 1;
     const sourceNoteHtml = showNotes && databaseNotes.length

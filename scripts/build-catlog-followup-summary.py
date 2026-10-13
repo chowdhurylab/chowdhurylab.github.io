@@ -283,7 +283,8 @@ def paper_keys(row):
 
 # Records by main source (Stats figure 2): each record once, under the source its source_db names: records read from the
 # paper by CatLog apart from the earlier paper extractions, a record naming several databases under "several" and one
-# naming none under "unrecorded"; each with its review statuses (verification_status counts).
+# naming none under "unrecorded"; each with its review statuses (verification_status counts). A source_db that names no
+# database ("mixed") reads the databases the record lists as merged; "mixed" alone is several databases.
 MAIN_SOURCE_KEYS = ("catlog", "earlier_paper", "brenda", "oed", "uniprot", "sabio_rk", "skid", "strenda", "several",
                     "unrecorded")
 
@@ -291,9 +292,9 @@ MAIN_SOURCE_KEYS = ("catlog", "earlier_paper", "brenda", "oed", "uniprot", "sabi
 def main_source(row):
     if str(row.get("verification_method") or "").startswith("catlog_v2_read"):
         return "catlog"
-    keys = source_keys(row.get("source_db"))
+    keys = source_keys(row.get("source_db")) or source_keys(";".join(map(str, row.get("source_databases_merged") or [])))
     if not keys:
-        return "unrecorded"
+        return "several" if str(row.get("source_db") or "").strip().lower() == "mixed" else "unrecorded"
     if len(keys) > 1:
         return "several"
     key = next(iter(keys))
