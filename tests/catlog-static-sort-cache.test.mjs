@@ -2283,6 +2283,7 @@ const unitFlagHtml = measurementSection(row({
   condition_flags: ["kcat_over_km_unit_mismatch"], kcat_over_km_source_differs: true,
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
+assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
 assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is close to 1000, the factor between per mM and per M\./);
 // v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
 const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
@@ -2618,6 +2619,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
+  // Every number in the Value column ends at the same place: a row without calc. or "!" keeps their space, unseen.
+  assert.match(html, /<span class="vt-number">7\.33<\/span><small class="metric-origin vt-ghost" aria-hidden="true">calc\.<\/small><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/);
+  assert.match(html, /<span class="vt-number">15<\/span><small class="metric-origin" title="[^"]+">calc\.<\/small><button class="value-flag"/);
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
   // Its calc. note never says the source does not print a kcat/Km: it says CatLog calculated it and points at the listed one.
   assert.match(html, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists a different kcat\/Km \(above\)\.<\/li>/);

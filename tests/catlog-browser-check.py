@@ -1383,6 +1383,17 @@ def check_record_panel(driver, browser, url, route_label):
                 wide = driver.execute_script("const panel = document.getElementById('detailPanel'); return [panel.scrollWidth, panel.clientWidth]")
                 assert wide[0] <= wide[1] + 1, f"The long variant record overflows sideways at {width}px: {wide}"
                 results[f"long-variant-{label}"] = True
+            if label != "mobile":
+                # Every number in the Value column ends at the same place, also beside calc. and a "!".
+                driver.get("about:blank")
+                driver.get(base + f"#record={CALC_FLAG_RECORD}")
+                wait.until(lambda d: d.execute_script(
+                    "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                if driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .metric-origin:not(.vt-ghost)"):
+                    edges = driver.execute_script(
+                        "return [...document.querySelectorAll('#detailContent .values-table .vt-number')].map(e => e.getBoundingClientRect().right)")
+                    assert len(edges) > 1 and max(edges) - min(edges) <= 1, f"The Value column's numbers do not line up at {width}px: {edges}"
+                    results[f"values-aligned-{label}"] = True
             if label == "mobile":
                 # On phones calc. and "!" go under the number, so the Values table stays inside its section and As printed
                 # keeps room (at 390 and at 320px; skipped when this snapshot does not have that record).
@@ -1399,11 +1410,11 @@ def check_record_panel(driver, browser, url, route_label):
                         const table = section.querySelector('.values-table');
                         const contentRight = section.getBoundingClientRect().right - parseFloat(getComputedStyle(section).paddingRight);
                         const heads = [...table.querySelectorAll('thead th')].map(th => [th.textContent, th.getBoundingClientRect().width]);
-                        const cell = section.querySelector('td.vt-value .metric-origin').closest('td');
+                        const cell = section.querySelector('td.vt-value .metric-origin:not(.vt-ghost)').closest('td');
                         const panel = document.getElementById('detailPanel');
                         return {over: table.getBoundingClientRect().right - contentRight,
                                 printed: (heads.find(([name]) => name === 'As printed') || [, 0])[1],
-                                below: cell.querySelector('.metric-origin').getBoundingClientRect().top
+                                below: cell.querySelector('.metric-origin:not(.vt-ghost)').getBoundingClientRect().top
                                     >= cell.querySelector('.vt-number').getBoundingClientRect().bottom - 1,
                                 sideways: panel.scrollWidth - panel.clientWidth};
                     """)

@@ -7307,7 +7307,7 @@
     const places = fields.filter(([field]) => proofLineIndex(proof, field) >= 0).map(([field]) => placeOf(field));
     const sharedPlace = places.length && places[0] && places.every((place) => place === places[0]) ? places[0] : "";
     const whereColumn = !sharedPlace && places.some(Boolean);
-    const rows = fields.map(([field, label]) => {
+    const cells = fields.map(([field, label]) => {
       const index = proofLineIndex(proof, field);
       const line = index >= 0 ? proof.lines[index] : null;
       const fact = index >= 0 ? proof.facts[index] : null;
@@ -7329,13 +7329,18 @@
         : "";
       const place = whereColumn ? placeOf(field) : "";
       const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
-      return `<tr><th scope="row">${label}</th>`
-        + `<td class="vt-value"><span class="vt-number">${valueHtml}</span>${calc}${flagMarkerHtml(field, notes)}</td>`
-        + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
-        + `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>`
-        + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
-        + "</tr>";
+      return { label, valueHtml, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };
     });
+    // calc. and "!" follow their number; a row without one keeps an unseen copy of its space, so every number ends at
+    // the same place (on phones, where they sit under the number, the copies take no room).
+    const calcSlot = cells.some((cell) => cell.calc) ? '<small class="metric-origin vt-ghost" aria-hidden="true">calc.</small>' : "";
+    const flagSlot = cells.some((cell) => cell.flag) ? '<span class="value-flag vt-ghost" aria-hidden="true"></span>' : "";
+    const rows = cells.map(({ label, valueHtml, calc, flag, unitCell, place, printed }) => `<tr><th scope="row">${label}</th>`
+      + `<td class="vt-value"><span class="vt-number">${valueHtml}</span>${calc || calcSlot}${flag || flagSlot}</td>`
+      + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
+      + `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>`
+      + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
+      + "</tr>");
     // A merged older record's kcat/Km values as its sources list them.
     const listed = sourceEfficiencyRow(summary, detail);
     // A record with no kcat, Km or kcat/Km says so in words (some keep a Ki only), and names who lists one when a source does.

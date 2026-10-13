@@ -383,7 +383,9 @@ is left out, never an empty heading. The order (design spec 5):
   (under As printed on phones). An older record shows a dash under As printed
   and no Where. A calculated kcat/Km carries "calc." (on phones calc. and a "!"
   go under the number, so As printed keeps about 100px at 375px; at 320px a
-  two-part unit may take two lines and the table still fits); under the table: the
+  two-part unit may take two lines and the table still fits). A row without
+  calc. or "!" keeps their space unseen (aria-hidden), so every number in the
+  Value column ends at the same place; on phones that space is dropped. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
   s⁻¹ mM⁻¹, 5 values", in the catalog unit; shown when it differs from the
   record's kcat/Km or the record stores none, then the empty line says "No kcat,
