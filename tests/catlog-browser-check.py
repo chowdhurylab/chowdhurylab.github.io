@@ -2181,7 +2181,7 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     reviewer", and one line under the table saying what it means (the numbers still end at the same place); its Paper
     section's In CatLog link opens Browse at the paper's records with the record kept open (on a phone, where the record
     covers the list, with the record closed; Back opens it again); Back after a link in a record opens it where it was
-    left."""
+    left; the record's ‹ and › step to the record before or after it in the results, across the table's pages."""
     results = {}
     keys = driver.execute_async_script("""
         const done = arguments[arguments.length - 1];
@@ -2341,6 +2341,63 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         " && document.querySelector('#detailRecordKey')?.textContent === arguments[0]"
         " && Math.abs(document.getElementById('detailPanel').scrollTop - arguments[1]) <= 2", opened, left_at))
     results["record-back-scroll"] = True
+    # The record's ‹ and › open the record before or after it in the results: from the last row of a page, › opens the
+    # next page's first row and turns the table to that page, keeping the focus on › and adding no history entry; ‹ at the
+    # first record is disabled. On a phone they step through the cards without closing the record.
+    set_browse_viewport(driver, browser, 1440, 1000)
+    driver.get("about:blank")
+    driver.get(base)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) >= 2
+               and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+    wait.until(lambda d: d.execute_script("return !document.getElementById('nextButton').disabled"))
+    page_one = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key]')].map(r => r.dataset.key)")
+    last_row = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell")[-1]
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", last_row)
+    last_row.click()
+    loaded = ("return document.body.classList.contains('detail-open') && !document.querySelector('#detailLoadStatus')"
+              " && document.querySelector('#detailRecordKey')?.textContent === arguments[0]")
+    wait.until(lambda d: d.execute_script(loaded, page_one[-1]))
+    length = driver.execute_script("return history.length")
+    assert driver.find_element(By.ID, "previousRecordButton").is_enabled()
+    driver.find_element(By.ID, "nextRecordButton").click()
+    wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key]')].every(r => !arguments[0].includes(r.dataset.key))", page_one))
+    page_two_first = driver.execute_script("return document.querySelector('#recordsBody tr[data-key]').dataset.key")
+    wait.until(lambda d: d.execute_script(loaded, page_two_first))
+    stepped = driver.execute_script("""
+        return {focus: document.activeElement && document.activeElement.id, hash: location.hash};
+    """)
+    assert stepped["focus"] == "nextRecordButton", stepped
+    assert f"record={page_two_first}" in stepped["hash"], stepped
+    assert driver.execute_script("return history.length") == length, "A step added a history entry"
+    driver.find_element(By.ID, "previousRecordButton").click()
+    wait.until(lambda d: d.execute_script(loaded, page_one[-1]))
+    wait.until(lambda d: d.execute_script("return document.querySelector('#recordsBody tr[data-key]').dataset.key === arguments[0]", page_one[0]))
+    driver.find_element(By.ID, "closeDetailButton").click()
+    wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+    first_row = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", first_row)
+    first_row.click()
+    wait.until(lambda d: d.execute_script(loaded, page_one[0]))
+    assert not driver.find_element(By.ID, "previousRecordButton").is_enabled(), "The first record has no previous one"
+    results["record-steps"] = True
+    set_browse_viewport(driver, browser, 390, 844)
+    driver.get("about:blank")
+    driver.get(base + f"#record={page_one[0]}")
+    wait.until(lambda d: d.execute_script(loaded, page_one[0]))
+    wait.until(lambda d: d.find_element(By.ID, "nextRecordButton").is_enabled())
+    header = driver.execute_script("""
+        const title = document.querySelector('#detailContent .detail-title').getBoundingClientRect();
+        const heading = document.getElementById('detailHeading').getBoundingClientRect();
+        const buttons = [...document.querySelectorAll('#detailContent .detail-title-buttons button')].map(b => b.getBoundingClientRect());
+        return {apart: buttons.every(b => b.left >= heading.right - 1), inside: buttons.every(b => b.right <= innerWidth && b.top >= title.top - 1),
+                sideways: document.getElementById('detailPanel').scrollWidth - document.getElementById('detailPanel').clientWidth};
+    """)
+    assert header["apart"] and header["inside"] and header["sideways"] <= 1, f"The record's ‹ › × overlap its name: {header}"
+    driver.find_element(By.ID, "nextRecordButton").click()
+    wait.until(lambda d: d.execute_script(loaded, page_one[1]))
+    assert driver.execute_script("return document.body.classList.contains('detail-open')")
+    set_browse_viewport(driver, browser, 1440, 1000)
+    results["record-steps-phone"] = True
     return results
 
 

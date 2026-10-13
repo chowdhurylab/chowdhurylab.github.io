@@ -4539,6 +4539,58 @@ assert.equal(
   }
 }
 
+// The record's ‹ and › open the record before or after it in the results, turning the table's page when it is on another
+// one, and keep the focus on the button pressed (on the other one at either end); both are disabled when the results do
+// not hold the open record.
+{
+  const keys = ["step-a", "step-b", "step-c"];
+  const stepRows = keys.map((key) => {
+    const shard = `data/details-${key}.js`;
+    window.CATLOG_DETAIL_SHARDS[shard] = { [key]: { ui_record_key: key } };
+    window.CATLOG_DETAIL_SHARD_GENERATIONS[shard] = runtimeSourceSha256;
+    api.state.loadedScripts.add(shard);
+    return row({ record_key: key, detail_shard: shard });
+  });
+  const previousPageSize = api.state.pageSize;
+  const previousButton = element("previousRecordButton");
+  const nextButton = element("nextRecordButton");
+  try {
+    api.state.records = api.state.filtered = stepRows;
+    api.state.pageSize = 2;
+    api.state.page = 1;
+    await api.selectRecord("step-a");
+    assert.equal(previousButton.disabled, true, "the first record has no previous one");
+    assert.equal(nextButton.disabled, false);
+    assert.match(element("detailContent").innerHTML, /<div class="detail-title-buttons">\s*<button id="previousRecordButton" class="icon-button record-step" type="button" aria-label="Previous record"[^>]*>&lsaquo;<\/button>\s*<button id="nextRecordButton" class="icon-button record-step" type="button" aria-label="Next record"[^>]*>&rsaquo;<\/button>\s*<button id="closeDetailButton"/);
+    nextButton.focus();
+    await api.stepRecord(1);
+    assert.equal(api.state.selectedKey, "step-b");
+    assert.equal(api.state.page, 1);
+    assert.equal(document.activeElement, nextButton, "the focus stays on Next");
+    assert.deepEqual([previousButton.disabled, nextButton.disabled], [false, false]);
+    await api.stepRecord(1);
+    assert.equal(api.state.selectedKey, "step-c");
+    assert.equal(api.state.page, 2, "the table turns to the page that shows the record");
+    assert.equal(nextButton.disabled, true, "the last record has no next one");
+    assert.equal(document.activeElement, previousButton, "at the end the focus goes to Previous");
+    await api.stepRecord(1);
+    assert.equal(api.state.selectedKey, "step-c", "nothing after the last record");
+    await api.stepRecord(-1);
+    assert.equal(api.state.selectedKey, "step-b");
+    assert.equal(api.state.page, 1);
+    // Results that no longer hold the open record (new filters): neither button opens anything.
+    api.state.filtered = [stepRows[0]];
+    api.renderRows();
+    assert.deepEqual([previousButton.disabled, nextButton.disabled], [true, true]);
+    assert.deepEqual(JSON.parse(JSON.stringify(api.recordStepTargets())), { position: -1, previous: null, next: null });
+  } finally {
+    api.state.pageSize = previousPageSize;
+    api.state.page = 1;
+    api.state.selectedKey = "";
+    document.body.classList.remove("detail-open");
+  }
+}
+
 const firstRowElement = makeElement("firstRow");
 firstRowElement.dataset.key = "first";
 const secondRowElement = makeElement("secondRow");

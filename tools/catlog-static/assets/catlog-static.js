@@ -6458,6 +6458,8 @@
     const loading = !state.recordsReady;
     const sortWaits = sortWaitsForRecords();
     const pageRows = sortWaits ? [] : currentPageRows();
+    // The open record's Previous and Next follow the results.
+    syncRecordSteps();
     const activeRowKey = activeTableRowKey(pageRows);
     state.activeRowKey = activeRowKey;
     // While the index loads in the default order with nothing filtered, the pages already drawn are final: count them
@@ -7208,7 +7210,75 @@
     if (resultsPending) state.refocusAfterFilters = selectedKey;
   }
 
-  async function selectRecord(key, { focusDetail = true } = {}) {
+  // ---- Record panel: Previous and Next record ----
+  // The header's ‹ and › open the record before or after the open one in the results, in the table's order and across
+  // its pages (the table turns to the page that shows it). They are disabled at either end, while a sort waits for the
+  // records, and when the results do not hold the open record (opened from a link outside the filters).
+  const RECORD_STEP_IDS = { previous: "previousRecordButton", next: "nextRecordButton" };
+
+  function recordStepTargets(key = state.selectedKey) {
+    const position = key && !sortWaitsForRecords() ? state.filtered.findIndex((row) => row.record_key === key) : -1;
+    if (position < 0) return { position, previous: null, next: null };
+    return { position, previous: state.filtered[position - 1] || null, next: state.filtered[position + 1] || null };
+  }
+
+  function isRecordStepButton(element) {
+    return Boolean(element?.id) && Object.values(RECORD_STEP_IDS).includes(element.id);
+  }
+
+  // The buttons follow the results: drawn with the header, and again whenever the table is (new filters, sort, the rest
+  // of the index arriving). A button that loses its record hands its focus to the other one, or to the heading.
+  function syncRecordSteps() {
+    const previousButton = $(RECORD_STEP_IDS.previous);
+    const nextButton = $(RECORD_STEP_IDS.next);
+    if (!previousButton || !nextButton || !state.selectedKey) return;
+    const { previous, next } = recordStepTargets();
+    const focused = [previousButton, nextButton].find((button) => button === document.activeElement);
+    previousButton.disabled = !previous;
+    nextButton.disabled = !next;
+    if (focused?.disabled) focusRecordStep(state.selectedKey, focused.id);
+  }
+
+  // Focus on this step button, else on the other one, else on the heading (at either end of the results).
+  function focusRecordStep(key, id) {
+    if (state.selectedKey !== key) return;
+    const other = id === RECORD_STEP_IDS.previous ? RECORD_STEP_IDS.next : RECORD_STEP_IDS.previous;
+    const button = [$(id), $(other)].find((item) => item && !item.disabled);
+    if (button) button.focus({ preventScroll: true });
+    else focusDetailHeading(key);
+  }
+
+  function refocusDetailTop(key, stepFocus) {
+    if (stepFocus) focusRecordStep(key, stepFocus);
+    else focusDetailHeading(key);
+  }
+
+  // Previous (-1) or Next (1): the neighbouring record opens in the same place in history (Back still leaves the record),
+  // and the table shows its row, turning the page when it is on another one.
+  function stepRecord(step) {
+    const { position, previous, next } = recordStepTargets();
+    const target = step < 0 ? previous : next;
+    if (!target) return;
+    const page = Math.floor((position + step) / state.pageSize) + 1;
+    const turning = page !== state.page;
+    if (turning) {
+      state.pendingPage = 0;
+      state.page = page;
+    }
+    const selecting = selectRecord(target.record_key, { stepFocus: step < 0 ? RECORD_STEP_IDS.previous : RECORD_STEP_IDS.next });
+    if (turning) showTableTop();
+    // Beside the table (from 1024px) its row scrolls into view; up to 1023px the record covers the list, and closing it
+    // focuses the row there.
+    if (!narrowDetailMedia.matches) {
+      [...($("recordsBody")?.querySelectorAll?.("tr[data-key]") || [])]
+        .find((item) => item.dataset.key === target.record_key)?.scrollIntoView?.({ block: "nearest" });
+    }
+    return selecting;
+  }
+
+  // stepFocus: the id of the header's Previous or Next record button that opened this record, which keeps the focus
+  // (so the next step is one more press) instead of the heading.
+  async function selectRecord(key, { focusDetail = true, stepFocus = "" } = {}) {
     const row = state.records.find((item) => item.record_key === key);
     if (!row) {
       resetDetail();
@@ -7240,7 +7310,8 @@
     `;
     if (switching && $("detailPanel")) $("detailPanel").scrollTop = 0;
     bindDetailTop();
-    if (focusDetail) focusDetailHeading(key);
+    if (stepFocus) focusRecordStep(key, stepFocus);
+    else if (focusDetail) focusDetailHeading(key);
     try {
       const detail = await detailForRow(row, {
         onRetry: (attempt, delay) => {
@@ -7253,14 +7324,16 @@
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       renderDetail(summaryWithDetail(row, detail), detail);
       if (restore && $("detailPanel")) $("detailPanel").scrollTop = restore.top;
-      if (restoreFocus) focusDetailHeading(key);
+      if (restoreFocus) refocusDetailTop(key, stepFocus);
       // The snapshot's record checks (when it has a file of them) arrive once; the open record is drawn again with them.
       if (recordChecksPath() && !recordChecks) {
         ensureRecordChecks().then(() => {
           if (state.selectedKey !== key || state.selectedDetail !== detail || !recordCheck(row)) return;
           const focusInside = $("detailContent").contains(document.activeElement);
+          const stepId = isRecordStepButton(document.activeElement) ? document.activeElement.id : "";
           renderDetail(summaryWithDetail(row, detail), detail);
-          if (focusInside) $("detailHeading")?.focus({ preventScroll: true });
+          if (stepId) focusRecordStep(key, stepId);
+          else if (focusInside) $("detailHeading")?.focus({ preventScroll: true });
         });
       }
     } catch (error) {
@@ -7278,7 +7351,7 @@
       `;
       bindDetailTop();
       $("retryDetailButton").addEventListener("click", () => (outOfDate ? reloadCatalogPage() : selectRecord(key)));
-      if (restoreFocus) focusDetailHeading(key);
+      if (restoreFocus) refocusDetailTop(key, stepFocus);
     }
   }
 
@@ -9693,7 +9766,11 @@
     return `
       <div class="detail-top">
         <div class="detail-title">
-          <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+          <div class="detail-title-buttons">
+            <button id="${RECORD_STEP_IDS.previous}" class="icon-button record-step" type="button" aria-label="Previous record" title="Previous record in the results" disabled>&lsaquo;</button>
+            <button id="${RECORD_STEP_IDS.next}" class="icon-button record-step" type="button" aria-label="Next record" title="Next record in the results" disabled>&rsaquo;</button>
+            <button id="closeDetailButton" class="icon-button close-detail" type="button" aria-label="Close record">&times;</button>
+          </div>
           ${detailHeadingHtml(summary)}
         </div>
         ${detailSubtitleHtml(summary, { ecFromDatabases: withDetail && v2Record && ecFromDatabases(detail) })}
@@ -9792,8 +9869,12 @@
     });
   }
 
-  // The header's buttons (close, Copy link), in every state of the record (loading, loaded, not loaded).
+  // The header's buttons (Previous and Next record, close, Copy link), in every state of the record (loading, loaded, not
+  // loaded).
   function bindDetailTop() {
+    $(RECORD_STEP_IDS.previous)?.addEventListener("click", () => stepRecord(-1));
+    $(RECORD_STEP_IDS.next)?.addEventListener("click", () => stepRecord(1));
+    syncRecordSteps();
     $("closeDetailButton").addEventListener("click", closeDetailAndRestoreFocus);
     document.querySelectorAll("#detailContent .detail-top .copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));
@@ -10411,6 +10492,9 @@
       retainDetailShard,
       detailForRow,
       selectRecord,
+      stepRecord,
+      recordStepTargets,
+      renderRows,
       handlePageDownload,
       handleCsvExport,
       csvParts,

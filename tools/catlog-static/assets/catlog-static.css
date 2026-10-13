@@ -546,7 +546,11 @@ body.detail-open .detail-panel { display:block }
 .detail-key .copy-link { padding:0; font-size:var(--fs-12); font-weight:500 }
 /* Copy link, Show and Copy are at least 24px tall to touch (WCAG 2.5.8); a negative margin keeps their lines as they were. */
 .detail-key .copy-link { min-height:24px; margin-block:-4px }
-.close-detail { position:absolute; top:12px; right:12px }
+/* The title's buttons at its top right: ‹ and › open the record before or after this one in the results, × closes it.
+   The title keeps their width clear (the header's 56px and 56px more), so a long name wraps before them. */
+.detail-title { padding-right:56px }
+.detail-title-buttons { position:absolute; top:12px; right:12px; display:flex; align-items:center }
+.record-step { width:28px }
 .detail-section { border-top:1px solid var(--line-soft); padding:16px 20px }
 .detail-top + .detail-section { border-top:0 }
 .detail-section h3 { margin:0 0 12px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
@@ -1225,7 +1229,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    scroll with the record, and a rule shows under the name once it does. */
 @media (max-width: 640px), (max-height: 900px) {
   .detail-top { display:contents }
-  .detail-title { position:sticky; top:0; z-index:2; border-bottom:1px solid transparent; background:var(--bg); padding:var(--sp-4) 56px var(--sp-2) 20px }
+  .detail-title { position:sticky; top:0; z-index:2; border-bottom:1px solid transparent; background:var(--bg); padding:var(--sp-4) 112px var(--sp-2) 20px }
   .detail-panel.is-scrolled .detail-title { border-bottom-color:var(--line) }
   .detail-title h2 { margin:0 }
   .detail-top > p { margin-bottom:var(--sp-1); padding:0 20px }
@@ -1247,7 +1251,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-18) }
-  .detail-title .close-detail { top:8px }
+  .detail-title .detail-title-buttons { top:8px }
   /* The record's values: calc. and "!" go under the number, so As printed keeps its room and the table its width. */
   .values-table :is(th,td) { padding-right:6px; padding-left:6px }
   .values-table td.vt-value .vt-number { display:block }

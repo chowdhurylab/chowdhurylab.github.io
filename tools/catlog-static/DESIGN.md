@@ -222,8 +222,8 @@ record's place decides it), or is #record=<key> when nothing is set, so reload,
 a copied link and Esc keep the filters. Opening a record from the list adds one
 history entry (its state remembers the list's address), so Back, on a phone the
 system's Back gesture too, closes the record instead of leaving CatLog; another
-record opened from there replaces that entry, so Back never steps through every
-record looked at. × and Esc step back over the entry while the list behind it is
+record opened from there (a link in it, ‹ or ›) replaces that entry, so Back never
+steps through every record looked at. × and Esc step back over the entry while the list behind it is
 the one it was opened from (else, and after a reload, the address is rewritten
 in place); until that Back lands, a record opened meanwhile waits to write its
 address and a tab or link followed meanwhile waits to add its entry. Leaving
@@ -482,8 +482,13 @@ found at once: A, B, G, C, D, E, F, H.
 
 - A. Header (stays in view; on phones and on screens up to 900px tall, where
   the whole header would take a third of the record or more, only the name and
-  × stay, with a rule under them once the record scrolls, and the lines below
-  scroll with the record): the name (20px/600; 16px when longer than 64 characters) and × close; "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
+  ‹ › × stay, with a rule under them once the record scrolls, and the lines below
+  scroll with the record): the name (20px/600; 16px when longer than 64 characters) and, at its top right, ‹ and ›
+  (Previous and Next record, 28px wide: the record before or after this one in the results, in the table's order and
+  across its pages, the table turning to the page that shows it and, beside the record from 1024px, scrolling its row
+  into view; disabled at either end, while a sort waits for the records and when the results do not hold the record;
+  the button pressed keeps the focus, the other one takes it at an end) and × close, the name's line keeping their
+  88px clear so a long name wraps before them; "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
   `N145A`" (the binomial in italics, a strain or "sp." roman; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
   paper does not print reads "EC 2.3.1.183 (from enzyme databases; not printed
