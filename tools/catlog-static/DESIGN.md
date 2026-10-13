@@ -127,7 +127,7 @@ it was when the record closes (opening it closes the record); from 1600px the
 sidebar, the table and the record sit side by side. From 641 to 1023px it starts
 as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
-"Filters · Clear all · ×" at the top and "Show N records" (accent, 44px) at the
+"Filters · Clear all · ×" at the top (Clear all while a filter is on) and "Show N records" (accent, 44px) at the
 bottom; Esc, × or that button close it, and Escape never closes the sidebar.
 A control reached with Tab or Shift+Tab scrolls clear of the sticky heading and
 footer, focus ring included (scroll padding 56px at the top, 80px at the bottom
@@ -144,7 +144,8 @@ scrolls sideways; its names then narrow only to their longest word, so Enzyme
 stays narrow, with the Columns control (‹ › step one column), Enzyme kept in
 view and edge shadows drawn over the rows inside the visible area (beside
 Enzyme, before the vertical scrollbar). The
-sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
+sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all
+while a filter is on, «);
 its groups are native disclosures with 13px/600 summaries (13px 16px, 44px for
 one line; the chevron and any "?" stay level with the title's first line when a
 wide font wraps it), a soft rule between them, options in 28px rows (14px box, 13px label, the 12px --muted

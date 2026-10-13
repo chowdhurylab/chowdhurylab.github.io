@@ -237,6 +237,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .rail-heading { position:sticky; top:0; z-index:2; display:flex; flex-shrink:0; min-height:48px; align-items:center; gap:var(--sp-2); border-bottom:1px solid var(--line-soft); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-4) }
 .rail-title { margin:0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .rail-heading #clearButton { margin-left:auto; font-size:var(--fs-13) }
+/* Without a filter on, Clear all is hidden and the « (or ×) keeps the heading's right end. */
+.rail-heading #clearButton[hidden] ~ .icon-button { margin-left:auto }
 .rail-heading .icon-button { flex:0 0 32px }
 .filter-toggle { width:max-content }
 .filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }

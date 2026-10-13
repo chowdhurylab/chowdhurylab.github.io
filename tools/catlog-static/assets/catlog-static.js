@@ -5732,6 +5732,12 @@
     });
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
     $("filterRailButton")?.setAttribute("aria-label", count ? `Show filters, ${count} active` : "Show filters");
+    // The sidebar's Clear all shows only while a filter is on, as the chips' does; the focus it held stays in the sidebar.
+    const sidebarClear = $("clearButton");
+    if (sidebarClear) {
+      if (!count && document.activeElement === sidebarClear) $("catalogFilters")?.focus?.({ preventScroll: true });
+      sidebarClear.hidden = count === 0;
+    }
     const bar = $("activeFilters");
     if (!bar) return;
     const html = count
