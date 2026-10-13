@@ -209,7 +209,9 @@ then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗
 and Download share the first line, the four tabs share the second across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
 with Clear all at the left and Columns, Export and Sort at the right; on phones a
-Filters button opens the sheet and the chips go under the toolbar. A selected
+Filters button opens the sheet and the chips go under the toolbar (Filters,
+Export and Sort stay on one row; below 360px "Sort" is read out but not shown
+and the buttons are narrower, so the menu shows "Review result" whole). A selected
 record is a column right of the table from 1024px (440px, 480px from 1440px) and
 a full-height dialog below. Never put details below the table or cover desktop
 measurement columns. Keep 25 rows per page,

@@ -1136,6 +1136,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .guide-choice-link { width:100%; white-space:normal }
 }
 
+/* The smallest phones (below 360px): "Sort" is read out but not shown and the toolbar's buttons are narrower, so the
+   Sort menu keeps about 110px and shows "Review result" whole, a Filters count included. */
+@media (max-width: 359px) {
+  .sort-control label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .records-header :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .catalog-load-progress, .catalog-load-progress > span, .detail-panel, .filter-rail, .filter-backdrop, .chevron, tbody tr { transition:none }
 }

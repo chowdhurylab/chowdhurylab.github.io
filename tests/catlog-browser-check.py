@@ -1162,6 +1162,22 @@ def check_layout(driver, browser, url, route_label):
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open())
         results["tablet-800"] = True
+        # The smallest phones: Filters (with its count), Export and the Sort menu stay on one row, the menu shows
+        # "Review result" whole, and "Sort" is still the menu's name for screen readers.
+        if browser == "chrome":
+            set_browse_viewport(driver, browser, 320, 800)
+            open_page("#browse?metric=kcat")
+            toolbar = driver.execute_script("""
+                const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
+                const select = document.getElementById('sortSelect');
+                return {filters: top('#openFiltersButton'), export: top('#exportMenu > summary'), sort: top('#sortSelect'),
+                        width: Math.round(select.getBoundingClientRect().width), name: select.labels[0]?.textContent.trim(),
+                        scroll: document.documentElement.scrollWidth > innerWidth + 1};
+            """)
+            tops = [toolbar["filters"], toolbar["export"], toolbar["sort"]]
+            assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108
+                    and toolbar["name"].startswith("Sort") and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
+            results["phone-320-toolbar"] = True
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-failure.png"))
         raise
