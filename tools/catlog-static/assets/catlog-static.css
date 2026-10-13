@@ -550,6 +550,8 @@ body.detail-open .detail-panel { display:block }
 .values-table .vt-ghost { visibility:hidden }
 .values-table .vt-unit { color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
 .values-table .vt-unit small { font-size:var(--fs-12) }
+/* Without As printed (an older record), Unit takes the rest of the width. */
+.values-table.vt-no-printed .vt-unit { width:auto }
 .values-table caption { padding:0 0 8px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); text-align:left; overflow-wrap:anywhere }
 .values-table .vt-where { max-width:9em; color:var(--text-2); font-size:var(--fs-12); overflow-wrap:anywhere }
 .values-table .vt-where.vt-short { white-space:nowrap }

@@ -240,7 +240,7 @@ assert.match(
   /<main id="statsView"[^>]*hidden/,
 );
 assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed", paperNotes\)/);
-assert.match(sourceCode, /<th scope="col">As printed<\/th>\$\{whereColumn \? '<th scope="col" class="vt-where">Where<\/th>' : ""\}/);
+assert.match(sourceCode, /\$\{printedColumn \? '<th scope="col">As printed<\/th>' : ""\}\$\{whereColumn \? '<th scope="col" class="vt-where">Where<\/th>' : ""\}/);
 
 function makeClassList() {
   const values = new Set();
@@ -2085,9 +2085,15 @@ const kiMeasurementHtml = measurementSection(row(), {
 });
 // Values: one row per stored value, Ki last; a value's number and its unit in their own cells.
 assert.match(kiMeasurementHtml, /<tr><th scope="row"><i>K<\/i><sub>i<\/sub><\/th><td class="vt-value"><span class="vt-number">0\.25<\/span><\/td><td class="vt-unit">µM<\/td>/);
-// An older record: As printed is a dash; no place is known, so no Where column.
-assert.match(kiMeasurementHtml, /<th scope="col">Parameter<\/th><th scope="col" class="vt-value">Value<\/th><th scope="col">Unit<\/th><th scope="col">As printed<\/th><\/tr>/);
-assert.match(kiMeasurementHtml, /<td class="vt-printed">—<\/td><\/tr>/);
+// An older record: nothing as printed and no place known, so neither an As printed nor a Where column (a column of
+// dashes would read as "nothing printed"); Unit takes the rest.
+assert.match(kiMeasurementHtml, /<table class="values-table vt-no-printed"><thead><tr><th scope="col">Parameter<\/th><th scope="col" class="vt-value">Value<\/th><th scope="col">Unit<\/th><\/tr>/);
+assert.doesNotMatch(kiMeasurementHtml, /vt-printed|As printed/);
+assert.match(kiMeasurementHtml, /<td class="vt-unit">µM<\/td><\/tr>/);
+// No pointer to the earlier review's notes unless the record has them under Paper; with them, one grey line.
+assert.doesNotMatch(kiMeasurementHtml, /earlier review's notes under Paper/);
+assert.match(api.valuesSection(row(), {}, { printedUnderPaper: true }),
+  /<ul class="value-notes">(?:<li>[^]*?<\/li>)*<li>The earlier review&#39;s notes under Paper say where the paper prints these values\.<\/li><\/ul>/);
 assert.ok(kiMeasurementHtml.indexOf("<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></th>") < kiMeasurementHtml.indexOf("<i>K</i><sub>i</sub></th>"), "Ki comes last");
 
 const noKiMeasurementHtml = measurementSection(row({ has_ki: false }), {});

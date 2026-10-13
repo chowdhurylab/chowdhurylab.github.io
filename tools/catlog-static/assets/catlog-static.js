@@ -7293,7 +7293,8 @@
   // ---- Record panel: B. Values ----
   // One table, Parameter | Value | Unit | As printed | Where, in kcat, Km, kcat/Km (then Ki) order; a metric the record
   // lacks is not a row. A record read from the paper gives each value as printed and where it is printed; an older record
-  // has a dash there (its earlier review's notes are under Paper). Under the table: the kcat/Km its sources list, each
+  // has no As printed column (a column of dashes would read as "nothing printed"), and a line under the table points to
+  // its earlier review's notes under Paper when it has them. Under the table: the kcat/Km its sources list, each
   // caution once (amber, with the "!" the value carries), the grey notes (how code converted a unit, calc.), then each
   // line quoted from the paper once. Facts only (where, what was printed, how it was converted), never reasoning.
   const VALUE_FIELDS = [
@@ -7343,7 +7344,9 @@
     return [...shared, ...own];
   }
 
-  function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail) } = {}) {
+  const PRINTED_UNDER_PAPER_NOTE = "The earlier review's notes under Paper say where the paper prints these values.";
+
+  function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail), printedUnderPaper = false } = {}) {
     const metricSummary = metricSummaryFor(summary, detail);
     const flags = conditionFlags(summary, detail);
     const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
@@ -7388,6 +7391,8 @@
       const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
       return { label, valueHtml, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };
     });
+    // As printed only when some value has a printed form (a Where column's place sits in it on phones).
+    const printedColumn = whereColumn || cells.some((cell) => cell.printed !== EMPTY_VALUE);
     // calc. and "!" follow their number; a row without one keeps an unseen copy of its space, so every number ends at
     // the same place (on phones, where they sit under the number, the copies take no room).
     const calcSlot = cells.some((cell) => cell.calc) ? '<small class="metric-origin vt-ghost" aria-hidden="true">calc.</small>' : "";
@@ -7395,7 +7400,7 @@
     const rows = cells.map(({ label, valueHtml, calc, flag, unitCell, place, printed }) => `<tr><th scope="row">${label}</th>`
       + `<td class="vt-value"><span class="vt-number">${valueHtml}</span>${calc || calcSlot}${flag || flagSlot}</td>`
       + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
-      + `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>`
+      + (printedColumn ? `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>` : "")
       + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
       + "</tr>");
     // A merged older record's kcat/Km values as its sources list them.
@@ -7418,6 +7423,7 @@
       calcNote && fields.some(([field]) => field === "kcat_over_km")
         ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`
         : "",
+      !printedColumn && printedUnderPaper && rows.length ? escapeHtml(PRINTED_UNDER_PAPER_NOTE) : "",
     ].filter(Boolean);
     // Each printed line once; a "line" that is only the printed number itself adds nothing, and a line another value's
     // line continues (one excerpt cut at two lengths, a trailing "…" aside) is quoted once, the longer, for both values.
@@ -7443,9 +7449,9 @@
       ? { metrics: item.metrics }
       : { place: sharedPlace ? "" : item.place }));
     const table = rows.length
-      ? `<table class="values-table">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
+      ? `<table class="values-table${printedColumn ? "" : " vt-no-printed"}">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
         + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th>`
-        + `<th scope="col">Unit</th><th scope="col">As printed</th>${whereColumn ? '<th scope="col" class="vt-where">Where</th>' : ""}</tr></thead>`
+        + `<th scope="col">Unit</th>${printedColumn ? '<th scope="col">As printed</th>' : ""}${whereColumn ? '<th scope="col" class="vt-where">Where</th>' : ""}</tr></thead>`
         + `<tbody>${rows.join("")}</tbody></table>`
       : "";
     return detailSection("values", "Values", [
@@ -8598,7 +8604,7 @@
     // which protein and substrate, the paper, the databases, the review; the source's own fields last.
     $("detailContent").innerHTML = `
       ${detailTopHtml(summary, detail, { v2Record })}
-      ${valuesSection(summary, detail, { proof: v2Proof })}
+      ${valuesSection(summary, detail, { proof: v2Proof, printedUnderPaper: Boolean(paperNotesHtml) })}
       ${sourceSection(summary, detail, { v2Record, proof: v2Proof, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
       ${conditionsSection(summary, detail)}
       ${proteinSection(summary, detail)}

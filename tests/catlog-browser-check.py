@@ -1359,7 +1359,11 @@ def check_record_panel(driver, browser, url, route_label):
                 assert panel["subtitle"].startswith("EC "), panel["subtitle"]
                 assert panel["substrate"].startswith("Substrate: "), panel["substrate"]
                 assert re.fullmatch(r"[0-9a-f]{16}(?:-\d+)?", panel["recordKey"]), panel["recordKey"]
-                assert panel["valuesHead"][:4] == ["Parameter", "Value", "Unit", "As printed"], panel["valuesHead"]
+                if kind == "from-paper":
+                    assert panel["valuesHead"][:4] == ["Parameter", "Value", "Unit", "As printed"], panel["valuesHead"]
+                else:
+                    # An older record prints nothing in As printed, so it has no such column (dashes would read "not printed").
+                    assert panel["valuesHead"] == ["Parameter", "Value", "Unit"], panel["valuesHead"]
                 assert panel["valueCells"] and set(panel["valueCells"]) == {"right"}, panel["valueCells"]
                 if panel["revealed"] is not None:
                     assert panel["revealed"] == [True, False, "true", "Hide", True], panel["revealed"]

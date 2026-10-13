@@ -383,10 +383,13 @@ is left out, never an empty heading. The order (design spec 5):
   16px/600 right-aligned, the unit 12px muted. A record read from the paper
   gives each number as printed; the place goes in a caption ("Printed in
   Table 2") when every value shares it, in a Where column when they differ
-  (under As printed on phones). An older record shows a dash under As printed
-  and no Where. A calculated kcat/Km carries "calc." (on phones calc. and a "!"
-  go under the number, so As printed keeps about 100px at 375px; at 320px a
-  two-part unit may take two lines and the table still fits). A row without
+  (under As printed on phones). An older record has neither As printed nor
+  Where (a column of dashes would read as "nothing printed"; Unit takes the
+  rest), and when its earlier review noted where the paper prints the values,
+  a grey line under the table points to those notes under Paper. A calculated
+  kcat/Km carries "calc." (on phones calc. and a "!" go under the number, so
+  As printed keeps about 100px at 375px; at 320px a two-part unit may take two
+  lines and the table still fits). A row without
   calc. or "!" keeps their space unseen (aria-hidden), so every number in the
   Value column ends at the same place; on phones that space is dropped. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
