@@ -1213,6 +1213,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start }
 }
 
+/* The narrowest phones: each row of a record's lists (Source, Against the databases, Conditions, ...) puts its label above
+   its value, so a sentence or a comparison takes the panel's whole width instead of a narrow column beside the labels. */
+@media (max-width: 400px) {
+  .detail-kv { gap:10px }
+  .kv-line { grid-template-columns:minmax(0,1fr); row-gap:2px }
+}
+
 /* On a phone or a screen up to 900px tall only the record's name and × stay in view as it scrolls (the whole header
    takes a third of the record or more there, with a long name almost half); EC, substrate, status and the record ID
    scroll with the record, and a rule shows under the name once it does. */

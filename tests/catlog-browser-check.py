@@ -1906,12 +1906,13 @@ def check_record_panel(driver, browser, url, route_label):
             const databases = content.querySelector('.databases-section');
             return {
                 sections: [...content.querySelectorAll('.detail-section > h3, details.detail-disclosure > summary')].map(e => e.textContent.trim()),
-                // The status line's dot and the selected row's dot (the same status colour), the definition lists' label
-                // column (112px, 96px on phones) and what section G says.
+                // The status line's dot and the selected row's dot (the same status colour), the definition lists' columns
+                // (112px labels, 96px on phones, one column with each label above its value up to 400px) and what
+                // section G says.
                 dotColor: status ? getComputedStyle(status, '::before').backgroundColor : null,
                 rowDotColor: selectedDot && selectedDot.getBoundingClientRect().width > 0
                     ? getComputedStyle(selectedDot, '::before').backgroundColor : null,
-                labelColumn: getComputedStyle(content.querySelector('.detail-section .kv-line')).gridTemplateColumns.split(' ')[0],
+                kvColumns: getComputedStyle(content.querySelector('.detail-section .kv-line')).gridTemplateColumns.split(' '),
                 databasesText: databases ? databases.innerText : null,
                 headingSize: getComputedStyle(content.querySelector('.detail-section > h3')).fontSize,
                 subtitle: content.querySelector('.detail-top .detail-subtitle')?.textContent || '',
@@ -1956,7 +1957,10 @@ def check_record_panel(driver, browser, url, route_label):
                 assert panel["dashes"] == 0, "A labelled row shows a bare dash"
                 assert not RECORD_PANEL_FORBIDDEN.search(panel["text"]), RECORD_PANEL_FORBIDDEN.search(panel["text"]).group(0)
                 assert not panel["overflow"], f"The {kind} record overflows sideways at {width}px"
-                assert panel["labelColumn"] == ("96px" if width <= 720 else "112px"), panel["labelColumn"]
+                if width <= 400:
+                    assert len(panel["kvColumns"]) == 1, panel["kvColumns"]
+                else:
+                    assert panel["kvColumns"][0] == ("96px" if width <= 720 else "112px"), panel["kvColumns"]
                 assert panel["dotColor"] and panel["dotColor"] not in ("rgba(0, 0, 0, 0)", "transparent"), panel["dotColor"]
                 if panel["rowDotColor"]:
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])

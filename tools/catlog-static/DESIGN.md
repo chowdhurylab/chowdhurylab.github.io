@@ -463,8 +463,9 @@ Keep values, units, warnings, protein form, identifiers, and paper links
 visible, and say each thing once, in plain words. The record is a white column
 with a 1px rule on its left: a header that stays in view, then sections, each
 after a soft rule with a 14px/600 heading and a definition list (112px terms in
-12px muted, 14px values; 96px terms on phones). A section with nothing to say
-is left out, never an empty heading. Opening a record draws its whole header
+12px muted, 14px values; 96px terms on phones; up to 400px each term sits
+above its value, so a sentence or a database comparison takes the whole width).
+A section with nothing to say is left out, never an empty heading. Opening a record draws its whole header
 at once from the table's row (name, EC and organism, substrate, status, record
 ID), so the header keeps its place when the record arrives; below it, only when
 loading takes a moment (after 240ms), "Loading record…" and a quiet outline of
