@@ -1854,6 +1854,9 @@ PHONE_LISTED_RANGE_RECORD = "1d970ee6bc6d9538"
 # An APH(2'')-Ia variant whose Assay list holds "phosphoenolpyruvate/pyruvate kinase/lactate dehydrogenase/NADH" (wider
 # than the list at 320px until the item could break it).
 PHONE_LONG_WORD_RECORD = "2479abbe2effcc47"
+# A vSET read from the paper whose three values a human reviewer approved, two of them written as × 10ⁿ (8.0 × 10⁻⁶ and
+# 1.28 × 10⁻⁴): at 320px in a wide font they once ran into Unit and their checks dropped onto lines of their own.
+PHONE_APPROVED_SCIENTIFIC_RECORD = "9f56345af45ee06e"
 
 
 def check_record_panel(driver, browser, url, route_label):
@@ -2039,6 +2042,64 @@ def check_record_panel(driver, browser, url, route_label):
                         """)
                         assert abs(stuck["top"]) <= 1 and stuck["closeShown"] and stuck["statusGone"], stuck
                         assert stuck["share"] < 0.15, f"The record's sticky header takes {stuck['share']:.0%} of a phone screen"
+                if browser == "chrome":
+                    # At 320px in a wide font (Linux Chrome's are wider) a number written as × 10ⁿ wraps before "× 10" inside
+                    # Value, never into Unit; its check stays beside its last line; every number ends at the same place
+                    # (skipped when this snapshot does not have that record).
+                    set_browse_viewport(driver, browser, 320, height)
+                    driver.get("about:blank")
+                    driver.get(base + f"#record={PHONE_APPROVED_SCIENTIFIC_RECORD}")
+                    wait.until(lambda d: d.execute_script(
+                        "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                    if driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .scientific-number"):
+                        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .value-approved[role='img']"))
+                        driver.execute_script("""
+                            const style = document.createElement('style');
+                            style.id = 'wideFontCheck';
+                            style.textContent = "#detailPanel, #detailPanel * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
+                            document.head.appendChild(style);
+                        """)
+                        rows = driver.execute_script("""
+                            const glyphs = (element, skip) => {
+                                const rects = [];
+                                const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+                                while (walker.nextNode()) {
+                                    const node = walker.currentNode;
+                                    if (skip && node.parentElement.closest(skip)) continue;
+                                    for (let i = 0; i < node.length; i++) {
+                                        if (!node.data[i].trim() || node.data[i] === '\u2060') continue;
+                                        const range = document.createRange();
+                                        range.setStart(node, i);
+                                        range.setEnd(node, i + 1);
+                                        const rect = range.getBoundingClientRect();
+                                        if (rect.width > 0) rects.push(rect);
+                                    }
+                                }
+                                return rects;
+                            };
+                            return [...document.querySelectorAll('#detailContent .values-table tbody tr')].map(row => {
+                                const number = glyphs(row.querySelector('td.vt-value .vt-number'), '.value-approved');
+                                const unit = glyphs(row.querySelector('td.vt-unit'));
+                                const check = row.querySelector('td.vt-value .value-approved[role="img"]');
+                                const last = number[number.length - 1];
+                                const checkRect = check && check.getBoundingClientRect();
+                                return {
+                                    name: row.cells[0].innerText.trim(),
+                                    numberRight: Math.max(...number.map(r => r.right)),
+                                    unitLeft: Math.min(...unit.map(r => r.left)),
+                                    cellRight: row.querySelector('td.vt-value').getBoundingClientRect().right,
+                                    checkBeside: checkRect ? checkRect.left >= last.right - 1 && checkRect.top < last.bottom && checkRect.bottom > last.top : null,
+                                    checkInside: checkRect ? checkRect.right <= row.querySelector('td.vt-value').getBoundingClientRect().right + 1 : null,
+                                };
+                            });
+                        """)
+                        driver.execute_script("document.getElementById('wideFontCheck')?.remove()")
+                        for row in rows:
+                            assert row["numberRight"] < row["unitLeft"], f"{row['name']}'s value runs into Unit at 320px: {row}"
+                            assert row["checkBeside"] is not False and row["checkInside"] is not False, f"{row['name']}'s check leaves its number at 320px: {row}"
+                        ends = [row["numberRight"] for row in rows]
+                        assert max(ends) - min(ends) <= 1, f"The Value column's numbers do not line up at 320px: {rows}"
+                        results["values-approved-scientific-320"] = True
                 # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps),
                 # a long listed kcat/Km range (it breaks after its dash) and an Assay item with a long word, from 320 to
                 # 389px (skipped when this snapshot does not have the record).

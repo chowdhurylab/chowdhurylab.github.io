@@ -8093,8 +8093,10 @@
     const checkSlot = cells.some((cell) => cell.check) ? `<span class="value-approved vt-ghost" aria-hidden="true">${CHECK_ICON_HTML}</span>` : "";
     const calcSlot = cells.some((cell) => cell.calc) ? '<small class="metric-origin vt-ghost" aria-hidden="true">calc.</small>' : "";
     const flagSlot = cells.some((cell) => cell.flag) ? '<span class="value-flag vt-ghost" aria-hidden="true"></span>' : "";
+    // A word joiner (U+2060) ties the check to its number: where a narrow cell wraps a long number, the check goes with
+    // the number's last part (× 10⁻⁴ ✓), never onto a line of its own.
     const rows = cells.map(({ label, valueHtml, check, calc, flag, unitCell, place, printed }) => `<tr><th scope="row">${label}</th>`
-      + `<td class="vt-value"><span class="vt-number">${valueHtml}${check || checkSlot}</span>${calc || calcSlot}${flag || flagSlot}</td>`
+      + `<td class="vt-value"><span class="vt-number">${valueHtml}${check || checkSlot ? `&#8288;${check || checkSlot}` : ""}</span>${calc || calcSlot}${flag || flagSlot}</td>`
       + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
       + (printedColumn ? `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>` : "")
       + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
@@ -8150,7 +8152,7 @@
       ? { metrics: item.metrics }
       : { place: sharedPlace ? "" : item.place }));
     const table = rows.length
-      ? `<table class="values-table${printedColumn ? "" : " vt-no-printed"}">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
+      ? `<table class="values-table${printedColumn ? "" : " vt-no-printed"}${checkSlot ? " vt-checks" : ""}">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
         + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th>`
         + `<th scope="col">Unit</th>${printedColumn ? '<th scope="col">As printed</th>' : ""}${whereColumn ? '<th scope="col" class="vt-where">Where</th>' : ""}</tr></thead>`
         + `<tbody>${rows.join("")}</tbody></table>`

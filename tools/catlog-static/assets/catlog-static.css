@@ -615,13 +615,19 @@ body.detail-open .detail-panel { display:block }
   /* fixed columns: the table can never be wider than its section, whatever the system font */
   .values-table { table-layout:fixed }
   .values-table :is(thead th:first-child, tbody th) { width:24% }
-  .values-table :is(thead th:nth-child(2), .vt-value) { width:31% }
+  .values-table :is(thead th:nth-child(2), .vt-value) { width:34% }
   .values-table :is(thead th:nth-child(3), .vt-unit) { width:17% }
   .values-table :is(th,td) { overflow-wrap:anywhere }
   .values-table tbody th { white-space:normal }
-  .values-table :is(th,td) { padding-left:4px; padding-right:4px }
   .values-table .vt-value { white-space:normal }
-  .values-table .vt-value .vt-number { white-space:normal }
+  /* A number in 14px keeps its check beside it: one too long for the cell (1.28 × 10⁻⁴ in a wide font) wraps before
+     "× 10", never between the number and its check and never into Unit. The check hangs in a 16px margin of its own,
+     so every line of every number ends at the same place. */
+  .values-table td.vt-value .vt-number { font-size:var(--fs-14); line-height:var(--lh-14); white-space:nowrap }
+  .values-table td.vt-value .scientific-number { display:inline; white-space:normal }
+  .values-table.vt-checks td.vt-value .vt-number { padding-right:16px }
+  .values-table.vt-checks td.vt-value .vt-number > .value-approved { margin-right:-16px }
+  .values-table.vt-checks td.vt-value .vt-number > .value-approved.vt-ghost { display:none }
   .values-table thead th { overflow-wrap:normal; hyphens:auto }
   .values-table td.vt-value :is(.metric-origin, .value-flag) { display:block; margin-left:0 }
   .values-table .vt-unit { white-space:normal }
@@ -1317,9 +1323,12 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody .card-label-unit { display:block; margin-top:2px }
 }
 
-/* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. */
+/* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. The cells come
+   closer than on other phones (here, after their 6px), and Value, whose numbers are right-aligned, needs no left padding. */
 @media (max-width: 360px) {
   .values-table .vt-unit { white-space:normal }
+  .values-table :is(th,td) { padding-left:4px; padding-right:4px }
+  .values-table .vt-value { padding-left:0 }
 }
 
 @media (max-width: 520px) {

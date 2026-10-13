@@ -2268,7 +2268,7 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   assert.equal(shown({ kcat_display: "135.0" }), "135.0", "printed trailing zeros stay");
   assert.equal(shown({ km_display: "0.02828" }), "0.02828");
   assert.equal(shown({ km_display: "17.8894" }), "17.89");
-  assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times;&nbsp;10<sup>7<\/sup>/);
+  assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times;&nbsp;10<sup>7<\/sup>/, "× 10 never parts");
   // The record's value strip follows the rule; the tooltip keeps the stored digits.
   assert.equal(api.panelValueHtml(row({ kcat_display: "30.333" }), "kcat"), "30.3");
   // An earlier-catalog kcat/Km of unstated origin is never called calculated, even when it equals kcat ÷ Km.
@@ -3510,8 +3510,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["kcat", "Km"]);
-  // A row without a check keeps an unseen copy of its space, so the numbers end at the same place.
-  assert.match(html, /<span class="vt-number">1<span class="value-approved vt-ghost" aria-hidden="true"><svg/);
+  // A row without a check keeps an unseen copy of its space, so the numbers end at the same place; a word joiner ties
+  // each check (or its copy) to its number, so a narrow cell never puts it on a line of its own.
+  assert.match(html, /<span class="vt-number">1&#8288;<span class="value-approved vt-ghost" aria-hidden="true"><svg/);
+  assert.match(html, /<table class="values-table[^"]* vt-checks"/, "a table with checks keeps a margin for them on the narrowest phones");
   // A note that is not the review's sentence marks nothing (no guessing from free text).
   api.renderDetail(noted, {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), []);
