@@ -1959,6 +1959,13 @@ def check(driver, browser, url):
             return gaps;
         """)
         assert spacing and all(abs(gap - 8) <= 0.5 for gap in spacing), f"Bars of one-line rows sit 8px apart at {width}px: {spacing}"
+        if width < 1024:
+            # Tablet header: Download ends where the links out under it end.
+            edges = driver.execute_script("""
+                return [document.querySelector('#downloadMenu > summary').getBoundingClientRect().right,
+                        document.querySelector('.external-nav').getBoundingClientRect().right];
+            """)
+            assert abs(edges[0] - edges[1]) <= 1, f"Download ends with the links out at {width}px: {edges}"
         capture(f"stats-{width}")
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})

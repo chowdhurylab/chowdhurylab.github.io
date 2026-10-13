@@ -208,8 +208,8 @@ back (with how many) or to clear everything. The header's tabs are the
 catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
 behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
-every view: brand and Download, the tabs with the links out at the line's end,
-then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
+every view: brand and Download, the tabs with the links out at the line's end
+(Download ends where they end), then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
 and Download share the first line, the four tabs share the second across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
 with Clear all at the left and Columns, Export and Sort at the right; on phones a

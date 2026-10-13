@@ -1028,6 +1028,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @media (max-width: 1023px) {
   .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" "search search"; column-gap:var(--sp-3); row-gap:6px; padding:var(--sp-2) var(--sp-4) 10px }
   body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:minmax(0,1fr) max-content; grid-template-areas:"brand actions" "nav links" }
+  /* Download ends where the links out under it end. */
+  .header-actions { justify-self:end }
   .top-nav { justify-self:stretch; flex-wrap:nowrap; gap:var(--sp-1); min-width:0; overflow-x:auto; scrollbar-width:none }
   .top-nav::-webkit-scrollbar { display:none }
   .nav-tab { flex:0 0 auto; min-width:0; min-height:40px; padding:2px 10px 0 }
