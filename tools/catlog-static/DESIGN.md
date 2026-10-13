@@ -78,7 +78,7 @@ apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
 so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
-Keep Records, Accepted, CatLog v2, Human-checked and the three "With
+Keep Records, Accepted, Read from the paper, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
 --muted, on one baseline (Records, Accepted and Read from the paper in accent ink with the soft glow,
 Human-checked in its green; a linked count tints around itself on hover without moving the line), the snapshot date (12px) at its end (its title is the
@@ -86,13 +86,14 @@ Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
 From 1181 to 1439px "With" is read out but not shown; a window still too narrow
 (or "Matching records") moves the date under the counts, inside the same 64px.
 From 641 to 1180px, too narrow for the counts on one line, the band always takes
-the same two lines (Records, Accepted, CatLog v2, Human-checked; then the With
-counts and the date, with no divider at the start of a line); below about 740px
-Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px;
+the same two lines (Records, Accepted, Read from the paper, Human-checked; then the With
+counts and the date, with no divider at the start of a line); from 641 to 799px Read from the paper shows its short
+tag, From paper (a wide font such as Linux's DejaVu Sans needs 780px for the whole label; a screen reader still reads
+Read from the paper), and below about 710px Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px;
 a filtered "Matching records" count too wide for one line puts Accepted under it),
 Human-checked takes the next line with the More button, and More shows the rest
-(CatLog v2 first). CatLog v2 N (the name Stats and the Source filter give that count; its title says "read
-from the paper by CatLog") links to those records (#browse?source=paper plus
+(Read from the paper first). Read from the paper N (the name Stats and the Source filter give that count; its title
+says "Show the records read from the paper by CatLog") links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's
 summary.overview.from_paper.records on an unfiltered view until the records
 load, then the count among the current results; 0 is plain text. Human-checked N is a link to those records
@@ -110,8 +111,9 @@ offers "All N matching records (CSV)", "This page (CSV)" and "This page (JSON)".
 The CSV is built in the page from the loaded index, a slice at a time: the
 table's columns with their units and stored digits, the condition note under the
 substrate (condition_note, so look-alike records of a paper stay apart), review result (the exact
-value), human-checked, source (named as the JSON and Download record name it: "CatLog v2" for a record read from the
-paper by CatLog, otherwise the databases by name, "Open Enzyme Database (OED)"), PMIDs, DOIs, UniProt ID and record ID, one line
+value), human-checked, source (named as the JSON and Download record name it: "CatLog (read from the paper)" for a
+record read from the paper by CatLog, otherwise the databases by name, "Open Enzyme Database (OED)"; the field names
+stay), PMIDs, DOIs, UniProt ID and record ID, one line
 per record (RFC 4180, UTF-8 with a byte-order mark; a cell a spreadsheet would
 read as a formula starts with an apostrophe). The JSON page export keeps every
 field from the records' detail files. Files are named catlog-<snapshot
@@ -166,18 +168,19 @@ one short line per option and no help paragraphs; a group with explanations has 
 24px round "?" beside its chevron that shows them in a quiet --surface-2 box under
 its title (and hides them again); opened near the foot of the sidebar or the phone sheet, the sidebar scrolls just
 enough to keep the group's options in view, never taking its title under the sticky heading. The panel order: Source (three
-radio buttons: All records, CatLog v2 and CatLog v1, CatLog v2 and v1 entries as the user names them (2026-10-13);
-each version sits beside its count and says what it holds in a few words on one quieter 12px --muted line under it
-that runs under the count too, "read from the paper" and "from enzyme databases", short enough for the 256px sidebar
-with a wide font, so no label wraps on its own); its "?" says what each is ("CatLog v2: the current version, read
-from the paper by an AI model; ..." and "CatLog v1: the earlier version with the same goal, started from enzyme
-database entries; part of them were checked against their papers (the review result says which)", never that every
-CatLog v1 entry was checked; each radio's title says the same), that a merged record counts under each
+radio buttons: All records, Read from the paper and Not yet re-read: each record labelled by what happened to it, with
+CatLog the one name (the user, 2026-10-13, round 8; never v1 or v2); each label on one line beside its count in the
+256px sidebar, also in a wide font (DejaVu Sans) beside a six-figure count: the sidebar's scrollbar is thin and a
+radio's count may come 4px closer to its label than elsewhere); its "?" says what each is ("Read from the paper: by an
+AI model; a second, separate AI check compared each value with the paper." and "Not yet re-read: from CatLog's earlier
+version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads
+a paper, its records replace these.", never that every such record was checked; each radio's title says the same,
+Read from the paper's as the method's short form), that a merged record counts under each
 database and links to the Guide's #guide-method; "By database" folds the databases (the Open Enzyme Database as "OED", the
 table's tag, read out and on hover in full), STRENDA DB,
 earlier paper extractions (shown as "Earlier extractions", the table's tag, and read out in full, so a wide font keeps it
-on one line at 256px) and Source not recorded: ticking one selects CatLog v1, a merged record counts under each
-database it names, and All records or CatLog v2 clears them), Against the databases (shown only when the snapshot carries the comparison:
+on one line at 256px) and Source not recorded: ticking one selects Not yet re-read, a merged record counts under each
+database it names, and All records or Read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
 scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
@@ -211,12 +214,12 @@ when one of its options is set. Every option shows how many of the current
 results it covers, counted with its own group set aside (so ticking it shows, or
 adds, that many); an option at 0 is grey and stays clickable. Before the record
 index arrives, Review result, Measurement type and the three Source choices show
-the snapshot's own counts (CatLog v2 is the counts band's figure,
-CatLog v1 the rest), the other options a dash. The counts are
+the snapshot's own counts (Read from the paper is the counts band's figure,
+Not yet re-read the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
-above the table that removes it, in the sidebar's words ("Source: CatLog v2", "Source: OED", "Source: Earlier
+above the table that removes it, in the sidebar's words ("Source: Read from the paper", "Source: OED", "Source: Earlier
 extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's
 trailing dot), followed by Clear all (with no matching
 records, "Clear search and filters" takes its place, so the toolbar has one clear
@@ -230,8 +233,8 @@ Browse with filters has the address #browse?key=value&... (q, status, checked,
 ec, enzyme, organism, substrate, metric, variant, tmin, tmax, phmin, phmax,
 caution, db, source, sort, rows, page, record; comma lists; unknown keys ignored;
 db only when the snapshot carries the comparison).
-source=paper is CatLog v2: read from the paper (the older status=v2 opens it
-too), source=databases CatLog v1: from enzyme databases, and source=brenda,oed,... those
+source=paper is Read from the paper (the older status=v2 opens it
+too), source=databases Not yet re-read, and source=brenda,oed,... those
 databases (earlier_paper, unrecorded and strenda included).
 It is read on load and on Back and Forward, rewritten in place (never a new
 history entry) when the filters, search, sort, rows per page or page change, and
@@ -408,7 +411,7 @@ human reviewer's approval (human-checked)"). human-checked's rule, said the same
 in the filter's "?", the badge's title, the record, the Guide and Stats (the user,
 2026-10-13; no whole-row rule): "A human reviewer approved every kcat and Km shown;
 the kcat/Km was approved too or agrees with kcat ÷ Km." (a record read by CatLog adds
-"the same values, in the review of CatLog v1 entries"); never "every value". Columns are sized to the page's content: values, EC and Review result are
+"the same values, in the review of the earlier version's entries"); never "every value". Columns are sized to the page's content: values, EC and Review result are
 as wide as their widest entry (and their heading) and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
@@ -620,8 +623,8 @@ found at once: A, B, G, C, D, E, F, H.
   a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
-- C. Source: Values from ("The paper (CatLog v2)", as the Source filter names the
-  version, so "Read from the paper" is said once, by the Method line under it; or the databases by
+- C. Source: Values from ("The paper (read by CatLog)", so "Read from the paper" is said once, by the Method line
+  under it; or the databases by
   name, never a raw key; not "Source", which would repeat the heading); Merged
   from (database entries and papers); the source's own details as rows of the
   same list, each wrapping (nothing to open at the record's end): Databases, the
@@ -752,7 +755,7 @@ found at once: A, B, G, C, D, E, F, H.
   changed field, "66 mM → **0.066 mM**" with the kind of change ("unit or
   magnitude (÷ 1000)" with the factor kept on one line, "more digits /
   rounding", "different number", "added: the source had none", "removed",
-  "replaced"), "Before: as in OED for this paper" or "Before: CatLog v1 value
+  "replaced"), "Before: as in OED for this paper" or "Before: the earlier version's value
   before the correction" (nothing for an added value's "none"), "In the paper: <where>"; then
   pH, temperature (in °C), identifiers as text, as given, never written as
   numbers ("UniProt P00325 → P00326", "PMID 21149620 → 21149602", not
@@ -765,7 +768,7 @@ found at once: A, B, G, C, D, E, F, H.
   automated review to what the paper prints." (and "More records like this:
   Corrected earlier" when Browse has that option). A corrected record without its
   trail says so in its Review result line ("this snapshot does not list the
-  changes"; CatLog v1's files keep them) and has no section G. Any other
+  changes"; the earlier version's files keep them) and has no section G. Any other
   record has no section G: a heading that compares nothing is never shown.
   Colour is never the only carrier: the word or phrase is always printed.
 - H. Review and audit: Review result in one sentence ("Accepted: read from the paper
@@ -776,8 +779,9 @@ found at once: A, B, G, C, D, E, F, H.
   whose Evidence reads "Located in the paper", nor on one that names no
   paper); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that
-  has a mark (no review year; the notes are shown as written: they name "CatLog v1
-  entries" themselves; a checked record without a note names the values it shows that a reviewer approved, "A human
+  has a mark (no review year; the notes are shown as written, except that a note naming "CatLog v1 entries" reads
+  "the earlier version's entries" (versionWords; CatLog is the one name); the review notes of a record not yet re-read
+  say "the earlier version's entry" where the earlier review wrote "expected row"; a checked record without a note names the values it shows that a reviewer approved, "A human
   reviewer approved the Km shown." or "... the kcat and Km shown; the kcat/Km agrees with kcat ÷ Km.", never a value
   the record does not have; human-checked's whole rule only when it shows all three and the mark lists none); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
@@ -835,11 +839,12 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band: 32px key numbers in accent ink with a soft glow (24-32px with the window between 721 and 1199px, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (the human review of CatLog v1 entries as the lead, the user's headline, with CatLog v2's match as a side
-line; then the checks), 3 What is in the catalog (the review-result donut and its legend table, records by main
-source with a Records | Share switch, CatLog v2 and CatLog v1 entries, values per paper in CatLog v2, what the
-records contain, wild type and variants), 4 Biology (enzyme classes with accepted and CatLog v2 entries, the top
-organisms and EC numbers overall and among CatLog v2 entries), 5 Values (value ranges, then values by enzyme class
+2 Quality (the lead, the user's headline: "Human review", 99.9% values correct of 2,674 entries from the earlier
+version (408 papers), with "Read from the paper again: same value as the reviewers for ..." as a side line; then the
+checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a
+Records | Share switch, Read from the paper and not yet re-read, values read from each paper, what the records
+contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
+organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
 as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with one sentence and a 12px
 data line (snapshot, Data ID, definition); fills run from the colour to its tint with 1px outlines, in the
@@ -868,15 +873,16 @@ points to the method ("How this catalog is built: see ..."). Then "On this
 page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: How CatLog reads and checks
 values (#guide-method: the only place the method is said in full; it opens
-with the human review in a light box ("Human reviewers checked 2,674 CatLog v1
-entries from 408 papers: values correct (kcat, Km, kcat/Km) 99.9%." and CatLog v2's
-match, the Stats lead's side line) linked to Stats, left out without those counts;
-then a definition list of CatLog v2: read from the paper, AI audits, Human review
+with the human review in a light box ("99.9% values correct of 2,674 entries from the
+earlier version (408 papers)." and "Read from the paper again: ...", the Stats lead's
+side line) linked to Stats, left out without those counts;
+then a definition list of Read from the paper (CatLog's current version, which the Guide says once is its second),
+AI audits, Human review
 (what the lead does not say: "A reviewer disputed a kcat, Km or kcat/Km value on 3
 of the 2,674 entries, ...", values missing and other disagreements, then the
 human-checked records and their rule; the lead's sentence is never said twice;
-kcat, Km and kcat/Km in italics with a subscript in the lead and this item), CatLog v1: from
-enzyme databases and Who does it (linking to Team); the
+kcat, Km and kcat/Km in italics with a subscript in this item), Not yet re-read (records from CatLog's earlier
+version; when CatLog reads a paper, its records replace these) and Who does it (linking to Team); the
 audit and human-review numbers are filled from the snapshot's overview when it
 has them, never typed, and the items read without numbers otherwise; badges,
 filters and Stats say it in one line and link here), Find records (#guide-find:
@@ -896,8 +902,9 @@ Guide at that section, and a link to one (from Stats, a record, the filters or
 the contents list) opens it in the page with focus on its heading (made
 focusable then, so a page opened at a section shows no focus ring); the Guide never downloads the record index. Terms and
 meanings are two-column lists, one line each where they fit; no walls of text.
-Records are "CatLog v2 entries" and "CatLog v1 entries" there, as in the Source
-filter and Stats (never "older records"; "Evidence labels on CatLog v1 entries").
+Records are "read from the paper" and "not yet re-read" there, as in the Source
+filter and Stats (never "older records", never v1 or v2; "Evidence labels on records not yet re-read"); the earlier
+version is named only in the method section and in a tag's or status's help.
 Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel
 changes, the Guide's wording and example change with it. The page keeps exactly

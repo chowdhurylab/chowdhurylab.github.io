@@ -24,55 +24,64 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
 
 1. At a glance, the headline band (the user: "the stats bar on top - can it glow a bit or more focus driving"): a box
    with a 2px accent rule along its top, fading to the right, and a soft accent wash in its corner. Line 1 (32px):
-   Records, Accepted with its share, CatLog v2 entries with their papers, Human review (the values correct in CatLog
-   v1 entries; a snapshot without the review's counts gives CatLog v2's match), the numbers in accent ink with a soft
+   Records, Accepted with its share, Read from the paper with its papers, Human review ("99.9%", "values correct of
+   2,674 entries from the earlier version (408 papers)"; a snapshot without the review's counts gives the share of
+   approved values the same, read from the paper again), the numbers in accent ink with a soft
    glow (a 14px text-shadow of the accent at 26%, never neon). Line 2 (20px): Papers, Enzymes, EC numbers, Organisms,
-   Substrates. Accepted and the CatLog v2 entries link into Browse: the whole item is the link and tints calmly under
-   the pointer. Phones: 24/18px, two to a row. Browse's counts band gets the same treatment at 20px: its key numbers
+   Substrates. Accepted and Read from the paper link into Browse: the whole item is the link and tints calmly under
+   the pointer. Phones: 24/18px, two to a row; below 360px line 1 stands one under the other, so Read from the paper
+   keeps one line in a wide font (DejaVu Sans). CatLog is the one name (round 8): records are Read from the paper or
+   Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on
+   Stats), in the human review's base and in the Guide's method section. Browse's counts band gets the same treatment at 20px: its key numbers
    in accent ink with the glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
    linked count tints around itself without moving the line. Its With counts (kcat, Km, kcat/Km) are secondary:
    16px/500 in --text-2 with their 13px labels, so the key numbers lead. Nothing moves when the viewer asks for less motion;
    print drops every glow and wash.
 2. Quality: the lead, then Checks on the values.
-3. What is in the catalog: Review result (the donut), Records by main source, CatLog v2 and CatLog v1 entries, Values
-   per paper in CatLog v2, then What the records contain beside Wild type and variants.
-4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the 10 with the most CatLog v2 entries.
+3. What is in the catalog: Review result (the donut), Records by main source, Read from the paper and not yet re-read,
+   Values read from each paper, then What the records contain beside Wild type and variants.
+4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the same among records read from the
+   paper.
 5. Values: Value ranges, then Values by enzyme class.
 6. Cautions.
 7. Against the databases: figures 3-5 of the design spec, only when the snapshot has their counts.
 
 A closed "How these numbers are counted" ends the page. The parts' figures and tables:
 
-- Lead (first in Quality, full width): Human review of CatLog v1 entries, what the reviewers'
+- Lead (first in Quality, full width): Human review of the earlier version's entries, what the reviewers'
   own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
   `overview.quality.review.v1` (catlog-v2 HUMAN_REVIEW.md "Measuring CatLog against the reviewers"; `build_overview`
   copies each reviewed catalog's numbers, strings and `other_by_kind`). Each entry a reviewer checked counts once, by
-  its final verdict. The big number is the values correct (kcat, Km, kcat/Km): entries where no reviewer disputed a
-  number or its unit, worked out from `entries` and `value_disputed` ("99.9%"). One sentence: "Human reviewers
-  checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km value on 3 of them, and
-  all 3 are as printed in the paper." (`value_disputed_checked_as_printed`). Two facts: Values missing ("31 entries
+  its final verdict. Its heading is "Human review"; the big number is the values correct (kcat, Km, kcat/Km): entries
+  where no reviewer disputed a number or its unit, worked out from `entries` and `value_disputed` ("99.9%"), with its
+  base under it as one phrase, "values correct of 2,674 entries from the earlier version (408 papers)". One sentence,
+  without repeating the base: "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3
+  are as printed in the paper." (`value_disputed_checked_as_printed`). Two facts: Values missing ("31 entries
   (1.2%)") and Other disagreements ("177 entries (6.6%)"), then one note: what values missing means ("the paper
-  prints a value the entry lacked, mostly the kcat"), with how many of the values reviewers named CatLog v2 has
-  (`agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, a minor line
-  ("could not find the value 153, organism name 13, DOI 5, ..."). A review of CatLog v2 entries (`review.v2`, once
-  reviewers check them) adds one sentence of the same shape. CatLog v2 against the review is one side line, set off
-  by a rule at its left: "CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of
-  4,074 approved values (89.0%); wrong CatLog values found: 0." (`agreement.agree` of `values_approved`, else
+  prints a value the entry lacked, mostly the kcat"), with how many of the values reviewers named CatLog has read from
+  the paper since ("CatLog has read 53 of the 58 values reviewers named from the paper";
+  `agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, a minor line
+  ("could not find the value 153, organism name 13, DOI 5, ..."). A review of records read from the paper
+  (`review.v2`, once reviewers check them) adds one sentence of the same shape ("Human reviewers checked 40 records
+  read from the paper (3 papers): ..."). CatLog's reading against the review is one side line, set off by a rule at
+  its left: "Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong
+  CatLog values found: 0." (`agreement.agree` of `values_approved`, else
   `v2_found` of `v2_approved_total`: the match as it is now; `agreement.catlog_value_wrong`, else `v2_wrong`). Then
   a data line with the definitions and links to the Guide's method and to Team. kcat, Km and kcat/Km in the lead's
   text (the big number's words, the sentence, the notes, the data line) take the site's italic markup with a
   subscript (metricWordsHtml, on escaped text only), as the Values lines and the Guide write them. The first-comparison and blind
   fields (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no
-  "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with CatLog v2's match
-  ("of the values human reviewers approved are the same in CatLog v2") and what reviewers found in CatLog v1 entries
-  (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
+  "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with that match ("of the
+  values human reviewers approved are the same, read from the paper again"; its sentence names the papers: "Read from
+  the paper again (98 papers human reviewers checked): ...") and what reviewers found in entries from the earlier
+  version (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
   hole; each slice has one fill, its colour at 60% with a 1px opaque outline, so navy and slate stay apart (the
   bars keep their fade); the one partition that is
   a true whole) beside its legend table; pointing at a slice or its row lights both (lit rows tinted --surface-2; Not
   checked's row lights both its slices with their rows, while Unverified or Not reviewed alone leaves it unlit): Accepted (split in the rows under it:
-  CatLog v2: read from the paper, CatLog v1 as printed, after a correction,
+  Read from the paper; Not yet re-read, as printed, after a correction or
   approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed
   under it), Disputed, each with its definition. The no-paper-linked note and
   the closed table of fields saved in records that are not accepted follow.
@@ -87,13 +96,14 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   `main_sources` draws the same groups from the source_db counts, unsplit. A Records | Share switch above the bars
   redraws each source as 100% of itself (the accepted share by source, with its own 0-100% axis), eased unless the
   viewer asks for less motion.
-- CatLog v2 and CatLog v1 entries: two bars stacked by review result (CatLog v2: the main source CatLog's own
-  reading; CatLog v1: every other record, so the two make all records), each label the entries, then the share
-  accepted; both names link into Browse (source=paper, source=databases).
-- Values per paper in CatLog v2 (`overview.from_paper_values`): CatLog v2's papers by how many kcat, Km and printed
-  kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a calculated
-  kcat/Km is not a value read), each label the papers, then their share; drawn only when the bins add up to CatLog
-  v2's papers. No publication years: the data has none.
+- Read from the paper and not yet re-read: two bars stacked by review result (Read from the paper: the main source
+  CatLog's own reading; Not yet re-read: every other record, so the two make all records), each label the records,
+  then the share accepted; both names link into Browse (source=paper, source=databases). What each means is said once,
+  in How these numbers are counted.
+- Values read from each paper (`overview.from_paper_values`): the papers CatLog has read, by how many kcat, Km and
+  printed kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a
+  calculated kcat/Km is not a value read), each label the papers, then their share; drawn only when the bins add up to
+  the papers CatLog has read. No publication years: the data has none.
 - Figures 3-5 when `overview.quality` holds `db_compare`, `earlier_corrections`
   and `replaced` (counts the CatLog side computes; whole counts only, checked
   to add up): values read from the paper against the databases (same number,
@@ -103,33 +113,34 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   lists any of the parameters CatLog read from them; for 171 more, the
   databases list some of them but not all", leaving out a count of zero),
   the corrections on records accepted after a correction (rounding, a
-  different number, unit or magnitude, added) and the CatLog v1 entries of
-  papers CatLog v2 has read (same number in CatLog's reading, not found). 100%
+  different number, unit or magnitude, added) and Entries replaced by reading
+  the paper (the earlier version's entries of papers CatLog has read: same number in CatLog's reading, not found). 100%
   bars per parameter with reference lines at 25/50/75/100% and the shares
   under them. Absent counts: no figure and no heading. Captions never seem to
-  contradict the headline: figure 5's papers are those CatLog v2 has read that
-  CatLog v1 also had, figure 3 says for how many papers no database
+  contradict the headline: figure 5's papers are those CatLog has read that
+  the earlier version also had, figure 3 says for how many papers no database
   lists any parameter CatLog read and for how many it lists some but not all,
   and figure 4, when its record count is not the snapshot's count of records
   accepted after a correction, names both (with the date it was counted).
 - Checks on the values (cards, after the lead): second AI check (records read from the paper),
-  AI audits, the human review of CatLog v1 entries (entries and papers; values
+  AI audits, the human review of the earlier version's entries (entries and papers; values
   correct, values missing and other disagreements as shares; a snapshot without
   `review` gives every value reviewers compared, approved or not, the share
-  correct always beside the label errors), the reviewers' approved values in
-  CatLog v2 (the same value now, wrong CatLog values found) and human-checked
+  correct always beside the label errors), the reviewers' approved values read
+  from the paper again (the same value now, wrong CatLog values found) and human-checked
   records (with human-checked's rule and the records of this snapshot that have a
   human reviewer's verdict, approved or not: `human_marked`, records, not the
   review's entries); a row whose numbers are missing is left out. Metric words in
   its result lines are in italics, as in the lead. Each card with a share (kept of the values audited; human-checked
   of the records with a reviewer's verdict) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
-- Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a darker navy
+- Enzyme classes: records bars (light) with the accepted drawn over them and the records read from the paper as a darker navy
   stripe inside the accepted bar (70% navy, 30% text), set off from its fill by a 1px white gap above and below, so it
   parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
-  accepted swatch with the stripe through it); a nonzero accepted or CatLog v2 count draws at least 2px wide; each label gives records, accepted, then CatLog v2 entries (navy), each
-  number in its own right-aligned column under a 12px muted heading line (Records, Accepted, CatLog v2: the legend's
-  order), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
+  accepted swatch with the stripe through it, named Read from the paper); a nonzero accepted or read-from-the-paper
+  count draws at least 2px wide; each label gives records, accepted, then read from the paper (navy), each
+  number in its own right-aligned column under a 12px muted heading line (Records, Accepted, From paper: the legend's
+  order, the last in the short tag), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
   that heading line. On phones, as in every bar chart, its bars and axis span the row: the class name and its numbers
   share the first line, under the headings, 8px apart, and a long class name hyphenates.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
@@ -161,8 +172,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC
-  with the enzyme name its records use most, bars against the largest), then the 10 organisms and EC numbers with
-  the most CatLog v2 entries (counts "Entries", shares of CatLog v2 entries, navy bars, linked with source=paper),
+  with the enzyme name its records use most, bars against the largest), then Most common organisms and Most common
+  EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, navy
+  bars, linked with source=paper),
   What the records contain, Wild type and variants, Cautions.
 
 Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette but a bit glowing"): every figure
@@ -180,7 +192,7 @@ the labels' own font, so labels never touch, also in a wider font; on phones, wh
 thin sooner: six ticks under 56ch, five under 45ch, four under 34ch); light 1px gridlines at the
 ticks shown, a gridline giving way with its label, so none is unlabelled. Category labels 13px, value labels and ticks
 12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
-label of several numbers (the count, then the share; Figure 5's records, accepted and CatLog v2 entries) sets each
+label of several numbers (the count, then the share; Figure 5's records, accepted and read from the paper) sets each
 number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
 chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font at 600,
 the boldest weight in a value column), so the counts line up whatever the shares.
@@ -202,7 +214,7 @@ cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring; the glow stays soft (never neon) and only marks focus: at rest only the headline band's key
 numbers and the lead figure of Quality glow; a mark (bar, slice, ridge, median dot) glows only while pointed at or
 focused, so the part numbers, meters, the median dots, the ridges and the pressed switch button have plain 1px
-outlines at rest, and the CatLog v2 stripe never glows (its accepted bar does). Markup (a deliberate change from the design spec's
+outlines at rest, and the read-from-the-paper stripe never glows (its accepted bar does). Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
 (role="img", its summary in aria-label, a title per part), each value-range
 histogram and each class ridge an image with its summary in aria-label; bar charts and table bars
@@ -221,8 +233,8 @@ and columns print in their colours even with the browser's background graphics o
 switch on paper.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
-rows under it split it into the CatLog v2 entries, read from the paper by CatLog,
-and the CatLog v1 entries, as printed, after a correction or on a human reviewer's
+rows under it split it into the records read from the paper by CatLog and
+those not yet re-read, as printed, after a correction or on a human reviewer's
 approval), Not confirmed, Not checked (the
 group Browse filters on, with Unverified and Not reviewed under it), then
 Disputed. An unfamiliar status is listed, not dropped. Keep the no-paper-linked caveat visible. The
@@ -286,10 +298,10 @@ stations come from the manifest (papers read and records at AI reading,
 values re-checked by AI audits at CatLog, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
 its field is absent. Human check says the Stats lead's headline shortened, never
-a bare "agreement": "99.9% values correct" over "in 2,674 CatLog v1 entries"
-("99.9% values correct in" over "2,674 CatLog v1 entries" on the upright loop),
-its label one phrase; without the review's counts, "89.0% of approved values"
-over "the same in CatLog v2" (three lines on the upright loop). No station's
+a bare "agreement": "99.9% values correct" over "of 2,674 entries from the earlier version"
+("99.9% values correct" over "of 2,674 entries from" over "the earlier version" on the upright loop),
+its label one phrase; without the review's counts, "89.0% of approved values the same,"
+over "read from the paper again" (three lines on the upright loop). No station's
 name and numbers come within 12px of another station's,
 the track, or the chips and their lines, also in a wider font (Linux Chrome): on
 the wide loop CatLog's stand up and left of its dot, clear of the arc, Rules
