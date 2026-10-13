@@ -313,10 +313,12 @@ the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat 
 kcat/Km stored with 4 figures ending 333, 667, 833 or 167, as 7.333 = 440/60,
 shows 7.33), never fewer than a number's integer digits below 10⁵; up to 4
 printed digits stay as stored, trailing zeros included (135.0, 0.030). A kcat/Km
-CatLog calculated, or an earlier-catalog kcat/Km of unstated origin that equals
-kcat ÷ Km within 0.1%, carries "calc." (its title says which) and the significant
-figures of kcat and Km, at most 4 (one that only equals kcat ÷ Km never more than
-it is stored with: 0.56 stays 0.56). Tooltips and the downloads keep the stored
+CatLog calculated (kcat_over_km_origin "calculated"; an earlier-catalog kcat/Km of
+unstated origin is never called calculated, even when it equals kcat ÷ Km) carries
+"calc." and the significant figures of kcat and Km, at most 4. Its title is "kcat ÷
+Km, calculated by CatLog; not printed in the paper." on a record read from the
+paper and "kcat ÷ Km, calculated by CatLog." on an older one, whose source may list
+a kcat/Km of its own (often the printed one). Tooltips and the downloads keep the stored
 digits. The record's Value column follows the table's rule, except that a record
 read by CatLog shows its values to the figures the paper printed when CatLog gives
 them (value_display: 135.0 where the table shows 135), never more figures than the
@@ -403,8 +405,9 @@ is left out, never an empty heading. The order (design spec 5):
   s⁻¹." (a unit in CatLog's own words, in these notes, the Second check and the
   unit cautions, reads s⁻¹ whether the reader typed s^-1 or s-1; As printed
   keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; not printed
-  in the paper."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists a
-  different kcat/Km (above)." when its sources list one, never "not printed"),
+  in the paper."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists its
+  own kcat/Km (above)." when its sources list one, never "not printed" or
+  "different": a listed value is often the printed one, the same to the figures shown),
   then each quoted line once (a line another value's line continues, one excerpt
   cut at two lengths, is quoted once, the longer): one line gives its place,
   "Table 2 row, as extracted from the paper's text" ("Table 2, as extracted ..."

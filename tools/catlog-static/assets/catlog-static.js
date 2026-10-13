@@ -1322,12 +1322,18 @@
     return storedUnitDiffers(row, field) ? `${displayHtml}${storedUnitHtml(row, field)}` : displayHtml;
   }
 
-  const CALCULATED_NOTE = "kcat ÷ Km, not printed in the source";
+  // A kcat/Km worked out as kcat ÷ Km ("calc."), in the table's tooltip and the record's note. A record read from the
+  // paper has one only when the paper prints none; an older record's source may still list a kcat/Km of its own (the
+  // record shows it), so its note never says none is printed.
+  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; not printed in the paper.";
+  const CALCULATED_OLDER_NOTE = "kcat ÷ Km, calculated by CatLog.";
   const EQUALS_QUOTIENT_NOTE = "Equals kcat ÷ Km; the source does not say whether it was printed or calculated. Shown with the significant figures of kcat and Km.";
 
   // A kcat/Km worked out from kcat and Km: "calc." beside the table value, "calculated" in the record.
   function efficiencyOriginHtml(row, { short = false } = {}) {
-    const note = row.kcat_over_km_origin === "calculated" ? CALCULATED_NOTE : (efficiencyLooksCalculated(row) ? EQUALS_QUOTIENT_NOTE : "");
+    const note = row.kcat_over_km_origin === "calculated"
+      ? (isV2Row(row) ? CALCULATED_V2_NOTE : CALCULATED_OLDER_NOTE)
+      : (efficiencyLooksCalculated(row) ? EQUALS_QUOTIENT_NOTE : "");
     return note ? `<small class="metric-origin" title="${escapeHtml(note)}">${short ? "calc." : "calculated"}</small>` : "";
   }
 
@@ -4212,7 +4218,7 @@
     }
     if (contents.length) {
       const notes = [
-        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table, as is an older kcat/Km of unstated origin that equals kcat ÷ Km).` : "",
+        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
         both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
       ].filter(Boolean).join(" ");
       tables.push({
@@ -7304,11 +7310,6 @@
     ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>"],
     ["ki", "<i>K</i><sub>i</sub>"],
   ];
-  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; not printed in the paper.";
-  // An older record's calculated kcat/Km: the earlier catalog worked it out, but its source may still list one of its own
-  // (shown above the note, so the note never says the source does not print one).
-  const CALCULATED_OLDER_NOTE = "kcat ÷ Km, calculated by CatLog.";
-
   // The proof line (a record read from the paper) that gives a field's value, or -1.
   function proofLineIndex(proof, field) {
     return proof ? proof.lines.findIndex((line) => (v2MetricLabels[line.metric] || [])[0] === field) : -1;
@@ -7415,9 +7416,10 @@
       : (fields.some(([field]) => field === "ki")
           ? `This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km${listedBy}.`
           : `No kcat, Km or kcat/Km is stored for this record${listedBy}.`);
-    // "OED lists a different kcat/Km (above)." after an older record's calc. note when its sources list their own.
+    // "OED lists its own kcat/Km (above)." after an older record's calc. note when its sources list their own (often the
+    // printed one: the same number to the figures shown, or a kcat/Km the paper prints that kcat ÷ Km rounds apart from).
     const calcListed = calcNote && !v2Record && listed && listers.length
-      ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list different kcat/Km values" : "lists a different kcat/Km"} (above).`
+      ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list their own kcat/Km values" : "lists its own kcat/Km"} (above).`
       : "";
     const greyNotes = [
       ...conversionNotesHtml(proof, unitCautions),

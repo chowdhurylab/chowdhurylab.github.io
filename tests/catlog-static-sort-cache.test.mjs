@@ -2139,6 +2139,12 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   assert.equal(api.efficiencyOriginHtml(printedRow, { short: true }), "");
   const fromPaperRow = { ...quotientRow, source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" };
   assert.equal(api.efficiencyOriginHtml(fromPaperRow, { short: true }), "", "a value read from the paper is never called calculated");
+  // A calculated kcat/Km's tooltip: "not printed in the paper" only on a record read from the paper; an older record's
+  // source may list (and its paper print) a kcat/Km of its own.
+  const calcOlder = { ...quotientRow, kcat_over_km_origin: "calculated", source_db: "oed" };
+  assert.equal(api.efficiencyOriginHtml(calcOlder, { short: true }), '<small class="metric-origin" title="kcat ÷ Km, calculated by CatLog.">calc.</small>');
+  const calcV2 = { ...calcOlder, source_db: "primary_paper_direct", verification_status: "verified", enzyme_label_source: "explicit_enzyme_name" };
+  assert.match(api.efficiencyOriginHtml(calcV2, { short: true }), /title="kcat ÷ Km, calculated by CatLog; not printed in the paper\."/);
 }
 // A per-minute value stored with 4 figures shows its ÷60 repeat in its ending (7.333 = 440/60, 0.1833 = 11/60): 3 figures
 // for kcat and kcat/Km; other 4-figure values, and Km, stay as stored.
@@ -2651,12 +2657,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span class="vt-number">15<\/span><small class="metric-origin" title="[^"]+">calc\.<\/small><button class="value-flag"/);
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
   // Its calc. note never says the source does not print a kcat/Km: it says CatLog calculated it and points at the listed one.
-  assert.match(html, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists a different kcat\/Km \(above\)\.<\/li>/);
+  assert.match(html, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists its own kcat\/Km \(above\)\.<\/li>/);
   assert.doesNotMatch(html, /not printed in the source/);
   const alone = measurementSection(merged, {});
   assert.match(alone, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\.<\/li>/);
   const twoSources = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 40, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(twoSources, /calculated by CatLog\. OED and BRENDA list different kcat\/Km values \(above\)\./);
+  assert.match(twoSources, /calculated by CatLog\. OED and BRENDA list their own kcat\/Km values \(above\)\./);
   // CatLog's flag for the same conflict: a kcat/Km mismatch caution in the table and the filter; the record's note is the
   // one above, never the flag's name.
   const flagged = Object.assign(row({ ...merged, condition_flags: ["kcat_over_km_source_mismatch"] }), {});
