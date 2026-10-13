@@ -841,7 +841,10 @@ with the human review in a light box ("Human reviewers checked 2,674 CatLog v1
 entries from 408 papers: values correct (kcat, Km, kcat/Km) 99.9%." and CatLog v2's
 match, the Stats lead's side line) linked to Stats, left out without those counts;
 then a definition list of CatLog v2: read from the paper, AI audits, Human review
-(the review in full, then the human-checked records and their rule), CatLog v1: from
+(what the lead does not say: "A reviewer disputed a kcat, Km or kcat/Km value on 3
+of the 2,674 entries, ...", values missing and other disagreements, then the
+human-checked records and their rule; the lead's sentence is never said twice;
+kcat, Km and kcat/Km in italics with a subscript in the lead and this item), CatLog v1: from
 enzyme databases and Who does it (linking to Team); the
 audit and human-review numbers are filled from the snapshot's overview when it
 has them, never typed, and the items read without numbers otherwise; badges,

@@ -4225,15 +4225,19 @@
 
   // "Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km value on
   // 3 of them, and all 3 are as printed in the paper." With share, the values correct come first ("...: values correct
-  // (kcat, Km, kcat/Km) 99.9%; a reviewer disputed ...").
-  function reviewSentence(facts, { catalog = "CatLog v1", share = false } = {}) {
+  // (kcat, Km, kcat/Km) 99.9%; a reviewer disputed ..."). Without opener (after a lead that already says how many
+  // entries reviewers checked): "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3
+  // are as printed in the paper."
+  function reviewSentence(facts, { catalog = "CatLog v1", share = false, opener = true } = {}) {
     const { disputed, asPrinted } = facts;
     const checked = disputed && asPrinted === disputed
       ? `, and ${disputed === 1 ? "it is" : `all ${formatInteger(disputed)} are`} as printed in the paper`
       : (disputed && asPrinted ? `; ${formatInteger(asPrinted)} of these ${asPrinted === 1 ? "is" : "are"} as printed in the paper` : "");
+    const ofWhich = opener ? "them" : `the ${formatInteger(facts.entries)} ${facts.entries === 1 ? "entry" : "entries"}`;
     const result = disputed
-      ? `a reviewer disputed a ${REVIEW_VALUES} value on ${formatInteger(disputed)} of them${checked}`
+      ? `a reviewer disputed a ${REVIEW_VALUES} value on ${formatInteger(disputed)} of ${ofWhich}${checked}`
       : `no reviewer disputed a ${REVIEW_VALUES} value`;
+    if (!opener) return `${result.charAt(0).toUpperCase()}${result.slice(1)}.`;
     return `Human reviewers checked ${formatInteger(facts.entries)} ${catalog} ${facts.entries === 1 ? "entry" : "entries"}${facts.papers ? ` from ${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"}` : ""}: ${share ? `values correct (kcat, Km, kcat/Km) ${facts.correctShare}; ` : ""}${result}.`;
   }
 
@@ -4298,14 +4302,16 @@
 
   // The Guide's Human review item: the review in full (values correct, missing and other disagreements, and the review of
   // CatLog v2 entries when there is one), or, without the reviewers' own counts, what reviewers found in CatLog v1 entries.
-  function humanComparisonText(overview) {
+  // afterLead: the Guide's lead above it already says how many entries reviewers checked, so the item starts with what
+  // the lead does not say (never the same sentence twice).
+  function humanComparisonText(overview, { afterLead = false } = {}) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     if (!review) return v1ComparedText(quality);
     const missing = reviewMissingText(review, quality.agreement);
     const v2Review = reviewFacts(quality.review?.v2);
     return [
-      reviewSentence(review),
+      reviewSentence(review, { opener: !afterLead }),
       missing ? `Values missing: ${missing}.` : "",
       review.other !== null ? `Other disagreements: ${entriesText(review.other, review.entries)}.` : "",
       v2Review ? reviewSentence(v2Review, { catalog: "CatLog v2", share: true }) : "",
@@ -4350,14 +4356,16 @@
       kinds ? `Other disagreements, by kind: ${kinds}.` : "",
     ].filter(Boolean);
     const v2Review = reviewFacts(quality.review?.v2);
+    // kcat, Km and kcat/Km in the site's italic markup (metricWordsHtml, on escaped text only, never on a link).
+    const words = (text) => metricWordsHtml(escapeHtml(text));
     return section("Human review of CatLog v1 entries",
-      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct (kcat, Km, kcat/Km)</span>`,
-      `<p class="stats-lead-sentence">${escapeHtml(reviewSentence(review))}</p>
+      `<strong>${escapeHtml(review.correctShare)}</strong><span>${words("values correct (kcat, Km, kcat/Km)")}</span>`,
+      `<p class="stats-lead-sentence">${words(reviewSentence(review))}</p>
           ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
-          ${notes.length ? `<p class="stats-lead-note">${escapeHtml(notes.join(" "))}</p>` : ""}
-          ${v2Review ? `<p class="stats-lead-note">${escapeHtml(reviewSentence(v2Review, { catalog: "CatLog v2", share: true }))}</p>` : ""}
+          ${notes.length ? `<p class="stats-lead-note">${words(notes.join(" "))}</p>` : ""}
+          ${v2Review ? `<p class="stats-lead-note">${words(reviewSentence(v2Review, { catalog: "CatLog v2", share: true }))}</p>` : ""}
           ${match ? `<p class="stats-lead-side">${escapeHtml(v2MatchSentence(match, { ofThese: true }))}</p>` : ""}
-          <p class="stats-fig-data">${statsDataLine(`${asOf}From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict. Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.${review.missing !== null ? " Values missing: the reviewer says the paper prints a value the entry lacks." : ""}${match ? ` ${sameDefinition}` : ""}`)}</p>`);
+          <p class="stats-fig-data">${metricWordsHtml(statsDataLine(`${asOf}From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict. Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.${review.missing !== null ? " Values missing: the reviewer says the paper prints a value the entry lacks." : ""}${match ? ` ${sameDefinition}` : ""}`))}</p>`);
   }
 
   // The Guide's method section opens with the human review (the user's headline, first on Stats too): the values correct
@@ -4368,7 +4376,7 @@
     const match = v2MatchFacts(quality);
     if (!review && !match) return "";
     const headline = review
-      ? `Human reviewers checked ${formatInteger(review.entries)} CatLog v1 ${review.entries === 1 ? "entry" : "entries"}${review.papers ? ` from ${formatInteger(review.papers)} ${review.papers === 1 ? "paper" : "papers"}` : ""}: values correct (kcat, Km, kcat/Km) <strong>${escapeHtml(review.correctShare)}</strong>.`
+      ? `Human reviewers checked ${formatInteger(review.entries)} CatLog v1 ${review.entries === 1 ? "entry" : "entries"}${review.papers ? ` from ${formatInteger(review.papers)} ${review.papers === 1 ? "paper" : "papers"}` : ""}: ${metricWordsHtml("values correct (kcat, Km, kcat/Km)")} <strong>${escapeHtml(review.correctShare)}</strong>.`
       : "";
     const side = match ? escapeHtml(v2MatchSentence(match, { ofThese: Boolean(review) })) : "";
     return `<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
@@ -4383,10 +4391,10 @@
     if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
     const overview = statsOverview(Number(manifest.total_rows || 0));
     const lead = $("guideMethodLead");
+    const leadHtml = lead ? guideReviewLeadHtml(overview) : "";
     if (lead) {
-      const html = guideReviewLeadHtml(overview);
-      lead.innerHTML = html;
-      lead.hidden = !html;
+      lead.innerHTML = leadHtml;
+      lead.hidden = !leadHtml;
     }
     const audit = auditFacts(overview);
     if ($("guideMethodAudits") && audit) {
@@ -4395,9 +4403,10 @@
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     if ($("guideMethodHuman") && humanChecked !== null) {
-      const comparison = humanComparisonText(overview);
-      // what the review found comes first (the user, 2026-10-12), then the human-checked records and their rule
-      $("guideMethodHuman").textContent = `${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`;
+      // What the review found comes first (the user, 2026-10-12; what the lead above already says is not said again),
+      // then the human-checked records and their rule; kcat, Km and kcat/Km in the Guide's italic markup.
+      const comparison = humanComparisonText(overview, { afterLead: Boolean(leadHtml) });
+      $("guideMethodHuman").innerHTML = metricWordsHtml(escapeHtml(`${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`));
     }
   }
 
@@ -4739,7 +4748,7 @@
         result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label.`,
         share: (compared - comparedWrong) / compared } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked records", number: formatInteger(humanChecked), href: statsBrowseHref({ checked: "1" }),
-        unit: "accepted records", result: `${HUMAN_CHECKED_DESCRIPTION}${marked !== null && marked >= humanChecked ? ` Reviewers looked at ${formatInteger(marked)} records.` : ""}`,
+        unit: "accepted records", result: `${HUMAN_CHECKED_DESCRIPTION}${marked !== null && marked >= humanChecked ? ` In this snapshot, ${formatInteger(marked)} records have a human reviewer's verdict, approved or not.` : ""}`,
         share: marked ? humanChecked / marked : null } : null,
     ].filter(Boolean);
     const quality_ = [];
@@ -4753,7 +4762,7 @@
           <span class="stats-check-number">${card.href ? `<a class="stats-link" href="${escapeHtml(card.href)}">${card.number}</a>` : card.number}</span>
           <span class="stats-check-unit">${escapeHtml(card.unit)}</span>
           ${card.share !== null && card.share !== undefined ? `<span class="stats-meter" aria-hidden="true"><span style="width:${+(Math.max(0, Math.min(1, card.share)) * 100).toFixed(4)}%"></span></span>` : `<span class="stats-meter is-blank" aria-hidden="true"></span>`}
-          <span class="stats-check-result">${escapeHtml(card.result)}</span></li>`).join("")}</ul>
+          <span class="stats-check-result">${metricWordsHtml(escapeHtml(card.result))}</span></li>`).join("")}</ul>
         ${lead ? "" : `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`}
         <p class="stats-fig-data">${statsDataLine()}</p></section>` });
     }

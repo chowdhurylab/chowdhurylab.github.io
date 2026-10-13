@@ -59,7 +59,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   by a rule at its left: "CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of
   4,074 approved values (89.0%); wrong CatLog values found: 0." (`agreement.agree` of `values_approved`, else
   `v2_found` of `v2_approved_total`: the match as it is now; `agreement.catlog_value_wrong`, else `v2_wrong`). Then
-  a data line with the definitions and links to the Guide's method and to Team. The first-comparison and blind
+  a data line with the definitions and links to the Guide's method and to Team. kcat, Km and kcat/Km in the lead's
+  text (the big number's words, the sentence, the notes, the data line) take the site's italic markup with a
+  subscript (metricWordsHtml, on escaped text only), as the Values lines and the Guide write them. The first-comparison and blind
   fields (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no
   "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with CatLog v2's match
   ("of the values human reviewers approved are the same in CatLog v2") and what reviewers found in CatLog v1 entries
@@ -116,8 +118,11 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   `review` gives every value reviewers compared, approved or not, the share
   correct always beside the label errors), the reviewers' approved values in
   CatLog v2 (the same value now, wrong CatLog values found) and human-checked
-  records (with human-checked's rule); a row whose numbers are missing is left
-  out. Each card with a share (kept of the values audited; human-checked of the records reviewers looked at) has a
+  records (with human-checked's rule and the records of this snapshot that have a
+  human reviewer's verdict, approved or not: `human_marked`, records, not the
+  review's entries); a row whose numbers are missing is left out. Metric words in
+  its result lines are in italics, as in the lead. Each card with a share (kept of the values audited; human-checked
+  of the records with a reviewer's verdict) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
 - Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a darker navy
   stripe inside the accepted bar (70% navy, 30% text), set off from its fill by a 1px white gap above and below, so it

@@ -690,6 +690,9 @@ REVIEW_FIXTURE = {
 }
 REVIEW_SENTENCE = ("Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km "
                    "value on 3 of them, and all 3 are as printed in the paper.")
+# The Guide's Human review item, under the Guide's lead that already says how many entries reviewers checked, starts with
+# what the lead does not say (never the same sentence twice).
+REVIEW_ITEM_START = "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper."
 REVIEW_SIDE_LINE = ("CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved "
                     "values (89.0%); wrong CatLog values found: 0.")
 
@@ -774,6 +777,8 @@ def check_review_headline(driver, browser, url):
             assert "99.9%" in band and "values correct in CatLog v1 entries" in band, band
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == "99.9%"
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText") == REVIEW_SENTENCE
+            # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
+            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure i + sub, .stats-lead-sentence i + sub")) >= 7
             text = lead.get_attribute("innerText")
             assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog v2 has 53 of the 58 values reviewers named" in text, text
             assert "could not find the value 153, organism name 13, DOI 5" in text, text
@@ -787,7 +792,11 @@ def check_review_headline(driver, browser, url):
             guide = driver.execute_script(GUIDE_LEAD_JS)
             assert guide and "values correct (kcat, Km, kcat/Km) 99.9%" in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
             human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
-            assert REVIEW_SENTENCE in human and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
+            assert human.startswith(REVIEW_ITEM_START) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
+            assert "Human reviewers checked 2,674" not in human, "The Human review item repeats the Guide's lead"
+            # kcat, Km and kcat/Km in the site's italic markup in the lead and the Human review item, as Stats' lead
+            assert driver.execute_script("""return ['guideMethodLead', 'guideMethodHuman'].every((id) =>
+                document.getElementById(id).querySelectorAll('i + sub').length >= 3)"""), "kcat, Km and kcat/Km are in italics"
             assert_document_stays(driver, "Guide with the human review")
             # Team's Human check says the values correct, on the wide and the upright loop, and its lines touch no other
             # station's.
