@@ -117,7 +117,11 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   out. Each card with a share (kept of the values audited; human-checked of the records reviewers looked at) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
 - Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a solid navy
-  stripe inside (`ec_classes[].from_paper`); each label gives records, accepted, then CatLog v2 entries (navy).
+  stripe inside (`ec_classes[].from_paper`); each label gives records, accepted, then CatLog v2 entries (navy), each
+  number in its own right-aligned column under a 12px muted heading line (Records, Accepted, CatLog v2: the legend's
+  order), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
+  that heading line. On phones its bars and axis span the row (the end tick's label ends at its tick): the class name
+  and its numbers share the first line, under the headings, 8px apart, and a long name hyphenates.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them; values without a recorded
@@ -158,8 +162,8 @@ middle and the end of five ticks); light 1px gridlines at the ticks. Category la
 12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
 label of several numbers (the count, then the share; Figure 5's records, accepted and CatLog v2 entries) sets each
 number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
-chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font), so the
-counts line up whatever the shares.
+chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font at 600,
+the boldest weight in a value column), so the counts line up whatever the shares.
 Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
 drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
 tap. Scrolling hides a line the pointer showed (the pointer brings it back), while a line keyboard focus showed

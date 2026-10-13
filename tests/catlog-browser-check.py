@@ -825,9 +825,13 @@ STATS_AXIS_EVEN = """
         const places = shown.map(tick => parseFloat(tick.style.left));
         const steps = places.slice(1).map((place, index) => place - places[index]);
         const boxes = shown.map(tick => tick.getBoundingClientRect());
+        // each label centred on its tick; Figure 5's end label on phones ends at its tick (its axis spans the row, with no
+        // empty column to reach into)
+        const placed = (box, index) => { const at = area.left + area.width * places[index] / 100;
+            return Math.abs((box.left + box.right) / 2 - at) <= 1
+                || (index === boxes.length - 1 && axis.closest('.has-value-heads') && Math.abs(box.right - at) <= 1); };
         return steps.every(step => Math.abs(step - steps[0]) < 0.5)
-            && boxes.every((box, index) => index === 0
-                || Math.abs((box.left + box.right) / 2 - (area.left + area.width * places[index] / 100)) <= 1)
+            && boxes.every((box, index) => index === 0 || placed(box, index))
             && boxes.every((box, index) => index === 0 || box.left >= boxes[index - 1].right + 4);
     });
 """
@@ -940,6 +944,17 @@ def check_stats_more(driver, browser, overview, total):
     if all(isinstance(item.get("from_paper"), int) for item in classes.values()) and classes:
         shown = [int(span.get_attribute("innerText").replace(",", "")) for span in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-v2-count")]
         assert shown == [item["from_paper"] for item in classes.values()] and all(item["from_paper"] <= item["count"] for item in classes.values()), shown
+    if classes:
+        # Figure 5 names its value columns in the legend's order, each heading over its numbers (STATS_VALUE_COLUMNS_JS
+        # below checks they end at one x), and no class name runs into them.
+        heads = [part.get_attribute("innerText") for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
+        with_v2 = all(isinstance(item.get("from_paper"), int) for item in classes.values())
+        assert heads == ["Records", "Accepted"] + (["CatLog v2"] if with_v2 else []), heads
+        crowded = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].filter((row) => {
+            const name = document.createRange(); name.selectNodeContents(row.querySelector('.stats-chart-label'));
+            return Math.max(...[...name.getClientRects()].map((box) => box.right)) > row.querySelector('.stats-value-part').getBoundingClientRect().left - 4;
+        }).map((row) => row.dataset.row)""")
+        assert not crowded, f"Class names run into Figure 5's numbers: {crowded}"
     ridges = driver.find_elements(By.CSS_SELECTOR, "[data-figure='class-values'] .stats-ridges")
     expected = [key for key in ("kcat", "km", "kcat_over_km") if (overview["metrics"].get(key) or {}).get("by_class")]
     assert [panel.get_attribute("data-metric") for panel in ridges] == expected, [panel.get_attribute("data-metric") for panel in ridges]

@@ -890,7 +890,10 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Labels set on 16px lines, the bar's height, so bars of one-line rows sit 8px apart. */
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
 /* The rows' own size is the value labels' 12px, so a value column given in ch (statsBarChart) fits them. */
-.stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px; font-size:var(--fs-12) }
+.stats-chart-row, .stats-chart-axis, .stats-chart-head { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px; font-size:var(--fs-12) }
+/* The value columns' headings (Figure 5: Records, Accepted, CatLog v2), 12px muted, each right-aligned over its column. */
+.stats-chart-head { margin:0 0 6px }
+.stats-chart-head > .stats-chart-value { grid-column:-2 / -1; color:var(--muted) }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -900,7 +903,9 @@ a.stats-total-value:focus-visible { outline:0 }
    viewer's font; it takes no height), so counts line up. */
 .stats-chart-value.has-parts { display:flex; justify-content:flex-end; align-items:flex-start; gap:6px }
 .stats-value-part[data-sizer] { display:inline-grid; justify-items:end }
-.stats-value-part[data-sizer]::before { content:attr(data-sizer); grid-area:1 / 1; min-width:max-content; height:0; overflow:hidden; visibility:hidden; white-space:pre }
+/* The sizer is measured at 600, the boldest weight in a value column (Figure 5's CatLog v2 count), so a column of bold
+   numbers and its regular heading come out equally wide. */
+.stats-value-part[data-sizer]::before { content:attr(data-sizer); grid-area:1 / 1; min-width:max-content; height:0; overflow:hidden; visibility:hidden; white-space:pre; font-weight:600 }
 .stats-value-part[data-sizer] > span { grid-area:1 / 1 }
 .stats-track { position:relative; display:block; height:16px }
 .stats-track .stats-seg { position:absolute; top:0; bottom:0 }
@@ -1193,10 +1198,20 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ridge-name { display:none }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar. */
-  .stats-chart-row, .stats-chart-axis { grid-template-columns:minmax(0,1fr) var(--value-w,96px); row-gap:4px }
+  .stats-chart-row, .stats-chart-axis, .stats-chart-head { grid-template-columns:minmax(0,1fr) var(--value-w,96px); row-gap:4px }
   .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:minmax(0,1fr) 64px }
   .stats-chart-label { grid-column:1 / -1 }
   .stats-chart-axis > span:first-child { display:none }
+  /* A chart with value headings (Figure 5) keeps its bars the full width, since its three columns take more room: the
+     name and the numbers share the first line, under the headings; the bar and the axis span the row. */
+  .stats-chart.has-value-heads :is(.stats-chart-row,.stats-chart-head,.stats-chart-axis) { column-gap:8px }
+  .stats-chart.has-value-heads .stats-chart-label { grid-column:1; grid-row:1; align-self:end; -webkit-hyphens:auto; hyphens:auto }
+  .stats-chart.has-value-heads .stats-chart-value { grid-column:2; grid-row:1; align-self:end }
+  .stats-chart.has-value-heads .stats-track { grid-column:1 / -1; grid-row:2 }
+  .stats-chart.has-value-heads .stats-chart-axis > .stats-axis-ticks { grid-column:1 / -1 }
+  .stats-chart.has-value-heads .stats-chart-axis > span:last-child { display:none }
+  /* the axis has no empty column to reach into: its end label ends at its tick */
+  .stats-chart.has-value-heads .stats-axis-ticks > span:last-child { transform:translateX(-100%) }
   .stats-col-bar, .stats-minibar { width:48px }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }

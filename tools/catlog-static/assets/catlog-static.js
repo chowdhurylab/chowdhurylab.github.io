@@ -3660,17 +3660,23 @@
   // counts line up whatever the shares. A hidden sizer (data-sizer) holds that column's entry shapes in the viewer's own
   // font, one per line: each entry with its digits as 0 (tabular digits are equally wide), leaving out a shape that ends
   // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
+  // `valueHeads` (one per column; Figure 5's Records, Accepted, CatLog v2) names the columns in a heading line above the
+  // first row: then every column, the first too, is also as wide as its heading, which stands right-aligned over it.
   function statsValueSizer(texts) {
     const shapes = [...new Set(texts.map((text) => String(text).replace(/[0-9]/g, "0")).filter(Boolean))];
     return shapes.filter((shape) => !shapes.some((other) => other !== shape && other.endsWith(shape))).sort().join("\n");
   }
 
-  function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "" }) {
+  function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "", valueHeads = [] }) {
     const columns = Math.max(0, ...rows.map((row) => (Array.isArray(row.parts) ? row.parts.length : 0)));
-    const sizers = Array.from({ length: columns }, (_column, index) => statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")));
-    const valueHtml = (row) => (Array.isArray(row.parts)
-      ? row.parts.map((part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index ? ` data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${escapeHtml(part.text)}</span>` : `>${escapeHtml(part.text)}`}</span>`).join("")
-      : row.value);
+    const heads = columns && valueHeads.length === columns ? valueHeads.map(String) : [];
+    const sizers = Array.from({ length: columns }, (_column, index) => [statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")), heads[index] || ""]
+      .filter(Boolean).join("\n"));
+    const partHtml = (part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index || heads.length ? ` data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${escapeHtml(part.text)}</span>` : `>${escapeHtml(part.text)}`}</span>`;
+    const valueHtml = (row) => (Array.isArray(row.parts) ? row.parts.map(partHtml).join("") : row.value);
+    const headHtml = heads.length
+      ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts">${heads.map((text, index) => partHtml({ text }, index)).join("")}</span></div>`
+      : "";
     // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px; a
     // label in columns needs each column's longest entry and a 6px gap between them.
     const longest = columns
@@ -3682,8 +3688,8 @@
       ? `<div class="stats-chart-tools">${legend.length ? statsLegend(legend) : ""}<div class="stats-switch" role="group" aria-label="Bar length">${[["records", "Records"], ["share", "Share"]]
         .map(([mode, label]) => `<button type="button" class="stats-switch-button" data-stats-mode="${mode}" aria-pressed="${mode === "records"}">${label}</button>`).join("")}</div></div>`
       : legend.length ? statsLegend(legend) : "";
-    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
-      ${tools}
+    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}${heads.length ? " has-value-heads" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
+      ${tools}${headHtml}
       <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
         ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay, shareOf: switchable ? row.count : 0, shareRefs: switchable ? [0, 25, 50, 75, 100] : null })}
@@ -3761,6 +3767,21 @@
       const width = typeof text.getComputedTextLength === "function" ? text.getComputedTextLength() : 0;
       const size = parseFloat(window.getComputedStyle?.(text)?.fontSize || "") || 0;
       if (room > 0 && size > 0 && width > room) text.style.fontSize = `${Math.floor(size * room / width * 10) / 10}px`;
+    }
+  }
+
+  // A chart with value headings (Figure 5) sizes its value column to the headings' line as drawn: every column there is
+  // as wide as its sizer (heading and entries, measured in the viewer's font), so that line is exactly the room each row
+  // needs, where the estimate in ch (statsBarChart) runs wide for letters. On phones the class names get that room.
+  // Run once Stats is on screen.
+  function statsFitValueColumns(root) {
+    for (const chart of root?.querySelectorAll?.(".stats-chart.has-value-heads") || []) {
+      const line = chart.querySelector(".stats-chart-head .stats-chart-value");
+      const parts = [...(line?.children || [])];
+      if (!parts.length) continue;
+      const gap = parseFloat(window.getComputedStyle?.(line)?.columnGap || "") || 0;
+      const width = parts.reduce((sum, part) => sum + part.getBoundingClientRect().width, 0) + gap * (parts.length - 1);
+      if (width > 0) chart.style.setProperty("--value-w", `${Math.ceil(width)}px`);
     }
   }
 
@@ -4943,7 +4964,8 @@
       biology.push({
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
         body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
-          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: "CatLog v2 entries" }] : [])] }),
+          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: "CatLog v2 entries" }] : [])],
+          valueHeads: ["Records", "Accepted", ...(withV2 ? ["CatLog v2"] : [])] }),
         caption: withV2 ? "Records per enzyme class, with the accepted ones and the CatLog v2 entries; each label gives records, accepted, then CatLog v2 entries."
           : "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
         data: statsDataLine(notes),
@@ -5043,6 +5065,7 @@
     }
     $("statsCharts").innerHTML = sections.join("");
     statsFitDonutTotals($("statsCharts"));
+    statsFitValueColumns($("statsCharts"));
   }
 
   // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time
@@ -11061,6 +11084,7 @@
       statsSwitchMode,
       statsRangeNumber,
       statsFitDonutTotals,
+      statsFitValueColumns,
       reviewLeadHtml,
       renderTeam,
       teamNumbers,

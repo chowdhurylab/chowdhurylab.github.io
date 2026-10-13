@@ -2022,7 +2022,11 @@ function row(overrides = {}) {
   assert.equal(breakdown.temperature, 4);
   assert.equal(breakdown.ph, 5);
   assert.match(chart, /3 records give both temperature and pH/);
-  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="\d+"><span>2<\/span><\/span><\/span>/);
+  // Enzyme classes name their value columns in a heading line (Records, Accepted), each column, the first too, sized to
+  // its heading and its entries, so the heading stands right-aligned over its numbers.
+  assert.match(chart, /<div class="stats-chart has-value-heads" data-chart="ec-classes"/);
+  assert.match(chart, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><\/span><\/div>/);
+  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><\/span>/);
   assert.equal((chart.match(/<figure class="stats-range"/g) || []).length, 1, "Only metrics with a usable summary get a histogram");
   assert.match(chart, /aria-label="kcat: median 4\.5 s⁻¹; 10% of values are below 0\.036 and 10% above 240; 5 values\."/);
   assert.equal((chart.match(/class="stats-histogram-bars">/g) || []).length, 1);
@@ -2043,7 +2047,8 @@ function row(overrides = {}) {
       metrics: { kcat: { ...overview.metrics.kcat, by_class: kcatClasses } } };
     api.renderStats();
     const more = element("statsCharts").innerHTML;
-    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="\d+"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="\d+"><span>2<\/span><\/span><\/span>/);
+    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;CatLog v2"><span>CatLog v2<\/span><\/span><\/span><\/div>/);
+    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;CatLog v2"><span>2<\/span><\/span><\/span>/);
     assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 CatLog v2 entries \(50\.0%\)"/);
     assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Organisms with the most CatLog v2 entries<\/h3>[\s\S]*?<th scope="col" class="stats-num">Entries<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
@@ -2100,9 +2105,9 @@ function row(overrides = {}) {
       assert.match(full.body, /style="--ridge-n:calc\(6ch \+ 4px\)"/);
       assert.doesNotMatch(full.data, /lighter/);
     }
-    // A count chart's value column fits its longest entry per number column, in ch (a wider font widens it), with 6px
-    // between the columns, at least 96px.
-    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(3ch \+ 18px\)\)"/);
+    // A count chart's value column fits its longest entry per number column, here each column's heading (Records,
+    // Accepted, CatLog v2), in ch (a wider font widens it), with 6px between the columns, at least 96px.
+    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(24ch \+ 18px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.
     assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "CatLog v2 and CatLog v1 entries",
       "Values per paper in CatLog v2", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
@@ -2201,6 +2206,16 @@ function row(overrides = {}) {
   assert.match(columns, /<span class="stats-chart-value has-parts"><span class="stats-value-part">80,215<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;&lt;0\.0%"><span>3\.2%<\/span><\/span><\/span>/);
   assert.match(columns, /<span class="stats-value-part">5<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;&lt;0\.0%"><span>&lt;0\.1%<\/span>/);
   assert.match(columns, /style="--value-w:max\(96px, calc\(12ch \+ 12px\)\)"/);
+  assert.doesNotMatch(columns, /stats-chart-head|has-value-heads/);
+  // With headings (one per column) every column, the first too, is sized to its heading and entries; the estimate in ch
+  // counts the headings, and statsFitValueColumns then sets the width the headings' line takes as drawn.
+  const headed = api.statsBarChart({ key: "t", scale: 90000, valueHeads: ["Records", "Accepted"], rows: [
+    { key: "a", count: 80215, label: "A", parts: [{ text: "80,215" }, { text: "2,567", className: "stats-muted" }], segments: [{ part: "accepted", count: 2567 }] }] });
+  assert.match(headed, /<div class="stats-chart has-value-heads" data-chart="t" style="--value-w:max\(96px, calc\(15ch \+ 12px\)\)">/);
+  assert.match(headed, /<span class="stats-value-part" data-sizer="00,000&#10;Records"><span>80,215<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0,000&#10;Accepted"><span>2,567<\/span><\/span>/);
+  // headings that do not match the columns are left out
+  assert.doesNotMatch(api.statsBarChart({ key: "t", scale: 9, valueHeads: ["Records"], rows: [
+    { key: "a", count: 8, label: "A", parts: [{ text: "8" }, { text: "2" }], segments: [{ part: "accepted", count: 2 }] }] }), /stats-chart-head/);
   // Axis ends: three to five whole steps ending closest above the largest value.
   assert.equal(JSON.stringify(api.statsNiceScale(81355)), JSON.stringify({ max: 90000, step: 30000 }));
   assert.equal(JSON.stringify(api.statsNiceScale(59012)), JSON.stringify({ max: 60000, step: 20000 }));
