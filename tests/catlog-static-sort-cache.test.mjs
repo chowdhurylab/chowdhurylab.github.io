@@ -2007,7 +2007,7 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
     // The Guide's Not checked definition counts these records under Not reviewed, as Stats does, and says how the record
     // shows them.
     api.renderGuideMethod();
-    assert.match(element("guideNotCheckedDefinition").innerHTML, /never reviewed, or that the earlier review accepted \(tag: <em>no paper linked<\/em>\)\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>; a record the earlier review accepted reads <em>Not checked<\/em> with the tag <em>no paper linked<\/em>\.$/);
+    assert.match(element("guideNotCheckedDefinition").innerHTML, /never reviewed, or that the earlier review accepted \(tag: <em>no paper linked<\/em>\)\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>; a record with no paper linked reads <em>Not checked<\/em> with that tag\.$/);
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
     api.setHumanReviewMarks({ approved: { checked: true } });
     assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or because a human reviewer approved every value\. Human-checked: a human reviewer approved every value shown\."/);

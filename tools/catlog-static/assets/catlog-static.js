@@ -267,7 +267,7 @@
   // The Guide's Not checked definition, with its words in italics as the static page has them.
   function guideNotCheckedHtml() {
     return followsReviewRules()
-      ? "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed, or that the earlier review accepted (tag: <em>no paper linked</em>). The record shows which, for example <em>Not checked (Unverified)</em>; a record the earlier review accepted reads <em>Not checked</em> with the tag <em>no paper linked</em>."
+      ? "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed, or that the earlier review accepted (tag: <em>no paper linked</em>). The record shows which, for example <em>Not checked (Unverified)</em>; a record with no paper linked reads <em>Not checked</em> with that tag."
       : "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed. The record shows which, for example <em>Not checked (Unverified)</em>.";
   }
   // Records accepted because a human reviewer approved every value (accepted_basis "human review").
