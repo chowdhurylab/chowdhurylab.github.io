@@ -165,16 +165,15 @@ one short line per option and no help paragraphs; a group with explanations has 
 24px round "?" beside its chevron that shows them in a quiet --surface-2 box under
 its title (and hides them again); opened near the foot of the sidebar or the phone sheet, the sidebar scrolls just
 enough to keep the group's options in view, never taking its title under the sticky heading. The panel order: Source (three
-radio buttons: All records, CatLog v2: read from the paper and CatLog v1: enzyme
-databases, CatLog v2 and v1 entries as the user names them (2026-10-13; where the
-sidebar is too narrow for one line, the version stays first and what it means moves
-whole to the next line); its "?" says what each holds, that a merged record counts under each
+radio buttons: All records, CatLog v2 and CatLog v1, CatLog v2 and v1 entries as the user names them (2026-10-13);
+each version sits beside its count and says what it holds in a few words on one quieter 12px --muted line under it
+that runs under the count too, "read from the paper" and "from enzyme databases", short enough for the 256px sidebar
+with a wide font, so no label wraps on its own); its "?" says what each holds, that a merged record counts under each
 database and links to the Guide's #guide-method; "By database" folds the databases (the Open Enzyme Database as "OED", the
 table's tag, read out and on hover in full), STRENDA DB,
 earlier paper extractions (shown as "Earlier extractions", the table's tag, and read out in full, so a wide font keeps it
-on one line at 256px) and Source not recorded: ticking one selects CatLog v1:
-enzyme databases, a merged record counts under each database it names, and All
-records or CatLog v2: read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
+on one line at 256px) and Source not recorded: ticking one selects CatLog v1, a merged record counts under each
+database it names, and All records or CatLog v2 clears them), Against the databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
 scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
@@ -208,7 +207,7 @@ results it covers, counted with its own group set aside (so ticking it shows, or
 adds, that many); an option at 0 is grey and stays clickable. Before the record
 index arrives, Review result, Measurement type and the three Source choices show
 the snapshot's own counts (CatLog v2 is the counts band's figure,
-Enzyme databases the rest), the other options a dash. The counts are
+CatLog v1 the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip

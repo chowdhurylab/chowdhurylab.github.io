@@ -1827,6 +1827,28 @@ def check_layout(driver, browser, url, route_label):
             return bad;
         """)
         assert not misaligned, f"Group chevron or '?' off its title's first line: {misaligned}"
+        # The Source radios say what each version is: "CatLog v2" beside its count with "read from the paper" on one
+        # quieter line under it, "CatLog v1" with "from enzyme databases"; neither line wraps, also in a wide font at the
+        # sidebar's 256px (1280px window).
+        set_browse_viewport(driver, browser, 1280, 1000)
+        source_rows = driver.execute_script("""
+            const style = document.createElement('style');
+            style.id = 'wideSourceFont';
+            style.textContent = "#sourceChecklist, #sourceChecklist * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
+            document.head.appendChild(style);
+            const lines = (e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
+            const rows = [...document.querySelectorAll('#sourceChecklist .radio-row')].map(row => {
+                const [label, what] = [row.querySelector(':scope > span:not(.source-mode-what)'), row.querySelector('.source-mode-what')];
+                return {label: label.innerText, labelLines: lines(label), what: what ? what.innerText : null, whatLines: what ? lines(what) : 0,
+                        countLevel: Math.abs(row.querySelector('strong').getBoundingClientRect().top - label.getBoundingClientRect().top) < 3};
+            });
+            style.remove();
+            return rows;
+        """)
+        assert [(row["label"], row["what"]) for row in source_rows] == [
+            ("All records", None), ("CatLog v2", "read from the paper"), ("CatLog v1", "from enzyme databases")], source_rows
+        assert all(row["labelLines"] == 1 and row["whatLines"] in (0, 1) and row["countLevel"] for row in source_rows), source_rows
+        set_browse_viewport(driver, browser, 1440, 1000)
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
         assert not driver.find_element(By.ID, "aboutSource").is_displayed()
         about.click()

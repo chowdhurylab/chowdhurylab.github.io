@@ -5352,9 +5352,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 // The sidebar keeps one short line per option; the explanations are behind each group's "?" (aboutSource, aboutStatus).
 {
   const source = element("sourceChecklist").innerHTML;
-  // CatLog v2 and v1 entries by name (the user, 2026-10-13).
-  assert.match(source, /<span>CatLog v2 <span class="source-mode-what">current<\/span><\/span>/);
-  assert.match(source, /<span>CatLog v1 <span class="source-mode-what">earlier<\/span><\/span>/);
+  // CatLog v2 and v1 entries by name (the user, 2026-10-13), each saying what it holds in a few words on its own line
+  // (read out after the version, before the count).
+  assert.match(source, /value="paper" \/>\s*<span>CatLog v2<\/span>\s*<span class="source-mode-what">read from the paper<\/span>\s*<strong data-count="source:paper">/);
+  assert.match(source, /value="databases" \/>\s*<span>CatLog v1<\/span>\s*<span class="source-mode-what">from enzyme databases<\/span>\s*<strong data-count="source:databases">/);
+  assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.

@@ -242,14 +242,13 @@
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Current version: values read straight from the paper by an AI model and checked by a second, separate AI check.";
   const SOURCE_DATABASES_HELP = "Earlier version, same goal: it started from enzyme database entries and checked them against their papers. The review result shows which were checked.";
-  // The sidebar's labels are short; where the sidebar is too narrow for one line, the version stays on the first line and
-  // what it means moves whole to the next (.source-mode-what). The help is behind the group's "?".
+  // The sidebar says what each version is in a few words: the version beside its count, what it holds on a second,
+  // quieter line under both (what; read out after the version), short enough for the 256px sidebar with a wide font, so
+  // no label wraps on its own. The help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'CatLog v2 <span class="source-mode-what">current</span>',
-      help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1 <span class="source-mode-what">earlier</span>',
-      help: SOURCE_DATABASES_HELP },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, what: "read from the paper", help: SOURCE_CATLOG_HELP, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, what: "from enzyme databases", help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
   // absent), shortHtml the sidebar's one-line label at 256px, with a wide font too (the table's tag, its name read out).
@@ -5851,7 +5850,8 @@
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.help)}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
-            <span>${item.shortHtml || escapeHtml(item.label)}</span>
+            <span>${escapeHtml(item.label)}</span>${item.what ? `
+            <span class="source-mode-what">${escapeHtml(item.what)}</span>` : ""}
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
         </div>
