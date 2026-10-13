@@ -548,8 +548,8 @@
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
 
-  // A Guide section's heading (focusable, tabindex -1): the one the section is labelled by, or the target itself when it
-  // is a heading (#guide-cautions).
+  // A Guide section's heading: the one the section is labelled by, or the target itself when it is a heading
+  // (#guide-cautions).
   function guideSectionHeading(section) {
     if (/^H[1-6]$/.test(section?.tagName || "")) return section;
     const id = section?.getAttribute("aria-labelledby");
@@ -9245,7 +9245,10 @@
         url.hash = target.hash;
         if (window.location.href !== url.href) window.history.pushState({ catlogView: "guide" }, "", url);
         showLocationView();
-        guideSectionHeading(section)?.focus({ preventScroll: true });
+        const heading = guideSectionHeading(section);
+        // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
+        if (heading && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+        heading?.focus({ preventScroll: true });
         return;
       }
       if (!/^#browse\?/.test(target.hash)) return;

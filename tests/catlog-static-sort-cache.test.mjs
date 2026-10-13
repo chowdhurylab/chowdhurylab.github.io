@@ -177,7 +177,7 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   assert.doesNotMatch(pageHtml, /hidden after a data check/, "A dash never suggests values were suppressed");
   assert.ok(pageHtml.includes("beside a value flags a possible problem; open the record to read what it is."));
   // Cautions state the problem; they give no orders.
-  assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions"[^>]*>[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
+  assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   // The release tool writes both descriptions: its earlier wording, or the site's words (records, review results, no
   // serial comma) once it uses them.

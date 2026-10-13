@@ -641,7 +641,8 @@ Units (#guide-units), Downloads (#guide-downloads), Before you use the values
 (#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
 Questions (#guide-questions, native disclosures). A section's address opens the
 Guide at that section, and a link to one (from Stats, a record, the filters or
-the contents list) opens it in the page with focus on its heading (tabindex -1); the Guide never downloads the record index. Terms and
+the contents list) opens it in the page with focus on its heading (made
+focusable then, so a page opened at a section shows no focus ring); the Guide never downloads the record index. Terms and
 meanings are two-column lists, one line each where they fit; no walls of text.
 Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel

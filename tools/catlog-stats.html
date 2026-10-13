@@ -356,7 +356,7 @@
           </nav>
 
           <section class="guide-section guide-method" id="guide-method" aria-labelledby="guide-method-title">
-            <h2 id="guide-method-title" tabindex="-1">How CatLog reads and checks values</h2>
+            <h2 id="guide-method-title">How CatLog reads and checks values</h2>
             <p class="guide-method-lead" id="guideMethodLead" hidden></p>
             <dl class="guide-term-list guide-method-list">
               <div><dt>Read from the paper</dt><dd>CatLog reads papers directly. An AI model (Claude, Anthropic) reads each <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> with its unit, enzyme, organism, substrate and assay conditions. A second, separate AI check compares every value with the paper. Code confirms that the quoted line is in the paper text, and converts units where the paper&rsquo;s differ from the catalog&rsquo;s. Each value keeps where it is printed and the number as printed. A person has not checked these values unless the record is marked human-checked.</dd></div>
@@ -368,7 +368,7 @@
           </section>
 
           <section class="guide-section guide-find" id="guide-find" aria-labelledby="guide-find-title">
-            <h2 id="guide-find-title" tabindex="-1">Find records</h2>
+            <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
               <div><dt>Filters</dt><dd>Source (read from the paper by CatLog or from enzyme databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.</dd></div>
@@ -384,7 +384,7 @@
           </section>
 
           <section class="guide-section guide-record" id="guide-record" aria-labelledby="guide-record-title">
-            <h2 id="guide-record-title" tabindex="-1">Read a record</h2>
+            <h2 id="guide-record-title">Read a record</h2>
             <p>Click a record in the table, or press Enter on it, to open it.</p>
             <dl class="guide-term-list">
               <div><dt>Header</dt><dd>The enzyme name; EC number, organism and form (wild type or the variant); the substrate; the status line, the review result and its tags, for example <em>Accepted &middot; read from the paper &middot; human-checked</em>; and the record ID with <em>Copy link</em>.</dd></div>
@@ -438,7 +438,7 @@
               </div>
             </figure>
 
-            <h3 id="guide-cautions" tabindex="-1">Cautions</h3>
+            <h3 id="guide-cautions">Cautions</h3>
             <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; open the record to read what it is. On phones the short words below stand beside it. A value without a recorded unit shows <em>no unit</em>, and a questionable temperature has the mark in the T column, after a dash when the temperature is not shown.</p>
             <dl class="guide-term-list guide-caution-list">
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</dt><dd>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> printed in the paper (or listed by the source) and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ. The record gives both numbers and how far apart they are; a factor near 60 usually means minutes against seconds, and one near 1000 a concentration unit. All three values are kept as the source gives them.</dd></div>
@@ -454,7 +454,7 @@
           </section>
 
           <section class="guide-section" id="guide-status" aria-labelledby="guide-status-title">
-            <h2 id="guide-status-title" tabindex="-1">Review result</h2>
+            <h2 id="guide-status-title">Review result</h2>
             <p>Each record has one review result and may carry tags.</p>
             <dl class="guide-status-list">
               <div>
@@ -511,7 +511,7 @@
           </section>
 
           <section class="guide-section" id="guide-units" aria-labelledby="guide-units-title">
-            <h2 id="guide-units-title" tabindex="-1">Units</h2>
+            <h2 id="guide-units-title">Units</h2>
             <dl class="guide-term-list">
               <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
               <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
@@ -530,7 +530,7 @@
           </section>
 
           <section class="guide-section guide-downloads" id="guide-downloads" aria-labelledby="guide-downloads-title">
-            <h2 id="guide-downloads-title" tabindex="-1">Downloads</h2>
+            <h2 id="guide-downloads-title">Downloads</h2>
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, including sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
@@ -547,7 +547,7 @@
           </section>
 
           <section class="guide-section guide-downloads guide-caveats" id="guide-caveats" aria-labelledby="guide-caveats-title">
-            <h2 id="guide-caveats-title" tabindex="-1">Before you use the values</h2>
+            <h2 id="guide-caveats-title">Before you use the values</h2>
             <dl class="guide-download-list">
               <div><dt>Review result</dt><dd>Only Accepted records passed review: Not confirmed records have an open question and Not checked records have no review result. Most records have not been checked by a person.</dd></div>
               <div><dt>Units</dt><dd>Read the unit beside each value: a few older records keep another unit or none (see <a href="#guide-units">Units</a>).</dd></div>
@@ -559,7 +559,7 @@
 
           <section class="guide-citation" id="guide-cite" aria-labelledby="guide-citation-title">
             <div>
-              <h2 id="guide-citation-title" tabindex="-1">Cite this snapshot</h2>
+              <h2 id="guide-citation-title">Cite this snapshot</h2>
               <p>Cite the paper and the snapshot you used:</p>
               <p id="guidePaperCitation">Sajeevan, K. A., et al. (2026). <cite>CatRange enables robust prediction of enzyme variant kinetic regimes.</cite> PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309.</p>
               <p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the catalog loads)</code></p>
@@ -578,7 +578,7 @@
           </section>
 
           <section class="guide-sources" id="guide-sources" aria-labelledby="guide-sources-title">
-            <h2 id="guide-sources-title" tabindex="-1">Sources and licenses</h2>
+            <h2 id="guide-sources-title">Sources and licenses</h2>
             <p class="guide-note">Rows from the databases keep their own license, named in each row&rsquo;s source_license field. SKiD rows are for non-commercial use only, without derivatives.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
               <div><dt>Read from the paper by CatLog</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
@@ -593,7 +593,7 @@
           </section>
 
           <section class="guide-section guide-questions" id="guide-questions" aria-labelledby="guide-questions-title">
-            <h2 id="guide-questions-title" tabindex="-1">Questions</h2>
+            <h2 id="guide-questions-title">Questions</h2>
             <details class="guide-details">
               <summary>Why does a value differ from BRENDA?</summary>
               <p>A value read from the paper by CatLog is converted by code where needed, so it can differ from a database entry for the same paper: the database may give it in another unit, round it or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Older records keep their source database&rsquo;s value.</p>
