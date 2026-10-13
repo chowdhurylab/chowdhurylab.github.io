@@ -2675,7 +2675,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(twice, /more than 2-fold from the kcat\/Km shown|stored as the source lists them/);
   const some = measurementSection(older("some", 0.076, 1.26, "227.78", both), { source_kcat_over_km_values: [
     { value: 0.06027, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(some, /BRENDA lists kcat\/Km 0\.06027 and 5 s⁻¹ mM⁻¹ for this record; 0\.06027 agrees with kcat ÷ Km\./);
+  assert.match(some, /BRENDA lists 2 kcat\/Km values for this record \(0\.060–5\.0 s⁻¹ mM⁻¹\); one of them agrees with kcat ÷ Km\./);
   // Without listed values in the catalog unit the flags keep their own notes.
   assert.match(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {}), /The source&#39;s kcat\/Km \(46\.1 s⁻¹ mM⁻¹\) is 2\.5-fold above/);
   // A familiar factor between kcat ÷ Km and the listed kcat/Km is named (e375ce185827beeb, 3dc72daa0a20580c).

@@ -7003,14 +7003,22 @@
     if (!check || check.v2) return "";
     const listed = listedEfficiencies(summary, detail).filter((item) => listedEfficiencyInCatalogUnit(item.unit) && Number(item.value) > 0);
     if (!listed.length) return "";
-    const values = [...new Set(listed.map((item) => Number(item.value)))].sort((a, b) => a - b);
-    const agree = values.filter((value) => Math.abs(value / check.quotient - 1) <= 0.1);
-    const valuesText = values.length > 3 ? listedRangeText(values) : sentenceList(values.map((value) => numberText(String(value))));
-    let relation = values.length > 1 ? ", each more than 2-fold from the stored kcat/Km" : ", more than 2-fold from the stored kcat/Km";
-    if (agree.length === values.length) relation = values.length > 1 ? ", each within 10% of kcat ÷ Km" : ", which agrees with kcat ÷ Km";
-    else if (agree.length) relation = `; ${sentenceList(agree.map((value) => numberText(String(value))))} ${agree.length > 1 ? "agree" : "agrees"} with kcat ÷ Km`;
+    const values = [...new Set(listed.map((item) => Number(item.value)))];
+    const agree = values.filter((value) => Math.abs(value / check.quotient - 1) <= 0.1).length;
+    // One listed value by its number; several as the row above shows them (a range), with how many agree.
+    let listedText;
+    if (values.length === 1) {
+      listedText = `kcat/Km ${numberText(String(values[0]))} ${check.unit} for this record, `
+        + (agree ? "which agrees with kcat ÷ Km" : "more than 2-fold from the stored kcat/Km");
+    } else {
+      const relation = agree === values.length
+        ? "all agree with kcat ÷ Km"
+        : (agree ? `${agree === 1 ? "one of them agrees" : `${formatInteger(agree)} of them agree`} with kcat ÷ Km`
+          : "each is more than 2-fold from the stored kcat/Km");
+      listedText = `${formatInteger(values.length)} kcat/Km values for this record (${listedRangeText(values)} ${check.unit}); ${relation}`;
+    }
     return `The stored kcat/Km (${noteValueText(summary, "kcat_over_km")} ${check.unit}) is ${check.foldText} ${check.direction} `
-      + `kcat ÷ Km (${check.quotientText} ${check.unit}). ${listedSourcesText(listed)} kcat/Km ${valuesText} ${check.unit} for this record${relation}.`
+      + `kcat ÷ Km (${check.quotientText} ${check.unit}). ${listedSourcesText(listed)} ${listedText}.`
       + (check.factor ? ` ${check.factor[1]}` : "");
   }
 
