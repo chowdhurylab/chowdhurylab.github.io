@@ -7785,9 +7785,9 @@
       identityRow,
       sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : "",
       // No sequence: the row says why (the note) or None.
-      ...(hasSequence ? sequenceRows : [kv("Sequence", sequenceVariantNote || "None recorded")]),
+      ...(hasSequence ? sequenceRows : [kv("Sequence", sequenceVariantNote || "None")]),
       kv("Substrate", substrate),
-      smiles ? revealRowHtml("SMILES", smiles, "detailSmiles") : kv("SMILES", "None recorded"),
+      smiles ? revealRowHtml("SMILES", smiles, "detailSmiles") : kv("SMILES", "None"),
     ]));
   }
 

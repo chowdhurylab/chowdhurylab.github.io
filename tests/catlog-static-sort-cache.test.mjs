@@ -1412,7 +1412,7 @@ assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
 }
 const emptyIdentityHtml = api.proteinSection({}, {});
 assert.match(emptyIdentityHtml, /<h3 id="detail-protein-title">Protein and substrate<\/h3>/);
-assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None recorded<\/dd>/);
+assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Substrate<\/dt><dd>Not recorded<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
@@ -1514,7 +1514,7 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
     sequence_source: "manual_literature_uniprot_resolution",
     sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." });
   assert.match(unmatched, /<dt>UniProt<\/dt><dd>Not matched to UniProt<\/dd>/);
-  assert.match(unmatched, /<dt>Sequence<\/dt><dd>None recorded<\/dd>/);
+  assert.match(unmatched, /<dt>Sequence<\/dt><dd>None<\/dd>/);
   assert.doesNotMatch(unmatched, /shown as the variant sequence|from the cited paper/, "no note about a sequence that is not shown");
   assert.match(api.proteinSection({ primary_uniprot_id: "P2" }, { sequence_source: "manual_literature_uniprot_resolution", sequence: "MA" }),
     /\(from the cited paper\)/);
@@ -2438,7 +2438,7 @@ api.renderDetail(row({ record_key: "unknowns-v2", source_db: "primary_paper_dire
 assert.match(element("detailContent").innerHTML, /EC 1\.1\.1\.1 &middot; organism not stated in the paper<\/p>/);
 assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Not stated in the paper<\/span>/);
 assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
-assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None recorded<\/dd>/);
+assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
 // The record (design spec 5): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values (with

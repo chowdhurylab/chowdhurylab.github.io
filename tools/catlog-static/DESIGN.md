@@ -500,8 +500,8 @@ integer are not figures, so "47,000 M⁻¹ s⁻¹" or "9440 µM" shows 47 or 9.4
 in the table, not 47.000 or 9.440; a kcat/Km calculated for an older record keeps the significant
 figures of kcat and Km. Odd records read plainly: "Unknown" EC or organism
 reads "EC unknown" / "organism not recorded"; a record without kcat, Km or
-kcat/Km says so (or that it stores a Ki only); a missing sequence or SMILES
-reads "None recorded" and a missing paper ID "None"; a paper's stand-in ID (NP and 8 hex digits) is text,
+kcat/Km says so (or that it stores a Ki only); a missing sequence, SMILES or
+paper ID reads "None"; a paper's stand-in ID (NP and 8 hex digits) is text,
 never a PubMed link. Sentences are not hyphenated. A record that cannot be
 loaded says so ("This record could not be loaded.", or that the page is out of
 date, with Reload). Do not discard source text, hide scientific warnings,
