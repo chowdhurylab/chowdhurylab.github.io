@@ -1695,9 +1695,9 @@ function row(overrides = {}) {
   // The review result is a donut (the one partition that is a true whole) beside its legend table; Accepted is split in
   // the rows under it.
   assert.match(element("statsCharts").innerHTML, /<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\."/);
-  // Each slice fills from its colour's tint to the colour (a radial gradient per colour) and lights with its table row.
-  assert.match(element("statsCharts").innerHTML, /<path class="stats-part-unverified" style="fill:url\(#statsDonutFill-unverified\)" d="[^"]+" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/path>/);
-  assert.match(element("statsCharts").innerHTML, /<radialGradient id="statsDonutFill-unverified" class="stats-part-unverified"/);
+  // Each slice has one fill (its colour at 60%, from the stylesheet), no gradient, and lights with its table row.
+  assert.match(element("statsCharts").innerHTML, /<path class="stats-part-unverified" d="[^"]+" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/path>/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /radialGradient|statsDonutFill/);
   assert.match(element("statsCharts").innerHTML, /data-stat-key="unverified" data-count="1" data-hl="unverified"/);
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2" data-hl="accepted"/, "Accepted's parts light Accepted");
   assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");

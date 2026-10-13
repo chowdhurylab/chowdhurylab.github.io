@@ -66,7 +66,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
-  hole; each slice fills from its colour's tint at the hole to the colour at the rim; the one partition that is
+  hole; each slice has one fill, its colour at 60% with a 1px opaque outline, so navy and slate stay apart (the
+  bars keep their fade); the one partition that is
   a true whole) beside its legend table; pointing at a slice or its row lights both: Accepted (split in the rows under it:
   CatLog v2: read from the paper, CatLog v1 as printed, after a correction,
   approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed

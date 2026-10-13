@@ -3718,8 +3718,9 @@
   }
 
   // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre. Each slice
-  // fills from its colour's tint at the hole to the colour at the rim; pointing at a slice (or its row in the legend
-  // table, data-hl) lights it with a soft glow and gives its exact count.
+  // has one fill, its colour at 60% with a 1px opaque outline (design spec section 2), so every point of a slice reads as
+  // its colour (a fade to the tint made navy and slate alike near the hole); pointing at a slice (or its row in the
+  // legend table, data-hl) lights it with a soft glow and gives its exact count.
   function statsDonut(parts, total, { title, unit = "records" } = {}) {
     const cx = 100, cy = 100, outer = 88, inner = 56, full = 2 * Math.PI;
     const point = (radius, angle) => `${+(cx + radius * Math.sin(angle)).toFixed(3)} ${+(cy - radius * Math.cos(angle)).toFixed(3)}`;
@@ -3729,7 +3730,6 @@
     };
     let angle = 0;
     const paths = [];
-    const fills = new Set();
     const cuts = new Set();
     for (const part of parts) {
       if (!(part.count > 0) || !(total > 0)) continue;
@@ -3738,15 +3738,13 @@
       // A whole ring is drawn as two halves: an arc cannot start and end at the same point.
       const d = whole ? `${arc(0, Math.PI)}${arc(Math.PI, full)}` : arc(angle, Math.min(full, angle + sweep));
       const tip = `${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`;
-      fills.add(part.part);
-      paths.push(`<path class="stats-part-${part.part}" style="fill:url(#statsDonutFill-${part.part})" d="${d}"${part.key ? ` data-hl="${escapeHtml(part.key)}"` : ""} data-tip="${escapeHtml(tip)}"></path>`);
+      paths.push(`<path class="stats-part-${part.part}" d="${d}"${part.key ? ` data-hl="${escapeHtml(part.key)}"` : ""} data-tip="${escapeHtml(tip)}"></path>`);
       if (!whole) {
         cuts.add(+angle.toFixed(6));
         cuts.add(+Math.min(full, angle + sweep).toFixed(6) % +full.toFixed(6));
       }
       angle += sweep;
     }
-    const gradients = [...fills].map((part) => `<radialGradient id="statsDonutFill-${part}" class="stats-part-${part}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${outer}"><stop offset="${+(inner / outer).toFixed(3)}" class="stats-donut-stop-in"/><stop offset="1" class="stats-donut-stop-out"/></radialGradient>`).join("");
     const gaps = [...cuts].map((cut) => {
       const [x1, y1] = point(inner - 1, cut).split(" ");
       const [x2, y2] = point(outer + 1, cut).split(" ");
@@ -3754,7 +3752,7 @@
     }).join("");
     const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
     return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
-      <defs>${gradients}</defs><g class="stats-donut-slices">${paths.join("")}</g>${gaps}
+      <g class="stats-donut-slices">${paths.join("")}</g>${gaps}
       <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 8}">${formatInteger(total)}</text>
       <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
     </svg>`;

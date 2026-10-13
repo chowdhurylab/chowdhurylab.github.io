@@ -866,10 +866,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:6px; background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
 .stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
-/* Each slice fills from its colour's tint at the hole to the colour at the rim (a radial gradient per colour). */
-.stats-donut path { stroke:var(--part-line, var(--part)); stroke-width:1; stroke-opacity:0.85 }
-.stats-donut-stop-in { stop-color:var(--part); stop-opacity:0.3 }
-.stats-donut-stop-out { stop-color:var(--part); stop-opacity:0.8 }
+/* Each slice has one fill, its colour at 60% with a 1px opaque outline (design spec section 2): no gradient, so a slice
+   reads as its colour all along and navy (Accepted) and slate (Not checked) stay apart; the bars keep theirs. */
+.stats-donut path { fill:var(--part); fill:color-mix(in srgb, var(--part) 60%, var(--bg)); stroke:var(--part-line, var(--part)); stroke-width:1 }
 .stats-donut path.is-active { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 60%, transparent)) }
 .stats-swatch { display:inline-block; flex:0 0 10px; width:10px; height:10px; vertical-align:-1px }
 
