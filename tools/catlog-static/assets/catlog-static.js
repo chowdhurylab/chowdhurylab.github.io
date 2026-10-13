@@ -252,7 +252,7 @@
       help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
-  // absent), shortHtml the sidebar's one-line label (the table's tag, its name read out and on hover).
+  // absent), shortHtml the sidebar's one-line label at 256px, with a wide font too (the table's tag, its name read out).
   const sourceFilters = [
     { value: "brenda", label: "BRENDA", tag: "BRENDA", bit: 2 },
     { value: "sabio_rk", label: "SABIO-RK", tag: "SABIO-RK", bit: 4 },
@@ -262,7 +262,7 @@
     { value: "skid", label: "SKiD", tag: "SKiD", bit: 32 },
     { value: "strenda", label: "STRENDA DB", tag: "STRENDA DB", bit: 64 },
     { value: "earlier_paper", label: "Earlier paper extractions", tag: "earlier extraction", name: "Earlier paper extraction", bit: 128,
-      title: EARLIER_EXTRACTION_DEFINITION },
+      shortHtml: 'Earlier<span class="visually-hidden"> paper</span> extractions', title: EARLIER_EXTRACTION_DEFINITION },
     { value: "unrecorded", label: "Source not recorded", tag: "source not recorded", bit: 256 },
   ];
   const SOURCE_UNRECORDED_BIT = 256;

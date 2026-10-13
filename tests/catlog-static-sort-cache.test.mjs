@@ -5106,6 +5106,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.
   assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
+  assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
+    "Earlier paper extractions shows as the table's tag, its name read out in full");
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2<\/strong>: Current version: values read straight from the paper by an AI model and checked by a second, separate AI check\./);
   assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1<\/strong>: Earlier version, same goal: it started from enzyme database entries/);

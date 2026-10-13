@@ -161,7 +161,8 @@ sidebar is too narrow for one line, the version stays first and what it means mo
 whole to the next line); its "?" says what each holds, that a merged record counts under each
 database and links to the Guide's #guide-method; "By database" folds the databases (the Open Enzyme Database as "OED", the
 table's tag, read out and on hover in full), STRENDA DB,
-earlier paper extractions and Source not recorded: ticking one selects CatLog v1:
+earlier paper extractions (shown as "Earlier extractions", the table's tag, and read out in full, so a wide font keeps it
+on one line at 256px) and Source not recorded: ticking one selects CatLog v1:
 enzyme databases, a merged record counts under each database it names, and All
 records or CatLog v2: read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
