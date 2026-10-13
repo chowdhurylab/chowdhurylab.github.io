@@ -8839,6 +8839,16 @@
     return [...shared, ...own];
   }
 
+  // As printed in a table with checks: each number of two or more figures (0.00048, 2,800) and each unit written with
+  // its power (min-1, mM−1) in a span that keeps it on one line, so a narrow phone table breaks the printed text between
+  // its parts (before a unit, at ±), never inside a number (the check's 16px once broke "0.00048" in a wide font) or
+  // between a unit and its power ("mM-" over "1"). Tags and entities are left as they are.
+  function printedNumbersHtml(html) {
+    return String(html).split(/(<[^>]*>|&#?\w+;)/).map((part, index) => (index % 2
+      ? part
+      : part.replace(/\d[\d.,]*\d|[A-Za-zµμ]+[-−–]\d+/g, (piece) => `<span class="vt-whole">${piece}</span>`))).join("");
+  }
+
   const PRINTED_UNDER_PAPER_NOTE = "The earlier review's notes under Paper say where the paper prints these values.";
 
   function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail), printedUnderPaper = false } = {}) {
@@ -8891,7 +8901,9 @@
         : "";
       const check = approved.has(field) ? APPROVED_VALUE_HTML : "";
       const place = whereColumn ? placeOf(field) : "";
-      const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
+      // (in a table with checks, the numbers of As printed stay whole on phones: printedNumbersHtml)
+      const printedHtml = fact?.printed ? caretHtml(escapePublic(fact.printed)) : "";
+      const printed = printedHtml ? (approved.size ? printedNumbersHtml(printedHtml) : printedHtml) : EMPTY_VALUE;
       return { label, valueHtml, check, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };
     });
     // As printed only when some value has a printed form (a Where column's place sits in it on phones).

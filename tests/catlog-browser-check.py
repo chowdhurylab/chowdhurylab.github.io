@@ -2750,6 +2750,39 @@ def check_record_panel(driver, browser, url, route_label):
                         # The heading keeps the checks' space too, so it ends where the numbers end.
                         assert abs(measured["headRight"] - max(ends)) <= 1, f"Value does not end over the numbers at 320px: {measured}"
                         results["values-approved-scientific-320"] = True
+                    # At 375 and 390px in a wide font the check's 16px once broke its As printed "0.00048 min⁻¹" into
+                    # "0.0004" over "8": each printed number stays whole and the table inside its section.
+                    for phone_width in (375, 390):
+                        set_browse_viewport(driver, browser, phone_width, height)
+                        driver.get("about:blank")
+                        driver.get(base + f"#record={PHONE_APPROVED_SCIENTIFIC_RECORD}")
+                        wait.until(lambda d: d.execute_script(
+                            "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                        if not driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .vt-printed"):
+                            continue
+                        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .value-approved[role='img']"))
+                        printed = driver.execute_script("""
+                            const style = document.createElement('style');
+                            style.id = 'widePrintedCheck';
+                            style.textContent = "#detailPanel, #detailPanel * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
+                            document.head.appendChild(style);
+                            const table = document.querySelector('#detailContent .values-table');
+                            const lines = (element) => {
+                                const range = document.createRange();
+                                range.selectNodeContents(element);
+                                return new Set([...range.getClientRects()].filter(r => r.width > 0.5).map(r => Math.round(r.top))).size;
+                            };
+                            const split = [...table.querySelectorAll('.vt-printed .vt-whole')].filter(e => lines(e) > 1).map(e => e.textContent);
+                            const section = table.parentElement;
+                            const inner = section.getBoundingClientRect().right - parseFloat(getComputedStyle(section).paddingRight);
+                            const result = {split, figures: table.querySelectorAll('.vt-printed .vt-whole').length,
+                                            past: Math.round(table.getBoundingClientRect().right - inner)};
+                            style.remove();
+                            return result;
+                        """)
+                        assert printed["figures"] and not printed["split"], f"As printed breaks a number at {phone_width}px in a wide font: {printed}"
+                        assert printed["past"] <= 1, f"The Values table runs past its section at {phone_width}px in a wide font: {printed}"
+                        results[f"values-printed-whole-{phone_width}"] = True
                 # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps),
                 # a long listed kcat/Km range (it breaks after its dash) and an Assay item with a long word, from 320 to
                 # 389px (skipped when this snapshot does not have the record).

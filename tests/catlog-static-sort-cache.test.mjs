@@ -2547,6 +2547,18 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   assert.doesNotMatch(html, /class="vt-where/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
   assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.03 mM/);
+  // In a table with checks each printed number of As printed is one unbreakable piece (the check's 16px once broke
+  // "0.00048" in a wide font at 375px), and so is a unit written with its power; a single figure and the text between
+  // them stay as they are.
+  api.setHumanReviewMarks({ [v2.measurement_key || v2.record_key]: { checked: true, approved: ["kcat", "km"] } });
+  api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
+    proof_lines: [line("kcat", "135.0 ± 15.1 sec−1", "135.0"), line("Km", "30 µM", "0.030"), line("kcat/Km", "4.5 × 10^3", "4501")] });
+  const checked = element("detailContent").innerHTML;
+  assert.match(checked, /<table class="values-table vt-checks">/);
+  assert.match(checked, /<td class="vt-printed"><span class="vt-whole">135\.0<\/span> ± <span class="vt-whole">15\.1<\/span> <span class="vt-whole">sec−1<\/span><\/td>/);
+  assert.match(checked, /<td class="vt-printed"><span class="vt-whole">30<\/span> µM<\/td>/);
+  assert.match(checked, /<td class="vt-printed"><span class="vt-whole">4\.5<\/span> × <span class="vt-whole">10<\/span><sup>3<\/sup><\/td>/);
+  api.setHumanReviewMarks({});
 }
 // A value read from the paper shows its value_display exactly, never cut to 4 figures (41e7d72dfb8772a1: kcat 1285.4 ±
 // 124.7 sec⁻¹; 0245a504d4175d86: kcat/Km 621.92 ± 7.30 mM⁻¹·s⁻¹), in Values and in the report email; an older record's value
