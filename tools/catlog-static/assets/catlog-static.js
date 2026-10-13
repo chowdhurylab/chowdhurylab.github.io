@@ -181,7 +181,7 @@
   };
   const databaseFilters = [
     { value: "corrects", label: "Corrects a database", chip: "Corrects a database value", bit: 1,
-      title: "A database lists another number for a value, and the paper shows CatLog's" },
+      title: "A database lists a different number for a value; the record says what the paper prints and why they differ" },
     { value: "differs", label: "Differs, unresolved", chip: "Differs from a database, not yet resolved", bit: 2,
       title: "A database lists another number for a value; not yet resolved" },
     { value: "same", label: "Same as a database", chip: "Same as a database", bit: 4,
