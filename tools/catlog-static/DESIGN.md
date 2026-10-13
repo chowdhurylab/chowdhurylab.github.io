@@ -524,7 +524,10 @@ found at once: A, B, G, C, D, E, F, H.
   stays beside its number (or the number's last line) at every width: a word
   joiner ties the two, and up to 360px the check hangs in a 16px margin of its
   own, so every line of every number ends at the same place. The first grey note under the table says what the check
-  means: "✓ Approved by a human reviewer (see Human review below)." A row without
+  means: "✓ Approved by a human reviewer (see Human review below)."; beside a
+  calc. kcat/Km it adds "The calc. kcat/Km carries no check: CatLog calculated
+  it.", so checks on kcat and Km alone never read as a value the review left
+  out. A row without
   the check, calc. or "!" keeps their space unseen (aria-hidden), so every number in the
   Value column ends at the same place; on phones the calc. and "!" space is dropped. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1

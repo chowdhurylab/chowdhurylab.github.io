@@ -3621,6 +3621,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A kcat/Km worked out from kcat and Km (calc.) is not printed: no reviewer approved it as such.
   api.renderDetail(row({ record_key: "hc-calc", measurement_key: "hc-calc", kcat_over_km_origin: "calculated" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "Km"]);
+  // The line under the table says why the calc. kcat/Km beside checked values has none.
+  assert.match(element("detailContent").innerHTML, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see Human review below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
   // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") carries no check, also in

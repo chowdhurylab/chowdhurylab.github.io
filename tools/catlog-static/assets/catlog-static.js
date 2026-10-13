@@ -8273,10 +8273,13 @@
     const withheldNote = withheldNames
       ? `${withheldNames} ${approval.withheld.length > 1 ? "carry" : "carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`
       : "";
+    // A kcat/Km CatLog calculated beside checked values: why it has none (no reviewer approved a number the paper does not
+    // print), so checks on kcat and Km alone never read as a value left out of the review.
+    const calcNoCheck = cells.some((cell) => cell.calc && !cell.check) ? " The calc. kcat/Km carries no check: CatLog calculated it." : "";
     const greyNotes = [
       // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
-        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.${escapeHtml(calcNoCheck)}${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
         : (withheldNote
             ? escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`)
             : ""),
