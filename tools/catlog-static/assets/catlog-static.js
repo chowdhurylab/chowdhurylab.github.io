@@ -9063,9 +9063,11 @@
       count = state.records.reduce((total, row) => total + (pmid ? rowHasPmid(row, Number(pmid)) : rowHasDoi(row, folded)), 0);
     }
     const rowClass = { className: "paper-records-row" };
-    if (count === 1) return linkedKv("In CatLog", "Only this record", rowClass);
+    // A record that names several papers links to the first, by name.
+    const paper = (pmid ? pmids.length : dois.length) > 1 ? (pmid ? `PMID ${pmid}` : `DOI ${doi}`) : "this paper";
+    if (count === 1) return linkedKv("In CatLog", escapePublic(`Only this record${paper === "this paper" ? "" : ` from ${paper}`}`), rowClass);
     const href = `${browseHash([["q", pmid ? `pmid:${pmid}` : `doi:${doi}`]])}&record=${encodeURIComponent(key)}`;
-    const words = count > 1 ? `${formatInteger(count)} records from this paper` : "Records from this paper";
+    const words = escapePublic(count > 1 ? `${formatInteger(count)} records from ${paper}` : `Records from ${paper}`);
     return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href)}">${words}<span aria-hidden="true"> →</span></a>`, rowClass);
   }
 

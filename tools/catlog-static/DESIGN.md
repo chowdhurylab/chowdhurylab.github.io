@@ -533,7 +533,8 @@ found at once: A, B, G, C, D, E, F, H.
   link to the paper's records in Browse with this record kept open
   (#browse?q=pmid:<PMID>&record=<key>, or doi:<DOI>), "89 records from this
   paper →" once the record index is loaded ("Only this record" when it is the
-  paper's one); an older
+  paper's one; a record naming several papers links to the first by name, "43
+  records from PMID 35008493"); an older
   record's notes on request: "Earlier automated review: where the values are
   printed" (Where, As printed and Conversion, code quotes and "->" written as
   plain text and arrows; the Conversion line keeps each value's printed number

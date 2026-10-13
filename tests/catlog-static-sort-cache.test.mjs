@@ -3383,6 +3383,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     assert.match(element("detailContent").innerHTML, /<div class="kv-line paper-records-row"><dt>In CatLog<\/dt><dd>Only this record<\/dd>/);
     api.renderDetail(summary, {});
     assert.doesNotMatch(element("detailContent").innerHTML, /In CatLog/, "no paper, no link");
+    // A record that names several papers links to the first by name.
+    api.state.records = [{ ...summary, _pmids: [12234181, 777] }, row({ record_key: "paper-c", _pmids: 12234181 })];
+    api.renderDetail(summary, { supporting_pmids: ["12234181", "777"] });
+    assert.match(element("detailContent").innerHTML, />2 records from PMID 12234181<span aria-hidden="true"> →</);
     api.state.recordsReady = false;
     api.renderDetail(summary, { supporting_dois: ["10.1021/bi020196a"] });
     assert.match(element("detailContent").innerHTML, /href="#browse\?q=doi:10\.1021\/bi020196a&amp;record=paper-a">Records from this paper</);
