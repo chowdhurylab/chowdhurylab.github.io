@@ -1378,6 +1378,10 @@ assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full 
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
 assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says CatLog v1 entries, never older records");
 assert.match(guideHtml, /<summary>Evidence labels on CatLog v1 entries<\/summary>/);
+// The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
+// Guide says so where it says the table has no temperature or pH column.
+assert.match(guideHtml, /The table has no temperature or pH column: they show under the substrate only to tell apart records of one paper that differ in them/);
+assert.doesNotMatch(guideHtml, /table does not show (?:temperature|them)/);
 // The counts band names the records read from the paper by CatLog as Stats and the Source filter do: CatLog v2.
 assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the CatLog v2 entries, read from the paper by CatLog"[^>]*><span>CatLog v2<\/span><strong id="fromPaperCount">/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");

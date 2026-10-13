@@ -424,7 +424,9 @@ which is theirs under the substrate ("pH 6.5", "37 °C", "pH not stated",
 table has no T column; only the
 part that differs in the series; the tooltip adds "this paper also measured this
 enzyme and substrate at another pH", or, for records whose values another record
-shares, "otherwise the same as another record of this paper"). The table writes
+shares, "otherwise the same as another record of this paper"). The Guide says so
+where it says the table has no temperature or pH column (Cautions, Units: shown
+only to tell apart records of one paper). The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from
 the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat or
