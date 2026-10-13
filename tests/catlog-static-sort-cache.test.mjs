@@ -2656,6 +2656,32 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const close = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(close, /kcat\/Km listed by BRENDA/);
   assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");
+  // One kcat/Km flagged against kcat ÷ Km and against the listed values: one note says both (f93512e053523964).
+  const older = (key, kcat, km, ratio, flags) => row({ record_key: key, kcat, km, kcat_over_km: Number(ratio), kcat_display: String(kcat),
+    km_display: String(km), kcat_over_km_display: ratio, kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)",
+    kcat_over_km_source_differs: true, source_db: "brenda", condition_flags: flags });
+  const both = ["kcat_over_km_quotient_mismatch", "kcat_over_km_source_mismatch"];
+  const twice = measurementSection(older("twice", 4.1, 0.22, "46.067", both), { source_kcat_over_km_values: [{ value: 18.6, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  assert.match(twice, /The stored kcat\/Km \(46\.1 s⁻¹ mM⁻¹\) is 2\.5-fold above kcat ÷ Km \(19 s⁻¹ mM⁻¹\)\. BRENDA lists kcat\/Km 18\.6 s⁻¹ mM⁻¹ for this record, which agrees with kcat ÷ Km\./);
+  assert.equal((twice.match(/<li id="detailFlagNote/g) || []).length, 1, "one note for one mismatch");
+  assert.doesNotMatch(twice, /more than 2-fold from the kcat\/Km shown|stored as the source lists them/);
+  const some = measurementSection(older("some", 0.076, 1.26, "227.78", both), { source_kcat_over_km_values: [
+    { value: 0.06027, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  assert.match(some, /BRENDA lists kcat\/Km 0\.06027 and 5 s⁻¹ mM⁻¹ for this record; 0\.06027 agrees with kcat ÷ Km\./);
+  // Without listed values in the catalog unit the flags keep their own notes.
+  assert.match(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {}), /The source&#39;s kcat\/Km \(46\.1 s⁻¹ mM⁻¹\) is 2\.5-fold above/);
+  // A familiar factor between kcat ÷ Km and the listed kcat/Km is named (e375ce185827beeb, 3dc72daa0a20580c).
+  const thousand = measurementSection(older("thousand", 3.5, 64, "0.05469", ["kcat_over_km_source_mismatch"]),
+    { source_kcat_over_km_values: [{ value: 55.5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  assert.match(thousand, /is 1,015-fold below the kcat\/Km BRENDA lists for this record \(55\.5\)\. The factor is close to 1000, the factor between per mM and per M\./);
+  // Folds past 10,000 are not spelled out (4a0225c90ac5a298).
+  const far = measurementSection(older("far", 390000, 0.0013, "3e+8", ["kcat_over_km_source_mismatch"]),
+    { source_kcat_over_km_values: [328, 650, 0.0042].map((value) => ({ value, unit: "s^(-1)*mM^(-1)", source_db: "sabio_rk" })) });
+  assert.match(far, /is more than 10,000-fold above every kcat\/Km SABIO-RK lists for this record \(0\.0042–650\)\./);
+  assert.doesNotMatch(far, /461,538/);
+  const wide = measurementSection(older("wide", 300, 1, "300", ["kcat_over_km_source_mismatch"]),
+    { source_kcat_over_km_values: [0.01, 10].map((value) => ({ value, unit: "s^(-1)*mM^(-1)", source_db: "brenda" })) });
+  assert.match(wide, /is 30- to more than 10,000-fold above every kcat\/Km BRENDA lists/);
 }
 // Records of one paper that read alike: the export's condition note under the substrate (table and record); without
 // one, look-alikes with values on the page that share a paper say only that they read the same.

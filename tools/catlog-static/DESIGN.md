@@ -517,7 +517,11 @@ re-checked the value, ends with what it found ("... and kept mM."); the note
 stays amber. CatLog's own flag for it
 (printed_unit_prefix_differs) counts as a possible unit error and is said once.
 A merged older record whose listed kcat/Km values are all more than 2-fold from
-kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"). An older record whose
+kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"; a familiar factor such as
+1000 is named, and a fold past 10,000 reads "more than 10,000-fold"). A stored
+kcat/Km flagged both against kcat ÷ Km and against every listed kcat/Km gets one
+note for both ("The stored kcat/Km ... BRENDA lists kcat/Km 18.6 s⁻¹ mM⁻¹ for
+this record, which agrees with kcat ÷ Km."). An older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number.
 

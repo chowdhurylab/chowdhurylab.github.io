@@ -6969,16 +6969,50 @@
     const above = folds.every((fold) => fold > 2);
     const below = folds.every((fold) => fold < 0.5);
     const sizes = folds.map((fold) => Math.max(fold, 1 / fold));
-    const foldText = foldNumberText;
     const low = Math.min(...sizes);
     const high = Math.max(...sizes);
-    const fold = low.toFixed(1) === high.toFixed(1) || (low >= 10 && Math.round(low) === Math.round(high)) ? foldText(low) : `${foldText(low)}–${foldText(high)}`;
-    const sources = [...new Set(listed.map((item) => sourceShortName(item.source_db) || "the source"))];
-    const lists = `${sources.join(" and ")} ${sources.length > 1 ? "list" : "lists"}`;
+    const fold = foldRangeText(low, high);
     const unit = unitText("s^(-1)*mM^(-1)");
-    const direction = above ? `${fold}-fold above` : (below ? `${fold}-fold below` : "more than 2-fold away from");
+    const direction = above ? `${fold} above` : (below ? `${fold} below` : "more than 2-fold away from");
+    // A familiar factor (1000: per mM and per M) is named, as the kcat ÷ Km note names it.
+    const factor = KCAT_KM_FACTORS.find(([target]) => Math.abs(low / target - 1) <= 0.1 && Math.abs(high / target - 1) <= 0.1);
     return `kcat ÷ Km (${numberText(quotient, { figures: quotientFigures(summary) })} ${unit}) is ${direction} `
-      + `${listed.length > 1 ? "every" : "the"} kcat/Km ${lists} for this record (${listedRangeText(listed.map((item) => Number(item.value)))}).`;
+      + `${listed.length > 1 ? "every" : "the"} kcat/Km ${listedSourcesText(listed)} for this record (${listedRangeText(listed.map((item) => Number(item.value)))}).`
+      + (factor ? ` ${factor[1]}` : "");
+  }
+
+  // "OED lists", "OED and BRENDA list".
+  function listedSourcesText(listed) {
+    const sources = [...new Set(listed.map((item) => sourceShortName(item.source_db) || "the source"))];
+    return `${sources.join(" and ")} ${sources.length > 1 ? "list" : "lists"}`;
+  }
+
+  // "2.4–4.9-fold", "15-fold"; past 10,000-fold the exact size says nothing more ("more than 10,000-fold").
+  const FOLD_CAP = 1e4;
+  function foldRangeText(low, high) {
+    if (low > FOLD_CAP) return `more than ${formatInteger(FOLD_CAP)}-fold`;
+    if (high > FOLD_CAP) return `${foldNumberText(low)}- to more than ${formatInteger(FOLD_CAP)}-fold`;
+    const same = low.toFixed(1) === high.toFixed(1) || (low >= 10 && Math.round(low) === Math.round(high));
+    return same ? `${foldNumberText(low)}-fold` : `${foldNumberText(low)}–${foldNumberText(high)}-fold`;
+  }
+
+  // An older record flagged twice for one kcat/Km (its stored kcat/Km is far from kcat ÷ Km, and from every kcat/Km its
+  // sources list): one note with both, the listed values said against kcat ÷ Km.
+  function storedEfficiencyNote(summary, detail, flags) {
+    if (!flags.has("kcat_over_km_source_mismatch") || ![...KCAT_KM_FLAGS].some((flag) => flags.has(flag))) return "";
+    const check = kcatKmCheck(summary);
+    if (!check || check.v2) return "";
+    const listed = listedEfficiencies(summary, detail).filter((item) => listedEfficiencyInCatalogUnit(item.unit) && Number(item.value) > 0);
+    if (!listed.length) return "";
+    const values = [...new Set(listed.map((item) => Number(item.value)))].sort((a, b) => a - b);
+    const agree = values.filter((value) => Math.abs(value / check.quotient - 1) <= 0.1);
+    const valuesText = values.length > 3 ? listedRangeText(values) : sentenceList(values.map((value) => numberText(String(value))));
+    let relation = values.length > 1 ? ", each more than 2-fold from the stored kcat/Km" : ", more than 2-fold from the stored kcat/Km";
+    if (agree.length === values.length) relation = values.length > 1 ? ", each within 10% of kcat ÷ Km" : ", which agrees with kcat ÷ Km";
+    else if (agree.length) relation = `; ${sentenceList(agree.map((value) => numberText(String(value))))} ${agree.length > 1 ? "agree" : "agrees"} with kcat ÷ Km`;
+    return `The stored kcat/Km (${noteValueText(summary, "kcat_over_km")} ${check.unit}) is ${check.foldText} ${check.direction} `
+      + `kcat ÷ Km (${check.quotientText} ${check.unit}). ${listedSourcesText(listed)} kcat/Km ${valuesText} ${check.unit} for this record${relation}.`
+      + (check.factor ? ` ${check.factor[1]}` : "");
   }
 
   // ---- Record panel: flags ----
@@ -7007,6 +7041,8 @@
   function flagNotes(summary, detail, flags, consistent) {
     const order = ["kcat", "km", "kcat_over_km"];
     const notes = [];
+    // One kcat/Km flagged both against kcat ÷ Km and against the sources' kcat/Km: one note says both.
+    const storedNote = consistent ? "" : storedEfficiencyNote(summary, detail, flags);
     [...flags]
       .map((flag) => ({ flag, field: valueIntegrityFlags[flag]?.field || "" }))
       .sort((a, b) => (a.field ? order.indexOf(a.field) : 9) - (b.field ? order.indexOf(b.field) : 9))
@@ -7018,8 +7054,9 @@
         // With the source's own kcat/Km shown, the stored value's diffusion-limit flag is the same unit factor.
         if (consistent && flag === "efficiency_above_diffusion_limit") return;
         // The listed values' own note (both numbers and the fold, measurementNotes) says it better when it applies.
-        if (flag === "kcat_over_km_source_mismatch" && listedEfficiencyNote(summary, detail, flags)) return;
+        if (flag === "kcat_over_km_source_mismatch" && (listedEfficiencyNote(summary, detail, flags) || storedNote)) return;
         let text = magnitudeBound(flag, summary)?.note || flagNoteTexts[flag] || conditionFlagLabel(flag, summary, detail);
+        if (storedNote && !consistent && KCAT_KM_FLAGS.has(flag)) text = storedNote;
         if (unitField) text = `No unit is recorded for ${metricNames[unitField] || unitField}.`;
         if (consistent && KCAT_KM_FLAGS.has(flag)) {
           const { check } = consistent;
