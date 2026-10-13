@@ -1326,7 +1326,25 @@
       .replace(/\bnormali[sz]ed unit\b/gi, "unit")
       .replace(/\bnormali[sz]ed\b/gi, "converted")
       .replace(/\buM\b/g, "µM")
-      .replace(/\s+/g, " ");
+      .replace(/\s+/g, " ")
+      .replace(/^(?=\d)/, (start, _at, line) => (CONVERSION_BARE_KCAT.test(line) ? "kcat " : start))
+      .replace(/\b(in|to) catalog units\b/g, "$1 the catalog's units")
+      .replace(/\b(\d(?:\.\d+)?)e([+-])(\d{2,3})\b/g, (_m, digits, sign, power) => `${digits} × 10^${sign === "-" ? "-" : ""}${Number(power)}`)
+      .replace(/\^\{([−-]?\d+)\.\}/g, "^{$1}")
+      .replace(CONVERSION_LONG_DECIMAL, conversionRounded);
+  }
+
+  // The Conversion line's slips that the earlier pipeline's notes carry (text_check): a quotient written to six or more
+  // decimals with more than four significant digits ("1.1/13 = 0.084615") reads to four (0.08462, as the Values table
+  // shows it); a small number such as 0.000015 keeps its digits. A note that starts with a bare first-order rate and goes
+  // on ("1.1 s^-1; K_B = 13 mM; kcat/K_B = ...") opens with "kcat", the value it is; Python's 1.08e+03 reads 1.08 × 10³.
+  const CONVERSION_BARE_KCAT = /^\d+(?:\.\d+)?\s*(?:s|sec|min|h)\s*\^?\(?[−-]1\)?\s*[;=]/i;
+  const CONVERSION_LONG_DECIMAL = /(?<![\w.^−-])(\d+)\.(\d{6,})(?!\d|\.\d)/g;
+  function conversionRounded(match, whole, fraction) {
+    if (`${whole}${fraction}`.replace(/^0+/, "").length <= 4) return match;
+    // Half up as written (0.084615 is a hair under it in binary, so it is nudged first).
+    const rounded = (Number(match) * (1 + 1e-12)).toPrecision(4);
+    return /e/i.test(rounded) ? match : rounded.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
 
   function evidenceNoteHtml(value) {

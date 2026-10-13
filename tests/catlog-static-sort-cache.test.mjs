@@ -3382,6 +3382,21 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     "Km: printed Table 3 cell 8739 µM; 8739 / 1000 = 8.739 mM. kcat: printed Table 3 cell 140 s^-1 (no conversion); printed efficiency cell 16.0 x 10^3 M^-1 s^-1 converts to 16.0 s^-1 mM^-1 because 1 M^-1 s^-1 is 0.001 s^-1 mM^-1.");
   assert.equal(api.conversionFacts("Km: printed cell 60.8 uM; 60.8 / 1000 = 0.0608 mM. kcat: printed cell 2.5 s^-1; the cell is already in s^-1, so no unit conversion applies. 1 M^-1 s^-1 is 0.001 s^-1 mM^-1, so 0.41 x 10^5 / 1000 = 41.0 s^-1 mM^-1."),
     "Km: printed cell 60.8 µM; 60.8 / 1000 = 0.0608 mM. kcat: printed cell 2.5 s^-1 (no conversion); 0.41 x 10^5 / 1000 = 41.0 s^-1 mM^-1.");
+  // The notes' slips read cleanly (text_check): a quotient to six or more decimals reads to four significant digits, as
+  // the Values table shows it (a small number keeps its digits); a note cut before its first label opens with "kcat";
+  // Python's 4.69e+01 reads 4.69 × 10^1; "catalog units" is the catalog's units.
+  assert.equal(api.conversionFacts("1.1 s^-1; K_B = 13 mM; kcat/K_B = 1.1/13 = 0.084615 s^-1 mM^-1"),
+    "kcat 1.1 s^-1; K_B = 13 mM; kcat/K_B = 1.1/13 = 0.08462 s^-1 mM^-1.");
+  assert.equal(api.conversionFacts("1.2 s^-1; 33 uM = 0.033 mM; kcat/K_A = 1.2/0.033 = 36.363636 s^-1 mM^-1"),
+    "kcat 1.2 s^-1; 33 µM = 0.033 mM; kcat/K_A = 1.2/0.033 = 36.36 s^-1 mM^-1.");
+  assert.equal(api.conversionFacts("kcat 548 min-1 = 9.133333. Km=0.91 mM."), "kcat 548 min-1 = 9.133. Km=0.91 mM.");
+  assert.equal(api.conversionFacts("0.013 uM = 0.000013 mM; 0.53 uM min-1 = 0.00000000883 M s-1."), "0.013 µM = 0.000013 mM; 0.53 µM min-1 = 0.00000000883 M s-1.");
+  assert.equal(api.conversionFacts("290 uM = 0.29 mM."), "290 µM = 0.29 mM.", "a lone concentration keeps its words");
+  assert.equal(api.conversionFacts("kcat/Km 0.0469 s-1 mM-1 (converted by code from 4.69e+01 s-1 M-1)."),
+    "kcat/Km 0.0469 s-1 mM-1 (converted by code from 4.69 × 10^1 s-1 M-1).");
+  assert.equal(api.conversionFacts("kcat/Km 130 s-1 mM-1 (converted by code from 13 × 10^{4.}(s-1/M))."),
+    "kcat/Km 130 s-1 mM-1 (converted by code from 13 × 10^{4}(s-1/M)).");
+  assert.equal(api.conversionFacts("Central values in catalog units are Km = 0.12 mM."), "Central values in the catalog's units are Km = 0.12 mM.");
   // A converted value the source calls canonical gets no tag; a printed 5.0 x 10^3 is a number, not a conversion.
   assert.equal(api.conversionFacts("Km: printed Table 2 cell 343.3 uM; 343.3 / 1000 = 0.3433 mM is the canonical paper value."),
     "Km: printed Table 2 cell 343.3 µM; 343.3 / 1000 = 0.3433 mM.");

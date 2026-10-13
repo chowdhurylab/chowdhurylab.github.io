@@ -684,7 +684,12 @@ found at once: A, B, G, C, D, E, F, H.
   plain text and arrows; the Conversion line keeps each value's printed number
   and arithmetic and says "(no conversion)" for the earlier pipeline's
   reasoning, right after the value it is about and never after a unit
-  conversion such as "/ 1000" or "converts to", uM reads µM). The notes never
+  conversion such as "/ 1000" or "converts to", uM reads µM; a quotient written
+  to six or more decimals with more than four significant digits reads to four,
+  "1.1/13 = 0.08462", as the Values table shows it, while 0.000015 keeps its digits;
+  a note cut before its first label, "1.1 s⁻¹; K_B = 13 mM; ...", opens with
+  "kcat"; Python's 4.69e+01 reads 4.69 × 10¹; "catalog units" reads "the
+  catalog's units"). The notes never
   show the earlier pipeline's field names or how it fetched the paper:
   "Km raw_value=1.27 mM raw_unit=mM" reads "Km 1.27 mM" (a unit once), a
   printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
