@@ -1374,10 +1374,20 @@ assert.match(guideHtml, /<em>Possible unit or magnitude error<\/em> \([^)]*above
 assert.doesNotMatch(guideHtml, /not in the table or the Cautions filter/);
 assert.match(sourceCode, /value: "units", label: "Possible unit or magnitude error", bit: 2, title: "[^"]*a printed unit that differs[^"]*"/);
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
-// CatLog v1 and v2 entries are named as such (the user, 2026-10-13), never "the earlier catalog" or "the old catalog".
+// Records are named by what happened to them (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read,
+// never "the earlier catalog", "the old catalog" or older records. CatLog is the one name: no v1 or v2; the earlier
+// version is named only in the method section and in help (a tag's definition), and the method section says once that
+// the current version is the second.
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
-assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says CatLog v1 entries, never older records");
-assert.match(guideHtml, /<summary>Evidence labels on CatLog v1 entries<\/summary>/);
+assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says records not yet re-read, never older records");
+assert.doesNotMatch(guideHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b|version 2/i);
+assert.match(guideHtml, /<summary>Evidence labels on records not yet re-read<\/summary>/);
+{
+  const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
+  assert.match(method, /<div><dt>Read from the paper<\/dt><dd>CatLog&rsquo;s current version, its second, reads papers directly\./);
+  assert.match(method, /<div><dt>Not yet re-read<\/dt><dd>Records from CatLog&rsquo;s earlier version, which started from enzyme database entries \([^)]*\) and checked part of them against their papers[^<]*When CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.equal((guideHtml.match(/its second/g) || []).length, 1, "The Guide says once that the current version is the second");
+}
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
 // Guide says so where it says the table has no temperature or pH column.
 assert.match(guideHtml, /The table has no temperature or pH column: they show under the substrate only to tell apart records of one paper that differ in them/);
