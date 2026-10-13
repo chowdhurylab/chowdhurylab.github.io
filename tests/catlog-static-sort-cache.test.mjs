@@ -3380,7 +3380,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     assert.match(element("detailContent").innerHTML, /<a class="paper-records-link" href="#browse\?q=pmid:12234181&amp;record=paper-a">2 records from this paper</);
     api.state.records = [{ ...summary, _pmids: 12234181 }];
     api.renderDetail(summary, { supporting_pmids: ["12234181"] });
-    assert.match(element("detailContent").innerHTML, /<dt>In CatLog<\/dt><dd>Only this record<\/dd>/);
+    assert.match(element("detailContent").innerHTML, /<div class="kv-line paper-records-row"><dt>In CatLog<\/dt><dd>Only this record<\/dd>/);
     api.renderDetail(summary, {});
     assert.doesNotMatch(element("detailContent").innerHTML, /In CatLog/, "no paper, no link");
     api.state.recordsReady = false;

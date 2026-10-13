@@ -16,6 +16,7 @@
     selectedShard: "",
     activeRowKey: "",
     selectedDetail: null,
+    selectedPaperIds: null,
     pageDownloadPending: false,
     recordChunksLoaded: 0,
     recordChunksTotal: 0,
@@ -2742,6 +2743,7 @@
       state.recordsReady = true;
       updateLoadProgress();
       setupFilters();
+      refreshPaperRecordsRow();
       setSortAvailable(true);
       // The page already drawn from the first rows stays as it is when it is the same page.
       state.preserveRenderedRows = state.firstRowsShown;
@@ -2814,6 +2816,7 @@
     state.recordsReady = true;
     updateLoadProgress();
     setupFilters();
+    refreshPaperRecordsRow();
     await ensureCurrentFilters({ resetPage: false });
     updateTableScrollControls();
   }
@@ -9059,10 +9062,20 @@
       const folded = foldSearch(doi);
       count = state.records.reduce((total, row) => total + (pmid ? rowHasPmid(row, Number(pmid)) : rowHasDoi(row, folded)), 0);
     }
-    if (count === 1) return kv("In CatLog", "Only this record");
+    const rowClass = { className: "paper-records-row" };
+    if (count === 1) return linkedKv("In CatLog", "Only this record", rowClass);
     const href = `${browseHash([["q", pmid ? `pmid:${pmid}` : `doi:${doi}`]])}&record=${encodeURIComponent(key)}`;
     const words = count > 1 ? `${formatInteger(count)} records from this paper` : "Records from this paper";
-    return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href)}">${words}<span aria-hidden="true"> →</span></a>`);
+    return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href)}">${words}<span aria-hidden="true"> →</span></a>`, rowClass);
+  }
+
+  // A record opened before the whole record index arrived gets its paper's count in place once it has (rows and focus
+  // elsewhere stay).
+  function refreshPaperRecordsRow() {
+    const line = document.querySelector?.("#detailContent .paper-records-row");
+    const row = state.selectedKey ? state.records.find((item) => item.record_key === state.selectedKey) : null;
+    if (!line || !row || !state.selectedPaperIds || line.contains(document.activeElement)) return;
+    line.outerHTML = paperRecordsRow(row, state.selectedPaperIds.pmids, state.selectedPaperIds.dois);
   }
 
   // ---- Record panel: C. Source ----
@@ -9183,6 +9196,7 @@
       .map((line) => noteWithoutHeadingSource(line, noteSource));
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const v2Proof = v2ProofFacts(summary, detail);
+    state.selectedPaperIds = { pmids, dois };
     const isSourceNote = (summary.proof_kind || detail.proof_kind) === "source_note";
     const mergedRows = Number(detail.source_record_count || summary.source_record_count || 0);
     // What stands behind an older record's values (a record read by CatLog says so in its Method line).
