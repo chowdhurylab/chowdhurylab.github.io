@@ -6613,12 +6613,18 @@
     if (status) status.textContent = openedRecordMessage(row);
   }
 
+  // Whether the last input came from the keyboard (set by bindControls): the record's heading, focused so a screen
+  // reader starts there, shows its focus ring after a key press, not after a click or on a link that opens a record.
+  let keyboardInput = false;
+
   function focusDetailHeading(key) {
     const activeElement = document.activeElement;
     const focusCurrentHeading = () => {
       if (state.selectedKey !== key || !document.body.classList.contains("detail-open")) return;
       if (document.activeElement !== activeElement) return;
-      $("detailHeading")?.focus();
+      const heading = $("detailHeading");
+      heading?.classList?.toggle("quiet-focus", !keyboardInput);
+      heading?.focus({ preventScroll: true });
     };
     if (narrowDetailMedia.matches) window.setTimeout(focusCurrentHeading, 180);
     else focusCurrentHeading();
@@ -6803,6 +6809,7 @@
       renderRows();
       return;
     }
+    const switching = state.selectedKey !== key;
     state.selectedKey = key;
     syncRecordUrl(key);
     state.selectedShard = row.detail_shard || "";
@@ -6812,10 +6819,17 @@
     renderRows();
     $("detailEmpty").classList.add("hidden");
     $("detailContent").classList.remove("hidden");
+    // The whole header is drawn from the table's row at once (name, EC and organism, substrate, status, record ID), so
+    // it keeps its place when the record arrives; below it a quiet outline of the values, shown only when loading takes
+    // a moment. Another record opens at its top.
     $("detailContent").innerHTML = `
-      ${detailTopHtml(row, {}, { withDetail: false })}
-      <p id="detailLoadStatus" class="muted detail-load-status" role="status">Loading record…</p>
+      ${detailTopHtml(row, {})}
+      <div class="detail-loading">
+        <p id="detailLoadStatus" class="muted detail-load-status" role="status">Loading record…</p>
+        <div class="detail-skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      </div>
     `;
+    if (switching && $("detailPanel")) $("detailPanel").scrollTop = 0;
     bindDetailTop();
     if (focusDetail) focusDetailHeading(key);
     try {
@@ -6845,7 +6859,7 @@
       // A record file from another snapshot needs the page reloaded; anything else can be tried again.
       const outOfDate = String(error?.message || "") === PAGE_OUT_OF_DATE;
       $("detailContent").innerHTML = `
-        ${detailTopHtml(row, {}, { withDetail: false })}
+        ${detailTopHtml(row, {})}
         <div class="detail-load-error" role="alert">
           <strong>${escapeHtml(outOfDate ? PAGE_OUT_OF_DATE : RECORD_NOT_LOADED)}</strong>
           <span>The table still shows its values.</span>
@@ -8456,17 +8470,6 @@
     return typeof line === "string" && EARLIER_REVIEW_NOTE.test(line.trim());
   }
 
-  function detailDisclosure(title, rows) {
-    return `
-      <details class="detail-disclosure">
-        <summary>${escapeHtml(title)}</summary>
-        <div class="detail-kv">${rows.filter(Boolean).join("")}</div>
-      </details>
-    `;
-  }
-
-
-
   // "Report a problem": an email to the lab with the record ID, the snapshot and the values as the record shows them
   // (shown: a value the record shows in place of the stored one, such as the source's own kcat/Km; listed: the kcat/Km
   // values its sources list, as the record shows them under Values).
@@ -8521,7 +8524,9 @@
   const LONG_DETAIL_NAME = 64;
   function detailHeadingHtml(row) {
     const name = String(row.enzyme_display_name || "").trim() || "Enzyme name not recorded";
-    return `<h2 id="detailHeading" tabindex="-1"${name.length > LONG_DETAIL_NAME ? ' class="long-name"' : ""}>${escapePublic(name)}</h2>`;
+    // (Its focus ring shows after a key press only: focusDetailHeading.)
+    const classes = [name.length > LONG_DETAIL_NAME ? "long-name" : "", keyboardInput ? "" : "quiet-focus"].filter(Boolean).join(" ");
+    return `<h2 id="detailHeading" tabindex="-1"${classes ? ` class="${classes}"` : ""}>${escapePublic(name)}</h2>`;
   }
 
   // The organism with its binomial in italics ("<i>Escherichia coli</i> K-12", "<i>Bacillus</i> sp. A1"); a name that is
@@ -8946,15 +8951,23 @@
   }
 
   // ---- Record panel: C. Source ----
+  // The source and its own details in one list (each row wraps; nothing to open): the source, what it merges, where the
+  // enzyme name comes from (an older record; a record read from the paper takes it from the paper), how the values were
+  // read or what stands behind them, the license and the snapshot.
   function sourceSection(summary, detail, { v2Record, proof, mergedRows, paperCount, evidence, sourceNoteHtml }) {
     const facts = proof?.facts || null;
     const dataId = snapshotDataId();
+    const dataOrigin = publicEvidenceString(detail.data_origin);
     return detailSection("source", "Source", kvList([
       kv("Source", recordSourceName(recordSourceDb(summary, detail), v2Record)),
       // How many database rows a record merges is said once, here.
       mergedRows > 1
         ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
         : "",
+      mergedDatabasesRow(summary, detail),
+      v2Record ? "" : kv("Name from", sourceLabels[summary.enzyme_label_source] || "Not recorded"),
+      // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
+      dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
       // A record read by CatLog: how (Method) and what the second AI check found; an older record: what stands behind
       // its values.
       v2Record
@@ -9078,7 +9091,6 @@
       ? notesDisclosure(oneDatabase ? `${several ? "Notes" : "Note"} from ${noteSource}` : `Database ${several ? "notes" : "note"}`, databaseNotes)
       : "";
     const paperNotesHtml = showNotes && paperNotes.length ? notesDisclosure("Earlier automated review: where the values are printed", paperNotes) : "";
-    const dataOrigin = publicEvidenceString(detail.data_origin);
     const check = recordCheck(summary);
     const hasCorrections = correctionItems(detail, check).length > 0;
     // The values the record shows where they differ from the stored ones (the source's own kcat/Km), for the report email.
@@ -9097,12 +9109,6 @@
       ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
       ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, hasPaper: paperIds.length + dois.length > 0 })}
       ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref })}
-      ${detailDisclosure("Source details", [
-        kv("Name from", v2Record ? "Paper" : sourceLabels[summary.enzyme_label_source] || "Not recorded"),
-        mergedDatabasesRow(summary, detail),
-        // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
-        dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
-      ])}
     `;
     bindDetailTop();
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
@@ -9288,6 +9294,13 @@
   }
 
   function bindControls() {
+    // The last input's kind, for the record heading's focus ring (focusDetailHeading).
+    document.addEventListener?.("keydown", (event) => {
+      if (!event.metaKey && !event.ctrlKey && !event.altKey) keyboardInput = true;
+    }, true);
+    document.addEventListener?.("pointerdown", () => {
+      keyboardInput = false;
+    }, true);
     [
       "globalSearchInput",
       "ecFilterInput",

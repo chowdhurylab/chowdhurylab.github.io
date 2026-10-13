@@ -1597,8 +1597,7 @@ def check_layout(driver, browser, url, route_label):
 RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|CatLog v2")
 
 
-RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "Paper", "Against the databases", "Review and audit",
-                   "Source details"]
+RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "Paper", "Against the databases", "Review and audit"]
 
 # A malic enzyme variant with 28 substitutions (PMID 24998673): its sequence line is one long run with no spaces.
 LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
@@ -1615,7 +1614,8 @@ PHONE_LONG_WORD_RECORD = "2479abbe2effcc47"
 
 def check_record_panel(driver, browser, url, route_label):
     """The record (design spec 5): header lines, then Values, Source, Conditions, Protein and substrate, Paper, Against the
-    databases (only when it has something to say), Review and audit, and Source details last; a record read from the paper
+    databases (only when it has something to say), Review and audit with the record's actions last (the source's own
+    details are rows of Source, nothing to open at the end); a record read from the paper
     says how in its Method line (with the Guide link) and gives its values as printed; an older record names the earlier
     automated review; no labelled row shows a bare dash; Show opens a sequence under its row."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
@@ -1651,7 +1651,7 @@ def check_record_panel(driver, browser, url, route_label):
             const selectedDot = document.querySelector('#recordsBody tr[aria-selected="true"] .state-label');
             const databases = content.querySelector('.databases-section');
             return {
-                sections: [...content.querySelectorAll('.detail-section > h3, .detail-disclosure > summary')].map(e => e.textContent.trim()),
+                sections: [...content.querySelectorAll('.detail-section > h3, details.detail-disclosure > summary')].map(e => e.textContent.trim()),
                 // The status line's dot and the selected row's dot (the same status colour), the definition lists' label
                 // column (112px, 96px on phones) and what section G says.
                 dotColor: status ? getComputedStyle(status, '::before').backgroundColor : null,

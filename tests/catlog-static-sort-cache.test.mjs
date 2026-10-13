@@ -2657,7 +2657,7 @@ assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
 // The record (design spec 5): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values (with
-// the values as printed), Source, Conditions, Protein and substrate, Paper, Review and audit, Source details last.
+// the values as printed), Source, Conditions, Protein and substrate, Paper, Review and audit with the record's actions last.
 {
   const v2Summary = row({ record_key: "v2-structure", measurement_key: "v2-structure", source_db: "primary_paper_direct",
     enzyme_label_source: "explicit_enzyme_name", ec_number: "1.4.1.20", organism: "Bacillus sphaericus",
@@ -2676,7 +2676,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>read from the paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
   const order = ['class="detail-top"', ">Values</h3>", ">Source</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
-    ">Review and audit</h3>", 'id="downloadSelectedJson"', "<summary>Source details</summary>"];
+    ">Review and audit</h3>", 'id="downloadSelectedJson"'];
   const positions = order.map((part) => html.indexOf(part));
   assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
@@ -3124,7 +3124,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
   assert.match(html, /<dt>Source<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
-  assert.match(html, /<dt>Name from<\/dt><dd>Paper<\/dd>/);
+  assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: the Source says so");
+  // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).
+  assert.doesNotMatch(html, /Source details|<details class="detail-disclosure"/);
   html = render({ source_db: "strenda", proof_kind: "source_note", has_proof_excerpt: false },
     { proof_lines: ["Raw STRENDA Extraction: kcat/Km\t4200.0 (+/-) 290.0 M⁻¹ s⁻¹"] });
   assert.match(html, /<summary>Note from STRENDA DB<\/summary>/);
@@ -3135,6 +3137,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7.5" }, { proof_lines: ["pH 7.5, 25°C"] });
   assert.match(html, /<dt>Source<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "named as the status line names them");
   assert.match(html, /<dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/);
+  assert.match(html.slice(html.indexOf('class="detail-section source-section"'), html.indexOf('class="detail-section conditions-section"')),
+    /<dt>Source<\/dt><dd>BRENDA, SABIO-RK<\/dd><\/div><div class="kv-line"><dt>Name from<\/dt><dd>BRENDA recommended name<\/dd>/,
+    "Name from follows the Source in its section");
   assert.doesNotMatch(html, /Note from|25°C/, "a note that only repeats T and pH is not shown");
   // SKiD's notes as CatLog writes them ("SKiD: 55°C, pH 8.9"): hidden when they only repeat T and pH; otherwise shown
   // without repeating the source the heading names.
@@ -3149,7 +3154,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { proof_lines: ["pH 7.5, 30°C", "SKiD: 30°C, pH 7"] });
   assert.match(html, /<p class="evidence-note-plain">pH 7\.5, 30°C<\/p>/);
   assert.doesNotMatch(html, /SKiD: 30°C/, "the SKiD note repeats T and pH");
-  // A merged record's note does not name every database as its author, and its Source details do not repeat the
+  // A merged record's note does not name every database as its author, and its Databases row does not repeat the
   // Source's databases in another order (f1abdd207ecc711a); the name's origin reads plainly.
   html = render({ source_db: "sabio_rk;brenda;skid", enzyme_label_source: "ec_name_fallback", proof_kind: "source_note",
     has_proof_excerpt: false, temperature_display: "25", ph_display: "7" },
@@ -4104,6 +4109,10 @@ assert.equal(
         headingFocusCount = 0;
         const selecting = api.selectRecord(key);
         assert.equal(document.activeElement, heading, "explicit selection focuses the loading heading");
+        // While it loads, the whole header is drawn from the table's row (it keeps its place when the record arrives),
+        // then a quiet outline of the values; the heading shows no focus ring after a click.
+        assert.match(content.innerHTML, /<p class="detail-substrate">[\s\S]*<p class="detail-status"[\s\S]*<p class="detail-key">[\s\S]*id="detailLoadStatus"[\s\S]*<div class="detail-skeleton" aria-hidden="true">/);
+        assert.match(content.innerHTML, /<h2 id="detailHeading" tabindex="-1" class="quiet-focus">/);
         if (moveFocus) searchInput.focus();
         await selecting;
         assert.equal(document.activeElement, moveFocus ? searchInput : heading,

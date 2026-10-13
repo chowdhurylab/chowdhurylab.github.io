@@ -307,8 +307,6 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .source-databases > summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
 .source-databases[open] > summary::after { content:"\2212"; content:"\2212" / "" }
 .source-databases > .check-stack { padding-top:var(--sp-1) }
-.detail-disclosure summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
-.detail-disclosure[open] summary::after { content:"\2212"; content:"\2212" / "" }
 
 /* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
    at the bottom. */
@@ -497,11 +495,25 @@ body.detail-open .detail-panel { display:block }
 }
 #detailContent { padding:0 0 8px }
 .detail-load-status { margin:0; padding:16px 20px }
+/* While a record loads: its header at once; the status line and a quiet outline of the values only after a moment, so a
+   quick load does not flash. */
+.detail-loading { animation:detail-loading-in 160ms ease-out 240ms both }
+.detail-loading .detail-load-status { padding-bottom:4px }
+.detail-skeleton { display:grid; gap:12px; padding:12px 20px 16px }
+.detail-skeleton span { display:block; height:12px; border-radius:2px; background:var(--line-soft) }
+.detail-skeleton span:nth-child(1) { width:28% }
+.detail-skeleton span:nth-child(2) { width:86% }
+.detail-skeleton span:nth-child(3) { width:72% }
+.detail-skeleton span:nth-child(4) { width:80% }
+@keyframes detail-loading-in { from { opacity:0 } to { opacity:1 } }
+@media (prefers-reduced-motion: reduce) { .detail-loading { animation:none } }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:4px; border-bottom:1px solid var(--line); background:var(--bg); padding:16px 56px 12px 20px }
 .detail-top h2 { margin:0 0 2px; color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20); min-width:0; overflow-wrap:break-word }
 .detail-top h2.long-name { font-size:var(--fs-16); line-height:var(--lh-16) }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+/* Focused after a click or by a link that opens the record (for screen readers), the heading shows no ring. */
+.detail-top h2.quiet-focus:focus-visible { outline:none }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
 .detail-form { display:inline-block; max-width:100% }
 .detail-subtitle code.mutation { color:var(--text); font:var(--fs-12)/var(--lh-12) var(--font-mono); overflow-wrap:anywhere }
@@ -660,15 +672,11 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .section-text.cmp-paper-note { margin-bottom:12px }
 .section-note { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 
-/* H. Actions side by side (Download record is the primary button); Source details fold last. */
+/* H. Actions side by side (Download record is the primary button), the record's last line. */
 .detail-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:16px }
 .detail-actions .button { min-height:36px }
 .button.primary { border-color:var(--accent); background:var(--accent); color:var(--bg) }
 .button.primary:hover:not(:disabled) { border-color:var(--accent-hover); background:var(--accent-hover); text-decoration:none }
-.detail-disclosure { border-top:1px solid var(--line-soft); padding:0 20px }
-.detail-disclosure summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:14px 0; color:var(--text); font-size:var(--fs-14); font-weight:600; list-style:none }
-.detail-disclosure summary::-webkit-details-marker { display:none }
-.detail-disclosure .detail-kv { padding-bottom:14px }
 .detail-load-error { display:grid; gap:6px; margin:16px 20px; border-left:3px solid var(--caution); background:var(--caution-tint); padding:12px 14px; color:var(--caution-ink); font-size:var(--fs-13) }
 .detail-load-error strong { color:var(--caution-ink) }
 .detail-load-error .button { width:max-content; margin-top:6px; border-color:var(--caution-line) }

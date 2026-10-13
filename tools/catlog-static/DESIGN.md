@@ -394,7 +394,14 @@ visible, and say each thing once, in plain words. The record is a white column
 with a 1px rule on its left: a header that stays in view, then sections, each
 after a soft rule with a 14px/600 heading and a definition list (112px terms in
 12px muted, 14px values; 96px terms on phones). A section with nothing to say
-is left out, never an empty heading. The order (design spec 5):
+is left out, never an empty heading. Opening a record draws its whole header
+at once from the table's row (name, EC and organism, substrate, status, record
+ID), so the header keeps its place when the record arrives; below it, only when
+loading takes a moment (after 240ms), "Loading record…" and a quiet outline of
+the values in `--line-soft` bars (no animation with reduced motion). Another
+record opens at its top. The heading takes focus for screen readers; its focus
+ring shows after a key press (Enter on a row), not after a click or a link that
+opens the record. The order (design spec 5):
 
 - A. Header (stays in view; on phones and on screens up to 900px tall, where
   the whole header would take a third of the record or more, only the name and
@@ -467,7 +474,14 @@ is left out, never an empty heading. The order (design spec 5):
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
 - C. Source: Source ("The paper (read by CatLog)" or the databases by name,
-  never a raw key); Merged from (database entries and papers); for a record read
+  never a raw key); Merged from (database entries and papers); the source's own
+  details as rows of the same list, each wrapping (nothing to open at the
+  record's end): Databases, the databases a merged record combines when they are
+  not the Source's own (compared as a set, named in the Source's order); Name
+  from on an older record ("BRENDA recommended name", "The source database's
+  entry", "The EC list's accepted name"; a record read from the paper takes its
+  name from the paper, which its Source says); Data origin when it is a plain
+  word other than "experimental"; for a record read
   by CatLog a Method line (the short method sentence ending "units converted by
   code" or "values stored as printed", with "How CatLog reads and checks values
   →", the Guide section's own name, as every link to it reads; the link moves to
@@ -576,10 +590,6 @@ is left out, never an empty heading. The order (design spec 5):
   change; never an empty list or a local path); the license as the record
   shows it, once. The earlier pipeline's internal fields stay in the
   Full data.
-- Source details, collapsed, last: Name from ("Paper", "BRENDA recommended
-  name", "The source database's entry", "The EC list's accepted name") and the
-  databases a merged record combines, when they are not the Source's own
-  (compared as a set, named in the Source's order).
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one
