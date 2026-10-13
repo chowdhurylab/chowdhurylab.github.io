@@ -1160,6 +1160,11 @@ def check_layout(driver, browser, url, route_label):
             assert ok, f"Sidebar, table and record sit side by side: {boxes}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
             driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1700-record.png"))
+            # Narrowed below 1600px the record takes the sidebar's place; widened again, the sidebar comes back beside it.
+            set_browse_viewport(driver, browser, 1280, 1000)
+            wait.until(lambda d: not is_open() and box(".filter-column")["width"] == 48 and detail_open())
+            set_browse_viewport(driver, browser, 1700, 1000)
+            wait.until(lambda d: is_open() and box(".filter-column")["width"] == 288 and detail_open())
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             wait.until(lambda d: not detail_open())
             results["record-1700"] = True

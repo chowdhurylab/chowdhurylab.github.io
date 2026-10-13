@@ -6299,13 +6299,21 @@
   }
 
   function syncFilterPanel() {
+    const filtersOpen = document.body.classList.contains("filters-open");
+    const detailOpen = document.body.classList.contains("detail-open");
     // A window narrowed below 1600px with the sidebar and a record both open keeps the record (the sidebar becomes
     // the rail and comes back when the record closes).
-    if (document.body.classList.contains("filters-open") && document.body.classList.contains("detail-open")
-      && filtersDocked() && recordTakesSidebarPlace()) {
+    if (filtersOpen && detailOpen && filtersDocked() && recordTakesSidebarPlace()) {
       const scrollTop = $("catalogFilters")?.scrollTop || 0;
       setFiltersOpen(false, { focus: false });
       state.filtersAwayForRecord = { scrollTop };
+      return;
+    }
+    // Widened to 1600px or more, there is room for both again: the sidebar the record had collapsed comes back beside it.
+    const away = state.filtersAwayForRecord;
+    if (!filtersOpen && detailOpen && away && filtersDocked() && filtersBesideRecordMedia.matches) {
+      setFiltersOpen(true, { focus: false });
+      if ($("catalogFilters")) $("catalogFilters").scrollTop = away.scrollTop;
       return;
     }
     syncFilterRailRole();
