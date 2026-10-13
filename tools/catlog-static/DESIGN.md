@@ -236,7 +236,8 @@ behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", fol
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
 every view: brand and Download, the tabs with the links out at the line's end
 (Download ends where they end), then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
-and Download share the first line, the four tabs share the second across the
+and Download share the first line (a wide system font puts the two links on two lines at the right, never over the
+brand), the four tabs share the second across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
 with Clear all at the left and Columns, Export and Sort at the right; on phones a
 Filters button opens the sheet and the chips go under the toolbar (Filters,
@@ -329,7 +330,7 @@ record without a PMID or DOI; under the user's review rules (an export that
 counts accepted_basis) such a record is Not checked, and a record whose every
 value a human reviewer approved is Accepted (its record says so: "Accepted
 because a human reviewer approved every value"). Columns are sized to the page's content: values, EC and Review result are
-as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
+as wide as their widest entry (and their heading) and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits

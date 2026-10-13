@@ -6312,8 +6312,11 @@
       const first = style(cells[0]);
       const padding = parseFloat(first.paddingLeft) + parseFloat(first.paddingRight) + 2;
       const natural = cells.map((cell) => cell.firstElementChild?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
-      // A value column is also as wide as its header (with the sort arrow).
-      const header = table.querySelector(`thead ${column.cell} .sort-button`)?.getBoundingClientRect().width || 0;
+      // A value column is also as wide as its header (with the sort arrow), and Review result as its heading (a wide
+      // system font made "Review result" longer than "Accepted · from paper" and cut it).
+      const header = column.key === "state"
+        ? headingWidth(table, "thead th.c-status") - padding
+        : table.querySelector(`thead ${column.cell} .sort-button`)?.getBoundingClientRect().width || 0;
       const widest = Math.max(natural[natural.length - 1], header);
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
@@ -6391,15 +6394,17 @@
       const word = cell.querySelector(".state-label");
       if (word) label = Math.max(label, word.getBoundingClientRect().right - cell.firstElementChild.getBoundingClientRect().left);
     });
-    const header = table.querySelector("thead th.c-status");
-    let heading = 0;
-    if (header && typeof document.createRange === "function") {
-      const range = document.createRange();
-      range.selectNodeContents(header);
-      const style = window.getComputedStyle(header);
-      heading = range.getBoundingClientRect().width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
-    }
-    return Math.max(min, Math.ceil(label + padding), Math.ceil(heading));
+    return Math.max(min, Math.ceil(label + padding), Math.ceil(headingWidth(table, "thead th.c-status")));
+  }
+
+  // A heading cell's text width with its padding (0 where the browser cannot measure it).
+  function headingWidth(table, selector) {
+    const header = table.querySelector(selector);
+    if (!header || typeof document.createRange !== "function") return 0;
+    const range = document.createRange();
+    range.selectNodeContents(header);
+    const style = window.getComputedStyle(header);
+    return range.getBoundingClientRect().width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
   }
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each

@@ -1455,6 +1455,14 @@ def check_layout(driver, browser, url, route_label):
         open_page()
         assert box(".app-header")["height"] == 56, f"At 1024px the header is one line: {box('.app-header')}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+        # Review result is as wide as its heading too, whatever the system font.
+        heading = driver.execute_script("""
+            const th = document.querySelector('#recordTableWrap thead th.c-status');
+            const range = document.createRange(); range.selectNodeContents(th);
+            const style = getComputedStyle(th);
+            return {text: range.getBoundingClientRect().width, room: th.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)};
+        """)
+        assert heading["text"] <= heading["room"] + 1, f"At 1024px the Review result heading is cut: {heading}"
         driver.execute_script("location.hash = '#team'")
         wait.until(lambda d: d.execute_script("return document.body.classList.contains('team-open')"))
         assert box(".app-header")["height"] == 56, f"At 1024px the Team header is one line: {box('.app-header')}"
@@ -1548,6 +1556,9 @@ def check_layout(driver, browser, url, route_label):
             tops = [toolbar["filters"], toolbar["export"], toolbar["sort"]]
             assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108
                     and toolbar["name"].startswith("Sort") and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
+            # The links out never run into the brand (a wide font puts them on two lines instead).
+            brand, links = box(".brand-lockup strong"), box(".external-nav")
+            assert brand["left"] + brand["width"] <= links["left"] + 1, f"At 320px the links out overlap the brand: {brand} {links}"
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
             # whole (its text, padding and arrow), with "Sort" shown beside it.
             for width in (360, 372, 389):

@@ -1150,7 +1150,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-areas:"brand links actions" "nav nav nav" }
   .top-nav { gap:0 }
   .nav-tab { flex:1 1 0; min-height:40px; padding:2px var(--sp-1) 0 }
-  .external-nav { justify-self:end; gap:var(--sp-3); border-left:0; padding-left:0 }
+  /* The links out never run into the brand: with a wide system font they take two lines at the right instead. */
+  .external-nav { justify-self:end; flex-wrap:wrap; justify-content:flex-end; min-width:0; gap:0 var(--sp-3); border-left:0; padding-left:0 }
   .nav-external { font-size:var(--fs-12) }
   .nav-external-long, .download-data-word { display:none }
   .nav-external-short { display:inline }
