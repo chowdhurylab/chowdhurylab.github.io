@@ -1398,6 +1398,30 @@ def check_layout(driver, browser, url, route_label):
             tops = [toolbar["filters"], toolbar["export"], toolbar["sort"]]
             assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108
                     and toolbar["name"].startswith("Sort") and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
+            # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
+            # whole (its text, padding and arrow), with "Sort" shown beside it.
+            for width in (360, 372, 389):
+                set_browse_viewport(driver, browser, width, 800)
+                open_page("#browse?metric=kcat")
+                sort = driver.execute_script("""
+                    const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
+                    const select = document.getElementById('sortSelect');
+                    const style = getComputedStyle(select);
+                    const probe = document.createElement('span');
+                    probe.textContent = select.options[select.selectedIndex].text;
+                    probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+                    document.body.appendChild(probe);
+                    const text = probe.getBoundingClientRect().width;
+                    probe.remove();
+                    return {text: select.options[select.selectedIndex].text, width: select.getBoundingClientRect().width,
+                            need: text + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2 + 20,
+                            label: document.querySelector('.sort-control label').getBoundingClientRect().width > 2,
+                            tops: [top('#openFiltersButton'), top('#exportMenu > summary'), top('#sortSelect')],
+                            scroll: document.documentElement.scrollWidth > innerWidth + 1};
+                """)
+                assert (sort["text"] == "Review result" and sort["width"] >= sort["need"] and sort["label"]
+                        and max(sort["tops"]) - min(sort["tops"]) <= 2 and not sort["scroll"]), (
+                    f"At {width}px with a filter the Sort menu fits: {sort}")
             results["phone-320-toolbar"] = True
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-failure.png"))

@@ -1230,6 +1230,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .sort-control label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
   .records-header :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
 }
+/* Phones from 360 to 389px: with a filter on, the Filters count left the Sort menu too little room for "Review result"
+   (it read "Review res"), so the toolbar's buttons are narrower there too; "Sort" stays. */
+@media (min-width: 360px) and (max-width: 389px) {
+  .records-header:has(#activeFilterCount:not(.hidden)) :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .catalog-load-progress, .catalog-load-progress > span, .detail-panel, .filter-rail, .filter-backdrop, .chevron, tbody tr { transition:none }
