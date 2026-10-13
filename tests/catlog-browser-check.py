@@ -441,6 +441,9 @@ def check_browse(driver, browser, url, route_label):
             assert driver.find_element(By.ID, "pageLabel").text == "No records"
             for identifier in ("downloadPageButton", "exportPageCsvButton", "exportAllCsvButton", "prevButton", "nextButton"):
                 assert not driver.find_element(By.ID, identifier).is_enabled()
+            # One clear button in the toolbar: "Clear search and filters" stands in for the chips' Clear all.
+            assert driver.find_element(By.ID, "clearResultsButton").is_displayed()
+            assert not any(button.is_displayed() for button in driver.find_elements(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]"))
             screenshots.append(capture(viewport, "empty"))
             driver.find_element(By.ID, "clearResultsButton").click()
             wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{total:,} records" and row_keys() == first_keys)

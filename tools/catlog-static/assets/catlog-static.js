@@ -2177,6 +2177,7 @@
     $("pageSummary").textContent = message;
     $("pageSummary").classList.remove("visually-hidden");
     if ($("clearResultsButton")) $("clearResultsButton").hidden = true;
+    $("activeFilters")?.classList?.remove?.("results-empty");
     $("pageLabel").textContent = "No records";
     $("prevButton").disabled = true;
     $("nextButton").disabled = true;
@@ -5541,7 +5542,10 @@
     $("pageSummary").textContent = pageRows.length
       ? (loading ? loadingSummary : range)
       : (awaitingMarks ? "Loading human-review results" : state.recordsReady ? "No matching records" : loadProgressText());
-    if ($("clearResultsButton")) $("clearResultsButton").hidden = !state.recordsReady || pageRows.length > 0 || awaitingMarks;
+    const clearResults = $("clearResultsButton");
+    if (clearResults) clearResults.hidden = !state.recordsReady || pageRows.length > 0 || awaitingMarks;
+    // With no results, "Clear search and filters" stands in for the chips' Clear all: one clear button, not two.
+    $("activeFilters")?.classList?.toggle?.("results-empty", Boolean(clearResults && !clearResults.hidden));
     $("pageLabel").textContent = pageRows.length
       ? range
       : state.recordsReady ? "No records" : "Loading";

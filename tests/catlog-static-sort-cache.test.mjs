@@ -3758,6 +3758,7 @@ const detailShard = "details-test.js";
   assert.equal(api.state.filtered.length, 0);
   assert.equal(element("pageSummary").textContent, "No matching records");
   assert.equal(element("clearResultsButton").hidden, false);
+  assert.equal(element("activeFilters").classList.contains("results-empty"), true, "with no results the chips' Clear all gives way to Clear search and filters");
   assert.equal(element("downloadPageButton").disabled, true);
   assert.equal(element("nextButton").disabled, true);
   assert.equal(element("prevButton").disabled, true);
@@ -3767,6 +3768,7 @@ const detailShard = "details-test.js";
   assert.equal(document.activeElement, element("globalSearchInput"));
   assert.equal(api.state.filtered.length, largeRows.length);
   assert.equal(element("clearResultsButton").hidden, true);
+  assert.equal(element("activeFilters").classList.contains("results-empty"), false);
   assert.equal(element("downloadPageButton").disabled, false);
   assert.equal((element("recordsBody").innerHTML.match(/<tr\s/g) || []).length, 25);
 }

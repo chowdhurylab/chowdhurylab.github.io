@@ -340,6 +340,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-chip:hover { border-color:var(--accent) }
 .filter-chip:hover .chip-x { color:var(--accent) }
 .filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
+.active-filters.results-empty .filter-chips-clear { display:none }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
 .table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }

@@ -154,8 +154,9 @@ adds, that many); an option at 0 is grey and stays clickable. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
-above the table that removes it, followed by Clear all; the count beside Filters
-is the number of chips. Esc closes the panel (beside an open record, the one
+above the table that removes it, followed by Clear all (with no matching
+records, "Clear search and filters" takes its place, so the toolbar has one clear
+button); the count beside Filters is the number of chips. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
 every record is prepared in idle moments once the search box or the filters
 get focus.
