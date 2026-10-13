@@ -3690,7 +3690,7 @@
       : legend.length ? statsLegend(legend) : "";
     return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}${heads.length ? " has-value-heads" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
       ${tools}${headHtml}
-      <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
+      <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row${row.note ? " has-note" : ""}" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
         ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay, shareOf: switchable ? row.count : 0, shareRefs: switchable ? [0, 25, 50, 75, 100] : null })}
         <span class="stats-chart-value${Array.isArray(row.parts) ? " has-parts" : ""}">${valueHtml(row)}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}

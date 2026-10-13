@@ -192,7 +192,8 @@ inline SVG with role="img" for every figure): the donut is an SVG image
 histogram and each class ridge an image with its summary in aria-label; bar charts and table bars
 are HTML in a `<figure>`, so their names stay links into Browse that a keyboard
 reaches and every count is text a screen reader reads row by row and a viewer
-can copy. On phones each name sits above its bar. `@media
+can copy. A name with a breakdown under it (Figure 2's Other) has its bar and numbers on the name's line, not
+centred on the breakdown. On phones each name sits above its bar. `@media
 print`: one column across the page's full width at 80% scale (a landscape
 page holds the title, the lead and the headline counts, and most pages two
 figures or tables), no figure or headline count split across pages (the lead

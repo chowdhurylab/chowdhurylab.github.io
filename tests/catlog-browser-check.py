@@ -993,6 +993,15 @@ def check_stats_more(driver, browser, overview, total):
         # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
         stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
         assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
+    # A name with a breakdown under it (Figure 2's Other): beside the bar, the bar and its numbers stand on the name's
+    # line, not on the breakdown's (on phones the name sits above its bar).
+    off_line = driver.execute_script("""return [...document.querySelectorAll('.stats-chart-row.has-note')].filter((row) => row.offsetParent).filter((row) => {
+        const label = row.querySelector('.stats-chart-label'); const track = row.querySelector('.stats-track').getBoundingClientRect();
+        const name = document.createRange(); name.selectNodeContents(label.firstChild); const line = name.getClientRects()[0];
+        if (label.getBoundingClientRect().right > track.left) return false;
+        return Math.abs(track.top - line.top) > 1 || Math.abs(row.querySelector('.stats-chart-value').getBoundingClientRect().top - line.top) > 1;
+    }).map((row) => row.dataset.row)""")
+    assert not off_line, f"Bars sit below their names: {off_line}"
     # The counts of a chart line up whatever the shares beside them.
     if driver.find_elements(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-switch"):
         assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-chart-value.has-parts")

@@ -902,6 +902,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+/* A label with a breakdown under it (Figure 2's Other): the bar and the numbers stand on the name's line (all three are
+   16px lines), not centred on the breakdown. */
+.stats-chart-row.has-note { align-items:start }
 .stats-chart-value { color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
 /* A value label of several numbers (count, then share): each in its own right-aligned column; a column after the first is
    as wide as its widest entry in the chart (a hidden sizer, data-sizer, one entry shape per line, measured in the
