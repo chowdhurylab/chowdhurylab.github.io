@@ -168,7 +168,10 @@ enough to keep the group's options in view, never taking its title under the sti
 radio buttons: All records, CatLog v2 and CatLog v1, CatLog v2 and v1 entries as the user names them (2026-10-13);
 each version sits beside its count and says what it holds in a few words on one quieter 12px --muted line under it
 that runs under the count too, "read from the paper" and "from enzyme databases", short enough for the 256px sidebar
-with a wide font, so no label wraps on its own); its "?" says what each holds, that a merged record counts under each
+with a wide font, so no label wraps on its own); its "?" says what each is ("CatLog v2: the current version, read
+from the paper by an AI model; ..." and "CatLog v1: the earlier version with the same goal, started from enzyme
+database entries; part of them were checked against their papers (the review result says which)", never that every
+CatLog v1 entry was checked; each radio's title says the same), that a merged record counts under each
 database and links to the Guide's #guide-method; "By database" folds the databases (the Open Enzyme Database as "OED", the
 table's tag, read out and on hover in full), STRENDA DB,
 earlier paper extractions (shown as "Earlier extractions", the table's tag, and read out in full, so a wide font keeps it
@@ -748,8 +751,8 @@ found at once: A, B, G, C, D, E, F, H.
   whose Evidence reads "Located in the paper", nor on one that names no
   paper); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that
-  has a mark (no review year; the notes' "the earlier catalog" reads "CatLog v1
-  entries"; a checked record without a note says human-checked's rule); then Download record (the primary button) and
+  has a mark (no review year; the notes are shown as written: they name "CatLog v1
+  entries" themselves; a checked record without a note says human-checked's rule); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
   the values as the record shows them, a Ki included, and the kcat/Km its
   sources list when the record shows one, "kcat/Km listed by OED 3.0–6.1 s⁻¹

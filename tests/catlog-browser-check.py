@@ -1853,7 +1853,8 @@ def check_layout(driver, browser, url, route_label):
         assert not driver.find_element(By.ID, "aboutSource").is_displayed()
         about.click()
         assert about.get_attribute("aria-expanded") == "true" and driver.find_element(By.ID, "aboutSource").is_displayed()
-        assert "a second, separate AI check" in driver.execute_script("return document.getElementById('aboutSource').innerText")
+        about_text = driver.execute_script("return document.getElementById('aboutSource').innerText")
+        assert "a second, separate AI check" in about_text and "part of them were checked against their papers" in about_text, about_text
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
         # In a short window, opening Review result's "?" scrolls the sidebar just enough to keep its options in view, never

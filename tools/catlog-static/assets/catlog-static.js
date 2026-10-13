@@ -240,8 +240,10 @@
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_CATLOG_HELP = "Current version: values read straight from the paper by an AI model and checked by a second, separate AI check.";
-  const SOURCE_DATABASES_HELP = "Earlier version, same goal: it started from enzyme database entries and checked them against their papers. The review result shows which were checked.";
+  // What each version is, after its name in the Source "?" ("CatLog v1: the earlier version ..."), and as the radio's
+  // title. Only part of the CatLog v1 entries were checked against their papers (most are Not confirmed or Not checked).
+  const SOURCE_CATLOG_HELP = "the current version, read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
+  const SOURCE_DATABASES_HELP = "the earlier version with the same goal, started from enzyme database entries; part of them were checked against their papers (the review result says which).";
   // The sidebar says what each version is in a few words: the version beside its count, what it holds on a second,
   // quieter line under both (what; read out after the version), short enough for the 256px sidebar with a wide font, so
   // no label wraps on its own. The help is behind the group's "?".
@@ -5848,7 +5850,7 @@
       }
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
-          <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.help)}"` : ""}>
+          <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
             <span>${escapeHtml(item.label)}</span>${item.what ? `
             <span class="source-mode-what">${escapeHtml(item.what)}</span>` : ""}

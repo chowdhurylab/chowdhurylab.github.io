@@ -5364,8 +5364,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2<\/strong>: Current version: values read straight from the paper by an AI model and checked by a second, separate AI check\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1<\/strong>: Earlier version, same goal: it started from enzyme database entries/);
+  // What each version is: only part of the CatLog v1 entries were checked against their papers.
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2<\/strong>: the current version, read from the paper by an AI model; a second, separate AI check compared each value with the paper\./);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1<\/strong>: the earlier version with the same goal, started from enzyme database entries; part of them were checked against their papers \(the review result says which\)\./);
+  assert.match(source, /<label class="check-row radio-row" title="The earlier version with the same goal, started from enzyme database entries; part of them were checked/);
+  assert.doesNotMatch(element("aboutSource").innerHTML + source, /checked them against their papers/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
