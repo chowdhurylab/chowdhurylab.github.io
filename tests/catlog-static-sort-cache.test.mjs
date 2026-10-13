@@ -3176,6 +3176,18 @@ assert.match(suggestions.innerHTML, /^<span class="suggestion-title" aria-hidden
     searchInput.getBoundingClientRect = () => ({ left: 8, top: 90, bottom: 122, width: 220 });
     api.showSuggestions(searchInput);
     assert.equal(suggestions.style.maxHeight, "104px", "short viewports use a scrollable list");
+    // The examples take one line where the screen has room: the box is as wide as that line, not its field.
+    const originalBoxRect = suggestions.getBoundingClientRect;
+    suggestions.getBoundingClientRect = () => ({ left: 0, top: 0, bottom: 0, width: 530.4 });
+    window.innerWidth = 1280;
+    searchInput.getBoundingClientRect = () => ({ left: 780, top: 16, bottom: 48, width: 320 });
+    api.showSuggestions(searchInput);
+    assert.equal(suggestions.style.width, "531px");
+    assert.equal(suggestions.style.left, "741px", "kept inside the screen");
+    window.innerWidth = 375;
+    api.showSuggestions(searchInput);
+    assert.equal(suggestions.style.width, "359px", "a phone wraps them");
+    suggestions.getBoundingClientRect = originalBoxRect;
   } finally {
     searchInput.getBoundingClientRect = originalRect;
     window.innerWidth = originalWidth;

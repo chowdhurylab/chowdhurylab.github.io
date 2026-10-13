@@ -183,7 +183,9 @@ number, organism, substrate, UniProt ID or PMID), and so does the line of
 examples. Empty, it offers one fixed line of examples
 ("Try: hexokinase · 1.1.1.1 · Escherichia coli · NADH · P00330 · PMID
 15989682"), each a search with results; the name fields offer three of their
-own; nothing is drawn at random. The examples are reached with the arrow keys
+own; nothing is drawn at random. The box is as wide as that line wherever the
+screen has room (wider than its field); on a phone the examples wrap, with no
+"·" left at a line's end or start. The examples are reached with the arrow keys
 (Enter picks one) or a click, never with Tab: Tab out of the field closes them. Search matches every word in any order, ignoring case, accents, Greek letters
 against their names (β = beta), µ/micro/u-, dash and prime variants, and
 hyphens, spaces, commas or underscores inside a name (4-nitrophenyl = 4

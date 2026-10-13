@@ -4282,9 +4282,13 @@
     selected.scrollIntoView({ block: "nearest" });
   }
 
+  // The examples sit on one line wherever the screen has room for it, the box then wider than its field (DESIGN.md "one
+  // fixed line of examples"); on a phone they wrap, and no "·" is left at a line's end or start (tidySuggestionSeparators).
   function positionSuggestions(input, box) {
     const rect = input.getBoundingClientRect();
-    const width = Math.min(Math.max(240, Math.round(rect.width)), window.innerWidth - 16);
+    box.style.width = "max-content";
+    const oneLine = Math.ceil(box.getBoundingClientRect?.().width || 0);
+    const width = Math.min(Math.max(240, Math.round(rect.width), oneLine), window.innerWidth - 16);
     const below = Math.max(0, window.innerHeight - rect.bottom - 14);
     const above = Math.max(0, rect.top - 14);
     const openAbove = below < 160 && above > below;
@@ -4293,6 +4297,28 @@
     box.style.maxHeight = `${Math.min(320, openAbove ? above : below)}px`;
     box.style.top = openAbove ? "auto" : `${Math.round(rect.bottom + 6)}px`;
     box.style.bottom = openAbove ? `${Math.round(window.innerHeight - rect.top + 6)}px` : "auto";
+    tidySuggestionSeparators(box);
+  }
+
+  // When the examples wrap, a "·" left at a line's end is hidden (its room kept, so nothing moves) and one that starts a
+  // line is taken out. Checked in order, each on the layout the earlier ones left.
+  function tidySuggestionSeparators(box) {
+    const separators = [...box.querySelectorAll(".suggestion-sep")];
+    separators.forEach((separator) => {
+      separator.style.display = "";
+      separator.style.visibility = "";
+    });
+    const sameLine = (a, b) => {
+      const first = a.getBoundingClientRect();
+      const second = b.getBoundingClientRect();
+      return first.top < second.bottom && second.top < first.bottom;
+    };
+    separators.forEach((separator) => {
+      const before = separator.previousElementSibling;
+      const after = separator.nextElementSibling;
+      if (before && !sameLine(before, separator)) separator.style.display = "none";
+      else if (after && !sameLine(separator, after)) separator.style.visibility = "hidden";
+    });
   }
 
   function showSuggestions(input) {
@@ -4307,11 +4333,11 @@
     if (state.suggestionInputId && state.suggestionInputId !== input.id) hideSuggestions();
     const suggestions = searchExamples[kind] || [];
     if (!suggestions.length) return;
-    positionSuggestions(input, box);
     box.innerHTML = `<span class="suggestion-title" aria-hidden="true">Try:</span>${suggestions.map((value, index) => (
       `${index ? '<span class="suggestion-sep" aria-hidden="true">·</span>' : ""}<button id="catlog-suggestion-${index}" type="button" role="option" tabindex="-1" aria-selected="false" data-value="${escapeHtml(value)}">${escapePublic(value)}</button>`
     )).join("")}`;
     box.classList.remove("hidden");
+    positionSuggestions(input, box);
     state.suggestionIndex = -1;
     state.suggestionInputId = input.id;
     input.setAttribute("aria-controls", "searchSuggestions");
