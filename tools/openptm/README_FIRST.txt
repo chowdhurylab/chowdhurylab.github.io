@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-12
+Release: 2026-10-13
 
 Browse PTMs, sites, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -9,10 +9,10 @@ Open index.html locally, or keep it beside the Excel file when publishing.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,223 function/regulation records.
+- 27,165 site records and 14,227 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 48 selected paper comparisons, containing 52 measurement entries from
-  28 primary papers across 27 families with numeric measurements.
+- 52 selected paper comparisons, containing 58 measurement entries from
+  30 primary papers across 29 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -22,7 +22,17 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
-New source records
+New measurements
+- Osteocalcin carboxylation: two calcium conditions from the original Table II.
+  The source's inconsistent units remain flagged beside the values; K is not
+  converted to Kd. These are grouped Gla states, not three separate site effects.
+- Engineered thiocarboxylation: thioredoxin and DTNB kinetics from Tables 4–5.
+  Engineered material, conflicting Table 4 footnote letters and the reporter
+  substrate are labelled explicitly. These are not native PTM samples.
+These four comparisons were checked by one reviewer against the original
+articles. This is source checking, not experimental validation.
+
+Source records retained
 - PTMPhaSe: 855 qualitative annotations, not 855 independent experiments.
   Five rows from four selected papers have been checked against the studies;
   the remaining 850 are marked unreviewed. The RPS23 direction conflict stays
@@ -53,7 +63,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-c381c02b879d70c79682e2f4a92ef9924ec552f40d2c65d67cb39a4b206d59f8
+cae58315bf2c8e81c6bc637709d968e00246adeb0054d280cec95cd7a175f2d0
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
