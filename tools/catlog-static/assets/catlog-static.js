@@ -8091,8 +8091,10 @@
         const result = summary._recordState || recordStateForRow(summary);
         const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);
         // A database record the earlier review did not settle, with a paper to check it against (a record that names no
-        // paper gets no such line: its Paper section says None).
-        if (fromDatabase && hasPaper && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
+        // paper gets no such line: its Paper section says None). A record whose values the earlier review located in the
+        // paper (Evidence: Located in the paper, its notes under Paper) gets none either: it was checked against the paper.
+        const located = [summary, detail].some((item) => item?.proof_kind === "paper_evidence" || Boolean(item?.has_proof_excerpt));
+        if (fromDatabase && hasPaper && !located && !hasNoPaperLinked(summary) && (result === "curation_pending" || result === "not_verified")) {
           body = `<p class="section-text">${escapeHtml(DATABASE_VALUES_NOTE)}</p>`;
         }
       }

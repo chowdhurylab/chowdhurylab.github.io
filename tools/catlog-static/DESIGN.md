@@ -453,7 +453,8 @@ is left out, never an empty heading. The order (design spec 5):
   record without its trail says so in its Status ("this snapshot does not list
   the changes"; the earlier catalog keeps them) and has no section G. A database record
   the earlier review did not settle (Not confirmed, Not checked) with a paper:
-  "Not yet checked against the paper: the values are the database's." Colour is
+  "Not yet checked against the paper: the values are the database's." (not on
+  one whose Evidence reads "Located in the paper": it has no section G). Colour is
   never the only carrier: the word or phrase is always printed.
 - H. Review and audit: Status in one sentence ("Accepted: read from the paper
   by CatLog.", or the earlier automated review's result with "How the earlier
