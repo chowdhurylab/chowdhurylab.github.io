@@ -399,8 +399,9 @@ is left out, never an empty heading. The order (design spec 5):
   different kcat/Km (above)." when its sources list one, never "not printed"),
   then each quoted line once (a line another value's line continues, one excerpt
   cut at two lengths, is quoted once, the longer): one line gives its place,
-  "Table 2 row, as extracted from the paper's text", or "As extracted from the
-  paper's text" when the caption already names it; more than one line name
+  "Table 2 row, as extracted from the paper's text" ("Table 2, as extracted ..."
+  for a sentence, a line with no cells), or "As extracted from the paper's text"
+  when the caption already names it; more than one line name
   their values instead, "kcat and kcat/Km line, as extracted from the paper's
   text" (at most 240 characters, table markers removed, K_M set as
   K<sub>m</sub>); a row of more than four cells, or one whose ± signs extraction

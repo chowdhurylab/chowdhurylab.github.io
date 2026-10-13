@@ -2707,6 +2707,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // One line, places that differ: the line gives its place (the Where column has both).
   html = lines(["kcat", "Table 2", "wt | 1 | 2", "1 s^-1"], ["Km", "Table 3", "1 mM"]);
   assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “wt/);
+  // A sentence (no cells) is not a row, even when the values are said to be in a table.
+  html = lines(["kcat", "Table VIII", "the K values for ETF were 3.8, 4.5 and 8.3", "1 s^-1"], ["Km", "Table 3", "1 mM"]);
+  assert.match(html, /<p class="evidence-note-plain">Table VIII, as extracted from the paper’s text: “the K values/);
   // More than one line: each names its values, and a line another value's line continues is quoted once, the longer.
   const excerpt = "kcat = 4.0 ± 0.4 s–1 and Km = 3.1 mM catalyze the conversion";
   html = lines(["kcat", "Results", excerpt, "4.0 ± 0.4 s^-1"], ["Km", "Results", "a Km of 3.1 ± 0.3 mM was found"],

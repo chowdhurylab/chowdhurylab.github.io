@@ -7432,14 +7432,15 @@
     return `${(cut > PRINTED_LINE_MAX / 2 ? head.slice(0, cut) : head).replace(/[\s|,;]+$/, "")}…`;
   }
 
-  // The label names the values ("kcat and kcat/Km line, as extracted ...") when it is given them, else the place; a
-  // folded line names its values too ("Show the kcat line as extracted").
+  // The label names the values ("kcat and kcat/Km line, as extracted ...") when it is given them, else the place: "Table 2
+  // row" for a line with cells, "Table 2" for a sentence. A folded line names its values too ("Show the kcat line as
+  // extracted").
   function printedLineNoteHtml(printedLine, { place = "", metrics = [] } = {}) {
+    const cells = String(printedLine).split("|").length;
     const what = metrics.length ? `${sentenceList(metrics)} line` : "";
-    const where = what || (/^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place);
+    const where = what || (cells > 1 && /^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place);
     const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
     const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
-    const cells = String(printedLine).split("|").length;
     const lostPlusMinus = /\d \( \d/.test(printedLine);
     if (cells <= 4 && !lostPlusMinus) return quote;
     // The warning only where the ± signs were lost; a long row is folded without it.
