@@ -6086,12 +6086,15 @@
 
   // Records of one paper that read the same in every column but differ in their assay: the short condition note the
   // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, records with values
-  // on this page that share a paper and every column and differ only in the assay temperature or pH (the table shows
-  // neither) say which, "pH 6.5" or "37 °C"; when nothing shown or stored tells them apart they say only that (the table
-  // cannot tell whether their conditions, protein or nothing at all differ).
+  // on this page of one paper's temperature or pH series (the same enzyme, variant, EC, organism, substrate and source,
+  // whatever their values) say which temperature or pH is theirs, "pH 6.5" or "37 °C", when those differ in the series
+  // (the table shows neither). Records that read alike in every column, values included, and share their temperature
+  // and pH too say only that they read alike (the table cannot tell whether their conditions, protein or nothing at all
+  // differ).
   const VISIBLE_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name",
     "kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit", "verification_status",
     "source_db"];
+  const SERIES_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name", "source_db"];
 
   function conditionNoteText(...rows) {
     for (const row of rows) {
@@ -6103,31 +6106,52 @@
 
   // The page's look-alike records: a Map of record key to the note under its substrate, the temperature or pH that tells
   // it from the others ("pH 6.5", "37 °C", "pH 6.5 · 37 °C"), or "" when nothing does. A Set-like has() keeps the older
-  // callers working.
+  // callers working. Its titles map gives the tooltip of a series record whose values no other record shares.
   function lookAlikeRowKeys(pageRows) {
-    const groups = new Map();
+    const series = new Map();
+    const alike = new Map();
     pageRows.forEach((row) => {
       if (conditionNoteText(row)) return;
       if (!["kcat", "km", "kcat_over_km"].some((field) => metricHasValue(row, field))) return;
       const papers = [row._pmids, row._dois].map((value) => JSON.stringify(value ?? null)).join("|");
       if (papers === "null|null") return;
-      const key = JSON.stringify([...VISIBLE_ROW_FIELDS.map((field) => row[field] ?? null), papers]);
-      groups.set(key, [...(groups.get(key) || []), row]);
+      [[series, SERIES_ROW_FIELDS], [alike, VISIBLE_ROW_FIELDS]].forEach(([groups, fields]) => {
+        const key = JSON.stringify([...fields.map((field) => row[field] ?? null), papers]);
+        groups.set(key, [...(groups.get(key) || []), row]);
+      });
     });
+    const conditions = new Map();
+    const condition = (row) => {
+      if (!conditions.has(row.record_key)) conditions.set(row.record_key, [formatPh(row), formatTemperature(row)]);
+      return conditions.get(row.record_key);
+    };
     const notes = new Map();
-    groups.forEach((rows) => {
+    notes.titles = new Map();
+    // A series whose temperature or pH differs: each record says its own, only the part that differs.
+    series.forEach((rows) => {
       if (rows.length < 2) return;
-      const conditions = rows.map((row) => [formatPh(row), formatTemperature(row)]);
-      const differs = [0, 1].map((at) => new Set(conditions.map((pair) => pair[at])).size > 1);
-      rows.forEach((row, index) => {
-        const [ph, temperature] = conditions[index];
-        const parts = [
+      const differs = [0, 1].map((at) => new Set(rows.map((row) => condition(row)[at])).size > 1);
+      if (!differs.some(Boolean)) return;
+      const other = differs[0] && differs[1] ? "pH or temperature" : differs[0] ? "pH" : "temperature";
+      rows.forEach((row) => {
+        const [ph, temperature] = condition(row);
+        const note = [
           differs[0] ? (ph === EMPTY_VALUE ? "pH not stated" : `pH ${ph}`) : "",
           differs[1] ? (temperature === EMPTY_VALUE ? "T not stated" : `${temperature} °C`) : "",
-        ].filter(Boolean);
-        // Rows that share their temperature and pH with another row of the group still read alike.
-        const twin = rows.some((other, at) => at !== index && conditions[at][0] === ph && conditions[at][1] === temperature);
-        notes.set(row.record_key, twin && parts.length ? "" : parts.join(" · "));
+        ].filter(Boolean).join(" · ");
+        notes.set(row.record_key, note);
+        notes.titles.set(row.record_key, `${note}; this paper also measured this enzyme and substrate at another ${other}`);
+      });
+    });
+    // Records with the same values: one that shares its temperature and pH with another still reads alike; one that does
+    // not keeps its series note with the tooltip for same values.
+    alike.forEach((rows) => {
+      if (rows.length < 2) return;
+      rows.forEach((row, index) => {
+        const [ph, temperature] = condition(row);
+        const twin = rows.some((other, at) => at !== index && condition(other)[0] === ph && condition(other)[1] === temperature);
+        if (twin) notes.set(row.record_key, "");
+        notes.titles.delete(row.record_key);
       });
     });
     return notes;
@@ -6142,7 +6166,8 @@
     const condition = conditionNoteText(row);
     const assay = lookAlikes.get?.(row.record_key) || "";
     const note = condition || assay || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
-    const title = condition || (assay ? `${assay}; the other values as another record of this paper` : LOOK_ALIKE_TITLE);
+    const title = condition || lookAlikes.titles?.get(row.record_key)
+      || (assay ? `${assay}; the other values as another record of this paper` : LOOK_ALIKE_TITLE);
     return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
   }
 

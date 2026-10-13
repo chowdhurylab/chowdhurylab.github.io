@@ -2915,6 +2915,29 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(notes.get("same3"), "pH 8");
   assert.equal(api.substrateNoteHtml(assay[0], notes), '<small class="condition-note" title="pH 6.5; the other values as another record of this paper">pH 6.5</small>');
   assert.match(api.substrateNoteHtml(assay[6], notes), />like another record<\/small>/);
+  // A pH or temperature series whose values differ (cruzain at pH 3.5 to 7.5, PMID 29336553): each record says its own
+  // pH; records that read alike in every column, pH included, still say so; another variant or paper is another series.
+  const citrate = (key, ph, kcat, extra = {}) => twin(key, { substrate_name: "citrate", ph_display: ph, kcat_display: kcat, ...extra });
+  const series = [citrate("s1", "3.5", "0.003"), citrate("s2", "5", "0.21"), citrate("s3", "7.5", "0.67"), citrate("s4", "7.5", "0.67"),
+    citrate("s5", "6", "0.5", { mutation_signature: "E208A" }), citrate("s6", "6", "0.4", { _pmids: 2 }),
+    citrate("s7", "4.1", "0.012", { verification_status: "corrected" })];
+  const seriesNotes = api.lookAlikeRowKeys(series);
+  assert.equal(seriesNotes.get("s1"), "pH 3.5");
+  assert.equal(seriesNotes.get("s2"), "pH 5");
+  assert.equal(seriesNotes.get("s7"), "pH 4.1", "a review result of its own does not take a record out of its series");
+  assert.equal(seriesNotes.get("s3"), "", "records that read alike, pH included, still say so");
+  assert.equal(seriesNotes.get("s4"), "");
+  assert.equal(seriesNotes.has("s5"), false, "another variant is another series");
+  assert.equal(seriesNotes.has("s6"), false, "another paper is another series");
+  assert.equal(api.substrateNoteHtml(series[0], seriesNotes), '<small class="condition-note" title="pH 3.5; this paper also measured this enzyme and substrate at another pH">pH 3.5</small>');
+  assert.match(api.substrateNoteHtml(series[2], seriesNotes), /title="same values as another record of this paper">like another record<\/small>/);
+  const urea = [twin("u1", { substrate_name: "urea", temperature_display: "25", km_display: "1" }),
+    twin("u2", { substrate_name: "urea", temperature_display: "37", km_display: "3" }), twin("u3", { substrate_name: "urea", temperature_display: "37", ph_display: "8", km_display: "4" })];
+  const ureaNotes = api.lookAlikeRowKeys(urea);
+  assert.deepEqual(["u1", "u2", "u3"].map((key) => ureaNotes.get(key)), ["pH 7 · 25 °C", "pH 7 · 37 °C", "pH 8 · 37 °C"]);
+  assert.match(api.substrateNoteHtml(urea[0], ureaNotes), /title="pH 7 · 25 °C; this paper also measured this enzyme and substrate at another pH or temperature">pH 7 · 25 °C</);
+  const warm = api.lookAlikeRowKeys(urea.slice(0, 2));
+  assert.match(api.substrateNoteHtml(urea[1], warm), /title="37 °C; this paper also measured this enzyme and substrate at another temperature">37 °C</);
   api.renderDetail(row({ record_key: "noted" }), { condition_note: "with 10 mM FBP" });
   assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Substrate<\/span><\/p><p class="detail-condition-note">with 10 mM FBP<\/p>/);
   api.renderDetail(row({ record_key: "not-noted" }), {});
