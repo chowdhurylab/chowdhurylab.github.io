@@ -688,7 +688,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-part-records { --part:var(--line-strong) }
 .stats-part-open { --part:var(--line-strong) }
 .stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
-.stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line-soft); box-shadow:inset 0 0 0 1px var(--line) }
+/* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
+.stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
 .stats-part-open.stats-seg, .stats-part-open.stats-swatch { background:var(--bg); box-shadow:inset 0 0 0 1px var(--line-strong) }
 .stats-donut path { fill:var(--part); fill-opacity:0.6; stroke:var(--part-line, var(--part)); stroke-width:1 }
 .stats-swatch { display:inline-block; flex:0 0 10px; width:10px; height:10px; vertical-align:-1px }
