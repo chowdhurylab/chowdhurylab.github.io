@@ -2179,6 +2179,14 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.equal(api.rowCautionBits(catalase), 16);
   assert.ok(api.conditionFlags(row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "min^(-1)", condition_flags: ["kcat_magnitude_needs_check"] }))
     .has("kcat_magnitude_needs_check"), "a kcat in another unit keeps its flag");
+  // A temperature caution (the filter's Temperature questionable group) puts its "!" in the T cell, after the dash.
+  const zeroCelsius = row({ temperature_display: "", condition_flags: ["temperature_zero_celsius_needs_check"] });
+  assert.equal(api.rowCautionBits(zeroCelsius), 8);
+  const tCell = api.conditionCellHtml("c-temp", "—", api.temperatureFlagBadgeHtml(api.conditionFlags(zeroCelsius)));
+  assert.match(tCell, /^<td class="c-temp num" data-empty="" data-flagged=""><span>—<\/span><span class="value-flag" role="img" title="Temperature recorded as exactly 0 °C; may stand for a missing value"/);
+  assert.match(tCell, /<span class="visually-hidden">T questionable<\/span>/);
+  assert.equal(api.temperatureFlagBadgeHtml(api.conditionFlags(unflaggedLow)), "", "a Km caution leaves T unmarked");
+  assert.equal(api.conditionCellHtml("c-temp", "—"), '<td class="c-temp num" data-empty=""><span>—</span></td>');
 }
 // An older record's kcat/Km off by a unit factor shows the source's own value that agrees with kcat ÷ Km.
 const unitFlagHtml = measurementSection(row({

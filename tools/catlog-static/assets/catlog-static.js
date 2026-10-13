@@ -147,7 +147,8 @@
     { value: "variant", label: "Variant", bit: 2 },
   ];
 
-  // Cautions, grouped as the table's "!" markers and the record's notes show them (conditionFlags).
+  // Cautions, grouped as the table marks them ("!" beside a value or T, "no unit") and the record's notes show them
+  // (conditionFlags).
   // Each caution states the problem; the record's note gives the numbers.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
@@ -443,7 +444,16 @@
     if (!matched.length) return "";
     const labels = [...new Set(matched.map((flag) => conditionFlagLabel(flag, row)).filter(Boolean))];
     const shortText = [...new Set(matched.map((flag) => flagShortText(flag, row)))].join(" · ");
-    const summary = labels.join("; ");
+    return flagBadgeHtml(labels.join("; "), shortText);
+  }
+
+  // The T cell's "!" for a temperature caution (the Cautions filter's Temperature questionable group).
+  function temperatureFlagBadgeHtml(flags) {
+    const labels = [...new Set([...flags].filter((flag) => flag.startsWith("temperature_")).map((flag) => conditionFlagLabel(flag)))];
+    return labels.length ? flagBadgeHtml(labels.join("; "), "T questionable") : "";
+  }
+
+  function flagBadgeHtml(summary, shortText) {
     return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
   }
 
@@ -1256,11 +1266,13 @@
     return formatNumber(number, { maximumFractionDigits: 1 });
   }
 
-  // The table's T and pH cells: the number alone, or a dash (marked empty, so a phone card leaves it out).
-  function conditionCellHtml(className, value) {
+  // The table's T and pH cells: the number alone, or a dash (marked empty, so a phone card leaves it out unless a
+  // caution's "!" follows it).
+  function conditionCellHtml(className, value, flagHtml = "") {
+    const flagged = flagHtml ? " data-flagged=\"\"" : "";
     return value === EMPTY_VALUE
-      ? `<td class="${className} num" data-empty=""><span>${EMPTY_VALUE}</span></td>`
-      : `<td class="${className} num"><span>${escapeHtml(value)}</span></td>`;
+      ? `<td class="${className} num" data-empty=""${flagged}><span>${EMPTY_VALUE}</span>${flagHtml}</td>`
+      : `<td class="${className} num"${flagged}><span>${escapeHtml(value)}</span>${flagHtml}</td>`;
   }
 
   function stateConfig(value) {
@@ -5623,7 +5635,7 @@
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
-        ${conditionCellHtml("c-temp", formatTemperature(row))}
+        ${conditionCellHtml("c-temp", formatTemperature(row), temperatureFlagBadgeHtml(flags))}
         ${conditionCellHtml("c-ph", formatPh(row))}
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
@@ -8726,6 +8738,8 @@
       conditionFlags,
       rowCautionBits,
       valueFlagBadgeHtml,
+      temperatureFlagBadgeHtml,
+      conditionCellHtml,
       publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,

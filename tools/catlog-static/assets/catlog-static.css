@@ -428,6 +428,7 @@ td.c-form { display:none }
 /* A caution: an amber "!" beside the value; the words are in its tooltip. */
 .value-flag { position:relative; display:inline-grid; flex:0 0 14px; place-items:center; align-self:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg); cursor:help }
 .value-flag::before { content:"!"; font-size:var(--fs-12); font-weight:600; line-height:1 }
+td.c-temp .value-flag { margin-left:4px; vertical-align:-2px }
 
 /* Placeholder rows while the first records load. */
 .skeleton-row, .skeleton-row:hover { cursor:default; background:var(--bg) }
@@ -1113,9 +1114,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The status keeps its two lines (status, then the source and tags), with T and pH at the line's end. */
   #recordsBody td.c-status { order:6; flex:1 1 0; align-self:center }
   #recordsBody :is(td.c-temp,td.c-ph) { order:7; flex:0 0 auto; align-self:center; color:var(--text-2); text-align:right }
-  #recordsBody :is(td.c-temp,td.c-ph)[data-empty] { display:none }
-  #recordsBody td.c-temp > span::after { content:"\00a0\00b0 C" }
-  #recordsBody td.c-ph > span::before { content:"pH\00a0" }
+  #recordsBody :is(td.c-temp,td.c-ph)[data-empty]:not([data-flagged]) { display:none }
+  #recordsBody :is(td.c-temp,td.c-ph)[data-empty] > span:first-child { display:none }
+  #recordsBody td.c-temp > span:first-child::after { content:"\00a0\00b0 C" }
+  #recordsBody td.c-ph > span:first-child::before { content:"pH\00a0" }
 
   /* A caution shows its short words beside the "!" (no tooltip on a touch screen). */
   #recordsBody .value-flag { display:inline-flex; flex:0 0 auto; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
