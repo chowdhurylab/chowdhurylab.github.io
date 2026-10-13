@@ -167,10 +167,15 @@ scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
 export puts them: each proof line's database_status, an earlier corrected
 record's corrections list; a Table field of the same name wins), the per-value
-database_status, a record summary or the corrections list; never an empty heading: Corrects a database,
-Differs, unresolved, Same as a database (every compared value), Adds a value (a
+database_status, a record summary or the corrections list; never an empty heading: Corrects a value,
+Different number (not yet resolved), Same number (every compared value), Adds a value (a
 value no database lists for the paper), Not in any database (none listed) and,
-when a record has one, Changed in earlier review; a record matches any option
+when a record has one, Corrected earlier (by the earlier automated review). Each result has one short
+name (DATABASE_RESULT_NAMES), the same in the option, its chip, a record's result word and
+its links to records like it, and short enough for one line beside a five-digit count
+at 1024 to 1439px with a wide font or a scrollbar ("Corrects a database value" and
+"Changed in earlier review" took two); the group's heading says "databases" and the
+longer meaning is each option's title and the "?". A record matches any option
 ticked; its "?" says what is compared and what each option means; address key
 db=corrects,differs,same,adds,new,earlier), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
@@ -598,9 +603,9 @@ found at once: A, B, G, C, D, E, F, H.
   `--cmp-same`, `--cmp-differs`, `--cmp-new`, `--chg-magnitude` for a database
   CatLog corrects by a unit or a power of ten, `--cmp-differs` for any other
   correction, `--bar-neutral` for the same number under another label, beside
-  its word: "Same number", "Different number", "Not in the databases",
-  "Corrects a database value" (CatLog's phrase for its "corrected" status: one
-  database value, never the database as a whole), "Other label", "Not
+  its word, the name Browse's option has: "Same number", "Different number",
+  "Not in any database", "Corrects a value" (CatLog's "corrected" status: one
+  database value, never the database as a whole), and "Other label", "Not
   compared"), then the snapshot's line as given ("BRENDA lists 1,300 mM, 1,000×
   higher. The paper prints 1.3 ± 0.10 mM (Table 2). Checked against the paper:
   µM entered as mM."), the cause in words when the line does not already say
@@ -616,8 +621,8 @@ found at once: A, B, G, C, D, E, F, H.
   the same paper. A different number can mean a different measurement." under
   it. When Browse has the "Against the databases" filter group (options named
   database; address #browse?db=...), a last line links each option the record
-  matches to the records like it: "More records like this: Corrects a database
-  value · Adds a value to the databases" (corrects: a value corrected; differs:
+  matches to the records like it, by the option's name: "More records like this:
+  Corrects a value · Adds a value" (corrects: a value corrected; differs:
   a different number not yet resolved; same: every compared value the same;
   adds: a value no database lists; new: no value in any database, said instead
   of adds; earlier: an earlier corrected record); an option the page does not
@@ -631,7 +636,7 @@ found at once: A, B, G, C, D, E, F, H.
   replaced sequence or SMILES ("Replaced", not repeated); a field whose value
   did not change is not listed; one closing note, "Changed in the earlier
   automated review to what the paper prints." (and "More records like this:
-  Changed in the earlier review" when Browse has that option). A corrected record without its
+  Corrected earlier" when Browse has that option). A corrected record without its
   trail says so in its Review result line ("this snapshot does not list the
   changes"; the earlier catalog keeps them) and has no section G. A database
   record the earlier review did not settle (Not confirmed, Not checked) with a

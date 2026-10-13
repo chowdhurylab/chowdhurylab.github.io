@@ -3276,8 +3276,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(section, /<h3 id="detail-databases-title">Against the databases<\/h3><p class="section-text cmp-paper-note">All 12 BRENDA Km values for this paper are 1000× lower than printed\.<\/p><dl class="detail-kv cmp-list"><div class="kv-line cmp-item"><dt><i>k<\/i><sub>cat<\/sub><\/dt><dd><span class="cmp-value">30\.4 <small>s<sup>-1<\/sup><\/small><\/span>/);
   assert.doesNotMatch(section, /<table|Databases for this paper/, "no table: a list that wraps at any width");
   assert.match(section, /<span class="cmp-mark cmp-same" aria-hidden="true"><\/span><strong>Same number<\/strong><\/span><span class="cmp-line">Same as BRENDA, SABIO-RK\.<\/span><\/dd>/);
-  assert.match(section, /<dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">549\.9 <small>mM<\/small><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a database value<\/strong><\/span><span class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/span><small class="cmp-cause">Checked against the paper: an mM value entered as µM<\/small><small class="cmp-where">In the paper: Table 1, row Cellobiose: 549\.9 ± 62\.5<\/small><\/dd>/);
-  assert.match(section, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong>/);
+  assert.match(section, /<dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">549\.9 <small>mM<\/small><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><span class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/span><small class="cmp-cause">Checked against the paper: an mM value entered as µM<\/small><small class="cmp-where">In the paper: Table 1, row Cellobiose: 549\.9 ± 62\.5<\/small><\/dd>/);
+  assert.match(section, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in any database<\/strong>/);
   assert.match(section, /<p class="section-note">Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\. A different number can mean a different measurement\.<\/p>/);
   assert.doesNotMatch(section, /cmp-explore/, "no link to a Browse filter the page does not have");
   // Right after Values: what CatLog corrected against the databases is found at once.
@@ -3303,18 +3303,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
         line("Km", { database_status: "new", database_line: "Not in BRENDA." }),
         line("kcat/Km", { database_status: "corrected", database_line: "BRENDA lists 60 mM⁻¹ s⁻¹." }),
       ]));
-      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects">Corrects a database value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds">Adds a value to the databases<\/a><\/p>/);
+      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds">Adds a value<\/a><\/p>/);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same", database_line: "Same as OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=same">Same as a database<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=same">Same number<\/a><\/p>/);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
         line("Km", { database_status: "new", database_line: "Not in OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=new">In no database<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=new">Not in any database<\/a><\/p>/);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹." })]));
       assert.doesNotMatch(html, /cmp-explore/, "an option Browse does not have gets no link");
       html = render(row({ record_key: "corrected-explore", verification_status: "corrected", source_db: "oed" }),
         { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] });
-      assert.match(html, /More records like this: <a href="#browse\?db=earlier">Changed in the earlier review<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=earlier">Corrected earlier<\/a><\/p>/);
     } finally {
       document.querySelector = previousQuery;
     }
@@ -3331,11 +3331,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /Against the databases|not compared/, "no compared value, no section");
   // A correction of the database that is not a unit or a power of ten is a different number (brown), not red.
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists the value of another row.", database_cause: "value_from_other_row" })]));
-  assert.match(html, /<span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><strong>Corrects a database value<\/strong><\/span><span class="cmp-line">BRENDA lists the value of another row\.<\/span><small class="cmp-cause">Checked against the paper: a value from another cell of the table<\/small>/);
+  assert.match(html, /<span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><span class="cmp-line">BRENDA lists the value of another row\.<\/span><small class="cmp-cause">Checked against the paper: a value from another cell of the table<\/small>/);
   // A cause code with no wording is not shown (never the raw code with spaces); a cause given as a phrase is shown as given.
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists 5 mM.", database_cause: "some_new_cause" })]));
   assert.doesNotMatch(html, /cmp-cause|some new cause|some_new_cause/);
-  assert.match(html, /<strong>Corrects a database value<\/strong><\/span><span class="cmp-line">BRENDA lists 5 mM\.<\/span><\/dd>/);
+  assert.match(html, /<strong>Corrects a value<\/strong><\/span><span class="cmp-line">BRENDA lists 5 mM\.<\/span><\/dd>/);
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists 5 mM.", database_cause: "a misread header" })]));
   assert.match(html, /<small class="cmp-cause">Checked against the paper: a misread header<\/small>/);
   // A local file named as evidence is never shown.
@@ -3684,7 +3684,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", 
     ] });
   assert.deepEqual(payload.database_comparison, [
     { metric: "kcat", result: "Same number", line: "Same as BRENDA, SABIO-RK.", databases: null, cause: null, evidence: null },
-    { metric: "Km", result: "Corrects a database value", line: "BRENDA lists 0.5499 mM, 1,000× lower.", databases: null, cause: "an mM value entered as µM", evidence: null },
+    { metric: "Km", result: "Corrects a value", line: "BRENDA lists 0.5499 mM, 1,000× lower.", databases: null, cause: "an mM value entered as µM", evidence: null },
   ]);
   assert.equal(payload.database_note, "All 12 BRENDA Km values for this paper are 1000× lower than printed.");
   // A line that is the result is the result; a calculated kcat/Km reads as the record's row does.
@@ -3883,7 +3883,10 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.browseHash(), "#browse?db=corrects,new");
   assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), ["db-fixed", "db-new"]);
   assert.deepEqual(JSON.parse(JSON.stringify(api.activeFilterItems().map((item) => [item.key, item.label]))),
-    [["db:corrects", "Corrects a database value"], ["db:new", "In no database"]]);
+    [["db:corrects", "Corrects a value"], ["db:new", "Not in any database"]]);
+  // One name per result: the sidebar's options say what their chips, a record's result words and its links say.
+  assert.deepEqual([...element("databaseChecklist").innerHTML.matchAll(/<span>([^<]+)<\/span>/g)].map((match) => match[1]),
+    ["Corrects a value", "Different number", "Same number", "Adds a value", "Not in any database", "Corrected earlier"]);
   // The index carries the number as an optional column; an index without it gives every row null (the group stays hidden).
   {
     const enumFields = ["enzyme_label_source", "source_db", "verification_status", "evidence_confidence_tier", "sequence_variant_status",

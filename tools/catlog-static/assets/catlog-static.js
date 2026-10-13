@@ -194,20 +194,27 @@
     confirmed: 1, same: 1, same_number: 1, corrected: 2, differs: 4, different: 4, differs_not_resolved: 4, new: 8,
     new_paper_not_in_databases: 8, paper_not_in_databases: 8, not_in_databases: 8, same_number_other_label: 16, other_label: 16,
   };
+  // One short name per result, the same in the sidebar, its chip, a record's result word and its links to records like
+  // it; each fits one line of the sidebar beside a five-digit count, with a wide font too (the group's heading says
+  // "databases"; the longer meaning is each option's title and its "?").
+  const DATABASE_RESULT_NAMES = {
+    corrects: "Corrects a value", differs: "Different number", same: "Same number", adds: "Adds a value",
+    new: "Not in any database", earlier: "Corrected earlier",
+  };
   const databaseFilters = [
-    { value: "corrects", label: "Corrects a database", chip: "Corrects a database value", bit: 1,
+    { value: "corrects", bit: 1,
       title: "A database lists a different number for a value; the record says what the paper prints and why they differ" },
-    { value: "differs", label: "Differs, unresolved", chip: "Differs from a database, not yet resolved", bit: 2,
+    { value: "differs", bit: 2,
       title: "A database lists another number for a value; not yet resolved" },
-    { value: "same", label: "Same as a database", chip: "Same as a database", bit: 4,
+    { value: "same", bit: 4,
       title: "Every value is the number a database lists for it" },
-    { value: "adds", label: "Adds a value", chip: "Adds a value to the databases", bit: 8,
+    { value: "adds", bit: 8,
       title: "At least one value no database lists for this paper" },
-    { value: "new", label: "Not in any database", chip: "In no database", bit: 16,
+    { value: "new", bit: 16,
       title: "No database lists any of the values" },
-    { value: "earlier", label: "Changed in earlier review", chip: "Changed in the earlier review", bit: 32, optional: true,
+    { value: "earlier", bit: 32, optional: true,
       title: "A database record the earlier automated review corrected; the record lists what changed" },
-  ];
+  ].map((item) => ({ ...item, label: DATABASE_RESULT_NAMES[item.value], chip: DATABASE_RESULT_NAMES[item.value] }));
 
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
   // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
@@ -8887,12 +8894,12 @@
   // filter).
   const DATABASE_RESULTS = [
     { test: /other[\s_-]*label/i, word: "Other label", key: "neutral", filter: "other_label" },
-    { test: /^(?:confirmed|same)/i, word: "Same number", key: "same", filter: "same" },
+    { test: /^(?:confirmed|same)/i, word: DATABASE_RESULT_NAMES.same, key: "same", filter: "same" },
     // "corrected": a database lists another number for the same measurement and code or a check against the paper
     // found why (CatLog's own definition); the word names one database value, never the database as a whole.
-    { test: /^correct/i, word: "Corrects a database value", key: "magnitude", filter: "corrected" },
-    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Different number", key: "differs", filter: "differs" },
-    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "Not in the databases", key: "new", filter: "new" },
+    { test: /^correct/i, word: DATABASE_RESULT_NAMES.corrects, key: "magnitude", filter: "corrected" },
+    { test: /^(?:differ|different|not[\s_-]*among)/i, word: DATABASE_RESULT_NAMES.differs, key: "differs", filter: "differs" },
+    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: DATABASE_RESULT_NAMES.new, key: "new", filter: "new" },
     { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "", filter: "" },
   ];
   // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given, and a code with no wording
