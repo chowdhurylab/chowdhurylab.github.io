@@ -2425,7 +2425,7 @@ const pageRecordsByKey = Object.fromEntries(
 assert.equal(pageRecordsByKey["page-mixed"].source_license, mixedSourceLicenses);
 assert.equal(pageRecordsByKey["page-summary-fallback"].source_license, "CC BY 4.0");
 assert.equal(pageRecordsByKey["page-empty-summary"].source_license, "CC BY-NC-ND 4.0");
-assert.equal(pageRecordsByKey["page-missing-license"].source_license, "See the source database's terms", "the license as the record shows it");
+assert.equal(pageRecordsByKey["page-missing-license"].source_license, "See the source's terms", "the license as the record shows it");
 // Each record is the flat object Download record saves: the record's words, no internal fields.
 for (const record of pagePayload.records) {
   assert.equal(record.review_result, "Accepted");
@@ -3237,7 +3237,10 @@ assert.ok(!("summary_marker" in detailPreferredPayload) && !("detail_marker" in 
 assert.equal((await recordDownloadPayload(row({ record_key: "record-summary-fallback", source_license: "CC BY 4.0" }), { source_license: "" })).source_license,
   "CC BY 4.0");
 assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-license", source_license: undefined }), {})).source_license,
-  "See the source database's terms");
+  "See the source's terms");
+// A record with no recorded source has no source's terms to point to.
+assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", source_db: "unknown", source_license: "see source" }), {})).source_license,
+  "Not recorded");
 // Download record carries the kcat/Km the record's sources list, as the record shows them.
 {
   const listedPayload = await recordDownloadPayload(row({ record_key: "record-listed", source_db: "brenda", kcat: null, km: 0.05,

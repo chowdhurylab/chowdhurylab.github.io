@@ -151,6 +151,11 @@ def check_guide(driver, wait):
         assert "CC BY 4.0" in source_rows["Read from the paper by CatLog"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]
+    # Every database's licence is said one way, "License: ...", a database without one "License: see the source's terms"
+    # (as a record from it reads).
+    for name, text in source_rows.items():
+        if not name.startswith("Read from the paper"):
+            assert text.startswith("License: "), (name, text)
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
     assert driver.execute_script("""

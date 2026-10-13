@@ -8130,11 +8130,16 @@
       + (note ? `<p class="detail-condition-note">${escapePublic(note)}</p>` : "");
   }
 
-  // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms.
+  // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms. A source
+  // that names no licence reads as the Guide's list says it ("see the source's terms"); a record with no recorded source
+  // has no source to point to.
+  const SOURCE_TERMS_TEXT = "see the source's terms";
   function detailLicense(summary, detail, v2Record) {
     if (v2Record) return "CC BY 4.0 (CatLog compilation)";
     const license = String(sourceLicense(summary, detail) || "").trim();
-    return license && !/^see source$/i.test(license) ? license : "See the source database's terms";
+    if (license && !/^see source$/i.test(license)) return license;
+    if (rowSourceBits({ source_db: recordSourceDb(summary, detail) }) === SOURCE_UNRECORDED_BIT) return "Not recorded";
+    return SOURCE_TERMS_TEXT.charAt(0).toUpperCase() + SOURCE_TERMS_TEXT.slice(1);
   }
 
   // The paper's title and year, when the record carries them (paper_title; paper_year, year or publication_year).
@@ -8742,7 +8747,7 @@
           ? escapeHtml(item.licenseText)
           : (item.key === "primary_paper_direct"
               ? escapeHtml(PRIMARY_LITERATURE_LICENSE)
-              : (item.license && !/^see source$/i.test(item.license) ? `License: ${escapeHtml(item.license)}` : "See the source site for license terms"));
+              : `License: ${escapeHtml(item.license && !/^see source$/i.test(item.license) ? item.license : SOURCE_TERMS_TEXT)}`);
         return `
           <div>
             <dt>${sourceNameHtml(item)}</dt>

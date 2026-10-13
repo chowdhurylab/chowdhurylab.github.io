@@ -432,7 +432,10 @@ is left out, never an empty heading. The order (design spec 5):
   older record an Evidence line ("Located in the paper", "Paper cited" on an
   accepted record or "Paper cited (values not located)" on one that is not,
   "Several database records" or "Database record only"); one
-  license line; the snapshot's data ID; a database note on request, headed by
+  license line (a source that names none reads "See the source's terms", as the
+  Guide's Sources and licenses list says "License: see the source's terms"; a
+  record with no recorded source reads "Not recorded"); the snapshot's data ID;
+  a database note on request, headed by
   its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a
   record merged from several databases, which do not say whose note it is),
   without an importer's label and not shown when it only repeats the
