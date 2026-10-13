@@ -9332,6 +9332,13 @@
     return `${text}${unit ? ` ${unitText(unit)}` : ""}`;
   }
 
+  // A unit an earlier correction changed, written as the record writes units: exponents as superscripts ("s^(-1)",
+  // "s^-1 M^-1", "min(-1)" read s⁻¹, s⁻¹ M⁻¹, min⁻¹) and uM as µM.
+  function correctionUnitText(value) {
+    if (value == null || value === "") return "none";
+    return catlogUnitText(shownText(value).replace(/([A-Za-zµμ])\(([−+-]?\d+)\)/g, "$1^($2)")).replace(/\buM\b/g, "µM");
+  }
+
   // A temperature the earlier catalog stores in kelvin reads in °C, as the record's Conditions do.
   function correctionTemperatureText(value, field) {
     if (value == null || value === "") return "none";
@@ -9383,6 +9390,7 @@
         if (/sequence|smiles/.test(item.key)) return comparisonItemHtml(item.name, "Replaced", whereHtml(item));
         const text = /^temperature/.test(item.key)
           ? (value) => correctionTemperatureText(value, item.key)
+          : /_unit$/.test(item.key) ? correctionUnitText
           : (value) => (item.key === "wild_type" && typeof value === "boolean"
             ? (value ? "wild type" : "variant")
             : correctionValueText(value, item.unit, { asNumber: CORRECTION_NUMBER_FIELDS.has(item.key) }));

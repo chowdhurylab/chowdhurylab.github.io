@@ -3409,6 +3409,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "pubmed_id", before: "21149620", after: "21149602", kind: "changed" },
     { field: "ncbi_protein_id", before: null, after: 123456789, kind: "added" },
     { field: "vmax", before: 120000, after: 1200, unit: "nmol/min/mg", kind: "magnitude" },
+    { field: "kcat_unit", before: "s^(-1)", after: "min^(-1)", kind: "changed" },
+    { field: "km_unit", before: null, after: "uM", kind: "added" },
+    { field: "kcat_over_km_unit", before: "s^-1 M^-1", after: "s^(-1)*mM^(-1)", kind: "changed" },
+    { field: "ki_unit", before: "min(-1)", after: "s-1", kind: "changed" },
     { field: "smiles", kind: "replaced" },
   ] });
   const trail = html.slice(html.indexOf('class="detail-section databases-section"'), html.indexOf('class="detail-section review-section"'));
@@ -3424,6 +3428,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<dt>PMID<\/dt><dd><span class="cmp-value">21149620<span class="cmp-arrow"> → <\/span><strong>21149602<\/strong><\/span><\/dd>/);
   assert.match(trail, /<dt>NCBI Protein<\/dt><dd><span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>123456789<\/strong><\/span>/);
   assert.doesNotMatch(trail, /× 10⁷|× 10⁸/);
+  // A changed unit reads as the record's units do: superscript exponents, µM; never the stored carets.
+  assert.match(trail, /<dt><i>k<\/i><sub>cat<\/sub> unit<\/dt><dd><span class="cmp-value">s⁻¹<span class="cmp-arrow"> → <\/span><strong>min⁻¹<\/strong><\/span><\/dd>/);
+  assert.match(trail, /<dt><i>K<\/i><sub>m<\/sub> unit<\/dt><dd><span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>µM<\/strong><\/span>/);
+  assert.match(trail, /<span class="cmp-value">s⁻¹ M⁻¹<span class="cmp-arrow"> → <\/span><strong>s⁻¹ mM⁻¹<\/strong><\/span>/);
+  assert.match(trail, /<dt><i>K<\/i><sub>i<\/sub> unit<\/dt><dd><span class="cmp-value">min⁻¹<span class="cmp-arrow"> → <\/span><strong>s⁻¹<\/strong><\/span>/);
+  assert.doesNotMatch(trail, /\^|\(-1\)/, "no caret unit left");
   assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1200 nmol\/min\/mg<\/strong><\/span>/);
   assert.match(trail, /<dt>SMILES<\/dt><dd><span class="cmp-value">Replaced<\/span><\/dd>/);
   assert.doesNotMatch(trail, /papers\\x\.pdf|x\.pdf/, "a local path never");
