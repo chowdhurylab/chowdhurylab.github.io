@@ -169,6 +169,8 @@ Pointing at a mark, or focusing the link in its row, lights it with a soft glow 
 drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
 tap. Scrolling hides a line the pointer showed (the pointer brings it back), while a line keyboard focus showed
 follows its mark as long as the mark is in view, so Tab to a mark below the fold, which scrolls the page, keeps it.
+Escape puts the line and the light out without moving the pointer or focus (WCAG 1.4.13); they stay out on that mark
+until the pointer or focus moves on.
 Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,

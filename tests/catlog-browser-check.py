@@ -1005,6 +1005,11 @@ def check_stats_more(driver, browser, overview, total):
         lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"status\"] .is-active')].map(e => e.tagName.toLowerCase())")
         assert sorted(lit) == ["path", "tr"], lit
         assert driver.execute_script("return document.querySelector('[data-figure=\"status\"] .stats-fig').classList.contains('has-active')")
+        # Escape puts the line and the light out with the pointer still on the slice (WCAG 1.4.13), and moving within
+        # the slice does not bring them back.
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": box[0] + 1, "y": box[1]})
+        assert driver.execute_script("return document.getElementById('statsTip').hidden && !document.querySelector('#statsCharts .has-active')"), "Escape leaves the tooltip line"
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
     # Tab onto a mark below the fold: the view scrolls to it right after focusin, and its tooltip line stays, beside it.
     expected_tip = driver.execute_script("""
@@ -1029,6 +1034,10 @@ def check_stats_more(driver, browser, overview, total):
               done({hidden: tip.hidden, text: tip.textContent, gap: Math.min(Math.abs(mark.top - box.bottom), Math.abs(box.top - mark.bottom))});
             }));""")
         assert not focus_tip["hidden"] and focus_tip["text"] == expected_tip and focus_tip["gap"] <= 20, focus_tip
+        # Escape puts a focused mark's line out and keeps the focus where it is.
+        focused = driver.execute_script("return document.activeElement")
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        assert driver.execute_script("return document.getElementById('statsTip').hidden && document.activeElement === arguments[0] && !document.querySelector('#statsCharts .has-active')", focused), "Escape leaves a focused mark's tooltip line"
         driver.execute_script("document.activeElement.blur()")
 
 

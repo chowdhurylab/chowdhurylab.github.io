@@ -4496,8 +4496,10 @@
 
   // Pointing at a mark (or focusing the link in its row) lights it and every mark of the same name in its figure
   // (data-hl: a donut slice and its table row, a class's ridge in all three panels) and dims the rest; a tooltip line
-  // gives the mark's exact count (data-tip, the same words as its accessible text). One set of listeners on the Stats
-  // view, bound the first time Stats is drawn.
+  // gives the mark's exact count (data-tip, the same words as its accessible text). Escape puts the line and the light
+  // out without moving the pointer or focus (WCAG 1.4.13); they stay out on that mark until the pointer or focus moves
+  // to another mark or leaves it. One set of listeners on the Stats view (Escape on the document, since a pointer over a
+  // mark does not move focus there), bound the first time Stats is drawn.
   function statsTip() {
     let tip = $("statsTip");
     if (!tip && $("statsView") && document.createElement) {
@@ -4551,17 +4553,23 @@
     // The mark whose tooltip line came from keyboard focus (null when the pointer showed it): scrolling the view moves
     // that line with its mark, since Tab to a mark off screen scrolls the view right after focusin.
     let focused = null;
+    // The mark whose line shows (or whose row is lit), and the one Escape put out.
+    let shown = null;
+    let dismissed = null;
     const markOf = (target) => target?.closest?.("[data-hl], [data-tip]") || null;
     const enter = (target, point) => {
       const mark = markOf(target);
       if (!mark || !view.contains(mark)) return;
       const row = mark.closest("[data-hl]");
+      const tipped = mark.closest("[data-tip]");
+      if (dismissed && dismissed === (tipped || row)) return;
+      dismissed = null;
       if (row !== current) {
         if (current) statsLight(current, false);
         current = row;
         if (row) statsLight(row, true);
       }
-      const tipped = mark.closest("[data-tip]");
+      shown = tipped || row;
       focused = !point && tipped ? tipped : null;
       if (tipped) statsShowTip(tipped, point);
       else statsHideTip();
@@ -4570,6 +4578,8 @@
       if (current) statsLight(current, false);
       current = null;
       focused = null;
+      shown = null;
+      dismissed = null;
       statsHideTip();
     };
     // A pointer's tooltip line goes on scroll (the pointer brings it back); a focused mark's line follows the mark while
@@ -4583,15 +4593,22 @@
     view.addEventListener("pointermove", (event) => {
       if (event.pointerType === "touch") return;
       if (!markOf(event.target)) {
-        if (current) leave();
+        if (current || dismissed) leave();
         return;
       }
       enter(event.target, { x: event.clientX, y: event.clientY });
     });
     view.addEventListener("pointerdown", (event) => {
       if (event.pointerType !== "touch") return;
+      dismissed = null;
       if (markOf(event.target)) enter(event.target, { x: event.clientX, y: event.clientY });
       else leave();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !shown) return;
+      const mark = shown;
+      leave();
+      dismissed = mark;
     });
     view.addEventListener("pointerleave", leave);
     view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
