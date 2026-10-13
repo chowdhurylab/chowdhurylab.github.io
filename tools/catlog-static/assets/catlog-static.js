@@ -839,13 +839,120 @@
     return raw.length ? "" : "Evidence details unavailable";
   }
 
+  // A unit as the earlier review's notes write it, for comparing two spellings ("microM", "uM" and "µM"; "s^-1", "s-1").
+  function evidenceUnitKey(text) {
+    return String(text ?? "").trim()
+      .replace(/\bmicro(?=M\b)|\bu(?=M\b)|μ/g, "µ")
+      .replace(/[−–]/g, "-")
+      .replace(/\^/g, "")
+      .replace(/[*·]/g, " ")
+      .replace(/\s+/g, " ");
+  }
+
+  // A printed value with its unit once: "1.27 mM" with the unit mM stays "1.27 mM", "75 +/- 5" with uM reads "75 +/- 5 uM".
+  function evidenceValueWithUnit(value, unit) {
+    const text = String(value ?? "").trim();
+    const unitKey = evidenceUnitKey(unit);
+    const valueKey = evidenceUnitKey(text);
+    if (!unitKey) return text;
+    const hasUnit = valueKey === unitKey
+      || (valueKey.endsWith(unitKey) && /[\d)\s]$/.test(valueKey.slice(0, -unitKey.length)));
+    return hasUnit ? text : `${text} ${String(unit).trim()}`;
+  }
+
+  // The earlier review's key=value fields as plain text: "Km raw_value=1.27 mM raw_unit=mM" reads "Km 1.27 mM"; a printed
+  // cell or sentence other than the value itself is quoted after it ("kcat 0.022 s^-1, printed “(2.2 ± 0.1) x 10-2”",
+  // "Km 60 µM, printed “Kms were 66 µM (NADPH) and 60 µM [(S)-HMG-CoA]”"); a cell that repeats the value is left out.
+  const EVIDENCE_RAW_FIELDS = /\b(raw|(?:[a-z]+_)*normali[sz]ed)_value=\s*(.*?)\s+\1_unit=\s*(.*?)(?:\s+raw_uncertainty=\s*(.*?))?(?:\s+raw_(?:cell|segment)=\s*(?:"([^"]*)"|([^;]*?)))?(?=\s*(?:;|$)|\s+[a-z]+(?:_[a-z0-9]+)+=)/g;
+  // The earlier pipeline's own field names that can stay in a note, as words.
+  const EVIDENCE_KEY_WORDS = [
+    [/\bcurrent_export_(kcat_over_km|kcat|km)=\s*/gi, (_m, metric) => `earlier ${metric.toLowerCase() === "km" ? "Km" : metric.toLowerCase() === "kcat" ? "kcat" : "kcat/Km"} `],
+    // "paper_kcat_over_km_s^-1_mM^-1: 0.13" reads "paper kcat/Km 0.13 s^-1 mM^-1".
+    [/\bpaper_(kcat_over_km|kcat|km)_(\S+?):\s*(-?\d+(?:\.\d+)?)/gi, (_m, metric, unit, number) =>
+      `paper ${({ kcat_over_km: "kcat/Km", kcat: "kcat", km: "Km" })[metric.toLowerCase()]} ${number} ${unit.replace(/_/g, " ")}`],
+    [/\bpaper_(kcat|km)\b/gi, (_m, metric) => `paper ${metric.toLowerCase() === "km" ? "Km" : "kcat"}`],
+    [/\bkcat_over_km_provenance\b/gi, "kcat/Km note"],
+    [/\bkcat_over_km\b/gi, "kcat/Km"],
+    [/\bcomputed_from_table_kcat_km=\s*/gi, "computed from the table's kcat and Km as "],
+    [/\b(?:printed_(?:raw_)?value|paper_(?:value|cell))=\s*/gi, "printed "],
+    [/\s*\b(?:printed_unit|raw_unit|raw_uncertainty)=\s*/gi, " "],
+    [/\b(?:[a-z]+_)*(?:raw|normali[sz]ed)_(?:value|unit|cell|segment)[=:]\s*/gi, ""],
+    [/\b([a-z]+(?:_[a-z0-9]+)+)=\s*/g, (_m, key) => `${key.replace(/_/g, " ")} `],
+    // "Km NADP raw=8.2 µM" and the field name km ("km=1.21 mM", "km 0.98 mM").
+    [/\s*\braw=\s*/g, " "],
+    [/(^|[\s;.,(])km(?=\s*[=:]|\s+\d)/g, "$1Km"],
+  ];
+  // How the earlier pipeline fetched the paper ("PubMed XML abstract PMID 7635824", "ScienceDirect HTML Table 1", "Official
+  // PMC full-text Table 1", "Springer official article Table 4") says nothing about where the value is printed: the
+  // place stays ("Abstract", "Table 1", "Table 4"). A run of these words goes when it names a database, publisher or file
+  // format and a place in the paper follows, or when it names two ("PMC full text PMID 14602595 kinetic prose"); ACS,
+  // ASM, JBC and OUP alone could be an enzyme's name.
+  const ROUTE_NAMES = String.raw`official|PubMed|Europe\s+PMC|PMCID\s+PMC\d+|PMC|PMID\s+\d+|J-STAGE|ScienceDirect|Elsevier|Springer|Wiley|Taylor(?:\s*(?:&|and)\s*Francis)?|Oxford\s+Academic|XML|HTML|JATS|ePDF|Full\s+Access|full[- ]?text`;
+  const ROUTE_WORDS = String.raw`OUP|JBC|ACS|ASM|article|visible|free|scanned|author\s+manuscript|primary-paper`;
+  const EVIDENCE_ROUTE = new RegExp(String.raw`(^|[\s(;,:])((?:(?:${ROUTE_NAMES}|${ROUTE_WORDS})(?:\s*\/\s*|,\s+|\s+|(?=[);]|$)))+)`, "gi");
+  const EVIDENCE_ROUTE_NAME = new RegExp(String.raw`(?:^|[\s/,])(?:${ROUTE_NAMES})(?=[\s/,]|$)`, "gi");
+  const EVIDENCE_PLACE = /^(?:abstracts?|tables?|prose|results?|text|paragraphs?|pdf|figures?|fig\.|body|pages?|segments?|sentences?|supplement\w*|discussion|methods|legends?|footnotes?|captions?|title|reports?|states?)\b/i;
+
+  function withoutEvidenceRoute(text) {
+    const source = String(text ?? "");
+    const result = source
+      .replace(EVIDENCE_ROUTE, (match, before, run, offset, whole) => {
+        const names = (run.match(EVIDENCE_ROUTE_NAME) || []).length;
+        return names >= 2 || (names && EVIDENCE_PLACE.test(whole.slice(offset + match.length))) ? before : match;
+      })
+      .replace(/(^|[\s(;,:])(?:ScienceDirect|PubMed|Europe\s+PMC|PMC|Springer|Wiley)\s*\/\s*(?=[A-Z])/g, "$1")
+      .replace(/\b(abstracts?)\s+(?:for\s+)?(?:PMID|PMCID)\s+(?:PMC)?\d+\b/gi, "$1")
+      .replace(/\s*,?\s*\bdecoded (?:plain-numeral )?(?:transcription|measurement-bound row)\b\s*(,?)/gi, "$1")
+      .replace(/\s*\(\s*\)/g, "")
+      .replace(/^[\s,;·]+/, "");
+    // A note that opened with the route ("PubMed XML abstract ...") opens with its place ("Abstract ...").
+    return /^[A-Z]/.test(source.trim()) ? result.replace(/^[a-z]/, (letter) => letter.toUpperCase()) : result;
+  }
+
+  // The earlier review's words for its own steps, as facts: its "normalized" is a conversion, its "expected row" the
+  // record it was checking (the earlier record).
+  function evidenceWords(text) {
+    const cased = (word, replacement) => (/^[A-Z]/.test(word) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement);
+    return String(text)
+      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier record has no $1")
+      .replace(/\b(\S+) is not populated for this row\b/g, "this record has no $1")
+      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier record"))
+      .replace(/\bnormali[sz]ation\b/gi, (word) => cased(word, "conversion"))
+      .replace(/\bnormali[sz]ed value\b/gi, (word) => cased(word, "value in catalog units"))
+      .replace(/\bnormali[sz]ed unit\b/gi, (word) => cased(word, "unit"))
+      .replace(/\bnormali[sz]es\b/gi, (word) => cased(word, "converts"))
+      .replace(/\bnormali[sz]e\b/gi, (word) => cased(word, "convert"))
+      .replace(/\bnormali[sz]ed\b/gi, (word) => cased(word, "converted"))
+      .replace(/\bPRINTS\b/g, "prints")
+      .replace(/\bPRINTED\b/g, "printed");
+  }
+
   function cleanEvidenceValue(value) {
-    return publicText(value)
-      .replace(/\braw_value=/gi, "")
-      .replace(/\braw_unit=/gi, "")
-      .replace(/\bnormalized_value=/gi, "")
-      .replace(/\bnormalized_unit=/gi, "")
+    let text = publicText(value).replace(EVIDENCE_RAW_FIELDS, (_m, _kind, number, unit, uncertainty, quoted, cell) => {
+      let result = evidenceValueWithUnit(number, unit);
+      if (uncertainty) result += ` ${uncertainty.trim()}`;
+      const printed = String(quoted ?? cell ?? "").trim();
+      const same = (a, b) => evidenceUnitKey(a).replace(/\s/g, "") === evidenceUnitKey(b).replace(/\s/g, "");
+      if (printed && !same(printed, number) && !same(evidenceValueWithUnit(printed, unit), result)) {
+        result += `, printed “${printed}”`;
+      }
+      return result;
+    });
+    for (const [pattern, replacement] of EVIDENCE_KEY_WORDS) text = text.replace(pattern, replacement);
+    return evidenceWords(withoutEvidenceRoute(text))
+      .replace(/\+\s?\/\s?[-−]/g, "±")
       .replace(/\bmicroM\b/g, "µM")
+      .replace(/\buM\b/g, "µM")
+      // A unit the note gives twice after its number ("1.27 mM mM").
+      .replace(/(\d)\s*((?:[µμmnpk]?M|s\^?-1|min\^?-1))\s+\2(?![\w^\-−])/g, "$1 $2")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Where the earlier review found a value (a table and row, an abstract), without how it fetched the paper.
+  function evidenceLocationText(value) {
+    return evidenceWords(withoutEvidenceRoute(publicEvidenceString(value)))
+      .replace(/\+\s?\/\s?[-−]/g, "±")
       .replace(/\buM\b/g, "µM")
       .replace(/\s+/g, " ")
       .trim();
@@ -994,7 +1101,7 @@
       return text ? `<p class="evidence-note-plain">${evidenceTextHtml(text)}</p>` : "";
     }
 
-    const location = [value.table_label, value.row_label].map(publicEvidenceString).filter(Boolean).join(" · ");
+    const location = [value.table_label, value.row_label].map(evidenceLocationText).filter(Boolean).join(" · ");
     const reported = publicEvidenceString(value.raw_value_unit_evidence
       || (!value.normalized_value_unit_evidence ? value.column_label : ""));
     const normalized = publicEvidenceString(value.normalized_value_unit_evidence);
@@ -1006,7 +1113,7 @@
     ].filter(Boolean);
 
     if (!rows.length) {
-      const fallback = evidenceText(value);
+      const fallback = cleanEvidenceValue(evidenceText(value));
       return fallback ? `<p class="evidence-note-plain">${evidenceTextHtml(fallback)}</p>` : "";
     }
     return kvList(rows.map(([label, text]) => linkedKv(label, evidenceTextHtml(text))), "evidence-note-item");
@@ -8885,6 +8992,7 @@
       printedNumberText,
       v2LineFacts,
       conversionFacts,
+      evidenceNoteHtml,
       conditionLines,
       copyDetailValue,
       showSuggestions,

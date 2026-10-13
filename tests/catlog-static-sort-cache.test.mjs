@@ -2733,6 +2733,31 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(row({ record_key: "older-normalized", proof_kind: "paper_evidence", has_proof_excerpt: true }), {
     proof_lines: [{ table_label: "Table 1", normalized_value_unit_evidence: "Normalized paper Km: 14.29 uM = 0.01429 mM" }] });
   assert.match(element("detailContent").innerHTML, /<dt>Conversion<\/dt><dd>paper Km: 14\.29 µM = 0\.01429 mM\.<\/dd>/);
+  // The earlier review's field names, doubled units, "+/-" and how it fetched the paper never show (9b6aef24da6a5ae3,
+  // fb0399f5635b45b4, fd30a554cb5a4a74, 7a7905feca5ca6ea, 15a3fc9449a5f7bf, 1702072ddbfbb89d, 5200afbd43cdffe1).
+  const note = (line) => api.evidenceNoteHtml(line).replace(/<[^>]+>/g, "|").replace(/\|+/g, "|").replace(/&#39;/g, "'");
+  assert.equal(note({ table_label: "PubMed XML abstract PMID 7635824", row_label: "Citrobacter glycerol dehydrogenase / glycerol",
+    raw_value_unit_evidence: "Km raw_value=1.27 mM raw_unit=mM", normalized_value_unit_evidence: "Km normalized_value=1.27 normalized_unit=mM" }),
+  "|Where|Abstract · Citrobacter glycerol dehydrogenase / glycerol|As printed|Km 1.27 mM|Conversion|Km 1.27 mM.|");
+  assert.match(note({ table_label: "Table 5", raw_value_unit_evidence: "Km raw_value=75 +/- 5 raw_unit=uM raw_cell=75 +/- 5; kcat raw_value=0.05 raw_unit=s^-1 raw_cell=0.05; kcat/Km raw_value=6.00 x 10^2 raw_unit=M^-1*s^-1 raw_cell=6.00 x 10^2" }),
+    /\|As printed\|Km 75 ± 5 µM; kcat 0\.05 s\|-1\|; kcat\/Km 6\.00 × 10\|2\| M\|-1\| s\|-1\|$/);
+  assert.match(note({ table_label: "Abstract kinetic prose segment", raw_value_unit_evidence: "Km raw_value=60 microM raw_unit=microM raw_cell=Kms were 66 microM (NADPH) and 60 microM [(S)-HMG-CoA]" }),
+    /\|As printed\|Km 60 µM, printed “Kms were 66 µM \(NADPH\) and 60 µM \[\(S\)-HMG-CoA\]”\|$/);
+  assert.match(note({ table_label: "Table 2", raw_value_unit_evidence: "kcat raw_value=0.022 raw_unit=s^-1 raw_cell=(2.2 +/- 0.1) x 10-2; KM raw_value=184 raw_unit=uM raw_uncertainty=+/- 6 uM" }),
+    /\|As printed\|kcat 0\.022 s\|-1\|, printed “\(2\.2 ± 0\.1\) x 10-2”; KM 184 µM ± 6 µM\|$/);
+  assert.equal(note({ table_label: "TABLE 4 'Steady-state kinetic constants'", row_label: "TABLE 4, decoded plain-numeral transcription, substrate row `NADH`",
+    normalized_value_unit_evidence: "kcat/Km: the paper PRINTS the kcat/Km cell 1490 s^-1 mM^-1 for this substrate row" }),
+  "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|-1| mM|-1| for this substrate row.|");
+  assert.equal(note({ table_label: "ScienceDirect HTML Table 1, Kinetic properties of I. isl MalDH", row_label: "Pyruvate",
+    normalized_value_unit_evidence: "kcat=8 s^-1. No Km was populated in the expected row, and Table 1 leaves Km blank for pyruvate." }),
+  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The earlier record has no Km, and Table 1 leaves Km blank for pyruvate.|");
+  assert.match(note({ table_label: "Official PMC full-text Table 1", row_label: "x", normalized_value_unit_evidence: "kcat/Km 81.3 s^-1 mM^-1; current_export_kcat_over_km=86.0 s^-1 mM^-1; current_export_km=1.21 mM; kcat_over_km 0.755 s^-1 mM^-1" }),
+    /^\|Where\|Table 1 · x\|Conversion\|kcat\/Km 81\.3 .*; earlier kcat\/Km 86\.0 .*; earlier Km 1\.21 mM; kcat\/Km 0\.755 /);
+  assert.match(note({ table_label: "PMID 17041055 PMC full text", row_label: "Sulfolobus tokodaii reductase", raw_value_unit_evidence: "Km 0.015 mM mM; normalized to 0.015 mM" }),
+    /^\|Where\|Sulfolobus tokodaii reductase\|As printed\|Km 0\.015 mM; converted to 0\.015 mM\|$/);
+  // A place, enzyme or abbreviation that only looks like a route stays (an ACS row, a substrate-label image, K_m=).
+  assert.match(note({ table_label: "ACS Table 1", row_label: "Official substrate-label image", raw_value_unit_evidence: "K_m=2.2 mM; 1,5-AF_NADPH=49.0 mM" }),
+    /^\|Where\|ACS Table 1 · Official substrate-label image\|As printed\|K_m=2\.2 mM; 1,5-AF_NADPH=49\.0 mM\|$/);
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited \(values not located\)<\/dd>/);
 }

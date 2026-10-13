@@ -431,7 +431,12 @@ is left out, never an empty heading. The order (design spec 5):
   plain text and arrows; the Conversion line keeps each value's printed number
   and arithmetic and says "(no conversion)" for the earlier pipeline's
   reasoning, right after the value it is about and never after a unit
-  conversion such as "/ 1000" or "converts to", uM reads µM).
+  conversion such as "/ 1000" or "converts to", uM reads µM). The notes never
+  show the earlier pipeline's field names or how it fetched the paper:
+  "Km raw_value=1.27 mM raw_unit=mM" reads "Km 1.27 mM" (a unit once), a
+  printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
+  “(2.2 ± 0.1) x 10-2”"), "+/-" reads ±, "PubMed XML abstract PMID n" reads
+  "Abstract" and "ScienceDirect HTML Table 1" "Table 1".
 - G. Against the databases (only when there is something to say): for a record
   read from the paper, one row per value, Parameter | CatLog | (Databases for
   this paper) | Result, the result a 10px square in its comparison colour
