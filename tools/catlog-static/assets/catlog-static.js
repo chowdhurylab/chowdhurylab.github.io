@@ -9083,7 +9083,7 @@
       (document.querySelector('#recordsBody tr[tabindex="0"]') || $("recordTableWrap"))?.focus();
     });
     $("recordTableWrap").addEventListener("scroll", updateTableScrollControls, { passive: true });
-    // On phones only the record's name and × stay in view; a rule under them shows once the record scrolls.
+    // On phones and short screens only the record's name and × stay in view; a rule under them shows once the record scrolls.
     $("detailPanel")?.addEventListener("scroll", (event) => {
       event.currentTarget.classList.toggle("is-scrolled", event.currentTarget.scrollTop > 0);
     }, { passive: true });

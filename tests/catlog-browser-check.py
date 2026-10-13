@@ -1006,6 +1006,21 @@ def check_layout(driver, browser, url, route_label):
         boxes = [box(selector) for selector in selectors]
         return all(left["right"] <= right["left"] + 1 for left, right in zip(boxes, boxes[1:])), boxes
 
+    def record_header_scrolled():
+        # Scrolls the open record; says whether the name and × stay at its top and whether the status line stays in view.
+        return driver.execute_script("""
+            const panel = document.getElementById('detailPanel');
+            panel.scrollTop = 600;
+            const top = panel.getBoundingClientRect().top;
+            const title = panel.querySelector('.detail-title').getBoundingClientRect();
+            const close = document.getElementById('closeDetailButton').getBoundingClientRect();
+            const status = panel.querySelector('.detail-status').getBoundingClientRect();
+            const result = {scrolled: panel.scrollTop, titleTop: Math.round(title.top - top), closeShown: close.top >= top - 1,
+                            statusShown: status.top >= top - 1, share: Math.round(title.height / panel.clientHeight * 100) / 100};
+            panel.scrollTop = 0;
+            return result;
+        """)
+
     results = {}
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
@@ -1092,6 +1107,11 @@ def check_layout(driver, browser, url, route_label):
         ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
         assert ok, f"Rail, table and record sit side by side: {boxes}"
         assert driver.find_element(By.ID, "detailPanel").get_attribute("role") is None, "From 1024px the record is a column"
+        # A screen 900px tall or less keeps only the record's name and × in view as it scrolls; the status line scrolls away.
+        stuck = record_header_scrolled()
+        if stuck["scrolled"] >= 300:
+            assert abs(stuck["titleTop"]) <= 1 and stuck["closeShown"] and not stuck["statusShown"], stuck
+            assert stuck["share"] < 0.25, f"The record's name in view takes {stuck['share']:.0%} of the record at 1280x900"
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1280-record.png"))
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open() and is_open())
@@ -1160,6 +1180,10 @@ def check_layout(driver, browser, url, route_label):
             ok, boxes = side_by_side(".filter-column", ".table-panel", "#detailPanel")
             assert ok, f"Sidebar, table and record sit side by side: {boxes}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+            # Taller than 900px, the whole header stays in view, status line included.
+            stuck = record_header_scrolled()
+            if stuck["scrolled"] >= 300:
+                assert stuck["closeShown"] and stuck["statusShown"], stuck
             driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1700-record.png"))
             # Narrowed below 1600px the record takes the sidebar's place; widened again, the sidebar comes back beside it.
             set_browse_viewport(driver, browser, 1280, 1000)

@@ -1047,6 +1047,19 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start }
 }
 
+/* On a phone or a screen up to 900px tall only the record's name and × stay in view as it scrolls (the whole header
+   takes a third of the record or more there, with a long name almost half); EC, substrate, status and the record ID
+   scroll with the record, and a rule shows under the name once it does. */
+@media (max-width: 640px), (max-height: 900px) {
+  .detail-top { display:contents }
+  .detail-title { position:sticky; top:0; z-index:2; border-bottom:1px solid transparent; background:var(--bg); padding:var(--sp-4) 56px var(--sp-2) 20px }
+  .detail-panel.is-scrolled .detail-title { border-bottom-color:var(--line) }
+  .detail-title h2 { margin:0 }
+  .detail-top > p { margin-bottom:var(--sp-1); padding:0 20px }
+  .detail-top > p:last-child { margin-bottom:0; padding-bottom:12px }
+  .detail-top + .detail-section { border-top:1px solid var(--line) }
+}
+
 /* Phones: a compact header and counts, one toolbar row, and each record as a card instead of a wide table. */
 @media (max-width: 640px) {
   /* Brand, the links out and Download; then the four tabs across the width; then search (Browse only). */
@@ -1060,16 +1073,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .nav-external-short { display:inline }
   .brand-lockup span:not(.visually-hidden) { display:none }
   .detail-top h2 { font-size:var(--fs-18) }
-  /* Only the record's name and × stay in view (a quarter of the screen otherwise); EC, substrate, status and the record
-     ID scroll with the record. */
-  .detail-top { display:contents }
-  .detail-title { position:sticky; top:0; z-index:2; border-bottom:1px solid transparent; background:var(--bg); padding:var(--sp-4) 56px var(--sp-2) 20px }
-  .detail-panel.is-scrolled .detail-title { border-bottom-color:var(--line) }
-  .detail-title h2 { margin:0 }
   .detail-title .close-detail { top:8px }
-  .detail-top > p { margin-bottom:var(--sp-1); padding:0 20px }
-  .detail-top > p:last-child { margin-bottom:0; padding-bottom:12px }
-  .detail-top + .detail-section { border-top:1px solid var(--line) }
   /* The record's values: calc. and "!" go under the number, so As printed keeps its room and the table its width. */
   .values-table :is(th,td) { padding-right:6px; padding-left:6px }
   .values-table td.vt-value .vt-number { display:block }
