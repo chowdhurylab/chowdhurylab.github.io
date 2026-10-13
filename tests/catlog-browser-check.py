@@ -1135,6 +1135,12 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: is_open() and box(".filter-column")["width"] == 288)
         assert stored() in (None, "unavailable")
         results["sidebar-1440"] = True
+        # The browser's own colour (theme-color) is the accent token.
+        theme = driver.execute_script("""
+            return {meta: document.querySelector('meta[name="theme-color"]').content.toLowerCase(),
+                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase()};
+        """)
+        assert theme["meta"] == theme["accent"] == "#245f58", theme
         # Every row is 44px: a variant's tag under the name and a condition note under the substrate add no height.
         for width in (1440, 1024):
             set_browse_viewport(driver, browser, width, 1000)
