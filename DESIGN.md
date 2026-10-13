@@ -161,7 +161,9 @@ chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, meas
 counts line up whatever the shares.
 Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
 drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
-tap. Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts
+tap. Scrolling hides a line the pointer showed (the pointer brings it back), while a line keyboard focus showed
+follows its mark as long as the mark is in view, so Tab to a mark below the fold, which scrolls the page, keeps it.
+Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
 --st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5

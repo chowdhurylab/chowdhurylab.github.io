@@ -4524,6 +4524,9 @@
     if (!view || view.dataset.statsBound) return;
     view.dataset.statsBound = "1";
     let current = null;
+    // The mark whose tooltip line came from keyboard focus (null when the pointer showed it): scrolling the view moves
+    // that line with its mark, since Tab to a mark off screen scrolls the view right after focusin.
+    let focused = null;
     const markOf = (target) => target?.closest?.("[data-hl], [data-tip]") || null;
     const enter = (target, point) => {
       const mark = markOf(target);
@@ -4535,13 +4538,23 @@
         if (row) statsLight(row, true);
       }
       const tipped = mark.closest("[data-tip]");
+      focused = !point && tipped ? tipped : null;
       if (tipped) statsShowTip(tipped, point);
       else statsHideTip();
     };
     const leave = () => {
       if (current) statsLight(current, false);
       current = null;
+      focused = null;
       statsHideTip();
+    };
+    // A pointer's tooltip line goes on scroll (the pointer brings it back); a focused mark's line follows the mark while
+    // the mark is in view.
+    const scrolled = () => {
+      const box = focused?.isConnected && focused.contains(document.activeElement) ? focused.getBoundingClientRect() : null;
+      const frame = view.getBoundingClientRect();
+      if (box && box.bottom > frame.top && box.top < frame.bottom) statsShowTip(focused);
+      else statsHideTip();
     };
     view.addEventListener("pointermove", (event) => {
       if (event.pointerType === "touch") return;
@@ -4559,7 +4572,7 @@
     view.addEventListener("pointerleave", leave);
     view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
     view.addEventListener("focusout", leave);
-    view.addEventListener("scroll", statsHideTip, { passive: true });
+    view.addEventListener("scroll", scrolled, { passive: true });
     view.addEventListener("click", (event) => {
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);

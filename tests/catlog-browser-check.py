@@ -984,6 +984,30 @@ def check_stats_more(driver, browser, overview, total):
         assert sorted(lit) == ["path", "tr"], lit
         assert driver.execute_script("return document.querySelector('[data-figure=\"status\"] .stats-fig').classList.contains('has-active')")
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
+    # Tab onto a mark below the fold: the view scrolls to it right after focusin, and its tooltip line stays, beside it.
+    expected_tip = driver.execute_script("""
+        const view = document.getElementById('statsView');
+        const marks = [...document.querySelectorAll('#statsCharts [data-tip] a.stats-link')].filter((link) => link.offsetParent);
+        const target = marks[marks.length - 1];
+        const stops = [...view.querySelectorAll('a[href], button, summary')].filter((item) => item.offsetParent && item.tabIndex >= 0);
+        const before = target ? stops[stops.indexOf(target) - 1] : null;
+        if (!before) return null;
+        view.scrollTop = 0;
+        before.focus({ preventScroll: true });
+        return target.getBoundingClientRect().top > innerHeight ? target.closest('[data-tip]').dataset.tip : null;
+    """)
+    if expected_tip:
+        ActionChains(driver).send_keys(Keys.TAB).perform()
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script("return document.getElementById('statsView').scrollTop > 0"))
+        # read it two frames later, after the view's scroll event has run
+        focus_tip = driver.execute_async_script("""const done = arguments[arguments.length - 1];
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              const tip = document.getElementById('statsTip'); const mark = document.activeElement.closest('[data-tip]').getBoundingClientRect();
+              const box = tip.getBoundingClientRect();
+              done({hidden: tip.hidden, text: tip.textContent, gap: Math.min(Math.abs(mark.top - box.bottom), Math.abs(box.top - mark.bottom))});
+            }));""")
+        assert not focus_tip["hidden"] and focus_tip["text"] == expected_tip and focus_tip["gap"] <= 20, focus_tip
+        driver.execute_script("document.activeElement.blur()")
 
 
 # The figures a newer overview adds, as build_overview counts them, set in Chrome before the page starts (the data files
