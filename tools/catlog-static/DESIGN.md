@@ -242,7 +242,10 @@ every view: brand and Download, the tabs with the links out at the line's end
 and Download share the first line (a wide system font puts the two links on two lines at the right, never over the
 brand), the four tabs share the second across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
-with Clear all at the left and Columns, Export and Sort at the right; on phones a
+with Clear all at the left and Columns, Export and Sort at the right (when the
+records are 721 to 1000px wide, beside the open sidebar or a record on a laptop,
+the chips take the full width under that row instead of a narrow column beside
+it, so none is cut; a chip's tooltip names its whole filter); on phones a
 Filters button opens the sheet and the chips go under the toolbar (Filters,
 Export and Sort stay on one row; below 360px "Sort" is read out but not shown
 and the buttons are narrower, and to 389px the buttons are narrower while a

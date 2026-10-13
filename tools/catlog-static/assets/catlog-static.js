@@ -5664,7 +5664,7 @@
     const bar = $("activeFilters");
     if (!bar) return;
     const html = count
-      ? items.map((item) => `<button class="filter-chip" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove this filter" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
+      ? items.map((item) => `<button class="filter-chip" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
         + `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>`
       : "";
     if (html === renderedChipsHtml) return;
