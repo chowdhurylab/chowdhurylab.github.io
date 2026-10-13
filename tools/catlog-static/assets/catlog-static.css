@@ -848,6 +848,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-loop { display:block; width:100%; height:auto; margin:0 auto; overflow:visible; font-family:var(--font); font-variant-numeric:tabular-nums lining-nums }
 .team-loop-wide { max-width:960px }
 .team-loop-narrow { display:none; max-width:400px }
+/* The upright loop has no people or agents on it: its caption sends readers to the list instead. */
+.team-caption-narrow { display:none }
 .team-track { fill:none; stroke:var(--line-strong); stroke-width:3 }
 .team-arrow { fill:none; stroke:var(--muted); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round }
 .team-branch { stroke:var(--line-strong); stroke-width:2; stroke-dasharray:4 4 }
@@ -903,8 +905,9 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 /* Tablets and phones: the upright loop, with the legend beside it (under it on phones). */
 @media (max-width: 959px) {
-  .team-loop-wide { display:none }
+  .team-loop-wide, .team-caption-wide { display:none }
   .team-loop-narrow { display:block }
+  .team-caption-narrow { display:inline }
   .team-body { grid-template-columns:minmax(0,400px) minmax(0,1fr); align-items:start }
   .team-legend { grid-template-columns:1fr }
 }
@@ -964,7 +967,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .team-body { display:block }
   .team-figure { break-inside:avoid; margin-bottom:16px; padding:8px }
   .team-loop-wide { display:block; max-width:100% }
-  .team-loop-narrow { display:none }
+  .team-loop-narrow, .team-caption-wide { display:none }
+  .team-caption-narrow { display:inline }
   .team-legend { grid-template-columns:repeat(2,minmax(0,1fr)); break-inside:avoid }
 }
 

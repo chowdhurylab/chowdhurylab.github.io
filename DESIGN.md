@@ -221,7 +221,8 @@ agent, on the figure or in the legend under it (People and AI agents, one
 plain phrase each and where they work), lights their stations and fades the
 rest. Below 960px the loop stands upright (the people and agents are in the
 legend beside it, under it on phones) so its labels stay 11px or more at
-375px. Printed, the wide loop with its people and agents stays whole on one
+375px; its caption then says the list tells where each one works, instead of
+asking to point at people the drawing does not show. Printed, the wide loop with its people and agents stays whole on one
 page and the legend follows in two columns. The Guide's method section links
 to it.
 

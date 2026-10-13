@@ -736,6 +736,8 @@ def check_team(driver, browser, url):
     else:
         driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerover', {bubbles: true}))", chip)
     wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
+    caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption").text
+    assert "Point at or tab to a person" in caption and "The list of" not in caption, caption
     driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
     # The Guide's link to Team opens it as the tab does, with focus on its heading (not left on the page body).
     driver.get("about:blank")
@@ -759,6 +761,9 @@ def check_team(driver, browser, url):
                 return [...document.querySelectorAll('svg.team-loop-narrow text')].every(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a >= 11);
             """), "Team labels read at phone width"
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
+            # The upright loop draws no people or agents, so its caption points to the list instead.
+            caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption")
+            assert "The list of people and AI agents" in caption.text and "Point at" not in caption.text, caption.text
             # The phone header as on Stats: the links out beside Download, the four tabs on their own line under it.
             assert driver.execute_script("""
                 const top = (s) => document.querySelector(s).getBoundingClientRect();
