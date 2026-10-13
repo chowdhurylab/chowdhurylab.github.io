@@ -16,61 +16,41 @@ before filtering. Show exact counts; a nonzero share below 0.1% prints <0.1%.
 An older manifest without an overview shows what it has: never an empty
 heading, a headline without its number, or a count above the record total.
 
-Order: the title (24px) with the snapshot line, then the lead (the agreement
-with human reviewers, first on the page: the user's headline success measure),
-then two headline lines (32px: Records, Accepted with its share, Read from the
-paper by CatLog with its papers, Human-checked; 20px: Papers, Enzymes, EC
+Order: the title (24px) with the snapshot line, then the lead (the human review, first on the page: the user's
+headline), then two headline lines (32px: Records, Accepted with its share, CatLog v2: read from the paper with its
+papers, Human-checked; 20px: Papers, Enzymes, EC
 numbers, Organisms, Substrates; 24/18px on phones), then numbered figures and
 tables on a 12-column grid (max 1200px, gap 24px), two to a row from 1024px (an
 odd one out spans the row; a bar chart that spans it keeps its labels within
 240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row each, so the
 legend table keeps its room beside the donut), one below:
 
-- Lead (`#statsLead`, above the headline counts, full width): Agreement with
-  human reviewers, the success measure (the user, 2026-10-12), from
-  `overview.quality.agreement` (catlog-v2
-  human_review.AGREEMENT_DEFINITIONS; `build_overview` copies the fields listed
-  in AGREEMENT_FIELDS). The headline is `first_agree_unexposed_pct` (the first
-  comparison, before any fix, on the papers read blind) when present, else agree
-  of values_approved; under the number its 95% range when
-  `first_agree_unexposed_ci95` gives one ("95% range 79.7–90.6%"), then what it
-  counts ("of approved values matched at the first comparison, on the 271 papers
-  read blind", or "of the values human reviewers approved are the same in
-  CatLog"); the blind paper count is `papers_unexposed` when present. Then one
-  sentence, said word for word in the Guide's method section and shortened at
-  Team's Human check: "At the first comparison, before any fix, CatLog matched
-  85.6% (95% range 80.9–89.9%) of the values human reviewers approved on the
-  271 papers read blind (CatLog's readers never opened database or
-  earlier-catalog files)." No reason is given for a gap to other papers. The
-  first comparison on all papers and the count after fixes are facts under it,
-  never the headline. Then a
-  100% bar of the approved values (the same value, then the differences as
-  CatLog's own check against the paper split them: CatLog right, the same
-  printed value under another name or rounding, left out by its reading rules,
-  CatLog wrong, not checked yet) with its legend (a zero count has no segment
-  and no row, except CatLog wrong: its 0 is a result), the facts (values
-  approved, first comparison and now after fixes when present, differences
-  checked against the paper with CatLog wrong in them ("152 of 257; CatLog
-  wrong in none"), the errors the first
-  comparison found ("68 wrong labels, 1 missed value, 0 wrong numbers or
-  units", from `first_catlog_errors` and its split), fixes said against them
-  ("all 69"), wrong number or unit in CatLog, missing values reviewers named),
-  where the paper shows CatLog right what the earlier catalog had wrong in
-  those approved values (its value not printed in the paper or a wrong label:
-  the README's split), the values reviewers called
-  wrong (the ones CatLog did not have and the ones it had with the same
-  number, then what became of the latter: kept or dropped by an AI audit,
-  found right against the paper, changed since, not settled; zero parts left
-  out) and the direct review of CatLog's records when their counts add up
-  (objections that dispute no value shown are said apart, never as failures), a
-  data line with the definitions, and links to the Guide's method and to Team.
-  No agreement counts, no lead.
+- Lead (`#statsLead`, above the headline counts, full width): Human review of CatLog v1 entries, what the reviewers'
+  own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
+  `overview.quality.review.v1` (catlog-v2 HUMAN_REVIEW.md "Measuring CatLog against the reviewers"; `build_overview`
+  copies each reviewed catalog's numbers, strings and `other_by_kind`). Each entry a reviewer checked counts once, by
+  its final verdict. The big number is the values correct (kcat, Km, kcat/Km): entries where no reviewer disputed a
+  number or its unit, worked out from `entries` and `value_disputed` ("99.9%"). One sentence: "Human reviewers
+  checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km value on 3 of them, and
+  all 3 are as printed in the paper." (`value_disputed_checked_as_printed`). Two facts: Values missing ("31 entries
+  (1.2%)") and Other disagreements ("177 entries (6.6%)"), then one note: what values missing means ("the paper
+  prints a value the entry lacked, mostly the kcat"), with how many of the values reviewers named CatLog v2 has
+  (`agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, a minor line
+  ("could not find the value 153, organism name 13, DOI 5, ..."). A review of CatLog v2 entries (`review.v2`, once
+  reviewers check them) adds one sentence of the same shape. CatLog v2 against the review is one side line, set off
+  by a rule at its left: "CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of
+  4,074 approved values (89.0%); wrong CatLog values found: 0." (`agreement.agree` of `values_approved`, else
+  `v2_found` of `v2_approved_total`: the match as it is now; `agreement.catlog_value_wrong`, else `v2_wrong`). Then
+  a data line with the definitions and links to the Guide's method and to Team. The first-comparison and blind
+  fields (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no
+  "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with CatLog v2's match
+  ("of the values human reviewers approved are the same in CatLog v2") and what reviewers found in CatLog v1 entries
+  (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, 1px white gaps, the total in the centre; the one partition that is
   a true whole) beside its legend table: Accepted (split in the rows under it:
-  read from the paper by CatLog, earlier catalog as printed, after a
-  correction, every value approved by a human reviewer; the split in words is
-  the row's title), Not confirmed, Not checked (Unverified and Not reviewed
+  CatLog v2: read from the paper, CatLog v1 as printed, after a correction,
+  approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed
   under it), Disputed, each with its definition. The no-paper-linked note and
   the closed table of fields saved in records that are not accepted follow.
 - Figure 2, Records by main source: each record once (`main_sources`:
@@ -91,23 +71,23 @@ legend table keeps its room beside the donut), one below:
   lists any of the parameters CatLog read from them; for 171 more, the
   databases list some of them but not all", leaving out a count of zero),
   the corrections on records accepted after a correction (rounding, a
-  different number, unit or magnitude, added) and the earlier records of
-  papers CatLog has read (same number in CatLog's reading, not found). 100%
+  different number, unit or magnitude, added) and the CatLog v1 entries of
+  papers CatLog v2 has read (same number in CatLog's reading, not found). 100%
   bars per parameter with reference lines at 25/50/75/100% and the shares
   under them. Absent counts: no figure and no heading. Captions never seem to
-  contradict the headline: figure 5's papers are those CatLog has read that
-  the earlier catalog also had, figure 3 says for how many papers no database
+  contradict the headline: figure 5's papers are those CatLog v2 has read that
+  CatLog v1 also had, figure 3 says for how many papers no database
   lists any parameter CatLog read and for how many it lists some but not all,
   and figure 4, when its record count is not the snapshot's count of records
   accepted after a correction, names both (with the date it was counted).
 - Table, Checks on the values: second AI check (records read from the paper),
-  AI audits, the reviewers' approved values, human-checked records, the human
-  review of the earlier catalog (every value reviewers compared on its papers,
-  approved or not, where the lead counts only approved values; the share
-  correct always beside the label errors); a row whose numbers are missing is
-  left out. Its bars are grey (--bar-neutral), as in the other tables; when
-  the lead gives the first comparison, the reviewers' row says its count is
-  now, after fixes.
+  AI audits, the human review of CatLog v1 entries (entries and papers; values
+  correct, values missing and other disagreements as shares; a snapshot without
+  `review` gives every value reviewers compared, approved or not, the share
+  correct always beside the label errors), the reviewers' approved values in
+  CatLog v2 (the same value now, wrong CatLog values found) and human-checked
+  records (with human-checked's rule); a row whose numbers are missing is left
+  out. Its bars are grey (--bar-neutral), as in the other tables.
 - Enzyme classes: records bars (light) with the accepted drawn over them.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
@@ -135,13 +115,7 @@ right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
 --st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5
 (--cmp-same green, --cmp-differs brown, --cmp-new cyan) with the kinds of
-change in figure 4 (--chg-precision mint, --chg-magnitude red), the lead's
-agreement set (its own set, which reuses those hues for the matching meaning:
-the same value --cmp-same green, the paper shows CatLog right --cmp-differs
-brown, the same printed value under another name or rounding --chg-precision
-mint with a green ring, left out by CatLog's reading rules --bar-neutral, the
-paper shows CatLog wrong --chg-magnitude red, not checked yet an open part
-with a grey outline; no other figure or table uses it), --bar-neutral for
+change in figure 4 (--chg-precision mint, --chg-magnitude red), --bar-neutral for
 single-series bars and table bars (Table 1 included) and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring. Markup (a deliberate change from the design spec's
@@ -160,8 +134,8 @@ and columns print in their colours even with the browser's background graphics
 off.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
-rows under it split it into the records read from the paper by CatLog and the
-earlier catalog's, as printed, after a correction or on a human reviewer's
+rows under it split it into the CatLog v2 entries, read from the paper by CatLog,
+and the CatLog v1 entries, as printed, after a correction or on a human reviewer's
 approval), Not confirmed, Not checked (the
 group Browse filters on, with Unverified and Not reviewed under it), then
 Disputed. An unfamiliar status is listed, not dropped. Keep the no-paper-linked caveat visible. The
@@ -178,7 +152,9 @@ text. The per-database list under figure 2 gives the records read from the
 paper by CatLog (linked as #browse?source=paper, which opens exactly them) apart
 from the earlier paper extractions (#browse?source=earlier_paper), then each
 database. Counting rules shared with the page: human-checked is an accepted
-record whose mark is checked (looked up as the badge does); papers are
+record whose mark is checked (looked up as the badge does): a reviewer approved
+every kcat and Km it shows and its kcat/Km was approved too or agrees with kcat ÷ Km
+(the user, 2026-10-13; no whole-row rule); papers are
 distinct PMIDs, else DOIs, else a stand-in id; names are distinct ignoring
 capitals, without "Unknown"; EC numbers are complete four-part numbers; a
 record naming EC numbers in two classes counts in each class (said in a note);
@@ -220,13 +196,14 @@ agents at AI check, Audit agents at CatLog; rectangles on the accent tint), peop
 Erin at Human check; Mohammad at The paper; grey pills). First names only: no titles, ranks, model or vendor
 names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
-values re-checked by AI audits at CatLog, the agreement headline and
+values re-checked by AI audits at CatLog, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
 its field is absent. Human check says the Stats lead's headline shortened, never
-a bare "agreement": "85.6% matched (95% range 80.9–89.9%)" over "first
-comparison, 271 papers read blind" (five short lines on the upright loop), its
-label one phrase; without the blind headline, "89.7% of approved values
-matched". No station's name and numbers come within 12px of another station's,
+a bare "agreement": "99.9% values correct" over "in 2,674 CatLog v1 entries"
+("99.9% values correct in" over "2,674 CatLog v1 entries" on the upright loop),
+its label one phrase; without the review's counts, "89.0% of approved values"
+over "the same in CatLog v2" (three lines on the upright loop). No station's
+name and numbers come within 12px of another station's,
 the track, or the chips and their lines, also in a wider font (Linux Chrome): on
 the wide loop CatLog's stand up and left of its dot, clear of the arc, Rules
 updated sits near the lower straight's left end and Human check right of its

@@ -639,8 +639,8 @@ def marks_quality(payload):
     kept = {key: quality[key] for key in QUALITY_FIELDS
             if isinstance(quality.get(key), int) and not isinstance(quality.get(key), bool) and quality[key] >= 0}
     # the agreement of CatLog with human reviewers (catlog-v2 human_review.AGREEMENT_DEFINITIONS): whole counts, its
-    # percentages and the headline's 95% range as the CatLog side writes it ("79.7-90.6"); its definitions map stays in
-    # the marks file
+    # percentages and the first comparison's range as the CatLog side writes it ("79.7-90.6", reference only); its
+    # definitions map stays in the marks file
     agreement = quality.get("agreement")
     if isinstance(agreement, dict):
         counts = {key: value for key, value in agreement.items() if key in AGREEMENT_FIELDS

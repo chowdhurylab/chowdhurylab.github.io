@@ -305,6 +305,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* Source: three choices, one line each (the help is behind the group's "?"); the databases fold under "By database". */
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
+/* "CatLog v2: read from the paper": when it does not fit on one line, "read from the paper" moves whole to the next. */
+.radio-row .source-mode-what { display:inline-block }
 .source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
 .source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .source-databases > summary::-webkit-details-marker { display:none }

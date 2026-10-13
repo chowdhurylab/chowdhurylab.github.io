@@ -242,11 +242,14 @@
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
-  // The sidebar's labels are short, one line each; the help is behind the group's "?".
+  // The sidebar's labels are short; where the sidebar is too narrow for one line, the version stays on the first line and
+  // what it means moves whole to the next (.source-mode-what). The help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: "CatLog v2: read from the paper", help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: "CatLog v1: enzyme databases", help: SOURCE_DATABASES_HELP },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'CatLog v2: <span class="source-mode-what">read from the paper</span>',
+      help: SOURCE_CATLOG_HELP, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1: <span class="source-mode-what">enzyme databases</span>',
+      help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
   // absent), shortHtml the sidebar's one-line label (the table's tag, its name read out and on hover).
@@ -3935,14 +3938,15 @@
 
   // Values missing in words, with how many of the values reviewers named CatLog v2 has (quality.agreement
   // stated_values_catlog_has of stated_values): "31 entries (1.2%) lacked a value the paper prints, mostly the kcat;
-  // CatLog v2 has 53 of the 58 values reviewers named". "" without the count.
-  function reviewMissingText(facts, agreement) {
-    if (facts.missing === null) return "";
+  // CatLog v2 has 53 of the 58 values reviewers named"; with counted (the count is said beside it) "the paper prints a
+  // value the entry lacked, mostly the kcat; ...". "" without the count, and with counted when none is missing.
+  function reviewMissingText(facts, agreement, { counted = false } = {}) {
+    if (facts.missing === null || (counted && !facts.missing)) return "";
     const stated = statsCount(agreement?.stated_values);
     const has = stated ? statsCount(agreement.stated_values_catlog_has, stated) : null;
-    const missing = facts.missing
-      ? `${entriesText(facts.missing, facts.entries)} lacked a value the paper prints, mostly the kcat`
-      : "no entry lacked a value the paper prints";
+    const missing = counted ? "the paper prints a value the entry lacked, mostly the kcat"
+      : facts.missing ? `${entriesText(facts.missing, facts.entries)} lacked a value the paper prints, mostly the kcat`
+        : "no entry lacked a value the paper prints";
     return `${missing}${has !== null ? `; CatLog v2 has ${formatInteger(has)} of the ${formatInteger(stated)} values reviewers named` : ""}`;
   }
 
@@ -4030,7 +4034,7 @@
           ${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}
           <p class="stats-fig-data">${statsDataLine(`${asOf}${sameDefinition}`)}</p>`);
     }
-    const missing = reviewMissingText(review, quality.agreement);
+    const missing = reviewMissingText(review, quality.agreement, { counted: true });
     const kinds = reviewKindsText(review);
     const facts = [
       review.missing !== null ? ["Values missing", entriesText(review.missing, review.entries)] : null,

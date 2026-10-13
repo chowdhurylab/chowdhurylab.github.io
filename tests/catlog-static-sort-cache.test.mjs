@@ -1869,7 +1869,7 @@ function row(overrides = {}) {
   assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct \(kcat, Km, kcat\/Km\)<\/span><\/div>/);
   assert.match(lead, /<p class="stats-lead-sentence">Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat\/Km value on 3 of them, and all 3 are as printed in the paper\.<\/p>/);
   assert.match(lead, /<dt>Values missing<\/dt><dd>31 entries \(1\.2%\)<\/dd><\/div><div><dt>Other disagreements<\/dt><dd>177 entries \(6\.6%\)<\/dd>/);
-  assert.match(lead, /<p class="stats-lead-note">Values missing: 31 entries \(1\.2%\) lacked a value the paper prints, mostly the kcat; CatLog v2 has 53 of the 58 values reviewers named\. Other disagreements, by kind: could not find the value 153, organism name 13, DOI 5, substrate name 3, duplicate 2, paper evidence mismatch 1\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-note">Values missing: the paper prints a value the entry lacked, mostly the kcat; CatLog v2 has 53 of the 58 values reviewers named\. Other disagreements, by kind: could not find the value 153, organism name 13, DOI 5, substrate name 3, duplicate 2, paper evidence mismatch 1\.<\/p>/);
   assert.match(lead, /<p class="stats-lead-side">CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved values \(89\.0%\); wrong CatLog values found: 0\.<\/p>/);
   assert.match(lead, /Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\./);
   assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
@@ -5100,8 +5100,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 {
   const source = element("sourceChecklist").innerHTML;
   // CatLog v2 and v1 entries by name (the user, 2026-10-13).
-  assert.match(source, /<span>CatLog v2: read from the paper<\/span>/);
-  assert.match(source, /<span>CatLog v1: enzyme databases<\/span>/);
+  assert.match(source, /<span>CatLog v2: <span class="source-mode-what">read from the paper<\/span><\/span>/);
+  assert.match(source, /<span>CatLog v1: <span class="source-mode-what">enzyme databases<\/span><\/span>/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.

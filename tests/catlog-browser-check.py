@@ -146,7 +146,7 @@ def check_guide(driver, wait):
         "return [...document.querySelectorAll('#guideView [data-guide-databases]')].map(e => e.getClientRects().length > 0)")
     assert len(database_lines) == 2 and all(shown == comparison for shown in database_lines), (comparison, database_lines)
     guide_text = driver.find_element(By.ID, "guideView").text
-    for word in ("CatLog v2", "independent", "AI run", "Checks pending", "Exporter", "exporter"):
+    for word in ("independent", "AI run", "Checks pending", "Exporter", "exporter", *DROPPED_WORDING):
         assert word not in guide_text, f"The Guide still says {word}"
     # Cite: the downloads save under the snapshot's date, and the Data ID check names that file.
     day = driver.execute_script("return new Date(window.CATLOG_STATIC_MANIFEST.generated_at).toISOString().slice(0, 10)")
@@ -161,14 +161,14 @@ def check_guide(driver, wait):
             .map(row => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.trim()]));
     """)
     if isinstance(from_paper, int):
-        assert f"{from_paper:,} records in this snapshot" in source_rows.get("Read from the paper by CatLog", ""), source_rows
-        assert "CC BY 4.0" in source_rows["Read from the paper by CatLog"]
+        assert f"{from_paper:,} records in this snapshot" in source_rows.get("CatLog v2: read from the paper", ""), source_rows
+        assert "CC BY 4.0" in source_rows["CatLog v2: read from the paper"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]
     # Every database's licence is said one way, "License: ...", a database without one "License: see the source's terms"
     # (as a record from it reads).
     for name, text in source_rows.items():
-        if not name.startswith("Read from the paper"):
+        if not name.startswith(("CatLog v2", "Read from the paper")):
             assert text.startswith("License: "), (name, text)
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
@@ -222,6 +222,14 @@ def check_human_checked(driver, url):
         row.find_elements(By.CSS_SELECTOR, ".state-badge .state-tag.human-checked svg.check-icon")
         for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
     assert all(row.find_element(By.CSS_SELECTOR, ".state-label").text == "Accepted" for row in rows)
+    # Each badge's title says human-checked's rule (the user, 2026-10-13): every kcat and Km, and the kcat/Km approved
+    # too or agreeing with kcat / Km; never "every value".
+    titles = driver.execute_script(
+        "return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(badge => badge.title)")
+    rule = "Human-checked: a human reviewer approved every kcat and Km shown"
+    assert titles and all(rule in title and "the kcat/Km was approved too or agrees with kcat \u00f7 Km." in title
+                          for title in titles), titles[:3]
+    assert not any("every value" in title or "earlier catalog" in title for title in titles), titles[:3]
     return int(count.replace(",", ""))
 
 
@@ -532,13 +540,13 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
 
 LEAD_FIRST_JS = """
     const lead = document.getElementById('statsLead'), totals = document.getElementById('statsTotals');
-    return Boolean(lead && !lead.hidden && lead.querySelector('[data-figure="agreement"]')
+    return Boolean(lead && !lead.hidden && lead.querySelector('[data-figure="review"]')
         && (lead.compareDocumentPosition(totals) & Node.DOCUMENT_POSITION_FOLLOWING)
-        && !document.querySelector('#statsCharts [data-figure="agreement"]'));
+        && !document.querySelector('#statsCharts [data-figure="review"]'));
 """
 
 
-# The Guide's agreement line, when shown: its text, whether it comes right after the section's heading, its Stats link.
+# The Guide's human-review line, when shown: its text, whether it comes right after the section's heading, its Stats link.
 GUIDE_LEAD_JS = """
     const lead = document.getElementById('guideMethodLead');
     if (!lead || lead.hidden || !lead.getClientRects().length) return null;
@@ -546,12 +554,41 @@ GUIDE_LEAD_JS = """
             stats: Boolean(lead.querySelector('a[href$="catlog-stats.html"], a[href$="#stats"]'))};
 """
 
+# The strict wording the user dropped on 2026-10-13 (first comparison, read blind, the 95% range) and the catalog names
+# that CatLog v1 and v2 replace; no human-review text says them.
+DROPPED_WORDING = ("first comparison", "read blind", "fully blind", "95% range", "earlier catalog", "old catalog")
+
+
+def review_share(part, whole):
+    """A share as the page writes it (qualityShare): one decimal, <0.1% and >99.9% at the ends."""
+    percent = part / whole * 100
+    if 0 < percent < 0.1:
+        return "<0.1%"
+    if 99.9 < percent < 100:
+        return ">99.9%"
+    return f"{percent:.1f}%"
+
+
+def review_headline(quality):
+    """The share the human-review lead gives: the values correct in CatLog v1 entries (quality.review.v1), else the
+    reviewers' approved values CatLog v2 has (quality.agreement, else v2_found of v2_approved_total); None without them."""
+    review = (quality.get("review") or {}).get("v1") or {}
+    entries, disputed = review.get("entries"), review.get("value_disputed")
+    if isinstance(entries, int) and entries > 0 and isinstance(disputed, int) and 0 <= disputed <= entries:
+        return review_share(entries - disputed, entries)
+    agreement = quality.get("agreement") or {}
+    for approved, same in ((agreement.get("values_approved"), agreement.get("agree")),
+                           (quality.get("v2_approved_total"), quality.get("v2_found"))):
+        if isinstance(approved, int) and approved > 0 and isinstance(same, int) and 0 <= same <= approved:
+            return review_share(same, approved)
+    return None
+
 
 def check_quality(driver, browser, url, quality=None):
     """Stats' checks table and the Guide's method section give the audit and human-review numbers of overview.quality;
-    the agreement with human reviewers leads Stats when the snapshot has it. Without a quality object in the snapshot, a
-    copy of the manifest with QUALITY_FIXTURE (set in Chrome before the page starts; the data files are not changed) is
-    checked instead."""
+    the human review leads Stats when the snapshot has it. Without a quality object in the snapshot, a copy of the
+    manifest with QUALITY_FIXTURE (set in Chrome before the page starts; the data files are not changed) is checked
+    instead."""
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
     injected = None
     if quality is None:
@@ -564,10 +601,12 @@ def check_quality(driver, browser, url, quality=None):
               } });
         """ % json.dumps(QUALITY_FIXTURE)})
     audited = isinstance(quality.get("audit_values"), int) and quality["audit_values"] > 0
-    compared = all(isinstance(quality.get(key), int) for key in ("compared_values_v1", "wrong_v1", "label_or_annotation_v1")) \
+    reviewed = bool(((quality.get("review") or {}).get("v1") or {}).get("entries"))
+    # Without the reviewers' own counts, the share correct of every value reviewers compared (with the label errors).
+    compared = not reviewed and all(isinstance(quality.get(key), int) for key in ("compared_values_v1", "wrong_v1", "label_or_annotation_v1")) \
         and quality["compared_values_v1"] > 0
     correct = f"{(quality['compared_values_v1'] - quality['wrong_v1']) / quality['compared_values_v1'] * 100:.1f}% correct" if compared else ""
-    agreement = quality.get("agreement") or {}
+    headline = review_headline(quality)
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         driver.get("about:blank")
@@ -579,17 +618,18 @@ def check_quality(driver, browser, url, quality=None):
             assert "independent" not in audit.lower(), audit
         if compared:
             # The share correct is shown only with the label errors beside it.
-            earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='earlier']").text
+            earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='review']").text
             assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
             # Its group is every value compared, not the lead's approved values.
             assert f"{quality['compared_values_v1']:,} values" in earlier and "approved or not" in earlier, earlier
-        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
-            assert driver.execute_script(LEAD_FIRST_JS), "The agreement leads Stats, above the headline counts"
-            assert f"{agreement['agree']:,}" in driver.find_element(By.CSS_SELECTOR, "tr[data-check='agreement']").text
+        if headline:
+            assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Stats, above the headline counts"
+            figure = driver.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead-figure strong").text
+            assert figure == headline, (figure, headline)
         else:
-            assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without agreement counts"
-        stats_text = driver.find_element(By.ID, "statsLead").text + driver.find_element(By.ID, "statsCharts").text
-        for word in ("independent", "AI run", "Claude", "Codex", "CatLog v2"):
+            assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without the human review's counts"
+        stats_text = driver.find_element(By.ID, "statsLead").get_attribute("innerText") + driver.find_element(By.ID, "statsCharts").get_attribute("innerText")
+        for word in ("independent", "AI run", "Claude", "Codex", *DROPPED_WORDING):
             assert word not in stats_text, f"Stats says {word}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
         # Stats' link to the method opens the Guide in this page with focus on the section's heading.
@@ -602,34 +642,42 @@ def check_quality(driver, browser, url, quality=None):
         driver.get("about:blank")
         driver.get(url + "#guide-method")
         wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
-        # The method section opens with the agreement, as Stats does (the user's headline measure).
+        # The method section opens with the human review, as Stats does (the user's headline).
         lead = driver.execute_script(GUIDE_LEAD_JS)
-        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
-            blind = agreement.get("first_agree_unexposed_pct")
-            percent = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
-            assert lead and lead["first"] and percent in lead["text"] and lead["stats"], lead
+        if headline:
+            assert lead and lead["first"] and headline in lead["text"] and lead["stats"], lead
         else:
-            assert not lead, "No agreement line in the Guide without agreement counts"
+            assert not lead, "No human-review line in the Guide without its counts"
         if audited:
             guide = driver.find_element(By.ID, "guideMethodAudits").text
             assert guide.startswith(f"{quality['audit_values']:,} values re-checked against their papers by a separate AI auditor"), guide
         if compared:
             assert correct in driver.find_element(By.ID, "guideMethodHuman").text
+        method = driver.find_element(By.ID, "guide-method").get_attribute("innerText")
+        for word in DROPPED_WORDING:
+            assert word not in method, f"The Guide's method says {word}"
     finally:
         if injected:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
 
 
-# The agreement headline as the CatLog side writes it from the 2026-10-12 build on (catlog-v2 AGREEMENT_DEFINITIONS): the
-# first comparison on the papers read blind, with its 95% range (a string) and those papers' count. Made-up numbers.
-BLIND_AGREEMENT_FIXTURE = {
-    "papers_compared": 160, "values_approved": 2489, "agree": 2232, "agree_pct": 89.7, "first_agree": 2110,
-    "first_agree_pct": 84.8, "papers_exposed": 38, "papers_unexposed": 122, "first_agree_unexposed_pct": 85.3,
-    "first_agree_unexposed_ci95": "79.7-90.6", "first_catlog_errors": 69, "first_catlog_errors_value": 0,
-    "first_catlog_errors_label": 68, "first_catlog_errors_missed": 1, "fixed_after_comparison": 69, "catlog_value_wrong": 0,
+# The human-review headline as the CatLog side writes it from 2026-10-13 (quality.review.v1: the reviewers' own files;
+# these are that day's numbers), beside the first-comparison and blind fields, which are reference only and never shown.
+REVIEW_FIXTURE = {
+    "review": {"v1": {"entries": 2674, "papers": 408, "value_disputed": 3, "value_correct_pct": 99.9,
+                      "value_disputed_checked_as_printed": 3, "value_missing": 31, "value_missing_pct": 1.2,
+                      "other_disputed": 177, "other_disputed_pct": 6.6,
+                      "other_by_kind": {"could not find the value": 153, "organism name": 13, "DOI": 5, "substrate name": 3,
+                                        "duplicate": 2, "paper evidence mismatch": 1}}},
+    "v2_found": 3625, "v2_approved_total": 4074,
+    "agreement": {"papers_compared": 311, "values_approved": 4074, "agree": 3625, "first_agree": 3545, "first_agree_pct": 87.0,
+                  "papers_unexposed": 291, "first_agree_unexposed_pct": 85.9, "first_agree_unexposed_ci95": "81.6-89.7",
+                  "catlog_value_wrong": 0, "stated_values": 58, "stated_values_catlog_has": 53},
 }
-BLIND_SENTENCE = ("At the first comparison, before any fix, CatLog matched 85.3% (95% range 79.7\u201390.6%) of the values human "
-                  "reviewers approved on the 122 papers read blind (CatLog's readers never opened database or earlier-catalog files).")
+REVIEW_SENTENCE = ("Human reviewers checked 2,674 CatLog v1 entries from 408 papers: a reviewer disputed a kcat, Km or kcat/Km "
+                   "value on 3 of them, and all 3 are as printed in the paper.")
+REVIEW_SIDE_LINE = ("CatLog v2 has re-read 311 of these papers: the same value as the reviewers for 3,625 of 4,074 approved "
+                    "values (89.0%); wrong CatLog values found: 0.")
 
 
 # Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
@@ -684,44 +732,53 @@ TEAM_LABELS_CLEAR = """
 """
 
 
-def check_blind_headline(driver, browser, url):
-    """With the blind headline in the snapshot, Stats' lead and the Guide's method section say the same sentence: the first
-    comparison on the papers read blind, its 95% range and what read blind means; after fixes only as a secondary line.
-    The fixture is set in Chrome before the page starts (the data files are not changed)."""
+def check_review_headline(driver, browser, url):
+    """With the reviewers' own counts in the snapshot, Stats' lead says the human review of CatLog v1 entries (values
+    correct, values missing, other disagreements by kind) with CatLog v2's match as a side line; the Guide's method
+    section and Team's Human check say it shortened; the first-comparison and blind fields are never shown. The fixture
+    is set in Chrome before the page starts (the data files are not changed)."""
     if browser != "chrome":
         return
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
     injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
         Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
           set(value) {
-            if (value?.summary?.overview) value.summary.overview.quality = { ...(value.summary.overview.quality || {}), agreement: %s };
+            if (value?.summary?.overview) value.summary.overview.quality = { ...(value.summary.overview.quality || {}), ...%s };
             Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
           } });
-    """ % json.dumps(BLIND_AGREEMENT_FIXTURE)})
+    """ % json.dumps(REVIEW_FIXTURE)})
     try:
-        set_browse_viewport(driver, browser, 1440, 1000)
-        driver.get("about:blank")
-        driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
-        lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead"))
-        assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").text == BLIND_SENTENCE, lead.text
-        figure = lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
-        assert "85.3%" in figure and "95% range 79.7\u201390.6%" in figure and "122 papers read blind" in figure, figure
-        assert "Now, after fixes" in lead.text and "89.7%" not in lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
-        driver.get("about:blank")
-        driver.get(url + "#guide-method")
-        wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
-        guide = driver.execute_script(GUIDE_LEAD_JS)
-        assert guide and BLIND_SENTENCE in guide["text"], guide
-        assert_document_stays(driver, "Guide with the blind headline")
-        # Team's Human check says it shortened, on the wide and the upright loop, and its lines touch no other station's.
-        for width, height, layout in ((1440, 1000, "wide"), (375, 812, "narrow")):
+        for width, height in ((1440, 1000), (375, 812)):
             driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1,
                                                                           "mobile": width < 768})
             driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead"))
+            assert lead.find_element(By.CSS_SELECTOR, "h2").get_attribute("innerText") == "Human review of CatLog v1 entries"
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == "99.9%"
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText") == REVIEW_SENTENCE
+            text = lead.get_attribute("innerText")
+            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog v2 has 53 of the 58 values reviewers named" in text, text
+            assert "could not find the value 153, organism name 13, DOI 5" in text, text
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText") == REVIEW_SIDE_LINE
+            for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
+                assert word not in text, f"The lead says {word}"
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
+            driver.get("about:blank")
+            driver.get(url + "#guide-method")
+            wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+            guide = driver.execute_script(GUIDE_LEAD_JS)
+            assert guide and "values correct (kcat, Km, kcat/Km) 99.9%" in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
+            human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
+            assert REVIEW_SENTENCE in human and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
+            assert_document_stays(driver, "Guide with the human review")
+            # Team's Human check says the values correct, on the wide and the upright loop, and its lines touch no other
+            # station's.
+            layout = "wide" if width >= 960 else "narrow"
+            driver.get("about:blank")
             driver.get(url + "#team")
-            human = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "85.3% matched (95% range 79.7\u201390.6%) at the first comparison, on 122 papers read blind" \
-                in human.get_attribute("aria-label"), human.get_attribute("aria-label")
+            station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
+            assert "99.9% values correct in 2,674 CatLog v1 entries" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -741,7 +798,7 @@ FIGURES_FIXTURE = {
                  "values": {"kcat": [19250, 21222], "km": [21071, 23351], "kcat_over_km": [1109, 1234]}},
 }
 FIGURE_TITLES = ("Values read from the paper against the databases", "Corrections on records accepted after a correction",
-                 "Earlier records of papers CatLog has read")
+                 "CatLog v1 entries of papers CatLog v2 has read")
 
 
 # The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), and no two
@@ -1127,7 +1184,7 @@ def check_filters(driver, browser, url, route_label):
             assert driver.execute_script("return document.querySelectorAll('#databaseChecklist .check-row').length") >= 5
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
-        # 4. Source: the older status=v2 opens Read from the paper by CatLog (source=paper), every row tagged "from
+        # 4. Source: the older status=v2 opens CatLog v2: read from the paper (source=paper), every row tagged "from
         # paper"; a database narrows the enzyme databases, and the status cell names it.
         def first_tags():
             return driver.execute_script(
@@ -1845,7 +1902,7 @@ def check_layout(driver, browser, url, route_label):
 
 
 # Words of the earlier pipeline and of CatLog's tooling that a record must never show.
-RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|CatLog v2")
+RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|earlier catalog|old catalog", re.I)
 
 
 RECORD_SECTIONS = ["Values", "Against the databases", "Source", "Conditions", "Protein and substrate", "Paper", "Review and audit"]
@@ -2517,9 +2574,9 @@ def check(driver, browser, url):
     assert len(donut.find_elements(By.CSS_SELECTOR, "path")) == sum(1 for key in ("manual_review_required", "unverified",
         "mathematically_inferred", "disputed") if expected.get(key, 0)) + bool(accepted)
     if overview:
-        # Accepted splits into the records read from the paper by CatLog and the earlier catalog's.
+        # Accepted splits into the CatLog v2 entries (read from the paper by CatLog) and the CatLog v1 entries.
         read = overview["from_paper"]["records"]
-        assert f"{read:,} read from the paper by CatLog; {accepted - read:,} from the earlier catalog" in accepted_split
+        assert f"{read:,} CatLog v2 entries, read from the paper; {accepted - read:,} CatLog v1 entries" in accepted_split
         # records accepted on a human review (accepted_basis "human review") are named apart from "as printed"
         human = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("accepted_basis", [])}.get("human review", 0)
         assert f"({expected.get('verified', 0) - read - human:,} as printed" in accepted_split
@@ -2578,24 +2635,14 @@ def check(driver, browser, url):
         main_rows = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
                      for row in driver.find_elements(By.CSS_SELECTOR, ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-chart-row")}
         assert sum(main_rows.values()) == total, f"Main sources add up to all records: {main_rows}"
-        # The lead: agreement with human reviewers comes first, when the snapshot has its counts.
-        agreement = (overview.get("quality") or {}).get("agreement") or {}
-        if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"] > 0:
+        # The lead: the human review comes first, when the snapshot has its counts (never the dropped wording).
+        lead_share = review_headline(overview.get("quality") or {})
+        if lead_share:
             lead = driver.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead")
-            assert driver.execute_script(LEAD_FIRST_JS), "Agreement comes first on Stats, above the headline counts"
-            blind = agreement.get("first_agree_unexposed_pct")
-            headline = f"{blind:.1f}%" if isinstance(blind, (int, float)) else f"{agreement['agree'] / agreement['values_approved'] * 100:.1f}%"
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").text == headline
-            assert f"{agreement['values_approved']:,}" in lead.text
-            # The headline's 95% range under the number when the snapshot gives one.
-            ci95 = agreement.get("first_agree_unexposed_ci95")
-            if isinstance(blind, (int, float)) and isinstance(ci95, str) and re.match(r"^\d+(\.\d+)?-\d+(\.\d+)?$", ci95):
-                assert "95% range" in lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
-            # How many differences were checked against the paper, and CatLog wrong in them, even when that is none.
-            if all(isinstance(agreement.get(key), int) for key in ("differ", "differ_not_adjudicated", "differ_catlog_wrong")) \
-                    and agreement["differ"] > 0 and agreement["differ_catlog_wrong"] <= agreement["differ"] - agreement["differ_not_adjudicated"]:
-                checked = agreement["differ"] - agreement["differ_not_adjudicated"]
-                assert f"{checked:,} of {agreement['differ']:,}; CatLog wrong in" in lead.text, lead.text
+            assert driver.execute_script(LEAD_FIRST_JS), "The human review comes first on Stats, above the headline counts"
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == lead_share
+            for word in DROPPED_WORDING:
+                assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
         ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range")
         assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))
@@ -2916,7 +2963,7 @@ def main():
         quality = (stats_overview(manifest) or {}).get("quality")
         if quality or args.browser == "chrome":
             check_quality(driver, args.browser, url, quality)
-        check_blind_headline(driver, args.browser, url)
+        check_review_headline(driver, args.browser, url)
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         browse = []
