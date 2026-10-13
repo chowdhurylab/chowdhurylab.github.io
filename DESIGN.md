@@ -41,7 +41,7 @@ legend table keeps its room beside the donut), one below:
   sentence, a
   100% bar of the approved values (the same value, then the differences as
   CatLog's own check against the paper split them: CatLog right, the same
-  printed value under another name or rounded, left out by its reading rules,
+  printed value under another name or rounding, left out by its reading rules,
   CatLog wrong, not checked yet) with its legend (a zero count has no segment
   and no row, except CatLog wrong: its 0 is a result), the facts (values
   approved, first comparison and now after fixes when present, differences
@@ -133,7 +133,7 @@ right-aligned under their headings. Colours are tokens: review results
 change in figure 4 (--chg-precision mint, --chg-magnitude red), the lead's
 agreement set (its own set, which reuses those hues for the matching meaning:
 the same value --cmp-same green, the paper shows CatLog right --cmp-differs
-brown, the same printed value under another name or rounded --chg-precision
+brown, the same printed value under another name or rounding --chg-precision
 mint with a green ring, left out by CatLog's reading rules --bar-neutral, the
 paper shows CatLog wrong --chg-magnitude red, not checked yet an open part
 with a grey outline; no other figure or table uses it), --bar-neutral for

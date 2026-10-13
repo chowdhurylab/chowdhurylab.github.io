@@ -3700,7 +3700,7 @@
     const parts = [
       { part: "same", label: "Same value", count: agree },
       { part: "differs", label: "The paper shows CatLog right", count: pick("differ_catlog_right") },
-      { part: "rounding", label: "The same printed value, another name or rounded",
+      { part: "rounding", label: "Same printed value: another name or rounding",
         count: pick("differ_same_value_other_name") === null || pick("differ_rounding") === null ? null : pick("differ_same_value_other_name") + pick("differ_rounding") },
       { part: "neutral", label: "Left out by CatLog's reading rules", count: pick("differ_not_comparable") },
       { part: "magnitude", label: "The paper shows CatLog wrong", count: pick("differ_catlog_wrong") },
@@ -3751,7 +3751,7 @@
     // A zero count draws no segment and has no legend row, except "The paper shows CatLog wrong": its 0 is a result.
     const shown = parts.filter((item) => item.count > 0 || (split && item.part === "magnitude"));
     const bar = `<div class="stats-lead-bar">
-        <p class="stats-lead-bar-title">${first !== null || headline.blind ? "Approved values now" : "Approved values"} <span class="stats-muted">(${formatInteger(approved)})</span>: the same in CatLog, or where CatLog differs, what its check against the paper found</p>
+        <p class="stats-lead-bar-title">${first !== null || headline.blind ? "Approved values now" : "Approved values"} <span class="stats-muted">(${formatInteger(approved)})</span>: the same in CatLog or, where CatLog differs, what its check against the paper found</p>
         ${statsTrack(shown.filter((item) => item.count > 0).map((item) => ({ part: item.part, count: item.count, title: `${item.label}: ${formatInteger(item.count)}` })), approved, { refs: [0, 25, 50, 75, 100] })}
         ${statsLegend(shown)}
       </div>`;
@@ -4240,7 +4240,7 @@
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes",
         body: statsBarChart({ key: "ec-classes", rows, scale: max, overlay: true, axis: statsAxis(max, step),
           legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }] }),
-        caption: "Records per enzyme class, with the accepted ones; each label gives the records, then the accepted.",
+        caption: "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
         data: statsDataLine(notes),
       });
     }
@@ -4316,7 +4316,7 @@
     const cautionsOk = cautions.every((item) => item.count !== null);
     if (formOk) {
       tables.push({ id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table", stack: cautionsOk,
-        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table's tag says it.", data: statsDataLine("Shares of all records.") });
+        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it.", data: statsDataLine("Shares of all records.") });
     }
     if (cautionsOk) {
       tables.push({ id: "statsCautionsTitle", key: "cautions", title: "Cautions", kind: "Table", stacked: formOk,
