@@ -8733,19 +8733,19 @@
     + "A different number can mean a different measurement.";
   const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
-  // Browse's "Against the databases" filter group (#browse?db=..., options named "database"): the record-level options a
-  // record matches, by its values' results (filter keys above) or its earlier corrections. A link shows only for an
-  // option the page has.
+  // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
+  // option's words): the options a record matches, by its values' results (filter keys above) or its earlier
+  // corrections. A link shows only for an option the page has.
   const DATABASE_FILTER_PARAM = "db";
   const DATABASE_FILTER_INPUT = "database";
-  const DATABASE_BROWSE_OPTIONS = [
-    { value: "corrects", word: "Corrects a database value", matches: (keys) => keys.has("corrected") },
-    { value: "differs", word: "Differs from a database, not yet resolved", matches: (keys) => keys.has("differs") },
-    { value: "same", word: "Same as a database", matches: (keys) => keys.size > 0 && [...keys].every((key) => key === "same") },
-    { value: "new", word: "In no database", matches: (keys) => keys.size > 0 && [...keys].every((key) => key === "new") },
-    { value: "adds", word: "Adds a value to the databases", matches: (keys) => keys.has("new") && ![...keys].every((key) => key === "new") },
-    { value: "earlier", word: "Changed in the earlier review", matches: (keys) => keys.has("earlier") },
-  ];
+  const DATABASE_BROWSE_MATCHES = {
+    corrects: (keys) => keys.has("corrected"),
+    differs: (keys) => keys.has("differs"),
+    same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same"),
+    adds: (keys) => keys.has("new") && ![...keys].every((key) => key === "new"),
+    new: (keys) => keys.size > 0 && [...keys].every((key) => key === "new"),
+    earlier: (keys) => keys.has("earlier"),
+  };
 
   // Text from the snapshot shown as given (internal placeholders removed), at most `max` characters.
   function shownText(value, max = PRINTED_LINE_MAX) {
@@ -8875,8 +8875,8 @@
   }
 
   function databaseBrowseLinksHtml(keys) {
-    const links = DATABASE_BROWSE_OPTIONS.filter((option) => option.matches(keys) && databaseFilterAvailable(option.value))
-      .map((option) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, option.value]]))}">${escapeHtml(option.word)}</a>`);
+    const links = databaseFilters.filter((option) => DATABASE_BROWSE_MATCHES[option.value]?.(keys) && databaseFilterAvailable(option.value))
+      .map((option) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, option.value]]))}">${escapeHtml(option.chip)}</a>`);
     return links.length ? `<p class="cmp-explore">More records like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
