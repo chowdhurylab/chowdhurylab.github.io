@@ -3121,6 +3121,23 @@ const detailFalseKiHtml = measurementSection(row({
   ki_unit: "mM",
 }), { has_ki: false });
 assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
+// A record whose only value is a Ki (bc610fa98f4a279b): Download record and the report email carry it, as Values shows it;
+// a record without a Ki gets no Ki fields.
+{
+  const kiOnly = row({ record_key: "ki-only", source_db: "brenda", organism: "Ovis aries", substrate_name: "NADPH", kcat: null,
+    km: null, kcat_over_km: null, kcat_display: null, km_display: null, kcat_over_km_display: null, has_ki: true, ki: 0.0021,
+    ki_display: "0.0021", ki_unit: "mM" });
+  const kiPayload = await recordDownloadPayload(kiOnly, { supporting_pmids: ["15709755"] });
+  assert.equal(kiPayload.ki, 0.0021);
+  assert.equal(kiPayload.ki_unit, "mM");
+  assert.equal(kiPayload.kcat, null);
+  api.renderDetail(kiOnly, { supporting_pmids: ["15709755"] });
+  const kiBody = decodeURIComponent(element("detailContent").innerHTML
+    .match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  assert.match(kiBody, /Ovis aries; NADPH; Ki 0\.0021 mM; PMID 15709755\./);
+  const noKiPayload = await recordDownloadPayload(row({ record_key: "no-ki", has_ki: false, ki_display: "0.5", ki_unit: "mM" }), {});
+  assert.ok(!("ki" in noKiPayload) && !("ki_unit" in noKiPayload), "no Ki shown, no Ki fields");
+}
 
 // The Organism field: a common name matches as a whole word ("rat" is not inside Serratia or auratus); other words
 // match inside a name, and a binomial finds its strains.

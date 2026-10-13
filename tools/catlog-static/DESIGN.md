@@ -468,9 +468,10 @@ is left out, never an empty heading. The order (design spec 5):
   Human review line with the reviewer's facts-only note on every record that
   has a mark (no review year); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
-  the values as the record shows them; the DOI when there is no PMID). Download
-  record (and This page as JSON) saves one flat object: the Full data's field
-  names for the values, units, conditions, paper IDs, UniProt ID, sequence and
+  the values as the record shows them, a Ki included; the DOI when there is no
+  PMID). Download record (and This page as JSON) saves one flat object: the Full
+  data's field names for the values (ki and ki_unit when the record shows a Ki),
+  units, conditions, paper IDs, UniProt ID, sequence and
   SMILES; the record's own words for review result, source, method, check,
   values as printed, AI audit, cautions and human review, and, when the snapshot
   carries them, Against the databases (each value's result, line, cause and

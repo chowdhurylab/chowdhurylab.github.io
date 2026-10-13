@@ -2751,6 +2751,7 @@
       { caseInsensitive: list === detail.supporting_dois });
     const value = (field) => (metricHasValue(metricSummary, field) ? Number(shownValueText(metricSummary, field)) : null);
     const unit = (field) => (metricHasValue(metricSummary, field) ? plainUnit(metricUnit(metricSummary, field)) || null : null);
+    const hasKi = Boolean(metricSummary.has_ki) && metricHasValue(metricSummary, "ki");
     const temperature = formatTemperature(summary);
     const ph = formatPh(summary);
     // Against the databases (section G), as the record says it: each value's result, or the earlier review's changes.
@@ -2798,6 +2799,9 @@
       kcat_over_km: value("kcat_over_km"),
       kcat_over_km_unit: unit("kcat_over_km"),
       kcat_over_km_origin: metricHasValue(metricSummary, "kcat_over_km") ? summary.kcat_over_km_origin || null : null,
+      // A Ki only when the record shows one, as its Values table does.
+      ki: hasKi ? value("ki") : null,
+      ki_unit: hasKi ? unit("ki") : null,
       // The kcat/Km the record's sources list, as the record shows them (when they differ from its own, or it has none).
       source_kcat_over_km_values: shownListedEfficiencies(summary, detail).map((item) => ({
         value: Number(item.value),
@@ -2855,6 +2859,10 @@
     if (!record.database_note) delete record.database_note;
     if (!earlierCorrections.length) delete record.earlier_corrections;
     if (!record.source_kcat_over_km_values.length) delete record.source_kcat_over_km_values;
+    if (!hasKi) {
+      delete record.ki;
+      delete record.ki_unit;
+    }
     return record;
   }
 
@@ -7789,8 +7797,9 @@
   // (shown: a value the record shows in place of the stored one, such as the source's own kcat/Km).
   function reportProblemHref(summary, pmids, { dois = [], standInIds = [], shown = {} } = {}) {
     const key = summary.record_key || summary.measurement_key || "";
-    const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"]]
-      .filter(([field]) => metricHasValue(summary, field))
+    // A Ki only when the record shows one (its detail says it has one), as the Values table does.
+    const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"], ["ki", "Ki"]]
+      .filter(([field]) => metricHasValue(summary, field) && (field !== "ki" || Boolean(summary.has_ki)))
       .map(([field, label]) => [label, field in shown ? numberText(shown[field]) : panelValueText(summary, field), unitText(metricUnit(summary, field))].filter(Boolean).join(" "));
     const about = [
       recordedName(summary.enzyme_display_name) || "Name not recorded",
