@@ -1951,7 +1951,7 @@ function row(overrides = {}) {
   assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "CatLog found 3 of the 4 values reviewers approved.");
 assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agree: 2232, differ: 257, differ_catlog_right: 109,
   differ_catlog_wrong: 0, differ_not_adjudicated: 105 }),
-  "On 98 papers human reviewers checked that CatLog has since read, CatLog has the same value for 2,232 of the 2,489 values the reviewers approved (89.7%). Of the 257 that differ, 152 were checked against the paper: CatLog was right in 109 and wrong in none; 43 are the same value under another name, a rounding, or a value CatLog leaves out by its reading rules. 105 are not checked yet.");
+  "On 98 papers human reviewers checked that CatLog has since read, CatLog has the same value for 2,232 of the 2,489 values the reviewers approved (89.7%). Of the 257 that differ, 152 were checked against the paper: CatLog was right in 109 and wrong in none; 43 are the same value under another name, a rounding or a value CatLog leaves out by its reading rules. 105 are not checked yet.");
   assert.equal(api.humanComparisonText({ quality: { compared_values_v1: 1000, wrong_v1: 0, label_or_annotation_v1: 0 } }),
     "In the earlier catalog, 0 of 1,000 values reviewers compared had a wrong number or unit (100.0% correct), and 0 had a wrong enzyme, organism, substrate, variant or protein label.");
   runtimeManifest.summary.overview = overview;

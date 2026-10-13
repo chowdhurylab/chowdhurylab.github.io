@@ -116,8 +116,8 @@
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
     get accepted() {
       return followsReviewRules()
-        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review as printed or after a correction, or every value approved by a human reviewer."
-        : "Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.";
+        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or with every value approved by a human reviewer."
+        : "Passed review: read from the paper by CatLog or accepted by the earlier automated review (as printed or after a correction).";
     },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
     // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
@@ -3656,7 +3656,7 @@
     if (differ && open !== null && right !== null && wrong !== null && right + wrong <= differ - open) {
       const checked = differ - open;
       const other = checked - right - wrong;
-      text += ` Of the ${formatInteger(differ)} that differ, ${formatInteger(checked)} were checked against the paper: CatLog was right in ${formatInteger(right)} and wrong in ${wrong ? formatInteger(wrong) : "none"}${other ? `; ${formatInteger(other)} are the same value under another name, a rounding, or a value CatLog leaves out by its reading rules` : ""}${open ? `. ${formatInteger(open)} are not checked yet` : ""}.`;
+      text += ` Of the ${formatInteger(differ)} that differ, ${formatInteger(checked)} were checked against the paper: CatLog was right in ${formatInteger(right)} and wrong in ${wrong ? formatInteger(wrong) : "none"}${other ? `; ${formatInteger(other)} are the same value under another name, a rounding or a value CatLog leaves out by its reading rules` : ""}${open ? `. ${formatInteger(open)} are not checked yet` : ""}.`;
     }
     return text;
   }
@@ -4350,7 +4350,7 @@
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records where a human reviewer approved every value, as the tag shows.</dd></div>
-        <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database, or several databases merged into one record.</dd></div>
+        <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`);
     }
@@ -4493,7 +4493,7 @@
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated, and back to papers; CatLog also feeds the website and the paper.">
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated and back to papers; CatLog also feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${dots}${stations}${actors}
     </svg>`;
