@@ -548,11 +548,15 @@ found at once: A, B, G, C, D, E, F, H.
   number too long for Value (1.28 × 10⁻⁴ in a wide font) wraps before "× 10"
   ("× 10" never parts), never into Unit. A value a human reviewer approved carries a
   small green check (`--checked`, 12px) right after its number, named "approved
-  by a human reviewer" (role img): every value of a record the reviewer checked
-  (mark.checked), the values the mark lists (mark.approved, when the marks carry
-  it), or the metrics named by the review's own sentence "A human reviewer
-  approved the same kcat and Km for this paper ..."; any other note marks
-  nothing, and a calc. kcat/Km never has one (it is not printed). A value whose
+  by a human reviewer" (role img): the values the mark lists (mark.approved:
+  only values a reviewer approved), else the kcat and Km of a record the
+  reviewer checked (mark.checked), plus the metrics named by the review's own
+  sentence "A human reviewer approved the same kcat and Km for this paper ...";
+  any other note marks nothing, and a calc. kcat/Km never has one (it is not
+  printed). Being checked never puts a check on a kcat/Km: a checked record's
+  printed kcat/Km that the list leaves out agrees with the approved kcat ÷ Km,
+  and the grey note says so ("The kcat/Km carries no check: it agrees with the
+  approved kcat ÷ Km."). A value whose
   magnitude caution the record shows (Km above 10 M or below 1 nM, kcat above
   10⁸ s⁻¹, kcat/Km above the diffusion limit: "the unit or the value may be
   wrong") has its check withheld, in the record and in Download record's

@@ -3905,9 +3905,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const approvedValues = (html) => [...html.matchAll(/<tr><th scope="row">(.*?)<\/th><td class="vt-value"><span class="vt-number">[^<]*(<span class="value-approved"[^>]*>)?/g)]
     .filter((match) => match[2]).map((match) => match[1].replace(/<[^>]+>/g, ""));
   const APPROVED_NAME = /<span class="value-approved" role="img" aria-label="approved by a human reviewer" title="Approved by a human reviewer"><svg class="check-icon"/;
+  // A checked record without a list: its kcat and Km (its kcat/Km was approved too or only agrees with kcat ÷ Km, so
+  // being checked never puts a check on it).
   api.renderDetail(accepted, {});
   html = element("detailContent").innerHTML;
-  assert.deepEqual(approvedValues(html), ["kcat", "Km", "kcat/Km"]);
+  assert.deepEqual(approvedValues(html), ["kcat", "Km"]);
   assert.match(html, APPROVED_NAME);
   assert.match(html, /<li><span class="value-approved-key"><svg class="check-icon"[^>]*>.*?<\/svg><\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
@@ -3928,9 +3930,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     "hc-list-noted": { checked: false, approved: ["kcat"], note: "A reviewer questioned this Km." },
     "hc-calc": { checked: true },
     "hc-strict": { checked: false, note: "A human reviewer approved the same Vmax and Km for this paper." },
-    "hc-big-km": { checked: true },
+    "hc-big-km": { checked: true, approved: ["kcat", "km", "kcat_over_km"] },
     "hc-only-km": { checked: true },
+    // the marks file's list holds only values a reviewer approved: a kcat/Km that agrees with the approved kcat ÷ Km is
+    // left out of it, and a sentence naming kcat/Km gives a checked record without a list its check
+    "hc-follows": { checked: true, approved: ["kcat", "km"], note: "A human reviewer approved the same kcat and Km for this paper in the 2026 review of CatLog v1 entries." },
+    "hc-named": { checked: true, note: "A human reviewer approved the same kcat, Km and kcat/Km for this paper in the 2026 review of CatLog v1 entries." },
   });
+  api.renderDetail(row({ record_key: "hc-follows", measurement_key: "hc-follows", verification_status: "verified" }), {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), ["kcat", "Km"], "a kcat/Km that only agrees with kcat ÷ Km carries no check");
+  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The kcat\/Km carries no check: it agrees with the approved kcat ÷ Km\.<\/li>/);
+  assert.deepEqual((await recordDownloadPayload(row({ record_key: "hc-follows", measurement_key: "hc-follows" }), {})).human_approved_values, ["kcat", "Km"]);
+  api.renderDetail(row({ record_key: "hc-named", measurement_key: "hc-named", verification_status: "verified" }), {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), ["kcat", "Km", "kcat/Km"]);
+  assert.doesNotMatch(html, /agrees with the approved/, "without a list, nothing is said about how the kcat/Km was approved");
   api.renderDetail(row({ record_key: "hc-list", measurement_key: "hc-list" }), {});
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["Km", "kcat/Km"]);

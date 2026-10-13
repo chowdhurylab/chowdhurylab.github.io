@@ -1863,10 +1863,11 @@
   const CHECK_ICON_HTML = '<svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // The values a human reviewer approved on a record, as Values fields ("kcat", "km", "kcat_over_km"): the mark's own
-  // list when it has one (approved: ["kcat", "Km", "kcat/Km"]); else every value when the reviewer checked the record
-  // (the Values table leaves out what the record does not print); else the metrics named by the one sentence the review
-  // writes for a partial approval ("A human reviewer approved the same kcat and Km for this paper ..."). Any other note
-  // marks nothing.
+  // list when it has one (approved: ["kcat", "Km", "kcat/Km"]: only values a reviewer approved; a kcat/Km that agrees
+  // with the approved kcat ÷ Km is left out of it); else, on a record the reviewer checked, its kcat and Km (a checked
+  // record's kcat/Km was approved too or only agrees with kcat ÷ Km, so it gets a check only when the review's sentence
+  // names it); else the metrics named by the one sentence the review writes for a partial approval ("A human reviewer
+  // approved the same kcat and Km for this paper ..."). Any other note marks nothing.
   const APPROVED_METRIC_FIELDS = { kcat: "kcat", km: "km", "kcat/km": "kcat_over_km", kcat_over_km: "kcat_over_km" };
   const APPROVED_SENTENCE = /^A human reviewer approved the same ((?:kcat\/Km|kcat|Km)(?:(?:, | and )(?:kcat\/Km|kcat|Km))*) for this paper\b/;
   function humanApprovedFields(row) {
@@ -1874,9 +1875,18 @@
     if (!mark || typeof mark !== "object") return new Set();
     const fieldsOf = (names) => new Set(names.map((name) => APPROVED_METRIC_FIELDS[String(name ?? "").trim().toLowerCase()]).filter(Boolean));
     if (Array.isArray(mark.approved)) return fieldsOf(mark.approved);
-    if (mark.checked === true) return new Set(["kcat", "km", "kcat_over_km"]);
     const match = String(mark.note || "").match(APPROVED_SENTENCE);
-    return match ? fieldsOf(match[1].split(/, | and /)) : new Set();
+    const named = match ? fieldsOf(match[1].split(/, | and /)) : new Set();
+    return mark.checked === true ? new Set(["kcat", "km", ...named]) : named;
+  }
+
+  // A checked record's kcat/Km that is printed but not on the mark's list of approved values: it agrees with the
+  // approved kcat ÷ Km (what makes the record human-checked), so it carries no check of its own and the note under the
+  // table says why. Only with a list: without one, which of the two it was is not known.
+  function efficiencyFollowsApproval(summary, approved) {
+    const mark = humanReviewMark(summary);
+    return mark?.checked === true && Array.isArray(mark.approved) && approved.has("kcat") && approved.has("km")
+      && !approved.has("kcat_over_km") && summary.kcat_over_km_origin !== "calculated";
   }
 
   // The record's values that carry the check, in kcat, Km, kcat/Km order: approved, shown, and not a kcat/Km worked out
@@ -8923,10 +8933,15 @@
     // A kcat/Km CatLog calculated beside checked values: why it has none (no reviewer approved a number the paper does not
     // print), so checks on kcat and Km alone never read as a value left out of the review.
     const calcNoCheck = cells.some((cell) => cell.calc && !cell.check) ? " The calc. kcat/Km carries no check: CatLog calculated it." : "";
+    // A printed kcat/Km of a checked record that no reviewer approved as such: it agrees with the approved kcat ÷ Km.
+    const followsNoCheck = fields.some(([field]) => field === "kcat_over_km")
+      && efficiencyFollowsApproval(summary, humanApprovedFields(summary))
+      ? " The kcat/Km carries no check: it agrees with the approved kcat ÷ Km."
+      : "";
     const greyNotes = [
       // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
-        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${metricWordsHtml(escapeHtml(calcNoCheck))}${withheldNote ? ` ${metricWordsHtml(escapeHtml(withheldNote))}` : ""}`
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${metricWordsHtml(escapeHtml(calcNoCheck + followsNoCheck))}${withheldNote ? ` ${metricWordsHtml(escapeHtml(withheldNote))}` : ""}`
         : (withheldNote
             ? metricWordsHtml(escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`))
             : ""),
