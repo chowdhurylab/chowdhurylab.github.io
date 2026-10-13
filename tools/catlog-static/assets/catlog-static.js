@@ -1804,8 +1804,9 @@
       ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value shown."}`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
+    // The word has its own span: a table short of room keeps the green check alone (fitColumnWidths).
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
-      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
+      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}<span class="state-tag-word">human-checked</span></span>` : "");
     const name = [label, ...tags, checked ? "human-checked" : ""].filter(Boolean).join(", ");
     return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
@@ -6421,7 +6422,10 @@
   // the window is too narrow the table gives way, one step after another and each only as far as needed: the names wrap
   // to two lines between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a
   // word longer than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's
-  // word. So beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even
+  // word. Before the names go below their longest word, Review result's human-checked tag gives up its word and keeps its
+  // green check (the word stays in the badge's tooltip and accessible name), so the names win that room back (beside the
+  // open sidebar at 1280px one human-checked row had kept Review result at 194px and cut every enzyme name). So beside
+  // the open sidebar from 1280px every column, Review result included, stays in view. Only when even
   // that is not enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at
   // their longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's
   // widths unless those leave Enzyme narrower than its heading (fitHeadingsOnly).
@@ -6467,6 +6471,7 @@
     if (!cols.open || FIT_COLUMNS.some((column) => !cols[column.key])) return;
     Object.values(cols).forEach((col) => { col.style.width = ""; });
     table.style.minWidth = "";
+    table.classList.remove("status-compact");
     const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
     if (style(table).display !== "table") return;
     if (!rows.length) {
@@ -6503,7 +6508,12 @@
       const words = column.shrink ? Math.min(width, wordWidth) : min;
       // Review result gives way last, down to the review result's word (or its header): its tag line then ends in "…".
       const floor = column.key === "state" ? statusFloor(table, cells, min, padding) : 0;
-      return { ...column, min, width, oneLine, words, cells, cellWords, padding, floor };
+      // Before that, its human-checked tag can keep only its check: the widest badge without that word.
+      const compact = column.key === "state" ? Math.max(floor, Math.min(width, Math.ceil(Math.max(header, ...cells.map((cell) => {
+        const part = (selector) => cell.querySelector(selector)?.getBoundingClientRect().width || 0;
+        return Math.max(part(".state-label"), part(".state-tags") - part(".state-tag-word"));
+      })) + padding))) : 0;
+      return { ...column, min, width, full: width, oneLine, words, cells, cellWords, padding, floor, compact };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
@@ -6515,8 +6525,10 @@
     // Organism goes below its longest word last among the names: a genus is capitalized, so it would break without a
     // hyphen (Chlamydomona-s), where an enzyme or a substrate is usually hyphenated.
     const organism = shrinkable.filter((column) => column.key === "organism");
+    // The human-checked word goes whole (true): whatever room it frees beyond the need goes back to the names below.
     const steps = [
       [shrinkable, (column) => Math.max(column.min, column.words)],
+      [status, (column) => column.compact, true],
       [shrinkable.filter((column) => column.key !== "organism"), (column) => column.min],
       [organism, (column) => column.min],
       [status, (column) => column.floor],
@@ -6529,12 +6541,13 @@
       // that cannot keep it in view even then (beside a record from 1024px, on a tablet beside the sidebar) scrolls
       // sideways: its names stop at their longest word, so the sticky Enzyme column stays narrow and the values come into
       // view sooner, and no word is broken nor tag cut for room the table cannot win.
+      // A table that scrolls anyway still lets the human-checked word go, so it scrolls less.
       const giveWay = floor <= available + arrow;
-      for (const [columns, target] of giveWay ? steps : steps.slice(0, 1)) {
+      for (const [columns, target, whole] of giveWay ? steps : steps.slice(0, 2)) {
         const excess = total() - available;
         const slack = columns.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;
-        const share = Math.min(1, excess / slack);
+        const share = whole ? 1 : Math.min(1, excess / slack);
         columns.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
       }
     }
@@ -6553,6 +6566,7 @@
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
+    table.classList.toggle("status-compact", status.some((column) => column.width < column.full));
     // Only a name with a word longer than its column is hyphenated; the others break between words.
     widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
       (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);

@@ -490,6 +490,10 @@ td.c-status { text-align:left }
 .state-tag.human-checked { color:var(--checked); font-weight:500 }
 .state-tag.human-checked::before { color:var(--muted); font-weight:400 }
 .state-tag.human-checked .check-icon { margin-right:2px }
+/* A table short of room (the script sets .status-compact): human-checked keeps its green check and gives its word's room
+   to the names; the word stays in the badge's tooltip and accessible name. */
+table.status-compact #recordsBody .state-tag.human-checked .check-icon { margin-right:0 }
+table.status-compact #recordsBody .state-tag-word { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; border:0; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
 
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-13) }
 .pagination select { width:64px }

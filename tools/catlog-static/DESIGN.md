@@ -361,7 +361,11 @@ start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
 right after Review result. In a narrow window the names give way (two lines, broken
-between words while they can; the full name is on hover), then Review result's tags
+between words while they can; the full name is on hover), then Review result's
+human-checked tag keeps only its green check (its word stays in the badge's tooltip
+and accessible name; the room goes back to the names: one human-checked row had held
+Review result at 194px beside the 1280px sidebar and cut every enzyme name), then the
+names go to their minimums, then Review result's tags
 (the badge's accessible name and the record keep them all), and when that is not enough the
 table scrolls sideways. The table has no temperature or pH columns (the user,
 2026-10-13: the rows stay about the enzyme and its values); the records of one

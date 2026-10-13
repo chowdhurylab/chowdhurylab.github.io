@@ -1466,6 +1466,38 @@ def check_layout(driver, browser, url, route_label):
             assert cues["scrollLeft"] == 0 and cues["overflow"] == cues["right"] == cues["controls"] == cues["sticky"], (
                 f"The scroll cues follow the table's width once the marks are in: {cues}")
             results["scroll-cues-1280"] = True
+            # A table short of room keeps human-checked's green check and gives its word's room to the names (the badge's
+            # accessible name keeps the word); a table with room shows the word whole. 1024 beside the open sidebar is
+            # short of room.
+            def checked_tags():
+                return driver.execute_script("""
+                    const table = document.querySelector('#recordTableWrap table');
+                    return {compact: table.classList.contains('status-compact'),
+                            tags: [...document.querySelectorAll('#recordsBody .state-tag.human-checked')].map(tag => {
+                                const cell = tag.closest('td').getBoundingClientRect();
+                                const icon = tag.querySelector('svg.check-icon').getBoundingClientRect();
+                                const word = tag.querySelector('.state-tag-word').getBoundingClientRect();
+                                return {icon: icon.width >= 8 && icon.right <= cell.right + 1, word: Math.round(word.width),
+                                        wordIn: word.right <= cell.right + 1,
+                                        named: /human-checked/.test(tag.closest('.state-badge').getAttribute('aria-label'))};
+                            })};
+                """)
+            tags = checked_tags()
+            assert tags["tags"] and all(tag["icon"] and tag["named"] for tag in tags["tags"]), tags
+            if not tags["compact"]:
+                assert all(tag["word"] > 20 and tag["wordIn"] for tag in tags["tags"]), f"With room human-checked shows whole: {tags}"
+            set_browse_viewport(driver, browser, 1024, 900)
+            open_page("#browse?checked=1")
+            if not is_open():
+                driver.find_element(By.ID, "filterRailButton").click()
+                wait.until(lambda d: is_open())
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-tag.human-checked"))
+            tags = checked_tags()
+            assert tags["compact"] and tags["tags"] and all(
+                tag["icon"] and tag["named"] and tag["word"] <= 1 for tag in tags["tags"]), (
+                f"At 1024px beside the sidebar human-checked keeps only its check: {tags}")
+            results["human-checked-compact"] = True
+            set_browse_viewport(driver, browser, 1280, 900)
         # 1024 with the sidebar collapsed: the table fits until a record opens beside it; then it scrolls sideways, and the
         # Columns control and the right edge cue say so at once (not only after the window is resized).
         set_browse_viewport(driver, browser, 1024, 900)

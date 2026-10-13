@@ -3474,7 +3474,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const accepted = row({ record_key: "hc-accepted", measurement_key: "hc-accepted", verification_status: "verified" });
   const pending = row({ record_key: "hc-pending", measurement_key: "hc-pending", verification_status: "manual_review_required" });
   const noted = row({ record_key: "hc-note", measurement_key: "hc-note", verification_status: "corrected" });
-  assert.match(api.statusBadge(accepted), /<span class="state-tag human-checked"><svg class="check-icon"[^>]*>.*<\/svg>human-checked<\/span>/);
+  assert.match(api.statusBadge(accepted), /<span class="state-tag human-checked"><svg class="check-icon"[^>]*>.*<\/svg><span class="state-tag-word">human-checked<\/span><\/span>/);
   assert.doesNotMatch(api.statusBadge(pending), /human-checked/);
   assert.doesNotMatch(api.statusBadge(noted), /human-checked/);
   api.renderDetail(accepted, {});
