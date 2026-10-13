@@ -278,6 +278,21 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["replaced"], {"records": 7, "values": {"kcat": [5, 6]}})
         self.assertNotIn("db_compare", followup.marks_quality({"quality": {"audit_values": 1, "db_compare": [1]}}))
 
+    def test_overview_copies_the_headline_range_and_first_comparison_errors(self):
+        # The headline is reported with its 95% range (a "low-high" string), its blind paper count and the errors the
+        # first comparison found; a range in any other shape is left out, never guessed.
+        blind = {"papers_compared": 160, "values_approved": 2489, "agree": 2232, "papers_exposed": 38,
+                 "papers_unexposed": 122, "first_agree_unexposed_pct": 85.3, "first_agree_unexposed_ci95": "79.7-90.6",
+                 "first_catlog_errors": 69, "first_catlog_errors_value": 0, "first_catlog_errors_label": 68,
+                 "first_catlog_errors_missed": 1, "fixed_after_comparison": 69}
+        self.assertEqual(followup.marks_quality({"quality": {"agreement": blind}})["agreement"], blind)
+        for bad in ("79.7 to 90.6", "79.7-", "-5-90", "79.7–90.6", None, [79.7, 90.6]):
+            result = followup.marks_quality({"quality": {"agreement": {**blind, "first_agree_unexposed_ci95": bad}}})
+            self.assertNotIn("first_agree_unexposed_ci95", result["agreement"], bad)
+        # Only the headline's range may be a string.
+        result = followup.marks_quality({"quality": {"agreement": {**blind, "papers_unexposed": "122"}}})
+        self.assertNotIn("papers_unexposed", result["agreement"])
+
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, _marks = self.write_fixture(directory, overview_rows(), {})

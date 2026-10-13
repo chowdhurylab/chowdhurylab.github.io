@@ -31,16 +31,22 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   human_review.AGREEMENT_DEFINITIONS; `build_overview` copies the fields listed
   in AGREEMENT_FIELDS). The headline is `first_agree_unexposed_pct` (the first
   comparison on papers CatLog read without database or earlier-catalog values
-  in view) when present, else agree of values_approved; under the number, what
-  it counts ("of the values human reviewers approved are the same in CatLog",
-  or the same value at the first comparison on papers read without database
-  values in view). Then one sentence, a
+  in view) when present, else agree of values_approved; under the number its
+  95% range when `first_agree_unexposed_ci95` gives one ("95% range
+  79.7–90.6%", also in the sentence and the Guide), then what it counts ("of
+  the values human reviewers approved are the same in CatLog", or the same
+  value at the first comparison on papers read without database values in
+  view); the blind paper count is `papers_unexposed` when present. Then one
+  sentence, a
   100% bar of the approved values (the same value, then the differences as
   CatLog's own check against the paper split them: CatLog right, the same
   printed value under another name or rounded, left out by its reading rules,
   CatLog wrong, not checked yet) with its legend, the facts (values approved,
-  first comparison and now after fixes when present, fixes, wrong number or
-  unit in CatLog, missing values reviewers named), where the paper shows CatLog
+  first comparison and now after fixes when present, the errors the first
+  comparison found ("68 wrong labels, 1 missed value, 0 wrong numbers or
+  units", from `first_catlog_errors` and its split), fixes said against them
+  ("all 69"), wrong number or unit in CatLog, missing values reviewers named),
+  where the paper shows CatLog
   right what the earlier catalog had wrong (its value not printed in the paper,
   or a wrong label: the README's split), the values reviewers called
   wrong and the direct review of CatLog's records when their counts add up

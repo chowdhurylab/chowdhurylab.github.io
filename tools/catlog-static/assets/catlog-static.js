@@ -3546,9 +3546,46 @@
     const papers = statsCount(a.papers_compared);
     const exposed = papers ? statsCount(a.papers_exposed, papers) : null;
     if (typeof blind === "number" && Number.isFinite(blind) && blind >= 0 && blind <= 100) {
-      return { percent: `${blind.toFixed(1)}%`, blind: true, blindPapers: exposed !== null ? papers - exposed : null, approved, agree, papers };
+      // The papers behind it as the CatLog side counts them (papers_unexposed), else the papers no reading agent was exposed on.
+      const unexposed = statsCount(a.papers_unexposed, papers || Infinity);
+      const blindPapers = unexposed !== null ? unexposed : exposed !== null ? papers - exposed : null;
+      return { percent: `${blind.toFixed(1)}%`, blind: true, blindPapers, range: agreementRange(a.first_agree_unexposed_ci95),
+        approved, agree, papers };
     }
     return { percent: qualityShare(agree, approved), blind: false, approved, agree, papers };
+  }
+
+  // The headline's 95% range (first_agree_unexposed_ci95, "79.7-90.6": papers resampled) as the page writes it,
+  // "79.7–90.6%"; empty when it is missing or not two percentages in order.
+  function agreementRange(value) {
+    const match = typeof value === "string" ? value.trim().match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/) : null;
+    if (!match) return "";
+    const [low, high] = [Number(match[1]), Number(match[2])];
+    return low <= high && high <= 100 ? `${low.toFixed(1)}–${high.toFixed(1)}%` : "";
+  }
+
+  // What the first comparison showed CatLog had wrong (first_catlog_errors and its split), as words: "68 wrong labels,
+  // 1 missed value, 0 wrong numbers or units"; the total alone when the split is missing or does not add up; null without.
+  function firstComparisonErrors(a, approved) {
+    const total = statsCount(a.first_catlog_errors, approved);
+    const [labels, missed, numbers] = ["first_catlog_errors_label", "first_catlog_errors_missed", "first_catlog_errors_value"]
+      .map((key) => statsCount(a[key], approved));
+    if (labels !== null && missed !== null && numbers !== null && (total === null || labels + missed + numbers === total)) {
+      return {
+        total: labels + missed + numbers,
+        labels,
+        missed,
+        numbers,
+        text: `${formatInteger(labels)} wrong ${labels === 1 ? "label" : "labels"}, ${formatInteger(missed)} missed ${missed === 1 ? "value" : "values"}, ${formatInteger(numbers)} wrong ${numbers === 1 ? "number or unit" : "numbers or units"}`,
+      };
+    }
+    return total !== null ? { total, text: formatInteger(total) } : null;
+  }
+
+  // "69 fixed since": the errors fixed after the comparison, said against what it found ("all 69", "60 of 69").
+  function fixedAfterComparisonText(fixed, errors) {
+    if (!errors || fixed > errors.total) return formatInteger(fixed);
+    return fixed === errors.total ? `all ${formatInteger(fixed)}` : `${formatInteger(fixed)} of ${formatInteger(errors.total)}`;
   }
 
   // How often CatLog and human reviewers agree (quality.agreement, catlog-v2 human_review.AGREEMENT_DEFINITIONS): the
@@ -3559,12 +3596,18 @@
     const { approved, agree, papers } = headline;
     const first = statsCount(a.first_agree, approved);
     let text = headline.blind
-      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent} of the values they approved. `
+      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent}${headline.range ? ` (95% range ${headline.range})` : ""} of the values they approved. `
       : "";
     if (headline.blind || first !== null) {
       text += `${papers ? `On all ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, ` : ""}${first !== null ? `CatLog had ${formatInteger(first)} of the ${formatInteger(approved)} approved values at the first comparison (${qualityShare(first, approved)}) and has ${formatInteger(agree)} now, after fixes (${qualityShare(agree, approved)}).` : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`}`;
     } else {
       text += `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
+    }
+    // What the first comparison found wrong in CatLog, the label errors named (as the README says it).
+    const errors = firstComparisonErrors(a, approved);
+    if (errors?.labels !== undefined) {
+      const fixed = statsCount(a.fixed_after_comparison, errors.total);
+      text += ` The first comparison found ${formatInteger(errors.labels)} label or annotation ${errors.labels === 1 ? "error" : "errors"} in CatLog (a UniProt entry, substrate structure or variant field), ${formatInteger(errors.missed)} missed ${errors.missed === 1 ? "value" : "values"} and ${formatInteger(errors.numbers)} wrong ${errors.numbers === 1 ? "number or unit" : "numbers or units"}${fixed !== null && errors.total ? `; ${fixedAfterComparisonText(fixed, errors)} ${fixed === 1 ? "is" : "are"} fixed since` : ""}.`;
     }
     const differ = statsCount(a.differ, approved);
     const open = differ !== null ? statsCount(a.differ_not_adjudicated, differ) : null;
@@ -3639,15 +3682,17 @@
     const wrong = statsCount(a.catlog_value_wrong);
     const stated = statsCount(a.stated_values);
     const statedHas = stated ? statsCount(a.stated_values_catlog_has, stated) : null;
+    const errors = firstComparisonErrors(a, approved);
     const lead = headline.blind
-      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent} of the values they approved.`
+      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent}${headline.range ? ` (95% range ${headline.range})` : ""} of the values they approved.`
       : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values human reviewers approved${papers ? `, on ${formatInteger(papers)} papers they checked that CatLog has since read` : ""}.`;
     const facts = [
       ["Values approved", `${formatInteger(approved)}${papers ? ` on ${formatInteger(papers)} papers` : ""}`],
       first !== null ? ["First comparison", `${formatInteger(first)} the same (${qualityShare(first, approved)})`] : null,
       // (without a first comparison, the big number and the sentence already give the same value count)
       first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} (${qualityShare(agree, approved)})`] : null,
-      fixed !== null ? ["Fixed after the comparison", formatInteger(fixed)] : null,
+      errors ? ["Errors found at the first comparison", errors.text] : null,
+      fixed !== null ? ["Fixed after the comparison", fixedAfterComparisonText(fixed, errors)] : null,
       wrong !== null ? ["Wrong number or unit in CatLog", formatInteger(wrong)] : null,
       stated && statedHas !== null ? ["Missing values reviewers named", `${formatInteger(stated)}; CatLog has ${formatInteger(statedHas)}`] : null,
     ].filter(Boolean);
@@ -3703,7 +3748,7 @@
     return `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsAgreementTitle" data-figure="agreement">
       <h2 id="statsAgreementTitle">Agreement with human reviewers</h2>
       <div class="stats-lead-body">
-        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong><span>${headline.blind
+        <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong>${headline.range ? `<span class="stats-lead-range">95% range ${escapeHtml(headline.range)}</span>` : ""}<span>${headline.blind
           ? "the same value as the reviewers at the first comparison, on papers read without database values in view"
           : "of the values human reviewers approved are the same in CatLog"}</span></div>
         <div class="stats-lead-text">

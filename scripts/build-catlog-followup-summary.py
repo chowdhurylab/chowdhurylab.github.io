@@ -563,7 +563,9 @@ QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared
 
 
 AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_agree_pct", "agree", "agree_pct",
-                    "fixed_after_comparison", "papers_exposed", "first_agree_unexposed_pct", "catlog_value_wrong",
+                    "first_catlog_errors", "first_catlog_errors_value", "first_catlog_errors_label",
+                    "first_catlog_errors_missed", "fixed_after_comparison", "papers_exposed", "papers_unexposed",
+                    "first_agree_unexposed_pct", "first_agree_unexposed_ci95", "catlog_value_wrong",
                     "differ", "differ_catlog_right",
                     "differ_earlier_value_error", "differ_earlier_label_error", "differ_same_value_other_name",
                     "differ_rounding", "differ_catlog_wrong", "differ_not_comparable", "differ_not_adjudicated",
@@ -573,6 +575,9 @@ AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_
                     "direct_records_reviewed", "direct_values_reviewed",
                     "direct_values_agree", "direct_values_disagree", "direct_values_other",
                     "direct_disagree_wrong_after_audit", "direct_disagree_audit_pending")
+# Agreement fields that are a range of percentages, written "low-high" (catlog-v2 human_review: f"{low:.1f}-{high:.1f}").
+AGREEMENT_RANGES = ("first_agree_unexposed_ci95",)
+AGREEMENT_RANGE = re.compile(r"^\d+(?:\.\d+)?-\d+(?:\.\d+)?$")
 # Stats figures 3-5 (design spec section 6), when the CatLog side writes them into the quality object: nested objects of
 # whole counts only (anything else in them is dropped), copied as they are; the page checks how they add up.
 QUALITY_FIGURES = ("db_compare", "earlier_corrections", "replaced")
@@ -601,12 +606,14 @@ def marks_quality(payload):
         return None
     kept = {key: quality[key] for key in QUALITY_FIELDS
             if isinstance(quality.get(key), int) and not isinstance(quality.get(key), bool) and quality[key] >= 0}
-    # the agreement of CatLog with human reviewers (catlog-v2 human_review.AGREEMENT_DEFINITIONS): whole counts and one
-    # percentage; its definitions map stays in the marks file
+    # the agreement of CatLog with human reviewers (catlog-v2 human_review.AGREEMENT_DEFINITIONS): whole counts, its
+    # percentages and the headline's 95% range as the CatLog side writes it ("79.7-90.6"); its definitions map stays in
+    # the marks file
     agreement = quality.get("agreement")
     if isinstance(agreement, dict):
         counts = {key: value for key, value in agreement.items() if key in AGREEMENT_FIELDS
-                  and isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0}
+                  and ((isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0)
+                       or (key in AGREEMENT_RANGES and isinstance(value, str) and AGREEMENT_RANGE.match(value)))}
         if isinstance(counts.get("values_approved"), int) and isinstance(counts.get("agree"), int):
             kept["agreement"] = counts
     for key in QUALITY_FIGURES:

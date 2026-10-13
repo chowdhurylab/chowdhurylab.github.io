@@ -764,6 +764,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-lead-figure { display:grid; gap:4px }
 .stats-lead-figure strong { color:var(--text); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
 .stats-lead-figure span { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-lead-figure .stats-lead-range { color:var(--text); font-weight:600; font-variant-numeric:tabular-nums }
 .stats-lead-text { display:grid; gap:12px; min-width:0 }
 .stats-lead-text > p { margin:0 }
 .stats-lead-sentence { max-width:80ch; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }

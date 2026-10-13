@@ -1785,6 +1785,29 @@ function row(overrides = {}) {
   assert.match(lead, /Wrong number or unit in CatLog<\/dt><dd>3</);
   assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog does not have 12 of them; it has 6 with the same number \(an AI audit kept 2, a check against the paper found 1 right, 3 not settled yet\); 2 it had were dropped after an AI audit found them wrong\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
   assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
+  // The headline is said with its 95% range and the papers behind it as the CatLog side counts them (papers_unexposed,
+  // not papers_compared minus papers_exposed); the errors the first comparison found are named, and what was fixed is
+  // said against them.
+  const rangeFixture = { ...blindFixture, papers_compared: 160, papers_exposed: 30, papers_unexposed: 122,
+    first_agree_unexposed_pct: 85.3, first_agree_unexposed_ci95: "79.7-90.6", first_catlog_errors: 69,
+    first_catlog_errors_value: 0, first_catlog_errors_label: 68, first_catlog_errors_missed: 1, fixed_after_comparison: 69 };
+  runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: rangeFixture } };
+  api.renderStats();
+  lead = element("statsLead").innerHTML;
+  assert.match(lead, /<strong>85\.3%<\/strong><span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>the same value/);
+  assert.match(lead, /on the 122 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for 85\.3% \(95% range 79\.7–90\.6%\) of the values they approved\./);
+  assert.match(lead, /Errors found at the first comparison<\/dt><dd>68 wrong labels, 1 missed value, 0 wrong numbers or units<\/dd>/);
+  assert.match(lead, /Fixed after the comparison<\/dt><dd>all 69<\/dd>/);
+  assert.match(api.agreementText(rangeFixture), /for 85\.3% \(95% range 79\.7–90\.6%\) of the values they approved\..* The first comparison found 68 label or annotation errors in CatLog \(a UniProt entry, substrate structure or variant field\), 1 missed value and 0 wrong numbers or units; all 69 are fixed since\. Of the 257/);
+  // A range that is not two percentages in order, or a split that does not add up, is not shown (the total stays).
+  const unsure = { ...rangeFixture, first_agree_unexposed_ci95: "90.6-79.7", first_catlog_errors_label: 60, fixed_after_comparison: 40 };
+  runtimeManifest.summary.overview = { ...overview, quality: { agreement: unsure } };
+  api.renderStats();
+  lead = element("statsLead").innerHTML;
+  assert.doesNotMatch(lead, /95% range|stats-lead-range|wrong labels/);
+  assert.match(lead, /Errors found at the first comparison<\/dt><dd>69<\/dd>/);
+  assert.match(lead, /Fixed after the comparison<\/dt><dd>40 of 69<\/dd>/);
+  assert.doesNotMatch(api.agreementText(unsure), /The first comparison found/);
   // Values of CatLog's own records that reviewers checked directly, with what an AI audit then found.
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: { ...blindFixture, direct_records_reviewed: 12,
     direct_values_reviewed: 30, direct_values_agree: 26, direct_values_disagree: 3, direct_values_other: 1,
