@@ -1006,6 +1006,16 @@ MORE_FIXTURE_JS = """
 """
 
 
+# The ridge axes' labels as drawn: per axis, each tick's text from only the parts that take room on screen (the "10"
+# and its exponent are measured apart, so a hidden "10" with a visible exponent shows as the bare exponent).
+RIDGE_TICKS_JS = """
+    const shown = (node) => { const range = document.createRange(); range.selectNodeContents(node);
+      const box = range.getBoundingClientRect(); return box.width > 0.5 && box.height > 0.5; };
+    return [...document.querySelectorAll('.stats-ridge-ticks')].map((axis) => [...axis.children]
+      .map((tick) => [...tick.childNodes].filter(shown).map((node) => node.textContent).join('').trim()).filter(Boolean));
+"""
+
+
 # A viewer whose system draws text wider (Verdana, letter-spacing 0.5px), set before the page's script runs.
 WIDE_FONT_JS = """
     new MutationObserver((list, observer) => {
@@ -1046,6 +1056,13 @@ def check_stats_new_figures(driver, browser, url):
             assert all(len(set(panel)) == 1 and panel[0] >= 120 for panel in widths), widths
             driver.execute_script("document.querySelector('[data-figure=\"class-values\"]').scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-new-figures-{width}.png"))
+        # Every ridge axis label that shows reads as a power of ten, whole: a narrow axis drops every second label with
+        # its exponent, never leaving a bare "−2" that reads as a value (narrow phones and the three-panel row at 1024px).
+        for narrow in (320, 360, 1024):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": narrow, "height": 900, "deviceScaleFactor": 1, "mobile": narrow < 640})
+            labels = driver.execute_script(RIDGE_TICKS_JS)
+            assert labels and all(axis and all(label.startswith("10") and len(label) > 2 for label in axis) for axis in labels), (
+                f"At {narrow}px a ridge axis label is not a whole power of ten: {labels}")
         # The key numbers glow on screen and not on paper; with less motion asked for, nothing moves.
         glow = "return getComputedStyle(document.querySelector('.stats-totals-main .stats-total-value')).textShadow"
         assert driver.execute_script(glow) not in ("", "none")
