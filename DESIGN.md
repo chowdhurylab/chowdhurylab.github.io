@@ -16,16 +16,33 @@ before filtering. Show exact counts; a nonzero share below 0.1% prints <0.1%.
 An older manifest without an overview shows what it has: never an empty
 heading, a headline without its number, or a count above the record total.
 
-Order: the title (24px) with the snapshot line, then the lead (the human review, first on the page: the user's
-headline), then two headline lines (32px: Records, Accepted with its share, CatLog v2: read from the paper with its
-papers, Human-checked; 20px: Papers, Enzymes, EC
-numbers, Organisms, Substrates; 24/18px on phones), then numbered figures and
-tables on a 12-column grid (max 1200px, gap 24px), two to a row from 1024px (an
-odd one out spans the row; a bar chart that spans it keeps its labels within
-240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row each, so the
-legend table keeps its room beside the donut), one below:
+Order (the user, 2026-10-13: "more stuff in Stats or make it better organized"): the title (24px) with the snapshot
+line, then numbered parts, each with one plain heading (20px, its number in a small accent disc) and its figures and
+tables on a 12-column grid (max 1200px, gaps 48px and 32px), two to a row from 1024px (an odd one out spans the row;
+a bar chart that spans it keeps its labels within 240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row
+each, so the legend table keeps its room beside the donut), one below. Figures and tables are numbered across parts.
 
-- Lead (`#statsLead`, above the headline counts, full width): Human review of CatLog v1 entries, what the reviewers'
+1. At a glance, the headline band (the user: "the stats bar on top - can it glow a bit or more focus driving"): a box
+   with a 2px accent rule along its top, fading to the right, and a soft accent wash in its corner. Line 1 (32px):
+   Records, Accepted with its share, CatLog v2 entries with their papers, Human review (the values correct in CatLog
+   v1 entries; a snapshot without the review's counts gives CatLog v2's match), the numbers in accent ink with a soft
+   glow (a 14px text-shadow of the accent at 26%, never neon). Line 2 (20px): Papers, Enzymes, EC numbers, Organisms,
+   Substrates. Accepted and the CatLog v2 entries link into Browse: the whole item is the link and tints calmly under
+   the pointer. Phones: 24/18px, two to a row. Browse's counts band gets the same treatment at 20px: its key numbers
+   in accent ink with the glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
+   linked count tints around itself without moving the line. Nothing moves when the viewer asks for less motion;
+   print drops every glow and wash.
+2. Quality: the lead, then Checks on the values.
+3. What is in the catalog: Review result (the donut), Records by main source, CatLog v2 and CatLog v1 entries, Values
+   per paper in CatLog v2, then What the records contain beside Wild type and variants.
+4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the 10 with the most CatLog v2 entries.
+5. Values: Value ranges, then Values by enzyme class.
+6. Cautions.
+7. Against the databases: figures 3-5 of the design spec, only when the snapshot has their counts.
+
+A closed "How these numbers are counted" ends the page. The parts' figures and tables:
+
+- Lead (first in Quality, full width): Human review of CatLog v1 entries, what the reviewers'
   own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
   `overview.quality.review.v1` (catlog-v2 HUMAN_REVIEW.md "Measuring CatLog against the reviewers"; `build_overview`
   copies each reviewed catalog's numbers, strings and `other_by_kind`). Each entry a reviewer checked counts once, by
@@ -47,8 +64,9 @@ legend table keeps its room beside the donut), one below:
   ("of the values human reviewers approved are the same in CatLog v2") and what reviewers found in CatLog v1 entries
   (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
-  clockwise, 1px white gaps, the total in the centre; the one partition that is
-  a true whole) beside its legend table: Accepted (split in the rows under it:
+  clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
+  hole; each slice fills from its colour's tint at the hole to the colour at the rim; the one partition that is
+  a true whole) beside its legend table; pointing at a slice or its row lights both: Accepted (split in the rows under it:
   CatLog v2: read from the paper, CatLog v1 as printed, after a correction,
   approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed
   under it), Disputed, each with its definition. The no-paper-linked note and
@@ -61,7 +79,16 @@ legend table keeps its room beside the donut), one below:
   own records are linked (no single filter opens a main source). Under it, the
   per-database counts Browse's source filter finds (a merged record counts
   under each, as the Guide's source list), each linked. A snapshot without
-  `main_sources` draws the same groups from the source_db counts, unsplit.
+  `main_sources` draws the same groups from the source_db counts, unsplit. A Records | Share switch above the bars
+  redraws each source as 100% of itself (the accepted share by source, with its own 0-100% axis), eased unless the
+  viewer asks for less motion.
+- CatLog v2 and CatLog v1 entries: two bars stacked by review result (CatLog v2: the main source CatLog's own
+  reading; CatLog v1: every other record, so the two make all records), each label the entries, then the share
+  accepted; both names link into Browse (source=paper, source=databases).
+- Values per paper in CatLog v2 (`overview.from_paper_values`): CatLog v2's papers by how many kcat, Km and printed
+  kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a calculated
+  kcat/Km is not a value read), each label the papers, then their share; drawn only when the bins add up to CatLog
+  v2's papers. No publication years: the data has none.
 - Figures 3-5 when `overview.quality` holds `db_compare`, `earlier_corrections`
   and `replaced` (counts the CatLog side computes; whole counts only, checked
   to add up): values read from the paper against the databases (same number,
@@ -80,37 +107,51 @@ legend table keeps its room beside the donut), one below:
   lists any parameter CatLog read and for how many it lists some but not all,
   and figure 4, when its record count is not the snapshot's count of records
   accepted after a correction, names both (with the date it was counted).
-- Table, Checks on the values: second AI check (records read from the paper),
+- Checks on the values (cards, after the lead): second AI check (records read from the paper),
   AI audits, the human review of CatLog v1 entries (entries and papers; values
   correct, values missing and other disagreements as shares; a snapshot without
   `review` gives every value reviewers compared, approved or not, the share
   correct always beside the label errors), the reviewers' approved values in
   CatLog v2 (the same value now, wrong CatLog values found) and human-checked
   records (with human-checked's rule); a row whose numbers are missing is left
-  out. Its bars are grey (--bar-neutral), as in the other tables.
-- Enzyme classes: records bars (light) with the accepted drawn over them.
+  out. Each card with a share (kept of the values audited; human-checked of the records reviewers looked at) has a
+  thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
+- Enzyme classes: records bars (light) with the accepted drawn over them and the CatLog v2 entries as a solid navy
+  stripe inside (`ec_classes[].from_paper`); each label gives records, accepted, then CatLog v2 entries (navy).
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them; values without a recorded
   unit or in another unit are left out; the 10–90% bounds have two significant
-  figures.
+  figures. Each parameter has its own Nature BPG colour (kcat --fig-kcat red, Km --fig-km cyan, kcat/Km
+  --fig-kcat-km green; never a review result), named by the panel's own heading.
+- Values by enzyme class (full width, small multiples): per parameter a ridgeline panel, one ridge per EC class
+  drawn through its half-decade bins (`overview.metrics.<metric>.by_class`: one grid of 14-18 bins per parameter
+  shared by every class, the end bins holding every value beyond them; a record in several classes counts in
+  each), each scaled to its own peak (shapes compare whatever the class's size) with a smooth curve that never
+  overshoots its bins, a fill from the parameter's colour to its tint, the 10–90% range as a line on the baseline
+  with the median as a dot, the median at the right to two significant figures, a shared log axis per panel (its
+  labels thin out when narrow). EC N links into Browse; the class name stands beside it only where a panel has the
+  row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC
-  with the enzyme name its records use most, bars against the largest), What
-  the records contain, then Wild type and variants above Cautions in one
-  column. A closed "How these numbers are counted" ends the page.
+  with the enzyme name its records use most, bars against the largest), then the 10 organisms and EC numbers with
+  the most CatLog v2 entries (counts "Entries", shares of CatLog v2 entries, navy bars, linked with source=paper),
+  What the records contain, Wild type and variants, Cautions.
 
-Figure style: every figure and table has a heading (18px), the plot, then
+Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette but a bit glowing"): every figure
+and table has a heading (16px; the parts' headings are 20px), the plot, then
 "Figure N." or "Table N." (numbered in reading order, figures and tables
 apart, so without figures 3-5 the next figure is 3) with one sentence (13px) and a 12px data line (snapshot, Data ID,
-definition). Bars 16px thick, 8px apart, square ends; fills at 60% opacity of
-their colour (alpha, so the reference lines show through the bars) with a 1px
-opaque outline; legends inline above the plot with 10px
+definition). Bars 16px thick, 8px apart, their outer ends rounded 2px; fills run from the colour to its tint, top
+to bottom, with a 1px opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
 its tick, the end one too, so they sit evenly (a narrow axis keeps 0, the
-middle and the end of five ticks); no gridlines except 1px reference lines. Category labels 13px, value labels and ticks 12px, tabular
-numbers. Table rows 13px with an 80px bar (48px on phones); the counts
+middle and the end of five ticks); light 1px gridlines at the ticks. Category labels 13px, value labels and ticks
+12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it).
+Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
+drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
+tap. Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
 --st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5
@@ -118,10 +159,11 @@ right-aligned under their headings. Colours are tokens: review results
 change in figure 4 (--chg-precision mint, --chg-magnitude red), --bar-neutral for
 single-series bars and table bars (Table 1 included) and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
-donut is the only ring. Markup (a deliberate change from the design spec's
+donut is the only ring; the glow stays soft (never neon) and only marks focus: the headline numbers, the part
+numbers, the active mark. Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
-(role="img", its summary in aria-label, a title per part) and each value-range
-histogram an image with its summary in aria-label; bar charts and table bars
+(role="img", its summary in aria-label, a title per part), each value-range
+histogram and each class ridge an image with its summary in aria-label; bar charts and table bars
 are HTML in a `<figure>`, so their names stay links into Browse that a keyboard
 reaches and every count is text a screen reader reads row by row and a viewer
 can copy. On phones each name sits above its bar. `@media
@@ -129,9 +171,9 @@ print`: one column across the page's full width at 80% scale (a landscape
 page holds the title, the lead and the headline counts, and most pages two
 figures or tables), no figure or headline count split across pages (the lead
 alone may go on between its parts; the three value-range histograms stay side
-by side on any paper size, so their caption stays with them); bars, swatches
-and columns print in their colours even with the browser's background graphics
-off.
+by side on any paper size, so their caption stays with them, and the three ridgeline panels too); bars, swatches
+and columns print in their colours even with the browser's background graphics off; no glow, wash, tooltip or
+switch on paper.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
 rows under it split it into the CatLog v2 entries, read from the paper by CatLog,

@@ -28,6 +28,11 @@ colors:
   change-magnitude: "#E64B35"
   change-precision: "#91D1C2"
   bar-neutral: "#7d8885"
+  figure-kcat: "#E64B35"
+  figure-km: "#4DBBD5"
+  figure-kcat-km: "#00A087"
+  accent-glow: "rgba(36,95,88,0.26)"
+  accent-wash: "rgba(36,95,88,0.07)"
 typography:
   body:
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif'
@@ -42,7 +47,7 @@ typography:
   weights: 400, 500, 600
   numbers: tabular-nums lining-nums
 spacing: 4, 8, 12, 16, 24, 32, 48px
-radius: 4px (controls), 0 (bars)
+radius: 4px (controls), 2px (Stats bars' outer ends), 0 (table bars)
 layout:
   header: 56px
   counts-band: 64px
@@ -58,8 +63,10 @@ layout:
 Start with the table, not a landing page. The page is one grid on a 4px spacing
 scale with 24px gutters (16px below 1024px): a 56px header, a 64px counts band,
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
-and --line-soft inside them; there are no gradients, and shadows only on the phone
-sheet, dialogs and menus.
+and --line-soft inside them; shadows only on the phone sheet, dialogs, menus and
+Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"): the
+counts band and Stats' headline band carry a soft accent wash, a thin accent rule and their key numbers in accent
+ink with a soft glow (--accent-glow), and Stats' figures fill from colour to tint; never neon, none in print.
 Stats, the Guide and Team scroll inside their own view under the header; the
 document itself never scrolls (each view is positioned, so screen-reader-only
 text deep in a page cannot reach past it).
@@ -73,7 +80,8 @@ one 600 with a 2px accent rule under it.
 
 Keep Records, Accepted, Read from the paper, Human-checked and the three "With
 kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
---muted, on one baseline, the snapshot date (12px) at its end (its title is the
+--muted, on one baseline (Records, Accepted and Read from the paper in accent ink with the soft glow,
+Human-checked in its green; a linked count tints around itself on hover without moving the line), the snapshot date (12px) at its end (its title is the
 Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
 From 1181 to 1439px "With" is read out but not shown; a window still too narrow
 (or "Matching records") moves the date under the counts, inside the same 64px.
@@ -333,8 +341,8 @@ Use the existing system font (no web font), tabular lining numerals, and zero
 letter spacing; mono only for record keys, mutations, SMILES and sequences. One
 scale of sizes with their line heights (12/16 units, ticks and counts in filter
 options; 13/18 table cells, chips, labels and captions; 14/20 UI text and record
-values; 16/24 Guide body; 18/24 Stats section headings; 20/24 counts band
-numbers and record title; 24/28 Stats and Guide titles; 32/36 Stats headline),
+values; 16/24 Guide body and Stats figure headings; 18/24 Stats part headings on phones; 20/24 counts band
+numbers, record title and Stats part headings; 24/28 Stats and Guide titles; 32/36 Stats headline),
 each a --fs-N / --lh-N token in the stylesheet. Table
 names break between words and hyphenate a word longer than its column (a break
 inside a word only as a last resort; the Organism column is at least about 13
@@ -465,8 +473,9 @@ review line, the counts band and the Guide. The tag shows on accepted records
 only; it updates in place when the marks arrive (rows are not redrawn). On a
 phone card the badge keeps its two lines; a tag
 line too long for the room left ends in an ellipsis. Use thin dividers, 4px
-control radii, and shadows only for the phone sheet, dialogs and menus. No
-decorative gradients, statistic cards, or hero art.
+control radii, and shadows only for the phone sheet, dialogs, menus and Stats' tooltip line. No
+decorative gradients, statistic cards, or hero art (the bands' wash and glow and Stats' figure fills are the
+exceptions, see Layout).
 
 ## Record Details
 
@@ -792,20 +801,19 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 ## Stats
 
-One page from the snapshot manifest (never the record index): the human review
-of CatLog v1 entries first, as the lead (the user's headline: the reviewers' own
-files, with CatLog v2's match as a side line), then two
-headline lines (32px and 20px), then numbered figures and tables, two to a row
-from 1024px:
-the review-result donut and its legend table, records by main source stacked
-by review result, the database comparison, earlier corrections and replaced
-records when the snapshot has their counts, the checks table, enzyme classes,
-value ranges, then the top organisms and EC numbers, what the records contain,
-wild type and variants, and cautions. Each has "Figure N." or "Table N." with
-one sentence and a 12px data line (snapshot, Data ID, definition); fills at 60%
-with 1px outlines in the review-result and comparison tokens. The donut and the
-histograms are images with a summary; the bar charts are HTML, so their names
-stay links and their counts text. Names Browse can filter on link to
+One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
+1 At a glance (the headline band: 32px key numbers in accent ink with a soft glow, then 20px scope counts),
+2 Quality (the human review of CatLog v1 entries as the lead, the user's headline, with CatLog v2's match as a side
+line; then the checks), 3 What is in the catalog (the review-result donut and its legend table, records by main
+source with a Records | Share switch, CatLog v2 and CatLog v1 entries, values per paper in CatLog v2, what the
+records contain, wild type and variants), 4 Biology (enzyme classes with accepted and CatLog v2 entries, the top
+organisms and EC numbers overall and among CatLog v2 entries), 5 Values (value ranges, then values by enzyme class
+as ridgeline small multiples), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
+Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with one sentence and a 12px
+data line (snapshot, Data ID, definition); fills run from the colour to its tint with 1px outlines, in the
+review-result and comparison tokens and one Nature BPG colour per parameter for values; pointing at a mark lights
+it with a soft glow and gives its exact count. The donut, the histograms and the ridges are images with a summary;
+the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
 DESIGN.md, "Stats".
 
