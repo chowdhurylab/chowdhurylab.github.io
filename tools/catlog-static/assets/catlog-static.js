@@ -4363,15 +4363,16 @@
     papers: "Papers", reading: "AI reading", check: "AI check", catlog: "CatLog", human: "Human check",
     rules: "Rules updated", website: "Website", paper: "The paper",
   };
+  // In the order the wide figure draws them, so Tab follows it: the agents above, left to right, then the people below.
   const TEAM_ACTORS = [
+    { key: "download", name: "Download agent", kind: "ai", stations: ["papers"], phrase: "fetches papers" },
+    { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value" },
+    { key: "checking", name: "Checking agents", kind: "ai", stations: ["check"], phrase: "check it again, separately" },
+    { key: "audit", name: "Audit agents", kind: "ai", stations: ["catlog"], phrase: "re-check samples" },
     { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
     { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and docs" },
-    { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value" },
-    { key: "checking", name: "Checking agents", kind: "ai", stations: ["check"], phrase: "check it again, separately" },
-    { key: "audit", name: "Audit agents", kind: "ai", stations: ["catlog"], phrase: "re-check samples" },
-    { key: "download", name: "Download agent", kind: "ai", stations: ["papers"], phrase: "fetches papers" },
   ];
   // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
   const TEAM_LEGEND = [

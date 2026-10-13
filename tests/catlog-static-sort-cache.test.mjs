@@ -1291,6 +1291,11 @@ assert.equal(document.title, "Team | CatLog");
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
   // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
+  // Tab follows the drawing: the agents above, left to right, then the people below.
+  assert.deepEqual(
+    [...element("teamFigure").innerHTML.matchAll(/class="team-actor [^"]*" data-actor="(\w+)"/g)].map((match) => match[1]),
+    ["download", "reading", "checking", "audit", "supantha", "aarna", "erin", "mohammad"],
+  );
   assert.match(team, /<animateMotion dur="24s"/, "Dots move round the loop unless the viewer asks for less motion");
   assert.equal((team.match(/class="team-loop team-loop-(wide|narrow)"/g) || []).length, 2);
   const numbers = api.teamNumbers();
