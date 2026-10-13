@@ -3995,8 +3995,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), []);
   assert.doesNotMatch(html, /value-approved/);
-  assert.match(html, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub>, but it carries no check: the note above questions its unit or value\.<\/li>/);
+  // A human-checked record whose only approved value has its check withheld still says it is human-checked under the
+  // table, so its badge and the unmarked table agree; a record that is not accepted says only what the reviewer approved.
+  assert.match(html, /<li>Human-checked: a human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it carries no check: the note above questions its unit or value\.<\/li>/);
   assert.ok(!("human_approved_values" in await recordDownloadPayload(onlyKm, {})), "no check shown, none listed");
+  api.renderDetail({ ...onlyKm, verification_status: "manual_review_required" }, {});
+  assert.match(element("detailContent").innerHTML, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it carries no check: the note above questions its unit or value\.<\/li>/);
   // A human-checked record without a note names only the values it shows: a Km-only record says nothing of a kcat or a
   // kcat/Km it does not have; with the mark's list, a kcat/Km that was not approved itself agrees with kcat ÷ Km.
   const humanLine = (record) => {

@@ -8956,8 +8956,13 @@
       // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
         ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${metricWordsHtml(escapeHtml(calcNoCheck + followsNoCheck))}${withheldNote ? ` ${metricWordsHtml(escapeHtml(withheldNote))}` : ""}`
+        // No value carries a check, every approved one withheld: a human-checked record still says so here, so its
+        // badge and an unmarked table agree ("Human-checked: a human reviewer approved Km (see Human review below), but
+        // it carries no check: ...").
         : (withheldNote
-            ? metricWordsHtml(escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`))
+            ? `${isHumanChecked(summary) ? "Human-checked: a" : "A"} human reviewer approved ${metricWordsHtml(escapeHtml(withheldNames))}`
+              + `${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"}`
+              + ` no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.${metricWordsHtml(escapeHtml(followsNoCheck))}`
             : ""),
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")

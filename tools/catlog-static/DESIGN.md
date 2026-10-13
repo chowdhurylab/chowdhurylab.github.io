@@ -568,7 +568,9 @@ found at once: A, B, G, C, D, E, F, H.
   wrong") has its check withheld, in the record and in Download record's
   human_approved_values alike, and the grey note says so: "Km carries no check:
   the note above questions its unit or value." (or, with no check shown, "A
-  human reviewer approved Km, but it carries no check: ..."). The check
+  human reviewer approved Km, but it carries no check: ..."; on a human-checked
+  record "Human-checked: a human reviewer approved Km (see Human review below),
+  but it carries no check: ...", so its badge and the unmarked table agree). The check
   stays beside its number (or the number's last line) at every width: a word
   joiner ties the two, and up to 360px the check hangs in a 16px margin of its
   own, so every line of every number ends at the same place. The first grey note under the table says what the check
