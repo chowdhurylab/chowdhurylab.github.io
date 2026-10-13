@@ -7,4 +7,4 @@
 - Review rules: an accepted record needs a linked paper, so 173 older records without a PMID or DOI are no longer counted as accepted; 58 older records whose every value a human reviewer approved are accepted.
 - Checks: 1,081 values audited so far, 3 wrong and removed; 1,543 accepted records human-checked; at the first comparison CatLog had the same value for 85.6% of the values human reviewers approved on the 271 papers it read fully blind (95% range 80.9-89.9); 88.9% after fixing what that comparison found.
 - Site changes:
-  - On the narrowest phones a record's calc. and caution marks sit under the value, so the Values table fits whatever the system font; the browser check reads the link-out names the way Safari's driver returns them.
+  - On the narrowest phones the record's Values table has fixed column widths, so it never runs past its section whatever the system font; the browser check reads the Team caption's visible text.
