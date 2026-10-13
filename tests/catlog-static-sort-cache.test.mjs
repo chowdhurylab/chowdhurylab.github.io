@@ -2087,17 +2087,18 @@ function row(overrides = {}) {
     // Medians rounded for a column: 7 → 7.0, 12.8 → 13, 0.0573 → 0.057, 1,234 → 1,200; unrounded as before.
     assert.deepEqual([7, 12.8, 0.0573, 1234, 370].map((value) => api.statsRangeNumber(value, { figures: 2 })), ["7.0", "13", "0.057", "1,200", "370"]);
     assert.equal(api.statsRangeNumber(0.0573), "0.0573");
-    // The donut's centre total is fitted to the hole only when it is wider than it (data-room, px).
-    const fitted = new Map([["data-room", "98"]]);
-    const total = { getAttribute: (name) => fitted.get(name) ?? null, setAttribute: (name, value) => fitted.set(name, value),
-      removeAttribute: (name) => fitted.delete(name), getComputedTextLength: () => 120 };
+    // The donut's centre total is set smaller only when it is wider than the hole's room (data-room, px).
+    const fitted = new Map();
+    const total = { getAttribute: (name) => (name === "data-room" ? "104" : null), getComputedTextLength: () => 130,
+      style: { removeProperty: (name) => fitted.delete(name), set fontSize(value) { fitted.set("font-size", value); } } };
+    window.getComputedStyle = () => ({ fontSize: "24px" });
     api.statsFitDonutTotals({ querySelectorAll: () => [total] });
-    assert.equal(fitted.get("textLength"), "98");
-    assert.equal(fitted.get("lengthAdjust"), "spacingAndGlyphs");
+    assert.equal(fitted.get("font-size"), "19.2px");
     total.getComputedTextLength = () => 90;
     api.statsFitDonutTotals({ querySelectorAll: () => [total] });
-    assert.ok(!fitted.has("textLength") && !fitted.has("lengthAdjust"));
-    assert.match(element("statsCharts").innerHTML, /<text class="stats-donut-total" x="100" y="100" data-room="98">/);
+    assert.ok(!fitted.has("font-size"));
+    delete window.getComputedStyle;
+    assert.match(element("statsCharts").innerHTML, /<text class="stats-donut-total" x="100" y="100" data-room="104">/);
     const path = api.statsSmoothPath([[0, 40], [10, 40], [20, 4], [30, 39], [40, 40], [100, 40]]);
     const ys = [...path.matchAll(/-?[\d.]+ (-?[\d.]+)/g)].map((match) => Number(match[1]));
     assert.ok(ys.length > 6 && ys.every((y) => y >= 4 - 1e-9 && y <= 40 + 1e-9), path);

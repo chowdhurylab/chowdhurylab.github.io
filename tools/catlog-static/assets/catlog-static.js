@@ -3729,23 +3729,20 @@
     const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
     return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
       <defs>${gradients}</defs><g class="stats-donut-slices">${paths.join("")}</g>${gaps}
-      <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 14}">${formatInteger(total)}</text>
+      <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 8}">${formatInteger(total)}</text>
       <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
     </svg>`;
   }
 
   // The donut's centre total stays inside the hole whatever font the viewer's system draws it in: a total wider than
-  // the hole (data-room, in px: the donut is drawn 1:1) is set to that width. Run once Stats is on screen.
+  // the hole's room (data-room, in px: the donut is drawn 1:1) is set smaller to fit. Run once Stats is on screen.
   function statsFitDonutTotals(root) {
     for (const text of root?.querySelectorAll?.(".stats-donut-total") || []) {
-      text.removeAttribute("textLength");
-      text.removeAttribute("lengthAdjust");
+      text.style?.removeProperty?.("font-size");
       const room = Number(text.getAttribute("data-room")) || 0;
       const width = typeof text.getComputedTextLength === "function" ? text.getComputedTextLength() : 0;
-      if (room > 0 && width > room) {
-        text.setAttribute("textLength", String(room));
-        text.setAttribute("lengthAdjust", "spacingAndGlyphs");
-      }
+      const size = parseFloat(window.getComputedStyle?.(text)?.fontSize || "") || 0;
+      if (room > 0 && size > 0 && width > room) text.style.fontSize = `${Math.floor(size * room / width * 10) / 10}px`;
     }
   }
 
