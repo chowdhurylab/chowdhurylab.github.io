@@ -2302,6 +2302,13 @@ assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
   const dbMissing = measurementSection(row({ temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null }), {});
   assert.ok(dbMissing.includes("<dt>Temperature</dt><dd>Not recorded</dd>"));
   assert.ok(dbMissing.includes("<dt>pH</dt><dd>Not recorded</dd>"));
+  // No temperature stored and no flag, but the source's note gives one: the row says so, as the flagged row does.
+  const noted = measurementSection(row({ temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null }),
+    { proof_lines: ["mutant enzyme R269A/N270A, at pH 7.5 and 25°C"] });
+  assert.ok(noted.includes("<dt>Temperature</dt><dd>Not recorded (source note: 25 °C)</dd>"));
+  const twoNoted = measurementSection(row({ temperature_k: null, temperature_display: "n/a" }),
+    { proof_lines: ["pH 7.5, 25°C", "pH 7.5, 37°C, with Mg2+"] });
+  assert.ok(twoNoted.includes("<dt>Temperature</dt><dd>Not recorded</dd>"), "two note temperatures: no guess");
 }
 assert.deepEqual(withheldConditions, withheldConditionsBefore);
 

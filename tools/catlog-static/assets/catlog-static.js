@@ -7343,6 +7343,13 @@
         ? `${compactValue(kelvin)} K (as recorded); ${temperatureFlag}`
         : `Not shown, ${temperatureFlag}${noted.length ? ` (source note: ${noted.join(", ")})` : ""}`;
     }
+    // An older record that stores no temperature while its source's note gives one ("pH 7.5, 25°C"): "Not recorded (source
+    // note: 25 °C)", so the row never reads as if no temperature were known. Two or more note temperatures say nothing.
+    let missingTemperature = missing;
+    if (!temperatureText && !v2Record && !reasons.temperature) {
+      const noted = sourceNoteTemperatures(detail);
+      if (noted.length === 1) missingTemperature = `${missing} (source note: ${noted[0]})`;
+    }
     const ph = formatPh(summary);
     let phText = ph !== EMPTY_VALUE ? ph : "";
     const phFlag = flagged("ph_");
@@ -7351,7 +7358,7 @@
       phText = stored != null && stored !== "" ? `${compactValue(stored)} (as recorded); ${phFlag}` : `Not shown, ${phFlag}`;
     }
     return {
-      temperature: temperatureText || (reasons.temperature ? sentence(reasons.temperature) : missing),
+      temperature: temperatureText || (reasons.temperature ? sentence(reasons.temperature) : missingTemperature),
       ph: phText || (reasons.ph ? sentence(reasons.ph) : missing),
     };
   }
