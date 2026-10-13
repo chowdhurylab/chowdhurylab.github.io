@@ -182,7 +182,7 @@ title has the full definition) with a link to the Guide's #guide-status, where
 the tags are defined, so the box stays small and the options stay in view), Enzyme, organism,
 substrate (labelled fields, the EC number first), Measurement type
 (ticking several shows records with all of them), Wild type or variant (a note
-says how many records state neither), Assay conditions (temperature °C and pH, from
+says how many records state neither, "1 record does not ...", and is hidden when none), Assay conditions (temperature °C and pH, from
 and to, either may be empty; a bound that is not a number is outlined and
 ignored), then Cautions (grouped as the "!" notes), which starts closed and opens
 when one of its options is set. Every option shows how many of the current

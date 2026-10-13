@@ -5162,7 +5162,7 @@
       if ($("variantChecklist")) {
         $("variantChecklist").innerHTML = variantFilters.map((item) => checkRowHtml({
           name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
-        })).join("") + `<p class="filter-note"><span data-count="variant:none">${EMPTY_VALUE}</span> records do not state wild type or variant.</p>`;
+        })).join("") + `<p class="filter-note" id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records do not state wild type or variant.</span></p>`;
       }
       if ($("databaseChecklist")) {
         $("databaseChecklist").innerHTML = databaseFilters.map((item) => checkRowHtml({
@@ -5246,6 +5246,14 @@
       element.textContent = formatCount(count);
       element.closest?.(".check-row, .range-row")?.classList.toggle("is-zero", count === 0);
     });
+    // "N records do not state wild type or variant": shown once counted and only when some do (1 record does not).
+    const variantNote = $("variantNoneNote");
+    if (variantNote) {
+      const none = filterCountValue("variant:none", counts);
+      variantNote.hidden = !none;
+      const words = variantNote.querySelector?.("[data-variant-none-words]");
+      if (words) words.textContent = none === 1 ? "record does not state wild type or variant." : "records do not state wild type or variant.";
+    }
   }
 
   // The counts follow every change of the records, the marks or the filters; they are worked out in idle moments.
