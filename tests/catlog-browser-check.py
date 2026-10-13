@@ -1944,6 +1944,10 @@ CALC_FLAG_RECORD = "1704dd2d6297af79"
 # A biotinidase read from the paper (its Method line's Guide link once ran past the panel at 361-389px) and an older alcohol
 # dehydrogenase whose SABIO-RK kcat/Km range (6.7 × 10⁻⁴–2.3 × 10³ s⁻¹ mM⁻¹, 115 values) once ran past it at 320px.
 PHONE_PAPER_RECORD = "50abd2bbc472636a"
+# An older laccase record (OED) with no As printed column whose calculated kcat/Km (1.3 × 10⁴) carries calc., and an older
+# record without As printed whose Km carries a caution "!" beside a calc. kcat/Km (the "!"'s unseen copy keeps its width).
+OLDER_CALC_RECORD = "d9e74e6231c6815d"
+OLDER_FLAG_RECORD = "fc4516156e0894cf"
 PHONE_LISTED_RANGE_RECORD = "1d970ee6bc6d9538"
 # An APH(2'')-Ia variant whose Assay list holds "phosphoenolpyruvate/pyruvate kinase/lactate dehydrogenase/NADH" (wider
 # than the list at 320px until the item could break it).
@@ -2143,6 +2147,33 @@ def check_record_panel(driver, browser, url, route_label):
                         """)
                         assert abs(stuck["top"]) <= 1 and stuck["closeShown"] and stuck["statusGone"], stuck
                         assert stuck["share"] < 0.15, f"The record's sticky header takes {stuck['share']:.0%} of a phone screen"
+                # A record without As printed (an older record) has the room: from 361px its calc. and "!" stay beside the
+                # number, every number still ends at the same place (with or without a "!") and the table stays inside its
+                # section (skipped when this snapshot does not have that record).
+                set_browse_viewport(driver, browser, 390, height)
+                for older_record in (OLDER_CALC_RECORD, OLDER_FLAG_RECORD):
+                    driver.get("about:blank")
+                    driver.get(base + f"#record={older_record}")
+                    wait.until(lambda d: d.execute_script(
+                        "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                    if not driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table.vt-no-printed .metric-origin:not(.vt-ghost)"):
+                        continue
+                    beside = driver.execute_script("""
+                        const section = document.querySelector('#detailContent .values-section');
+                        const table = section.querySelector('.values-table');
+                        const contentRight = section.getBoundingClientRect().right - parseFloat(getComputedStyle(section).paddingRight);
+                        const cell = section.querySelector('td.vt-value .metric-origin:not(.vt-ghost)').closest('td');
+                        const number = cell.querySelector('.vt-number').getBoundingClientRect();
+                        const calc = cell.querySelector('.metric-origin:not(.vt-ghost)').getBoundingClientRect();
+                        const edges = [...table.querySelectorAll('.vt-number')].map(e => e.getBoundingClientRect().right);
+                        return {over: table.getBoundingClientRect().right - contentRight,
+                                beside: calc.top < number.bottom && calc.left >= number.right - 1,
+                                spread: Math.max(...edges) - Math.min(...edges)};
+                    """)
+                    assert beside["over"] <= 1, f"The older record {older_record}'s Values table runs past its section at 390px: {beside}"
+                    assert beside["beside"], f"The older record {older_record}'s calc. goes under its number at 390px: {beside}"
+                    assert beside["spread"] <= 1, f"The older record {older_record}'s numbers do not line up at 390px: {beside}"
+                    results[f"older-calc-beside-390-{older_record}"] = True
                 if browser == "chrome":
                     # At 320px in a wide font (Linux Chrome's are wider) a number written as × 10ⁿ wraps before "× 10" inside
                     # Value, never into Unit; its check stays beside its last line; every number ends at the same place

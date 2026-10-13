@@ -524,7 +524,9 @@ found at once: A, B, G, C, D, E, F, H.
   a grey line under the table points to those notes under Paper. A calculated
   kcat/Km carries "calc." (on phones calc. and a "!" go under the number, so
   As printed keeps about 100px at 375px; at 320px a two-part unit may take two
-  lines and the table still fits). Up to 360px the columns are fixed (Parameter
+  lines and the table still fits; an older record, with no As printed, keeps
+  them beside the number from 361 to 640px, so every row stays one line, and its
+  unit wraps before the table outgrows the section). Up to 360px the columns are fixed (Parameter
   24%, Value 34%, Unit 17%, As printed the rest), the numbers are 14px, and a
   number too long for Value (1.28 × 10⁻⁴ in a wide font) wraps before "× 10"
   ("× 10" never parts), never into Unit. A value a human reviewer approved carries a
@@ -550,7 +552,8 @@ found at once: A, B, G, C, D, E, F, H.
   it.", so checks on kcat and Km alone never read as a value the review left
   out. A row without
   the check, calc. or "!" keeps their space unseen (aria-hidden), so every number in the
-  Value column ends at the same place; on phones the calc. and "!" space is dropped. The
+  Value column ends at the same place; on phones the calc. and "!" space is dropped (kept
+  for an older record above 360px, where they stay beside the number). The
   Value heading keeps the same unseen spaces (no height; calc. drawn by the stylesheet,
   so its text stays "Value"), so it ends where the numbers end at every width. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1

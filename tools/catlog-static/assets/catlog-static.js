@@ -8295,8 +8295,8 @@
     // As printed only when some value has a printed form (a Where column's place sits in it on phones).
     const printedColumn = whereColumn || cells.some((cell) => cell.printed !== EMPTY_VALUE);
     // The check, calc. and "!" follow their number; a row without one keeps an unseen copy of its space, so every number
-    // ends at the same place (on phones calc. and "!" sit under the number and their copies take no room; the check
-    // stays beside its number).
+    // ends at the same place (on phones calc. and "!" sit under the number and their copies take no room, except in a
+    // table without As printed above 360px; the check stays beside its number).
     const checkSlot = cells.some((cell) => cell.check) ? `<span class="value-approved vt-ghost" aria-hidden="true">${CHECK_ICON_HTML}</span>` : "";
     const calcSlot = cells.some((cell) => cell.calc) ? '<small class="metric-origin vt-ghost" aria-hidden="true">calc.</small>' : "";
     const flagSlot = cells.some((cell) => cell.flag) ? '<span class="value-flag vt-ghost" aria-hidden="true"></span>' : "";

@@ -1353,6 +1353,20 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody .card-label-unit { display:block; margin-top:2px }
 }
 
+/* Phones above 360px, a record without As printed (an older record): Unit has the room, so calc. and "!" stay beside the
+   number as on a wide screen and every row keeps one line; a unit wraps before the table outgrows its section. */
+@media (min-width: 361px) and (max-width: 640px) {
+  .values-table.vt-no-printed td.vt-value .vt-number { display:inline }
+  .values-table.vt-no-printed td.vt-value .vt-ghost { display:inline }
+  /* the "!" keeps its 14px when unseen too, so a row without one ends where a row with one does */
+  .values-table.vt-no-printed td.vt-value .value-flag.vt-ghost { display:inline-grid }
+  .values-table.vt-no-printed td.vt-value .metric-origin { margin-left:4px }
+  .values-table.vt-no-printed td.vt-value .value-flag,
+  .values-table.vt-no-printed td.vt-value .metric-origin + .value-flag { margin-left:6px }
+  .values-table.vt-no-printed th.vt-value .vt-ghost:not(.value-approved) { display:inline-block }
+  .values-table.vt-no-printed .vt-unit { white-space:normal }
+}
+
 /* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. The cells come
    closer than on other phones (here, after their 6px), and Value, whose numbers are right-aligned, needs no left padding. */
 @media (max-width: 360px) {
