@@ -218,7 +218,7 @@ agreement headline at Human check, records at Website), each left out when
 its field is absent. Small dots move round the track (SVG animateMotion),
 not drawn for prefers-reduced-motion. Pointing at or focusing a person or
 agent, on the figure or in the legend under it (People and AI agents, one
-plain phrase each and where they work), lights their stations and fades the
+plain phrase each and where they work, in the loop's order), lights their stations and fades the
 rest. Below 960px the loop stands upright (the people and agents are in the
 legend beside it, under it on phones) so its labels stay 11px or more at
 375px; its caption then says the list tells where each one works, instead of

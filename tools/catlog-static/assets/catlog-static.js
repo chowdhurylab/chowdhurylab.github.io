@@ -4363,6 +4363,13 @@
     papers: "Papers", reading: "AI reading", check: "AI check", catlog: "CatLog", human: "Human check",
     rules: "Rules updated", website: "Website", paper: "The paper",
   };
+  // Where a person or agent works, as "At Papers, CatLog, Rules updated, Website": in the loop's order (the order of
+  // TEAM_STATIONS; a person's first station is the one their line meets), "the paper" in lower case mid-sentence.
+  function teamStationsText(keys) {
+    const order = Object.keys(TEAM_STATIONS);
+    return [...new Set(keys)].sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      .map((key) => TEAM_STATIONS[key].replace(/^The /, "the ")).join(", ");
+  }
   // In the order the wide figure draws them, so Tab follows it: the agents above, left to right, then the people below.
   const TEAM_ACTORS = [
     { key: "download", name: "Download agent", kind: "ai", stations: ["papers"], phrase: "fetches papers" },
@@ -4468,7 +4475,7 @@
       // A thin line from the chip to each of its stations on the track (Supantha's to Rules updated only).
       const target = layout.stations[actor.stations[0]];
       const fromY = target.y < y ? y - height / 2 : y + height / 2;
-      return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${actor.stations.map((key) => TEAM_STATIONS[key]).join(", ")}.`)}">
+      return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}">
         <line class="team-link" x1="${x}" y1="${fromY}" x2="${target.x}" y2="${target.y + (target.y < y ? 9 : -9)}"/>
         <rect x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
         <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text></g>`;
@@ -4485,7 +4492,7 @@
   function renderTeam() {
     const numbers = teamNumbers();
     const legendItem = (item) => `<li class="team-legend-item team-legend-${TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind}" tabindex="0" data-actor="${item.actors.join(" ")}" data-stations="${[...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].join(" ")}">
-      <i class="team-legend-mark" aria-hidden="true"></i><span>${item.text}<small>At ${escapeHtml([...new Set(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations))].map((key) => TEAM_STATIONS[key]).join(", "))}</small></span></li>`;
+      <i class="team-legend-mark" aria-hidden="true"></i><span>${item.text}<small>At ${escapeHtml(teamStationsText(item.actors.flatMap((key) => TEAM_ACTORS.find((actor) => actor.key === key).stations)))}</small></span></li>`;
     const people = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "person");
     const agents = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "ai");
     $("teamFigure").innerHTML = `${teamFigureSvg("wide", numbers)}${teamFigureSvg("narrow", numbers)}`;

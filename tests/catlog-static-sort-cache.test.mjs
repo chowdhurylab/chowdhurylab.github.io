@@ -1291,6 +1291,11 @@ assert.equal(document.title, "Team | CatLog");
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
   // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
+  // Where each works, in the loop's order and mid-sentence case.
+  assert.match(team, /<small>At Papers, CatLog, Rules updated, Website<\/small>/);
+  assert.match(team, /<small>At the paper<\/small>/);
+  assert.match(team, /aria-label="Supantha: builds CatLog and turns findings into better rules\. At Papers, CatLog, Rules updated, Website\."/);
+  assert.doesNotMatch(team, /At The paper/);
   // Tab follows the drawing: the agents above, left to right, then the people below.
   assert.deepEqual(
     [...element("teamFigure").innerHTML.matchAll(/class="team-actor [^"]*" data-actor="(\w+)"/g)].map((match) => match[1]),
