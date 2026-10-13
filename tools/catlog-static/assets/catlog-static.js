@@ -6046,11 +6046,12 @@
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
   // the window is too narrow the table gives way, one step after another and each only as far as needed: the names wrap
-  // to two lines between words (the full name is in the tooltip); the names narrow to their minimums (a word longer
-  // than its column is hyphenated); last, Review result's tag line ends in "…", down to the review result's word. So
-  // beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even that is not
-  // enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at their
-  // longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
+  // to two lines between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a
+  // word longer than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's
+  // word. So beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even
+  // that is not enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at
+  // their longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's
+  // widths.
   const FIT_COLUMNS = [
     { key: "enzyme", cell: ".c-enzyme", min: 136, narrowMin: 128, cap: 340, shrink: 1 },
     { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120 },
@@ -6133,9 +6134,13 @@
     const shrinkable = widths.filter((column) => column.shrink);
     const status = widths.filter((column) => column.floor);
     // Each step narrows its columns toward a target, in proportion to what each can give, and only as far as needed.
+    // Organism goes below its longest word last among the names: a genus is capitalized, so it would break without a
+    // hyphen (Chlamydomona-s), where an enzyme or a substrate is usually hyphenated.
+    const organism = shrinkable.filter((column) => column.key === "organism");
     const steps = [
       [shrinkable, (column) => Math.max(column.min, column.words)],
-      [shrinkable, (column) => column.min],
+      [shrinkable.filter((column) => column.key !== "organism"), (column) => column.min],
+      [organism, (column) => column.min],
       [status, (column) => column.floor],
     ];
     // The narrowest the columns can be (the arrow aside): every step taken in full.

@@ -130,7 +130,8 @@ Beside the open sidebar from 1280px the table fits, Review result always in
 view without sideways scrolling: the name columns give way first to two lines
 broken between words (a line may also break after a hyphen, comma or slash),
 then to their minimums (Enzyme 136px, Organism 108px, Substrate 112px; a word
-longer than its column is hyphenated), and last Review result's tag line ends
+longer than its column is hyphenated; Organism last, as a capitalized genus
+breaks without a hyphen), and last Review result's tag line ends
 in "…" (never its word). Only a table that cannot keep Review result in view
 even then (beside a record from 1024px, on a tablet with the sidebar open)
 scrolls sideways; its names then narrow only to their longest word, so Enzyme
