@@ -240,12 +240,22 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-toggle { width:max-content }
 .filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }
 /* Groups: native disclosures, 13px/600 summaries, a soft rule between them. */
-.filter-section { border-bottom:1px solid var(--line-soft) }
+.filter-section { position:relative; border-bottom:1px solid var(--line-soft) }
 .filter-section-title { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--sp-2); color:var(--text); cursor:pointer; padding:var(--sp-3) var(--sp-4); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); list-style:none; user-select:none }
 .filter-section-title::-webkit-details-marker { display:none }
 .filter-section-title:hover { background:var(--surface-2) }
 .filter-section-title:focus-visible { outline-offset:-2px }
 .filter-section > :not(summary) { margin:0 var(--sp-4) var(--sp-3) }
+/* A group's "?" (beside its chevron) shows its explanations in a quiet box under the title: the options keep one short
+   line each. */
+.filter-section.has-about > .filter-section-title > span { margin-right:36px }
+.filter-section > .section-about { position:absolute; top:10px; right:38px; display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
+.filter-section > .section-about:hover { border-color:var(--accent); color:var(--accent) }
+.filter-section > .section-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }
+.filter-about { display:grid; gap:6px; border-radius:var(--radius); background:var(--surface-2); padding:var(--sp-2) 10px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
+.filter-about p { margin:0 }
+.filter-about strong { color:var(--text); font-weight:600 }
+.filter-about .filter-about-tags { margin-top:2px; color:var(--muted); font-weight:600 }
 
 /* 12px chevrons; they turn over when their group opens or closes. */
 .chevron { flex:0 0 12px; width:12px; height:12px; transition:transform 160ms ease }
@@ -254,20 +264,23 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-section input:is([type="search"],[type="text"]), .records-tools select, .pagination select { width:100%; min-width:0; min-height:32px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); color:var(--text); padding:4px var(--sp-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .filter-section input:is([type="search"],[type="text"]):focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--accent) }
 .filter-section input[aria-invalid="true"] { border-color:var(--st-disputed) }
-/* Names and EC number: a label beside each field. */
-.field-grid { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:var(--sp-2) }
-.field-grid label { color:var(--text-2); font-size:var(--fs-13) }
+/* Names and EC number: a label beside each field (the column is as wide as the longest label, so none wraps). */
+.field-grid { display:grid; grid-template-columns:max-content minmax(0,1fr); align-items:center; gap:var(--sp-2) var(--sp-3) }
+.field-grid label { color:var(--text-2); font-size:var(--fs-13); white-space:nowrap }
 /* Assay conditions: a label and its count, then from and to. */
 .range-stack { display:grid; gap:var(--sp-3) }
 .range-row { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:var(--sp-1) 6px }
-.range-label { grid-column:1 / 3; color:var(--text); font-size:var(--fs-13) }
-.range-row > strong { grid-column:3; justify-self:end; color:var(--muted); font-size:var(--fs-12); font-weight:400 }
+/* The label has the whole first line (its count at the right end), so a wide font does not wrap it. */
+.range-label { grid-column:1 / -1; grid-row:1; padding-right:64px; color:var(--text); font-size:var(--fs-13) }
+.range-row > strong { grid-column:3; grid-row:1; justify-self:end; color:var(--muted); font-size:var(--fs-12); font-weight:400 }
 .range-dash { color:var(--muted); font-size:var(--fs-13) }
 .filter-note { margin:0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-/* Options: 28px rows, a 14px box, the 13px label and its 12px count at the right. */
+/* Options: 28px rows, a 14px box, the 13px label and its 12px count at the right. A label that wraps (a wide system
+   font) takes a second line: the box and the count stay on its first line and nothing runs into the next row. */
 .check-stack { display:grid; gap:0 }
-.check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:center; gap:var(--sp-2); color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
-.check-row input { width:14px; height:14px; margin:0; accent-color:var(--accent) }
+.check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:start; gap:var(--sp-2); padding:5px 0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
+.check-row input { width:14px; height:14px; margin:2px 0 0; accent-color:var(--accent) }
+.check-row > strong { padding-top:1px; white-space:nowrap }
 /* Review result ticks in the status colours; green only for human-checked. */
 .check-row.accepted input { accent-color:var(--st-accepted) }
 .check-row.review input { accent-color:var(--st-pending-ring) }
@@ -285,24 +298,17 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
 .check-row.is-zero .human-checked-word { color:inherit }
 
-/* Source: three choices, each with a short help line under it; the databases fold under "By database". */
+/* Source: three choices, one line each (the help is behind the group's "?"); the databases fold under "By database". */
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
-.source-help { margin:-2px 0 var(--sp-1) 22px }
 .source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
 .source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .source-databases > summary::-webkit-details-marker { display:none }
 .source-databases > summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
 .source-databases[open] > summary::after { content:"\2212"; content:"\2212" / "" }
 .source-databases > .check-stack { padding-top:var(--sp-1) }
-.status-guide { margin-top:var(--sp-1); border-top:1px solid var(--line-soft); padding-top:var(--sp-2); color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.status-guide summary { display:flex; align-items:center; justify-content:space-between; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
-.status-guide summary::-webkit-details-marker { display:none }
-.status-guide summary::after, .detail-disclosure summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
-.status-guide[open] summary::after, .detail-disclosure[open] summary::after { content:"\2212"; content:"\2212" / "" }
-.status-guide-body { display:grid; gap:6px; padding-top:var(--sp-2) }
-.status-guide-body p { margin:0 }
-.status-guide-body strong { color:var(--text) }
+.detail-disclosure summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
+.detail-disclosure[open] summary::after { content:"\2212"; content:"\2212" / "" }
 
 /* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
    at the bottom. */

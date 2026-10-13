@@ -180,10 +180,12 @@
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
+  // The sidebar's labels are short, one line each ("by CatLog" is read out); the help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
-    { value: "paper", label: SOURCE_CATLOG_LABEL, help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, help: SOURCE_DATABASES_HELP },
+    { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'Read from the paper<span class="visually-hidden"> by CatLog</span>',
+      help: SOURCE_CATLOG_HELP, guide: true },
+    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: "Enzyme databases", help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
   // absent).
@@ -4898,27 +4900,27 @@
   function setupFilters() {
     if (!filterChecklistsBuilt) {
       filterChecklistsBuilt = true;
-      // Review result: the four results, "Only human-checked" nested under Accepted, then their definitions and the
-      // tags' (the method in one line, with the Guide's full account a link away).
+      // Review result: the four results, "Only human-checked" nested under Accepted. Their definitions and the tags' (the
+      // method in one line, with the Guide's full account a link away) are behind the group's "?".
       $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
         checked: true, count: `state:${item.value}`, className: item.className,
       }) + (item.value === "accepted" ? checkRowHtml({
-        name: "humanChecked", value: "1", id: "humanCheckedFilter", labelHtml: `Only <span class="human-checked-word">${CHECK_ICON_HTML}human-checked</span>`,
+        name: "humanChecked", value: "1", id: "humanCheckedFilter",
+        labelHtml: `<span class="visually-hidden">Only </span><span class="human-checked-word">${CHECK_ICON_HTML}human-checked</span>`,
         label: "Only human-checked", title: HUMAN_CHECKED_DESCRIPTION, count: "checked", className: "human-checked nested",
-      }) : "")).join("") + `
-      <details class="status-guide">
-        <summary>Review result definitions</summary>
-        <div class="status-guide-body">
+      }) : "")).join("");
+      if ($("aboutStatus")) {
+        $("aboutStatus").innerHTML = `
           ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "Passed review; "))}</p>`).join("")}
+          <p class="filter-about-tags">Tags</p>
+          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)}</p>
           <p><strong>earlier extraction</strong>: ${escapeHtml(EARLIER_EXTRACTION_DEFINITION)}</p>
-          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
-          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>
           <p><strong>corrected</strong>: ${escapeHtml(CORRECTED_DEFINITION)}</p>
           <p><strong>no paper linked</strong>: ${escapeHtml(noPaperDefinition())}</p>
-        </div>
-      </details>
-    `;
+          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
+          <p><a href="#guide-status">Review result in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
+      }
       $("measurementChecklist").innerHTML = measurementFilters.map((item) => checkRowHtml({
         name: "measurement", value: item.value, labelHtml: item.labelHtml, count: `metric:${item.value}`,
       })).join("") + `<p class="filter-note">Ticking more than one shows records with all of them.</p>`;
@@ -4935,21 +4937,25 @@
       }
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
-          <label class="check-row radio-row">
-            <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""}${item.help ? ` aria-describedby="sourceHelp-${item.value}"` : ""} />
-            <span>${escapeHtml(item.label)}</span>
+          <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.help)}"` : ""}>
+            <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
+            <span>${item.shortHtml || escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
-          </label>${item.help ? `
-          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a>` : ""}</p>` : ""}`).join("")}
+          </label>`).join("")}
         </div>
         <details class="source-databases" id="sourceDatabases">
           <summary>By database</summary>
           <div class="check-stack">${sourceFilters.map((item) => checkRowHtml({
             name: "source", value: item.value, label: item.label, title: item.title || "", count: `source:${item.value}`,
           })).join("")}
-            <p class="filter-note">A merged record counts under each database it came from.</p>
           </div>
         </details>`;
+      }
+      if ($("aboutSource")) {
+        $("aboutSource").innerHTML = sourceModes.filter((item) => item.help).map((item) => `
+          <p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.help)}</p>`).join("") + `
+          <p>A merged record counts under each database it came from.</p>
+          <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
     }
     updateFilterCounts();
@@ -9322,6 +9328,16 @@
     });
     ["variantChecklist", "cautionChecklist"].forEach((id) => {
       $(id)?.addEventListener("change", () => applyFiltersInBackground());
+    });
+    // A group's "?" shows or hides its explanations, under the group's title.
+    document.querySelectorAll?.("#catalogFilters .section-about").forEach((button) => {
+      button.addEventListener("click", () => {
+        const panel = $(button.getAttribute("aria-controls"));
+        if (!panel) return;
+        const open = panel.hidden;
+        panel.hidden = !open;
+        button.setAttribute("aria-expanded", String(open));
+      });
     });
     // Source: ticking a database selects From enzyme databases; All records or Read from the paper clears the databases.
     $("sourceChecklist")?.addEventListener("change", (event) => {

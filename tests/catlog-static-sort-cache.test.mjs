@@ -4472,6 +4472,21 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   Object.assign(runtimeManifest, { total_rows: saved.total, summary: saved.summary, enriched_download: saved.enriched, source_sha256: saved.source });
 }
 
+// The sidebar keeps one short line per option; the explanations are behind each group's "?" (aboutSource, aboutStatus).
+{
+  const source = element("sourceChecklist").innerHTML;
+  assert.match(source, /<span>Read from the paper<span class="visually-hidden"> by CatLog<\/span><\/span>/);
+  assert.match(source, /<span>Enzyme databases<\/span>/);
+  assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
+  assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper by CatLog<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
+  assert.match(element("aboutSource").innerHTML, /<strong>From enzyme databases<\/strong>: BRENDA, SABIO-RK/);
+  assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
+  const status = element("statusChecklist").innerHTML;
+  assert.doesNotMatch(status, /status-guide|Review result definitions/);
+  assert.match(status, /<span class="visually-hidden">Only <\/span><span class="human-checked-word">/);
+  assert.match(element("aboutStatus").innerHTML, /<strong>Not confirmed<\/strong>: The earlier automated review left a question open/);
+  assert.match(element("aboutStatus").innerHTML, /<strong>human-checked<\/strong>: A human reviewer approved every value shown\./);
+}
 console.log("CatLog viewer behavior checks passed.");
 
 // value_display is compared with the stored number (the display string is rounded to 5 figures), and a printed integer

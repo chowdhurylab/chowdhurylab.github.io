@@ -1240,6 +1240,30 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: is_open() and box(".filter-column")["width"] == 288)
         assert stored() in (None, "unavailable")
         results["sidebar-1440"] = True
+        # The sidebar is compact: no option's text runs past its row or into the next one, and a group's "?" shows its
+        # explanations under its title (and hides them again).
+        overlaps = driver.execute_script("""
+            const bad = [];
+            const rows = [...document.querySelectorAll('#catalogFilters :is(.check-row, .range-row, .field-grid label)')].filter(e => e.getClientRects().length);
+            rows.forEach((row, i) => {
+                const r = row.getBoundingClientRect();
+                [...row.children].filter(c => c.getClientRects().length).forEach(c => {
+                    const b = c.getBoundingClientRect();
+                    if (b.bottom > r.bottom + 0.5 || b.right > r.right + 0.5) bad.push(row.innerText.trim());
+                });
+                const next = rows[i + 1]?.getBoundingClientRect();
+                if (next && Math.abs(next.left - r.left) < 1 && next.top < r.bottom - 0.5 && !row.matches('label')) bad.push(row.innerText.trim());
+            });
+            return bad;
+        """)
+        assert not overlaps, f"Sidebar options overlap: {overlaps}"
+        about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
+        assert not driver.find_element(By.ID, "aboutSource").is_displayed()
+        about.click()
+        assert about.get_attribute("aria-expanded") == "true" and driver.find_element(By.ID, "aboutSource").is_displayed()
+        assert "a second, separate AI check" in driver.execute_script("return document.getElementById('aboutSource').innerText")
+        about.click()
+        assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
         # The browser's own colour (theme-color) is the accent token.
         theme = driver.execute_script("""
             return {meta: document.querySelector('meta[name="theme-color"]').content.toLowerCase(),

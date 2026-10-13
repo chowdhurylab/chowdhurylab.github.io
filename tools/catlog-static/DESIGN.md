@@ -144,18 +144,24 @@ Enzyme, before the vertical scrollbar). The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
 its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
 rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
-count at the right) and 32px fields. The panel order: Source (three
-radio buttons: All records, Read from the paper by CatLog and From enzyme
-databases, the last two with a one-line help under them, the first ending in a
-link to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
+count at the right; a label a wide font wraps takes a second line, box and count
+on its first, and never runs into the next row) and 32px fields, their labels in
+a column as wide as the longest. The sidebar is compact (the user, 2026-10-13):
+one short line per option and no help paragraphs; a group with explanations has a
+24px round "?" beside its chevron that shows them in a quiet --surface-2 box under
+its title (and hides them again). The panel order: Source (three
+radio buttons: All records, Read from the paper (read out "by CatLog") and Enzyme
+databases; its "?" says what each holds, that a merged record counts under each
+database and links to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
 earlier paper extractions and Source not recorded: ticking one selects From
 enzyme databases, a merged record counts under each database it names, and All
 records or Read from the paper clears them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
-human-checked" sits under Accepted, its tick green, and ticking it ticks Accepted;
-its count waits for the review marks; unticking Accepted unticks it; then Review
-result definitions: the four results and the tags (earlier extraction included),
-the method in one line with a link to #guide-method), Enzyme, organism and
+human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
+out "Only human-checked"), its tick green, and ticking it ticks Accepted;
+its count waits for the review marks; unticking Accepted unticks it; its "?" gives
+the four results and the tags (earlier extraction included, the method in one
+line) with a link to the Guide's #guide-status), Enzyme, organism and
 substrate (labelled fields, the EC number first), Measurement type
 (ticking several shows records with all of them), Wild type or variant (a note
 says how many records state neither), Assay conditions (temperature °C and pH, from
