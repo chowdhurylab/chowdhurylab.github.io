@@ -435,6 +435,8 @@ tbody tr.selected .row-arrow { color:var(--accent) }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
 td.c-form { display:none }
+/* A value's label for phone cards; the table's headings name its columns. */
+.card-label { display:none }
 .row-arrow { color:var(--muted); font-size:var(--fs-20) }
 
 /* A value and its markers (no unit,calc.,a caution) share one line. */
@@ -1285,9 +1287,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody td.c-substrate.has-note > .clamp-2 { order:2; flex:1 1 0; min-width:0; color:var(--text-2) }
   #recordsBody td.c-substrate .condition-note { order:2; flex:0 0 100%; font-size:var(--fs-12) }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
-  /* Each label is its name and unit, "kcat (s⁻¹)"; a label too wide breaks only before its unit. A value too wide for its
-     cell (a wide font at 320px) breaks before its "× 10". */
-  #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--muted); font-size:var(--fs-12); line-height:14px }
+  /* Each label is its name and unit as the table's headings write them, "kcat (s⁻¹)" with italic k and subscript cat; a
+     label too wide breaks only before its unit. A value too wide for its cell (a wide font at 320px) breaks before its
+     "× 10". */
+  #recordsBody .card-label { display:block; color:var(--muted); font-size:var(--fs-12); line-height:14px }
+  #recordsBody .card-label-unit { white-space:nowrap }
   #recordsBody .metric-with-note { justify-content:flex-start }
   #recordsBody .scientific-number { white-space:normal }
   #recordsBody .scientific-number sup { white-space:nowrap }
@@ -1310,7 +1314,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* Phones below 390px: kcat/Km (s⁻¹ mM⁻¹) does not fit its card's third, so every value label puts its unit on a second
    line ("kcat" over "(s⁻¹)"), as the table's headings do, and the three values stay on one line. */
 @media (max-width: 389px) {
-  #recordsBody td[data-label]::before { white-space:pre-line }
+  #recordsBody .card-label-unit { display:block; margin-top:2px }
 }
 
 /* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. */

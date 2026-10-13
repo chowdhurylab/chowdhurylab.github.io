@@ -413,9 +413,12 @@ with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
 12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
 stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) each record is a card: name and EC;
 the variant's mutation (under the name, as in the table); organism · substrate, with any note under the substrate on
-its own grey line; kcat, Km and kcat/Km with their units as labels; the
+its own grey line; kcat, Km and kcat/Km with their units as labels, written as the table's headings and the counts
+band write them (italic k and K, subscript cat and m: real elements in each value cell, hidden in the table, as a CSS
+attr() label cannot draw them); the
 two-line status badge. Below 390px kcat/Km (s⁻¹ mM⁻¹) does not fit a third of the card, so every value label puts
-its unit on a second line, as the table's headings do, and the three values stay on one line; a wider label breaks
+its unit on a second line (2px below the name, clear of its subscript), as the table's headings do, and the three
+values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
 The phone filter sheet ends with a "Show N records" button. Filter chips use
 the accent tint with a thin accent line, 12px text, and wrap within the toolbar.

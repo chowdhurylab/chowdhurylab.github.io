@@ -6387,9 +6387,9 @@
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${escapePublic(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
         <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${escapePublic(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
-        <td class="c-kcat num" data-label="kcat&#10;(s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
-        <td class="c-km num" data-label="Km&#10;(mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
-        <td class="c-eff num" data-label="kcat/Km&#10;(s⁻¹&nbsp;mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
+        <td class="c-kcat num">${CARD_VALUE_LABELS.kcat}<span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
+        <td class="c-km num">${CARD_VALUE_LABELS.km}<span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
+        <td class="c-eff num">${CARD_VALUE_LABELS.kcat_over_km}<span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
@@ -6432,6 +6432,15 @@
     const controls = filterControlState();
     return controls.sort === "evidence" && !activeFilterItems(controls).length;
   }
+
+  // Phone cards label each value with its name and unit as the table's headings write them (italic k and K, subscript
+  // cat and m), in the cell itself: a CSS attr() label could not draw italics or subscripts. The table hides these labels
+  // (its headings name the columns); below 390px each unit takes a second line, so the three values stay on one line.
+  const CARD_VALUE_LABELS = {
+    kcat: '<span class="card-label"><i>k</i><sub>cat</sub> <span class="card-label-unit">(s⁻¹)</span></span>',
+    km: '<span class="card-label"><i>K</i><sub>m</sub> <span class="card-label-unit">(mM)</span></span>',
+    kcat_over_km: '<span class="card-label"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> <span class="card-label-unit">(s⁻¹&nbsp;mM⁻¹)</span></span>',
+  };
 
   // Column widths follow the page. Values, EC and Review result are as wide as their widest entry and never wrap.
   // A name column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
@@ -6507,7 +6516,8 @@
       const cells = rows.map((row) => row.querySelector(column.cell)).filter(Boolean);
       const first = style(cells[0]);
       const padding = parseFloat(first.paddingLeft) + parseFloat(first.paddingRight) + 2;
-      const natural = cells.map((cell) => cell.firstElementChild?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
+      // A value cell's content follows its phone card label (hidden here).
+      const natural = cells.map((cell) => cell.querySelector(":scope > :not(.card-label)")?.getBoundingClientRect().width || 0).sort((a, b) => a - b);
       // A value column is also as wide as its header (with the sort arrow), and Review result as its heading (a wide
       // system font made "Review result" longer than "Accepted · from paper" and cut it).
       const header = column.key === "state"

@@ -1380,6 +1380,11 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert marks["rows"] and marks["marked"] == marks["rows"] and marks["heights"] == [44], (
                 f"Every Temperature questionable row says so under its substrate: {marks}")
+        # The phone cards' value labels stay hidden in the table (its headings name the columns).
+        assert driver.execute_script("""
+            const labels = [...document.querySelectorAll('#recordsBody .card-label')];
+            return labels.length > 0 && labels.every(label => getComputedStyle(label).display === 'none');
+        """), "The table shows no card labels"
         results["row-height"] = True
         # The one-line header (from 1024px) never cuts the search box's placeholder.
         for width in (1024, 1180, 1181, 1259, 1260, 1279, 1280, 1440):
@@ -1743,6 +1748,18 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert values and all(max(card["tops"]) - min(card["tops"]) <= 2 and card["over"] <= 1 for card in values), (
                 f"At 320px a card's three values line up and stay in their cells: {values}")
+            # Each value's label is written as the table's headings write it (italic k or K and a subscript), above the value.
+            labels = driver.execute_script("""
+                const card = document.querySelector('#recordsBody tr[data-key]');
+                return ['c-kcat', 'c-km', 'c-eff'].map(name => {
+                  const cell = card.querySelector('td.' + name), label = cell.querySelector('.card-label');
+                  return {shown: !!label && getComputedStyle(label).display !== 'none', italic: !!label?.querySelector('i'),
+                          sub: !!label?.querySelector('sub'), unit: label?.querySelector('.card-label-unit')?.textContent || '',
+                          above: !!label && label.getBoundingClientRect().bottom <= cell.querySelector('.metric-with-note').getBoundingClientRect().top + 1};
+                });
+            """)
+            assert all(label["shown"] and label["italic"] and label["sub"] and label["unit"].startswith("(") and label["above"]
+                       for label in labels), f"At 320px each card value is labelled with italic k and its subscript: {labels}"
             # A card reads name, variant, organism · substrate, then the note under the substrate: a note never parts a
             # variant from its enzyme (the note as the table writes it, under the first variant card's substrate).
             open_page("#browse?variant=variant")
