@@ -1841,10 +1841,13 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: blindFixture } };
   api.renderStats();
   lead = element("statsLead").innerHTML;
-  assert.match(lead, /<strong>84\.7%<\/strong><span>the same value as the reviewers at the first comparison, on papers read without database values in view<\/span>/);
-  assert.match(lead, /At the first comparison, on the 58 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for 84\.7% of the values they approved\./);
-  assert.match(lead, /First comparison<\/dt><dd>2,110 the same \(84\.8%\)/);
-  assert.match(lead, /Now, after fixes<\/dt><dd>2,232 \(89\.7%\)/);
+  // The blind headline is said one way (Stats' lead, the Guide, Team): the first comparison, before any fix, on the papers
+  // read blind, with what that means; the first comparison on all papers and the count after fixes come after it.
+  assert.match(lead, /<strong>84\.7%<\/strong><span>of approved values matched at the first comparison, on the 58 papers read blind<\/span>/);
+  assert.match(lead, /<p class="stats-lead-sentence">At the first comparison, before any fix, CatLog matched 84\.7% of the values human reviewers approved on the 58 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\.<\/p>/);
+  assert.match(lead, /First comparison, all papers<\/dt><dd>2,110 matched \(84\.8%\)/);
+  assert.match(lead, /Now, after fixes<\/dt><dd>2,232 matched \(89\.7%\)/);
+  assert.match(lead, /Matched \(the same value\): the same paper/);
   // Table 1 beside that lead says its agreement count is the one after fixes; its bars are grey, as in the other tables.
   assert.match(element("statsCharts").innerHTML, /<tr data-check="agreement">[\s\S]*?<td>2,232 the same in CatLog now, after fixes \(89\.7%\)<\/td>/);
   const checksTable = element("statsCharts").innerHTML.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0];
@@ -1854,8 +1857,8 @@ function row(overrides = {}) {
   // What became of the values reviewers called wrong that CatLog had with the same number: parts of that number.
   assert.match(lead, /Reviewers called 20 values wrong on these papers: CatLog did not have 12 of them; it had 8 with the same number \(an AI audit kept 2, 2 were dropped after an AI audit found them wrong, a check against the paper found 1 right, CatLog has changed or removed 1 since and 2 are not settled yet\)\. 4 other objections dispute no value shown \(a value missing, a duplicate, the DOI or a name\)\./);
   api.renderGuideMethod();
-  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, on the 58 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as human reviewers for <strong>84\.7%<\/strong> of the values they approved\. <a /);
-  assert.match(api.agreementText(blindFixture), /^At the first comparison, on the 58 papers .*84\.7% of the values they approved\. On all 98 papers .*CatLog had 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and has 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
+  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, before any fix, CatLog matched <strong>84\.7%<\/strong> of the values human reviewers approved on the 58 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\. <a /);
+  assert.match(api.agreementText(blindFixture), /^At the first comparison, before any fix, CatLog matched 84\.7% of the values human reviewers approved on the 58 papers read blind \(CatLog's readers never opened database or earlier-catalog files\)\. On all 98 papers .*CatLog matched 2,110 of the 2,489 approved values at the first comparison \(84\.8%\) and matches 2,232 now, after fixes \(89\.7%\)\. Of the 257 that differ/);
   // The headline is said with its 95% range and the papers behind it as the CatLog side counts them (papers_unexposed,
   // not papers_compared minus papers_exposed); the errors the first comparison found are named, and what was fixed is
   // said against them.
@@ -1865,11 +1868,15 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", agreement: rangeFixture } };
   api.renderStats();
   lead = element("statsLead").innerHTML;
-  assert.match(lead, /<strong>85\.3%<\/strong><span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>the same value/);
-  assert.match(lead, /on the 122 papers CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for 85\.3% \(95% range 79\.7–90\.6%\) of the values they approved\./);
+  assert.match(lead, /<strong>85\.3%<\/strong><span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched/);
+  assert.match(lead, /At the first comparison, before any fix, CatLog matched 85\.3% \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\./);
+  assert.match(lead, /<span class="stats-lead-range">95% range 79\.7–90\.6%<\/span><span>of approved values matched at the first comparison, on the 122 papers read blind<\/span>/);
+  // The Guide's lead says the same sentence, the range included.
+  api.renderGuideMethod();
+  assert.match(element("guideMethodLead").innerHTML, /<\/span> At the first comparison, before any fix, CatLog matched <strong>85\.3%<\/strong> \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind \(CatLog&#39;s readers never opened database or earlier-catalog files\)\. <a /);
   assert.match(lead, /Errors found at the first comparison<\/dt><dd>68 wrong labels, 1 missed value, 0 wrong numbers or units<\/dd>/);
   assert.match(lead, /Fixed after the comparison<\/dt><dd>all 69<\/dd>/);
-  assert.match(api.agreementText(rangeFixture), /for 85\.3% \(95% range 79\.7–90\.6%\) of the values they approved\..* The first comparison found 68 label or annotation errors in CatLog \(a UniProt entry, substrate structure or variant field\), 1 missed value and 0 wrong numbers or units; all 69 are fixed since\. Of the 257/);
+  assert.match(api.agreementText(rangeFixture), /matched 85\.3% \(95% range 79\.7–90\.6%\) of the values human reviewers approved on the 122 papers read blind .* The first comparison found 68 label or annotation errors in CatLog \(a UniProt entry, substrate structure or variant field\), 1 missed value and 0 wrong numbers or units; all 69 are fixed since\. Of the 257/);
   // A range that is not two percentages in order, or a split that does not add up, is not shown (the total stays).
   const unsure = { ...rangeFixture, first_agree_unexposed_ci95: "90.6-79.7", first_catlog_errors_label: 60, fixed_after_comparison: 40 };
   runtimeManifest.summary.overview = { ...overview, quality: { agreement: unsure } };

@@ -31,14 +31,19 @@ legend table keeps its room beside the donut), one below:
   `overview.quality.agreement` (catlog-v2
   human_review.AGREEMENT_DEFINITIONS; `build_overview` copies the fields listed
   in AGREEMENT_FIELDS). The headline is `first_agree_unexposed_pct` (the first
-  comparison on papers CatLog read without database or earlier-catalog values
-  in view) when present, else agree of values_approved; under the number its
-  95% range when `first_agree_unexposed_ci95` gives one ("95% range
-  79.7–90.6%", also in the sentence and the Guide), then what it counts ("of
-  the values human reviewers approved are the same in CatLog", or the same
-  value at the first comparison on papers read without database values in
-  view); the blind paper count is `papers_unexposed` when present. Then one
-  sentence, a
+  comparison, before any fix, on the papers read blind) when present, else agree
+  of values_approved; under the number its 95% range when
+  `first_agree_unexposed_ci95` gives one ("95% range 79.7–90.6%"), then what it
+  counts ("of approved values matched at the first comparison, on the 271 papers
+  read blind", or "of the values human reviewers approved are the same in
+  CatLog"); the blind paper count is `papers_unexposed` when present. Then one
+  sentence, said word for word in the Guide's method section and shortened at
+  Team's Human check: "At the first comparison, before any fix, CatLog matched
+  85.6% (95% range 80.9–89.9%) of the values human reviewers approved on the
+  271 papers read blind (CatLog's readers never opened database or
+  earlier-catalog files)." No reason is given for a gap to other papers. The
+  first comparison on all papers and the count after fixes are facts under it,
+  never the headline. Then a
   100% bar of the approved values (the same value, then the differences as
   CatLog's own check against the paper split them: CatLog right, the same
   printed value under another name or rounding, left out by its reading rules,

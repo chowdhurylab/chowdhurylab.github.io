@@ -240,7 +240,7 @@ class OverviewTests(unittest.TestCase):
     def test_overview_copies_the_marks_quality(self):
         quality = {"as_of": "2026-10-11T05:05:00", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
                    "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
-                   "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0,
+                   "v2_found_after_fixes": 2210, "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0,
                    "reviewer": "someone", "audit_wrong_share": 0.27, "v2_wrong_bool": True}
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}}, quality)
@@ -295,6 +295,31 @@ class OverviewTests(unittest.TestCase):
         # Only the headline's range may be a string.
         result = followup.marks_quality({"quality": {"agreement": {**blind, "papers_unexposed": "122"}}})
         self.assertNotIn("papers_unexposed", result["agreement"])
+
+    def test_overview_keeps_every_agreement_field_the_page_reads(self):
+        # Every quality.agreement field the page's code reads reaches the overview; the 2026-10-12 build's shape (the
+        # headline's range as a string among whole counts and percentages) is copied whole, its definitions left behind.
+        import re
+        script = (Path(__file__).resolve().parents[1] / "tools/catlog-static/assets/catlog-static.js").read_text()
+        agreement_key = re.compile(r"^(papers_(compared|exposed|unexposed)|values_approved|agree(_pct)?|first_\w+|differ(_\w+)?"
+                                   r"|stated_\w+|rejected_\w+|direct_\w+|fixed_after_comparison|catlog_value_wrong"
+                                   r"|matched_later_other)$")
+        read = {key for key in re.findall(r"\ba\.([a-z][a-z0-9_]*)|\"([a-z][a-z0-9_]*)\"", script) for key in key if key}
+        read = {key for key in read if agreement_key.match(key)}
+        self.assertIn("first_agree_unexposed_ci95", read)
+        self.assertEqual(read - set(followup.AGREEMENT_FIELDS), set())
+        fresh = {"papers_compared": 291, "values_approved": 3838, "first_agree": 3332, "first_agree_pct": 86.8, "agree": 3412,
+                 "agree_pct": 88.9, "first_catlog_errors": 69, "first_catlog_errors_value": 0,
+                 "first_catlog_errors_label": 68, "first_catlog_errors_missed": 1, "fixed_after_comparison": 69,
+                 "matched_later_other": 11, "papers_exposed": 14, "first_agree_unexposed_pct": 85.6, "papers_unexposed": 271,
+                 "first_agree_unexposed_ci95": "80.9-89.9", "catlog_value_wrong": 0, "differ": 426, "rejected_values": 9,
+                 "rejected_catlog_also_without": 0, "rejected_catlog_has_same": 9, "rejected_kept_after_audit": 4,
+                 "rejected_cleared_by_paper_check": 5, "rejected_not_value": 37, "direct_values_reviewed": 0}
+        quality = {"as_of": "2026-10-12", "v2_found": 3332, "v2_found_after_fixes": 3412, "v2_approved_total": 3838,
+                   "agreement": {**fresh, "definitions": {"agree": "text"}}}
+        result = followup.marks_quality({"quality": quality})
+        self.assertEqual(result["agreement"], fresh)
+        self.assertEqual((result["v2_found"], result["v2_found_after_fixes"]), (3332, 3412))
 
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:

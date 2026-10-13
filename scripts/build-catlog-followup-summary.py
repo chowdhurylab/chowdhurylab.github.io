@@ -559,13 +559,16 @@ def summarize_overview(rows, marks=None):
 
 # Audit and human-review results the CatLog side writes into the marks file's top-level "quality" object (from its audit
 # record and review accuracy). The overview keeps these fields only: whole counts, and the date they were counted.
+# v2_found is the first comparison's count (since 2026-10-12); v2_found_after_fixes the count after fixes.
 QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared_papers_v1", "wrong_v1",
-                  "label_or_annotation_v1", "v2_found", "v2_approved_total", "v2_differences_checked", "v2_wrong")
+                  "label_or_annotation_v1", "v2_found", "v2_found_after_fixes", "v2_approved_total",
+                  "v2_differences_checked", "v2_wrong")
 
 
 AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_agree_pct", "agree", "agree_pct",
                     "first_catlog_errors", "first_catlog_errors_value", "first_catlog_errors_label",
-                    "first_catlog_errors_missed", "fixed_after_comparison", "papers_exposed", "papers_unexposed",
+                    "first_catlog_errors_missed", "fixed_after_comparison", "matched_later_other", "papers_exposed",
+                    "papers_unexposed",
                     "first_agree_unexposed_pct", "first_agree_unexposed_ci95", "catlog_value_wrong",
                     "differ", "differ_catlog_right",
                     "differ_earlier_value_error", "differ_earlier_label_error", "differ_same_value_other_name",

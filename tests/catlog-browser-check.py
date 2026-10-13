@@ -604,6 +604,51 @@ def check_quality(driver, browser, url, quality=None):
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
 
 
+# The agreement headline as the CatLog side writes it from the 2026-10-12 build on (catlog-v2 AGREEMENT_DEFINITIONS): the
+# first comparison on the papers read blind, with its 95% range (a string) and those papers' count. Made-up numbers.
+BLIND_AGREEMENT_FIXTURE = {
+    "papers_compared": 160, "values_approved": 2489, "agree": 2232, "agree_pct": 89.7, "first_agree": 2110,
+    "first_agree_pct": 84.8, "papers_exposed": 38, "papers_unexposed": 122, "first_agree_unexposed_pct": 85.3,
+    "first_agree_unexposed_ci95": "79.7-90.6", "first_catlog_errors": 69, "first_catlog_errors_value": 0,
+    "first_catlog_errors_label": 68, "first_catlog_errors_missed": 1, "fixed_after_comparison": 69, "catlog_value_wrong": 0,
+}
+BLIND_SENTENCE = ("At the first comparison, before any fix, CatLog matched 85.3% (95% range 79.7\u201390.6%) of the values human "
+                  "reviewers approved on the 122 papers read blind (CatLog's readers never opened database or earlier-catalog files).")
+
+
+def check_blind_headline(driver, browser, url):
+    """With the blind headline in the snapshot, Stats' lead and the Guide's method section say the same sentence: the first
+    comparison on the papers read blind, its 95% range and what read blind means; after fixes only as a secondary line.
+    The fixture is set in Chrome before the page starts (the data files are not changed)."""
+    if browser != "chrome":
+        return
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+          set(value) {
+            if (value?.summary?.overview) value.summary.overview.quality = { ...(value.summary.overview.quality || {}), agreement: %s };
+            Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+          } });
+    """ % json.dumps(BLIND_AGREEMENT_FIXTURE)})
+    try:
+        set_browse_viewport(driver, browser, 1440, 1000)
+        driver.get("about:blank")
+        driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+        lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead"))
+        assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").text == BLIND_SENTENCE, lead.text
+        figure = lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
+        assert "85.3%" in figure and "95% range 79.7\u201390.6%" in figure and "122 papers read blind" in figure, figure
+        assert "Now, after fixes" in lead.text and "89.7%" not in lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").text
+        driver.get("about:blank")
+        driver.get(url + "#guide-method")
+        wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+        guide = driver.execute_script(GUIDE_LEAD_JS)
+        assert guide and BLIND_SENTENCE in guide["text"], guide
+        assert_document_stays(driver, "Guide with the blind headline")
+    finally:
+        driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+
+
 # Figures 3-5 as the CatLog side will write them into overview.quality (the design spec's counts); no snapshot has them yet.
 FIGURES_FIXTURE = {
     "db_compare": {"kcat": {"same": 28743, "differs": 2964, "absent": 494}, "km": {"same": 32551, "differs": 2867, "absent": 307},
@@ -2187,6 +2232,7 @@ def main():
         quality = (stats_overview(manifest) or {}).get("quality")
         if quality or args.browser == "chrome":
             check_quality(driver, args.browser, url, quality)
+        check_blind_headline(driver, args.browser, url)
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         browse = []

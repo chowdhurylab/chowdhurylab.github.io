@@ -3611,6 +3611,18 @@
     return low <= high && high <= 100 ? `${low.toFixed(1)}–${high.toFixed(1)}%` : "";
   }
 
+  // The blind headline in one sentence, said the same way in Stats' lead, the Guide's method section and (shortened) on
+  // Team: the first comparison, before any fix, its 95% range and the papers read blind, with what "read blind" means
+  // (catlog-v2 AGREEMENT_DEFINITIONS first_agree_unexposed_pct). No reason is given for any gap to other papers.
+  // Plain text, or HTML with the percent bolded when `html` is set (the Guide).
+  const BLIND_DEFINITION = "CatLog's readers never opened database or earlier-catalog files";
+  function blindHeadlineSentence(headline, { html = false } = {}) {
+    const text = html ? escapeHtml : (value) => value;
+    const percent = html ? `<strong>${escapeHtml(headline.percent)}</strong>` : headline.percent;
+    const papers = headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers";
+    return `${text("At the first comparison, before any fix, CatLog matched ")}${percent}${text(`${headline.range ? ` (95% range ${headline.range})` : ""} of the values human reviewers approved on ${papers} read blind (${BLIND_DEFINITION}).`)}`;
+  }
+
   // What the first comparison showed CatLog had wrong (first_catlog_errors and its split), as words: "68 wrong labels,
   // 1 missed value, 0 wrong numbers or units"; the total alone when the split is missing or does not add up; null without.
   function firstComparisonErrors(a, approved) {
@@ -3642,11 +3654,9 @@
     if (!headline) return "";
     const { approved, agree, papers } = headline;
     const first = statsCount(a.first_agree, approved);
-    let text = headline.blind
-      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent}${headline.range ? ` (95% range ${headline.range})` : ""} of the values they approved. `
-      : "";
+    let text = headline.blind ? `${blindHeadlineSentence(headline)} ` : "";
     if (headline.blind || first !== null) {
-      text += `${papers ? `On all ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, ` : ""}${first !== null ? `CatLog had ${formatInteger(first)} of the ${formatInteger(approved)} approved values at the first comparison (${qualityShare(first, approved)}) and has ${formatInteger(agree)} now, after fixes (${qualityShare(agree, approved)}).` : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`}`;
+      text += `${papers ? `On all ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, ` : ""}${first !== null ? `CatLog matched ${formatInteger(first)} of the ${formatInteger(approved)} approved values at the first comparison (${qualityShare(first, approved)}) and matches ${formatInteger(agree)} now, after fixes (${qualityShare(agree, approved)}).` : `CatLog matches ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved now, after fixes (${qualityShare(agree, approved)}).`}`;
     } else {
       text += `${papers ? `On ${formatInteger(papers)} papers human reviewers checked that CatLog has since read, CatLog` : "CatLog"} has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values the reviewers approved (${qualityShare(agree, approved)}).`;
     }
@@ -3739,13 +3749,14 @@
       ? `${formatInteger(differ - open)} of ${formatInteger(differ)}; CatLog wrong in ${wrongInDiffer ? formatInteger(wrongInDiffer) : "none"}`
       : "";
     const lead = headline.blind
-      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as the reviewers for ${headline.percent}${headline.range ? ` (95% range ${headline.range})` : ""} of the values they approved.`
+      ? blindHeadlineSentence(headline)
       : `CatLog has the same value for ${formatInteger(agree)} of the ${formatInteger(approved)} values human reviewers approved${papers ? `, on ${formatInteger(papers)} papers they checked that CatLog has since read` : ""}.`;
     const facts = [
       ["Values approved", `${formatInteger(approved)}${papers ? ` on ${formatInteger(papers)} papers` : ""}`],
-      first !== null ? ["First comparison", `${formatInteger(first)} the same (${qualityShare(first, approved)})`] : null,
+      // Beside the blind headline, the first comparison on every compared paper and the count after fixes are secondary.
+      first !== null ? [headline.blind ? "First comparison, all papers" : "First comparison", `${formatInteger(first)} matched (${qualityShare(first, approved)})`] : null,
       // (without a first comparison, the big number and the sentence already give the same value count)
-      first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} (${qualityShare(agree, approved)})`] : null,
+      first !== null || headline.blind ? ["Now, after fixes", `${formatInteger(agree)} matched (${qualityShare(agree, approved)})`] : null,
       checkedDifferences ? ["Differences checked against the paper", checkedDifferences] : null,
       errors ? ["Errors found at the first comparison", errors.text] : null,
       fixed !== null ? ["Fixed after the comparison", fixedAfterComparisonText(fixed, errors)] : null,
@@ -3820,7 +3831,7 @@
       <h2 id="statsAgreementTitle">Agreement with human reviewers</h2>
       <div class="stats-lead-body">
         <div class="stats-lead-figure"><strong>${escapeHtml(headline.percent)}</strong>${headline.range ? `<span class="stats-lead-range">95% range ${escapeHtml(headline.range)}</span>` : ""}<span>${headline.blind
-          ? "the same value as the reviewers at the first comparison, on papers read without database values in view"
+          ? `of approved values matched at the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} read blind`
           : "of the values human reviewers approved are the same in CatLog"}</span></div>
         <div class="stats-lead-text">
           <p class="stats-lead-sentence">${escapeHtml(lead)}</p>
@@ -3829,7 +3840,7 @@
           ${rightText ? `<p class="stats-lead-note">${escapeHtml(rightText)}</p>` : ""}
           ${rejectedText ? `<p class="stats-lead-note">${escapeHtml(rejectedText)}</p>` : ""}
           ${directText ? `<p class="stats-lead-note">${escapeHtml(directText)}</p>` : ""}
-          <p class="stats-fig-data">${statsDataLine(`${a && overview.quality.as_of ? `Counted ${formatDate(String(overview.quality.as_of).slice(0, 10))}. ` : ""}Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection in the 2026 review of the earlier catalog, on papers CatLog has since read. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%. Differences are split by CatLog's own check against the paper, not by the reviewers.`)}</p>
+          <p class="stats-fig-data">${statsDataLine(`${a && overview.quality.as_of ? `Counted ${formatDate(String(overview.quality.as_of).slice(0, 10))}. ` : ""}Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection in the 2026 review of the earlier catalog, on papers CatLog has since read. Matched (the same value): the same paper, metric, protein, variant and substrate, and a value within 2%. Differences are split by CatLog's own check against the paper, not by the reviewers.`)}</p>
           <p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>
         </div>
       </div>
@@ -3843,7 +3854,7 @@
     if (!headline) return "";
     const percent = `<strong>${escapeHtml(headline.percent)}</strong>`;
     const sentence = headline.blind
-      ? `At the first comparison, on ${headline.blindPapers !== null ? `the ${formatInteger(headline.blindPapers)} papers` : "the papers"} CatLog read without database or earlier-catalog values in view, CatLog had the same value as human reviewers for ${percent} of the values they approved.`
+      ? blindHeadlineSentence(headline, { html: true })
       : `CatLog has the same value as human reviewers for ${percent} of the values they approved: ${formatInteger(headline.agree)} of ${formatInteger(headline.approved)}${headline.papers ? `, on ${formatInteger(headline.papers)} papers they checked that CatLog has since read` : ""}.`;
     return `<span class="guide-method-lead-title">Agreement with human reviewers</span> ${sentence} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
   }

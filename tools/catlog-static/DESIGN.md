@@ -625,8 +625,8 @@ page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: How CatLog reads and checks
 values (#guide-method: the only place the method is said in full; it opens
 with the agreement with human reviewers in a light box, the Stats lead's
-headline percent in one sentence linked to Stats, left out without agreement
-counts; then a definition list of Read from the paper, AI audits, Human
+sentence word for word (the blind headline with its 95% range and what read
+blind means) linked to Stats, left out without agreement counts; then a definition list of Read from the paper, AI audits, Human
 review, Earlier catalog and Who does it (linking to Team); the
 audit and human-review numbers are filled from the snapshot's overview when it
 has them, never typed, and the items read without numbers otherwise; badges,
