@@ -75,11 +75,6 @@
   --scroll-edge:rgba(23,33,32,0.5);
   --shadow:0 10px 26px rgba(20,34,31,0.09);
   --shadow-panel:0 0 36px rgba(20,34,31,0.16);
-  /* Team page: AI agents and people (BPG navy and brown, with light tints). */
-  --team-ai:#3C5488;
-  --team-ai-tint:#eef0f6;
-  --team-person:#7E6148;
-  --team-person-tint:#f4efea;
 }
 * { box-sizing:border-box }
 html, body { background:var(--bg) }
@@ -844,7 +839,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-heading p { max-width:72ch; margin:8px 0 0; color:var(--text-2); font-size:var(--fs-16); line-height:var(--lh-16) }
 .team-body { display:grid; gap:24px; margin-top:24px }
 .team-figure { margin:0; border:1px solid var(--line); border-radius:4px; background:var(--bg); padding:16px }
-.team-figure figcaption { margin-top:8px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.team-figure figcaption { margin-top:8px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .team-loop { display:block; width:100%; height:auto; margin:0 auto; overflow:visible; font-family:var(--font); font-variant-numeric:tabular-nums lining-nums }
 .team-loop-wide { max-width:960px }
 .team-loop-narrow { display:none; max-width:320px }
@@ -856,22 +851,26 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-dots circle { fill:var(--accent) }
 .team-station-dot { fill:var(--bg); stroke:var(--text); stroke-width:2 }
 .team-station-branch .team-station-dot { stroke:var(--text-2) }
-.team-station-name { fill:var(--text); font-size:15px; font-weight:600 }
+/* SVG text in user units on the type scale: the wide loop prints them at about 1.1x on a desktop. */
+.team-station-name { fill:var(--text); font-size:16px; font-weight:600 }
 .team-station-number { fill:var(--text-2); font-size:13px }
 .team-loop-narrow .team-station-name { font-size:14px }
 .team-loop-narrow .team-station-number { font-size:12px }
 .team-actor { cursor:default; outline:none }
-.team-actor rect { stroke-width:1.5 }
+.team-chip { stroke-width:1.5 }
 .team-actor text { fill:var(--text); font-size:14px; font-weight:500 }
-.team-actor-ai rect { fill:var(--team-ai-tint); stroke:var(--team-ai) }
-.team-actor-person rect { fill:var(--team-person-tint); stroke:var(--team-person) }
+/* AI agents on the accent tint, people in neutral grey: the status navy and the comparison brown keep their meanings. */
+.team-actor-ai .team-chip { fill:var(--accent-tint); stroke:var(--accent) }
+.team-actor-person .team-chip { fill:var(--surface-2); stroke:var(--muted) }
 .team-link { stroke:var(--line-strong); stroke-width:1.5 }
-.team-actor:focus-visible rect { stroke:var(--accent); stroke-width:3 }
+/* The focus ring stands apart from the chip, as the site's 2px ring with its offset does. */
+.team-focus-ring { fill:none; stroke:none; pointer-events:none }
+.team-actor:focus-visible .team-focus-ring { stroke:var(--accent); stroke-width:2 }
 /* Pointing at (or tabbing to) a person or agent lights their stations and fades the rest. */
 .team-highlight .team-station, .team-highlight .team-actor, .team-highlight .team-legend-item { transition:opacity 120ms ease }
 .team-highlight .team-station:not(.is-lit), .team-highlight .team-actor:not(.is-lit) { opacity:0.3 }
 .team-station.is-lit .team-station-dot { fill:var(--accent); stroke:var(--accent) }
-.team-actor.is-lit rect { stroke-width:2.5 }
+.team-actor.is-lit .team-chip { stroke-width:2.5 }
 .team-actor.is-lit .team-link { stroke:var(--accent) }
 .team-legend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px }
 .team-legend h2 { margin:0 0 8px; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
@@ -882,8 +881,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-legend-item:is(:hover,.is-lit) { background:var(--surface-2) }
 .team-legend-item:focus-visible { outline:2px solid var(--accent); outline-offset:0 }
 .team-legend-mark { flex:0 0 14px; width:14px; height:14px; margin-top:3px; border:1.5px solid }
-.team-legend-ai .team-legend-mark { border-color:var(--team-ai); border-radius:3px; background:var(--team-ai-tint) }
-.team-legend-person .team-legend-mark { border-color:var(--team-person); border-radius:50%; background:var(--team-person-tint) }
+.team-legend-ai .team-legend-mark { border-color:var(--accent); border-radius:3px; background:var(--accent-tint) }
+.team-legend-person .team-legend-mark { border-color:var(--muted); border-radius:50%; background:var(--surface-2) }
 @media (prefers-reduced-motion: reduce) {
   .team-dots { display:none }
   .team-highlight .team-station, .team-highlight .team-actor { transition:none }

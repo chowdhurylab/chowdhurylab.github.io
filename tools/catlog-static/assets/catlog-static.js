@@ -4484,8 +4484,9 @@
       const toY = Math.round((target.y - ((target.y - fromY) / length) * 9) * 10) / 10;
       return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}">
         <line class="team-link" x1="${x}" y1="${fromY}" x2="${toX}" y2="${toY}"/>
-        <rect x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
-        <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text></g>`;
+        <rect class="team-chip" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
+        <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text>
+        <rect class="team-focus-ring" x="${x - width / 2 - 4}" y="${y - height / 2 - 4}" width="${width + 8}" height="${height + 8}" rx="${actor.kind === "ai" ? 6 : height / 2 + 4}"/></g>`;
     }).join("") : "";
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");

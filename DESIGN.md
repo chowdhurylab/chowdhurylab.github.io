@@ -208,15 +208,18 @@ user approved: a racetrack of stations Papers, AI reading, AI check, CatLog,
 Human check, Rules updated and back to Papers (clockwise, small arrows), with
 Website and The paper branching off CatLog. AI agents stand above their
 stations (Download agent at Papers, Reading agents at AI reading, Checking
-agents at AI check, Audit agents at CatLog; navy rectangles), people below
+agents at AI check, Audit agents at CatLog; rectangles on the accent tint), people below
 (Supantha at Rules updated, also lighting Papers, CatLog and Website; Aarna and
-Erin at Human check; Mohammad at The paper; brown pills). First names only: no titles, ranks, model or vendor
+Erin at Human check; Mohammad at The paper; grey pills). First names only: no titles, ranks, model or vendor
 names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
 values re-checked by AI audits at CatLog, human-checked records and the
 agreement headline at Human check, records at Website), each left out when
 its field is absent. Small dots move round the track (SVG animateMotion),
-not drawn for prefers-reduced-motion. Pointing at or focusing a person or
+not drawn for prefers-reduced-motion. Its text is on the type scale (station names 16,
+numbers 13, chips 14; upright 14 and 12) and the caption 13px like Stats'; the
+chips leave the status navy and the comparison brown to their own meanings, and
+a focused chip gets a 2px accent ring set apart from it. Pointing at or focusing a person or
 agent, on the figure or in the legend under it (People and AI agents, one
 plain phrase each and where they work, in the loop's order), lights their stations and fades the
 rest. Below 960px the loop stands upright (the people and agents are in the
