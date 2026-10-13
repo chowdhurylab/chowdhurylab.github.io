@@ -2435,6 +2435,16 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     kcat_over_km_source_differs: true }), { source_kcat_over_km_values: [{ value: 126.667, unit: "s^(-1)*mM^(-1)", source_db: "oed", pmids: ["11054102"] }] });
   assert.match(one, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> s<sup>-1<\/sup>/);
   assert.doesNotMatch(one, /126\.667/);
+  // The report email quotes the listed kcat/Km the record shows, as it shows them.
+  api.renderDetail(row({ record_key: "listed-email", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
+    kcat_display: "11.333", km_display: "0.09", kcat_over_km_display: "125.92", kcat_over_km_origin: "calculated",
+    kcat_over_km_source_differs: true }), { source_kcat_over_km_values: [{ value: 126.667, unit: "s^(-1)*mM^(-1)", source_db: "oed" },
+    { value: 3.0, unit: "1/mM*1/s", source_db: "brenda" }, { value: 6.117, unit: "1/mM*1/s", source_db: "brenda" }, { value: 5, unit: "", source_db: "brenda" }] });
+  const emailHtml = element("detailContent").innerHTML;
+  const emailBody = decodeURIComponent(emailHtml.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  assert.match(emailBody, /kcat\/Km 130 mM-1 s-1; kcat\/Km listed by OED 127 s⁻¹ mM⁻¹; kcat\/Km listed by BRENDA 3\.0–6\.1 s⁻¹ mM⁻¹ \(2 values\); kcat\/Km listed by BRENDA 5 no unit\.\n/);
+  api.renderDetail(row({ record_key: "nothing-listed" }), {});
+  assert.doesNotMatch(decodeURIComponent(element("detailContent").innerHTML.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1]), /listed by/);
   assert.equal(api.listedRangeText([126.667]), "127");
   assert.equal(api.listedRangeText([0.0000123456]), "1.235 × 10⁻⁵");
   const same = api.valuesSection(row({ record_key: "listed-same", kcat_over_km: 64, kcat_over_km_display: "64" }),

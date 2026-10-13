@@ -7141,11 +7141,10 @@
   }
 
   // "kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹ (5 values)", one line per source.
-  function sourceEfficiencyRow(summary, detail) {
-    const values = shownListedEfficiencies(summary, detail);
-    if (!values.length) return "";
+  // The listed values the record shows, by source and unit: [{source, unit, values}].
+  function listedEfficiencyGroups(summary, detail) {
     const groups = new Map();
-    values.forEach((item) => {
+    shownListedEfficiencies(summary, detail).forEach((item) => {
       const source = sourceShortName(item.source_db) || "the source";
       const catalogUnit = listedEfficiencyInCatalogUnit(item.unit);
       const unitKey = catalogUnit ? "catalog" : String(item.unit || "");
@@ -7153,6 +7152,19 @@
       if (!groups.has(key)) groups.set(key, { source, unit: catalogUnit ? "s^(-1)*mM^(-1)" : String(item.unit || ""), values: [] });
       groups.get(key).values.push(Number(item.value));
     });
+    return [...groups.values()];
+  }
+
+  // The same as the report email quotes them: "kcat/Km listed by OED 3.0–6.1 s⁻¹ mM⁻¹ (5 values)".
+  function listedEfficiencyTexts(summary, detail) {
+    return listedEfficiencyGroups(summary, detail).map((group) => `kcat/Km listed by ${group.source} ${listedRangeText(group.values)} `
+      + `${group.unit ? unitText(group.unit) : UNIT_NOT_RECORDED_LABEL}`
+      + `${group.values.length > 1 ? ` (${formatInteger(group.values.length)} values)` : ""}`);
+  }
+
+  function sourceEfficiencyRow(summary, detail) {
+    const groups = listedEfficiencyGroups(summary, detail);
+    if (!groups.length) return "";
     const bySource = new Map();
     groups.forEach((group) => {
       const unit = group.unit ? ` ${unitHtml(group.unit)}` : ` ${unitMissingHtml()}`;
@@ -8212,8 +8224,9 @@
 
 
   // "Report a problem": an email to the lab with the record ID, the snapshot and the values as the record shows them
-  // (shown: a value the record shows in place of the stored one, such as the source's own kcat/Km).
-  function reportProblemHref(summary, pmids, { dois = [], standInIds = [], shown = {} } = {}) {
+  // (shown: a value the record shows in place of the stored one, such as the source's own kcat/Km; listed: the kcat/Km
+  // values its sources list, as the record shows them under Values).
+  function reportProblemHref(summary, pmids, { dois = [], standInIds = [], shown = {}, listed = [] } = {}) {
     const key = summary.record_key || summary.measurement_key || "";
     // A Ki only when the record shows one (its detail says it has one), as the Values table does.
     const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"], ["ki", "Ki"]]
@@ -8224,6 +8237,7 @@
       recordedName(summary.organism) || "organism not recorded",
       recordedName(summary.substrate_name) || "substrate not recorded",
       ...values,
+      ...listed,
       pmids.length ? `PMID ${pmids.slice(0, 5).join(", ")}${pmids.length > 5 ? ` and ${pmids.length - 5} more` : ""}` : "",
       // Without a PMID the paper is named by its DOI (and a paper's stand-in ID).
       pmids.length ? "" : [...dois.slice(0, 3).map((doi) => `DOI ${doi}`), ...standInIds.slice(0, 3).map((id) => `paper ${id}`)].join(", "),
@@ -8826,7 +8840,8 @@
     // The values the record shows where they differ from the stored ones (the source's own kcat/Km), for the report email.
     const consistentShown = measurementNotes(summary, detail, { proof: v2Proof }).consistent;
     const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
-    const reportHref = reportProblemHref(metricSummaryFor(summary, detail), pmids, { dois, standInIds, shown: shownValues });
+    const reportHref = reportProblemHref(metricSummaryFor(summary, detail), pmids,
+      { dois, standInIds, shown: shownValues, listed: listedEfficiencyTexts(summary, detail) });
     // The order (design spec 5): what was measured, where it comes from and how it was checked, under which conditions,
     // which protein and substrate, the paper, the databases, the review; the source's own fields last.
     $("detailContent").innerHTML = `

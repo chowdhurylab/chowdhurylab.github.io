@@ -530,8 +530,9 @@ is left out, never an empty heading. The order (design spec 5):
   Human review line with the reviewer's facts-only note on every record that
   has a mark (no review year); then Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
-  the values as the record shows them, a Ki included; the DOI when there is no
-  PMID). Download record (and This page as JSON) saves one flat object: the Full
+  the values as the record shows them, a Ki included, and the kcat/Km its
+  sources list when the record shows one, "kcat/Km listed by OED 3.0–6.1 s⁻¹
+  mM⁻¹ (5 values)"; the DOI when there is no PMID). Download record (and This page as JSON) saves one flat object: the Full
   data's field names for the values (ki and ki_unit when the record shows a Ki),
   units, conditions, paper IDs, UniProt ID, sequence and
   SMILES; the record's own words for review result, source, method, check,
