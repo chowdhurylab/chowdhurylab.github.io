@@ -562,7 +562,9 @@ found at once: A, B, G, C, D, E, F, H.
   keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; not printed
   in the paper."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists its
   own kcat/Km (above)." when its sources list one, never "not printed" or
-  "different": a listed value is often the printed one, the same to the figures shown),
+  "different": a listed value is often the printed one, the same to the figures shown;
+  in the grey notes, the empty line and the "kcat/Km listed by OED" label kcat, Km, kcat/Km
+  and Ki are set as the table's rows set them, italic k or K with a subscript),
   then each quoted line once (a line another value's line continues, one excerpt
   cut at two lengths, is quoted once, the longer): one line gives its place,
   "Table 2 row, as extracted from the paper's text" ("Table 2, as extracted ..."

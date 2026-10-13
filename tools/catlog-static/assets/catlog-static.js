@@ -7904,7 +7904,9 @@
       const html = `<span class="source-efficiency-value"><span>${number}${unit}</span>${count}</span>`;
       bySource.set(group.source, [...(bySource.get(group.source) || []), html]);
     });
-    return [...bySource].map(([source, items]) => linkedKv(`kcat/Km listed by ${source}`, items.join(""))).join("");
+    // Its label names kcat/Km as the Values table does (metricWordsHtml).
+    return [...bySource].map(([source, items]) => `<div class="kv-line"><dt>${metricWordsHtml(escapePublic(`kcat/Km listed by ${source}`))}</dt>`
+      + `<dd>${items.join("")}</dd></div>`).join("");
   }
 
   // kcat ÷ Km against every kcat/Km the sources list (in catalog units): a note when all are more than 2-fold away.
@@ -8257,6 +8259,13 @@
     ["kcat_over_km", "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>"],
     ["ki", "<i>K</i><sub>i</sub>"],
   ];
+  // kcat, Km, kcat/Km and Ki in the Values section's own lines (the notes under its table, its empty line, "kcat/Km listed
+  // by OED") as its rows name them: italic k or K with a subscript. Takes escaped text; whole words only.
+  const METRIC_WORD_HTML = Object.fromEntries([["kcat/Km", "kcat_over_km"], ["kcat", "kcat"], ["Km", "km"], ["Ki", "ki"]]
+    .map(([word, field]) => [word, VALUE_FIELDS.find(([key]) => key === field)[1]]));
+  function metricWordsHtml(html) {
+    return String(html ?? "").replace(/(^|[^\w/])(kcat\/Km|kcat|Km|Ki)(?![\w/])/g, (_match, lead, word) => `${lead}${METRIC_WORD_HTML[word]}`);
+  }
   // The proof line (a record read from the paper) that gives a field's value, or -1.
   function proofLineIndex(proof, field) {
     return proof ? proof.lines.findIndex((line) => (v2MetricLabels[line.metric] || [])[0] === field) : -1;
@@ -8284,11 +8293,11 @@
         if (!plain.includes(line.metric)) plain.push(line.metric);
       } else {
         const said = conversion.replace(/(printed unit read as )(.+)$/, (_m, head, unit) => `${head}${catlogUnitText(unit)}`);
-        own.push(`${escapePublic(line.metric)}: ${caretHtml(escapePublic(said))}.`);
+        own.push(`${metricWordsHtml(escapePublic(line.metric))}: ${caretHtml(escapePublic(said))}.`);
       }
     });
     const shared = plain.length
-      ? [`${escapePublic(sentenceList(plain))}: converted by code from the printed ${plain.length > 1 ? "units" : "unit"}.`]
+      ? [`${metricWordsHtml(escapePublic(sentenceList(plain)))}: converted by code from the printed ${plain.length > 1 ? "units" : "unit"}.`]
       : [];
     return [...shared, ...own];
   }
@@ -8390,13 +8399,13 @@
     const greyNotes = [
       // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
-        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${escapeHtml(calcNoCheck)}${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${metricWordsHtml(escapeHtml(calcNoCheck))}${withheldNote ? ` ${metricWordsHtml(escapeHtml(withheldNote))}` : ""}`
         : (withheldNote
-            ? escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`)
+            ? metricWordsHtml(escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`))
             : ""),
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")
-        ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`
+        ? `<span class="metric-origin">calc.</span> ${metricWordsHtml(escapeHtml(calcNote))}${metricWordsHtml(escapeHtml(calcListed))}`
         : "",
       !printedColumn && printedUnderPaper && rows.length ? escapeHtml(PRINTED_UNDER_PAPER_NOTE) : "",
     ].filter(Boolean);
@@ -8435,7 +8444,7 @@
       : "";
     return detailSection("values", "Values", [
       table,
-      emptyNote ? `<p class="values-empty">${escapeHtml(emptyNote)}</p>` : "",
+      emptyNote ? `<p class="values-empty">${metricWordsHtml(escapeHtml(emptyNote))}</p>` : "",
       listed ? kvList([listed], "measurement-listed") : "",
       flagNotesHtml(notes),
       greyNotes.length ? `<ul class="value-notes">${greyNotes.map((note) => `<li>${note}</li>`).join("")}</ul>` : "",

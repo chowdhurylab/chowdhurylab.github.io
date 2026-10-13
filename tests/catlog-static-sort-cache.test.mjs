@@ -2220,6 +2220,9 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
 
 // The record's Values and Conditions sections together (what the round-4 Measurement and Assay conditions showed).
 const measurementSection = (summary, detail) => api.valuesSection(summary, detail) + api.conditionsSection(summary, detail);
+// The Values section's own lines write kcat, Km, kcat/Km and Ki as its table does (italic k or K, subscript); the checks of
+// their words read them plain.
+const plainMetricNames = (html) => html.replace(/<i>([kK])<\/i><sub>(cat|m|i)<\/sub>/g, "$1$2");
 const kiMeasurementHtml = measurementSection(row(), {
   has_ki: true,
   ki_display: "0.25",
@@ -2471,19 +2474,22 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   const listedOnly = { source_kcat_over_km_values: [brenda(0.5, "s^(-1)*mM^(-1)"), brenda(50, "s^(-1)*mM^(-1)"), brenda(0.5, null), brenda(50, null)] };
   const empty = api.valuesSection(row({ record_key: "listed-only", source_db: "brenda", kcat: null, km: null, kcat_over_km: null,
     kcat_display: null, km_display: null, kcat_over_km_display: null }), listedOnly);
-  assert.match(empty, /No kcat, Km or kcat\/Km is stored for this record; BRENDA lists a kcat\/Km for it \(below\)\./);
-  assert.match(empty, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">0\.50<\/span>–<span class="listed-end">50<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
+  assert.match(plainMetricNames(empty), /No kcat, Km or kcat\/Km is stored for this record; BRENDA lists a kcat\/Km for it \(below\)\./);
+  // Its empty line and the listed values' label name the parameters as the Values table does.
+  assert.match(empty, /<p class="values-empty">No <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> is stored/);
+  assert.match(empty, /<dt><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> listed by BRENDA<\/dt>/);
+  assert.match(plainMetricNames(empty), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">0\.50<\/span>–<span class="listed-end">50<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
   assert.doesNotMatch(empty, /no unit/, "a number BRENDA also gives with no unit is listed once, in its unit");
   const pair = api.valuesSection(row({ record_key: "listed-pair", source_db: "brenda", kcat: 17479, km: 1.86, kcat_over_km: null,
     kcat_display: "17479", km_display: "1.86", kcat_over_km_display: null }), { source_kcat_over_km_values: [brenda(9397, "s^(-1)*mM^(-1)"), brenda(9397, null)] });
-  assert.match(pair, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> s<sup>-1<\/sup>/);
+  assert.match(plainMetricNames(pair), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> s<sup>-1<\/sup>/);
   assert.doesNotMatch(pair, /flag-notes|kcat\/Km mismatch/, "no new caution: the table's cautions stay CatLog's flags");
   // One listed value follows the display rule too, as the range's ends are rounded (341905f35e2de883: OED's 126.667 shows
   // 127, a ÷60 artefact; 9397 keeps its 4 figures).
   const one = api.valuesSection(row({ record_key: "listed-one", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
     kcat_display: "11.333", km_display: "0.09", kcat_over_km_display: "125.92", kcat_over_km_origin: "calculated",
     kcat_over_km_source_differs: true }), { source_kcat_over_km_values: [{ value: 126.667, unit: "s^(-1)*mM^(-1)", source_db: "oed", pmids: ["11054102"] }] });
-  assert.match(one, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> s<sup>-1<\/sup>/);
+  assert.match(plainMetricNames(one), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> s<sup>-1<\/sup>/);
   assert.doesNotMatch(one, /126\.667/);
   // The report email quotes the listed kcat/Km the record shows, as it shows them.
   api.renderDetail(row({ record_key: "listed-email", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
@@ -2707,7 +2713,7 @@ api.renderDetail(row({ record_key: "unknowns-v2", source_db: "primary_paper_dire
   organism: "Unknown", substrate_name: "Unknown" }), {});
 assert.match(element("detailContent").innerHTML, /EC 1\.1\.1\.1 &middot; organism not stated in the paper<\/p>/);
 assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Not stated in the paper<\/span>/);
-assert.match(referenceHtml, /No kcat, Km or kcat\/Km is stored for this record\./);
+assert.match(plainMetricNames(referenceHtml), /No kcat, Km or kcat\/Km is stored for this record\./);
 assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
@@ -2781,7 +2787,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.match(html, /compared each value with the paper; units converted by code\./);
   assert.match(html, /<dt>Second check<\/dt><dd>kcat: confirmed; Km: unit set to mM\.<\/dd>/);
-  assert.match(html, /<ul class="value-notes"><li>kcat: converted by code from the printed unit\.<\/li><\/ul>/);
+  assert.match(html, /<ul class="value-notes"><li><i>k<\/i><sub>cat<\/sub>: converted by code from the printed unit\.<\/li><\/ul>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
   assert.match(badge, /aria-label="Accepted, from paper"/);
@@ -2792,7 +2798,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", "converted by code, printed unit read as 10^3 s-1", "corrected: unit set to 10^3 s-1")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /<dt>Second check<\/dt><dd>Unit set to 10³ s⁻¹ for every value\.<\/dd>/);
-  assert.match(html, /<li>kcat: converted by code, printed unit read as 10³ s⁻¹\.<\/li>/);
+  assert.match(html, /<li><i>k<\/i><sub>cat<\/sub>: converted by code, printed unit read as 10³ s⁻¹\.<\/li>/);
   assert.equal(api.catlogUnitText("s-1 mM-1"), "s⁻¹ mM⁻¹");
   assert.equal(api.catlogUnitText("M-1s-1"), "M⁻¹s⁻¹");
   assert.equal(api.catlogUnitText("min-1 µM-1"), "min⁻¹ µM⁻¹");
@@ -2839,7 +2845,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The value carries the "!" (its amber note says which unit and why); the grey note says only that code converted it.
   assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
   assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>-1<\/sup> min<sup>-1<\/sup>/);
-  assert.match(confirmedHtml, /<li>kcat, Km and kcat\/Km: converted by code from the printed units\.<\/li>/);
+  assert.match(plainMetricNames(confirmedHtml), /<li>kcat, Km and kcat\/Km: converted by code from the printed units\.<\/li>/);
   assert.doesNotMatch(confirmedHtml, /printed unit read as/);
   const bothSummary = v2({ record_key: "unit-both", kcat: 150, km: 2.9, kcat_over_km: 54, kcat_display: "150", km_display: "2.9",
     kcat_over_km_display: "54", kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)" });
@@ -2877,7 +2883,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
-  assert.match(sameHtml, /<li>kcat\/Km: converted by code, printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
+  assert.match(plainMetricNames(sameHtml), /<li>kcat\/Km: converted by code, printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
 // when every one is more than 2-fold from kcat ÷ Km, an amber note says so.
@@ -2887,20 +2893,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_source_differs: true, source_db: "oed" });
   const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
   const html = measurementSection(merged, { source_kcat_over_km_values: listed });
-  assert.match(html, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
+  assert.match(plainMetricNames(html), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   // Every number in the Value column ends at the same place: a row without calc. or "!" keeps their space, unseen.
   assert.match(html, /<span class="vt-number">7\.33<\/span><small class="metric-origin vt-ghost" aria-hidden="true">calc\.<\/small><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/);
   assert.match(html, /<span class="vt-number">15<\/span><small class="metric-origin" title="[^"]+">calc\.<\/small><button class="value-flag"/);
-  assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
+  assert.ok(plainMetricNames(html).indexOf("kcat/Km listed by OED") >= 0
+    && plainMetricNames(html).indexOf("kcat/Km listed by OED") < plainMetricNames(html).indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
   // Its calc. note never says the source does not print a kcat/Km: it says CatLog calculated it and points at the listed one.
-  assert.match(html, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists its own kcat\/Km \(above\)\.<\/li>/);
+  assert.match(plainMetricNames(html), /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists its own kcat\/Km \(above\)\.<\/li>/);
+  assert.match(html, /<span class="metric-origin">calc\.<\/span> <i>k<\/i><sub>cat<\/sub> ÷ <i>K<\/i><sub>m<\/sub>, calculated by CatLog\. OED lists its own <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> \(above\)\.<\/li>/);
   assert.doesNotMatch(html, /not printed in the source/);
   const alone = measurementSection(merged, {});
-  assert.match(alone, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\.<\/li>/);
+  assert.match(plainMetricNames(alone), /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\.<\/li>/);
   const twoSources = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 40, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(twoSources, /calculated by CatLog\. OED and BRENDA list their own kcat\/Km values \(above\)\./);
+  assert.match(plainMetricNames(twoSources), /calculated by CatLog\. OED and BRENDA list their own kcat\/Km values \(above\)\./);
   // CatLog's flag for the same conflict: a kcat/Km mismatch caution in the table and the filter; the record's note is the
   // one above, never the flag's name.
   const flagged = Object.assign(row({ ...merged, condition_flags: ["kcat_over_km_source_mismatch"] }), {});
@@ -2912,7 +2920,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(measurementSection(flagged, {}), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
   assert.equal(api.rowCautionBits(row({ record_key: "ph-only", condition_flags: ["ph_outside_0_14"] })), 16, "a flag of no group is no caution, as Stats counts it");
   const close = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(close, /kcat\/Km listed by BRENDA/);
+  assert.match(plainMetricNames(close), /kcat\/Km listed by BRENDA/);
   assert.doesNotMatch(close, /fold above|kcat\/Km mismatch/, "one listed value agrees: no note");
   // One kcat/Km flagged against kcat ÷ Km and against the listed values: one note says both (f93512e053523964).
   const older = (key, kcat, km, ratio, flags) => row({ record_key: key, kcat, km, kcat_over_km: Number(ratio), kcat_display: String(kcat),
@@ -3704,7 +3712,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The heading keeps the calc. space as well (the stylesheet draws its unseen "calc.").
   assert.match(element("detailContent").innerHTML, /<span class="vt-head">Value<span class="value-approved vt-ghost" aria-hidden="true"><svg[^>]*>.*?<\/svg><\/span><small class="metric-origin vt-ghost" aria-hidden="true"><\/small><\/span><\/th>/);
   // The line under the table says why the calc. kcat/Km beside checked values has none.
-  assert.match(element("detailContent").innerHTML, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
   // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") carries no check, also in
@@ -3715,7 +3723,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.match(html, /Km is above 10 M; the unit or the value may be wrong\./);
   assert.deepEqual(approvedValues(html), ["kcat", "kcat/Km"]);
-  assert.match(html, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
   assert.deepEqual((await recordDownloadPayload(bigKm, {})).human_approved_values, ["kcat", "kcat/Km"]);
   api.renderDetail(row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 9e-7, km_display: "9e-7" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "kcat/Km"], "Km below 1 nM: no check");
@@ -3725,7 +3733,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), []);
   assert.doesNotMatch(html, /value-approved/);
-  assert.match(html, /<li>A human reviewer approved Km, but it carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(html, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub>, but it carries no check: the note above questions its unit or value\.<\/li>/);
   assert.ok(!("human_approved_values" in await recordDownloadPayload(onlyKm, {})), "no check shown, none listed");
   api.setHumanReviewMarks({});
   api.renderDetail(accepted, {});
