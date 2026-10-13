@@ -129,6 +129,9 @@ as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
 "Filters · Clear all · ×" at the top and "Show N records" (accent, 44px) at the
 bottom; Esc, × or that button close it, and Escape never closes the sidebar.
+A control reached with Tab or Shift+Tab scrolls clear of the sticky heading and
+footer, focus ring included (scroll padding 56px at the top, 80px at the bottom
+of the phone sheet).
 Beside the open sidebar from 1280px the table fits, Review result always in
 view without sideways scrolling: the name columns give way first to two lines
 broken between words (a line may also break after a hyphen, comma or slash),

@@ -231,7 +231,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 }
 .double-chevron { flex:0 0 16px; width:16px; height:16px; color:var(--muted) }
 /* The sidebar (and, on phones, the sheet): a sticky heading, then the filter groups. */
-.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain }
+/* A control reached with Tab or Shift+Tab scrolls clear of the sticky 48px heading, with room for its focus ring. */
+.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:56px }
 .filter-rail:focus { outline:none }
 .rail-heading { position:sticky; top:0; z-index:2; display:flex; flex-shrink:0; min-height:48px; align-items:center; gap:var(--sp-2); border-bottom:1px solid var(--line-soft); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-4) }
 .rail-title { margin:0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
@@ -312,7 +313,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    at the bottom. */
 .filter-footer { display:none }
 @media (max-width: 640px) {
-  .filter-rail { position:fixed; inset:0; z-index:80; height:100vh; height:100dvh; box-shadow:var(--shadow-panel); transform:translateY(calc(100% + 24px)); visibility:hidden; pointer-events:none; transition:transform 200ms ease, visibility 200ms ease }
+  /* ...and clear of the sticky 69px "Show N records" footer. */
+  .filter-rail { position:fixed; inset:0; z-index:80; height:100vh; height:100dvh; box-shadow:var(--shadow-panel); transform:translateY(calc(100% + 24px)); visibility:hidden; pointer-events:none; transition:transform 200ms ease, visibility 200ms ease; scroll-padding-bottom:80px }
   body.filters-open .filter-rail { transform:translateY(0); visibility:visible; pointer-events:auto }
   .filter-backdrop { position:fixed; inset:0; z-index:75; border:0; background:var(--overlay); cursor:default; opacity:0; visibility:hidden; pointer-events:none; transition:opacity 160ms ease, visibility 160ms ease }
   body.filters-open .filter-backdrop { opacity:1; visibility:visible; pointer-events:auto }
