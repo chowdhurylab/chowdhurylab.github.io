@@ -296,6 +296,28 @@ class OverviewTests(unittest.TestCase):
         result = followup.marks_quality({"quality": {"agreement": {**blind, "papers_unexposed": "122"}}})
         self.assertNotIn("papers_unexposed", result["agreement"])
 
+    def test_overview_copies_the_review_headline(self):
+        # quality.review (the user's headline from 2026-10-13: what the reviewers' own files say) reaches the overview: per
+        # reviewed catalog its numbers, strings and the other_by_kind map; lists, definitions and broken values stay behind.
+        v1 = {"entries": 2674, "papers": 408, "entries_without_paper": 166, "approved": 2464, "rejected": 210,
+              "value_disputed": 3, "value_correct_pct": 99.9, "value_disputed_checked_as_printed": 3,
+              "value_disputed_unchecked": [], "value_missing": 31, "value_missing_pct": 1.2, "value_missing_named": 32,
+              "other_disputed": 177, "other_disputed_pct": 6.6,
+              "other_by_kind": {"could not find the value": 153, "organism name": 13, "DOI": 5, "substrate name": 3,
+                                "duplicate": 2, "paper evidence mismatch": 1, "broken": "x", "": 4}}
+        quality = {"as_of": "2026-10-13", "v2_found": 3625, "v2_found_after_fixes": 3625, "v2_approved_total": 4074,
+                   "review": {"v1": {**v1, "definitions": {"entries": "text"}, "flag": True, "nested": {"a": 1},
+                                     "negative": -1},
+                              "v2": {"papers": 3}, "draft": {"entries": 1}}}
+        result = followup.marks_quality({"quality": quality})
+        kept = {key: value for key, value in v1.items() if key != "value_disputed_unchecked"}
+        kept["other_by_kind"] = {key: value for key, value in v1["other_by_kind"].items() if key and key != "broken"}
+        # v2 without an entry count and a key that names no catalog are left out
+        self.assertEqual(result["review"], {"v1": kept})
+        self.assertEqual((result["v2_found"], result["v2_approved_total"]), (3625, 4074))
+        self.assertNotIn("review", followup.marks_quality({"quality": {"audit_values": 1, "review": {"v1": [1]}}}))
+        self.assertNotIn("review", followup.marks_quality({"quality": {"audit_values": 1, "review": [1]}}))
+
     def test_overview_keeps_every_agreement_field_the_page_reads(self):
         # Every quality.agreement field the page's code reads reaches the overview; the 2026-10-12 build's shape (the
         # headline's range as a string among whole counts and percentages) is copied whole, its definitions left behind.

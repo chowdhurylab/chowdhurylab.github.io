@@ -559,7 +559,8 @@ def summarize_overview(rows, marks=None):
 
 # Audit and human-review results the CatLog side writes into the marks file's top-level "quality" object (from its audit
 # record and review accuracy). The overview keeps these fields only: whole counts, and the date they were counted.
-# v2_found is the first comparison's count (since 2026-10-12); v2_found_after_fixes the count after fixes.
+# v2_found is the reviewers' approved values CatLog v2 has as it is now, after fixes (the CatLog side changed it from the
+# first comparison's count on 2026-10-13; v2_found_after_fixes is the same count), of v2_approved_total.
 QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared_papers_v1", "wrong_v1",
                   "label_or_annotation_v1", "v2_found", "v2_found_after_fixes", "v2_approved_total",
                   "v2_differences_checked", "v2_wrong")
@@ -580,11 +581,38 @@ AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_
                     "direct_values_agree", "direct_values_disagree", "direct_values_other",
                     "direct_disagree_wrong_after_audit", "direct_disagree_audit_pending")
 # Agreement fields that are a range of percentages, written "low-high" (catlog-v2 human_review: f"{low:.1f}-{high:.1f}").
+# The first-comparison and blind fields are copied for reference only: the page reads none of them for a headline.
 AGREEMENT_RANGES = ("first_agree_unexposed_ci95",)
 AGREEMENT_RANGE = re.compile(r"^\d+(?:\.\d+)?-\d+(?:\.\d+)?$")
 # Stats figures 3-5 (design spec section 6), when the CatLog side writes them into the quality object: nested objects of
 # whole counts only (anything else in them is dropped), copied as they are; the page checks how they add up.
 QUALITY_FIGURES = ("db_compare", "earlier_corrections", "replaced")
+# The human-review headline (the user, 2026-10-13): quality.review, what the reviewers' own files say, one object per
+# catalog reviewed ("v1": CatLog v1 entries; "v2" once reviewers check CatLog v2 entries). Each keeps its numbers
+# (entries, papers, value_correct_pct, value_missing, ...), its short strings and the other_by_kind map (a kind of other
+# disagreement and its count); lists, nested objects and the definitions stay in the marks file.
+REVIEW_NAME = re.compile(r"^v\d+$")
+REVIEW_MAPS = ("other_by_kind",)
+
+
+def review_counts(value):
+    """One reviewed catalog's numbers, strings and by-kind counts (see REVIEW_NAME), or None when nothing is left."""
+    if not isinstance(value, dict):
+        return None
+    kept = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or key == "definitions":
+            continue
+        if isinstance(item, (int, float)) and not isinstance(item, bool) and math.isfinite(item) and item >= 0:
+            kept[key] = item
+        elif isinstance(item, str) and item.strip() and len(item) <= 200:
+            kept[key] = item
+        elif key in REVIEW_MAPS and isinstance(item, dict):
+            kinds = {kind: count for kind, count in item.items() if isinstance(kind, str) and kind.strip()
+                     and isinstance(count, int) and not isinstance(count, bool) and count >= 0}
+            if kinds:
+                kept[key] = kinds
+    return kept if isinstance(kept.get("entries"), int) else None
 
 
 def whole_counts(value, depth=0):
@@ -624,6 +652,12 @@ def marks_quality(payload):
         figure = whole_counts(quality.get(key)) if isinstance(quality.get(key), dict) else None
         if figure:
             kept[key] = figure
+    review = quality.get("review")
+    if isinstance(review, dict):
+        reviews = {name: counts for name, counts in ((name, review_counts(item)) for name, item in review.items()
+                                                     if isinstance(name, str) and REVIEW_NAME.match(name)) if counts}
+        if reviews:
+            kept["review"] = reviews
     as_of = quality.get("as_of")
     if kept and isinstance(as_of, str) and re.match(r"^\d{4}-\d{2}-\d{2}", as_of):
         kept = {"as_of": as_of[:10], **kept}
