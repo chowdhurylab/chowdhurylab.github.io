@@ -692,7 +692,9 @@ found at once: A, B, G, C, D, E, F, H.
   "2.114962 × 10⁷"; only Vmax and pH are numbers), units as the record's
   units read ("kcat unit s⁻¹ → min⁻¹", never "s^(-1)"; uM as µM) and a
   replaced sequence or SMILES ("Replaced", not repeated); a field whose value
-  did not change is not listed; one closing note, "Changed in the earlier
+  did not change is not listed, and two stored copies of one field that read the
+  same (sequence and canonical_sequence, uniprot_id and primary_uniprot_id: same
+  name, same before → after) are one item; one closing note, "Changed in the earlier
   automated review to what the paper prints." (and "More records like this:
   Corrected earlier" when Browse has that option). A corrected record without its
   trail says so in its Review result line ("this snapshot does not list the

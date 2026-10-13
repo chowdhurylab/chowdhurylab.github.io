@@ -3407,6 +3407,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "ph", before: 7, after: 7.5, kind: "different" },
     { field: "temperature_k", before: 298.15, after: 303.15, kind: "different" },
     { field: "uniprot_id", old_value: "P00325", new_value: "P00326", kind: "changed" },
+    { field: "primary_uniprot_id", old_value: "P00325", new_value: "P00326", kind: "changed", where: "Methods: UniProt P00326" },
+    { field: "sequence", kind: "replaced" },
+    { field: "canonical_sequence", kind: "replaced" },
+    { field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" },
     { field: "pubmed_id", before: "21149620", after: "21149602", kind: "changed" },
     { field: "ncbi_protein_id", before: null, after: 123456789, kind: "added" },
     { field: "vmax", before: 120000, after: 1200, unit: "nmol/min/mg", kind: "magnitude" },
@@ -3424,7 +3428,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>40 s⁻¹ mM⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><span>added: the source had none<\/span><\/span><\/dd>/);
   assert.match(trail, /<dt>pH<\/dt><dd><span class="cmp-value">7<span class="cmp-arrow"> → <\/span><strong>7\.5<\/strong><\/span>/);
   assert.match(trail, /<dt>Temperature<\/dt><dd><span class="cmp-value">25 °C<span class="cmp-arrow"> → <\/span><strong>30 °C<\/strong><\/span>/);
-  assert.match(trail, /<dt>UniProt<\/dt><dd><span class="cmp-value">P00325<span class="cmp-arrow"> → <\/span><strong>P00326<\/strong><\/span><\/dd>/);
+  // Two copies of one field that read the same (uniprot_id and primary_uniprot_id, sequence and canonical_sequence, a
+  // value listed twice) are one row, keeping the place in the paper either gives.
+  assert.match(trail, /<dt>UniProt<\/dt><dd><span class="cmp-value">P00325<span class="cmp-arrow"> → <\/span><strong>P00326<\/strong><\/span><small class="cmp-where">In the paper: Methods: UniProt P00326<\/small><\/dd>/);
+  const changes = trail.slice(0, trail.indexOf("</section>"));
+  assert.equal((changes.match(/<dt>UniProt<\/dt>/g) || []).length, 1, "one UniProt row");
+  assert.equal((changes.match(/<dt>Sequence<\/dt><dd><span class="cmp-value">Replaced<\/span>/g) || []).length, 1, "one Sequence row");
+  assert.equal((changes.match(/<dt><i>K<\/i><sub>m<\/sub><\/dt>/g) || []).length, 1, "one Km row");
   // Identifiers are text as given, never numbers in × 10ⁿ; a numeric field such as Vmax is written as a number.
   assert.match(trail, /<dt>PMID<\/dt><dd><span class="cmp-value">21149620<span class="cmp-arrow"> → <\/span><strong>21149602<\/strong><\/span><\/dd>/);
   assert.match(trail, /<dt>NCBI Protein<\/dt><dd><span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>123456789<\/strong><\/span>/);

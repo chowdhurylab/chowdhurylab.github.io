@@ -9400,13 +9400,40 @@
     return `${numberText(String(Math.round(celsius * 100) / 100))} °C`;
   }
 
+  // How an earlier correction of one of the record's other fields reads its before and after values.
+  function correctionOtherText(item) {
+    if (/^temperature/.test(item.key)) return (value) => correctionTemperatureText(value, item.key);
+    if (/_unit$/.test(item.key)) return correctionUnitText;
+    return (value) => (item.key === "wild_type" && typeof value === "boolean"
+      ? (value ? "wild type" : "variant")
+      : correctionValueText(value, item.unit, { asNumber: CORRECTION_NUMBER_FIELDS.has(item.key) }));
+  }
+
+  // Two stored copies of one field (sequence and canonical_sequence, uniprot_id and primary_uniprot_id) that read the
+  // same (the same name and the same before → after; a replaced sequence or SMILES by its name) are one item, which keeps
+  // the kind of change and the place in the paper either gives.
+  function mergeCorrectionCopies(items, shownOf) {
+    const merged = new Map();
+    items.forEach((item) => {
+      const key = [item.name, ...shownOf(item)].join("\u0000");
+      const kept = merged.get(key);
+      if (!kept) merged.set(key, { ...item });
+      else {
+        if (!kept.kind && item.kind) kept.kind = item.kind;
+        if (!kept.where && item.where) kept.where = item.where;
+        if (!kept.listed && item.listed) kept.listed = item.listed;
+      }
+    });
+    return [...merged.values()];
+  }
+
   // Before → After and the kind of change, one item per changed field: kinetic values first, then the record's other
   // fields (pH, temperature, identifiers; a replaced sequence or SMILES is named, not repeated); "Before: as in OED for
   // this paper" when a database lists the earlier number, and where the paper prints the value. A field whose number did
-  // not change is not listed.
+  // not change is not listed, nor a second copy of a field that reads the same (mergeCorrectionCopies).
   function earlierCorrectionsHtml(items, recordKey) {
-    const valueItems = [];
-    const otherItems = [];
+    let valueItems = [];
+    let otherItems = [];
     items.forEach((item) => {
       const key = item.field.toLowerCase().replace(/\s+/g, "");
       const field = CORRECTION_FIELDS[key];
@@ -9420,6 +9447,10 @@
       if (hasBefore && String(item.before) === String(item.after)) return;
       otherItems.push({ ...item, key, name: CORRECTION_LABELS[key] || escapePublic(item.field.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase())) });
     });
+    valueItems = mergeCorrectionCopies(valueItems, (item) => [correctionValueText(item.before, item.unit), correctionValueText(item.after, item.unit)]);
+    otherItems = mergeCorrectionCopies(otherItems, (item) => (/sequence|smiles/.test(item.key)
+      ? ["Replaced"]
+      : [correctionOtherText(item)(item.before), correctionOtherText(item)(item.after)]));
     if (!valueItems.length && !otherItems.length) return "";
     const changeHtml = (item) => {
       const change = changeWords(item);
@@ -9440,12 +9471,7 @@
       }),
       ...otherItems.map((item) => {
         if (/sequence|smiles/.test(item.key)) return comparisonItemHtml(item.name, "Replaced", whereHtml(item));
-        const text = /^temperature/.test(item.key)
-          ? (value) => correctionTemperatureText(value, item.key)
-          : /_unit$/.test(item.key) ? correctionUnitText
-          : (value) => (item.key === "wild_type" && typeof value === "boolean"
-            ? (value ? "wild type" : "variant")
-            : correctionValueText(value, item.unit, { asNumber: CORRECTION_NUMBER_FIELDS.has(item.key) }));
+        const text = correctionOtherText(item);
         return comparisonItemHtml(item.name, `${escapePublic(text(item.before))}${arrow}<strong>${escapePublic(text(item.after))}</strong>`,
           (item.kind && !/^chang/i.test(item.kind) ? changeHtml(item) : "") + whereHtml(item));
       }),
