@@ -2448,11 +2448,20 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.equal(api.rowCautionBits(catalase), 16);
   assert.ok(api.conditionFlags(row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "min^(-1)", condition_flags: ["kcat_magnitude_needs_check"] }))
     .has("kcat_magnitude_needs_check"), "a kcat in another unit keeps its flag");
-  // A temperature caution (the filter's Temperature questionable group): the table shows no temperature, so the row has
-  // no mark for it; the record says it on its Temperature line.
+  // A temperature caution (the filter's Temperature questionable group): the table shows no temperature, so the row's "!"
+  // and its short words open the grey line under the substrate (before any other note); the record says it on its
+  // Temperature line.
   const zeroCelsius = row({ temperature_display: "", condition_flags: ["temperature_zero_celsius_needs_check"] });
   assert.equal(api.rowCautionBits(zeroCelsius), 8);
-  assert.equal(typeof api.temperatureFlagBadgeHtml, "undefined");
+  const noLookAlikes = api.lookAlikeRowKeys([]);
+  assert.equal(api.substrateNoteHtml(zeroCelsius, noLookAlikes),
+    '<small class="condition-note"><span class="value-flag" role="img" title="Temperature recorded as exactly 0 °C; may stand for a missing value" '
+    + 'aria-label="Temperature recorded as exactly 0 °C; may stand for a missing value"><span class="visually-hidden">T questionable</span></span></small>');
+  const notedZero = row({ temperature_display: "", condition_note: "+10 mM FBP", condition_flags: ["temperature_unit_needs_check"] });
+  assert.match(api.substrateNoteHtml(notedZero, noLookAlikes),
+    /^<small class="condition-note"><span class="value-flag" role="img" title="Temperature unit questionable"[^>]*><span class="visually-hidden">T questionable<\/span><\/span> <span title="\+10 mM FBP">· \+10 mM FBP<\/span><\/small>$/);
+  assert.equal(api.temperatureFlagBadgeHtml(api.conditionFlags(unflaggedLow)), "", "a Km caution leaves the substrate line unmarked");
+  assert.equal(api.substrateNoteHtml(unflaggedLow, noLookAlikes), "");
   assert.match(measurementSection(zeroCelsius, {}), /<dt>Temperature<\/dt><dd>Not shown, recorded as exactly 0 °C, which may stand for a missing value/);
 }
 // An older record that stores no kcat/Km shows the kcat/Km its sources list even when nothing differs (3d1ca368da05740a:

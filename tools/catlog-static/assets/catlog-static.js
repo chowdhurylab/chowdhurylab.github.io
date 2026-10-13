@@ -499,6 +499,13 @@
     return flagBadgeHtml(labels.join("; "), shortText);
   }
 
+  // A temperature caution (the Cautions filter's Temperature questionable group). The table shows no temperature, so its
+  // "!" and short words stand in the grey line under the substrate; the record's Temperature line says which.
+  function temperatureFlagBadgeHtml(flags) {
+    const labels = [...new Set([...flags].filter((flag) => flag.startsWith("temperature_")).map((flag) => conditionFlagLabel(flag)))];
+    return labels.length ? flagBadgeHtml(labels.join("; "), "T questionable") : "";
+  }
+
   function flagBadgeHtml(summary, shortText) {
     return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
   }
@@ -6247,13 +6254,17 @@
   const LOOK_ALIKE_NOTE = "like another record";
   const LOOK_ALIKE_TITLE = "same values as another record of this paper";
 
-  function substrateNoteHtml(row, lookAlikes) {
+  // The grey line under the substrate: the condition or look-alike note, after a temperature caution's "!" and its words
+  // when the record has one.
+  function substrateNoteHtml(row, lookAlikes, flags = conditionFlags(row)) {
     const condition = conditionNoteText(row);
     const assay = lookAlikes.get?.(row.record_key) || "";
     const note = condition || assay || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
     const title = condition || lookAlikes.titles?.get(row.record_key)
       || (assay ? `${assay}; the other values as another record of this paper` : LOOK_ALIKE_TITLE);
-    return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
+    const temperatureFlag = temperatureFlagBadgeHtml(flags);
+    if (!temperatureFlag) return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
+    return `<small class="condition-note">${temperatureFlag}${note ? ` <span title="${escapePublic(title)}">· ${escapePublic(note)}</span>` : ""}</small>`;
   }
 
   function renderRows() {
@@ -6342,7 +6353,7 @@
     const lookAlikes = lookAlikeRowKeys(pageRows);
     body.innerHTML = pageRows.map((row) => {
       const flags = conditionFlags(row);
-      const substrateNote = substrateNoteHtml(row, lookAlikes);
+      const substrateNote = substrateNoteHtml(row, lookAlikes, flags);
       const enzymeName = row.enzyme_display_name || "Name not recorded";
       // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
       const enzymeForm = enzymeFormHtml(row);
@@ -10030,6 +10041,7 @@
       rowDatabaseBits,
       databaseSummaryBits,
       valueFlagBadgeHtml,
+      temperatureFlagBadgeHtml,
       publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,

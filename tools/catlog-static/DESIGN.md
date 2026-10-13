@@ -330,16 +330,19 @@ has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"
 (they may wrap to the next line there). The table shows no temperature or pH (the
-record, the filters and the downloads have them), so a temperature caution has no
-mark in the table: the record says it on its Temperature line, and the Cautions
-filter finds it. A caution states the problem, never an
+record, the filters and the downloads have them), so a temperature caution's "!"
+and its short words, T questionable, open the grey line under the substrate, on
+desktop too (before any condition or series note, "· +10 mM FBP"; the "!" has the
+record's note as its tooltip); the record says it on its Temperature line, and the
+Cautions filter finds it. A caution states the problem, never an
 order: the tooltip is the record's note ("The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is
 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
 them."; a familiar factor is named as a fact, and on a record read from the
 paper the printed numbers' own arithmetic says when they agree in one unit); the
 short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the stored
 value on older snapshots too), kcat > 10⁸ s⁻¹ (an older snapshot's flag on a kcat
-up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit error and above diffusion limit. The
+up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit error, above diffusion limit
+and T questionable. The
 Cautions filter names kcat/Km mismatch, Possible unit or magnitude error (the
 sidebar says "Unit or magnitude error", one line at 256px; its chip and the
 Guide keep "Possible"), No unit given, Temperature questionable and No cautions.

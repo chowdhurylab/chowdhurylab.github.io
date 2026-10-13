@@ -396,6 +396,11 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 /* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
 .c-substrate.has-note .clamp-2 { max-height:17px; -webkit-line-clamp:1 }
 .condition-note { display:block; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
+/* A temperature caution (the table has no temperature column): the amber "!" with its short words, T questionable, opens
+   the line under the substrate, before any other note; in a Substrate column at its narrowest the words end in "…". */
+.condition-note .value-flag { display:inline-flex; max-width:100%; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--caution); vertical-align:top }
+.condition-note .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg) }
+.condition-note .value-flag .visually-hidden { position:static; width:auto; min-width:0; height:auto; margin:0; clip:auto; clip-path:none; text-overflow:ellipsis }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
 

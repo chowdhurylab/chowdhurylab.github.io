@@ -1363,6 +1363,23 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert heights["tagged"] and heights["noted"] and heights["heights"] == [44], (
                 f"At {width}px rows with a variant tag or a condition note stay 44px: {heights}")
+        # The table has no temperature column: a temperature caution's "!" and its words, T questionable, open the line
+        # under the substrate of every row the Temperature questionable caution finds (the rows stay 44px).
+        overview = ((driver.execute_script("return window.CATLOG_STATIC_MANIFEST") or {}).get("summary") or {}).get("overview") or {}
+        if ((overview.get("cautions") or {}).get("temperature") or 0) > 0:
+            set_browse_viewport(driver, browser, 1440, 1000)
+            open_page("#browse?caution=temperature")
+            marks = driver.execute_script("""
+                const rows = [...document.querySelectorAll('#recordsBody tr[data-key]')];
+                const marked = rows.filter(row => {
+                  const flag = row.querySelector('td.c-substrate .condition-note .value-flag');
+                  return flag && /temperature/i.test(flag.getAttribute('aria-label') || '') && flag.innerText.trim() === 'T questionable';
+                });
+                return {rows: rows.length, marked: marked.length,
+                        heights: [...new Set(rows.map(row => Math.round(row.getBoundingClientRect().height)))]};
+            """)
+            assert marks["rows"] and marks["marked"] == marks["rows"] and marks["heights"] == [44], (
+                f"Every Temperature questionable row says so under its substrate: {marks}")
         results["row-height"] = True
         # The one-line header (from 1024px) never cuts the search box's placeholder.
         for width in (1024, 1180, 1181, 1259, 1260, 1279, 1280, 1440):
