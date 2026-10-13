@@ -486,7 +486,8 @@ is left out, never an empty heading. The order (design spec 5):
   data's field names for the values (ki and ki_unit when the record shows a Ki),
   units, conditions, paper IDs, UniProt ID, sequence and
   SMILES; the record's own words for review result, source, method, check,
-  values as printed, AI audit, cautions and human review, and, when the snapshot
+  values as printed (each with the whole line quoted from the paper, which the
+  record cuts at 240 characters), AI audit, cautions and human review, and, when the snapshot
   carries them, Against the databases (each value's result, line, cause and
   evidence; or the earlier review's changes, Before, After and the kind of
   change; never an empty list or a local path); the license as the record

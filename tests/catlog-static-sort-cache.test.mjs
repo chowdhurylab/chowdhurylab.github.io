@@ -3139,7 +3139,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-lice
       proof_lines: [
         { metric: "kcat", table_label: "Table 1", printed: "135.0 ± 15.1 sec−1", check: "confirmed", conversion: "", value_display: "135.0",
           raw_value_unit_evidence: "kcat printed as 135.0 ± 15.1 sec−1. A second, separate AI run confirmed it.", normalized_value: 135 },
-        { metric: "Km", table_label: "Table 1", printed: "24.7 mM", check: "confirmed", conversion: "" },
+        { metric: "Km", table_label: "Table 1", printed: "24.7 mM", check: "confirmed", conversion: "", printed_line: `4-Aminoacetophenone | 24.7 | ${"x".repeat(300)}` },
       ] },
   );
   assert.ok(!("source_kcat_over_km_values" in v2Payload), "no listed kcat/Km, no field");
@@ -3149,7 +3149,8 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-lice
   assert.equal(v2Payload.source_license, "CC BY 4.0 (CatLog compilation)");
   assert.match(v2Payload.method, /^Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\.$/);
   assert.equal(v2Payload.check, "All values confirmed.");
-  assert.deepEqual(v2Payload.values_as_printed[0], { metric: "kcat", as_printed: "135.0 ± 15.1 sec−1", location: "Table 1", conversion: null, check: "Confirmed" });
+  assert.deepEqual(v2Payload.values_as_printed[0], { metric: "kcat", as_printed: "135.0 ± 15.1 sec−1", location: "Table 1", printed_line: null, conversion: null, check: "Confirmed" });
+  assert.equal(v2Payload.values_as_printed[1].printed_line, `4-Aminoacetophenone | 24.7 | ${"x".repeat(300)}`, "the whole line, longer than the record quotes");
   assert.deepEqual(v2Payload.pubmed_ids, ["31072150"]);
   const text = JSON.stringify(v2Payload);
   assert.doesNotMatch(text, /independent|AI run|catlog_v2|accession_resolved|normali[sz]ed|proof_lines|verification_method/);

@@ -2841,6 +2841,8 @@
           metric: line.metric,
           as_printed: fact.printed || null,
           location: v2LinePlace(line) || null,
+          // The whole line, as stored (the record quotes at most 240 characters of it).
+          printed_line: fact.printedLine || null,
           conversion: fact.conversion || null,
           check: valueCheckText(fact, {}) || null,
         };
