@@ -401,7 +401,9 @@ loading takes a moment (after 240ms), "Loading record…" and a quiet outline of
 the values in `--line-soft` bars (no animation with reduced motion). Another
 record opens at its top. The heading takes focus for screen readers; its focus
 ring shows after a key press (Enter on a row), not after a click or a link that
-opens the record. The order (design spec 5):
+opens the record. The order is design spec 5's, with G (Against the databases)
+moved up right after B (Values), so what CatLog corrected against the databases is
+found at once: A, B, G, C, D, E, F, H.
 
 - A. Header (stays in view; on phones and on screens up to 900px tall, where
   the whole header would take a third of the record or more, only the name and

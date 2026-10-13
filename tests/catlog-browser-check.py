@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import threading
 import urllib.request
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, unquote_plus, urlencode, urljoin, urlsplit, urlunsplit
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -1597,7 +1597,7 @@ def check_layout(driver, browser, url, route_label):
 RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|CatLog v2")
 
 
-RECORD_SECTIONS = ["Values", "Source", "Conditions", "Protein and substrate", "Paper", "Against the databases", "Review and audit"]
+RECORD_SECTIONS = ["Values", "Against the databases", "Source", "Conditions", "Protein and substrate", "Paper", "Review and audit"]
 
 # A malic enzyme variant with 28 substitutions (PMID 24998673): its sequence line is one long run with no spaces.
 LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
@@ -1613,8 +1613,8 @@ PHONE_LONG_WORD_RECORD = "2479abbe2effcc47"
 
 
 def check_record_panel(driver, browser, url, route_label):
-    """The record (design spec 5): header lines, then Values, Source, Conditions, Protein and substrate, Paper, Against the
-    databases (only when it has something to say), Review and audit with the record's actions last (the source's own
+    """The record (design spec 5): header lines, then Values, Against the databases (only when it has something to say),
+    Source, Conditions, Protein and substrate, Paper, Review and audit with the record's actions last (the source's own
     details are rows of Source, nothing to open at the end); a record read from the paper
     says how in its Method line (with the Guide link) and gives its values as printed; an older record names the earlier
     automated review; no labelled row shows a bare dash; Show opens a sequence under its row."""
@@ -1833,10 +1833,66 @@ def check_record_panel(driver, browser, url, route_label):
         assert f"record={disputed}" in driver.current_url, driver.current_url
         assert driver.find_element(By.CSS_SELECTOR, '#recordsBody tr[aria-selected="true"]').get_attribute("data-key") == disputed
         results["in-page-record-link"] = True
+        results.update(check_record_marks_and_paper_link(driver, browser, base, wait))
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))
         raise
     return {"route": route_label, "checked": results, "passed": True}
+
+
+def check_record_marks_and_paper_link(driver, browser, base, wait):
+    """A record a human reviewer checked shows a green check after each of its values, named "approved by a human
+    reviewer", and one line under the table saying what it means (the numbers still end at the same place); its Paper
+    section's In CatLog link opens Browse at the paper's records with the record kept open."""
+    results = {}
+    keys = driver.execute_script("""
+        const app = document.querySelector('script[src*="catlog-static.js"]');
+        const url = new URL('../data/human-review-marks.json', app.src);
+        return fetch(url).then(r => r.json()).then(d => Object.entries(d.marks || {})
+            .filter(([, mark]) => mark && mark.checked === true).map(([key]) => key).slice(0, 12)).catch(() => []);
+    """) or []
+    for key in keys:
+        driver.get("about:blank")
+        driver.get(base + f"#record={key}")
+        wait.until(lambda d: d.execute_script(
+            "return Boolean(document.querySelector('#detailContent .values-section') && !document.querySelector('#detailLoadStatus'))"
+            " || Boolean(document.querySelector('#recordsBody .empty-notice'))"))
+        if not driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-section"):
+            continue
+        # The marks may arrive after the record: it is redrawn in place.
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .value-approved[role='img']"))
+        marks = driver.execute_script("""
+            const table = document.querySelector('#detailContent .values-table');
+            const checks = [...table.querySelectorAll('.value-approved[role="img"]')];
+            const key = document.querySelector('#detailContent .value-notes .value-approved-key');
+            const panel = document.getElementById('detailPanel');
+            return {names: checks.map(e => e.getAttribute('aria-label')),
+                    colour: checks.length ? getComputedStyle(checks[0]).color : null,
+                    legend: key ? key.closest('li').innerText.trim() : null,
+                    edges: [...table.querySelectorAll('.vt-number')].map(e => Math.round(e.getBoundingClientRect().right)),
+                    sideways: panel.scrollWidth - panel.clientWidth};
+        """)
+        assert marks["names"] and set(marks["names"]) == {"approved by a human reviewer"}, marks
+        assert marks["colour"] == "rgb(23, 115, 58)", marks["colour"]
+        assert (marks["legend"] or "").startswith("Approved by a human reviewer"), marks["legend"]
+        assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
+        assert marks["sideways"] <= 1, marks
+        results["value-approved-checks"] = True
+        link = driver.find_elements(By.CSS_SELECTOR, "#detailContent .paper-section a.paper-records-link")
+        if link:
+            href = urlsplit(link[0].get_attribute("href")).fragment
+            assert re.match(r"browse\?q=(?:pmid|doi):\S+&record=" + re.escape(key) + "$", href), href
+            count = re.match(r"([\d,]+) records from this paper", link[0].text)
+            query = re.match(r"browse\?q=([^&]+)", href).group(1)
+            link[0].click()
+            wait.until(lambda d: d.find_element(By.ID, "globalSearchInput").get_attribute("value") == unquote_plus(query))
+            if count:
+                wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count.group(1)} records")
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')")
+                       and d.find_element(By.ID, "detailRecordKey").text == key)
+            results["paper-records-link"] = True
+        break
+    return results
 
 
 def check(driver, browser, url):

@@ -9194,16 +9194,17 @@
     const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
     const reportHref = reportProblemHref(metricSummaryFor(summary, detail), pmids,
       { dois, standInIds, shown: shownValues, listed: listedEfficiencyTexts(summary, detail) });
-    // The order (design spec 5): what was measured, where it comes from and how it was checked, under which conditions,
-    // which protein and substrate, the paper, the databases, the review; the source's own fields last.
+    // The order (design spec 5, with the databases moved up so what CatLog corrected is found at once): what was
+    // measured and how it compares with the enzyme databases, where it comes from and how it was checked, under which
+    // conditions, which protein and substrate, the paper, the review and the record's actions.
     $("detailContent").innerHTML = `
       ${detailTopHtml(summary, detail, { v2Record })}
       ${valuesSection(summary, detail, { proof: v2Proof, printedUnderPaper: Boolean(paperNotesHtml) })}
+      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, hasPaper: paperIds.length + dois.length > 0 })}
       ${sourceSection(summary, detail, { v2Record, proof: v2Proof, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
       ${conditionsSection(summary, detail)}
       ${proteinSection(summary, detail)}
       ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
-      ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, hasPaper: paperIds.length + dois.length > 0 })}
       ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref })}
     `;
     bindDetailTop();
