@@ -4533,7 +4533,9 @@
   }
 
   // Pointing at a mark (or focusing the link in its row) lights it and every mark of the same name in its figure
-  // (data-hl: a donut slice and its table row, a class's ridge in all three panels) and dims the rest; a tooltip line
+  // (data-hl: a donut slice and its table row, a class's ridge in all three panels) and dims the rest. A row that stands
+  // for several marks names each (Not checked: "unverified mathematically_inferred"): it lights them all, and a mark
+  // lights such a row only when the row stands for nothing else (Unverified alone does not light Not checked); a tooltip line
   // gives the mark's exact count (data-tip, the same words as its accessible text). Escape puts the line and the light
   // out without moving the pointer or focus (WCAG 1.4.13); they stay out on that mark until the pointer or focus moves
   // to another mark or leaves it. One set of listeners on the Stats view (Escape on the document, since a pointer over a
@@ -4557,9 +4559,11 @@
     figure.querySelectorAll(".is-active").forEach((item) => item.classList.remove("is-active"));
     figure.classList.toggle("has-active", Boolean(on));
     if (!on) return;
-    const key = mark.dataset.hl;
+    const names = (item) => String(item.dataset.hl || "").split(" ").filter(Boolean);
+    const keys = new Set(names(mark));
     figure.querySelectorAll("[data-hl]").forEach((item) => {
-      if (item.dataset.hl === key) item.classList.add("is-active");
+      const own = names(item);
+      if (own.length && own.every((key) => keys.has(key))) item.classList.add("is-active");
     });
   }
 
@@ -4798,8 +4802,9 @@
     const notCheckedGroup = statusItems.find((item) => item.group);
     const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, key: item.value,
       label: item.sub && notCheckedGroup ? `${notCheckedGroup.label} (${item.label})` : item.label, count: item.count }));
-    // A row lights its slice: Accepted's parts light Accepted.
-    const statusLight = (item) => (item.detail ? "accepted" : item.group ? "" : item.value);
+    // A row lights its slice: Accepted's parts light Accepted; Not checked lights both of its parts with their rows.
+    const groupParts = statusItems.filter((item) => item.sub && !item.detail).map((item) => item.value).join(" ");
+    const statusLight = (item) => (item.detail ? "accepted" : item.group ? groupParts : item.value);
     const statusTable = `<table class="stats-table stats-status-table">
       <thead><tr><th scope="col">Review result</th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">Share</th></tr></thead>
       <tbody>${statusItems.map((item) => `<tr class="${item.detail ? "stats-row-detail" : item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" ${item.detail ? `data-part="${item.value}"` : `data-stat-key="${item.value}"`} data-count="${item.count}"${statusLight(item) ? ` data-hl="${statusLight(item)}"` : ""}${item.splitNote ? ` title="${escapeHtml(item.note)}"` : ""}>

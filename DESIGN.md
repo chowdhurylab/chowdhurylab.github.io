@@ -68,7 +68,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
   hole; each slice has one fill, its colour at 60% with a 1px opaque outline, so navy and slate stay apart (the
   bars keep their fade); the one partition that is
-  a true whole) beside its legend table; pointing at a slice or its row lights both: Accepted (split in the rows under it:
+  a true whole) beside its legend table; pointing at a slice or its row lights both (lit rows tinted --surface-2; Not
+  checked's row lights both its slices with their rows, while Unverified or Not reviewed alone leaves it unlit): Accepted (split in the rows under it:
   CatLog v2: read from the paper, CatLog v1 as printed, after a correction,
   approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed
   under it), Disputed, each with its definition. The no-paper-linked note and

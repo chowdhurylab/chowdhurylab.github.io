@@ -858,7 +858,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end),
 .stats-fig.has-active path[data-hl]:not(.is-active) { opacity:0.42 }
 .stats-chart-row.is-active .stats-seg:not(.stats-part-records), .stats-seg[data-tip]:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
-.stats-status-table tr.is-active > * { background:var(--surface-2) }
+/* A lit row of the review-result table is tinted (more specific than the stats tables' transparent cells, which hid it). */
+.stats-status-table.stats-table tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
 @media (prefers-reduced-motion: no-preference) {
   .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), filter 150ms ease, opacity 150ms ease }
   .stats-donut path[data-hl], .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease, filter 150ms ease }

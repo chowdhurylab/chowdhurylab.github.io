@@ -1054,6 +1054,24 @@ def check_stats_more(driver, browser, overview, total):
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": box[0] + 1, "y": box[1]})
         assert driver.execute_script("return document.getElementById('statsTip').hidden && !document.querySelector('#statsCharts .has-active')"), "Escape leaves the tooltip line"
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
+    # Pointing at Not checked in the legend table lights both of its slices (Unverified, Not reviewed) with their rows,
+    # each lit row tinted; the other slices dim. (Pointing at Not confirmed above lit only its own slice and row.)
+    group = driver.find_elements(By.CSS_SELECTOR, ".stats-status-section tr.stats-row-group[data-hl]")
+    if group:
+        parts = group[0].get_attribute("data-hl").split()
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", group[0])
+        x, y = driver.execute_script("const r = arguments[0].querySelector('.stats-name').getBoundingClientRect(); return [r.left + 4, r.top + 4]", group[0])
+        for dx in (0, 1):
+            driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x + dx, "y": y})
+        lit = driver.execute_script("""const figure = document.querySelector('[data-figure="status"]');
+            return {paths: [...figure.querySelectorAll('path.is-active')].map((path) => path.dataset.hl),
+                    slices: [...figure.querySelectorAll('path[data-hl]')].map((path) => path.dataset.hl),
+                    rows: [...figure.querySelectorAll('tr.is-active')].map((row) => row.dataset.statKey || row.dataset.part),
+                    tinted: [...figure.querySelectorAll('tr.is-active > th')].every((cell) => getComputedStyle(cell).backgroundColor !== 'rgba(0, 0, 0, 0)')};""")
+        assert parts and sorted(lit["paths"]) == sorted(key for key in parts if key in lit["slices"]), lit
+        assert sorted(lit["rows"]) == sorted(["not_verified", *parts]) and lit["tinted"], lit
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script(STATS_DIMMED_JS, "status")["marks"] < 0.5)
+        driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
     # Focusing a name in a bar chart or a ridge panel dims the other bars or ridges, never the other names and counts.
     for key in ("ec-classes", "class-values"):
         link = driver.find_elements(By.CSS_SELECTOR, f"[data-figure='{key}'] [data-hl] a.stats-link")

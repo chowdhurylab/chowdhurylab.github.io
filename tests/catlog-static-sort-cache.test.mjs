@@ -1699,6 +1699,8 @@ function row(overrides = {}) {
   assert.match(element("statsCharts").innerHTML, /<path class="stats-part-unverified" d="[^"]+" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/path>/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /radialGradient|statsDonutFill/);
   assert.match(element("statsCharts").innerHTML, /data-stat-key="unverified" data-count="1" data-hl="unverified"/);
+  // Not checked stands for both of its parts: pointing at it lights the Unverified and Not reviewed slices and rows.
+  assert.match(element("statsCharts").innerHTML, /<tr class="stats-row-group" data-stat-key="not_verified" data-count="1" data-hl="unverified mathematically_inferred">/);
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2" data-hl="accepted"/, "Accepted's parts light Accepted");
   assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2"[\s\S]*?As printed/);
