@@ -2514,6 +2514,40 @@ const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; 
 assert.match(lines.cosubstrate, /<dt>Cosubstrate<\/dt><dd>NAD\+<\/dd>/);
 assert.match(lines.conditions, /<dt>Assay<\/dt><dd>apparent kcat, Km<\/dd>/);
 assert.match(lines.preparation, /<dt>Preparation<\/dt><dd>purified<\/dd>/);
+// An older record's "buffer ..." item cut at a decimal point or comma by the earlier pipeline never shows its cut end
+// (record ed087b4be9cba15c read "buffer containing 0"): the words before it stay with "…", an item with nothing left goes.
+{
+  const older = (text, ph) => api.conditionLines(text, row({ source_db: "brenda", ph_display: ph }));
+  const zero = older("pH 7.4; 298.15 K; buffer containing 0; cofactor NADP+", "7.4");
+  assert.equal(zero.conditions, "", "'buffer containing 0' (0.1 M cut at its decimal point) is left out");
+  assert.match(zero.cosubstrate, /<dt>Cofactor<\/dt><dd>NADP(?:<sup>\+<\/sup>|\+)<\/dd>/);
+  for (const cut of ['buffer note ("in 0', "buffer note: 'in 0", "buffer of 0", "buffer and 1", "buffer I = 0", "buffer pH 5"]) {
+    assert.equal(older(`pH 5.8; ${cut}`, "5.8").conditions, "", `${cut} is left out`);
+  }
+  assert.match(older("pH 7.5; buffer 50 mM Tris-HCl pH 7", "7.5").conditions, /<dt>Assay<\/dt><dd>buffer 50 mM Tris-HCl …<\/dd>/,
+    "a buffer pH cut from 7.5 to 7 never stands beside the record's pH 7.5");
+  assert.match(older("pH 9.8; buffer containing 50 mM glycine (pH 9", "9.8").conditions, /<dd>buffer containing 50 mM glycine …<\/dd>/);
+  assert.match(older("pH 7.4; buffer containing 1 mM EDTA and 2", "7.4").conditions, /<dd>buffer containing 1 mM EDTA …<\/dd>/);
+  assert.match(older("pH 8.5; buffer 20 mM 1", "8.5").conditions, /<dd>buffer 20 mM …<\/dd>/);
+  // A cut that left a bracket or quote open closes it after "…", and a bracket that never closes holds no "; ".
+  const tes = older("pH 7.2; buffer 35 mM TES (K+; cofactor FAD", "7.2");
+  assert.match(tes.conditions, /<dd>buffer 35 mM TES \(K(?:<sup>\+<\/sup>|\+) …\)<\/dd>/);
+  assert.match(tes.cosubstrate, /<dt>Cofactor<\/dt><dd>FAD<\/dd>/, "the cofactor after an unclosed bracket keeps its own row");
+  assert.match(older("pH 7.6; buffer note \"in 50 mM Tris-HCl", "7.6").conditions, /<dd>buffer note &quot;in 50 mM Tris-HCl …&quot;<\/dd>/);
+  assert.match(older("pH 6.8; buffer conditions ('imidazole-HCl buffer pH 6", "6.8").conditions, /<dd>buffer conditions \(&#39;imidazole-HCl buffer …&#39;\)<\/dd>/);
+  // Whole items stay as they are: the record's own pH, a reference, a unit's digits.
+  assert.match(older("pH 9; buffer pH 9", "9").conditions, /<dd>buffer pH 9<\/dd>/);
+  assert.match(older("pH 8; buffer to ref 10", "8").conditions, /<dd>buffer to ref 10<\/dd>/);
+  assert.match(older("pH 6.5; buffer 50 mM KH2PO4", "6.5").conditions, /<dd>buffer 50 mM KH2PO4<\/dd>/);
+  // A name's number is not an amount (earlier paper-read records, 41766dc20ab8f4ed); an earlier paper-read record's cut
+  // item goes like a database record's (ed087b4be9cba15c, PMID 1980064).
+  const earlierPaper = (text) => api.conditionLines(text, row({ source_db: "primary_paper_direct", enzyme_label_source: "ec_name_fallback" }));
+  assert.match(earlierPaper("buffer and substrate made metal-free on Chelex 100").conditions, /<dd>buffer and substrate made metal-free on Chelex 100<\/dd>/);
+  assert.equal(earlierPaper("pH 7; buffer containing 0").conditions, "");
+  // CatLog's own readers write whole sentences: a record CatLog read from the paper is shown as written.
+  const v2 = api.conditionLines("buffer containing 0", row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
+  assert.match(v2.conditions, /<dd>buffer containing 0<\/dd>/);
+}
 // The AI reader's remarks about its own reading never show; the facts before them stay (PMIDs 29115742, 18783250, 27271847).
 {
   const remarks = api.conditionLines([

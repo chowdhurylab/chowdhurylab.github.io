@@ -617,7 +617,14 @@ found at once: A, B, G, C, D, E, F, H.
   gives one temperature; a value a flag holds back says why on its own row ("Not
   shown, the source's temperature unit is unclear (source note: 30 °C)"); a
   cofactor that is the substrate is not repeated. A labelled row never shows a
-  bare dash.
+  bare dash. An older record's "buffer ..." item that the earlier pipeline cut
+  at the paper's first "." or "," ("buffer containing 0" for 0.1 M, "Tris-HCl
+  pH 7" beside the record's pH 7.5, "buffer A (10 mM Tris-HCl") never shows its
+  cut end: a bare whole number at the end (not a reference, not the record's own
+  pH) goes with the words that only led to it, the rest ends in "…" and closes
+  the bracket or quote it opened, and an item left with only "buffer" is not
+  shown. A bracket that never closes holds no "; ", so a cofactor after it keeps
+  its own row.
 - E. Protein and substrate: Enzyme form ("Variant H150A", "Wild type"); one
   UniProt line, the accession and how it was found ("(inferred from EC number
   and organism)") or "Sequence known, no UniProt entry", "Several possible

@@ -8705,14 +8705,21 @@
     ]));
   }
 
-  // An assay summary, split at "; " outside brackets.
+  // An assay summary, split at "; " outside brackets. A bracket that never closes (a cut text: "buffer 35 mM TES (K+;
+  // cofactor FAD") holds no "; ", so the items after it keep their own lines.
   function conditionSegments(text) {
+    const open = [];
+    for (let index = 0; index < text.length; index += 1) {
+      if (text[index] === "(" || text[index] === "[") open.push(index);
+      else if ((text[index] === ")" || text[index] === "]") && open.length) open.pop();
+    }
+    const unclosed = new Set(open);
     const parts = [];
     let depth = 0;
     let start = 0;
     for (let index = 0; index < text.length; index += 1) {
       const character = text[index];
-      if (character === "(" || character === "[") depth += 1;
+      if ((character === "(" || character === "[") && !unclosed.has(index)) depth += 1;
       else if ((character === ")" || character === "]") && depth > 0) depth -= 1;
       else if (character === ";" && depth === 0 && text[index + 1] === " ") {
         parts.push(text.slice(start, index));
@@ -8738,6 +8745,42 @@
     return READER_REMARK.test(text) ? "" : text;
   }
 
+  // An older record's "buffer ..." item was cut by the earlier pipeline at the paper's first "." or ",": "buffer
+  // containing 0.1 M Tris" reads "buffer containing 0", "50 mM Tris-HCl pH 7.5" reads "50 mM Tris-HCl pH 7" beside the
+  // record's pH 7.5, "buffer A (10 mM Tris-HCl, pH 8)" reads "buffer A (10 mM Tris-HCl" (about 600 records). The cut end
+  // never shows: a whole number at the end right after a word that leads to an amount ("containing", "of", "pH" (not the
+  // record's own pH), "mM", "=", an opening bracket or quote) goes with the words that only led to it, what is left ends in
+  // "…" and closes what it opened, and an item with nothing left but "buffer" is left out. A name's number ("Chelex 100",
+  // "ref 10") is not an amount and stays.
+  const CUT_NUMBER_END = /(?:(?:^|[\s(\["'“‘])(?:and|or|containing|contains|of|in|with|to|at|plus|by|is|pH|I|[Bb]uffer|above|below)|[(\["'“‘=]|\d\s*(?:mM|µM|μM|nM|M))\s*\d+$/;
+  const CUT_LEAD_WORD = /(^|[\s(\["'“‘])(?:and|or|containing|contains|of|in|with|to|at|plus|by|is|pH|I|adjusted|complemented|above|below|note|context|conditions)$/i;
+  const CUT_OPEN_END = /[\s(\["'“‘=:,|+]+$/;
+  function closeCutText(text) {
+    const closers = [];
+    for (const character of text) {
+      if (character === "(") closers.push(")");
+      else if (character === "[") closers.push("]");
+      else if ((character === ")" || character === "]") && closers.length) closers.pop();
+    }
+    const doubleQuote = (text.match(/"/g) || []).length % 2 ? '"' : "";
+    const singleQuote = (text.match(/(?:^|[\s(\[])'/g) || []).length > (text.match(/'(?=$|[\s)\],.;:])/g) || []).length ? "'" : "";
+    return `${text}${doubleQuote}${singleQuote}${closers.reverse().join("")}`;
+  }
+  function uncutBufferItem(segment, phDisplay) {
+    if (!/^buffer\b/i.test(segment)) return segment;
+    const ph = phDisplay == null || phDisplay === "" ? NaN : Number(phDisplay);
+    const endPh = segment.match(/\bpH\s*(\d+)$/);
+    const cut = CUT_NUMBER_END.test(segment) && !(endPh && Number(endPh[1]) === ph);
+    if (!cut) return closeCutText(segment) === segment ? segment : closeCutText(`${segment} …`);
+    let text = segment;
+    for (let before = ""; before !== text;) {
+      before = text;
+      if (CUT_NUMBER_END.test(text)) text = text.replace(/\d+$/, "");
+      text = text.replace(CUT_OPEN_END, "").replace(CUT_LEAD_WORD, "$1").replace(CUT_OPEN_END, "");
+    }
+    return /^buffer$/i.test(text) ? "" : closeCutText(`${text} …`);
+  }
+
   // Assay conditions as short labelled lines: "cosubstrate X" / "cofactor X" and "preparation: ..." get their own line,
   // the rest is a short list; a pH or temperature that only repeats the lines above ("pH 7.5", "298.15 K") is left out.
   function conditionLines(text, summary = {}) {
@@ -8749,8 +8792,11 @@
     const reasons = { ph: "", temperature: "" };
     const ph = formatPh(summary);
     const temperature = formatTemperature(summary);
+    // Only older records carry the earlier pipeline's cut "buffer ..." items; CatLog's own readers write whole sentences.
+    const older = !isV2Row(summary);
     conditionSegments(String(compactValue(text) === EMPTY_VALUE ? "" : compactValue(text)).trim())
-      .map(withoutReaderRemarks).filter(Boolean).forEach((segment) => {
+      .map(withoutReaderRemarks).map((segment) => (older && segment ? uncutBufferItem(segment, summary.ph_display) : segment))
+      .filter(Boolean).forEach((segment) => {
       // Why a pH or temperature was left blank goes on that row ("pH: not confirmed in the paper text"); a segment that
       // only says it is not stated repeats the row.
       let match = segment.match(/^(pH|temperature) left blank: (.+)$/i);
