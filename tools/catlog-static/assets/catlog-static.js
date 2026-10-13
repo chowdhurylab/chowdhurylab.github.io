@@ -2863,6 +2863,8 @@
         after: item.after ?? null,
         unit: item.unit ? plainUnit(item.unit) || item.unit : null,
         change: change ? [change.word, change.factor].filter(Boolean).join(" ") : null,
+        // The database that lists the earlier number for this paper, and where the paper prints the value.
+        listed: item.listed || null,
         evidence: item.why && !looksLikeLocalPath(item.why) ? item.why : null,
       };
     });
@@ -8677,19 +8679,22 @@
   }
 
   // ---- Record panel: G. Against the databases ----
-  // A record read from the paper: one row per value, what the enzyme databases list for the same paper (fixed phrases from
-  // the snapshot, shown as given). An earlier "corrected" record: what its earlier review changed, Before and After. Any
-  // other database record the earlier review did not settle: the values are the database's. Nothing else gets the
-  // section (never an empty heading).
+  // A record read from the paper: each value with what the enzyme databases list for the same paper (CatLog's fixed
+  // phrases from the snapshot, shown as given), as the record's other lists are laid out: the parameter, then its value
+  // and result, the line, and where the paper prints it, each wrapping at any width. An earlier "corrected" record: what
+  // its earlier review changed, before → after, the kind of change and where the paper prints it. Any other database
+  // record the earlier review did not settle: the values are the database's. Nothing else gets the section (never an
+  // empty heading). Under the comparison, links open Browse at the records with the same result (when Browse has that
+  // filter).
   const DATABASE_RESULTS = [
-    { test: /other[\s_-]*label/i, word: "Other label", key: "neutral" },
-    { test: /^(?:confirmed|same)/i, word: "Same number", key: "same" },
+    { test: /other[\s_-]*label/i, word: "Other label", key: "neutral", filter: "other_label" },
+    { test: /^(?:confirmed|same)/i, word: "Same number", key: "same", filter: "same" },
     // "corrected": a database lists another number for the same measurement and code or a check against the paper
     // found why (CatLog's own definition); the word names one database value, never the database as a whole.
-    { test: /^correct/i, word: "Corrects a database value", key: "magnitude" },
-    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Different number", key: "differs" },
-    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "Not in the databases", key: "new" },
-    { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "" },
+    { test: /^correct/i, word: "Corrects a database value", key: "magnitude", filter: "corrected" },
+    { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Different number", key: "differs", filter: "differs" },
+    { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "Not in the databases", key: "new", filter: "new" },
+    { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "", filter: "" },
   ];
   // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given, and a code with no wording
   // here is not shown (never a raw code with its underscores turned into spaces).
@@ -8701,16 +8706,20 @@
     mM_entered_as_uM: "an mM value entered as µM",
     time_unit: "a per-minute or per-hour value not converted",
     decimal_or_exponent_slip: "a decimal point or exponent slip",
-    value_from_other_row: "a value from another row",
+    value_from_other_row: "a value from another cell of the table",
     value_not_in_paper: "a value the paper does not print",
     paper_unit_misprint: "a unit the paper misprints",
-    recomputed_ratio: "kcat ÷ Km recomputed from rounded values",
+    recomputed_ratio: "kcat/Km worked out from the database's own kcat and Km",
     different_measurement: "a different measurement",
   };
   const DATABASES_COMPARED_NOTE = "Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper. "
     + "A different number can mean a different measurement.";
   const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
+  // Browse's filter on this result (the "Against the databases" filter group: #browse?db=same,corrected,...). The links
+  // show only when the page has that group's options (input name databaseResult, values the filter keys above).
+  const DATABASE_FILTER_PARAM = "db";
+  const DATABASE_FILTER_INPUT = "databaseResult";
 
   // Text from the snapshot shown as given (internal placeholders removed), at most `max` characters.
   function shownText(value, max = PRINTED_LINE_MAX) {
@@ -8727,7 +8736,7 @@
     const text = String(status ?? "").trim();
     if (!text) return null;
     return DATABASE_RESULTS.find((item) => item.test.test(text))
-      || { word: text.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase()), key: "" };
+      || { word: text.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase()), key: "", filter: "" };
   }
 
   function databaseCauseText(value) {
@@ -8737,17 +8746,18 @@
     return /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(text) ? "" : text;
   }
 
-  // One value's comparison from its own fields (database_status, database_line, database_cause, database_evidence, or
-  // one database_check object), or null.
+  // One value's comparison from its own fields (database_status, database_line, database_sources, database_cause,
+  // database_evidence, or one database_check object), or null.
   function databaseFacts(line) {
     const check = line?.database_check && typeof line.database_check === "object" ? line.database_check : {};
     const status = shownText(line?.database_status ?? check.status);
-    const sentence = shownText(line?.database_line ?? check.line);
+    const sentence = shownText(line?.database_line ?? check.line, 600);
     const causeCode = shownText(line?.database_cause ?? check.cause);
     const cause = databaseCauseText(causeCode);
     const evidence = shownText(line?.database_evidence ?? check.evidence);
     if (!status && !sentence && !cause && !evidence) return null;
-    const sources = Array.isArray(check.sources) ? check.sources.map((item) => shownText(item)).filter(Boolean).join(", ") : shownText(check.sources);
+    const listedSources = line?.database_sources ?? check.sources;
+    const sources = Array.isArray(listedSources) ? listedSources.map((item) => shownText(item)).filter(Boolean).join(", ") : shownText(listedSources);
     const number = check.database_value;
     const listed = number != null && number !== "" && Number.isFinite(Number(number))
       ? `${numberText(String(number))}${check.database_unit ? ` ${unitText(shownText(check.database_unit))}` : ""}`
@@ -8769,7 +8779,7 @@
       sentence = `not among the ${Number(count) > 0 ? `${formatInteger(count)} ` : ""}${metric} values ${names} ${sources.length > 1 ? "list" : "lists"} for this paper`;
     } else if (result?.key === "new") sentence = `no database lists a ${metric} for this paper`;
     else if (/^calc/i.test(String(status))) sentence = "calculated; not compared";
-    // The phrase is the result (beside its square) and names the databases; no column repeats them.
+    // The phrase is the result (beside its square) and names the databases; nothing repeats them.
     return { status: String(status), sentence, cause: "", evidence: "", databases: "", phraseOnly: Boolean(sentence) };
   }
 
@@ -8778,6 +8788,9 @@
   const MAGNITUDE_CAUSES = new Set(["header_scale_inverted", "header_scale_ignored", "unit_not_converted", "uM_entered_as_mM",
     "mM_entered_as_uM", "time_unit", "decimal_or_exponent_slip", "paper_unit_misprint"]);
 
+  // The result's square (in its comparison colour) and its word, or the phrase that is the result itself; then the line,
+  // the cause when the line does not already give it, and where the paper prints the value. Colour is never the only
+  // carrier: the word or phrase is always printed.
   function databaseResultHtml(facts) {
     let result = databaseResult(facts.status);
     if (result?.key === "magnitude" && facts.causeCode && !MAGNITUDE_CAUSES.has(facts.causeCode)) result = { ...result, key: "differs" };
@@ -8787,10 +8800,12 @@
     const head = phrase
       ? `<span class="cmp-result">${mark}<span>${caretHtml(escapePublic(phrase))}</span></span>`
       : (result ? `<span class="cmp-result">${mark}<strong>${escapeHtml(result.word)}</strong></span>` : "");
+    const causeSaid = /checked against the paper/i.test(facts.sentence);
     return head
       + (!phrase && facts.sentence ? `<span class="cmp-line">${caretHtml(escapePublic(facts.sentence))}</span>` : "")
-      + (facts.cause ? `<small>Cause: ${escapePublic(facts.cause)}</small>` : "")
-      + (facts.evidence ? `<small>${caretHtml(escapePublic(facts.evidence))}</small>` : "");
+      + (!facts.sentence && facts.databases ? `<span class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</span>` : "")
+      + (facts.cause && !causeSaid ? `<small class="cmp-cause">Checked against the paper: ${escapePublic(facts.cause)}</small>` : "")
+      + (facts.evidence ? `<small class="cmp-where">In the paper: ${caretHtml(escapePublic(facts.evidence))}</small>` : "");
   }
 
   // A record read from the paper: one row per value the snapshot compares ({field, metric, label, facts}), in the
@@ -8819,50 +8834,87 @@
     return facts.phraseOnly || lineIsResult ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
   }
 
+  // One parameter of section G: its name, then the value with its result and the lines under them.
+  function comparisonItemHtml(labelHtml, valueHtml, bodyHtml, className = "") {
+    return `<div class="kv-line cmp-item${className ? ` ${className}` : ""}"><dt>${labelHtml}</dt><dd>`
+      + `${valueHtml ? `<span class="cmp-value">${valueHtml}</span>` : ""}${bodyHtml}</dd></div>`;
+  }
+
+  // Browse at the records whose values have this result ("Corrects a database value"), when Browse has that filter.
+  function databaseFilterAvailable(filter) {
+    if (!filter || typeof document.querySelector !== "function") return false;
+    return Boolean(document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${filter}"]`));
+  }
+
+  function databaseResultLinksHtml(results) {
+    const seen = new Set();
+    const links = results.filter((result) => {
+      if (!result?.filter || seen.has(result.filter) || !databaseFilterAvailable(result.filter)) return false;
+      seen.add(result.filter);
+      return true;
+    }).map((result) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, result.filter]]))}">${escapeHtml(result.word)}</a>`);
+    return links.length
+      ? `<p class="cmp-explore">Other records with ${links.length > 1 ? "these results" : "this result"}: ${links.join('<span aria-hidden="true"> · </span>')}</p>`
+      : "";
+  }
+
   // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
   function v2DatabaseComparisonHtml(summary, detail, proof, check) {
     const metricSummary = metricSummaryFor(summary, detail);
     const rows = v2DatabaseRows(summary, detail, proof, check);
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
-      .map((note) => shownText(note)).filter(Boolean);
+      .map((note) => shownText(note, 600)).filter(Boolean);
     if (!rows.length && !paperNotes.length) return "";
-    const withDatabases = rows.some((row) => row.facts.databases);
-    const table = rows.length
-      ? `<table class="values-table compare-table"><thead><tr><th scope="col">Parameter</th><th scope="col">CatLog</th>`
-        + `${withDatabases ? '<th scope="col">Databases for this paper</th>' : ""}<th scope="col">Result</th></tr></thead><tbody>`
-        + rows.map(({ field, label, facts }) => `<tr><th scope="row">${label}</th>`
-          + `<td class="cmp-catlog">${metricHasValue(metricSummary, field) ? `${panelValueHtml(metricSummary, field)} <small>${metricUnitHtml(metricSummary, field)}</small>` : EMPTY_VALUE}</td>`
-          + `${withDatabases ? `<td>${facts.databases ? caretHtml(escapePublic(facts.databases)) : EMPTY_VALUE}</td>` : ""}`
-          + `<td class="cmp-cell">${databaseResultHtml(facts)}</td></tr>`).join("")
-        + "</tbody></table>"
+    const list = rows.length
+      ? kvList(rows.map(({ field, label, facts }) => comparisonItemHtml(label,
+        metricHasValue(metricSummary, field) ? `${panelValueHtml(metricSummary, field)} <small>${metricUnitHtml(metricSummary, field)}</small>` : "",
+        databaseResultHtml(facts))), "cmp-list")
       : "";
     // The record's note is CatLog's own sentence: plain section text, never set like a line quoted from the paper.
     return paperNotes.map((note) => `<p class="section-text cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
-      + table
-      + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "");
+      + list
+      + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "")
+      + databaseResultLinksHtml(rows.map(({ facts }) => databaseResult(facts.status)));
   }
 
   // An earlier "corrected" record's correction trail (corrections, corrected_fields or the side file's chg), each
-  // item as {field, before, after, unit, kind, listed, why}.
+  // item as {field, before, after, unit, kind, listed, where, why}.
   function correctionItems(detail, check) {
     const raw = [detail.corrections, detail.corrected_fields, detail.earlier_corrections, check?.chg].find(Array.isArray) || [];
-    return raw.filter((item) => item && typeof item === "object").map((item) => ({
-      field: String(item.field ?? item.f ?? "").trim(),
-      before: item.old_value ?? item.before ?? item.b,
-      after: item.new_value ?? item.after ?? item.a,
-      unit: shownText(item.unit ?? item.u),
-      kind: String(item.kind ?? item.change ?? item.k ?? "").trim(),
-      listed: shownText(item.listed ?? item.before_listed),
-      why: shownText(item.evidence_table_row ?? item.evidence ?? item.why ?? item.w),
-    })).filter((item) => item.field);
+    return raw.filter((item) => item && typeof item === "object").map((item) => {
+      const where = shownText(item.where ?? item.evidence_table_row ?? item.evidence ?? item.why ?? item.w);
+      return {
+        field: String(item.field ?? item.f ?? "").trim(),
+        before: item.old_value ?? item.before ?? item.b,
+        after: item.new_value ?? item.after ?? item.a,
+        unit: shownText(item.unit ?? item.u),
+        kind: String(item.kind ?? item.change ?? item.k ?? "").trim(),
+        listed: shownText(item.listed ?? item.before_listed),
+        where: looksLikeLocalPath(where) ? "" : where,
+        why: looksLikeLocalPath(where) ? "" : where,
+      };
+    }).filter((item) => item.field);
   }
 
   const CORRECTION_FIELDS = { kcat: "kcat", km: "km", kcat_over_km: "kcat_over_km", "kcat/km": "kcat_over_km", ki: "ki" };
+  // The other fields an earlier correction can name, by how the record says them; numbers get Before → After like a value.
+  const CORRECTION_LABELS = {
+    vmax: "V<sub>max</sub>", ph: "pH", temperature_k: "Temperature", temperature_c: "Temperature", temperature: "Temperature",
+    kcat_unit: "<i>k</i><sub>cat</sub> unit", km_unit: "<i>K</i><sub>m</sub> unit", kcat_over_km_unit: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> unit",
+    ki_unit: "<i>K</i><sub>i</sub> unit", vmax_unit: "V<sub>max</sub> unit", kcat_range: "<i>k</i><sub>cat</sub> range",
+    km_range: "<i>K</i><sub>m</sub> range", substrate_name: "Substrate", cofactor_name: "Cofactor", enzyme_name: "Enzyme name",
+    organism: "Organism", ec_number: "EC", uniprot_id: "UniProt", primary_uniprot_id: "UniProt", ncbi_protein_id: "NCBI Protein",
+    genbank_accession: "GenBank", wild_type: "Form", mutation_signature: "Mutation", mutation_type: "Mutation type",
+    pubmed_id: "PMID", pmid: "PMID", doi: "DOI", sequence: "Sequence", canonical_sequence: "Sequence", smiles: "SMILES",
+  };
   const CHANGE_KINDS = [
     { test: /round|precision|digit/i, word: "more digits / rounding", key: "precision" },
     { test: /magnitude|power|scale|unit/i, word: "unit or magnitude", key: "magnitude" },
     { test: /^add/i, word: "added: the source had none", key: "new" },
+    { test: /^remov/i, word: "removed", key: "neutral" },
+    { test: /^replac/i, word: "replaced", key: "neutral" },
     { test: /differ|number|value/i, word: "different number", key: "differs" },
+    { test: /^chang/i, word: "changed", key: "neutral" },
   ];
 
   function powerFactorText(power) {
@@ -8891,42 +8943,66 @@
     return `${Number.isFinite(number) && String(value).trim() !== "" ? numberText(String(value)) : shownText(value)}${unit ? ` ${unitText(unit)}` : ""}`;
   }
 
+  // A temperature the earlier catalog stores in kelvin reads in °C, as the record's Conditions do.
+  function correctionTemperatureText(value, field) {
+    if (value == null || value === "") return "none";
+    const number = Number(value);
+    if (!Number.isFinite(number)) return shownText(value);
+    const celsius = field === "temperature_k" ? number - 273.15 : number;
+    return `${numberText(String(Math.round(celsius * 100) / 100))} °C`;
+  }
+
+  // Before → After and the kind of change, one item per changed field: kinetic values first, then the record's other
+  // fields (pH, temperature, identifiers; a replaced sequence or SMILES is named, not repeated); "Before: as in OED for
+  // this paper" when a database lists the earlier number, and where the paper prints the value. A field whose number did
+  // not change is not listed.
   function earlierCorrectionsHtml(items) {
     const valueItems = [];
-    const identity = [];
+    const otherItems = [];
     items.forEach((item) => {
       const key = item.field.toLowerCase().replace(/\s+/g, "");
       const field = CORRECTION_FIELDS[key];
       const name = field ? VALUE_FIELDS.find(([shown]) => shown === field)[1] : "";
+      const hasBefore = item.before != null && item.before !== "";
       if (name) {
-        // A field whose number did not change is not listed.
-        if (item.before != null && item.before !== "" && Number(item.before) === Number(item.after)) return;
+        if (hasBefore && Number(item.before) === Number(item.after)) return;
         valueItems.push({ ...item, name });
-      } else if (/uniprot|accession/.test(key)) {
-        identity.push(`UniProt ${shownText(item.before) || "none"} → ${shownText(item.after) || "none"}`);
-      } else if (/sequence/.test(key)) identity.push("Sequence replaced");
-      else if (/smiles/.test(key)) identity.push("SMILES replaced");
-      else identity.push(`${item.field.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase())} changed`);
+        return;
+      }
+      if (hasBefore && String(item.before) === String(item.after)) return;
+      otherItems.push({ ...item, key, name: CORRECTION_LABELS[key] || escapePublic(item.field.replace(/_/g, " ").replace(/^./, (character) => character.toUpperCase())) });
     });
-    if (!valueItems.length && !identity.length) return "";
-    const table = valueItems.length
-      ? `<table class="values-table compare-table"><thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>`
-        + valueItems.map((item) => {
-          const change = changeWords(item);
-          const hasBefore = item.before != null && item.before !== "";
-          const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value");
-          return `<tr><th scope="row">${item.name}</th>`
-            + `<td>${escapePublic(correctionValueText(item.before, item.unit))}${where ? `<small>${escapePublic(where)}</small>` : ""}</td>`
-            + `<td>${escapePublic(correctionValueText(item.after, item.unit))}</td>`
-            + `<td class="cmp-cell"><span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>`
-            + `<span>${escapeHtml(change.word)}${change.factor ? ` <span class="cmp-factor">${escapeHtml(change.factor)}</span>` : ""}</span></span></td></tr>`;
-        }).join("")
-        + "</tbody></table>"
-      : "";
-    const reasons = [...new Set(items.map((item) => item.why).filter((why) => why && !looksLikeLocalPath(why)))];
-    return table
-      + (identity.length ? `<ul class="value-notes">${identity.map((text) => `<li>${escapePublic(text)}</li>`).join("")}</ul>` : "")
-      + reasons.map((why) => `<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — ${caretHtml(escapePublic(why.replace(/[.\s]+$/, "")))}.</p>`).join("");
+    if (!valueItems.length && !otherItems.length) return "";
+    const changeHtml = (item) => {
+      const change = changeWords(item);
+      return `<span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>`
+        + `<span>${escapeHtml(change.word)}${change.factor ? ` <span class="cmp-factor">${escapeHtml(change.factor)}</span>` : ""}</span></span>`;
+    };
+    const arrow = '<span class="cmp-arrow"> → </span>';
+    const whereHtml = (item) => (item.where ? `<small class="cmp-where">In the paper: ${caretHtml(escapePublic(item.where))}</small>` : "");
+    const rows = [
+      ...valueItems.map((item) => {
+        const hasBefore = item.before != null && item.before !== "";
+        const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "earlier catalog value");
+        return comparisonItemHtml(item.name,
+          `${escapePublic(correctionValueText(item.before, item.unit))}${arrow}<strong>${escapePublic(correctionValueText(item.after, item.unit))}</strong>`,
+          changeHtml(item)
+          + (where ? `<small class="cmp-before">Before: ${escapePublic(where)}</small>` : "")
+          + whereHtml(item));
+      }),
+      ...otherItems.map((item) => {
+        if (/sequence|smiles/.test(item.key)) return comparisonItemHtml(item.name, "Replaced", whereHtml(item));
+        const text = /^temperature/.test(item.key)
+          ? (value) => correctionTemperatureText(value, item.key)
+          : (value) => (item.key === "wild_type" && typeof value === "boolean"
+            ? (value ? "wild type" : "variant")
+            : correctionValueText(value, item.unit));
+        return comparisonItemHtml(item.name, `${escapePublic(text(item.before))}${arrow}<strong>${escapePublic(text(item.after))}</strong>`,
+          (item.kind && !/^chang/i.test(item.kind) ? changeHtml(item) : "") + whereHtml(item));
+      }),
+    ];
+    return kvList(rows, "cmp-list")
+      + '<p class="section-note">Changed in the earlier automated review to what the paper prints.</p>';
   }
 
   function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, hasPaper = true } = {}) {
@@ -8948,6 +9024,25 @@
       }
     }
     return body ? detailSection("databases", "Against the databases", body) : "";
+  }
+
+  // ---- Record panel: explore ----
+  // The other records of this record's paper in Browse (the search box finds a paper by "pmid:<PMID>" or "doi:<DOI>"),
+  // with this record kept open; how many once the record index is loaded ("Only this record" when it is the paper's one).
+  function paperRecordsRow(summary, pmids, dois) {
+    const key = String(summary.record_key || "").trim();
+    const pmid = pmids.find((value) => /^[1-9]\d{0,9}$/.test(String(value).trim()));
+    const doi = pmid ? "" : String(dois[0] || "").trim();
+    if (!key || (!pmid && !doi)) return "";
+    let count = 0;
+    if (state.recordsReady && state.records.length) {
+      const folded = foldSearch(doi);
+      count = state.records.reduce((total, row) => total + (pmid ? rowHasPmid(row, Number(pmid)) : rowHasDoi(row, folded)), 0);
+    }
+    if (count === 1) return kv("In CatLog", "Only this record");
+    const href = `${browseHash([["q", pmid ? `pmid:${pmid}` : `doi:${doi}`]])}&record=${encodeURIComponent(key)}`;
+    const words = count > 1 ? `${formatInteger(count)} records from this paper` : "Records from this paper";
+    return linkedKv("In CatLog", `<a class="paper-records-link" href="${escapeHtml(href)}">${words}<span aria-hidden="true"> →</span></a>`);
   }
 
   // ---- Record panel: C. Source ----
@@ -8991,6 +9086,7 @@
       standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
       noPaper ? kv("PMID or DOI", "None") : "",
       places.length ? kv("Location", places.join("; ")) : "",
+      paperRecordsRow(summary, pmids, dois),
     ]) + notesHtml);
   }
 

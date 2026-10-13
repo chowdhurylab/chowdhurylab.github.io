@@ -527,7 +527,11 @@ opens the record. The order (design spec 5):
   recorded"; the substrate in full; SMILES with Show and Copy, or "None
   recorded".
 - F. Paper: the title and year when the record carries them; PubMed and DOI
-  links (a stand-in ID is text); where the values are printed; an older
+  links (a stand-in ID is text); where the values are printed; In CatLog, a
+  link to the paper's records in Browse with this record kept open
+  (#browse?q=pmid:<PMID>&record=<key>, or doi:<DOI>), "89 records from this
+  paper →" once the record index is loaded ("Only this record" when it is the
+  paper's one); an older
   record's notes on request: "Earlier automated review: where the values are
   printed" (Where, As printed and Conversion, code quotes and "->" written as
   plain text and arrows; the Conversion line keeps each value's printed number
@@ -539,38 +543,49 @@ opens the record. The order (design spec 5):
   printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
   “(2.2 ± 0.1) x 10-2”"), "+/-" reads ±, "PubMed XML abstract PMID n" reads
   "Abstract" and "ScienceDirect HTML Table 1" "Table 1".
-- G. Against the databases (only when there is something to say): for a record
-  read from the paper, one row per value, Parameter | CatLog | (Databases for
-  this paper) | Result, the result a 10px square in its comparison colour
-  (`--cmp-same`, `--cmp-differs`, `--cmp-new`, `--chg-magnitude` for a database
+- G. Against the databases (only when there is something to say), laid out like
+  the record's other lists so it wraps at any width (no table): for a record read
+  from the paper, one item per value, the parameter in the label column, then its
+  value and unit, its result (a 10px square in its comparison colour:
+  `--cmp-same`, `--cmp-differs`, `--cmp-new`, `--chg-magnitude` for a database
   CatLog corrects by a unit or a power of ten, `--cmp-differs` for any other
-  correction, `--bar-neutral` for the same number under another label)
-  beside its word ("Same number", "Different number", "Not in the databases",
+  correction, `--bar-neutral` for the same number under another label, beside
+  its word: "Same number", "Different number", "Not in the databases",
   "Corrects a database value" (CatLog's phrase for its "corrected" status: one
   database value, never the database as a whole), "Other label", "Not
-  compared") and the snapshot's own line, cause and evidence shown as given (a
-  local path never; a cause code with no wording is left out, never shown as
-  the raw code); a line that
-  starts with the result word ("same number in BRENDA, SABIO-RK") stands in the
-  word's place, so the result is said once; a kcat/Km CatLog calculated gets a
-  "Calculated; not compared" row once other values have rows; a paper-level
-  note above as plain section text (no rule beside it: it is CatLog's sentence,
-  not a quote), and "Compared with the values BRENDA, SABIO-RK, OED, SKiD and
-  STRENDA DB list for the same paper. A different number can mean a different
-  measurement." under it. An earlier corrected record with its correction trail:
-  Field | Before | After | Change ("66 mM, as in OED for this paper" or "earlier
-  catalog value", nothing under an added value's "none"; "unit or magnitude
-  (÷ 1000)" with the factor kept on one line, "more digits / rounding",
-  "different number", "added: the source had none"; a field whose number did
-  not change is not listed), identity changes as a list ("UniProt P00325 →
-  P00326", "Sequence replaced"), then "Why: changed in the earlier automated
-  review to the value the paper prints — <the printed place>". A corrected
-  record without its trail says so in its Review result line ("this snapshot does not list
-  the changes"; the earlier catalog keeps them) and has no section G. A database record
-  the earlier review did not settle (Not confirmed, Not checked) with a paper:
-  "Not yet checked against the paper: the values are the database's." (not on
-  one whose Evidence reads "Located in the paper": it has no section G). Colour is
-  never the only carrier: the word or phrase is always printed.
+  compared"), then the snapshot's line as given ("BRENDA lists 1,300 mM, 1,000×
+  higher. The paper prints 1.3 ± 0.10 mM (Table 2). Checked against the paper:
+  µM entered as mM."), the cause in words when the line does not already say
+  it ("Checked against the paper: a µM value entered as mM"; a cause code with
+  no wording is left out, never shown as the raw code), and where the paper
+  prints the value ("In the paper: Table 2, row ..."; a local path never); the
+  databases a value's database_sources name only when there is no line. A line
+  that starts with the result word ("same number in BRENDA, SABIO-RK") stands in
+  the word's place, so the result is said once; a kcat/Km CatLog calculated gets
+  a "Calculated; not compared" item once other values have items; a paper-level
+  note above as plain section text (CatLog's sentence, not a quote), and
+  "Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for
+  the same paper. A different number can mean a different measurement." under
+  it. When Browse has the "Against the databases" filter group (options named
+  databaseResult: same, corrected, differs, new, other_label; address
+  #browse?db=...), a last line links each result the record shows to the records
+  with it: "Other records with these results: Same number · Corrects a database
+  value". An earlier corrected record with its correction trail: one item per
+  changed field, "66 mM → **0.066 mM**" with the kind of change ("unit or
+  magnitude (÷ 1000)" with the factor kept on one line, "more digits /
+  rounding", "different number", "added: the source had none", "removed",
+  "replaced"), "Before: as in OED for this paper" or "Before: earlier catalog
+  value" (nothing for an added value's "none"), "In the paper: <where>"; then
+  pH, temperature (in °C), identifiers ("UniProt P00325 → P00326") and a
+  replaced sequence or SMILES ("Replaced", not repeated); a field whose value
+  did not change is not listed; one closing note, "Changed in the earlier
+  automated review to what the paper prints." A corrected record without its
+  trail says so in its Review result line ("this snapshot does not list the
+  changes"; the earlier catalog keeps them) and has no section G. A database
+  record the earlier review did not settle (Not confirmed, Not checked) with a
+  paper: "Not yet checked against the paper: the values are the database's."
+  (not on one whose Evidence reads "Located in the paper": it has no section
+  G). Colour is never the only carrier: the word or phrase is always printed.
 - H. Review and audit: Review result in one sentence ("Accepted: read from the paper
   by CatLog.", or the earlier automated review's result with "How the earlier
   review worked →"); an AI audit line with the audit's date and verdict only; a
