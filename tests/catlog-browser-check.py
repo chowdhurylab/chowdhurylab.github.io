@@ -2060,6 +2060,41 @@ def check_layout(driver, browser, url, route_label):
                 assert fit["overflow"] <= 28, f"At {width}px {view} scrolls sideways by more than the arrow: {fit}"
                 assert fit["sidebar"] == (256 if width < 1440 else 288), fit
         results["status-in-view-1280-1440"] = True
+        # In the 256px sidebar no label runs into its count, in a wide font (Verdana) too: "✓ human-checked" breaks after
+        # its hyphen rather than touch its count (it once read "✓human-checked1,543"). The caution chip stays on for the
+        # Clear all check below.
+        set_browse_viewport(driver, browser, 1280, 900)
+        open_page("#browse?caution=units")
+        wait.until(lambda d: is_open() and d.execute_script(
+            "return !!document.querySelector('#statusChecklist [data-count=\"checked\"]')?.textContent.trim()"))
+        tight = driver.execute_script("""
+            const style = document.createElement('style');
+            style.textContent = '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.5px !important }';
+            document.head.appendChild(style);
+            const out = [];
+            let rows = 0;
+            for (const row of document.querySelectorAll('#catalogFilters .check-row')) {
+              const count = row.querySelector(':scope > strong'), label = row.querySelector(':scope > span');
+              if (!count || !label || !row.getClientRects().length || !count.textContent.trim()) continue;
+              rows += 1;
+              const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+              let right = label.getBoundingClientRect().left;
+              while (walker.nextNode()) {
+                if (walker.currentNode.parentElement.closest('.visually-hidden')) continue;
+                const range = document.createRange();
+                range.selectNodeContents(walker.currentNode);
+                for (const box of range.getClientRects()) right = Math.max(right, box.right);
+              }
+              const gap = count.getBoundingClientRect().left - right;
+              if (gap < 4) out.push([label.textContent.trim(), Math.round(gap * 10) / 10]);
+            }
+            const word = document.querySelector('#statusChecklist .human-checked-word').getBoundingClientRect();
+            style.remove();
+            return {rows, tight: out, humanChecked: word.width > 20};
+        """)
+        assert tight["rows"] >= 8 and tight["humanChecked"] and not tight["tight"], (
+            f"At 1280px in a wide font every sidebar label stays clear of its count: {tight}")
+        results["sidebar-labels-wide-font-1280"] = True
         # Clear all, beside the chips and in the sidebar's heading, is a target at least 24px tall.
         targets = driver.execute_script("""
             return ['.filter-chips-clear', '#clearButton'].map(selector => document.querySelector(selector).getBoundingClientRect().height);

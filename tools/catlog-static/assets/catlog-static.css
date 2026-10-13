@@ -311,7 +311,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row.disputed input { accent-color:var(--st-disputed) }
 .check-row.human-checked input { accent-color:var(--checked) }
 .check-row.nested { margin-left:22px }
-.human-checked-word { color:var(--checked); font-weight:500; white-space:nowrap }
+/* "✓ human-checked" keeps one line beside its count; in the 256px sidebar a wider font breaks it after the hyphen rather
+   than run it into the count. */
+.human-checked-word { color:var(--checked); font-weight:500 }
 .human-checked-word .check-icon { margin-right:2px }
 .check-row strong { color:var(--muted); font-size:var(--fs-12); font-weight:400 }
 /* Counts being worked out after a change fade only if that takes a moment. */

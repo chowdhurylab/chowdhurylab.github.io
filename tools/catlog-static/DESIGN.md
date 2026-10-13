@@ -196,7 +196,8 @@ ticked; its "?" says what is compared and what each option means; address key
 db=corrects,differs,same,adds,new,earlier), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
-out "Only human-checked"), its tick green, and ticking it ticks Accepted;
+out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
+hyphen, never into its count), its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
 the four results and human-checked in one short sentence each (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
