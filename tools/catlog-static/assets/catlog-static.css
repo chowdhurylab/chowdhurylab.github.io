@@ -688,7 +688,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
 .stats-part-open { --part:var(--line-strong) }
-.stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
+.stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, transparent); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
 .stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
 .stats-part-open.stats-seg, .stats-part-open.stats-swatch { background:var(--bg); box-shadow:inset 0 0 0 1px var(--line-strong) }
@@ -808,7 +808,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-range-numbers dd { margin:2px 0 0; font-size:var(--fs-14); font-weight:500 }
 .stats-histogram { position:relative; padding-bottom:24px }
 .stats-histogram-bars { display:flex; align-items:flex-end; gap:2px; height:72px; border-bottom:1px solid var(--line) }
-.stats-histogram-bars > span { --part:var(--bar-neutral); flex:1 1 0; min-width:0; background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--part) }
+.stats-histogram-bars > span { --part:var(--bar-neutral); flex:1 1 0; min-width:0; background:var(--part); background:color-mix(in srgb, var(--part) 60%, transparent); box-shadow:inset 0 0 0 1px var(--part) }
 .stats-histogram-bars > span.has-values { min-height:1px }
 .stats-histogram-range { position:relative; height:12px }
 .stats-histogram-range > span { position:absolute; top:5px; height:2px; background:var(--text-2) }

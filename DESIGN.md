@@ -115,8 +115,9 @@ legend table keeps its room beside the donut), one below:
 Figure style: every figure and table has a heading (18px), the plot, then
 "Figure N." or "Table N." (numbered in reading order, figures and tables
 apart, so without figures 3-5 the next figure is 3) with one sentence (13px) and a 12px data line (snapshot, Data ID,
-definition). Bars 16px thick, 8px apart, square ends; fills at 60% of their
-colour with a 1px opaque outline; legends inline above the plot with 10px
+definition). Bars 16px thick, 8px apart, square ends; fills at 60% opacity of
+their colour (alpha, so the reference lines show through the bars) with a 1px
+opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
