@@ -1264,6 +1264,25 @@ def check_layout(driver, browser, url, route_label):
                     limit: Math.max(136, Math.ceil(word + padding))};
         """)
         assert enzyme["width"] <= enzyme["limit"] + 1, enzyme
+        # › steps one column: the next column's left edge meets the sticky Enzyme column (stops measured in the table's
+        # own coordinates, not the page's with the rail before it).
+        driver.find_element(By.ID, "scrollTableRightButton").click()
+        step = {}
+        def stepped(d):
+            step.update(d.execute_script("""
+                const wrap = document.getElementById('recordTableWrap');
+                const left = wrap.getBoundingClientRect().left;
+                const headers = [...wrap.querySelectorAll('thead th')].filter(th => th.getClientRects().length);
+                const sticky = headers[0].getBoundingClientRect().right - left;
+                return {scrollLeft: wrap.scrollLeft, sticky, end: wrap.scrollWidth - wrap.clientWidth,
+                        edges: headers.slice(1).map(th => Math.round(th.getBoundingClientRect().left - left))};
+            """))
+            settled = step["scrollLeft"] > 0 and step["scrollLeft"] == step.get("previous")
+            step["previous"] = step["scrollLeft"]
+            return settled
+        WebDriverWait(driver, 10, poll_frequency=0.25).until(stepped)
+        assert (any(abs(edge - step["sticky"]) <= 1 for edge in step["edges"])
+                or step["scrollLeft"] >= step["end"] - 1), f"› stops at a column's edge (or the table's end): {step}"
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open())
         driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")

@@ -6497,11 +6497,15 @@
     wrap.classList.toggle("can-scroll-right", canScrollRight);
   }
 
+  // ‹ › step one column at a time: each stop puts a column's left edge just right of the sticky Enzyme column. The edges
+  // are measured in the scroller's own coordinates (offsetLeft would count from the page, the sidebar included), and
+  // the columns a record hides (EC, T, pH) are skipped.
   function scrollTableColumns(direction) {
     const wrap = $("recordTableWrap");
-    const headers = [...wrap.querySelectorAll("thead th")];
-    const stickyWidth = headers[0]?.offsetWidth || 0;
-    const stops = headers.slice(1).map((header) => Math.max(0, header.offsetLeft - stickyWidth));
+    const headers = [...wrap.querySelectorAll("thead th")].filter((header) => header.getClientRects().length);
+    const stickyWidth = headers[0]?.getBoundingClientRect().width || 0;
+    const origin = wrap.getBoundingClientRect().left + wrap.clientLeft - wrap.scrollLeft;
+    const stops = headers.slice(1).map((header) => Math.max(0, Math.round(header.getBoundingClientRect().left - origin - stickyWidth)));
     const ordered = direction > 0 ? stops : [...stops].reverse();
     const target = ordered.find((stop) => direction > 0
       ? stop > wrap.scrollLeft + 2
