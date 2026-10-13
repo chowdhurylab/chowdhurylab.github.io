@@ -44,6 +44,9 @@
     // The record a #record= address names, until the index has loaded far enough to open it.
     pendingRecordKey: "",
     missingRecordKey: "",
+    // A record closed while new filters' results were on their way: its key, so focus goes back to its row (or the
+    // results) once they are drawn.
+    refocusAfterFilters: null,
     // Set while the Back that closing a record asked for has not landed yet (leaveRecordEntry), and what waits for it.
     leavingRecordEntry: null,
     afterLeavingRecordEntry: null,
@@ -6230,11 +6233,18 @@
       state.page = state.pendingPage;
       state.pendingPage = 0;
     }
+    // Focus in a record these results close, or left on rows they replace, goes to the results.
+    const refocus = state.refocusAfterFilters;
+    state.refocusAfterFilters = null;
+    let closedWithFocus = false;
     if (state.selectedKey && !state.filtered.some((row) => row.record_key === state.selectedKey)) {
+      closedWithFocus = Boolean($("detailPanel")?.contains?.(document.activeElement));
       resetDetail();
     }
     renderSummary();
     renderRows();
+    if (closedWithFocus) focusResults();
+    else if (refocus != null && focusLost()) focusRecordRow(refocus);
     openRecordFromLocation();
     updateFilterCounts();
     return true;
@@ -7125,15 +7135,35 @@
     setDetailOpen(false);
   }
 
-  function closeDetailAndRestoreFocus() {
+  // Keyboard focus on the results: the table's current row (the first row of the page), or the table itself while it
+  // shows no rows. Never left on the page body.
+  function focusResults() {
+    (document.querySelector?.('#recordsBody tr[tabindex="0"]') || $("recordTableWrap"))?.focus();
+  }
+
+  // Focus on the row of this record when the page shows it, else on the results.
+  function focusRecordRow(key) {
+    const row = key ? [...$("recordsBody").querySelectorAll("tr[data-key]")].find((item) => item.dataset.key === key) : null;
+    if (row) row.focus();
+    else focusResults();
+  }
+
+  function focusLost() {
+    const active = document.activeElement;
+    return !active || active === document.body;
+  }
+
+  // resultsPending: new filters' results are on their way (Back or Forward to other filters); they replace the rows
+  // drawn now, so focus goes to the record's row again once they are drawn (applyFilters).
+  function closeDetailAndRestoreFocus({ resultsPending = false } = {}) {
     const selectedKey = state.selectedKey;
     const stepBack = canLeaveRecordEntry(selectedKey);
     resetDetail({ keepAddress: stepBack });
     if (stepBack) leaveRecordEntry();
     renderRows();
-    const selectedRow = [...$("recordsBody").querySelectorAll("tr[data-key]")]
-      .find((row) => row.dataset.key === selectedKey);
-    selectedRow?.focus();
+    // The record's row, or the results when the page does not show it (another page of them).
+    focusRecordRow(selectedKey);
+    if (resultsPending) state.refocusAfterFilters = selectedKey;
   }
 
   async function selectRecord(key, { focusDetail = true } = {}) {
@@ -9204,9 +9234,11 @@
       && document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${option.value}"]`));
   }
 
+  // Each link keeps this record open beside the list, as its paper's link does (on a phone or tablet, where the record
+  // covers the list, the link shows the list instead and Back opens the record again).
   function databaseBrowseLinksHtml(keys, recordKey) {
     const links = databaseBrowseOptions(keys, recordKey)
-      .map((option) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, option.value]]))}">${escapeHtml(option.chip)}</a>`);
+      .map((option) => `<a href="${escapeHtml(`${browseHash([[DATABASE_FILTER_PARAM, option.value]])}&record=${encodeURIComponent(recordKey)}`)}">${escapeHtml(option.chip)}</a>`);
     return links.length ? `<p class="cmp-explore">More records like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
@@ -9893,7 +9925,7 @@
         // An address without a record (Back, Forward, a link to filtered Browse) closes the open one; focus that was in
         // the record goes back to its row, as when × closes it.
         if ($("detailPanel")?.contains(document.activeElement) && state.records.length) {
-          closeDetailAndRestoreFocus();
+          closeDetailAndRestoreFocus({ resultsPending: filtering });
         } else {
           resetDetail();
           if (state.records.length) renderRows();
@@ -10107,7 +10139,7 @@
     document.querySelector(".skip-link")?.addEventListener("click", (event) => {
       event.preventDefault();
       if (viewFromLocation() !== "browse") navigateTo("browse");
-      (document.querySelector('#recordsBody tr[tabindex="0"]') || $("recordTableWrap"))?.focus();
+      focusResults();
     });
     $("recordTableWrap").addEventListener("scroll", updateTableScrollControls, { passive: true });
     // On phones and short screens only the record's name and × stay in view; a rule under them shows once the record scrolls.

@@ -2219,6 +2219,22 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             wait.until(lambda d: d.execute_script(selected_key) == key
                        and d.find_element(By.ID, "pageLabel").text == page_before)
             results["paper-records-back"] = True
+            # × puts focus on the record's row, or on the results when the page does not show that row: never on the page
+            # body.
+            driver.find_element(By.ID, "closeDetailButton").click()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+            focus = driver.execute_script("""
+                const active = document.activeElement;
+                return {tag: active ? active.tagName : null, id: active ? active.id : null,
+                        key: active && active.dataset ? active.dataset.key || null : null,
+                        inResults: Boolean(active && active.closest && active.closest('#recordsBody')),
+                        shown: [...document.querySelectorAll('#recordsBody tr[data-key]')].map(r => r.dataset.key)};
+            """)
+            assert focus["tag"] not in (None, "BODY"), focus
+            assert focus["id"] == "recordTableWrap" or (focus["inResults"] and focus["tag"] == "TR"), focus
+            if key in focus["shown"]:
+                assert focus["key"] == key, focus
+            results["record-close-focus"] = True
             # On a phone the record covers the list: the link shows the paper's records instead (the record closes and the
             # address names none), and Back opens the record again.
             set_browse_viewport(driver, browser, 390, 844)

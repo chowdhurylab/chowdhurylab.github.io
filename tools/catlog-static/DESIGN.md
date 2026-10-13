@@ -229,7 +229,12 @@ in place); until that Back lands, a record opened meanwhile waits to write its
 address and a tab or link followed meanwhile waits to add its entry. A record
 opened from an address (a link, a reload) adds no entry. An address without a
 record closes the open one, and focus that was in the record goes back to its
-row. A link to #browse?
+row. Focus never falls to the page body: when the page does not show the closed
+record's row (another page of the results, after its paper's link), × and Esc
+put it on the results (the table's current row, or the table itself while it
+shows none); a record closed while new filters' results are on their way gets
+focus on its row once they are drawn, and focus in a record the new results
+leave out goes to the results. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
@@ -653,7 +658,9 @@ found at once: A, B, G, C, D, E, F, H.
   Corrects a value · Adds a value" (corrects: a value corrected; differs:
   a different number not yet resolved; same: every compared value the same;
   adds: a value no database lists; new: no value in any database, said instead
-  of adds; earlier: an earlier corrected record); an option the page does not
+  of adds; earlier: an earlier corrected record), each keeping the record open
+  beside the list as its paper's link does (#browse?db=corrects&record=<key>;
+  up to 1023px it shows the list instead, as that link does); an option the page does not
   have gets no link, and neither does one Browse cannot filter by: the record
   index must carry the comparison (database_summary; without it db= is not read
   and the link would open Browse unfiltered) and the record's own row in it must

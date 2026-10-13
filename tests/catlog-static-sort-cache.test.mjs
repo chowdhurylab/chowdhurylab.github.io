@@ -3316,21 +3316,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       assert.doesNotMatch(html, /cmp-explore/, "no link while Browse cannot filter by it");
       runtimeManifest.viewer_index.optional_fields = ["database_summary"];
       html = render(v2Summary, correctedAndNew());
-      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds">Adds a value<\/a><\/p>/);
+      // Each link keeps the record open beside the list, as its paper's link does.
+      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects&amp;record=v2-db">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds&amp;record=v2-db">Adds a value<\/a><\/p>/);
       // An option the record's own row in the index does not match (the list would not hold the record): no link to it.
       indexRow("v2-db", 1 | 8);
       html = render(v2Summary, correctedAndNew());
-      assert.match(html, /More records like this: <a href="#browse\?db=adds">Adds a value<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=adds&amp;record=v2-db">Adds a value<\/a><\/p>/);
       api.state.records = [];
       assert.doesNotMatch(render(v2Summary, correctedAndNew()), /cmp-explore/, "no row in the index, no link");
       indexRow("v2-db", 1);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same", database_line: "Same as OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=same">Same number<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
       indexRow("v2-db", 8);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
         line("Km", { database_status: "new", database_line: "Not in OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=new">Not in any database<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=new&amp;record=v2-db">Not in any database<\/a><\/p>/);
       indexRow("v2-db", 4);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹." })]));
       assert.doesNotMatch(html, /cmp-explore/, "an option Browse does not have gets no link");
@@ -3338,7 +3339,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       const trail = { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] };
       indexRow("corrected-explore", 32);
       html = render(correctedRecord, trail);
-      assert.match(html, /More records like this: <a href="#browse\?db=earlier">Corrected earlier<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=earlier&amp;record=corrected-explore">Corrected earlier<\/a><\/p>/);
       indexRow("corrected-explore", 0);
       assert.doesNotMatch(render(correctedRecord, trail), /cmp-explore/, "an index without the earlier changes: no link");
       delete runtimeManifest.viewer_index.optional_fields;
@@ -4443,6 +4444,51 @@ assert.equal(document.activeElement, secondRowElement, "close should win a pendi
 assert.equal(element("detailStatus").textContent, "");
 assert.equal(document.body.classList.contains("detail-open"), false);
 narrowDetailPanel = false;
+
+// × on a record whose row the page does not show (another page of the results, after its paper's link): focus goes to
+// the results, the table's current row or the table itself, never the page body. Closed while new filters' results are on
+// their way (Back to other filters), focus goes to the record's row again once they are drawn; a record the new results
+// close takes focus in it to the results.
+{
+  const previousQuery = document.querySelector;
+  const detailPanel = element("detailPanel");
+  const previousContains = detailPanel.contains;
+  try {
+    api.state.selectedKey = "elsewhere";
+    document.activeElement = document.body;
+    api.closeDetailAndRestoreFocus();
+    assert.equal(document.activeElement, element("recordTableWrap"), "no row on the page: the table");
+    document.querySelector = (selector) => (selector === '#recordsBody tr[tabindex="0"]' ? firstRowElement : previousQuery(selector));
+    api.state.selectedKey = "elsewhere";
+    document.activeElement = document.body;
+    api.closeDetailAndRestoreFocus();
+    assert.equal(document.activeElement, firstRowElement, "the page's current row");
+    api.state.selectedKey = "second";
+    api.closeDetailAndRestoreFocus({ resultsPending: true });
+    assert.equal(document.activeElement, secondRowElement);
+    assert.equal(api.state.refocusAfterFilters, "second");
+    document.activeElement = document.body;
+    assert.ok(await api.applyFilters());
+    assert.equal(document.activeElement, secondRowElement, "the new results' row of the closed record");
+    assert.equal(api.state.refocusAfterFilters, null);
+    document.activeElement = element("globalSearchInput");
+    api.state.refocusAfterFilters = "second";
+    await api.applyFilters();
+    assert.equal(document.activeElement, element("globalSearchInput"), "focus the visitor moved meanwhile stays");
+    api.state.selectedKey = "not-in-results";
+    detailPanel.contains = () => true;
+    document.activeElement = element("detailHeading");
+    await api.applyFilters();
+    assert.equal(api.state.selectedKey, "");
+    assert.equal(document.activeElement, firstRowElement, "the record closed by the results: focus to the results");
+  } finally {
+    document.querySelector = previousQuery;
+    detailPanel.contains = previousContains;
+    api.state.selectedKey = "";
+    api.state.refocusAfterFilters = null;
+    document.activeElement = document.body;
+  }
+}
 
 // The viewer fills _ecSort on first use, so the reference computes the EC parts itself.
 const referenceEcParts = (row) => String(row.ec_number || "").split(".")
