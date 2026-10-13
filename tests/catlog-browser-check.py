@@ -1805,7 +1805,9 @@ def check(driver, browser, url):
     assert [link.text for link in driver.find_elements(By.CSS_SELECTOR, ".top-nav a")] == ["Browse", "Stats", "Guide", "Team"]
     assert urlsplit(driver.find_element(By.ID, "teamButton").get_attribute("href")).fragment == "team"
     external = driver.find_elements(By.CSS_SELECTOR, ".external-nav a")
-    assert [link.text.replace("\u00a0", " ") for link in external] == ["CatRange paper ↗", "Chowdhury Lab ↗"]
+    # long names, or the short ones a narrower window shows (CI's Safari window)
+    names = [link.text.replace("\u00a0", " ") for link in external]
+    assert names in (["CatRange paper ↗", "Chowdhury Lab ↗"], ["Paper ↗", "Lab ↗"], ["CatRange paper ↗", "Lab ↗"]), names
     assert external[0].location["x"] > driver.find_element(By.ID, "teamButton").location["x"]
     assets = AssetReferences()
     assets.feed((ROOT / "tools/catlog-stats.html").read_text())
