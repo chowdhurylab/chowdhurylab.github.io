@@ -601,7 +601,9 @@ found at once: A, B, G, C, D, E, F, H.
   (#browse?q=pmid:<PMID>&record=<key>, or doi:<DOI>), "89 records from this
   paper →" once the record index is loaded ("Only this record" when it is the
   paper's one; a record naming several papers links to the first by name, "43
-  records from PMID 35008493"); an older
+  records from PMID 35008493"; up to 1023px, where the record covers the list,
+  following it closes the record and shows the paper's records with focus on
+  them, and Back opens the record again); an older
   record's notes on request: "Earlier automated review: where the values are
   printed" (Where, As printed and Conversion, code quotes and "->" written as
   plain text and arrows; the Conversion line keeps each value's printed number

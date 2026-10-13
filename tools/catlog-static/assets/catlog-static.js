@@ -725,6 +725,20 @@
     return params.length ? `${browseHash(params)}&record=${record}` : `#record=${record}`;
   }
 
+  // A #browse? address without its record=<key> (when it names that record), keeping the rest as written.
+  function hashWithoutRecord(hash, key) {
+    return String(hash || "").replace(/([?&])record=([^&#]*)(&?)/, (whole, lead, value, rest) => {
+      let named = value;
+      try {
+        named = decodeURIComponent(value);
+      } catch (_error) {
+        // An address that is not valid percent-encoding is compared as written.
+      }
+      if (named !== key) return whole;
+      return rest ? lead : "";
+    });
+  }
+
   function syncRecordUrl(key) {
     if (!key && !recordKeyFromLocation()) return;
     const url = new URL(window.location.href);
@@ -9842,8 +9856,16 @@
       event.preventDefault();
       const url = viewUrl("browse");
       url.hash = target.hash;
+      // On a phone or tablet the open record covers the list: a link in it that would keep it open (its paper's other
+      // records) shows the list instead, from its first row with focus on the results. Back opens the record again.
+      const fromOpenRecord = narrowDetailMedia.matches && Boolean(state.selectedKey) && Boolean(link.closest("#detailPanel"));
+      if (fromOpenRecord) url.hash = hashWithoutRecord(target.hash, state.selectedKey);
       window.history.pushState({ catlogView: "browse" }, "", url);
       showLocationView();
+      if (fromOpenRecord && !document.body.classList.contains("detail-open")) {
+        showTableTop();
+        $("recordTableWrap")?.focus({ preventScroll: true });
+      }
     });
     // From Stats or Guide, resting on the way back to Browse for a moment (pointer or keyboard focus), or focusing the
     // search box, starts the download. Passing over the link on the way to another tab does not.
@@ -10094,6 +10116,7 @@
       applyBrowseParams,
       applyLocationFilters,
       browseHash,
+      hashWithoutRecord,
       activeFilterItems,
       countFacets,
       filterControlState,

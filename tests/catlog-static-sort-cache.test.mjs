@@ -3432,6 +3432,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     api.state.records = [{ ...summary, _pmids: 12234181 }];
     api.renderDetail(summary, { supporting_pmids: ["12234181"] });
     assert.match(element("detailContent").innerHTML, /<div class="kv-line paper-records-row"><dt>In CatLog<\/dt><dd>Only this record<\/dd>/);
+    // On a phone or tablet the link shows the paper's records without the record (it covers the list there).
+    assert.equal(api.hashWithoutRecord("#browse?q=pmid:12234181&record=paper-a", "paper-a"), "#browse?q=pmid:12234181");
+    assert.equal(api.hashWithoutRecord("#browse?record=paper%20a&q=doi:10.1/x", "paper a"), "#browse?q=doi:10.1/x");
+    assert.equal(api.hashWithoutRecord("#browse?q=x&record=paper-a&page=2", "paper-a"), "#browse?q=x&page=2");
+    assert.equal(api.hashWithoutRecord("#browse?q=x&record=other", "paper-a"), "#browse?q=x&record=other", "another record stays");
     api.renderDetail(summary, {});
     assert.doesNotMatch(element("detailContent").innerHTML, /In CatLog/, "no paper, no link");
     // A record that names several papers links to the first by name.

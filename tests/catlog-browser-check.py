@@ -2160,7 +2160,8 @@ def check_record_panel(driver, browser, url, route_label):
 def check_record_marks_and_paper_link(driver, browser, base, wait):
     """A record a human reviewer checked shows a green check after each of its values, named "approved by a human
     reviewer", and one line under the table saying what it means (the numbers still end at the same place); its Paper
-    section's In CatLog link opens Browse at the paper's records with the record kept open."""
+    section's In CatLog link opens Browse at the paper's records with the record kept open (on a phone, where the record
+    covers the list, with the record closed; Back opens it again)."""
     results = {}
     keys = driver.execute_async_script("""
         const done = arguments[arguments.length - 1];
@@ -2218,6 +2219,26 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             wait.until(lambda d: d.execute_script(selected_key) == key
                        and d.find_element(By.ID, "pageLabel").text == page_before)
             results["paper-records-back"] = True
+            # On a phone the record covers the list: the link shows the paper's records instead (the record closes and the
+            # address names none), and Back opens the record again.
+            set_browse_viewport(driver, browser, 390, 844)
+            driver.get("about:blank")
+            driver.get(base + f"#record={key}")
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .paper-section a.paper-records-link")
+                       and d.execute_script("return document.body.classList.contains('detail-open')"))
+            phone_link = driver.find_element(By.CSS_SELECTOR, "#detailContent .paper-section a.paper-records-link")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", phone_link)
+            phone_link.click()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')")
+                       and d.find_element(By.ID, "globalSearchInput").get_attribute("value") == unquote_plus(query))
+            assert "record=" not in urlsplit(driver.current_url).fragment, driver.current_url
+            if count:
+                wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count.group(1)} records")
+            driver.back()
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')")
+                       and d.find_element(By.ID, "detailRecordKey").text == key)
+            set_browse_viewport(driver, browser, 1440, 1000)
+            results["paper-records-link-phone"] = True
         break
     return results
 
