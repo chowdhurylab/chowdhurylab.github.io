@@ -947,6 +947,21 @@ a.stats-total-value:focus-visible { outline:0 }
 @container axis (max-width: 300px) {
   :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(6) ~ :nth-child(even) { visibility:hidden }
 }
+/* On phones a bar chart's axis spans the row and its end label ends at its tick (no empty column to reach into), so the
+   last two labels need more room: there the labels thin sooner, by the labels' own font (ch; labels of up to 7
+   characters, "125,000", 4px apart): six ticks keep every other one under 56ch (Figure 3 on a 375px phone: 0, 50,000
+   and 100,000), five keep 0, the middle and the end under 45ch, and four keep only their ends under 34ch. */
+@media (max-width: 640px) {
+  @container axis (max-width: 56ch) {
+    :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(6) ~ :nth-child(even) { visibility:hidden }
+  }
+  @container axis (max-width: 45ch) {
+    :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(5) ~ :nth-child(even) { visibility:hidden }
+  }
+  @container axis (max-width: 34ch) {
+    :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(4) ~ :not(:last-child) { visibility:hidden }
+  }
+}
 .stats-ec-name { color:var(--text-2) }
 .stats-ec-number { white-space:nowrap }
 .stats-share-lines { display:grid; gap:2px; margin:12px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -1231,21 +1246,21 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ridges, .stats-range { --ridge-label:44px }
   .stats-ridge-name { display:none }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
-  /* On phones each name sits above its bar. */
-  .stats-chart-row, .stats-chart-axis, .stats-chart-head { grid-template-columns:minmax(0,1fr) var(--value-w,96px); row-gap:4px }
+  /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
+     headings), 8px from it, and the bar and the axis span the row, so the bars take the full width and a small segment
+     (OED's accepted, BRENDA's) stays wide enough to see. A long class name (Figure 5) hyphenates; a name with a
+     breakdown under it (Figure 2's Other) has its numbers on the name's first line, not on the breakdown's last. */
+  .stats-chart-row, .stats-chart-axis, .stats-chart-head { grid-template-columns:minmax(0,1fr) var(--value-w,96px); column-gap:8px; row-gap:4px }
   .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:minmax(0,1fr) 64px }
-  .stats-chart-label { grid-column:1 / -1 }
-  .stats-chart-axis > span:first-child { display:none }
-  /* A chart with value headings (Figure 5) keeps its bars the full width, since its three columns take more room: the
-     name and the numbers share the first line, under the headings; the bar and the axis span the row. */
-  .stats-chart.has-value-heads :is(.stats-chart-row,.stats-chart-head,.stats-chart-axis) { column-gap:8px }
-  .stats-chart.has-value-heads .stats-chart-label { grid-column:1; grid-row:1; align-self:end; -webkit-hyphens:auto; hyphens:auto }
-  .stats-chart.has-value-heads .stats-chart-value { grid-column:2; grid-row:1; align-self:end }
-  .stats-chart.has-value-heads .stats-track { grid-column:1 / -1; grid-row:2 }
-  .stats-chart.has-value-heads .stats-chart-axis > .stats-axis-ticks { grid-column:1 / -1 }
-  .stats-chart.has-value-heads .stats-chart-axis > span:last-child { display:none }
+  .stats-chart-label { grid-column:1; grid-row:1; align-self:end }
+  .stats-chart.has-value-heads .stats-chart-label { -webkit-hyphens:auto; hyphens:auto }
+  .stats-chart-value { grid-column:2; grid-row:1; align-self:end }
+  .stats-chart-row.has-note > .stats-chart-value { align-self:start }
+  .stats-track { grid-column:1 / -1; grid-row:2 }
+  .stats-chart-axis > span:first-child, .stats-chart-axis > span:last-child { display:none }
+  .stats-chart-axis > .stats-axis-ticks { grid-column:1 / -1 }
   /* the axis has no empty column to reach into: its end label ends at its tick */
-  .stats-chart.has-value-heads .stats-axis-ticks > span:last-child { transform:translateX(-100%) }
+  .stats-axis-ticks > span:last-child { transform:translateX(-100%) }
   .stats-col-bar, .stats-minibar { width:48px }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }

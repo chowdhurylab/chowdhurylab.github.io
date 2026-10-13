@@ -831,11 +831,12 @@ STATS_AXIS_EVEN = """
         if (JSON.stringify(lines) !== JSON.stringify(places)) return false;
         const steps = places.slice(1).map((place, index) => place - places[index]);
         const boxes = shown.map(tick => tick.getBoundingClientRect());
-        // each label centred on its tick; Figure 5's end label on phones ends at its tick (its axis spans the row, with no
+        // each label centred on its tick; on phones the end label ends at its tick (the axis spans the row, with no
         // empty column to reach into)
+        const phone = matchMedia('(max-width: 640px)').matches;
         const placed = (box, index) => { const at = area.left + area.width * places[index] / 100;
             return Math.abs((box.left + box.right) / 2 - at) <= 1
-                || (index === boxes.length - 1 && axis.closest('.has-value-heads') && Math.abs(box.right - at) <= 1); };
+                || (index === boxes.length - 1 && phone && places[index] === 100 && Math.abs(box.right - at) <= 1); };
         return steps.every(step => Math.abs(step - steps[0]) < 0.5)
             && boxes.every((box, index) => index === 0 || placed(box, index))
             && boxes.every((box, index) => index === 0 || box.left >= boxes[index - 1].right + 4);
@@ -3412,6 +3413,19 @@ def check(driver, browser, url):
                 return label.bottom <= track.top + 1;
             });
         """), "On phones each name sits above its bar"
+        off_phone = driver.execute_script("""
+            // On phones every bar spans its chart's row (the full width), and its numbers stand right-aligned on the name's
+            // line: its last line, or the first one when a breakdown follows the name (Figure 2's Other).
+            return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).filter(row => {
+                const box = row.getBoundingClientRect(), track = row.querySelector('.stats-track').getBoundingClientRect();
+                const label = row.querySelector('.stats-chart-label'), value = row.querySelector('.stats-chart-value').getBoundingClientRect();
+                const name = document.createRange(); name.selectNodeContents(row.classList.contains('has-note') ? label.firstChild : label);
+                const lines = [...name.getClientRects()].filter(line => line.width), line = row.classList.contains('has-note') ? lines[0] : lines[lines.length - 1];
+                return Math.abs(track.left - box.left) > 1 || Math.abs(track.right - box.right) > 1 || Math.abs(value.right - box.right) > 1
+                    || value.bottom > track.top + 1 || Math.abs(value.bottom - line.bottom) > 2;
+            }).map(row => `${row.closest('.stats-chart').dataset.chart}:${row.dataset.row}`);
+        """)
+        assert not off_phone, f"On phones bars span the row with their numbers on the name's line: {off_phone}"
         assert driver.execute_script("""
             return [...document.querySelectorAll('.stats-chart')].every(chart => {
                 const tracks = [...chart.querySelectorAll('.stats-track')].map(track => track.getBoundingClientRect());

@@ -125,8 +125,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   accepted swatch with the stripe through it); a nonzero accepted or CatLog v2 count draws at least 2px wide; each label gives records, accepted, then CatLog v2 entries (navy), each
   number in its own right-aligned column under a 12px muted heading line (Records, Accepted, CatLog v2: the legend's
   order), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
-  that heading line. On phones its bars and axis span the row (the end tick's label ends at its tick): the class name
-  and its numbers share the first line, under the headings, 8px apart, and a long name hyphenates.
+  that heading line. On phones, as in every bar chart, its bars and axis span the row: the class name and its numbers
+  share the first line, under the headings, 8px apart, and a long class name hyphenates.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them, drawn on the log axis it shares with Values by enzyme class (the
@@ -171,7 +171,8 @@ one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
 its tick, the end one too, so they sit evenly (where labels would touch they thin evenly: a narrow axis keeps every
 other one of six ticks, 0, 2 and 4 steps, 0, the middle and the end of five, and only the ends of four under 24ch, in
-the labels' own font, so labels never touch, also in a wider font); light 1px gridlines at the
+the labels' own font, so labels never touch, also in a wider font; on phones, where the end label ends at its tick, they
+thin sooner: six ticks under 56ch, five under 45ch, four under 34ch); light 1px gridlines at the
 ticks shown, a gridline giving way with its label, so none is unlabelled. Category labels 13px, value labels and ticks
 12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
 label of several numbers (the count, then the share; Figure 5's records, accepted and CatLog v2 entries) sets each
@@ -203,7 +204,9 @@ histogram and each class ridge an image with its summary in aria-label; bar char
 are HTML in a `<figure>`, so their names stay links into Browse that a keyboard
 reaches and every count is text a screen reader reads row by row and a viewer
 can copy. A name with a breakdown under it (Figure 2's Other) has its bar and numbers on the name's line, not
-centred on the breakdown. On phones each name sits above its bar. `@media
+centred on the breakdown. On phones each name sits above its bar with its numbers right-aligned on the name's line (the
+first line of a name with a breakdown), and the bar and axis span the row (the end tick's label ends at its tick), so
+bars take the full width and small segments stay visible. `@media
 print`: one column across the page's full width at 80% scale (a landscape
 page holds the title, the lead and the headline counts, and most pages two
 figures or tables), no figure or headline count split across pages (the lead
