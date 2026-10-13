@@ -172,6 +172,8 @@ def check_guide(driver, wait):
     """, tag), "human-checked needs its own colour"
     links[GUIDE_SECTIONS.index("guide-units")].click()
     wait.until(lambda d: urlsplit(d.current_url).fragment == "guide-units")
+    # The section's heading takes focus, so the next Tab goes on from the section.
+    wait.until(lambda d: d.execute_script("return document.activeElement?.id") == "guide-units-title")
     assert driver.find_element(By.ID, "guideView").is_displayed()
     assert not driver.find_element(By.ID, "catalogView").is_displayed()
     wait.until(lambda d: d.execute_script("""
@@ -583,6 +585,13 @@ def check_quality(driver, browser, url, quality=None):
         for word in ("independent", "AI run", "Claude", "Codex", "CatLog v2"):
             assert word not in stats_text, f"Stats says {word}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
+        # Stats' link to the method opens the Guide in this page with focus on the section's heading.
+        method_link = driver.find_element(By.CSS_SELECTOR, '#statsView a[href$="#guide-method"]')
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", method_link)
+        method_link.click()
+        wait.until(lambda d: d.execute_script(
+            "return document.body.classList.contains('guide-open') && document.activeElement?.id === 'guide-method-title'"))
+        assert urlsplit(driver.current_url).fragment == "guide-method"
         driver.get("about:blank")
         driver.get(url + "#guide-method")
         wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())

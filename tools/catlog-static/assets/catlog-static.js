@@ -548,6 +548,14 @@
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
 
+  // A Guide section's heading (focusable, tabindex -1): the one the section is labelled by, or the target itself when it
+  // is a heading (#guide-cautions).
+  function guideSectionHeading(section) {
+    if (/^H[1-6]$/.test(section?.tagName || "")) return section;
+    const id = section?.getAttribute("aria-labelledby");
+    return (id && document.getElementById(id)) || section?.querySelector("h2, h3") || null;
+  }
+
   function viewFromLocation() {
     if (["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) return window.location.hash.slice(1);
     if (GUIDE_SECTION_HASH.test(window.location.hash)) return "guide";
@@ -9226,6 +9234,18 @@
       if (linkedView) {
         event.preventDefault();
         navigateTo(linkedView);
+        return;
+      }
+      // A link to a Guide section (#guide-method from Stats, a record or the filters; the Guide's own contents) opens it
+      // in this page with focus on the section's heading, so the next Tab goes on from there, not from the link left behind.
+      const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : null;
+      if (section) {
+        event.preventDefault();
+        const url = viewUrl("guide");
+        url.hash = target.hash;
+        if (window.location.href !== url.href) window.history.pushState({ catlogView: "guide" }, "", url);
+        showLocationView();
+        guideSectionHeading(section)?.focus({ preventScroll: true });
         return;
       }
       if (!/^#browse\?/.test(target.hash)) return;
