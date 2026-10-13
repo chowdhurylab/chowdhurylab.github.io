@@ -5761,11 +5761,16 @@
     return new Set([...groups.values()].filter((keys) => keys.length > 1).flat());
   }
 
-  const LOOK_ALIKE_NOTE = "same values as another record of this paper";
+  // Short enough for the Substrate column at its narrowest on a desktop screen (120px; the full sentence was cut at
+  // nearly every width); the tooltip says it in full.
+  const LOOK_ALIKE_NOTE = "like another record";
+  const LOOK_ALIKE_TITLE = "same values as another record of this paper";
 
   function substrateNoteHtml(row, lookAlikes) {
-    const note = conditionNoteText(row) || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
-    return note ? `<small class="condition-note" title="${escapePublic(note)}">${escapePublic(note)}</small>` : "";
+    const condition = conditionNoteText(row);
+    const note = condition || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
+    const title = condition || LOOK_ALIKE_TITLE;
+    return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
   }
 
   function renderRows() {
