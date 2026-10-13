@@ -240,7 +240,11 @@ def check_human_checked(driver, url):
     wait.until(lambda d: not d.find_element(By.ID, "sortSelect").get_attribute("disabled"))
     page_hash = f"#browse?checked=1&sort=kcat_over_km&rows=100&page={(total + 99) // 100}"
     driver.execute_script("location.hash = arguments[0]", page_hash)
-    wait.until(lambda d: d.find_element(By.ID, "pageLabel").text.endswith(f"of {count}"))
+    # (page 1 also ends "of {count}": wait for the last page, sorted)
+    first_on_last = f"{((total + 99) // 100 - 1) * 100 + 1:,}"
+    wait.until(lambda d: d.find_element(By.ID, "sortSelect").get_attribute("value") == "kcat_over_km"
+               and (lambda label: label.startswith(first_on_last) and label.endswith(f"of {count}"))(
+                   d.find_element(By.ID, "pageLabel").get_attribute("innerText").strip()))
     no_ratio = driver.execute_script("""
         return [...document.querySelectorAll('#recordsBody tr[data-key]')]
             .filter(tr => tr.querySelector('td.c-eff .metric-with-note')?.innerText.trim() === '—').map(tr => tr.dataset.key).slice(-3);
@@ -667,10 +671,10 @@ def check_quality(driver, browser, url, quality=None):
                 assert "approved or not" in earlier, earlier
         if headline:
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            figure = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead .stats-lead-figure strong").text
+            figure = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead .stats-lead-figure strong").get_attribute("innerText").strip()
             assert figure == headline, (figure, headline)
             # The band's Human review gives the same share.
-            band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review'] .stats-total-value").get_attribute("innerText")
+            band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review'] .stats-total-value").get_attribute("innerText").strip()
             assert band == headline, (band, headline)
         else:
             assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without the human review's counts"
@@ -1488,9 +1492,12 @@ def check_filters(driver, browser, url, route_label):
 
     def record_number(label, index=0):
         # The table shows no temperature or pH: a row's are read from its record (the Conditions line named label).
-        row = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")[index]
-        key = row.get_attribute("data-key")
-        row.find_element(By.CSS_SELECTOR, ".primary-cell").click()
+        # (inside waits: Safari redraws the table after a record closes; centred: the last row sits under the pagination bar)
+        key = wait.until(lambda d: (lambda rows: rows[index].get_attribute("data-key") if len(rows) > index else None)(
+            d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
+        cell_css = f'#recordsBody tr[data-key="{key}"] .primary-cell'
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", wait.until(lambda d: d.find_element(By.CSS_SELECTOR, cell_css)))
+        wait.until(lambda d: d.find_element(By.CSS_SELECTOR, cell_css).click() is None)
         text = wait.until(lambda d: d.execute_script("""
             if (!document.body.classList.contains('detail-open') || !location.hash.includes(arguments[1])) return null;
             const dt = [...document.querySelectorAll('#detailContent .kv-line > dt')].find(e => e.textContent.trim() === arguments[0]);
@@ -2979,6 +2986,7 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             count = re.match(r"([\d,]+) records (?:from this paper|in CatLog)", link[0].text)
             query = re.match(r"browse\?q=([^&]+)", href).group(1)
             page_before = driver.find_element(By.ID, "pageLabel").text
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link[0])  # (clear of the sticky header)
             link[0].click()
             wait.until(lambda d: d.find_element(By.ID, "globalSearchInput").get_attribute("value") == unquote_plus(query))
             if count:
@@ -3052,7 +3060,9 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     results["record-back-phone"] = True
     set_browse_viewport(driver, browser, 1440, 1000)
     length = driver.execute_script("return history.length")
-    driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+    cell = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", cell)
+    cell.click()
     wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')"))
     driver.find_element(By.ID, "closeDetailButton").click()
     wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')")
