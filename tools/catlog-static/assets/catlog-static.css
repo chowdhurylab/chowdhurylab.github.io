@@ -1609,6 +1609,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .values-table .vt-unit { white-space:normal }
   .values-table :is(th,td) { padding-left:4px; padding-right:4px }
   .values-table .vt-value { padding-left:0 }
+  /* A value's "!" goes under its number at the right, as calc. does (a block box of 14px ignores text-align, so it once
+     sat at the cell's left edge, far from its number). */
+  .values-table td.vt-value .value-flag,
+  .values-table td.vt-value .metric-origin + .value-flag { margin-left:auto }
 }
 
 @media (max-width: 520px) {

@@ -2614,7 +2614,10 @@ def check_record_panel(driver, browser, url, route_label):
                         const heads = [...table.querySelectorAll('thead th')].map(th => [th.textContent, th.getBoundingClientRect().width]);
                         const cell = section.querySelector('td.vt-value .metric-origin:not(.vt-ghost)').closest('td');
                         const panel = document.getElementById('detailPanel');
+                        const flag = cell.querySelector('.value-flag:not(.vt-ghost)');
+                        const cellRight = cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight);
                         return {over: table.getBoundingClientRect().right - contentRight,
+                                flagGap: flag ? cellRight - flag.getBoundingClientRect().right : null,
                                 printed: (heads.find(([name]) => name === 'As printed') || [, 0])[1],
                                 below: cell.querySelector('.metric-origin:not(.vt-ghost)').getBoundingClientRect().top
                                     >= cell.querySelector('.vt-number').getBoundingClientRect().bottom - 1,
@@ -2623,6 +2626,8 @@ def check_record_panel(driver, browser, url, route_label):
                     assert fit["over"] <= 1 and fit["sideways"] <= 1, f"The Values table runs past its section at {phone_width}px: {fit}"
                     assert fit["below"], f"calc. stays beside the number at {phone_width}px: {fit}"
                     assert fit["printed"] >= (90 if phone_width == 390 else 48), f"As printed is squeezed at {phone_width}px: {fit}"
+                    # The "!" under the number sits at the right like calc., not at the cell's left edge.
+                    assert fit["flagGap"] is None or abs(fit["flagGap"]) <= 1, f"The '!' is not under its number at {phone_width}px: {fit}"
                     results[f"values-table-{phone_width}"] = True
                     if phone_width == 390:
                         # Only the name and × stay in view when the record scrolls; the status line scrolls away.
