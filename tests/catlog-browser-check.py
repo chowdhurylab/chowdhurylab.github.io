@@ -757,9 +757,11 @@ def check_team(driver, browser, url):
             narrow = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-narrow")
             assert narrow.is_displayed() and not driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide").is_displayed()
             assert narrow.size["width"] <= 375 and narrow.size["width"] >= 300
-            assert driver.execute_script("""
-                return [...document.querySelectorAll('svg.team-loop-narrow text')].every(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a >= 11);
-            """), "Team labels read at phone width"
+            # Every label of the upright loop prints at 12px or more, down to a 320px phone.
+            labels_px = """
+                return Math.min(...[...document.querySelectorAll('svg.team-loop-narrow text')].map(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a));
+            """
+            assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels read at phone width: {driver.execute_script(labels_px)}px"
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
             # The upright loop draws no people or agents, so its caption points to the list instead.
             caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption")
@@ -771,6 +773,10 @@ def check_team(driver, browser, url):
                 return Math.abs(links.top - actions.top) < 24 && nav.top >= links.bottom - 1;
             """), "Team header: links out beside Download, tabs below"
             driver.save_screenshot(str(OUTPUT / f"{browser}-team-mobile.png"))
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 320, "height": 640, "deviceScaleFactor": 1, "mobile": True})
+            wait.until(lambda d: d.execute_script("return innerWidth") == 320)
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Team overflows sideways at 320px"
+            assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels at 320px: {driver.execute_script(labels_px)}px"
         finally:
             driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": []})
             driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})

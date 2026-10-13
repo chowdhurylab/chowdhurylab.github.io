@@ -847,7 +847,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-figure figcaption { margin-top:8px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .team-loop { display:block; width:100%; height:auto; margin:0 auto; overflow:visible; font-family:var(--font); font-variant-numeric:tabular-nums lining-nums }
 .team-loop-wide { max-width:960px }
-.team-loop-narrow { display:none; max-width:400px }
+.team-loop-narrow { display:none; max-width:320px }
 /* The upright loop has no people or agents on it: its caption sends readers to the list instead. */
 .team-caption-narrow { display:none }
 .team-track { fill:none; stroke:var(--line-strong); stroke-width:3 }
@@ -908,7 +908,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .team-loop-wide, .team-caption-wide { display:none }
   .team-loop-narrow { display:block }
   .team-caption-narrow { display:inline }
-  .team-body { grid-template-columns:minmax(0,400px) minmax(0,1fr); align-items:start }
+  .team-body { grid-template-columns:minmax(0,354px) minmax(0,1fr); align-items:start }
   .team-legend { grid-template-columns:1fr }
 }
 
@@ -936,7 +936,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }
   .team-body { grid-template-columns:1fr }
-  /* the loop uses the full width, so its 12px labels stay 11px or more */
+  /* the loop uses the full width, so its 12px numbers stay 12px or more down to a 320px phone */
   .team-figure { border:0; border-block:1px solid var(--line); border-radius:0; padding:12px 0 }
 }
 

@@ -4393,7 +4393,8 @@
   ];
 
   // Two drawings of one loop: wide (stations along a racetrack, AI agents above, people below) and narrow (an upright
-  // track for phones and tablets, with the people and agents in the legend beside or under it).
+  // track for phones and tablets, with the people and agents in the legend beside or under it). The narrow viewBox is
+  // cut to the drawing (288 units): at 320px a phone has 288px for it, so its 12-unit numbers still print at 12px.
   const TEAM_LAYOUTS = {
     wide: {
       viewBox: "130 30 870 440",
@@ -4418,7 +4419,7 @@
       },
     },
     narrow: {
-      viewBox: "0 0 360 720",
+      viewBox: "36 20 288 690",
       track: "M80 170 A100 100 0 0 1 280 170 V480 A100 100 0 0 1 80 480 Z",
       stations: {
         papers: { x: 180, y: 70, label: [180, 44, "middle"] },
