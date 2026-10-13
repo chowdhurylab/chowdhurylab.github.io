@@ -155,7 +155,8 @@ one short line per option and no help paragraphs; a group with explanations has 
 its title (and hides them again). The panel order: Source (three
 radio buttons: All records, Read from the paper (read out "by CatLog") and Enzyme
 databases; its "?" says what each holds, that a merged record counts under each
-database and links to the Guide's #guide-method; "By database" folds the databases, STRENDA DB,
+database and links to the Guide's #guide-method; "By database" folds the databases (the Open Enzyme Database as "OED", the
+table's tag, read out and on hover in full), STRENDA DB,
 earlier paper extractions and Source not recorded: ticking one selects From
 enzyme databases, a merged record counts under each database it names, and All
 records or Read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
@@ -175,7 +176,7 @@ human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, 
 out "Only human-checked"), its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
 the four results and the tags (earlier extraction included, the method in one
-line) with a link to the Guide's #guide-status), Enzyme, organism and
+line) with a link to the Guide's #guide-status), Enzyme, organism,
 substrate (labelled fields, the EC number first), Measurement type
 (ticking several shows records with all of them), Wild type or variant (a note
 says how many records state neither), Assay conditions (temperature °C and pH, from
@@ -333,8 +334,9 @@ paper the printed numbers' own arithmetic says when they agree in one unit); the
 short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the stored
 value on older snapshots too), kcat > 10⁸ s⁻¹ (an older snapshot's flag on a kcat
 up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit error and above diffusion limit. The
-Cautions filter names kcat/Km mismatch, Possible unit or magnitude error, No
-unit given, Temperature questionable and No cautions.
+Cautions filter names kcat/Km mismatch, Possible unit or magnitude error (the
+sidebar says "Unit or magnitude error", one line at 256px; its chip and the
+Guide keep "Possible"), No unit given, Temperature questionable and No cautions.
 
 Review result cells (the column is headed "Review result", as in the Guide) align left: a dot and the review result (Accepted, Not confirmed,
 Not checked or Disputed: words that define themselves and promise no further

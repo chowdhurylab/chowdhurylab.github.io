@@ -153,10 +153,12 @@
 
   // Cautions, grouped as the table marks them ("!" beside a value or T, "no unit") and the record's notes show them
   // (conditionFlags).
-  // Each caution states the problem; the record's note gives the numbers.
+  // Each caution states the problem; the record's note gives the numbers. The sidebar shows short (one line at its
+  // 256px width); the chips, the Guide and Stats say the label.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above the diffusion limit or a printed unit that differs from the one CatLog read" },
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above the diffusion limit or a printed unit that differs from the one CatLog read",
+      short: "Unit or magnitude error" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
     { value: "none", label: "No cautions", bit: 16, title: "Records without any caution" },
@@ -204,7 +206,7 @@
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
+  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
   // The sidebar's labels are short, one line each ("by CatLog" is read out); the help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
@@ -213,11 +215,12 @@
     { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: "Enzyme databases", help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
-  // absent).
+  // absent), shortHtml the sidebar's one-line label (the table's tag, its name read out and on hover).
   const sourceFilters = [
     { value: "brenda", label: "BRENDA", tag: "BRENDA", bit: 2 },
     { value: "sabio_rk", label: "SABIO-RK", tag: "SABIO-RK", bit: 4 },
-    { value: "oed", label: "Open Enzyme Database", tag: "OED", name: "Open Enzyme Database (OED)", bit: 8 },
+    { value: "oed", label: "Open Enzyme Database", tag: "OED", name: "Open Enzyme Database (OED)", bit: 8,
+      shortHtml: 'OED<span class="visually-hidden"> (Open Enzyme Database)</span>', title: "Open Enzyme Database (OED)" },
     { value: "uniprot", label: "UniProt", tag: "UniProt", bit: 16 },
     { value: "skid", label: "SKiD", tag: "SKiD", bit: 32 },
     { value: "strenda", label: "STRENDA DB", tag: "STRENDA DB", bit: 64 },
@@ -5168,7 +5171,7 @@
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
-          name: "caution", value: item.value, label: item.label, labelHtml: item.labelHtml, title: item.title,
+          name: "caution", value: item.value, label: item.short || item.label, labelHtml: item.labelHtml, title: item.title,
           count: `caution:${item.value}`,
         })).join("");
       }
@@ -5183,7 +5186,7 @@
         <details class="source-databases" id="sourceDatabases">
           <summary>By database</summary>
           <div class="check-stack">${sourceFilters.map((item) => checkRowHtml({
-            name: "source", value: item.value, label: item.label, title: item.title || "", count: `source:${item.value}`,
+            name: "source", value: item.value, label: item.label, labelHtml: item.shortHtml, title: item.title || "", count: `source:${item.value}`,
           })).join("")}
           </div>
         </details>`;

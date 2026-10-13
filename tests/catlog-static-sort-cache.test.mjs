@@ -4704,6 +4704,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(source, /<span>Read from the paper<span class="visually-hidden"> by CatLog<\/span><\/span>/);
   assert.match(source, /<span>Enzyme databases<\/span>/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
+  // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
+  // the caution without "Possible", which its chip and the Guide keep.
+  assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
+  assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
+  assert.match(element("aboutSource").innerHTML, /the Open Enzyme Database \(OED\)/);
   assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper by CatLog<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
   assert.match(element("aboutSource").innerHTML, /<strong>From enzyme databases<\/strong>: BRENDA, SABIO-RK/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
