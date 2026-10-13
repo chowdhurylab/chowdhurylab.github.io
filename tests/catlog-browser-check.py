@@ -641,7 +641,7 @@ def check_quality(driver, browser, url, quality=None):
         wait.until(lambda d: d.find_elements(By.ID, "statsChecksTitle"))
         if audited:
             audit = driver.find_element(By.CSS_SELECTOR, "[data-check='audit']")
-            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText") == f"{quality['audit_values']:,}"
+            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText").strip() == f"{quality['audit_values']:,}"
             assert f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit.get_attribute("innerText"), audit.text
             assert "independent" not in audit.get_attribute("innerText").lower(), audit.text
         if compared:
@@ -794,17 +794,17 @@ def check_review_headline(driver, browser, url):
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead"))
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText") == "Human review of CatLog v1 entries"
+            assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review of CatLog v1 entries"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
             assert "99.9%" in band and "values correct in CatLog v1 entries" in band, band
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == "99.9%"
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText") == REVIEW_SENTENCE
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").strip() == REVIEW_SENTENCE
             # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
             assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure i + sub, .stats-lead-sentence i + sub")) >= 7
             text = lead.get_attribute("innerText")
             assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog v2 has 53 of the 58 values reviewers named" in text, text
             assert "could not find the value 153, organism name 13, DOI 5" in text, text
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText") == REVIEW_SIDE_LINE
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").strip() == REVIEW_SIDE_LINE
             for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
                 assert word not in text, f"The lead says {word}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
@@ -906,7 +906,7 @@ def check_stats_figures(driver, browser, url):
             # The comparison with the databases is the last numbered part, its three figures in order.
             part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
             assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")
-            headings = [h.get_attribute("innerText") for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
+            headings = [h.get_attribute("innerText").strip() for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
             assert headings == list(FIGURE_TITLES), headings
             figures = driver.execute_script("""
                 return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
@@ -1013,7 +1013,7 @@ def check_stats_more(driver, browser, overview, total):
     if classes:
         # Figure 5 names its value columns in the legend's order, each heading over its numbers (STATS_VALUE_COLUMNS_JS
         # below checks they end at one x), and no class name runs into them.
-        heads = [part.get_attribute("innerText") for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
+        heads = [part.get_attribute("innerText").strip() for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
         with_v2 = all(isinstance(item.get("from_paper"), int) for item in classes.values())
         assert heads == ["Records", "Accepted"] + (["CatLog v2"] if with_v2 else []), heads
         crowded = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].filter((row) => {
@@ -1269,7 +1269,7 @@ def check_stats_new_figures(driver, browser, url):
             manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
-            titles = [h.get_attribute("innerText") for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
+            titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
             for title in ("Values per paper in CatLog v2", "Organisms with the most CatLog v2 entries", "Values by enzyme class"):
                 assert title in titles, titles
             assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
@@ -3281,7 +3281,7 @@ def check(driver, browser, url):
         if human is not None:
             # Human-checked is a check under Quality, linked to those records.
             card = driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked']")
-            assert card.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText") == f"{human:,}"
+            assert card.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText").strip() == f"{human:,}"
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
         assert any(href.endswith("#browse?source=paper") for href in hrefs)
@@ -3290,7 +3290,7 @@ def check(driver, browser, url):
                       for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
         assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
         # Numbered parts in order, from the band's 1.
-        parts = [heading.get_attribute("innerText").split("\n") for heading in driver.find_elements(By.CSS_SELECTOR, ".stats-part-title")]
+        parts = [heading.get_attribute("innerText").strip().split("\n") for heading in driver.find_elements(By.CSS_SELECTOR, ".stats-part-title")]
         assert [int(number) for number, *_rest in parts] == list(range(1, len(parts) + 1)), parts
         check_stats_more(driver, browser, overview, total)
         forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] tr[data-stat-key]")
@@ -3313,7 +3313,7 @@ def check(driver, browser, url):
         if lead_share:
             lead = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead")
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == lead_share
+            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == lead_share
             for word in DROPPED_WORDING:
                 assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}

@@ -1231,6 +1231,12 @@ a.stats-total-value:focus-visible { outline:0 }
   .team-legend { grid-template-columns:1fr }
 }
 
+/* Four headline numbers on a tablet: a wide font (Linux's DejaVu, Verdana) would push a six-digit count past its column
+   at 32px, so the number scales between 24 and 32px with the window. */
+@media (min-width: 721px) and (max-width: 1199px) {
+  .stats-totals dd { font-size:clamp(var(--fs-24), 2.7vw, var(--fs-32)) }
+}
+
 @media (max-width: 720px) {
   .stats-totals dl { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0 }
   .stats-total:nth-child(odd)::before { display:none }

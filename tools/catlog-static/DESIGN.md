@@ -834,7 +834,7 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 ## Stats
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
-1 At a glance (the headline band: 32px key numbers in accent ink with a soft glow, then 20px scope counts),
+1 At a glance (the headline band: 32px key numbers in accent ink with a soft glow (24-32px with the window between 721 and 1199px, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
 2 Quality (the human review of CatLog v1 entries as the lead, the user's headline, with CatLog v2's match as a side
 line; then the checks), 3 What is in the catalog (the review-result donut and its legend table, records by main
 source with a Records | Share switch, CatLog v2 and CatLog v1 entries, values per paper in CatLog v2, what the
