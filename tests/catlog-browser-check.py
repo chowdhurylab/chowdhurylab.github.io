@@ -801,6 +801,9 @@ def check_filters(driver, browser, url, route_label):
         assert chip_keys() == ["ec"]
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: fragment() == "browse?rows=50" and not chip_keys())
+        # With no chip left, focus goes to the search box, never to « Hide filters (the next Enter would press it).
+        assert driver.switch_to.active_element.get_attribute("id") == "globalSearchInput", "Focus after Clear all"
+        driver.execute_script("document.activeElement.blur()")
 
         # 2. Human-checked: the filter sidebar is open beside the table (no dialog, the table stays usable); tick it, and
         # every row shown carries the "human-checked" tag; the count beside it is the number of records.

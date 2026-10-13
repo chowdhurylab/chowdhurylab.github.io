@@ -5073,15 +5073,16 @@
     if (focused) {
       const buttons = [...bar.querySelectorAll("button")];
       const target = (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey))
-        || buttons[Math.min(focusedIndex, buttons.length - 1)]
-        || filtersToggleButton();
-      target?.focus({ preventScroll: true });
+        || buttons[Math.min(focusedIndex, buttons.length - 1)];
+      if (target) target.focus({ preventScroll: true });
+      else focusAfterLastFilter();
     }
   }
 
   let renderedChipsHtml = "";
 
-  // Removing a filter (a chip, or the empty-results button): focus stays in the chips, or returns to Filters.
+  // Removing a filter (a chip, or the empty-results button): focus stays in the chips, or goes where
+  // focusAfterLastFilter says when none is left.
   function removeActiveFilter(key, { focusIndex = -1 } = {}) {
     const item = activeFilterItems().find((candidate) => candidate.key === key);
     if (!item) return;
@@ -5089,8 +5090,18 @@
     state.pendingPage = 0;
     renderActiveFilters();
     const chips = [...($("activeFilters")?.querySelectorAll?.(".filter-chip") || [])];
-    if (focusIndex >= 0) (chips[Math.min(focusIndex, chips.length - 1)] || filtersToggleButton())?.focus({ preventScroll: true });
+    if (focusIndex >= 0) {
+      const chip = chips[Math.min(focusIndex, chips.length - 1)];
+      if (chip) chip.focus({ preventScroll: true });
+      else focusAfterLastFilter();
+    }
     applyFiltersInBackground();
+  }
+
+  // With no filter chip left, focus goes to the search box beside the sidebar or its rail (never to « Hide filters,
+  // which the next Enter would press), and to the Filters button on a phone.
+  function focusAfterLastFilter() {
+    (filtersDocked() ? $("globalSearchInput") : filtersToggleButton())?.focus({ preventScroll: true });
   }
 
   function renderActiveFilterCount() {
@@ -5588,7 +5599,9 @@
       const removeLast = body.querySelector?.('[data-action="remove-last-filter"]');
       removeLast?.addEventListener("click", () => {
         removeActiveFilter(removeLast.dataset.filterKey);
-        ($("activeFilters")?.querySelector?.(".filter-chip") || filtersToggleButton())?.focus({ preventScroll: true });
+        const chip = $("activeFilters")?.querySelector?.(".filter-chip");
+        if (chip) chip.focus({ preventScroll: true });
+        else focusAfterLastFilter();
       });
       return;
     }
@@ -8536,7 +8549,7 @@
       }
       if (event.target?.closest?.("[data-filter-clear]")) {
         clearFilters();
-        filtersToggleButton()?.focus({ preventScroll: true });
+        focusAfterLastFilter();
       }
     });
     // The filter changed last is the one the empty-results note offers to remove.
