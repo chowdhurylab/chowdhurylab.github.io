@@ -3590,7 +3590,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["kcat", "Km", "kcat/Km"]);
   assert.match(html, APPROVED_NAME);
-  assert.match(html, /<li><span class="value-approved-key"><svg class="check-icon"[^>]*>.*?<\/svg><\/span>Approved by a human reviewer \(see Human review below\)\.<\/li>/);
+  assert.match(html, /<li><span class="value-approved-key"><svg class="check-icon"[^>]*>.*?<\/svg><\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["kcat", "Km"]);
@@ -3626,7 +3626,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The heading keeps the calc. space as well (the stylesheet draws its unseen "calc.").
   assert.match(element("detailContent").innerHTML, /<span class="vt-head">Value<span class="value-approved vt-ghost" aria-hidden="true"><svg[^>]*>.*?<\/svg><\/span><small class="metric-origin vt-ghost" aria-hidden="true"><\/small><\/span><\/th>/);
   // The line under the table says why the calc. kcat/Km beside checked values has none.
-  assert.match(element("detailContent").innerHTML, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see Human review below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
+  assert.match(element("detailContent").innerHTML, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
   // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") carries no check, also in
@@ -3637,7 +3637,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.match(html, /Km is above 10 M; the unit or the value may be wrong\./);
   assert.deepEqual(approvedValues(html), ["kcat", "kcat/Km"]);
-  assert.match(html, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see Human review below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(html, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
   assert.deepEqual((await recordDownloadPayload(bigKm, {})).human_approved_values, ["kcat", "kcat/Km"]);
   api.renderDetail(row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 9e-7, km_display: "9e-7" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "kcat/Km"], "Km below 1 nM: no check");

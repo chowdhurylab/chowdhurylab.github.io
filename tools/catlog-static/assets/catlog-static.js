@@ -8279,7 +8279,7 @@
     const greyNotes = [
       // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
-        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.${escapeHtml(calcNoCheck)}${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${escapeHtml(calcNoCheck)}${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
         : (withheldNote
             ? escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`)
             : ""),
@@ -9518,6 +9518,21 @@
     ]) + notesHtml);
   }
 
+  // The Values legend's "see Human review below" shows that row (in Review and audit, the record's last section, several
+  // screens down on a phone): scrolled into view and focused, as a value's "!" shows its note.
+  const HUMAN_REVIEW_LINK_HTML = '<button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review</button>';
+
+  // A row of the record (by its class), scrolled into view and focused, outlined a moment.
+  function showRecordRow(className) {
+    const row = document.querySelector?.(`#detailContent .${className}`);
+    if (!row) return;
+    row.tabIndex = -1;
+    row.scrollIntoView?.({ block: "nearest" });
+    row.focus?.({ preventScroll: true });
+    row.classList?.add("is-target");
+    window.setTimeout(() => row.classList?.remove("is-target"), 1600);
+  }
+
   // ---- Record panel: H. Review and audit ----
   // The record's review in one sentence, the AI audit (date and result only), what a human reviewer found, then the
   // record's actions.
@@ -9640,6 +9655,9 @@
     bindDetailTop();
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {
       button.addEventListener("click", () => showFlagNote(button.dataset.flagNote));
+    });
+    document.querySelectorAll("#detailContent [data-show-row]").forEach((button) => {
+      button.addEventListener("click", () => showRecordRow(button.dataset.showRow));
     });
     document.querySelectorAll("#detailContent .detail-section .copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));

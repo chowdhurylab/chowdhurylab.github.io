@@ -650,6 +650,10 @@ body.detail-open .detail-panel { display:block }
 .values-empty { margin:0; color:var(--text-2); font-size:var(--fs-13) }
 .value-notes { display:grid; gap:4px; margin:12px 0 0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .value-notes .metric-origin { margin-right:4px; font-size:var(--fs-12) }
+/* "see Human review below": a link-like button that shows that row of Review and audit (outlined a moment, as a note) */
+.value-notes .review-row-link { font-size:inherit; line-height:inherit; vertical-align:baseline }
+.human-review-line { scroll-margin-block:12px; border-radius:2px }
+.human-review-line:is(:focus-visible,.is-target) { outline:2px solid var(--accent); outline-offset:2px }
 button.value-flag { border:0; padding:0; cursor:pointer }
 .flag-notes { display:grid; gap:6px; margin:12px 0 0; padding:0; list-style:none }
 .flag-notes li { display:flex; gap:8px; border:1px solid var(--caution-line); border-radius:var(--radius); background:var(--caution-tint); padding:8px 10px; color:var(--caution-ink); font-size:var(--fs-13); line-height:var(--lh-13) }

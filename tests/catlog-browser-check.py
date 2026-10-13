@@ -2212,6 +2212,18 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
         assert marks["sideways"] <= 1, marks
         results["value-approved-checks"] = True
+        # "see Human review below" shows that row of Review and audit: scrolled into the panel's view and focused.
+        review_link = driver.find_elements(By.CSS_SELECTOR, "#detailContent .value-notes .review-row-link")
+        if review_link:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", review_link[0])
+            review_link[0].click()
+            wait.until(lambda d: d.execute_script("""
+                const row = document.querySelector('#detailContent .human-review-line');
+                const panel = document.getElementById('detailPanel').getBoundingClientRect();
+                const box = row && row.getBoundingClientRect();
+                return Boolean(box) && document.activeElement === row && box.top >= panel.top - 1 && box.bottom <= panel.bottom + 1;
+            """))
+            results["review-row-link"] = True
         link = driver.find_elements(By.CSS_SELECTOR, "#detailContent .paper-section a.paper-records-link")
         if link:
             href = urlsplit(link[0].get_attribute("href")).fragment
