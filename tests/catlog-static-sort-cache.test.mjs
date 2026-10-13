@@ -4462,3 +4462,13 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 }
 
 console.log("CatLog viewer behavior checks passed.");
+
+// value_display is compared with the stored number (the display string is rounded to 5 figures), and a printed integer
+// of up to 3 digits keeps its trailing zero (50 µM -> 0.050 mM), a longer one does not (47,000 -> not 47.000)
+{
+  const line = (metric, value_display, raw_value) => ({ metric, value_display, raw_value });
+  const plainDisplays = (...args) => JSON.parse(JSON.stringify(api.printedFigureDisplays(...args)));
+  assert.deepEqual(plainDisplays({ kcat: 3276.38, kcat_display: "3276.4" }, { proof_lines: [line("kcat", "3276.38", "3276.381 ± 184.275")] }), { kcat: "3276.38" });
+  assert.deepEqual(plainDisplays({ km: 0.05, km_display: "0.05" }, { proof_lines: [line("Km", "0.050", "50 ± 6")] }), { km: "0.050" });
+  assert.deepEqual(plainDisplays({ kcat_over_km: 47, kcat_over_km_display: "47" }, { proof_lines: [line("kcat/Km", "47.000", "47,000")] }), {});
+}

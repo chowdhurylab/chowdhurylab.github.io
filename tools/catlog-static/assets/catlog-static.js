@@ -7068,9 +7068,18 @@
       const field = (v2MetricLabels[line.metric] || [])[0];
       const text = valueDisplayText(line.value_display);
       if (!field || !text || field in displays) return;
-      const stored = Number(metricDisplay(summary, field));
-      if (!Number.isFinite(stored) || Math.abs(Number(text) - stored) > Math.abs(stored) * 1e-9) return;
-      const printed = numberParts(printedNumberText(String(line.raw_value ?? "").trim() || line.printed))?.significant || 0;
+      // the stored number itself (the *_display string is rounded to 5 figures: 2216.61 -> "2216.6"), the string as a fallback
+      const raw = Number(summary?.[field]);
+      const stored = Number.isFinite(raw) ? raw : Number(metricDisplay(summary, field));
+      if (!Number.isFinite(stored) || Math.abs(Number(text) - stored) > Math.abs(stored) * 1e-6) return;
+      // never more figures than the paper printed. A printed integer's trailing zero counts only when the paper prints an
+      // uncertainty with it ("50 ± 6 µM" -> 0.050, "40 (2)" -> 0.040; a bare "30 µM" stays 0.03), and only up to 3 digits
+      // ("47,000" never becomes 47.000)
+      const rawText = String(line.raw_value ?? "").trim() || String(line.printed ?? "");
+      const printedText = printedNumberText(rawText) || "";
+      let printed = numberParts(printedText)?.significant || 0;
+      const integerDigits = /^\d+$/.test(printedText) ? printedText.replace(/^0+/, "").length : 0;
+      if (integerDigits && integerDigits <= 3 && /±|\+\/-|\(\s*\d/.test(rawText)) printed = Math.max(printed, integerDigits);
       if (printed && (numberParts(text)?.significant || 0) > printed) return;
       displays[field] = text;
     });
@@ -9575,6 +9584,7 @@
       renderGuideMethod,
       sourceAttributionRows,
       humanComparisonText,
+      printedFigureDisplays,
       agreementText,
       statsCohortData,
       statsOverview,
