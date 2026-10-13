@@ -380,7 +380,11 @@ is left out, never an empty heading. The order (design spec 5):
   go under the number, so As printed keeps about 100px at 375px; at 320px a
   two-part unit may take two lines and the table still fits); under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
-  s⁻¹ mM⁻¹, 5 values", in the catalog unit), each caution once as an amber note
+  s⁻¹ mM⁻¹, 5 values", in the catalog unit; shown when it differs from the
+  record's kcat/Km or the record stores none, then the empty line says "No kcat,
+  Km or kcat/Km is stored for this record; BRENDA lists a kcat/Km for it
+  (below)."; a number a source also gives with no unit is listed once; Download
+  record carries them as source_kcat_over_km_values), each caution once as an amber note
   its value's "!" moves to, the grey notes ("kcat and Km: converted by code from
   the printed units.", "kcat/Km: converted by code, printed unit read as 10³ M⁻¹
   s⁻¹.", "calc. kcat ÷ Km, calculated by CatLog; not printed in the paper."),

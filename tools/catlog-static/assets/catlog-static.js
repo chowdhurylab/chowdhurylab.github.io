@@ -2680,6 +2680,12 @@
       kcat_over_km: value("kcat_over_km"),
       kcat_over_km_unit: unit("kcat_over_km"),
       kcat_over_km_origin: metricHasValue(metricSummary, "kcat_over_km") ? summary.kcat_over_km_origin || null : null,
+      // The kcat/Km the record's sources list, as the record shows them (when they differ from its own, or it has none).
+      source_kcat_over_km_values: shownListedEfficiencies(summary, detail).map((item) => ({
+        value: Number(item.value),
+        unit: item.unit ? plainUnit(listedEfficiencyInCatalogUnit(item.unit) ? "s^(-1)*mM^(-1)" : item.unit) || null : null,
+        source_db: item.source_db || null,
+      })),
       temperature_c: temperature === EMPTY_VALUE ? null : Number(temperature),
       ph: ph === EMPTY_VALUE ? null : Number(ph),
       assay_conditions_summary: text(detail.assay_conditions_summary),
@@ -2730,6 +2736,7 @@
     if (!databaseComparison.length) delete record.database_comparison;
     if (!record.database_note) delete record.database_note;
     if (!earlierCorrections.length) delete record.earlier_corrections;
+    if (!record.source_kcat_over_km_values.length) delete record.source_kcat_over_km_values;
     return record;
   }
 
@@ -6665,18 +6672,34 @@
     return sourceShortNames[key] || sourceDatabaseLabel(value);
   }
 
+  // Every kcat/Km the record's sources list, each once. A source that gives a number both in a unit and with no unit (BRENDA
+  // does, for most of its values) lists it once, in its unit.
+  function sourceListedEfficiencies(detail) {
+    const items = (Array.isArray(detail?.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
+      .filter((item) => item && item.value != null && item.value !== "" && Number.isFinite(Number(item.value)));
+    const withUnit = new Set(items.filter((item) => item.unit).map((item) => JSON.stringify([Number(item.value), item.source_db || ""])));
+    const seen = new Set();
+    return items.filter((item) => {
+      if (!item.unit && withUnit.has(JSON.stringify([Number(item.value), item.source_db || ""]))) return false;
+      const key = JSON.stringify([Number(item.value), item.unit || "", item.source_db || ""]);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // The listed values that differ from the record's own kcat/Km (CatLog's kcat_over_km_source_differs).
   function listedEfficiencies(summary, detail) {
     if (!summary.kcat_over_km_source_differs && !detail.kcat_over_km_source_differs) return [];
-    const seen = new Set();
-    return (Array.isArray(detail.source_kcat_over_km_values) ? detail.source_kcat_over_km_values : [])
-      .filter((item) => {
-        const key = item && item.value != null && Number.isFinite(Number(item.value))
-          ? JSON.stringify([item.value, item.unit || "", item.source_db || ""])
-          : "";
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+    return sourceListedEfficiencies(detail);
+  }
+
+  // The listed values the record shows: those that differ from its kcat/Km, or all of them when it stores none (a
+  // listed value equal to the stored one would say it twice).
+  function shownListedEfficiencies(summary, detail) {
+    const differs = listedEfficiencies(summary, detail);
+    if (differs.length || metricHasValue(summary, "kcat_over_km")) return differs;
+    return sourceListedEfficiencies(detail);
   }
 
   // A range of listed values to two significant figures (three when two would make its ends equal).
@@ -6691,7 +6714,7 @@
 
   // "kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹ (5 values)", one line per source.
   function sourceEfficiencyRow(summary, detail) {
-    const values = listedEfficiencies(summary, detail);
+    const values = shownListedEfficiencies(summary, detail);
     if (!values.length) return "";
     const groups = new Map();
     values.forEach((item) => {
@@ -7093,15 +7116,17 @@
         + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
         + "</tr>";
     });
-    // A record with no kcat, Km or kcat/Km says so in words (some keep a Ki only).
+    // A merged older record's kcat/Km values as its sources list them.
+    const listed = sourceEfficiencyRow(summary, detail);
+    // A record with no kcat, Km or kcat/Km says so in words (some keep a Ki only), and names who lists one when a source does.
     const noKinetics = ["kcat", "km", "kcat_over_km"].every((field) => !fields.some(([shown]) => shown === field));
+    const listers = [...new Set(shownListedEfficiencies(summary, detail).map((item) => sourceShortName(item.source_db) || "the source"))];
+    const listedBy = listers.length ? `; ${sentenceList(listers)} ${listers.length > 1 ? "list" : "lists"} a kcat/Km for it (below)` : "";
     const emptyNote = !noKinetics
       ? ""
       : (fields.some(([field]) => field === "ki")
-          ? "This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km."
-          : "No kcat, Km or kcat/Km is stored for this record.");
-    // A merged older record's kcat/Km values as its sources list them.
-    const listed = sourceEfficiencyRow(summary, detail);
+          ? `This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km${listedBy}.`
+          : `No kcat, Km or kcat/Km is stored for this record${listedBy}.`);
     const greyNotes = [
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")

@@ -2222,6 +2222,24 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.equal(api.temperatureFlagBadgeHtml(api.conditionFlags(unflaggedLow)), "", "a Km caution leaves T unmarked");
   assert.equal(api.conditionCellHtml("c-temp", "—"), '<td class="c-temp num" data-empty=""><span>—</span></td>');
 }
+// An older record that stores no kcat/Km shows the kcat/Km its sources list even when nothing differs (3d1ca368da05740a:
+// BRENDA lists 0.5 and 50 s⁻¹ mM⁻¹, each also with no unit); one whose stored kcat/Km equals the listed one says it once.
+{
+  const brenda = (value, unit) => ({ value, unit, source_db: "brenda", source_record_id: null, pmids: ["740076"] });
+  const listedOnly = { source_kcat_over_km_values: [brenda(0.5, "s^(-1)*mM^(-1)"), brenda(50, "s^(-1)*mM^(-1)"), brenda(0.5, null), brenda(50, null)] };
+  const empty = api.valuesSection(row({ record_key: "listed-only", source_db: "brenda", kcat: null, km: null, kcat_over_km: null,
+    kcat_display: null, km_display: null, kcat_over_km_display: null }), listedOnly);
+  assert.match(empty, /No kcat, Km or kcat\/Km is stored for this record; BRENDA lists a kcat\/Km for it \(below\)\./);
+  assert.match(empty, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span>0\.50–50 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
+  assert.doesNotMatch(empty, /no unit/, "a number BRENDA also gives with no unit is listed once, in its unit");
+  const pair = api.valuesSection(row({ record_key: "listed-pair", source_db: "brenda", kcat: 17479, km: 1.86, kcat_over_km: null,
+    kcat_display: "17479", km_display: "1.86", kcat_over_km_display: null }), { source_kcat_over_km_values: [brenda(9397, "s^(-1)*mM^(-1)"), brenda(9397, null)] });
+  assert.match(pair, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span>9397 s<sup>-1<\/sup>/);
+  assert.doesNotMatch(pair, /flag-notes|kcat\/Km mismatch/, "no new caution: the table's cautions stay CatLog's flags");
+  const same = api.valuesSection(row({ record_key: "listed-same", kcat_over_km: 64, kcat_over_km_display: "64" }),
+    { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
+  assert.doesNotMatch(same, /listed by/, "a listed kcat/Km equal to the stored one is not said twice");
+}
 // An older record's kcat/Km off by a unit factor shows the source's own value that agrees with kcat ÷ Km.
 const unitFlagHtml = measurementSection(row({
   kcat: 22.6, km: 0.35, kcat_over_km: 64000, kcat_display: "22.6", km_display: "0.35", kcat_over_km_display: "64000",
@@ -2977,6 +2995,13 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-summary-fall
   "CC BY 4.0");
 assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-license", source_license: undefined }), {})).source_license,
   "See the source database's terms");
+// Download record carries the kcat/Km the record's sources list, as the record shows them.
+{
+  const listedPayload = await recordDownloadPayload(row({ record_key: "record-listed", source_db: "brenda", kcat: null, km: 0.05,
+    kcat_over_km: null, kcat_display: null, km_display: "0.05", kcat_over_km_display: null }),
+  { source_kcat_over_km_values: [{ value: 4.9, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 4.9, unit: null, source_db: "brenda" }] });
+  assert.deepEqual(listedPayload.source_kcat_over_km_values, [{ value: 4.9, unit: "s^-1 mM^-1", source_db: "brenda" }]);
+}
 // A record read by CatLog: the method, the check and the values as printed in the record's words; CatLog's licence; none
 // of the pipeline's words.
 {
@@ -2992,6 +3017,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-lice
         { metric: "Km", table_label: "Table 1", printed: "24.7 mM", check: "confirmed", conversion: "" },
       ] },
   );
+  assert.ok(!("source_kcat_over_km_values" in v2Payload), "no listed kcat/Km, no field");
   assert.equal(v2Payload.kcat, 135);
   assert.equal(v2Payload.kcat_unit, "s^-1");
   assert.equal(v2Payload.source, "Read from the paper by CatLog");
