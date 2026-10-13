@@ -128,7 +128,10 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   drawn through its half-decade bins (`overview.metrics.<metric>.by_class`: one grid of 14-18 bins per parameter
   shared by every class, the end bins holding every value beyond them; a record in several classes counts in
   each), each scaled to its own peak (shapes compare whatever the class's size) with a smooth curve that never
-  overshoots its bins, a fill from the parameter's colour to its tint, the 10–90% range as a line on the baseline
+  overshoots its bins. The open-ended end bins are not in the curve (a pile there is not a peak in the data): the
+  curve covers the inner bins, cut off level at an end with values beyond it (falling to the baseline where there are
+  none), and each end bin with values gets a 6px hatched stub of fixed height, its count in the tooltip line and the
+  row's summary. A fill from the parameter's colour to its tint, the 10–90% range as a line on the baseline
   with the median as a dot, the median at the right to two significant figures, a shared log axis per panel (its
   labels thin out when narrow). EC N links into Browse; the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.

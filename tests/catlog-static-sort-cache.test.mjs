@@ -2064,6 +2064,27 @@ function row(overrides = {}) {
     assert.match(more, /#browse\?ec=1\.">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
     // The median column reads evenly: two significant figures (the tooltip line keeps the stored median).
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-value">([^<]+)<\/span>/g)].map((match) => match[1]), ["2.0", "4.5"]);
+    // The end bins hold every value beyond the grid: the curve covers the inner bins only (here bins 1-12 of 14, from
+    // 7.143% to 92.857%), a class with values in an end bin gets a hatched stub there with the count in its tooltip line,
+    // and its summary says so; class 1 has none in its end bins, so no stub and its curve falls to the baseline.
+    assert.match(more, /data-class="1"[^>]*>[\s\S]*?<path class="stats-ridge-area" style="fill:url\(#statsRidgeFill-kcat\)" d="M7\.14 40C[^"]*L92\.857 40L7\.143 40Z"\/>/);
+    assert.doesNotMatch(more.split('data-class="3"')[0], /stats-ridge-end/);
+    assert.match(more, /<i class="stats-ridge-end" style="left:92\.857%;width:7\.143%" data-tip="EC 3 Hydrolases, kcat 10⁵·⁵ s⁻¹ and above: 1 values \(end bin, not in the curve\)"><\/i>/);
+    assert.match(more, /aria-label="EC 3 Hydrolases, kcat: 1 values; [^"]*; in the end bins, not in the curve: 1 at 10⁵·⁵ s⁻¹ and above\."/);
+    {
+      // A pile in an end bin neither sets the scale nor draws a peak: the inner bins' highest count (4) is the ridge's
+      // peak (y 4), and the curve is cut off level at both ends, where values lie beyond (left at 2 of 4: y 22).
+      const piled = api.statsRidgeFigure({ ec_classes: [{ class: 4, name: "Lyases" }], metrics: { kcat: { by_class: { log10_start: 0, bin_width: 0.5,
+        classes: [{ class: 4, n: 111, median: 3, p10: 1, p90: 1000, counts: [5, 2, 4, 100] }] } } } });
+      const area = piled.body.match(/class="stats-ridge-area"[^>]* d="([^"]+)"/)[1];
+      assert.match(area, /^M25 22C/);
+      assert.match(area, /C[^C]* 75 4L75 40L25 40Z$/);
+      const ys = [...area.matchAll(/-?[\d.]+ (-?[\d.]+)/g)].map((match) => Number(match[1]));
+      assert.ok(Math.min(...ys) >= 4 - 1e-9, area);
+      assert.match(piled.body, /data-tip="EC 4 Lyases, kcat below 10⁰·⁵ s⁻¹: 5 values \(end bin, not in the curve\)"/);
+      assert.match(piled.body, /data-tip="EC 4 Lyases, kcat 10¹·⁵ s⁻¹ and above: 100 values \(end bin, not in the curve\)"/);
+      assert.match(piled.data, /each end bin also holds every value beyond it, so the curve leaves it out and a hatched stub marks it/);
+    }
     // A count chart's value column fits its longest value label, in ch (a wider font widens it), at least 96px.
     assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(5ch \+ 6px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.

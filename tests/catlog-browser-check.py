@@ -940,6 +940,9 @@ def check_stats_more(driver, browser, overview, total):
         for number, n in drawn.items():
             assert number not in classes or n <= classes[number]["count"], (number, n)
         assert all(svg.get_attribute("role") == "img" and svg.get_attribute("aria-label") for svg in panel.find_elements(By.CSS_SELECTOR, "svg.stats-ridge-svg"))
+        # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
+        stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
+        assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
     # Every figure is named and described: its heading, one numbered caption, a data line.
     for figure in driver.find_elements(By.CSS_SELECTOR, "#statsCharts figure.stats-fig"):
         assert figure.get_attribute("aria-labelledby") and figure.find_elements(By.CSS_SELECTOR, "figcaption .stats-fig-caption strong")
@@ -972,7 +975,7 @@ MORE_FIXTURE_JS = """
           const papers = overview.from_paper.papers;
           overview.from_paper_values = { values: papers * 3, bins: [1, 2, 5], papers: [papers - 2, 1, 1] };
           overview.ec_classes = (overview.ec_classes || []).map((item) => ({ ...item, from_paper: Math.floor(item.count / 4) }));
-          const counts = (n) => { const list = new Array(16).fill(0); list[5] = n - 2; list[6] = 1; list[9] = 1; return list; };
+          const counts = (n) => { const list = new Array(16).fill(0); list[5] = n - 2; list[6] = 1; list[15] = 1; return list; };
           overview.metrics.kcat.by_class = { log10_start: -4, bin_width: 0.5, classes: (overview.ec_classes || []).slice(0, 3)
             .map((item) => ({ class: item.class, n: 20, median: 0.5, p10: 0.02, p90: 4, counts: counts(20) })) };
           overview.top_organisms_from_paper = (overview.top_organisms || []).slice(0, 3).map((item) => ({ ...item, count: Math.min(item.count, overview.from_paper.records) }));

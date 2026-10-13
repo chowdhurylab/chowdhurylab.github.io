@@ -3913,22 +3913,38 @@
 
   // One metric's small multiple: a ridge per enzyme class drawn through its bin counts (each scaled to its own peak, so
   // shapes compare whatever the class's size), the 10–90% range as a line on the baseline with the median as a dot, the
-  // median printed at the right; a shared log axis under the panel.
+  // median printed at the right; a shared log axis under the panel. The two end bins hold every value beyond the grid
+  // (open-ended, so a pile there is not a peak in the data): the curve covers the inner bins only, cut off level at an
+  // outer edge with values beyond it (the fill ends in a straight edge, not a fall to zero), and each end bin with values
+  // gets a short hatched stub of fixed height instead, its count in the tooltip line.
   function statsRidgePanel(metric, grid) {
     const span = grid.bins * grid.width;
     const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - grid.start) / span * 100));
     const unit = metric.unit;
+    const ends = grid.bins >= 4;
+    const first = ends ? 1 : 0;
+    const last = ends ? grid.bins - 2 : grid.bins - 1;
+    const x = (edge) => +(edge / grid.bins * 100).toFixed(3);
+    const edgeText = (index) => statsPowerOfTen(+(grid.start + index * grid.width).toFixed(2));
     const rows = grid.classes.map((item) => {
-      const highest = Math.max(...item.counts);
-      const points = [[0, STATS_RIDGE_BASE], ...item.counts.map((count, index) => [(index + 0.5) / grid.bins * 100,
-        STATS_RIDGE_BASE - (highest ? count / highest * STATS_RIDGE_PEAK : 0)]), [100, STATS_RIDGE_BASE]];
+      const name = `EC ${item.class}${item.name ? ` ${item.name}` : ""}`;
+      const drawn = item.counts.slice(first, last + 1);
+      const highest = Math.max(0, ...drawn);
+      const below = ends ? item.counts[0] : 0;
+      const above = ends ? item.counts[grid.bins - 1] : 0;
+      const centres = drawn.map((count, index) => [x(first + index + 0.5), STATS_RIDGE_BASE - (highest ? count / highest * STATS_RIDGE_PEAK : 0)]);
+      // An end with values beyond it is cut off level; one with none falls to the baseline.
+      const points = [[x(first), below ? centres[0][1] : STATS_RIDGE_BASE], ...centres, [x(last + 1), above ? centres[centres.length - 1][1] : STATS_RIDGE_BASE]];
       const line = statsSmoothPath(points);
       const low = position(item.p10);
       const high = position(item.p90);
-      const text = `EC ${item.class}${item.name ? ` ${item.name}` : ""}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median)} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}.`;
+      const beyond = [below ? `${formatInteger(below)} below ${edgeText(1)} ${unit}` : "", above ? `${formatInteger(above)} at ${edgeText(grid.bins - 1)} ${unit} and above` : ""].filter(Boolean);
+      const text = `${name}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median)} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}${beyond.length ? `; in the end bins, not in the curve: ${beyond.join(", ")}` : ""}.`;
+      const stub = (count, index, where) => (count ? `<i class="stats-ridge-end" style="left:${x(index)}%;width:${x(1)}%" data-tip="${escapeHtml(`${name}, ${metric.label} ${where}: ${formatInteger(count)} values (end bin, not in the curve)`)}"></i>` : "");
+      const stubs = ends ? stub(below, 0, `below ${edgeText(1)} ${unit}`) + stub(above, grid.bins - 1, `${edgeText(grid.bins - 1)} ${unit} and above`) : "";
       return `<li class="stats-ridge-row" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(text)}">
         <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
-        <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L100 ${STATS_RIDGE_BASE}L0 ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg><span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
+        <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L${x(last + 1)} ${STATS_RIDGE_BASE}L${x(first)} ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg>${stubs}<span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
         <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
       </li>`;
     }).join("");
@@ -3967,7 +3983,7 @@
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
       caption: `Values in catalog units on a log scale, one curve per enzyme class drawn through ${binWord} bins and scaled to its own peak, with the median as a dot and the middle 80% of values as a line.`,
-      data: statsDataLine("A record in several classes counts in each; the end bins include all values beyond them; values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures."),
+      data: statsDataLine("A record in several classes counts in each; each end bin also holds every value beyond it, so the curve leaves it out and a hatched stub marks it, with its count in the tooltip line; values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures."),
     };
   }
 
