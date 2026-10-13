@@ -9060,7 +9060,7 @@
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
   // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
   // option's words): the options a record matches, by its values' results (filter keys above) or its earlier
-  // corrections. A link shows only for an option the page has.
+  // corrections. A link shows only where Browse can filter by it (databaseBrowseOptions).
   const DATABASE_FILTER_PARAM = "db";
   const DATABASE_FILTER_INPUT = "database";
   const DATABASE_BROWSE_MATCHES = {
@@ -9191,16 +9191,21 @@
       + `${valueHtml ? `<span class="cmp-value">${valueHtml}</span>` : ""}${bodyHtml}</dd></div>`;
   }
 
-  // Browse at the records like this one (Browse's "Against the databases" options this record matches), when the page
-  // has those options: keys are the record's results ("same", "corrected", "differs", "new"; "earlier" for an earlier
-  // review's corrections).
-  function databaseFilterAvailable(value) {
-    if (!value || typeof document.querySelector !== "function") return false;
-    return Boolean(document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${value}"]`));
+  // Browse at the records like this one (Browse's "Against the databases" options this record matches), only where Browse
+  // can filter by them: the page has the option, the snapshot's record index carries the comparison (without it an
+  // address's db= is not read, and the link would open Browse unfiltered) and the record's own row in that index matches
+  // the option, so the list the link opens holds this record. keys are the record's results ("same", "corrected",
+  // "differs", "new"; "earlier" for an earlier review's corrections).
+  function databaseBrowseOptions(keys, recordKey) {
+    if (!keys.size || !recordKey || !databaseComparisonIndexed() || typeof document.querySelector !== "function") return [];
+    const row = state.records.find((item) => item.record_key === recordKey);
+    const bits = row ? rowDatabaseBits(row) : 0;
+    return databaseFilters.filter((option) => DATABASE_BROWSE_MATCHES[option.value]?.(keys) && (bits & option.bit)
+      && document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${option.value}"]`));
   }
 
-  function databaseBrowseLinksHtml(keys) {
-    const links = databaseFilters.filter((option) => DATABASE_BROWSE_MATCHES[option.value]?.(keys) && databaseFilterAvailable(option.value))
+  function databaseBrowseLinksHtml(keys, recordKey) {
+    const links = databaseBrowseOptions(keys, recordKey)
       .map((option) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, option.value]]))}">${escapeHtml(option.chip)}</a>`);
     return links.length ? `<p class="cmp-explore">More records like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
@@ -9221,7 +9226,7 @@
     return paperNotes.map((note) => `<p class="section-text cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
       + list
       + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "")
-      + databaseBrowseLinksHtml(new Set(rows.map(({ facts }) => databaseResult(facts.status)?.filter).filter(Boolean)));
+      + databaseBrowseLinksHtml(new Set(rows.map(({ facts }) => databaseResult(facts.status)?.filter).filter(Boolean)), summary.record_key);
   }
 
   // An earlier "corrected" record's correction trail (corrections, corrected_fields or the side file's chg), each
@@ -9303,7 +9308,7 @@
   // fields (pH, temperature, identifiers; a replaced sequence or SMILES is named, not repeated); "Before: as in OED for
   // this paper" when a database lists the earlier number, and where the paper prints the value. A field whose number did
   // not change is not listed.
-  function earlierCorrectionsHtml(items) {
+  function earlierCorrectionsHtml(items, recordKey) {
     const valueItems = [];
     const otherItems = [];
     items.forEach((item) => {
@@ -9350,7 +9355,7 @@
     ];
     return kvList(rows, "cmp-list")
       + '<p class="section-note">Changed in the earlier automated review to what the paper prints.</p>'
-      + databaseBrowseLinksHtml(new Set(["earlier"]));
+      + databaseBrowseLinksHtml(new Set(["earlier"]), recordKey);
   }
 
   function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, hasPaper = true } = {}) {
@@ -9358,7 +9363,7 @@
     if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check);
     else {
       const corrections = correctionItems(detail, check);
-      if (corrections.length) body = earlierCorrectionsHtml(corrections);
+      if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
       else {
         const result = summary._recordState || recordStateForRow(summary);
         const fromDatabase = Boolean(rowSourceBits(summary) & DATABASE_SOURCE_BITS);

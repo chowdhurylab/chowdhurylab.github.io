@@ -3289,34 +3289,65 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /Checked against the paper: µM entered as mM\.<\/span><\/dd>/);
   // With Browse's "Against the databases" group on the page, the record links to the records like it: each option it
   // matches (a value corrected, one no database lists, every value the same, none in any database), never one the page
-  // does not have.
+  // does not have, and only when Browse can filter by it: the record index carries the comparison (else db= is not read
+  // and the link would open Browse unfiltered) and the record's own row in it matches the option.
   {
     const previousQuery = document.querySelector;
+    const previousRecords = api.state.records;
     const options = ["corrects", "same", "adds", "new", "earlier"];
     document.querySelector = (selector) => {
       const match = selector.match(/^#catalogFilters input\[name="database"\]\[value="([a-z]+)"\]$/);
       return match && options.includes(match[1]) ? {} : null;
     };
+    // The record's row in the index, with its comparison summary (same 1, corrected 2, differs 4, new 8, earlier 32).
+    const indexRow = (key, summary) => {
+      api.state.records = [row({ record_key: key, database_summary: summary })];
+    };
+    const correctedAndNew = () => v2Detail([
+      line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
+      line("Km", { database_status: "new", database_line: "Not in BRENDA." }),
+      line("kcat/Km", { database_status: "corrected", database_line: "BRENDA lists 60 mM⁻¹ s⁻¹." }),
+    ]);
     try {
-      html = render(v2Summary, v2Detail([
-        line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
-        line("Km", { database_status: "new", database_line: "Not in BRENDA." }),
-        line("kcat/Km", { database_status: "corrected", database_line: "BRENDA lists 60 mM⁻¹ s⁻¹." }),
-      ]));
+      // The records' own fields carry the comparison, the record index does not: the group is hidden, so no link.
+      indexRow("v2-db", 1 | 2 | 8);
+      html = render(v2Summary, correctedAndNew());
+      assert.match(html, /Against the databases/);
+      assert.doesNotMatch(html, /cmp-explore/, "no link while Browse cannot filter by it");
+      runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+      html = render(v2Summary, correctedAndNew());
       assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds">Adds a value<\/a><\/p>/);
+      // An option the record's own row in the index does not match (the list would not hold the record): no link to it.
+      indexRow("v2-db", 1 | 8);
+      html = render(v2Summary, correctedAndNew());
+      assert.match(html, /More records like this: <a href="#browse\?db=adds">Adds a value<\/a><\/p>/);
+      api.state.records = [];
+      assert.doesNotMatch(render(v2Summary, correctedAndNew()), /cmp-explore/, "no row in the index, no link");
+      indexRow("v2-db", 1);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same", database_line: "Same as OED." })]));
       assert.match(html, /More records like this: <a href="#browse\?db=same">Same number<\/a><\/p>/);
+      indexRow("v2-db", 8);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
         line("Km", { database_status: "new", database_line: "Not in OED." })]));
       assert.match(html, /More records like this: <a href="#browse\?db=new">Not in any database<\/a><\/p>/);
+      indexRow("v2-db", 4);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹." })]));
       assert.doesNotMatch(html, /cmp-explore/, "an option Browse does not have gets no link");
-      html = render(row({ record_key: "corrected-explore", verification_status: "corrected", source_db: "oed" }),
-        { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] });
+      const correctedRecord = row({ record_key: "corrected-explore", verification_status: "corrected", source_db: "oed" });
+      const trail = { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] };
+      indexRow("corrected-explore", 32);
+      html = render(correctedRecord, trail);
       assert.match(html, /More records like this: <a href="#browse\?db=earlier">Corrected earlier<\/a><\/p>/);
+      indexRow("corrected-explore", 0);
+      assert.doesNotMatch(render(correctedRecord, trail), /cmp-explore/, "an index without the earlier changes: no link");
+      delete runtimeManifest.viewer_index.optional_fields;
+      indexRow("corrected-explore", 32);
+      assert.doesNotMatch(render(correctedRecord, trail), /cmp-explore/);
     } finally {
       document.querySelector = previousQuery;
+      api.state.records = previousRecords;
+      delete runtimeManifest.viewer_index.optional_fields;
     }
   }
   // A line that starts with the result word is the result: the word is not said twice, in bold above it.

@@ -654,7 +654,10 @@ found at once: A, B, G, C, D, E, F, H.
   a different number not yet resolved; same: every compared value the same;
   adds: a value no database lists; new: no value in any database, said instead
   of adds; earlier: an earlier corrected record); an option the page does not
-  have gets no link. An earlier corrected record with its correction trail: one item per
+  have gets no link, and neither does one Browse cannot filter by: the record
+  index must carry the comparison (database_summary; without it db= is not read
+  and the link would open Browse unfiltered) and the record's own row in it must
+  match the option, so the list the link opens holds the record. An earlier corrected record with its correction trail: one item per
   changed field, "66 mM → **0.066 mM**" with the kind of change ("unit or
   magnitude (÷ 1000)" with the factor kept on one line, "more digits /
   rounding", "different number", "added: the source had none", "removed",
