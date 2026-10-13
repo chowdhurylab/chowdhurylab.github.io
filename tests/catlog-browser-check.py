@@ -2369,6 +2369,33 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert all(label["shown"] and label["italic"] and label["sub"] and label["unit"].startswith("(") and label["above"]
                        for label in labels), f"At 320px each card value is labelled with italic k and its subscript: {labels}"
+            # A caution's short words beside its "!" ("above diffusion limit · kcat/Km mismatch") wrap inside the value's
+            # third of the card, never past it, in the system font at 320px and in a wide font (Verdana) at 375px.
+            for width, wide in ((320, False), (375, True)):
+                set_browse_viewport(driver, browser, width, 800)
+                open_page("#browse?caution=units&rows=100")
+                flags = driver.execute_script("""
+                    if (arguments[0]) {
+                      const style = document.createElement('style');
+                      style.textContent = '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.5px !important }';
+                      document.head.appendChild(style);
+                    }
+                    const over = [];
+                    let words = 0;
+                    for (const flag of document.querySelectorAll('#recordsBody .value-flag')) {
+                      const text = flag.querySelector('.visually-hidden');
+                      const range = document.createRange();
+                      range.selectNodeContents(text || flag);
+                      const right = Math.max(flag.getBoundingClientRect().right, ...[...range.getClientRects()].map(box => box.right));
+                      const cell = flag.closest('td').getBoundingClientRect().right;
+                      if (text && text.getBoundingClientRect().width > 2) words += 1;
+                      if (right > cell + 1 || right > innerWidth) over.push([flag.closest('tr').dataset.key, text?.textContent, Math.round(right - cell)]);
+                    }
+                    return {words, over: over.slice(0, 5), scroll: document.documentElement.scrollWidth > innerWidth + 1};
+                """, wide)
+                assert flags["words"] >= 10 and not flags["over"] and not flags["scroll"], (
+                    f"At {width}px{' in a wide font' if wide else ''} every caution's words stay inside their card value: {flags}")
+            set_browse_viewport(driver, browser, 320, 800)
             # A card reads name, variant, organism · substrate, then the note under the substrate: a note never parts a
             # variant from its enzyme (the note as the table writes it, under the first variant card's substrate).
             open_page("#browse?variant=variant")

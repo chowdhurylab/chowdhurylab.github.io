@@ -376,7 +376,8 @@ differs). The record shows the note under its Substrate line. Every table row
 has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"
-(they may wrap to the next line there). The table shows no temperature or pH (the
+(they may go to the next line there, and words wider than the value's third of the
+card wrap under each other beside the "!", never past the card). The table shows no temperature or pH (the
 record, the filters and the downloads have them), so a temperature caution's "!"
 and its short words, T questionable, open the grey line under the substrate, on
 desktop too (before any condition or series note, "· +10 mM FBP"; the "!" has the

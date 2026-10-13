@@ -1559,10 +1559,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The status keeps its two lines (status, then the source and tags). */
   #recordsBody td.c-status { order:6; flex:1 1 0; align-self:center }
 
-  /* A caution shows its short words beside the "!" (no tooltip on a touch screen). */
-  #recordsBody .value-flag { display:inline-flex; flex:0 0 auto; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
-  #recordsBody .value-flag::before { display:grid; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg) }
-  #recordsBody .value-flag .visually-hidden { position:static; width:auto; height:auto; margin:0; clip:auto; clip-path:none }
+  /* A caution shows its short words beside the "!" (no tooltip on a touch screen). Words wider than the value's third of
+     the card ("above diffusion limit · kcat/Km mismatch") wrap under each other beside the "!", never past the card. */
+  #recordsBody .value-flag { display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%; align-items:flex-start; gap:3px; width:auto; height:auto; background:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
+  #recordsBody .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg) }
+  #recordsBody .value-flag .visually-hidden { position:static; width:auto; min-width:0; height:auto; margin:0; clip:auto; clip-path:none; white-space:normal; overflow-wrap:anywhere }
   #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
   #recordsBody tr.skeleton-row { padding:14px 16px }
   #recordsBody tr.skeleton-row td:not(.c-enzyme,.c-organism,.c-kcat) { display:none }
