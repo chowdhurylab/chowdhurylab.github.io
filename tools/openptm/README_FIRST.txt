@@ -9,10 +9,10 @@ Open index.html locally, or keep it beside the Excel file when publishing.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,227 function/regulation records.
+- 27,165 site records and 14,339 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 52 selected paper comparisons, containing 58 measurement entries from
-  30 primary papers across 29 families with numeric measurements.
+- 164 selected paper comparisons, containing 170 measurement entries from
+  31 primary papers across 30 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -23,14 +23,21 @@ are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
 New measurements
+- Citrullination: the complete Table 1 panel of four matched peptides against
+  28 HLA molecules. Two comparisons were already present; 110 are new. These
+  are one paper's results, not independent studies. Dashes remain >30,000 nM;
+  two bounds do not establish a difference. Alpha/beta partners follow S1.
+- Methacrylation: two AF9 binding comparisons against crotonylated H3 peptides,
+  with source SE and n=3. Neither state is unmodified histone. The original
+  main article was checked; separate SI purity traces were not reviewed.
 - Osteocalcin carboxylation: two calcium conditions from the original Table II.
   The source's inconsistent units remain flagged beside the values; K is not
   converted to Kd. These are grouped Gla states, not three separate site effects.
 - Engineered thiocarboxylation: thioredoxin and DTNB kinetics from Tables 4–5.
   Engineered material, conflicting Table 4 footnote letters and the reporter
   substrate are labelled explicitly. These are not native PTM samples.
-These four comparisons were checked by one reviewer against the original
-articles. This is source checking, not experimental validation.
+The 13 October additions were checked by one reviewer against original
+articles and tables. This is source checking, not experimental validation.
 
 Source records retained
 - PTMPhaSe: 855 qualitative annotations, not 855 independent experiments.
@@ -63,7 +70,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-cae58315bf2c8e81c6bc637709d968e00246adeb0054d280cec95cd7a175f2d0
+ded7cea965fd837f5d79f2d351fc6fa597cceb81a1ebcca684c53ccdd3ef6205
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
