@@ -1403,6 +1403,36 @@ def check_layout(driver, browser, url, route_label):
         assert "a second, separate AI check" in driver.execute_script("return document.getElementById('aboutSource').innerText")
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
+        # In a short window, opening Review result's "?" scrolls the sidebar just enough to keep its options in view, never
+        # taking its title under the sticky heading; closing it again leaves the sidebar where it is.
+        set_browse_viewport(driver, browser, 1440, 700)
+        driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
+        status_about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutStatus"]')
+        status_about.click()
+        reveal = """
+            const rail = document.getElementById('catalogFilters').getBoundingClientRect();
+            const heading = document.querySelector('.rail-heading').getBoundingClientRect();
+            const section = document.querySelector('[aria-controls="aboutStatus"]').closest('.filter-section');
+            const rows = [...section.querySelectorAll('.check-row')].filter(e => e.getClientRects().length);
+            const last = rows[rows.length - 1].getBoundingClientRect();
+            const title = section.querySelector(':scope > summary').getBoundingClientRect();
+            return {lastShown: last.bottom <= rail.bottom + 0.5, titleClear: title.top >= heading.bottom - 0.5,
+                    scrolled: document.getElementById('catalogFilters').scrollTop};
+        """
+        positions = []
+
+        def scroll_settled(d):
+            positions.append(d.execute_script(reveal)["scrolled"])
+            return len(positions) > 2 and positions[-1] == positions[-2] == positions[-3]
+
+        WebDriverWait(driver, 5, poll_frequency=0.1).until(scroll_settled)
+        shown = driver.execute_script(reveal)
+        assert shown["lastShown"] and shown["titleClear"] and shown["scrolled"] > 0, f"Review result's '?' hides its options: {shown}"
+        status_about.click()
+        assert not driver.find_element(By.ID, "aboutStatus").is_displayed()
+        assert driver.execute_script(reveal)["scrolled"] == shown["scrolled"], "Closing a '?' moved the sidebar"
+        driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
+        set_browse_viewport(driver, browser, 1440, 1000)
         # The browser's own colour (theme-color) is the accent token.
         theme = driver.execute_script("""
             return {meta: document.querySelector('meta[name="theme-color"]').content.toLowerCase(),

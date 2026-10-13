@@ -154,7 +154,8 @@ on its first, and never runs into the next row) and 32px fields, their labels in
 a column as wide as the longest. The sidebar is compact (the user, 2026-10-13):
 one short line per option and no help paragraphs; a group with explanations has a
 24px round "?" beside its chevron that shows them in a quiet --surface-2 box under
-its title (and hides them again). The panel order: Source (three
+its title (and hides them again); opened near the foot of the sidebar or the phone sheet, the sidebar scrolls just
+enough to keep the group's options in view, never taking its title under the sticky heading. The panel order: Source (three
 radio buttons: All records, CatLog v2: read from the paper and CatLog v1: enzyme
 databases, CatLog v2 and v1 entries as the user names them (2026-10-13; where the
 sidebar is too narrow for one line, the version stays first and what it means moves

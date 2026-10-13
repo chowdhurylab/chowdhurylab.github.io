@@ -5232,6 +5232,22 @@
       </label>`;
   }
 
+  // A filter group that has grown (its "?" opened) near the foot of the sidebar or the phone sheet scrolls up just enough
+  // to show its last option, and never so far that its title goes under the sticky heading: the rail's scroll-padding
+  // keeps the heading's room at the top and, on phones, the Show records bar's at the foot.
+  function revealFilterSection(section) {
+    const rail = section?.closest?.(".filter-rail");
+    if (!rail?.getBoundingClientRect || !rail.scrollBy) return;
+    const style = window.getComputedStyle(rail);
+    const view = rail.getBoundingClientRect();
+    const box = section.getBoundingClientRect();
+    const below = box.bottom - (view.bottom - (parseFloat(style.scrollPaddingBottom) || 0));
+    const room = box.top - (view.top + (parseFloat(style.scrollPaddingTop) || 0));
+    const by = Math.min(below, room);
+    if (by <= 0) return;
+    rail.scrollBy({ top: by, behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth" });
+  }
+
   // The checklists are built once (so a ticked box keeps its focus); their counts follow the loaded records.
   let filterChecklistsBuilt = false;
 
@@ -10285,7 +10301,8 @@
     ["variantChecklist", "cautionChecklist", "databaseChecklist"].forEach((id) => {
       $(id)?.addEventListener("change", () => applyFiltersInBackground());
     });
-    // A group's "?" shows or hides its explanations, under the group's title.
+    // A group's "?" shows or hides its explanations, under the group's title; opened near the sidebar's foot, the
+    // sidebar scrolls just enough to keep the group's options in view (revealFilterSection).
     document.querySelectorAll?.("#catalogFilters .section-about").forEach((button) => {
       button.addEventListener("click", () => {
         const panel = $(button.getAttribute("aria-controls"));
@@ -10293,6 +10310,7 @@
         const open = panel.hidden;
         panel.hidden = !open;
         button.setAttribute("aria-expanded", String(open));
+        if (open) revealFilterSection(button.closest?.(".filter-section"));
       });
     });
     // Source: ticking a database selects From enzyme databases; All records or Read from the paper clears the databases.
