@@ -571,6 +571,9 @@ body.detail-open .detail-panel { display:block }
 /* the narrowest phones (fonts differ by system): units may wrap, cells come closer, As printed breaks anywhere */
 @media (max-width: 360px) {
   .values-table :is(th,td) { padding-left:4px; padding-right:4px }
+  .values-table .vt-value { white-space:normal }
+  .values-table .vt-value .vt-number { white-space:nowrap }
+  .values-table td.vt-value :is(.metric-origin, .value-flag) { display:block; margin-left:0 }
   .values-table .vt-unit { white-space:normal }
   .values-table td:last-child { overflow-wrap:anywhere }
 }

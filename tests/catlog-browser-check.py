@@ -1806,8 +1806,10 @@ def check(driver, browser, url):
     assert urlsplit(driver.find_element(By.ID, "teamButton").get_attribute("href")).fragment == "team"
     external = driver.find_elements(By.CSS_SELECTOR, ".external-nav a")
     # long names, or the short ones a narrower window shows (CI's Safari window)
+    # (Safari's driver also returns the hidden short or long form, e.g. "CatRange paperPaper ↗": check the words, not the exact text)
     names = [link.text.replace("\u00a0", " ") for link in external]
-    assert names in (["CatRange paper ↗", "Chowdhury Lab ↗"], ["Paper ↗", "Lab ↗"], ["CatRange paper ↗", "Lab ↗"]), names
+    assert len(names) == 2 and all(name.endswith("↗") for name in names), names
+    assert "aper" in names[0] and "Lab" in names[1], names
     assert external[0].location["x"] > driver.find_element(By.ID, "teamButton").location["x"]
     assets = AssetReferences()
     assets.feed((ROOT / "tools/catlog-stats.html").read_text())
