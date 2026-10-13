@@ -4523,6 +4523,9 @@
   // Two drawings of one loop: wide (stations along a racetrack, AI agents above, people below) and narrow (an upright
   // track for phones and tablets, with the people and agents in the legend beside or under it). The narrow viewBox is
   // cut to the drawing (288 units): at 320px a phone has 288px for it, so its 12-unit numbers still print at 12px.
+  // Every station's name and numbers keep 12px or more from another station's, from the track and from the chips and
+  // their lines, also in a wider font (CI's Linux Chrome): on the upright loop a drawn line longer than `wrap`
+  // characters (the station's own, else the loop's) breaks at a space, so no line reaches the far side of the track.
   const TEAM_LAYOUTS = {
     wide: {
       viewBox: "130 30 870 440",
@@ -4531,40 +4534,55 @@
         papers: { x: 290, y: 140, label: [290, 172, "middle"] },
         reading: { x: 470, y: 140, label: [470, 172, "middle"] },
         check: { x: 650, y: 140, label: [650, 172, "middle"] },
-        catlog: { x: 780, y: 250, label: [762, 230, "end"] },
-        // stations on the lower straight: their name and numbers stand just above the track
-        // Human check sits right of the straight's middle, so its agreement lines keep clear of Rules updated's name
-        human: { x: 590, y: 360, label: [590, 0, "middle"], above: true },
-        rules: { x: 380, y: 360, label: [380, 0, "middle"], above: true },
+        // CatLog's name and numbers stand up and to the left of it, clear of the arc and ending above its dot, so Human
+        // check's lines below start well apart from them.
+        catlog: { x: 780, y: 250, label: [746, 206, "end"] },
+        // Stations on the lower straight: their name and numbers stand just above the track. Rules updated sits near the
+        // left end and Human check right of the middle, far apart, so Human check's last line (level with Rules
+        // updated's name) reads as its own.
+        human: { x: 585, y: 360, label: [585, 0, "middle"], above: true },
+        rules: { x: 330, y: 360, label: [330, 0, "middle"], above: true },
         website: { x: 870, y: 160, label: [886, 165, "start"], branch: true },
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
       },
-      arrows: [[380, 140, 0], [470, 360, 180], [160, 250, 270]],
+      arrows: [[380, 140, 0], [465, 360, 180], [160, 250, 270]],
       // Audit agents stand up and to the right of CatLog, so their line meets it between the track's arc and the
       // Website branch instead of running beside the arc.
       actors: {
         download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [850, 58],
-        supantha: [380, 438], aarna: [545, 438], erin: [635, 438], mohammad: [870, 418],
+        supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
       },
     },
     narrow: {
       viewBox: "36 20 288 690",
       track: "M80 170 A100 100 0 0 1 280 170 V480 A100 100 0 0 1 80 480 Z",
+      wrap: 23,
       stations: {
         papers: { x: 180, y: 70, label: [180, 44, "middle"] },
         reading: { x: 280, y: 210, label: [264, 206, "end"] },
-        check: { x: 280, y: 370, label: [264, 366, "end"] },
-        catlog: { x: 180, y: 580, label: [180, 508, "middle"] },
-        // up from the arc so Human check's six lines end above CatLog's name
-        human: { x: 80, y: 405, label: [96, 401, "start"] },
+        // AI check stands higher than Human check across the loop, so their names are not one row.
+        check: { x: 280, y: 340, label: [264, 336, "end"] },
+        // inside the lower arc, where the loop narrows: its numbers break into short lines
+        catlog: { x: 180, y: 580, label: [180, 500, "middle"], wrap: 16 },
+        // up from the arc so Human check's lines end well above CatLog's name, on the straight part of the track
+        human: { x: 80, y: 375, label: [96, 371, "start"] },
         rules: { x: 80, y: 285, label: [96, 281, "start"] },
         website: { x: 90, y: 650, label: [90, 678, "middle"], branch: true },
         paper: { x: 270, y: 650, label: [270, 678, "middle"], branch: true },
       },
-      arrows: [[280, 290, 90], [80, 360, 270]],
+      arrows: [[280, 275, 90], [80, 330, 270]],
       actors: null,
     },
   };
+
+  // One drawn line of a station's numbers, broken at spaces into lines of at most `limit` characters (none: as it is).
+  function teamWrappedLines(line, limit) {
+    const text = String(line);
+    if (!limit || text.length <= limit) return [text];
+    const cut = text.lastIndexOf(" ", limit);
+    if (cut <= 0) return [text];
+    return [text.slice(0, cut), ...teamWrappedLines(text.slice(cut + 1), limit)];
+  }
 
   // Live numbers at the stations, from this snapshot's manifest; a number the snapshot does not have is left out. One
   // entry per fact; a "\n" wraps a fact onto a second drawn line, and the station's label reads it as one phrase. A fact
@@ -4614,7 +4632,8 @@
     const arrows = layout.arrows.map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
     const stations = Object.entries(layout.stations).map(([key, station]) => {
       const facts = numbers[key] || [];
-      const lines = facts.flatMap((fact) => typeof fact === "string" ? fact.split("\n") : fact[layoutKey]);
+      const lines = facts.flatMap((fact) => typeof fact === "string" ? fact.split("\n") : fact[layoutKey])
+        .flatMap((line) => teamWrappedLines(line, station.wrap ?? layout.wrap));
       const [lx, at, anchor] = station.label;
       const ly = station.above ? station.y - 22 - lines.length * 18 : at;
       const name = escapeHtml(TEAM_STATIONS[key]);
@@ -10046,6 +10065,7 @@
       agreementLeadHtml,
       renderTeam,
       teamNumbers,
+      teamWrappedLines,
       renderView,
       navigateTo,
       viewUrl,

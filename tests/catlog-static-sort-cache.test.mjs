@@ -1324,6 +1324,18 @@ assert.equal(document.title, "Team | CatLog");
   assert.doesNotMatch(figureHtml, /<title/);
   assert.equal((figureHtml.match(/role="group" aria-label="CatLog's loop: /g) || []).length, 2);
   if (numbers.catlog.length) assert.match(figureHtml, /aria-label="CatLog: [\d,]+ values re-checked by AI audits"/);
+  // On the upright loop a drawn line breaks at a space after 23 characters (16 in CatLog's, inside the lower arc), so no
+  // line reaches the far side of the track in a wider font; the station's label still reads each fact whole.
+  const narrowLines = (station) => [...figureHtml.match(/class="team-loop team-loop-narrow"[\s\S]*?<\/svg>/)[0]
+    .match(new RegExp(`data-station="${station}"[\\s\\S]*?</g>`))[0].matchAll(/class="team-station-number"[^>]*>([^<]*)</g)].map((match) => match[1]);
+  for (const station of ["reading", "human", "catlog", "website"]) {
+    assert.ok(narrowLines(station).every((line) => line.length <= (station === "catlog" ? 16 : 23)), narrowLines(station).join(" | "));
+  }
+  assert.deepEqual([...api.teamWrappedLines("1,543 human-checked records", 23)], ["1,543 human-checked", "records"]);
+  assert.deepEqual([...api.teamWrappedLines("1,081 values re-checked", 16)], ["1,081 values", "re-checked"]);
+  assert.deepEqual([...api.teamWrappedLines("44,627 records", 23)], ["44,627 records"]);
+  assert.deepEqual([...api.teamWrappedLines("44,627 records", undefined)], ["44,627 records"]);
+  assert.deepEqual([...api.teamWrappedLines("a-word-longer-than-the-limit", 10)], ["a-word-longer-than-the-limit"]);
   assert.doesNotMatch(element("teamLegend").innerHTML, /tabindex/);
   assert.equal((element("teamLegend").innerHTML.match(/<button type="button" class="team-legend-button" aria-pressed="false" aria-describedby="(teamAt-[\w-]+)">[\s\S]*?<small id="\1" aria-hidden="true">At /g) || []).length, 7);
 }

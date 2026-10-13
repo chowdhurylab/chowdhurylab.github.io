@@ -634,6 +634,49 @@ TEAM_TEXT_APART = """
 """
 
 
+# Each Team station's label (its name and numbers) keeps 12px or more from every other station's label, from the track and
+# from the people's and agents' chips and lines (the branch lines too, for the stations off the loop's track): a list of
+# what is closer, empty when all is clear.
+TEAM_LABELS_CLEAR = """
+    const [layout, min] = arguments;
+    const svg = document.querySelector(`svg.team-loop-${layout}`);
+    const ctm = svg.getScreenCTM();
+    const blocks = [...svg.querySelectorAll('.team-station')].map(g => {
+        const boxes = [...g.querySelectorAll('text')].map(t => t.getBoundingClientRect());
+        return {station: g.dataset.station, boxes, box: boxes.length && {left: Math.min(...boxes.map(b => b.left)),
+            right: Math.max(...boxes.map(b => b.right)), top: Math.min(...boxes.map(b => b.top)), bottom: Math.max(...boxes.map(b => b.bottom))}};
+    }).filter(block => block.boxes.length);
+    const gap = (a, b) => Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+    const from = (box, points) => Math.min(...points.map(([x, y]) => Math.hypot(Math.max(box.left - x, 0, x - box.right), Math.max(box.top - y, 0, y - box.bottom))));
+    const screen = (x, y) => { const p = new DOMPoint(x, y).matrixTransform(ctm); return [p.x, p.y]; };
+    const track = svg.querySelector('.team-track');
+    const trackPoints = [];
+    for (let s = 0; s <= track.getTotalLength(); s += 2) { const p = track.getPointAtLength(s); trackPoints.push(screen(p.x, p.y)); }
+    const linePoints = (line) => {
+        const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map(name => Number(line.getAttribute(name)));
+        const steps = Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 2);
+        return Array.from({length: steps + 1}, (_, k) => screen(x1 + (x2 - x1) * k / steps, y1 + (y2 - y1) * k / steps));
+    };
+    const links = [...svg.querySelectorAll('.team-link')].flatMap(linePoints);
+    const branches = [...svg.querySelectorAll('.team-branch')].flatMap(linePoints);
+    const chips = [...svg.querySelectorAll('.team-chip')].map(chip => chip.getBoundingClientRect());
+    const close = [];
+    blocks.forEach((a, i) => blocks.slice(i + 1).forEach(b => {
+        if (gap(a.box, b.box) < min) close.push(`${a.station}/${b.station} ${Math.round(gap(a.box, b.box))}px`);
+    }));
+    for (const block of blocks) {
+        const offTrack = ['website', 'paper'].includes(block.station);
+        for (const box of block.boxes) {
+            const near = [['track', trackPoints], ['link', links], ['branch', offTrack ? [] : branches]]
+                .filter(([, points]) => points.length).map(([name, points]) => [name, from(box, points)])
+                .concat(chips.map(chip => ['chip', gap(box, chip)]));
+            for (const [name, distance] of near) if (distance < min) close.push(`${block.station} ${name} ${Math.round(distance)}px`);
+        }
+    }
+    return close;
+"""
+
+
 def check_blind_headline(driver, browser, url):
     """With the blind headline in the snapshot, Stats' lead and the Guide's method section say the same sentence: the first
     comparison on the papers read blind, its 95% range and what read blind means; after fixes only as a secondary line.
@@ -808,6 +851,8 @@ def check_team(driver, browser, url):
     # a wrapped fact as one phrase.
     assert not driver.find_elements(By.CSS_SELECTOR, "svg.team-loop > title") and wide.get_attribute("aria-label")
     assert ", by " not in wide.find_element(By.CSS_SELECTOR, "[data-station='catlog']").get_attribute("aria-label")
+    # No station's label crowds another's, the track or the chips: Human check's lines stand apart from CatLog's.
+    assert driver.execute_script(TEAM_LABELS_CLEAR, "wide", 12) == [], driver.execute_script(TEAM_LABELS_CLEAR, "wide", 12)
     # Legend lines are toggle buttons, not bare focusable list items: pressing Aarna and Erin's keeps Human check lit,
     # pressing Supantha's moves the light to his stations, and pressing it again turns it off.
     lit_js = "return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)"
@@ -862,6 +907,7 @@ def check_team(driver, browser, url):
                 return Math.min(...[...document.querySelectorAll('svg.team-loop-narrow text')].map(e => parseFloat(getComputedStyle(e).fontSize) * e.ownerSVGElement.getScreenCTM().a));
             """
             assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels read at phone width: {driver.execute_script(labels_px)}px"
+            assert driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12) == [], driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12)
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
             # The upright loop draws no people or agents, so its caption points to the list instead.
             caption = driver.execute_script("return arguments[0].innerText", driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption"))
@@ -878,6 +924,7 @@ def check_team(driver, browser, url):
             wait.until(lambda d: d.execute_script("return innerWidth") == 320)
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Team overflows sideways at 320px"
             assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels at 320px: {driver.execute_script(labels_px)}px"
+            assert driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12) == [], driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12)
         finally:
             driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": []})
             driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})

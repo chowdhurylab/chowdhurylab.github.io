@@ -226,8 +226,15 @@ its field is absent. Human check says the Stats lead's headline shortened, never
 a bare "agreement": "85.6% matched (95% range 80.9–89.9%)" over "first
 comparison, 271 papers read blind" (five short lines on the upright loop), its
 label one phrase; without the blind headline, "89.7% of approved values
-matched". On the wide loop Human check stands right of the lower straight's
-middle so its lines keep clear of Rules updated. Small dots move round the track (SVG animateMotion),
+matched". No station's name and numbers come within 12px of another station's,
+the track, or the chips and their lines, also in a wider font (Linux Chrome): on
+the wide loop CatLog's stand up and left of its dot, clear of the arc, Rules
+updated sits near the lower straight's left end and Human check right of its
+middle, so Human check's lines start well below CatLog's and its last line is
+far from Rules updated's name; on the upright loop AI check stands higher than
+Human check, Human check's lines end on the straight part well above CatLog's
+name, and a drawn line longer than 23 characters (16 for CatLog's, in the lower
+arc) breaks at a space. Small dots move round the track (SVG animateMotion),
 not drawn for prefers-reduced-motion. Its text is on the type scale (station names 16,
 numbers 13, chips 14; upright 14 and 12) and the caption 13px like Stats'; the
 chips leave the status navy and the comparison brown to their own meanings, and
