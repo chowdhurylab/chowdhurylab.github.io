@@ -335,7 +335,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0 }
 .records-title > span { color:var(--text-2); font-size:var(--fs-13) }
 .records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
-.records-tools select { width:180px }
+/* The Sort menu is 180px, or as wide as its longest option when a wider font needs more ("kcat/Km, high to low" was cut
+   in Verdana), so the chosen order always reads whole. */
+.records-tools select { width:auto; min-width:180px }
 .records-tools label { white-space:nowrap }
 .sort-control { display:inline-flex; min-width:0; align-items:center; gap:var(--sp-2) }
 .records-tools .button { white-space:nowrap }

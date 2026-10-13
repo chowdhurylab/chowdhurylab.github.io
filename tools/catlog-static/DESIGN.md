@@ -291,7 +291,9 @@ Guide never download the record index. kcat, Km and kcat/Km sort both
 ways, from the Sort menu or by clicking the column header (high to low first,
 then low to high); the header's arrow shows the direction, and records without
 the value stay last. Review result stays the default order (Disputed sorts with
-Not checked, as the index arrives).
+Not checked, as the index arrives). On a desktop the Sort menu is 180px, or as wide
+as its longest option when a wider font needs more, so the chosen order always
+reads whole ("kcat/Km, high to low" was cut in Verdana).
 
 ## Type And Color
 

@@ -1397,6 +1397,24 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert fit["need"] <= fit["room"], f"At {width}px the search placeholder fits: {fit}"
         results["search-placeholder"] = True
+        # The Sort menu reads its longest option whole ("kcat/Km, high to low" was cut in a wider font): it is 180px or as
+        # wide as that option needs.
+        set_browse_viewport(driver, browser, 1280, 900)
+        open_page("#browse?sort=kcat_over_km")
+        sort = driver.execute_script("""
+            const select = document.getElementById('sortSelect');
+            const style = getComputedStyle(select);
+            const probe = document.createElement('span');
+            probe.textContent = select.options[select.selectedIndex].text;
+            probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+            document.body.appendChild(probe);
+            const text = probe.getBoundingClientRect().width;
+            probe.remove();
+            return {text: select.options[select.selectedIndex].text, width: select.getBoundingClientRect().width,
+                    need: text + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2 + 20};
+        """)
+        assert sort["text"] == "kcat/Km, high to low" and sort["width"] >= max(180, sort["need"]) - 2, f"The Sort menu reads whole: {sort}"
+        results["sort-menu-whole"] = True
         # 1280: the sidebar is 256px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
