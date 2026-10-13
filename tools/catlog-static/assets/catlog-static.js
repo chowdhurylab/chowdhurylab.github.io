@@ -1811,11 +1811,13 @@
       ? `${description} Human-checked: ${fromPaper ? "a human reviewer approved the same values in the earlier catalog." : "a human reviewer approved every value shown."}`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
-    // The word has its own span: a table short of room keeps the green check alone (fitColumnWidths).
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
-      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}<span class="state-tag-word">human-checked</span></span>` : "");
+      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
+    // A table short of room, or beside an open record, shows human-checked as a green check right after the review result
+    // instead (the stylesheet shows one or the other), so the mark is never cut or hidden with the tags.
+    const checkHtml = checked ? `<span class="state-check" role="img" aria-label="human-checked">${CHECK_ICON_HTML}</span>` : "";
     const name = [label, ...tags, checked ? "human-checked" : ""].filter(Boolean).join(", ");
-    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}</span><span class="state-tags">${tagsHtml}</span></span>`;
+    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}${checkHtml}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
   function isContentHashedDataAsset(src) {
@@ -6436,8 +6438,8 @@
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
   // the window is too narrow the table gives way, one step after another and each only as far as needed: first Review
-  // result's human-checked tag keeps its green check alone (the word stays in the badge's tooltip and accessible name),
-  // all at once, and the names get back what that frees beyond the need (one human-checked row had held Review result at
+  // result's human-checked tag moves up as a green check after the review result (accessible name "human-checked"; the
+  // word stays in the badge's tooltip), all at once, and the names get back what that frees beyond the need (one human-checked row had held Review result at
   // 194px beside the open sidebar at 1280px and cut every enzyme name above its variant tag); the names wrap to two lines
   // between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a word longer
   // than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's word. So
@@ -6522,12 +6524,13 @@
       // A name column's width with every name on one line, and the narrowest that breaks no word.
       const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
       const words = column.shrink ? Math.min(width, wordWidth) : min;
-      // Review result gives way last, down to the review result's word (or its header): its tag line then ends in "…".
+      // Review result gives way last, down to the review result's word and its human-checked check (or its header): its
+      // tag line then ends in "…".
       const floor = column.key === "state" ? statusFloor(table, cells, min, padding) : 0;
-      // Before that, its human-checked tag can keep only its check: the widest badge without that word.
+      // Before that, human-checked can move up as a check after the review result: the widest badge without its tag.
       const compact = column.key === "state" ? Math.max(floor, Math.min(width, Math.ceil(Math.max(header, ...cells.map((cell) => {
         const part = (selector) => cell.querySelector(selector)?.getBoundingClientRect().width || 0;
-        return Math.max(part(".state-label"), part(".state-tags") - part(".state-tag-word"));
+        return Math.max(part(".state-label"), part(".state-tags") - part(".state-tag.human-checked"));
       })) + padding))) : 0;
       return { ...column, min, width, full: width, oneLine, words, cells, cellWords, padding, floor, compact };
     });
@@ -6541,7 +6544,7 @@
     // Organism goes below its longest word last among the names: a genus is capitalized, so it would break without a
     // hyphen (Chlamydomona-s), where an enzyme or a substrate is usually hyphenated.
     const organism = shrinkable.filter((column) => column.key === "organism");
-    // The human-checked word goes first and whole (true): whatever room it frees beyond the need goes back to the names
+    // The human-checked tag goes up first and whole (true): whatever room it frees beyond the need goes back to the names
     // below. It is one word on a few rows; an enzyme name above a variant tag has one line and is cut at its longest word.
     const steps = [
       [status, (column) => column.compact, true],
@@ -6558,7 +6561,7 @@
       // that cannot keep it in view even then (beside a record from 1024px, on a tablet beside the sidebar) scrolls
       // sideways: its names stop at their longest word, so the sticky Enzyme column stays narrow and the values come into
       // view sooner, and no word is broken nor tag cut for room the table cannot win.
-      // A table that scrolls anyway still lets the human-checked word go, so it scrolls less.
+      // A table that scrolls anyway still moves the human-checked tag up, so it scrolls less.
       const giveWay = floor <= available + arrow;
       for (const [columns, target, whole] of giveWay ? steps : steps.slice(0, 2)) {
         const excess = total() - available;
@@ -6620,8 +6623,9 @@
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
   }
 
-  // Review result's narrowest: the widest review result's word (with its dot), or the column's header. Narrower than its
-  // tags, the tag line ends in "…"; the badge's accessible name and the record keep every tag.
+  // Review result's narrowest: the widest review result's word (with its dot and any human-checked check: measured while
+  // the table measures, which shows that check), or the column's header. Narrower than its tags, the tag line ends in "…";
+  // the badge's accessible name and the record keep every tag.
   function statusFloor(table, cells, min, padding) {
     let label = 0;
     cells.forEach((cell) => {

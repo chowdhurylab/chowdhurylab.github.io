@@ -371,8 +371,9 @@ start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
 right after Review result. In a narrow window Review result's human-checked tag
-first keeps only its green check (its word stays in the badge's tooltip and
-accessible name; what that frees beyond the need goes back to the names: one
+first moves up as a 12px green check right after the review result ("Accepted ✓",
+read out "human-checked"; the word stays in the badge's tooltip), where the tag
+line's "…" never cuts it (what that frees beyond the need goes back to the names: one
 human-checked row had held Review result at 194px beside the 1280px sidebar and cut
 every enzyme name above its variant tag), then the names give way (two lines, broken
 between words while they can; the full name is on hover), then they go to their
@@ -410,7 +411,7 @@ Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
 12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
-stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
+stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) each record is a card: name and EC;
 the variant's mutation (under the name, as in the table); organism · substrate, with any note under the substrate on
 its own grey line; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge. Below 390px kcat/Km (s⁻¹ mM⁻¹) does not fit a third of the card, so every value label puts

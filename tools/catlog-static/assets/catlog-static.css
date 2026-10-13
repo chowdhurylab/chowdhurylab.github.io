@@ -492,10 +492,13 @@ td.c-status { text-align:left }
 .state-tag.human-checked { color:var(--checked); font-weight:500 }
 .state-tag.human-checked::before { color:var(--muted); font-weight:400 }
 .state-tag.human-checked .check-icon { margin-right:2px }
-/* A table short of room (the script sets .status-compact): human-checked keeps its green check and gives its word's room
-   to the names; the word stays in the badge's tooltip and accessible name. */
-table.status-compact #recordsBody .state-tag.human-checked .check-icon { margin-right:0 }
-table.status-compact #recordsBody .state-tag-word { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; border:0; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+/* A table short of room (the script sets .status-compact) or beside an open record: human-checked moves up as a 12px green
+   check right after the review result ("Accepted ✓", read out "human-checked"), where the tag line's "…" or the record's
+   room never cuts or hides it; its tag gives its room to the names. The table measures with the check shown. */
+.state-check { display:none; flex:0 0 auto; margin-left:-2px; color:var(--checked) }
+.state-check .check-icon { width:12px; height:12px; vertical-align:0 }
+:is(table.status-compact,table.measuring) #recordsBody .state-check { display:inline-flex }
+table.status-compact #recordsBody .state-tag.human-checked { display:none }
 
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-13) }
 .pagination select { width:64px }
@@ -1094,6 +1097,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @media (min-width: 1024px) {
   body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
+  body.detail-open #recordsBody .state-check { display:inline-flex }
 }
 
 @media (max-width: 1180px) {

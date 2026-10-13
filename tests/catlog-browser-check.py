@@ -1484,26 +1484,33 @@ def check_layout(driver, browser, url, route_label):
             assert cues["scrollLeft"] == 0 and cues["overflow"] == cues["right"] == cues["controls"] == cues["sticky"], (
                 f"The scroll cues follow the table's width once the marks are in: {cues}")
             results["scroll-cues-1280"] = True
-            # A table short of room keeps human-checked's green check and gives its word's room to the names (the badge's
-            # accessible name keeps the word); a table with room shows the word whole. 1024 beside the open sidebar is
-            # short of room.
+            # A table short of room shows human-checked as a green check right after the review result ("Accepted ✓", named
+            # "human-checked") and gives its tag's room to the names; a table with room shows the tag whole. Either way the
+            # mark is in view, never cut by the tag line's "…" nor hidden beside an open record. 1024 beside the open
+            # sidebar is short of room.
             def checked_tags():
                 return driver.execute_script("""
                     const table = document.querySelector('#recordTableWrap table');
+                    const shown = (element) => !!element && element.getBoundingClientRect().width > 0;
                     return {compact: table.classList.contains('status-compact'),
-                            tags: [...document.querySelectorAll('#recordsBody .state-tag.human-checked')].map(tag => {
-                                const cell = tag.closest('td').getBoundingClientRect();
-                                const icon = tag.querySelector('svg.check-icon').getBoundingClientRect();
-                                const word = tag.querySelector('.state-tag-word').getBoundingClientRect();
-                                return {icon: icon.width >= 8 && icon.right <= cell.right + 1, word: Math.round(word.width),
-                                        wordIn: word.right <= cell.right + 1,
-                                        named: /human-checked/.test(tag.closest('.state-badge').getAttribute('aria-label'))};
+                            tags: [...document.querySelectorAll('#recordsBody .state-badge')].filter(badge =>
+                                badge.querySelector('.state-tag.human-checked')).map(badge => {
+                                const cell = badge.closest('td').getBoundingClientRect();
+                                const tag = badge.querySelector('.state-tag.human-checked');
+                                const up = badge.querySelector('.state-label .state-check');
+                                const icon = [tag, up].filter(shown).map(mark => mark.querySelector('svg.check-icon').getBoundingClientRect());
+                                return {marks: icon.length, icon: icon.length === 1 && icon[0].width >= 8 && icon[0].right <= cell.right + 1,
+                                        up: shown(up), word: shown(tag) ? Math.round(tag.getBoundingClientRect().width) : 0,
+                                        wordIn: !shown(tag) || tag.getBoundingClientRect().right <= cell.right + 1,
+                                        named: up && up.getAttribute('aria-label') === 'human-checked'
+                                            && /human-checked/.test(badge.getAttribute('aria-label'))};
                             })};
                 """)
             tags = checked_tags()
             assert tags["tags"] and all(tag["icon"] and tag["named"] for tag in tags["tags"]), tags
             if not tags["compact"]:
-                assert all(tag["word"] > 20 and tag["wordIn"] for tag in tags["tags"]), f"With room human-checked shows whole: {tags}"
+                assert all(not tag["up"] and tag["word"] > 20 and tag["wordIn"] for tag in tags["tags"]), (
+                    f"With room human-checked shows whole: {tags}")
             set_browse_viewport(driver, browser, 1024, 900)
             open_page("#browse?checked=1")
             if not is_open():
@@ -1512,8 +1519,16 @@ def check_layout(driver, browser, url, route_label):
             wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-tag.human-checked"))
             tags = checked_tags()
             assert tags["compact"] and tags["tags"] and all(
-                tag["icon"] and tag["named"] and tag["word"] <= 1 for tag in tags["tags"]), (
-                f"At 1024px beside the sidebar human-checked keeps only its check: {tags}")
+                tag["icon"] and tag["named"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
+                f"At 1024px beside the sidebar human-checked is a check after the review result: {tags}")
+            # Beside an open record the tag line keeps only the source; human-checked stays as the check after Accepted.
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]").click()
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')"))
+            tags = checked_tags()
+            assert tags["tags"] and all(tag["icon"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
+                f"Beside an open record human-checked is a check after the review result: {tags}")
+            driver.find_element(By.ID, "closeDetailButton").click()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
             results["human-checked-compact"] = True
             set_browse_viewport(driver, browser, 1280, 900)
         # 1024 with the sidebar collapsed: the table fits until a record opens beside it; then it scrolls sideways, and the
