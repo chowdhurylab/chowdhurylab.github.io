@@ -569,10 +569,13 @@ found at once: A, B, G, C, D, E, F, H.
   "Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for
   the same paper. A different number can mean a different measurement." under
   it. When Browse has the "Against the databases" filter group (options named
-  databaseResult: same, corrected, differs, new, other_label; address
-  #browse?db=...), a last line links each result the record shows to the records
-  with it: "Other records with these results: Same number · Corrects a database
-  value". An earlier corrected record with its correction trail: one item per
+  database; address #browse?db=...), a last line links each option the record
+  matches to the records like it: "More records like this: Corrects a database
+  value · Adds a value to the databases" (corrects: a value corrected; differs:
+  a different number not yet resolved; same: every compared value the same;
+  adds: a value no database lists; new: no value in any database, said instead
+  of adds; earlier: an earlier corrected record); an option the page does not
+  have gets no link. An earlier corrected record with its correction trail: one item per
   changed field, "66 mM → **0.066 mM**" with the kind of change ("unit or
   magnitude (÷ 1000)" with the factor kept on one line, "more digits /
   rounding", "different number", "added: the source had none", "removed",
@@ -581,7 +584,8 @@ found at once: A, B, G, C, D, E, F, H.
   pH, temperature (in °C), identifiers ("UniProt P00325 → P00326") and a
   replaced sequence or SMILES ("Replaced", not repeated); a field whose value
   did not change is not listed; one closing note, "Changed in the earlier
-  automated review to what the paper prints." A corrected record without its
+  automated review to what the paper prints." (and "More records like this:
+  Changed in the earlier review" when Browse has that option). A corrected record without its
   trail says so in its Review result line ("this snapshot does not list the
   changes"; the earlier catalog keeps them) and has no section G. A database
   record the earlier review did not settle (Not confirmed, Not checked) with a

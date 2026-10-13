@@ -8716,10 +8716,19 @@
     + "A different number can mean a different measurement.";
   const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
-  // Browse's filter on this result (the "Against the databases" filter group: #browse?db=same,corrected,...). The links
-  // show only when the page has that group's options (input name databaseResult, values the filter keys above).
+  // Browse's "Against the databases" filter group (#browse?db=..., options named "database"): the record-level options a
+  // record matches, by its values' results (filter keys above) or its earlier corrections. A link shows only for an
+  // option the page has.
   const DATABASE_FILTER_PARAM = "db";
-  const DATABASE_FILTER_INPUT = "databaseResult";
+  const DATABASE_FILTER_INPUT = "database";
+  const DATABASE_BROWSE_OPTIONS = [
+    { value: "corrects", word: "Corrects a database value", matches: (keys) => keys.has("corrected") },
+    { value: "differs", word: "Differs from a database, not yet resolved", matches: (keys) => keys.has("differs") },
+    { value: "same", word: "Same as a database", matches: (keys) => keys.size > 0 && [...keys].every((key) => key === "same") },
+    { value: "new", word: "In no database", matches: (keys) => keys.size > 0 && [...keys].every((key) => key === "new") },
+    { value: "adds", word: "Adds a value to the databases", matches: (keys) => keys.has("new") && ![...keys].every((key) => key === "new") },
+    { value: "earlier", word: "Changed in the earlier review", matches: (keys) => keys.has("earlier") },
+  ];
 
   // Text from the snapshot shown as given (internal placeholders removed), at most `max` characters.
   function shownText(value, max = PRINTED_LINE_MAX) {
@@ -8840,22 +8849,18 @@
       + `${valueHtml ? `<span class="cmp-value">${valueHtml}</span>` : ""}${bodyHtml}</dd></div>`;
   }
 
-  // Browse at the records whose values have this result ("Corrects a database value"), when Browse has that filter.
-  function databaseFilterAvailable(filter) {
-    if (!filter || typeof document.querySelector !== "function") return false;
-    return Boolean(document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${filter}"]`));
+  // Browse at the records like this one (Browse's "Against the databases" options this record matches), when the page
+  // has those options: keys are the record's results ("same", "corrected", "differs", "new"; "earlier" for an earlier
+  // review's corrections).
+  function databaseFilterAvailable(value) {
+    if (!value || typeof document.querySelector !== "function") return false;
+    return Boolean(document.querySelector(`#catalogFilters input[name="${DATABASE_FILTER_INPUT}"][value="${value}"]`));
   }
 
-  function databaseResultLinksHtml(results) {
-    const seen = new Set();
-    const links = results.filter((result) => {
-      if (!result?.filter || seen.has(result.filter) || !databaseFilterAvailable(result.filter)) return false;
-      seen.add(result.filter);
-      return true;
-    }).map((result) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, result.filter]]))}">${escapeHtml(result.word)}</a>`);
-    return links.length
-      ? `<p class="cmp-explore">Other records with ${links.length > 1 ? "these results" : "this result"}: ${links.join('<span aria-hidden="true"> · </span>')}</p>`
-      : "";
+  function databaseBrowseLinksHtml(keys) {
+    const links = DATABASE_BROWSE_OPTIONS.filter((option) => option.matches(keys) && databaseFilterAvailable(option.value))
+      .map((option) => `<a href="${escapeHtml(browseHash([[DATABASE_FILTER_PARAM, option.value]]))}">${escapeHtml(option.word)}</a>`);
+    return links.length ? `<p class="cmp-explore">More records like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
   // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
@@ -8874,7 +8879,7 @@
     return paperNotes.map((note) => `<p class="section-text cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
       + list
       + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "")
-      + databaseResultLinksHtml(rows.map(({ facts }) => databaseResult(facts.status)));
+      + databaseBrowseLinksHtml(new Set(rows.map(({ facts }) => databaseResult(facts.status)?.filter).filter(Boolean)));
   }
 
   // An earlier "corrected" record's correction trail (corrections, corrected_fields or the side file's chg), each
@@ -9002,7 +9007,8 @@
       }),
     ];
     return kvList(rows, "cmp-list")
-      + '<p class="section-note">Changed in the earlier automated review to what the paper prints.</p>';
+      + '<p class="section-note">Changed in the earlier automated review to what the paper prints.</p>'
+      + databaseBrowseLinksHtml(new Set(["earlier"]));
   }
 
   function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, hasPaper = true } = {}) {

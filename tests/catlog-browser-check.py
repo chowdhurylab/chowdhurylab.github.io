@@ -1845,11 +1845,12 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     reviewer", and one line under the table saying what it means (the numbers still end at the same place); its Paper
     section's In CatLog link opens Browse at the paper's records with the record kept open."""
     results = {}
-    keys = driver.execute_script("""
+    keys = driver.execute_async_script("""
+        const done = arguments[arguments.length - 1];
         const app = document.querySelector('script[src*="catlog-static.js"]');
         const url = new URL('../data/human-review-marks.json', app.src);
-        return fetch(url).then(r => r.json()).then(d => Object.entries(d.marks || {})
-            .filter(([, mark]) => mark && mark.checked === true).map(([key]) => key).slice(0, 12)).catch(() => []);
+        fetch(url).then(r => r.json()).then(d => done(Object.entries(d.marks || {})
+            .filter(([, mark]) => mark && mark.checked === true).map(([key]) => key).slice(0, 12))).catch(() => done([]));
     """) or []
     for key in keys:
         driver.get("about:blank")

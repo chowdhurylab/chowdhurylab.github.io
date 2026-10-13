@@ -3236,19 +3236,34 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     database_line: "BRENDA lists 630 mM, 1,000× higher. The paper prints 630 ± 170 µM (Table 1). Checked against the paper: µM entered as mM." })]));
   assert.doesNotMatch(html, /cmp-cause/);
   assert.match(html, /Checked against the paper: µM entered as mM\.<\/span><\/dd>/);
-  // With Browse's "Against the databases" filter on the page, the results link to the records that have them (once each).
+  // With Browse's "Against the databases" group on the page, the record links to the records like it: each option it
+  // matches (a value corrected, one no database lists, every value the same, none in any database), never one the page
+  // does not have.
   {
     const previousQuery = document.querySelector;
-    document.querySelector = (selector) => (/input\[name="databaseResult"\]\[value="(?:same|corrected|new)"\]/.test(selector) ? {} : null);
+    const options = ["corrects", "same", "adds", "new", "earlier"];
+    document.querySelector = (selector) => {
+      const match = selector.match(/^#catalogFilters input\[name="database"\]\[value="([a-z]+)"\]$/);
+      return match && options.includes(match[1]) ? {} : null;
+    };
     try {
       html = render(v2Summary, v2Detail([
         line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
-        line("Km", { database_status: "confirmed", database_line: "Same as OED." }),
+        line("Km", { database_status: "new", database_line: "Not in BRENDA." }),
         line("kcat/Km", { database_status: "corrected", database_line: "BRENDA lists 60 mM⁻¹ s⁻¹." }),
       ]));
-      assert.match(html, /<p class="cmp-explore">Other records with these results: <a href="#browse\?db=same">Same number<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=corrected">Corrects a database value<\/a><\/p>/);
+      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects">Corrects a database value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds">Adds a value to the databases<\/a><\/p>/);
+      html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
+        line("Km", { database_status: "same", database_line: "Same as OED." })]));
+      assert.match(html, /More records like this: <a href="#browse\?db=same">Same as a database<\/a><\/p>/);
+      html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
+        line("Km", { database_status: "new", database_line: "Not in OED." })]));
+      assert.match(html, /More records like this: <a href="#browse\?db=new">In no database<\/a><\/p>/);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹." })]));
-      assert.doesNotMatch(html, /cmp-explore/, "a result Browse cannot filter on gets no link");
+      assert.doesNotMatch(html, /cmp-explore/, "an option Browse does not have gets no link");
+      html = render(row({ record_key: "corrected-explore", verification_status: "corrected", source_db: "oed" }),
+        { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] });
+      assert.match(html, /More records like this: <a href="#browse\?db=earlier">Changed in the earlier review<\/a><\/p>/);
     } finally {
       document.querySelector = previousQuery;
     }
