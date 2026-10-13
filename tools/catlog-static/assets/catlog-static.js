@@ -3716,7 +3716,7 @@
   // counts line up whatever the shares. A hidden sizer (data-sizer) holds that column's entry shapes in the viewer's own
   // font, one per line: each entry with its digits as 0 (tabular digits are equally wide), leaving out a shape that ends
   // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
-  // `valueHeads` (one per column; Figure 5's Records, Accepted, CatLog v2) names the columns in a heading line above the
+  // `valueHeads` (one per column; Figure 5's Records, Accepted, From paper) names the columns in a heading line above the
   // first row: then every column, the first too, is also as wide as its heading, which stands right-aligned over it.
   function statsValueSizer(texts) {
     const shapes = [...new Set(texts.map((text) => String(text).replace(/[0-9]/g, "0")).filter(Boolean))];
@@ -4601,11 +4601,11 @@
     const accepted = statsCount(data.accepted, records);
     const papers = statsCount(data.papers);
     return {
-      id: "statsReplacedTitle", key: "replaced", title: "CatLog v1 entries of papers CatLog v2 has read",
+      id: "statsReplacedTitle", key: "replaced", title: "Entries replaced by reading the paper",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      // papers: the papers CatLog v2 has read that CatLog v1 also had (fewer than the papers CatLog has read).
-      caption: `The ${formatInteger(records)} CatLog v1 ${records === 1 ? "entry" : "entries"}${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog v2 has read and CatLog v1 also had` : " of the papers CatLog v2 has read"}: whether CatLog v2's reading has the same number for that paper and parameter.`,
-      data: statsDataLine("A paper's CatLog v2 entries replace its CatLog v1 entries. kcat/Km calculated from kcat and Km are left out."),
+      // papers: the papers CatLog has read that the earlier version also had (fewer than the papers CatLog has read).
+      caption: `The ${formatInteger(records)} ${records === 1 ? "entry" : "entries"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog has read and the earlier version also had` : " of the papers CatLog has read"}: whether CatLog's reading has the same number for that paper and parameter.`,
+      data: statsDataLine("When CatLog reads a paper, its records replace these entries. kcat/Km calculated from kcat and Km are left out."),
     };
   }
 
@@ -5001,7 +5001,7 @@
       }
     }
 
-    // CatLog v2 papers by how many values CatLog v2 read from each (overview.from_paper_values).
+    // The papers CatLog has read, by how many values CatLog read from each (overview.from_paper_values).
     const perPaper = overview?.from_paper_values;
     let valuesPerPaper = null;
     if (perPaper && Array.isArray(perPaper.bins) && Array.isArray(perPaper.papers) && perPaper.bins.length === perPaper.papers.length
@@ -5021,9 +5021,9 @@
       while (rows.length > 1 && !rows[rows.length - 1].count) rows.pop();
       const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
       valuesPerPaper = {
-        id: "statsPerPaperTitle", key: "values-per-paper", title: "Values per paper in CatLog v2",
+        id: "statsPerPaperTitle", key: "values-per-paper", title: "Values read from each paper",
         body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step) }),
-        caption: `CatLog v2's ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} by how many kcat, Km and kcat/Km values CatLog read from each; each label gives the papers, then their share.`,
+        caption: `The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label gives the papers, then their share.`,
         data: statsDataLine(`${formatInteger(perPaper.values)} values in all; a kcat/Km calculated from kcat and Km is not counted.`),
       };
     }
@@ -5070,14 +5070,15 @@
     const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
       body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it.", data: statsDataLine("Shares of all records.") } : null;
-    // Two to a row: the review result beside the main sources; the two CatLog v2 figures; the fields beside the forms.
+    // Two to a row: the review result beside the main sources; the two figures of records read from the paper; the
+    // fields beside the forms.
     content.push(...[versions, valuesPerPaper].filter(Boolean));
     if (contentsTable && formsTable && content.length % 2 === 1) content.push({ stack: [contentsTable, formsTable] });
     else content.push(...[contentsTable, formsTable].filter(Boolean));
     parts.push({ key: "catalog", title: "What is in the catalog", items: content });
 
-    // 4. Biology: enzyme classes (records, accepted over them, CatLog v2 entries marked), the most common organisms and EC
-    // numbers, and the same among CatLog v2 entries.
+    // 4. Biology: enzyme classes (records, accepted over them, the records read from the paper marked), the most common
+    // organisms and EC numbers, and the same among records read from the paper.
     const biology = [];
     const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
       && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
@@ -5091,10 +5092,10 @@
         label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
         segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
           { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
-          ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} CatLog v2 entries (${statsShare(item.from_paper, item.count)})` }] : [])],
+          ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} read from the paper (${statsShare(item.from_paper, item.count)})` }] : [])],
         parts: [{ text: formatInteger(item.count) }, { text: formatInteger(item.accepted), className: "stats-muted" },
           ...(withV2 ? [{ text: formatInteger(item.from_paper), className: "stats-v2-count" }] : [])],
-        text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted${withV2 ? `, ${formatInteger(item.from_paper)} CatLog v2 entries` : ""}.`,
+        text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted${withV2 ? `, ${formatInteger(item.from_paper)} read from the paper` : ""}.`,
       }));
       const notes = [
         multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
@@ -5103,9 +5104,9 @@
       biology.push({
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
         body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
-          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: "CatLog v2 entries" }] : [])],
-          valueHeads: ["Records", "Accepted", ...(withV2 ? ["CatLog v2"] : [])] }),
-        caption: withV2 ? "Records per enzyme class, with the accepted ones and the CatLog v2 entries; each label gives records, accepted, then CatLog v2 entries."
+          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: SOURCE_CATLOG_LABEL }] : [])],
+          valueHeads: ["Records", "Accepted", ...(withV2 ? ["From paper"] : [])] }),
+        caption: withV2 ? "Records per enzyme class, with the accepted ones and those read from the paper; each label gives records, accepted, then read from the paper."
           : "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
         data: statsDataLine(notes),
       });
@@ -5130,14 +5131,14 @@
         caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, data: statsDataLine("Bars against the most common EC number.") });
     }
     if (v2Organisms.length) {
-      biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Organisms with the most CatLog v2 entries", kind: "Table",
-        body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", countHead: "Entries", part: "catlog" }),
-        caption: `The ${formatInteger(v2Organisms.length)} organisms with the most CatLog v2 entries; strains are counted with their species.`, data: statsDataLine("Shares of CatLog v2 entries.") });
+      biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Most common organisms among records read from the paper", kind: "Table",
+        body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", part: "catlog" }),
+        caption: `The ${formatInteger(v2Organisms.length)} organisms with the most records read from the paper; strains are counted with their species.`, data: statsDataLine("Shares of the records read from the paper.") });
     }
     if (v2EcNumbers.length) {
-      biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "EC numbers with the most CatLog v2 entries", kind: "Table",
-        body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", countHead: "Entries", part: "catlog" }),
-        caption: `The ${formatInteger(v2EcNumbers.length)} EC numbers with the most CatLog v2 entries, each with the enzyme name its records use most.`, data: statsDataLine("Shares of CatLog v2 entries.") });
+      biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "Most common EC numbers among records read from the paper", kind: "Table",
+        body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", part: "catlog" }),
+        caption: `The ${formatInteger(v2EcNumbers.length)} EC numbers with the most records read from the paper, each with the enzyme name its records use most.`, data: statsDataLine("Shares of the records read from the paper.") });
     }
     if (biology.length) parts.push({ key: "biology", title: "Biology", items: biology });
 
@@ -5168,8 +5169,8 @@
         caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") }] });
     }
 
-    // 7. Against the databases: CatLog against the databases, the earlier corrections, and the CatLog v1 entries CatLog v2
-    // replaced, each only when the snapshot has its counts.
+    // 7. Against the databases: CatLog against the databases, the earlier corrections, and the earlier version's entries
+    // that reading the paper replaced, each only when the snapshot has its counts.
     const databases = [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]
       .map((build) => build(overview?.quality, { corrected: counts.corrected })).filter(Boolean);
     if (databases.length) parts.push({ key: "databases", title: "Against the databases", items: databases });

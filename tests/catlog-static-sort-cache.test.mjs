@@ -1998,13 +1998,15 @@ function row(overrides = {}) {
   api.renderStats();
   const figures = element("statsCharts").innerHTML;
   assert.deepEqual(headings().slice(-3), ["Values read from the paper against the databases",
-    "Corrections on records accepted after a correction", "CatLog v1 entries of papers CatLog v2 has read"]);
+    "Corrections on records accepted after a correction", "Entries replaced by reading the paper"]);
   assert.equal(partTitles().at(-1), "7 Against the databases");
   assert.match(figures, /<strong>Figure 6\.<\/strong> Values CatLog read from the paper/);
   assert.match(figures, /data-row="all" data-count="14"/);
   assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of the parameters CatLog read from it; for 2 more, the databases list some of them but not all\./);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
-  assert.match(figures, /The 7 CatLog v1 entries \(2 accepted\) of the 1 paper that CatLog v2 has read and CatLog v1 also had: /);
+  assert.match(figures, /The 7 entries from the earlier version \(2 accepted\) of the 1 paper that CatLog has read and the earlier version also had: whether CatLog's reading has the same number/);
+  assert.match(figures, /When CatLog reads a paper, its records replace these entries\./);
+  assert.doesNotMatch(figures.replace(/<[^>]*>/g, " "), /\bv[12]\b/);
   // Figure 4 counted for another snapshot names both counts of records accepted after a correction (figure 1 has the
   // snapshot's own); with the same count it names one.
   const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
@@ -2026,7 +2028,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
   api.renderStats();
-  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|CatLog v1 entries of papers/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|Entries replaced/);
   // The match is the lead's (and the Guide lead's) side line; the Guide's Human review item adds nothing for it.
   assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "");
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ v2_approved_total: 4, v2_found: 3, v2_wrong: 1 })),
@@ -2075,9 +2077,9 @@ function row(overrides = {}) {
   assert.match(chart, /How these numbers are counted/);
   assert.doesNotMatch(chart, /NaN|Infinity|undefined/);
 
-  // More from the overview when the snapshot counts it: CatLog v2 entries per enzyme class, the organisms and EC numbers
-  // with the most CatLog v2 entries (linked with source=paper), values per paper, and values per enzyme class as small
-  // multiples on one half-decade grid per metric.
+  // More from the overview when the snapshot counts it: the records read from the paper per enzyme class, the most common
+  // organisms and EC numbers among them (linked with source=paper), values per paper, and values per enzyme class as
+  // small multiples on one half-decade grid per metric.
   {
     const kcatClasses = { log10_start: -1, bin_width: 0.5, classes: [
       { class: 1, n: 3, median: 2, p10: 0.5, p90: 9, counts: [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0] },
@@ -2089,16 +2091,18 @@ function row(overrides = {}) {
       metrics: { kcat: { ...overview.metrics.kcat, by_class: kcatClasses } } };
     api.renderStats();
     const more = element("statsCharts").innerHTML;
-    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;CatLog v2"><span>CatLog v2<\/span><\/span><\/span><\/div>/);
-    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;CatLog v2"><span>2<\/span><\/span><\/span>/);
-    assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 CatLog v2 entries \(50\.0%\)"/);
-    assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Organisms with the most CatLog v2 entries<\/h3>[\s\S]*?<th scope="col" class="stats-num">Entries<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
+    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;From paper"><span>From paper<\/span><\/span><\/span><\/div>/);
+    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;From paper"><span>2<\/span><\/span><\/span>/);
+    assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 read from the paper \(50\.0%\)"/);
+    assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
+    assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Most common organisms among records read from the paper<\/h3>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
-    // Values per paper: rows from the first bin to the last one with papers; shares of CatLog v2's papers.
-    assert.match(more, /<h3 id="statsPerPaperTitle" class="stats-fig-title">Values per paper in CatLog v2<\/h3>/);
+    // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
+    assert.match(more, /<h3 id="statsPerPaperTitle" class="stats-fig-title">Values read from each paper<\/h3>/);
+    assert.doesNotMatch(more.replace(/<[^>]*>/g, " "), /\bv[12]\b|Entries/, "CatLog is the one name");
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
     assert.match(more, /<span class="stats-chart-label">2–4<\/span>/);
-    assert.match(more, /CatLog v2's 1 paper by how many kcat, Km and kcat\/Km values CatLog read from each/);
+    assert.match(more, /The 1 paper CatLog has read, by how many kcat, Km and kcat\/Km values CatLog read from each/);
     // Values by enzyme class: a ridge per class, its median dot and 10–90% line, a link to the class in Browse.
     assert.match(more, /<h3 id="statsClassValuesTitle" class="stats-fig-title">Values by enzyme class<\/h3>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
@@ -2160,12 +2164,13 @@ function row(overrides = {}) {
       assert.doesNotMatch(full.data, /lighter/);
     }
     // A count chart's value column fits its longest entry per number column, here each column's heading (Records,
-    // Accepted, CatLog v2), in ch (a wider font widens it), with 6px between the columns, at least 96px.
-    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(24ch \+ 18px\)\)"/);
+    // Accepted, From paper), in ch (a wider font widens it), with 6px between the columns, at least 96px.
+    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(25ch \+ 18px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.
     assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "Read from the paper and not yet re-read",
-      "Values per paper in CatLog v2", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
-      "Most common EC numbers", "Organisms with the most CatLog v2 entries", "EC numbers with the most CatLog v2 entries", "Value ranges",
+      "Values read from each paper", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
+      "Most common EC numbers", "Most common organisms among records read from the paper",
+      "Most common EC numbers among records read from the paper", "Value ranges",
       "Values by enzyme class", "Cautions on values"]);
     assert.deepEqual([...more.matchAll(/<strong>Figure (\d+)\.<\/strong>/g)].map((match) => Number(match[1])), [1, 2, 3, 4, 5, 6, 7]);
     for (const caption of more.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<span class="stats-fig-data">|<\/figcaption>)/g)) {
@@ -2173,7 +2178,7 @@ function row(overrides = {}) {
     }
     assert.doesNotMatch(more, /NaN|Infinity|undefined/);
     // Counts that do not hold together are not drawn: values per paper that miss a paper, a class grid whose counts do
-    // not add up, a CatLog v2 count above the class's records.
+    // not add up, a count read from the paper above the class's records.
     runtimeManifest.summary.overview = { ...runtimeManifest.summary.overview, from_paper_values: { values: 5, bins: [1, 2], papers: [0, 0] },
       metrics: { kcat: { ...overview.metrics.kcat, by_class: { ...kcatClasses, classes: [{ ...kcatClasses.classes[0], n: 4 }] } } },
       ec_classes: [{ class: 1, name: "Oxidoreductases", count: 4, accepted: 2, from_paper: 5 }] };
@@ -2249,7 +2254,7 @@ function row(overrides = {}) {
   // An overview from another download, or with another record count, is not used.
   runtimeManifest.summary.overview = { ...overview, download_sha256: "other-download" };
   api.renderStats();
-  assert.doesNotMatch(element("statsTotals").innerHTML, /CatLog v2 entries|Papers/);
+  assert.doesNotMatch(element("statsTotals").innerHTML, /Read from the paper|Papers/);
   assert.equal(api.statsOverview(6), null);
   runtimeManifest.summary.overview = { ...overview, records: 7 };
   assert.equal(api.statsOverview(6), null);

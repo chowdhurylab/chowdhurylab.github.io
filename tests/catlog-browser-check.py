@@ -868,7 +868,7 @@ FIGURES_FIXTURE = {
                  "values": {"kcat": [19250, 21222], "km": [21071, 23351], "kcat_over_km": [1109, 1234]}},
 }
 FIGURE_TITLES = ("Values read from the paper against the databases", "Corrections on records accepted after a correction",
-                 "CatLog v1 entries of papers CatLog v2 has read")
+                 "Entries replaced by reading the paper")
 
 
 # The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), no two labels
@@ -974,7 +974,7 @@ def check_stats_figures(driver, browser, url):
     return {"route": "stats-figures", "passed": True}
 
 
-# Value labels of several numbers (count, then share; Figure 5's records, accepted, CatLog v2 entries) stand in columns:
+# Value labels of several numbers (count, then share; Figure 5's records, accepted, read from the paper) stand in columns:
 # within a chart each column's numbers end at one x. Returns the charts whose labels are ragged.
 STATS_VALUE_COLUMNS_JS = """
     return [...document.querySelectorAll('.stats-chart')].filter(chart => chart.querySelector('.stats-chart-value.has-parts')).filter(chart => {
@@ -998,9 +998,9 @@ STATS_DIMMED_JS = """
 
 
 def check_stats_more(driver, browser, overview, total):
-    """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: CatLog
-    v2 and v1 entries make all records, values per paper make CatLog v2's papers, each class's CatLog v2 entries and its
-    values by class stay within its records, the small multiples draw one ridge per class with values. In Chrome,
+    """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: the
+    records read from the paper and those not yet re-read make all records, values per paper make the papers CatLog read,
+    each class's records read from the paper and its values by class stay within its records, the small multiples draw one ridge per class with values. In Chrome,
     pointing at a mark lights it and gives its exact count in the tooltip line."""
     read = overview["from_paper"]["records"]
     versions = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
@@ -1017,7 +1017,7 @@ def check_stats_more(driver, browser, overview, total):
     if all(isinstance(item.get("from_paper"), int) for item in classes.values()) and classes:
         shown = [int(span.get_attribute("innerText").replace(",", "")) for span in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-v2-count")]
         assert shown == [item["from_paper"] for item in classes.values()] and all(item["from_paper"] <= item["count"] for item in classes.values()), shown
-        # The CatLog v2 stripe parts from its accepted bar by a 1px white gap above and below (not by lightness alone),
+        # The read-from-the-paper stripe parts from its accepted bar by a 1px white gap above and below (not by lightness alone),
         # never glows, not even in a lit row, and a nonzero count shows at least 2px wide within its accepted bar.
         stripes = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].map((row) => {
             const stripe = row.querySelector('.stats-part-catlog-mark'), accepted = row.querySelector('.stats-part-accepted');
@@ -1030,14 +1030,14 @@ def check_stats_more(driver, browser, overview, total):
         assert len(stripes) == sum(item["from_paper"] > 0 for item in classes.values()), stripes
         assert all(item["width"] >= 1.9 and item["lit"] == "none" and "rgb(255, 255, 255) 0px -1px 0px" in item["gap"]
                    and "rgb(255, 255, 255) 0px 1px 0px" in item["gap"] for item in stripes), stripes
-        # (CatLog v2 entries are accepted, so a stripe ends within its accepted bar.)
+        # (Records read from the paper are accepted, so a stripe ends within its accepted bar.)
         assert all(item["inside"] for item in stripes if classes[int(item["row"][3:])]["from_paper"] <= classes[int(item["row"][3:])]["accepted"]), stripes
     if classes:
         # Figure 5 names its value columns in the legend's order, each heading over its numbers (STATS_VALUE_COLUMNS_JS
         # below checks they end at one x), and no class name runs into them.
         heads = [part.get_attribute("innerText").strip() for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
         with_v2 = all(isinstance(item.get("from_paper"), int) for item in classes.values())
-        assert heads == ["Records", "Accepted"] + (["CatLog v2"] if with_v2 else []), heads
+        assert heads == ["Records", "Accepted"] + (["From paper"] if with_v2 else []), heads
         crowded = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].filter((row) => {
             const name = document.createRange(); name.selectNodeContents(row.querySelector('.stats-chart-label'));
             return Math.max(...[...name.getClientRects()].map((box) => box.right)) > row.querySelector('.stats-value-part').getBoundingClientRect().left - 4;
@@ -1190,7 +1190,7 @@ MORE_FIXTURE_JS = """
         if (overview?.from_paper) {
           const papers = overview.from_paper.papers;
           overview.from_paper_values = { values: papers * 3, bins: [1, 2, 5], papers: [papers - 2, 1, 1] };
-          // CatLog v2 entries are accepted: a class has no more of them than accepted records
+          // Records read from the paper are accepted: a class has no more of them than accepted records
           overview.ec_classes = (overview.ec_classes || []).map((item) => ({ ...item, from_paper: Math.min(item.accepted, Math.floor(item.count / 4)) }));
           const counts = (n) => { const list = new Array(16).fill(0); list[5] = n - 2; list[6] = 1; list[15] = 1; return list; };
           overview.metrics.kcat.by_class = { log10_start: -4, bin_width: 0.5, classes: (overview.ec_classes || []).slice(0, 3)
@@ -1292,7 +1292,7 @@ def check_stats_new_figures(driver, browser, url):
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
-            for title in ("Values per paper in CatLog v2", "Organisms with the most CatLog v2 entries", "Values by enzyme class"):
+            for title in ("Values read from each paper", "Most common organisms among records read from the paper", "Values by enzyme class"):
                 assert title in titles, titles
             assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
