@@ -3565,14 +3565,24 @@
   }
 
   // One numbered figure or table: its heading, the plot, then "Figure N." with one sentence and a data line (snapshot,
-  // data ID, definition), then anything that belongs under it (a note, a disclosure).
+  // data ID, definition), then anything that belongs under it (a note, a disclosure). Figures sit inside the numbered
+  // parts of the page (statsPartHtml), so their headings are one level down.
   function statsFigureHtml({ id, key, title, body, caption, data = "", wide = false, kind = "Figure", number = 0, after = "", className = "" }) {
     return `<section class="stats-section stats-figure-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}" data-figure="${key}">
-      <h2 id="${id}">${title}</h2>
+      <h3 id="${id}" class="stats-fig-title">${title}</h3>
       <figure class="stats-fig" aria-labelledby="${id}" aria-describedby="${id}Caption">
         ${body}
         <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${kind} ${number}.</strong> ${caption}</span>${data ? `<span class="stats-fig-data">${data}</span>` : ""}</figcaption>
       </figure>${after}</section>`;
+  }
+
+  // A numbered part of the page (the user, 2026-10-13: At a glance, Quality, What is in the catalog, Biology, Values,
+  // Cautions, Against the databases), with one plain heading and its figures on a 12-column grid.
+  function statsPartHtml(number, key, title, blocks, { intro = "" } = {}) {
+    const id = `statsPart${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;
+    return `<section class="stats-part" data-part="${key}" aria-labelledby="${id}">
+      <h2 id="${id}" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">${number}</span><span>${escapeHtml(title)}</span></h2>
+      ${intro}<div class="stats-part-grid">${blocks.join("")}</div></section>`;
   }
 
   // An axis of three to five steps of 1, 2, 2.5, 3 or 5 × 10ⁿ: the one that ends closest above the largest value.
@@ -3592,19 +3602,41 @@
     return best || { max, step: max };
   }
 
-  // A 16px bar: segments left to right (or each from the left, `overlay`), each a share of `scale`, over 1px reference
-  // lines at `refs` (percent of the axis).
-  function statsTrack(segments, scale, { refs = [0], overlay = false } = {}) {
+  // The places (percent of the axis) of an axis's ticks: light gridlines under the bars.
+  function statsTickRefs(scale, step) {
+    const refs = [];
+    for (let value = 0; value <= scale + step / 2; value += step) refs.push(+(value / scale * 100).toFixed(4));
+    return refs;
+  }
+
+  // Segment places in percent of `total`: left to right, or each from the left (`overlay`).
+  function statsPlaces(segments, total, overlay) {
     let left = 0;
-    const parts = segments.map((segment) => {
+    return segments.map((segment) => {
       const start = overlay ? 0 : left;
-      const width = scale > 0 ? Math.max(0, Math.min(100 - start, segment.count / scale * 100)) : 0;
+      const width = total > 0 ? Math.max(0, Math.min(100 - start, segment.count / total * 100)) : 0;
       if (!overlay) left += width;
-      return width > 0
-        ? `<span class="stats-seg stats-part-${segment.part}" style="left:${+start.toFixed(4)}%;width:${+width.toFixed(4)}%"${segment.title ? ` title="${escapeHtml(segment.title)}"` : ""}></span>`
-        : "";
+      return [+start.toFixed(4), +width.toFixed(4)];
+    });
+  }
+
+  // A 16px bar: segments left to right (or each from the left, `overlay`), each a share of `scale`, over 1px reference
+  // lines at `refs` (percent of the axis). The bar's outer ends are rounded (2px). With `shareOf`, each segment also
+  // carries its place as a share of that total (data-share), for a chart that can show either (statsSwitchMode); a
+  // segment's exact count is in its tooltip line (data-tip).
+  function statsTrack(segments, scale, { refs = [0], overlay = false, shareOf = 0, shareRefs = null } = {}) {
+    const main = statsPlaces(segments, scale, overlay);
+    const share = shareOf > 0 ? statsPlaces(segments, shareOf, overlay) : null;
+    const drawn = segments.map((_segment, index) => (main[index][1] > 0 || (share && share[index][1] > 0) ? index : -1)).filter((index) => index >= 0);
+    const parts = drawn.map((index) => {
+      const segment = segments[index];
+      const [start, width] = main[index];
+      const ends = overlay || drawn.length === 1 ? " is-start is-end" : `${index === drawn[0] ? " is-start" : ""}${index === drawn[drawn.length - 1] ? " is-end" : ""}`;
+      const places = share ? ` data-records="${start},${width}" data-share="${share[index][0]},${share[index][1]}"` : "";
+      return `<span class="stats-seg stats-part-${segment.part}${ends}" style="left:${start}%;width:${width}%"${places}${segment.title ? ` data-tip="${escapeHtml(segment.title)}"` : ""}></span>`;
     }).join("");
-    return `<span class="stats-track" aria-hidden="true">${refs.map((ref) => `<i class="stats-ref" style="left:${ref}%"></i>`).join("")}${parts}</span>`;
+    const lines = (list, extra) => list.map((ref) => `<i class="stats-ref${extra}" style="left:${ref}%"></i>`).join("");
+    return `<span class="stats-track" aria-hidden="true">${shareRefs ? lines(refs, " stats-ref-records") + lines(shareRefs, " stats-ref-share") : lines(refs, "")}${parts}</span>`;
   }
 
   // Legend above a plot, in segment order: a 10×10 swatch and the name (and a count, when given).
@@ -3613,28 +3645,52 @@
     return `<ul class="stats-legend">${items.map((item) => `<li><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i><span>${item.label}${item.count !== undefined ? ` <span class="stats-legend-count">${formatInteger(item.count)}</span>` : ""}</span></li>`).join("")}</ul>`;
   }
 
-  function statsAxis(scale, step, { percent = false } = {}) {
+  function statsAxis(scale, step, { percent = false, mode = "" } = {}) {
     const ticks = [];
     for (let value = 0; value <= scale + step / 2; value += step) ticks.push(value);
-    return `<div class="stats-chart-axis" aria-hidden="true"><span></span><span class="stats-axis-ticks">${ticks.map((value) => `<span style="left:${+(value / scale * 100).toFixed(4)}%">${percent ? `${Math.round(value)}%` : formatInteger(value)}</span>`).join("")}</span><span></span></div>`;
+    return `<div class="stats-chart-axis" aria-hidden="true"${mode ? ` data-axis-mode="${mode}"${mode === "share" ? " hidden" : ""}` : ""}><span></span><span class="stats-axis-ticks">${ticks.map((value) => `<span style="left:${+(value / scale * 100).toFixed(4)}%">${percent ? `${Math.round(value)}%` : formatInteger(value)}</span>`).join("")}</span><span></span></div>`;
   }
 
   // Horizontal bars: per row a label (a link into Browse when one filter opens exactly those records), a bar of one or
   // more segments and a value label; the legend above, an axis below. Percent charts draw each row as 100% of itself.
-  function statsBarChart({ key, rows, scale = 0, legend = [], axis = "", percent = false, overlay = false }) {
-    const refs = percent ? [0, 25, 50, 75, 100] : [0];
-    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}" data-chart="${key}">
-      ${legend.length ? statsLegend(legend) : ""}
-      <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}">
+  // Pointing at a row (or focusing its link) lights it and gives its exact counts in a tooltip line (data-hl, data-tip).
+  // `switchable`: a count chart that can also draw each row as 100% of itself (the Records | Share switch).
+  function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "" }) {
+    const refs = percent ? [0, 25, 50, 75, 100] : step ? statsTickRefs(scale, step) : [0];
+    const tools = switchable
+      ? `<div class="stats-chart-tools">${legend.length ? statsLegend(legend) : ""}<div class="stats-switch" role="group" aria-label="Bar length">${[["records", "Records"], ["share", "Share"]]
+        .map(([mode, label]) => `<button type="button" class="stats-switch-button" data-stats-mode="${mode}" aria-pressed="${mode === "records"}">${label}</button>`).join("")}</div></div>`
+      : legend.length ? statsLegend(legend) : "";
+    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
+      ${tools}
+      <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
-        ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay })}
+        ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay, shareOf: switchable ? row.count : 0, shareRefs: switchable ? [0, 25, 50, 75, 100] : null })}
         <span class="stats-chart-value">${row.value}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
       </li>`).join("")}</ul>
-      ${axis}
+      ${axis}${switchable ? statsAxis(100, 25, { percent: true, mode: "share" }) : ""}
     </div>`;
   }
 
-  // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre.
+  // The Records | Share switch of a count chart: each segment moves to the place it carries for that mode (eased, unless
+  // the viewer asks for less motion), with that mode's axis and gridlines.
+  function statsSwitchMode(button) {
+    const figure = button.closest(".stats-fig");
+    const mode = button.dataset.statsMode;
+    if (!figure || !mode) return;
+    figure.dataset.mode = mode;
+    figure.querySelectorAll(".stats-switch-button").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+    figure.querySelectorAll(".stats-seg[data-records]").forEach((segment) => {
+      const [left, width] = String(segment.dataset[mode === "share" ? "share" : "records"] || "").split(",");
+      segment.style.left = `${left}%`;
+      segment.style.width = `${width}%`;
+    });
+    figure.querySelectorAll("[data-axis-mode]").forEach((axis) => { axis.hidden = axis.dataset.axisMode !== mode; });
+  }
+
+  // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre. Each slice
+  // fills from its colour's tint at the hole to the colour at the rim; pointing at a slice (or its row in the legend
+  // table, data-hl) lights it with a soft glow and gives its exact count.
   function statsDonut(parts, total, { title, unit = "records" } = {}) {
     const cx = 100, cy = 100, outer = 88, inner = 56, full = 2 * Math.PI;
     const point = (radius, angle) => `${+(cx + radius * Math.sin(angle)).toFixed(3)} ${+(cy - radius * Math.cos(angle)).toFixed(3)}`;
@@ -3644,6 +3700,7 @@
     };
     let angle = 0;
     const paths = [];
+    const fills = new Set();
     const cuts = new Set();
     for (const part of parts) {
       if (!(part.count > 0) || !(total > 0)) continue;
@@ -3651,13 +3708,16 @@
       const whole = sweep >= full - 1e-9;
       // A whole ring is drawn as two halves: an arc cannot start and end at the same point.
       const d = whole ? `${arc(0, Math.PI)}${arc(Math.PI, full)}` : arc(angle, Math.min(full, angle + sweep));
-      paths.push(`<path class="stats-part-${part.part}" d="${d}"><title>${escapeHtml(`${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`)}</title></path>`);
+      const tip = `${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`;
+      fills.add(part.part);
+      paths.push(`<path class="stats-part-${part.part}" style="fill:url(#statsDonutFill-${part.part})" d="${d}"${part.key ? ` data-hl="${escapeHtml(part.key)}"` : ""} data-tip="${escapeHtml(tip)}"></path>`);
       if (!whole) {
         cuts.add(+angle.toFixed(6));
         cuts.add(+Math.min(full, angle + sweep).toFixed(6) % +full.toFixed(6));
       }
       angle += sweep;
     }
+    const gradients = [...fills].map((part) => `<radialGradient id="statsDonutFill-${part}" class="stats-part-${part}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${outer}"><stop offset="${+(inner / outer).toFixed(3)}" class="stats-donut-stop-in"/><stop offset="1" class="stats-donut-stop-out"/></radialGradient>`).join("");
     const gaps = [...cuts].map((cut) => {
       const [x1, y1] = point(inner - 1, cut).split(" ");
       const [x2, y2] = point(outer + 1, cut).split(" ");
@@ -3665,7 +3725,7 @@
     }).join("");
     const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
     return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
-      ${paths.join("")}${gaps}
+      <defs>${gradients}</defs><g class="stats-donut-slices">${paths.join("")}</g>${gaps}
       <text class="stats-donut-total" x="100" y="100">${formatInteger(total)}</text>
       <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
     </svg>`;
@@ -3673,9 +3733,9 @@
 
   // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
   // an 80px bar, the count, and its share of all records (or a second count). Bars are drawn against `scale`.
-  function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral" } = {}) {
+  function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral", countHead = "Records" } = {}) {
     return `<table class="stats-table">
-      <thead><tr><th scope="col">${escapeHtml(head)}</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">${escapeHtml(extra ? extra.head : "Share")}</th></tr></thead>
+      <thead><tr><th scope="col">${escapeHtml(head)}</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">${escapeHtml(countHead)}</th><th scope="col" class="stats-num">${escapeHtml(extra ? extra.head : "Share")}</th></tr></thead>
       <tbody>${items.map((item) => {
         const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
         const last = extra ? formatInteger(item[extra.key]) : escapeHtml(statsShare(item.count, total));
@@ -3762,12 +3822,131 @@
         <div><dt>10–90%</dt><dd>${statsRangeNumber(summary.p10, { html: true })} – ${statsRangeNumber(summary.p90, { html: true })}</dd></div>
       </dl>
       <div class="stats-histogram" role="img" aria-label="${escapeHtml(label)}">
-        <div class="stats-histogram-bars">${counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" title="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(start + 1) : index === bins - 1 ? statsPowerOfTen(start + index) + " and above" : `${statsPowerOfTen(start + index)} to ${statsPowerOfTen(start + index + 1)}`}: ${formatInteger(count)}`)}"></span>`).join("")}</div>
+        <div class="stats-histogram-bars">${counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? count / highest * 100 : 0}%" data-tip="${escapeHtml(`${index === 0 ? "below " + statsPowerOfTen(start + 1) : index === bins - 1 ? statsPowerOfTen(start + index) + " and above" : `${statsPowerOfTen(start + index)} to ${statsPowerOfTen(start + index + 1)}`} ${metric.unit}: ${formatInteger(count)} values`)}"></span>`).join("")}</div>
         <div class="stats-histogram-range" aria-hidden="true"><span style="left:${low}%;width:${Math.max(high - low, 0.5)}%"></span><i style="left:${median}%"></i></div>
         <div class="stats-histogram-axis" aria-hidden="true">${ticks.map((edge) => `<span style="left:${edge / bins * 100}%">10<sup>${String(start + edge).replace("-", "−")}</sup></span>`).join("")}</div>
       </div>
       <p class="stats-range-count">${formatInteger(n)} values</p>
     </figure>`;
+  }
+
+  // A smooth line through points (x ascending) that never overshoots them (monotone cubic, Fritsch and Carlson), so a
+  // curve drawn through histogram counts stays between zero and its highest bin.
+  function statsSmoothPath(points) {
+    const n = points.length;
+    if (n < 2) return "";
+    const f = (value) => +value.toFixed(2);
+    const dx = [];
+    const slope = [];
+    for (let index = 0; index < n - 1; index += 1) {
+      dx[index] = points[index + 1][0] - points[index][0];
+      slope[index] = (points[index + 1][1] - points[index][1]) / dx[index];
+    }
+    const tangent = [slope[0]];
+    for (let index = 1; index < n - 1; index += 1) tangent[index] = slope[index - 1] * slope[index] <= 0 ? 0 : (slope[index - 1] + slope[index]) / 2;
+    tangent[n - 1] = slope[n - 2];
+    for (let index = 0; index < n - 1; index += 1) {
+      if (slope[index] === 0) {
+        tangent[index] = 0;
+        tangent[index + 1] = 0;
+        continue;
+      }
+      const a = tangent[index] / slope[index];
+      const b = tangent[index + 1] / slope[index];
+      const h = a * a + b * b;
+      if (h > 9) {
+        const t = 3 / Math.sqrt(h);
+        tangent[index] = t * a * slope[index];
+        tangent[index + 1] = t * b * slope[index];
+      }
+    }
+    let d = `M${f(points[0][0])} ${f(points[0][1])}`;
+    for (let index = 0; index < n - 1; index += 1) {
+      const [x0, y0] = points[index];
+      const [x1, y1] = points[index + 1];
+      const third = dx[index] / 3;
+      d += `C${f(x0 + third)} ${f(y0 + tangent[index] * third)} ${f(x1 - third)} ${f(y1 - tangent[index + 1] * third)} ${f(x1)} ${f(y1)}`;
+    }
+    return d;
+  }
+
+  // Values by enzyme class (overview.metrics.<metric>.by_class): per metric one shared grid of half-decade bins, per
+  // class its count, median, 10th and 90th percentiles and bin counts. Null for a grid that does not hold together.
+  function statsClassGrid(summary, classNames) {
+    const grid = summary?.by_class;
+    const start = grid?.log10_start;
+    const width = grid?.bin_width;
+    if (!grid || !Number.isFinite(start) || !(width > 0) || !Array.isArray(grid.classes) || !grid.classes.length) return null;
+    const bins = grid.classes[0]?.counts?.length;
+    if (!(bins >= 2)) return null;
+    const classes = [];
+    for (const item of grid.classes) {
+      const n = statsCount(item?.n);
+      if (!Number.isInteger(item?.class) || !n || !Array.isArray(item.counts) || item.counts.length !== bins
+        || !item.counts.every((count) => statsCount(count) !== null) || item.counts.reduce((sum, count) => sum + count, 0) !== n
+        || ![item.median, item.p10, item.p90].every((value) => Number.isFinite(value) && value > 0)
+        || !(item.p10 <= item.median && item.median <= item.p90)) return null;
+      classes.push({ ...item, name: classNames[item.class] || "" });
+    }
+    return { start, width, bins, classes };
+  }
+
+  const STATS_RIDGE_BASE = 40;
+  const STATS_RIDGE_PEAK = 36;
+
+  // One metric's small multiple: a ridge per enzyme class drawn through its bin counts (each scaled to its own peak, so
+  // shapes compare whatever the class's size), the 10–90% range as a line on the baseline with the median as a dot, the
+  // median printed at the right; a shared log axis under the panel.
+  function statsRidgePanel(metric, grid) {
+    const span = grid.bins * grid.width;
+    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - grid.start) / span * 100));
+    const unit = metric.unit;
+    const rows = grid.classes.map((item) => {
+      const highest = Math.max(...item.counts);
+      const points = [[0, STATS_RIDGE_BASE], ...item.counts.map((count, index) => [(index + 0.5) / grid.bins * 100,
+        STATS_RIDGE_BASE - (highest ? count / highest * STATS_RIDGE_PEAK : 0)]), [100, STATS_RIDGE_BASE]];
+      const line = statsSmoothPath(points);
+      const low = position(item.p10);
+      const high = position(item.p90);
+      const text = `EC ${item.class}${item.name ? ` ${item.name}` : ""}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median)} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}.`;
+      return `<li class="stats-ridge-row" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(text)}">
+        <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
+        <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L100 ${STATS_RIDGE_BASE}L0 ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg><span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
+        <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true })}</span>
+      </li>`;
+    }).join("");
+    const ticks = [];
+    for (let decade = Math.ceil(grid.start); decade <= grid.start + span + 1e-9; decade += 1) ticks.push(decade);
+    const every = ticks.length > 7 ? 2 : 1;
+    const axis = ticks.map((decade, index) => `<span class="${index % every ? "stats-ridge-tick-minor" : ""}" style="left:${+((decade - grid.start) / span * 100).toFixed(3)}%">${index % every ? "" : `10<sup>${String(decade).replace("-", "−")}</sup>`}</span>`).join("");
+    return `<div class="stats-ridges stats-metric-${metric.key}" data-metric="${metric.key}">
+      <svg class="stats-ridge-defs" aria-hidden="true" focusable="false"><defs><linearGradient id="statsRidgeFill-${metric.key}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stats-ridge-stop-top"/><stop offset="1" class="stats-ridge-stop-bottom"/></linearGradient></defs></svg>
+      <p class="stats-ridges-title"><span>${metric.html} <span class="stats-range-unit">(${escapeHtml(unit)})</span></span><span class="stats-ridges-head">Median</span></p>
+      <ol class="stats-ridge-rows">${rows}</ol>
+      <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${axis}</span><span></span></div>
+    </div>`;
+  }
+
+  // Figure: kcat, Km and kcat/Km by enzyme class, one small multiple per metric (empty when no metric has a grid).
+  function statsRidgeFigure(overview) {
+    const classNames = Object.fromEntries((Array.isArray(overview?.ec_classes) ? overview.ec_classes : [])
+      .filter((item) => Number.isInteger(item?.class)).map((item) => [item.class, String(item.name || "")]));
+    const panels = [];
+    let width = null;
+    for (const metric of STATS_METRICS) {
+      const grid = statsClassGrid(overview?.metrics?.[metric.key], classNames);
+      if (!grid) continue;
+      width = grid.width;
+      panels.push(statsRidgePanel({ ...metric, label: metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat" }, grid));
+    }
+    if (!panels.length) return null;
+    const binWord = width === 0.5 ? "half-decade" : `${width}-decade`;
+    return {
+      id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
+      body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
+      caption: `Values in catalog units on a log scale, one curve per enzyme class drawn through ${binWord} bins and scaled to its own peak, with the median as a dot and the middle 80% of values as a line.`,
+      data: statsDataLine("A record in several classes counts in each; the end bins include all values beyond them; values without a recorded unit, or in a unit other than the catalog's, are left out."),
+    };
   }
 
   // Records per source, counted as the Browse source filter finds them (rowSourceBits): a record merged from several
@@ -4018,7 +4197,7 @@
     const sameDefinition = "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection; the same value: the same paper, metric, protein, variant and substrate, and a value within 2%.";
     const links = `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>`;
     const section = (title, figure, body) => `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsReviewTitle" data-figure="review">
-      <h2 id="statsReviewTitle">${escapeHtml(title)}</h2>
+      <h3 id="statsReviewTitle" class="stats-fig-title">${escapeHtml(title)}</h3>
       <div class="stats-lead-body">
         <div class="stats-lead-figure">${figure}</div>
         <div class="stats-lead-text">${body}${links}</div>
@@ -4226,6 +4405,102 @@
     };
   }
 
+  // Pointing at a mark (or focusing the link in its row) lights it and every mark of the same name in its figure
+  // (data-hl: a donut slice and its table row, a class's ridge in all three panels) and dims the rest; a tooltip line
+  // gives the mark's exact count (data-tip, the same words as its accessible text). One set of listeners on the Stats
+  // view, bound the first time Stats is drawn.
+  function statsTip() {
+    let tip = $("statsTip");
+    if (!tip && $("statsView") && document.createElement) {
+      tip = document.createElement("div");
+      tip.id = "statsTip";
+      tip.className = "stats-tip";
+      tip.setAttribute("aria-hidden", "true");
+      tip.hidden = true;
+      $("statsView").appendChild(tip);
+    }
+    return tip;
+  }
+
+  function statsLight(mark, on) {
+    const figure = mark?.closest?.(".stats-fig");
+    if (!figure) return;
+    figure.querySelectorAll(".is-active").forEach((item) => item.classList.remove("is-active"));
+    figure.classList.toggle("has-active", Boolean(on));
+    if (!on) return;
+    const key = mark.dataset.hl;
+    figure.querySelectorAll("[data-hl]").forEach((item) => {
+      if (item.dataset.hl === key) item.classList.add("is-active");
+    });
+  }
+
+  function statsShowTip(target, point = null) {
+    const tip = statsTip();
+    if (!tip || !target?.dataset?.tip) return;
+    tip.textContent = target.dataset.tip;
+    tip.hidden = false;
+    const box = target.getBoundingClientRect();
+    const width = tip.offsetWidth || 240;
+    const height = tip.offsetHeight || 28;
+    const x = point ? point.x : box.left + box.width / 2;
+    const left = Math.max(8, Math.min(window.innerWidth - width - 8, x - width / 2));
+    const above = (point ? point.y : box.top) - height - 10;
+    const top = above >= 8 ? above : (point ? point.y + 18 : box.bottom + 10);
+    tip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  }
+
+  function statsHideTip() {
+    const tip = $("statsTip");
+    if (tip) tip.hidden = true;
+  }
+
+  function bindStatsInteractions() {
+    const view = $("statsView");
+    if (!view || view.dataset.statsBound) return;
+    view.dataset.statsBound = "1";
+    let current = null;
+    const markOf = (target) => target?.closest?.("[data-hl], [data-tip]") || null;
+    const enter = (target, point) => {
+      const mark = markOf(target);
+      if (!mark || !view.contains(mark)) return;
+      const row = mark.closest("[data-hl]");
+      if (row !== current) {
+        if (current) statsLight(current, false);
+        current = row;
+        if (row) statsLight(row, true);
+      }
+      const tipped = mark.closest("[data-tip]");
+      if (tipped) statsShowTip(tipped, point);
+      else statsHideTip();
+    };
+    const leave = () => {
+      if (current) statsLight(current, false);
+      current = null;
+      statsHideTip();
+    };
+    view.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch") return;
+      if (!markOf(event.target)) {
+        if (current) leave();
+        return;
+      }
+      enter(event.target, { x: event.clientX, y: event.clientY });
+    });
+    view.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "touch") return;
+      if (markOf(event.target)) enter(event.target, { x: event.clientX, y: event.clientY });
+      else leave();
+    });
+    view.addEventListener("pointerleave", leave);
+    view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
+    view.addEventListener("focusout", leave);
+    view.addEventListener("scroll", statsHideTip, { passive: true });
+    view.addEventListener("click", (event) => {
+      const button = event.target?.closest?.("[data-stats-mode]");
+      if (button) statsSwitchMode(button);
+    });
+  }
+
   function renderStats() {
     // Immutable snapshot metadata: Stats never mixes filtered and full-download counts, and never loads the record index.
     const total = Number(manifest.total_rows || 0);
@@ -4238,33 +4513,95 @@
     const humanAccepted = humanAcceptedCount();
     const known = new Set(reviewStatuses.map((item) => item.value));
     const otherStatus = Object.entries(counts).reduce((sum, [key, count]) => sum + (known.has(key) ? 0 : count), 0);
+    bindStatsInteractions();
 
     $("statsScope").textContent = `All ${formatInteger(total)} records in this snapshot. Select a name to see those records in Browse.`;
     $("statsDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     const humanChecked = statsCount(overview?.human_checked_accepted, accepted);
-    const fromPaper = overview?.from_paper && statsCount(overview.from_paper.records, total);
+    const fromPaper = overview?.from_paper ? statsCount(overview.from_paper.records, total) : null;
     const papersRead = statsCount(overview?.from_paper?.papers);
+    const quality = overview?.quality || {};
+    const review = reviewFacts(quality.review?.v1);
+    const match = v2MatchFacts(quality);
+
+    // 1. At a glance: the headline band. Line 1 (32px, the key numbers in accent ink with a soft glow): records, accepted,
+    // CatLog v2 entries and the human review's headline; line 2 (20px): the catalog's scope. A number Browse can filter
+    // links there.
+    const reviewHeadline = review ? { value: review.correctShare, note: "values correct in CatLog v1 entries" }
+      : match ? { value: qualityShare(match.same, match.approved), note: "of approved values the same in CatLog v2" } : null;
     const main = [
-      ["Records", total],
-      ["Accepted", accepted, total ? `${statsShare(accepted, total)} of records` : ""],
-      [SOURCE_CATLOG_LABEL, fromPaper, papersRead !== null ? `from ${formatInteger(papersRead)} papers` : ""],
-      ["Human-checked", humanChecked],
-    ].filter(([, value]) => value !== null && value !== undefined);
+      { key: "records", label: "Records", value: formatInteger(total) },
+      { key: "accepted", label: "Accepted", value: formatInteger(accepted), note: total ? `${statsShare(accepted, total)} of records` : "",
+        params: accepted ? { status: "accepted" } : null },
+      fromPaper !== null ? { key: "catlog", label: `${SOURCE_CATLOG_LABEL} entries`, value: formatInteger(fromPaper),
+        note: papersRead !== null ? `from ${formatInteger(papersRead)} papers` : "", params: fromPaper ? { source: "paper" } : null } : null,
+      reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note } : null,
+    ].filter(Boolean);
     const scope = [
-      ["Papers", statsCount(overview?.papers)],
-      ["Enzymes", statsCount(overview?.enzymes) ?? statsCount(totals.unique_enzymes)],
-      ["EC numbers", statsCount(overview?.ec_numbers) ?? statsCount(totals.unique_ec_numbers)],
-      ["Organisms", statsCount(overview?.organisms) ?? statsCount(totals.unique_organisms)],
-      ["Substrates", statsCount(overview?.substrates) ?? statsCount(totals.unique_substrates)],
-    ].filter(([, value]) => value !== null);
-    const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(([label, value, note]) => `<div><dt>${escapeHtml(label)}</dt><dd>${formatCount(value)}${note ? `<small>${escapeHtml(note)}</small>` : ""}</dd></div>`).join("")}</dl>`;
-    $("statsTotals").innerHTML = totalsHtml(main, "stats-totals-main") + (scope.length ? totalsHtml(scope, "stats-totals-scope") : "");
+      ["papers", "Papers", statsCount(overview?.papers)],
+      ["enzymes", "Enzymes", statsCount(overview?.enzymes) ?? statsCount(totals.unique_enzymes)],
+      ["ec_numbers", "EC numbers", statsCount(overview?.ec_numbers) ?? statsCount(totals.unique_ec_numbers)],
+      ["organisms", "Organisms", statsCount(overview?.organisms) ?? statsCount(totals.unique_organisms)],
+      ["substrates", "Substrates", statsCount(overview?.substrates) ?? statsCount(totals.unique_substrates)],
+    ].filter(([, , value]) => value !== null).map(([key, label, value]) => ({ key, label, value: formatInteger(value) }));
+    const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"><dt>${escapeHtml(item.label)}</dt><dd>${item.params
+      ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
+      : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</dd></div>`;
+    const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
+    $("statsTotals").innerHTML = `<section class="stats-band" aria-labelledby="statsPartGlanceTitle">
+      <h2 id="statsPartGlanceTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">1</span><span>At a glance</span></h2>
+      ${totalsHtml(main, "stats-totals-main")}${scope.length ? totalsHtml(scope, "stats-totals-scope") : ""}</section>`;
 
-    // Figures in reading order; half-width ones stand two to a row from 1024px (an odd one out spans the row).
-    const figures = [];
+    // The parts after the band, each a list of figures (half width, two to a row from 1280px; `wide` ones take the row;
+    // `stack` puts two in one column) or ready blocks (`html`).
+    const parts = [];
 
-    // Figure 1. Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed,
-    // the words Browse uses; a donut (the one partition that is a true whole) and its legend table.
+    // 2. Quality: the human review of CatLog v1 entries leads (CatLog v2's match beside it), then the checks every value
+    // or a sample of them gets.
+    const lead = reviewLeadHtml(overview);
+    const audit = auditFacts(overview);
+    const marked = statsCount(overview?.human_marked, total);
+    // Without a lead, the share correct of every value reviewers compared on CatLog v1 entries' papers (the lead gives
+    // it otherwise), never without the label errors beside it.
+    const compared = lead ? null : statsCount(quality.compared_values_v1);
+    const comparedWrong = compared ? statsCount(quality.wrong_v1, compared) : null;
+    const labelErrors = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
+    const comparedPapers = compared ? statsCount(quality.compared_papers_v1) : null;
+    const checkCards = [
+      fromPaper ? { key: "second_check", name: "Second AI check", number: formatInteger(fromPaper), href: statsBrowseHref({ source: "paper" }),
+        unit: `records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`, result: "Every value compared with the paper.", share: 1 } : null,
+      audit ? { key: "audit", name: "AI audits", number: formatInteger(audit.values), unit: "values re-checked against the paper",
+        result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}.`,
+        share: (audit.values - audit.wrong) / audit.values } : null,
+      compared && comparedWrong !== null && labelErrors !== null ? { key: "review", name: "Human review of CatLog v1 entries",
+        number: formatInteger(compared), unit: `values${comparedPapers ? ` on ${formatInteger(comparedPapers)} ${comparedPapers === 1 ? "paper" : "papers"}` : ""}, approved or not`,
+        result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label.`,
+        share: (compared - comparedWrong) / compared } : null,
+      humanChecked !== null ? { key: "human_checked", name: "Human-checked records", number: formatInteger(humanChecked), href: statsBrowseHref({ checked: "1" }),
+        unit: "accepted records", result: `${HUMAN_CHECKED_DESCRIPTION}${marked !== null && marked >= humanChecked ? ` Reviewers looked at ${formatInteger(marked)} records.` : ""}`,
+        share: marked ? humanChecked / marked : null } : null,
+    ].filter(Boolean);
+    const quality_ = [];
+    if (lead) quality_.push({ html: lead });
+    if (checkCards.length) {
+      quality_.push({ html: `<section class="stats-section stats-checks-section stats-wide" aria-labelledby="statsChecksTitle" data-figure="checks">
+        <h3 id="statsChecksTitle" class="stats-fig-title">Checks on the values</h3>
+        <p class="stats-checks-intro">${escapeHtml(v2Sentence.replace(/\.$/, ""))}; AI audits and human reviewers then check samples against the papers.</p>
+        <ul class="stats-checks" style="--stats-checks:${checkCards.length}">${checkCards.map((card) => `<li class="stats-check" data-check="${card.key}">
+          <span class="stats-check-name">${escapeHtml(card.name)}</span>
+          <span class="stats-check-number">${card.href ? `<a class="stats-link" href="${escapeHtml(card.href)}">${card.number}</a>` : card.number}</span>
+          <span class="stats-check-unit">${escapeHtml(card.unit)}</span>
+          ${card.share !== null && card.share !== undefined ? `<span class="stats-meter" aria-hidden="true"><span style="width:${+(Math.max(0, Math.min(1, card.share)) * 100).toFixed(4)}%"></span></span>` : ""}
+          <span class="stats-check-result">${escapeHtml(card.result)}</span></li>`).join("")}</ul>
+        ${lead ? "" : `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`}
+        <p class="stats-fig-data">${statsDataLine()}</p></section>` });
+    }
+    if (quality_.length) parts.push({ key: "quality", title: "Quality", items: quality_ });
+
+    // 3. What is in the catalog.
+    const content = [];
+    // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
+    // Browse uses; a donut (the one partition that is a true whole) and its legend table.
     const fromPaperAccepted = statsCount(overview?.from_paper?.records, counts.verified || 0);
     const noPaperRule = followsReviewRules();
     const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
@@ -4302,14 +4639,16 @@
     ];
     // The donut's slices are named with the review result's word: "Not checked (Unverified)", as the record says it.
     const notCheckedGroup = statusItems.find((item) => item.group);
-    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part,
+    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, key: item.value,
       label: item.sub && notCheckedGroup ? `${notCheckedGroup.label} (${item.label})` : item.label, count: item.count }));
+    // A row lights its slice: Accepted's parts light Accepted.
+    const statusLight = (item) => (item.detail ? "accepted" : item.group ? "" : item.value);
     const statusTable = `<table class="stats-table stats-status-table">
       <thead><tr><th scope="col">Review result</th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">Share</th></tr></thead>
-      <tbody>${statusItems.map((item) => `<tr class="${item.detail ? "stats-row-detail" : item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" ${item.detail ? `data-part="${item.value}"` : `data-stat-key="${item.value}"`} data-count="${item.count}"${item.splitNote ? ` title="${escapeHtml(item.note)}"` : ""}>
+      <tbody>${statusItems.map((item) => `<tr class="${item.detail ? "stats-row-detail" : item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" ${item.detail ? `data-part="${item.value}"` : `data-stat-key="${item.value}"`} data-count="${item.count}"${statusLight(item) ? ` data-hl="${statusLight(item)}"` : ""}${item.splitNote ? ` title="${escapeHtml(item.note)}"` : ""}>
         <th scope="row"><span class="stats-name">${item.detail ? "" : `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>`}<span>${statsNameHtml(item)}${item.note && !item.splitNote ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
         <td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, total))}</td></tr>`).join("")}</tbody></table>`;
-    figures.push({
+    content.push({
       id: "statsStatusTitle", key: "status", className: "stats-status-section", title: "Review result",
       body: `<div class="stats-donut-layout">${statsDonut(donutParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
       caption: "Review result of every record in this snapshot; each record has exactly one.",
@@ -4318,21 +4657,28 @@
         ${statsUnacceptedFields(counts)}`,
     });
 
-    // Figure 2. Records by main source: each record once, coloured by review result when the snapshot counts it so.
+    // Records by main source: each record once, coloured by review result when the snapshot counts it so; Share draws
+    // each source as 100% (the accepted share by source).
     const mainSources = statsMainSources(overview, total, counts);
     const sources = statsSources(overview);
     const byDatabase = sources.length
       ? `<div class="stats-by-database"><p>In Browse, a record merged from several databases counts under each of them:</p>
         <ul>${sources.map((item) => `<li data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">${statsNameHtml(item)} <span class="stats-num">${formatInteger(item.count)}</span></li>`).join("")}</ul></div>`
       : "<p class=\"stats-note\">Source breakdown unavailable in this snapshot.</p>";
+    const statusParts = [
+      ["accepted", "Accepted", ["verified", "corrected"]], ["pending", "Not confirmed", ["manual_review_required"]],
+      ["not-checked", "Not checked", ["unverified", "mathematically_inferred"]], ["disputed", "Disputed", ["disputed"]],
+    ];
+    const knownStatuses = new Set(statusParts.flatMap(([, , statuses]) => statuses));
+    // A group's review results as bar segments (with Other status for any result not named above).
+    const statusSegments = (label, group) => {
+      const other = Object.entries(group).reduce((sum, [status, count]) => sum + (knownStatuses.has(status) ? 0 : count), 0);
+      return [...statusParts.map(([part, name, statuses]) => ({ part, name, count: statuses.reduce((sum, status) => sum + (group[status] || 0), 0) })),
+        ...(other ? [{ part: "neutral", name: "Other status", count: other }] : [])]
+        .map((item) => ({ ...item, title: `${label}, ${item.name}: ${formatInteger(item.count)}` }));
+    };
     if (mainSources) {
       const { groups, byStatus } = mainSources;
-      const statusParts = [
-        ["accepted", "Accepted", ["verified", "corrected"]], ["pending", "Not confirmed", ["manual_review_required"]],
-        ["not-checked", "Not checked", ["unverified", "mathematically_inferred"]], ["disputed", "Disputed", ["disputed"]],
-      ];
-      const sumOf = (group, statuses) => statuses.reduce((sum, status) => sum + (group[status] || 0), 0);
-      const known = new Set(statusParts.flatMap(([, , statuses]) => statuses));
       const otherKeys = STATS_MAIN_SOURCES.filter(([key]) => STATS_MAIN_OTHER.has(key) && groups[key]);
       const merged = {};
       for (const [key] of STATS_MAIN_SOURCES) {
@@ -4358,131 +4704,90 @@
         const labelHtml = key === "catlog" && fromPaper === records
           ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${escapeHtml(label)}</a>` : escapeHtml(label);
         if (!byStatus) {
-          return { key, count: records, label: labelHtml, note: escapeHtml(note), segments: [{ part: "neutral", count: records }],
+          return { key, count: records, label: labelHtml, note: escapeHtml(note), segments: [{ part: "neutral", count: records, title: `${label}: ${formatInteger(records)} records` }],
             value: formatInteger(records), text: `${label}: ${formatInteger(records)} records.` };
         }
-        const other = Object.entries(group).reduce((sum, [status, count]) => sum + (known.has(status) ? 0 : count), 0);
-        const parts = [...statusParts.map(([part, name, statuses]) => ({ part, name, count: sumOf(group, statuses) })),
-          ...(other ? [{ part: "neutral", name: "Other status", count: other }] : [])];
-        const acceptedCount = parts[0].count;
+        const segments = statusSegments(label, group).map((item) => ({ ...item, title: `${item.title} (${statsShare(item.count, records)})` }));
         return {
-          key, count: records, label: labelHtml, note: escapeHtml(note),
-          segments: parts.map((item) => ({ part: item.part, count: item.count, title: `${label}, ${item.name}: ${formatInteger(item.count)}` })),
-          value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(acceptedCount, records))}</span>`,
-          text: `${label}: ${formatInteger(records)} records; ${parts.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.`,
+          key, count: records, label: labelHtml, note: escapeHtml(note), segments,
+          value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(segments[0].count, records))}</span>`,
+          text: `${label}: ${formatInteger(records)} records; ${segments.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.`,
         };
       });
-      figures.push({
+      content.push({
         id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Records by main source",
         body: statsBarChart({
-          key: "main-source", rows, scale: max, axis: statsAxis(max, step),
-          legend: byStatus ? statusParts.map(([part, label]) => ({ part, label })) : [],
+          key: "main-source", rows, scale: max, step, axis: statsAxis(max, step, { mode: byStatus ? "records" : "" }),
+          legend: byStatus ? statusParts.map(([part, label]) => ({ part, label })) : [], switchable: byStatus,
         }),
         caption: byStatus
           ? "Records by main source, coloured by review result; each label gives the records, then the share accepted."
           : "Records by main source.",
-        data: statsDataLine("Main source: CatLog's own reading of the paper, or the database a record came from; a record merged from several databases counts once, under Several databases."),
+        data: statsDataLine(`Main source: CatLog's own reading of the paper, or the database a record came from; a record merged from several databases counts once, under Several databases.${byStatus ? " Share draws each source as 100%." : ""}`),
         after: byDatabase,
       });
     } else {
-      figures.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
+      content.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
         caption: "Records per source.", data: statsDataLine() });
     }
 
-    // Figures 3-5: CatLog against the databases, the earlier corrections, and the earlier records CatLog replaced.
-    for (const build of [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]) {
-      const figure = build(overview?.quality, { corrected: counts.corrected });
-      if (figure) figures.push(figure);
+    // CatLog v2 and CatLog v1 entries by review result (CatLog v2: the main source "catlog"; CatLog v1: every other record).
+    const v2Group = mainSources?.byStatus ? mainSources.groups.catlog : null;
+    let versions = null;
+    if (v2Group && fromPaper && Object.values(v2Group).reduce((sum, count) => sum + count, 0) === fromPaper) {
+      const v1Group = {};
+      for (const [status, count] of Object.entries(counts)) v1Group[status] = count - (v2Group[status] || 0);
+      if (Object.values(v1Group).every((count) => count >= 0)) {
+        const rows = [
+          ["catlog", `${SOURCE_CATLOG_LABEL} entries`, v2Group, { source: "paper" }],
+          ["v1", `${SOURCE_DATABASES_LABEL} entries`, v1Group, { source: "databases" }],
+        ].map(([key, label, group, params]) => {
+          const raw = statusSegments(label, group);
+          const records = raw.reduce((sum, item) => sum + item.count, 0);
+          const segments = raw.map((item) => ({ ...item, title: `${item.title} (${statsShare(item.count, records)})` }));
+          return { key, count: records, label: records ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(params))}">${escapeHtml(label)}</a>` : escapeHtml(label),
+            segments, value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(segments[0].count, records))}</span>`,
+            text: `${label}: ${formatInteger(records)} records; ${segments.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.` };
+        });
+        const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
+        versions = {
+          id: "statsVersionsTitle", key: "versions", title: "CatLog v2 and CatLog v1 entries",
+          body: statsBarChart({ key: "versions", rows, scale: max, step, axis: statsAxis(max, step),
+            legend: statusParts.map(([part, label]) => ({ part, label })) }),
+          caption: "CatLog v2 and CatLog v1 entries by review result; each label gives the entries, then the share accepted.",
+          data: statsDataLine("CatLog v2: read from the paper by CatLog, the current version; CatLog v1: the earlier version, from enzyme database entries."),
+        };
+      }
     }
 
-    // Checks on the records read from the paper: one row per kind of check, with a small grey bar like the other tables
-    // (the comparison colours belong to the database comparison).
-    const audit = auditFacts(overview);
-    const marked = statsCount(overview?.human_marked, total);
-    const quality = overview?.quality || {};
-    // The human review of CatLog v1 entries as the reviewers' own files say it, as the lead says it; a snapshot without
-    // those counts gives every value reviewers compared on CatLog v1 entries' papers, approved or not.
-    const review = reviewFacts(quality.review?.v1);
-    const compared = review ? null : statsCount(quality.compared_values_v1);
-    const comparedWrong = compared ? statsCount(quality.wrong_v1, compared) : null;
-    const labelErrors = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
-    const comparedPapers = compared ? statsCount(quality.compared_papers_v1) : null;
-    const match = v2MatchFacts(quality);
-    const checkRows = [
-      fromPaper ? { key: "second_check", name: "Second AI check", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)} records</a>${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
-        result: "Every value compared with the paper", share: 1 } : null,
-      audit ? { key: "audit", name: "AI audits", count: `${formatInteger(audit.values)} values`,
-        result: `${formatInteger(audit.values - audit.wrong)} kept; ${auditOutcomeText(audit)}${audit.date ? ` (as of ${audit.date})` : ""}`, share: (audit.values - audit.wrong) / audit.values } : null,
-      review ? { key: "review", name: "Human review of CatLog v1 entries",
-        count: `${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"}${review.papers ? ` from ${formatInteger(review.papers)} ${review.papers === 1 ? "paper" : "papers"}` : ""}`,
-        result: [`Values correct ${review.correctShare}`, review.missing !== null ? `values missing ${qualityShare(review.missing, review.entries)}` : "",
-          review.other !== null ? `other disagreements ${qualityShare(review.other, review.entries)}` : ""].filter(Boolean).join("; "),
-        share: (review.entries - review.disputed) / review.entries }
-        : compared && comparedWrong !== null && labelErrors !== null ? { key: "review", name: "Human review of CatLog v1 entries",
-          count: `${formatInteger(compared)} values${comparedPapers ? ` on ${formatInteger(comparedPapers)} ${comparedPapers === 1 ? "paper" : "papers"}` : ""}, approved or not`,
-          result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label`, share: (compared - comparedWrong) / compared } : null,
-      match ? { key: "agreement", name: "Reviewers' approved values in CatLog v2",
-        count: `${formatInteger(match.approved)} values${match.papers !== null ? ` on ${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"}` : ""}`,
-        result: `${formatInteger(match.same)} the same in CatLog v2 (${qualityShare(match.same, match.approved)})${match.wrong !== null ? `; wrong CatLog values found: ${formatInteger(match.wrong)}` : ""}`,
-        share: match.same / match.approved } : null,
-      humanChecked !== null ? { key: "human_checked", name: "Human-checked records", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} accepted records</a>`,
-        result: `${HUMAN_CHECKED_DESCRIPTION}${marked !== null && marked >= humanChecked ? ` Reviewers looked at ${formatInteger(marked)} records.` : ""}`,
-        share: marked ? humanChecked / marked : null } : null,
-    ].filter(Boolean);
-    if (checkRows.length) {
-      figures.push({
-        id: "statsChecksTitle", key: "checks", className: "stats-checks-section", title: "Checks on the values", kind: "Table",
-        body: `<table class="stats-table stats-checks-table">
-          <thead><tr><th scope="col">Check</th><th scope="col">Checked</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Share</span></th><th scope="col">Result</th></tr></thead>
-          <tbody>${checkRows.map((row) => `<tr data-check="${row.key}"><th scope="row">${escapeHtml(row.name)}</th><td>${row.count}</td>
-            <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined ? `<span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td>
-            <td>${escapeHtml(row.result)}</td></tr>`).join("")}</tbody></table>`,
-        // One sentence, as every caption: the method sentence, then the sampled checks after a semicolon.
-        caption: `${escapeHtml(v2Sentence.replace(/\.$/, ""))}; AI audits and human reviewers then check samples against the papers.`,
-        data: statsDataLine(),
-        after: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`,
+    // CatLog v2 papers by how many values CatLog v2 read from each (overview.from_paper_values).
+    const perPaper = overview?.from_paper_values;
+    let valuesPerPaper = null;
+    if (perPaper && Array.isArray(perPaper.bins) && Array.isArray(perPaper.papers) && perPaper.bins.length === perPaper.papers.length
+      && perPaper.bins.length && perPaper.bins.every((low, index) => Number.isInteger(low) && low >= 1 && (!index || low > perPaper.bins[index - 1]))
+      && perPaper.papers.every((count) => statsCount(count) !== null) && statsCount(perPaper.values) !== null && papersRead
+      && perPaper.papers.reduce((sum, count) => sum + count, 0) + (statsCount(perPaper.no_values) || 0) === papersRead) {
+      const rows = perPaper.bins.map((low, index) => {
+        const next = perPaper.bins[index + 1];
+        const label = next === undefined ? `${formatInteger(low)} or more` : next - 1 === low ? formatInteger(low) : `${formatInteger(low)}–${formatInteger(next - 1)}`;
+        const count = perPaper.papers[index];
+        return { key: `values_${low}`, count, label: escapeHtml(label),
+          segments: [{ part: "catlog", count, title: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"} (${statsShare(count, papersRead)})` }],
+          value: `${formatInteger(count)} <span class="stats-muted">${escapeHtml(statsShare(count, papersRead))}</span>`,
+          text: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"}.` };
       });
+      // the first rows hold no paper on a small snapshot; the last row is shown only with papers in it
+      while (rows.length > 1 && !rows[rows.length - 1].count) rows.pop();
+      const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
+      valuesPerPaper = {
+        id: "statsPerPaperTitle", key: "values-per-paper", title: "Values per paper in CatLog v2",
+        body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step) }),
+        caption: `CatLog v2's ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} by how many kcat, Km and kcat/Km values CatLog read from each; each label gives the papers, then their share.`,
+        data: statsDataLine(`${formatInteger(perPaper.values)} values in all; a kcat/Km calculated from kcat and Km is not counted.`),
+      };
     }
 
-    // Enzyme classes: records, with the accepted ones drawn over them.
-    const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
-      && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
-    if (classes.length) {
-      const none = statsCount(overview.ec_class_none, total);
-      const multiple = statsCount(overview.ec_class_multiple, total);
-      const { max, step } = statsNiceScale(Math.max(...classes.map((item) => item.count)));
-      const rows = classes.map((item) => ({
-        key: `ec_${item.class}`, count: item.count,
-        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
-        segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
-          { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted` }],
-        value: `${formatInteger(item.count)} <span class="stats-muted">${formatInteger(item.accepted)}</span>`,
-        text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted.`,
-      }));
-      const notes = [
-        multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
-        none ? `${formatInteger(none)} records have no EC class.` : "",
-      ].filter(Boolean).join(" ");
-      figures.push({
-        id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes",
-        body: statsBarChart({ key: "ec-classes", rows, scale: max, overlay: true, axis: statsAxis(max, step),
-          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }] }),
-        caption: "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
-        data: statsDataLine(notes),
-      });
-    }
-
-    // Value ranges (full width).
-    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
-    const rangesFigure = ranges.length ? {
-      id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
-      body: `<div class="stats-ranges">${ranges.join("")}</div>`,
-      caption: "Values in catalog units on a log scale, one bar per power of ten (the end bars include all values beyond them), with the median as a dot and the middle 80% of values as a line.",
-      data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out."),
-    } : null;
-
-    // Tables: what the records contain, the most common organisms and EC numbers, wild type and variants, cautions.
-    const tables = [];
+    // What the records contain, and wild type and variants.
     const coverage = summary.coverage || {};
     const download = manifest.enriched_download?.coverage || {};
     const conditions = overview?.conditions || {};
@@ -4499,27 +4804,13 @@
     const both = statsCount(conditions.both, total);
     const sequences = [["Wild-type sequence", download.wild_type_sequence], ["Variant sequence", download.variant_sequence]]
       .filter(([, count]) => statsCount(count, total) !== null);
-    const topItems = (list, toItem) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, total) !== null).map(toItem);
-    const organisms = topItems(overview?.top_organisms, (item, index) => ({ value: `organism_${index}`, label: String(item.name || ""),
-      labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { organism: String(item.name || "") } }));
-    const ecNumbers = topItems(overview?.top_ec, (item) => ({ value: `ec_${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
-      labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ec: String(item.ec || "") } }));
-    if (organisms.length) {
-      tables.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
-        body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
-        caption: `The ${formatInteger(organisms.length)} organisms with the most records; strains are counted with their species.`, data: statsDataLine("Bars against the most common organism.") });
-    }
-    if (ecNumbers.length) {
-      tables.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
-        body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
-        caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, data: statsDataLine("Bars against the most common EC number.") });
-    }
+    let contentsTable = null;
     if (contents.length) {
       const notes = [
         calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
         both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
       ].filter(Boolean).join(" ");
-      tables.push({
+      contentsTable = {
         id: "statsContentsTitle", key: "contents", title: "What the records contain", kind: "Table",
         body: statsTable(contents, total, { head: "Value or field" }),
         caption: "Records with each value or field; a record usually has several.",
@@ -4527,7 +4818,7 @@
         after: sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
           ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
         </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : "",
-      });
+      };
     }
     const form = overview?.enzyme_form || {};
     const forms = [
@@ -4535,59 +4826,140 @@
       { value: "variant", label: "Variant", count: statsCount(form.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
       { value: "not_stated", label: "Not stated", count: statsCount(form.not_stated, total) },
     ];
+    const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
+    const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
+      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it.", data: statsDataLine("Shares of all records.") } : null;
+    // Two to a row: the review result beside the main sources; the two CatLog v2 figures; the fields beside the forms.
+    content.push(...[versions, valuesPerPaper].filter(Boolean));
+    if (contentsTable && formsTable && content.length % 2 === 1) content.push({ stack: [contentsTable, formsTable] });
+    else content.push(...[contentsTable, formsTable].filter(Boolean));
+    parts.push({ key: "catalog", title: "What is in the catalog", items: content });
+
+    // 4. Biology: enzyme classes (records, accepted over them, CatLog v2 entries marked), the most common organisms and EC
+    // numbers, and the same among CatLog v2 entries.
+    const biology = [];
+    const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
+      && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
+    if (classes.length) {
+      const none = statsCount(overview.ec_class_none, total);
+      const multiple = statsCount(overview.ec_class_multiple, total);
+      const withV2 = classes.every((item) => statsCount(item.from_paper, item.count) !== null);
+      const { max, step } = statsNiceScale(Math.max(...classes.map((item) => item.count)));
+      const rows = classes.map((item) => ({
+        key: `ec_${item.class}`, count: item.count,
+        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
+        segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
+          { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
+          ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} CatLog v2 entries (${statsShare(item.from_paper, item.count)})` }] : [])],
+        value: `${formatInteger(item.count)} <span class="stats-muted">${formatInteger(item.accepted)}</span>${withV2 ? ` <span class="stats-v2-count">${formatInteger(item.from_paper)}</span>` : ""}`,
+        text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted${withV2 ? `, ${formatInteger(item.from_paper)} CatLog v2 entries` : ""}.`,
+      }));
+      const notes = [
+        multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
+        none ? `${formatInteger(none)} records have no EC class.` : "",
+      ].filter(Boolean).join(" ");
+      biology.push({
+        id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
+        body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step), valueWidth: withV2 ? "152px" : "",
+          legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: "CatLog v2 entries" }] : [])] }),
+        caption: withV2 ? "Records per enzyme class, with the accepted ones and the CatLog v2 entries; each label gives records, accepted, then CatLog v2 entries."
+          : "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
+        data: statsDataLine(notes),
+      });
+    }
+    const topItems = (list, toItem, max = total) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
+    const organismItem = (extra) => (item, index) => ({ value: `organism_${extra ? "v2_" : ""}${index}`, label: String(item.name || ""),
+      labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { ...(extra || {}), organism: String(item.name || "") } });
+    const ecItem = (extra) => (item) => ({ value: `ec_${extra ? "v2_" : ""}${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
+      labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ...(extra || {}), ec: String(item.ec || "") } });
+    const organisms = topItems(overview?.top_organisms, organismItem(null));
+    const ecNumbers = topItems(overview?.top_ec, ecItem(null));
+    const v2Organisms = fromPaper ? topItems(overview?.top_organisms_from_paper, organismItem({ source: "paper" }), fromPaper) : [];
+    const v2EcNumbers = fromPaper ? topItems(overview?.top_ec_from_paper, ecItem({ source: "paper" }), fromPaper) : [];
+    if (organisms.length) {
+      biology.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
+        body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
+        caption: `The ${formatInteger(organisms.length)} organisms with the most records; strains are counted with their species.`, data: statsDataLine("Bars against the most common organism.") });
+    }
+    if (ecNumbers.length) {
+      biology.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
+        body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
+        caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, data: statsDataLine("Bars against the most common EC number.") });
+    }
+    if (v2Organisms.length) {
+      biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Organisms with the most CatLog v2 entries", kind: "Table",
+        body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", countHead: "Entries", part: "catlog" }),
+        caption: `The ${formatInteger(v2Organisms.length)} organisms with the most CatLog v2 entries; strains are counted with their species.`, data: statsDataLine("Shares of CatLog v2 entries.") });
+    }
+    if (v2EcNumbers.length) {
+      biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "EC numbers with the most CatLog v2 entries", kind: "Table",
+        body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", countHead: "Entries", part: "catlog" }),
+        caption: `The ${formatInteger(v2EcNumbers.length)} EC numbers with the most CatLog v2 entries, each with the enzyme name its records use most.`, data: statsDataLine("Shares of CatLog v2 entries.") });
+    }
+    if (biology.length) parts.push({ key: "biology", title: "Biology", items: biology });
+
+    // 5. Values: the overall ranges, then the same per enzyme class as small multiples.
+    const values = [];
+    const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key])).filter(Boolean);
+    if (ranges.length) {
+      values.push({
+        id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
+        body: `<div class="stats-ranges">${ranges.join("")}</div>`,
+        caption: "Values in catalog units on a log scale, one bar per power of ten (the end bars include all values beyond them), with the median as a dot and the middle 80% of values as a line.",
+        data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out."),
+      });
+    }
+    const ridges = statsRidgeFigure(overview);
+    if (ridges) values.push(ridges);
+    if (values.length) parts.push({ key: "values", title: "Values", items: values });
+
+    // 6. Cautions, with the same names as the Cautions filter.
     const caution = overview?.cautions || {};
-    // The same names as the Cautions filter.
     const cautions = cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
       count: statsCount(caution[item.value], total), params: { caution: item.value }, part: item.value === "none" ? "neutral" : "caution" }));
-    const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
-    const cautionsOk = cautions.every((item) => item.count !== null);
-    if (formOk) {
-      tables.push({ id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table", stack: cautionsOk,
-        body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it.", data: statsDataLine("Shares of all records.") });
-    }
-    if (cautionsOk) {
-      tables.push({ id: "statsCautionsTitle", key: "cautions", title: "Cautions", kind: "Table", stacked: formOk,
-        body: statsTable(cautions, total, { head: "Caution" }), caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") });
+    if (cautions.every((item) => item.count !== null)) {
+      parts.push({ key: "cautions", title: "Cautions", items: [{ id: "statsCautionsTitle", key: "cautions", title: "Cautions on values", kind: "Table", wide: true,
+        className: "stats-narrow", body: statsTable(cautions, total, { head: "Caution" }),
+        caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") }] });
     }
 
-    // Number in reading order, Figures and Tables apart; place the half-width ones two to a row.
+    // 7. Against the databases: CatLog against the databases, the earlier corrections, and the CatLog v1 entries CatLog v2
+    // replaced, each only when the snapshot has its counts.
+    const databases = [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]
+      .map((build) => build(overview?.quality, { corrected: counts.corrected })).filter(Boolean);
+    if (databases.length) parts.push({ key: "databases", title: "Against the databases", items: databases });
+
+    // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart); half-width items
+    // stand two to a row and an odd one out takes the row.
     const numbers = { Figure: 0, Table: 0 };
-    const halves = figures.filter((item) => !item.wide);
-    if (halves.length % 2) halves[halves.length - 1].wide = true;
-    const html = (item) => statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] });
-    // The human review stands first, above the headline counts (the user's headline); a page without its slot keeps it
-    // at the top of the figures.
-    const lead = reviewLeadHtml(overview);
-    const leadSlot = $("statsLead");
-    if (leadSlot) {
-      leadSlot.innerHTML = lead;
-      leadSlot.hidden = !lead;
-    }
-    const parts = [leadSlot ? "" : lead, ...figures.map(html)];
-    if (rangesFigure) parts.push(html(rangesFigure));
-    const tableHtml = [];
-    for (let index = 0; index < tables.length; index += 1) {
-      const item = tables[index];
-      // Wild type and variants stand above Cautions in one column, so a short table leaves no gap.
-      if (item.stack && tables[index + 1]?.stacked) {
-        tableHtml.push(`<div class="stats-stack">${html(item)}${html(tables[index + 1])}</div>`);
-        index += 1;
-      } else {
-        tableHtml.push(html(item));
+    const html = (item) => (item.html !== undefined ? item.html : statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] }));
+    const sections = parts.filter((part) => part.items.length).map((part, index) => {
+      const halves = part.items.filter((item) => !item.wide && item.html === undefined);
+      if (halves.length % 2) {
+        const last = halves[halves.length - 1];
+        if (last.stack) last.stack[0].wide = true;
+        else last.wide = true;
       }
+      const blocks = part.items.map((item) => (item.stack
+        ? `<div class="stats-stack${item.wide ? " stats-wide" : ""}">${item.stack.map(html).join("")}</div>` : html(item)));
+      return statsPartHtml(index + 2, part.key, part.title, blocks);
+    });
+    // The human review stands in Quality now; an older page with a slot above the counts leaves it empty.
+    if ($("statsLead")) {
+      $("statsLead").innerHTML = "";
+      $("statsLead").hidden = true;
     }
-    if (tableHtml.length % 2 && tableHtml.length > 1) tableHtml[tableHtml.length - 1] = tableHtml[tableHtml.length - 1].replace('class="stats-section stats-figure-section', 'class="stats-section stats-figure-section stats-wide');
-    parts.push(...tableHtml);
     if (overview) {
-      parts.push(`<details class="stats-explanation stats-method stats-wide"><summary>How these numbers are counted</summary><dl>
+      sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
         <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
         <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
         <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(HUMAN_CHECKED_SENTENCE)}, as the tag shows.</dd></div>
         <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
+        <div><dt>CatLog v2 entries</dt><dd>Records read from the paper by CatLog, the current version; CatLog v1 entries are all the others.</dd></div>
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`);
     }
-    $("statsCharts").innerHTML = parts.filter(Boolean).join("");
+    $("statsCharts").innerHTML = sections.join("");
   }
 
   // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time
@@ -10599,6 +10971,10 @@
       statsDonut,
       statsNiceScale,
       statsMainSources,
+      statsClassGrid,
+      statsRidgeFigure,
+      statsSmoothPath,
+      statsSwitchMode,
       reviewLeadHtml,
       renderTeam,
       teamNumbers,

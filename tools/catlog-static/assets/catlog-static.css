@@ -70,7 +70,15 @@
   --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
   --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
   --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
-  /* Shadows only on the phone sheet, dialogs and menus. */
+  /* Stats' value figures: one Nature BPG colour per parameter (direct labels name them; never a status). */
+  --fig-kcat:#E64B35;         /* BPG red */
+  --fig-km:#4DBBD5;           /* BPG cyan */
+  --fig-kcat-km:#00A087;      /* BPG green */
+  /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
+  --accent-glow:rgba(36,95,88,0.26);
+  --accent-wash:rgba(36,95,88,0.07);
+  /* Shadows only on the phone sheet, dialogs, menus and Stats' tooltip line. */
+  --tip-shadow:0 6px 20px rgba(20,34,31,0.22);
   --overlay:rgba(20,34,31,0.24);
   --scroll-edge:rgba(23,33,32,0.5);
   --shadow:0 10px 26px rgba(20,34,31,0.09);
@@ -177,7 +185,9 @@ button:disabled { cursor:not-allowed; opacity:0.5 }
 body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:none }
 
 /* Counts band (64px): numbers 20px/600 and labels 13px on one baseline, the snapshot date at the line's end. */
-.snapshot-band { min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:0 var(--gutter) }
+.snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:radial-gradient(60% 220% at 0% 0%, var(--accent-wash), transparent 70%), var(--bg); padding:0 var(--gutter) }
+/* A thin accent rule along the band's foot, fading out to the right (the user, 2026-10-13: "more focus driving"). */
+.snapshot-band::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:linear-gradient(90deg, var(--accent), var(--accent-line) 35%, transparent 80%); pointer-events:none }
 .snapshot-overview { display:flex; flex-wrap:wrap; min-height:var(--band-h); align-items:baseline; align-content:center; gap:var(--sp-2) var(--sp-5); padding:var(--sp-2) 0 }
 .summary-grid, .snapshot-meta, .snapshot-controls { display:flex; min-width:0; align-items:baseline; gap:var(--sp-5) }
 .snapshot-meta { gap:var(--sp-4); border-left:1px solid var(--line); padding-left:var(--sp-5) }
@@ -185,6 +195,14 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .summary-card span, .snapshot-title, .snapshot-line > span, .snapshot-paper > span { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .snapshot-line > span { color:var(--text-2) }
 .summary-card strong, .snapshot-line strong, .snapshot-checked > strong, .snapshot-paper > strong { color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
+/* The key numbers (records, accepted, read from the paper) in accent ink with a soft glow; human-checked in its green. */
+.summary-card strong, .snapshot-paper > strong { color:var(--accent); text-shadow:0 0 12px var(--accent-glow) }
+.snapshot-checked > strong { color:var(--checked); text-shadow:0 0 12px color-mix(in srgb, var(--checked) 24%, transparent) }
+.snapshot-paper[href], .snapshot-checked[href] { margin:-3px -6px; border-radius:6px; padding:3px 6px }
+.snapshot-paper[href]:hover, .snapshot-checked[href]:hover { background:var(--accent-tint) }
+@media (prefers-reduced-motion: no-preference) {
+  .snapshot-paper[href], .snapshot-checked[href] { transition:background-color 200ms ease }
+}
 /* Human-checked N: a link to those records, its label in the human-checked green. */
 .snapshot-checked > span { color:var(--checked); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
 .snapshot-checked:hover { text-decoration:none }
@@ -755,20 +773,44 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-heading h1 { margin:0; font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
 .stats-heading .snapshot-date { color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .stats-heading p { margin:var(--sp-1) 0 0; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-totals { margin:var(--sp-5) 0 var(--sp-6); border-block:1px solid var(--line) }
-.stats-totals dl { display:grid; grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); margin:0; padding:var(--sp-4) 0 }
-.stats-totals dl + dl { border-top:1px solid var(--line-soft); padding:var(--sp-3) 0 }
-.stats-totals dl > div { min-width:0; border-left:1px solid var(--line-soft); padding-left:var(--sp-5) }
-.stats-totals dl > div:first-child { border:0; padding-left:0 }
+/* 1. At a glance: the headline band (the user, 2026-10-13: "can it glow a bit or more focus driving"). A thin accent rule
+   along its top, a soft accent wash, the key numbers (line 1, 32px) in accent ink with a soft glow; a linked number
+   opens Browse and its whole item tints calmly under the pointer. */
+.stats-totals { margin:var(--sp-5) 0 var(--sp-7) }
+.stats-band { position:relative; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:radial-gradient(90% 140% at 0% 0%, var(--accent-wash), transparent 60%), var(--bg); padding:var(--sp-4) var(--sp-4) var(--sp-2) }
+.stats-band::before { content:""; position:absolute; inset:0 0 auto; height:2px; background:linear-gradient(90deg, var(--accent), var(--accent-line) 50%, transparent 95%) }
+.stats-band > .stats-part-title { margin:0 0 var(--sp-1) var(--sp-2); border:0; padding:0 }
+.stats-totals dl { display:grid; grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); margin:0; padding:var(--sp-2) 0 }
+.stats-totals dl + dl { border-top:1px solid var(--line-soft) }
+.stats-total { position:relative; min-width:0; border-radius:6px; padding:var(--sp-2) var(--sp-3) }
+.stats-total + .stats-total::before { content:""; position:absolute; left:0; top:10px; bottom:10px; border-left:1px solid var(--line-soft) }
 .stats-totals dt { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-totals dd { margin:4px 0 0; font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
 .stats-totals dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-13); font-weight:400; line-height:var(--lh-13) }
 .stats-totals .stats-totals-scope dd { font-size:var(--fs-20); line-height:var(--lh-20) }
-.stats-charts { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:48px 24px; align-items:start }
-.stats-charts > * { grid-column:span 6; min-width:0 }
-.stats-charts > .stats-wide { grid-column:1 / -1 }
+.stats-total-value { color:var(--text) }
+.stats-totals-main .stats-total-value { color:var(--accent); text-shadow:0 0 14px var(--accent-glow) }
+/* A linked number: the whole item is its target. */
+a.stats-total-value { text-decoration:none }
+a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:6px }
+a.stats-total-value:focus-visible { outline:0 }
+.stats-total:has(> dd > a.stats-total-value:focus-visible) { outline:2px solid var(--accent); outline-offset:-2px }
+.stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint) }
+.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { text-shadow:0 0 18px var(--accent-glow) }
+@media (prefers-reduced-motion: no-preference) {
+  .stats-total { transition:background-color 200ms ease }
+}
+/* The numbered parts after the band: one plain heading each, figures on a 12-column grid (two to a row from 1280px). */
+.stats-charts { display:block }
+.stats-part + .stats-part, .stats-part + .stats-method { margin-top:var(--sp-7) }
+.stats-part-title { display:flex; align-items:center; gap:var(--sp-3); margin:0 0 var(--sp-5); border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
+.stats-part-number { display:inline-grid; flex:0 0 26px; width:26px; height:26px; place-items:center; border-radius:50%; background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent-line), 0 0 12px var(--accent-glow); color:var(--accent); font-size:var(--fs-13); font-weight:600; line-height:1 }
+.stats-part-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:48px 32px; align-items:start }
+.stats-part-grid > * { grid-column:span 6; min-width:0 }
+.stats-part-grid > .stats-wide { grid-column:1 / -1 }
 .stats-section { min-width:0 }
-.stats-section h2 { margin:0 0 12px; font-size:var(--fs-18); font-weight:600; line-height:var(--lh-18) }
+.stats-fig-title { margin:0 0 12px; font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.stats-narrow > .stats-fig { max-width:760px }
 .stats-stack { display:grid; gap:48px; align-content:start; min-width:0 }
 .stats-link, .stats-guide-link { color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-line); text-underline-offset:3px }
 .stats-link:hover, .stats-guide-link:hover { text-decoration-color:currentColor }
@@ -798,10 +840,33 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
-.stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, transparent); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
+/* CatLog v2 entries are accepted: navy, and on the enzyme classes a solid stripe inside the bar. */
+.stats-part-catlog, .stats-part-catlog-mark { --part:var(--st-accepted) }
+/* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
+.stats-seg, .stats-swatch { background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
+.stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
+.stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
+.stats-swatch { border-radius:2px }
+.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted); box-shadow:0 0 6px color-mix(in srgb, var(--st-accepted) 45%, transparent) }
+.stats-legend .stats-swatch.stats-part-catlog-mark { height:4px; margin-top:6px; background:var(--st-accepted) }
+.stats-v2-count { color:var(--st-accepted); font-weight:600 }
+/* Pointing at a mark (or focusing the link in its row) lights it with a soft glow in its own colour and dims the rest of
+   its figure (data-hl); its exact count shows in the tooltip line. */
+.stats-fig.has-active [data-hl]:not(.is-active) { opacity:0.42 }
+.stats-chart-row.is-active .stats-seg:not(.stats-part-records), .stats-seg[data-tip]:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
+.stats-status-table tr.is-active > * { background:var(--surface-2) }
+@media (prefers-reduced-motion: no-preference) {
+  .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), filter 150ms ease }
+  .stats-fig [data-hl] { transition:opacity 150ms ease, filter 150ms ease }
+}
+.stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:6px; background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
 .stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
-.stats-donut path { fill:var(--part); fill-opacity:0.6; stroke:var(--part-line, var(--part)); stroke-width:1 }
+/* Each slice fills from its colour's tint at the hole to the colour at the rim (a radial gradient per colour). */
+.stats-donut path { stroke:var(--part-line, var(--part)); stroke-width:1; stroke-opacity:0.85 }
+.stats-donut-stop-in { stop-color:var(--part); stop-opacity:0.3 }
+.stats-donut-stop-out { stop-color:var(--part); stop-opacity:0.8 }
+.stats-donut path.is-active { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 60%, transparent)) }
 .stats-swatch { display:inline-block; flex:0 0 10px; width:10px; height:10px; vertical-align:-1px }
 
 /* Legends: inline above the plot, in segment order. */
@@ -809,6 +874,14 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-legend li { display:inline-flex; align-items:flex-start; gap:6px }
 .stats-legend li > .stats-swatch { margin-top:3px }
 .stats-legend-count { color:var(--muted) }
+/* A count chart's legend with its Records | Share switch at the right. */
+.stats-chart-tools { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px 16px; margin:0 0 12px }
+.stats-chart-tools .stats-legend { margin:0 }
+.stats-switch { display:inline-flex; flex:0 0 auto; gap:2px; border:1px solid var(--line); border-radius:6px; background:var(--surface-2); padding:2px }
+.stats-switch-button { min-height:28px; border:0; border-radius:4px; background:transparent; color:var(--text-2); cursor:pointer; padding:0 10px; font-size:var(--fs-12); font-weight:500; line-height:var(--lh-12) }
+.stats-switch-button:hover { color:var(--text) }
+.stats-switch-button[aria-pressed="true"] { background:var(--bg); box-shadow:0 0 0 1px var(--accent-line), 0 0 8px var(--accent-glow); color:var(--accent) }
+.stats-fig:not([data-mode="share"]) .stats-ref-share, .stats-fig[data-mode="share"] .stats-ref-records { display:none }
 
 /* Bar charts: label, a 16px bar (rows 8px apart), value label; an axis under the bars. */
 .stats-chart { --label-w:minmax(96px,30%) }
@@ -817,7 +890,7 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-chart-percent { --label-w:88px }
 /* Labels set on 16px lines, the bar's height, so bars of one-line rows sit 8px apart. */
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
-.stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) 96px; align-items:center; column-gap:12px }
+.stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -883,15 +956,23 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-row-detail td { color:var(--text-2); font-size:var(--fs-12) }
 .stats-table .stats-row-detail th, .stats-table .stats-row-detail td { border-bottom-color:transparent }
 .stats-table tr:has(+ .stats-row-detail) > * { border-bottom-color:transparent }
-.stats-checks-table td { color:var(--text-2) }
-.stats-checks-table th[scope="row"] { font-weight:600 }
+/* Checks on the values: one card per check, its number, a thin meter of what held and the result in words. */
+.stats-checks-intro { margin:0 0 16px; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-checks { display:grid; grid-template-columns:repeat(var(--stats-checks,3),minmax(0,1fr)); gap:16px; margin:0 0 12px; padding:0; list-style:none }
+.stats-check { display:grid; align-content:start; gap:4px; min-width:0; border:1px solid var(--line); border-radius:8px; background:var(--bg); padding:16px }
+.stats-check-name { color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+.stats-check-number { color:var(--text); font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
+.stats-check-number .stats-link { text-decoration-thickness:1px }
+.stats-check-unit { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-meter { display:block; height:4px; margin:8px 0 6px; border-radius:2px; background:var(--line-soft) }
+.stats-meter > span { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg, var(--accent-line), var(--accent)); box-shadow:0 0 6px var(--accent-glow) }
+.stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 
-/* The lead: agreement with human reviewers, the success measure; first on the page, above the headline counts. */
-.stats-lead-slot { margin-top:24px }
-.stats-lead { border:1px solid var(--line); border-radius:4px; background:var(--surface-2); padding:24px }
+/* The lead of Quality: the human review of CatLog v1 entries, its share in accent ink with a soft glow. */
+.stats-lead { border:1px solid var(--line); border-radius:8px; background:radial-gradient(70% 120% at 0% 0%, var(--accent-wash), transparent 70%), var(--surface-2); padding:24px }
 .stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
 .stats-lead-figure { display:grid; gap:4px }
-.stats-lead-figure strong { color:var(--text); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
+.stats-lead-figure strong { color:var(--accent); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32); text-shadow:0 0 16px var(--accent-glow) }
 .stats-lead-figure span { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-lead-text { display:grid; gap:12px; min-width:0 }
 .stats-lead-text > p { margin:0 }
@@ -915,16 +996,53 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-range-numbers dd { margin:2px 0 0; font-size:var(--fs-14); font-weight:500 }
 .stats-histogram { position:relative; padding-bottom:24px }
 .stats-histogram-bars { display:flex; align-items:flex-end; gap:2px; height:72px; border-bottom:1px solid var(--line) }
-.stats-histogram-bars > span { --part:var(--bar-neutral); flex:1 1 0; min-width:0; background:var(--part); background:color-mix(in srgb, var(--part) 60%, transparent); box-shadow:inset 0 0 0 1px var(--part) }
+/* One Nature BPG colour per parameter (value ranges and the per-class small multiples alike). */
+.stats-range, .stats-ridges { --part:var(--bar-neutral) }
+:is(.stats-range, .stats-ridges)[data-metric="kcat"] { --part:var(--fig-kcat) }
+:is(.stats-range, .stats-ridges)[data-metric="km"] { --part:var(--fig-km) }
+:is(.stats-range, .stats-ridges)[data-metric="kcat_over_km"] { --part:var(--fig-kcat-km) }
+.stats-histogram-bars > span { flex:1 1 0; min-width:0; border-radius:2px 2px 0 0; background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 82%, var(--bg)), color-mix(in srgb, var(--part) 34%, var(--bg))); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--part) 85%, var(--bg)) }
+.stats-histogram-bars > span:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
 .stats-histogram-bars > span.has-values { min-height:1px }
 .stats-histogram-range { position:relative; height:12px }
-.stats-histogram-range > span { position:absolute; top:5px; height:2px; background:var(--text-2) }
-.stats-histogram-range > i { position:absolute; top:2px; width:8px; height:8px; margin-left:-4px; border-radius:50%; background:var(--text) }
+.stats-histogram-range > span { position:absolute; top:5px; height:2px; border-radius:1px; background:color-mix(in srgb, var(--part) 60%, var(--text)) }
+.stats-histogram-range > i { position:absolute; top:1px; width:10px; height:10px; margin-left:-5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2.5px color-mix(in srgb, var(--part) 60%, var(--text)), 0 0 8px color-mix(in srgb, var(--part) 70%, transparent) }
 .stats-histogram-axis { position:absolute; left:0; right:0; bottom:0; height:22px; font-size:var(--fs-12); color:var(--muted) }
 .stats-histogram-axis > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap; line-height:1.2 }
 .stats-histogram-axis > span::before { content:""; position:absolute; left:50%; top:-16px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-histogram-axis sup { font-size:var(--fs-12) }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
+/* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above, with a soft glow in
+   the parameter's colour; the 10-90% line and the median dot sit on its baseline. Three panels side by side from
+   1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
+.stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
+.stats-ridges { --ridge-label:44px; min-width:0 }
+.stats-ridge-defs { position:absolute; width:0; height:0; overflow:hidden }
+.stats-ridges-title, .stats-ridge-row, .stats-ridge-axis { display:grid; grid-template-columns:var(--ridge-label) minmax(0,1fr) 52px; column-gap:8px }
+.stats-ridges-title { align-items:baseline; margin:0 0 20px; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-ridges-title > span:first-child { grid-column:1 / 3 }
+.stats-ridges-head { color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); text-align:right }
+.stats-ridge-rows { margin:0; padding:0; list-style:none }
+.stats-ridge-row { height:30px; align-items:end }
+.stats-ridge-label { min-width:0; overflow:hidden; padding-bottom:2px; font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
+.stats-ridge-name { display:none; color:var(--text-2) }
+.stats-ridge-plot { position:relative; align-self:stretch }
+.stats-ridge-plot::after { content:""; position:absolute; left:0; right:0; bottom:0; border-bottom:1px solid var(--line) }
+.stats-ridge-svg { position:absolute; left:0; bottom:0; display:block; width:100%; height:40px; overflow:visible; filter:drop-shadow(0 0 3px color-mix(in srgb, var(--part) 40%, transparent)) }
+.stats-ridge-area { stroke:none }
+.stats-ridge-stop-top { stop-color:var(--part); stop-opacity:0.62 }
+.stats-ridge-stop-bottom { stop-color:var(--part); stop-opacity:0.1 }
+.stats-ridge-line { fill:none; stroke:var(--part); stroke-width:1.5; vector-effect:non-scaling-stroke; stroke-linejoin:round }
+.stats-ridge-range { position:absolute; bottom:-1px; z-index:1; height:3px; border-radius:2px; background:color-mix(in srgb, var(--part) 55%, var(--text)) }
+.stats-ridge-median { position:absolute; bottom:-4px; z-index:2; width:9px; height:9px; margin-left:-4.5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)), 0 0 6px color-mix(in srgb, var(--part) 70%, transparent) }
+.stats-ridge-value { padding-bottom:2px; color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
+.stats-ridge-row.is-active .stats-ridge-svg { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 70%, transparent)) }
+.stats-ridge-row.is-active .stats-ridge-label { font-weight:600 }
+.stats-ridge-axis { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-ridge-ticks { position:relative; height:16px }
+.stats-ridge-ticks > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap }
+.stats-ridge-ticks > span::before { content:""; position:absolute; left:50%; top:-8px; height:4px; border-left:1px solid var(--line-strong) }
+.stats-ridge-ticks sup { font-size:var(--fs-12) }
 
 .stats-detail-table { margin-top:12px; width:100%; min-width:0; table-layout:auto; border-collapse:collapse; font-size:var(--fs-13) }
 .stats-detail-table tr, .stats-detail-table tbody tr:nth-child(n) { height:auto; background:transparent; cursor:auto; transition:none }
@@ -1008,15 +1126,20 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 /* 1024-1279px: a half-width column is too narrow for the legend table beside the donut, so Figure 1 takes the row
    (donut and table side by side) and Figure 2 the next one, as on tablets; the figures after them pair up as before. */
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .stats-charts > .stats-status-section, .stats-charts > .stats-status-section + .stats-figure-section { grid-column:1 / -1 }
-  .stats-charts > .stats-status-section + .stats-figure-section .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
+  .stats-part-grid > .stats-status-section, .stats-part-grid > .stats-status-section + .stats-figure-section { grid-column:1 / -1 }
+  .stats-part-grid > .stats-status-section + .stats-figure-section .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
 }
 
 @media (max-width: 1023px) {
-  .stats-charts > * { grid-column:1 / -1 }
+  .stats-part-grid > * { grid-column:1 / -1 }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:520px }
   .stats-lead-body { grid-template-columns:1fr; gap:12px }
+  .stats-checks { grid-template-columns:repeat(2,minmax(0,1fr)) }
+  /* One panel per row, each class named. */
+  .stats-ridge-panels { grid-template-columns:1fr; gap:32px; max-width:560px }
+  .stats-ridges { --ridge-label:minmax(0,150px) }
+  .stats-ridge-name { display:inline }
 }
 
 /* Tablets and phones: the upright loop, with the legend beside it (under it on phones). */
@@ -1030,24 +1153,27 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 
 @media (max-width: 720px) {
   .stats-totals dl { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0 }
-  .stats-totals dl > div:nth-child(odd) { border:0; padding-left:0 }
-  .stats-totals dl > div:nth-child(even) { padding-left:16px }
+  .stats-total:nth-child(odd)::before { display:none }
 }
 
 @media (max-width: 640px) {
   .stats-shell, .team-shell { padding:24px 16px 32px }
   .stats-totals dd { font-size:var(--fs-24); line-height:var(--lh-24) }
   .stats-totals .stats-totals-scope dd { font-size:var(--fs-18); line-height:var(--lh-18) }
-  .stats-charts { gap:40px 0 }
   .stats-stack { gap:40px }
   .stats-lead { padding:16px }
+  .stats-band { padding:var(--sp-3) var(--sp-2) var(--sp-1) }
+  .stats-total { padding:var(--sp-2) }
+  .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
+  .stats-part-grid { gap:40px 0 }
+  .stats-checks { grid-template-columns:1fr }
+  .stats-ridges { --ridge-label:minmax(0,112px) }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar. */
-  .stats-chart-row, .stats-chart-axis { grid-template-columns:minmax(0,1fr) 96px; row-gap:4px }
+  .stats-chart-row, .stats-chart-axis { grid-template-columns:minmax(0,1fr) var(--value-w,96px); row-gap:4px }
   .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:minmax(0,1fr) 64px }
   .stats-chart-label { grid-column:1 / -1 }
   .stats-chart-axis > span:first-child { display:none }
-  .stats-checks-table .stats-col-bar { display:none }
   .stats-col-bar, .stats-minibar { width:48px }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }
@@ -1059,8 +1185,16 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 @media print {
   /* The bars, swatches and columns are painted backgrounds: print them in colour even with background graphics off. */
   .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
-  .stats-charts { display:block }
+  .stats-charts, .stats-part-grid { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
+  /* Paper: no glow, no wash, no tooltip or switch. */
+  .stats-view *, .snapshot-band * { text-shadow:none !important; filter:none !important }
+  .stats-band, .stats-lead { background:var(--bg) }
+  .stats-tip, .stats-switch { display:none !important }
+  .stats-part-title { break-after:avoid }
+  .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
+  .stats-ridges { --ridge-label:44px }
+  .stats-ridge-name { display:none }
   .stats-totals { break-inside:avoid }
   /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column) and
      the lead keeps its number beside the text; the lead may continue on the next page between its parts, so page 1
@@ -1070,8 +1204,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
   .stats-section.stats-lead { break-inside:auto; padding:16px 24px }
   /* The headline counts keep one line each, also where the browser sizes the page as a phone (A4 measured upright). */
   .stats-totals dl { grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); gap:0 }
-  .stats-totals dl > div:nth-child(n) { border-left:1px solid var(--line-soft); padding-left:var(--sp-5) }
-  .stats-totals dl > div:first-child { border:0; padding-left:0 }
+  .stats-total:nth-child(n)::before { display:block }
+  .stats-total:first-child::before { display:none }
   .stats-lead-figure, .stats-lead-sentence, .stats-lead-facts > div, .stats-lead-note, .stats-lead-side, .stats-lead-text > .stats-fig-data { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
