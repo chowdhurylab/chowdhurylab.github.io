@@ -154,7 +154,11 @@ one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
 its tick, the end one too, so they sit evenly (a narrow axis keeps 0, the
 middle and the end of five ticks); light 1px gridlines at the ticks. Category labels 13px, value labels and ticks
-12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it).
+12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
+label of several numbers (the count, then the share; Figure 5's records, accepted and CatLog v2 entries) sets each
+number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
+chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font), so the
+counts line up whatever the shares.
 Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
 drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
 tap. Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts

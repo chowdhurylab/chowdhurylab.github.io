@@ -895,6 +895,13 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-chart-value { color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
+/* A value label of several numbers (count, then share): each in its own right-aligned column; a column after the first is
+   as wide as its widest entry in the chart (a hidden sizer, data-sizer, one entry shape per line, measured in the
+   viewer's font; it takes no height), so counts line up. */
+.stats-chart-value.has-parts { display:flex; justify-content:flex-end; align-items:flex-start; gap:6px }
+.stats-value-part[data-sizer] { display:inline-grid; justify-items:end }
+.stats-value-part[data-sizer]::before { content:attr(data-sizer); grid-area:1 / 1; min-width:max-content; height:0; overflow:hidden; visibility:hidden; white-space:pre }
+.stats-value-part[data-sizer] > span { grid-area:1 / 1 }
 .stats-track { position:relative; display:block; height:16px }
 .stats-track .stats-seg { position:absolute; top:0; bottom:0 }
 .stats-ref { position:absolute; top:-4px; bottom:-4px; width:0; border-left:1px solid var(--line-soft) }

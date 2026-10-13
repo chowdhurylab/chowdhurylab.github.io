@@ -909,6 +909,17 @@ def check_stats_figures(driver, browser, url):
     return {"route": "stats-figures", "passed": True}
 
 
+# Value labels of several numbers (count, then share; Figure 5's records, accepted, CatLog v2 entries) stand in columns:
+# within a chart each column's numbers end at one x. Returns the charts whose labels are ragged.
+STATS_VALUE_COLUMNS_JS = """
+    return [...document.querySelectorAll('.stats-chart')].filter(chart => chart.querySelector('.stats-chart-value.has-parts')).filter(chart => {
+        const rows = [...chart.querySelectorAll('.stats-chart-value.has-parts')].filter(v => v.getBoundingClientRect().width)
+            .map(v => [...v.children].map(part => part.getBoundingClientRect().right));
+        return rows.some(row => row.length !== rows[0].length || row.some((right, i) => Math.abs(right - rows[0][i]) > 1));
+    }).map(chart => chart.dataset.chart);
+"""
+
+
 def check_stats_more(driver, browser, overview, total):
     """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: CatLog
     v2 and v1 entries make all records, values per paper make CatLog v2's papers, each class's CatLog v2 entries and its
@@ -948,6 +959,11 @@ def check_stats_more(driver, browser, overview, total):
         # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
         stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
         assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
+    # The counts of a chart line up whatever the shares beside them.
+    if driver.find_elements(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-switch"):
+        assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-chart-value.has-parts")
+    ragged = driver.execute_script(STATS_VALUE_COLUMNS_JS)
+    assert not ragged, f"Value labels do not line up: {ragged}"
     # Every figure is named and described: its heading, one numbered caption, a data line.
     for figure in driver.find_elements(By.CSS_SELECTOR, "#statsCharts figure.stats-fig"):
         assert figure.get_attribute("aria-labelledby") and figure.find_elements(By.CSS_SELECTOR, "figcaption .stats-fig-caption strong")
@@ -1052,6 +1068,8 @@ def check_stats_new_figures(driver, browser, url):
                         spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value, .stats-ridge-n')].filter(v =>
                           v.getBoundingClientRect().right > v.closest('.stats-section').getBoundingClientRect().right + 1).map(v => v.innerText)};""")
             assert "Verdana" in fit["family"] and fit["width"] <= fit["room"] + 0.5 and not fit["spill"], fit
+            ragged = driver.execute_script(STATS_VALUE_COLUMNS_JS)
+            assert not ragged, f"Value labels do not line up in a wide font: {ragged}"
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
     finally:

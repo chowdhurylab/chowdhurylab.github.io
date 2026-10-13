@@ -1786,15 +1786,15 @@ function row(overrides = {}) {
   assert.match(chart, /Records by enzyme form, as the table tags it\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   assert.match(chart, /a record can carry more than one\.<\/span><span class="stats-fig-data">[^<]*Shares of all records\./);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
-  assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value">3 <span class="stats-muted">0\.0%<\/span>/);
+  assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">3<\/span><span class="stats-value-part stats-muted" data-sizer="[^"]+"><span>0\.0%<\/span><\/span><\/span>/);
   assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2<\/a>/);
   assert.match(chart, /data-row="oed" data-count="1"[\s\S]*?class="stats-seg stats-part-accepted is-start is-end" style="left:0%;width:33\.3333%" data-records="0,33\.3333" data-share="0,100"/);
   // Records | Share: each segment carries both places, and the share axis waits hidden.
   assert.match(chart, /<button type="button" class="stats-switch-button" data-stats-mode="records" aria-pressed="true">Records<\/button><button type="button" class="stats-switch-button" data-stats-mode="share" aria-pressed="false">Share<\/button>/);
   assert.match(chart, /data-axis-mode="share" hidden/);
   // CatLog v2 and CatLog v1 entries by review result: v2 is the main source catlog, v1 every other record.
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2 entries<\/a>[\s\S]*?<span class="stats-chart-value">2 <span class="stats-muted">100\.0%<\/span>/);
-  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">CatLog v1 entries<\/a>[\s\S]*?<span class="stats-chart-value">4 <span class="stats-muted">25\.0%<\/span>/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">CatLog v2 entries<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">2<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>100\.0%<\/span>/);
+  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">CatLog v1 entries<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>25\.0%<\/span>/);
   assert.match(chart, /data-tip="CatLog v1 entries, Not confirmed: 1 \(25\.0%\)"/);
   assert.match(chart, /BRENDA, Not confirmed: 1/);
   // Main-source counts that do not add up to the review results are not drawn by status.
@@ -2022,7 +2022,7 @@ function row(overrides = {}) {
   assert.equal(breakdown.temperature, 4);
   assert.equal(breakdown.ph, 5);
   assert.match(chart, /3 records give both temperature and pH/);
-  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value">4 <span class="stats-muted">2<\/span>/);
+  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="\d+"><span>2<\/span><\/span><\/span>/);
   assert.equal((chart.match(/<figure class="stats-range"/g) || []).length, 1, "Only metrics with a usable summary get a histogram");
   assert.match(chart, /aria-label="kcat: median 4\.5 s⁻¹; 10% of values are below 0\.036 and 10% above 240; 5 values\."/);
   assert.equal((chart.match(/class="stats-histogram-bars">/g) || []).length, 1);
@@ -2043,7 +2043,7 @@ function row(overrides = {}) {
       metrics: { kcat: { ...overview.metrics.kcat, by_class: kcatClasses } } };
     api.renderStats();
     const more = element("statsCharts").innerHTML;
-    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value">4 <span class="stats-muted">2<\/span> <span class="stats-v2-count">2<\/span>/);
+    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="\d+"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="\d+"><span>2<\/span><\/span><\/span>/);
     assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 CatLog v2 entries \(50\.0%\)"/);
     assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Organisms with the most CatLog v2 entries<\/h3>[\s\S]*?<th scope="col" class="stats-num">Entries<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
@@ -2099,8 +2099,9 @@ function row(overrides = {}) {
       assert.match(full.body, /style="--ridge-n:calc\(6ch \+ 4px\)"/);
       assert.doesNotMatch(full.data, /lighter/);
     }
-    // A count chart's value column fits its longest value label, in ch (a wider font widens it), at least 96px.
-    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(5ch \+ 6px\)\)"/);
+    // A count chart's value column fits its longest entry per number column, in ch (a wider font widens it), with 6px
+    // between the columns, at least 96px.
+    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(3ch \+ 18px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.
     assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "CatLog v2 and CatLog v1 entries",
       "Values per paper in CatLog v2", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
@@ -2186,6 +2187,19 @@ function row(overrides = {}) {
   // A count chart with gridlines at its ticks.
   assert.equal((api.statsBarChart({ key: "t", scale: 30, step: 10, rows: [{ key: "a", count: 9, label: "A", value: "9",
     segments: [{ part: "accepted", count: 9 }] }] }).match(/<i class="stats-ref" style="left:[\d.]+%"><\/i>/g) || []).length, 4);
+  // A value label of several numbers sets each in its own right-aligned column: the count, then the share, every column
+  // after the first sized by a hidden sizer (data-sizer) of its entries' shapes, so the counts line up. The shapes: digits
+  // as 0, without one that ends another; "<0.0%" stays, since "<" may be wider than a digit.
+  assert.equal(api.statsValueSizer(["3.2%", "100.0%", "27.9%", "0.0%"]), "000.0%");
+  assert.equal(api.statsValueSizer(["99.9%", "<0.1%", "<0.1%"]), "00.0%\n<0.0%");
+  assert.equal(api.statsValueSizer(["18,217", "119", ""]), "00,000");
+  const columns = api.statsBarChart({ key: "t", scale: 90000, rows: [
+    { key: "a", count: 80215, label: "A", parts: [{ text: "80,215" }, { text: "3.2%", className: "stats-muted" }], segments: [{ part: "accepted", count: 2567 }] },
+    { key: "b", count: 44627, label: "B", parts: [{ text: "44,627" }, { text: "100.0%", className: "stats-muted" }], segments: [{ part: "accepted", count: 44627 }] },
+    { key: "c", count: 5, label: "C <x>", parts: [{ text: "5" }, { text: "<0.1%", className: "stats-muted" }], segments: [{ part: "accepted", count: 0 }] }] });
+  assert.match(columns, /<span class="stats-chart-value has-parts"><span class="stats-value-part">80,215<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;&lt;0\.0%"><span>3\.2%<\/span><\/span><\/span>/);
+  assert.match(columns, /<span class="stats-value-part">5<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;&lt;0\.0%"><span>&lt;0\.1%<\/span>/);
+  assert.match(columns, /style="--value-w:max\(96px, calc\(12ch \+ 12px\)\)"/);
   // Axis ends: three to five whole steps ending closest above the largest value.
   assert.equal(JSON.stringify(api.statsNiceScale(81355)), JSON.stringify({ max: 90000, step: 30000 }));
   assert.equal(JSON.stringify(api.statsNiceScale(59012)), JSON.stringify({ max: 60000, step: 20000 }));

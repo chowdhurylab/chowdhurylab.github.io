@@ -3655,10 +3655,28 @@
   // more segments and a value label; the legend above, an axis below. Percent charts draw each row as 100% of itself.
   // Pointing at a row (or focusing its link) lights it and gives its exact counts in a tooltip line (data-hl, data-tip).
   // `switchable`: a count chart that can also draw each row as 100% of itself (the Records | Share switch).
+  // A value label of several numbers (row.parts: [{ text, className }], e.g. the count, then the share) sets each number
+  // in its own right-aligned column; every column after the first is as wide as its widest entry in the chart, so the
+  // counts line up whatever the shares. A hidden sizer (data-sizer) holds that column's entry shapes in the viewer's own
+  // font, one per line: each entry with its digits as 0 (tabular digits are equally wide), leaving out a shape that ends
+  // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
+  function statsValueSizer(texts) {
+    const shapes = [...new Set(texts.map((text) => String(text).replace(/[0-9]/g, "0")).filter(Boolean))];
+    return shapes.filter((shape) => !shapes.some((other) => other !== shape && other.endsWith(shape))).sort().join("\n");
+  }
+
   function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "" }) {
-    // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px.
-    const longest = Math.max(0, ...rows.map((row) => String(row.value).replace(/<[^>]*>/g, "").replace(/&[a-z#0-9]+;/gi, "x").length));
-    if (!valueWidth && !percent && longest) valueWidth = `max(96px, calc(${longest}ch + 6px))`;
+    const columns = Math.max(0, ...rows.map((row) => (Array.isArray(row.parts) ? row.parts.length : 0)));
+    const sizers = Array.from({ length: columns }, (_column, index) => statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")));
+    const valueHtml = (row) => (Array.isArray(row.parts)
+      ? row.parts.map((part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index ? ` data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${escapeHtml(part.text)}</span>` : `>${escapeHtml(part.text)}`}</span>`).join("")
+      : row.value);
+    // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px; a
+    // label in columns needs each column's longest entry and a 6px gap between them.
+    const longest = columns
+      ? sizers.reduce((sum, sizer) => sum + Math.max(0, ...sizer.split("\n").map((line) => line.length)), 0)
+      : Math.max(0, ...rows.map((row) => String(row.value).replace(/<[^>]*>/g, "").replace(/&[a-z#0-9]+;/gi, "x").length));
+    if (!valueWidth && !percent && longest) valueWidth = `max(96px, calc(${longest}ch + ${6 + 6 * Math.max(0, columns - 1)}px))`;
     const refs = percent ? [0, 25, 50, 75, 100] : step ? statsTickRefs(scale, step) : [0];
     const tools = switchable
       ? `<div class="stats-chart-tools">${legend.length ? statsLegend(legend) : ""}<div class="stats-switch" role="group" aria-label="Bar length">${[["records", "Records"], ["share", "Share"]]
@@ -3669,7 +3687,7 @@
       <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
         ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay, shareOf: switchable ? row.count : 0, shareRefs: switchable ? [0, 25, 50, 75, 100] : null })}
-        <span class="stats-chart-value">${row.value}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
+        <span class="stats-chart-value${Array.isArray(row.parts) ? " has-parts" : ""}">${valueHtml(row)}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
       </li>`).join("")}</ul>
       ${axis}${switchable ? statsAxis(100, 25, { percent: true, mode: "share" }) : ""}
     </div>`;
@@ -4757,7 +4775,7 @@
         const segments = statusSegments(label, group).map((item) => ({ ...item, title: `${item.title} (${statsShare(item.count, records)})` }));
         return {
           key, count: records, label: labelHtml, note: escapeHtml(note), segments,
-          value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(segments[0].count, records))}</span>`,
+          parts: [{ text: formatInteger(records) }, { text: statsShare(segments[0].count, records), className: "stats-muted" }],
           text: `${label}: ${formatInteger(records)} records; ${segments.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.`,
         };
       });
@@ -4793,7 +4811,7 @@
           const records = raw.reduce((sum, item) => sum + item.count, 0);
           const segments = raw.map((item) => ({ ...item, title: `${item.title} (${statsShare(item.count, records)})` }));
           return { key, count: records, label: records ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(params))}">${escapeHtml(label)}</a>` : escapeHtml(label),
-            segments, value: `${formatInteger(records)} <span class="stats-muted">${escapeHtml(statsShare(segments[0].count, records))}</span>`,
+            segments, parts: [{ text: formatInteger(records) }, { text: statsShare(segments[0].count, records), className: "stats-muted" }],
             text: `${label}: ${formatInteger(records)} records; ${segments.filter((item) => item.count).map((item) => `${item.name} ${formatInteger(item.count)}`).join(", ")}.` };
         });
         const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
@@ -4820,7 +4838,7 @@
         const count = perPaper.papers[index];
         return { key: `values_${low}`, count, label: escapeHtml(label),
           segments: [{ part: "catlog", count, title: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"} (${statsShare(count, papersRead)})` }],
-          value: `${formatInteger(count)} <span class="stats-muted">${escapeHtml(statsShare(count, papersRead))}</span>`,
+          parts: [{ text: formatInteger(count) }, { text: statsShare(count, papersRead), className: "stats-muted" }],
           text: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"}.` };
       });
       // the first rows hold no paper on a small snapshot; the last row is shown only with papers in it
@@ -4898,7 +4916,8 @@
         segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
           { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
           ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} CatLog v2 entries (${statsShare(item.from_paper, item.count)})` }] : [])],
-        value: `${formatInteger(item.count)} <span class="stats-muted">${formatInteger(item.accepted)}</span>${withV2 ? ` <span class="stats-v2-count">${formatInteger(item.from_paper)}</span>` : ""}`,
+        parts: [{ text: formatInteger(item.count) }, { text: formatInteger(item.accepted), className: "stats-muted" },
+          ...(withV2 ? [{ text: formatInteger(item.from_paper), className: "stats-v2-count" }] : [])],
         text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted${withV2 ? `, ${formatInteger(item.from_paper)} CatLog v2 entries` : ""}.`,
       }));
       const notes = [
@@ -11016,6 +11035,7 @@
       statsShare,
       statsTable,
       statsBarChart,
+      statsValueSizer,
       statsDonut,
       statsNiceScale,
       statsMainSources,
