@@ -4410,8 +4410,10 @@
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
       },
       arrows: [[380, 140, 0], [470, 360, 180], [160, 250, 270]],
+      // Audit agents stand up and to the right of CatLog, so their line meets it between the track's arc and the
+      // Website branch instead of running beside the arc.
       actors: {
-        download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [810, 58],
+        download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [850, 58],
         supantha: [380, 438], aarna: [515, 438], erin: [605, 438], mohammad: [870, 418],
       },
     },
@@ -4472,11 +4474,15 @@
       const [x, y] = layout.actors[actor.key];
       const width = Math.round(actor.name.length * 8.2 + 28);
       const height = 28;
-      // A thin line from the chip to each of its stations on the track (Supantha's to Rules updated only).
+      // A thin line from the chip to its first station on the track (Supantha's to Rules updated only), aimed at the
+      // station's centre and stopping just short of its dot.
       const target = layout.stations[actor.stations[0]];
       const fromY = target.y < y ? y - height / 2 : y + height / 2;
+      const length = Math.hypot(target.x - x, target.y - fromY) || 1;
+      const toX = Math.round((target.x - ((target.x - x) / length) * 9) * 10) / 10;
+      const toY = Math.round((target.y - ((target.y - fromY) / length) * 9) * 10) / 10;
       return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}">
-        <line class="team-link" x1="${x}" y1="${fromY}" x2="${target.x}" y2="${target.y + (target.y < y ? 9 : -9)}"/>
+        <line class="team-link" x1="${x}" y1="${fromY}" x2="${toX}" y2="${toY}"/>
         <rect x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
         <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text></g>`;
     }).join("") : "";
