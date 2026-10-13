@@ -341,11 +341,15 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
 .table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
 .table-scroll-controls .icon-button { width:28px; height:28px; font-size:var(--fs-18) }
-/* A table wider than its room scrolls sideways: Enzyme stays in view and the scrolled edges are marked. */
+/* A table wider than its room scrolls sideways: Enzyme stays in view and the scrolled edges are marked. The marks are a
+   12px shadow over the rows inside the visible area (the script places them): beside the sticky Enzyme column at the
+   left, before the vertical scrollbar at the right. */
 .table-wrap { overscroll-behavior-x:contain }
-.table-wrap.can-scroll-right { box-shadow:inset -12px 0 10px -12px var(--scroll-edge) }
-.table-wrap.can-scroll-left { box-shadow:inset 12px 0 10px -12px var(--scroll-edge) }
-.table-wrap.can-scroll-left.can-scroll-right { box-shadow:inset 12px 0 10px -12px var(--scroll-edge), inset -12px 0 10px -12px var(--scroll-edge) }
+.table-panel { position:relative }
+.table-panel::before, .table-panel::after { content:""; position:absolute; z-index:4; top:var(--cue-top,0); bottom:var(--cue-bottom,0); width:12px; pointer-events:none; visibility:hidden }
+.table-panel::before { left:var(--cue-left,0); box-shadow:inset 12px 0 10px -12px var(--scroll-edge) }
+.table-panel::after { right:var(--cue-right,0); box-shadow:inset -12px 0 10px -12px var(--scroll-edge) }
+.table-panel.cue-left::before, .table-panel.cue-right::after { visibility:visible }
 .table-wrap:is(.can-scroll-left,.can-scroll-right) .c-enzyme { position:sticky; left:0; z-index:2; background:var(--bg); box-shadow:1px 0 0 var(--line) }
 .table-wrap:is(.can-scroll-left,.can-scroll-right) th.c-enzyme { z-index:3; background:var(--surface-2) }
 .table-wrap:is(.can-scroll-left,.can-scroll-right) tbody tr:nth-child(even) td.c-enzyme { background:var(--surface-3) }
@@ -1235,7 +1239,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   @page { size:landscape; margin:10mm }
   html, body, .static-app, .table-panel, .table-wrap, tbody tr { background:var(--bg) !important }
   .static-app, #catalogView, .workbench { display:block; height:auto; min-height:0; overflow:visible }
-  .top-nav, .external-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-column, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more { display:none !important }
+  .top-nav, .external-nav, .guide-view, .global-search, .header-actions, .search-suggestions, .filter-column, .filter-rail, .filter-backdrop, .records-header, .pagination, .detail-panel, .c-open, .col-open, .snapshot-controls, .snapshot-more, .table-panel::before, .table-panel::after { display:none !important }
   .app-header { display:block; min-height:0; padding:0 0 8px }
   .table-wrap, .table-panel, .stats-view { overflow:visible; border:0 }
   table { min-width:0 !important }

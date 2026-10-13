@@ -134,7 +134,9 @@ longer than its column is hyphenated), and last Review result's tag line ends
 in "…" (never its word). Only a table that cannot keep Review result in view
 even then (beside a record from 1024px, on a tablet with the sidebar open)
 scrolls sideways; its names then narrow only to their longest word, so Enzyme
-stays narrow, with the Columns control, edge shadows and Enzyme kept in view. The
+stays narrow, with the Columns control (‹ › step one column), Enzyme kept in
+view and edge shadows drawn over the rows inside the visible area (beside
+Enzyme, before the vertical scrollbar). The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
 its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
 rule between them, options in 28px rows (14px box, 13px label, the 12px --muted

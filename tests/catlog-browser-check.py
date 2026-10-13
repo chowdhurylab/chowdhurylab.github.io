@@ -1251,6 +1251,19 @@ def check_layout(driver, browser, url, route_label):
                     cue: wrap.classList.contains('can-scroll-right')};
         """)
         assert table_scroll["overflow"] == table_scroll["controls"] == table_scroll["cue"] == True, table_scroll
+        # The right edge's shadow is drawn inside the visible area, ending where the rows end (before the vertical
+        # scrollbar), over the rows and not under them.
+        cue = driver.execute_script("""
+            const wrap = document.getElementById('recordTableWrap');
+            const panel = wrap.parentElement;
+            const after = getComputedStyle(panel, '::after');
+            const outer = panel.getBoundingClientRect();
+            const box = wrap.getBoundingClientRect();
+            return {shown: after.visibility === 'visible', cueRight: outer.right - parseFloat(after.right),
+                    viewRight: box.left + wrap.clientLeft + wrap.clientWidth, cueTop: outer.top + parseFloat(after.top),
+                    viewTop: box.top + wrap.clientTop, width: parseFloat(after.width), z: after.zIndex};
+        """)
+        assert cue["shown"] and abs(cue["cueRight"] - cue["viewRight"]) <= 1 and abs(cue["cueTop"] - cue["viewTop"]) <= 1, cue
         # The table scrolls anyway, so the sticky Enzyme column narrows to its 136px minimum or its longest word.
         enzyme = driver.execute_script("""
             const names = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme strong')];

@@ -6495,6 +6495,28 @@
     if (right) right.disabled = !canScrollRight;
     wrap.classList.toggle("can-scroll-left", canScrollLeft);
     wrap.classList.toggle("can-scroll-right", canScrollRight);
+    placeScrollCues(wrap, canScrollLeft, canScrollRight);
+  }
+
+  // The edge shadows are drawn over the table inside its visible area (the panel's ::before and ::after): at the left
+  // beside the sticky Enzyme column, at the right before the vertical scrollbar, and above the horizontal one. On the
+  // scroller itself they would sit under the scrollbar and behind the sticky column and the rows.
+  function placeScrollCues(wrap, canScrollLeft, canScrollRight) {
+    const panel = wrap.parentElement;
+    if (!panel?.classList || !panel.style?.setProperty || typeof panel.getBoundingClientRect !== "function") return;
+    panel.classList.toggle("cue-left", canScrollLeft);
+    panel.classList.toggle("cue-right", canScrollRight);
+    if (!canScrollLeft && !canScrollRight) return;
+    const outer = panel.getBoundingClientRect();
+    const box = wrap.getBoundingClientRect();
+    const viewLeft = box.left + wrap.clientLeft;
+    const viewTop = box.top + wrap.clientTop;
+    const enzyme = wrap.querySelector("thead th.c-enzyme")?.getBoundingClientRect().width || 0;
+    const set = (name, value) => panel.style.setProperty(name, `${Math.max(0, Math.round(value))}px`);
+    set("--cue-top", viewTop - outer.top - panel.clientTop);
+    set("--cue-bottom", outer.top + panel.clientTop + panel.clientHeight - (viewTop + wrap.clientHeight));
+    set("--cue-left", viewLeft - outer.left - panel.clientLeft + enzyme);
+    set("--cue-right", outer.left + panel.clientLeft + panel.clientWidth - (viewLeft + wrap.clientWidth));
   }
 
   // ‹ › step one column at a time: each stop puts a column's left edge just right of the sticky Enzyme column. The edges
