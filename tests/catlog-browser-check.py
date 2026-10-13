@@ -2069,7 +2069,7 @@ def check_record_panel(driver, browser, url, route_label):
                             style.textContent = "#detailPanel, #detailPanel * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
                             document.head.appendChild(style);
                         """)
-                        rows = driver.execute_script("""
+                        measured = driver.execute_script("""
                             const glyphs = (element, skip) => {
                                 const rects = [];
                                 const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -2087,7 +2087,8 @@ def check_record_panel(driver, browser, url, route_label):
                                 }
                                 return rects;
                             };
-                            return [...document.querySelectorAll('#detailContent .values-table tbody tr')].map(row => {
+                            const head = glyphs(document.querySelector('#detailContent .values-table thead th.vt-value'), '.vt-ghost');
+                            const rows = [...document.querySelectorAll('#detailContent .values-table tbody tr')].map(row => {
                                 const number = glyphs(row.querySelector('td.vt-value .vt-number'), '.value-approved');
                                 const unit = glyphs(row.querySelector('td.vt-unit'));
                                 const check = row.querySelector('td.vt-value .value-approved[role="img"]');
@@ -2102,13 +2103,17 @@ def check_record_panel(driver, browser, url, route_label):
                                     checkInside: checkRect ? checkRect.right <= row.querySelector('td.vt-value').getBoundingClientRect().right + 1 : null,
                                 };
                             });
+                            return {rows, headRight: Math.max(...head.map(r => r.right))};
                         """)
                         driver.execute_script("document.getElementById('wideFontCheck')?.remove()")
+                        rows = measured["rows"]
                         for row in rows:
                             assert row["numberRight"] < row["unitLeft"], f"{row['name']}'s value runs into Unit at 320px: {row}"
                             assert row["checkBeside"] is not False and row["checkInside"] is not False, f"{row['name']}'s check leaves its number at 320px: {row}"
                         ends = [row["numberRight"] for row in rows]
                         assert max(ends) - min(ends) <= 1, f"The Value column's numbers do not line up at 320px: {rows}"
+                        # The heading keeps the checks' space too, so it ends where the numbers end.
+                        assert abs(measured["headRight"] - max(ends)) <= 1, f"Value does not end over the numbers at 320px: {measured}"
                         results["values-approved-scientific-320"] = True
                 # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps),
                 # a long listed kcat/Km range (it breaks after its dash) and an Assay item with a long word, from 320 to

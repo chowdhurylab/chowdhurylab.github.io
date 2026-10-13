@@ -8312,9 +8312,13 @@
     const quotes = quoted.map((item) => printedLineNoteHtml(item.printedLine, quoted.length > 1 || item.mixed
       ? { metrics: item.metrics }
       : { place: sharedPlace ? "" : item.place }));
+    // The Value heading keeps the same unseen spaces after it (calc. drawn by the stylesheet, so the heading's text stays
+    // "Value"), so it ends where the numbers end at every width.
+    const headSlots = `${checkSlot}${calcSlot ? '<small class="metric-origin vt-ghost" aria-hidden="true"></small>' : ""}${flagSlot}`;
+    const valueHead = headSlots ? `<span class="vt-head">Value${headSlots}</span>` : "Value";
     const table = rows.length
       ? `<table class="values-table${printedColumn ? "" : " vt-no-printed"}${checkSlot ? " vt-checks" : ""}">${sharedPlace ? `<caption>Printed in ${escapePublic(sharedPlace)}</caption>` : ""}`
-        + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">Value</th>`
+        + `<thead><tr><th scope="col">Parameter</th><th scope="col" class="vt-value">${valueHead}</th>`
         + `<th scope="col">Unit</th>${printedColumn ? '<th scope="col">As printed</th>' : ""}${whereColumn ? '<th scope="col" class="vt-where">Where</th>' : ""}</tr></thead>`
         + `<tbody>${rows.join("")}</tbody></table>`
       : "";

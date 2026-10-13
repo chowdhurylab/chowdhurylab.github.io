@@ -603,6 +603,14 @@ body.detail-open .detail-panel { display:block }
 .value-approved-key .check-icon { margin-right:4px; vertical-align:-0.12em }
 /* A row without calc. or "!" keeps their space unseen, so every number in the column ends at the same place. */
 .values-table .vt-ghost { visibility:hidden }
+/* The Value heading ends where the numbers end: unseen copies of the check, calc. and "!" spaces its rows keep, taking
+   width but no height (the heading row keeps its height). */
+.values-table th.vt-value .vt-head { white-space:nowrap }
+.values-table th.vt-value .vt-ghost { display:inline-block; height:0; overflow:hidden; vertical-align:baseline }
+.values-table th.vt-value .value-approved { margin-left:4px }
+.values-table th.vt-value .metric-origin { margin-left:4px }
+.values-table th.vt-value .metric-origin::before { content:"calc." }
+.values-table th.vt-value .value-flag { margin-left:6px }
 .values-table .vt-unit { color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
 .values-table .vt-unit small { font-size:var(--fs-12) }
 /* Without As printed (an older record), Unit takes the rest of the width. */
@@ -1231,6 +1239,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .values-table td.vt-value .metric-origin { margin-left:0 }
   .values-table td.vt-value .metric-origin + .value-flag { margin-left:4px }
   .values-table td.vt-value .value-approved.vt-ghost { display:inline }
+  .values-table th.vt-value .vt-ghost:not(.value-approved) { display:none }
   .values-table .vt-printed { overflow-wrap:anywhere }
   .snapshot-overview { min-height:40px; row-gap:6px }
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }

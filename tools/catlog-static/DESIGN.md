@@ -529,7 +529,9 @@ found at once: A, B, G, C, D, E, F, H.
   it.", so checks on kcat and Km alone never read as a value the review left
   out. A row without
   the check, calc. or "!" keeps their space unseen (aria-hidden), so every number in the
-  Value column ends at the same place; on phones the calc. and "!" space is dropped. Under the table: the
+  Value column ends at the same place; on phones the calc. and "!" space is dropped. The
+  Value heading keeps the same unseen spaces (no height; calc. drawn by the stylesheet,
+  so its text stays "Value"), so it ends where the numbers end at every width. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
   s⁻¹ mM⁻¹, 5 values", in the catalog unit, a range to 2 significant figures
   and a single value by the display rule, 126.667 showing 127; each end of a

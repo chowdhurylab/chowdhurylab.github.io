@@ -3598,6 +3598,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // each check (or its copy) to its number, so a narrow cell never puts it on a line of its own.
   assert.match(html, /<span class="vt-number">1&#8288;<span class="value-approved vt-ghost" aria-hidden="true"><svg/);
   assert.match(html, /<table class="values-table[^"]* vt-checks"/, "a table with checks keeps a margin for them on the narrowest phones");
+  // The Value heading keeps the check's space after it too, so it ends where the numbers end; its text stays "Value".
+  assert.match(html, /<th scope="col" class="vt-value"><span class="vt-head">Value<span class="value-approved vt-ghost" aria-hidden="true"><svg[^>]*>.*?<\/svg><\/span><\/span><\/th>/);
   // A note that is not the review's sentence marks nothing (no guessing from free text).
   api.renderDetail(noted, {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), []);
@@ -3621,6 +3623,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A kcat/Km worked out from kcat and Km (calc.) is not printed: no reviewer approved it as such.
   api.renderDetail(row({ record_key: "hc-calc", measurement_key: "hc-calc", kcat_over_km_origin: "calculated" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "Km"]);
+  // The heading keeps the calc. space as well (the stylesheet draws its unseen "calc.").
+  assert.match(element("detailContent").innerHTML, /<span class="vt-head">Value<span class="value-approved vt-ghost" aria-hidden="true"><svg[^>]*>.*?<\/svg><\/span><small class="metric-origin vt-ghost" aria-hidden="true"><\/small><\/span><\/th>/);
   // The line under the table says why the calc. kcat/Km beside checked values has none.
   assert.match(element("detailContent").innerHTML, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see Human review below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
