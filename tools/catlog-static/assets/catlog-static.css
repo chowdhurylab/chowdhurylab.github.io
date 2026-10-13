@@ -1271,8 +1271,12 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody td.c-substrate.has-note > .clamp-2 { order:2; flex:1 1 0; min-width:0; color:var(--text-2) }
   #recordsBody td.c-substrate .condition-note { order:2; flex:0 0 100%; font-size:var(--fs-12) }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
+  /* Each label is its name and unit, "kcat (s⁻¹)"; a label too wide breaks only before its unit. A value too wide for its
+     cell (a wide font at 320px) breaks before its "× 10". */
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--muted); font-size:var(--fs-12); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }
+  #recordsBody .scientific-number { white-space:normal }
+  #recordsBody .scientific-number sup { white-space:nowrap }
   /* The status keeps its two lines (status, then the source and tags). */
   #recordsBody td.c-status { order:6; flex:1 1 0; align-self:center }
 
@@ -1287,6 +1291,12 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody tr.skeleton-row td.num span { width:30%; margin-left:0 }
   #recordsBody :is(tr.empty-row,tr.loading-row) td { padding:24px 16px }
   .load-notice.empty-notice { position:static; max-width:none }
+}
+
+/* Phones below 390px: kcat/Km (s⁻¹ mM⁻¹) does not fit its card's third, so every value label puts its unit on a second
+   line ("kcat" over "(s⁻¹)"), as the table's headings do, and the three values stay on one line. */
+@media (max-width: 389px) {
+  #recordsBody td[data-label]::before { white-space:pre-line }
 }
 
 /* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. */

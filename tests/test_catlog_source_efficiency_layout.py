@@ -76,8 +76,8 @@ process.stdout.write(JSON.stringify([
         self.assertEqual(len(rendered), 3)
         for index, html in enumerate(rendered[:2]):
             with self.subTest(value=(6004, "6.004e+7")[index]):
-                # These fixtures contain only one named HTML entity: &times;.
-                root = ElementTree.fromstring(html.replace("&times;", "&#215;"))
+                # These fixtures contain only two named HTML entities: &times; and the &nbsp; that keeps "× 10" together.
+                root = ElementTree.fromstring(html.replace("&times;", "&#215;").replace("&nbsp;", "&#160;"))
                 label = root.find("dt")
                 self.assertEqual("".join(label.itertext()), "kcat/Km listed by BRENDA",
                                  "The row names the source that lists the value")

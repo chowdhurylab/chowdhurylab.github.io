@@ -1243,7 +1243,8 @@
     const coefficient = match[1];
     const exponent = String(Number(match[2]));
     const accessibleValue = `${coefficient} times 10 to the power of ${exponent}`;
-    return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times; 10<sup>${escapeHtml(exponent)}</sup></span></span>`;
+    // "× 10" never breaks after the "×": a phone card's narrow value may break before it.
+    return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times;&nbsp;10<sup>${escapeHtml(exponent)}</sup></span></span>`;
   }
 
   const UNIT_NOT_RECORDED_LABEL = "no unit";
@@ -6365,9 +6366,9 @@
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${escapePublic(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
         <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${escapePublic(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
-        <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
-        <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
-        <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
+        <td class="c-kcat num" data-label="kcat&#10;(s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
+        <td class="c-km num" data-label="Km&#10;(mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
+        <td class="c-eff num" data-label="kcat/Km&#10;(s⁻¹&nbsp;mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>

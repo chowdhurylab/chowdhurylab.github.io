@@ -1664,6 +1664,20 @@ def check_layout(driver, browser, url, route_label):
             # The links out never run into the brand (a wide font puts them on two lines instead).
             brand, links = box(".brand-lockup strong"), box(".external-nav")
             assert brand["left"] + brand["width"] <= links["left"] + 1, f"At 320px the links out overlap the brand: {brand} {links}"
+            # Phone cards at 320px: each value label puts its unit on a second line, so kcat, Km and kcat/Km start on one
+            # line, and no value (1.667 × 10⁻⁶ among the lowest lipase Km) runs past its third of the card.
+            open_page("#browse?q=lipase&sort=km_asc")
+            values = driver.execute_script("""
+                return [...document.querySelectorAll('#recordsBody tr[data-key]')].slice(0, 10).map(card => {
+                  const cells = ['c-kcat', 'c-km', 'c-eff'].map(name => card.querySelector('td.' + name));
+                  const tops = cells.map(cell => Math.round(cell.querySelector('.metric-with-note').getBoundingClientRect().top));
+                  const over = cells.map(cell => Math.max(...[...cell.querySelectorAll('.metric-with-note > *')]
+                    .map(item => item.getBoundingClientRect().right)) - cell.getBoundingClientRect().right);
+                  return {tops, over: Math.round(Math.max(...over))};
+                });
+            """)
+            assert values and all(max(card["tops"]) - min(card["tops"]) <= 2 and card["over"] <= 1 for card in values), (
+                f"At 320px a card's three values line up and stay in their cells: {values}")
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
             # whole (its text, padding and arrow), with "Sort" shown beside it.
             for width in (360, 372, 389):

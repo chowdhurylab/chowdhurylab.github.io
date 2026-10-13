@@ -2048,7 +2048,7 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
   assert.match(wide, /<dt>10–90%<\/dt><dd>0\.067 – 2,300<\/dd>/);
   assert.match(wide, /10% above 2,300; 3 values\./);
   assert.match(api.statsValueRange({ key: "kcat", html: "kcat", unit: "s⁻¹" }, { n: 2, median: 1250.5, p10: 2, p90: 250000, log10_start: 0, counts: [1, 0, 0, 0, 0, 1] }),
-    /<dd>1,250\.5<\/dd>[\s\S]*<dd>2 – <span class="scientific-number"[^>]*><span aria-hidden="true">2\.5 &times; 10<sup>5<\/sup>/);
+    /<dd>1,250\.5<\/dd>[\s\S]*<dd>2 – <span class="scientific-number"[^>]*><span aria-hidden="true">2\.5 &times;&nbsp;10<sup>5<\/sup>/);
 
   // An overview from another download, or with another record count, is not used.
   runtimeManifest.summary.overview = { ...overview, download_sha256: "other-download" };
@@ -2268,7 +2268,7 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   assert.equal(shown({ kcat_display: "135.0" }), "135.0", "printed trailing zeros stay");
   assert.equal(shown({ km_display: "0.02828" }), "0.02828");
   assert.equal(shown({ km_display: "17.8894" }), "17.89");
-  assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times; 10<sup>7<\/sup>/);
+  assert.match(shown({ kcat_display: "1.23456e+7" }), /1\.235 &times;&nbsp;10<sup>7<\/sup>/);
   // The record's value strip follows the rule; the tooltip keeps the stored digits.
   assert.equal(api.panelValueHtml(row({ kcat_display: "30.333" }), "kcat"), "30.3");
   // An earlier-catalog kcat/Km of unstated origin is never called calculated, even when it equals kcat ÷ Km.
