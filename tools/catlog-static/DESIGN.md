@@ -314,9 +314,12 @@ printed digits stay as stored, trailing zeros included (135.0, 0.030). A kcat/Km
 CatLog calculated, or an earlier-catalog kcat/Km of unstated origin that equals
 kcat ÷ Km within 0.1%, carries "calc." (its title says which) and the significant
 figures of kcat and Km, at most 4 (one that only equals kcat ÷ Km never more than
-it is stored with: 0.56 stays 0.56). Tooltips, the record's "In catalog units"
-and the downloads keep the stored digits; a record read by CatLog shows its values
-to the figures the paper printed when CatLog gives them (value_display: 135.0).
+it is stored with: 0.56 stays 0.56). Tooltips and the downloads keep the stored
+digits. The record's Value column follows the table's rule, except that a record
+read by CatLog shows its values to the figures the paper printed when CatLog gives
+them (value_display: 135.0 where the table shows 135), never more figures than the
+paper prints (a printed 47,000 M⁻¹ s⁻¹ reads 47, not 47.000). The Guide's Units
+section says the same.
 Every column fits in about 1010px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
