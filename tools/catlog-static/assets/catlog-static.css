@@ -383,9 +383,11 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
 
-/* Names wrap to two lines between words (hyphenated where a word is longer than the column; a break inside a word only
-   as a last resort); the full name is in the tooltip. SMILES and sequences alone may break anywhere. */
-.clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:break-word; -webkit-hyphens:auto; hyphens:auto; white-space:normal }
+/* Names wrap to two lines between words; the full name is in the tooltip. Only a name with a word longer than its
+   column is hyphenated (.hyphenate, set by the script that fits the columns), because hyphens:auto would also split
+   words that fit on the next line; a break inside a word is the last resort. SMILES and sequences may break anywhere. */
+.clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:break-word; white-space:normal }
+.clamp-2.hyphenate { -webkit-hyphens:auto; hyphens:auto }
 /* While the script measures each cell's natural width (one layout,never painted). */
 table.measuring .sort-button { width:max-content }
 table.measuring .clamp-2 { display:inline-block; max-width:none; white-space:nowrap }

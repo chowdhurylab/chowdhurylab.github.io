@@ -5721,15 +5721,15 @@
       const widest = Math.max(natural[natural.length - 1], header);
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
-      const wordWidth = column.shrink
-        ? Math.ceil(Math.max(...cells.map((cell) => widestWordWidth(cell.firstElementChild || cell))) + padding)
-        : min;
+      // Each name's longest word (a name column only), and the narrowest the column can be without breaking one.
+      const cellWords = column.shrink ? cells.map((cell) => widestWordWidth(cell.firstElementChild || cell)) : [];
+      const wordWidth = column.shrink ? Math.ceil(Math.max(...cellWords) + padding) : min;
       let width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
       if (docked && column.shrink) width = Math.max(width, Math.min(column.cap, wordWidth));
       // A name column's width with every name on one line, and the narrowest that breaks no word.
       const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
       const words = column.shrink ? Math.min(width, wordWidth) : min;
-      return { ...column, min, width, oneLine, words };
+      return { ...column, min, width, oneLine, words, cells, cellWords, padding };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
@@ -5764,6 +5764,10 @@
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
+    // Only a name with a word longer than its column is hyphenated; the others break between words.
+    widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
+      (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);
+    }));
   }
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each
