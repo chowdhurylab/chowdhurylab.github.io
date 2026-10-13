@@ -236,19 +236,19 @@
   // CatLog v2 entries are read from the paper by CatLog; CatLog v1 entries come from the enzyme databases, screened by
   // the earlier automated pipeline (v2 is the revision of v1; the user, 2026-10-13).
   const SOURCE_CATLOG_LABEL = "CatLog v2: read from the paper";
-  const SOURCE_DATABASES_LABEL = "CatLog v1: from enzyme databases";
+  const SOURCE_DATABASES_LABEL = "CatLog v1: earlier entries";
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
   // full (#guide-method).
   const v2Sentence = "Read from the paper by an AI model; a second, separate AI check compared each value with the paper.";
   const SOURCE_CATLOG_HELP = "Read by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB, plus earlier paper extractions and records with no source recorded; screened by an earlier automated pipeline of AI models and code checks.";
+  const SOURCE_DATABASES_HELP = "From enzyme databases (BRENDA, SABIO-RK, the Open Enzyme Database (OED), UniProt, SKiD and STRENDA DB) and earlier paper extractions; the earlier automated pipeline checked part of them against their papers, and the accepted ones say so.";
   // The sidebar's labels are short; where the sidebar is too narrow for one line, the version stays on the first line and
   // what it means moves whole to the next (.source-mode-what). The help is behind the group's "?".
   const sourceModes = [
     { value: "all", label: "All records" },
     { value: "paper", label: SOURCE_CATLOG_LABEL, shortHtml: 'CatLog v2: <span class="source-mode-what">read from the paper</span>',
       help: SOURCE_CATLOG_HELP, guide: true },
-    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1: <span class="source-mode-what">enzyme databases</span>',
+    { value: "databases", label: SOURCE_DATABASES_LABEL, shortHtml: 'CatLog v1: <span class="source-mode-what">earlier entries</span>',
       help: SOURCE_DATABASES_HELP },
   ];
   // The databases of the second group; tag is the word the status cell uses, name the record's Source line (label when
@@ -1804,10 +1804,9 @@
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
-    // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review"), and the catalog
-    // reviewed is named as the site names it ("the earlier catalog": CatLog v1 entries).
-    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review")
-      .replace(/\breview of the earlier catalog\b/g, "review of CatLog v1 entries");
+    // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review"); the notes name the
+    // catalog reviewed themselves ("the review of CatLog v1 entries", catlog-v2 e54b978), so nothing else is rewritten.
+    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review");
     // A mark that lists the approved values and says nothing else: which values, in words.
     const listed = !note && !mark?.checked && Array.isArray(mark?.approved)
       ? VALUE_FIELDS.filter(([field]) => humanApprovedFields(row).has(field)).map(([field]) => ({ kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" })[field])
@@ -5402,7 +5401,7 @@
     };
   }
 
-  // Source: one of All records, CatLog v2: read from the paper or CatLog v1: from enzyme databases; databases ticked under "By
+  // Source: one of All records, CatLog v2: read from the paper or CatLog v1: earlier entries; databases ticked under "By
   // database" narrow the last (and select it).
   function sourceControlState() {
     const sources = selectedCheckboxes("source");

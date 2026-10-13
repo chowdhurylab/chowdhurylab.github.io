@@ -362,7 +362,7 @@ const measurementInputs = ["kcat", "km", "kcat_over_km"].map((value) => ({
   value,
   checked: false,
 }));
-// Source: three radios (All records, CatLog v2: read from the paper, CatLog v1: from enzyme databases) and the databases.
+// Source: three radios (All records, CatLog v2: read from the paper, CatLog v1: earlier entries) and the databases.
 const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
   value, type: "radio", name: "sourceMode", checked: value === "all",
 }));
@@ -3597,8 +3597,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.setHumanReviewMarks({
     "hc-accepted": { checked: true },
     "hc-pending": { checked: true },
-    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of the earlier catalog." },
-    "hc-note-2": { checked: false, note: "A human reviewer approved the same kcat and Km for this paper in the 2026 review of the earlier catalog; kcat/Km was not reviewed." },
+    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of CatLog v1 entries." },
+    "hc-note-2": { checked: false, note: "A human reviewer approved the same kcat and Km for this paper in the 2026 review of CatLog v1 entries; kcat/Km was not reviewed." },
     "hc-fixed": { checked: true, note: "Checked by a human reviewer. Corrected after human review: Km unit." },
   });
   const accepted = row({ record_key: "hc-accepted", measurement_key: "hc-accepted", verification_status: "verified" });
@@ -3702,7 +3702,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.setHumanReviewMarks({
     "hc-accepted": { checked: true },
     "hc-pending": { checked: true },
-    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of the earlier catalog." },
+    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of CatLog v1 entries." },
   });
 
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
@@ -5101,7 +5101,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const source = element("sourceChecklist").innerHTML;
   // CatLog v2 and v1 entries by name (the user, 2026-10-13).
   assert.match(source, /<span>CatLog v2: <span class="source-mode-what">read from the paper<\/span><\/span>/);
-  assert.match(source, /<span>CatLog v1: <span class="source-mode-what">enzyme databases<\/span><\/span>/);
+  assert.match(source, /<span>CatLog v1: <span class="source-mode-what">earlier entries<\/span><\/span>/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.
@@ -5109,7 +5109,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   assert.match(element("aboutSource").innerHTML, /the Open Enzyme Database \(OED\)/);
   assert.match(element("aboutSource").innerHTML, /<strong>CatLog v2: read from the paper<\/strong>: Read by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1: from enzyme databases<\/strong>: BRENDA, SABIO-RK/);
+  assert.match(element("aboutSource").innerHTML, /<strong>CatLog v1: earlier entries<\/strong>: From enzyme databases \(BRENDA, SABIO-RK/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
