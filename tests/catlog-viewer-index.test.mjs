@@ -98,13 +98,23 @@ for await (const line of lines(tableUrl)) {
   tableRows.set(row.record_key, { position: tableRows.size, row });
   tableUncompressedBytes += Buffer.byteLength(line) + 1;
 }
-// Optional text fields (condition_note) are in the index only when the snapshot carries them.
+// Optional text fields (condition_note) are in the index only when the snapshot carries them. database_summary is not a
+// table field: the builder derives it from the Table row's comparison fields (DATABASE_FIELDS) or the Full data's (each
+// proof line's database_status, the record's corrections), one number per record.
 const optionalFields = viewer.optional_fields || [];
+const DATABASE_FIELDS = new Set([
+  "database_summary", "database_statuses", "database_status", "kcat_database_status", "km_database_status",
+  "kcat_over_km_database_status", "corrections", "corrections_count", "database_note",
+]);
+const textOptionalFields = optionalFields.filter((field) => field !== "database_summary");
 assert.deepEqual(
-  [...viewer.retained_fields, ...viewer.omitted_fields, ...optionalFields].sort(),
-  [...tableFields].sort(),
+  [...viewer.retained_fields, ...viewer.omitted_fields, ...textOptionalFields].sort(),
+  [...tableFields].filter((field) => !DATABASE_FIELDS.has(field)).sort(),
   "viewer fields and omissions must partition the public table schema",
 );
+const hasComparison = (row) => [...DATABASE_FIELDS].some((field) => ![undefined, null, "", 0].includes(row[field])
+  && !(Array.isArray(row[field]) && !row[field].length))
+  || (row.proof_lines || []).some((line) => line && ![undefined, null, ""].includes(line.database_status));
 
 // Decode schema 2 the way the page does (catlog-static.js viewerRowConstructor).
 const viewerLines = lines(viewerUrl)[Symbol.asyncIterator]();
@@ -153,6 +163,7 @@ function decode(values) {
 
 // Per record, the PMIDs and lower-case DOIs the Full data download gives it (the builder's _paper_ids).
 const enrichedIds = new Map();
+const enrichedCompared = new Set();
 if (paperFields.length) {
   for await (const line of lines(relative(`tools/catlog-static/${manifest.enriched_download.path}`))) {
     const row = JSON.parse(line);
@@ -162,6 +173,7 @@ if (paperFields.length) {
       .map((value) => String(value ?? "").trim().replace(/^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)/i, "").toLowerCase())
       .filter((value) => value.startsWith("10.") && value.includes("/")))];
     enrichedIds.set(row.record_key, { pmids, dois });
+    if (hasComparison(row)) enrichedCompared.add(row.record_key);
   }
   assert.equal(enrichedIds.size, manifest.total_rows, "the Full data download holds every record");
 }
@@ -210,9 +222,15 @@ for await (const line of viewerLines) {
   for (const field of [...viewer.retained_fields, ...Object.keys(viewer.derived_fields)]) {
     assert.deepEqual(row[field], source.row[field], `${field} differs for ${row.record_key}`);
   }
-  for (const field of optionalFields) {
+  for (const field of textOptionalFields) {
     const tableValue = typeof source.row[field] === "string" && source.row[field].trim() ? source.row[field].trim() : null;
     assert.equal(row[field], tableValue, `${field} differs for ${row.record_key}`);
+  }
+  if (optionalFields.includes("database_summary") && row.database_summary !== null) {
+    assert.ok(Number.isInteger(row.database_summary) && row.database_summary > 0 && row.database_summary <= 63,
+      `database_summary of ${row.record_key} is not a set of comparison bits: ${row.database_summary}`);
+    assert.ok(hasComparison(source.row) || enrichedCompared.has(row.record_key),
+      `database_summary of ${row.record_key} has no comparison in the Table or Full data download`);
   }
   assert.equal(shard, Math.floor(source.position / header.details_per_shard), `detail shard of ${row.record_key}`);
   if (papers) assert.deepEqual(papers, enrichedIds.get(row.record_key), `paper identifiers of ${row.record_key}`);

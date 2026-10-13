@@ -161,8 +161,10 @@ enzyme databases, a merged record counts under each database it names, and All
 records or Read from the paper clears them), Against the databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
 scripts/build-catlog-viewer-index.py takes from the Table download's database
-fields, the CatLog side's per-value database_status, a record summary or the
-earlier review's corrections list; never an empty heading: Corrects a database,
+fields or the Full data download of the same records (where the CatLog side's
+export puts them: each proof line's database_status, an earlier corrected
+record's corrections list; a Table field of the same name wins), the per-value
+database_status, a record summary or the corrections list; never an empty heading: Corrects a database,
 Differs, unresolved, Same as a database (every compared value), Adds a value (a
 value no database lists for the paper), Not in any database (none listed) and,
 when a record has one, Changed in earlier review; a record matches any option

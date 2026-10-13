@@ -207,7 +207,9 @@ OPTIONAL_TEXT_FIELDS = ("condition_note",)
 
 # How a record compares with the enzyme databases (BRENDA, SABIO-RK, OED, SKiD, STRENDA DB for the same paper), for the
 # sidebar's "Against the databases" group. The Table download may carry it in any of these shapes (the CatLog side's
-# per-value database_status, a record-level summary, or the earlier review's corrections list); the index writes one
+# per-value database_status, a record-level summary, or the earlier review's corrections list), and so may the Full data
+# download of the same records (catlog-enriched: each proof line's database_status, the record's corrections), which is
+# where the CatLog side's export puts it (its Table rows are built without them); the index reads both and writes one
 # compact number per record, "database_summary" (after the optional text fields, null on rows without it), only when
 # some row has one. The per-value lines themselves stay in the record's detail file.
 DATABASE_FIELDS = (
@@ -278,6 +280,9 @@ def database_summary(values: dict, unknown: dict[str, int]) -> int | None:
                   "kcat_over_km_database_status"):
         value = values.get(field)
         add(list(value.values()) if isinstance(value, dict) else value)
+    for line in values.get("proof_lines") or ():  # a Full data row: one database_status per value
+        if isinstance(line, dict):
+            add(line.get("database_status"))
     corrections = values.get("corrections")
     count = values.get("corrections_count")
     if (isinstance(corrections, list) and corrections) or (
@@ -398,10 +403,27 @@ def shared_texts(source_path: Path) -> dict[str, list[str]]:
     }
 
 
-def _paper_ids(enriched_path: Path, record_keys: set[str]) -> dict[str, tuple[list[int], list[str]]] | None:
+def full_data_database_fields(row: dict) -> dict:
+    """What a Full data row says about its comparison with the enzyme databases, for database_summary: its
+    DATABASE_FIELDS and its proof lines' database_status (only those, so the record's quotes are not kept)."""
+    fields = {field: row[field] for field in DATABASE_FIELDS if row.get(field) not in (None, "", [], {})}
+    statuses = [line.get("database_status") for line in row.get("proof_lines") or ()
+                if isinstance(line, dict) and line.get("database_status") not in (None, "")]
+    if statuses:
+        fields["proof_lines"] = [{"database_status": status} for status in statuses]
+    return fields
+
+
+def _paper_ids(
+    enriched_path: Path,
+    record_keys: set[str],
+    database: dict[str, dict] | None = None,
+) -> dict[str, tuple[list[int], list[str]]] | None:
     """Per record_key, its PMIDs (the paper's own first) and lower-case DOIs from one Full data download; None when
-    that download does not hold exactly these records (another snapshot's)."""
+    that download does not hold exactly these records (another snapshot's). When `database` is given, it receives each
+    record's comparison with the enzyme databases from the same download (full_data_database_fields), only on success."""
     found: dict[str, tuple[list[int], list[str]]] = {}
+    compared: dict[str, dict] = {}
     with gzip.open(enriched_path, "rb") as source:
         for raw_line in source:
             if not raw_line.strip():
@@ -421,15 +443,28 @@ def _paper_ids(enriched_path: Path, record_keys: set[str]) -> dict[str, tuple[li
                 if text.startswith("10.") and "/" in text and text not in dois:
                     dois.append(text)
             found[key] = (pmids, dois)
-    return found if len(found) == len(record_keys) else None
+            if database is not None:
+                fields = full_data_database_fields(row)
+                if fields:
+                    compared[key] = fields
+    if len(found) != len(record_keys):
+        return None
+    if database is not None:
+        database.update(compared)
+    return found
 
 
-def paper_ids(source_path: Path, record_keys: set[str], enriched_path: Path | None = None):
+def paper_ids(
+    source_path: Path,
+    record_keys: set[str],
+    enriched_path: Path | None = None,
+    database: dict[str, dict] | None = None,
+):
     """The Full data download of these records and its paper identifiers: the named file, else the newest
     catlog-enriched.<id>.jsonl.gz next to the table that holds exactly the table's records; (None, {}) when the
-    folder has none."""
+    folder has none. `database` receives the records' comparison with the enzyme databases from that download."""
     if enriched_path is not None:
-        ids = _paper_ids(enriched_path, record_keys)
+        ids = _paper_ids(enriched_path, record_keys, database)
         if ids is None:
             raise RuntimeError(f"{enriched_path.name} does not hold the table's records")
         return enriched_path, ids
@@ -438,7 +473,7 @@ def paper_ids(source_path: Path, record_keys: set[str], enriched_path: Path | No
         key=lambda path: (-path.stat().st_mtime, path.name),
     )
     for candidate in candidates:
-        ids = _paper_ids(candidate, record_keys)
+        ids = _paper_ids(candidate, record_keys, database)
         if ids is not None:
             return candidate, ids
     return None, {}
@@ -466,6 +501,7 @@ def build(
     optional_values: dict[str, dict[str, str]] = {field: {} for field in OPTIONAL_TEXT_FIELDS}
     database_values: dict[str, int] = {}
     database_unknown: dict[str, int] = {}
+    database_table: dict[str, dict] = {}
     source_bytes = 0
     encoded_numbers = {field: 0 for field in (*NUMBER_FROM_DISPLAY, *SAME_AS)}
 
@@ -496,9 +532,7 @@ def build(
                 if value and value.strip():
                     optional_values[field][record_key] = value.strip()
             if database:
-                summary = database_summary(database, database_unknown)
-                if summary is not None:
-                    database_values[record_key] = summary
+                database_table[record_key] = database
             for field, source_field in DERIVED_FIELDS.items():
                 value, source_value = row[field], row[source_field]
                 if value != source_value or isinstance(value, bool) != isinstance(source_value, bool):
@@ -531,8 +565,18 @@ def build(
             rows.append((default_order_key(row, position), values, record_key, position))
 
     rows.sort(key=lambda item: item[0])
-    papers_path, ids = paper_ids(source_path, record_keys, enriched_path)
+    database_full: dict[str, dict] = {}
+    papers_path, ids = paper_ids(source_path, record_keys, enriched_path, database_full)
     paper_fields = PAPER_FIELDS if papers_path else ()
+    # A record's comparison from both downloads; where both name the same field, the Table row's is kept.
+    database_sources = {"table": 0, "full_data": 0}
+    for record_key in sorted(set(database_table) | set(database_full)):
+        summary = database_summary({**database_full.get(record_key, {}), **database_table.get(record_key, {})},
+                                   database_unknown)
+        if summary is not None:
+            database_values[record_key] = summary
+            database_sources["table"] += record_key in database_table
+            database_sources["full_data"] += record_key in database_full
     optional_fields = tuple(field for field in OPTIONAL_TEXT_FIELDS if optional_values[field])
     if database_values:
         optional_fields += (DATABASE_SUMMARY_FIELD,)
@@ -599,6 +643,7 @@ def build(
         "database_summary_bits": {str(bit): sum(1 for value in database_values.values() if value & bit)
                                   for bit in (1, 2, 4, 8, 16, 32)} if database_values else {},
         "database_statuses_unknown": dict(sorted(database_unknown.items())),
+        "database_summary_sources": database_sources if database_values else {},
         "paper_id_fields": list(paper_fields),
         "paper_ids_source": papers_path.name if papers_path else None,
         "rows_with_pmid": sum(1 for row_pmids, _dois in ids.values() if row_pmids),

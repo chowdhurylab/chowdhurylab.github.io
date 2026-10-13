@@ -207,6 +207,49 @@ class ViewerManifestTests(unittest.TestCase):
         metadata, header, _encoded = self.build_rows([rows[-2], rows[-1], dict(rows[-1], record_key="x", measurement_key="x", review_key="x", database_note="All 20 ...")])
         self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "s"])
 
+    def test_database_summary_comes_from_the_full_data_too(self):
+        # The CatLog side's export puts the comparison only in the record and the Full data download: each proof line's
+        # database_status, an earlier corrected record's corrections. The index reads it there, with the paper ids.
+        v2 = dict(verification_status="verified", source_db="primary_paper_direct", enzyme_label_source="explicit_enzyme_name")
+        rows = [self.table_row("fixed", **v2), self.table_row("same", **v2), self.table_row("earlier", verification_status="corrected"),
+                self.table_row("both", **v2, km_database_status="differs"), self.table_row("plain")]
+        full = {
+            "fixed": {"proof_lines": [{"metric": "kcat", "database_status": "corrected", "database_line": "BRENDA lists 47,000."},
+                                      {"metric": "Km", "database_status": "confirmed"}, {"metric": "kcat/Km"}],
+                      "database_note": "BRENDA lists the values of another table."},
+            "same": {"proof_lines": [{"metric": "Km", "database_status": "confirmed"}, {"metric": "kcat", "database_status": ""}]},
+            "earlier": {"corrections": [{"field": "km", "before": 4.7, "after": 0.47, "kind": "magnitude"}]},
+            "both": {"proof_lines": [{"metric": "kcat", "database_status": "new"}]},
+            "plain": {"proof_lines": [{"metric": "kcat", "check": "confirmed"}], "corrections": []},
+        }
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        table = root / "catlog-table.000000000000.jsonl.gz"
+        table.write_bytes(gzip.compress("".join(json.dumps(row) + "\n" for row in rows).encode(), mtime=0))
+        enriched = root / "catlog-enriched.111111111111.jsonl.gz"
+        enriched.write_bytes(gzip.compress("".join(
+            json.dumps(dict(row, pubmed_id="123", **full[row["record_key"]])) + "\n" for row in rows).encode(), mtime=0))
+        target = root / "viewer.jsonl.gz"
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            metadata = BUILD.build(table, target, details_per_shard=2, enriched_path=enriched)
+        lines = gzip.decompress(target.read_bytes()).decode().splitlines()
+        header = json.loads(lines[0])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", *BUILD.PAPER_FIELDS, "s"])
+        decoded = {row[0]: dict(zip(header["fields"], row))["database_summary"] for row in map(json.loads, lines[1:])}
+        self.assertEqual(decoded, {"fixed": 3, "same": 1, "earlier": 32, "both": 12, "plain": None})
+        self.assertEqual(metadata["rows_with_optional"], {"database_summary": 4})
+        self.assertEqual(metadata["database_summary_sources"], {"table": 1, "full_data": 4})
+        # without a Full data download of the same records nothing comes from another snapshot's
+        other = root / "catlog-enriched.222222222222.jsonl.gz"
+        other.write_bytes(gzip.compress((json.dumps(dict(rows[0], record_key="z", **full["fixed"])) + "\n").encode(), mtime=0))
+        enriched.unlink()
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            metadata = BUILD.build(table, target, details_per_shard=2)
+        header = json.loads(gzip.decompress(target.read_bytes()).decode().splitlines()[0])
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", "s"])
+        self.assertEqual(metadata["database_summary_sources"], {"table": 1, "full_data": 0})
+
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
