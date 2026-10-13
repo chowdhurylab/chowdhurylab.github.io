@@ -966,9 +966,11 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .team-legend-item:is(:hover,.is-lit) { background:var(--surface-2) }
 .team-legend-button[aria-pressed="true"] { border-color:var(--accent-line); background:var(--accent-tint) }
 .team-legend-button:focus-visible { outline-offset:0 }
-.team-legend-mark { flex:0 0 14px; width:14px; height:14px; margin-top:3px; border:1.5px solid }
-.team-legend-ai .team-legend-mark { border-color:var(--accent); border-radius:3px; background:var(--accent-tint) }
-.team-legend-person .team-legend-mark { border-color:var(--muted); border-radius:50%; background:var(--surface-2) }
+/* Each line's mark is a filled 10px swatch in its chip's outline colour, as Stats' legends are drawn (a hollow circle or
+   square read as an unticked radio button or checkbox): a grey dot for a person, an accent square for an AI agent. */
+.team-legend-mark { flex:0 0 10px; width:10px; height:10px; margin-top:5px; background:var(--mark); background:color-mix(in srgb, var(--mark) 60%, transparent); box-shadow:inset 0 0 0 1px var(--mark) }
+.team-legend-ai .team-legend-mark { --mark:var(--accent); border-radius:2px }
+.team-legend-person .team-legend-mark { --mark:var(--muted); border-radius:50% }
 @media (prefers-reduced-motion: reduce) {
   .team-dots { display:none }
   .team-highlight .team-station, .team-highlight .team-actor { transition:none }

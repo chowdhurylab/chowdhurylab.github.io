@@ -241,7 +241,8 @@ chips leave the status navy and the comparison brown to their own meanings, and
 a focused chip gets a 2px accent ring set apart from it. Pointing at a person or
 agent, on the figure or in the legend under it (People and AI agents, one
 plain phrase each and where they work, in the loop's order), or focusing a chip, lights their stations and fades the
-rest. Each legend line is a toggle button (aria-pressed, named by its phrase,
+rest. Each legend line starts with a filled 10px swatch in its chip's outline colour, as Stats' legends are drawn (a
+grey dot for a person, an accent square for an agent; hollow marks read as unticked radio buttons and checkboxes) and is a toggle button (aria-pressed, named by its phrase,
 where they work as its description): a click, tap, Enter or
 Space keeps its stations lit until it or another line is pressed, so touch
 screens can light them too. The drawing is named by aria-label, not a <title>
