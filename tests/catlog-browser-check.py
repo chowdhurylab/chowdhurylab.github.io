@@ -1109,6 +1109,17 @@ STATS_EDGE_CONTRAST_JS = """
 """
 
 
+# The bar charts' axis labels that touch (less than 2px apart) as drawn: per axis, the pairs of neighbouring labels.
+STATS_AXIS_TOUCHING_JS = """
+    return [...document.querySelectorAll('.stats-axis-ticks')].filter((axis) => axis.offsetParent).flatMap((axis) => {
+      const labels = [...axis.children].filter((tick) => getComputedStyle(tick).visibility !== 'hidden' && tick.textContent.trim())
+        .map((tick) => [tick.textContent, tick.getBoundingClientRect()]);
+      return labels.slice(1).map((label, index) => [labels[index], label]).filter(([before, after]) => after[1].left < before[1].right + 2)
+        .map(([before, after]) => `${axis.closest('[data-figure]')?.dataset.figure}: ${before[0]} | ${after[0]}`);
+    });
+"""
+
+
 # A viewer whose system draws text wider (Verdana, letter-spacing 0.5px), set before the page's script runs.
 WIDE_FONT_JS = """
     new MutationObserver((list, observer) => {
@@ -1182,6 +1193,12 @@ def check_stats_new_figures(driver, browser, url):
             assert "Verdana" in fit["family"] and fit["width"] <= fit["room"] + 0.5 and not fit["spill"], fit
             ragged = driver.execute_script(STATS_VALUE_COLUMNS_JS)
             assert not ragged, f"Value labels do not line up in a wide font: {ragged}"
+            # No two labels on a bar chart's axis touch in the wide font, on a 320px phone, at 660px (where Figure 5's
+            # name and three value columns leave its bars narrowest) and on a desktop.
+            for narrow in (1280, 660, 320):
+                driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": narrow, "height": 900, "deviceScaleFactor": 1, "mobile": narrow < 640})
+                touching = driver.execute_script(STATS_AXIS_TOUCHING_JS)
+                assert not touching, f"At {narrow}px in a wide font axis labels touch: {touching}"
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
     finally:

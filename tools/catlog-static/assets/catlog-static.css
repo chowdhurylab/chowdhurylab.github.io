@@ -918,10 +918,15 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-axis { margin-top:4px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 /* Each tick label is centred on its place, the end one too (it reaches into the axis row's empty value column), so the
    labels sit evenly; "0" starts at the axis. An axis 240px wide or less keeps 0, the middle and the end of five ticks,
-   one 300px or less only the ends of six (four always fit, also at 320px). */
+   one 300px or less only the ends of six, and one under 24ch (the labels' own font, so a wider font thins sooner: 181px
+   in the system font, 183px in Verdana) only the ends of four, whose labels of up to 7 characters would otherwise
+   touch (Figure 5 at 641-700px, where its name and three value columns leave the bars about 130px). */
 .stats-axis-ticks { position:relative; height:16px; container:axis / inline-size }
 .stats-axis-ticks > span { position:absolute; top:0; transform:translateX(-50%); white-space:nowrap }
 .stats-axis-ticks > span:first-child { transform:none }
+@container axis (max-width: 24ch) {
+  .stats-axis-ticks > span:first-child:nth-last-child(4) ~ span:not(:last-child) { visibility:hidden }
+}
 @container axis (max-width: 240px) {
   .stats-axis-ticks > span:first-child:nth-last-child(5) ~ span:nth-child(even) { visibility:hidden }
 }
