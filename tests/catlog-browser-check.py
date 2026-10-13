@@ -1856,6 +1856,18 @@ def check_record_panel(driver, browser, url, route_label):
         assert f"record={disputed}" in driver.current_url, driver.current_url
         assert driver.find_element(By.CSS_SELECTOR, '#recordsBody tr[aria-selected="true"]').get_attribute("data-key") == disputed
         results["in-page-record-link"] = True
+        # The record is the last of its page: the table scrolls its row into view, below the column headings.
+        row_in_view = """
+            const wrap = document.getElementById('recordTableWrap');
+            const row = document.querySelector('#recordsBody tr[aria-selected="true"]');
+            if (!wrap || !row) return null;
+            const box = wrap.getBoundingClientRect();
+            const head = wrap.querySelector('thead th').getBoundingClientRect();
+            const rect = row.getBoundingClientRect();
+            return rect.top >= head.bottom - 1 && rect.bottom <= Math.min(box.top + wrap.clientTop + wrap.clientHeight, innerHeight) + 1;
+        """
+        wait.until(lambda d: d.execute_script(row_in_view))
+        results["record-link-row-in-view"] = True
         results.update(check_record_marks_and_paper_link(driver, browser, base, wait))
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))

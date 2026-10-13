@@ -723,6 +723,7 @@
       // The record already open stays as it is (its place in the panel, the focus); only the table moves to its page.
       if (key === state.selectedKey) renderRows();
       else selectRecord(key);
+      revealSelectedRow();
     } else if (state.records.some((row) => row.record_key === key)) {
       selectRecord(key);
     } else {
@@ -731,6 +732,37 @@
       $("globalSearchInput").value = key;
       applyFiltersInBackground();
     }
+  }
+
+  // A record opened from the address (a shared link, a reload, Back or Forward, its paper's link) shows its row: when the
+  // row is outside the table's view, the table scrolls it to the middle, below the column headings. A record opened by
+  // a click leaves the table where it is.
+  function revealSelectedRow() {
+    const reveal = () => {
+      const wrap = $("recordTableWrap");
+      const row = $("recordsBody")?.querySelector?.("tr.selected");
+      if (!wrap || !row || typeof row.getBoundingClientRect !== "function" || typeof wrap.getBoundingClientRect !== "function") return;
+      const box = wrap.getBoundingClientRect();
+      const heading = wrap.querySelector?.("thead th");
+      const headingStyle = heading ? window.getComputedStyle(heading) : null;
+      const headingHeight = headingStyle && headingStyle.position === "sticky" && headingStyle.visibility !== "hidden"
+        ? heading.getBoundingClientRect().height
+        : 0;
+      const top = Math.max(0, box.top + wrap.clientTop + headingHeight);
+      const bottom = Math.min(box.top + wrap.clientTop + wrap.clientHeight, window.innerHeight);
+      let rect = row.getBoundingClientRect();
+      if (rect.top >= top && rect.bottom <= bottom) return;
+      if (wrap.scrollHeight > wrap.clientHeight + 1) {
+        wrap.scrollTop += rect.top - top - Math.max(0, (bottom - top - rect.height) / 2);
+        rect = row.getBoundingClientRect();
+      }
+      // On a phone the page itself may scroll: the row is brought into the window.
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        window.scrollBy?.(0, rect.top - Math.max(0, (window.innerHeight - rect.height) / 2));
+      }
+    };
+    if (typeof window.requestAnimationFrame === "function") window.requestAnimationFrame(reveal);
+    else reveal();
   }
 
   function navigateTo(view) {
