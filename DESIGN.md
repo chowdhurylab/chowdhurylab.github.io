@@ -130,7 +130,13 @@ right-aligned under their headings. Colours are tokens: review results
 reviewers in the lead), kinds of change (--chg-precision mint,
 --chg-magnitude red), --bar-neutral for single-series bars and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
-donut is the only ring. On phones each name sits above its bar. `@media
+donut is the only ring. Markup (a deliberate change from the design spec's
+inline SVG with role="img" for every figure): the donut is an SVG image
+(role="img", its summary in aria-label, a title per part) and each value-range
+histogram an image with its summary in aria-label; bar charts and table bars
+are HTML in a `<figure>`, so their names stay links into Browse that a keyboard
+reaches and every count is text a screen reader reads row by row and a viewer
+can copy. On phones each name sits above its bar. `@media
 print`: one column, no figure or headline count split across pages (the three
 value-range histograms stay side by side on any paper size, so their caption
 stays with them); bars, swatches and columns print in their colours even with

@@ -576,9 +576,11 @@ records when the snapshot has their counts, the checks table, enzyme classes,
 value ranges, then the top organisms and EC numbers, what the records contain,
 wild type and variants, and cautions. Each has "Figure N." or "Table N." with
 one sentence and a 12px data line (snapshot, Data ID, definition); fills at 60%
-with 1px outlines in the review-result and comparison tokens. Names Browse can
-filter on link to `#browse?` with the shared filter keys. The full rules are in
-the site's DESIGN.md, "Stats".
+with 1px outlines in the review-result and comparison tokens. The donut and the
+histograms are images with a summary; the bar charts are HTML, so their names
+stay links and their counts text. Names Browse can filter on link to
+`#browse?` with the shared filter keys. The full rules are in the site's
+DESIGN.md, "Stats".
 
 ## Team
 
