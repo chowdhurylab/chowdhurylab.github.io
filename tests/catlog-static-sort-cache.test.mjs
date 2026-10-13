@@ -2060,6 +2060,10 @@ function row(overrides = {}) {
     // the median of class 1 (2 s⁻¹ = 10^0.301) on a 7-decade grid from 10^-1: (0.301 + 1) / 7
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));
     assert.match(more, /#browse\?ec=1\.">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
+    // The median column reads evenly: two significant figures (the tooltip line keeps the stored median).
+    assert.deepEqual([...more.matchAll(/<span class="stats-ridge-value">([^<]+)<\/span>/g)].map((match) => match[1]), ["2.0", "4.5"]);
+    // A count chart's value column fits its longest value label, in ch (a wider font widens it), at least 96px.
+    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(5ch \+ 6px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay one sentence.
     assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "CatLog v2 and CatLog v1 entries",
       "Values per paper in CatLog v2", "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms",
@@ -2080,6 +2084,20 @@ function row(overrides = {}) {
     assert.equal(api.statsClassGrid({ by_class: { log10_start: 0, bin_width: 0.5, classes: [] } }, {}), null);
     assert.equal(api.statsRidgeFigure({}), null);
     // The smooth curve never leaves the range of its points (no overshoot below the baseline or above the peak).
+    // Medians rounded for a column: 7 → 7.0, 12.8 → 13, 0.0573 → 0.057, 1,234 → 1,200; unrounded as before.
+    assert.deepEqual([7, 12.8, 0.0573, 1234, 370].map((value) => api.statsRangeNumber(value, { figures: 2 })), ["7.0", "13", "0.057", "1,200", "370"]);
+    assert.equal(api.statsRangeNumber(0.0573), "0.0573");
+    // The donut's centre total is fitted to the hole only when it is wider than it (data-room, px).
+    const fitted = new Map([["data-room", "98"]]);
+    const total = { getAttribute: (name) => fitted.get(name) ?? null, setAttribute: (name, value) => fitted.set(name, value),
+      removeAttribute: (name) => fitted.delete(name), getComputedTextLength: () => 120 };
+    api.statsFitDonutTotals({ querySelectorAll: () => [total] });
+    assert.equal(fitted.get("textLength"), "98");
+    assert.equal(fitted.get("lengthAdjust"), "spacingAndGlyphs");
+    total.getComputedTextLength = () => 90;
+    api.statsFitDonutTotals({ querySelectorAll: () => [total] });
+    assert.ok(!fitted.has("textLength") && !fitted.has("lengthAdjust"));
+    assert.match(element("statsCharts").innerHTML, /<text class="stats-donut-total" x="100" y="100" data-room="98">/);
     const path = api.statsSmoothPath([[0, 40], [10, 40], [20, 4], [30, 39], [40, 40], [100, 40]]);
     const ys = [...path.matchAll(/-?[\d.]+ (-?[\d.]+)/g)].map((match) => Number(match[1]));
     assert.ok(ys.length > 6 && ys.every((y) => y >= 4 - 1e-9 && y <= 40 + 1e-9), path);

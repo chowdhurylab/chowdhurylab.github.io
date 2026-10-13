@@ -3656,6 +3656,9 @@
   // Pointing at a row (or focusing its link) lights it and gives its exact counts in a tooltip line (data-hl, data-tip).
   // `switchable`: a count chart that can also draw each row as 100% of itself (the Records | Share switch).
   function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "" }) {
+    // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px.
+    const longest = Math.max(0, ...rows.map((row) => String(row.value).replace(/<[^>]*>/g, "").replace(/&[a-z#0-9]+;/gi, "x").length));
+    if (!valueWidth && !percent && longest) valueWidth = `max(96px, calc(${longest}ch + 6px))`;
     const refs = percent ? [0, 25, 50, 75, 100] : step ? statsTickRefs(scale, step) : [0];
     const tools = switchable
       ? `<div class="stats-chart-tools">${legend.length ? statsLegend(legend) : ""}<div class="stats-switch" role="group" aria-label="Bar length">${[["records", "Records"], ["share", "Share"]]
@@ -3726,9 +3729,24 @@
     const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
     return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
       <defs>${gradients}</defs><g class="stats-donut-slices">${paths.join("")}</g>${gaps}
-      <text class="stats-donut-total" x="100" y="100">${formatInteger(total)}</text>
+      <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 14}">${formatInteger(total)}</text>
       <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
     </svg>`;
+  }
+
+  // The donut's centre total stays inside the hole whatever font the viewer's system draws it in: a total wider than
+  // the hole (data-room, in px: the donut is drawn 1:1) is set to that width. Run once Stats is on screen.
+  function statsFitDonutTotals(root) {
+    for (const text of root?.querySelectorAll?.(".stats-donut-total") || []) {
+      text.removeAttribute("textLength");
+      text.removeAttribute("lengthAdjust");
+      const room = Number(text.getAttribute("data-room")) || 0;
+      const width = typeof text.getComputedTextLength === "function" ? text.getComputedTextLength() : 0;
+      if (room > 0 && width > room) {
+        text.setAttribute("textLength", String(room));
+        text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      }
+    }
   }
 
   // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
@@ -3784,13 +3802,15 @@
   }
 
   // A median or percentile from 1,000 to below 100,000 prints with thousands separators, like the counts (2,300); smaller
-  // and larger ones print as numberText and numberHtml do (0.067, 1.2 × 10⁵).
-  function statsRangeNumber(value, { html = false } = {}) {
-    if (Math.abs(value) >= 1000 && Math.abs(value) < 1e5) {
-      const text = new Intl.NumberFormat(undefined, { maximumFractionDigits: 20 }).format(value);
+  // and larger ones print as numberText and numberHtml do (0.067, 1.2 × 10⁵). With `figures`, rounded to that many
+  // significant figures first (a column of medians reads evenly: 7.0, 13, 0.057).
+  function statsRangeNumber(value, { html = false, figures = 0 } = {}) {
+    const shown = figures > 0 ? Number(value.toPrecision(figures)) : value;
+    if (Math.abs(shown) >= 1000 && Math.abs(shown) < 1e5) {
+      const text = new Intl.NumberFormat(undefined, { maximumFractionDigits: 20 }).format(shown);
       return html ? escapeHtml(text) : text;
     }
-    return html ? numberHtml(value) : numberText(value);
+    return html ? numberHtml(value, { figures }) : numberText(value, { figures });
   }
 
   // One metric's values on a log scale: bars per power of ten (the end bars hold everything beyond them), the median and
@@ -3912,13 +3932,18 @@
       return `<li class="stats-ridge-row" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(text)}">
         <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
         <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L100 ${STATS_RIDGE_BASE}L0 ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg><span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
-        <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true })}</span>
+        <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
       </li>`;
     }).join("");
     const ticks = [];
     for (let decade = Math.ceil(grid.start); decade <= grid.start + span + 1e-9; decade += 1) ticks.push(decade);
+    // A tick per decade, labelled every other decade on a wide axis; every second label gives way on a narrow one.
     const every = ticks.length > 7 ? 2 : 1;
-    const axis = ticks.map((decade, index) => `<span class="${index % every ? "stats-ridge-tick-minor" : ""}" style="left:${+((decade - grid.start) / span * 100).toFixed(3)}%">${index % every ? "" : `10<sup>${String(decade).replace("-", "−")}</sup>`}</span>`).join("");
+    const axis = ticks.map((decade, index) => {
+      const labelled = !(index % every);
+      const kind = labelled ? ((index / every) % 2 ? "stats-ridge-tick-alt" : "") : "stats-ridge-tick-minor";
+      return `<span${kind ? ` class="${kind}"` : ""} style="left:${+((decade - grid.start) / span * 100).toFixed(3)}%">${labelled ? `10<sup>${String(decade).replace("-", "−")}</sup>` : ""}</span>`;
+    }).join("");
     return `<div class="stats-ridges stats-metric-${metric.key}" data-metric="${metric.key}">
       <svg class="stats-ridge-defs" aria-hidden="true" focusable="false"><defs><linearGradient id="statsRidgeFill-${metric.key}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stats-ridge-stop-top"/><stop offset="1" class="stats-ridge-stop-bottom"/></linearGradient></defs></svg>
       <p class="stats-ridges-title"><span>${metric.html} <span class="stats-range-unit">(${escapeHtml(unit)})</span></span><span class="stats-ridges-head">Median</span></p>
@@ -3945,7 +3970,7 @@
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
       caption: `Values in catalog units on a log scale, one curve per enzyme class drawn through ${binWord} bins and scaled to its own peak, with the median as a dot and the middle 80% of values as a line.`,
-      data: statsDataLine("A record in several classes counts in each; the end bins include all values beyond them; values without a recorded unit, or in a unit other than the catalog's, are left out."),
+      data: statsDataLine("A record in several classes counts in each; the end bins include all values beyond them; values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures."),
     };
   }
 
@@ -4860,7 +4885,7 @@
       ].filter(Boolean).join(" ");
       biology.push({
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
-        body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step), valueWidth: withV2 ? "152px" : "",
+        body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
           legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: "CatLog v2 entries" }] : [])] }),
         caption: withV2 ? "Records per enzyme class, with the accepted ones and the CatLog v2 entries; each label gives records, accepted, then CatLog v2 entries."
           : "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
@@ -4960,6 +4985,7 @@
       </dl></details>`);
     }
     $("statsCharts").innerHTML = sections.join("");
+    statsFitDonutTotals($("statsCharts"));
   }
 
   // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time
@@ -10975,6 +11001,8 @@
       statsRidgeFigure,
       statsSmoothPath,
       statsSwitchMode,
+      statsRangeNumber,
+      statsFitDonutTotals,
       reviewLeadHtml,
       renderTeam,
       teamNumbers,

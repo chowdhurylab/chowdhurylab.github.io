@@ -198,10 +198,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* The key numbers (records, accepted, read from the paper) in accent ink with a soft glow; human-checked in its green. */
 .summary-card strong, .snapshot-paper > strong { color:var(--accent); text-shadow:0 0 12px var(--accent-glow) }
 .snapshot-checked > strong { color:var(--checked); text-shadow:0 0 12px color-mix(in srgb, var(--checked) 24%, transparent) }
-.snapshot-paper[href], .snapshot-checked[href] { margin:-3px -6px; border-radius:6px; padding:3px 6px }
-.snapshot-paper[href]:hover, .snapshot-checked[href]:hover { background:var(--accent-tint) }
+/* A linked count tints calmly under the pointer; the tint is drawn around it (::before), so the band's line keeps its place. */
+.snapshot-paper[href], .snapshot-checked[href] { position:relative; isolation:isolate }
+.snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-3px -6px; z-index:-1; border-radius:6px; background:transparent; pointer-events:none }
+.snapshot-paper[href]:hover::before, .snapshot-checked[href]:hover::before { background:var(--accent-tint) }
 @media (prefers-reduced-motion: no-preference) {
-  .snapshot-paper[href], .snapshot-checked[href] { transition:background-color 200ms ease }
+  .snapshot-paper[href]::before, .snapshot-checked[href]::before { transition:background-color 200ms ease }
 }
 /* Human-checked N: a link to those records, its label in the human-checked green. */
 .snapshot-checked > span { color:var(--checked); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
@@ -890,7 +892,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-percent { --label-w:88px }
 /* Labels set on 16px lines, the bar's height, so bars of one-line rows sit 8px apart. */
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
-.stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px }
+/* The rows' own size is the value labels' 12px, so a value column given in ch (statsBarChart) fits them. */
+.stats-chart-row, .stats-chart-axis { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px; font-size:var(--fs-12) }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -1039,7 +1042,10 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ridge-row.is-active .stats-ridge-svg { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 70%, transparent)) }
 .stats-ridge-row.is-active .stats-ridge-label { font-weight:600 }
 .stats-ridge-axis { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-ridge-ticks { position:relative; height:16px }
+.stats-ridge-ticks { position:relative; height:16px; container:ridge-axis / inline-size }
+@container ridge-axis (max-width: 220px) {
+  .stats-ridge-ticks > .stats-ridge-tick-alt { font-size:0 }
+}
 .stats-ridge-ticks > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap }
 .stats-ridge-ticks > span::before { content:""; position:absolute; left:50%; top:-8px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-ridge-ticks sup { font-size:var(--fs-12) }
@@ -1167,7 +1173,9 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-checks { grid-template-columns:1fr }
-  .stats-ridges { --ridge-label:minmax(0,112px) }
+  /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line). */
+  .stats-ridges { --ridge-label:44px }
+  .stats-ridge-name { display:none }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar. */
   .stats-chart-row, .stats-chart-axis { grid-template-columns:minmax(0,1fr) var(--value-w,96px); row-gap:4px }
@@ -1189,7 +1197,9 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
   /* Paper: no glow, no wash, no tooltip or switch. */
   .stats-view *, .snapshot-band * { text-shadow:none !important; filter:none !important }
-  .stats-band, .stats-lead { background:var(--bg) }
+  .stats-part-number { box-shadow:inset 0 0 0 1px var(--accent-line) }
+  .stats-meter > span, .stats-track .stats-seg.stats-part-catlog-mark { box-shadow:none }
+  .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
   .stats-tip, .stats-switch { display:none !important }
   .stats-part-title { break-after:avoid }
   .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
