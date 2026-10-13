@@ -3465,7 +3465,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|-1| mM|-1| for this substrate row.|");
   assert.equal(note({ table_label: "ScienceDirect HTML Table 1, Kinetic properties of I. isl MalDH", row_label: "Pyruvate",
     normalized_value_unit_evidence: "kcat=8 s^-1. No Km was populated in the expected row, and Table 1 leaves Km blank for pyruvate." }),
-  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The CatLog v1 entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
+  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The earlier version's entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
   assert.match(note({ table_label: "Official PMC full-text Table 1", row_label: "x", normalized_value_unit_evidence: "kcat/Km 81.3 s^-1 mM^-1; current_export_kcat_over_km=86.0 s^-1 mM^-1; current_export_km=1.21 mM; kcat_over_km 0.755 s^-1 mM^-1" }),
     /^\|Where\|Table 1 · x\|Conversion\|kcat\/Km 81\.3 .*; earlier kcat\/Km 86\.0 .*; earlier Km 1\.21 mM; kcat\/Km 0\.755 /);
   assert.match(note({ table_label: "PMID 17041055 PMC full text", row_label: "Sulfolobus tokodaii reductase", raw_value_unit_evidence: "Km 0.015 mM mM; normalized to 0.015 mM" }),
@@ -3750,7 +3750,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const trail = html.slice(html.indexOf('class="detail-section databases-section"'), html.indexOf('class="detail-section review-section"'));
   assert.doesNotMatch(trail, /<table/);
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude <span class="cmp-factor">\(÷ 1000\)<\/span><\/span><\/span><small class="cmp-before">Before: as in OED for this paper<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
-  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: CatLog v1 value before the correction<\/small>/);
+  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: the earlier version&#39;s value before the correction<\/small>/);
   assert.equal((trail.match(/>5 s⁻¹/g) || []).length, 0, "a field whose number did not change is not listed");
   assert.match(trail, /<span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>40 s⁻¹ mM⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><span>added: the source had none<\/span><\/span><\/dd>/);
   assert.match(trail, /<dt>pH<\/dt><dd><span class="cmp-value">7<span class="cmp-arrow"> → <\/span><strong>7\.5<\/strong><\/span>/);
@@ -3934,10 +3934,14 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /detail-status-checked/);
   assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/dd>/);
   api.renderDetail(noted, {});
-  // A note's review year is not shown (facts only), and the catalog reviewed is named CatLog v1 entries.
-  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of CatLog v1 entries\./);
+  // A note's review year is not shown (facts only), and a note that names CatLog v1 entries says the earlier version's
+  // entries (CatLog is the one name, round 8).
+  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier version&#39;s entries\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
-  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of CatLog v1 entries; kcat\/Km was not reviewed\.<\/dd>/);
+  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version&#39;s entries; kcat\/Km was not reviewed\.<\/dd>/);
+  // The other shapes a note could take say the same.
+  assert.deepEqual(["The CatLog v1 entry has no Km.", "a CatLog v1 entry", "An CatLog v1 entry", "CatLog v2 entries agree", "A CatLog v2 entry", "CatLog v2 reads"].map(api.versionWords),
+    ["The earlier version's entry has no Km.", "an entry from the earlier version", "An entry from the earlier version", "records read from the paper agree", "A record read from the paper", "CatLog reads"]);
   // A correction made after human review is said as given, in the Human review line.
   api.renderDetail(row({ record_key: "hc-fixed", measurement_key: "hc-fixed", verification_status: "verified" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);

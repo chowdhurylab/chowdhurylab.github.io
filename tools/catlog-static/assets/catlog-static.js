@@ -1151,13 +1151,13 @@
   }
 
   // The earlier review's words for its own steps, as facts: its "normalized" is a conversion, its "expected row" the
-  // record it was checking (the CatLog v1 entry; never "the earlier record", ADDENDUM item 4).
+  // record it was checking (the earlier version's entry, round 8; never "the earlier record", ADDENDUM item 4).
   function evidenceWords(text) {
     const cased = (word, replacement) => (/^[A-Z]/.test(word) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement);
     return String(text)
-      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The CatLog v1 entry has no $1")
+      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier version's entry has no $1")
       .replace(/\b(\S+) is not populated for this row\b/g, "this record has no $1")
-      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the CatLog v1 entry"))
+      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier version's entry"))
       .replace(/\bnormali[sz]ation\b/gi, (word) => cased(word, "conversion"))
       .replace(/\bnormali[sz]ed value\b/gi, (word) => cased(word, "value in catalog units"))
       .replace(/\bnormali[sz]ed unit\b/gi, (word) => cased(word, "unit"))
@@ -1825,13 +1825,27 @@
     return recordsLoad;
   }
 
+  // CatLog is the one name (round 8): a note written with the version names says what they stand for, as the record
+  // panel says it ("the review of CatLog v1 entries": "the review of the earlier version's entries"; a CatLog v2 entry
+  // is a record read from the paper).
+  function versionWords(text) {
+    return String(text)
+      .replace(/\b([Tt]he) CatLog v1 (entry|entries)\b/g, "$1 earlier version's $2")
+      .replace(/\b([Aa]n?) CatLog v1 entry\b/g, (match, article) => `${article[0] === "A" ? "An" : "an"} entry from the earlier version`)
+      .replace(/\bCatLog v1 (entry|entries)\b/g, "the earlier version's $1")
+      .replace(/\b([Aa]) CatLog v2 entry\b/g, "$1 record read from the paper")
+      .replace(/\b(?:[Tt]he )?CatLog v2 entries\b/g, "records read from the paper")
+      .replace(/\bCatLog v[12]\b/g, "CatLog");
+  }
+
   function humanReviewNote(row) {
     const mark = humanReviewMark(row);
     // A checked mark on a record that is not accepted: the reviewer approved its values, other checks are still open.
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
     // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review"); the notes name the
-    // catalog reviewed themselves ("the review of CatLog v1 entries", catlog-v2 e54b978), so nothing else is rewritten.
-    const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review");
+    // entries reviewed themselves ("the review of CatLog v1 entries", catlog-v2 e54b978, said as the earlier version's
+    // entries by versionWords until the notes say it so).
+    const note = versionWords(String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review"));
     // A mark that lists the approved values and says nothing else: which values, in words.
     const listed = !note && !mark?.checked && Array.isArray(mark?.approved)
       ? VALUE_FIELDS.filter(([field]) => humanApprovedFields(row).has(field)).map(([field]) => ({ kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" })[field])
@@ -2017,9 +2031,9 @@
       noPaper ? "no paper linked" : "",
     ].filter(Boolean);
     // A record read by CatLog is human-checked for the same values of the same paper, enzyme, substrate and variant in
-    // the review of CatLog v1 entries.
+    // the review of the earlier version's entries.
     const fullDescription = checked
-      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of CatLog v1 entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
+      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version's entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
@@ -10197,7 +10211,7 @@
     const rows = [
       ...valueItems.map((item) => {
         const hasBefore = item.before != null && item.before !== "";
-        const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "CatLog v1 value before the correction");
+        const where = !hasBefore ? "" : (item.listed ? `as in ${item.listed} for this paper` : "the earlier version's value before the correction");
         return comparisonItemHtml(item.name,
           `${escapePublic(correctionValueText(item.before, item.unit))}${arrow}<strong>${escapePublic(correctionValueText(item.after, item.unit))}</strong>`,
           changeHtml(item)
@@ -11256,6 +11270,7 @@
       printedFigureDisplays,
       reviewFacts,
       reviewSentence,
+      versionWords,
       v2MatchFacts,
       v2MatchSentence,
       statsCohortData,
