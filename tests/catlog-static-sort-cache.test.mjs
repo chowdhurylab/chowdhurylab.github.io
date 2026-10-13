@@ -3916,13 +3916,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // of a checked record, the values the review's sentence names on another, the mark's own list when it has one.
   const approvedValues = (html) => [...html.matchAll(/<tr><th scope="row">(.*?)<\/th><td class="vt-value"><span class="vt-number">[^<]*(<span class="value-approved"[^>]*>)?/g)]
     .filter((match) => match[2]).map((match) => match[1].replace(/<[^>]+>/g, ""));
-  const APPROVED_NAME = /<span class="value-approved" role="img" aria-label="approved by a human reviewer" title="Approved by a human reviewer"><svg class="check-icon"/;
+  // (named by its tooltip alone: a title beside an aria-label is read out again as a description)
+  const APPROVED_NAME = /<span class="value-approved" role="img" title="approved by a human reviewer"><svg class="check-icon"/;
   // A checked record without a list: its kcat and Km (its kcat/Km was approved too or only agrees with kcat ÷ Km, so
   // being checked never puts a check on it).
   api.renderDetail(accepted, {});
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["kcat", "Km"]);
   assert.match(html, APPROVED_NAME);
+  assert.doesNotMatch(html, /class="value-approved"[^>]*aria-label/);
   assert.match(html, /<li><span class="value-approved-key"><svg class="check-icon"[^>]*>.*?<\/svg><\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
   html = element("detailContent").innerHTML;

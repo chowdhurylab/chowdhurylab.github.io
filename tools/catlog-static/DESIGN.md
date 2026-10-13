@@ -553,7 +553,8 @@ found at once: A, B, G, C, D, E, F, H.
   number too long for Value (1.28 × 10⁻⁴ in a wide font) wraps before "× 10"
   ("× 10" never parts), never into Unit. A value a human reviewer approved carries a
   small green check (`--checked`, 12px) right after its number, named "approved
-  by a human reviewer" (role img): the values the mark lists (mark.approved:
+  by a human reviewer" (role img, named by its tooltip alone: a title beside an
+  aria-label is read out again as a description): the values the mark lists (mark.approved:
   only values a reviewer approved), else the kcat and Km of a record the
   reviewer checked (mark.checked), plus the metrics named by the review's own
   sentence "A human reviewer approved the same kcat and Km for this paper ...";

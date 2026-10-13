@@ -1923,9 +1923,11 @@
     return fields;
   }
 
-  // The check after a value a human reviewer approved (Values table); its meaning is the line under the table.
+  // The check after a value a human reviewer approved (Values table); its meaning is the line under the table. Its
+  // tooltip is its accessible name ("68 approved by a human reviewer"): with an aria-label beside the title, the title
+  // was read out again as a description after every approved number.
   const APPROVED_VALUE_NAME = "approved by a human reviewer";
-  const APPROVED_VALUE_HTML = `<span class="value-approved" role="img" aria-label="${APPROVED_VALUE_NAME}" title="Approved by a human reviewer">${CHECK_ICON_HTML}</span>`;
+  const APPROVED_VALUE_HTML = `<span class="value-approved" role="img" title="${APPROVED_VALUE_NAME}">${CHECK_ICON_HTML}</span>`;
 
   // A record read by CatLog: the method in one line, ending with whether code converted any value's unit (facts: the
   // record's proof-line facts; without them nothing is said about units).

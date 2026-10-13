@@ -2874,13 +2874,15 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             const checks = [...table.querySelectorAll('.value-approved[role="img"]')];
             const key = document.querySelector('#detailContent .value-notes .value-approved-key');
             const panel = document.getElementById('detailPanel');
-            return {names: checks.map(e => e.getAttribute('aria-label')),
+            return {names: checks.map(e => e.getAttribute('title')),
+                    labels: checks.filter(e => e.hasAttribute('aria-label')).length,
                     colour: checks.length ? getComputedStyle(checks[0]).color : null,
                     legend: key ? key.closest('li').innerText.trim() : null,
                     edges: [...table.querySelectorAll('.vt-number')].map(e => Math.round(e.getBoundingClientRect().right)),
                     sideways: panel.scrollWidth - panel.clientWidth};
         """)
-        assert marks["names"] and set(marks["names"]) == {"approved by a human reviewer"}, marks
+        # Named by its tooltip alone (role img): a title beside an aria-label is read out again as a description.
+        assert marks["names"] and set(marks["names"]) == {"approved by a human reviewer"} and not marks["labels"], marks
         assert marks["colour"] == "rgb(23, 115, 58)", marks["colour"]
         assert (marks["legend"] or "").startswith("Approved by a human reviewer"), marks["legend"]
         assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
