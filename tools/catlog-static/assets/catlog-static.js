@@ -94,6 +94,8 @@
   const filtersOpenByDefaultMedia = window.matchMedia("(min-width: 1200px)");
   // From 1600px the sidebar stays open beside an open record; from 1024 to 1599px the record takes its place.
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
+  // Stats fits some widths to the drawn text; once a font finishes loading it fits them again (one listener per page).
+  let statsRefitOnFonts = false;
   // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
@@ -5184,6 +5186,14 @@
     $("statsCharts").innerHTML = sections.join("");
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
+    // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
+    if (!statsRefitOnFonts && document.fonts?.addEventListener) {
+      statsRefitOnFonts = true;
+      document.fonts.addEventListener("loadingdone", () => {
+        const root = $("statsCharts");
+        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); }
+      });
+    }
   }
 
   // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time

@@ -242,7 +242,8 @@ def check_human_checked(driver, url):
             .filter(tr => tr.querySelector('td.c-eff .metric-with-note')?.innerText.trim() === '—').map(tr => tr.dataset.key).slice(-3);
     """)
     for key in no_ratio:
-        driver.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme').click()
+        # (Safari redraws the table after the previous record closes: wait for the row before clicking it.)
+        wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f'#recordsBody tr[data-key="{key}"] td.c-enzyme').click() is None)
         wait.until(lambda d: d.execute_script(
             "return document.querySelector('#detailContent #detailRecordKey')?.textContent === arguments[0]"
             " && Boolean(document.querySelector('#detailContent .human-review-line dd'))", key))

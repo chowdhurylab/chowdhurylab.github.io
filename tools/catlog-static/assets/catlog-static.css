@@ -128,9 +128,9 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
   .app-header { column-gap:var(--sp-4) }
   .external-nav { gap:var(--sp-3); padding-left:var(--sp-4) }
 }
-/* 1024-1279px: still one 56px line, the brand without its tagline and the short links out ("Paper ↗ Lab ↗"), so the
-   search box keeps room for its placeholder. */
-@media (min-width: 1024px) and (max-width: 1279px) {
+/* 1024-1439px: still one 56px line, the brand without its tagline and the short links out ("Paper ↗ Lab ↗"), so the
+   search box keeps room for its placeholder (at 1280px the long links left it 225px in Linux's wider DejaVu font). */
+@media (min-width: 1024px) and (max-width: 1439px) {
   .app-header { grid-template-columns:max-content max-content max-content minmax(160px,1fr) max-content }
   .brand-lockup span:not(.visually-hidden), .nav-external-long { display:none }
   .nav-external-short { display:inline }

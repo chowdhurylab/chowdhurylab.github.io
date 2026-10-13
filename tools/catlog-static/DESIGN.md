@@ -74,7 +74,7 @@ text deep in a page cannot reach past it).
 The header is one 56px line from 1024px: brand ("CatLog", enzyme kinetics
 catalog), the catalog's tabs Browse · Stats · Guide · Team, the links out set
 apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
-1279px the brand drops its tagline and the links out read "Paper ↗" and "Lab ↗",
+1439px the brand drops its tagline and the links out read "Paper ↗" and "Lab ↗",
 so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
