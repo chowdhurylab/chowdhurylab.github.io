@@ -260,7 +260,8 @@ type scale (front matter) and weights 400/500/600 only; no text below 12px.
 Colours are tokens in the stylesheet's :root, the only place hex values appear
 (other areas use the tokens: --st-* for review status, which figures fill at 60%
 with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
-of change, --bar-neutral for single-series bars, --caution* for cautions,
+of change (and for the Stats lead's agreement set, which reuses their hues; see the
+root DESIGN.md), --bar-neutral for single-series bars and table bars, --caution* for cautions,
 --checked for human-checked, --accent* for actions).
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric

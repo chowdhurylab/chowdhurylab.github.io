@@ -125,10 +125,16 @@ middle and the end of five ticks); no gridlines except 1px reference lines. Cate
 numbers. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
 (--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
---st-not-reviewed tan, --st-disputed red), comparisons (--cmp-same green,
---cmp-differs brown, --cmp-new cyan; the same colours compare CatLog with the
-reviewers in the lead), kinds of change (--chg-precision mint,
---chg-magnitude red), --bar-neutral for single-series bars and amber only for
+--st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5
+(--cmp-same green, --cmp-differs brown, --cmp-new cyan) with the kinds of
+change in figure 4 (--chg-precision mint, --chg-magnitude red), the lead's
+agreement set (its own set, which reuses those hues for the matching meaning:
+the same value --cmp-same green, the paper shows CatLog right --cmp-differs
+brown, the same printed value under another name or rounded --chg-precision
+mint with a green ring, left out by CatLog's reading rules --bar-neutral, the
+paper shows CatLog wrong --chg-magnitude red, not checked yet an open part
+with a grey outline; no other figure or table uses it), --bar-neutral for
+single-series bars and table bars (Table 1 included) and amber only for
 cautions. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring. Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
