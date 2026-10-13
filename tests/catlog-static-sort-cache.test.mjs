@@ -1724,7 +1724,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = overview;
   api.renderStats();
   assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
-  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads papers <span aria-hidden="true">→<\/span><\/a>/);
+  assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads and checks values <span aria-hidden="true">→<\/span><\/a>/);
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /<tr data-check="second_check">[\s\S]*?#browse\?source=paper">2 records<\/a> from 1 papers/);
   assert.match(chart, /<tr data-check="human_checked">[\s\S]*?#browse\?checked=1">1 accepted records<\/a>[\s\S]*?A reviewer approved every value; reviewers looked at 2 records/);
@@ -2540,7 +2540,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify; ec_from_databases",
     proof_lines: [line("kcat", ""), line("Km", "")] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<dt>Method<\/dt><dd>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →<\/span><\/a><\/dd>/);
+  assert.match(html, /<dt>Method<\/dt><dd>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads and checks values<span aria-hidden="true"> →<\/span><\/a><\/dd>/);
   assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
   assert.doesNotMatch(html, /<dt>Evidence<\/dt>|second, separate AI run|independent/);

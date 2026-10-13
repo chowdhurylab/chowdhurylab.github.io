@@ -421,7 +421,8 @@ is left out, never an empty heading. The order (design spec 5):
 - C. Source: Source ("The paper (read by CatLog)" or the databases by name,
   never a raw key); Merged from (database entries and papers); for a record read
   by CatLog a Method line (the short method sentence ending "units converted by
-  code" or "values stored as printed", with "How CatLog reads papers →") and a
+  code" or "values stored as printed", with "How CatLog reads and checks values
+  →", the Guide section's own name, as every link to it reads) and a
   Second check line (one result for every value, "All values confirmed." or
   "Unit set to mM for every value.", or each value's result, "kcat: confirmed;
   Km: unit set to mM."; then once what the check changed on the record, "The AI

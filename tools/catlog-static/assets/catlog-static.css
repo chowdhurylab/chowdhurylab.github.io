@@ -287,7 +287,6 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
 .source-help { margin:-2px 0 var(--sp-1) 22px }
-.source-help a { white-space:nowrap }
 .source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
 .source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .source-databases > summary::-webkit-details-marker { display:none }
@@ -302,7 +301,6 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .status-guide-body { display:grid; gap:6px; padding-top:var(--sp-2) }
 .status-guide-body p { margin:0 }
 .status-guide-body strong { color:var(--text) }
-.status-guide-body a { white-space:nowrap }
 
 /* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
    at the bottom. */

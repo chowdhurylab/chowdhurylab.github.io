@@ -4143,7 +4143,7 @@
             <td>${escapeHtml(row.result)}</td></tr>`).join("")}</tbody></table>`,
         caption: `${escapeHtml(v2Sentence)} AI audits and human reviewers then check samples against the papers.`,
         data: statsDataLine(),
-        after: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads papers <span aria-hidden="true">→</span></a></p>`,
+        after: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`,
       });
     }
 
@@ -4778,7 +4778,7 @@
           ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "passed review; "))}</p>`).join("")}
           <p><strong>earlier extraction</strong>: ${escapeHtml(EARLIER_EXTRACTION_DEFINITION)}</p>
           <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
-          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads papers<span aria-hidden="true">&nbsp;&rarr;</span></a></p>
+          <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>
           <p><strong>corrected</strong>: ${escapeHtml(CORRECTED_DEFINITION)}</p>
           <p><strong>no paper linked</strong>: ${escapeHtml(noPaperDefinition())}</p>
         </div>
@@ -4805,7 +4805,7 @@
             <span>${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>${item.help ? `
-          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads papers<span aria-hidden="true">&nbsp;&rarr;</span></a>` : ""}</p>` : ""}`).join("")}
+          <p class="filter-note source-help" id="sourceHelp-${item.value}">${escapeHtml(item.help)}${item.guide ? ` <a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a>` : ""}</p>` : ""}`).join("")}
         </div>
         <details class="source-databases" id="sourceDatabases">
           <summary>By database</summary>
@@ -8492,7 +8492,7 @@
       // A record read by CatLog: how (Method) and what the second AI check found; an older record: what stands behind
       // its values.
       v2Record
-        ? linkedKv("Method", `${escapePublic(v2MethodSentence(facts, { unitChanged: measurementNotes(summary, detail, { proof }).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads papers<span aria-hidden="true"> →</span></a>`)
+        ? linkedKv("Method", `${escapePublic(v2MethodSentence(facts, { unitChanged: measurementNotes(summary, detail, { proof }).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads and checks values<span aria-hidden="true"> →</span></a>`)
         : (evidence && evidence !== "Database note" ? kv("Evidence", evidence) : ""),
       v2Record && facts ? kv("Second check", v2CheckText(facts, v2CheckOptions(summary, detail, proof))) : "",
       kv("License", detailLicense(summary, detail, v2Record)),
