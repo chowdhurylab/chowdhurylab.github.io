@@ -4199,6 +4199,19 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.key), ["source:sabio_rk", "source:unrecorded"]);
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: SABIO-RK", "Source: not recorded"]);
   assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
+  // A chip says what the sidebar says ("Earlier extractions", "OED"); its button and the no-results note read the name in
+  // full, as the sidebar does.
+  assert.deepEqual([...api.activeFilterItems()].map((item) => [item.label, item.labelHtml]),
+    [["Source: Earlier paper extractions", "Source: Earlier extractions"]]);
+  assert.deepEqual(await keysFor("source=oed"), ["src-oed"]);
+  assert.deepEqual([...api.activeFilterItems()].map((item) => [item.label, item.labelHtml]),
+    [["Source: OED (Open Enzyme Database)", "Source: OED"]]);
+  // An EC class chip is named as Stats names it: "EC 1" for ec=1. (a trailing dot left out).
+  for (const [address, chip] of [["ec=1.", "EC 1"], ["ec=1.1.1.", "EC 1.1.1"], ["ec=EC+3.1.,+2.7", "EC 3.1, 2.7"], ["ec=1.1.1.1", "EC 1.1.1.1"]]) {
+    api.applyBrowseParams(new Map(new URLSearchParams(address)));
+    assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), [chip], address);
+  }
+  assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
   // Removing the last database chip removes the source filter.
   api.activeFilterItems().find((item) => item.key === "source:earlier_paper").clear();
   assert.equal(api.browseHash(), "");

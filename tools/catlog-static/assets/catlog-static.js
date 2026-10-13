@@ -6329,7 +6329,8 @@
         () => setSourceControls("all"));
     }
     if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"));
-    if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "")}`, () => clearInputs("ecFilterInput"));
+    // "EC 1" for ec=1. (the EC classes Stats links to), as Stats names them: a trailing dot is left out.
+    if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "").replace(/(\d)\.+(?=[\s,;]|$)/g, "$1")}`, () => clearInputs("ecFilterInput"));
     if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
     if (controls.organism) add("organism", `Organism: ${controls.organism}`, () => clearInputs("organismFilterInput"));
     if (controls.substrate) add("substrate", `Substrate: ${controls.substrate}`, () => clearInputs("substrateFilterInput"));
@@ -6353,9 +6354,13 @@
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);
-      // "Source: BRENDA", "Source: earlier paper extractions", "Source: not recorded" (names keep their capitals).
-      const chip = item.value === "unrecorded" ? "not recorded" : item.value === "earlier_paper" ? "earlier paper extractions" : item.label;
-      add(`source:${item.value}`, `Source: ${chip}`, () => setSourceControls(others.length ? "databases" : "all", others));
+      // The sidebar's words: "Source: BRENDA", "Source: OED", "Source: Earlier extractions", "Source: not recorded" (names
+      // keep their capitals); the remove button and the no-results note read a short name in full, as the sidebar does.
+      const chip = item.value === "unrecorded" ? "not recorded" : item.label;
+      const shown = item.shortHtml ? item.shortHtml.replace(/<span class="visually-hidden">[^<]*<\/span>/g, "") : "";
+      const read = item.shortHtml ? item.shortHtml.replace(/<[^>]*>/g, "") : chip;
+      add(`source:${item.value}`, `Source: ${read}`, () => setSourceControls(others.length ? "databases" : "all", others),
+        shown ? `Source: ${shown}` : "");
     });
     return items;
   }

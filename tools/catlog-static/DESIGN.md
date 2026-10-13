@@ -214,7 +214,9 @@ CatLog v1 the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
 and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
-above the table that removes it, followed by Clear all (with no matching
+above the table that removes it, in the sidebar's words ("Source: CatLog v2", "Source: OED", "Source: Earlier
+extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's
+trailing dot), followed by Clear all (with no matching
 records, "Clear search and filters" takes its place, so the toolbar has one clear
 button; Clear all here and in the sidebar's heading are 24px tall targets at
 least); the count beside Filters is the number of chips. Esc closes the panel (beside an open record, the one
