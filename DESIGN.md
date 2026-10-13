@@ -50,9 +50,9 @@ legend table keeps its room beside the donut), one below:
   comparison found ("68 wrong labels, 1 missed value, 0 wrong numbers or
   units", from `first_catlog_errors` and its split), fixes said against them
   ("all 69"), wrong number or unit in CatLog, missing values reviewers named),
-  where the paper shows CatLog
-  right what the earlier catalog had wrong (its value not printed in the paper,
-  or a wrong label: the README's split), the values reviewers called
+  where the paper shows CatLog right what the earlier catalog had wrong in
+  those approved values (its value not printed in the paper or a wrong label:
+  the README's split), the values reviewers called
   wrong (the ones CatLog did not have and the ones it had with the same
   number, then what became of the latter: kept or dropped by an AI audit,
   found right against the paper, changed since, not settled; zero parts left
@@ -97,10 +97,12 @@ legend table keeps its room beside the donut), one below:
   accepted after a correction, names both (with the date it was counted).
 - Table, Checks on the values: second AI check (records read from the paper),
   AI audits, the reviewers' approved values, human-checked records, the human
-  review of the earlier catalog (the share correct always beside the label
-  errors); a row whose numbers are missing is left out. Its bars are grey
-  (--bar-neutral), as in the other tables; when the lead gives the first
-  comparison, the reviewers' row says its count is now, after fixes.
+  review of the earlier catalog (every value reviewers compared on its papers,
+  approved or not, where the lead counts only approved values; the share
+  correct always beside the label errors); a row whose numbers are missing is
+  left out. Its bars are grey (--bar-neutral), as in the other tables; when
+  the lead gives the first comparison, the reviewers' row says its count is
+  now, after fixes.
 - Enzyme classes: records bars (light) with the accepted drawn over them.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of

@@ -564,6 +564,8 @@ def check_quality(driver, browser, url, quality=None):
             # The share correct is shown only with the label errors beside it.
             earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='earlier']").text
             assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
+            # Its group is every value compared, not the lead's approved values.
+            assert f"{quality['compared_values_v1']:,} values" in earlier and "approved or not" in earlier, earlier
         if isinstance(agreement.get("values_approved"), int) and agreement["values_approved"]:
             assert driver.execute_script(LEAD_FIRST_JS), "The agreement leads Stats, above the headline counts"
             assert f"{agreement['agree']:,}" in driver.find_element(By.CSS_SELECTOR, "tr[data-check='agreement']").text

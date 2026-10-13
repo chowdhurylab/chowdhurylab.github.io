@@ -1777,6 +1777,7 @@ function row(overrides = {}) {
   assert.deepEqual(headings().slice(0, 3), ["Review result", "Records by main source", "Checks on the values"]);
   assert.match(qualityChart, /<tr data-check="audit"><th scope="row">AI audits<\/th><td>742 values<\/td>[\s\S]*?<td>740 kept; 2 were wrong \(0\.3%\) and removed \(as of Oct 11, 2026\)<\/td>/);
   // The share correct is never shown without the label errors beside it.
+  assert.match(qualityChart, /<tr data-check="earlier"><th scope="row">Human review of the earlier catalog<\/th><td>2,431 values on 312 papers, approved or not<\/td>/);
   assert.match(qualityChart, /<td>9 wrong number or unit \(99\.6% correct\); 114 wrong label<\/td>/);
   assert.match(qualityChart, /<tr data-check="agreement">[\s\S]*?<td>2,380 values<\/td>[\s\S]*?CatLog found 2,160; none of the 504 where it differed was wrong against the paper<\/td>/);
   api.renderGuideMethod();
@@ -1819,7 +1820,8 @@ function row(overrides = {}) {
   assert.match(lead, /Differences checked against the paper<\/dt><dd>152 of 257; CatLog wrong in none<\/dd>/);
   assert.match(lead, /Missing values reviewers named<\/dt><dd>58; CatLog has 53/);
   // Where the paper shows CatLog right, what the earlier catalog had wrong (the README's split).
-  assert.match(lead, /In the 109 differences where the paper shows CatLog right, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);
+  // The 100 label errors belong to these 109 approved values, not to Table 1's count of every value compared.
+  assert.match(lead, /The paper shows CatLog right in 109 of the approved values that differ; of these 109, the earlier catalog&#39;s value is not printed in the paper \(9\) or has a wrong enzyme, organism, substrate, variant or protein label \(100\)\./);
   assert.doesNotMatch(lead, /Same value<\/dt>/, "Without a first comparison the big number already gives the same-value count");
   assert.match(element("statsCharts").innerHTML, /<td>2,232 the same in CatLog \(89\.7%\)<\/td>/, "No first comparison: the count stands alone");
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);

@@ -3760,7 +3760,7 @@
     const valueError = right ? statsCount(a.differ_earlier_value_error, right) : null;
     const labelError = right ? statsCount(a.differ_earlier_label_error, right) : null;
     const rightText = valueError !== null && labelError !== null && valueError + labelError === right
-      ? `In the ${formatInteger(right)} differences where the paper shows CatLog right, the earlier catalog's value is not printed in the paper (${formatInteger(valueError)}) or has a wrong enzyme, organism, substrate, variant or protein label (${formatInteger(labelError)}).`
+      ? `The paper shows CatLog right in ${formatInteger(right)} of the approved values that differ; of ${right === 1 ? "this one" : `these ${formatInteger(right)}`}, the earlier catalog's value is not printed in the paper (${formatInteger(valueError)}) or has a wrong enzyme, organism, substrate, variant or protein label (${formatInteger(labelError)}).`
       : "";
     // Values reviewers called wrong, at their first comparison: the ones CatLog did not have and the ones it had with the
     // same number (rejected_catlog_also_without + rejected_catlog_has_same = rejected_values); what became of the latter
@@ -4176,6 +4176,8 @@
     const compared = statsCount(quality.compared_values_v1);
     const comparedWrong = compared ? statsCount(quality.wrong_v1, compared) : null;
     const labelErrors = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
+    // Every value reviewers compared, approved or not (the lead counts only the approved ones).
+    const comparedPapers = compared ? statsCount(quality.compared_papers_v1) : null;
     // An older snapshot without the agreement counts: what CatLog found of the reviewers' approved values.
     const approvedV2 = statsCount(quality.v2_approved_total);
     const found = approvedV2 ? statsCount(quality.v2_found, approvedV2) : null;
@@ -4193,7 +4195,8 @@
       humanChecked !== null ? { key: "human_checked", name: "Human-checked records", count: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} accepted records</a>`,
         result: marked !== null && marked >= humanChecked ? `A reviewer approved every value; reviewers looked at ${formatInteger(marked)} records` : "A reviewer approved every value",
         share: marked ? humanChecked / marked : null } : null,
-      compared && comparedWrong !== null && labelErrors !== null ? { key: "earlier", name: "Human review of the earlier catalog", count: `${formatInteger(compared)} values`,
+      compared && comparedWrong !== null && labelErrors !== null ? { key: "earlier", name: "Human review of the earlier catalog",
+        count: `${formatInteger(compared)} values${comparedPapers ? ` on ${formatInteger(comparedPapers)} ${comparedPapers === 1 ? "paper" : "papers"}` : ""}, approved or not`,
         result: `${formatInteger(comparedWrong)} wrong number or unit (${qualityShare(compared - comparedWrong, compared)} correct); ${formatInteger(labelErrors)} wrong label`, share: (compared - comparedWrong) / compared } : null,
     ].filter(Boolean);
     if (checkRows.length) {
