@@ -4204,7 +4204,8 @@
           <tbody>${checkRows.map((row) => `<tr data-check="${row.key}"><th scope="row">${escapeHtml(row.name)}</th><td>${row.count}</td>
             <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined ? `<span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td>
             <td>${escapeHtml(row.result)}</td></tr>`).join("")}</tbody></table>`,
-        caption: `${escapeHtml(v2Sentence)} AI audits and human reviewers then check samples against the papers.`,
+        // One sentence, as every caption: the method sentence, then the sampled checks after a semicolon.
+        caption: `${escapeHtml(v2Sentence.replace(/\.$/, ""))}; AI audits and human reviewers then check samples against the papers.`,
         data: statsDataLine(),
         after: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`,
       });
@@ -4243,7 +4244,7 @@
     const rangesFigure = ranges.length ? {
       id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
       body: `<div class="stats-ranges">${ranges.join("")}</div>`,
-      caption: "Values in catalog units on a log scale, one bar per power of ten; the end bars include all values beyond them. Dot: median; line: middle 80% of values.",
+      caption: "Values in catalog units on a log scale, one bar per power of ten (the end bars include all values beyond them), with the median as a dot and the middle 80% of values as a line.",
       data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out."),
     } : null;
 

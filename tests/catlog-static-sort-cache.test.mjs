@@ -1730,7 +1730,14 @@ function row(overrides = {}) {
   assert.doesNotMatch(element("statsCharts").innerHTML, /BRENDA, Not confirmed/);
   runtimeManifest.summary.overview = overview;
   api.renderStats();
-  assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper."));
+  assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper; AI audits and human reviewers then check samples against the papers."));
+  // Every caption is "Figure N." or "Table N." and one sentence.
+  const captions = chart.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<span class="stats-fig-data">|<\/figcaption>)/g) || [];
+  assert.ok(captions.length >= 3, "Stats has numbered captions");
+  for (const caption of captions) {
+    const sentence = caption.replace(/<[^>]+>/g, "").replace(/^\s*(Figure|Table) \d+\.\s*/, "").trim();
+    assert.doesNotMatch(sentence, /\.\s+[A-Z]/, `One sentence per caption: ${sentence}`);
+  }
   assert.match(chart, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads and checks values <span aria-hidden="true">→<\/span><\/a>/);
   assert.doesNotMatch(chart, /independent|AI run|separate AI run/);
   assert.match(chart, /<tr data-check="second_check">[\s\S]*?#browse\?source=paper">2 records<\/a> from 1 papers/);
