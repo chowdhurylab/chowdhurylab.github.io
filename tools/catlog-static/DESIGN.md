@@ -261,7 +261,11 @@ the review marks) has it, and a key the snapshot lacks is put in the search box
 with a note that it is not there. Marks that arrive after a record opened redraw
 its panel in place (the rows and focus stay).
 
-While records load, placeholder rows keep the table's shape and, until the first
+While records load, placeholder rows keep the table's shape (a table with no
+rows, loading or with nothing matching, keeps the stylesheet's column widths
+unless those would leave Enzyme narrower than its heading, as beside the open
+sidebar at 1024-1199px: then every column takes its minimum, at least its
+heading, and the names share the rest) and, until the first
 rows appear, the count beside Filters says how many have loaded ("Loading
 records…" when only the files are counted). Loading and failure notices use
 plain words, never file, shard or chunk names: a page older than its data says

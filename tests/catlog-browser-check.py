@@ -1503,6 +1503,29 @@ def check_layout(driver, browser, url, route_label):
         driver.find_element(By.ID, "filterRailButton").click()
         wait.until(lambda d: is_open() and box(".filter-column")["width"] == 256)
         assert stored() in ("0", "unavailable")
+        # Nothing matches beside the open sidebar: Enzyme's heading keeps its room, clear of EC's (the stylesheet's widths
+        # had left it 0px wide), and the active filters take the full width under the toolbar, none cut, each chip's
+        # tooltip naming its whole filter.
+        driver.execute_script("location.hash = arguments[0]", "#browse?ec=9.9.9.9&source=paper&organism=Escherichia%20coli")
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .empty-notice")
+                   and len(d.find_elements(By.CSS_SELECTOR, "#activeFilters .filter-chip")) == 3)
+        empty = driver.execute_script("""
+            const text = (th) => { const range = document.createRange(); range.selectNodeContents(th); return range.getBoundingClientRect(); };
+            const enzyme = document.querySelector('#recordTableWrap thead th.c-enzyme');
+            const ec = document.querySelector('#recordTableWrap thead th.c-ec');
+            const wrap = document.getElementById('recordTableWrap');
+            const chips = [...document.querySelectorAll('#activeFilters .filter-chip')];
+            const tools = document.querySelector('.records-tools').getBoundingClientRect();
+            return {enzyme: enzyme.getBoundingClientRect().width, enzymeText: text(enzyme).right, ecText: text(ec).left,
+                    scrollWidth: wrap.scrollWidth, clientWidth: wrap.clientWidth,
+                    cut: chips.filter(chip => { const label = chip.querySelector('span'); return label.scrollWidth > label.clientWidth + 1; }).map(chip => chip.innerText),
+                    titles: chips.map(chip => chip.title), named: chips.every(chip => chip.title === chip.getAttribute('aria-label') && chip.title.startsWith('Remove filter: ')),
+                    under: chips.every(chip => chip.getBoundingClientRect().top >= tools.bottom - 1)};
+        """)
+        assert empty["enzyme"] >= 60 and empty["enzymeText"] <= empty["ecText"], f"With nothing to show, Enzyme's heading keeps its room: {empty}"
+        assert empty["scrollWidth"] <= empty["clientWidth"] + 24, f"With nothing to show, the table fits beside the sidebar: {empty}"
+        assert not empty["cut"] and empty["named"] and empty["under"], f"The chips take the full width under the toolbar: {empty}"
+        results["empty-table-1100"] = True
         open_page()
         if stored() == "0":
             assert is_open(), "A sidebar opened below 1200px stays open on reload"

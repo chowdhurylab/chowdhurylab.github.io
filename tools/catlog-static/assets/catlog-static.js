@@ -6300,7 +6300,7 @@
   // word. So beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even
   // that is not enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at
   // their longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's
-  // widths.
+  // widths unless those leave Enzyme narrower than its heading (fitHeadingsOnly).
   const FIT_COLUMNS = [
     { key: "enzyme", cell: ".c-enzyme", min: 136, narrowMin: 128, cap: 340, shrink: 1 },
     { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120 },
@@ -6344,7 +6344,11 @@
     Object.values(cols).forEach((col) => { col.style.width = ""; });
     table.style.minWidth = "";
     const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
-    if (!rows.length || style(table).display !== "table") return;
+    if (style(table).display !== "table") return;
+    if (!rows.length) {
+      fitHeadingsOnly(table, cols);
+      return;
+    }
     const visible = (element) => style(element).display !== "none";
     const narrow = narrowDetailMedia.matches;
     // Beside docked filters a name column starts no narrower than its longest word (within its cap), so a word is broken
@@ -6429,6 +6433,36 @@
     widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
       (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);
     }));
+  }
+
+  // A table with no data rows (placeholders while loading, or nothing matches) keeps the stylesheet's widths unless they
+  // leave Enzyme narrower than its heading: beside the open sidebar at 1024-1199px the other columns took all the room,
+  // Enzyme fell to 0px and EC's heading was drawn over its own. Then each column takes its minimum, at least as wide as
+  // its heading, the name columns share what is left, and only a table that is still too wide scrolls sideways.
+  function fitHeadingsOnly(table, cols) {
+    const style = window.getComputedStyle;
+    const enzyme = table.querySelector("thead th.c-enzyme");
+    if (!enzyme || enzyme.getBoundingClientRect().width >= headingWidth(table, "thead th.c-enzyme")) return;
+    const visible = (element) => style(element).display !== "none";
+    const narrow = narrowDetailMedia.matches;
+    const widths = FIT_COLUMNS.filter((column) => visible(cols[column.key])).map((column) => {
+      const heading = Math.ceil(headingWidth(table, `thead th${column.cell}`));
+      return { ...column, heading, width: Math.max(narrow ? column.narrowMin : column.min, heading) };
+    });
+    const total = () => widths.reduce((sum, column) => sum + column.width, 0);
+    const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
+    const available = table.parentElement.clientWidth - arrow;
+    // Short of room, the narrower minimums.
+    if (total() > available) widths.forEach((column) => { column.width = Math.max(column.narrowMin, column.heading); });
+    const names = widths.filter((column) => column.shrink === 1);
+    const rest = available - total();
+    if (rest > 0 && names.length) {
+      const base = names.reduce((sum, column) => sum + column.width, 0);
+      names.forEach((column) => { column.width += Math.floor(rest * column.width / base); });
+      names[0].width += Math.max(0, available - total());
+    }
+    widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
+    table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
   }
 
   // Review result's narrowest: the widest review result's word (with its dot), or the column's header. Narrower than its
