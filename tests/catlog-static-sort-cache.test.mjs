@@ -3329,6 +3329,17 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same", database_line: "Same as OED." })]));
       assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
+      // The same number under another label: said in the reviews' own words, and found with the records whose numbers
+      // are the same.
+      indexRow("v2-db", 1 | 16);
+      html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
+        line("Km", { database_status: "same_number_other_label", database_line: "SABIO-RK lists this number for substrate NAD+." })]));
+      assert.match(html, /<span class="cmp-mark cmp-neutral" aria-hidden="true"><\/span><strong>Same number, other label<\/strong><\/span><span class="cmp-line">SABIO-RK lists this number for substrate NAD\+\.<\/span>/);
+      assert.doesNotMatch(html, />Other label</);
+      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
+      indexRow("v2-db", 16);
+      html = render(v2Summary, v2Detail([line("Km", { database_status: "same_number_other_label", database_line: "BRENDA lists this number for another organism." })]));
+      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
       indexRow("v2-db", 8);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
         line("Km", { database_status: "new", database_line: "Not in OED." })]));
@@ -4115,14 +4126,15 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     sourceRow("db-earlier", { source_db: "brenda", verification_status: "corrected", corrections: [{ field: "km" }] }),
     sourceRow("db-plain", { source_db: "brenda" }),
   ];
-  assert.deepEqual(dbRows.map((item) => api.rowDatabaseBits(item)), [4, 1, 2 | 8, 8 | 16, 0, 32, 0]);
+  // The same number under another label is found under "same".
+  assert.deepEqual(dbRows.map((item) => api.rowDatabaseBits(item)), [4, 1, 2 | 8, 8 | 16, 4, 32, 0]);
   assert.deepEqual(dbRows.map((item) => api.databaseSummaryBits(item)), [1, 3, 12, 8, 16, 32, 0]);
   api.indexLoadedRecords(dbRows);
   counts = await countsFor("db=corrected,new");
   assert.equal(databaseInputs.filter((input) => input.checked).length, 0, "db= is read only when the index carries the comparison");
   runtimeManifest.viewer_index.optional_fields = ["database_summary"];
   counts = await countsFor("db=corrected,new");
-  assert.deepEqual({ ...counts.database }, { corrects: 1, differs: 1, same: 1, adds: 2, new: 1, earlier: 1 });
+  assert.deepEqual({ ...counts.database }, { corrects: 1, differs: 1, same: 2, adds: 2, new: 1, earlier: 1 });
   assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects", "new"], "db= takes the aliases");
   assert.equal(api.browseHash(), "#browse?db=corrects,new");
   assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), ["db-fixed", "db-new"]);

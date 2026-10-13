@@ -655,8 +655,9 @@ found at once: A, B, G, C, D, E, F, H.
   correction, `--bar-neutral` for the same number under another label, beside
   its word, the name Browse's option has: "Same number", "Different number",
   "Not in any database", "Corrects a value" (CatLog's "corrected" status: one
-  database value, never the database as a whole), and "Other label", "Not
-  compared"), then the snapshot's line as given ("BRENDA lists 1,300 mM, 1,000×
+  database value, never the database as a whole), and "Same number, other label"
+  (the reviews' own term for the same number under another substrate, organism
+  or form label; the line says which), "Not compared"), then the snapshot's line as given ("BRENDA lists 1,300 mM, 1,000×
   higher. The paper prints 1.3 ± 0.10 mM (Table 2). Checked against the paper:
   µM entered as mM."), the cause in words when the line does not already say
   it ("Checked against the paper: a µM value entered as mM"; a cause code with
@@ -673,7 +674,8 @@ found at once: A, B, G, C, D, E, F, H.
   database; address #browse?db=...), a last line links each option the record
   matches to the records like it, by the option's name: "More records like this:
   Corrects a value · Adds a value" (corrects: a value corrected; differs:
-  a different number not yet resolved; same: every compared value the same;
+  a different number not yet resolved; same: every compared value the same
+  number, also one listed under another label;
   adds: a value no database lists; new: no value in any database, said instead
   of adds; earlier: an earlier corrected record), each keeping the record open
   beside the list as its paper's link does (#browse?db=corrects&record=<key>;

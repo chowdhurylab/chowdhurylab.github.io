@@ -5079,8 +5079,9 @@
   }
 
   // The "Against the databases" options a record matches, as databaseFilters bits: a value corrected against a database,
-  // a different number not yet resolved, every compared value the same as a database, a value no database lists, none
-  // listed at all, and an earlier record the earlier review changed. 0 for a record that was not compared.
+  // a different number not yet resolved, every compared value the same number as a database (a database that lists it
+  // under another label too: the record says which label), a value no database lists, none listed at all, and an
+  // earlier record the earlier review changed. 0 for a record that was not compared.
   function rowDatabaseBits(row) {
     if (row._databaseBits == null) {
       const { same, corrected, differs, new: added, otherLabel, earlier } = DATABASE_SUMMARY_BITS;
@@ -5089,7 +5090,7 @@
       let bits = 0;
       if (summary & corrected) bits |= 1;
       if (summary & differs) bits |= 2;
-      if (compared && !(compared & ~same)) bits |= 4;
+      if (compared && !(compared & ~(same | otherLabel))) bits |= 4;
       if (summary & added) bits |= 8;
       if (compared && !(compared & ~added)) bits |= 16;
       if (summary & earlier) bits |= 32;
@@ -9111,7 +9112,9 @@
   // database's under Review and audit). Under the comparison, links open Browse at the records with the same result
   // (when Browse has that filter).
   const DATABASE_RESULTS = [
-    { test: /other[\s_-]*label/i, word: "Other label", key: "neutral", filter: "other_label" },
+    // The same number under another label (substrate, organism, form): the reviews' own term; Browse finds it under its
+    // "same" option, and the line says which label the database gives.
+    { test: /other[\s_-]*label/i, word: "Same number, other label", key: "neutral", filter: "other_label" },
     { test: /^(?:confirmed|same)/i, word: DATABASE_RESULT_NAMES.same, key: "same", filter: "same" },
     // "corrected": a database lists another number for the same measurement and code or a check against the paper
     // found why (CatLog's own definition); the word names one database value, never the database as a whole.
@@ -9148,7 +9151,7 @@
   const DATABASE_BROWSE_MATCHES = {
     corrects: (keys) => keys.has("corrected"),
     differs: (keys) => keys.has("differs"),
-    same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same"),
+    same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same" || key === "other_label"),
     adds: (keys) => keys.has("new") && ![...keys].every((key) => key === "new"),
     new: (keys) => keys.size > 0 && [...keys].every((key) => key === "new"),
     earlier: (keys) => keys.has("earlier"),
