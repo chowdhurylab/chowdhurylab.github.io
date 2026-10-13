@@ -1658,7 +1658,8 @@ function row(overrides = {}) {
   assert.match(element("statsCharts").innerHTML, /<strong>Table 1\.<\/strong> Records with each value or field/);
   // The review result is a donut (the one partition that is a true whole) beside its legend table; Accepted is split in
   // the rows under it.
-  assert.match(element("statsCharts").innerHTML, /<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Unverified 1 \(16\.7%\); Disputed 1 \(16\.7%\)\."/);
+  assert.match(element("statsCharts").innerHTML, /<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\."/);
+  assert.match(element("statsCharts").innerHTML, /<path class="stats-part-unverified" d="[^"]+"><title>Not checked \(Unverified\): 1 \(16\.7%\)<\/title>/);
   assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2"[\s\S]*?As printed/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers/, "No lead without agreement counts");

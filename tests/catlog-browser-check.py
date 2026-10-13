@@ -1651,6 +1651,10 @@ def check(driver, browser, url):
     # The donut: one slice per review result with records, in the snapshot's numbers.
     donut = driver.find_element(By.CSS_SELECTOR, ".stats-status-section svg.stats-donut")
     assert donut.get_attribute("role") == "img" and f"{total:,} records" in donut.get_attribute("aria-label")
+    # Its slices say the review result's word, as the record does: Not checked (Unverified), Not checked (Not reviewed).
+    for key, word in (("unverified", "Unverified"), ("mathematically_inferred", "Not reviewed")):
+        if expected.get(key, 0):
+            assert f"Not checked ({word}) {expected[key]:,}" in donut.get_attribute("aria-label"), donut.get_attribute("aria-label")
     assert len(donut.find_elements(By.CSS_SELECTOR, "path")) == sum(1 for key in ("manual_review_required", "unverified",
         "mathematically_inferred", "disputed") if expected.get(key, 0)) + bool(accepted)
     if overview:

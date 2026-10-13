@@ -4073,7 +4073,10 @@
         note: stateDescriptions.disputed },
       ...(otherStatus ? [{ value: "other_status", label: "Other status", part: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
-    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, label: item.label, count: item.count }));
+    // The donut's slices are named with the review result's word: "Not checked (Unverified)", as the record says it.
+    const notCheckedGroup = statusItems.find((item) => item.group);
+    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part,
+      label: item.sub && notCheckedGroup ? `${notCheckedGroup.label} (${item.label})` : item.label, count: item.count }));
     const statusTable = `<table class="stats-table stats-status-table">
       <thead><tr><th scope="col">Review result</th><th scope="col" class="stats-num">Records</th><th scope="col" class="stats-num">Share</th></tr></thead>
       <tbody>${statusItems.map((item) => `<tr class="${item.detail ? "stats-row-detail" : item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" ${item.detail ? `data-part="${item.value}"` : `data-stat-key="${item.value}"`} data-count="${item.count}"${item.splitNote ? ` title="${escapeHtml(item.note)}"` : ""}>
