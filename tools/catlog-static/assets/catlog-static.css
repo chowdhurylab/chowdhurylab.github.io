@@ -915,26 +915,32 @@ a.stats-total-value:focus-visible { outline:0 }
    numbers and its regular heading come out equally wide. */
 .stats-value-part[data-sizer]::before { content:attr(data-sizer); grid-area:1 / 1; min-width:max-content; height:0; overflow:hidden; visibility:hidden; white-space:pre; font-weight:600 }
 .stats-value-part[data-sizer] > span { grid-area:1 / 1 }
-.stats-track { position:relative; display:block; height:16px }
+/* The track is an axis container as wide as its axis's tick row (same column, same 12px font), so its gridlines give way
+   with their labels (below). */
+.stats-track { position:relative; display:block; height:16px; container:axis / inline-size }
 .stats-track .stats-seg { position:absolute; top:0; bottom:0 }
+.stats-refs { display:contents }
 .stats-ref { position:absolute; top:-4px; bottom:-4px; width:0; border-left:1px solid var(--line-soft) }
 .stats-chart-axis { margin-top:4px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 /* Each tick label is centred on its place, the end one too (it reaches into the axis row's empty value column), so the
-   labels sit evenly; "0" starts at the axis. An axis 240px wide or less keeps 0, the middle and the end of five ticks,
-   one 300px or less only the ends of six, and one under 24ch (the labels' own font, so a wider font thins sooner: 181px
-   in the system font, 183px in Verdana) only the ends of four, whose labels of up to 7 characters would otherwise
-   touch (Figure 5 at 641-700px, where its name and three value columns leave the bars about 130px). */
+   labels sit evenly; "0" starts at the axis. Where labels would touch they thin evenly: an axis 300px wide or less
+   keeps every other one of six ticks, 0, 2 and 4 steps (0, 50,000 and 100,000 of 0-125,000, not only the ends; Figure 3
+   at 1280-1440px), one 240px or less 0, the middle and the end of five, and one under
+   24ch (the labels' own font, so a wider font thins sooner: 181px in the system font, 183px in Verdana) only the ends of
+   four, whose labels would otherwise touch (Figure 5 at 641-700px, where its name and three value columns leave the bars
+   about 130px). A gridline in the bars gives way with its label (stats-refs holds an axis's lines in its ticks' order),
+   so no gridline is left unlabelled. */
 .stats-axis-ticks { position:relative; height:16px; container:axis / inline-size }
 .stats-axis-ticks > span { position:absolute; top:0; transform:translateX(-50%); white-space:nowrap }
 .stats-axis-ticks > span:first-child { transform:none }
 @container axis (max-width: 24ch) {
-  .stats-axis-ticks > span:first-child:nth-last-child(4) ~ span:not(:last-child) { visibility:hidden }
+  :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(4) ~ :not(:last-child) { visibility:hidden }
 }
 @container axis (max-width: 240px) {
-  .stats-axis-ticks > span:first-child:nth-last-child(5) ~ span:nth-child(even) { visibility:hidden }
+  :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(5) ~ :nth-child(even) { visibility:hidden }
 }
 @container axis (max-width: 300px) {
-  .stats-axis-ticks > span:first-child:nth-last-child(6) ~ span:not(:last-child) { visibility:hidden }
+  :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(6) ~ :nth-child(even) { visibility:hidden }
 }
 .stats-ec-name { color:var(--text-2) }
 .stats-ec-number { white-space:nowrap }

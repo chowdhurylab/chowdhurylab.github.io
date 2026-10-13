@@ -816,13 +816,18 @@ FIGURE_TITLES = ("Values read from the paper against the databases", "Correction
                  "CatLog v1 entries of papers CatLog v2 has read")
 
 
-# The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), and no two
-# labels touch.
+# The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), no two labels
+# touch, and the gridlines drawn in the bars are exactly at the labels shown (a label that gives way takes its gridline
+# with it, so no gridline is unlabelled).
 STATS_AXIS_EVEN = """
     return [...document.querySelectorAll('.stats-axis-ticks')].filter(axis => axis.getBoundingClientRect().width).every(axis => {
         const area = axis.getBoundingClientRect();
         const shown = [...axis.children].filter(tick => getComputedStyle(tick).visibility === 'visible');
         const places = shown.map(tick => parseFloat(tick.style.left));
+        const track = axis.closest('.stats-chart').querySelector('.stats-chart-row .stats-track');
+        const lines = [...track.querySelectorAll('.stats-ref')].filter(line => line.getClientRects().length && getComputedStyle(line).visibility === 'visible')
+            .map(line => parseFloat(line.style.left));
+        if (JSON.stringify(lines) !== JSON.stringify(places)) return false;
         const steps = places.slice(1).map((place, index) => place - places[index]);
         const boxes = shown.map(tick => tick.getBoundingClientRect());
         // each label centred on its tick; Figure 5's end label on phones ends at its tick (its axis spans the row, with no
@@ -1164,6 +1169,8 @@ def check_stats_new_figures(driver, browser, url):
             assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
+            # Figure 3's six ticks (0-125,000) thin to every other one where they would touch, gridlines with them.
+            assert driver.execute_script(STATS_AXIS_EVEN), f"Axis labels sit unevenly, touch or leave a gridline unlabelled at {width}px"
             edge = driver.execute_script(STATS_EDGE_CONTRAST_JS)
             assert edge is None or edge >= 3, f"A histogram outline or ridge line has {edge:.2f}:1 against the page"
             # The ridges of one panel share one plot width; on phones the class number stands alone.
@@ -1208,6 +1215,7 @@ def check_stats_new_figures(driver, browser, url):
                 driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": narrow, "height": 900, "deviceScaleFactor": 1, "mobile": narrow < 640})
                 touching = driver.execute_script(STATS_AXIS_TOUCHING_JS)
                 assert not touching, f"At {narrow}px in a wide font axis labels touch: {touching}"
+                assert driver.execute_script(STATS_AXIS_EVEN), f"At {narrow}px in a wide font a gridline is unlabelled or labels sit unevenly"
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
     finally:

@@ -3623,7 +3623,9 @@
   // A 16px bar: segments left to right (or each from the left, `overlay`), each a share of `scale`, over 1px reference
   // lines at `refs` (percent of the axis). The bar's outer ends are rounded (2px). With `shareOf`, each segment also
   // carries its place as a share of that total (data-share), for a chart that can show either (statsSwitchMode); a
-  // segment's exact count is in its tooltip line (data-tip).
+  // segment's exact count is in its tooltip line (data-tip). The reference lines of one axis are one group (stats-refs),
+  // in the order of that axis's tick labels, so a gridline gives way where its label does (the stylesheet thins both
+  // alike).
   function statsTrack(segments, scale, { refs = [0], overlay = false, shareOf = 0, shareRefs = null } = {}) {
     const main = statsPlaces(segments, scale, overlay);
     const share = shareOf > 0 ? statsPlaces(segments, shareOf, overlay) : null;
@@ -3635,7 +3637,7 @@
       const places = share ? ` data-records="${start},${width}" data-share="${share[index][0]},${share[index][1]}"` : "";
       return `<span class="stats-seg stats-part-${segment.part}${ends}" style="left:${start}%;width:${width}%"${places}${segment.title ? ` data-tip="${escapeHtml(segment.title)}"` : ""}></span>`;
     }).join("");
-    const lines = (list, extra) => list.map((ref) => `<i class="stats-ref${extra}" style="left:${ref}%"></i>`).join("");
+    const lines = (list, extra) => `<span class="stats-refs${extra}">${list.map((ref) => `<i class="stats-ref" style="left:${ref}%"></i>`).join("")}</span>`;
     return `<span class="stats-track" aria-hidden="true">${shareRefs ? lines(refs, " stats-ref-records") + lines(shareRefs, " stats-ref-share") : lines(refs, "")}${parts}</span>`;
   }
 

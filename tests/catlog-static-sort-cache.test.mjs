@@ -2190,9 +2190,14 @@ function row(overrides = {}) {
   assert.match(stacked, /stats-part-accepted is-start" style="left:0%;width:60%"[\s\S]*stats-part-pending is-end" style="left:60%;width:40%"/);
   assert.match(api.statsBarChart({ key: "t", scale: 10, overlay: true, rows: [{ key: "a", count: 9, label: "A", value: "9",
     segments: [{ part: "records", count: 8 }, { part: "accepted", count: 2 }] }] }), /stats-part-accepted is-start is-end" style="left:0%;width:20%"/);
-  // A count chart with gridlines at its ticks.
-  assert.equal((api.statsBarChart({ key: "t", scale: 30, step: 10, rows: [{ key: "a", count: 9, label: "A", value: "9",
-    segments: [{ part: "accepted", count: 9 }] }] }).match(/<i class="stats-ref" style="left:[\d.]+%"><\/i>/g) || []).length, 4);
+  // A count chart with gridlines at its ticks, one group in the ticks' order (so a gridline gives way with its label).
+  const gridded = api.statsBarChart({ key: "t", scale: 30, step: 10, rows: [{ key: "a", count: 9, label: "A", value: "9",
+    segments: [{ part: "accepted", count: 9 }] }] });
+  assert.equal((gridded.match(/<i class="stats-ref" style="left:[\d.]+%"><\/i>/g) || []).length, 4);
+  assert.match(gridded, /<span class="stats-refs"><i class="stats-ref" style="left:0%"><\/i><i class="stats-ref" style="left:33\.3333%"><\/i><i class="stats-ref" style="left:66\.6667%"><\/i><i class="stats-ref" style="left:100%"><\/i><\/span>/);
+  // A chart with a Records | Share switch keeps each mode's gridlines in a group of their own.
+  assert.match(api.statsBarChart({ key: "t", scale: 30, step: 10, switchable: true, rows: [{ key: "a", count: 9, label: "A", value: "9",
+    segments: [{ part: "accepted", count: 9 }] }] }), /<span class="stats-refs stats-ref-records">(<i class="stats-ref"[^>]*><\/i>){4}<\/span><span class="stats-refs stats-ref-share">(<i class="stats-ref"[^>]*><\/i>){5}<\/span>/);
   // A value label of several numbers sets each in its own right-aligned column: the count, then the share, every column
   // after the first sized by a hidden sizer (data-sizer) of its entries' shapes, so the counts line up. The shapes: digits
   // as 0, without one that ends another; "<0.0%" stays, since "<" may be wider than a digit.

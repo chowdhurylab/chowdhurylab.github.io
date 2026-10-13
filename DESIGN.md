@@ -160,9 +160,10 @@ to bottom, with a 1px opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
-its tick, the end one too, so they sit evenly (a narrow axis keeps 0, the
-middle and the end of five ticks, only the ends of six, and only the ends of four under 24ch, in the labels' own font,
-so labels never touch, also in a wider font); light 1px gridlines at the ticks. Category labels 13px, value labels and ticks
+its tick, the end one too, so they sit evenly (where labels would touch they thin evenly: a narrow axis keeps every
+other one of six ticks, 0, 2 and 4 steps, 0, the middle and the end of five, and only the ends of four under 24ch, in
+the labels' own font, so labels never touch, also in a wider font); light 1px gridlines at the
+ticks shown, a gridline giving way with its label, so none is unlabelled. Category labels 13px, value labels and ticks
 12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
 label of several numbers (the count, then the share; Figure 5's records, accepted and CatLog v2 entries) sets each
 number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
