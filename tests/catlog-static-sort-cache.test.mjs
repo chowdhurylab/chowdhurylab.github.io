@@ -2004,6 +2004,10 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
     assert.doesNotMatch(badge, /never reviewed/);
     assert.equal(api.rowStatusLabel(noPaper, { exact: true }), "Not checked", "the tag says why, not 'Not reviewed'");
     assert.equal(api.reviewOutcome(noPaper), "Not checked: the earlier automated review accepted it, but no paper is cited, so the value cannot be traced to a paper.");
+    // The Guide's Not checked definition counts these records under Not reviewed, as Stats does, and says how the record
+    // shows them.
+    api.renderGuideMethod();
+    assert.match(element("guideNotCheckedDefinition").innerHTML, /never reviewed, or that the earlier review accepted \(tag: <em>no paper linked<\/em>\)\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>; a record the earlier review accepted reads <em>Not checked<\/em> with the tag <em>no paper linked<\/em>\.$/);
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
     api.setHumanReviewMarks({ approved: { checked: true } });
     assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or because a human reviewer approved every value\. Human-checked: a human reviewer approved every value shown\."/);
@@ -2012,6 +2016,9 @@ assert.equal(api.agreementText({ papers_compared: 98, values_approved: 2489, agr
     assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed, in the earlier automated review.");
     api.setHumanReviewMarks({});
     runtimeManifest.summary = savedSummary;
+    // An older snapshot accepts these records, so its Not reviewed is only the records nobody reviewed.
+    api.renderGuideMethod();
+    assert.match(element("guideNotCheckedDefinition").innerHTML, /that was never reviewed\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>\.$/);
   }
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.

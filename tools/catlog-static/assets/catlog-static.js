@@ -120,7 +120,11 @@
         : "Passed review: read from the paper by CatLog, or accepted by the earlier automated review as printed or after a correction.";
     },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
-    not_verified: "No review result. Unverified: the earlier review recorded no final check. Not reviewed: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed.",
+    // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
+    // (Stats counts them there; the record reads "Not checked" with the tag "no paper linked").
+    get not_verified() {
+      return `No review result. Unverified: the earlier review recorded no final check. Not reviewed: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed${followsReviewRules() ? ", or that the earlier review accepted (tag: no paper linked)" : ""}.`;
+    },
     disputed: "A check found a problem; not accepted.",
   };
   const HUMAN_CHECKED_DESCRIPTION = "A human reviewer approved every value shown.";
@@ -259,6 +263,12 @@
   const NO_PAPER_RECORD_NOTE = "The earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
   function noPaperDefinition() {
     return followsReviewRules() ? NO_PAPER_NOT_ACCEPTED : identityOnlyTrustNote;
+  }
+  // The Guide's Not checked definition, with its words in italics as the static page has them.
+  function guideNotCheckedHtml() {
+    return followsReviewRules()
+      ? "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed, or that the earlier review accepted (tag: <em>no paper linked</em>). The record shows which, for example <em>Not checked (Unverified)</em>; a record the earlier review accepted reads <em>Not checked</em> with the tag <em>no paper linked</em>."
+      : "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed. The record shows which, for example <em>Not checked (Unverified)</em>.";
   }
   // Records accepted because a human reviewer approved every value (accepted_basis "human review").
   function humanAcceptedCount() {
@@ -3782,6 +3792,7 @@
     // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
     if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
+    if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
     const overview = statsOverview(Number(manifest.total_rows || 0));
     const audit = auditFacts(overview);
     if ($("guideMethodAudits") && audit) {
