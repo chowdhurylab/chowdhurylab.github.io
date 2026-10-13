@@ -4878,9 +4878,9 @@
       <details class="status-guide">
         <summary>Review result definitions</summary>
         <div class="status-guide-body">
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "passed review; "))}</p>`).join("")}
+          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateDescriptions[item.value].replace(/^Passed review: /, "Passed review; "))}</p>`).join("")}
           <p><strong>earlier extraction</strong>: ${escapeHtml(EARLIER_EXTRACTION_DEFINITION)}</p>
-          <p><strong>human-checked:</strong> ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
+          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)} Shown on accepted records only.</p>
           <p><strong>from paper</strong>: ${escapeHtml(v2Sentence)} <a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>
           <p><strong>corrected</strong>: ${escapeHtml(CORRECTED_DEFINITION)}</p>
           <p><strong>no paper linked</strong>: ${escapeHtml(noPaperDefinition())}</p>
