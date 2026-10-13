@@ -259,8 +259,10 @@ across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
 with Clear all at the left and Columns, Export and Sort at the right (when the
 records are 721 to 1000px wide, beside the open sidebar or a record on a laptop,
-the chips take the full width under that row instead of a narrow column beside
-it, so none is cut; a chip's tooltip names its whole filter); on phones a
+Export and Sort drop "results" and "by" and the chips stay on that one 48px row
+while they fit beside them; when they do not, they take the full width under it,
+Clear all after the last, instead of a narrow column beside it, so none is cut;
+a chip's tooltip names its whole filter); on phones a
 Filters button opens the sheet and the chips go under the toolbar (Filters,
 Export and Sort stay on one row; below 360px "Sort" is read out but not shown
 and the buttons are narrower, and to 389px the buttons are narrower while a

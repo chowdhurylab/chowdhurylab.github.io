@@ -1440,6 +1440,31 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open() and is_open())
         assert box(".filter-column")["width"] == 256
         results["record-1280"] = True
+        # With two filters on and a record open at 1280, the chips share the toolbar's one row while they fit beside
+        # Export and Sort (48px, Clear all last); a wider font puts them, with Clear all, on the full width under it.
+        # Never a chip cut, over the toolbar or Clear all alone on a line.
+        open_page("#browse?source=databases&checked=1")
+        wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, "#activeFilters .filter-chip")) == 2)
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open())
+        toolbar = driver.execute_script("""
+            const rect = e => e.getBoundingClientRect();
+            const tools = rect(document.querySelector('.records-tools'));
+            const chips = [...document.querySelectorAll('#activeFilters .filter-chip')];
+            const clear = rect(document.querySelector('#activeFilters .filter-chips-clear'));
+            const last = rect(chips[chips.length - 1]);
+            const mid = r => (r.top + r.bottom) / 2;
+            return {header: Math.round(rect(document.querySelector('.records-header')).height),
+                    beside: chips.every(chip => rect(chip).right <= tools.left + 1 && Math.abs(mid(rect(chip)) - mid(tools)) <= 2),
+                    under: chips.every(chip => rect(chip).top >= tools.bottom - 1),
+                    cut: chips.filter(chip => { const label = chip.querySelector('span'); return label.scrollWidth > label.clientWidth + 1; }).length,
+                    clearWithLast: Math.abs(mid(clear) - mid(last)) <= 2 && clear.left >= last.right};
+        """)
+        assert not toolbar["cut"] and toolbar["clearWithLast"] and (
+            (toolbar["beside"] and toolbar["header"] <= 49) or toolbar["under"]), f"Chips beside an open record at 1280: {toolbar}"
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open())
+        results["chips-record-1280"] = True
         # Beside the open sidebar from 1280px Review result stays in view without sideways scrolling, in the filtered views
         # whose wide tags and values once pushed it out (database sources, Not confirmed, a caution): the names give way,
         # then the tags (ending in an ellipsis), never the review result's word. Only the arrow may scroll out of view.
@@ -1656,8 +1681,8 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: is_open() and box(".filter-column")["width"] == 256)
         assert stored() in ("0", "unavailable")
         # Nothing matches beside the open sidebar: Enzyme's heading keeps its room, clear of EC's (the stylesheet's widths
-        # had left it 0px wide), and the active filters take the full width under the toolbar, none cut, each chip's
-        # tooltip naming its whole filter.
+        # had left it 0px wide), and the active filters, too long to sit beside the toolbar, take the full width under it,
+        # none cut, each chip's tooltip naming its whole filter.
         driver.execute_script("location.hash = arguments[0]", "#browse?ec=9.9.9.9&source=paper&organism=Escherichia%20coli")
         wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .empty-notice")
                    and len(d.find_elements(By.CSS_SELECTOR, "#activeFilters .filter-chip")) == 3)

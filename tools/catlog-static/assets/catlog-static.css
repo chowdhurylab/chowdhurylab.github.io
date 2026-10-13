@@ -1128,16 +1128,16 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .records-header { grid-template-columns:minmax(0,1fr) }
   .records-tools { flex-wrap:wrap }
 }
-/* 721-1000px (beside the open sidebar or a record on a laptop): the toolbar would squeeze the chips into a narrow
-   column, one per line and cut. The count and the toolbar share the first row; the chips take the full width under
-   them, then "Clear search and filters" when nothing matches. Hidden parts take no row. */
+/* 721-1000px (beside the open sidebar or a record on a laptop): Export and Sort drop "results" and "by", and the chips
+   share the toolbar's one 48px row while they fit beside it, Clear all last. When they do not fit, the toolbar keeps the
+   row and the chips take the full width under it (never a narrow column, one per line and cut), with a count that is
+   not the page range and "Clear search and filters". Row-reverse with the toolbar first keeps it at the right on the
+   first row; the chips' block grows to fill the room left of it. */
 @container records (min-width: 721px) and (max-width: 1000px) {
-  .records-header { row-gap:var(--sp-2) }
-  .records-title { display:contents }
-  #pageSummary { grid-column:1; grid-row:1 }
-  .records-tools { grid-column:2; grid-row:1 }
-  .active-filters { grid-column:1 / -1; grid-row:2 }
-  #clearResultsButton { grid-column:1 / -1; justify-self:start }
+  .records-header { display:flex; flex-direction:row-reverse; flex-wrap:wrap; row-gap:var(--sp-2) }
+  .records-tools { order:-1; flex:none }
+  .records-title { flex:1 1 auto }
+  .download-page-detail, .records-tools .sort-label-detail { display:none }
 }
 @container records (max-width: 1100px) {
   table { --cell-x:6px }
