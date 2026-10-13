@@ -737,6 +737,13 @@ def check_team(driver, browser, url):
         driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerover', {bubbles: true}))", chip)
     wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
     driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
+    # The Guide's link to Team opens it as the tab does, with focus on its heading (not left on the page body).
+    driver.get("about:blank")
+    driver.get(url + "#guide-method")
+    link = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, '#guide-method a[href$="#team"]'))
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
+    link.click()
+    wait.until(lambda d: d.execute_script("return document.body.classList.contains('team-open') && document.activeElement?.id === 'teamHeading'"))
     if browser == "chrome":
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 812, "deviceScaleFactor": 1, "mobile": True})
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})

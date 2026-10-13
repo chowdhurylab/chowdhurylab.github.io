@@ -9030,7 +9030,17 @@
       const folder = (path) => path.replace(/[^/]*$/, "");
       const file = target.pathname.split("/").pop();
       if (target.origin !== here.origin || folder(target.pathname) !== folder(here.pathname)) return;
-      if (!/^#browse\?/.test(target.hash) || ![here.pathname.split("/").pop(), "catlog-latest.html", "catlog-stats.html", "index.html", ""].includes(file)) return;
+      if (![here.pathname.split("/").pop(), "catlog-latest.html", "catlog-stats.html", "index.html", ""].includes(file)) return;
+      // A link to Team or Stats (the Guide's method section, the Stats lead, the Guide's agreement line) opens it as its
+      // tab does: in this page, with the view's heading focused, so the next Tab goes into the view, not the header.
+      const linkedView = target.hash === "#team" ? "team"
+        : target.hash === "#stats" || (file === "catlog-stats.html" && !target.hash) ? "stats" : "";
+      if (linkedView) {
+        event.preventDefault();
+        navigateTo(linkedView);
+        return;
+      }
+      if (!/^#browse\?/.test(target.hash)) return;
       event.preventDefault();
       const url = viewUrl("browse");
       url.hash = target.hash;
