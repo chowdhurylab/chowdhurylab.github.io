@@ -9321,10 +9321,15 @@
     return kind;
   }
 
-  function correctionValueText(value, unit) {
+  // The other fields whose values are numbers, written as the record writes numbers (× 10ⁿ from 10⁵). Identifiers (PMID,
+  // NCBI Protein, GenBank, EC, DOI) and names are text, shown as given: a PMID 21149620 never reads 2.114962 × 10⁷.
+  const CORRECTION_NUMBER_FIELDS = new Set(["vmax", "ph"]);
+
+  function correctionValueText(value, unit, { asNumber = true } = {}) {
     if (value == null || value === "") return "none";
     const number = Number(value);
-    return `${Number.isFinite(number) && String(value).trim() !== "" ? numberText(String(value)) : shownText(value)}${unit ? ` ${unitText(unit)}` : ""}`;
+    const text = asNumber && Number.isFinite(number) && String(value).trim() !== "" ? numberText(String(value)) : shownText(value);
+    return `${text}${unit ? ` ${unitText(unit)}` : ""}`;
   }
 
   // A temperature the earlier catalog stores in kelvin reads in °C, as the record's Conditions do.
@@ -9380,7 +9385,7 @@
           ? (value) => correctionTemperatureText(value, item.key)
           : (value) => (item.key === "wild_type" && typeof value === "boolean"
             ? (value ? "wild type" : "variant")
-            : correctionValueText(value, item.unit));
+            : correctionValueText(value, item.unit, { asNumber: CORRECTION_NUMBER_FIELDS.has(item.key) }));
         return comparisonItemHtml(item.name, `${escapePublic(text(item.before))}${arrow}<strong>${escapePublic(text(item.after))}</strong>`,
           (item.kind && !/^chang/i.test(item.kind) ? changeHtml(item) : "") + whereHtml(item));
       }),

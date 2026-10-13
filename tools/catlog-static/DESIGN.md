@@ -670,7 +670,9 @@ found at once: A, B, G, C, D, E, F, H.
   rounding", "different number", "added: the source had none", "removed",
   "replaced"), "Before: as in OED for this paper" or "Before: earlier catalog
   value" (nothing for an added value's "none"), "In the paper: <where>"; then
-  pH, temperature (in °C), identifiers ("UniProt P00325 → P00326") and a
+  pH, temperature (in °C), identifiers as text, as given, never written as
+  numbers ("UniProt P00325 → P00326", "PMID 21149620 → 21149602", not
+  "2.114962 × 10⁷"; only Vmax and pH are numbers) and a
   replaced sequence or SMILES ("Replaced", not repeated); a field whose value
   did not change is not listed; one closing note, "Changed in the earlier
   automated review to what the paper prints." (and "More records like this:

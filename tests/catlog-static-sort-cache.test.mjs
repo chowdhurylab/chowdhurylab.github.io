@@ -3406,6 +3406,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "ph", before: 7, after: 7.5, kind: "different" },
     { field: "temperature_k", before: 298.15, after: 303.15, kind: "different" },
     { field: "uniprot_id", old_value: "P00325", new_value: "P00326", kind: "changed" },
+    { field: "pubmed_id", before: "21149620", after: "21149602", kind: "changed" },
+    { field: "ncbi_protein_id", before: null, after: 123456789, kind: "added" },
+    { field: "vmax", before: 120000, after: 1200, unit: "nmol/min/mg", kind: "magnitude" },
     { field: "smiles", kind: "replaced" },
   ] });
   const trail = html.slice(html.indexOf('class="detail-section databases-section"'), html.indexOf('class="detail-section review-section"'));
@@ -3417,6 +3420,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<dt>pH<\/dt><dd><span class="cmp-value">7<span class="cmp-arrow"> → <\/span><strong>7\.5<\/strong><\/span>/);
   assert.match(trail, /<dt>Temperature<\/dt><dd><span class="cmp-value">25 °C<span class="cmp-arrow"> → <\/span><strong>30 °C<\/strong><\/span>/);
   assert.match(trail, /<dt>UniProt<\/dt><dd><span class="cmp-value">P00325<span class="cmp-arrow"> → <\/span><strong>P00326<\/strong><\/span><\/dd>/);
+  // Identifiers are text as given, never numbers in × 10ⁿ; a numeric field such as Vmax is written as a number.
+  assert.match(trail, /<dt>PMID<\/dt><dd><span class="cmp-value">21149620<span class="cmp-arrow"> → <\/span><strong>21149602<\/strong><\/span><\/dd>/);
+  assert.match(trail, /<dt>NCBI Protein<\/dt><dd><span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>123456789<\/strong><\/span>/);
+  assert.doesNotMatch(trail, /× 10⁷|× 10⁸/);
+  assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1200 nmol\/min\/mg<\/strong><\/span>/);
   assert.match(trail, /<dt>SMILES<\/dt><dd><span class="cmp-value">Replaced<\/span><\/dd>/);
   assert.doesNotMatch(trail, /papers\\x\.pdf|x\.pdf/, "a local path never");
   assert.match(trail, /<p class="section-note">Changed in the earlier automated review to what the paper prints\.<\/p>/);
