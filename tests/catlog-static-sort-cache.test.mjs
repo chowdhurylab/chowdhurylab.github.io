@@ -3001,7 +3001,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /compared each value with the paper; units converted by code\./);
-  assert.match(html, /<dt>Second check<\/dt><dd>kcat: confirmed; Km: unit set to mM\.<\/dd>/);
+  // The Second check line sets kcat, Km and kcat/Km as the Values table does (italics, subscripts).
+  assert.match(html, /<dt>Second check<\/dt><dd><i>k<\/i><sub>cat<\/sub>: confirmed; <i>K<\/i><sub>m<\/sub>: unit set to mM\.<\/dd>/);
   assert.match(html, /<ul class="value-notes"><li><i>k<\/i><sub>cat<\/sub>: converted by code from the printed unit\.<\/li><\/ul>/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
@@ -3316,7 +3317,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { assay_conditions_summary: "pH 7; 50 mM Tris" });
   // Values whose results differ: the Second check line names each value's result (no column in Values).
   assert.doesNotMatch(html, /AI check<\/th>/);
-  assert.match(html, /<dt>Second check<\/dt><dd>kcat: confirmed; Km: qualifier corrected\. The AI check also removed EC 2\.7\.2\.12 and corrected the assay conditions \(see Conditions\)\.<\/dd>/);
+  assert.match(plainMetricNames(html), /<dt>Second check<\/dt><dd>kcat: confirmed; Km: qualifier corrected\. The AI check also removed EC 2\.7\.2\.12 and corrected the assay conditions \(see Conditions\)\.<\/dd>/);
   assert.doesNotMatch(html, /\(was |unit used for the conversion/);
   // Phrases already in plain words pass through; a caution on a confirmed value is pointed to.
   html = render([line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")]);
@@ -3325,7 +3326,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
     condition_flags: ["kcat_over_km_quotient_mismatch"] }), { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "confirmed"), line("Km", "confirmed"), line("kcat/Km", "confirmed")] });
-  assert.match(element("detailContent").innerHTML, /<dt>Second check<\/dt><dd>All values confirmed as printed; see the note on kcat\/Km\.<\/dd>/);
+  assert.match(element("detailContent").innerHTML, /<dt>Second check<\/dt><dd>All values confirmed as printed; see the note on <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\.<\/dd>/);
   html = render([line("kcat", "corrected: cosubstrate; assay conditions")], { assay_conditions_summary: "50 mM Tris" });
   assert.match(html, /All values confirmed\. The AI check also corrected the cosubstrate and the assay conditions \(see Conditions\)\.<\/dd>/);
   html = render([line("kcat", "corrected: unit set to mM; EC 1.1.1.25 removed")]);
@@ -3431,7 +3432,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  assert.match(html, /<dt>Values from<\/dt><dd>Read from the paper by CatLog<\/dd>/);
+  // The paper, as the Source filter names the version; the Method row says how it was read ("Read from the paper" once).
+  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(CatLog v2\)<\/dd>/);
+  assert.equal((html.match(/Read from the paper/g) || []).length, 1, "Read from the paper is said once in the record's Source");
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
   assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: Values from says so");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).

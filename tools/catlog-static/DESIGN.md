@@ -604,7 +604,8 @@ found at once: A, B, G, C, D, E, F, H.
   a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the line as extracted" ("Show the kcat line as
   extracted" when the lines name their values) with that warning.
-- C. Source: Values from ("Read from the paper by CatLog" or the databases by
+- C. Source: Values from ("The paper (CatLog v2)", as the Source filter names the
+  version, so "Read from the paper" is said once, by the Method line under it; or the databases by
   name, never a raw key; not "Source", which would repeat the heading); Merged
   from (database entries and papers); the source's own details as rows of the
   same list, each wrapping (nothing to open at the record's end): Databases, the
@@ -621,7 +622,7 @@ found at once: A, B, G, C, D, E, F, H.
   itself, so no phone scrolls the record sideways) and a
   Second check line (one result for every value, "All values confirmed." or
   "Unit set to mM for every value.", or each value's result, "kcat: confirmed;
-  Km: unit set to mM."; then once what the check changed on the record, "The AI
+  Km: unit set to mM.", kcat, Km and kcat/Km in italics with subscripts as in the Values table; then once what the check changed on the record, "The AI
   check also removed EC 2.7.2.12 and corrected the assay conditions"; a removed
   EC the header still shows says where the shown one comes from, "removed EC
   1.1.1.25 (not printed in the paper; the EC shown comes from the enzyme

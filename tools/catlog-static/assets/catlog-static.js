@@ -7875,9 +7875,11 @@
 
   // A labelled row of the record (a term and its value in the section's list); a missing value reads "Not recorded",
   // never a bare dash.
-  function kv(label, value) {
+  // metricWords: kcat, Km and kcat/Km in the text set as the Values table sets them (metricWordsHtml).
+  function kv(label, value, { metricWords = false } = {}) {
     const text = compactValue(value);
-    return linkedKv(label, escapePublic(text === EMPTY_VALUE ? "Not recorded" : text));
+    const html = escapePublic(text === EMPTY_VALUE ? "Not recorded" : text);
+    return linkedKv(label, metricWords ? metricWordsHtml(html) : html);
   }
 
   function doiLink(value) {
@@ -9501,7 +9503,9 @@
   // else the databases by name, read from source_db as Browse's Source filter and the status line read it
   // (rowSourceBits: "sabio_rk;brenda" is "BRENDA, SABIO-RK"), never a raw key.
   function recordSourceName(value, v2Record = false) {
-    if (v2Record) return "Read from the paper by CatLog";
+    // A record read by CatLog: the paper, as the Source filter names the version (the Method row under it says how it
+    // was read, so "Read from the paper" is not said twice).
+    if (v2Record) return `The paper (${SOURCE_CATLOG_LABEL})`;
     const bits = rowSourceBits({ source_db: value });
     if (bits === SOURCE_UNRECORDED_BIT) return "Not recorded";
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
@@ -10249,7 +10253,8 @@
       v2Record
         ? linkedKv("Method", `${escapePublic(v2MethodSentence(facts, { unitChanged: measurementNotes(summary, detail, { proof }).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads and checks values<span aria-hidden="true"> →</span></a>`)
         : (evidence && evidence !== "Database note" ? kv("Evidence", evidence) : ""),
-      v2Record && facts ? kv("Second check", v2CheckText(facts, v2CheckOptions(summary, detail, proof))) : "",
+      // kcat, Km and kcat/Km in italics with subscripts, as the Values table and the lines under it write them.
+      v2Record && facts ? kv("Second check", v2CheckText(facts, v2CheckOptions(summary, detail, proof)), { metricWords: true }) : "",
       kv("License", detailLicense(summary, detail, v2Record)),
       dataId ? kv("Data ID", `${dataId}${manifest.generated_at ? ` (snapshot ${formatDate(manifest.generated_at)})` : ""}`) : "",
     ]) + sourceNoteHtml);
