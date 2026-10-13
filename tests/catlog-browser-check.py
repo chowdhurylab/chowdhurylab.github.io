@@ -538,11 +538,14 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
                    "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0}
 
 
+# The human review leads Quality, the first numbered part after the headline band (part 1), and is shown once.
 LEAD_FIRST_JS = """
-    const lead = document.getElementById('statsLead'), totals = document.getElementById('statsTotals');
-    return Boolean(lead && !lead.hidden && lead.querySelector('[data-figure="review"]')
-        && (lead.compareDocumentPosition(totals) & Node.DOCUMENT_POSITION_FOLLOWING)
-        && !document.querySelector('#statsCharts [data-figure="review"]'));
+    const band = document.querySelector('#statsTotals > .stats-band');
+    const quality = document.querySelector('#statsCharts > .stats-part');
+    const lead = document.querySelector('#statsCharts .stats-lead[data-figure="review"]');
+    return Boolean(band && quality && quality.dataset.part === 'quality' && lead
+        && quality.querySelector('.stats-part-grid').firstElementChild === lead
+        && document.querySelectorAll('[data-figure="review"]').length === 1);
 """
 
 
@@ -613,22 +616,31 @@ def check_quality(driver, browser, url, quality=None):
         driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
         wait.until(lambda d: d.find_elements(By.ID, "statsChecksTitle"))
         if audited:
-            audit = driver.find_element(By.CSS_SELECTOR, "tr[data-check='audit']").text
-            assert f"{quality['audit_values']:,} values" in audit and f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit, audit
-            assert "independent" not in audit.lower(), audit
+            audit = driver.find_element(By.CSS_SELECTOR, "[data-check='audit']")
+            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText") == f"{quality['audit_values']:,}"
+            assert f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit.get_attribute("innerText"), audit.text
+            assert "independent" not in audit.get_attribute("innerText").lower(), audit.text
         if compared:
-            # The share correct is shown only with the label errors beside it.
-            earlier = driver.find_element(By.CSS_SELECTOR, "tr[data-check='review']").text
-            assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
-            # Its group is every value compared, not the lead's approved values.
-            assert f"{quality['compared_values_v1']:,} values" in earlier and "approved or not" in earlier, earlier
+            # The share correct is shown only with the label errors beside it: in the lead, or in a check of its own
+            # when there is no lead. Its group is every value compared, not the lead's approved values.
+            leads = driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-lead")
+            earlier = (leads[0] if leads else driver.find_element(By.CSS_SELECTOR, "[data-check='review']")).get_attribute("innerText")
+            if leads:
+                assert correct in earlier and f"and {quality['label_or_annotation_v1']:,} had a wrong enzyme" in earlier, earlier
+                assert f"of {quality['compared_values_v1']:,} values reviewers compared" in earlier, earlier
+            else:
+                assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
+                assert "approved or not" in earlier, earlier
         if headline:
-            assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Stats, above the headline counts"
-            figure = driver.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead-figure strong").text
+            assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
+            figure = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead .stats-lead-figure strong").text
             assert figure == headline, (figure, headline)
+            # The band's Human review gives the same share.
+            band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review'] .stats-total-value").get_attribute("innerText")
+            assert band == headline, (band, headline)
         else:
             assert not driver.find_elements(By.CSS_SELECTOR, ".stats-lead"), "No lead without the human review's counts"
-        stats_text = driver.find_element(By.ID, "statsLead").get_attribute("innerText") + driver.find_element(By.ID, "statsCharts").get_attribute("innerText")
+        stats_text = driver.find_element(By.ID, "statsTotals").get_attribute("innerText") + driver.find_element(By.ID, "statsCharts").get_attribute("innerText")
         for word in ("independent", "AI run", "Claude", "Codex", *DROPPED_WORDING):
             assert word not in stats_text, f"Stats says {word}"
         assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1")
@@ -753,8 +765,11 @@ def check_review_headline(driver, browser, url):
                                                                           "mobile": width < 768})
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
-            lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead"))
-            assert lead.find_element(By.CSS_SELECTOR, "h2").get_attribute("innerText") == "Human review of CatLog v1 entries"
+            lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead"))
+            assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
+            assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText") == "Human review of CatLog v1 entries"
+            band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
+            assert "99.9%" in band and "values correct in CatLog v1 entries" in band, band
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == "99.9%"
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText") == REVIEW_SENTENCE
             text = lead.get_attribute("innerText")
@@ -845,8 +860,11 @@ def check_stats_figures(driver, browser, url):
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsReplacedTitle"))
-            headings = [h.text for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2")]
-            assert headings[2:5] == list(FIGURE_TITLES), headings
+            # The comparison with the databases is the last numbered part, its three figures in order.
+            part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
+            assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")
+            headings = [h.get_attribute("innerText") for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
+            assert headings == list(FIGURE_TITLES), headings
             figures = driver.execute_script("""
                 return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
                     key: chart.dataset.chart,
@@ -870,6 +888,17 @@ def check_stats_figures(driver, browser, url):
             brenda = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-chart-row[data-row='brenda']")
             assert int(brenda.get_attribute("data-count")) == driver.execute_script("return window.CATLOG_STATIC_MANIFEST.total_rows")
             assert len(brenda.find_elements(By.CSS_SELECTOR, ".stats-seg")) >= 3
+            # Records | Share: Share draws each source as 100% of itself (with its own axis), Records goes back.
+            bar_width = "return [...arguments[0].querySelectorAll('.stats-seg')].reduce((sum, seg) => sum + parseFloat(seg.style.width), 0)"
+            share = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-stats-mode='share']")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", share)
+            share.click()
+            assert share.get_attribute("aria-pressed") == "true"
+            assert abs(driver.execute_script(bar_width, brenda) - 100) < 0.01, driver.execute_script(bar_width, brenda)
+            assert driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-axis-mode='share']").is_displayed()
+            assert not driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-axis-mode='records']").is_displayed()
+            driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-stats-mode='records']").click()
+            assert driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-axis-mode='records']").is_displayed()
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
             driver.execute_script("document.querySelector('[data-figure=\"db-compare\"]').scrollIntoView()")
@@ -878,6 +907,150 @@ def check_stats_figures(driver, browser, url):
         driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
     return {"route": "stats-figures", "passed": True}
+
+
+def check_stats_more(driver, browser, overview, total):
+    """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: CatLog
+    v2 and v1 entries make all records, values per paper make CatLog v2's papers, each class's CatLog v2 entries and its
+    values by class stay within its records, the small multiples draw one ridge per class with values. In Chrome,
+    pointing at a mark lights it and gives its exact count in the tooltip line."""
+    read = overview["from_paper"]["records"]
+    versions = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
+                for row in driver.find_elements(By.CSS_SELECTOR, "[data-figure='versions'] .stats-chart-row")}
+    if versions:
+        assert versions == {"catlog": read, "v1": total - read}, versions
+    per_paper = overview.get("from_paper_values")
+    rows = [int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, "[data-figure='values-per-paper'] .stats-chart-row")]
+    if per_paper:
+        assert rows and sum(rows) + per_paper.get("no_values", 0) == overview["from_paper"]["papers"], (rows, per_paper)
+    else:
+        assert not rows
+    classes = {item["class"]: item for item in overview.get("ec_classes") or []}
+    if all(isinstance(item.get("from_paper"), int) for item in classes.values()) and classes:
+        shown = [int(span.get_attribute("innerText").replace(",", "")) for span in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-v2-count")]
+        assert shown == [item["from_paper"] for item in classes.values()] and all(item["from_paper"] <= item["count"] for item in classes.values()), shown
+    ridges = driver.find_elements(By.CSS_SELECTOR, "[data-figure='class-values'] .stats-ridges")
+    expected = [key for key in ("kcat", "km", "kcat_over_km") if (overview["metrics"].get(key) or {}).get("by_class")]
+    assert [panel.get_attribute("data-metric") for panel in ridges] == expected, [panel.get_attribute("data-metric") for panel in ridges]
+    for panel in ridges:
+        grid = overview["metrics"][panel.get_attribute("data-metric")]["by_class"]
+        drawn = {int(row.get_attribute("data-class")): int(row.get_attribute("data-count")) for row in panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-row")}
+        assert drawn == {item["class"]: item["n"] for item in grid["classes"]}, drawn
+        # a record has at most one value per metric, so a class has no more values than records
+        for number, n in drawn.items():
+            assert number not in classes or n <= classes[number]["count"], (number, n)
+        assert all(svg.get_attribute("role") == "img" and svg.get_attribute("aria-label") for svg in panel.find_elements(By.CSS_SELECTOR, "svg.stats-ridge-svg"))
+    # Every figure is named and described: its heading, one numbered caption, a data line.
+    for figure in driver.find_elements(By.CSS_SELECTOR, "#statsCharts figure.stats-fig"):
+        assert figure.get_attribute("aria-labelledby") and figure.find_elements(By.CSS_SELECTOR, "figcaption .stats-fig-caption strong")
+    if browser != "chrome":
+        return
+    # Pointing at the Not confirmed slice lights it and its table row, dims the rest and gives its exact count.
+    slice_ = driver.find_elements(By.CSS_SELECTOR, ".stats-donut path[data-hl='manual_review_required']")
+    if slice_:
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", slice_[0])
+        box = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.left + r.width * 0.3, r.top + r.height * 0.6]", slice_[0])
+        for x in (box[0] - 2, box[0]):
+            driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x, "y": box[1]})
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script("const t = document.getElementById('statsTip'); return t && !t.hidden"))
+        tip = driver.execute_script("return document.getElementById('statsTip').textContent")
+        pending = int(driver.find_element(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key='manual_review_required']").get_attribute("data-count"))
+        assert tip.startswith(f"Not confirmed: {pending:,} ("), tip
+        lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"status\"] .is-active')].map(e => e.tagName.toLowerCase())")
+        assert sorted(lit) == ["path", "tr"], lit
+        assert driver.execute_script("return document.querySelector('[data-figure=\"status\"] .stats-fig').classList.contains('has-active')")
+        driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
+
+
+# The figures a newer overview adds, as build_overview counts them, set in Chrome before the page starts (the data files
+# are not changed); derived from the snapshot's own counts so they add up.
+MORE_FIXTURE_JS = """
+    Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+      set(value) {
+        const overview = value?.summary?.overview;
+        if (overview?.from_paper) {
+          const papers = overview.from_paper.papers;
+          overview.from_paper_values = { values: papers * 3, bins: [1, 2, 5], papers: [papers - 2, 1, 1] };
+          overview.ec_classes = (overview.ec_classes || []).map((item) => ({ ...item, from_paper: Math.floor(item.count / 4) }));
+          const counts = (n) => { const list = new Array(16).fill(0); list[5] = n - 2; list[6] = 1; list[9] = 1; return list; };
+          overview.metrics.kcat.by_class = { log10_start: -4, bin_width: 0.5, classes: (overview.ec_classes || []).slice(0, 3)
+            .map((item) => ({ class: item.class, n: 20, median: 0.5, p10: 0.02, p90: 4, counts: counts(20) })) };
+          overview.top_organisms_from_paper = (overview.top_organisms || []).slice(0, 3).map((item) => ({ ...item, count: Math.min(item.count, overview.from_paper.records) }));
+        }
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+      } });
+"""
+
+
+# A viewer whose system draws text wider (Verdana, letter-spacing 0.5px), set before the page's script runs.
+WIDE_FONT_JS = """
+    new MutationObserver((list, observer) => {
+      if (!document.head) return;
+      const style = document.createElement("style");
+      style.textContent = "html { --font: Verdana, sans-serif !important } body, body * { letter-spacing: 0.5px !important }";
+      document.head.appendChild(style);
+      observer.disconnect();
+    }).observe(document, { childList: true, subtree: true });
+"""
+
+
+def check_stats_new_figures(driver, browser, url):
+    """Chrome: with a newer overview's counts (MORE_FIXTURE_JS) Stats draws the added figures in order and they add up
+    (check_stats_more) at 1440 and 375px; the motion respects a reduced-motion setting, print drops every glow, and a
+    wide fallback font keeps the donut's total and every value label inside their figures."""
+    if browser != "chrome":
+        return {"route": "stats-new-figures", "skipped": "Chrome only"}
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": MORE_FIXTURE_JS})
+    try:
+        for width, height in ((1440, 1000), (375, 812)):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.ID, "statsClassValuesTitle"))
+            manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+            overview = stats_overview(manifest)
+            check_stats_more(driver, browser, overview, manifest["total_rows"])
+            titles = [h.get_attribute("innerText") for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
+            for title in ("Values per paper in CatLog v2", "Organisms with the most CatLog v2 entries", "Values by enzyme class"):
+                assert title in titles, titles
+            assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
+            assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
+            # The ridges of one panel share one plot width; on phones the class number stands alone.
+            widths = driver.execute_script("return [...document.querySelectorAll('.stats-ridges')].map(panel => [...panel.querySelectorAll('.stats-ridge-plot')].map(plot => Math.round(plot.getBoundingClientRect().width)))")
+            assert all(len(set(panel)) == 1 and panel[0] >= 120 for panel in widths), widths
+            driver.execute_script("document.querySelector('[data-figure=\"class-values\"]').scrollIntoView()")
+            driver.save_screenshot(str(OUTPUT / f"{browser}-stats-new-figures-{width}.png"))
+        # The key numbers glow on screen and not on paper; with less motion asked for, nothing moves.
+        glow = "return getComputedStyle(document.querySelector('.stats-totals-main .stats-total-value')).textShadow"
+        assert driver.execute_script(glow) not in ("", "none")
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
+        assert driver.execute_script(glow) == "none"
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
+        assert driver.execute_script("return getComputedStyle(document.querySelector('.stats-seg')).transitionDuration") in ("0s", "")
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
+        assert driver.execute_script("return getComputedStyle(document.querySelector('.stats-seg')).transitionDuration") != "0s"
+        # A wide fallback font from the start (Verdana, letter-spacing 0.5px): the donut's total is set smaller to stay
+        # inside its hole, and every value label stays inside its figure.
+        wide = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": WIDE_FONT_JS})
+        try:
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 1280, "height": 900, "deviceScaleFactor": 1, "mobile": False})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.ID, "statsClassValuesTitle"))
+            fit = driver.execute_script("""const t = document.querySelector('.stats-donut-total');
+                return {family: getComputedStyle(t).fontFamily, width: t.getComputedTextLength(), room: Number(t.getAttribute('data-room')),
+                        spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value')].filter(v =>
+                          v.getBoundingClientRect().right > v.closest('.stats-section').getBoundingClientRect().right + 1).map(v => v.innerText)};""")
+            assert "Verdana" in fit["family"] and fit["width"] <= fit["room"] + 0.5 and not fit["spill"], fit
+        finally:
+            driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
+    finally:
+        driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
+    return {"route": "stats-new-figures", "passed": True}
 
 
 TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "rules", "website", "paper")
@@ -1820,6 +1993,14 @@ def check_layout(driver, browser, url, route_label):
                 f"At {width}px the counts band takes two lines: {band}")
             band_heights.add(band["height"])
         assert len(band_heights) == 1, f"The two-line counts band keeps one height: {band_heights}"
+        # The band's key numbers glow softly in accent ink (Human-checked in its green); a linked count's hover tint is
+        # drawn around it, so it never moves the line.
+        glow = driver.execute_script("""
+            const shadow = selector => getComputedStyle(document.querySelector(selector)).textShadow;
+            return {records: shadow('.summary-card strong'), checked: shadow('#humanCheckedLink > strong'),
+                    tint: getComputedStyle(document.getElementById('humanCheckedLink'), '::before').position};
+        """)
+        assert glow["records"] not in ("", "none") and glow["checked"] not in ("", "none") and glow["tint"] == "absolute", glow
         results["band-two-lines"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)
@@ -2683,14 +2864,30 @@ def check(driver, browser, url):
     if overview:
         human = overview.get("human_checked_accepted")
         if human is not None:
-            assert "Human-checked" in headline and f"{human:,}" in headline
+            # Human-checked is a check under Quality, linked to those records.
+            card = driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked']")
+            assert card.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText") == f"{human:,}"
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
         assert any(href.endswith("#browse?source=paper") for href in hrefs)
+        # The band's key numbers link into Browse: Accepted and the CatLog v2 entries.
+        band_links = {item.get_attribute("data-total"): urlsplit(item.find_element(By.CSS_SELECTOR, "a.stats-total-value").get_attribute("href")).fragment
+                      for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
+        assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
+        # Numbered parts in order, from the band's 1.
+        parts = [heading.get_attribute("innerText").split("\n") for heading in driver.find_elements(By.CSS_SELECTOR, ".stats-part-title")]
+        assert [int(number) for number, *_rest in parts] == list(range(1, len(parts) + 1)), parts
+        check_stats_more(driver, browser, overview, total)
         forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] tr[data-stat-key]")
         assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
         classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] [data-stat-key]")
         assert classes == {f"ec_{item['class']}": item["count"] for item in overview["ec_classes"]}
+        # Each record is in one class, in none or in several, and one in several counts in each of them (two to seven):
+        # the class bars exceed the records with a class by at least one and at most six per record in several.
+        none, several = overview.get("ec_class_none"), overview.get("ec_class_multiple")
+        if isinstance(none, int) and isinstance(several, int) and classes:
+            extra = sum(classes.values()) - (total - none)
+            assert several <= extra <= 6 * several, (sum(classes.values()), none, several, total)
         cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] tr[data-stat-key]")
         # Figure 2: each record once under its main source (its bars add up to all records).
         main_rows = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
@@ -2699,8 +2896,8 @@ def check(driver, browser, url):
         # The lead: the human review comes first, when the snapshot has its counts (never the dropped wording).
         lead_share = review_headline(overview.get("quality") or {})
         if lead_share:
-            lead = driver.find_element(By.CSS_SELECTOR, "#statsLead .stats-lead")
-            assert driver.execute_script(LEAD_FIRST_JS), "The human review comes first on Stats, above the headline counts"
+            lead = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead")
+            assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText") == lead_share
             for word in DROPPED_WORDING:
                 assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
@@ -2715,7 +2912,7 @@ def check(driver, browser, url):
     else:
         assert "Human-checked" not in headline and "CatLog v2" not in headline
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-range")
-    for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2"):
+    for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2, #statsCharts h3"):
         section = heading.find_element(By.XPATH, "..")
         assert section.find_elements(By.CSS_SELECTOR, "li, figure, p"), f"Empty Stats section: {heading.text}"
     # Figures and tables are numbered in reading order, each with one caption and a data line.
@@ -2806,6 +3003,9 @@ def check(driver, browser, url):
     # BRENDA (records merged from several databases count under each), the records read from the paper by CatLog and
     # the earlier paper extractions.
     for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] tr[data-stat-key]",
+                     ".stats-section[aria-labelledby='statsV2OrganismsTitle'] tr[data-stat-key]",
+                     ".stats-section[aria-labelledby='statsV2EcTitle'] tr[data-stat-key]",
+                     "[data-figure='versions'] .stats-chart-row[data-row='v1']",
                      ".stats-by-database li[data-stat-key='source_brenda']",
                      ".stats-by-database li[data-stat-key='source_catlog']",
                      ".stats-by-database li[data-stat-key='source_paper_earlier']",
@@ -3026,6 +3226,7 @@ def main():
             check_quality(driver, args.browser, url, quality)
         check_review_headline(driver, args.browser, url)
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
+        result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
