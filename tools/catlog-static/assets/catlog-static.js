@@ -1144,13 +1144,13 @@
   }
 
   // The earlier review's words for its own steps, as facts: its "normalized" is a conversion, its "expected row" the
-  // record it was checking (the earlier record).
+  // record it was checking (the CatLog v1 entry; never "the earlier record", ADDENDUM item 4).
   function evidenceWords(text) {
     const cased = (word, replacement) => (/^[A-Z]/.test(word) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement);
     return String(text)
-      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier record has no $1")
+      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The CatLog v1 entry has no $1")
       .replace(/\b(\S+) is not populated for this row\b/g, "this record has no $1")
-      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier record"))
+      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the CatLog v1 entry"))
       .replace(/\bnormali[sz]ation\b/gi, (word) => cased(word, "conversion"))
       .replace(/\bnormali[sz]ed value\b/gi, (word) => cased(word, "value in catalog units"))
       .replace(/\bnormali[sz]ed unit\b/gi, (word) => cased(word, "unit"))

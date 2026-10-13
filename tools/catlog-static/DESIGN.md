@@ -861,6 +861,8 @@ Guide at that section, and a link to one (from Stats, a record, the filters or
 the contents list) opens it in the page with focus on its heading (made
 focusable then, so a page opened at a section shows no focus ring); the Guide never downloads the record index. Terms and
 meanings are two-column lists, one line each where they fit; no walls of text.
+Records are "CatLog v2 entries" and "CatLog v1 entries" there, as in the Source
+filter and Stats (never "older records"; "Evidence labels on CatLog v1 entries").
 Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel
 changes, the Guide's wording and example change with it. The page keeps exactly

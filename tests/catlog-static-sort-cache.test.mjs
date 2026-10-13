@@ -1376,6 +1376,8 @@ assert.match(sourceCode, /value: "units", label: "Possible unit or magnitude err
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
 // CatLog v1 and v2 entries are named as such (the user, 2026-10-13), never "the earlier catalog" or "the old catalog".
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
+assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says CatLog v1 entries, never older records");
+assert.match(guideHtml, /<summary>Evidence labels on CatLog v1 entries<\/summary>/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -3382,7 +3384,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|-1| mM|-1| for this substrate row.|");
   assert.equal(note({ table_label: "ScienceDirect HTML Table 1, Kinetic properties of I. isl MalDH", row_label: "Pyruvate",
     normalized_value_unit_evidence: "kcat=8 s^-1. No Km was populated in the expected row, and Table 1 leaves Km blank for pyruvate." }),
-  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The earlier record has no Km, and Table 1 leaves Km blank for pyruvate.|");
+  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The CatLog v1 entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
   assert.match(note({ table_label: "Official PMC full-text Table 1", row_label: "x", normalized_value_unit_evidence: "kcat/Km 81.3 s^-1 mM^-1; current_export_kcat_over_km=86.0 s^-1 mM^-1; current_export_km=1.21 mM; kcat_over_km 0.755 s^-1 mM^-1" }),
     /^\|Where\|Table 1 · x\|Conversion\|kcat\/Km 81\.3 .*; earlier kcat\/Km 86\.0 .*; earlier Km 1\.21 mM; kcat\/Km 0\.755 /);
   assert.match(note({ table_label: "PMID 17041055 PMC full text", row_label: "Sulfolobus tokodaii reductase", raw_value_unit_evidence: "Km 0.015 mM mM; normalized to 0.015 mM" }),
