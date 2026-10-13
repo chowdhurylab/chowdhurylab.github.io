@@ -2766,20 +2766,17 @@
     const ph = formatPh(summary);
     // Against the databases (section G), as the record says it: each value's result, or the earlier review's changes.
     const check = recordCheck(summary);
-    const databaseComparison = (v2Record && proof ? proof.lines : []).map((line) => {
-      const facts = databaseFacts(line) || sideFileDatabaseFacts(check?.db?.[line.metric], line.metric);
-      if (!facts) return null;
-      const result = databaseResult(facts.status);
-      const phrase = facts.phraseOnly ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
+    const databaseComparison = (v2Record && proof ? v2DatabaseRows(summary, detail, proof, check) : []).map(({ metric, facts }) => {
+      const phrase = databaseResultPhrase(facts);
       return {
-        metric: line.metric,
-        result: phrase || result?.word || null,
+        metric,
+        result: phrase || databaseResult(facts.status)?.word || null,
         line: phrase ? null : facts.sentence || null,
         databases: facts.databases || null,
         cause: facts.cause || null,
         evidence: facts.evidence || null,
       };
-    }).filter(Boolean);
+    });
     const databaseNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
       .map((note) => shownText(note)).filter(Boolean);
     const earlierCorrections = v2Record ? [] : correctionItems(detail, check).map((item) => {
@@ -8220,26 +8217,47 @@
     let result = databaseResult(facts.status);
     if (result?.key === "magnitude" && facts.causeCode && !MAGNITUDE_CAUSES.has(facts.causeCode)) result = { ...result, key: "differs" };
     const mark = `<span class="cmp-mark${result?.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span>`;
-    if (facts.phraseOnly) {
-      const phrase = facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1);
-      return `<span class="cmp-result">${mark}<span>${caretHtml(escapePublic(phrase))}</span></span>`;
-    }
-    const head = result ? `<span class="cmp-result">${mark}<strong>${escapeHtml(result.word)}</strong></span>` : "";
+    // A line that is the result itself is shown in the result's place; otherwise the result word, then the line.
+    const phrase = databaseResultPhrase(facts);
+    const head = phrase
+      ? `<span class="cmp-result">${mark}<span>${caretHtml(escapePublic(phrase))}</span></span>`
+      : (result ? `<span class="cmp-result">${mark}<strong>${escapeHtml(result.word)}</strong></span>` : "");
     return head
-      + (facts.sentence ? `<span class="cmp-line">${caretHtml(escapePublic(facts.sentence))}</span>` : "")
+      + (!phrase && facts.sentence ? `<span class="cmp-line">${caretHtml(escapePublic(facts.sentence))}</span>` : "")
       + (facts.cause ? `<small>Cause: ${escapePublic(facts.cause)}</small>` : "")
       + (facts.evidence ? `<small>${caretHtml(escapePublic(facts.evidence))}</small>` : "");
+  }
+
+  // A record read from the paper: one row per value the snapshot compares ({field, metric, label, facts}), in the
+  // proof lines' order. A kcat/Km CatLog calculated (kcat ÷ Km, no proof line of its own) is not compared: it gets its
+  // own row once the other values have theirs.
+  function v2DatabaseRows(summary, detail, proof, check) {
+    const rows = (proof?.lines || []).map((line) => {
+      const field = (v2MetricLabels[line.metric] || [])[0];
+      const facts = databaseFacts(line) || sideFileDatabaseFacts(check?.db?.[line.metric], line.metric);
+      if (!field || !facts) return null;
+      return { field, metric: line.metric, label: v2MetricLabels[line.metric][1], facts };
+    }).filter(Boolean);
+    if (rows.length && summary.kcat_over_km_origin === "calculated" && !rows.some((item) => item.field === "kcat_over_km")
+      && metricHasValue(metricSummaryFor(summary, detail), "kcat_over_km")) {
+      rows.push({ field: "kcat_over_km", metric: "kcat/Km", label: v2MetricLabels["kcat/Km"][1],
+        facts: { status: "calculated", sentence: "calculated; not compared", cause: "", evidence: "", databases: "", phraseOnly: true } });
+    }
+    return rows;
+  }
+
+  // The result as one phrase when the line says it ("same number in BRENDA, SABIO-RK", or the side file's phrases),
+  // else "": the result word is then not said twice.
+  function databaseResultPhrase(facts) {
+    const result = databaseResult(facts.status);
+    const lineIsResult = Boolean(result && facts.sentence && facts.sentence.toLowerCase().startsWith(result.word.toLowerCase()));
+    return facts.phraseOnly || lineIsResult ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
   }
 
   // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
   function v2DatabaseComparisonHtml(summary, detail, proof, check) {
     const metricSummary = metricSummaryFor(summary, detail);
-    const rows = (proof?.lines || []).map((line) => {
-      const field = (v2MetricLabels[line.metric] || [])[0];
-      const facts = databaseFacts(line) || sideFileDatabaseFacts(check?.db?.[line.metric], line.metric);
-      if (!field || !facts) return null;
-      return { field, label: v2MetricLabels[line.metric][1], facts };
-    }).filter(Boolean);
+    const rows = v2DatabaseRows(summary, detail, proof, check);
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
       .map((note) => shownText(note)).filter(Boolean);
     if (!rows.length && !paperNotes.length) return "";
@@ -8253,7 +8271,8 @@
           + `<td class="cmp-cell">${databaseResultHtml(facts)}</td></tr>`).join("")
         + "</tbody></table>"
       : "";
-    return paperNotes.map((note) => `<p class="cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
+    // The record's note is CatLog's own sentence: plain section text, never set like a line quoted from the paper.
+    return paperNotes.map((note) => `<p class="section-text cmp-paper-note">${caretHtml(escapePublic(note))}</p>`).join("")
       + table
       + (rows.length ? `<p class="section-note">${escapeHtml(DATABASES_COMPARED_NOTE)}</p>` : "");
   }

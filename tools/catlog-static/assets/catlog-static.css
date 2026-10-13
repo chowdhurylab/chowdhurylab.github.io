@@ -611,8 +611,9 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .cmp-mark.cmp-precision { border-color:var(--chg-precision); background:var(--chg-precision) }
 .cmp-mark.cmp-neutral { border-color:var(--bar-neutral); background:var(--bar-neutral) }
 .cmp-line { display:block; margin-top:2px; color:var(--text-2) }
-.cmp-paper-note { margin:0 0 12px; border-left:2px solid var(--line); padding-left:10px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .section-text { margin:0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* The record's database note is CatLog's text, not a quote: plain, with no rule beside it. */
+.section-text.cmp-paper-note { margin-bottom:12px }
 .section-note { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 
 /* H. Actions side by side (Download record is the primary button); Source details fold last. */

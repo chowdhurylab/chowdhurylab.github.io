@@ -461,8 +461,12 @@ is left out, never an empty heading. The order (design spec 5):
   correction, `--bar-neutral` for the same number under another label)
   beside its word ("Same number", "Different number", "Not in the databases",
   "Corrects the database", "Other label", "Not compared") and the snapshot's own
-  line, cause and evidence shown as given (a local path never); a paper-level
-  note above, and "Compared with the values BRENDA, SABIO-RK, OED, SKiD and
+  line, cause and evidence shown as given (a local path never); a line that
+  starts with the result word ("same number in BRENDA, SABIO-RK") stands in the
+  word's place, so the result is said once; a kcat/Km CatLog calculated gets a
+  "Calculated; not compared" row once other values have rows; a paper-level
+  note above as plain section text (no rule beside it: it is CatLog's sentence,
+  not a quote), and "Compared with the values BRENDA, SABIO-RK, OED, SKiD and
   STRENDA DB list for the same paper. A different number can mean a different
   measurement." under it. An earlier corrected record with its correction trail:
   Field | Before | After | Change ("66 mM, as in OED for this paper" or "earlier
