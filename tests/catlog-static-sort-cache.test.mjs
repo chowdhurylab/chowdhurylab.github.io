@@ -1853,9 +1853,13 @@ function row(overrides = {}) {
     "Corrections on records accepted after a correction", "Earlier records of papers CatLog has read"]);
   assert.match(figures, /<strong>Figure 3\.<\/strong> Values CatLog read from the paper/);
   assert.match(figures, /data-row="all" data-count="14"/);
-  assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\./);
+  assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of these parameters; for 2 more, at least one of them is missing from the databases\./);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
   assert.match(figures, /The 7 earlier records \(2 accepted\) of the 1 paper CatLog has read/);
+  // With no paper missing every parameter, the papers missing one are counted on their own.
+  runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, papers_all_absent: 0, papers_some_absent: 1 } } };
+  api.renderStats();
+  assert.match(element("statsCharts").innerHTML, /wrong\. For 1 paper at least one of these parameters is missing from the databases\./);
   // A figure whose counts are not whole numbers is not drawn (never an empty heading).
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };

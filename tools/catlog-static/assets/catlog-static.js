@@ -3874,10 +3874,17 @@
     const calculated = statsCount(data.calculated ?? data.calculated_not_compared);
     const papersNone = statsCount(data.papers_all_absent);
     const papersSome = statsCount(data.papers_some_absent);
+    // Papers the databases miss: all of these parameters, then (the other papers) at least one of them.
+    const papers = (count) => `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
+    const papersMissing = [
+      papersNone ? `for ${papers(papersNone)} no database lists any of these parameters` : "",
+      papersSome ? (papersNone ? `for ${formatInteger(papersSome)} more, at least one of them is missing from the databases`
+        : `for ${papers(papersSome)} at least one of these parameters is missing from the databases`) : "",
+    ].filter(Boolean).join("; ");
     const notes = [
       "Numbers compared for the same paper and parameter; substrate, variant and conditions are not compared, and a different number does not mean the database is wrong.",
       calculated ? `${formatInteger(calculated)} kcat/Km calculated by CatLog are not compared.` : "",
-      papersNone !== null && papersSome !== null ? `No database lists any of these parameters for ${formatInteger(papersNone)} papers, and at least one of them for ${formatInteger(papersSome)} more.` : "",
+      papersMissing ? `${papersMissing.charAt(0).toUpperCase()}${papersMissing.slice(1)}.` : "",
     ].filter(Boolean).join(" ");
     return {
       id: "statsDbCompareTitle", key: "db-compare", title: "Values read from the paper against the databases",

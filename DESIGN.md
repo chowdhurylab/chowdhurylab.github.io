@@ -77,7 +77,10 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   and `replaced` (counts the CatLog side computes; whole counts only, checked
   to add up): values read from the paper against the databases (same number,
   a different number, no database value; the caption says only the paper and
-  parameter are compared and a different number is not a database error),
+  parameter are compared and a different number is not a database error; its
+  data line names the papers the databases miss, "For 9 papers no database
+  lists any of these parameters; for 171 more, at least one of them is missing
+  from the databases"),
   the corrections on records accepted after a correction (rounding, a
   different number, unit or magnitude, added) and the earlier records of
   papers CatLog has read (same number in CatLog's reading, not found). 100%
