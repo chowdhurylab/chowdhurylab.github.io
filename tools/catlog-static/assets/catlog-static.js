@@ -1714,12 +1714,35 @@
   // The record's values that carry the check, in kcat, Km, kcat/Km order: approved, shown, and not a kcat/Km worked out
   // from kcat and Km (calc.: not printed, so no reviewer approved it as such).
   function approvedValueFields(summary, detail = {}, proof = null) {
+    return valueApproval(summary, detail, proof).checked;
+  }
+
+  // The approved values shown, split in those that carry the check and those withheld: a value whose magnitude caution
+  // the record shows (Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, kcat/Km above the diffusion limit: "the unit or
+  // the value may be wrong") gets no check, so the page never backs a stored number it doubts (a 37.5 M Km a reviewer
+  // approved; the review most likely concerned the paper's value). Its note under the table says so.
+  function valueApproval(summary, detail = {}, proof = null) {
     const approved = humanApprovedFields(summary);
-    if (!approved.size) return [];
+    if (!approved.size) return { checked: [], withheld: [] };
     const metricSummary = metricSummaryFor(summary, detail);
-    return ["kcat", "km", "kcat_over_km"].filter((field) => approved.has(field)
+    const shown = ["kcat", "km", "kcat_over_km"].filter((field) => approved.has(field)
       && (metricHasValue(metricSummary, field) || proofLineIndex(proof, field) >= 0)
       && !(field === "kcat_over_km" && summary.kcat_over_km_origin === "calculated"));
+    const doubted = doubtedValueFields(summary, detail);
+    return { checked: shown.filter((field) => !doubted.has(field)), withheld: shown.filter((field) => doubted.has(field)) };
+  }
+
+  // The values a magnitude caution questions, as the record's notes show them (with the source's own kcat/Km shown in
+  // place of the stored one, the diffusion-limit caution is not said: that value is not doubted).
+  function doubtedValueFields(summary, detail = {}) {
+    const flags = conditionFlags(summary, detail);
+    const fields = new Set();
+    if (flags.has("kcat_magnitude_needs_check")) fields.add("kcat");
+    if (flags.has("km_magnitude_needs_check")) fields.add("km");
+    if (flags.has("efficiency_above_diffusion_limit") && !consistentEfficiency(metricSummaryFor(summary, detail), detail, flags)) {
+      fields.add("kcat_over_km");
+    }
+    return fields;
   }
 
   // The check after a value a human reviewer approved (Values table); its meaning is the line under the table.
@@ -8046,8 +8069,10 @@
       : metricHasValue(metricSummary, field) || proofLineIndex(proof, field) >= 0));
     const calcNote = calculatedNote(summary, v2Record);
     // The values a human reviewer approved get a check; a kcat/Km worked out from kcat and Km (calc.) is not printed, so
-    // no reviewer approved it as such.
-    const approved = new Set(approvedValueFields(summary, detail, proof));
+    // no reviewer approved it as such, and a value under a magnitude caution has its check withheld (said under the table).
+    const approval = valueApproval(summary, detail, proof);
+    const approved = new Set(approval.checked);
+    const withheldNames = sentenceList(approval.withheld.map((field) => metricNames[field]));
     // Where each value is printed: a column when the values' places differ, one caption above the table when every value
     // shares it, nothing for an older record (its notes are under Paper).
     const placeOf = (field) => {
@@ -8117,11 +8142,17 @@
     const calcListed = calcNote && !v2Record && listed && listers.length
       ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list their own kcat/Km values" : "lists its own kcat/Km"} (above).`
       : "";
+    // "Km carries no check: the note above questions its unit or value." (the caution is the note above the grey notes)
+    const withheldNote = withheldNames
+      ? `${withheldNames} ${approval.withheld.length > 1 ? "carry" : "carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`
+      : "";
     const greyNotes = [
-      // What the check after a value means, once.
+      // What the check after a value means, once; an approved value whose check is withheld, and why.
       cells.some((cell) => cell.check)
-        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.`
-        : "",
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.${withheldNote ? ` ${escapeHtml(withheldNote)}` : ""}`
+        : (withheldNote
+            ? escapeHtml(`A human reviewer approved ${withheldNames}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`)
+            : ""),
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")
         ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`

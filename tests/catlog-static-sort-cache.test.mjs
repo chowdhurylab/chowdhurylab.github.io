@@ -3523,6 +3523,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     "hc-list-noted": { checked: false, approved: ["kcat"], note: "A reviewer questioned this Km." },
     "hc-calc": { checked: true },
     "hc-strict": { checked: false, note: "A human reviewer approved the same Vmax and Km for this paper." },
+    "hc-big-km": { checked: true },
+    "hc-only-km": { checked: true },
   });
   api.renderDetail(row({ record_key: "hc-list", measurement_key: "hc-list" }), {});
   html = element("detailContent").innerHTML;
@@ -3537,6 +3539,26 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "Km"]);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
+  // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") carries no check, also in
+  // the record download, and the note under the table says why; Km below 1 nM counts too.
+  const bigKm = row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 37500, km_display: "37500", kcat_over_km: 0.0032,
+    kcat_over_km_display: "0.0032", condition_flags: ["km_magnitude_needs_check"] });
+  api.renderDetail(bigKm, {});
+  html = element("detailContent").innerHTML;
+  assert.match(html, /Km is above 10 M; the unit or the value may be wrong\./);
+  assert.deepEqual(approvedValues(html), ["kcat", "kcat/Km"]);
+  assert.match(html, /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see Human review below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.deepEqual((await recordDownloadPayload(bigKm, {})).human_approved_values, ["kcat", "kcat/Km"]);
+  api.renderDetail(row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 9e-7, km_display: "9e-7" }), {});
+  assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "kcat/Km"], "Km below 1 nM: no check");
+  const onlyKm = row({ record_key: "hc-only-km", measurement_key: "hc-only-km", kcat: null, kcat_display: "", kcat_over_km: null,
+    kcat_over_km_display: "", km: 37500, km_display: "37500", condition_flags: ["km_magnitude_needs_check"] });
+  api.renderDetail(onlyKm, {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), []);
+  assert.doesNotMatch(html, /value-approved/);
+  assert.match(html, /<li>A human reviewer approved Km, but it carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.ok(!("human_approved_values" in await recordDownloadPayload(onlyKm, {})), "no check shown, none listed");
   api.setHumanReviewMarks({});
   api.renderDetail(accepted, {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved|Approved by a human reviewer/);

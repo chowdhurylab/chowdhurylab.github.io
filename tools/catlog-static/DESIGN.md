@@ -500,7 +500,13 @@ found at once: A, B, G, C, D, E, F, H.
   (mark.checked), the values the mark lists (mark.approved, when the marks carry
   it), or the metrics named by the review's own sentence "A human reviewer
   approved the same kcat and Km for this paper ..."; any other note marks
-  nothing, and a calc. kcat/Km never has one (it is not printed). The check
+  nothing, and a calc. kcat/Km never has one (it is not printed). A value whose
+  magnitude caution the record shows (Km above 10 M or below 1 nM, kcat above
+  10⁸ s⁻¹, kcat/Km above the diffusion limit: "the unit or the value may be
+  wrong") has its check withheld, in the record and in Download record's
+  human_approved_values alike, and the grey note says so: "Km carries no check:
+  the note above questions its unit or value." (or, with no check shown, "A
+  human reviewer approved Km, but it carries no check: ..."). The check
   stays beside its number (or the number's last line) at every width: a word
   joiner ties the two, and up to 360px the check hangs in a 16px margin of its
   own, so every line of every number ends at the same place. The first grey note under the table says what the check
