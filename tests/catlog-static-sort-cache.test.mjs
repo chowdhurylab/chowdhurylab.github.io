@@ -1420,6 +1420,14 @@ assert.match(emptyIdentityHtml, /<dt>Sequence<\/dt><dd>None<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Substrate<\/dt><dd>Not recorded<\/dd>/);
 assert.match(emptyIdentityHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(emptyIdentityHtml, /Sequence note/);
+// No sequence found reads None, as a missing SMILES does, not a sentence of its own.
+for (const note of ["No sequence was resolved for this record, so variant-aware sequence handling could not be applied.",
+  "Mutation context is present, but no sequence was resolved for this record."]) {
+  const noneHtml = api.proteinSection({}, { sequence_variant_note: note });
+  assert.match(noneHtml, /<dt>Sequence<\/dt><dd>None<\/dd>/);
+  assert.match(noneHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
+  assert.doesNotMatch(noneHtml, /No sequence was found/);
+}
 const blankFormNoteHtml = api.proteinSection({}, { sequence_variant_note: "   " });
 assert.match(blankFormNoteHtml, /<dt>Enzyme form<\/dt><dd>Not recorded<\/dd>/);
 assert.doesNotMatch(blankFormNoteHtml, /Sequence note/);

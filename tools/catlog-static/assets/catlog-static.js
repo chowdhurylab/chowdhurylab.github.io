@@ -6580,11 +6580,10 @@
     if (/^Sequence identity was resolved, but no explicit wild-type or mutant call was captured\.?$/.test(text)) {
       return enzymeForm === "Not recorded" ? "" : "The source does not say whether this is wild type or a variant.";
     }
-    if (/^No sequence was resolved for this record, so variant-aware sequence handling could not be applied\.?$/.test(text)) {
-      return "No sequence was found for this record.";
-    }
-    if (/^Mutation context is present, but no sequence was resolved for this record\.?$/.test(text)) {
-      return "No sequence was found for this variant.";
+    // No sequence found: the Sequence row reads None, as for a missing SMILES or paper ID.
+    if (/^No sequence was resolved for this record, so variant-aware sequence handling could not be applied\.?$/.test(text)
+      || /^Mutation context is present, but no sequence was resolved for this record\.?$/.test(text)) {
+      return "";
     }
     match = text.match(/^Resolved canonical sequence from (.+?) and applied mutation signature (\S+)(?: with inferred residue-numbering offset ([+-]\d+))? to reconstruct the assayed variant sequence\.?$/);
     if (match) {
