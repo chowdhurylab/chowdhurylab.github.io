@@ -248,8 +248,9 @@ behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", fol
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
 every view: brand and Download, the tabs with the links out at the line's end
 (Download ends where they end), then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
-and Download share the first line (a wide system font puts the two links on two lines at the right, never over the
-brand), the four tabs share the second across the
+and Download share the first line (below 360px the header's gaps are 8px, so the two links keep one line at 320px;
+only a wide system font puts them on two lines at the right, never over the brand), the four tabs share the second
+across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
 with Clear all at the left and Columns, Export and Sort at the right (when the
 records are 721 to 1000px wide, beside the open sidebar or a record on a laptop,

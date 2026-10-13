@@ -1318,6 +1318,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* The smallest phones (below 360px): "Sort" is read out but not shown and the toolbar's buttons are narrower, so the
    Sort menu keeps about 110px and shows "Review result" whole, a Filters count included. */
 @media (max-width: 359px) {
+  /* The header's gaps are 8px, so "Paper ↗ Lab ↗" keeps one line beside the brand; only a wider font still wraps it. */
+  .app-header, body:is(.stats-open,.guide-open,.team-open) .app-header { column-gap:var(--sp-2) }
+  .external-nav { column-gap:var(--sp-2) }
   .sort-control label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
   .records-header :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
 }
