@@ -486,7 +486,9 @@ A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one
 CatLog read it in (µM printed, mM used) is such a caution ("printed unit
 differs"), named by its value ("Km: The paper prints µM; ..."): its note says
-whether kcat ÷ Km shows the unit used is right. CatLog's own flag for it
+whether kcat ÷ Km shows the unit used is right and, when an AI audit
+re-checked the value, ends with what it found ("... and kept mM."); the note
+stays amber. CatLog's own flag for it
 (printed_unit_prefix_differs) counts as a possible unit error and is said once.
 A merged older record whose listed kcat/Km values are all more than 2-fold from
 kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"). An older record whose

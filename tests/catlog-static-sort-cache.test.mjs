@@ -2565,6 +2565,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
   assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores s⁻¹ mM⁻¹, 1000-fold apart/);
+  assert.doesNotMatch(bothHtml, /AI audit/, "no audit, no audit sentence");
+  // An AI audit of the value ends its note with what it found (0f2107bac841d82f); the note stays amber.
+  const auditedHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
+    proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""),
+      { ...proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"), audit_date: "2026-10-12", audit_result: "kept" },
+      { ...proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1"), audit_date: "2026-10-12", audit_result: "unit corrected" }] });
+  assert.match(auditedHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and kept mM\./);
+  assert.match(auditedHtml, /CatLog stores s⁻¹ mM⁻¹, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and corrected its unit\./);
+  assert.match(auditedHtml, /aria-label="Km: printed unit differs\. Show the note\."/);
   // CatLog's own flag for it (printed_unit_prefix_differs) is a unit caution; the per-value notes say it, once.
   const flaggedBoth = { ...bothSummary, condition_flags: ["printed_unit_prefix_differs"] };
   assert.equal(api.rowCautionBits(flaggedBoth), 2, "counted under Possible unit or magnitude error");

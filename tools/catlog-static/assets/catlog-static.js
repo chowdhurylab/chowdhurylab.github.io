@@ -7124,9 +7124,20 @@
     return `10${[...String(power)].map((character) => SUPERSCRIPT_DIGITS[character] ?? character).join("")}-fold`;
   }
 
+  // What an AI audit of such a value found, said at the end of its note ("An AI audit on Oct 12, 2026 re-checked it
+  // against the paper and kept mM."); empty when the value was not audited.
+  function unitAuditText(audit, used) {
+    if (!audit) return "";
+    const date = auditDateText(audit.date);
+    const verdict = /^kept$/i.test(audit.result)
+      ? ` and kept ${used}`
+      : (/^unit corrected$/i.test(audit.result) ? " and corrected its unit" : "");
+    return ` An AI audit${date ? ` on ${date}` : ""} re-checked it against the paper${verdict}.`;
+  }
+
   // Values whose printed concentration unit (µM) is not the unit CatLog read the number in (mM): an amber note each. When
   // only one value was read that way and the record has a printed kcat, Km and kcat/Km, kcat ÷ Km shows which unit is
-  // right; otherwise the note says it cannot.
+  // right; otherwise the note says it cannot. An AI audit of the value adds what it found; the note stays amber.
   function unitPrefixCautions(summary, proof) {
     if (!proof) return [];
     const metricOf = (line) => (v2MetricLabels[line.metric] || [""])[0];
@@ -7165,6 +7176,7 @@
         const verb = /converted by code/.test(fact.conversion) ? "uses" : "stores";
         text = `The paper prints ${printed}; CatLog ${verb} ${used}, ${foldWords(power)} apart, and kcat ÷ Km cannot show which is right.`;
       }
+      text += unitAuditText(fact.audit, used);
       return { field, metric, text, printed, used };
     });
   }
