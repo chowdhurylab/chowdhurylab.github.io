@@ -1418,7 +1418,7 @@ def check_record_panel(driver, browser, url, route_label):
                 dashes: [...content.querySelectorAll('.kv-line > dd')].filter(e => e.textContent.trim() === '—').length,
                 method: method ? method.textContent : null,
                 methodLink: method?.querySelector('a.method-link')?.getAttribute('href') || null,
-                review: row('Status')[0]?.textContent || null,
+                review: row('Review result')[0]?.textContent || null,
                 valuesHead: [...content.querySelectorAll('.values-section .values-table thead th')].map(e => e.textContent),
                 valueCells: [...content.querySelectorAll('.values-section .values-table td.vt-value')].map(e => getComputedStyle(e).textAlign),
                 revealed,

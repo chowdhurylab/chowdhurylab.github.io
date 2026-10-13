@@ -2606,7 +2606,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<td class="vt-printed">68 s<sup>-1<\/sup><\/td><\/tr>/);
   assert.match(html, /<dt>Location<\/dt><dd>Table 2<\/dd>/);
   assert.doesNotMatch(html, /Against the databases/, "no database comparison in the snapshot: no section");
-  assert.match(html, /<dt>Status<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd>/);
+  assert.match(html, /<dt>Review result<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd>/);
   // Organism names: the binomial in italics; a strain or "sp." stays roman; a virus stays roman.
   assert.equal(api.organismHtml("Escherichia coli K-12"), "<i>Escherichia coli</i> K-12");
   assert.equal(api.organismHtml("Bacillus sp. A1"), "<i>Bacillus</i> sp. A1");
@@ -2678,7 +2678,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", { audit_date: "2026-10-11", audit_result: "kept" }), line("Km", { audit_date: "2026-10-11", audit_result: "kept" })] });
   let html = element("detailContent").innerHTML;
   assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
-  assert.match(html, /<dt>Status<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd><\/div><div class="kv-line"><dt>AI audit<\/dt><dd>Oct 11, 2026: re-checked against the paper and kept\.<\/dd>/);
+  assert.match(html, /<dt>Review result<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd><\/div><div class="kv-line"><dt>AI audit<\/dt><dd>Oct 11, 2026: re-checked against the paper and kept\.<\/dd>/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { check: "confirmed; re-checked in an independent audit (2026-10-11)" }),
       line("Km", { check: "confirmed; unit corrected in an independent audit (2026-10-11)" })] });
@@ -3179,7 +3179,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<li>UniProt P00325 → P00326<\/li><li>SMILES replaced<\/li>/);
   assert.equal((html.match(/Why: /g) || []).length, 1, "the same reason once; a local path never");
   assert.match(html, /<p class="section-note">Why: changed in the earlier automated review to the value the paper prints — Table 2, row 12-hydroxydodecanoic acid: Km 66 µM\.<\/p>/);
-  assert.match(html, /<dt>Status<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Against the databases\./);
+  assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Against the databases\./);
   assert.doesNotMatch(html, /value before correction was not kept/);
   // Without its trail, a corrected record says the snapshot does not list the changes (the earlier catalog keeps them)
   // and has no section.

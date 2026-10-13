@@ -292,7 +292,7 @@ up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit 
 Cautions filter names kcat/Km mismatch, Possible unit or magnitude error, No
 unit given, Temperature questionable and No cautions.
 
-Status cells align left: a dot and the review result (Accepted, Not confirmed,
+Review result cells (the column is headed "Review result", as in the Guide) align left: a dot and the review result (Accepted, Not confirmed,
 Not checked or Disputed: words that define themselves and promise no further
 work), then whole-word tags on a second line that always starts with the source: "from paper" (read by CatLog), the
 databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
@@ -300,12 +300,12 @@ each), "earlier extraction" or "source not recorded". "no paper linked" marks a
 record without a PMID or DOI; under the user's review rules (an export that
 counts accepted_basis) such a record is Not checked, and a record whose every
 value a human reviewer approved is Accepted (its record says so: "Accepted
-because a human reviewer approved every value"). Columns are sized to the page's content: values, EC, T, pH and Status are
+because a human reviewer approved every value"). Columns are sized to the page's content: values, EC, T, pH and Review result are
 as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
-right after Status. In a narrow window the names give way (two lines, broken
+right after Review result. In a narrow window the names give way (two lines, broken
 between words while they can; the full name is on hover), and when that is not
 enough the table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
 and pH, with a dash when the value is missing. The table writes
@@ -329,7 +329,7 @@ section says the same.
 Every column fits in about 1010px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
-12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC, T, pH and the arrow give way; Status
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC, T, pH and the arrow give way; Review result
 stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
 organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge, then °C and pH at the line's end.
@@ -501,13 +501,13 @@ is left out, never an empty heading. The order (design spec 5):
   not change is not listed), identity changes as a list ("UniProt P00325 →
   P00326", "Sequence replaced"), then "Why: changed in the earlier automated
   review to the value the paper prints — <the printed place>". A corrected
-  record without its trail says so in its Status ("this snapshot does not list
+  record without its trail says so in its Review result line ("this snapshot does not list
   the changes"; the earlier catalog keeps them) and has no section G. A database record
   the earlier review did not settle (Not confirmed, Not checked) with a paper:
   "Not yet checked against the paper: the values are the database's." (not on
   one whose Evidence reads "Located in the paper": it has no section G). Colour is
   never the only carrier: the word or phrase is always printed.
-- H. Review and audit: Status in one sentence ("Accepted: read from the paper
+- H. Review and audit: Review result in one sentence ("Accepted: read from the paper
   by CatLog.", or the earlier automated review's result with "How the earlier
   review worked →"); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that

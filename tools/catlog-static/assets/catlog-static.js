@@ -8646,7 +8646,7 @@
       : `${escapePublic(hasCorrections && summary.verification_status === "corrected" ? CORRECTED_LISTED_SENTENCE : reviewOutcome(summary, detail))} <a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →</span></a>`;
     const audit = (proof && v2AuditText(proof.lines, proof.facts)) || sideFileAuditText(check);
     return detailSection("review", "Review and audit", kvList([
-      linkedKv("Status", status),
+      linkedKv("Review result", status),
       audit ? kv("AI audit", audit) : "",
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
