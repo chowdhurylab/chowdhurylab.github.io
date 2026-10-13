@@ -369,7 +369,6 @@ table { --cell-x:10px; width:100%; border-collapse:collapse; table-layout:fixed 
 .col-substrate { width:clamp(150px,13vw,220px) }
 .col-kcat, .col-km { width:88px }
 .col-efficiency { width:104px }
-.col-temp, .col-ph { width:52px }
 .col-state { width:188px }
 .col-open { width:28px }
 th, td { border-bottom:1px solid var(--line-soft); padding:4px var(--cell-x); text-align:left; vertical-align:middle; font-size:var(--fs-13); line-height:17px; overflow-wrap:break-word }
@@ -384,7 +383,7 @@ th[aria-sort] .sort-icon, .sort-button:enabled:is(:hover,:focus-visible) .sort-i
 th:not([aria-sort]) .sort-icon { color:var(--muted) }
 th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 
-.c-substrate, .c-ph { border-right:1px solid var(--line) }
+.c-substrate, .c-eff { border-right:1px solid var(--line) }
 /* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
 .c-substrate.has-note .clamp-2 { max-height:17px; -webkit-line-clamp:1 }
 .condition-note { display:block; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
@@ -434,7 +433,6 @@ td.c-form { display:none }
 /* A caution: an amber "!" beside the value; the words are in its tooltip. */
 .value-flag { position:relative; display:inline-grid; flex:0 0 14px; place-items:center; align-self:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg); cursor:help }
 .value-flag::before { content:"!"; font-size:var(--fs-12); font-weight:600; line-height:1 }
-td.c-temp .value-flag { margin-left:4px; vertical-align:-2px }
 
 /* Placeholder rows while the first records load. */
 .skeleton-row, .skeleton-row:hover { cursor:default; background:var(--bg) }
@@ -1044,11 +1042,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    stays in view), 288px (1440 and up); the record 440px (1024-1439), 480px (1440 and up). */
 @media (max-width: 1439px) { :root { --sidebar-w:256px; --panel-w:440px } }
 
-/* A record open on desktop: EC, T, pH and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
+/* A record open on desktop: EC and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
    and without the other tags. */
 @media (min-width: 1024px) {
-  body.detail-open :is(.col-ec,.col-temp,.col-ph,.col-open,.c-ec,.c-temp,.c-ph,.c-open) { display:none }
-  body.detail-open .c-eff { border-right:1px solid var(--line) }
+  body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
 }
 
@@ -1091,12 +1088,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   body.detail-open .skip-link { display:none }
   .detail-panel { position:fixed; inset:0 0 0 auto; z-index:70; width:min(440px,100vw); height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; box-shadow:var(--shadow-panel); transform:translateX(calc(100% + 18px)); visibility:hidden; pointer-events:none; transition:transform 160ms ease, visibility 160ms ease }
   body.detail-open .detail-panel { transform:translateX(0); visibility:visible; pointer-events:auto }
-  /* Every column fits from about 1010px. */
-  table { min-width:1000px }
+  /* Every column fits from about 910px. */
+  table { min-width:900px }
   .col-ec { width:72px }
   .col-kcat, .col-km { width:80px }
   .col-efficiency { width:96px }
-  .col-temp, .col-ph { width:48px }
   .col-state { width:168px }
   .col-open { width:20px }
 }
@@ -1223,13 +1219,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
   #recordsBody td[data-label]::before { content:attr(data-label); display:block; color:var(--muted); font-size:var(--fs-12); line-height:14px }
   #recordsBody .metric-with-note { justify-content:flex-start }
-  /* The status keeps its two lines (status, then the source and tags), with T and pH at the line's end. */
+  /* The status keeps its two lines (status, then the source and tags). */
   #recordsBody td.c-status { order:6; flex:1 1 0; align-self:center }
-  #recordsBody :is(td.c-temp,td.c-ph) { order:7; flex:0 0 auto; align-self:center; color:var(--text-2); text-align:right }
-  #recordsBody :is(td.c-temp,td.c-ph)[data-empty]:not([data-flagged]) { display:none }
-  #recordsBody :is(td.c-temp,td.c-ph)[data-empty] > span:first-child { display:none }
-  #recordsBody td.c-temp > span:first-child::after { content:"\00a0\00b0 C" }
-  #recordsBody td.c-ph > span:first-child::before { content:"pH\00a0" }
 
   /* A caution shows its short words beside the "!" (no tooltip on a touch screen). */
   #recordsBody .value-flag { display:inline-flex; flex:0 0 auto; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }

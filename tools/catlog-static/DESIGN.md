@@ -248,7 +248,7 @@ from the first rows of the index, which arrives in Review-status order, and
 stays in place when the rest arrives; sorting waits for all records (an address
 with a value sort keeps the placeholder rows and says "then sorting" until
 then, never a provisional top 25). Stats and
-Guide never download the record index. kcat, Km, kcat/Km, T and pH sort both
+Guide never download the record index. kcat, Km and kcat/Km sort both
 ways, from the Sort menu or by clicking the column header (high to low first,
 then low to high); the header's arrow shows the direction, and records without
 the value stay last. Review result stays the default order (Disputed sorts with
@@ -283,16 +283,17 @@ is never clipped with the name, which then keeps one line; wild type shows
 nothing. Records of one paper that read alike but differ in their assay carry a
 short condition note (the export's condition_note, "+10 mM FBP") as a grey second
 line under the substrate, the substrate then taking one line; without a note,
-records with values on the page that share a paper and every column read "like
-another record" (it fits the Substrate column at its 120px minimum; its tooltip
+records with values on the page that share a paper, every column, temperature
+and pH read "like another record" (it fits the Substrate column at its 120px minimum; its tooltip
 says "same values as another record of this paper"; the table cannot tell what
 differs). The record shows the note under its Substrate line. Every table row
 has the same height. Value markers
 (no unit, calc., a caution) sit beside the value, never under it; a caution's
 words are in its tooltip and the record, and on phone cards beside the "!"
-(they may wrap to the next line there). A temperature caution's "!" sits in the
-T cell, after the dash that stands for a temperature not shown ("T questionable"
-on phone cards). A caution states the problem, never an
+(they may wrap to the next line there). The table shows no temperature or pH (the
+record, the filters and the downloads have them), so a temperature caution has no
+mark in the table: the record says it on its Temperature line, and the Cautions
+filter finds it. A caution states the problem, never an
 order: the tooltip is the record's note ("The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is
 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
 them."; a familiar factor is named as a fact, and on a record read from the
@@ -311,7 +312,7 @@ each), "earlier extraction" or "source not recorded". "no paper linked" marks a
 record without a PMID or DOI; under the user's review rules (an export that
 counts accepted_basis) such a record is Not checked, and a record whose every
 value a human reviewer approved is Accepted (its record says so: "Accepted
-because a human reviewer approved every value"). Columns are sized to the page's content: values, EC, T, pH and Review result are
+because a human reviewer approved every value"). Columns are sized to the page's content: values, EC and Review result are
 as wide as their widest entry and never wrap; Enzyme, Organism and Substrate
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
@@ -319,8 +320,10 @@ proportion to their widths, so the table fills the window and the arrow sits
 right after Review result. In a narrow window the names give way (two lines, broken
 between words while they can; the full name is on hover), then Review result's tags
 (the badge's accessible name and the record keep them all), and when that is not enough the
-table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
-and pH, with a dash when the value is missing. The table writes
+table scrolls sideways. The table has no temperature or pH columns (the user,
+2026-10-13: the rows stay about the enzyme and its values); records of one paper
+that read alike and differ only there say which under the substrate ("pH 6.5",
+"37 °C", "pH not stated"; only the part that differs). The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from
 the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat or
@@ -339,13 +342,13 @@ paper printed and never cut to 4 (value_display: 135.0 where the table shows 135
 1285.4 where it shows 1285), never more figures than the paper prints (a printed
 47,000 M⁻¹ s⁻¹ reads 47, not 47.000); the 4-figure rule stays for older records
 and for a kcat/Km CatLog calculated. The Guide's Units section says the same.
-Every column fits in about 1010px of table; a table with less room (beside the
+Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
-12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC, T, pH and the arrow give way; Review result
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
 stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
 organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
-two-line status badge, then °C and pH at the line's end.
+two-line status badge.
 The phone filter sheet ends with a "Show N records" button. Filter chips use
 the accent tint with a thin accent line, 12px text, and wrap within the toolbar.
 
@@ -362,7 +365,7 @@ does not look disabled. Amber (--caution) marks cautions. Green (human-checked, 
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records
 only; it updates in place when the marks arrive (rows are not redrawn). On a
-phone card the badge keeps its two lines and T and pH sit at its right; a tag
+phone card the badge keeps its two lines; a tag
 line too long for the room left ends in an ellipsis. Use thin dividers, 4px
 control radii, and shadows only for the phone sheet, dialogs and menus. No
 decorative gradients, statistic cards, or hero art.

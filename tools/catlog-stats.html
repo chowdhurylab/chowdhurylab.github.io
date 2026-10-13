@@ -198,7 +198,7 @@
                   <div class="download-options export-options">
                     <button id="exportAllCsvButton" type="button">
                       <strong id="exportAllCsvLabel">All matching records (CSV)</strong>
-                      <span>The table&rsquo;s columns with units, review result, source, PMID, DOI, UniProt ID and record ID</span>
+                      <span>The table&rsquo;s columns with units, temperature, pH, review result, source, PMID, DOI, UniProt ID and record ID</span>
                     </button>
                     <button id="exportPageCsvButton" type="button">
                       <strong>This page (CSV)</strong>
@@ -224,10 +224,6 @@
                     <option value="km_asc">Km, low to high</option>
                     <option value="kcat_over_km">kcat/Km, high to low</option>
                     <option value="kcat_over_km_asc">kcat/Km, low to high</option>
-                    <option value="temperature">T (°C), high to low</option>
-                    <option value="temperature_asc">T (°C), low to high</option>
-                    <option value="ph">pH, high to low</option>
-                    <option value="ph_asc">pH, low to high</option>
                   </select>
                 </span>
               </div>
@@ -243,8 +239,6 @@
                   <col class="col-kcat" />
                   <col class="col-km" />
                   <col class="col-efficiency" />
-                  <col class="col-temp" />
-                  <col class="col-ph" />
                   <col class="col-state" />
                   <col class="col-open" />
                 </colgroup>
@@ -257,23 +251,21 @@
                     <th scope="col" class="c-kcat num sortable"><button class="sort-button" type="button" data-sort="kcat"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>k</i><sub>cat</sub><span class="header-unit">s<sup>-1</sup></span></span></button></th>
                     <th scope="col" class="c-km num sortable"><button class="sort-button" type="button" data-sort="km"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>K</i><sub>m</sub><span class="header-unit">mM</span></span></button></th>
                     <th scope="col" class="c-eff num sortable"><button class="sort-button" type="button" data-sort="kcat_over_km"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><span class="header-unit">s<sup>-1</sup> mM<sup>-1</sup></span></span></button></th>
-                    <th scope="col" class="c-temp num sortable"><button class="sort-button" type="button" data-sort="temperature"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label">T<span class="header-unit">°C</span></span></button></th>
-                    <th scope="col" class="c-ph num sortable"><button class="sort-button" type="button" data-sort="ph"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label">pH</span></button></th>
                     <th scope="col" class="c-status">Review result</th>
                     <th scope="col" class="c-open"><span class="visually-hidden">Open record</span></th>
                   </tr>
                 </thead>
                 <tbody id="recordsBody">
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
-                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-temp num"><span></span></td><td class="c-ph num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
+                  <tr class="skeleton-row" aria-hidden="true"><td class="c-enzyme"><span></span></td><td class="c-ec"><span></span></td><td class="c-organism"><span></span></td><td class="c-substrate"><span></span></td><td class="c-kcat num"><span></span></td><td class="c-km num"><span></span></td><td class="c-eff num"><span></span></td><td class="c-status"><span></span></td><td class="c-open"><span></span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -415,8 +407,6 @@
                     <span><i>K</i><sub>m</sub> for 4-aminoacetophenone</span>
                   </div>
                   <dl>
-                    <div><dt>T (°C)</dt><dd>30</dd></div>
-                    <div><dt>pH</dt><dd>7.5</dd></div>
                     <div><dt>Organism</dt><dd><i>Pseudomonas fluorescens</i>, wild type</dd></div>
                     <div><dt>Review result</dt><dd>Accepted · from paper · human-checked</dd></div>
                   </dl>
@@ -439,7 +429,7 @@
             </figure>
 
             <h3 id="guide-cautions">Cautions</h3>
-            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; open the record to read what it is. On phones the short words below stand beside it. A value without a recorded unit shows <em>no unit</em>, and a questionable temperature has the mark in the T column, after a dash when the temperature is not shown.</p>
+            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; open the record to read what it is. On phones the short words below stand beside it. A value without a recorded unit shows <em>no unit</em>. The table does not show temperature or pH: a questionable temperature is noted in the open record.</p>
             <dl class="guide-term-list guide-caution-list">
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</dt><dd>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> printed in the paper (or listed by the source) and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ. The record gives both numbers and how far apart they are; a factor near 60 usually means minutes against seconds, and one near 1000 a concentration unit. All three values are kept as the source gives them.</dd></div>
               <div><dt><i>K</i><sub>m</sub> &gt;&nbsp;10&nbsp;M, <i>K</i><sub>m</sub> &lt;&nbsp;1&nbsp;nM</dt><dd><i>K</i><sub>m</sub> above 10&nbsp;M or below 1&nbsp;nM; the unit or the value may be wrong.</dd></div>
@@ -516,7 +506,7 @@
               <div><dt><i>k</i><sub>cat</sub></dt><dd>Turnover number, s<sup>-1</sup>.</dd></div>
               <div><dt><i>K</i><sub>m</sub></dt><dd>Michaelis constant, mM.</dd></div>
               <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Catalytic efficiency, s<sup>-1</sup> mM<sup>-1</sup> (multiply by 1,000 for M<sup>-1</sup> s<sup>-1</sup>).</dd></div>
-              <div><dt>T (°C), pH</dt><dd>Assay temperature and pH; the record lists the other conditions.</dd></div>
+              <div><dt>T (°C), pH</dt><dd>Assay temperature and pH, in the record with the other conditions (the table does not show them; the filters and the downloads have them).</dd></div>
             </dl>
             <p>On a record read by CatLog, code converts each printed value to these units (&micro;M to mM, min<sup>-1</sup> to s<sup>-1</sup>). Stored values drop trailing zeros (a printed 0.050 mM is stored as 0.05): the table and the downloads give the stored number, and the record&rsquo;s values table keeps the zeros the paper prints (0.050) beside the value as printed.</p>
             <dl class="guide-term-list">
@@ -525,7 +515,7 @@
               <div><dt>Other units</dt><dd>A few older records keep another unit, shown after the value (min<sup>-1</sup>, mg/mL), or have <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               <div><dt>Large and small</dt><dd>Numbers of 100,000 or more and below 0.001 are written as a &times; 10<sup>n</sup> (8.2 &times; 10<sup>-4</sup>).</dd></div>
               <div><dt>Digits</dt><dd>The table and the record show at most 4 significant figures, and 3 where a conversion from per minute left repeating digits (30.333 shows as 30.3); a whole number keeps all its digits. A value read from the paper shows in the record with every figure the paper prints, none cut (a printed 135.0 s<sup>-1</sup> reads 135.0 there and 135 in the table, a printed 1285.4 s<sup>-1</sup> reads 1285.4 there and 1285 in the table), but never with more figures than the paper prints (a printed 47,000 M<sup>-1</sup> s<sup>-1</sup> reads 47 s<sup>-1</sup> mM<sup>-1</sup>, not 47.00). The tooltip and the downloads keep the stored digits.</dd></div>
-              <div><dt>Missing values</dt><dd>A dash, used only in table cells, means no value (in the T column, a temperature flagged as questionable). In the record a <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that is not stored has no row, and the Values section says when none is stored. Any other detail the paper or the source database does not give reads <em>Not stated in the paper</em> (records read by CatLog) or <em>Not recorded</em> (database records); a missing PMID or DOI, sequence or SMILES reads <em>None</em>, or says why there is no sequence.</dd></div>
+              <div><dt>Missing values</dt><dd>A dash, used only in table cells, means no value. In the record a <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that is not stored has no row, and the Values section says when none is stored. Any other detail the paper or the source database does not give reads <em>Not stated in the paper</em> (records read by CatLog) or <em>Not recorded</em> (database records); a missing PMID or DOI, sequence or SMILES reads <em>None</em>, or says why there is no sequence.</dd></div>
             </dl>
           </section>
 
@@ -534,7 +524,7 @@
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, including sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
-              <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, review result, source and paper IDs), or this page as JSON; <strong>Download record</strong> saves the open record as JSON: its values with units, review result, method, check, cautions, human review, paper IDs, sequence, SMILES and license. Full data holds every field.</dd></div>
+              <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, temperature, pH, review result, source and paper IDs), or this page as JSON; <strong>Download record</strong> saves the open record as JSON: its values with units, review result, method, check, cautions, human review, paper IDs, sequence, SMILES and license. Full data holds every field.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind older records: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
             </dl>

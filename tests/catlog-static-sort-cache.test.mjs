@@ -169,7 +169,8 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.ok(pageHtml.includes("A dash, used only in table cells, means no value (in the T column, a temperature flagged as questionable)."));
+  assert.ok(pageHtml.includes("A dash, used only in table cells, means no value."));
+  assert.doesNotMatch(pageHtml, /c-temp|c-ph|value="temperature"|value="ph"/, "the table shows no temperature or pH and does not sort by them");
   // The record leaves out a value it does not store; a missing linked item reads None (the Guide says what the record does).
   assert.ok(pageHtml.includes("that is not stored has no row, and the Values section says when none is stored."));
   assert.ok(pageHtml.includes("a missing PMID or DOI, sequence or SMILES reads <em>None</em>"));
@@ -2429,14 +2430,12 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.equal(api.rowCautionBits(catalase), 16);
   assert.ok(api.conditionFlags(row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "min^(-1)", condition_flags: ["kcat_magnitude_needs_check"] }))
     .has("kcat_magnitude_needs_check"), "a kcat in another unit keeps its flag");
-  // A temperature caution (the filter's Temperature questionable group) puts its "!" in the T cell, after the dash.
+  // A temperature caution (the filter's Temperature questionable group): the table shows no temperature, so the row has
+  // no mark for it; the record says it on its Temperature line.
   const zeroCelsius = row({ temperature_display: "", condition_flags: ["temperature_zero_celsius_needs_check"] });
   assert.equal(api.rowCautionBits(zeroCelsius), 8);
-  const tCell = api.conditionCellHtml("c-temp", "—", api.temperatureFlagBadgeHtml(api.conditionFlags(zeroCelsius)));
-  assert.match(tCell, /^<td class="c-temp num" data-empty="" data-flagged=""><span>—<\/span><span class="value-flag" role="img" title="Temperature recorded as exactly 0 °C; may stand for a missing value"/);
-  assert.match(tCell, /<span class="visually-hidden">T questionable<\/span>/);
-  assert.equal(api.temperatureFlagBadgeHtml(api.conditionFlags(unflaggedLow)), "", "a Km caution leaves T unmarked");
-  assert.equal(api.conditionCellHtml("c-temp", "—"), '<td class="c-temp num" data-empty=""><span>—</span></td>');
+  assert.equal(typeof api.temperatureFlagBadgeHtml, "undefined");
+  assert.match(measurementSection(zeroCelsius, {}), /<dt>Temperature<\/dt><dd>Not shown, recorded as exactly 0 °C, which may stand for a missing value/);
 }
 // An older record that stores no kcat/Km shows the kcat/Km its sources list even when nothing differs (3d1ca368da05740a:
 // BRENDA lists 0.5 and 50 s⁻¹ mM⁻¹, each also with no unit); one whose stored kcat/Km equals the listed one says it once.
@@ -2887,12 +2886,29 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const twin = (key, extra = {}) => Object.assign(row({ record_key: key, measurement_key: key, substrate_name: "pyruvate" }), { _pmids: 25401076, _dois: null }, extra);
   const page = [twin("a"), twin("b"), twin("c", { kcat_display: "2" }), twin("d", { condition_note: "+10 mM FBP" }), twin("e", { _pmids: 1 })];
   const alike = api.lookAlikeRowKeys(page);
-  assert.deepEqual([...alike].sort(), ["a", "b"]);
+  assert.deepEqual([...alike.keys()].sort(), ["a", "b"]);
   assert.equal(api.substrateNoteHtml(page[0], alike), '<small class="condition-note" title="same values as another record of this paper">like another record</small>');
   const empty = (key) => twin(key, { kcat_display: "", km_display: "", kcat_over_km_display: "" });
   assert.equal(api.lookAlikeRowKeys([empty("x"), empty("y")]).size, 0, "records without values are not called look-alikes");
   assert.equal(api.substrateNoteHtml(page[2], alike), "");
   assert.match(api.substrateNoteHtml(page[3], alike), /title="\+10 mM FBP">\+10 mM FBP<\/small>/);
+  // The table shows no temperature or pH: look-alikes that differ only there say which, and only the part that differs.
+  const assay = [twin("p1", { ph_display: "6.5", temperature_display: "25" }), twin("p2", { ph_display: "8.5", temperature_display: "25" }),
+    twin("p3", { ph_display: "", temperature_display: "25" }), twin("t1", { substrate_name: "lactate", temperature_display: "25" }),
+    twin("t2", { substrate_name: "lactate", temperature_display: "37", ph_display: "" }), twin("t3", { substrate_name: "lactate", temperature_display: "37", ph_display: "7" }),
+    twin("same1", { substrate_name: "malate", ph_display: "7", temperature_display: "30" }), twin("same2", { substrate_name: "malate", ph_display: "7", temperature_display: "30" }),
+    twin("same3", { substrate_name: "malate", ph_display: "8", temperature_display: "30" })];
+  const notes = api.lookAlikeRowKeys(assay);
+  assert.equal(notes.get("p1"), "pH 6.5");
+  assert.equal(notes.get("p2"), "pH 8.5");
+  assert.equal(notes.get("p3"), "pH not stated");
+  assert.equal(notes.get("t1"), "pH 7 · 25 °C");
+  assert.equal(notes.get("t2"), "pH not stated · 37 °C");
+  assert.equal(notes.get("t3"), "pH 7 · 37 °C");
+  assert.equal(notes.get("same1"), "", "a record that shares its temperature and pH with another still reads alike");
+  assert.equal(notes.get("same3"), "pH 8");
+  assert.equal(api.substrateNoteHtml(assay[0], notes), '<small class="condition-note" title="pH 6.5; the other values as another record of this paper">pH 6.5</small>');
+  assert.match(api.substrateNoteHtml(assay[6], notes), />like another record<\/small>/);
   api.renderDetail(row({ record_key: "noted" }), { condition_note: "with 10 mM FBP" });
   assert.match(element("detailContent").innerHTML, /<span class="detail-substrate-name">Substrate<\/span><\/p><p class="detail-condition-note">with 10 mM FBP<\/p>/);
   api.renderDetail(row({ record_key: "not-noted" }), {});
@@ -4087,16 +4103,12 @@ function referenceComparator(sort) {
     const right = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
     return right - left;
   };
-  // Low to high, rows without the value last; T and pH sort by the number the table shows.
+  // Low to high, rows without the value last.
   const numericAsc = (field) => (a, b) => {
     const left = a[field] == null ? Number.POSITIVE_INFINITY : Number(a[field]);
     const right = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
     return left - right;
   };
-  const shown = (field, valueOf) => (row) => ({ [field]: valueOf(row) });
-  const temperature = (row) => (/^-?[\d.]+$/.test(String(row.temperature_display ?? "")) ? Number(row.temperature_display) : null);
-  const ph = (row) => (/^[\d.]+$/.test(String(row.ph_display ?? "")) && Number(row.ph_display) <= 14 ? Number(row.ph_display) : null);
-  const by = (comparator, valueOf) => (a, b) => comparator({ ...a, ...valueOf(a) }, { ...b, ...valueOf(b) });
   const comparators = {
     evidence: (a, b) => (
       (a._stateRank - b._stateRank)
@@ -4114,10 +4126,6 @@ function referenceComparator(sort) {
     km_asc: numericAsc("km"),
     kcat_over_km: numericDesc("kcat_over_km"),
     kcat_over_km_asc: numericAsc("kcat_over_km"),
-    temperature: by(numericDesc("t"), shown("t", temperature)),
-    temperature_asc: by(numericAsc("t"), shown("t", temperature)),
-    ph: by(numericDesc("p"), shown("p", ph)),
-    ph_asc: by(numericAsc("p"), shown("p", ph)),
   };
   return (a, b) => comparators[sort](a, b) || (a._loadIndex - b._loadIndex);
 }
@@ -4134,10 +4142,6 @@ const modes = [
   "km_asc",
   "kcat_over_km",
   "kcat_over_km_asc",
-  "temperature",
-  "temperature_asc",
-  "ph",
-  "ph_asc",
 ];
 const fixtures = [
   row({ record_key: "a", verification_status: "unverified", evidence_confidence_tier: "candidate_only", source_record_count: 2, ec_number: "10.2.1.1", enzyme_display_name: "Zulu", organism: "Mouse", substrate_name: "ATP", kcat: null, km: 8, kcat_over_km: 0.1, temperature_display: "37", ph_display: "n/a" }),
@@ -4162,6 +4166,13 @@ for (const mode of modes) {
     [...api.state.records].filter(subset).sort(referenceComparator(mode)).map((item) => item.record_key),
     `${mode} should preserve filter-then-sort ordering when filtering a cached global ordering`,
   );
+}
+
+// The table shows no temperature or pH, so it does not sort by them: an older address's sort=temperature or sort=ph_asc
+// opens the default order.
+for (const older of ["temperature", "temperature_asc", "ph", "ph_asc"]) {
+  assert.deepEqual(Array.from(await api.orderedRecordsFor(older), (item) => item.record_key),
+    Array.from(await api.orderedRecordsFor("evidence"), (item) => item.record_key), `${older} opens the default order`);
 }
 
 const tiedRows = Array.from({ length: 24 }, (_, index) => row({ record_key: `tie-${index}` }));

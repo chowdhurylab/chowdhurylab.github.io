@@ -914,6 +914,21 @@ def check_filters(driver, browser, url, route_label):
     def chip_keys():
         return driver.execute_script("return [...document.querySelectorAll('#activeFilters [data-filter-key]')].map(e => e.dataset.filterKey)")
 
+    def record_number(label, index=0):
+        # The table shows no temperature or pH: a row's are read from its record (the Conditions line named label).
+        row = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")[index]
+        key = row.get_attribute("data-key")
+        row.find_element(By.CSS_SELECTOR, ".primary-cell").click()
+        text = wait.until(lambda d: d.execute_script("""
+            if (!document.body.classList.contains('detail-open') || !location.hash.includes(arguments[1])) return null;
+            const dt = [...document.querySelectorAll('#detailContent .kv-line > dt')].find(e => e.textContent.trim() === arguments[0]);
+            return dt ? dt.nextElementSibling.innerText.trim() : null;
+        """, label, key))
+        driver.find_element(By.ID, "closeDetailButton").click()
+        wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+        match = re.match(r"-?\d+(?:\.\d+)?", text)
+        return float(match.group(0)) if match else None
+
     def count_of(key):
         # Counts follow the results; while newer ones are worked out the panel says so (data-counts="pending").
         if driver.find_element(By.ID, "catalogFilters").get_attribute("data-counts") == "pending":
@@ -939,9 +954,12 @@ def check_filters(driver, browser, url, route_label):
         rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
         assert 0 < len(rows) <= 50
         assert all(any(part == "1.1.1" or part.startswith("1.1.1.") for part in re.split(r"[;,\s]+", ec)) for ec in cells("c-ec"))
-        assert all(20 <= float(value) <= 30 for value in cells("c-temp")), cells("c-temp")
-        filtered = summary()
         first_keys = [row.get_attribute("data-key") for row in rows]
+        assert not cells("c-temp") and not cells("c-ph"), "The table shows no temperature or pH"
+        temperatures = [record_number("Temperature", index) for index in (0, len(rows) - 1)]
+        assert all(value is not None and 20 <= value <= 30 for value in temperatures), temperatures
+        wait.until(lambda d: fragment() == address[1:])
+        filtered = summary()
         # The copied address opens the same records.
         copied = driver.current_url
         open_page(copied)
@@ -1003,8 +1021,9 @@ def check_filters(driver, browser, url, route_label):
         wait.until(lambda d: fragment() == "browse?phmin=7&phmax=7.5")
         wait_ready()
         assert chip_keys() == ["ph"]
-        ph_values = cells("c-ph")
-        assert ph_values and all(7 <= float(value) <= 7.5 for value in ph_values), ph_values
+        ph_values = [record_number("pH", index) for index in (0, 1)]
+        assert all(value is not None and 7 <= value <= 7.5 for value in ph_values), ph_values
+        wait.until(lambda d: fragment() == "browse?phmin=7&phmax=7.5")
         # The sidebar is part of the page: Escape leaves it open (« collapses it).
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         assert driver.execute_script("return document.body.classList.contains('filters-open')")

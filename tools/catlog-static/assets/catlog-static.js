@@ -457,12 +457,6 @@
     return flagBadgeHtml(labels.join("; "), shortText);
   }
 
-  // The T cell's "!" for a temperature caution (the Cautions filter's Temperature questionable group).
-  function temperatureFlagBadgeHtml(flags) {
-    const labels = [...new Set([...flags].filter((flag) => flag.startsWith("temperature_")).map((flag) => conditionFlagLabel(flag)))];
-    return labels.length ? flagBadgeHtml(labels.join("; "), "T questionable") : "";
-  }
-
   function flagBadgeHtml(summary, shortText) {
     return `<span class="value-flag" role="img" title="${escapeHtml(summary)}" aria-label="${escapeHtml(summary)}"><span class="visually-hidden">${escapeHtml(shortText)}</span></span>`;
   }
@@ -1427,15 +1421,6 @@
     return formatNumber(number, { maximumFractionDigits: 1 });
   }
 
-  // The table's T and pH cells: the number alone, or a dash (marked empty, so a phone card leaves it out unless a
-  // caution's "!" follows it).
-  function conditionCellHtml(className, value, flagHtml = "") {
-    const flagged = flagHtml ? " data-flagged=\"\"" : "";
-    return value === EMPTY_VALUE
-      ? `<td class="${className} num" data-empty=""${flagged}><span>${EMPTY_VALUE}</span>${flagHtml}</td>`
-      : `<td class="${className} num"${flagged}><span>${escapeHtml(value)}</span>${flagHtml}</td>`;
-  }
-
   function stateConfig(value) {
     return recordStates.find((item) => item.value === value) || recordStates[2];
   }
@@ -2240,7 +2225,7 @@
 
   // The numeric columns sort both ways: "kcat" is high to low, "kcat_asc" low to high. A column header shows the
   // direction of the current sort (aria-sort and an arrow); clicking it sorts high to low, then low to high.
-  const SORT_HEADER_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", temperature: "assay temperature", ph: "assay pH" };
+  const SORT_HEADER_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" };
 
   function syncSortHeaders() {
     const sort = $("sortSelect")?.value || "evidence";
@@ -2307,7 +2292,7 @@
 
   // The number of table columns (the test harness has no table, hence the fallback).
   function tableColumnCount() {
-    return document.querySelectorAll?.("#recordTableWrap thead th").length || 11;
+    return document.querySelectorAll?.("#recordTableWrap thead th").length || 9;
   }
 
   // What a visitor reads when loading fails: a page older than the data it finds says so plainly (PAGE_OUT_OF_DATE);
@@ -5655,10 +5640,6 @@
       km_asc: numericAsc("km"),
       kcat_over_km: numericDesc("kcat_over_km"),
       kcat_over_km_asc: numericAsc("kcat_over_km"),
-      temperature: numericDesc("_sortTemperature"),
-      temperature_asc: numericAsc("_sortTemperature"),
-      ph: numericDesc("_sortPh"),
-      ph_asc: numericAsc("_sortPh"),
       evidence: (a, b) => {
         const stateDelta = a._stateRank - b._stateRank;
         if (stateDelta !== 0) return stateDelta;
@@ -5766,10 +5747,6 @@
       "km_asc",
       "kcat_over_km",
       "kcat_over_km_asc",
-      "temperature",
-      "temperature_asc",
-      "ph",
-      "ph_asc",
     ].includes(sort) ? sort : "evidence";
   }
 
@@ -5903,9 +5880,10 @@
   }
 
   // Records of one paper that read the same in every column but differ in their assay: the short condition note the
-  // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, two records with
-  // values on this page that share a paper and every column say only that (the table cannot tell whether their
-  // conditions, protein or nothing at all differ).
+  // export gives (condition_note: "+10 mM FBP", "no effector") goes under the substrate. Without one, records with values
+  // on this page that share a paper and every column and differ only in the assay temperature or pH (the table shows
+  // neither) say which, "pH 6.5" or "37 °C"; when nothing shown or stored tells them apart they say only that (the table
+  // cannot tell whether their conditions, protein or nothing at all differ).
   const VISIBLE_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name",
     "kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit", "verification_status",
     "source_db"];
@@ -5918,6 +5896,9 @@
     return "";
   }
 
+  // The page's look-alike records: a Map of record key to the note under its substrate, the temperature or pH that tells
+  // it from the others ("pH 6.5", "37 °C", "pH 6.5 · 37 °C"), or "" when nothing does. A Set-like has() keeps the older
+  // callers working.
   function lookAlikeRowKeys(pageRows) {
     const groups = new Map();
     pageRows.forEach((row) => {
@@ -5925,10 +5906,26 @@
       if (!["kcat", "km", "kcat_over_km"].some((field) => metricHasValue(row, field))) return;
       const papers = [row._pmids, row._dois].map((value) => JSON.stringify(value ?? null)).join("|");
       if (papers === "null|null") return;
-      const key = JSON.stringify([...VISIBLE_ROW_FIELDS.map((field) => row[field] ?? null), formatTemperature(row), formatPh(row), papers]);
-      groups.set(key, [...(groups.get(key) || []), row.record_key]);
+      const key = JSON.stringify([...VISIBLE_ROW_FIELDS.map((field) => row[field] ?? null), papers]);
+      groups.set(key, [...(groups.get(key) || []), row]);
     });
-    return new Set([...groups.values()].filter((keys) => keys.length > 1).flat());
+    const notes = new Map();
+    groups.forEach((rows) => {
+      if (rows.length < 2) return;
+      const conditions = rows.map((row) => [formatPh(row), formatTemperature(row)]);
+      const differs = [0, 1].map((at) => new Set(conditions.map((pair) => pair[at])).size > 1);
+      rows.forEach((row, index) => {
+        const [ph, temperature] = conditions[index];
+        const parts = [
+          differs[0] ? (ph === EMPTY_VALUE ? "pH not stated" : `pH ${ph}`) : "",
+          differs[1] ? (temperature === EMPTY_VALUE ? "T not stated" : `${temperature} °C`) : "",
+        ].filter(Boolean);
+        // Rows that share their temperature and pH with another row of the group still read alike.
+        const twin = rows.some((other, at) => at !== index && conditions[at][0] === ph && conditions[at][1] === temperature);
+        notes.set(row.record_key, twin && parts.length ? "" : parts.join(" · "));
+      });
+    });
+    return notes;
   }
 
   // Short enough for the Substrate column at its narrowest on a desktop screen (120px; the full sentence was cut at
@@ -5938,8 +5935,9 @@
 
   function substrateNoteHtml(row, lookAlikes) {
     const condition = conditionNoteText(row);
-    const note = condition || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
-    const title = condition || LOOK_ALIKE_TITLE;
+    const assay = lookAlikes.get?.(row.record_key) || "";
+    const note = condition || assay || (lookAlikes.has(row.record_key) ? LOOK_ALIKE_NOTE : "");
+    const title = condition || (assay ? `${assay}; the other values as another record of this paper` : LOOK_ALIKE_TITLE);
     return note ? `<small class="condition-note" title="${escapePublic(title)}">${escapePublic(note)}</small>` : "";
   }
 
@@ -6044,8 +6042,6 @@
         <td class="c-kcat num" data-label="kcat (s⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num" data-label="Km (mM)"><span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
         <td class="c-eff num" data-label="kcat/Km (s⁻¹ mM⁻¹)"><span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
-        ${conditionCellHtml("c-temp", formatTemperature(row), temperatureFlagBadgeHtml(flags))}
-        ${conditionCellHtml("c-ph", formatPh(row))}
         <td class="c-status">${statusBadge(row)}</td>
         <td class="c-open row-arrow" aria-hidden="true">&rsaquo;</td>
       </tr>
@@ -6089,7 +6085,7 @@
     return controls.sort === "evidence" && !activeFilterItems(controls).length;
   }
 
-  // Column widths follow the page. Values, EC, T, pH and Review result are as wide as their widest entry and never wrap.
+  // Column widths follow the page. Values, EC and Review result are as wide as their widest entry and never wrap.
   // A name column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
@@ -6109,8 +6105,6 @@
     { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
     { key: "km", cell: ".c-km", min: 60, narrowMin: 56, cap: 200 },
     { key: "efficiency", cell: ".c-eff", min: 88, narrowMin: 84, cap: 220 },
-    { key: "temp", cell: ".c-temp", min: 44, narrowMin: 40, cap: 90 },
-    { key: "ph", cell: ".c-ph", min: 44, narrowMin: 40, cap: 80 },
     { key: "state", cell: ".c-status", min: 96, narrowMin: 96, cap: 400 },
   ];
   // A name column grows toward one line for its names up to this many times its cap; longer names keep two lines.
@@ -9531,8 +9525,6 @@
       conditionFlags,
       rowCautionBits,
       valueFlagBadgeHtml,
-      temperatureFlagBadgeHtml,
-      conditionCellHtml,
       publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,
