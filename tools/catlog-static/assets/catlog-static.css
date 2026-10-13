@@ -428,7 +428,7 @@ tbody tr.selected .row-arrow { color:var(--accent) }
 .primary-cell { min-width:0 }
 .primary-cell strong { color:var(--accent); font-weight:500 }
 /* A variant's mutation: its own line under the name, never clipped by it; the name then keeps one line, so every row
-   keeps one height. Phones show it after organism · substrate (td.c-form, hidden in the table). */
+   keeps one height. Phones show it on its own line under the name (td.c-form, hidden in the table). */
 .enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--accent-line); border-radius:4px; background:var(--accent-tint); padding:0 4px; color:var(--accent); font-size:var(--fs-12); font-weight:500; line-height:14px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
@@ -1262,10 +1262,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody td.c-organism { flex:0 1 auto; max-width:60%; margin-right:-6px }
   #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:block; max-height:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
   #recordsBody td.c-substrate .clamp-2::before { content:"\00b7\00a0" }
-  /* The variant line follows organism · substrate; the name keeps its two lines. */
+  /* The variant line comes right under the name, as in the table (the name keeps its two lines), then organism ·
+     substrate and any note under them: a note never parts a variant from its enzyme. */
   #recordsBody .primary-cell .enzyme-form { display:none }
   #recordsBody .clamp-2.has-form { max-height:34px; -webkit-line-clamp:2 }
-  #recordsBody td.c-form { display:block; order:2; flex:0 0 100% }
+  #recordsBody td.c-form { display:block; order:1; flex:0 0 100% }
   /* A condition note is a grey line of its own under organism · substrate. */
   #recordsBody td.c-substrate.has-note { display:contents }
   #recordsBody td.c-substrate.has-note > .clamp-2 { order:2; flex:1 1 0; min-width:0; color:var(--text-2) }

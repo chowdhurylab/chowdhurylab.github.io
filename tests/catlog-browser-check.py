@@ -1678,6 +1678,24 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert values and all(max(card["tops"]) - min(card["tops"]) <= 2 and card["over"] <= 1 for card in values), (
                 f"At 320px a card's three values line up and stay in their cells: {values}")
+            # A card reads name, variant, organism · substrate, then the note under the substrate: a note never parts a
+            # variant from its enzyme (the note as the table writes it, under the first variant card's substrate).
+            open_page("#browse?variant=variant")
+            order = driver.execute_script("""
+                const card = [...document.querySelectorAll('#recordsBody tr[data-key]')].find(row => row.querySelector('td.c-form'));
+                if (!card) return null;
+                const cell = card.querySelector('td.c-substrate');
+                if (!cell.querySelector('.condition-note')) {
+                  cell.classList.add('has-note');
+                  cell.insertAdjacentHTML('beforeend', '<small class="condition-note">+10 mM fructose 1,6-bisphosphate</small>');
+                }
+                const box = selector => card.querySelector(selector).getBoundingClientRect();
+                return {name: box('td.c-enzyme').bottom, form: [box('td.c-form').top, box('td.c-form').bottom],
+                        organism: box('td.c-organism').top, substrate: box('td.c-substrate .clamp-2').bottom,
+                        note: box('td.c-substrate .condition-note').top};
+            """)
+            assert order and order["name"] <= order["form"][0] + 1 and order["form"][1] <= order["organism"] + 1 and (
+                order["substrate"] <= order["note"] + 1), f"At 320px a card reads name, variant, organism · substrate, note: {order}"
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
             # whole (its text, padding and arrow), with "Sort" shown beside it.
             for width in (360, 372, 389):

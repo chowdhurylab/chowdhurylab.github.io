@@ -396,7 +396,8 @@ sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
 12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
 stays with its source line (the other tags give way). On phones (640px and below) each record is a card: name and EC;
-organism · substrate; the variant's mutation; kcat, Km and kcat/Km with their units as labels; the
+the variant's mutation (under the name, as in the table); organism · substrate, with any note under the substrate on
+its own grey line; kcat, Km and kcat/Km with their units as labels; the
 two-line status badge. Below 390px kcat/Km (s⁻¹ mM⁻¹) does not fit a third of the card, so every value label puts
 its unit on a second line, as the table's headings do, and the three values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
