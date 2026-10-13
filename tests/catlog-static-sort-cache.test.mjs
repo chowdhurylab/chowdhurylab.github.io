@@ -4417,6 +4417,21 @@ for (const older of ["temperature", "temperature_asc", "ph", "ph_asc"]) {
     Array.from(await api.orderedRecordsFor("evidence"), (item) => item.record_key), `${older} opens the default order`);
 }
 
+// The A to Z sorts skip a name's leading quotes and brackets; a name of marks only keeps them.
+api.indexLoadedRecords([
+  row({ record_key: "quoted", organism: '"Chelatobacter" strain ATCC 29600', enzyme_display_name: "(S)-Lactate oxidase", substrate_name: "'Xylose'" }),
+  row({ record_key: "bracketed", organism: "[Bacillus] caldolyticus", enzyme_display_name: "Alcohol dehydrogenase", substrate_name: "[3H]Water" }),
+  row({ record_key: "plain-a", organism: "Azotobacter vinelandii", enzyme_display_name: "Malate dehydrogenase", substrate_name: "ATP" }),
+  row({ record_key: "plain-d", organism: "Danio rerio", enzyme_display_name: "Tyrosinase", substrate_name: "D-Glucose" }),
+  row({ record_key: "marks", organism: "-", enzyme_display_name: "-", substrate_name: "-" }),
+]);
+assert.deepEqual(Array.from(await api.orderedRecordsFor("organism"), (item) => item.record_key),
+  ["marks", "plain-a", "bracketed", "quoted", "plain-d"], "organism sorts skip leading quotes and brackets");
+assert.deepEqual(Array.from(await api.orderedRecordsFor("enzyme"), (item) => item.record_key),
+  ["marks", "bracketed", "plain-a", "quoted", "plain-d"], "enzyme sorts skip a leading bracket");
+assert.deepEqual(Array.from(await api.orderedRecordsFor("substrate"), (item) => item.record_key),
+  ["marks", "bracketed", "plain-a", "plain-d", "quoted"], "substrate sorts skip leading quotes and brackets");
+
 const tiedRows = Array.from({ length: 24 }, (_, index) => row({ record_key: `tie-${index}` }));
 api.indexLoadedRecords(tiedRows);
 for (const mode of modes) {

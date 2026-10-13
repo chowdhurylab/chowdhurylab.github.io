@@ -2073,13 +2073,22 @@
         ? -1
         : (tierOrder[row.evidence_confidence_tier] ?? 99);
       row._sourceCount = Number(row.source_record_count || 0);
-      row._sortEnzyme = String(row.enzyme_display_name || "");
-      row._sortOrganism = String(row.organism || "");
-      row._sortSubstrate = String(row.substrate_name || "");
+      row._sortEnzyme = sortText(row.enzyme_display_name);
+      row._sortOrganism = sortText(row.organism);
+      row._sortSubstrate = sortText(row.substrate_name);
       row._sortTemperature = temperatureValue(row);
       row._sortPh = phValue(row);
       // _ecSort and _search are filled on first use (ecParts, searchText): most rows never need them.
     });
+  }
+
+  // The A to Z sorts (enzyme, organism, substrate) skip leading quotes, brackets and other marks, so '"Chelatobacter"
+  // strain ATCC 29600' sorts under C and "[Bacillus] caldolyticus" under B instead of before every name from A. A name
+  // made of marks only keeps them.
+  function sortText(value) {
+    const text = String(value || "");
+    if (!text || /^[\p{L}\p{N}]/u.test(text)) return text;
+    return text.replace(/^[^\p{L}\p{N}]+/u, "") || text;
   }
 
   function ecParts(row) {
