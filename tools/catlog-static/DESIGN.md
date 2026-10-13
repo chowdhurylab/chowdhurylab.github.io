@@ -257,8 +257,11 @@ scrolling within the table, and the page controls reachable. An open record's
 address names it (record=<record key>, replaced, not added to history, and
 removed when the record closes), so it can be shared; opening such an address
 shows the record on its table page once the index (and, with Human-checked on,
-the review marks) has it, and a key the snapshot lacks is put in the search box
-with a note that it is not there. Marks that arrive after a record opened redraw
+the review marks) has it, with its row scrolled into the table's view (only for
+an address: a click leaves the table where it is), and a key the snapshot lacks
+is put in the search box with a note that it is not there. New filters with the
+same record open (its paper's link, Back from there) move the table to the
+record's page too, never to page 1. Marks that arrive after a record opened redraw
 its panel in place (the rows and focus stay).
 
 While records load, placeholder rows keep the table's shape (a table with no
