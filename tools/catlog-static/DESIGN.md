@@ -605,7 +605,8 @@ found at once: A, B, G, C, D, E, F, H.
   units, conditions, paper IDs, UniProt ID, sequence and
   SMILES; the record's own words for review result, source, method, check,
   values as printed (each with the whole line quoted from the paper, which the
-  record cuts at 240 characters), AI audit, cautions and human review, and, when the snapshot
+  record cuts at 240 characters), AI audit, cautions and human review (with
+  human_approved_values, the values the record shows with a check), and, when the snapshot
   carries them, Against the databases (each value's result, line, cause and
   evidence; or the earlier review's changes, Before, After and the kind of
   change; never an empty list or a local path); the license as the record

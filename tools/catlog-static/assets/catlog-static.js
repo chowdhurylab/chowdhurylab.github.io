@@ -1646,6 +1646,17 @@
     return match ? fieldsOf(match[1].split(/, | and /)) : new Set();
   }
 
+  // The record's values that carry the check, in kcat, Km, kcat/Km order: approved, shown, and not a kcat/Km worked out
+  // from kcat and Km (calc.: not printed, so no reviewer approved it as such).
+  function approvedValueFields(summary, detail = {}, proof = null) {
+    const approved = humanApprovedFields(summary);
+    if (!approved.size) return [];
+    const metricSummary = metricSummaryFor(summary, detail);
+    return ["kcat", "km", "kcat_over_km"].filter((field) => approved.has(field)
+      && (metricHasValue(metricSummary, field) || proofLineIndex(proof, field) >= 0)
+      && !(field === "kcat_over_km" && summary.kcat_over_km_origin === "calculated"));
+  }
+
   // The check after a value a human reviewer approved (Values table); its meaning is the line under the table.
   const APPROVED_VALUE_NAME = "approved by a human reviewer";
   const APPROVED_VALUE_HTML = `<span class="value-approved" role="img" aria-label="${APPROVED_VALUE_NAME}" title="Approved by a human reviewer">${CHECK_ICON_HTML}</span>`;
@@ -2925,6 +2936,8 @@
       database_note: databaseNotes.join(" ") || null,
       earlier_corrections: earlierCorrections,
       human_review: humanReviewNote(summary) || null,
+      // The values the record shows with a human reviewer's check.
+      human_approved_values: approvedValueFields(summary, detail, proof).map((field) => ({ kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" })[field]),
       paper_title: paperTitleText(summary, detail) || null,
       pubmed_ids: ids(detail.supporting_pmids, detail.pubmed_id),
       dois: ids(detail.supporting_dois, detail.doi),
@@ -2944,6 +2957,7 @@
     if (!databaseComparison.length) delete record.database_comparison;
     if (!record.database_note) delete record.database_note;
     if (!earlierCorrections.length) delete record.earlier_corrections;
+    if (!record.human_approved_values.length) delete record.human_approved_values;
     if (!record.source_kcat_over_km_values.length) delete record.source_kcat_over_km_values;
     if (!hasKi) {
       delete record.ki;
@@ -7827,7 +7841,7 @@
     const calcNote = calculatedNote(summary, v2Record);
     // The values a human reviewer approved get a check; a kcat/Km worked out from kcat and Km (calc.) is not printed, so
     // no reviewer approved it as such.
-    const approved = humanApprovedFields(summary);
+    const approved = new Set(approvedValueFields(summary, detail, proof));
     // Where each value is printed: a column when the values' places differ, one caption above the table when every value
     // shares it, nothing for an older record (its notes are under Paper).
     const placeOf = (field) => {
@@ -7860,7 +7874,7 @@
       const calc = field === "kcat_over_km" && calcNote
         ? `<small class="metric-origin" title="${escapeHtml(calcNote)}">calc.</small>`
         : "";
-      const check = approved.has(field) && !calc ? APPROVED_VALUE_HTML : "";
+      const check = approved.has(field) ? APPROVED_VALUE_HTML : "";
       const place = whereColumn ? placeOf(field) : "";
       const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
       return { label, valueHtml, check, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };

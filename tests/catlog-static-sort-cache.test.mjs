@@ -3469,6 +3469,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["Km", "kcat/Km"]);
   assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved the Km and kcat\/Km on this record\.<\/dd>/);
+  // The record download names the values that carry the check.
+  assert.deepEqual((await recordDownloadPayload(row({ record_key: "hc-list", measurement_key: "hc-list" }), {})).human_approved_values, ["Km", "kcat/Km"]);
   api.renderDetail(row({ record_key: "hc-list-noted", measurement_key: "hc-list-noted" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat"]);
   // A kcat/Km worked out from kcat and Km (calc.) is not printed: no reviewer approved it as such.
@@ -3479,6 +3481,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.setHumanReviewMarks({});
   api.renderDetail(accepted, {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved|Approved by a human reviewer/);
+  assert.ok(!("human_approved_values" in await recordDownloadPayload(accepted, {})), "no check, no list");
   api.setHumanReviewMarks({
     "hc-accepted": { checked: true },
     "hc-pending": { checked: true },
