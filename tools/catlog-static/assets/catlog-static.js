@@ -1609,6 +1609,11 @@
     const accepted = (row._recordState || recordStateForRow(row)) === "accepted";
     // Facts only: a note's review year is left out ("in CatLog's 2026 review", "in the 2026 review").
     const note = String(mark?.note || "").replace(/\b(CatLog['’]s|the) (?:19|20)\d\d review\b/g, "$1 review");
+    // A mark that lists the approved values and says nothing else: which values, in words.
+    const listed = !note && !mark?.checked && Array.isArray(mark?.approved)
+      ? VALUE_FIELDS.filter(([field]) => humanApprovedFields(row).has(field)).map(([field]) => ({ kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" })[field])
+      : [];
+    if (listed.length) return `A human reviewer approved the ${sentenceList(listed)} on this record.`;
     return note || (mark?.checked
       ? (accepted
           ? "A human reviewer approved every value on this record."
@@ -1623,6 +1628,27 @@
 
   // The small check drawn before "human-checked" (badges, the record's status line, the counts band, the Guide).
   const CHECK_ICON_HTML = '<svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // The values a human reviewer approved on a record, as Values fields ("kcat", "km", "kcat_over_km"): the mark's own
+  // list when it has one (approved: ["kcat", "Km", "kcat/Km"]); else every value when the reviewer checked the record
+  // (the Values table leaves out what the record does not print); else the metrics named by the one sentence the review
+  // writes for a partial approval ("A human reviewer approved the same kcat and Km for this paper ..."). Any other note
+  // marks nothing.
+  const APPROVED_METRIC_FIELDS = { kcat: "kcat", km: "km", "kcat/km": "kcat_over_km", kcat_over_km: "kcat_over_km" };
+  const APPROVED_SENTENCE = /^A human reviewer approved the same ((?:kcat\/Km|kcat|Km)(?:(?:, | and )(?:kcat\/Km|kcat|Km))*) for this paper\b/;
+  function humanApprovedFields(row) {
+    const mark = humanReviewMark(row);
+    if (!mark || typeof mark !== "object") return new Set();
+    const fieldsOf = (names) => new Set(names.map((name) => APPROVED_METRIC_FIELDS[String(name ?? "").trim().toLowerCase()]).filter(Boolean));
+    if (Array.isArray(mark.approved)) return fieldsOf(mark.approved);
+    if (mark.checked === true) return new Set(["kcat", "km", "kcat_over_km"]);
+    const match = String(mark.note || "").match(APPROVED_SENTENCE);
+    return match ? fieldsOf(match[1].split(/, | and /)) : new Set();
+  }
+
+  // The check after a value a human reviewer approved (Values table); its meaning is the line under the table.
+  const APPROVED_VALUE_NAME = "approved by a human reviewer";
+  const APPROVED_VALUE_HTML = `<span class="value-approved" role="img" aria-label="${APPROVED_VALUE_NAME}" title="Approved by a human reviewer">${CHECK_ICON_HTML}</span>`;
 
   // A record read by CatLog: the method in one line, ending with whether code converted any value's unit (facts: the
   // record's proof-line facts; without them nothing is said about units).
@@ -7783,6 +7809,9 @@
       ? Boolean(metricSummary.has_ki) && metricHasValue(metricSummary, field)
       : metricHasValue(metricSummary, field) || proofLineIndex(proof, field) >= 0));
     const calcNote = calculatedNote(summary, v2Record);
+    // The values a human reviewer approved get a check; a kcat/Km worked out from kcat and Km (calc.) is not printed, so
+    // no reviewer approved it as such.
+    const approved = humanApprovedFields(summary);
     // Where each value is printed: a column when the values' places differ, one caption above the table when every value
     // shares it, nothing for an older record (its notes are under Paper).
     const placeOf = (field) => {
@@ -7815,18 +7844,21 @@
       const calc = field === "kcat_over_km" && calcNote
         ? `<small class="metric-origin" title="${escapeHtml(calcNote)}">calc.</small>`
         : "";
+      const check = approved.has(field) && !calc ? APPROVED_VALUE_HTML : "";
       const place = whereColumn ? placeOf(field) : "";
       const printed = fact?.printed ? caretHtml(escapePublic(fact.printed)) : EMPTY_VALUE;
-      return { label, valueHtml, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };
+      return { label, valueHtml, check, calc, flag: flagMarkerHtml(field, notes), unitCell, place, printed };
     });
     // As printed only when some value has a printed form (a Where column's place sits in it on phones).
     const printedColumn = whereColumn || cells.some((cell) => cell.printed !== EMPTY_VALUE);
-    // calc. and "!" follow their number; a row without one keeps an unseen copy of its space, so every number ends at
-    // the same place (on phones, where they sit under the number, the copies take no room).
+    // The check, calc. and "!" follow their number; a row without one keeps an unseen copy of its space, so every number
+    // ends at the same place (on phones calc. and "!" sit under the number and their copies take no room; the check
+    // stays beside its number).
+    const checkSlot = cells.some((cell) => cell.check) ? `<span class="value-approved vt-ghost" aria-hidden="true">${CHECK_ICON_HTML}</span>` : "";
     const calcSlot = cells.some((cell) => cell.calc) ? '<small class="metric-origin vt-ghost" aria-hidden="true">calc.</small>' : "";
     const flagSlot = cells.some((cell) => cell.flag) ? '<span class="value-flag vt-ghost" aria-hidden="true"></span>' : "";
-    const rows = cells.map(({ label, valueHtml, calc, flag, unitCell, place, printed }) => `<tr><th scope="row">${label}</th>`
-      + `<td class="vt-value"><span class="vt-number">${valueHtml}</span>${calc || calcSlot}${flag || flagSlot}</td>`
+    const rows = cells.map(({ label, valueHtml, check, calc, flag, unitCell, place, printed }) => `<tr><th scope="row">${label}</th>`
+      + `<td class="vt-value"><span class="vt-number">${valueHtml}${check || checkSlot}</span>${calc || calcSlot}${flag || flagSlot}</td>`
       + `<td class="vt-unit">${unitCell || EMPTY_VALUE}</td>`
       + (printedColumn ? `<td class="vt-printed">${printed}${place ? `<small class="vt-where-inline">${escapePublic(place)}</small>` : ""}</td>` : "")
       + (whereColumn ? `<td class="vt-where${place.length <= 14 ? " vt-short" : ""}">${place ? escapePublic(place) : EMPTY_VALUE}</td>` : "")
@@ -7848,6 +7880,10 @@
       ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list their own kcat/Km values" : "lists its own kcat/Km"} (above).`
       : "";
     const greyNotes = [
+      // What the check after a value means, once.
+      cells.some((cell) => cell.check)
+        ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? " (see Human review below)" : ""}.`
+        : "",
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")
         ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`

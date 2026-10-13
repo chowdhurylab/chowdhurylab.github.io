@@ -563,6 +563,11 @@ body.detail-open .detail-panel { display:block }
 .values-table td.vt-value .vt-number { font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
 .values-table td.vt-value .metric-origin { margin-left:4px }
 .values-table td.vt-value .value-flag { margin-left:6px; vertical-align:-1px }
+/* A value a human reviewer approved: a small green check after the number (its meaning is the first note under the table). */
+.value-approved, .value-approved-key { color:var(--checked) }
+.values-table td.vt-value .value-approved { margin-left:4px; font-size:var(--fs-12); font-weight:400 }
+.value-approved .check-icon { width:12px; height:12px; vertical-align:-1px }
+.value-approved-key .check-icon { margin-right:4px; vertical-align:-0.12em }
 /* A row without calc. or "!" keeps their space unseen, so every number in the column ends at the same place. */
 .values-table .vt-ghost { visibility:hidden }
 .values-table .vt-unit { color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
@@ -1164,6 +1169,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .values-table td.vt-value .vt-ghost { display:none }
   .values-table td.vt-value .metric-origin { margin-left:0 }
   .values-table td.vt-value .metric-origin + .value-flag { margin-left:4px }
+  .values-table td.vt-value .value-approved.vt-ghost { display:inline }
   .values-table .vt-printed { overflow-wrap:anywhere }
   .snapshot-overview { min-height:40px; row-gap:6px }
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }

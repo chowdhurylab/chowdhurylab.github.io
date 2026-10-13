@@ -3358,6 +3358,50 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A correction made after human review is said as given, in the Human review line.
   api.renderDetail(row({ record_key: "hc-fixed", measurement_key: "hc-fixed", verification_status: "verified" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);
+  // A check after each value a human reviewer approved (Values table), with its meaning once under the table: every value
+  // of a checked record, the values the review's sentence names on another, the mark's own list when it has one.
+  const approvedValues = (html) => [...html.matchAll(/<tr><th scope="row">(.*?)<\/th><td class="vt-value"><span class="vt-number">[^<]*(<span class="value-approved"[^>]*>)?/g)]
+    .filter((match) => match[2]).map((match) => match[1].replace(/<[^>]+>/g, ""));
+  const APPROVED_NAME = /<span class="value-approved" role="img" aria-label="approved by a human reviewer" title="Approved by a human reviewer"><svg class="check-icon"/;
+  api.renderDetail(accepted, {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), ["kcat", "Km", "kcat/Km"]);
+  assert.match(html, APPROVED_NAME);
+  assert.match(html, /<li><span class="value-approved-key"><svg class="check-icon"[^>]*>.*?<\/svg><\/span>Approved by a human reviewer \(see Human review below\)\.<\/li>/);
+  api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), ["kcat", "Km"]);
+  // A row without a check keeps an unseen copy of its space, so the numbers end at the same place.
+  assert.match(html, /<span class="vt-number">1<span class="value-approved vt-ghost" aria-hidden="true"><svg/);
+  // A note that is not the review's sentence marks nothing (no guessing from free text).
+  api.renderDetail(noted, {});
+  assert.deepEqual(approvedValues(element("detailContent").innerHTML), []);
+  assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/);
+  api.setHumanReviewMarks({
+    "hc-list": { checked: false, approved: ["Km", "kcat/Km"] },
+    "hc-list-noted": { checked: false, approved: ["kcat"], note: "A reviewer questioned this Km." },
+    "hc-calc": { checked: true },
+    "hc-strict": { checked: false, note: "A human reviewer approved the same Vmax and Km for this paper." },
+  });
+  api.renderDetail(row({ record_key: "hc-list", measurement_key: "hc-list" }), {});
+  html = element("detailContent").innerHTML;
+  assert.deepEqual(approvedValues(html), ["Km", "kcat/Km"]);
+  assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved the Km and kcat\/Km on this record\.<\/dd>/);
+  api.renderDetail(row({ record_key: "hc-list-noted", measurement_key: "hc-list-noted" }), {});
+  assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat"]);
+  // A kcat/Km worked out from kcat and Km (calc.) is not printed: no reviewer approved it as such.
+  api.renderDetail(row({ record_key: "hc-calc", measurement_key: "hc-calc", kcat_over_km_origin: "calculated" }), {});
+  assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "Km"]);
+  api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
+  assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
+  api.setHumanReviewMarks({});
+  api.renderDetail(accepted, {});
+  assert.doesNotMatch(element("detailContent").innerHTML, /value-approved|Approved by a human reviewer/);
+  api.setHumanReviewMarks({
+    "hc-accepted": { checked: true },
+    "hc-pending": { checked: true },
+    "hc-note": { checked: false, note: "A human reviewer checked the same Km in CatLog's 2026 review of the earlier catalog." },
+  });
 
   const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady, page: api.state.page,
     summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
