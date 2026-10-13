@@ -4932,6 +4932,9 @@
     if (PAGE_SIZES.includes(rows)) setPageSize(rows);
     const page = Number(params.get("page"));
     state.pendingPage = Number.isInteger(page) && page > 1 ? page : 0;
+    // page=1, a page that is no page number (page=-2) or no page= at all is the first page. An address that names a
+    // record opens on that record's page instead.
+    if (!state.pendingPage && !recordKeyFromLocation()) state.page = 1;
   }
 
   // Back, Forward or an edited address: the controls follow the address, and the records follow when it changed them.
@@ -4941,7 +4944,12 @@
     if (!params) return false;
     const before = browseHash();
     applyBrowseParams(params);
-    if (browseHash() === before) return false;
+    if (browseHash() === before) {
+      // Nothing to change, but the address may still say what the table does not show (rows=37 keeps the page size
+      // shown): it is rewritten to the table's. An address naming a record is left to open it.
+      if (!state.selectedKey && !recordKeyFromLocation()) syncBrowseUrl();
+      return false;
+    }
     if (state.records.length) applyFiltersInBackground({ resetPage: !state.pendingPage });
     return true;
   }
@@ -8741,6 +8749,7 @@
       statusBadge,
       sourceTagText,
       applyBrowseParams,
+      applyLocationFilters,
       browseHash,
       activeFilterItems,
       countFacets,

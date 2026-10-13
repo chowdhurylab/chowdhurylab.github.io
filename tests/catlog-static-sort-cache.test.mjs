@@ -3070,6 +3070,41 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.applyBrowseParams(new Map(new URLSearchParams("status=accepted,curation_pending,not_verified")));
   assert.equal(api.browseHash(), "", "every review result ticked");
 
+  // An address's page: page=1, a page that is no page number or no page= at all is the first page. An address that
+  // says what the table does not show (rows=37) is rewritten to what it shows.
+  {
+    const replaced = [];
+    const originalReplace = window.history.replaceState;
+    window.history.replaceState = (_state, _title, url) => replaced.push(new URL(url).hash);
+    try {
+      api.state.page = 11;
+      api.applyBrowseParams(new Map(new URLSearchParams("q=src&page=-2")));
+      assert.equal(api.state.page, 1, "page=-2 opens the first page");
+      assert.equal(api.browseHash(), "#browse?q=src");
+      api.state.page = 11;
+      api.applyBrowseParams(new Map(new URLSearchParams("q=src")));
+      assert.equal(api.state.page, 1, "an address without page= opens the first page");
+      api.applyBrowseParams(new Map(new URLSearchParams("q=src&page=7")));
+      assert.equal(api.browseHash(), "#browse?q=src&page=7");
+      api.state.pendingPage = 0;
+      api.state.page = 1;
+      window.location.hash = "#browse?q=src&rows=37&page=-2";
+      assert.equal(api.applyLocationFilters(), false, "the same table: nothing to filter again");
+      assert.deepEqual(replaced, ["#browse?q=src"], "the address is rewritten to the table's");
+      // An address naming a record keeps its page for the record.
+      api.state.page = 3;
+      window.location.hash = "#browse?q=src&record=src-v2";
+      api.applyBrowseParams(new Map(new URLSearchParams("q=src&record=src-v2")));
+      assert.equal(api.state.page, 3);
+    } finally {
+      window.history.replaceState = originalReplace;
+      window.location.hash = "";
+      api.state.page = 1;
+      api.applyBrowseParams(new Map());
+      await api.ensureCurrentFilters();
+    }
+  }
+
   // Filter counts follow the results: each option counted over the records that match every other filter.
   const disputed = sourceRow("src-disputed", { source_db: "brenda", verification_status: "disputed", kcat: null });
   const pending = sourceRow("src-pending", { source_db: "sabio_rk", verification_status: "manual_review_required" });
