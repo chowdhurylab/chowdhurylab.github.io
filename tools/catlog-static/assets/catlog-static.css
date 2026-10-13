@@ -845,16 +845,16 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
-/* CatLog v2 entries are accepted: navy, and on the enzyme classes a darker stripe inside the accepted bar. */
+/* Records read from the paper are accepted: navy, and on the enzyme classes a darker stripe inside the accepted bar. */
 .stats-part-catlog, .stats-part-catlog-mark { --part:var(--st-accepted) }
 /* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
 .stats-seg, .stats-swatch { background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
-/* The CatLog v2 stripe (Figure 5) is a darker navy (70% navy, 30% text) inside the accepted bar, set off from the accepted
+/* The read-from-the-paper stripe (Figure 5) is a darker navy (70% navy, 30% text) inside the accepted bar, set off from the accepted
    fill by a 1px white gap above and below, so it parts from that fill by more than lightness, in grey print too; it
-   never glows. A nonzero accepted or CatLog v2 count is drawn at least 2px wide, so EC 7's 44 entries show and the
+   never glows. A nonzero accepted or read-from-the-paper count is drawn at least 2px wide, so EC 7's 44 entries show and the
    stripe stays within its accepted bar. The legend's swatch is an accepted swatch with the stripe through it. */
 .stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted); background:color-mix(in srgb, var(--st-accepted) 70%, var(--text)); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
 .stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
@@ -905,7 +905,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-rows { display:grid; gap:8px; margin:0; padding:0; list-style:none }
 /* The rows' own size is the value labels' 12px, so a value column given in ch (statsBarChart) fits them. */
 .stats-chart-row, .stats-chart-axis, .stats-chart-head { display:grid; grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,96px); align-items:center; column-gap:12px; font-size:var(--fs-12) }
-/* The value columns' headings (Figure 5: Records, Accepted, CatLog v2), 12px muted, each right-aligned over its column. */
+/* The value columns' headings (Figure 5: Records, Accepted, From paper), 12px muted, each right-aligned over its column. */
 .stats-chart-head { margin:0 0 6px }
 .stats-chart-head > .stats-chart-value { grid-column:-2 / -1; color:var(--muted) }
 .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
@@ -920,7 +920,7 @@ a.stats-total-value:focus-visible { outline:0 }
    viewer's font; it takes no height), so counts line up. */
 .stats-chart-value.has-parts { display:flex; justify-content:flex-end; align-items:flex-start; gap:6px }
 .stats-value-part[data-sizer] { display:inline-grid; justify-items:end }
-/* The sizer is measured at 600, the boldest weight in a value column (Figure 5's CatLog v2 count), so a column of bold
+/* The sizer is measured at 600, the boldest weight in a value column (Figure 5's From paper count), so a column of bold
    numbers and its regular heading come out equally wide. */
 .stats-value-part[data-sizer]::before { content:attr(data-sizer); grid-area:1 / 1; min-width:max-content; height:0; overflow:hidden; visibility:hidden; white-space:pre; font-weight:600 }
 .stats-value-part[data-sizer] > span { grid-area:1 / 1 }
@@ -1025,7 +1025,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-meter.is-blank { visibility:hidden }
 .stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 
-/* The lead of Quality: the human review of CatLog v1 entries, its share in accent ink with a soft glow. */
+/* The lead of Quality: the human review of the earlier version's entries, its share in accent ink with a soft glow. */
 .stats-lead { border:1px solid var(--line); border-radius:8px; background:radial-gradient(70% 120% at 0% 0%, var(--accent-wash), transparent 70%), var(--surface-2); padding:24px }
 .stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
 .stats-lead-figure { display:grid; gap:4px }
@@ -1038,7 +1038,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-lead-facts dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-lead-facts dd { margin:2px 0 0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-lead-note { max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-/* CatLog v2 against the review: a side line, set off by a rule at its left. */
+/* Read from the paper again, against the review: a side line, set off by a rule at its left. */
 .stats-lead-side { max-width:80ch; border-left:2px solid var(--line-strong); padding-left:12px; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
 .stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-13) }
 .stats-lead .stats-lead-links { margin:0 }
