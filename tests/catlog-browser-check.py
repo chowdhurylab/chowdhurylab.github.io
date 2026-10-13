@@ -951,6 +951,13 @@ def check_stats_more(driver, browser, overview, total):
         for number, n in drawn.items():
             assert number not in classes or n <= classes[number]["count"], (number, n)
         assert all(svg.get_attribute("role") == "img" and svg.get_attribute("aria-label") for svg in panel.find_elements(By.CSS_SELECTOR, "svg.stats-ridge-svg"))
+        # each class links to its records with the panel's parameter (any unit, so Browse can list more than n: the
+        # tooltip line says so)
+        metric = panel.get_attribute("data-metric")
+        for row in panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-row"):
+            fragment = urlsplit(row.find_element(By.CSS_SELECTOR, ".stats-ridge-label a.stats-link").get_attribute("href")).fragment
+            assert dict(parse_qsl(fragment[len("browse?"):])) == {"ec": f"{row.get_attribute('data-class')}.", "metric": metric}, fragment
+            assert row.get_attribute("data-tip").endswith(f"record with a {'kcat/Km' if metric == 'kcat_over_km' else 'Km' if metric == 'km' else 'kcat'}, in any unit."), row.get_attribute("data-tip")
         # each class's number of values in the n column; fewer than 300 draw lighter and dashed
         ns = [int(cell.get_attribute("innerText").replace(",", "")) for cell in panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-n")]
         assert ns == [item["n"] for item in grid["classes"]], ns

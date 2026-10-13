@@ -2056,7 +2056,7 @@ function row(overrides = {}) {
     assert.match(more, /<h3 id="statsClassValuesTitle" class="stats-fig-title">Values by enzyme class<\/h3>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
     // A class with fewer than 300 values is drawn lighter and dashed (is-few), and the data line says so.
-    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2 s⁻¹; 10–90% 0\.5–9 s⁻¹\.">/);
+    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
     assert.match(more, /A record in several classes counts in each; a lighter, dashed curve has fewer than 300 values;/);
     // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
     assert.match(more, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span><\/p>/);
@@ -2068,7 +2068,8 @@ function row(overrides = {}) {
     assert.match(more, /<linearGradient id="statsRidgeFill-kcat"/);
     // the median of class 1 (2 s⁻¹ = 10^0.301) on a 7-decade grid from 10^-1: (0.301 + 1) / 7
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));
-    assert.match(more, /#browse\?ec=1\.">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
+    // The class's link opens its records with the panel's parameter (in any unit, so Browse can count more than n).
+    assert.match(more, /#browse\?ec=1\.&amp;metric=kcat">EC 1<\/a><span class="stats-ridge-name"> Oxidoreductases<\/span>/);
     // The median column reads evenly: two significant figures (the tooltip line keeps the stored median).
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-value">([^<]+)<\/span>/g)].map((match) => match[1]), ["2.0", "4.5"]);
     // The end bins hold every value beyond the grid: the curve covers the inner bins only (here bins 1-12 of 14, from

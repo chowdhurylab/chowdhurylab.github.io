@@ -3964,8 +3964,11 @@
       const text = `${name}, ${metric.label}: ${formatInteger(item.n)} values; median ${statsRangeNumber(item.median)} ${unit}; 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} ${unit}${beyond.length ? `; in the end bins, not in the curve: ${beyond.join(", ")}` : ""}.`;
       const stub = (count, index, where) => (count ? `<i class="stats-ridge-end" style="left:${x(index)}%;width:${x(1)}%" data-tip="${escapeHtml(`${name}, ${metric.label} ${where}: ${formatInteger(count)} values (end bin, not in the curve)`)}"></i>` : "");
       const stubs = ends ? stub(below, 0, `below ${edgeText(1)} ${unit}`) + stub(above, grid.bins - 1, `${edgeText(grid.bins - 1)} ${unit} and above`) : "";
-      return `<li class="stats-ridge-row${item.n < STATS_RIDGE_FEW ? " is-few" : ""}" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(text)}">
-        <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
+      // The class's link opens Browse on its records with this parameter, which also lists values in another unit or
+      // with none recorded, so Browse can count more than n: the tooltip line says so.
+      const tip = `${text} The link lists every EC ${item.class} record with a ${metric.label}, in any unit.`;
+      return `<li class="stats-ridge-row${item.n < STATS_RIDGE_FEW ? " is-few" : ""}" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
+        <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, metric: metric.key }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
         <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L${x(last + 1)} ${STATS_RIDGE_BASE}L${x(first)} ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg>${stubs}<span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
         <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
         <span class="stats-ridge-n">${formatInteger(item.n)}</span>

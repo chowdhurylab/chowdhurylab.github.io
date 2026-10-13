@@ -136,7 +136,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   with the median as a dot, the median at the right to two significant figures and the class's number of values
   after it (a muted n column sized in ch to its longest count), a class with fewer than 300 values drawn lighter
   (fill at 45%) with a dashed outline so it does not look as solid as a big one (the data line says so when one is
-  shown), a shared log axis per panel (its labels thin out when narrow, the power of ten with them). EC N links into Browse; the class name stands beside it only where a panel has the
+  shown), a shared log axis per panel (its labels thin out when narrow, the power of ten with them). EC N links into Browse with the panel's parameter (the
+  class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC
   with the enzyme name its records use most, bars against the largest), then the 10 organisms and EC numbers with
