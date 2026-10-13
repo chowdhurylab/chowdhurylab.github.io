@@ -169,7 +169,11 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.ok(pageHtml.includes("A dash means no value (in the T column, a temperature flagged as questionable)."));
+  assert.ok(pageHtml.includes("A dash, used only in table cells, means no value (in the T column, a temperature flagged as questionable)."));
+  // The record leaves out a value it does not store; a missing linked item reads None (the Guide says what the record does).
+  assert.ok(pageHtml.includes("that is not stored has no row, and the Values section says when none is stored."));
+  assert.ok(pageHtml.includes("a missing PMID or DOI, sequence or SMILES reads <em>None</em>"));
+  assert.doesNotMatch(pageHtml, /is a dash too|None recorded/);
   assert.doesNotMatch(pageHtml, /hidden after a data check/, "A dash never suggests values were suppressed");
   assert.ok(pageHtml.includes("beside a value flags a possible problem; open the record to read what it is."));
   // Cautions state the problem; they give no orders.
