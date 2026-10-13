@@ -1458,6 +1458,9 @@ CALC_FLAG_RECORD = "1704dd2d6297af79"
 # dehydrogenase whose SABIO-RK kcat/Km range (6.7 × 10⁻⁴–2.3 × 10³ s⁻¹ mM⁻¹, 115 values) once ran past it at 320px.
 PHONE_PAPER_RECORD = "50abd2bbc472636a"
 PHONE_LISTED_RANGE_RECORD = "1d970ee6bc6d9538"
+# An APH(2'')-Ia variant whose Assay list holds "phosphoenolpyruvate/pyruvate kinase/lactate dehydrogenase/NADH" (wider
+# than the list at 320px until the item could break it).
+PHONE_LONG_WORD_RECORD = "2479abbe2effcc47"
 
 
 def check_record_panel(driver, browser, url, route_label):
@@ -1642,12 +1645,12 @@ def check_record_panel(driver, browser, url, route_label):
                         """)
                         assert abs(stuck["top"]) <= 1 and stuck["closeShown"] and stuck["statusGone"], stuck
                         assert stuck["share"] < 0.15, f"The record's sticky header takes {stuck['share']:.0%} of a phone screen"
-                # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps)
-                # and a long listed kcat/Km range (it breaks after its dash), from 320 to 389px (skipped when this snapshot
-                # does not have the record).
+                # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps),
+                # a long listed kcat/Km range (it breaks after its dash) and an Assay item with a long word, from 320 to
+                # 389px (skipped when this snapshot does not have the record).
                 for phone_width in (375, 361, 320):
                     set_browse_viewport(driver, browser, phone_width, height)
-                    for key in (PHONE_PAPER_RECORD, PHONE_LISTED_RANGE_RECORD):
+                    for key in (PHONE_PAPER_RECORD, PHONE_LISTED_RANGE_RECORD, PHONE_LONG_WORD_RECORD):
                         driver.get("about:blank")
                         driver.get(base + f"#record={key}")
                         wait.until(lambda d: d.execute_script(
@@ -1657,7 +1660,7 @@ def check_record_panel(driver, browser, url, route_label):
                         sideways = driver.execute_script("""
                             const panel = document.getElementById('detailPanel');
                             const right = panel.getBoundingClientRect().left + panel.clientWidth;
-                            const past = [...panel.querySelectorAll('.method-link, .source-efficiency-value, .listed-end')]
+                            const past = [...panel.querySelectorAll('.method-link, .source-efficiency-value, .listed-end, .condition-list > li')]
                                 .filter(e => e.getBoundingClientRect().right > right + 1).map(e => e.textContent);
                             return {sideways: panel.scrollWidth - panel.clientWidth, past};
                         """)

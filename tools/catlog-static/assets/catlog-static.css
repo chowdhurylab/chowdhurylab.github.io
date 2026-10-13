@@ -523,6 +523,9 @@ body.detail-open .detail-panel { display:block }
 .method-link { display:inline-block; max-width:100%; white-space:normal }
 .condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:break-word }
 .condition-list li::marker { color:var(--muted) }
+/* An item may be narrower than its longest word ("phosphoenolpyruvate/pyruvate"), which then breaks, so a 320px phone
+   does not scroll the record sideways. */
+.condition-list > li { min-width:0 }
 /* A listed range breaks only after its dash or before its unit (each end is one unbroken number), so it fits at 320px. */
 .source-efficiency-value { display:grid; gap:2px }
 .source-efficiency-value .listed-end { white-space:nowrap }

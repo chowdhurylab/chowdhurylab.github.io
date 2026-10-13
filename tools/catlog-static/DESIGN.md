@@ -462,8 +462,10 @@ is left out, never an empty heading. The order (design spec 5):
   temperature and pH rows. The earlier automated review's own notes among them
   ("PMID ... Table 1: ...", "Official PMC route: ...") are not the database's:
   one that names a table goes under Paper, the rest are left out.
-- D. Conditions: temperature, pH, the other conditions (Assay, a short list),
-  cosubstrate, cofactor, preparation. A missing temperature or pH reads "Not
+- D. Conditions: temperature, pH, the other conditions (Assay, a short list
+  whose items break a word longer than the line, "phosphoenolpyruvate/pyruvate",
+  so a 320px phone does not scroll the record sideways), cosubstrate, cofactor,
+  preparation. A missing temperature or pH reads "Not
   stated in the paper" on a record read from the paper and "Not recorded" on a
   database record, "Not recorded (source note: 25 °C)" when its source's note
   gives one temperature; a value a flag holds back says why on its own row ("Not
