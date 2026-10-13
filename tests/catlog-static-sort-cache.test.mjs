@@ -3860,6 +3860,61 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     }
   }
 
+  // Opening a record over the list adds one history entry that remembers the list (Back closes the record); another
+  // record opened from there replaces it; × steps back over it only while the list behind is the one it was opened from,
+  // else the address is rewritten in place and the entry is no record entry any more.
+  {
+    const calls = [];
+    const original = { push: window.history.pushState, replace: window.history.replaceState, href: window.location.href };
+    const go = (kind) => (state, _title, url) => {
+      const next = new URL(url);
+      calls.push([kind, next.hash]);
+      window.history.state = state;
+      window.location.href = next.href;
+      window.location.hash = next.hash;
+    };
+    window.history.pushState = go("push");
+    window.history.replaceState = go("replace");
+    try {
+      api.state.page = 1;
+      api.applyBrowseParams(new Map(new URLSearchParams("q=src")));
+      window.location.href = "https://example.test/catlog/#browse?q=src";
+      window.location.hash = "#browse?q=src";
+      window.history.state = null;
+      api.syncRecordUrl("src-v2");
+      assert.deepEqual(calls, [["push", "#browse?q=src&record=src-v2"]]);
+      assert.equal(window.history.state.catlogRecordFrom, "#browse?q=src");
+      api.syncRecordUrl("src-oed");
+      assert.deepEqual(calls.at(-1), ["replace", "#browse?q=src&record=src-oed"], "another record replaces the entry");
+      assert.equal(window.history.state.catlogRecordFrom, "#browse?q=src");
+      window.history.back = () => {};
+      assert.equal(api.canLeaveRecordEntry("src-oed"), true, "× steps back to the list");
+      assert.equal(api.canLeaveRecordEntry("src-v2"), false, "not the record the address names");
+      api.applyBrowseParams(new Map(new URLSearchParams("q=other&record=src-oed")));
+      assert.equal(api.canLeaveRecordEntry("src-oed"), false, "the list behind changed");
+      api.syncRecordUrl("");
+      assert.deepEqual(calls.at(-1), ["replace", "#browse?q=other"]);
+      assert.ok(!("catlogRecordFrom" in window.history.state), "the entry now shows the list");
+      // A record the address already names (opened from a link or a reload) adds no entry.
+      calls.length = 0;
+      window.location.href = "https://example.test/catlog/#record=src-v2";
+      window.location.hash = "#record=src-v2";
+      api.applyBrowseParams(new Map());
+      api.syncRecordUrl("src-v2");
+      assert.deepEqual(calls, []);
+    } finally {
+      window.history.pushState = original.push;
+      window.history.replaceState = original.replace;
+      delete window.history.back;
+      delete window.history.state;
+      window.location.href = original.href;
+      window.location.hash = "";
+      api.state.page = 1;
+      api.applyBrowseParams(new Map());
+      await api.ensureCurrentFilters();
+    }
+  }
+
   // Filter counts follow the results: each option counted over the records that match every other filter.
   const disputed = sourceRow("src-disputed", { source_db: "brenda", verification_status: "disputed", kcat: null });
   const pending = sourceRow("src-pending", { source_db: "sabio_rk", verification_status: "manual_review_required" });

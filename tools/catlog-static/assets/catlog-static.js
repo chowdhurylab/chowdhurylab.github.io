@@ -44,6 +44,9 @@
     // The record a #record= address names, until the index has loaded far enough to open it.
     pendingRecordKey: "",
     missingRecordKey: "",
+    // Set while the Back that closing a record asked for has not landed yet (leaveRecordEntry), and what waits for it.
+    leavingRecordEntry: null,
+    afterLeavingRecordEntry: null,
     // The page an address names (#browse?...&page=), until the records it counts have loaded.
     pendingPage: 0,
     // Active filter keys, the one changed last at the end.
@@ -702,8 +705,11 @@
 
   // An open record is in the address, so it can be shared and reloaded: #record=<record_key> when no filter is set, else
   // after the filters (#browse?checked=1&...&record=<record_key>), so reloading or copying it keeps them. The page is left
-  // out: the record's place in the results decides it. Opening a record writes the address (replacing the entry, so Back
-  // still leaves the page) and closing the record gives it back to the filters (#browse?..., or none).
+  // out: the record's place in the results decides it. Opening a record over the list adds one history entry, so Back
+  // (on a phone the system's Back gesture too) closes the record and does not leave CatLog; another record opened from
+  // there replaces that entry, so Back never steps through every record looked at. Closing the record gives the address
+  // back to the filters (#browse?..., or none): × and Escape step back over the record's entry when the list behind it
+  // is still the one it was opened from, else the address is rewritten in place.
   const RECORD_HASH = /^#record=([^&#]+)$/;
 
   function recordKeyFromLocation() {
@@ -739,16 +745,78 @@
     });
   }
 
+  // The history entry a record's opening added remembers the list's address it was opened from.
+  const RECORD_ENTRY_FROM = "catlogRecordFrom";
+
+  function historyState() {
+    const current = window.history?.state;
+    return current && typeof current === "object" ? current : {};
+  }
+
+  // The history state without the record entry's mark (the entry now shows the list, or another page load owns it).
+  function historyStateWithoutRecordEntry() {
+    if (!(RECORD_ENTRY_FROM in historyState())) return window.history?.state ?? null;
+    const { [RECORD_ENTRY_FROM]: _from, ...rest } = historyState();
+    return rest;
+  }
+
   function syncRecordUrl(key) {
-    if (!key && !recordKeyFromLocation()) return;
+    // Until Back lands on the list's address (leaveRecordEntry), the record opened meanwhile waits for it.
+    if (state.leavingRecordEntry) return;
+    const shown = recordKeyFromLocation();
+    if (!key && !shown) return;
     const url = new URL(window.location.href);
     url.hash = key ? recordHash(key) : browseHash();
     if (url.href === window.location.href) return;
     try {
-      window.history.replaceState(window.history.state, "", url);
+      if (key && !shown && viewFromLocation() === "browse" && typeof window.history.pushState === "function") {
+        window.history.pushState({ ...historyState(), catlogView: "browse", [RECORD_ENTRY_FROM]: window.location.hash }, "", url);
+      } else {
+        window.history.replaceState(key ? window.history.state : historyStateWithoutRecordEntry(), "", url);
+      }
     } catch (_error) {
       // A page opened from a file may not allow it; the record still opens.
     }
+  }
+
+  // Whether closing the open record can step back over the history entry its opening added: the address still names the
+  // record, and the list behind it (filters, sort, page) is the one it was opened from.
+  function canLeaveRecordEntry(key) {
+    const from = historyState()[RECORD_ENTRY_FROM];
+    return Boolean(key) && typeof from === "string" && typeof window.history?.back === "function"
+      && recordKeyFromLocation() === key && from === browseHash();
+  }
+
+  // Steps back over the record's entry. Back lands a moment later (popstate); until then the address is not written, so
+  // a record opened in that moment is not closed by it and gets its own entry once Back has landed. Should Back not land,
+  // the address follows the page again after a second.
+  function leaveRecordEntry() {
+    const leaving = {};
+    state.leavingRecordEntry = leaving;
+    window.history.back();
+    window.setTimeout(() => {
+      if (state.leavingRecordEntry === leaving) landedFromRecordEntry();
+    }, 1000);
+  }
+
+  function landedFromRecordEntry() {
+    state.leavingRecordEntry = null;
+    const next = state.afterLeavingRecordEntry;
+    state.afterLeavingRecordEntry = null;
+    if (state.selectedKey) syncRecordUrl(state.selectedKey);
+    else if (recordKeyFromLocation()) syncRecordUrl("");
+    else syncBrowseUrl();
+    next?.();
+  }
+
+  // A tab or an in-page link followed while that Back has not landed waits for it: a history entry added before it lands
+  // would be undone by it.
+  function afterRecordEntryLeft(action) {
+    if (!state.leavingRecordEntry) {
+      action();
+      return;
+    }
+    state.afterLeavingRecordEntry = action;
   }
 
   // Opens the record a #record= address names once the loaded index holds it, on the table page that shows it. A key
@@ -809,6 +877,10 @@
   }
 
   function navigateTo(view) {
+    if (state.leavingRecordEntry) {
+      afterRecordEntryLeft(() => navigateTo(view));
+      return;
+    }
     const url = viewUrl(view);
     // Back to Browse keeps the filters in the address.
     if (view === "browse") url.hash = browseHash();
@@ -5655,7 +5727,7 @@
 
   // Writes the current filters into the address, replacing the current history entry.
   function syncBrowseUrl() {
-    if (!window.history?.replaceState || viewFromLocation() !== "browse") return;
+    if (!window.history?.replaceState || viewFromLocation() !== "browse" || state.leavingRecordEntry) return;
     // A record the address names waits for the index; until it opens, the address keeps it.
     if (state.pendingRecordKey || (!state.selectedKey && recordKeyFromLocation())) return;
     const url = viewUrl("browse");
@@ -7041,8 +7113,9 @@
     });
   }
 
-  function resetDetail() {
-    if (state.selectedKey) syncRecordUrl("");
+  // keepAddress: the caller steps back in history to the list's address instead.
+  function resetDetail({ keepAddress = false } = {}) {
+    if (state.selectedKey && !keepAddress) syncRecordUrl("");
     state.selectedKey = "";
     state.selectedShard = "";
     state.selectedDetail = null;
@@ -7054,7 +7127,9 @@
 
   function closeDetailAndRestoreFocus() {
     const selectedKey = state.selectedKey;
-    resetDetail();
+    const stepBack = canLeaveRecordEntry(selectedKey);
+    resetDetail({ keepAddress: stepBack });
+    if (stepBack) leaveRecordEntry();
     renderRows();
     const selectedRow = [...$("recordsBody").querySelectorAll("tr[data-key]")]
       .find((row) => row.dataset.key === selectedKey);
@@ -9791,7 +9866,13 @@
         if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
       }
     });
-    const showLocationView = () => {
+    const showLocationView = (event) => {
+      // The Back that × or Escape asked for has landed on the list's address: nothing to change but the address of a
+      // record opened in the meantime.
+      if (event?.type === "popstate" && state.leavingRecordEntry) {
+        landedFromRecordEntry();
+        return;
+      }
       const view = viewFromLocation();
       if (view === "browse") ensureRecordsLoaded();
       renderView(view);
@@ -9804,9 +9885,14 @@
         state.pendingRecordKey = recordKey;
         if (!filtering) openRecordFromLocation();
       } else if (!recordKey && state.selectedKey && view === "browse") {
-        // An address without a record (Back, Forward, a link to filtered Browse) closes the open one.
-        resetDetail();
-        if (state.records.length) renderRows();
+        // An address without a record (Back, Forward, a link to filtered Browse) closes the open one; focus that was in
+        // the record goes back to its row, as when × closes it.
+        if ($("detailPanel")?.contains(document.activeElement) && state.records.length) {
+          closeDetailAndRestoreFocus();
+        } else {
+          resetDetail();
+          if (state.records.length) renderRows();
+        }
       }
     };
     window.addEventListener("popstate", showLocationView);
@@ -9842,30 +9928,34 @@
       const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : null;
       if (section) {
         event.preventDefault();
-        const url = viewUrl("guide");
-        url.hash = target.hash;
-        if (window.location.href !== url.href) window.history.pushState({ catlogView: "guide" }, "", url);
-        showLocationView();
-        const heading = guideSectionHeading(section);
-        // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
-        if (heading && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-        heading?.focus({ preventScroll: true });
+        afterRecordEntryLeft(() => {
+          const url = viewUrl("guide");
+          url.hash = target.hash;
+          if (window.location.href !== url.href) window.history.pushState({ catlogView: "guide" }, "", url);
+          showLocationView();
+          const heading = guideSectionHeading(section);
+          // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
+          if (heading && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+          heading?.focus({ preventScroll: true });
+        });
         return;
       }
       if (!/^#browse\?/.test(target.hash)) return;
       event.preventDefault();
-      const url = viewUrl("browse");
-      url.hash = target.hash;
-      // On a phone or tablet the open record covers the list: a link in it that would keep it open (its paper's other
-      // records) shows the list instead, from its first row with focus on the results. Back opens the record again.
-      const fromOpenRecord = narrowDetailMedia.matches && Boolean(state.selectedKey) && Boolean(link.closest("#detailPanel"));
-      if (fromOpenRecord) url.hash = hashWithoutRecord(target.hash, state.selectedKey);
-      window.history.pushState({ catlogView: "browse" }, "", url);
-      showLocationView();
-      if (fromOpenRecord && !document.body.classList.contains("detail-open")) {
-        showTableTop();
-        $("recordTableWrap")?.focus({ preventScroll: true });
-      }
+      afterRecordEntryLeft(() => {
+        const url = viewUrl("browse");
+        url.hash = target.hash;
+        // On a phone or tablet the open record covers the list: a link in it that would keep it open (its paper's other
+        // records) shows the list instead, from its first row with focus on the results. Back opens the record again.
+        const fromOpenRecord = narrowDetailMedia.matches && Boolean(state.selectedKey) && Boolean(link.closest("#detailPanel"));
+        if (fromOpenRecord) url.hash = hashWithoutRecord(target.hash, state.selectedKey);
+        window.history.pushState({ catlogView: "browse" }, "", url);
+        showLocationView();
+        if (fromOpenRecord && !document.body.classList.contains("detail-open")) {
+          showTableTop();
+          $("recordTableWrap")?.focus({ preventScroll: true });
+        }
+      });
     });
     // From Stats or Guide, resting on the way back to Browse for a moment (pointer or keyboard focus), or focusing the
     // search box, starts the download. Passing over the link on the way to another tab does not.
@@ -10068,7 +10158,10 @@
       renderGuideMethod();
       const cleanUrl = viewUrl(viewFromLocation());
       if (!["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) cleanUrl.hash = window.location.hash;
-      if (cleanUrl.href !== window.location.href) window.history.replaceState(window.history.state, "", cleanUrl);
+      // A record entry kept through a reload is this page load's own: × rewrites its address instead of stepping back to
+      // an entry of the page as it was before the reload.
+      const startState = historyStateWithoutRecordEntry();
+      if (cleanUrl.href !== window.location.href || startState !== window.history.state) window.history.replaceState(startState, "", cleanUrl);
       bindControls();
       // The checklists exist from the start, so an address with filters (#browse?...) can set them before the records load.
       setupFilters();
@@ -10117,6 +10210,8 @@
       applyLocationFilters,
       browseHash,
       hashWithoutRecord,
+      syncRecordUrl,
+      canLeaveRecordEntry,
       activeFilterItems,
       countFacets,
       filterControlState,

@@ -2240,6 +2240,36 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
             set_browse_viewport(driver, browser, 1440, 1000)
             results["paper-records-link-phone"] = True
         break
+    # On a phone a record opened from the list covers it like a screen of its own: Back (the system's Back gesture) closes
+    # it and stays in CatLog. On a wide screen × steps back over the record's entry, so Back from the list leaves no
+    # closed record behind to step through.
+    set_browse_viewport(driver, browser, 390, 844)
+    driver.get("about:blank")
+    driver.get(base)
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+               and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+    first = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+    opened = first.get_attribute("data-key")
+    first.find_element(By.CSS_SELECTOR, ".primary-cell").click()
+    wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')")
+               and f"record={opened}" in urlsplit(d.current_url).fragment)
+    driver.back()
+    wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+    assert urlsplit(driver.current_url).path == urlsplit(base).path, driver.current_url
+    assert "record=" not in urlsplit(driver.current_url).fragment, driver.current_url
+    assert driver.find_element(By.ID, "catalogView").is_displayed()
+    results["record-back-phone"] = True
+    set_browse_viewport(driver, browser, 1440, 1000)
+    length = driver.execute_script("return history.length")
+    driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+    wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open')"))
+    driver.find_element(By.ID, "closeDetailButton").click()
+    wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')")
+               and "record=" not in urlsplit(d.current_url).fragment)
+    driver.back()
+    wait.until(lambda d: urlsplit(d.current_url).path != urlsplit(base).path)
+    assert driver.execute_script("return history.length") == length, "Closing a record left an entry behind"
+    results["record-close-history"] = True
     return results
 
 

@@ -219,8 +219,17 @@ history entry) when the filters, search, sort, rows per page or page change, and
 gone when nothing is set, so a copied link opens the same records. An open
 record is added after the filters (#browse?...&record=<key>, without page: the
 record's place decides it), or is #record=<key> when nothing is set, so reload,
-a copied link and Esc keep the filters. An address without a record closes the
-open one. A link to #browse?
+a copied link and Esc keep the filters. Opening a record from the list adds one
+history entry (its state remembers the list's address), so Back, on a phone the
+system's Back gesture too, closes the record instead of leaving CatLog; another
+record opened from there replaces that entry, so Back never steps through every
+record looked at. × and Esc step back over the entry while the list behind it is
+the one it was opened from (else, and after a reload, the address is rewritten
+in place); until that Back lands, a record opened meanwhile waits to write its
+address and a tab or link followed meanwhile waits to add its entry. A record
+opened from an address (a link, a reload) adds no entry. An address without a
+record closes the open one, and focus that was in the record goes back to its
+row. A link to #browse?
 from Stats or the Guide opens in the page without reloading the records. Rows
 per page is remembered in this browser (localStorage, optional).
 
