@@ -480,8 +480,11 @@ is left out, never an empty heading. The order (design spec 5):
   CatLog corrects by a unit or a power of ten, `--cmp-differs` for any other
   correction, `--bar-neutral` for the same number under another label)
   beside its word ("Same number", "Different number", "Not in the databases",
-  "Corrects the database", "Other label", "Not compared") and the snapshot's own
-  line, cause and evidence shown as given (a local path never); a line that
+  "Corrects a database value" (CatLog's phrase for its "corrected" status: one
+  database value, never the database as a whole), "Other label", "Not
+  compared") and the snapshot's own line, cause and evidence shown as given (a
+  local path never; a cause code with no wording is left out, never shown as
+  the raw code); a line that
   starts with the result word ("same number in BRENDA, SABIO-RK") stands in the
   word's place, so the result is said once; a kcat/Km CatLog calculated gets a
   "Calculated; not compared" row once other values have rows; a paper-level

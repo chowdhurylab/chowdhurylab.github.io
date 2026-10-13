@@ -8216,12 +8216,15 @@
   const DATABASE_RESULTS = [
     { test: /other[\s_-]*label/i, word: "Other label", key: "neutral" },
     { test: /^(?:confirmed|same)/i, word: "Same number", key: "same" },
-    { test: /^correct/i, word: "Corrects the database", key: "magnitude" },
+    // "corrected": a database lists another number for the same measurement and code or a check against the paper
+    // found why (CatLog's own definition); the word names one database value, never the database as a whole.
+    { test: /^correct/i, word: "Corrects a database value", key: "magnitude" },
     { test: /^(?:differ|different|not[\s_-]*among)/i, word: "Different number", key: "differs" },
     { test: /^(?:new|absent|none|not[\s_-]*(?:listed|in)\b|no[\s_-]*database)/i, word: "Not in the databases", key: "new" },
     { test: /^(?:not[\s_-]*compared|calc)/i, word: "Not compared", key: "" },
   ];
-  // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given.
+  // The fixed cause codes (CatLog's contribution report) in words; a phrase is shown as given, and a code with no wording
+  // here is not shown (never a raw code with its underscores turned into spaces).
   const DATABASE_CAUSES = {
     header_scale_inverted: "the table header's scale factor applied the wrong way",
     header_scale_ignored: "the table header's scale factor not applied",
@@ -8263,7 +8266,7 @@
     const text = shownText(value);
     if (!text) return "";
     if (DATABASE_CAUSES[text]) return DATABASE_CAUSES[text];
-    return /^[A-Za-z]+(?:_[A-Za-z]+)+$/.test(text) ? text.replace(/_/g, " ") : text;
+    return /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(text) ? "" : text;
   }
 
   // One value's comparison from its own fields (database_status, database_line, database_cause, database_evidence, or
