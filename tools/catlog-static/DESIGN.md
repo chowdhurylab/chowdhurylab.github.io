@@ -406,7 +406,9 @@ is left out, never an empty heading. The order (design spec 5):
   calc. or "!" keeps their space unseen (aria-hidden), so every number in the
   Value column ends at the same place; on phones that space is dropped. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
-  s⁻¹ mM⁻¹, 5 values", in the catalog unit; shown when it differs from the
+  s⁻¹ mM⁻¹, 5 values", in the catalog unit, each end of a range one unbroken
+  number, so a long range breaks after its dash or before its unit and fits at
+  320px; shown when it differs from the
   record's kcat/Km or the record stores none, then the empty line says "No kcat,
   Km or kcat/Km is stored for this record; BRENDA lists a kcat/Km for it
   (below)."; a number a source also gives with no unit is listed once; Download
@@ -433,7 +435,9 @@ is left out, never an empty heading. The order (design spec 5):
   never a raw key); Merged from (database entries and papers); for a record read
   by CatLog a Method line (the short method sentence ending "units converted by
   code" or "values stored as printed", with "How CatLog reads and checks values
-  →", the Guide section's own name, as every link to it reads) and a
+  →", the Guide section's own name, as every link to it reads; the link moves to
+  the next line whole when it does not fit and wraps only on a line narrower than
+  itself, so no phone scrolls the record sideways) and a
   Second check line (one result for every value, "All values confirmed." or
   "Unit set to mM for every value.", or each value's result, "kcat: confirmed;
   Km: unit set to mM."; then once what the check changed on the record, "The AI

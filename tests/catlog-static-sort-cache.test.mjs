@@ -2392,11 +2392,11 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   const empty = api.valuesSection(row({ record_key: "listed-only", source_db: "brenda", kcat: null, km: null, kcat_over_km: null,
     kcat_display: null, km_display: null, kcat_over_km_display: null }), listedOnly);
   assert.match(empty, /No kcat, Km or kcat\/Km is stored for this record; BRENDA lists a kcat\/Km for it \(below\)\./);
-  assert.match(empty, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span>0\.50–50 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
+  assert.match(empty, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">0\.50<\/span>–<span class="listed-end">50<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
   assert.doesNotMatch(empty, /no unit/, "a number BRENDA also gives with no unit is listed once, in its unit");
   const pair = api.valuesSection(row({ record_key: "listed-pair", source_db: "brenda", kcat: 17479, km: 1.86, kcat_over_km: null,
     kcat_display: "17479", km_display: "1.86", kcat_over_km_display: null }), { source_kcat_over_km_values: [brenda(9397, "s^(-1)*mM^(-1)"), brenda(9397, null)] });
-  assert.match(pair, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span>9397 s<sup>-1<\/sup>/);
+  assert.match(pair, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> s<sup>-1<\/sup>/);
   assert.doesNotMatch(pair, /flag-notes|kcat\/Km mismatch/, "no new caution: the table's cautions stay CatLog's flags");
   const same = api.valuesSection(row({ record_key: "listed-same", kcat_over_km: 64, kcat_over_km_display: "64" }),
     { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
@@ -2754,7 +2754,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_source_differs: true, source_db: "oed" });
   const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
   const html = measurementSection(merged, { source_kcat_over_km_values: listed });
-  assert.match(html, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span>3\.0–6\.1 s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
+  assert.match(html, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> s<sup>-1<\/sup> mM<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   // Every number in the Value column ends at the same place: a row without calc. or "!" keeps their space, unseen.

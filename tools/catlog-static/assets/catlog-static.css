@@ -518,10 +518,14 @@ body.detail-open .detail-panel { display:block }
 .reference-link { max-width:100%; overflow-wrap:anywhere; text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
 .reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }
 .identity-how { color:var(--text-2) }
-.method-link { white-space:nowrap }
+/* The Guide link after the Method sentence moves to the next line whole when it does not fit, and wraps only when a line
+   is narrower than the link (a phone of 361-389px held it on one line past the panel's edge). */
+.method-link { display:inline-block; max-width:100%; white-space:normal }
 .condition-list { display:grid; gap:4px; min-width:0; margin:0; padding:0 0 0 14px; color:var(--text); overflow-wrap:break-word }
 .condition-list li::marker { color:var(--muted) }
-.source-efficiency-value { display:grid; gap:2px; white-space:nowrap }
+/* A listed range breaks only after its dash or before its unit (each end is one unbroken number), so it fits at 320px. */
+.source-efficiency-value { display:grid; gap:2px }
+.source-efficiency-value .listed-end { white-space:nowrap }
 .measurement-listed { margin-top:12px }
 
 /* Status line: a dot, the review result (13px/600), then its tags. */
@@ -1215,11 +1219,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .load-notice.empty-notice { position:static; max-width:none }
 }
 
-/* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px, and the
-   Method row's Guide link may wrap. */
+/* Narrow phones (320px): a two-part unit (s⁻¹ mM⁻¹) may take two lines, so As printed keeps about 70px. */
 @media (max-width: 360px) {
   .values-table .vt-unit { white-space:normal }
-  .method-link { white-space:normal }
 }
 
 @media (max-width: 520px) {

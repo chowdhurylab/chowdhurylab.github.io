@@ -7092,14 +7092,30 @@
     return sourceListedEfficiencies(detail);
   }
 
-  // A range of listed values to two significant figures (three when two would make its ends equal).
-  function listedRangeText(values) {
+  // A range of listed values to two significant figures (three when two would make its ends equal): its ends and figures,
+  // or null for a single value.
+  function listedRangeEnds(values) {
     const low = Math.min(...values);
     const high = Math.max(...values);
-    if (values.length === 1 || low === high) return numberText(String(low));
+    if (values.length === 1 || low === high) return null;
     let figures = 2;
     while (figures < 4 && numberText(low, { figures }) === numberText(high, { figures })) figures += 1;
-    return `${numberText(low, { figures })}–${numberText(high, { figures })}`;
+    return { low, high, figures };
+  }
+
+  function listedRangeText(values) {
+    const ends = listedRangeEnds(values);
+    if (!ends) return numberText(String(Math.min(...values)));
+    return `${numberText(ends.low, { figures: ends.figures })}–${numberText(ends.high, { figures: ends.figures })}`;
+  }
+
+  // The same in the record's number style; each end stays whole, so a long range breaks only after its dash (or before
+  // its unit).
+  function listedRangeHtml(values) {
+    const end = (value, options) => `<span class="listed-end">${numberHtml(value, options)}</span>`;
+    const ends = listedRangeEnds(values);
+    if (!ends) return end(String(Math.min(...values)));
+    return `${end(ends.low, { figures: ends.figures })}–${end(ends.high, { figures: ends.figures })}`;
   }
 
   // "kcat/Km listed by OED: 3.0–6.1 s⁻¹ mM⁻¹ (5 values)", one line per source.
@@ -7118,7 +7134,7 @@
     const bySource = new Map();
     groups.forEach((group) => {
       const unit = group.unit ? ` ${unitHtml(group.unit)}` : ` ${unitMissingHtml()}`;
-      const number = group.values.length === 1 ? numberHtml(String(group.values[0])) : escapePublic(listedRangeText(group.values));
+      const number = listedRangeHtml(group.values);
       const count = group.values.length > 1 ? `<small>${formatInteger(group.values.length)} values</small>` : "";
       const html = `<span class="source-efficiency-value"><span>${number}${unit}</span>${count}</span>`;
       bySource.set(group.source, [...(bySource.get(group.source) || []), html]);
