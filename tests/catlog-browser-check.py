@@ -1594,11 +1594,13 @@ def check_layout(driver, browser, url, route_label):
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
                 .map(e => getComputedStyle(e)[prop]);
-            return {numbers: px('.snapshot-overview strong', 'fontSize'), labels: px('.summary-card > span, .snapshot-paper > span, .snapshot-checked > span', 'fontSize'),
+            return {numbers: px('.summary-card strong, .snapshot-paper > strong, .snapshot-checked > strong', 'fontSize'),
+                    with: px('.snapshot-line strong', 'fontSize'), labels: px('.summary-card > span, .snapshot-paper > span, .snapshot-checked > span', 'fontSize'),
                     th: px('#recordTableWrap thead th', 'fontSize'), thWeight: px('#recordTableWrap thead th', 'fontWeight'),
                     td: px('#recordsBody td.c-organism', 'fontSize')};
         """)
-        assert set(sizes["numbers"]) == {"20px"} and set(sizes["labels"]) == {"13px"}, sizes
+        # the key numbers 20px; the With counts (kcat, Km, kcat/Km) are secondary at 16px
+        assert set(sizes["numbers"]) == {"20px"} and set(sizes["with"]) == {"16px"} and set(sizes["labels"]) == {"13px"}, sizes
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
         date, records = box("#snapshotDate"), box(".summary-card strong")
         # on the counts' line where the fonts allow, else under them; always inside the 64px band (Linux fonts are wider)
@@ -2086,10 +2088,16 @@ def check_layout(driver, browser, url, route_label):
         # drawn around it, so it never moves the line.
         glow = driver.execute_script("""
             const shadow = selector => getComputedStyle(document.querySelector(selector)).textShadow;
+            const font = selector => { const style = getComputedStyle(document.querySelector(selector));
+              return {size: parseFloat(style.fontSize), weight: Number(style.fontWeight), color: style.color}; };
             return {records: shadow('.summary-card strong'), checked: shadow('#humanCheckedLink > strong'),
-                    tint: getComputedStyle(document.getElementById('humanCheckedLink'), '::before').position};
+                    tint: getComputedStyle(document.getElementById('humanCheckedLink'), '::before').position,
+                    key: font('.summary-card strong'), with: font('#snapshotMeta .snapshot-line strong'), withShadow: shadow('#snapshotMeta .snapshot-line strong')};
         """)
         assert glow["records"] not in ("", "none") and glow["checked"] not in ("", "none") and glow["tint"] == "absolute", glow
+        # The With counts are secondary: smaller, lighter and without the glow, so the key numbers lead the band.
+        assert (glow["with"]["size"] < glow["key"]["size"] and glow["with"]["weight"] < glow["key"]["weight"]
+                and glow["withShadow"] in ("", "none")), glow
         results["band-two-lines"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)

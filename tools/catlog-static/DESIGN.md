@@ -341,8 +341,8 @@ Use the existing system font (no web font), tabular lining numerals, and zero
 letter spacing; mono only for record keys, mutations, SMILES and sequences. One
 scale of sizes with their line heights (12/16 units, ticks and counts in filter
 options; 13/18 table cells, chips, labels and captions; 14/20 UI text and record
-values; 16/24 Guide body and Stats figure headings; 18/24 Stats part headings on phones; 20/24 counts band
-numbers, record title and Stats part headings; 24/28 Stats and Guide titles; 32/36 Stats headline),
+values; 16/24 Guide body, Stats figure headings and the counts band's With counts (500, --text-2); 18/24 Stats part
+headings on phones; 20/24 counts band key numbers, record title and Stats part headings; 24/28 Stats and Guide titles; 32/36 Stats headline),
 each a --fs-N / --lh-N token in the stylesheet. Table
 names break between words and hyphenate a word longer than its column (a break
 inside a word only as a last resort; the Organism column is at least about 13

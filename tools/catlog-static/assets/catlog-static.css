@@ -194,6 +194,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* The key numbers (records, accepted, read from the paper) in accent ink with a soft glow; human-checked in its green. */
 .summary-card strong, .snapshot-paper > strong { color:var(--accent); text-shadow:0 0 12px var(--accent-glow) }
 .snapshot-checked > strong { color:var(--checked); text-shadow:0 0 12px color-mix(in srgb, var(--checked) 24%, transparent) }
+/* The With counts (kcat, Km, kcat/Km rows) are secondary: 16px/500 in --text-2, so the key numbers in accent ink lead
+   the band (dark 20px numbers drew the eye first). The line height stays, so the band keeps its height. */
+.snapshot-line strong { color:var(--text-2); font-size:var(--fs-16); font-weight:500; line-height:var(--lh-20) }
 /* A linked count tints calmly under the pointer; the tint is drawn around it (::before), so the band's line keeps its place. */
 .snapshot-paper[href], .snapshot-checked[href] { position:relative; isolation:isolate }
 .snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-3px -6px; z-index:-1; border-radius:6px; background:transparent; pointer-events:none }

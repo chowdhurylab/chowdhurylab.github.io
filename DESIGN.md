@@ -30,7 +30,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    Substrates. Accepted and the CatLog v2 entries link into Browse: the whole item is the link and tints calmly under
    the pointer. Phones: 24/18px, two to a row. Browse's counts band gets the same treatment at 20px: its key numbers
    in accent ink with the glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
-   linked count tints around itself without moving the line. Nothing moves when the viewer asks for less motion;
+   linked count tints around itself without moving the line. Its With counts (kcat, Km, kcat/Km) are secondary:
+   16px/500 in --text-2 with their 13px labels, so the key numbers lead. Nothing moves when the viewer asks for less motion;
    print drops every glow and wash.
 2. Quality: the lead, then Checks on the values.
 3. What is in the catalog: Review result (the donut), Records by main source, CatLog v2 and CatLog v1 entries, Values
