@@ -47,7 +47,7 @@ layout:
   header: 56px
   counts-band: 64px
   gutter: 24px (16px below 1024px)
-  sidebar: 256px (to 1279px), 272px (1280-1439px), 288px (1440px and up); rail 48px
+  sidebar: 256px (to 1439px), 288px (1440px and up); rail 48px
   record: 440px (1024-1439px), 480px (1440px and up)
 ---
 
@@ -112,10 +112,9 @@ the bottom page controls compact, with page size left and navigation right.
 
 Filters are a persistent sidebar, a grid column left of the table and never
 over it, and the results follow each change (no "Show N records" button beside
-the table). From 1200px it is open by default (256px to 1279px, 272px to 1439px,
-288px from 1440px); from 1024 to 1199px it starts as the rail, because the
-table's columns (about 905px with every name broken between words) do not fit
-beside it. « in its heading collapses it to a 48px rail, a tall "Filters"
+the table). From 1200px it is open by default (256px to 1439px, 288px from
+1440px); from 1024 to 1199px it starts as the rail, because the table's columns
+do not fit beside it. « in its heading collapses it to a 48px rail, a tall "Filters"
 button set vertically with the active-filter count. A viewer's choice that
 differs from their width's default (collapsed from 1200px, opened below) is kept
 in their browser (localStorage, optional) and applies at every desktop width;
@@ -127,11 +126,15 @@ as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
 "Filters · Clear all · ×" at the top and "Show N records" (accent, 44px) at the
 bottom; Esc, × or that button close it, and Escape never closes the sidebar.
-Beside the sidebar, and whenever the table scrolls sideways anyway (beside a
-record from 1024px, on a tablet with the rail), the name columns narrow to their
-longest word and no further (a line may break after a hyphen, comma or slash), so
-Enzyme stays near its 160px minimum; a table still too wide scrolls
-sideways with the Columns control, edge shadows and Enzyme kept in view. The
+Beside the open sidebar from 1280px the table fits, Review result always in
+view without sideways scrolling: the name columns give way first to two lines
+broken between words (a line may also break after a hyphen, comma or slash),
+then to their minimums (Enzyme 136px, Organism 108px, Substrate 112px; a word
+longer than its column is hyphenated), and last Review result's tag line ends
+in "…" (never its word). Only a table that cannot keep Review result in view
+even then (beside a record from 1024px, on a tablet with the sidebar open)
+scrolls sideways; its names then narrow only to their longest word, so Enzyme
+stays narrow, with the Columns control, edge shadows and Enzyme kept in view. The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
 its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
 rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
@@ -306,8 +309,9 @@ start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
 right after Review result. In a narrow window the names give way (two lines, broken
-between words while they can; the full name is on hover), and when that is not
-enough the table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
+between words while they can; the full name is on hover), then Review result's tags
+(the badge's accessible name and the record keep them all), and when that is not enough the
+table scrolls sideways. Temperature and pH are two plain numeric columns, T (°C)
 and pH, with a dash when the value is missing. The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from

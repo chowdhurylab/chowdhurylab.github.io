@@ -1005,11 +1005,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .header-actions { grid-area:actions }
 .detail-empty { display:none }
 
-/* Column widths: the sidebar 256px (to 1279px, tablets included), 272px (1280-1439), 288px (1440 and up); the record
-   440px (1024-1439), 480px (1440 and up). */
-@media (max-width: 1279px) { :root { --sidebar-w:256px } }
-@media (min-width: 1280px) and (max-width: 1439px) { :root { --sidebar-w:272px } }
-@media (max-width: 1439px) { :root { --panel-w:440px } }
+/* Column widths: the sidebar 256px (to 1439px, tablets included; at 1280-1439px the table needs the 16px so Review result
+   stays in view), 288px (1440 and up); the record 440px (1024-1439), 480px (1440 and up). */
+@media (max-width: 1439px) { :root { --sidebar-w:256px; --panel-w:440px } }
 
 /* A record open on desktop: EC, T, pH and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
    and without the other tags. */

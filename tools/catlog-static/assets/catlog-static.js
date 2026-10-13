@@ -81,8 +81,7 @@
   // the rail.
   const desktopMedia = window.matchMedia("(min-width: 1024px)");
   // From 1200px the sidebar starts open (unless this viewer collapsed it). From 1024 to 1199px the table's columns do not
-  // fit beside it (about 905px with every name broken between words), so it starts as the rail unless this viewer
-  // opened it.
+  // fit beside it, so it starts as the rail unless this viewer opened it.
   const filtersOpenByDefaultMedia = window.matchMedia("(min-width: 1200px)");
   // From 1600px the sidebar stays open beside an open record; from 1024 to 1599px the record takes its place.
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
@@ -6042,19 +6041,22 @@
     return controls.sort === "evidence" && !activeFilterItems(controls).length;
   }
 
-  // Column widths follow the page. Values, EC, T, pH and Status are as wide as their widest entry and never wrap. A name
-  // column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
+  // Column widths follow the page. Values, EC, T, pH and Review result are as wide as their widest entry and never wrap.
+  // A name column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
-  // rest in proportion to their widths, so the table fills the window and the arrow sits right after Status. When the
-  // window is too narrow, the names give way (they wrap to two lines, between words while they can; the full name is in
-  // the tooltip); when even that is not enough, the table scrolls sideways. Phones show cards, and placeholder or empty
-  // tables keep the stylesheet's widths.
+  // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
+  // the window is too narrow the table gives way, one step after another and each only as far as needed: the names wrap
+  // to two lines between words (the full name is in the tooltip); the names narrow to their minimums (a word longer
+  // than its column is hyphenated); last, Review result's tag line ends in "…", down to the review result's word. So
+  // beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even that is not
+  // enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at their
+  // longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's widths.
   const FIT_COLUMNS = [
-    { key: "enzyme", cell: ".c-enzyme", min: 160, narrowMin: 150, cap: 340, shrink: 1 },
+    { key: "enzyme", cell: ".c-enzyme", min: 136, narrowMin: 128, cap: 340, shrink: 1 },
     { key: "ec", cell: ".c-ec", min: 64, narrowMin: 60, cap: 120 },
-    // About 13 characters, so a genus such as Chromobacterium is not cut mid-word.
-    { key: "organism", cell: ".c-organism", min: 124, narrowMin: 118, cap: 200, shrink: 1 },
-    { key: "substrate", cell: ".c-substrate", min: 120, narrowMin: 112, cap: 220, shrink: 1 },
+    // About 13 characters, so most genus names (Saccharomyces) are not cut mid-word.
+    { key: "organism", cell: ".c-organism", min: 108, narrowMin: 104, cap: 200, shrink: 1 },
+    { key: "substrate", cell: ".c-substrate", min: 112, narrowMin: 104, cap: 220, shrink: 1 },
     { key: "kcat", cell: ".c-kcat", min: 64, narrowMin: 60, cap: 200 },
     { key: "km", cell: ".c-km", min: 60, narrowMin: 56, cap: 200 },
     { key: "efficiency", cell: ".c-eff", min: 88, narrowMin: 84, cap: 220 },
@@ -6097,8 +6099,8 @@
     if (!rows.length || style(table).display !== "table") return;
     const visible = (element) => style(element).display !== "none";
     const narrow = narrowDetailMedia.matches;
-    // Beside docked filters a name column is never narrower than its longest word: the table scrolls sideways instead
-    // (with the Columns control and the Enzyme column kept in view).
+    // Beside docked filters a name column starts no narrower than its longest word (within its cap), so a word is broken
+    // only when the table needs the room.
     const docked = filtersDocked() && document.body.classList.contains("filters-open");
     // Each cell's natural width, read once with wrapping switched off (table.measuring in the stylesheet).
     table.classList.add("measuring");
@@ -6120,27 +6122,37 @@
       // A name column's width with every name on one line, and the narrowest that breaks no word.
       const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
       const words = column.shrink ? Math.min(width, wordWidth) : min;
-      return { ...column, min, width, oneLine, words, cells, cellWords, padding };
+      // Review result gives way last, down to the review result's word (or its header): its tag line then ends in "…".
+      const floor = column.key === "state" ? statusFloor(table, cells, min, padding) : 0;
+      return { ...column, min, width, oneLine, words, cells, cellWords, padding, floor };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
     const total = () => widths.reduce((sum, column) => sum + column.width, 0);
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
-    const floor = total() - shrinkable.reduce((sum, column) => sum + column.width - column.min, 0);
+    const status = widths.filter((column) => column.floor);
+    // Each step narrows its columns toward a target, in proportion to what each can give, and only as far as needed.
+    const steps = [
+      [shrinkable, (column) => Math.max(column.min, column.words)],
+      [shrinkable, (column) => column.min],
+      [status, (column) => column.floor],
+    ];
+    // The narrowest the columns can be (the arrow aside): every step taken in full.
+    const floor = widths.reduce((sum, column) => sum + Math.min(column.width,
+      column.shrink ? column.min : (column.floor || column.width)), 0);
     if (total() > available) {
-      // Too wide for the window: the names give way, first to two lines broken between words, then to their minimums.
-      // When the table scrolls sideways anyway (beside docked filters, or with less room than every column's minimum,
-      // as beside a record from 1024px) they stop at their longest word: the sticky Enzyme column stays narrow and the
-      // values come into view sooner, and no word is broken for room the table cannot win.
-      const scrolls = docked || available < floor;
-      const targets = [(column) => Math.max(column.min, column.words), (column) => column.min];
-      for (const target of scrolls ? targets.slice(0, 1) : targets) {
+      // Every step is taken while that keeps Review result in view (only the arrow may then scroll out of view). A table
+      // that cannot keep it in view even then (beside a record from 1024px, on a tablet beside the sidebar) scrolls
+      // sideways: its names stop at their longest word, so the sticky Enzyme column stays narrow and the values come into
+      // view sooner, and no word is broken nor tag cut for room the table cannot win.
+      const giveWay = floor <= available + arrow;
+      for (const [columns, target] of giveWay ? steps : steps.slice(0, 1)) {
         const excess = total() - available;
-        const slack = shrinkable.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
+        const slack = columns.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;
         const share = Math.min(1, excess / slack);
-        shrinkable.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
+        columns.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
       }
     }
     const names = widths.filter((column) => column.shrink === 1);
@@ -6162,6 +6174,25 @@
     widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
       (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);
     }));
+  }
+
+  // Review result's narrowest: the widest review result's word (with its dot), or the column's header. Narrower than its
+  // tags, the tag line ends in "…"; the badge's accessible name and the record keep every tag.
+  function statusFloor(table, cells, min, padding) {
+    let label = 0;
+    cells.forEach((cell) => {
+      const word = cell.querySelector(".state-label");
+      if (word) label = Math.max(label, word.getBoundingClientRect().right - cell.firstElementChild.getBoundingClientRect().left);
+    });
+    const header = table.querySelector("thead th.c-status");
+    let heading = 0;
+    if (header && typeof document.createRange === "function") {
+      const range = document.createRange();
+      range.selectNodeContents(header);
+      const style = window.getComputedStyle(header);
+      heading = range.getBoundingClientRect().width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
+    }
+    return Math.max(min, Math.ceil(label + padding), Math.ceil(heading));
   }
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each

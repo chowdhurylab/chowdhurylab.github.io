@@ -1170,10 +1170,10 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert fit["need"] <= fit["room"], f"At {width}px the search placeholder fits: {fit}"
         results["search-placeholder"] = True
-        # 1280: the sidebar is 272px; a record takes its place (the rail) and closing it brings it back.
+        # 1280: the sidebar is 256px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
-        assert is_open() and box(".filter-column")["width"] == 272, box(".filter-column")
+        assert is_open() and box(".filter-column")["width"] == 256, box(".filter-column")
         driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
         wait.until(lambda d: detail_open() and not is_open())
         assert box(".filter-column")["width"] == 48 and box("#detailPanel")["width"] == 440, (box(".filter-column"), box("#detailPanel"))
@@ -1188,8 +1188,33 @@ def check_layout(driver, browser, url, route_label):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-1280-record.png"))
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open() and is_open())
-        assert box(".filter-column")["width"] == 272
+        assert box(".filter-column")["width"] == 256
         results["record-1280"] = True
+        # Beside the open sidebar from 1280px Review result stays in view without sideways scrolling, in the filtered views
+        # whose wide tags and values once pushed it out (database sources, Not confirmed, a caution): the names give way,
+        # then the tags (ending in an ellipsis), never the review result's word. Only the arrow may scroll out of view.
+        fit_views = ("#browse?status=curation_pending", "#browse?source=brenda", "#browse?source=sabio_rk",
+                     "#browse?source=uniprot", "#browse?caution=units")
+        for width in (1280, 1366, 1440):
+            set_browse_viewport(driver, browser, width, 900)
+            for view in fit_views:
+                open_page(view)
+                wait.until(lambda d: is_open())
+                fit = driver.execute_script("""
+                    const wrap = document.getElementById('recordTableWrap');
+                    const view = wrap.getBoundingClientRect();
+                    const status = wrap.querySelector('thead th.c-status').getBoundingClientRect();
+                    const words = [...wrap.querySelectorAll('#recordsBody .state-label')]
+                        .filter(word => word.getBoundingClientRect().right > word.closest('td').getBoundingClientRect().right + 1);
+                    return {statusRight: status.right, viewRight: view.left + wrap.clientWidth, overflow: wrap.scrollWidth - wrap.clientWidth,
+                            sidebar: document.querySelector('.filter-column').getBoundingClientRect().width,
+                            cutWords: words.length, scrollLeft: wrap.scrollLeft};
+                """)
+                assert fit["scrollLeft"] == 0 and fit["statusRight"] <= fit["viewRight"] + 1 and fit["cutWords"] == 0, (
+                    f"At {width}px {view} keeps Review result in view beside the sidebar: {fit}")
+                assert fit["overflow"] <= 28, f"At {width}px {view} scrolls sideways by more than the arrow: {fit}"
+                assert fit["sidebar"] == (256 if width < 1440 else 288), fit
+        results["status-in-view-1280-1440"] = True
         # The human-review marks widen Status with the human-checked tag after the rows are drawn: a table that then
         # scrolls sideways shows it at once (scroll buttons, sticky Enzyme column, edge cue), before any scroll.
         manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
@@ -1226,7 +1251,7 @@ def check_layout(driver, browser, url, route_label):
                     cue: wrap.classList.contains('can-scroll-right')};
         """)
         assert table_scroll["overflow"] == table_scroll["controls"] == table_scroll["cue"] == True, table_scroll
-        # The table scrolls anyway, so the sticky Enzyme column narrows to its 160px minimum or its longest word.
+        # The table scrolls anyway, so the sticky Enzyme column narrows to its 136px minimum or its longest word.
         enzyme = driver.execute_script("""
             const names = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme strong')];
             const font = getComputedStyle(names[0]);
@@ -1236,7 +1261,7 @@ def check_layout(driver, browser, url, route_label):
             const cell = getComputedStyle(document.querySelector('#recordsBody td.c-enzyme'));
             const padding = parseFloat(cell.paddingLeft) + parseFloat(cell.paddingRight) + 2;
             return {width: document.querySelector('#recordTableWrap thead th.c-enzyme').getBoundingClientRect().width,
-                    limit: Math.max(160, Math.ceil(word + padding))};
+                    limit: Math.max(136, Math.ceil(word + padding))};
         """)
         assert enzyme["width"] <= enzyme["limit"] + 1, enzyme
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
