@@ -115,6 +115,13 @@ GUIDE_SECTIONS = ("guide-method", "guide-find", "guide-record", "guide-status", 
                   "guide-cite", "guide-sources", "guide-questions")
 
 
+def assert_document_stays(driver, view):
+    """Stats, the Guide and Team scroll inside their own view under a header that stays put: the document itself never
+    scrolls (hidden screen-reader text placed against the page once made it ~4,000px tall and scrolled the header away)."""
+    state = driver.execute_script("const page = document.scrollingElement; return [page.scrollHeight, page.clientHeight]")
+    assert state[0] <= state[1] + 1, f"{view} makes the whole document scroll: {state}"
+
+
 def check_guide(driver, wait):
     """Guide: the contents list reaches every section, a section's link keeps the Guide open at that section, the
     example views use the #browse? links Browse reads, and human-checked is drawn as in the table."""
@@ -173,6 +180,7 @@ def check_guide(driver, wait):
         return top >= view.top - 1 && top <= view.top + 48;
     """))
     assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
+    assert_document_stays(driver, "Guide")
 
 
 def check_human_checked(driver, url):
@@ -754,6 +762,7 @@ def check_team(driver, browser, url):
     wait.until(lambda d: d.execute_script("return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station).join()") == "reading")
     caption = driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption").text
     assert "Point at or tab to a person" in caption and "The list of" not in caption, caption
+    assert_document_stays(driver, "Team")
     driver.save_screenshot(str(OUTPUT / f"{browser}-team-desktop.png"))
     # The Guide's link to Team opens it as the tab does, with focus on its heading (not left on the page body).
     driver.get("about:blank")
@@ -788,6 +797,7 @@ def check_team(driver, browser, url):
                 const links = top('.external-nav'), actions = top('.header-actions'), nav = top('.top-nav');
                 return Math.abs(links.top - actions.top) < 24 && nav.top >= links.bottom - 1;
             """), "Team header: links out beside Download, tabs below"
+            assert_document_stays(driver, "Team at 375px")
             driver.save_screenshot(str(OUTPUT / f"{browser}-team-mobile.png"))
             driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 320, "height": 640, "deviceScaleFactor": 1, "mobile": True})
             wait.until(lambda d: d.execute_script("return innerWidth") == 320)
@@ -1924,6 +1934,7 @@ def check(driver, browser, url):
                 stats_scrolls: stats.scrollHeight > stats.clientHeight + 1};
         """)
         assert not (viewports[label]["document_scrolls"] and viewports[label]["stats_scrolls"]), "Nested vertical page scrolling"
+        assert_document_stays(driver, f"Stats ({label})")
         check_panel_width()
         overflow = driver.execute_script("""
             return [...document.querySelectorAll('.stats-chart-label, .stats-chart-value, .stats-table .stats-num, .stats-totals dd, .stats-range-numbers dd, .stats-lead-figure strong')]

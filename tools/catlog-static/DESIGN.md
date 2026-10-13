@@ -60,6 +60,9 @@ scale with 24px gutters (16px below 1024px): a 56px header, a 64px counts band,
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
 and --line-soft inside them; there are no gradients, and shadows only on the phone
 sheet, dialogs and menus.
+Stats, the Guide and Team scroll inside their own view under the header; the
+document itself never scrolls (each view is positioned, so screen-reader-only
+text deep in a page cannot reach past it).
 
 The header is one 56px line from 1024px: brand ("CatLog", enzyme kinetics
 catalog), the catalog's tabs Browse · Stats · Guide · Team, the links out set
