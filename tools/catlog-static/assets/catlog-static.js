@@ -3147,7 +3147,7 @@
       condition_note: conditionNoteText(summary, detail) || null,
       cautions: notes.map((note) => note.text),
       review_result: rowStatusLabel(summary, { exact: true }),
-      source: v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(recordSourceDb(summary, detail)),
+      source: exportSourceName(summary, detail, v2Record),
       tags: [
         summary.verification_status === "corrected" ? "corrected" : "",
         hasNoPaperLinked(summary) ? "no paper linked" : "",
@@ -3279,7 +3279,7 @@
     ["ph", (row) => csvCondition(formatPh(row))],
     ["review_result", (row) => rowStatusLabel(row, { exact: true })],
     ["human_checked", (row) => (state.humanMarksLoaded ? (isHumanChecked(row) ? "yes" : "no") : "")],
-    ["source", (row) => sourceTagText(row)],
+    ["source", (row) => exportSourceName(row)],
     ["source_db", (row) => row.source_db],
     ["pubmed_id", (row) => paperIdsOf(row._pmids, (value) => String(value))],
     ["doi", (row) => paperIdsOf(row._dois, (position) => paperDois[position] || "")],
@@ -9489,6 +9489,13 @@
     const bits = rowSourceBits({ source_db: value });
     if (bits === SOURCE_UNRECORDED_BIT) return "Not recorded";
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
+  }
+
+  // A record's source as both exports name it (the "source" of Export results' CSV, This page (JSON) and Download
+  // record): "CatLog v2" for a record read from the paper by CatLog, as the Source filter says, otherwise its databases by
+  // name, as the record's Source line says ("BRENDA, SABIO-RK", "Open Enzyme Database (OED)").
+  function exportSourceName(row, detail = {}, v2Record = isV2Row(row)) {
+    return v2Record ? SOURCE_CATLOG_LABEL : recordSourceName(recordSourceDb(row, detail));
   }
 
   // The source a record's panel names: its source_db, or, when that names no database ("mixed", the one record merged

@@ -1,6 +1,7 @@
 """Unmocked public-site checks on disposable Chrome and macOS Safari runners."""
 
 import argparse
+import csv
 import functools
 import hashlib
 from html.parser import HTMLParser
@@ -412,6 +413,9 @@ def check_browse(driver, browser, url, route_label):
             header, csv_rows = downloaded_csv("exportPageCsvButton")
             assert header[0] == "record_key" and {"kcat_unit", "review_result", "source", "pubmed_id", "doi"} <= set(header)
             assert [line.split(",", 1)[0] for line in csv_rows] == page_keys
+            # Both exports name each record's source the same way ("CatLog v2" for a record read from the paper by CatLog).
+            csv_sources = {cells[0]: cells[header.index("source")] for cells in csv.reader(csv_rows)}
+            assert csv_sources == {record["record_key"]: record.get("source") for record in page_payload["records"]}, csv_sources
             driver.execute_script(scroll_table_to_bottom)
             driver.find_element(By.ID, "prevButton").click()
             wait.until(lambda _d: row_keys() == first_keys)

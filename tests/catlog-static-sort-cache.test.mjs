@@ -4456,7 +4456,13 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.ok(lines[1].startsWith('csv-1,"alcohol dehydrogenase, class I",1.1.1.1,"Homo ""sapiens""",\'=SUM(A1),\'+10 mM FBP,D102E,30.333,s^-1,0.05,mM,606.66,s^-1 mM^-1,calculated,25,7,Not checked (Unverified),'), lines[1]);
   assert.ok(lines[1].endsWith(",BRENDA,brenda,123; 456,,P00330"), lines[1]);
   assert.match(lines[2], /^csv-2,Enzyme,1\.1\.1\.1,Organism,Substrate,,wild type,,,1,mM,/, "a missing value is an empty cell");
-  assert.match(lines[2], /,Accepted,[^,]*,from paper,primary_paper_direct,/);
+  // The source as This page (JSON) and Download record name it: CatLog v2 for a record read from the paper by CatLog,
+  // as the Source filter says; the databases by name otherwise.
+  assert.match(lines[2], /,Accepted,[^,]*,CatLog v2,primary_paper_direct,/);
+  const sourceLines = (await api.csvParts([row({ record_key: "csv-oed", source_db: "oed" }), row({ record_key: "csv-merged", source_db: "sabio_rk;brenda" }),
+    row({ record_key: "csv-mixed", source_db: "mixed" })])).join("").split("\r\n").slice(1, -1);
+  assert.deepEqual(sourceLines.map((line) => line.match(/,(Open Enzyme Database \(OED\)|"BRENDA, SABIO-RK"|Not recorded),(?:oed|sabio_rk;brenda|mixed),/)?.[1]),
+    ["Open Enzyme Database (OED)", '"BRENDA, SABIO-RK"', "Not recorded"], sourceLines.join("\n"));
   // A cell starting with + or - is a formula to a spreadsheet unless it is a plain number (variant "+G212").
   const signed = (await api.csvParts([row({ record_key: "csv-3", mutation_signature: "+G212", wild_type: false, organism: "-Organism",
     kcat_display: "-5", kcat_unit: "s^(-1)", km_display: "+0.5", km_unit: "mM" })])).join("").replace(/^\ufeff/, "").split("\r\n")[1];
