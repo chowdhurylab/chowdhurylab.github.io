@@ -59,7 +59,7 @@ odd one out spans the row; a bar chart that spans it keeps its labels within
   (objections that dispute no value shown are said apart, never as failures), a
   data line with the definitions, and links to the Guide's method and to Team.
   No agreement counts, no lead.
-- Figure 1, Review result: a donut (outer r 88, inner r 56, 12 o'clock,
+- Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, 1px white gaps, the total in the centre; the one partition that is
   a true whole) beside its legend table: Accepted (split in the rows under it:
   read from the paper by CatLog, earlier catalog as printed, after a

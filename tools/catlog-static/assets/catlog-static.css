@@ -743,8 +743,9 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .stats-by-database .stats-num { margin-left:2px; color:var(--muted) }
 
 /* Figure 1: the review-result donut beside its legend table. */
-.stats-donut-layout { display:grid; grid-template-columns:176px minmax(0,1fr); gap:24px; align-items:start }
-.stats-donut { display:block; width:176px; height:176px; overflow:visible }
+/* Drawn at its viewBox size (200px), so the ring's radii (88 and 56) and the 24px total are the sizes on screen. */
+.stats-donut-layout { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
+.stats-donut { display:block; width:200px; height:200px; overflow:visible }
 .stats-donut-gap { stroke:var(--bg); stroke-width:1.5 }
 .stats-donut-total { fill:var(--text); font-size:var(--fs-24); font-weight:600; text-anchor:middle; dominant-baseline:middle; font-variant-numeric:tabular-nums lining-nums }
 .stats-donut-unit { fill:var(--muted); font-size:var(--fs-12); text-anchor:middle; dominant-baseline:middle }
