@@ -924,6 +924,18 @@ STATS_VALUE_COLUMNS_JS = """
 """
 
 
+# While a mark is lit, in figure `key`: the highest effective opacity of the other marks (bars, slices, ridges) and the
+# lowest of any text in the other rows (1 when names and counts keep full ink).
+STATS_DIMMED_JS = """
+    const figure = document.querySelector(`[data-figure="${arguments[0]}"] .stats-fig`);
+    const shown = (node) => { let o = 1; for (let n = node; n && n !== figure.parentElement; n = n.parentElement) o *= +getComputedStyle(n).opacity; return o; };
+    const rest = [...figure.querySelectorAll('[data-hl]:not(.is-active)')];
+    const marks = rest.flatMap((row) => row.matches('path') ? [row] : [...row.querySelectorAll('.stats-seg, .stats-ridge-svg')]);
+    const texts = rest.flatMap((row) => [...row.querySelectorAll('*')]).filter((node) => [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent.trim()));
+    return {marks: Math.max(0, ...marks.map(shown)), text: Math.min(1, ...texts.map(shown))};
+"""
+
+
 def check_stats_more(driver, browser, overview, total):
     """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: CatLog
     v2 and v1 entries make all records, values per paper make CatLog v2's papers, each class's CatLog v2 entries and its
@@ -1005,12 +1017,24 @@ def check_stats_more(driver, browser, overview, total):
         lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"status\"] .is-active')].map(e => e.tagName.toLowerCase())")
         assert sorted(lit) == ["path", "tr"], lit
         assert driver.execute_script("return document.querySelector('[data-figure=\"status\"] .stats-fig').classList.contains('has-active')")
+        # Only the other marks dim: the legend table's names and counts keep full ink.
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script(STATS_DIMMED_JS, "status")["marks"] < 0.5)
+        assert driver.execute_script(STATS_DIMMED_JS, "status")["text"] == 1, "Pointing at a slice dims names or counts"
         # Escape puts the line and the light out with the pointer still on the slice (WCAG 1.4.13), and moving within
         # the slice does not bring them back.
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": box[0] + 1, "y": box[1]})
         assert driver.execute_script("return document.getElementById('statsTip').hidden && !document.querySelector('#statsCharts .has-active')"), "Escape leaves the tooltip line"
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 2, "y": 2})
+    # Focusing a name in a bar chart or a ridge panel dims the other bars or ridges, never the other names and counts.
+    for key in ("ec-classes", "class-values"):
+        link = driver.find_elements(By.CSS_SELECTOR, f"[data-figure='{key}'] [data-hl] a.stats-link")
+        if not link:
+            continue
+        driver.execute_script("arguments[0].focus()", link[0])
+        WebDriverWait(driver, 5).until(lambda d: d.execute_script(STATS_DIMMED_JS, key)["marks"] < 0.5)
+        assert driver.execute_script(STATS_DIMMED_JS, key)["text"] == 1, f"Focusing a name in {key} dims names or counts"
+        driver.execute_script("document.activeElement.blur()")
     # Tab onto a mark below the fold: the view scrolls to it right after focusin, and its tooltip line stays, beside it.
     expected_tip = driver.execute_script("""
         const view = document.getElementById('statsView');

@@ -166,7 +166,8 @@ number in its own right-aligned column 6px apart, every column after the first a
 chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font at 600,
 the boldest weight in a value column), so the counts line up whatever the shares.
 Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
-drop-shadow), dims the rest of its figure and shows its exact count in a dark tooltip line; touch shows it on a
+drop-shadow), dims the other marks of its figure (bars, slices, ridges; their names and counts keep full ink, so
+their contrast holds) and shows its exact count in a dark tooltip line; touch shows it on a
 tap. Scrolling hides a line the pointer showed (the pointer brings it back), while a line keyboard focus showed
 follows its mark as long as the mark is in view, so Tab to a mark below the fold, which scrolls the page, keeps it.
 Escape puts the line and the light out without moving the pointer or focus (WCAG 1.4.13); they stay out on that mark

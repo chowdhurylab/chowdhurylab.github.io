@@ -853,13 +853,15 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-v2-count { color:var(--st-accepted); font-weight:600 }
 /* Glow is for the key numbers (the headline band, the lead of Quality) and for the mark under the pointer only: at rest
    the marks of a figure have plain outlines. Pointing at a mark (or focusing the link in its row) lights it with a soft
-   glow in its own colour and dims the rest of its figure (data-hl); its exact count shows in the tooltip line. */
-.stats-fig.has-active [data-hl]:not(.is-active) { opacity:0.42 }
+   glow in its own colour and dims the other marks of its figure (data-hl: bars, slices, ridges with their range, median
+   and end stubs); its exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
+.stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end),
+.stats-fig.has-active path[data-hl]:not(.is-active) { opacity:0.42 }
 .stats-chart-row.is-active .stats-seg:not(.stats-part-records), .stats-seg[data-tip]:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
 .stats-status-table tr.is-active > * { background:var(--surface-2) }
 @media (prefers-reduced-motion: no-preference) {
-  .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), filter 150ms ease }
-  .stats-fig [data-hl] { transition:opacity 150ms ease, filter 150ms ease }
+  .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), filter 150ms ease, opacity 150ms ease }
+  .stats-donut path[data-hl], .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease, filter 150ms ease }
 }
 .stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:6px; background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
