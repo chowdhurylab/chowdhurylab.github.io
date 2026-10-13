@@ -374,7 +374,9 @@ is left out, never an empty heading. The order (design spec 5):
   the paper" for a record CatLog read, else as the table names it: "BRENDA",
   "earlier extraction", "source not recorded"), then "corrected", "no paper
   linked" or "✓ human-checked"; last the record ID in 12px mono and Copy link
-  (the page's address with #record=).
+  (the page's address with #record=). Copy link, and Show and Copy under E,
+  are text buttons at least 24px tall to touch (WCAG 2.5.8), with a negative
+  margin so their lines keep their height.
 - B. Values: one table, Parameter | Value | Unit | As printed | Where, in kcat,
   Km, kcat/Km, Ki order (a metric the record lacks is not a row); the value at
   16px/600 right-aligned, the unit 12px muted. A record read from the paper

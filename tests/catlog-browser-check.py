@@ -408,14 +408,15 @@ def check_browse(driver, browser, url, route_label):
             record_payload = downloaded_payload("downloadSelectedJson")
             assert exact_key(record_payload) == selected_key == loaded_detail.get("measurement_key")
             assert record_payload.get("source_license") and record_payload.get("review_result")
-            # The header gives the record ID and a Copy link to this record.
+            # The header gives the record ID and a Copy link to this record, at least 24px tall to touch.
             displayed_id = driver.execute_script("""
                 const button = document.querySelector('#detailContent .detail-top .copy-link');
                 return [document.querySelector('#detailContent .detail-top #detailRecordKey')?.textContent,
-                        button?.dataset.copyText || ''];
+                        button?.dataset.copyText || '', Math.round(button?.getBoundingClientRect().height || 0)];
             """)
             assert displayed_id[0] == selected_key, displayed_id
             assert displayed_id[1].endswith(f"#record={selected_key}"), displayed_id
+            assert displayed_id[2] >= 24, displayed_id
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
             assert driver.switch_to.active_element.get_attribute("data-key") == selected_key
