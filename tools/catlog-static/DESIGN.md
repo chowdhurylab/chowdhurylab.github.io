@@ -165,7 +165,8 @@ and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
 above the table that removes it, followed by Clear all (with no matching
 records, "Clear search and filters" takes its place, so the toolbar has one clear
-button); the count beside Filters is the number of chips. Esc closes the panel (beside an open record, the one
+button; Clear all here and in the sidebar's heading are 24px tall targets at
+least); the count beside Filters is the number of chips. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
 every record is prepared in idle moments once the search box or the filters
 get focus.

@@ -336,6 +336,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-chip:hover { border-color:var(--accent) }
 .filter-chip:hover .chip-x { color:var(--accent) }
 .filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
+/* Clear all (beside the chips and in the sidebar's heading) and Clear search and filters: targets at least 24px tall. */
+:is(.filter-chips-clear, #clearButton, #clearResultsButton) { min-height:24px }
 .active-filters.results-empty .filter-chips-clear { display:none }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }

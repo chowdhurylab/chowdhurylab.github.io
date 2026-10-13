@@ -1221,6 +1221,11 @@ def check_layout(driver, browser, url, route_label):
                 assert fit["overflow"] <= 28, f"At {width}px {view} scrolls sideways by more than the arrow: {fit}"
                 assert fit["sidebar"] == (256 if width < 1440 else 288), fit
         results["status-in-view-1280-1440"] = True
+        # Clear all, beside the chips and in the sidebar's heading, is a target at least 24px tall.
+        targets = driver.execute_script("""
+            return ['.filter-chips-clear', '#clearButton'].map(selector => document.querySelector(selector).getBoundingClientRect().height);
+        """)
+        assert min(targets) >= 24, f"Clear all is at least 24px tall: {targets}"
         # The human-review marks widen Status with the human-checked tag after the rows are drawn: a table that then
         # scrolls sideways shows it at once (scroll buttons, sticky Enzyme column, edge cue), before any scroll.
         manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
