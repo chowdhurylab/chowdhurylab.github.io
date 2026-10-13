@@ -216,14 +216,14 @@
 
   // Where a record's enzyme name comes from, read after "Name from" (a CatLog v2 record's: the paper).
   const sourceLabels = {
-    source_record: "Source record",
-    explicit_enzyme_name: "Source record",
+    source_record: "The source database's entry",
+    explicit_enzyme_name: "The source database's entry",
     brenda_recommended_name: "BRENDA recommended name",
     protein_name_fallback: "Protein name",
-    uniprot_name_fallback: "UniProt",
-    ec_accepted_name_fallback: "EC list (accepted name)",
-    ec_name_fallback: "EC list",
-    uniprot_fallback: "UniProt (accession only)",
+    uniprot_name_fallback: "The UniProt entry",
+    ec_accepted_name_fallback: "The EC list's accepted name",
+    ec_name_fallback: "The EC list's accepted name",
+    uniprot_fallback: "The UniProt accession (no name recorded)",
     name_not_preserved: "Not recorded",
   };
 
@@ -7954,9 +7954,18 @@
 
   // The databases a record merges, unless that only repeats its Source.
   function mergedDatabasesRow(summary, detail) {
-    const names = [...new Set((detail.source_databases_merged || []).map((value) => recordSourceName(value)).filter((name) => name !== "Not recorded"))];
-    if (!names.length || names.join(", ") === recordSourceName(summary.source_db || detail.source_db)) return "";
-    return kv("Databases", names.join(", "));
+    const merged = (Array.isArray(detail.source_databases_merged) ? detail.source_databases_merged : []).filter(Boolean);
+    // The same databases in another order ("sabio_rk, brenda" under Source "BRENDA, SABIO-RK") only repeat the Source.
+    const bits = merged.reduce((all, value) => all | rowSourceBits({ source_db: value }), 0) & ~SOURCE_UNRECORDED_BIT;
+    if (!bits || bits === rowSourceBits({ source_db: summary.source_db || detail.source_db })) return "";
+    return kv("Databases", sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", "));
+  }
+
+  // A note the earlier automated review wrote among a database's notes (where it found the paper, "PMID 18984592 Table
+  // 1: ...", "Official PMC route: ..."): not the database's own words.
+  const EARLIER_REVIEW_NOTE = /^(?:PMID|PMCID)\b|\bPMC\d{4,}\b|^Official\b[^:]*\broute\b|^Table\s+\w+\s+reports\b/i;
+  function earlierReviewNote(line) {
+    return typeof line === "string" && EARLIER_REVIEW_NOTE.test(line.trim());
   }
 
   function detailDisclosure(title, rows) {
@@ -8552,13 +8561,24 @@
     const evidence = v2Record ? "" : evidenceLabel(summary, proofLines);
     // An older record's notes expand on request: a database's own note under Source, the earlier review's notes on where
     // the paper prints the values under Paper.
-    const notesDisclosure = (heading) => `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(heading)}</summary>`
-      + `<div class="evidence-note-list">${evidenceNotesHtml(proofLines, 3)}</div></details>`;
+    const notesDisclosure = (heading, notes) => `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(heading)}</summary>`
+      + `<div class="evidence-note-list">${evidenceNotesHtml(notes, 3)}</div></details>`;
     const showNotes = proofLines.length && !v2Proof;
-    const sourceNoteHtml = showNotes && isSourceNote
-      ? notesDisclosure(noteSource === "Not recorded" ? "Database note" : `Note from ${noteSource}`)
+    // A database note is headed by its database when the record has one ("Note from BRENDA"); a merged record's notes
+    // do not say which database wrote them. The earlier review's own notes among them are not the database's: those
+    // that say where the paper prints the values go under Paper, the rest are left out.
+    const databaseNotes = isSourceNote ? proofLines.filter((line) => !earlierReviewNote(line)) : [];
+    // Without the route that found the paper ("PMID 18984592 Table 1: ..." reads "Table 1: ..."; Paper names the PMID).
+    const paperNotes = isSourceNote
+      ? proofLines.filter((line) => earlierReviewNote(line) && /\bTable\s+[A-Z0-9]+\b/i.test(line)).map(withoutEvidenceRoute)
+      : proofLines;
+    const sourceBits = rowSourceBits({ source_db: summary.source_db || detail.source_db });
+    const oneDatabase = sourceBits !== SOURCE_UNRECORDED_BIT && !(sourceBits & (sourceBits - 1));
+    const several = Math.min(databaseNotes.length, 3) > 1;
+    const sourceNoteHtml = showNotes && databaseNotes.length
+      ? notesDisclosure(oneDatabase ? `${several ? "Notes" : "Note"} from ${noteSource}` : `Database ${several ? "notes" : "note"}`, databaseNotes)
       : "";
-    const paperNotesHtml = showNotes && !isSourceNote ? notesDisclosure("Earlier automated review: where the values are printed") : "";
+    const paperNotesHtml = showNotes && paperNotes.length ? notesDisclosure("Earlier automated review: where the values are printed", paperNotes) : "";
     const dataOrigin = publicEvidenceString(detail.data_origin);
     const check = recordCheck(summary);
     const hasCorrections = correctionItems(detail, check).length > 0;

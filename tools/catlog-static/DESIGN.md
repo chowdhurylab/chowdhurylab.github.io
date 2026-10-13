@@ -426,8 +426,12 @@ is left out, never an empty heading. The order (design spec 5):
   accepted record or "Paper cited (values not located)" on one that is not,
   "Several database records" or "Database record only"); one
   license line; the snapshot's data ID; a database note on request, headed by
-  its source ("Note from BRENDA"), without an importer's label and not shown
-  when it only repeats the temperature and pH rows.
+  its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a
+  record merged from several databases, which do not say whose note it is),
+  without an importer's label and not shown when it only repeats the
+  temperature and pH rows. The earlier automated review's own notes among them
+  ("PMID ... Table 1: ...", "Official PMC route: ...") are not the database's:
+  one that names a table goes under Paper, the rest are left out.
 - D. Conditions: temperature, pH, the other conditions (Assay, a short list),
   cosubstrate, cofactor, preparation. A missing temperature or pH reads "Not
   stated in the paper" on a record read from the paper and "Not recorded" on a
@@ -506,7 +510,9 @@ is left out, never an empty heading. The order (design spec 5):
   shows it, once. The earlier pipeline's internal fields stay in the
   Full data.
 - Source details, collapsed, last: Name from ("Paper", "BRENDA recommended
-  name") and the databases a merged record combines.
+  name", "The source database's entry", "The EC list's accepted name") and the
+  databases a merged record combines, when they are not the Source's own
+  (compared as a set, named in the Source's order).
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one

@@ -239,7 +239,7 @@ assert.match(
   indexHtml,
   /<main id="statsView"[^>]*hidden/,
 );
-assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed"\)/);
+assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed", paperNotes\)/);
 assert.match(sourceCode, /<th scope="col">As printed<\/th>\$\{whereColumn \? '<th scope="col" class="vt-where">Where<\/th>' : ""\}/);
 
 function makeClassList() {
@@ -2930,6 +2930,34 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { proof_lines: ["pH 7.5, 30°C", "SKiD: 30°C, pH 7"] });
   assert.match(html, /<p class="evidence-note-plain">pH 7\.5, 30°C<\/p>/);
   assert.doesNotMatch(html, /SKiD: 30°C/, "the SKiD note repeats T and pH");
+  // A merged record's note does not name every database as its author, and its Source details do not repeat the
+  // Source's databases in another order (f1abdd207ecc711a); the name's origin reads plainly.
+  html = render({ source_db: "sabio_rk;brenda;skid", enzyme_label_source: "ec_name_fallback", proof_kind: "source_note",
+    has_proof_excerpt: false, temperature_display: "25", ph_display: "7" },
+  { source_databases_merged: ["sabio_rk", "brenda", "skid"], proof_lines: ["liver mevalonate kinase", "SKiD: 25°C, pH 7"] });
+  assert.match(html, /<dt>Source<\/dt><dd>BRENDA, SABIO-RK, SKiD<\/dd>/);
+  assert.match(html, /<summary>Database note<\/summary><div class="evidence-note-list"><p class="evidence-note-plain">liver mevalonate kinase<\/p><\/div>/);
+  assert.doesNotMatch(html, /Note from|<dt>Databases<\/dt>/);
+  assert.match(html, /<dt>Name from<\/dt><dd>The EC list&#39;s accepted name<\/dd>/);
+  html = render({ source_db: "sabio_rk", enzyme_label_source: "explicit_enzyme_name" }, { source_databases_merged: ["sabio_rk", "brenda"] });
+  assert.match(html, /<dt>Databases<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "a database the Source does not name");
+  assert.match(html, /<dt>Name from<\/dt><dd>The source database&#39;s entry<\/dd>/);
+  html = render({ source_db: "skid", proof_kind: "source_note", has_proof_excerpt: false, temperature_display: "55", ph_display: "8.9" },
+    { proof_lines: ["SKiD: 37°C, pH 8.9", "SKiD: 30°C, pH 7.0"] });
+  assert.match(html, /<summary>Notes from SKiD<\/summary>/);
+  // The earlier review's notes among a database's are not the database's (6537016e7c188e39): where the paper prints
+  // the values goes under Paper, the route it took is left out.
+  html = render({ source_db: "brenda", proof_kind: "source_note", has_proof_excerpt: false },
+    { proof_lines: ["PMID 18984592 Table 1: Dpo4 T239W, dCTP opposite template G, pH 7.4 at 37 C", "Official PMC route: PMCID PMC2605995"] });
+  assert.doesNotMatch(html, /Note from BRENDA|Official PMC route|PMC2605995/);
+  const paperPart = html.slice(html.indexOf('class="detail-section paper-section"'));
+  assert.match(paperPart, /<summary>Earlier automated review: where the values are printed<\/summary><div class="evidence-note-list"><p class="evidence-note-plain">Table 1: Dpo4 T239W, dCTP opposite template G, pH 7\.4 at 37 C<\/p>/);
+  assert.match(render({ source_db: "brenda", proof_kind: "source_note", has_proof_excerpt: false },
+    { proof_lines: ["PMCID PMC6555127 Table 2 row CYP3A4*2 (S222P)."] }), /<p class="evidence-note-plain">Table 2 row CYP3A4\*2 \(S222P\)\.<\/p>/);
+  html = render({ source_db: "brenda", proof_kind: "source_note", has_proof_excerpt: false },
+    { proof_lines: ["pH 7.4, 37°C, mutant T239W", "PMID 287271 is a comment on a focal-disease paper, not a kinetics paper."] });
+  assert.match(html, /<summary>Note from BRENDA<\/summary><div class="evidence-note-list"><p class="evidence-note-plain">pH 7\.4, 37°C, mutant T239W<\/p><\/div>/);
+  assert.doesNotMatch(html, /PMID 287271|Earlier automated review: where/);
 }
 // The report email quotes the numbers as the record shows them; the paper's title and year lead Paper.
 {
