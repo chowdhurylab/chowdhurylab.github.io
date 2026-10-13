@@ -7115,9 +7115,19 @@
     return { low, high, figures };
   }
 
+  // One listed value is rounded too, by the display rule (at most 4 figures, 3 for a ÷60 artefact: OED's 126.667 shows 127).
+  function listedValueOptions(value) {
+    const figures = roundingFigures(String(value), { perMinute: true });
+    return figures ? { figures } : undefined;
+  }
+
+  function listedValueText(value) {
+    return numberText(String(value), listedValueOptions(value));
+  }
+
   function listedRangeText(values) {
     const ends = listedRangeEnds(values);
-    if (!ends) return numberText(String(Math.min(...values)));
+    if (!ends) return listedValueText(Math.min(...values));
     return `${numberText(ends.low, { figures: ends.figures })}–${numberText(ends.high, { figures: ends.figures })}`;
   }
 
@@ -7126,7 +7136,7 @@
   function listedRangeHtml(values) {
     const end = (value, options) => `<span class="listed-end">${numberHtml(value, options)}</span>`;
     const ends = listedRangeEnds(values);
-    if (!ends) return end(String(Math.min(...values)));
+    if (!ends) return end(String(Math.min(...values)), listedValueOptions(Math.min(...values)));
     return `${end(ends.low, { figures: ends.figures })}–${end(ends.high, { figures: ends.figures })}`;
   }
 
@@ -7209,7 +7219,7 @@
     // One listed value by its number; several as the row above shows them (a range), with how many agree.
     let listedText;
     if (values.length === 1) {
-      listedText = `kcat/Km ${numberText(String(values[0]))} ${check.unit} for this record, `
+      listedText = `kcat/Km ${listedValueText(values[0])} ${check.unit} for this record, `
         + (agree ? "which agrees with kcat ÷ Km" : "more than 2-fold from the stored kcat/Km");
     } else {
       const relation = agree === values.length
@@ -7270,7 +7280,7 @@
           const { check } = consistent;
           text = `The stored kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}) is `
             + `${check.foldText} ${check.direction} kcat ÷ Km (${check.quotientText} ${check.unit}). The source's own kcat/Km, `
-            + `${numberText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed above)" : ""}, `
+            + `${listedValueText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed above)" : ""}, `
             + "agrees with kcat ÷ Km and is shown above."
             + (check.factor ? ` ${check.factor[1]}` : "");
         }
@@ -7571,7 +7581,9 @@
       let unitCell;
       if (metricHasValue(metricSummary, field)) {
         // A non-catalog stored unit is the record's unit (with what that means in its title); a missing one says so.
-        valueHtml = field === "kcat_over_km" && consistent ? numberHtml(consistent.value) : panelValueHtml(metricSummary, field);
+        valueHtml = field === "kcat_over_km" && consistent
+          ? numberHtml(String(consistent.value), listedValueOptions(consistent.value))
+          : panelValueHtml(metricSummary, field);
         unitCell = metricUnitMissing(metricSummary, field, flags)
           ? unitMissingHtml()
           : (storedUnitDiffers(metricSummary, field) ? storedUnitHtml(metricSummary, field) : metricUnitHtml(metricSummary, field));
@@ -8206,7 +8218,7 @@
     // A Ki only when the record shows one (its detail says it has one), as the Values table does.
     const values = [["kcat", "kcat"], ["km", "Km"], ["kcat_over_km", "kcat/Km"], ["ki", "Ki"]]
       .filter(([field]) => metricHasValue(summary, field) && (field !== "ki" || Boolean(summary.has_ki)))
-      .map(([field, label]) => [label, field in shown ? numberText(shown[field]) : panelValueText(summary, field), unitText(metricUnit(summary, field))].filter(Boolean).join(" "));
+      .map(([field, label]) => [label, field in shown ? listedValueText(shown[field]) : panelValueText(summary, field), unitText(metricUnit(summary, field))].filter(Boolean).join(" "));
     const about = [
       recordedName(summary.enzyme_display_name) || "Name not recorded",
       recordedName(summary.organism) || "organism not recorded",
@@ -9450,6 +9462,7 @@
       isV2Row,
       identityResolutionLabel,
       valuesSection,
+      listedRangeText,
       conditionsSection,
       lookAlikeRowKeys,
       substrateNoteHtml,

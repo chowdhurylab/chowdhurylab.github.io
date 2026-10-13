@@ -407,9 +407,10 @@ is left out, never an empty heading. The order (design spec 5):
   calc. or "!" keeps their space unseen (aria-hidden), so every number in the
   Value column ends at the same place; on phones that space is dropped. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
-  s⁻¹ mM⁻¹, 5 values", in the catalog unit, each end of a range one unbroken
-  number, so a long range breaks after its dash or before its unit and fits at
-  320px; shown when it differs from the
+  s⁻¹ mM⁻¹, 5 values", in the catalog unit, a range to 2 significant figures
+  and a single value by the display rule, 126.667 showing 127; each end of a
+  range is one unbroken number, so a long range breaks after its dash or before
+  its unit and fits at 320px; shown when it differs from the
   record's kcat/Km or the record stores none, then the empty line says "No kcat,
   Km or kcat/Km is stored for this record; BRENDA lists a kcat/Km for it
   (below)."; a number a source also gives with no unit is listed once; Download

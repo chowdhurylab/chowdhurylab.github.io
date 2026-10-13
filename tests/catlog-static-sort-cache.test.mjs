@@ -2428,6 +2428,15 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     kcat_display: "17479", km_display: "1.86", kcat_over_km_display: null }), { source_kcat_over_km_values: [brenda(9397, "s^(-1)*mM^(-1)"), brenda(9397, null)] });
   assert.match(pair, /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> s<sup>-1<\/sup>/);
   assert.doesNotMatch(pair, /flag-notes|kcat\/Km mismatch/, "no new caution: the table's cautions stay CatLog's flags");
+  // One listed value follows the display rule too, as the range's ends are rounded (341905f35e2de883: OED's 126.667 shows
+  // 127, a ÷60 artefact; 9397 keeps its 4 figures).
+  const one = api.valuesSection(row({ record_key: "listed-one", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
+    kcat_display: "11.333", km_display: "0.09", kcat_over_km_display: "125.92", kcat_over_km_origin: "calculated",
+    kcat_over_km_source_differs: true }), { source_kcat_over_km_values: [{ value: 126.667, unit: "s^(-1)*mM^(-1)", source_db: "oed", pmids: ["11054102"] }] });
+  assert.match(one, /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> s<sup>-1<\/sup>/);
+  assert.doesNotMatch(one, /126\.667/);
+  assert.equal(api.listedRangeText([126.667]), "127");
+  assert.equal(api.listedRangeText([0.0000123456]), "1.235 × 10⁻⁵");
   const same = api.valuesSection(row({ record_key: "listed-same", kcat_over_km: 64, kcat_over_km_display: "64" }),
     { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
   assert.doesNotMatch(same, /listed by/, "a listed kcat/Km equal to the stored one is not said twice");
