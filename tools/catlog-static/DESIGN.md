@@ -145,8 +145,9 @@ stays narrow, with the Columns control (‹ › step one column), Enzyme kept in
 view and edge shadows drawn over the rows inside the visible area (beside
 Enzyme, before the vertical scrollbar). The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all, «);
-its groups are native disclosures with 13px/600 summaries (12px 16px), a soft
-rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
+its groups are native disclosures with 13px/600 summaries (13px 16px, 44px for
+one line; the chevron and any "?" stay level with the title's first line when a
+wide font wraps it), a soft rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
 count at the right; a label a wide font wraps takes a second line, box and count
 on its first, and never runs into the next row) and 32px fields, their labels in
 a column as wide as the longest. The sidebar is compact (the user, 2026-10-13):

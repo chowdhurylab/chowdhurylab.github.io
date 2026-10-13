@@ -1314,6 +1314,24 @@ def check_layout(driver, browser, url, route_label):
             return bad;
         """)
         assert not overlaps, f"Sidebar options overlap: {overlaps}"
+        # A group's chevron and "?" stay level with its title's first line, also when a wide font wraps the title.
+        misaligned = driver.execute_script("""
+            const bad = [];
+            document.querySelectorAll('#catalogFilters .filter-section').forEach(section => {
+                if (!section.getClientRects().length) return;
+                const summary = section.querySelector(':scope > summary');
+                const text = [...summary.childNodes].find(node => node.textContent.trim());
+                const range = document.createRange();
+                range.selectNodeContents(text);
+                const first = [...range.getClientRects()].find(r => r.width > 0.5);
+                const centre = (r) => (r.top + r.bottom) / 2;
+                const marks = [summary.querySelector('.chevron'), section.querySelector(':scope > .section-about')]
+                    .filter(e => e && e.getClientRects().length);
+                if (marks.some(e => Math.abs(centre(e.getBoundingClientRect()) - centre(first)) > 1.5)) bad.push(summary.innerText.trim());
+            });
+            return bad;
+        """)
+        assert not misaligned, f"Group chevron or '?' off its title's first line: {misaligned}"
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
         assert not driver.find_element(By.ID, "aboutSource").is_displayed()
         about.click()

@@ -242,13 +242,15 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }
 /* Groups: native disclosures, 13px/600 summaries, a soft rule between them. */
 .filter-section { position:relative; border-bottom:1px solid var(--line-soft) }
-.filter-section-title { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:var(--sp-2); color:var(--text); cursor:pointer; padding:var(--sp-3) var(--sp-4); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); list-style:none; user-select:none }
+/* A title keeps its chevron (and its "?") level with its first line: 13px above and below an 18px line make the 44px row,
+   so a one-line title is centred and a title a wide font wraps keeps both on its first line. */
+.filter-section-title { display:flex; min-height:44px; align-items:flex-start; justify-content:space-between; gap:var(--sp-2); color:var(--text); cursor:pointer; padding:13px var(--sp-4); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); list-style:none; user-select:none }
 .filter-section-title::-webkit-details-marker { display:none }
 .filter-section-title:hover { background:var(--surface-2) }
 .filter-section-title:focus-visible { outline-offset:-2px }
 .filter-section > :not(summary) { margin:0 var(--sp-4) var(--sp-3) }
 /* A group's "?" (beside its chevron) shows its explanations in a quiet box under the title: the options keep one short
-   line each. */
+   line each. Its 24px circle is centred on the title's first line (top 10px + 12px = 13px + 9px), as the chevron is. */
 .filter-section.has-about > .filter-section-title > span { margin-right:36px }
 .filter-section > .section-about { position:absolute; top:10px; right:38px; display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
 .filter-section > .section-about:hover { border-color:var(--accent); color:var(--accent) }
@@ -260,7 +262,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 
 /* 12px chevrons; they turn over when their group opens or closes. */
 .chevron { flex:0 0 12px; width:12px; height:12px; transition:transform 160ms ease }
-.filter-section-title .chevron { color:var(--muted) }
+.filter-section-title .chevron { margin-top:3px; color:var(--muted) }
 .filter-section:not([open]) .chevron, .download-menu[open] .chevron, .snapshot-band.expanded .chevron { transform:rotate(180deg) }
 .filter-section input:is([type="search"],[type="text"]), .records-tools select, .pagination select { width:100%; min-width:0; min-height:32px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); color:var(--text); padding:4px var(--sp-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .filter-section input:is([type="search"],[type="text"]):focus-visible, .records-tools select:focus-visible, .pagination select:focus-visible { border-color:var(--accent) }
