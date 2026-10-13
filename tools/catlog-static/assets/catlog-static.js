@@ -7029,7 +7029,9 @@
     ["ki", "<i>K</i><sub>i</sub>"],
   ];
   const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; not printed in the paper.";
-  const CALCULATED_OLDER_NOTE = "kcat ÷ Km, not printed in the source.";
+  // An older record's calculated kcat/Km: the earlier catalog worked it out, but its source may still list one of its own
+  // (shown above the note, so the note never says the source does not print one).
+  const CALCULATED_OLDER_NOTE = "kcat ÷ Km, calculated by CatLog.";
 
   // The proof line (a record read from the paper) that gives a field's value, or -1.
   function proofLineIndex(proof, field) {
@@ -7127,10 +7129,14 @@
       : (fields.some(([field]) => field === "ki")
           ? `This record stores a Ki (inhibition constant) only, no kcat, Km or kcat/Km${listedBy}.`
           : `No kcat, Km or kcat/Km is stored for this record${listedBy}.`);
+    // "OED lists a different kcat/Km (above)." after an older record's calc. note when its sources list their own.
+    const calcListed = calcNote && !v2Record && listed && listers.length
+      ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list different kcat/Km values" : "lists a different kcat/Km"} (above).`
+      : "";
     const greyNotes = [
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")
-        ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}`
+        ? `<span class="metric-origin">calc.</span> ${escapeHtml(calcNote)}${escapeHtml(calcListed)}`
         : "",
     ].filter(Boolean);
     // Each printed line once; a "line" that is only the printed number itself adds nothing.

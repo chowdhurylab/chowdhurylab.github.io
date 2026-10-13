@@ -387,7 +387,9 @@ is left out, never an empty heading. The order (design spec 5):
   record carries them as source_kcat_over_km_values), each caution once as an amber note
   its value's "!" moves to, the grey notes ("kcat and Km: converted by code from
   the printed units.", "kcat/Km: converted by code, printed unit read as 10³ M⁻¹
-  s⁻¹.", "calc. kcat ÷ Km, calculated by CatLog; not printed in the paper."),
+  s⁻¹.", "calc. kcat ÷ Km, calculated by CatLog; not printed in the paper."; an
+  older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists a
+  different kcat/Km (above)." when its sources list one, never "not printed"),
   then each quoted line once, "Table 2 row, as extracted from the paper's text"
   (at most 240 characters, table markers removed, K_M set as K<sub>m</sub>); a
   row of more than four cells, or one whose ± signs extraction dropped, is

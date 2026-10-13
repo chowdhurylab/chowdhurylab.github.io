@@ -2566,6 +2566,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /kcat ÷ Km \(15 s⁻¹ mM⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   assert.ok(html.indexOf("kcat/Km listed by OED") < html.indexOf("is 2.4–4.9-fold above"), "the listed values come first, under the values");
+  // Its calc. note never says the source does not print a kcat/Km: it says CatLog calculated it and points at the listed one.
+  assert.match(html, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\. OED lists a different kcat\/Km \(above\)\.<\/li>/);
+  assert.doesNotMatch(html, /not printed in the source/);
+  const alone = measurementSection(merged, {});
+  assert.match(alone, /<span class="metric-origin">calc\.<\/span> kcat ÷ Km, calculated by CatLog\.<\/li>/);
+  const twoSources = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 40, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
+  assert.match(twoSources, /calculated by CatLog\. OED and BRENDA list different kcat\/Km values \(above\)\./);
   // CatLog's flag for the same conflict: a kcat/Km mismatch caution in the table and the filter; the record's note is the
   // one above, never the flag's name.
   const flagged = Object.assign(row({ ...merged, condition_flags: ["kcat_over_km_source_mismatch"] }), {});
