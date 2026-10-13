@@ -4440,7 +4440,7 @@
     // kcat, Km and kcat/Km in the site's italic markup (metricWordsHtml, on escaped text only, never on a link).
     const words = (text) => metricWordsHtml(escapeHtml(text));
     return section("Human review",
-      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct</span><span>of ${escapeHtml(reviewBaseText(review))}</span>`,
+      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct of ${escapeHtml(reviewBaseText(review))}</span>`,
       `<p class="stats-lead-sentence">${words(reviewSentence(review, { opener: false }))}</p>
           ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
           ${notes.length ? `<p class="stats-lead-note">${words(notes.join(" "))}</p>` : ""}

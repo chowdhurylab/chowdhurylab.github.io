@@ -251,7 +251,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .double-chevron { flex:0 0 16px; width:16px; height:16px; color:var(--muted) }
 /* The sidebar (and, on phones, the sheet): a sticky heading, then the filter groups. */
 /* A control reached with Tab or Shift+Tab scrolls clear of the sticky 48px heading, with room for its focus ring. */
-.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:56px }
+/* A thin scrollbar (11px where scrollbars take room, as in Chrome on Linux and Windows) leaves the options 4px more. */
+.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:56px; scrollbar-width:thin }
 .filter-rail:focus { outline:none }
 .rail-heading { position:sticky; top:0; z-index:2; display:flex; flex-shrink:0; min-height:48px; align-items:center; gap:var(--sp-2); border-bottom:1px solid var(--line-soft); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-4) }
 .rail-title { margin:0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
@@ -323,9 +324,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
 .check-row.is-zero .human-checked-word { color:inherit }
 
-/* Source: three choices, one line each (the help is behind the group's "?"); the databases fold under "By database". */
+/* Source: three choices, one line each (the help is behind the group's "?"); the databases fold under "By database".
+   Read from the paper keeps one line beside a six-figure count in the 256px sidebar, also in a wide font (DejaVu Sans):
+   a count may come 4px closer to its label than elsewhere. */
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
+.radio-row > strong { margin-left:-4px }
 .source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
 .source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
 .source-databases > summary::-webkit-details-marker { display:none }
@@ -1236,6 +1240,12 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-totals dl { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0 }
   .stats-total:nth-child(odd)::before { display:none }
 }
+/* The narrowest phones: the four headline numbers one under the other, so Read from the paper keeps one line, also in a
+   wide font (DejaVu Sans), and the human review's base reads in two lines, not five. */
+@media (max-width: 359px) {
+  .stats-totals .stats-totals-main { grid-template-columns:1fr; gap:8px 0 }
+  .stats-totals-main .stats-total::before { display:none }
+}
 
 @media (max-width: 640px) {
   .stats-shell, .team-shell { padding:24px 16px 32px }
@@ -1426,6 +1436,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .snapshot-overview::before { content:""; order:1; flex-basis:100%; height:0 }
   .snapshot-meta, .snapshot-controls { order:2; margin-top:8px }
   .snapshot-meta { border-left:0; padding-left:0 }
+}
+/* Read from the paper N takes its short tag, From paper, where the first line is tight (641-799px; a wide font such as
+   Linux's DejaVu Sans needs 780px for the whole label); a screen reader still reads Read from the paper. */
+.snapshot-paper-short { display:none }
+@media (min-width: 641px) and (max-width: 799px) {
+  .snapshot-paper-long { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .snapshot-paper-short { display:inline }
 }
 
 @media (max-width: 720px) {

@@ -1875,23 +1875,30 @@ def check_layout(driver, browser, url, route_label):
         """)
         assert not misaligned, f"Group chevron or '?' off its title's first line: {misaligned}"
         # The Source radios name what happened to each record, Read from the paper and Not yet re-read, one line each
-        # beside its count, also in a wide font at the sidebar's 256px (1280px window); the help is behind the "?".
+        # beside its count, also in a wide font (Verdana here, DejaVu Sans on Linux) at the sidebar's 256px (1280px
+        # window), with today's counts and with a six-figure count the catalog will reach; the help is behind the "?".
         set_browse_viewport(driver, browser, 1280, 1000)
         source_rows = driver.execute_script("""
             const style = document.createElement('style');
             style.id = 'wideSourceFont';
-            style.textContent = "#sourceChecklist, #sourceChecklist * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
+            style.textContent = "#sourceChecklist, #sourceChecklist * {font-family: Verdana, 'DejaVu Sans', sans-serif !important}";
             document.head.appendChild(style);
             const lines = (e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
-            const rows = [...document.querySelectorAll('#sourceChecklist .radio-row')].map(row => {
+            const rows = [...document.querySelectorAll('#sourceChecklist .radio-row')];
+            const measure = () => rows.map(row => {
                 const label = row.querySelector(':scope > span');
                 return {label: label.innerText.trim(), labelLines: lines(label), spans: row.querySelectorAll(':scope > span').length,
                         countLevel: Math.abs(row.querySelector('strong').getBoundingClientRect().top - label.getBoundingClientRect().top) < 3};
             });
+            const now = measure();
+            const counts = rows.map(row => row.querySelector('strong').textContent);
+            rows.forEach(row => { row.querySelector('strong').textContent = '888,888'; });
+            const grown = measure();
+            rows.forEach((row, index) => { row.querySelector('strong').textContent = counts[index]; });
             style.remove();
-            return rows;
+            return now.concat(grown);
         """)
-        assert [row["label"] for row in source_rows] == ["All records", "Read from the paper", "Not yet re-read"], source_rows
+        assert [row["label"] for row in source_rows] == ["All records", "Read from the paper", "Not yet re-read"] * 2, source_rows
         assert all(row["labelLines"] == 1 and row["spans"] == 1 and row["countLevel"] for row in source_rows), source_rows
         set_browse_viewport(driver, browser, 1440, 1000)
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
@@ -2353,6 +2360,12 @@ def check_layout(driver, browser, url, route_label):
             assert (band["checked"] == band["records"] and band["meta"] > band["records"] + 12
                     and abs(band["date"] - band["meta"]) < 12 and band["divider"] == "0px"), (
                 f"At {width}px the counts band takes two lines: {band}")
+            # Read from the paper takes its short tag, From paper, below 800px (a screen reader reads the whole label).
+            shown = driver.execute_script("""const link = document.getElementById('fromPaperLink');
+                return [...link.querySelectorAll('.snapshot-paper-long, .snapshot-paper-short')]
+                    .filter(e => e.getBoundingClientRect().width > 1).map(e => e.textContent)""")
+            if driver.find_element(By.ID, "fromPaperLink").is_displayed():
+                assert shown == (["From paper"] if width < 800 else ["Read from the paper"]), (width, shown)
             band_heights.add(band["height"])
         assert len(band_heights) == 1, f"The two-line counts band keeps one height: {band_heights}"
         # The band's key numbers glow softly in accent ink (Human-checked in its green); a linked count's hover tint is

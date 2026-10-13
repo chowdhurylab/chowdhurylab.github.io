@@ -1392,8 +1392,9 @@ assert.match(guideHtml, /<summary>Evidence labels on records not yet re-read<\/s
 // Guide says so where it says the table has no temperature or pH column.
 assert.match(guideHtml, /The table has no temperature or pH column: they show under the substrate only to tell apart records of one paper that differ in them/);
 assert.doesNotMatch(guideHtml, /table does not show (?:temperature|them)/);
-// The counts band names the records read from the paper by CatLog as Stats and the Source filter do: Read from the paper.
-assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the records read from the paper by CatLog"[^>]*><span>Read from the paper<\/span><strong id="fromPaperCount">/);
+// The counts band names the records read from the paper by CatLog as Stats and the Source filter do: Read from the paper
+// (its short tag, From paper, where the band's first line is tight; a screen reader reads the whole label).
+assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the records read from the paper by CatLog"[^>]*><span><span class="snapshot-paper-long">Read from the paper<\/span><span class="snapshot-paper-short" aria-hidden="true">From paper<\/span><\/span><strong id="fromPaperCount">/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<section [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<section [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -1942,7 +1943,7 @@ function row(overrides = {}) {
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
   // The band's Human review is the same headline.
   assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>values correct of 2,674 entries from the earlier version \(408 papers\)<\/small>/);
-  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct<\/span><span>of 2,674 entries from the earlier version \(408 papers\)<\/span><\/div>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct of 2,674 entries from the earlier version \(408 papers\)<\/span><\/div>/);
   assert.match(lead, /<p class="stats-lead-sentence">A reviewer disputed a kcat, Km or kcat\/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper\.<\/p>/);
   assert.match(lead, /<dt>Values missing<\/dt><dd>31 entries \(1\.2%\)<\/dd><\/div><div><dt>Other disagreements<\/dt><dd>177 entries \(6\.6%\)<\/dd>/);
   assert.match(lead, /<p class="stats-lead-note">Values missing: the paper prints a value the entry lacked, mostly the kcat; CatLog has read 53 of the 58 values reviewers named from the paper\. Other disagreements, by kind: could not find the value 153, organism name 13, DOI 5, substrate name 3, duplicate 2, paper evidence mismatch 1\.<\/p>/);
