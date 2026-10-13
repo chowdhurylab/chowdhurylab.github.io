@@ -2065,6 +2065,29 @@ def check_record_panel(driver, browser, url, route_label):
                     driver.get(base + f"#record={PHONE_APPROVED_SCIENTIFIC_RECORD}")
                     wait.until(lambda d: d.execute_script(
                         "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+                    if driver.find_elements(By.CSS_SELECTOR, "#detailContent .detail-status"):
+                        # Its status line (Accepted · read from the paper · ✓ human-checked) wraps here in a wide font: the
+                        # tag that starts the next line shows no "·" before it and the line above ends without one.
+                        status = driver.execute_script("""
+                            const style = document.createElement('style');
+                            style.id = 'wideStatusCheck';
+                            style.textContent = "#detailPanel .detail-status, #detailPanel .detail-status * {font-family: Verdana, 'DejaVu Sans', sans-serif !important; letter-spacing: 0.5px !important}";
+                            document.head.appendChild(style);
+                            const line = document.querySelector('#detailContent .detail-status');
+                            const clipLeft = line.getBoundingClientRect().left + parseFloat(getComputedStyle(line).borderLeftWidth);
+                            const tags = [...line.children];
+                            const tops = tags.map(tag => tag.getBoundingClientRect().top);
+                            // A "·" before a tag that starts a line has no room left of it inside the line's clipped box.
+                            const dotStarts = tags.filter((tag, i) => i > 0 && tops[i] > tops[i - 1] + 1
+                                && getComputedStyle(tag, '::before').content !== 'none'
+                                && tag.getBoundingClientRect().left - clipLeft > 1).map(tag => tag.textContent);
+                            const dotEnds = tags.filter(tag => !['none', 'normal'].includes(getComputedStyle(tag, '::after').content)).map(tag => tag.textContent);
+                            const result = {lines: new Set(tops.map(Math.round)).size, dotStarts, dotEnds, text: line.textContent};
+                            style.remove();
+                            return result;
+                        """)
+                        assert not status["dotStarts"] and not status["dotEnds"], f"The record's status line leaves a dangling '·' at 320px: {status}"
+                        results["status-line-wrap-320"] = True
                     if driver.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .scientific-number"):
                         wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .values-table .value-approved[role='img']"))
                         driver.execute_script("""

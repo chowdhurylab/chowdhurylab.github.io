@@ -581,11 +581,13 @@ body.detail-open .detail-panel { display:block }
 .source-efficiency-value .listed-end { white-space:nowrap }
 .measurement-listed { margin-top:12px }
 
-/* Status line: a dot, the review result (13px/600), then its tags. */
-.detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; margin-top:2px }
-.detail-status::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent) }
-.detail-status > span { white-space:nowrap }
-.detail-status > span:not(:last-child)::after { content:"\00b7"; margin-left:6px }
+/* Status line: a dot, the review result (13px/600), then its tags. Each tag's "·" sits in the 12px gap before it; a tag
+   that wraps starts its line, where its "·" falls left of the line and is clipped, so no line starts or ends with a "·"
+   (the line has no side padding of its own: on phones its margins keep it off the panel's edges). */
+.detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; margin-top:2px; overflow-x:clip }
+.detail-status::before { content:""; width:8px; height:8px; margin-right:-6px; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent) }
+.detail-status > span { position:relative; white-space:nowrap }
+.detail-status > span + span::before { content:"\00b7"; position:absolute; top:0; right:100%; width:12px; color:var(--text-2); font-weight:400; text-align:center }
 .detail-status-word { color:var(--text); font-weight:600 }
 .detail-status > .detail-status-checked { color:var(--checked); font-weight:500 }
 .detail-status-checked .check-icon { margin-right:3px }
@@ -1233,6 +1235,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .detail-panel.is-scrolled .detail-title { border-bottom-color:var(--line) }
   .detail-title h2 { margin:0 }
   .detail-top > p { margin-bottom:var(--sp-1); padding:0 20px }
+  .detail-top > p.detail-status { margin-right:20px; margin-left:20px; padding-right:0; padding-left:0 }
   .detail-top > p:last-child { margin-bottom:0; padding-bottom:12px }
   .detail-top + .detail-section { border-top:1px solid var(--line) }
 }

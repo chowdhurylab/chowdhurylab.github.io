@@ -500,7 +500,9 @@ found at once: A, B, G, C, D, E, F, H.
   (Unverified)" keeps the earlier status in brackets), the source ("read from
   the paper" for a record CatLog read, else as the table names it: "BRENDA",
   "earlier extraction", "source not recorded"), then "corrected", "no paper
-  linked" or "✓ human-checked"; last the record ID in 12px mono and Copy link
+  linked" or "✓ human-checked" (each "·" sits in the gap before its tag, so a
+  tag that wraps onto the next line on a phone leaves no "·" at the end of one
+  line or the start of the next); last the record ID in 12px mono and Copy link
   (the page's address with #record=). Copy link, and Show and Copy under E,
   are text buttons at least 24px tall to touch (WCAG 2.5.8), with a negative
   margin so their lines keep their height.
