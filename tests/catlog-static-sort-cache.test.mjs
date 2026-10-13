@@ -4010,6 +4010,46 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
       api.applyBrowseParams(new Map());
       api.syncRecordUrl("src-v2");
       assert.deepEqual(calls, []);
+      // Leaving an open record by a link, a tab or × keeps its place in its entry, so Back or Forward opens it there;
+      // only for that record, and a new entry, another record or the list does not carry it.
+      const previousKey = api.state.selectedKey;
+      api.state.selectedKey = "src-v2";
+      document.body.classList.add("detail-open");
+      element("detailPanel").scrollTop = 420.4;
+      try {
+        window.history.state = { catlogView: "browse" };
+        api.rememberRecordScroll();
+        assert.deepEqual(calls.at(-1), ["replace", "#record=src-v2"], "the same address");
+        assert.equal(JSON.stringify(window.history.state), '{"catlogView":"browse","catlogRecordScroll":{"key":"src-v2","top":420}}');
+        assert.equal(JSON.stringify(api.rememberedRecordScroll("src-v2")), '{"key":"src-v2","top":420}');
+        assert.equal(api.rememberedRecordScroll("src-oed"), null, "another record opens at its top");
+        window.history.state = { catlogRecordScroll: { key: "src-v2", top: 0 } };
+        assert.equal(api.rememberedRecordScroll("src-v2"), null, "at its top: nothing to restore");
+        // A record the address does not name (its entry was left already): nothing is written.
+        calls.length = 0;
+        window.location.href = "https://example.test/catlog/#browse?q=src";
+        window.location.hash = "#browse?q=src";
+        api.rememberRecordScroll();
+        assert.deepEqual(calls, []);
+        // A new record entry, another record in the entry and the list's address all drop the place.
+        api.applyBrowseParams(new Map(new URLSearchParams("q=src")));
+        window.history.state = { catlogView: "browse", catlogRecordScroll: { key: "src-v2", top: 420 } };
+        api.syncRecordUrl("src-v2");
+        assert.deepEqual(calls.at(-1), ["push", "#browse?q=src&record=src-v2"]);
+        assert.ok(!("catlogRecordScroll" in window.history.state), "a new entry starts at the record's top");
+        window.history.state = { ...window.history.state, catlogRecordScroll: { key: "src-v2", top: 420 } };
+        api.syncRecordUrl("src-oed");
+        assert.deepEqual(calls.at(-1), ["replace", "#browse?q=src&record=src-oed"]);
+        assert.ok(!("catlogRecordScroll" in window.history.state));
+        window.history.state = { ...window.history.state, catlogRecordScroll: { key: "src-oed", top: 420 } };
+        api.syncRecordUrl("");
+        assert.deepEqual(calls.at(-1), ["replace", "#browse?q=src"]);
+        assert.equal(JSON.stringify(Object.keys(window.history.state)), '["catlogView"]');
+      } finally {
+        api.state.selectedKey = previousKey;
+        document.body.classList.remove("detail-open");
+        element("detailPanel").scrollTop = 0;
+      }
     } finally {
       window.history.pushState = original.push;
       window.history.replaceState = original.replace;

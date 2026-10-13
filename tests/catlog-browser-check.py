@@ -2180,7 +2180,8 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     """A record a human reviewer checked shows a green check after each of its values, named "approved by a human
     reviewer", and one line under the table saying what it means (the numbers still end at the same place); its Paper
     section's In CatLog link opens Browse at the paper's records with the record kept open (on a phone, where the record
-    covers the list, with the record closed; Back opens it again)."""
+    covers the list, with the record closed; Back opens it again); Back after a link in a record opens it where it was
+    left."""
     results = {}
     keys = driver.execute_async_script("""
         const done = arguments[arguments.length - 1];
@@ -2317,6 +2318,29 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     wait.until(lambda d: urlsplit(d.current_url).path != urlsplit(base).path)
     assert driver.execute_script("return history.length") == length, "Closing a record left an entry behind"
     results["record-close-history"] = True
+    # A link followed from a record (here its Method line's Guide link), then Back: the record opens where it was left,
+    # not at its top.
+    driver.get("about:blank")
+    driver.get(base + "#browse?source=paper")
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+               and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+    first = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+    opened = first.get_attribute("data-key")
+    first.find_element(By.CSS_SELECTOR, ".primary-cell").click()
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .source-section a.method-link")
+               and not d.find_elements(By.ID, "detailLoadStatus"))
+    method_link = driver.find_element(By.CSS_SELECTOR, "#detailContent .source-section a.method-link")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", method_link)
+    left_at = driver.execute_script("return document.getElementById('detailPanel').scrollTop")
+    assert left_at > 0, "The record did not scroll"
+    method_link.click()
+    wait.until(lambda d: d.execute_script("return document.body.classList.contains('guide-open')"))
+    driver.back()
+    wait.until(lambda d: d.execute_script(
+        "return document.body.classList.contains('detail-open') && !document.querySelector('#detailLoadStatus')"
+        " && document.querySelector('#detailRecordKey')?.textContent === arguments[0]"
+        " && Math.abs(document.getElementById('detailPanel').scrollTop - arguments[1]) <= 2", opened, left_at))
+    results["record-back-scroll"] = True
     return results
 
 

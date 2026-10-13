@@ -43,6 +43,8 @@
     suggestionInputId: "",
     // The record a #record= address names, until the index has loaded far enough to open it.
     pendingRecordKey: "",
+    // { key, top }: where Back or Forward opens that record (rememberRecordScroll).
+    recordScrollToRestore: null,
     missingRecordKey: "",
     // A record closed while new filters' results were on their way: its key, so focus goes back to its row (or the
     // results) once they are drawn.
@@ -750,17 +752,41 @@
 
   // The history entry a record's opening added remembers the list's address it was opened from.
   const RECORD_ENTRY_FROM = "catlogRecordFrom";
+  // A record's entry also remembers how far its record was scrolled when the visitor left it (a link in it, a tab, ×),
+  // so Back (or Forward) opens the record there again: { key, top }.
+  const RECORD_SCROLL = "catlogRecordScroll";
 
   function historyState() {
     const current = window.history?.state;
     return current && typeof current === "object" ? current : {};
   }
 
-  // The history state without the record entry's mark (the entry now shows the list, or another page load owns it).
+  // The history state without the record entry's marks (the entry now shows the list, or another page load owns it).
   function historyStateWithoutRecordEntry() {
-    if (!(RECORD_ENTRY_FROM in historyState())) return window.history?.state ?? null;
-    const { [RECORD_ENTRY_FROM]: _from, ...rest } = historyState();
+    const current = historyState();
+    if (!(RECORD_ENTRY_FROM in current) && !(RECORD_SCROLL in current)) return window.history?.state ?? null;
+    const { [RECORD_ENTRY_FROM]: _from, [RECORD_SCROLL]: _scroll, ...rest } = current;
     return rest;
+  }
+
+  // Before the page leaves the open record's history entry by itself (a link in the record, a tab, ×), the entry keeps
+  // how far the record was scrolled.
+  function rememberRecordScroll() {
+    const key = state.selectedKey;
+    const panel = $("detailPanel");
+    if (!key || !panel || !document.body.classList.contains("detail-open") || recordKeyFromLocation() !== key) return;
+    try {
+      window.history.replaceState({ ...historyState(), [RECORD_SCROLL]: { key, top: Math.round(panel.scrollTop) } }, "", window.location.href);
+    } catch (_error) {
+      // A page opened from a file may not allow it; the record then opens at its top.
+    }
+  }
+
+  // Where Back or Forward should show the record this entry names (its remembered place), or null.
+  function rememberedRecordScroll(key) {
+    const remembered = historyState()[RECORD_SCROLL];
+    const top = Number(remembered?.top);
+    return remembered && remembered.key === key && Number.isFinite(top) && top > 0 ? { key, top } : null;
   }
 
   function syncRecordUrl(key) {
@@ -773,9 +799,14 @@
     if (url.href === window.location.href) return;
     try {
       if (key && !shown && viewFromLocation() === "browse" && typeof window.history.pushState === "function") {
-        window.history.pushState({ ...historyState(), catlogView: "browse", [RECORD_ENTRY_FROM]: window.location.hash }, "", url);
+        const { [RECORD_SCROLL]: _scroll, ...rest } = historyState();
+        window.history.pushState({ ...rest, catlogView: "browse", [RECORD_ENTRY_FROM]: window.location.hash }, "", url);
+      } else if (key) {
+        // Another record in the same entry (or new filters): the place remembered for the one before no longer applies.
+        const { [RECORD_SCROLL]: _scroll, ...rest } = historyState();
+        window.history.replaceState(RECORD_SCROLL in historyState() ? rest : window.history.state, "", url);
       } else {
-        window.history.replaceState(key ? window.history.state : historyStateWithoutRecordEntry(), "", url);
+        window.history.replaceState(historyStateWithoutRecordEntry(), "", url);
       }
     } catch (_error) {
       // A page opened from a file may not allow it; the record still opens.
@@ -888,6 +919,7 @@
     // Back to Browse keeps the filters in the address.
     if (view === "browse") url.hash = browseHash();
     if (window.location.href !== url.href) {
+      rememberRecordScroll();
       window.history.pushState({ catlogView: view }, "", url);
     }
     if (view === "browse") ensureRecordsLoaded();
@@ -7166,6 +7198,7 @@
   function closeDetailAndRestoreFocus({ resultsPending = false } = {}) {
     const selectedKey = state.selectedKey;
     const stepBack = canLeaveRecordEntry(selectedKey);
+    if (stepBack) rememberRecordScroll();
     resetDetail({ keepAddress: stepBack });
     if (stepBack) leaveRecordEntry();
     renderRows();
@@ -7182,6 +7215,9 @@
       return;
     }
     const switching = state.selectedKey !== key;
+    // The place to open this record at (Back or Forward to it); any other record opens at its top.
+    const restore = state.recordScrollToRestore?.key === key ? state.recordScrollToRestore : null;
+    state.recordScrollToRestore = null;
     state.selectedKey = key;
     syncRecordUrl(key);
     state.selectedShard = row.detail_shard || "";
@@ -7215,6 +7251,7 @@
       state.selectedDetail = detail;
       const restoreFocus = focusDetail && $("detailContent").contains(document.activeElement);
       renderDetail(summaryWithDetail(row, detail), detail);
+      if (restore && $("detailPanel")) $("detailPanel").scrollTop = restore.top;
       if (restoreFocus) focusDetailHeading(key);
       // The snapshot's record checks (when it has a file of them) arrive once; the open record is drawn again with them.
       if (recordChecksPath() && !recordChecks) {
@@ -10016,6 +10053,10 @@
       const filtering = applyLocationFilters() && state.records.length > 0;
       const recordKey = recordKeyFromLocation();
       if (recordKey && (filtering || recordKey !== state.selectedKey)) {
+        // Back or Forward to a record the visitor left by a link, a tab or ×: it opens where they left it.
+        // (The hashchange that follows a Back keeps it for the record still on its way.)
+        state.recordScrollToRestore = event?.type === "popstate" ? rememberedRecordScroll(recordKey)
+          : (state.recordScrollToRestore?.key === recordKey ? state.recordScrollToRestore : null);
         // With new filters the record opens when their results are ready (applyFilters ends by opening it), on the
         // page that shows it; looking it up now would use the previous results. The record already open counts too:
         // following its paper's link, or Back from there, shows its row on its page of the new results, not page 1.
@@ -10068,7 +10109,10 @@
         afterRecordEntryLeft(() => {
           const url = viewUrl("guide");
           url.hash = target.hash;
-          if (window.location.href !== url.href) window.history.pushState({ catlogView: "guide" }, "", url);
+          if (window.location.href !== url.href) {
+            rememberRecordScroll();
+            window.history.pushState({ catlogView: "guide" }, "", url);
+          }
           showLocationView();
           const heading = guideSectionHeading(section);
           // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
@@ -10086,6 +10130,7 @@
         // records) shows the list instead, from its first row with focus on the results. Back opens the record again.
         const fromOpenRecord = narrowDetailMedia.matches && Boolean(state.selectedKey) && Boolean(link.closest("#detailPanel"));
         if (fromOpenRecord) url.hash = hashWithoutRecord(target.hash, state.selectedKey);
+        rememberRecordScroll();
         window.history.pushState({ catlogView: "browse" }, "", url);
         showLocationView();
         if (fromOpenRecord && !document.body.classList.contains("detail-open")) {
@@ -10350,6 +10395,8 @@
       hashWithoutRecord,
       syncRecordUrl,
       canLeaveRecordEntry,
+      rememberRecordScroll,
+      rememberedRecordScroll,
       activeFilterItems,
       countFacets,
       filterControlState,

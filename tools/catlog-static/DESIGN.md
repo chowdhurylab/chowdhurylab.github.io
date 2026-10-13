@@ -226,8 +226,12 @@ record opened from there replaces that entry, so Back never steps through every
 record looked at. × and Esc step back over the entry while the list behind it is
 the one it was opened from (else, and after a reload, the address is rewritten
 in place); until that Back lands, a record opened meanwhile waits to write its
-address and a tab or link followed meanwhile waits to add its entry. A record
-opened from an address (a link, a reload) adds no entry. An address without a
+address and a tab or link followed meanwhile waits to add its entry. Leaving
+an open record by a link in it, a tab or × keeps how far it was scrolled in its
+entry's state ({key, top}), so Back or Forward to that entry opens the record
+where the visitor left it; a new entry, another record in the entry and the
+list's address drop it, and a record opened from the list or by a row starts at
+its top. A record opened from an address (a link, a reload) adds no entry. An address without a
 record closes the open one, and focus that was in the record goes back to its
 row. Focus never falls to the page body: when the page does not show the closed
 record's row (another page of the results, after its paper's link), × and Esc
