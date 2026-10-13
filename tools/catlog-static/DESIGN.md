@@ -331,10 +331,11 @@ Km, calculated by CatLog; not printed in the paper." on a record read from the
 paper and "kcat ÷ Km, calculated by CatLog." on an older one, whose source may list
 a kcat/Km of its own (often the printed one). Tooltips and the downloads keep the stored
 digits. The record's Value column follows the table's rule, except that a record
-read by CatLog shows its values to the figures the paper printed when CatLog gives
-them (value_display: 135.0 where the table shows 135), never more figures than the
-paper prints (a printed 47,000 M⁻¹ s⁻¹ reads 47, not 47.000). The Guide's Units
-section says the same.
+read by CatLog shows its values exactly as CatLog gives them, to the figures the
+paper printed and never cut to 4 (value_display: 135.0 where the table shows 135,
+1285.4 where it shows 1285), never more figures than the paper prints (a printed
+47,000 M⁻¹ s⁻¹ reads 47, not 47.000); the 4-figure rule stays for older records
+and for a kcat/Km CatLog calculated. The Guide's Units section says the same.
 Every column fits in about 1010px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
@@ -564,8 +565,8 @@ stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number.
 
 The record writes numbers like the table (a × 10ⁿ at or above 10⁵ and below
-10⁻³, the same display rule); a value CatLog gives to the figures printed keeps
-them (135.0), but never more figures than the paper prints: zeros of a printed
+10⁻³, the same display rule); a value CatLog gives to the figures printed shows
+exactly those figures (135.0, 1285.4; never rounded to 4), but never more figures than the paper prints: zeros of a printed
 integer are not figures, so "47,000 M⁻¹ s⁻¹" or "9440 µM" shows 47 or 9.44 as
 in the table, not 47.000 or 9.440; a kcat/Km calculated for an older record keeps the significant
 figures of kcat and Km. Odd records read plainly: "Unknown" EC or organism

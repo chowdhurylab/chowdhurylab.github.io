@@ -7034,17 +7034,21 @@
     return row._valueDisplays?.[field] || metricDisplay(row, field);
   }
 
-  // A value as the panel shows it (as the table does; a value CatLog gives to the figures printed keeps them).
+  // A value as the panel shows it: a value CatLog read from the paper exactly as its value_display gives it (the figures
+  // the paper prints, "1285.4" stays 1285.4); any other value by the display rule, as the table shows it (4 figures at
+  // most for an older record's value, a calculated kcat/Km to the figures of kcat and Km).
+  function panelValueFigures(row, field) {
+    return row._valueDisplays?.[field] ? 0 : displayFigures(row, field);
+  }
+
   function panelValueHtml(row, field) {
-    const own = row._valueDisplays?.[field];
-    const figures = own ? roundingFigures(own) : displayFigures(row, field);
+    const figures = panelValueFigures(row, field);
     return numberHtml(shownValueText(row, field), figures ? { figures } : undefined);
   }
 
   // The same, as text (the report email quotes the numbers the record shows).
   function panelValueText(row, field) {
-    const own = row._valueDisplays?.[field];
-    const figures = own ? roundingFigures(own) : displayFigures(row, field);
+    const figures = panelValueFigures(row, field);
     return numberText(shownValueText(row, field), figures ? { figures } : undefined);
   }
 

@@ -2287,6 +2287,36 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
   assert.match(body, /kcat 135\.0 s⁻¹; Km 0\.03 mM/);
 }
+// A value read from the paper shows its value_display exactly, never cut to 4 figures (41e7d72dfb8772a1: kcat 1285.4 ±
+// 124.7 sec⁻¹; 0245a504d4175d86: kcat/Km 621.92 ± 7.30 mM⁻¹·s⁻¹), in Values and in the report email; an older record's value
+// and a kcat/Km CatLog calculated keep the display rule.
+{
+  const v2 = row({ record_key: "five-figures", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 1285.4, kcat_display: "1285.4", km: 13.5, km_display: "13.5", kcat_over_km: 621.92, kcat_over_km_display: "621.92",
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "paper_reported" });
+  const line = (metric, raw_value, raw_unit, value_display) => ({ metric, table_label: "Table 1", raw_value, raw_unit,
+    printed: `${raw_value} ${raw_unit}`, check: "confirmed", conversion: "", value_display });
+  api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
+    proof_lines: [line("kcat", "1285.4 ± 124.7", "sec−1", "1285.4"), line("Km", "13.5 ± 2.2", "mM", "13.5"),
+      line("kcat/Km", "621.92 ± 7.30", "mM^{−1}·s^{−1}", "621.92")] });
+  const html = element("detailContent").innerHTML;
+  assert.match(html, /<span class="vt-number">1285\.4<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup><\/td>/, "kcat as the paper prints it");
+  assert.match(html, /<span class="vt-number">621\.92<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup> mM<sup>-1<\/sup><\/td>/);
+  const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  assert.match(body, /kcat 1285\.4 s⁻¹; Km 13\.5 mM; kcat\/Km 621\.92 s⁻¹ mM⁻¹/);
+  // The same digits on an older record follow the display rule.
+  const older = row({ kcat: 1285.4, kcat_display: "1285.4", kcat_unit: "s^(-1)", source_db: "brenda" });
+  assert.equal(api.panelValueHtml(older, "kcat"), "1285");
+  // A kcat/Km CatLog calculated for a record read from the paper keeps the figures of kcat and Km.
+  const calculated = row({ record_key: "calc-v2", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
+    kcat: 1285.4, kcat_display: "1285.4", km: 13.5, km_display: "13.5", kcat_over_km: 95.214814, kcat_over_km_display: "95.214814",
+    kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_origin: "calculated" });
+  api.renderDetail(calculated, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
+    proof_lines: [line("kcat", "1285.4 ± 124.7", "sec−1", "1285.4"), line("Km", "13.5 ± 2.2", "mM", "13.5")] });
+  const calcHtml = element("detailContent").innerHTML;
+  assert.match(calcHtml, /<span class="vt-number">1285\.4<\/span>/);
+  assert.match(calcHtml, /<span class="vt-number">95\.2<\/span>/, "kcat ÷ Km to 3 figures, as Km has");
+}
 // A value_display with more figures than the paper prints is not used: "47.000" from a printed "47,000 M⁻¹ s⁻¹" (a
 // thousands separator) and "9.440" from "9440 ± 780 µM" show the stored digits, as the table does; "0.0300" from a
 // printed "30.0 µM" keeps its zero.
