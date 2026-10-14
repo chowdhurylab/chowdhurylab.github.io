@@ -2378,6 +2378,7 @@ def check_filters(driver, browser, url, route_label):
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise
     return {"route": route_label, "human_checked": checked, "database_counts": database_results and database_results.get("counts"),
+            "database_stats_links": database_results and database_results.get("stats_links"),
             "passed": True}
 
 
