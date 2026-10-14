@@ -1761,10 +1761,15 @@ def check_filters(driver, browser, url, route_label):
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
         # 4. Source: the older status=v2 opens Read from the paper (source=paper), every row tagged "from
-        # paper"; a database narrows the enzyme databases, and the status cell names it.
+        # paper"; a database narrows the records not yet re-read, each tagged "not re-read" (read out in full), and the
+        # status cell names the database after it.
         def first_tags():
             return driver.execute_script(
                 "return [...document.querySelectorAll('#recordsBody tr[data-key] .state-tags > .state-tag:first-child')].map(e => e.textContent)")
+
+        def second_tags():
+            return driver.execute_script(
+                "return [...document.querySelectorAll('#recordsBody tr[data-key] .state-tags > .state-tag:nth-child(2)')].map(e => e.textContent)")
         overview = stats_overview(driver.execute_script("return window.CATLOG_STATIC_MANIFEST"))
         open_page(base + "#browse?status=v2")
         wait.until(lambda d: fragment() == "browse?source=paper")
@@ -1774,7 +1779,10 @@ def check_filters(driver, browser, url, route_label):
         assert chip_keys() == ["source:paper"]
         open_page(base + "#browse?source=skid")
         assert driver.execute_script("return document.querySelector('input[name=\"sourceMode\"][value=\"databases\"]').checked")
-        assert first_tags() and all("SKiD" in tag for tag in first_tags()), first_tags()
+        assert first_tags() and all(tag == "not re-read" for tag in first_tags()), first_tags()
+        assert len(second_tags()) == len(first_tags()) and all("SKiD" in tag for tag in second_tags()), second_tags()
+        names = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(e => e.getAttribute('aria-label'))")
+        assert all(", Not yet re-read, " in name and "not re-read" not in name for name in names), names
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
@@ -2588,6 +2596,24 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert order and order["name"] <= order["form"][0] + 1 and order["form"][1] <= order["organism"] + 1 and (
                 order["substrate"] <= order["note"] + 1), f"At 320px a card reads name, variant, organism · substrate, note: {order}"
+            # A card's tag line starts "not re-read" for a record not yet re-read; where the line is too long for the card
+            # (with human-checked at 320px), human-checked is the check after the review result, never cut by the "…".
+            if isinstance(((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted"), int):
+                set_browse_viewport(driver, browser, 320, 800)
+                open_page("#browse?source=databases&checked=1")
+                wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-tag.human-checked"))
+                marks = driver.execute_script("""
+                    const shown = (element) => !!element && element.getBoundingClientRect().width > 0;
+                    return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(badge => {
+                        const line = badge.querySelector('.state-tags'), tag = badge.querySelector('.state-tag.human-checked');
+                        const up = badge.querySelector('.state-label .state-check');
+                        return {first: line.querySelector('.state-tag').textContent, up: shown(up), tag: shown(tag),
+                                tagIn: !shown(tag) || tag.getBoundingClientRect().right <= line.getBoundingClientRect().right + 1};
+                    });
+                """)
+                assert marks and all(mark["first"] == "not re-read" and (mark["up"] != mark["tag"]) and mark["tagIn"]
+                                     for mark in marks), f"At 320px each card shows human-checked whole or as a check: {marks}"
+                results["phone-320-card-tags"] = True
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
             # whole (its text, padding and arrow), with "Sort" shown beside it.
             for width in (360, 372, 389):
@@ -2775,6 +2801,8 @@ def check_record_panel(driver, browser, url, route_label):
                     assert status_lines and all(len(lines) >= 2 for lines in status_lines), status_lines
                     if kind == "from-paper":
                         assert all(lines[1] == "from paper" for lines in status_lines), status_lines
+                    else:
+                        assert all(lines[1] == "not re-read" for lines in status_lines), status_lines
                 driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-{kind}-{label}.png"))
                 results[f"{kind}-{label}"] = True
                 ActionChains(driver).send_keys(Keys.ESCAPE).perform()

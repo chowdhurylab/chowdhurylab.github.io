@@ -1387,6 +1387,8 @@ assert.match(guideHtml, /<summary>Evidence labels on records not yet <span class
 assert.doesNotMatch(guideHtml, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read in the Guide is kept whole");
 assert.equal(api.keepReRead('Not yet re-read <a title="not yet re-read">pre-reading re-read</a>'),
   'Not yet <span class="nowrap">re-read</span> <a title="not yet re-read">pre-reading <span class="nowrap">re-read</span></a>');
+// The tag a record not yet re-read carries where one read from the paper says "from paper".
+assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>Not yet <span class="nowrap">re-read<\/span> by CatLog: /);
 assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version, an automated pipeline of AI models and code checks\.<\/dd>/);
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
@@ -2375,14 +2377,18 @@ function row(overrides = {}) {
   assert.equal(api.rowStatusLabel(row({ verification_status: "manual_review_required" })), "Not confirmed");
   assert.equal(api.rowStatusLabel(row({ verification_status: "disputed" })), "Disputed");
   assert.equal(api.rowStatusLabel(row({ verification_status: "corrected" }), { exact: true }), "Accepted");
-  // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title.
+  // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title. A record
+  // not yet re-read is tagged "not re-read" where one read from the paper says "from paper", read out in full.
   const badge = api.statusBadge(row({ verification_status: "corrected" }));
-  assert.match(badge, /aria-label="Accepted, BRENDA, corrected"/);
+  assert.match(badge, /aria-label="Accepted, Not yet re-read, BRENDA, corrected"/);
+  assert.match(badge, /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">BRENDA<\/span><span class="state-tag">corrected<\/span><\/span>/);
   assert.match(badge, /title="Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them\."/);
-  assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, BRENDA"/);
+  assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, Not yet re-read, BRENDA"/);
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
   assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
+  assert.match(paperBadge, /<span class="state-tags"><span class="state-tag">from paper<\/span><\/span>/);
+  assert.doesNotMatch(paperBadge, /not re-read|Not yet re-read/);
   assert.doesNotMatch(paperBadge, /independent|run\b|code converted/);
   assert.equal(api.reviewOutcome(prepared), "Not checked: taken from the source database as listed.");
   // An older record's review says it was the earlier automated review, and what it found.
@@ -2397,7 +2403,7 @@ function row(overrides = {}) {
     "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.");
   // An older snapshot: an accepted record without a paper is tagged; a human-checked one keeps the earlier review's title.
   assert.match(api.statusBadge(row({ verification_status: "verified", public_trust_basis: "identity_only" })),
-    /title="Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper\."[^>]*aria-label="Accepted, BRENDA, no paper linked"/);
+    /title="Accepted, but no PMID or DOI is linked, so the value cannot be traced to a paper\."[^>]*aria-label="Accepted, Not yet re-read, BRENDA, no paper linked"/);
   // The user's review rules (D1, D2), followed by an export that counts accepted_basis: a record without a paper is Not
   // checked and still tagged; a record a human reviewer approved in full may be accepted for that alone.
   {
@@ -2406,7 +2412,7 @@ function row(overrides = {}) {
       accepted_basis: [{ label: "human review", count: 1 }] } };
     const noPaper = row({ record_key: "no-paper", measurement_key: "no-paper", verification_status: "mathematically_inferred", public_trust_basis: "identity_only", source_db: "skid" });
     const badge = api.statusBadge(noPaper);
-    assert.match(badge, /aria-label="Not checked, SKiD, no paper linked"/);
+    assert.match(badge, /aria-label="Not checked, Not yet re-read, SKiD, no paper linked"/);
     assert.match(badge, /title="Not checked: the earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted\."/);
     assert.doesNotMatch(badge, /never reviewed/);
     assert.equal(api.rowStatusLabel(noPaper, { exact: true }), "Not checked", "the tag says why, not 'Not reviewed'");
@@ -3063,7 +3069,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const badge = api.statusBadge(v2Summary);
   assert.match(badge, /aria-label="Accepted, from paper"/);
   assert.match(badge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\."/);
-  assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, BRENDA, corrected"/);
+  assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, Not yet re-read, BRENDA, corrected"/);
   // A unit in CatLog's own words reads as the page writes units, whether the exponent was typed with a caret or a hyphen.
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "converted by code, printed unit read as 10^3 s-1", "corrected: unit set to 10^3 s-1")] });
@@ -3942,7 +3948,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
   assert.match(html, /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.<\/dd><\/div>/);
   assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
-  assert.match(api.statusBadge(accepted), /aria-label="Accepted, BRENDA, human-checked"/);
+  assert.match(api.statusBadge(accepted), /aria-label="Accepted, Not yet re-read, BRENDA, human-checked"/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
@@ -4307,7 +4313,8 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.state.recordsReady = true;
   assert.deepEqual([fromPaper, earlier, merged, unknown, oed].map(api.sourceTagText),
     ["from paper", "earlier extraction", "BRENDA, SABIO-RK", "source not recorded", "OED"]);
-  assert.match(api.statusBadge(oed), /<span class="state-tags"><span class="state-tag">OED<\/span><span class="state-tag">corrected<\/span><\/span>/);
+  assert.match(api.statusBadge(oed), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">OED<\/span><span class="state-tag">corrected<\/span><\/span>/);
+  assert.match(api.statusBadge(earlier), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">earlier extraction<\/span><\/span>/);
   assert.match(api.statusBadge(fromPaper), /<span class="state-tag">from paper<\/span>/);
   const keysFor = async (address) => {
     api.applyBrowseParams(new Map(new URLSearchParams(address)));

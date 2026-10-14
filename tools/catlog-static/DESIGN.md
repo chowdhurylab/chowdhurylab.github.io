@@ -402,9 +402,10 @@ Guide keep "Possible"), No unit given, Temperature questionable and No cautions.
 
 Review result cells (the column is headed "Review result", as in the Guide) align left: a dot and the review result (Accepted, Not confirmed,
 Not checked or Disputed: words that define themselves and promise no further
-work), then whole-word tags on a second line that always starts with the source: "from paper" (read by CatLog), the
+work), then whole-word tags on a second line that always starts with what happened to the record: "from paper" (read
+by CatLog), or "not re-read" (read out "Not yet re-read") followed by its source: the
 databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
-each), "earlier extraction" or "source not recorded". "no paper linked" marks a
+each), "earlier extraction" or "source not recorded". Beside an open record only that first tag stays. "no paper linked" marks a
 record without a PMID or DOI; under the user's review rules (an export that
 counts accepted_basis) such a record is Not checked, and a human-checked record
 the earlier review had not accepted is Accepted (its record says so: "Accepted on a
@@ -426,7 +427,8 @@ every enzyme name above its variant tag), then the names give way (two lines, br
 between words while they can; the full name is on hover), then they go to their
 minimums, then Review result's tags
 (the badge's accessible name and the record keep them all), and when that is not enough the
-table scrolls sideways. The table has no temperature or pH columns (the user,
+table scrolls sideways. A phone card whose tag line is too long for it (not re-read · BRENDA · corrected · human-checked
+at 320px) moves human-checked up the same way, card by card. The table has no temperature or pH columns (the user,
 2026-10-13: the rows stay about the enzyme and its values); the records of one
 paper's temperature or pH series on the page (the same enzyme, variant, EC,
 organism, substrate and source, whatever their values or review result) say

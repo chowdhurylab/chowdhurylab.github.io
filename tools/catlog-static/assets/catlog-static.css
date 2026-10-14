@@ -526,6 +526,9 @@ td.c-status { text-align:left }
 .state-check .check-icon { width:12px; height:12px; vertical-align:0 }
 :is(table.status-compact,table.measuring) #recordsBody .state-check { display:inline-flex }
 table.status-compact #recordsBody .state-tag.human-checked { display:none }
+/* A phone card whose tag line does not fit (the script sets .tags-compact) does the same. */
+#recordsBody .state-badge.tags-compact .state-check { display:inline-flex }
+#recordsBody .state-badge.tags-compact .state-tag.human-checked { display:none }
 
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-13) }
 .pagination select { width:64px }
@@ -1367,8 +1370,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    stays in view), 288px (1440 and up); the record 440px (1024-1439), 480px (1440 and up). */
 @media (max-width: 1439px) { :root { --sidebar-w:256px; --panel-w:440px } }
 
-/* A record open on desktop: EC and the arrow give way; Status stays, with its source line (from paper, BRENDA, ...)
-   and without the other tags. */
+/* A record open on desktop: EC and the arrow give way; Status stays, with the first tag of its source line (from
+   paper, not re-read) and without the other tags. */
 @media (min-width: 1024px) {
   body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }

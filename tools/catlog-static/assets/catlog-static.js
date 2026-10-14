@@ -242,6 +242,9 @@
   // earlier version is named only in help texts and the Guide's method section.
   const SOURCE_CATLOG_LABEL = "Read from the paper";
   const SOURCE_DATABASES_LABEL = "Not yet re-read";
+  // Their short tags, first on the table's tag line and the phone card's (a screen reader hears the labels).
+  const SOURCE_CATLOG_TAG = "from paper";
+  const SOURCE_DATABASES_TAG = "not re-read";
   // The source both downloads give a record read from the paper (the field names stay).
   const SOURCE_CATLOG_EXPORT = "CatLog (read from the paper)";
   // The method in one short form, said the same way in the filter, badges, Stats and the record; the Guide says it in
@@ -2001,9 +2004,10 @@
     return own ? `${result} (${own})` : result;
   }
 
-  // One badge for the table: a dot and the review result, then whole-word tags: the source (from paper, BRENDA, ...), then
-  // corrected, no paper linked, human-checked. The tag line is always present, so every badge has the same height. Its
-  // title says what the result means for this record; its accessible name is the words alone ("Accepted, from paper").
+  // One badge for the table: a dot and the review result, then whole-word tags: what happened to the record (from paper,
+  // or not re-read and its source: BRENDA, ...), then corrected, no paper linked, human-checked. The tag line is always
+  // present, so every badge has the same height. Its title says what the result means for this record; its accessible
+  // name is the words alone ("Accepted, from paper", "Accepted, Not yet re-read, BRENDA").
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isCorrected = row.verification_status === "corrected";
@@ -2034,6 +2038,7 @@
       || config.label;
     const label = rowStatusLabel(row);
     const tags = [
+      fromPaper ? "" : SOURCE_DATABASES_TAG,
       sourceTagText(row),
       isCorrected ? "corrected" : "",
       noPaper ? "no paper linked" : "",
@@ -2049,7 +2054,8 @@
     // A table short of room, or beside an open record, shows human-checked as a green check right after the review result
     // instead (the stylesheet shows one or the other), so the mark is never cut or hidden with the tags.
     const checkHtml = checked ? `<span class="state-check" role="img" aria-label="human-checked">${CHECK_ICON_HTML}</span>` : "";
-    const name = [label, ...tags, checked ? "human-checked" : ""].filter(Boolean).join(", ");
+    const name = [label, ...tags.map((tag) => (tag === SOURCE_DATABASES_TAG ? SOURCE_DATABASES_LABEL : tag)),
+      checked ? "human-checked" : ""].filter(Boolean).join(", ");
     return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}${checkHtml}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
@@ -5755,12 +5761,12 @@
     return bits;
   }
 
-  // The status cell's second line names the source: "from paper" for CatLog's own records, otherwise the databases
-  // (BRENDA, SABIO-RK, OED, ...), "earlier extraction" or "source not recorded".
+  // The status cell's second line names the source: "from paper" for CatLog's own records, otherwise (after "not re-read")
+  // the databases (BRENDA, SABIO-RK, OED, ...), "earlier extraction" or "source not recorded".
   const sourceTagByBits = new Map();
 
   function sourceTagText(row) {
-    if (isV2Row(row)) return "from paper";
+    if (isV2Row(row)) return SOURCE_CATLOG_TAG;
     const bits = rowSourceBits(row);
     let text = sourceTagByBits.get(bits);
     if (text === undefined) {
@@ -7258,7 +7264,24 @@
   // also updates the sideways-scroll cues: the sticky Enzyme column, the edge shadows and the scroll buttons.
   function fitTableColumns() {
     fitColumnWidths();
+    fitCardTags();
     updateTableScrollControls();
+  }
+
+  // Phone cards: a tag line too long for its card ("not re-read · BRENDA, SABIO-RK · corrected · human-checked" at
+  // 320px) shows human-checked as the green check after the review result, as a table short of room does, so the line's
+  // "…" never cuts it. Every card is measured with its tag first, then the classes are set (one layout pass).
+  function fitCardTags() {
+    const table = $("recordTableWrap")?.querySelector?.("table");
+    const colgroup = table?.querySelector?.("colgroup");
+    if (!table || !colgroup || typeof window.getComputedStyle !== "function") return;
+    const badges = [...table.querySelectorAll("#recordsBody .state-badge")];
+    badges.forEach((badge) => badge.classList.remove("tags-compact"));
+    if (window.getComputedStyle(colgroup).display !== "none") return;
+    badges.filter((badge) => {
+      const tags = badge.querySelector(".state-tags");
+      return badge.querySelector(".state-tag.human-checked") && tags && tags.scrollWidth > tags.clientWidth + 1;
+    }).forEach((badge) => badge.classList.add("tags-compact"));
   }
 
   function fitColumnWidths() {
