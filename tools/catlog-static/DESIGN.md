@@ -726,63 +726,90 @@ found at once: A, B, G, C, D, E, F, H.
   printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
   “(2.2 ± 0.1) x 10-2”"), "+/-" reads ±, "PubMed XML abstract PMID n" reads
   "Abstract" and "ScienceDirect HTML Table 1" "Table 1".
-- G. Against the databases (only when there is something to say), laid out like
-  the record's other lists so it wraps at any width (no table): for a record read
-  from the paper, one item per value, the parameter in the label column, then its
-  value and unit, its result (a 10px square in its comparison colour:
-  `--cmp-same`, `--cmp-differs`, `--cmp-new`, `--chg-magnitude` for a database
-  CatLog corrects by a unit or a power of ten, `--cmp-differs` for any other
-  correction, `--bar-neutral` for the same number under another label, beside
-  its word, the name Browse's option has: "Same number", "Different number",
-  "Not in any database", "Corrects a value" (CatLog's "corrected" status: one
-  database value, never the database as a whole), and "Same number, other label"
-  (the reviews' own term for the same number under another substrate, organism
-  or form label; the line says which), "Not compared"), then the snapshot's line as given ("BRENDA lists 1,300 mM, 1,000×
-  higher. The paper prints 1.3 ± 0.10 mM (Table 2). Checked against the paper:
-  µM entered as mM."), the cause in words when the line does not already say
-  it ("Checked against the paper: a µM value entered as mM"; a cause code with
-  no wording is left out, never shown as the raw code), and where the paper
-  prints the value ("In the paper: Table 2, row ..."; a local path never); the
-  databases a value's database_sources name only when there is no line. A line
-  that starts with the result word ("same number in BRENDA, SABIO-RK") stands in
-  the word's place, so the result is said once; a kcat/Km CatLog calculated gets
-  a "Calculated; not compared" item once other values have items; a paper-level
-  note above as plain section text (CatLog's sentence, not a quote), and
-  "Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for
-  the same paper. A different number can mean a different measurement." under
-  it. When Browse has the "Against the databases" filter group (options named
-  database; address #browse?db=...), a last line links each option the record
-  matches to the records like it, by the option's name: "More records like this:
-  Corrects a value · Not in the databases" (corrects: a value corrected;
-  differs: a different number whose cause is not yet known; other_label: the
-  same number under another label; all_same: every compared value the same
-  number; not_listed: a value no database lists; all_not_listed: no value in any
-  database, said instead of not_listed; earlier: an earlier corrected record), each keeping the record open
-  beside the list as its paper's link does (#browse?db=corrects&record=<key>;
-  up to 1023px it shows the list instead, as that link does); an option the page does not
-  have gets no link, and neither does one Browse cannot filter by: the record
-  index must carry the comparison (database_summary; without it db= is not read
-  and the link would open Browse unfiltered) and the record's own row in it must
-  match the option, so the list the link opens holds the record. An earlier corrected record with its correction trail: one item per
-  changed field, "66 mM → **0.066 mM**" with the kind of change ("unit or
-  magnitude (÷ 1000)" with the factor kept on one line, "more digits /
-  rounding", "different number", "added: the source had none", "removed",
-  "replaced"), "Before: as in OED for this paper" or "Before: the earlier version's value
-  before the correction" (nothing for an added value's "none"), "In the paper: <where>"; then
-  pH, temperature (in °C), identifiers as text, as given, never written as
-  numbers ("UniProt P00325 → P00326", "PMID 21149620 → 21149602", not
-  "2.114962 × 10⁷"; only Vmax and pH are numbers), units as the record's
+- G. Against the databases (only when there is something to say; round 9 brief,
+  section 4). For a record read from the paper, in this order: the paper's note
+  (database_note: one database lists its values at one factor throughout) in a
+  box (`--surface-2`, 1px `--line`, 13px), "Across this paper:" and the note as
+  given, then a link to those values: "Show these 12 values →" (q=pmid:<PMID>
+  or doi:<DOI>, db=corrects, dbsrc, dbpar, from the manifest's
+  summary.database_comparison.database_notes, once Browse matches dbsrc and
+  dbpar; several notes name their parameter, and their database when they
+  differ), else "Records of this paper that correct a value →" (q and
+  db=corrects). Then each value a database lists with the same number, in one
+  13px line with a green square, values whose lines read the same sharing it
+  ("kcat and Km: Same as BRENDA and OED."; the line whole, or "Same as <the
+  value's database_sources>." without one), and a kcat/Km CatLog calculated
+  ("kcat/Km: calculated by CatLog; not compared.", outlined square), once other
+  values are compared. Then one folding note (`<details>`) per value that is not
+  the same; its summary (13px, wraps): the parameter · which databases list
+  what, from database_sources and the result only ("BRENDA and STRENDA DB list
+  another number" for a correction or a different number, "SABIO-RK lists this
+  number" for the same number under another label, nothing for a value no
+  database lists), then the result's 10px square and word, the name Browse's
+  option and chip have: "Corrects a value" (`--chg-magnitude`, whatever the
+  cause), "Different number" (`--cmp-differs`), "Same, other label"
+  (`--bar-neutral`), "Not in the databases" (`--cmp-new`). Its body: the
+  snapshot's line whole (never parsed for reasons, factors, numbers or
+  databases), then a definition list (112px labels, 96px on phones, one column
+  up to 400px) with rows that have content: Cause (database_cause in words,
+  including the code-found power_of_ten "off by an exact power of ten",
+  printed_number_unit_not_applied "the printed number taken in another unit",
+  time_factor "off by exactly 60 or 3,600"; left out when the line already says
+  what the check against the paper found; a code with no wording never shown)
+  and In the paper (database_evidence; a local path never). A note with an
+  empty body is a plain line. Notes on a correction or a different number are
+  open: every one from 641px, only the first on a phone; others closed; nothing
+  is remembered. Display names come from the manifest
+  (summary.database_comparison.sources: key, name, display, in order; STRENDA
+  reads "STRENDA DB"), else the five in the code. Then a 12px footer: "Compared
+  with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same
+  paper. A different number can mean a different measurement; it does not by
+  itself mean a database is wrong." (names from the manifest; never a counted
+  "five"), and "More like this:" links, each keeping the record open beside the
+  list as its paper's link does (#browse?db=corrects&record=<key>; up to
+  1023px it shows the list instead): each Browse option the record matches
+  (corrects, differs, other_label, not_listed or, when every value is not
+  listed, its nested all_not_listed, all_same, earlier), by the option's chip;
+  an option the page does not have gets no link, and neither does one Browse
+  cannot filter by (the record index must carry the comparison and the record's
+  own row in it must match the option); once Browse matches dbsrc and dbpar,
+  each database of the record's strongest result for that parameter ("BRENDA",
+  titled "Corrects a value · Database: BRENDA · Compared value: kcat"); and "All
+  records of this paper" (#browse?q=pmid:<PMID>) unless it is the paper's only
+  record. Under the Values table (section B), a value that corrects or differs
+  gets one 12px line in words, "kcat/Km: BRENDA and OED list another number.
+  See Against the databases ↓" (no square beside CatLog's number), whose button
+  opens that value's note, scrolls it to the middle and focuses it.
+  An earlier corrected record (not yet re-read) with its correction trail: the
+  intro "CatLog's earlier version changed these values to what the paper
+  prints. CatLog has not read this paper again yet.", then one item per changed
+  field, "66 mM → **0.066 mM**" with the kind of change ("unit or magnitude",
+  "more digits / rounding", "different number", "added: the source had none",
+  "removed", "replaced"), "Before: as BRENDA lists it for this paper" or
+  "Before: the earlier version's value" (nothing for an added value's "none"),
+  with the factor between them for a unit, magnitude or different number
+  ("(1,000× higher)": before ÷ after); numbers at most 4 significant figures
+  (0.546667 reads 0.5467; integer digits below 10⁵ kept, 19230.8 reads 19231;
+  more figures when Before and After would read the same, 2.667 → 2.6667), a
+  rounded number's stored digits in its title ("As stored: 0.546667"); "In the
+  paper: <where>" under each item, or once under the list when every item
+  shares it; then pH, temperature (in °C), identifiers as text, as given, never
+  written as numbers ("UniProt P00325 → P00326", "PMID 21149620 → 21149602",
+  not "2.114962 × 10⁷"; only Vmax and pH are numbers), units as the record's
   units read ("kcat unit s⁻¹ → min⁻¹", never "s^(-1)"; uM as µM) and a
   replaced sequence or SMILES ("Replaced", not repeated); a field whose value
   did not change is not listed, and two stored copies of one field that read the
   same (sequence and canonical_sequence, uniprot_id and primary_uniprot_id: same
-  name, same before → after) are one item; one closing note, "Changed in the earlier
-  automated review to what the paper prints." (and "More records like this:
-  Corrected earlier" when Browse has that option). A corrected record without its
-  trail says so in its Review result line ("this snapshot does not list the
-  changes"; the earlier version's files keep them) and has no section G. Any other
-  record has no section G: a heading that compares nothing is never shown.
-  Colour is never the only carrier: the word or phrase is always printed.
+  name, same before → after) are one item; then "More like this: Corrected
+  earlier" when Browse has that option. A corrected record without its trail
+  says so in its Review result line ("this snapshot does not list the
+  changes"; the earlier version's files keep them) and has no section G. Any
+  other record has no section G: a heading that compares nothing is never
+  shown. Colour is never the only carrier: the word or phrase is always printed.
+  Factors anywhere in the comparison (x = the database's number ÷ CatLog's):
+  exact powers of ten "10×", "100×", "1,000×", "10⁶×", 60 or 3,600 "60×" /
+  "3,600×", any other at two figures ("4.5×", "960×"), then "higher" (x > 1) or
+  "lower".
 - H. Review and audit: Review result in one sentence ("Accepted: read from the paper
   by CatLog.", or the earlier automated review's result with "How the earlier
   review worked →"); for a database record the earlier review did not settle
