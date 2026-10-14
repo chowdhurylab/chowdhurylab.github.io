@@ -3611,8 +3611,10 @@ def check_record_panel(driver, browser, url, route_label):
 # Section G's records in the test snapshot of 2026-10-13 (each check is skipped when a snapshot does not have it): an
 # orotidine 5'-monophosphate decarboxylase variant (PMID 24958125) whose kcat and Km correct OED's numbers and whose
 # kcat/Km no database lists; a glutamate racemase (PMID 19552402) with the paper's note on BRENDA; an earlier
-# methylglyoxal synthase record (PMID 23261063) whose kcat/Km the earlier version changed from 0.546667 to 0.544.
+# methylglyoxal synthase record (PMID 23261063) whose kcat/Km the earlier version changed from 0.546667 to 0.544; a
+# record (PMID 24358164) whose kcat/Km no compared database lists, next to a Km that differs.
 DATABASE_NOTES_RECORD = "97138dce57908fb0"
+DATABASE_NOT_LISTED_RECORD = "8090b6354d18037c"
 DATABASE_PAPER_NOTE_RECORD = "d93a98fb48b46766"
 EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
 DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases")
@@ -3635,9 +3637,32 @@ DATABASE_SECTION_STATE = """
         stored: [...section.querySelectorAll('.cmp-value [title]')].map(e => [strip(e.textContent), e.getAttribute('title')]),
         before: [...section.querySelectorAll('.cmp-before')].map(e => strip(e.textContent)),
         text: strip(section.innerText),
+        all: strip(section.textContent).replace(/\\s+/g, ' '),
         sideways: panel.scrollWidth - panel.clientWidth,
     };
 """
+# A snapshot whose lines predate the round 9 brief's C9 (the 2026-10-13 test bundle says "None of the five databases" and
+# "STRENDA"): set to 1 for such a test bundle only, and the check lists what it found instead of failing. Never in CI.
+PRE_C9_LINES = os.environ.get("CATLOG_CHECK_PRE_C9_LINES") == "1"
+
+
+def database_names_problems(state):
+    """How section G names the databases, against its footer (the snapshot's list of compared databases, by their display
+    names), over the whole section with its closed notes: no count of them in words ("None of the five databases": the
+    lines say "the compared databases", round 9 brief C9) and every database named as the footer names it ("STRENDA
+    DB", never "STRENDA" alone)."""
+    text = state["all"]
+    problems = []
+    counted = re.search(r"\b(?:two|three|four|five|six|seven|eight|nine|ten)\s+(?:compared\s+|core\s+)?databases\b", text, re.I)
+    if counted:
+        problems.append(f"counts the databases: {counted.group(0)!r}")
+    match = re.match(r"Compared with the values (.+?) lists? for the same paper\.", state["footer"])
+    assert match, state["footer"]
+    for name in re.split(r", | and ", match.group(1)):
+        first, _, rest = name.partition(" ")
+        if rest and re.search(rf"\b{re.escape(first)}\b(?! {re.escape(rest)})", text):
+            problems.append(f"names {first} without {rest!r} (the footer: {name})")
+    return problems
 
 
 def check_record_databases(driver, browser, base, wait):
@@ -3645,8 +3670,9 @@ def check_record_databases(driver, browser, base, wait):
     the result's word in its summary; notes on a correction or a different number open (every one from 641px, only the
     first on a phone); one line under the Values table for each of those values, whose button opens its note in view;
     the compared databases and the caption under them; the paper's note in a box with its link into Browse; an earlier
-    record's intro, numbers to at most 4 figures (the stored digits in the title) and Before line. No record scrolls
-    sideways. Skipped where the snapshot does not have the record."""
+    record's intro, numbers to at most 4 figures (the stored digits in the title) and Before line; the lines (a value no
+    database lists too) name the databases as the footer does, never counted in words. No record scrolls sideways.
+    Skipped where the snapshot does not have the record."""
     results = {}
 
     def open_record(key):
@@ -3655,6 +3681,17 @@ def check_record_databases(driver, browser, base, wait):
         wait.until(lambda d: d.execute_script(
             "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
         return bool(driver.find_elements(By.CSS_SELECTOR, "#detailContent .databases-section"))
+
+    def check_database_names(state, key):
+        problems = database_names_problems(state)
+        if problems and PRE_C9_LINES:
+            results.setdefault("databases-names-pre-c9", {})[key] = problems
+            return "waived (lines before C9)"
+        assert not problems, (f"Record {key}: Against the databases names the databases unlike its footer: {problems}. The "
+                              "snapshot's database_line predates C9 (catlog-v2 tools/site_release.py: 'None of the compared "
+                              "databases', display names such as STRENDA DB); publish this section only with C9. For a pre-C9 "
+                              "test bundle only, CATLOG_CHECK_PRE_C9_LINES=1 lists this instead of failing.")
+        return True
 
     sizes = [("desktop", 1440, 1000)] + ([("phone-390", 390, 844), ("phone-320", 320, 800)] if browser == "chrome" else [])
     for label, width, height in sizes:
@@ -3676,6 +3713,8 @@ def check_record_databases(driver, browser, base, wait):
             assert state["footer"].startswith("Compared with the values ") and state["footer"].endswith(DATABASE_CAPTION_END), state["footer"]
             assert not re.search(r"\bfive\b|Not in any database|Same number, other label|Adds a value", state["text"]), state["text"]
             assert state["sideways"] <= 1, f"Against the databases scrolls sideways at {width}px: {state['sideways']}"
+            if label == "desktop":
+                check_database_names(state, DATABASE_NOTES_RECORD)
             # A pointer's button opens its note (a closed one where there is one) in view, its summary focused.
             closed = [note["field"] for note in changed if not note["open"]]
             target = (closed or state["pointers"])[0]
@@ -3692,6 +3731,11 @@ def check_record_databases(driver, browser, base, wait):
             assert driver.execute_script("const p = document.getElementById('detailPanel'); return p.scrollWidth - p.clientWidth") <= 1
             driver.save_screenshot(str(OUTPUT / f"{browser}-record-databases-{label}.png"))
             results[f"databases-notes-{label}"] = True
+        if label == "desktop" and open_record(DATABASE_NOT_LISTED_RECORD):
+            # A value no compared database lists: its note's line (closed) names the databases as the footer does.
+            state = driver.execute_script(DATABASE_SECTION_STATE)
+            assert "Not in the databases" in [note["word"] for note in state["notes"]], state["notes"]
+            results["databases-not-listed-names"] = check_database_names(state, DATABASE_NOT_LISTED_RECORD)
         if open_record(DATABASE_PAPER_NOTE_RECORD):
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert state["box"].startswith("Across this paper: "), state["box"]

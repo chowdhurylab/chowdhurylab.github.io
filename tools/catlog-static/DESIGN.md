@@ -750,7 +750,10 @@ found at once: A, B, G, C, D, E, F, H.
   cause), "Different number" (`--cmp-differs`), "Same, other label"
   (`--bar-neutral`), "Not in the databases" (`--cmp-new`). Its body: the
   snapshot's line whole (never parsed for reasons, factors, numbers or
-  databases), then a definition list (112px labels, 96px on phones, one column
+  databases; so the lines must name the databases as the footer does, "None of
+  the compared databases" and "STRENDA DB", round 9 brief C9 on the CatLog
+  side: the browser check reads every note, closed ones too, and fails on a
+  count in words or a name the footer spells otherwise), then a definition list (112px labels, 96px on phones, one column
   up to 400px) with rows that have content: Cause (database_cause in words,
   including the code-found power_of_ten "off by an exact power of ten",
   printed_number_unit_not_applied "the printed number taken in another unit",
