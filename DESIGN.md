@@ -129,7 +129,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   - Each value against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above);
     shares under the bars; a segment with a filter opens Browse when clicked; data line: calculated kcat/Km not
-    compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`).
+    compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
+    kcat/Km it calculated or under another parameter named apart.
   - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Beside it,
     the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per

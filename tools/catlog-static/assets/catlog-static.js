@@ -5088,6 +5088,27 @@
     });
   }
 
+  // The numbers the databases list for these papers that match no value CatLog read from them (not_reproduced.distinct:
+  // each paper, parameter and number counted once, by the first reason that applies). Two reasons are numbers CatLog
+  // does have, as a kcat/Km it calculated or under another parameter: they are named apart, never counted as numbers
+  // CatLog does not have.
+  const STATS_NOT_REPRODUCED_HELD = [
+    ["equals_catlog_calculated_ratio", "that equals a kcat/Km CatLog calculated", "that equal a kcat/Km CatLog calculated"],
+    ["another_parameter_in_catlog", "that CatLog has under another parameter", "that CatLog has under another parameter"],
+  ];
+
+  function statsNotReproducedText(comparison) {
+    const counts = statsCountMap(comparison?.not_reproduced?.distinct);
+    if (!counts) return "";
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const held = STATS_NOT_REPRODUCED_HELD.map(([code, one, many]) => [counts[code] || 0, one, many]);
+    const missing = total - held.reduce((sum, [count]) => sum + count, 0);
+    const parts = [[missing, "that CatLog does not have", "that CatLog does not have"], ...held].filter(([count]) => count > 0);
+    if (!parts.length) return "";
+    const clauses = parts.map(([count, one, many], index) => `${formatInteger(count)}${index ? "" : ` ${count === 1 ? "number" : "numbers"} for these papers`} ${count === 1 ? one : many}`);
+    return `The databases also list ${statsListText(clauses)}; the README gives the reasons.`;
+  }
+
   // Figure: each value against the databases, a 100% bar per parameter and for all values; the thin results (corrects,
   // differs) have their counts right of the bar, each linking into Browse for that parameter.
   function statsDatabaseValuesFigure(comparison, values, sources) {
@@ -5112,11 +5133,9 @@
     ];
     // The thin counts' column: both counts, their swatches and gaps (the value labels are 12px).
     const chars = Math.max(...rows.map((row) => thin.reduce((total, result) => total + formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length, 0)));
-    const notReproduced = statsCountMap(comparison.not_reproduced?.distinct);
-    const elsewhere = notReproduced ? Object.values(notReproduced).reduce((total, count) => total + count, 0) : 0;
     const notes = [
       values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "",
-      elsewhere ? `The databases also list ${formatInteger(elsewhere)} ${elsewhere === 1 ? "number" : "numbers"} for these papers that CatLog does not have; the README gives the reasons.` : "",
+      statsNotReproducedText(comparison),
     ].filter(Boolean).join(" ");
     const names = statsListText(sources.map((source) => source.display));
     return {
@@ -12447,6 +12466,7 @@
       statsCohortData,
       statsOverview,
       statsBrowseHref,
+      statsNotReproducedText,
       statsValueRange,
       statsValueAxis,
       statsDecadeTicks,
