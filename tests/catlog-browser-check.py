@@ -3443,10 +3443,122 @@ def check_record_panel(driver, browser, url, route_label):
         wait.until(lambda d: d.execute_script(row_in_view))
         results["record-link-row-in-view"] = True
         results.update(check_record_marks_and_paper_link(driver, browser, base, wait))
+        results.update(check_record_databases(driver, browser, base, wait))
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))
         raise
     return {"route": route_label, "checked": results, "passed": True}
+
+
+# Section G's records in the test snapshot of 2026-10-13 (each check is skipped when a snapshot does not have it): an
+# orotidine 5'-monophosphate decarboxylase variant (PMID 24958125) whose kcat and Km correct OED's numbers and whose
+# kcat/Km no database lists; a glutamate racemase (PMID 19552402) with the paper's note on BRENDA; an earlier
+# methylglyoxal synthase record (PMID 23261063) whose kcat/Km the earlier version changed from 0.546667 to 0.544.
+DATABASE_NOTES_RECORD = "97138dce57908fb0"
+DATABASE_PAPER_NOTE_RECORD = "d93a98fb48b46766"
+EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
+DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases")
+DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
+EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints. CatLog has not read this paper again yet."
+DATABASE_SECTION_STATE = """
+    const strip = (text) => (text || '').trim();
+    const section = document.querySelector('#detailContent .databases-section');
+    const panel = document.getElementById('detailPanel');
+    return {
+        order: [...document.querySelectorAll('#detailContent .detail-section > h3')].map(h => strip(h.textContent)),
+        notes: [...section.querySelectorAll('.cmp-note')].map(note => ({field: note.dataset.cmpField, details: note.tagName === 'DETAILS',
+            open: note.tagName === 'DETAILS' ? note.open : null, word: strip(note.querySelector('.cmp-result strong')?.textContent)})),
+        pointers: [...document.querySelectorAll('#detailContent .values-section .cmp-pointer-link')].map(button => button.dataset.showNote),
+        pointerLines: [...document.querySelectorAll('#detailContent .values-section .cmp-pointer')].map(line => strip(line.innerText)),
+        footer: strip(section.querySelector('.cmp-footer')?.textContent),
+        box: strip(section.querySelector('.cmp-paper-note')?.innerText),
+        boxLink: section.querySelector('.cmp-paper-note a')?.getAttribute('href') || null,
+        intro: strip(section.querySelector('.cmp-intro')?.textContent),
+        stored: [...section.querySelectorAll('.cmp-value [title]')].map(e => [strip(e.textContent), e.getAttribute('title')]),
+        before: [...section.querySelectorAll('.cmp-before')].map(e => strip(e.textContent)),
+        text: strip(section.innerText),
+        sideways: panel.scrollWidth - panel.clientWidth,
+    };
+"""
+
+
+def check_record_databases(driver, browser, base, wait):
+    """Section G, Against the databases (round 9 brief, section 4): a folding note for each value that is not the same,
+    the result's word in its summary; notes on a correction or a different number open (every one from 641px, only the
+    first on a phone); one line under the Values table for each of those values, whose button opens its note in view;
+    the compared databases and the caption under them; the paper's note in a box with its link into Browse; an earlier
+    record's intro, numbers to at most 4 figures (the stored digits in the title) and Before line. No record scrolls
+    sideways. Skipped where the snapshot does not have the record."""
+    results = {}
+
+    def open_record(key):
+        driver.get("about:blank")
+        driver.get(base + f"#record={key}")
+        wait.until(lambda d: d.execute_script(
+            "return Boolean(document.querySelector('#detailContent .values-section') || document.querySelector('#recordsBody .empty-notice'))"))
+        return bool(driver.find_elements(By.CSS_SELECTOR, "#detailContent .databases-section"))
+
+    sizes = [("desktop", 1440, 1000)] + ([("phone-390", 390, 844), ("phone-320", 320, 800)] if browser == "chrome" else [])
+    for label, width, height in sizes:
+        set_browse_viewport(driver, browser, width, height)
+        if open_record(DATABASE_NOTES_RECORD):
+            state = driver.execute_script(DATABASE_SECTION_STATE)
+            assert state["order"][:2] == ["Values", "Against the databases"], state["order"]
+            assert state["notes"] and all(note["word"] in DATABASE_RESULT_WORDS for note in state["notes"]), state["notes"]
+            changed = [note for note in state["notes"] if note["word"] in ("Corrects a value", "Different number")]
+            assert changed and all(note["details"] for note in changed), state["notes"]
+            # Notes on a correction or a different number are open: every one from 641px, only the first on a phone.
+            expected = [width >= 641 or index == 0 for index, _ in enumerate(changed)]
+            assert [note["open"] for note in changed] == expected, f"Open notes at {width}px: {state['notes']}"
+            assert not any(note["open"] for note in state["notes"] if note not in changed), state["notes"]
+            # One line under the Values table for each of them, in words.
+            assert state["pointers"] == [note["field"] for note in changed], (state["pointers"], state["notes"])
+            assert all(line.endswith("list another number. See Against the databases ↓") or line.endswith("lists another number. See Against the databases ↓")
+                       for line in state["pointerLines"]), state["pointerLines"]
+            assert state["footer"].startswith("Compared with the values ") and state["footer"].endswith(DATABASE_CAPTION_END), state["footer"]
+            assert not re.search(r"\bfive\b|Not in any database|Same number, other label|Adds a value", state["text"]), state["text"]
+            assert state["sideways"] <= 1, f"Against the databases scrolls sideways at {width}px: {state['sideways']}"
+            # A pointer's button opens its note (a closed one where there is one) in view, its summary focused.
+            closed = [note["field"] for note in changed if not note["open"]]
+            target = (closed or state["pointers"])[0]
+            button = driver.find_element(By.CSS_SELECTOR, f'#detailContent .cmp-pointer-link[data-show-note="{target}"]')
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", button)
+            button.click()
+            wait.until(lambda d: d.execute_script("""
+                const note = document.querySelector(`#detailContent .cmp-note[data-cmp-field="${arguments[0]}"]`);
+                const panel = document.getElementById('detailPanel').getBoundingClientRect();
+                const box = note.querySelector('summary').getBoundingClientRect();
+                return note.open && box.top >= panel.top - 1 && box.bottom <= Math.min(panel.bottom, innerHeight) + 1
+                    && document.activeElement === note.querySelector('summary');
+            """, target))
+            assert driver.execute_script("const p = document.getElementById('detailPanel'); return p.scrollWidth - p.clientWidth") <= 1
+            driver.save_screenshot(str(OUTPUT / f"{browser}-record-databases-{label}.png"))
+            results[f"databases-notes-{label}"] = True
+        if open_record(DATABASE_PAPER_NOTE_RECORD):
+            state = driver.execute_script(DATABASE_SECTION_STATE)
+            assert state["box"].startswith("Across this paper: "), state["box"]
+            assert state["sideways"] <= 1, f"The paper's note scrolls sideways at {width}px"
+            if state["boxLink"]:
+                # The records of this paper that correct a value, in Browse.
+                assert "db=corrects" in state["boxLink"] and re.search(r"q=(?:pmid|doi):", state["boxLink"]), state["boxLink"]
+                if label == "desktop":
+                    link = driver.find_element(By.CSS_SELECTOR, "#detailContent .cmp-paper-note a")
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
+                    link.click()
+                    wait.until(lambda d: "db=corrects" in d.execute_script("return location.hash")
+                               and d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
+                               and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+                    results["databases-paper-note-link"] = True
+            results[f"databases-paper-note-{label}"] = True
+        if open_record(EARLIER_CORRECTIONS_RECORD):
+            state = driver.execute_script(DATABASE_SECTION_STATE)
+            assert state["intro"] == EARLIER_CORRECTIONS_INTRO, state["intro"]
+            assert ["0.5467 mM⁻¹ s⁻¹", "As stored: 0.546667"] in state["stored"], state["stored"]
+            assert "Before: as BRENDA lists it for this paper" in state["before"], state["before"]
+            assert state["sideways"] <= 1, f"The earlier corrections scroll sideways at {width}px"
+            results[f"databases-earlier-{label}"] = True
+    set_browse_viewport(driver, browser, 1440, 1000)
+    return results
 
 
 def check_record_marks_and_paper_link(driver, browser, base, wait):

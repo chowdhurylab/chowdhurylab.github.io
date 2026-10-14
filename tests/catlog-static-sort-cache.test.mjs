@@ -4045,9 +4045,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       const correctedRecord = row({ record_key: "corrected-explore", verification_status: "corrected", source_db: "oed" });
       const trail = { supporting_pmids: ["1"], corrections: [{ field: "km", before: 66, after: 0.066, unit: "mM", kind: "magnitude" }] };
       indexRow("corrected-explore", 32);
-      assert.match(explore(render(correctedRecord, trail)), /^More like this: <a href="#browse\?db=earlier&amp;record=corrected-explore">Corrected earlier<\/a>/);
+      // (Its Paper section links the paper's records.)
+      assert.equal(explore(render(correctedRecord, trail)), 'More like this: <a href="#browse?db=earlier&amp;record=corrected-explore">Corrected earlier</a>');
       indexRow("corrected-explore", 0);
-      assert.doesNotMatch(explore(render(correctedRecord, trail)), /db=earlier/, "an index without the earlier changes: no link");
+      assert.equal(explore(render(correctedRecord, trail)), "", "an index without the earlier changes: no link");
       delete runtimeManifest.viewer_index.optional_fields;
       indexRow("corrected-explore", 32);
       assert.doesNotMatch(explore(render(correctedRecord, trail)), /db=/);

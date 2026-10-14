@@ -11040,8 +11040,9 @@
   // lists it for this paper" when a database lists the earlier number, else "Before: the earlier version's value", with
   // the factor between them for a unit, magnitude or different number; where the paper prints the value, said once under
   // the list when every item shares it. A field whose number did not change is not listed, nor a second copy of a field
-  // that reads the same (mergeCorrectionCopies).
-  function earlierCorrectionsHtml(items, recordKey, paperRef) {
+  // that reads the same (mergeCorrectionCopies). More like this: Corrected earlier (the Paper section links the paper's
+  // records).
+  function earlierCorrectionsHtml(items, recordKey) {
     let valueItems = [];
     let otherItems = [];
     items.forEach((item) => {
@@ -11097,7 +11098,7 @@
     return `<p class="section-text cmp-intro">${escapeHtml(EARLIER_CORRECTIONS_INTRO)}</p>`
       + kvList(rows, "cmp-list")
       + (sharedWhere ? `<p class="cmp-where-once">In the paper: ${caretHtml(escapePublic(sharedWhere))}</p>` : "")
-      + databaseMoreLinksHtml(new Set(["earlier"]), [], recordKey, paperRef);
+      + databaseMoreLinksHtml(new Set(["earlier"]), [], recordKey, null);
   }
 
   // The section shows only with a comparison to give: a record read from the paper whose values were compared, or an
@@ -11110,7 +11111,7 @@
     if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check, paperRef);
     else {
       const corrections = correctionItems(detail, check);
-      if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key, paperRef);
+      if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
     }
     return body ? detailSection("databases", "Against the databases", body) : "";
   }
