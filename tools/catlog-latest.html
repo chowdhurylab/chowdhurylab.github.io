@@ -347,6 +347,7 @@
               <li><a href="#guide-find">Find records</a></li>
               <li><a href="#guide-record">Read a record</a></li>
               <li><a href="#guide-status">Review result</a></li>
+              <li data-guide-database-section hidden><a href="#guide-databases">Against the databases</a></li>
               <li><a href="#guide-units">Units</a></li>
               <li><a href="#guide-downloads">Downloads</a></li>
               <li><a href="#guide-caveats">Before you use the values</a></li>
@@ -372,7 +373,7 @@
             <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
-              <div><dt>Filters</dt><dd>Source (read from the paper or not yet <span class="nowrap">re-read</span>, and the databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds the records whose values CatLog corrected against an enzyme database, those that differ from one (not yet resolved), the same, or values no database lists for the paper.</span></dd></div>
+              <div><dt>Filters</dt><dd>Source (read from the paper or not yet <span class="nowrap">re-read</span>, and the databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare with the numbers the enzyme databases list for the same paper (see <a href="#guide-databases">Against the databases</a>).</span></dd></div>
               <div><dt>Sort</dt><dd>By review result (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
               <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record: the address adds <code>record=</code> and the record ID to the filters.</dd></div>
             </dl>
@@ -390,7 +391,7 @@
             <dl class="guide-term-list">
               <div><dt>Header</dt><dd>The enzyme name; EC number, organism and form (wild type or the variant); the substrate; the status line, the review result and its tags, for example <em>Accepted &middot; read from the paper &middot; human-checked</em>; and the record ID with <em>Copy link</em>. The arrows &lsaquo; and &rsaquo; beside &times; open the previous or next record in the results.</dd></div>
               <div><dt>Values</dt><dd>Each value in catalog units with its unit and any caution. A record read by CatLog also gives each number as printed in the paper and where it is printed. A green check after a value means a human reviewer approved it; a value whose caution questions its unit or size carries none, nor does a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> CatLog calculated (calc.).</dd></div>
-              <div data-guide-databases hidden><dt>Against the databases</dt><dd>How each value compares with the numbers the enzyme databases list for the same paper (same, corrected, different or not listed, and where the paper prints it), or what an earlier review changed, before and after.</dd></div>
+              <div data-guide-databases hidden><dt>Against the databases</dt><dd>How each value compares with the numbers the enzyme databases list for the same paper: its result, why a database&rsquo;s number differs and where the paper prints the value; on a record not yet <span class="nowrap">re-read</span>, what the earlier review changed, before and after (see <a href="#guide-databases">Against the databases</a>).</dd></div>
               <div><dt>Source</dt><dd>Where the values come from, where the enzyme name comes from, which databases a merged record combines, how the values were read and checked, the license and the snapshot&rsquo;s data ID.</dd></div>
               <div><dt>Conditions</dt><dd>Temperature, pH, the other assay conditions, cosubstrate and preparation.</dd></div>
               <div><dt>Protein and substrate</dt><dd>Wild type or variant, UniProt accession, protein sequence, substrate and SMILES, where CatLog has them.</dd></div>
@@ -512,6 +513,11 @@
             </details>
           </section>
 
+          <section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>
+            <h2 id="guide-databases-title">Against the databases</h2>
+            <div id="guideDatabasesBody"></div>
+          </section>
+
           <section class="guide-section" id="guide-units" aria-labelledby="guide-units-title">
             <h2 id="guide-units-title">Units</h2>
             <dl class="guide-term-list">
@@ -598,7 +604,7 @@
             <h2 id="guide-questions-title">Questions</h2>
             <details class="guide-details">
               <summary>Why does a value differ from BRENDA?</summary>
-              <p>A value read from the paper by CatLog is converted by code where needed, so it can differ from a database entry for the same paper: the database may give it in another unit, round it or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Records not yet <span class="nowrap">re-read</span> keep their source database&rsquo;s value.</p>
+              <p>A value read from the paper by CatLog is converted by code where needed, so it can differ from a database entry for the same paper: the database may give it in another unit, round it or take it from another table, assay condition or enzyme form. The record shows the value as printed and where it is printed. Records not yet <span class="nowrap">re-read</span> keep their source database&rsquo;s value.<span data-guide-database-section hidden> <a href="#guide-databases">Against the databases</a> says how CatLog compares its values with the databases and why they differ.</span></p>
             </details>
             <details class="guide-details">
               <summary>Why is a sequence or SMILES missing?</summary>

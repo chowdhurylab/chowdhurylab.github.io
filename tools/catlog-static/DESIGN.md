@@ -934,6 +934,25 @@ manifest's record index lists database_summary, as Browse's group does),
 Review result (#guide-status: Accepted, Not confirmed, Not checked and
 Disputed, each with the table's own badge, then each tag, human-checked with
 its check and green),
+Against the databases (#guide-databases, marked data-guide-database-section with
+its line in the contents and under Questions; shown when the manifest's
+summary.database_comparison is there, or the record index lists database_summary,
+then without counts; written from the manifest only: a lead naming the compared
+databases from the manifest's sources list, else the databases its counts name, in
+its order (never a typed "five"), with the values compared, the papers and the
+share where a database lists a number for the same measurement (from 1,000
+values); What is compared and Databases (versions, dates and values when the
+sources list has them); Results, the six of Browse's group in its order, each after
+a 10px square in its result colour (none on Corrected earlier) with the counts
+Browse's options give, "N values in M records", the records linked to
+#browse?db=<key> only where Browse has that option, every value under Not in the
+databases, Corrected earlier left out when the snapshot counts 0; Cause of a
+correction (the four families, each cause code in one); How a correction is found
+(the three ways, counted when the manifest counts them, else the paper check and a
+line for code's two ways together); Why no database lists a value (the six
+reasons, counts summed over the parameters where the manifest has them); then the
+comparison caption and a link to Stats. A count the manifest lacks leaves its line
+out),
 Units (#guide-units), Downloads (#guide-downloads), Before you use the values
 (#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
 Questions (#guide-questions, native disclosures). A section's address opens the

@@ -127,9 +127,15 @@ def assert_document_stays(driver, view):
 def check_guide(driver, wait):
     """Guide: the contents list reaches every section, a section's link keeps the Guide open at that section, the
     example views use the #browse? links Browse reads, and human-checked is drawn as in the table."""
-    links = driver.find_elements(By.CSS_SELECTOR, ".guide-contents a")
-    assert [urlsplit(link.get_attribute("href")).fragment for link in links] == list(GUIDE_SECTIONS)
-    for section in GUIDE_SECTIONS:
+    # Against the databases has a section of its own (and a line in the contents) when the snapshot carries the
+    # comparison: the manifest's summary, or the record index's field.
+    sections = list(GUIDE_SECTIONS)
+    if driver.execute_script("""const m = window.CATLOG_STATIC_MANIFEST;
+        return Boolean(m?.summary?.database_comparison) || (m?.viewer_index?.optional_fields || []).includes('database_summary')"""):
+        sections.insert(sections.index("guide-status") + 1, "guide-databases")
+    links = [link for link in driver.find_elements(By.CSS_SELECTOR, ".guide-contents a") if link.is_displayed()]
+    assert [urlsplit(link.get_attribute("href")).fragment for link in links] == sections
+    for section in sections:
         assert driver.find_element(By.ID, section).is_displayed(), f"Guide section {section} is not shown"
     examples = [urlsplit(link.get_attribute("href")).fragment
                 for link in driver.find_elements(By.CSS_SELECTOR, "#guide-find .guide-link-list a")]
@@ -179,7 +185,7 @@ def check_guide(driver, wait):
         return [...document.querySelectorAll('#guide-status .state-tag:not(.human-checked)')]
             .every(other => getComputedStyle(other).color !== checked);
     """, tag), "human-checked needs its own colour"
-    links[GUIDE_SECTIONS.index("guide-units")].click()
+    links[sections.index("guide-units")].click()
     wait.until(lambda d: urlsplit(d.current_url).fragment == "guide-units")
     # The section's heading takes focus, so the next Tab goes on from the section.
     wait.until(lambda d: d.execute_script("return document.activeElement?.id") == "guide-units-title")
@@ -192,6 +198,133 @@ def check_guide(driver, wait):
     """))
     assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
     assert_document_stays(driver, "Guide")
+
+
+GUIDE_DB_RESULTS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases", "All values the same",
+                    "Corrected earlier")
+GUIDE_DB_HEADINGS = ["Results", "Cause of a correction", "How a correction is found", "Why no database lists a value"]
+# Each row of a Guide list: its term and its meaning side by side, or (on a phone) the meaning under the term, never over it.
+GUIDE_DB_ROWS_CLEAR = """
+    const bad = [];
+    for (const row of document.querySelectorAll('#guideDatabasesBody dl > div')) {
+      const dt = row.querySelector(':scope > dt').getBoundingClientRect(), dd = row.querySelector(':scope > dd').getBoundingClientRect();
+      const view = document.getElementById('guideView').getBoundingClientRect();
+      if (!(dd.top >= dt.bottom - 1 || dd.left >= dt.right - 1)) bad.push(row.querySelector('dt').innerText.trim());
+      if (dt.right > view.right + 1 || dd.right > view.right + 1) bad.push('outside: ' + row.querySelector('dt').innerText.trim());
+    }
+    return bad;
+"""
+
+
+def check_guide_databases(driver, browser, url):
+    """The Guide's Against the databases (#guide-databases), from the manifest only: shown with its line in the contents
+    when the snapshot carries the comparison (hidden otherwise); the six results in Browse's order, each after the square
+    of its colour (none on Corrected earlier) and with the counts Browse's options give; the causes, how a correction is
+    found and why no database lists a value; no sideways scroll at 375 and 320px; and a records count opens Browse at
+    those records."""
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
+    set_browse_viewport(driver, browser, 1440, 1000)
+    driver.get("about:blank")
+    driver.get(url + "#guide-databases")
+    wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+    manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+    comparison = (manifest.get("summary") or {}).get("database_comparison")
+    indexed = "database_summary" in ((manifest.get("viewer_index") or {}).get("optional_fields") or [])
+    section = driver.find_element(By.ID, "guide-databases")
+    contents = driver.find_element(By.CSS_SELECTOR, '.guide-contents a[href="#guide-databases"]')
+    # (the question's answer sits in a closed disclosure: its line is read by its own hidden attribute)
+    question = driver.execute_script(
+        "return !document.querySelector('#guide-questions a[href=\"#guide-databases\"]').closest('[data-guide-database-section]').hidden")
+    if not comparison and not indexed:
+        assert not section.is_displayed() and not contents.is_displayed() and not question
+        return {"route": "guide-databases", "passed": True, "shown": False}
+    assert section.is_displayed() and contents.is_displayed() and question
+    assert not driver.execute_script(
+        "return performance.getEntriesByType('resource').some(e => /catlog-viewer-index|catlog-table|details-\\d+/.test(e.name))"
+    ), "The Guide must not download the record index or detail shards"
+    # The address opens the Guide at the section.
+    wait.until(lambda d: d.execute_script("""
+        const view = document.querySelector('#guideView').getBoundingClientRect();
+        const top = document.querySelector('#guide-databases').getBoundingClientRect().top;
+        return top >= view.top - 1 && top <= view.top + 48;
+    """))
+    body = driver.find_element(By.ID, "guideDatabasesBody")
+    headings = [heading.text.strip() for heading in body.find_elements(By.CSS_SELECTOR, "h3")]
+    assert headings == GUIDE_DB_HEADINGS, headings
+    rows = driver.execute_script("""
+        return [...document.querySelectorAll('#guideDatabasesBody .guide-db-results > div')].map(row => ({
+          label: row.querySelector('dt').innerText.trim(),
+          count: row.querySelector(':scope > dd > .guide-db-count')?.innerText.trim() ?? null,
+          nested: row.querySelector('.guide-db-nested')?.innerText.trim() ?? null,
+          mark: (() => { const mark = row.querySelector('.guide-db-mark'); const box = mark.getBoundingClientRect();
+            return [mark.dataset.result || '', getComputedStyle(mark).backgroundColor, Math.round(box.width), Math.round(box.height)]; })(),
+        }));
+    """)
+    labels = [row["label"] for row in rows]
+    assert labels in (list(GUIDE_DB_RESULTS), list(GUIDE_DB_RESULTS[:-1])), labels
+    marks = [row["mark"] for row in rows]
+    assert [mark[0] for mark in marks[:5]] == ["corrects", "differs", "other_label", "not_listed", "same"], marks
+    assert all(mark[2:] == [10, 10] for mark in marks), marks
+    assert len({mark[1] for mark in marks[:5]}) == 5 and all(mark[1] not in ("rgba(0, 0, 0, 0)", "transparent") for mark in marks[:5]), marks
+    if len(marks) == 6:
+        assert marks[5][0] == "" and marks[5][1] in ("rgba(0, 0, 0, 0)", "transparent"), marks[5]
+    words = lambda count, one, many: f"{count:,} {one if count == 1 else many}"
+    result = {"route": "guide-databases", "passed": True, "shown": True}
+    if comparison:
+        text = body.get_attribute("innerText").strip()
+        values = (comparison.get("values") or {}).get("all") or {}
+        kinds = comparison.get("records_with_kind") or {}
+        records = comparison.get("records") or {}
+        compared = sum(count for key, count in values.items() if key != "not_compared")
+        assert f"This snapshot compares {words(compared, 'value', 'values')} from {words(comparison['papers'], 'paper', 'papers')}." in text, text[:400]
+        counts = {row["label"]: row["count"] for row in rows}
+        expected = {
+            "Corrects a value": f"{words(values['corrected'], 'value', 'values')} in {words(kinds['corrected'], 'record', 'records')}",
+            "Different number": f"{words(values['differs'], 'value', 'values')} in {words(kinds['differs'], 'record', 'records')}",
+            "Same, other label": f"{words(values['same_number_other_label'], 'value', 'values')} in {words(kinds['other_label'], 'record', 'records')}",
+            "Not in the databases": f"{words(values['new'] + values.get('new_ratio_only', 0) + values.get('new_paper_not_in_databases', 0), 'value', 'values')} in {words(kinds['new'], 'record', 'records')}",
+            "All values the same": words(records["every_value_confirmed"], "record", "records"),
+        }
+        assert {key: counts[key] for key in expected} == expected, counts
+        nested = next(row["nested"] for row in rows if row["label"] == "Not in the databases")
+        assert nested == f"Under it, every value: no compared database lists any value of the record ({words(records['every_value_new'], 'record', 'records')}).", nested
+        # The databases named in the lead come from the manifest; no hard-coded number of them.
+        for name in (comparison.get("values_by_database") or {}):
+            assert ("STRENDA DB" if name == "STRENDA" else name) in text.split("\n", 1)[0], (name, text[:300])
+        for word in ("five", "v1", "v2", "independent", "claim", "agentic", "blind", "undefined", "NaN"):
+            assert not re.search(rf"\b{word}\b", text, re.I), f"The Guide's section says {word}"
+        assert "it does not by itself mean a database is wrong." in text
+        result["counts"] = counts
+    assert driver.execute_script(GUIDE_DB_ROWS_CLEAR) == [], driver.execute_script(GUIDE_DB_ROWS_CLEAR)
+    assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
+    driver.execute_script("arguments[0].scrollIntoView({block: 'start'})", section)
+    driver.save_screenshot(str(OUTPUT / f"{browser}-guide-databases.png"))
+    if browser == "chrome":
+        try:
+            for width, height in ((375, 812), (320, 640)):
+                driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": True})
+                wait.until(lambda d: d.execute_script("return innerWidth") == width)
+                assert driver.execute_script("""
+                    const view = document.getElementById('guideView');
+                    return document.documentElement.scrollWidth <= innerWidth + 1 && view.scrollWidth <= view.clientWidth + 1;
+                """), f"The Guide overflows sideways at {width}px"
+                assert driver.execute_script(GUIDE_DB_ROWS_CLEAR) == [], (width, driver.execute_script(GUIDE_DB_ROWS_CLEAR))
+                driver.execute_script("arguments[0].scrollIntoView({block: 'start'})", section)
+                driver.save_screenshot(str(OUTPUT / f"{browser}-guide-databases-{width}.png"))
+        finally:
+            driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        set_browse_viewport(driver, browser, 1440, 1000)
+    # A records count opens Browse at those records (only where Browse can filter by that result).
+    link = body.find_elements(By.CSS_SELECTOR, '.guide-db-results a[href$="#browse?db=corrects"]')
+    if indexed and comparison and link:
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link[0])
+        link[0].click()
+        wait.until(lambda d: urlsplit(d.current_url).fragment == "browse?db=corrects")
+        wait.until(lambda d: d.find_element(By.ID, "catalogView").is_displayed())
+        corrected = comparison["records_with_kind"]["corrected"]
+        wait.until(lambda d: (d.find_element(By.ID, "activeSummary").text or "").strip() == words(corrected, "record", "records"))
+        result["browse_link"] = words(corrected, "record", "records")
+    return result
 
 
 def check_human_checked(driver, url):
@@ -4328,6 +4461,7 @@ def main():
         result["stats_databases"] = check_stats_databases(driver, args.browser, url)
         result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
+        result["guide_databases"] = check_guide_databases(driver, args.browser, url)
         result["word_breaks"] = check_word_breaks(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]

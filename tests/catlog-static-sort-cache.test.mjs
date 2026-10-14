@@ -1363,8 +1363,13 @@ assert.doesNotMatch(indexHtml, /ChowdhuryLab</);
 const guideHtml = indexHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0];
 const guideContents = guideHtml.match(/<nav class="guide-contents"[^>]*>([\s\S]*?)<\/nav>/)[1];
 const guideAnchors = [...guideContents.matchAll(/href="#(guide-[a-z-]+)"/g)].map((match) => match[1]);
-assert.deepEqual(guideAnchors, ["guide-method", "guide-find", "guide-record", "guide-status", "guide-units", "guide-downloads",
-  "guide-caveats", "guide-cite", "guide-sources", "guide-questions"]);
+assert.deepEqual(guideAnchors, ["guide-method", "guide-find", "guide-record", "guide-status", "guide-databases", "guide-units",
+  "guide-downloads", "guide-caveats", "guide-cite", "guide-sources", "guide-questions"]);
+// Against the databases is a section of its own, written from the manifest when the snapshot carries the comparison: it
+// starts hidden, and its line in the contents with it.
+assert.match(guideContents, /<li data-guide-database-section hidden><a href="#guide-databases">Against the databases<\/a><\/li>/);
+assert.match(guideHtml, /<section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>\s*<h2 id="guide-databases-title">Against the databases<\/h2>\s*<div id="guideDatabasesBody"><\/div>\s*<\/section>/);
+assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 4, "the contents, Find records, Read a record and Questions link to it");
 // The method is said in full once, in its own section (with the model's name); nowhere else in the Guide.
 const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.match(guideMethod, /<a href="#team">People behind CatLog<\/a>/);
@@ -4203,6 +4208,161 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     } finally {
       document.querySelectorAll = previousAll;
       delete runtimeManifest.viewer_index.optional_fields;
+    }
+  }
+}
+// The Guide's section Against the databases (#guide-databases) is written from the manifest's
+// summary.database_comparison: what is compared, the six results with their counts (the ones Browse's options count),
+// the cause families, how a correction is found and why no database lists a value; a count the manifest lacks leaves
+// its line out. The fixture's numbers are the round 9 test bundle's.
+{
+  const bundleComparison = () => ({
+    values: { all: { new_paper_not_in_databases: 1382, confirmed: 97791, not_compared: 5946, differs: 1051, new: 14732,
+      same_number_other_label: 5574, corrected: 1548, new_ratio_only: 4873 } },
+    corrections: { values: 1548, by: { code: 892, paper_check: 656 },
+      by_cause: { power_of_ten: 557, printed_number_unit_not_applied: 253, header_scale_inverted: 179, unit_not_converted: 126,
+        paper_unit_misprint: 91, decimal_or_exponent_slip: 86, time_factor: 82, header_scale_ignored: 56, mM_entered_as_uM: 28,
+        value_from_other_row: 22, recomputed_ratio: 21, time_unit: 21, uM_entered_as_mM: 18, value_not_in_paper: 8 },
+      by_database: { BRENDA: 1156, OED: 616, "SABIO-RK": 368, SKiD: 130, STRENDA: 12 } },
+    values_by_database: { BRENDA: { same: 1 }, "SABIO-RK": { same: 1 }, OED: { same: 1 }, SKiD: { same: 1 }, STRENDA: { same: 1 } },
+    records: { every_value_new: 6283, any_value_new: 14002, every_value_confirmed: 36121, corrects_a_database_value: 1443,
+      differs_not_yet_resolved: 955 },
+    records_by_summary: { same: 36121, corrected: 128, differs: 124, other_label: 1824, new: 6283, mixed: 10078, not_compared: 0 },
+    records_with_kind: { same: 45251, corrected: 1443, differs: 955, other_label: 3466, new: 14002 },
+    papers_not_in_databases: Array.from({ length: 39 }, (_, index) => String(1000 + index)),
+    papers: 2650,
+  });
+  const plain = (html) => html.replace(/<[^>]+>/g, "").replace(/&rsquo;/g, "’").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ");
+  const items = (html, title) => {
+    const list = html.split(new RegExp(`<h3 id="[^"]+">${title}</h3>`))[1].split("<h3")[0];
+    return Object.fromEntries([...list.matchAll(/<div><dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd><\/div>/g)]
+      .map(([, label, text]) => [plain(label).trim(), plain(text).trim()]));
+  };
+  const earlierOverview = { earlier_corrections: { records: 2881 } };
+  let html = api.guideDatabasesHtml(bundleComparison(), earlierOverview);
+  let text = plain(html);
+  assert.ok(text.startsWith("CatLog compares the values it reads from a paper with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper. This snapshot compares 126,951 values from 2,650 papers. Where a database lists a number for the same measurement (100,390 values), it is the paper’s number for 97.4%."), text);
+  assert.match(html, /<i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog reads from a paper/);
+  assert.match(text, /Not compared: a kcat\/Km CatLog calculated \(calc\.; 5,946 in this snapshot\) and a value printed over a mass concentration \(mg\/mL\)\./);
+  assert.match(html, /<dt>Databases<\/dt><dd>BRENDA, SABIO-RK, OED, SKiD and STRENDA DB\.<\/dd>/);
+  // The six results in Browse's order, each with the square of its colour (none on Corrected earlier) and its counts.
+  const results = items(html, "Results");
+  assert.deepEqual(Object.keys(results), ["Corrects a value", "Different number", "Same, other label", "Not in the databases",
+    "All values the same", "Corrected earlier"]);
+  assert.deepEqual([...html.matchAll(/<span class="guide-db-mark"(?: data-result="([a-z_]+)")? aria-hidden="true"><\/span>/g)].map((match) => match[1] ?? ""),
+    ["corrects", "differs", "other_label", "not_listed", "same", ""]);
+  assert.equal(results["Corrects a value"], "A database lists another number for this value. CatLog’s value is the one the paper prints; the record names the cause and how it was found. 1,548 values in 1,443 records");
+  assert.ok(results["Different number"].endsWith("A different number can be a different measurement. 1,051 values in 955 records"));
+  assert.ok(results["Same, other label"].endsWith("under another substrate, variant or organism. 5,574 values in 3,466 records"));
+  assert.ok(results["Not in the databases"].endsWith("The record says why and what they do list. 20,987 values in 14,002 records Under it, every value: no compared database lists any value of the record (6,283 records)."), results["Not in the databases"]);
+  assert.ok(results["All values the same"].endsWith("Every compared value is the number a database lists for it. 36,121 records"));
+  assert.ok(results["Corrected earlier"].startsWith("Not yet re-read: CatLog’s earlier version changed these values"));
+  assert.ok(results["Corrected earlier"].endsWith("2,881 records"));
+  // Every cause code has a family (a code without one would drop out of the counts); the families add up to the corrections.
+  const families = api.GUIDE_DB_CAUSE_FAMILIES;
+  const codes = [...Object.keys(bundleComparison().corrections.by_cause)];
+  for (const code of codes) assert.equal(families.filter((family) => family.causes.includes(code)).length, 1, code);
+  const causes = items(html, "Cause of a correction");
+  assert.deepEqual(Object.keys(causes), ["Unit or scale", "Decimal slip", "Another number", "Unit misprinted"]);
+  assert.deepEqual(Object.values(causes).map((value) => value.match(/([\d,]+) values$/)[1]), ["1,320", "86", "51", "91"]);
+  // How found: this snapshot counts the paper check apart and code's two ways together.
+  const found = items(html, "How a correction is found");
+  assert.deepEqual(Object.keys(found), ["Checked against the paper", "Exact factor; the paper’s kcat ÷ Km agrees", "Exact factor only"]);
+  assert.ok(found["Checked against the paper"].endsWith("named the cause. 656 values"));
+  assert.ok(found["Exact factor only"].endsWith("nothing else was checked."));
+  assert.match(text, /Found by code \(an exact factor, with or without the cross-check\): 892 values\./);
+  // Why not listed: the two kinds values.all counts apart, the paper count from the papers no database lists.
+  const why = items(html, "Why no database lists a value");
+  assert.deepEqual(Object.keys(why), ["kcat and Km listed", "Other values listed", "Substrate not listed", "Parameter not listed",
+    "Variant not listed", "Paper not listed"]);
+  assert.ok(why["kcat and Km listed"].endsWith("they did not store the ratio. 4,873 values"));
+  assert.ok(why["Other values listed"].endsWith("the pairing could not match."));
+  assert.ok(why["Paper not listed"].endsWith("in none of the compared databases. 1,382 values from 39 papers"));
+  assert.ok(text.includes("Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong."));
+  assert.doesNotMatch(text, /\bfive\b|\bv[12]\b|independent|claim|agentic|blind|undefined|NaN|null/i);
+  assert.match(html, /not yet <span class="nowrap">re-read<\/span>/);
+  // Links into Browse only where Browse can filter by the result (its option exists and the record index carries the
+  // comparison): Corrects a value always; without the comparison in the record index none.
+  assert.doesNotMatch(html, /#browse\?db=/);
+  runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+  try {
+    html = api.guideDatabasesHtml(bundleComparison(), earlierOverview);
+    assert.match(html, /1,548 values in <a href="[^"]*#browse\?db=corrects">1,443 records<\/a>/);
+    for (const item of api.GUIDE_DB_RESULTS.flatMap((result) => [result, result.nested].filter(Boolean))) {
+      const href = api.guideDatabaseBrowseHref(item.key);
+      assert.ok(href === "" || href.endsWith(`#browse?db=${item.key}`), href);
+      if (href) assert.ok(html.includes(`href="${href}"`), item.key);
+    }
+  } finally {
+    delete runtimeManifest.viewer_index.optional_fields;
+  }
+  // N databases: a sixth the snapshot counts values for joins by itself, in the manifest's order.
+  const six = bundleComparison();
+  six.values_by_database.UniProt = { same: 1 };
+  assert.match(plain(api.guideDatabasesHtml(six)), /with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
+  // The manifest's sources list names the databases with their versions, dates and values.
+  six.sources = [{ key: "brenda", name: "BRENDA", version: "2026.1", retrieved: "2026-10-07", rows: 297863 },
+    { key: "strenda", name: "STRENDA", display: "STRENDA DB", retrieved: "2026-10-07" }, "uniprot"];
+  html = api.guideDatabasesHtml(six);
+  assert.match(plain(html), /with the values BRENDA, STRENDA DB and UniProt list for the same paper\./);
+  const sources = [...html.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((match) => plain(match[1]));
+  assert.equal(sources.length, 3);
+  assert.match(sources[0], /^BRENDA 2026\.1, retrieved Oct 7, 2026 \(297,863 values\)$/);
+  assert.match(sources[1], /^STRENDA DB, retrieved Oct 7, 2026$/);
+  assert.equal(sources[2], "UniProt");
+  // Counts of the three ways and of the six reasons when the manifest has them (by cause then way, or by way then cause).
+  const counted = bundleComparison();
+  counted.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } };
+  counted.values.not_listed_by_reason = { kcat: { ratio_only: 0, condition_absent: 1792, substrate_absent: 10 },
+    Km: { condition_absent: 1607, metric_absent: 3, variant_absent: 4 }, "kcat/Km": { condition_absent: 1130, ratio_only: 4873, paper_not_in_databases: 336 } };
+  html = api.guideDatabasesHtml(counted);
+  assert.deepEqual(Object.values(items(html, "How a correction is found")).map((value) => value.match(/([\d,]+) values$/)?.[1]), ["126", "300", "257"]);
+  assert.doesNotMatch(plain(html), /Found by code/);
+  assert.deepEqual(Object.values(items(html, "Why no database lists a value")).map((value) => value.match(/([\d,]+) values(?: from [\d,]+ papers?)?$/)?.[1]),
+    ["4,873", "4,529", "10", "3", "4", "336"]);
+  counted.corrections.by_cause_found_by = { paper_check: { unit_not_converted: 5 }, factor_only: { power_of_ten: 2 } };
+  assert.deepEqual(Object.values(items(api.guideDatabasesHtml(counted), "How a correction is found")).map((value) => value.match(/([\d,]+) values?$/)?.[1]), ["5", "0", "2"]);
+  // Without counts: the words alone, never an empty count, a guessed number or a heading without its list.
+  html = api.guideDatabasesHtml({});
+  text = plain(html);
+  assert.doesNotMatch(html, /guide-db-count|guide-db-note">Found by code|<li>/);
+  assert.doesNotMatch(text, /undefined|NaN|null|This snapshot compares|Where a database lists a number for the same measurement|in this snapshot/);
+  assert.match(text, /with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\./);
+  assert.equal([...html.matchAll(/<h3 /g)].length, 4);
+  assert.equal(Object.keys(items(html, "Results")).length, 6);
+  assert.equal(api.guideDatabasesHtml(null), "");
+  // A snapshot whose records carry no earlier corrections leaves Corrected earlier out (Browse has no such option then).
+  assert.ok(!("Corrected earlier" in items(api.guideDatabasesHtml(bundleComparison(), { earlier_corrections: { records: 0 } }), "Results")));
+  assert.ok("Corrected earlier" in items(api.guideDatabasesHtml(bundleComparison(), { quality: { earlier_corrections: { records: 5 } } }), "Results"));
+  // The section and its lines in the contents and under Questions show with the manifest's comparison (or the record
+  // index's); the body is written then.
+  {
+    const sectionItems = [{ hidden: true }, { hidden: true }, { hidden: true }];
+    const previousAll = document.querySelectorAll;
+    document.querySelectorAll = (selector) => selector === "[data-guide-database-section]" ? sectionItems : previousAll(selector);
+    const hadSummary = "summary" in runtimeManifest;
+    const previousSummary = runtimeManifest.summary;
+    try {
+      runtimeManifest.summary = { ...(previousSummary || {}) };
+      delete runtimeManifest.summary.database_comparison;
+      api.renderGuideDatabases();
+      assert.deepEqual(sectionItems.map((item) => item.hidden), [true, true, true]);
+      assert.equal(element("guideDatabasesBody").innerHTML, "");
+      runtimeManifest.summary.database_comparison = bundleComparison();
+      api.renderGuideDatabases();
+      assert.deepEqual(sectionItems.map((item) => item.hidden), [false, false, false]);
+      assert.match(element("guideDatabasesBody").innerHTML, /This snapshot compares 126,951 values from 2,650 papers\./);
+      delete runtimeManifest.summary.database_comparison;
+      runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+      api.renderGuideDatabases();
+      assert.deepEqual(sectionItems.map((item) => item.hidden), [false, false, false]);
+      assert.doesNotMatch(element("guideDatabasesBody").innerHTML, /This snapshot compares/);
+    } finally {
+      document.querySelectorAll = previousAll;
+      delete runtimeManifest.viewer_index.optional_fields;
+      if (hadSummary) runtimeManifest.summary = previousSummary;
+      else delete runtimeManifest.summary;
+      api.renderGuideDatabases();
     }
   }
 }

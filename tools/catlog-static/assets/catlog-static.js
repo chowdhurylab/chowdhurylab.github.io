@@ -4585,6 +4585,273 @@
     }
   }
 
+  // ---- Guide: Against the databases (#guide-databases) ----
+  // The Guide's own section on the comparison (round 9 brief, piece 8; the words of its section 2 are binding): what is
+  // compared, the six results Browse's group offers, the cause of a correction, how one is found and why no database
+  // lists a value, each with this snapshot's counts where the manifest's summary.database_comparison gives them (a
+  // missing count leaves its line out, never a guessed number). The databases come from the manifest: its sources list
+  // with versions ([{key, name, display, version, retrieved, rows}]), else the databases it counts values for, in its
+  // order (a sixth, such as UniProt, joins by itself), else the fixed list below. Like the rest of the Guide it reads the
+  // manifest only, never the record index.
+  const GUIDE_DB_FALLBACK_SOURCES = ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB"];
+  const GUIDE_DB_DISPLAY = {
+    brenda: "BRENDA", sabio_rk: "SABIO-RK", "sabio-rk": "SABIO-RK", oed: "OED", skid: "SKiD", strenda: "STRENDA DB",
+    strenda_db: "STRENDA DB", uniprot: "UniProt",
+  };
+  // Browse's options in its order (key = the address's db= value); mark: the result's colour, as in Browse.
+  const GUIDE_DB_RESULTS = [
+    { key: "corrects", label: "Corrects a value", mark: "corrects",
+      text: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
+    { key: "differs", label: "Different number", mark: "differs",
+      text: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
+    { key: "other_label", label: "Same, other label", mark: "other_label",
+      text: "A database lists this number for the paper under another substrate, variant or organism." },
+    { key: "not_listed", label: "Not in the databases", mark: "not_listed",
+      text: "No compared database lists this value for this paper. The record says why and what they do list.",
+      nested: { key: "all_not_listed", label: "every value", text: "no compared database lists any value of the record" } },
+    { key: "all_same", label: "All values the same", mark: "same",
+      text: "Every compared value is the number a database lists for it." },
+    { key: "earlier", label: "Corrected earlier", mark: "",
+      text: "Not yet re-read: CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
+  ];
+  // The cause of a correction in four families (Browse's Cause list, Stats); causes: the snapshot's cause codes in each.
+  const GUIDE_DB_CAUSE_FAMILIES = [
+    { key: "unit", label: "Unit or scale",
+      text: "The database's number is the paper's in another unit or scale: the printed unit not converted, the table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, the printed number taken in another unit, or a number off by an exact power of ten, 60 or 3,600.",
+      causes: ["unit_not_converted", "header_scale_inverted", "header_scale_ignored", "uM_entered_as_mM", "mM_entered_as_uM",
+        "time_unit", "power_of_ten", "printed_number_unit_not_applied", "time_factor"] },
+    { key: "decimal", label: "Decimal slip", text: "A decimal point or exponent slip.", causes: ["decimal_or_exponent_slip"] },
+    { key: "elsewhere", label: "Another number",
+      text: "A number from another cell of the table, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km.",
+      causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"] },
+    { key: "misprint", label: "Unit misprinted", text: "A unit the paper misprints.", causes: ["paper_unit_misprint"] },
+  ];
+  const GUIDE_DB_FOUND_BY = [
+    { key: "paper_check", label: "Checked against the paper", text: "A separate AI check read the paper and named the cause." },
+    { key: "factor_cross_checked", label: "Exact factor; the paper's kcat ÷ Km agrees",
+      text: "Code found the database's number is the paper's times an exact factor, and the paper's own kcat ÷ Km matches CatLog's value, not the database's." },
+    { key: "factor_only", label: "Exact factor only", text: "Code found an exact factor; nothing else was checked." },
+  ];
+  const GUIDE_DB_NOT_LISTED = [
+    { key: "ratio_only", label: "kcat and Km listed",
+      text: "A printed kcat/Km whose kcat and Km the databases list; they did not store the ratio." },
+    { key: "condition_absent", label: "Other values listed",
+      text: "The databases list other numbers for this substrate and variant, not this one; some may be values the pairing could not match." },
+    { key: "substrate_absent", label: "Substrate not listed", text: "The databases list this parameter for the paper, but not for this substrate." },
+    { key: "metric_absent", label: "Parameter not listed", text: "The databases list values from the paper, but none of this parameter." },
+    { key: "variant_absent", label: "Variant not listed",
+      text: "The databases list this parameter for this substrate, but not with this variant or organism." },
+    { key: "paper_not_in_databases", label: "Paper not listed", text: "The paper is in none of the compared databases." },
+  ];
+  const GUIDE_DB_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
+
+  // The snapshot's comparison (manifest summary.database_comparison), or null.
+  function guideDatabaseSummary() {
+    const data = manifest.summary?.database_comparison;
+    return data && typeof data === "object" && !Array.isArray(data) ? data : null;
+  }
+
+  // The compared databases in the manifest's order: [{name, version, retrieved, rows}] (only name is sure).
+  function guideDatabaseSources(data) {
+    const display = (value) => {
+      const text = String(value ?? "").trim();
+      return GUIDE_DB_DISPLAY[text] || GUIDE_DB_DISPLAY[text.toLowerCase().replace(/[\s-]+/g, "_")] || text;
+    };
+    const listed = Array.isArray(data?.sources) ? data.sources.map((item) => {
+      if (typeof item === "string") return { name: display(item) };
+      if (!item || typeof item !== "object") return null;
+      const name = String(item.display ?? "").trim() || display(item.name ?? item.key);
+      const text = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
+      return name ? { name, version: text(item.version), retrieved: text(item.retrieved), rows: statsCount(item.rows) } : null;
+    }).filter(Boolean) : [];
+    if (listed.length) return listed;
+    const counted = Object.keys(data?.values_by_database || data?.corrections?.by_database || {}).map(display).filter(Boolean);
+    return (counted.length ? counted : GUIDE_DB_FALLBACK_SOURCES).map((name) => ({ name }));
+  }
+
+  // A count of a manifest object's whole numbers, or null when any is not one (never a sum of damaged counts).
+  function guideDatabaseSum(values, skip = []) {
+    if (!values || typeof values !== "object") return null;
+    let total = 0;
+    for (const [key, value] of Object.entries(values)) {
+      if (skip.includes(key)) continue;
+      if (statsCount(value) === null) return null;
+      total += value;
+    }
+    return total;
+  }
+
+  // Each result's values and records in this snapshot (null where the manifest does not say): records as Browse counts
+  // them (records_with_kind, records), values from values.all; a value no database lists is one of three kinds there.
+  function guideDatabaseCounts(data, overview) {
+    const all = data?.values?.all || {};
+    const kinds = data?.records_with_kind || {};
+    const records = data?.records || {};
+    const notListed = statsCount(all.new);
+    const earlier = overview?.earlier_corrections ?? overview?.quality?.earlier_corrections;
+    return {
+      corrects: { values: statsCount(all.corrected), records: statsCount(kinds.corrected ?? records.corrects_a_database_value) },
+      differs: { values: statsCount(all.differs), records: statsCount(kinds.differs ?? records.differs_not_yet_resolved) },
+      other_label: { values: statsCount(all.same_number_other_label), records: statsCount(kinds.other_label) },
+      not_listed: {
+        values: notListed === null ? null
+          : notListed + (statsCount(all.new_ratio_only) || 0) + (statsCount(all.new_paper_not_in_databases) || 0),
+        records: statsCount(kinds.new ?? records.any_value_new),
+      },
+      all_not_listed: { values: null, records: statsCount(records.every_value_new) },
+      all_same: { values: null, records: statsCount(records.every_value_confirmed ?? data?.records_by_summary?.same) },
+      earlier: { values: null, records: statsCount(earlier?.records) },
+    };
+  }
+
+  function guideCountWords(count, one, many) {
+    return `${formatInteger(count)} ${count === 1 ? one : many}`;
+  }
+
+  // Browse at a result's records, only where Browse can filter by it (the page has the option and the snapshot's record
+  // index carries the comparison); otherwise "".
+  function guideDatabaseBrowseHref(key) {
+    if (!databaseComparisonIndexed() || !databaseFilters.some((item) => item.value === key)) return "";
+    return statsBrowseHref({ [DATABASE_FILTER_PARAM]: key });
+  }
+
+  // "1,548 values in 1,443 records", the records linked into Browse where it can show them; "" without counts.
+  function guideDatabaseCountHtml(key, count) {
+    if (!count) return "";
+    const href = count.records ? guideDatabaseBrowseHref(key) : "";
+    const records = count.records === null ? "" : guideCountWords(count.records, "record", "records");
+    const recordsHtml = records && href ? `<a href="${escapeHtml(href)}">${escapeHtml(records)}</a>` : escapeHtml(records);
+    const values = count.values === null ? "" : guideCountWords(count.values, "value", "values");
+    if (values && records) return `${escapeHtml(values)} in ${recordsHtml}`;
+    return values ? escapeHtml(values) : recordsHtml;
+  }
+
+  // A definition list of one group of words (label, its meaning, then its count on a line of its own).
+  function guideDatabaseListHtml(items, countOf, className = "") {
+    return `<dl class="guide-term-list guide-db-list${className ? ` ${className}` : ""}">${items.map((item) => {
+      const count = countOf(item);
+      return `<div><dt>${metricWordsHtml(escapeHtml(item.label))}</dt><dd>${metricWordsHtml(escapeHtml(item.text))}${count
+        ? ` <span class="guide-db-count">${count}</span>` : ""}</dd></div>`;
+    }).join("")}</dl>`;
+  }
+
+  // How many corrections each way of finding them found: the three ways where the manifest counts them
+  // (corrections.by_cause_found_by, by cause then way or by way then cause; or the three keys in corrections.by), else
+  // code and the paper check (corrections.by: code, paper_check). code: the corrections code found, counted together.
+  function guideDatabaseFoundBy(corrections) {
+    const ways = GUIDE_DB_FOUND_BY.map((item) => item.key);
+    const nested = corrections?.by_cause_found_by;
+    if (nested && typeof nested === "object" && Object.values(nested).every((inner) => inner && typeof inner === "object")) {
+      const byWay = Object.keys(nested).every((key) => ways.includes(key));
+      const totals = Object.fromEntries(ways.map((key) => [key, 0]));
+      let seen = false;
+      for (const [outer, inner] of Object.entries(nested)) {
+        for (const [innerKey, value] of Object.entries(inner)) {
+          const way = byWay ? outer : innerKey;
+          if (!ways.includes(way) || statsCount(value) === null) continue;
+          totals[way] += value;
+          seen = true;
+        }
+      }
+      if (seen) return { totals, code: null };
+    }
+    const by = corrections?.by && typeof corrections.by === "object" ? corrections.by : {};
+    const totals = Object.fromEntries(ways.map((key) => [key, statsCount(by[key])]));
+    const code = ways.slice(1).some((key) => totals[key] !== null) ? null : statsCount(by.code);
+    return { totals, code };
+  }
+
+  // Values no database lists, by why: the counts per parameter (values.not_listed_by_reason) summed, else the two
+  // kinds values.all counts apart; papers: the papers no compared database lists.
+  function guideDatabaseNotListed(data) {
+    const byReason = data?.values?.not_listed_by_reason ?? data?.not_listed_by_reason;
+    const totals = Object.fromEntries(GUIDE_DB_NOT_LISTED.map((item) => [item.key, null]));
+    if (byReason && typeof byReason === "object") {
+      const metrics = byReason.all && typeof byReason.all === "object" ? [byReason.all]
+        : Object.values(byReason).filter((item) => item && typeof item === "object");
+      for (const counts of metrics) {
+        for (const [reason, value] of Object.entries(counts)) {
+          if (reason in totals && statsCount(value) !== null) totals[reason] = (totals[reason] || 0) + value;
+        }
+      }
+    }
+    const all = data?.values?.all || {};
+    if (totals.ratio_only === null) totals.ratio_only = statsCount(all.new_ratio_only);
+    if (totals.paper_not_in_databases === null) totals.paper_not_in_databases = statsCount(all.new_paper_not_in_databases);
+    const papers = Array.isArray(data?.papers_not_in_databases) ? data.papers_not_in_databases.length : null;
+    return { totals, papers };
+  }
+
+  // The section's body, or "" when the snapshot carries no comparison.
+  function guideDatabasesHtml(data, overview) {
+    if (!data) return "";
+    const sources = guideDatabaseSources(data);
+    const names = sentenceList(sources.map((item) => item.name));
+    const all = data.values?.all || {};
+    const compared = guideDatabaseSum(all, ["not_compared"]);
+    const papers = statsCount(data.papers);
+    const paired = ["confirmed", "corrected", "differs"].map((key) => statsCount(all[key]));
+    const pairedTotal = paired.includes(null) ? null : paired[0] + paired[1] + paired[2];
+    const lead = [
+      `CatLog compares the values it reads from a paper with the values ${names} list for the same paper.`,
+      compared && papers ? `This snapshot compares ${guideCountWords(compared, "value", "values")} from ${guideCountWords(papers, "paper", "papers")}.` : "",
+      pairedTotal >= 1000 ? `Where a database lists a number for the same measurement (${formatInteger(pairedTotal)} values), it is the paper's number for ${qualityShare(paired[0], pairedTotal)}.` : "",
+    ].filter(Boolean).join(" ");
+    const calculated = statsCount(all.not_compared);
+    const words = (text) => metricWordsHtml(escapeHtml(text));
+    const whatHtml = `${words("Each kcat, Km and kcat/Km CatLog reads from a paper, in the catalog's units, against the numbers each database lists for that paper: for the same substrate, variant and organism, with pH and temperature used to pair the values. Not compared: a kcat/Km CatLog calculated (")}<em>calc.</em>${
+      calculated ? escapeHtml(`; ${formatInteger(calculated)} in this snapshot`) : ""}${words(") and a value printed over a mass concentration (mg/mL). Records not yet re-read are not compared; those corrected earlier list what changed (")}<em>Corrected earlier</em>).`;
+    const versions = sources.some((item) => item.version || item.retrieved || item.rows !== null && item.rows !== undefined);
+    const databasesHtml = versions
+      ? `<ul class="guide-db-sources">${sources.map((item) => `<li>${escapeHtml([
+        `${item.name}${item.version ? ` ${item.version}` : ""}`,
+        item.retrieved ? `retrieved ${/^\d{4}-\d{2}-\d{2}/.test(item.retrieved) ? formatDate(item.retrieved.slice(0, 10)) : item.retrieved}` : "",
+      ].filter(Boolean).join(", "))}${item.rows !== null && item.rows !== undefined ? ` <span class="guide-db-count-inline">(${escapeHtml(guideCountWords(item.rows, "value", "values"))})</span>` : ""}</li>`).join("")}</ul>`
+      : `${escapeHtml(names)}.`;
+    const counts = guideDatabaseCounts(data, overview);
+    const results = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
+      const count = guideDatabaseCountHtml(item.key, counts[item.key]);
+      const nested = item.nested
+        ? ` <span class="guide-db-nested">Under it, <em>${escapeHtml(item.nested.label)}</em>: ${escapeHtml(item.nested.text)}${counts[item.nested.key].records !== null
+          ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : "";
+      return `<div><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(item.text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
+    }).join("");
+    const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
+    const familyCount = (family) => {
+      if (!byCause) return "";
+      const counted = family.causes.map((cause) => statsCount(byCause[cause])).filter((value) => value !== null);
+      return counted.length ? escapeHtml(guideCountWords(counted.reduce((sum, value) => sum + value, 0), "value", "values")) : "";
+    };
+    const found = guideDatabaseFoundBy(data.corrections);
+    const foundCount = (item) => (found.totals[item.key] === null ? "" : escapeHtml(guideCountWords(found.totals[item.key], "value", "values")));
+    const notListed = guideDatabaseNotListed(data);
+    const notListedCount = (item) => {
+      const total = notListed.totals[item.key];
+      if (total === null) return "";
+      const papersText = item.key === "paper_not_in_databases" && notListed.papers ? ` from ${guideCountWords(notListed.papers, "paper", "papers")}` : "";
+      return escapeHtml(`${guideCountWords(total, "value", "values")}${papersText}`);
+    };
+    const stats = viewUrl("stats").href;
+    return keepReRead(`<p>${words(lead)}</p>
+      <dl class="guide-term-list guide-db-list">
+        <div><dt>What is compared</dt><dd>${whatHtml}</dd></div>
+        <div><dt>Databases</dt><dd>${databasesHtml}</dd></div>
+      </dl>
+      <h3 id="guide-databases-results">Results</h3>
+      <p>Browse&rsquo;s <em>Against the databases</em> group finds records by these results. A record matches a result when one of its values has it; <em>All values the same</em>, <em>every value</em> and <em>Corrected earlier</em> describe the whole record.</p>
+      <dl class="guide-status-list guide-db-results">${results}</dl>
+      <h3 id="guide-databases-causes">Cause of a correction</h3>
+      ${guideDatabaseListHtml(GUIDE_DB_CAUSE_FAMILIES, familyCount)}
+      <h3 id="guide-databases-found">How a correction is found</h3>
+      ${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}
+      ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor, with or without the cross-check): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
+      <h3 id="guide-databases-not-listed">Why no database lists a value</h3>
+      ${guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount)}
+      <p class="guide-db-note">${escapeHtml(GUIDE_DB_CAPTION)} Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
+      // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
+      .replace(/&#39;/g, "&rsquo;");
+  }
+
   // Figures 3-5 (design spec section 6) read counts the CatLog side computes at build time (overview.quality); each is
   // drawn only when its counts hold together, and an older snapshot shows none of them (never an empty heading).
   const STATS_PARAMETERS = [
@@ -6272,6 +6539,12 @@
     if (typeof document.querySelectorAll !== "function") return;
     const shown = databaseComparisonIndexed();
     document.querySelectorAll("[data-guide-databases]").forEach((element) => { element.hidden = !shown; });
+    // The Guide's own section (with its line in the contents and under Questions, marked data-guide-database-section)
+    // shows when the manifest carries the comparison, or the record index does (then without counts).
+    const body = $("guideDatabasesBody");
+    const html = body ? guideDatabasesHtml(guideDatabaseSummary() || (shown ? {} : null), statsOverview(Number(manifest.total_rows || 0))) : "";
+    if (body) body.innerHTML = html;
+    document.querySelectorAll("[data-guide-database-section]").forEach((element) => { element.hidden = !html; });
   }
 
   function databaseComparisonShown() {
@@ -12122,6 +12395,14 @@
       comparedDatabases,
       databaseRefineKeys: DATABASE_REFINE_KEYS,
       renderGuideDatabases,
+      guideDatabasesHtml,
+      guideDatabaseSources,
+      guideDatabaseCounts,
+      guideDatabaseFoundBy,
+      guideDatabaseNotListed,
+      guideDatabaseBrowseHref,
+      GUIDE_DB_CAUSE_FAMILIES,
+      GUIDE_DB_RESULTS,
       toggleReveal,
       recordLink,
       numberHtml,
