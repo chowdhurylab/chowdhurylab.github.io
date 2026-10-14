@@ -1356,6 +1356,58 @@ def check_stats_new_figures(driver, browser, url):
 TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "rules", "website", "paper")
 
 
+# Words in visible text under a root that span two line boxes (a Range over the word has rects on two lines); details
+# under the root are opened first when asked, so their text is laid out.
+SPLIT_WORDS_JS = """
+const [root, pattern, open] = arguments;
+if (!root) return null;
+if (open) root.querySelectorAll('details').forEach((d) => { d.open = true; });
+const found = [];
+const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+  const re = new RegExp(pattern, 'g');
+  for (let m = re.exec(node.nodeValue); m; m = re.exec(node.nodeValue)) {
+    const range = document.createRange();
+    range.setStart(node, m.index); range.setEnd(node, m.index + m[0].length);
+    const tops = [];
+    for (const r of range.getClientRects()) if (r.width > 0.5 && r.height > 0.5 && !tops.some((t) => Math.abs(t - r.top) < 2)) tops.push(r.top);
+    if (tops.length > 1) found.push(`${m[0]} in "${node.nodeValue.trim().slice(0, 60)}"`);
+  }
+}
+return found;
+"""
+
+
+def check_word_breaks(driver, browser, url):
+    """Round 8's labels never break inside a word: "re-read" never splits at its hyphen ("re-" at the end of one line,
+    "read" on the next) in Stats' figure titles and captions or in the Guide, at a phone, a small phone and a tablet."""
+    if browser != "chrome":
+        return "skipped (Chrome only: phone widths by device emulation)"
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    checked = []
+    try:
+        for width in (320, 375, 768):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": 900, "deviceScaleFactor": 1,
+                                                                          "mobile": width < 768})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.ID, "statsVersionsTitle"))
+            driver.execute_async_script("const done = arguments[arguments.length - 1]; document.fonts.ready.then(() => setTimeout(done, 300))")
+            assert driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsVersionsTitle"), "re-read", False) == [], width
+            split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsCharts"), "re-read", False)
+            assert split == [], f"re-read splits at its hyphen on Stats at {width}px: {split}"
+            driver.get("about:blank")
+            driver.get(url + "#guide-method")
+            wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+            driver.execute_async_script("const done = arguments[arguments.length - 1]; document.fonts.ready.then(() => setTimeout(done, 300))")
+            split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "guideView"), "re-read", True)
+            assert split == [], f"re-read splits at its hyphen in the Guide at {width}px: {split}"
+            checked.append(width)
+    finally:
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"re_read_whole_at": checked}
+
+
 def check_team(driver, browser, url):
     """Team (#team): its own view from the Team tab, never loading the record index; the loop names every station, its
     numbers come from the manifest, a person or agent lights their stations when pointed at or focused, it reads at
@@ -3701,6 +3753,7 @@ def main():
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
+        result["word_breaks"] = check_word_breaks(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":

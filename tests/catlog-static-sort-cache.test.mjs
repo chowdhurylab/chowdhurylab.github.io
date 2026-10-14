@@ -1381,13 +1381,17 @@ assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full 
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
 assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says records not yet re-read, never older records");
 assert.doesNotMatch(guideHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b|version 2/i);
-assert.match(guideHtml, /<summary>Evidence labels on records not yet re-read<\/summary>/);
+assert.match(guideHtml, /<summary>Evidence labels on records not yet <span class="nowrap">re-read<\/span><\/summary>/);
+// "re-read" never breaks at its hyphen (a wide font split "re-" / "read"): every one in the Guide's text keeps one line.
+assert.doesNotMatch(guideHtml, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read in the Guide is kept whole");
+assert.equal(api.keepReRead('Not yet re-read <a title="not yet re-read">pre-reading re-read</a>'),
+  'Not yet <span class="nowrap">re-read</span> <a title="not yet re-read">pre-reading <span class="nowrap">re-read</span></a>');
 assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version, an automated pipeline of AI models and code checks\.<\/dd>/);
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
   const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
   assert.match(method, /<div><dt>Read from the paper<\/dt><dd>CatLog&rsquo;s current version, its second, reads papers directly\./);
-  assert.match(method, /<div><dt>Not yet re-read<\/dt><dd>Records from CatLog&rsquo;s earlier version, which started from enzyme database entries \([^)]*\) and checked part of them against their papers[^<]*When CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.match(method, /<div><dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>Records from CatLog&rsquo;s earlier version, which started from enzyme database entries \([^)]*\) and checked part of them against their papers[^<]*When CatLog reads a paper, its records replace these\.<\/dd>/);
   assert.equal((guideHtml.match(/its second/g) || []).length, 1, "The Guide says once that the current version is the second");
 }
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
@@ -1678,7 +1682,8 @@ function row(overrides = {}) {
       .map(([, key, count]) => [key, Number(count)]),
   );
   // Figure and table titles (the human-review lead's apart), and the numbered parts' headings.
-  const headings = () => [...element("statsCharts").innerHTML.matchAll(/<h3 id="(?!statsReviewTitle)[^"]+" class="stats-fig-title">([^<]+)<\/h3>/g)].map((match) => match[1]);
+  const headings = () => [...element("statsCharts").innerHTML.matchAll(/<h3 id="(?!statsReviewTitle)[^"]+" class="stats-fig-title">(.*?)<\/h3>/g)]
+    .map((match) => match[1].replace(/<[^>]*>/g, ""));
   const partTitles = () => [...(element("statsTotals").innerHTML + element("statsCharts").innerHTML)
     .matchAll(/<h2 id="statsPart\w+Title" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">(\d+)<\/span><span>([^<]+)<\/span><\/h2>/g)]
     .map((match) => `${match[1]} ${match[2]}`);
@@ -1820,11 +1825,12 @@ function row(overrides = {}) {
   // other record. CatLog is the one name: no v1 or v2 anywhere on Stats.
   assert.doesNotMatch((chart + totalsHtml).replace(/<[^>]*>/g, " "), /\bv[12]\b/);
   assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">2<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>100\.0%<\/span>/);
-  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">Not yet re-read<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>25\.0%<\/span>/);
+  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">Not yet <span class="nowrap">re-read<\/span><\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part">4<\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%"><span>25\.0%<\/span>/);
   assert.match(chart, /data-tip="Not yet re-read, Not confirmed: 1 \(25\.0%\)"/);
   // How these numbers are counted says what each means, the earlier version once, in its help.
   assert.match(chart, /<dt>Read from the paper<\/dt><dd>Records read from the paper by an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
-  assert.match(chart, /<dt>Not yet re-read<\/dt><dd>All other records: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.match(chart, /<dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>All other records: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read on Stats is kept whole");
   assert.equal((chart.match(/earlier version/g) || []).length, 1, "the earlier version is named once on Stats");
   assert.match(chart, /BRENDA, Not confirmed: 1/);
   // Main-source counts that do not add up to the review results are not drawn by status.

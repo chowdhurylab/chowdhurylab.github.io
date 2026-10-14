@@ -954,6 +954,13 @@
     })[char]);
   }
 
+  // "re-read" never breaks at its hyphen ("re-" at the end of one line, "read" on the next, as a wide font such as
+  // DejaVu Sans split Stats' figure titles): the word in text, never inside a tag, keeps one line. Stats applies it once
+  // to its whole page; the Guide (index.html) writes the same span.
+  function keepReRead(html) {
+    return String(html).replace(/\bre-read\b(?![^<>]*>)/g, '<span class="nowrap">re-read</span>');
+  }
+
   function publicText(value) {
     return String(value == null ? "" : value)
       .replace(/\bpaper[- ]backed\b/gi, "paper linked")
@@ -5220,7 +5227,7 @@
         <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
       </dl></details>`);
     }
-    $("statsCharts").innerHTML = sections.join("");
+    $("statsCharts").innerHTML = keepReRead(sections.join(""));
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
     // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
@@ -11271,6 +11278,7 @@
       reviewFacts,
       reviewSentence,
       versionWords,
+      keepReRead,
       v2MatchFacts,
       v2MatchSentence,
       statsCohortData,

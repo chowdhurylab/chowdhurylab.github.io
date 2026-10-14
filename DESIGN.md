@@ -32,7 +32,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    the pointer. Phones: 24/18px, two to a row; below 360px line 1 stands one under the other, so Read from the paper
    keeps one line in a wide font (DejaVu Sans). CatLog is the one name (round 8): records are Read from the paper or
    Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on
-   Stats), in the human review's base and in the Guide's method section. Browse's counts band gets the same treatment at 20px: its key numbers
+   Stats), in the human review's base and in the Guide's method section. "re-read" never breaks at its hyphen ("re-" /
+   "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band gets the same treatment at 20px: its key numbers
    in accent ink with the glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
    linked count tints around itself without moving the line. Its With counts (kcat, Km, kcat/Km) are secondary:
    16px/500 in --text-2 with their 13px labels, so the key numbers lead. Nothing moves when the viewer asks for less motion;
