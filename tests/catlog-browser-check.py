@@ -1143,8 +1143,16 @@ def check_stats_figures(driver, browser, url):
             compared = sum(count for status, count in comparison["values"]["all"].items() if status != "not_compared")
             lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
             assert lead.get_attribute("innerText").strip().startswith(f"Of {compared:,} values read from"), lead.get_attribute("innerText")
+            # Its result phrases link into Browse in Figure 8's order (a result with no values has none), each titled
+            # with the records it opens where the comparison counts them.
             links = [urlsplit(a.get_attribute("href")).fragment for a in lead.find_elements(By.CSS_SELECTOR, "a")]
-            assert links == ["browse?db=corrects", "browse?db=differs", "browse?db=not_listed"], links
+            results = (("other_label", ("same_number_other_label",)), ("corrects", ("corrected",)), ("differs", ("differs",)),
+                       ("not_listed", ("new", "new_ratio_only", "new_paper_not_in_databases")))
+            assert links == [f"browse?db={db}" for db, statuses in results
+                             if sum(comparison["values"]["all"].get(status, 0) for status in statuses)], links
+            if comparison.get("records_with_kind"):
+                titles = [a.get_attribute("title") for a in lead.find_elements(By.CSS_SELECTOR, "a")]
+                assert all(re.fullmatch(r"[\d,]+ values? in [\d,]+ records?", title or "") for title in titles), titles
             figures = driver.execute_script("""
                 return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
                     key: chart.dataset.chart,
@@ -1248,6 +1256,22 @@ STATS_DATABASES_LAYOUT_JS = """
         const shown = [Boolean(box(table)), Boolean(box(blocks))];
         if (shown[0] === shown[1]) problems.push('Corrections by cause and database: table shown ' + shown[0] + ', lines shown ' + shown[1]);
         if (phone && shown[0]) problems.push('Corrections by cause and database: a table on a phone');
+    }
+    // A database's name never breaks across lines ("SABIO-" / "RK", "STRENDA" / "DB"), a wide font included.
+    const names = ['SABIO-RK', 'STRENDA DB', 'BRENDA', 'SKiD', 'UniProt'];
+    const walker = document.createTreeWalker(part, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const parent = node.parentElement;
+        if (!parent.getClientRects().length || parent.closest('.visually-hidden')) continue;
+        for (const name of names) {
+            for (let i = node.data.indexOf(name); i >= 0; i = node.data.indexOf(name, i + 1)) {
+                const range = document.createRange();
+                range.setStart(node, i);
+                range.setEnd(node, i + name.length);
+                const lines = new Set([...range.getClientRects()].filter((line) => line.width > 0).map((line) => Math.round(line.top)));
+                if (lines.size > 1) problems.push(name + ' breaks across lines in ' + ((parent.closest('[data-figure]') || {dataset: {figure: 'the lead'}}).dataset.figure));
+            }
+        }
     }
     if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('the page scrolls sideways');
     const view = document.querySelector('#statsView');
