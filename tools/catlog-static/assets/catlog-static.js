@@ -4925,15 +4925,20 @@
       title: "No compared database lists this value for this paper. The record says why and what they do list." },
   ];
   // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
-  // database's values from papers it does not list (paper_absent) stand beside its bar, never in it.
+  // database's values from papers it does not list (paper_absent) stand beside its bar, never in it. db: Browse's
+  // result, only where Browse finds exactly these values: a value Browse matches by its own result and the databases
+  // that result names. That holds for Corrects alone (a database's kind is corrected only on a value whose own result is
+  // Corrects, the database among those it names). A database's Different number also counts its other number for a value
+  // whose own result is Same or Corrects (other_number, another_measurement), and its Same, other label a value whose
+  // own result is Same: Browse would show fewer values than these counts, so they stay plain numbers.
   const STATS_DATABASE_KINDS = [
     { part: "same", label: "Same number", kinds: ["same", "same_rounded"],
       title: "The database lists this number for this value, or the same number rounded." },
-    { part: "other-label", db: "other_label", label: "Same, other label", kinds: ["same_number_other_label"],
+    { part: "other-label", label: "Same, other label", kinds: ["same_number_other_label"],
       title: "The database lists this number for the paper under another substrate, variant or organism." },
     { part: "corrects", db: "corrects", label: "Corrects a value", kinds: ["corrected"],
       title: "The database lists another number for this value; CatLog's value is the one the paper prints." },
-    { part: "differs", db: "differs", label: "Different number", kinds: ["differs", "other_number", "another_measurement"],
+    { part: "differs", label: "Different number", kinds: ["differs", "other_number", "another_measurement"],
       title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
     { part: "not-listed", label: "Other values listed", kinds: ["other_values_only"],
       title: "The database lists other numbers of this parameter for the paper, not this one." },
@@ -5206,8 +5211,9 @@
         : formatInteger(count);
       return `<td class="stats-num" data-count="${count}">${number}${paired >= STATS_RATE_BASE ? `<small>${escapeHtml(statsShare(count, paired))}</small>` : ""}</td>`;
     };
+    // A database's Differs is not one Browse result (STATS_DATABASE_KINDS): only the All row's links.
     const line = (row, name, params) => `<th scope="row">${name}<small class="stats-db-paired-note">${formatInteger(row.paired)} paired</small></th><td class="stats-num stats-db-paired-col" data-count="${row.paired}">${formatInteger(row.paired)}</td>
-      ${cell(row.same, row.paired, null, "")}${cell(row.corrects, row.paired, { db: "corrects", ...params }, `${params.dbsrc ? row.source.display : "All"}, corrects a value`)}${cell(row.differs, row.paired, { db: "differs", ...params }, `${params.dbsrc ? row.source.display : "All"}, different number`)}`;
+      ${cell(row.same, row.paired, null, "")}${cell(row.corrects, row.paired, { db: "corrects", ...params }, `${params.dbsrc ? row.source.display : "All"}, corrects a value`)}${cell(row.differs, row.paired, params.dbsrc ? null : { db: "differs" }, "All, different number")}`;
     const names = new Set(sources.map((source) => source.key));
     const derived = names.has("skid") && names.has("brenda") ? " (SKiD derives from BRENDA)" : "";
     return {

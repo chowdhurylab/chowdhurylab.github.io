@@ -2199,6 +2199,13 @@ function row(overrides = {}) {
     assert.match(refined("db-values"), /class="stats-seg stats-part-not-listed[^"]*"[^>]*data-tip="kcat, Not in the databases: 5,100 \(12\.3%\)" data-href="[^"]*#browse\?db=not_listed&amp;dbpar=kcat"/);
     assert.match(refined("db-sources"), /data-href="[^"]*#browse\?db=corrects&amp;dbsrc=sabio_rk"/);
     assert.match(refined("db-paired"), /<td class="stats-num" data-count="1156"><a class="stats-link" href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda" aria-label="BRENDA, corrects a value: 1,156">1,156<\/a><small>1\.7%<\/small><\/td>/);
+    // A database's Different number (813 differs + 274 other numbers for BRENDA) and Same, other label count values
+    // whose own result is another, which Browse's value-level filter would not show: plain numbers, in the table,
+    // the bars and the legend, even then. The All row's Differs is one result and links.
+    assert.doesNotMatch(databaseSection(), /db=(?:differs|other_label)&amp;dbsrc=/);
+    assert.match(refined("db-paired"), /<td class="stats-num" data-count="1087">1,087<small>1\.6%<\/small><\/td>/);
+    assert.match(refined("db-paired"), /<tfoot>[\s\S]*?href="[^"]*#browse\?db=differs" aria-label="All, different number: 1,051">1,051<\/a>/);
+    assert.match(refined("db-sources"), /<ul class="stats-legend">[\s\S]*?<span title="[^"]*">Same, other label<\/span>[\s\S]*?#browse\?db=corrects"[^>]*>Corrects a value<\/a>[\s\S]*?<span title="[^"]*">Different number<\/span>/);
     assert.match(refined("db-found"), /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or a power of ten slipped">Decimal slip<\/a>/);
     assert.match(refined("db-causes"), /href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda&amp;dbwhy=unit" aria-label="BRENDA, unit or scale: 979">979<\/a>/);
     // A key Browse still lacks keeps its counts plain: a database without a cause.

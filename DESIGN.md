@@ -135,7 +135,10 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Beside it,
     the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per
-    database and "All, each value once" (`values.all`); below 400px the paired count goes under the name.
+    database and "All, each value once" (`values.all`); below 400px the paired count goes under the name. Per
+    database only Corrects links (bar, legend, table): a database's Different number also counts its other number for a
+    value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
+    which matches a value by its own result, would show fewer; the All row's Differs links (one result).
   - How each correction was found: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; STATS_CAUSE_FAMILIES maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
