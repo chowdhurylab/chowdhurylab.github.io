@@ -848,7 +848,7 @@ checks), 3 What is in the catalog (the review-result donut and its legend table,
 Records | Share switch, Read from the paper and not yet re-read, values read from each paper, what the records
 contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
 organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
-as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (only when the snapshot has those counts).
+as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a one-sentence lead, each value against the databases, each database against the values read from its papers beside the values it pairs, how each correction was found beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with one sentence and a 12px
 data line (snapshot, Data ID, definition); fills run from the colour to its tint with 1px outlines, in the
 review-result and comparison tokens and --bar-neutral for the single-series value figures (every BPG hue already

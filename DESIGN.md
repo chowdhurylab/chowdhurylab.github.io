@@ -45,7 +45,11 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    paper.
 5. Values: Value ranges, then Values by enzyme class.
 6. Cautions.
-7. Against the databases: figures 3-5 of the design spec, only when the snapshot has their counts.
+7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a one-sentence lead, Each
+   value against the databases (alone in its row until Why no database lists a value joins it), Each database against
+   the values read from its papers beside When a database lists a number for the same measurement, How each correction
+   was found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
+   replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
 
 A closed "How these numbers are counted" ends the page. The parts' figures and tables:
 
@@ -105,24 +109,37 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   printed kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a
   calculated kcat/Km is not a value read), each label the papers, then their share; drawn only when the bins add up to
   the papers CatLog has read. No publication years: the data has none.
-- Figures 3-5 when `overview.quality` holds `db_compare`, `earlier_corrections`
-  and `replaced` (counts the CatLog side computes; whole counts only, checked
-  to add up): values read from the paper against the databases (same number,
-  a different number, no database value; the caption says only the paper and
-  parameter are compared and a different number is not a database error; its
-  data line names the papers the databases miss, "For 9 papers no database
-  lists any of the parameters CatLog read from them; for 171 more, the
-  databases list some of them but not all", leaving out a count of zero),
-  the corrections on records accepted after a correction (rounding, a
-  different number, unit or magnitude, added) and Entries replaced by reading
-  the paper (the earlier version's entries of papers CatLog has read: same number in CatLog's reading, not found). 100%
-  bars per parameter with reference lines at 25/50/75/100% and the shares
-  under them. Absent counts: no figure and no heading. Captions never seem to
-  contradict the headline: figure 5's papers are those CatLog has read that
-  the earlier version also had, figure 3 says for how many papers no database
-  lists any parameter CatLog read and for how many it lists some but not all,
-  and figure 4, when its record count is not the snapshot's count of records
-  accepted after a correction, names both (with the date it was counted).
+- Part 7, Against the databases, reads only the manifest's `summary.database_comparison` (the page never parses a
+  value's database line): whole counts, checked to add up (the parameters to `values.all`, the causes to
+  `corrections.values`); a figure whose keys are absent or damaged is left out, and the part has no heading without
+  figures. The databases, their order and names come from its `sources` list (key, name, display), else from the
+  databases its counts name in the Source filter's order and spelling (STRENDA DB): no number of databases is fixed.
+  Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
+  does not by itself mean a database is wrong." Shares only on a base of 1,000 values, else counts. Colours as Browse
+  gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
+  not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
+  - Lead (14px): "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database
+    lists, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and
+    20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it
+    is the paper's number for 97.4%." The three result phrases link into Browse (db=corrects, differs, not_listed).
+  - Each value against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
+    corrects, differs, not listed); the counts of corrects and differs beside each bar link into Browse with dbpar;
+    shares under the bars; a segment with a filter opens Browse when clicked; data line: calculated kcat/Km not
+    compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`).
+  - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
+    values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Beside it,
+    the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per
+    database and "All, each value once" (`values.all`); below 400px the paired count goes under the name.
+  - How each correction was found: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
+    misprinted; STATS_CAUSE_FAMILIES maps every cause code), split checked against the paper / an exact factor found by
+    code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
+    add up to its code count. Beside it Corrections by cause and database (`by_cause_database`), non-zero cells
+    linking to db=corrects&dbsrc&dbwhy; a line per database on phones, or wherever the table does not fit its column.
+  - Corrections on records not yet re-read: `overview.earlier_corrections`, counted by the overview builder from the
+    Full data's corrections lists (kcat, Km, kcat/Km by kind: more digits or rounding, a different number, unit or
+    magnitude, added; other changes counted apart; how many values before the change a database lists), its records
+    linking to db=earlier; without it, the CatLog side's `overview.quality.earlier_corrections` (another snapshot's
+    count names both record counts). Entries replaced by reading the paper (`overview.quality.replaced`) as before.
 - Checks on the values (cards, after the lead): second AI check (records read from the paper),
   AI audits, the human review of the earlier version's entries (entries and papers; values
   correct, values missing and other disagreements as shares; a snapshot without
