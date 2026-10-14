@@ -118,16 +118,16 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
   does not by itself mean a database is wrong." Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
-  not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds). A link
-  that names one database, cause or parameter (dbsrc, dbwhy, dbpar) is drawn only once Browse reads that key
-  (DATABASE_REFINE_KEYS, as the record's links): until then the count or name is plain text, so no link opens a wider
-  list than it names.
+  not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
   - Lead (14px): "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database
     lists, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and
     20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it
     is the paper's number for 97.4%." The three result phrases link into Browse (db=corrects, differs, not_listed).
+  - Links never open a wider list than their count: a count, segment or label whose link would name a database
+    (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
+    (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
   - Each value against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
-    corrects, differs, not listed); the counts of corrects and differs beside each bar link into Browse (with dbpar);
+    corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above);
     shares under the bars; a segment with a filter opens Browse when clicked; data line: calculated kcat/Km not
     compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`).
   - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
@@ -138,7 +138,7 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
     misprinted; STATS_CAUSE_FAMILIES maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
     add up to its code count. Beside it Corrections by cause and database (`by_cause_database`), non-zero cells
-    linking to db=corrects (with dbsrc and dbwhy); a line per database on phones, or wherever the table does not fit
+    linking to db=corrects&dbsrc&dbwhy (see above); a line per database on phones, or wherever the table does not fit
     its column.
   - Corrections on records not yet re-read: `overview.earlier_corrections`, counted by the overview builder from the
     Full data's corrections lists (kcat, Km, kcat/Km by kind: more digits or rounding, a different number, unit or

@@ -1184,9 +1184,9 @@ def check_stats_figures(driver, browser, url):
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
             driver.execute_script("document.querySelector('[data-figure=\"db-values\"]').scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-figures-{width}.png"))
-        # A segment that has a Browse filter opens Browse there: the values in none of the databases (All values' row; a
-        # parameter's segment links only once Browse reads dbpar). The address Browse opens with is read as the new page
-        # starts (sessionStorage), whatever Browse then makes of it.
+        # A segment that has a Browse filter opens Browse there: the kcat values in none of the databases (once Browse
+        # matches a compared parameter; until then, all values in none of the databases, the kcat segment unlinked). The
+        # address Browse opens with is read as the new page starts (sessionStorage), whatever Browse then makes of it.
         first = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": "try { sessionStorage.setItem('catlogFirstAddress', location.href); } catch (error) {}"})
         try:
@@ -1194,12 +1194,16 @@ def check_stats_figures(driver, browser, url):
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsDbValuesTitle"))
-            segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='all'] .stats-seg.stats-part-not-listed")
+            segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='kcat'] .stats-seg.stats-part-not-listed")
+            expected = "browse?db=not_listed&dbpar=kcat"
+            if not segment.get_attribute("data-href"):
+                segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='all'] .stats-seg.stats-part-not-listed")
+                expected = "browse?db=not_listed"
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", segment)
             segment.click()
             wait.until(lambda d: urlsplit(d.current_url).path.endswith("catlog-latest.html"))
             opened = driver.execute_script("return sessionStorage.getItem('catlogFirstAddress')")
-            assert urlsplit(opened).fragment == "browse?db=not_listed", opened
+            assert urlsplit(opened).fragment == expected, opened
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": first["identifier"]})
     finally:
@@ -1294,6 +1298,30 @@ def check_stats_databases(driver, browser, url):
                 assert not driver.execute_script("return Boolean(document.querySelector('.stats-db-cause-table').getClientRects().length)")
             driver.execute_script("document.querySelector(\"#statsCharts [data-part='databases']\").scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-databases-{width}.png"))
+        # Every part-7 link (and linked bar segment) opens Browse at an address Browse keeps: one that named a key Browse
+        # does not match yet would be cut back to a wider list than its count. One link per set of address keys; only
+        # where the snapshot's record index carries the comparison (Browse has the group).
+        set_browse_viewport(driver, browser, 1440, 1000)
+        addresses = driver.execute_script("""
+            return [...document.querySelectorAll("#statsCharts [data-part='databases'] a[href*='#browse'], #statsCharts [data-part='databases'] [data-href*='#browse']")]
+                .map((element) => element.getAttribute('href') || element.getAttribute('data-href'));
+        """)
+        assert addresses, "Part 7 links into Browse"
+        indexed = driver.execute_script(
+            "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
+        by_keys = {}
+        for address in addresses:
+            fragment = urlsplit(urljoin(driver.current_url, address)).fragment
+            by_keys.setdefault(tuple(sorted(key for key, _value in parse_qsl(fragment.partition("?")[2]))), fragment)
+        browse = url.split("#", 1)[0]
+        summary = "const e = document.getElementById('activeSummary'); return e ? e.textContent.trim() : ''"
+        for fragment in by_keys.values() if indexed else ():
+            driver.get("about:blank")
+            driver.get(f"{browse}#{fragment}")
+            wait.until(lambda d: re.fullmatch(r"[\d,]+ records?", d.execute_script(summary)))
+            kept = urlsplit(driver.current_url).fragment
+            assert sorted(parse_qsl(kept.partition("?")[2])) == sorted(parse_qsl(fragment.partition("?")[2])), \
+                f"Stats links to #{fragment}; Browse keeps #{kept}"
     finally:
         if injected:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})

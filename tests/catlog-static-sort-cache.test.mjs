@@ -2104,12 +2104,12 @@ function row(overrides = {}) {
   assert.match(values, /stats-wide/, "Alone in its pair (Why no database lists a value is not here yet), it takes the row");
   assert.deepEqual([...values.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["kcat", 41541], ["km", 48066], ["kcatkm", 37344], ["all", 126951]]);
-  // A parameter's counts are not links while Browse does not read dbpar (it would open every record with such a value,
-  // a wider list than the count names); All values' counts are.
-  assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span>[\s\S]*?stats-part-differs" aria-hidden="true"><\/i>269<\/span>/);
+  // Until Browse matches a compared parameter (dbpar), a parameter's counts are plain numbers: a link would open every
+  // record with that result. All values links by result alone.
+  assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span><span><i class="stats-swatch stats-part-differs" aria-hidden="true"><\/i>269<\/span>/);
   assert.match(values, /data-row="kcatkm"[\s\S]*?<small>printed<\/small>/);
   assert.match(values, /data-row="all"[\s\S]*?href="[^"]*#browse\?db=corrects" aria-label="All values, Corrects a value: 1,548">1,548<\/a>/);
-  // Segments with a Browse filter open it (data-href); Same number has none, nor a parameter's while dbpar is not read.
+  // Segments with a Browse filter open it (data-href); Same number has none.
   assert.match(values, /class="stats-seg stats-part-not-listed[^"]*"[^>]*data-tip="All values, Not in the databases: 20,987 \(16\.5%\)" data-href="[^"]*#browse\?db=not_listed"/);
   assert.match(values, /class="stats-seg stats-part-not-listed[^"]*"[^>]*data-tip="kcat, Not in the databases: 5,100 \(12\.3%\)"><\/span>/);
   assert.doesNotMatch(values, /stats-part-same[^"]*"[^>]*data-href/);
@@ -2129,7 +2129,7 @@ function row(overrides = {}) {
   assert.match(bySource, /STRENDA DB, Same number: 216"/, "No share on a base under 1,000 values");
   assert.match(bySource, /BRENDA, Same number: 63,927 \(63\.1%\)"/);
   assert.match(bySource, /BRENDA: Same number 63,927 \(63\.1%\),[^<]*; 25,603 values from papers it does not list\./);
-  assert.doesNotMatch(bySource, /data-href/, "No database's segment links while Browse does not read dbsrc");
+  assert.doesNotMatch(bySource, /data-href/, "No database filter in Browse yet: no segment links");
   assert.match(bySource, /Shares are given only for a database with 1,000 values or more\./);
   for (const part of ["not-listed", "not-listed-2", "not-listed-3"]) assert.match(bySource, new RegExp(`stats-swatch stats-part-${part}"`));
   // Beside it, the values each database pairs: same with its share, corrects and differs linking into Browse.
@@ -2153,32 +2153,12 @@ function row(overrides = {}) {
   assert.match(causes, /<thead><tr><th scope="col">Cause<\/th><th scope="col" class="stats-num">BRENDA<\/th><th scope="col" class="stats-num">SABIO-RK<\/th><th scope="col" class="stats-num">OED<\/th><th scope="col" class="stats-num">SKiD<\/th><th scope="col" class="stats-num">STRENDA DB<\/th><th scope="col" class="stats-num">All<\/th><\/tr><\/thead>/);
   assert.deepEqual([...causes.match(/<tr data-stat-key="cause_unit">[\s\S]*?<\/tr>/)[0].matchAll(/data-count="(\d+)"/g)].map((match) => Number(match[1])),
     [979, 325, 526, 123, 12, 1320]);
-  assert.match(causes, /data-stat-key="cause_unit">[\s\S]*?<td class="stats-num" data-count="979">979<\/td>/);
-  assert.match(causes, /<tr data-stat-key="cause_all">[\s\S]*?<td class="stats-num" data-count="1548"><a class="stats-link" href="[^"]*#browse\?db=corrects" aria-label="All, all causes: 1,548">1,548<\/a><\/td>/);
+  assert.match(causes, /data-count="979">979<\/td>/);
+  assert.match(causes, /<tr data-stat-key="cause_all">[\s\S]*?href="[^"]*#browse\?db=corrects" aria-label="All, all causes: 1,548">1,548<\/a>/);
   assert.match(causes, /data-stat-key="cause_decimal">[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
   assert.deepEqual([...causes.match(/<tr data-stat-key="cause_all">[\s\S]*?<\/tr>/)[0].matchAll(/data-count="(\d+)"/g)].map((match) => Number(match[1])),
     [1156, 368, 616, 130, 12, 1548]);
   assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
-  // No part-7 link names a database, cause or parameter that Browse would drop: each opens the list it names.
-  assert.doesNotMatch(databaseSection(), /dbsrc|dbwhy|dbpar/);
-  // Once Browse reads a key, the links that name it come back, each with exactly that key.
-  try {
-    api.databaseRefineKeys.add("dbpar");
-    api.renderStats();
-    assert.match(figureHtml("db-values"), /data-row="kcat"[\s\S]*?href="[^"]*#browse\?db=corrects&amp;dbpar=kcat" aria-label="kcat, Corrects a value: 328">328<\/a>[\s\S]*?href="[^"]*#browse\?db=differs&amp;dbpar=kcat" aria-label="kcat, Different number: 269">269<\/a>/);
-    assert.match(figureHtml("db-values"), /data-tip="kcat, Not in the databases: 5,100 \(12\.3%\)" data-href="[^"]*#browse\?db=not_listed&amp;dbpar=kcat"/);
-    assert.doesNotMatch(databaseSection(), /dbsrc|dbwhy/);
-    api.databaseRefineKeys.add("dbsrc");
-    api.databaseRefineKeys.add("dbwhy");
-    api.renderStats();
-    assert.match(figureHtml("db-sources"), /data-href="[^"]*#browse\?db=corrects&amp;dbsrc=sabio_rk"/);
-    assert.match(figureHtml("db-paired"), /<td class="stats-num" data-count="1156"><a class="stats-link" href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda" aria-label="BRENDA, corrects a value: 1,156">1,156<\/a><small>1\.7%<\/small><\/td>/);
-    assert.match(figureHtml("db-found"), /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or a power of ten slipped">Decimal slip<\/a>/);
-    assert.match(figureHtml("db-causes"), /href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda&amp;dbwhy=unit" aria-label="BRENDA, unit or scale: 979">979<\/a>/);
-  } finally {
-    api.databaseRefineKeys.clear();
-    api.renderStats();
-  }
   // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
   const earlier = figureHtml("earlier-corrections");
   assert.match(plain(earlier), /Values CatLog's earlier version changed to what the paper prints, by kind of change, on the 2,881 records not yet re-read that list their changes\./);
@@ -2191,6 +2171,33 @@ function row(overrides = {}) {
     .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-sources", "db-paired", "db-found", "db-causes", "earlier-corrections", "replaced"]);
   assert.match(figures, /<strong>Table \d+\.<\/strong> Values for which a database lists a number for the same measurement/);
   assert.doesNotMatch(plain(databaseSection()), /\bv[12]\b|\bfive\b|independent|blind|claim/i);
+  // A part-7 link never names an address key Browse does not match (it would open a wider list than its count).
+  assert.doesNotMatch(databaseSection(), /db(?:src|why|par)=/);
+  // Once Browse matches a database, a cause and a compared parameter, those counts link to exactly those values.
+  const browseKeys = [...api.databaseRefineKeys];
+  for (const key of ["dbsrc", "dbwhy", "dbpar"]) api.databaseRefineKeys.add(key);
+  try {
+    api.renderStats();
+    const refined = (key) => figureHtml(key);
+    assert.match(refined("db-values"), /data-row="kcat"[\s\S]*?href="[^"]*#browse\?db=corrects&amp;dbpar=kcat" aria-label="kcat, Corrects a value: 328">328<\/a>[\s\S]*?href="[^"]*#browse\?db=differs&amp;dbpar=kcat" aria-label="kcat, Different number: 269">269<\/a>/);
+    assert.match(refined("db-values"), /data-row="kcatkm"[\s\S]*?<small>printed<\/small>[\s\S]*?#browse\?db=corrects&amp;dbpar=kcatkm/);
+    assert.match(refined("db-values"), /class="stats-seg stats-part-not-listed[^"]*"[^>]*data-tip="kcat, Not in the databases: 5,100 \(12\.3%\)" data-href="[^"]*#browse\?db=not_listed&amp;dbpar=kcat"/);
+    assert.match(refined("db-sources"), /data-href="[^"]*#browse\?db=corrects&amp;dbsrc=sabio_rk"/);
+    assert.match(refined("db-paired"), /<td class="stats-num" data-count="1156"><a class="stats-link" href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda" aria-label="BRENDA, corrects a value: 1,156">1,156<\/a><small>1\.7%<\/small><\/td>/);
+    assert.match(refined("db-found"), /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or a power of ten slipped">Decimal slip<\/a>/);
+    assert.match(refined("db-causes"), /href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda&amp;dbwhy=unit" aria-label="BRENDA, unit or scale: 979">979<\/a>/);
+    // A key Browse still lacks keeps its counts plain: a database without a cause.
+    api.databaseRefineKeys.delete("dbwhy");
+    api.renderStats();
+    assert.match(refined("db-paired"), /dbsrc=brenda" aria-label="BRENDA, corrects a value: 1,156"/);
+    assert.match(refined("db-causes"), /data-count="979">979<\/td>/);
+    assert.match(refined("db-causes"), /<tr data-stat-key="cause_all">[\s\S]*?dbsrc=brenda" aria-label="BRENDA, all causes: 1,156">1,156<\/a>/);
+    assert.doesNotMatch(databaseSection(), /dbwhy=/);
+  } finally {
+    api.databaseRefineKeys.clear();
+    for (const key of browseKeys) api.databaseRefineKeys.add(key);
+    api.renderStats();
+  }
   // Every cause code has a family: the bundle's, and the codes the CatLog side writes for a correction.
   for (const cause of [...Object.keys(databaseComparison().corrections.by_cause), "header_scale_inverted", "header_scale_ignored",
     "unit_not_converted", "uM_entered_as_mM", "mM_entered_as_uM", "time_unit", "decimal_or_exponent_slip", "value_from_other_row",
