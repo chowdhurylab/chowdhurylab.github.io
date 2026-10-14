@@ -2187,6 +2187,13 @@ function row(overrides = {}) {
   runtimeManifest.summary.database_comparison.values_by_database = { "Some DB": { same: 5, paper_absent: 1 }, ...databaseComparison().values_by_database };
   assert.equal(JSON.stringify(api.statsDatabaseSources(runtimeManifest.summary.database_comparison).map((source) => [source.key, source.display])),
     JSON.stringify([["brenda", "BRENDA"], ["sabio_rk", "SABIO-RK"], ["oed", "OED"], ["skid", "SKiD"], ["strenda", "STRENDA DB"], ["some_db", "Some DB"]]));
+  // Stats, the Guide, Browse's "?" and a record's footer read one list (comparedDatabases): a comparison that neither lists
+  // nor counts its databases names the six; none without a comparison; a listed database keeps its version, date and rows.
+  assert.deepEqual([...api.statsDatabaseSources({ values: {} })].map((source) => source.display), ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB", "UniProt"]);
+  assert.equal(api.statsDatabaseSources(null).length, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(api.statsDatabaseSources({ sources: [{ key: "strenda_db", name: "STRENDA DB", version: "2026-10-07", rows: 898 }, "UniProt"] }))),
+    [{ key: "strenda", name: "STRENDA DB", display: "STRENDA DB", version: "2026-10-07", rows: 898 }, { key: "uniprot", name: "UniProt", display: "UniProt" }]);
+  assert.deepEqual([...api.guideDatabaseSources({ values: {} })].map((source) => source.name), [...api.statsDatabaseSources({ values: {} })].map((source) => source.display));
   // Each figure needs its own keys; a damaged count drops that figure (and the lead with the values), never shows an
   // empty heading.
   const withOut = (change) => {
@@ -3840,8 +3847,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // paper prints it, in a definition list. On a phone only the first note on a correction or a different number is open.
   assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span>BRENDA and STRENDA DB list another number <\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><dl class="detail-kv cmp-facts"><div class="kv-line"><dt>Cause<\/dt><dd>an mM value entered as µM<\/dd><\/div><div class="kv-line"><dt>In the paper<\/dt><dd>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/dd><\/div><\/dl><\/div><\/details>/);
   assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this kcat\/Km for this paper\.<\/p><\/div><\/details>/);
-  // The compared databases (the fallback names: this snapshot does not list them) and the caption's second sentence.
-  assert.match(section, /<p class="section-note cmp-footer">Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
+  // The compared databases (the six fallback names: this snapshot neither lists nor counts them) and the caption's second
+  // sentence.
+  assert.match(section, /<p class="section-note cmp-footer">Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
   // More like this: the paper's records (always searchable); no result link while Browse cannot filter by it.
   assert.match(section, /<p class="cmp-explore">More like this: <a href="#browse\?q=pmid:31072150&amp;record=v2-db">All records of this paper<\/a><\/p>/);
   assert.doesNotMatch(section, /db=|<table|cmp-list|Not in any database|Same number, other label/);
@@ -3953,7 +3961,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       runtimeManifest.summary.database_comparison.sources = [{ key: "brenda", name: "BRENDA", display: "BRENDA" }];
       assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA lists for the same paper\./);
       runtimeManifest.summary.database_comparison.sources = [{}, null, { key: "" }];
-      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list/, "an unusable list: the fallback");
+      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list/, "an unusable list: the fallback");
+      // Without a list, the databases the snapshot counts the values' database_sources for (values_by_database), in order.
+      runtimeManifest.summary.database_comparison = { values_by_database: { STRENDA: {}, OED: {}, BRENDA: {}, SKiD: {}, "SABIO-RK": {} } };
+      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\./);
     } finally {
       runtimeManifest.summary = previousSummary;
     }
@@ -4327,7 +4338,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   text = plain(html);
   assert.doesNotMatch(html, /guide-db-count|guide-db-note">Found by code|<li>/);
   assert.doesNotMatch(text, /undefined|NaN|null|This snapshot compares|Where a database lists a number for the same measurement|in this snapshot/);
-  assert.match(text, /with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\./);
+  assert.match(text, /with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
   assert.equal([...html.matchAll(/<h3 /g)].length, 4);
   assert.equal(Object.keys(items(html, "Results")).length, 6);
   assert.equal(api.guideDatabasesHtml(null), "");
@@ -5100,8 +5111,8 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(rows.map((match) => match[1].trim()), ["", "", "", "", "nested", "", "after-divider"]);
     assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
   }
-  // The "?" names the databases compared, from the manifest (here none listed: the five the comparison began with).
-  assert.match(element("aboutDatabases").innerHTML, /with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper/);
+  // The "?" names the databases compared, from the manifest (here none listed or counted: the six fallback names).
+  assert.match(element("aboutDatabases").innerHTML, /with the numbers BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper/);
   assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\): No compared database lists any value of the record\./);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
@@ -5144,7 +5155,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 2 }, values: { all: { corrected: "2" } } };
       assert.equal(api.databaseOptionTitle(api.databaseFilters[0]), api.databaseFilters[0].title, "a count that is not a number is left out");
       // The databases compared come from the manifest: its sources list (a sixth database joins there), else the
-      // databases values_by_database counts, else the five the comparison began with.
+      // databases values_by_database counts, else six.
       runtimeManifest.summary.database_comparison = { values_by_database: { BRENDA: {}, "SABIO-RK": {}, OED: {}, SKiD: {}, STRENDA: {} } };
       assert.deepEqual(JSON.parse(JSON.stringify(api.comparedDatabases())), [
         { key: "brenda", name: "BRENDA", display: "BRENDA" }, { key: "sabio_rk", name: "SABIO-RK", display: "SABIO-RK" },
@@ -5154,7 +5165,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
         { key: "uniprot", name: "UniProt", display: "UniProt" }, null, { name: "" }, "OED"], values_by_database: { SKiD: {} } };
       assert.deepEqual([...api.comparedDatabases()].map((item) => `${item.key}:${item.display}`), ["brenda:BRENDA", "strenda:STRENDA DB", "uniprot:UniProt", "oed:OED"]);
       delete runtimeManifest.summary.database_comparison;
-      assert.deepEqual([...api.comparedDatabases()].map((item) => item.display), ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB"]);
+      assert.deepEqual([...api.comparedDatabases()].map((item) => item.display), ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB", "UniProt"]);
     } finally {
       if (previousSummary === undefined) delete runtimeManifest.summary;
       else runtimeManifest.summary = previousSummary;

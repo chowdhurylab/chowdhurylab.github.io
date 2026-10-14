@@ -302,6 +302,45 @@
     skid: "skid", strenda: "strenda",
   };
 
+  // The databases CatLog compares each value with, in order, as the snapshot names them: {key (Browse's dbsrc), name (as
+  // the values' database_sources and the manifest's counts write it), display, and version, retrieved, rows when the
+  // snapshot gives them}. Every place that names them reads this list (Browse's "?", a record's footer, the Guide,
+  // Stats): the snapshot's summary.database_comparison.sources when it lists them; else the databases the values'
+  // database_sources name, as the snapshot counts them (values_by_database, corrections.by_database), in
+  // COMPARED_DATABASE_ORDER with one it does not know after the known ones by its own name; else the six below. Display
+  // names are the Source filter's (STRENDA DB). Nothing assumes how many databases there are.
+  const COMPARED_DATABASE_ORDER = ["brenda", "sabio_rk", "oed", "skid", "strenda", "uniprot"];
+  const COMPARED_DATABASES_FALLBACK = ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA", "UniProt"];
+
+  // A database's key from its name or key ("SABIO-RK", "sabio_rk", "STRENDA DB": sabio_rk, strenda), or the name folded.
+  function comparedDatabaseKey(name) {
+    const folded = String(name ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    return [folded, folded.split("_")[0]].map((token) => SOURCE_TOKENS[token]).find((key) => COMPARED_DATABASE_ORDER.includes(key)) || folded;
+  }
+
+  function comparedDatabases(comparison = manifest.summary?.database_comparison) {
+    const data = comparison && typeof comparison === "object" && !Array.isArray(comparison) ? comparison : {};
+    const text = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
+    const entry = (source) => {
+      const item = source && typeof source === "object" && !Array.isArray(source) ? source : { name: source };
+      const name = text(item.name) || text(item.display) || text(item.key);
+      const key = comparedDatabaseKey(text(item.key) || name);
+      if (!name || !key) return null;
+      const known = COMPARED_DATABASE_ORDER.includes(key) ? sourceFilters.find((filter) => filter.value === key)?.tag : "";
+      const facts = { version: text(item.version), retrieved: text(item.retrieved), rows: statsCount(item.rows) };
+      return { key, name, display: text(item.display) || known || name,
+        ...Object.fromEntries(Object.entries(facts).filter(([, value]) => value !== "" && value !== null)) };
+    };
+    const unique = (items) => items.filter((item, index) => item && items.findIndex((other) => other?.key === item.key) === index);
+    const listed = unique((Array.isArray(data.sources) ? data.sources : []).map(entry));
+    if (listed.length) return listed;
+    const maps = [data.values_by_database, data.corrections?.by_database].filter((map) => map && typeof map === "object" && !Array.isArray(map));
+    const rank = (item) => (COMPARED_DATABASE_ORDER.includes(item.key) ? COMPARED_DATABASE_ORDER.indexOf(item.key) : COMPARED_DATABASE_ORDER.length);
+    const counted = unique([...new Set(maps.flatMap((map) => Object.keys(map)))].map(entry))
+      .map((item, index) => ({ item, index })).sort((a, b) => rank(a.item) - rank(b.item) || a.index - b.index).map(({ item }) => item);
+    return counted.length ? counted : COMPARED_DATABASES_FALLBACK.map(entry);
+  }
+
   const tierOrder = {
     paper_grounded_high_confidence: 0,
     paper_grounded: 1,
@@ -4589,15 +4628,9 @@
   // The Guide's own section on the comparison (round 9 brief, piece 8; the words of its section 2 are binding): what is
   // compared, the six results Browse's group offers, the cause of a correction, how one is found and why no database
   // lists a value, each with this snapshot's counts where the manifest's summary.database_comparison gives them (a
-  // missing count leaves its line out, never a guessed number). The databases come from the manifest: its sources list
-  // with versions ([{key, name, display, version, retrieved, rows}]), else the databases it counts values for, in its
-  // order (a sixth, such as UniProt, joins by itself), else the fixed list below. Like the rest of the Guide it reads the
-  // manifest only, never the record index.
-  const GUIDE_DB_FALLBACK_SOURCES = ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB"];
-  const GUIDE_DB_DISPLAY = {
-    brenda: "BRENDA", sabio_rk: "SABIO-RK", "sabio-rk": "SABIO-RK", oed: "OED", skid: "SKiD", strenda: "STRENDA DB",
-    strenda_db: "STRENDA DB", uniprot: "UniProt",
-  };
+  // missing count leaves its line out, never a guessed number). The databases are comparedDatabases': the manifest's
+  // sources list with versions ([{key, name, display, version, retrieved, rows}]), else the databases it counts values
+  // for, else six. Like the rest of the Guide it reads the manifest only, never the record index.
   // Browse's options in its order (key = the address's db= value); mark: the result's colour, as in Browse.
   const GUIDE_DB_RESULTS = [
     { key: "corrects", label: "Corrects a value", mark: "corrects",
@@ -4651,22 +4684,10 @@
     return data && typeof data === "object" && !Array.isArray(data) ? data : null;
   }
 
-  // The compared databases in the manifest's order: [{name, version, retrieved, rows}] (only name is sure).
+  // The compared databases in order (comparedDatabases): [{name (the display name), version, retrieved, rows}] (only name
+  // is sure).
   function guideDatabaseSources(data) {
-    const display = (value) => {
-      const text = String(value ?? "").trim();
-      return GUIDE_DB_DISPLAY[text] || GUIDE_DB_DISPLAY[text.toLowerCase().replace(/[\s-]+/g, "_")] || text;
-    };
-    const listed = Array.isArray(data?.sources) ? data.sources.map((item) => {
-      if (typeof item === "string") return { name: display(item) };
-      if (!item || typeof item !== "object") return null;
-      const name = String(item.display ?? "").trim() || display(item.name ?? item.key);
-      const text = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
-      return name ? { name, version: text(item.version), retrieved: text(item.retrieved), rows: statsCount(item.rows) } : null;
-    }).filter(Boolean) : [];
-    if (listed.length) return listed;
-    const counted = Object.keys(data?.values_by_database || data?.corrections?.by_database || {}).map(display).filter(Boolean);
-    return (counted.length ? counted : GUIDE_DB_FALLBACK_SOURCES).map((name) => ({ name }));
+    return comparedDatabases(data).map((item) => ({ name: item.display, version: item.version || "", retrieved: item.retrieved || "", rows: item.rows ?? null }));
   }
 
   // A count of a manifest object's whole numbers, or null when any is not one (never a sum of damaged counts).
@@ -4884,10 +4905,8 @@
   // Part 7, Against the databases: read only from the manifest's summary.database_comparison, which the CatLog side
   // writes with the snapshot. Each figure is drawn only when its keys are there as whole counts that hold together;
   // without them part 7 has only the earlier version's figures, or no heading at all. The databases, their order and
-  // their names come from the comparison's own list (sources: key, name, display); a comparison without that list names
-  // the databases its counts name, in STATS_DATABASE_ORDER, spelled as the Source filter spells them (STRENDA DB).
+  // their names are comparedDatabases' (the comparison's own list, else the databases its counts name, else six).
   // Nothing here assumes how many databases there are.
-  const STATS_DATABASE_ORDER = ["brenda", "sabio_rk", "oed", "skid", "strenda", "uniprot"];
   // The second and third sentences of every part-7 caption (and of the record's own footer).
   const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
   // Shares are printed only on a base of this many values; below it, counts alone.
@@ -4971,31 +4990,10 @@
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
   }
 
-  // The compared databases in order: { key (Browse's dbsrc), name (the comparison's own key for it), display }.
+  // The compared databases in order (comparedDatabases): { key (Browse's dbsrc), name (the comparison's own key for it),
+  // display }; none without a comparison.
   function statsDatabaseSources(comparison) {
-    if (!comparison) return [];
-    const keyOf = (name) => {
-      const folded = String(name).trim().toLowerCase().replace(/[\s-]+/g, "_");
-      return SOURCE_TOKENS[folded] || SOURCE_TOKENS[folded.split("_")[0]] || folded;
-    };
-    const displayOf = (key, name) => sourceFilters.find((item) => item.value === key && key !== "earlier_paper")?.tag || name;
-    const listed = (Array.isArray(comparison.sources) ? comparison.sources : [])
-      .filter((item) => item && typeof item === "object" && [item.name, item.display, item.key].some((text) => typeof text === "string" && text.trim()));
-    if (listed.length) {
-      return listed.map((item) => {
-        const name = String(item.name || item.display || item.key).trim();
-        const key = String(item.key || keyOf(name)).trim();
-        return { key, name, display: String(item.display || displayOf(keyOf(name), name)).trim() };
-      });
-    }
-    const names = [...new Set([...Object.keys(comparison.values_by_database || {}), ...Object.keys(comparison.corrections?.by_database || {})])]
-      .filter((name) => name.trim());
-    const rank = (name) => {
-      const index = STATS_DATABASE_ORDER.indexOf(keyOf(name));
-      return index < 0 ? STATS_DATABASE_ORDER.length : index;
-    };
-    return names.map((name, index) => ({ name, index })).sort((a, b) => rank(a.name) - rank(b.name) || a.index - b.index)
-      .map(({ name }) => ({ key: keyOf(name), name, display: displayOf(keyOf(name), name) }));
+    return comparison ? comparedDatabases(comparison) : [];
   }
 
   // One database's entry in a map keyed by database (values_by_database, by_database, a cause's databases).
@@ -6473,32 +6471,6 @@
       const children = databaseFilters.filter((item) => item.parent === option?.value).map((item) => item.value);
       if (children.length) setCheckboxes("database", selectedCheckboxes("database").filter((value) => !children.includes(value)));
     }
-  }
-
-  // The databases compared, in the manifest's order with their display names ({key, name, display}): the snapshot's
-  // summary.database_comparison.sources when it lists them, else the databases its values_by_database counts, else the
-  // five the comparison began with. A database added to the comparison (UniProt) joins through the manifest.
-  const DATABASE_DISPLAY_NAMES = { strenda: "STRENDA DB" };
-  const DATABASES_COMPARED_FALLBACK = ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA"];
-
-  function databaseKey(name) {
-    return String(name ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  }
-
-  function comparedDatabases() {
-    const comparison = manifest.summary?.database_comparison || {};
-    const entry = (source) => {
-      const item = source && typeof source === "object" ? source : { name: source };
-      const name = String(item.name ?? item.display ?? item.key ?? "").trim();
-      const key = databaseKey(item.key ?? name);
-      if (!name || !key) return null;
-      return { key, name, display: String(item.display ?? "").trim() || DATABASE_DISPLAY_NAMES[databaseKey(name)] || name };
-    };
-    const listed = (Array.isArray(comparison.sources) ? comparison.sources : []).map(entry).filter(Boolean);
-    if (listed.length) return listed;
-    const counted = comparison.values_by_database && typeof comparison.values_by_database === "object"
-      ? Object.keys(comparison.values_by_database).map(entry).filter(Boolean) : [];
-    return counted.length ? counted : DATABASES_COMPARED_FALLBACK.map(entry);
   }
 
   // An option's title: its definition and, when the manifest counts them, how many values and records have that result
@@ -12394,7 +12366,6 @@
       databaseFactorText,
       showDatabaseNote,
       correctionNumbers,
-      comparedDatabases,
       databaseRefineKeys: DATABASE_REFINE_KEYS,
       renderGuideDatabases,
       guideDatabasesHtml,

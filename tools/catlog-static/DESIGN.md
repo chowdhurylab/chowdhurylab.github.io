@@ -203,7 +203,7 @@ the name, the count comes 6px closer (the counts stay in line with the other gro
 tighter between words and 0.01em between letters; "every value" may wrap. A record matches any option ticked, except that "every value" narrows Not in the
 databases: ticking it ticks that too, unticking that unticks it, and the pair is one chip, "Not in the
 databases: every value", that removes both. The "?" names the databases compared from the manifest (its
-sources list, else the databases values_by_database counts, else the five the comparison began with) and gives
+sources list, else the databases values_by_database counts, else BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt) and gives
 each option's definition. In the phone sheet the group's rows are 44px. Address key
 db=corrects,differs,other_label,not_listed,all_not_listed,all_same,earlier; earlier addresses keep their records:
 adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Review result (Accepted, Not
@@ -761,7 +761,8 @@ found at once: A, B, G, C, D, E, F, H.
   open: every one from 641px, only the first on a phone; others closed; nothing
   is remembered. Display names come from the manifest
   (summary.database_comparison.sources: key, name, display, in order; STRENDA
-  reads "STRENDA DB"), else the five in the code. Then a 12px footer: "Compared
+  reads "STRENDA DB"), else the databases values_by_database counts, else the
+  six in the code (with UniProt). Then a 12px footer: "Compared
   with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same
   paper. A different number can mean a different measurement; it does not by
   itself mean a database is wrong." (names from the manifest; never a counted
@@ -939,7 +940,7 @@ its line in the contents and under Questions; shown when the manifest's
 summary.database_comparison is there, or the record index lists database_summary,
 then without counts; written from the manifest only: a lead naming the compared
 databases from the manifest's sources list, else the databases its counts name, in
-its order (never a typed "five"), with the values compared, the papers and the
+its order, else the six in the code (never a typed "five"), with the values compared, the papers and the
 share where a database lists a number for the same measurement (from 1,000
 values); What is compared and Databases (versions, dates and values when the
 sources list has them); Results, the six of Browse's group in its order, each after
