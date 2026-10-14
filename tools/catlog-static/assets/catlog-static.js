@@ -97,6 +97,7 @@
   // Stats fits some widths to the drawn text; once a font finishes loading it fits them again (one listener per page).
   let statsRefitOnFonts = false;
   let statsRefitOnNarrow = false;
+  let statsRefitOnResize = false;
   // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
@@ -657,6 +658,9 @@
     if (statsOpen && !state.statsRendered) {
       renderStats();
       state.statsRendered = true;
+    } else if (statsOpen) {
+      // The window may have changed width while Stats was hidden (its table is measured only while shown).
+      statsFitDatabaseTables($("statsCharts"));
     }
     // The Team page too: drawn from the manifest the first time it is shown.
     if (teamOpen && !state.teamRendered && $("teamFigure")) {
@@ -3890,6 +3894,18 @@
     }
   }
 
+  // Corrections by cause and database has a column per database: where its table is wider than its figure (a wide font,
+  // a narrow window, more databases), the figure gives a line per database instead (stats-db-narrow), as on phones,
+  // where the stylesheet does so anyway. Run whenever Stats is shown, after a late font and on a resize; a table that
+  // is not drawn (Stats hidden, a phone) is not measured and keeps its table form until it is.
+  function statsFitDatabaseTables(root) {
+    for (const figure of root?.querySelectorAll?.("[data-figure='db-causes'] .stats-fig") || []) {
+      figure.classList.remove("stats-db-narrow");
+      const table = figure.querySelector(".stats-db-cause-table");
+      if (table?.getClientRects?.().length && table.offsetWidth > figure.clientWidth + 1) figure.classList.add("stats-db-narrow");
+    }
+  }
+
   // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
   // an 80px bar, the count, and its share of all records (or a second count). Bars are drawn against `scale`.
   function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral", countHead = "Records" } = {}) {
@@ -4812,7 +4828,7 @@
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)` })
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
-      caption: `Each value read from the paper${names ? `, against what ${escapeHtml(names)} list for it` : ""}; the counts right of each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
+      caption: `Each value read from the paper${names ? `, against what ${escapeHtml(names)} list for it` : ""}; the two counts beside each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(notes),
     };
   }
@@ -4843,7 +4859,7 @@
       body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
         axis: statsAxis(100, 25, { percent: true }),
         valueWidth: `calc(${Math.max(...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
-      caption: `For each database, how it lists the values read from the papers it lists (the number right of its bar); the values from papers it does not list are counted under the bar. A value counts for every database. ${STATS_DATABASE_CAPTION}`,
+      caption: `For each database, how it lists the values read from the papers it lists (the number beside its bar); the values from papers it does not list are counted under the bar. A value counts for every database. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(rows.some((row) => row.count < STATS_RATE_BASE) ? `Shares are given only for a database with ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
     };
   }
@@ -4872,14 +4888,14 @@
         : formatInteger(count);
       return `<td class="stats-num" data-count="${count}">${number}${paired >= STATS_RATE_BASE ? `<small>${escapeHtml(statsShare(count, paired))}</small>` : ""}</td>`;
     };
-    const line = (row, name, params) => `<th scope="row">${name}</th><td class="stats-num" data-count="${row.paired}">${formatInteger(row.paired)}</td>
+    const line = (row, name, params) => `<th scope="row">${name}<small class="stats-db-paired-note">${formatInteger(row.paired)} paired</small></th><td class="stats-num stats-db-paired-col" data-count="${row.paired}">${formatInteger(row.paired)}</td>
       ${cell(row.same, row.paired, null, "")}${cell(row.corrects, row.paired, { db: "corrects", ...params }, `${params.dbsrc ? row.source.display : "All"}, corrects a value`)}${cell(row.differs, row.paired, { db: "differs", ...params }, `${params.dbsrc ? row.source.display : "All"}, different number`)}`;
     const names = new Set(sources.map((source) => source.key));
     const derived = names.has("skid") && names.has("brenda") ? " (SKiD derives from BRENDA)" : "";
     return {
       id: "statsDbPairedTitle", key: "db-paired", title: "When a database lists a number for the same measurement", kind: "Table",
       body: `<table class="stats-table stats-db-table">
-        <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
+        <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num stats-db-paired-col">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
         <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, escapeHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
         ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
       caption: `Values for which a database lists a number for the same measurement (paired), and how many it lists as the paper prints them. A number copied into several databases counts for each${derived}${all.paired ? "; the All row counts each value once" : ""}. ${STATS_DATABASE_CAPTION}`,
@@ -4971,11 +4987,11 @@
       <tfoot><tr data-stat-key="cause_all"><th scope="row">All causes</th>${[...columns, all]
         .map((column) => `<td class="stats-num" data-count="${column.total}">${link(column.total, params(column, null), `${name(column)}, all causes`)}</td>`).join("")}</tr></tfoot></table>`;
     const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${escapeHtml(name(column))}:</strong> ${STATS_CAUSE_FAMILIES
-      .filter((family) => column.families[family.key]).map((family) => `${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}`).join(" · ")}</li>`).join("")}</ul>`;
+      .filter((family) => column.families[family.key]).map((family) => `<span class="nowrap">${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</span>`).join(" · ")}</li>`).join("")}</ul>`;
     return {
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
-      caption: `Values that correct a database's number, by cause and database. A value corrected in several databases counts for each; the All column counts each value once. ${STATS_DATABASE_CAPTION}`,
+      caption: `Values that correct a database's number, by cause and database. A value corrected in several databases counts for each; All counts each value once. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here; All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""),
     };
   }
@@ -5677,12 +5693,27 @@
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
+    statsFitDatabaseTables($("statsCharts"));
     // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
     if (!statsRefitOnFonts && document.fonts?.addEventListener) {
       statsRefitOnFonts = true;
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); }
+        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); statsFitDatabaseTables(root); }
+      });
+    }
+    // A window that changes width changes the room of Corrections by cause and database's table (once per page).
+    if (!statsRefitOnResize && window.addEventListener) {
+      statsRefitOnResize = true;
+      let pending = false;
+      window.addEventListener("resize", () => {
+        if (pending || !window.requestAnimationFrame) return;
+        pending = true;
+        window.requestAnimationFrame(() => {
+          pending = false;
+          const root = $("statsCharts");
+          if (root?.isConnected) statsFitDatabaseTables(root);
+        });
       });
     }
     // Across 360px a heading of several words changes between one line and one word per line (data-sizer-narrow): the

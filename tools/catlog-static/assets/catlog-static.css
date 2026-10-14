@@ -985,6 +985,9 @@ a.stats-total-value:focus-visible { outline:0 }
 /* A muted line under a bar (Each database against the values read from its papers: the values from papers it does not
    list), in the bar's column and under the value. */
 .stats-chart-aside { grid-column:2 / -1; margin-top:2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-chart-rows:has(.stats-chart-aside) + .stats-chart-axis { margin-top:8px }
+/* Database names as labels: STRENDA DB keeps one line in a wide font (Verdana with letter-spacing). */
+.stats-chart-percent[data-chart="db-sources"] { --label-w:104px }
 /* A segment that opens Browse (the same filter is a link in the chart's text). */
 .stats-seg[data-href] { cursor:pointer }
 /* Part 7's lead: one 14px sentence under the part's heading, its result names linking into Browse. */
@@ -998,6 +1001,20 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-db-table tfoot td small { font-weight:400 }
 .stats-db-blocks { display:none; gap:6px; margin:0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-db-blocks strong { color:var(--text); font-weight:600 }
+/* Corrections by cause and database: database names may take two lines (STRENDA DB) and the cells sit closer, so the
+   table fits a half-width column in a wide font; where it still does not, the figure gives a line per database
+   (stats-db-narrow, set by the page after measuring), as on phones. */
+.stats-table.stats-db-cause-table :is(th,td) { padding-inline:6px }
+.stats-table.stats-db-cause-table thead th { white-space:normal }
+.stats-db-narrow .stats-db-cause-table { display:none }
+.stats-db-narrow .stats-db-blocks { display:grid }
+/* When a database lists a number for the same measurement: on the narrowest phones the paired count stands under the
+   database's name and its own column goes, so the table fits 320px in a wide font. */
+.stats-db-paired-note { display:none }
+@media (max-width: 400px) {
+  .stats-db-table .stats-db-paired-col { display:none }
+  .stats-db-table .stats-db-paired-note { display:block; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+}
 .stats-share-lines { display:grid; gap:2px; margin:12px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-share-lines > div { display:flex; flex-wrap:wrap; gap:4px 12px }
 .stats-share-lines dt { min-width:72px; color:var(--text) }
