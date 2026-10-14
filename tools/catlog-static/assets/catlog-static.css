@@ -848,6 +848,17 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
+/* Against the databases (part 7), as Browse colours them: same green, same number under another label neutral grey,
+   corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds are cyan at
+   three strengths (other values listed, parameter not listed, value not listed: the fill at about 60%, 40% and 20%),
+   and how a correction was found red at two (checked against the paper, an exact factor found by code), each with
+   the full colour as its outline, so they part by lightness in grey print too. */
+.stats-part-other-label { --part:var(--bar-neutral) }
+.stats-part-corrects { --part:var(--chg-magnitude) }
+.stats-part-corrects-2 { --part:color-mix(in srgb, var(--chg-magnitude) 55%, var(--bg)); --part-line:var(--chg-magnitude) }
+.stats-part-not-listed { --part:var(--cmp-new) }
+.stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new) }
+.stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new) }
 /* Records read from the paper are accepted: navy, and on the enzyme classes a darker stripe inside the accepted bar. */
 .stats-part-catlog, .stats-part-catlog-mark { --part:var(--st-accepted) }
 /* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
@@ -911,7 +922,7 @@ a.stats-total-value:focus-visible { outline:0 }
 /* The value columns' headings (Figure 5: Records, Accepted, From paper), 12px muted, each right-aligned over its column. */
 .stats-chart-head { margin:0 0 6px }
 .stats-chart-head > .stats-chart-value { grid-column:-2 / -1; color:var(--muted) }
-.stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) 64px }
+.stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:var(--label-w) minmax(0,1fr) var(--value-w,64px) }
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 /* A label with a breakdown under it (Figure 2's Other): the bar and the numbers stand on the name's line (all three are
@@ -971,6 +982,22 @@ a.stats-total-value:focus-visible { outline:0 }
 }
 .stats-ec-name { color:var(--text-2) }
 .stats-ec-number { white-space:nowrap }
+/* A muted line under a bar (Each database against the values read from its papers: the values from papers it does not
+   list), in the bar's column and under the value. */
+.stats-chart-aside { grid-column:2 / -1; margin-top:2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+/* A segment that opens Browse (the same filter is a link in the chart's text). */
+.stats-seg[data-href] { cursor:pointer }
+/* Part 7's lead: one 14px sentence under the part's heading, its result names linking into Browse. */
+.stats-part-lead { margin:0 0 var(--sp-5); max-width:80ch; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* Each value against the databases: the counts of the thin results right of each bar, each after its swatch. */
+.stats-db-thin { display:inline-flex; justify-content:flex-end; gap:8px; font-variant-numeric:tabular-nums lining-nums }
+.stats-db-thin > span { display:inline-flex; align-items:center; gap:4px }
+/* Part 7's tables: a count with its share under it. */
+.stats-db-table td small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-db-table tfoot :is(th,td) { border-top:1px solid var(--line); border-bottom:0; font-weight:600 }
+.stats-db-table tfoot td small { font-weight:400 }
+.stats-db-blocks { display:none; gap:6px; margin:0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-db-blocks strong { color:var(--text); font-weight:600 }
 .stats-share-lines { display:grid; gap:2px; margin:12px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-share-lines > div { display:flex; flex-wrap:wrap; gap:4px 12px }
 .stats-share-lines dt { min-width:72px; color:var(--text) }
@@ -1276,7 +1303,11 @@ a.stats-total-value:focus-visible { outline:0 }
      (OED's accepted, BRENDA's) stays wide enough to see. A long class name (Figure 5) hyphenates; a name with a
      breakdown under it (Figure 2's Other) has its numbers on the name's first line, not on the breakdown's last. */
   .stats-chart-row, .stats-chart-axis, .stats-chart-head { grid-template-columns:minmax(0,1fr) var(--value-w,96px); column-gap:8px; row-gap:4px }
-  .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:minmax(0,1fr) 64px }
+  .stats-chart-percent .stats-chart-row, .stats-chart-percent .stats-chart-axis { grid-template-columns:minmax(0,1fr) var(--value-w,64px) }
+  .stats-chart-aside { grid-column:1 / -1; grid-row:3; margin-top:0 }
+  /* Corrections by cause and database: a line per database instead of the table. */
+  .stats-db-cause-table { display:none }
+  .stats-db-blocks { display:grid }
   .stats-chart-label { grid-column:1; grid-row:1; align-self:end }
   .stats-chart.has-value-heads .stats-chart-label { -webkit-hyphens:auto; hyphens:auto }
   .stats-chart-value { grid-column:2; grid-row:1; align-self:end }

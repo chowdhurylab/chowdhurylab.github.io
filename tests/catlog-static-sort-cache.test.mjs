@@ -2014,19 +2014,218 @@ function row(overrides = {}) {
   lead = leadHtml();
   assert.doesNotMatch(lead, /Values missing|stats-lead-side|DOI|duplicate/);
   assert.match(lead, /Other disagreements, by kind: organism name 13\./);
-  // The comparison with the databases when the CatLog side's counts are in overview.quality: the last part, numbered on.
+  // Part 7, Against the databases, reads only summary.database_comparison (the test bundle's counts, 2026-10-13): the
+  // lead, each value against the databases, each database beside the values it pairs, how each correction was found
+  // beside the corrections by cause and database; then the earlier version's figures (overview.earlier_corrections,
+  // else quality's) and the replaced entries. An overview.quality.db_compare is no longer read.
+  const databaseComparison = () => ({
+    values: {
+      kcat: { new_paper_not_in_databases: 411, confirmed: 34186, differs: 269, new: 4689, same_number_other_label: 1658, corrected: 328 },
+      Km: { new_paper_not_in_databases: 635, confirmed: 40117, new: 4245, same_number_other_label: 2467, corrected: 381, differs: 221 },
+      "kcat/Km": { new_paper_not_in_databases: 336, confirmed: 23488, not_compared: 5946, same_number_other_label: 1449, new: 5798,
+        differs: 561, new_ratio_only: 4873, corrected: 839 },
+      all: { new_paper_not_in_databases: 1382, confirmed: 97791, not_compared: 5946, differs: 1051, new: 14732,
+        same_number_other_label: 5574, corrected: 1548, new_ratio_only: 4873 },
+    },
+    corrections: {
+      values: 1548,
+      by_cause: { power_of_ten: 557, printed_number_unit_not_applied: 253, header_scale_inverted: 179, unit_not_converted: 126,
+        paper_unit_misprint: 91, decimal_or_exponent_slip: 86, time_factor: 82, header_scale_ignored: 56, mM_entered_as_uM: 28,
+        value_from_other_row: 22, recomputed_ratio: 21, time_unit: 21, uM_entered_as_mM: 18, value_not_in_paper: 8 },
+      by_database: { BRENDA: 1156, OED: 616, "SABIO-RK": 368, SKiD: 130, STRENDA: 12 },
+      by_cause_database: {
+        power_of_ten: { "SABIO-RK": 97, BRENDA: 456, OED: 259, SKiD: 51 },
+        header_scale_inverted: { "SABIO-RK": 130, OED: 9, BRENDA: 49 },
+        header_scale_ignored: { "SABIO-RK": 1, BRENDA: 55, OED: 8, SKiD: 2 },
+        decimal_or_exponent_slip: { BRENDA: 85, OED: 48, SKiD: 3 },
+        paper_unit_misprint: { "SABIO-RK": 43, OED: 25, BRENDA: 46, SKiD: 4 },
+        mM_entered_as_uM: { BRENDA: 28, OED: 4, SKiD: 1 },
+        time_factor: { BRENDA: 82, OED: 29, SKiD: 6 },
+        value_from_other_row: { BRENDA: 22, OED: 5 },
+        recomputed_ratio: { BRENDA: 21, OED: 6 },
+        printed_number_unit_not_applied: { BRENDA: 229, OED: 133, "SABIO-RK": 24, SKiD: 63 },
+        unit_not_converted: { BRENDA: 48, OED: 73, STRENDA: 12, "SABIO-RK": 66 },
+        uM_entered_as_mM: { "SABIO-RK": 7, BRENDA: 11, OED: 11 },
+        value_not_in_paper: { BRENDA: 3, OED: 6 },
+        time_unit: { BRENDA: 21 },
+      },
+      by: { code: 892, paper_check: 656 },
+    },
+    values_by_database: {
+      BRENDA: { same: 63221, paper_absent: 25603, value_absent: 18746, parameter_absent: 6268, other_values_only: 5433,
+        same_number_other_label: 4731, corrected: 1156, differs: 813, same_rounded: 706, other_number: 274 },
+      "SABIO-RK": { paper_absent: 76540, same: 44991, same_number_other_label: 3297, value_absent: 1131, corrected: 368,
+        other_values_only: 291, parameter_absent: 136, differs: 120, other_number: 47, same_rounded: 30 },
+      OED: { paper_absent: 52172, same: 45964, other_values_only: 14719, value_absent: 8126, same_number_other_label: 2876,
+        same_rounded: 1771, corrected: 616, differs: 478, parameter_absent: 133, other_number: 96 },
+      SKiD: { paper_absent: 99102, same: 8511, other_values_only: 7141, parameter_absent: 6219, value_absent: 4762,
+        same_number_other_label: 844, corrected: 130, same_rounded: 107, differs: 79, other_number: 56 },
+      STRENDA: { paper_absent: 126567, same: 216, same_number_other_label: 82, other_values_only: 38, value_absent: 34, corrected: 12, differs: 2 },
+    },
+    records_with_kind: { same: 45251, corrected: 1443, differs: 955, other_label: 3466, new: 14002 },
+    not_reproduced: { distinct: { paired_with_different_number: 5635, reprinted_from_other_work: 2372, catlog_kept_no_values_from_paper: 1793,
+      equals_catlog_calculated_ratio: 1687, possible_catlog_miss: 1118, another_parameter_in_catlog: 463, possible_miss_weak: 448,
+      not_in_paper_text: 409, rejected_by_catlog_checks: 322, no_substrate_named_paper_has_several: 222, next_to_other_quantity: 154,
+      another_measurement_per_paper_check: 10 } },
+    papers: 2650,
+  });
+  const databaseSection = () => element("statsCharts").innerHTML.match(/<section class="stats-part" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part"|<details|$)/)?.[0] || "";
+  const figureHtml = (key) => element("statsCharts").innerHTML.match(new RegExp(`<section class="stats-section[^"]*" aria-labelledby="[^"]+" data-figure="${key}">[\\s\\S]*?</figure>[\\s\\S]*?</section>`))?.[0] || "";
+  const plain = (html) => html.replace(/<[^>]*>/g, "").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  const earlierCounts = { records: 2881, items: 5059, other_items: 889, before_listed: [2601, 3635], values: {
+    kcat: { rounding: 454, different: 222, magnitude: 35, added: 159 }, km: { rounding: 214, different: 319, magnitude: 85, added: 236 },
+    kcat_over_km: { rounding: 1532, different: 728, magnitude: 46, added: 140 } } };
+  runtimeManifest.summary.database_comparison = databaseComparison();
+  runtimeManifest.summary.overview = { ...overview, earlier_corrections: earlierCounts, quality: {
+    db_compare: { kcat: { same: 9, differs: 1, absent: 0 } },
+    replaced: { records: 7, accepted: 2, papers: 1, values: { kcat: [5, 6], km: [2, 2] } } } };
+  api.renderStats();
+  let figures = element("statsCharts").innerHTML;
+  assert.deepEqual(headings().slice(-7), ["Each value against the databases", "Each database against the values read from its papers",
+    "When a database lists a number for the same measurement", "How each correction was found", "Corrections by cause and database",
+    "Corrections on records not yet re-read", "Entries replaced by reading the paper"]);
+  assert.equal(partTitles().at(-1), "7 Against the databases");
+  assert.doesNotMatch(figures, /Values read from the paper against the databases|data-figure="db-compare"/);
+  // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
+  const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
+  assert.equal(plain(dbLead), "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database lists, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%.");
+  assert.match(dbLead, /href="[^"]*#browse\?db=corrects">1,548 correct a database/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=differs">1,051 differ/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=not_listed">20,987 are in none/);
+  // The lead stands right under the part's heading, before its figures.
+  assert.match(figures, /<span>Against the databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
+  // Each value against the databases: a 100% bar per parameter and for all, the thin counts right of each bar.
+  const values = figureHtml("db-values");
+  assert.match(values, /stats-wide/, "Alone in its pair (Why no database lists a value is not here yet), it takes the row");
+  assert.deepEqual([...values.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
+    [["kcat", 41541], ["km", 48066], ["kcatkm", 37344], ["all", 126951]]);
+  assert.match(values, /data-row="kcat"[\s\S]*?href="[^"]*#browse\?db=corrects&amp;dbpar=kcat" aria-label="kcat, Corrects a value: 328">328<\/a>[\s\S]*?href="[^"]*#browse\?db=differs&amp;dbpar=kcat" aria-label="kcat, Different number: 269">269<\/a>/);
+  assert.match(values, /data-row="kcatkm"[\s\S]*?<small>printed<\/small>[\s\S]*?#browse\?db=corrects&amp;dbpar=kcatkm/);
+  assert.match(values, /data-row="all"[\s\S]*?href="[^"]*#browse\?db=corrects" aria-label="All values, Corrects a value: 1,548">1,548<\/a>/);
+  // Segments with a Browse filter open it (data-href); Same number has none.
+  assert.match(values, /class="stats-seg stats-part-not-listed[^"]*"[^>]*data-tip="kcat, Not in the databases: 5,100 \(12\.3%\)" data-href="[^"]*#browse\?db=not_listed&amp;dbpar=kcat"/);
+  assert.doesNotMatch(values, /stats-part-same[^"]*"[^>]*data-href/);
+  assert.match(values, /<span class="visually-hidden">printed kcat\/Km: Same number 23,488 \(62\.9%\), Same, other label 1,449 \(3\.9%\), Corrects a value 839 \(2\.2%\), Different number 561 \(1\.5%\), Not in the databases 11,007 \(29\.5%\)\.<\/span>/);
+  // The legend names link into Browse (Same number has no filter), each with its definition.
+  assert.match(values, /<ul class="stats-legend">[\s\S]*?<span title="A database lists this number for this value\.">Same number<\/span>[\s\S]*?#browse\?db=other_label" title="A database lists this number for the paper under another substrate, variant or organism\.">Same, other label<\/a>/);
+  assert.match(plain(values), /Each value read from the paper, against what BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for it; the counts right of each bar are the values that correct a database's number and those with a different number\. Numbers compared for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\./);
+  assert.match(values, /5,946 kcat\/Km calculated by CatLog are not compared\. The databases also list 14,633 numbers for these papers that CatLog does not have; the README gives the reasons\./);
+  assert.match(values, /<dl class="stats-share-lines">[\s\S]*?82\.3%/);
+  // Each database against the values read from its papers: a bar per database in order, its papers' values right of
+  // it, the others under it; STRENDA DB by the Source filter's name.
+  const bySource = figureHtml("db-sources");
+  assert.deepEqual([...bySource.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
+    [["db_brenda", 101348], ["db_sabio_rk", 50411], ["db_oed", 74779], ["db_skid", 27849], ["db_strenda", 384]]);
+  assert.match(bySource, /<span class="stats-chart-aside" aria-hidden="true">\+ 25,603 values from papers BRENDA does not list<\/span>/);
+  assert.match(bySource, /<span class="stats-chart-label">STRENDA DB<\/span>/);
+  assert.match(bySource, /STRENDA DB, Same number: 216"/, "No share on a base under 1,000 values");
+  assert.match(bySource, /BRENDA, Same number: 63,927 \(63\.1%\)"/);
+  assert.match(bySource, /BRENDA: Same number 63,927 \(63\.1%\),[^<]*; 25,603 values from papers it does not list\./);
+  assert.match(bySource, /data-href="[^"]*#browse\?db=corrects&amp;dbsrc=sabio_rk"/);
+  assert.match(bySource, /Shares are given only for a database with 1,000 values or more\./);
+  for (const part of ["not-listed", "not-listed-2", "not-listed-3"]) assert.match(bySource, new RegExp(`stats-swatch stats-part-${part}"`));
+  // Beside it, the values each database pairs: same with its share, corrects and differs linking into Browse.
+  const paired = figureHtml("db-paired");
+  assert.match(paired, /<tr data-stat-key="db_brenda"><th scope="row">BRENDA<\/th><td class="stats-num" data-count="66170">66,170<\/td>\s*<td class="stats-num" data-count="63927">63,927<small>96\.6%<\/small><\/td><td class="stats-num" data-count="1156"><a class="stats-link" href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda" aria-label="BRENDA, corrects a value: 1,156">1,156<\/a><small>1\.7%<\/small><\/td><td class="stats-num" data-count="1087">/);
+  assert.match(paired, /<tr data-stat-key="db_strenda"><th scope="row">STRENDA DB<\/th><td class="stats-num" data-count="230">230<\/td>\s*<td class="stats-num" data-count="216">216<\/td>/);
+  assert.match(paired, /<tfoot><tr data-stat-key="db_all"><th scope="row">All, each value once<\/th><td class="stats-num" data-count="100390">100,390<\/td>\s*<td class="stats-num" data-count="97791">97,791<small>97\.4%<\/small><\/td><td class="stats-num" data-count="1548"><a class="stats-link" href="[^"]*#browse\?db=corrects" aria-label="All, corrects a value: 1,548">1,548<\/a><small>1\.5%<\/small><\/td><td class="stats-num" data-count="1051"><a[^>]*>1,051<\/a><small>1\.0%<\/small>/);
+  assert.match(plain(paired), /A number copied into several databases counts for each \(SKiD derives from BRENDA\); the All row counts each value once\./);
+  assert.match(paired, /Shares only where a database pairs 1,000 values or more\./);
+  // How each correction was found: a bar per cause family, split checked against the paper / an exact factor found by
+  // code (the causes code finds add up to corrections.by.code).
+  const found = figureHtml("db-found");
+  assert.deepEqual([...found.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
+    [["unit", 1320], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
+  assert.match(found, /data-tip="Unit or scale, Checked against the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found by code: 892"/);
+  assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); checked against the paper 428, exact factor found by code 892\.<\/span>/);
+  assert.match(found, /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or a power of ten slipped">Decimal slip<\/a>/);
+  assert.match(plain(found), /The 1,548 values that correct a database's number, by the cause of the database's number and how it was found; each label gives the values, then their share\./);
+  // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
+  const causes = figureHtml("db-causes");
+  assert.match(causes, /<thead><tr><th scope="col">Cause<\/th><th scope="col" class="stats-num">BRENDA<\/th><th scope="col" class="stats-num">SABIO-RK<\/th><th scope="col" class="stats-num">OED<\/th><th scope="col" class="stats-num">SKiD<\/th><th scope="col" class="stats-num">STRENDA DB<\/th><th scope="col" class="stats-num">All<\/th><\/tr><\/thead>/);
+  assert.deepEqual([...causes.match(/<tr data-stat-key="cause_unit">[\s\S]*?<\/tr>/)[0].matchAll(/data-count="(\d+)"/g)].map((match) => Number(match[1])),
+    [979, 325, 526, 123, 12, 1320]);
+  assert.match(causes, /href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda&amp;dbwhy=unit" aria-label="BRENDA, unit or scale: 979">979<\/a>/);
+  assert.match(causes, /data-stat-key="cause_decimal">[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
+  assert.deepEqual([...causes.match(/<tr data-stat-key="cause_all">[\s\S]*?<\/tr>/)[0].matchAll(/data-count="(\d+)"/g)].map((match) => Number(match[1])),
+    [1156, 368, 616, 130, 12, 1548]);
+  assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
+  // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
+  const earlier = figureHtml("earlier-corrections");
+  assert.match(plain(earlier), /Values CatLog's earlier version changed to what the paper prints, by kind of change, on the 2,881 records not yet re-read that list their changes\./);
+  assert.match(earlier, /<a class="stats-link" href="[^"]*#browse\?db=earlier">2,881 records not yet <span class="nowrap">re-read<\/span><\/a>/);
+  assert.match(earlier, /for 2,601 of 3,635 changed values \(71\.6%\)\. These records also list 889 other changes\./);
+  assert.doesNotMatch(earlier, /Figure 1 counts/);
+  // Pairs: each value alone (wide); each database beside the values it pairs; how found beside cause by database; the
+  // earlier corrections beside the replaced entries.
+  assert.deepEqual([...databaseSection().matchAll(/<section class="stats-section stats-figure-section( stats-wide)?[^"]*" aria-labelledby="[^"]+" data-figure="([^"]+)">/g)]
+    .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-sources", "db-paired", "db-found", "db-causes", "earlier-corrections", "replaced"]);
+  assert.match(figures, /<strong>Table \d+\.<\/strong> Values for which a database lists a number for the same measurement/);
+  assert.doesNotMatch(plain(databaseSection()), /\bv[12]\b|\bfive\b|independent|blind|claim/i);
+  // Every cause code has a family: the bundle's, and the codes the CatLog side writes for a correction.
+  for (const cause of [...Object.keys(databaseComparison().corrections.by_cause), "header_scale_inverted", "header_scale_ignored",
+    "unit_not_converted", "uM_entered_as_mM", "mM_entered_as_uM", "time_unit", "decimal_or_exponent_slip", "value_from_other_row",
+    "value_not_in_paper", "paper_unit_misprint", "recomputed_ratio", "power_of_ten", "printed_number_unit_not_applied", "time_factor"]) {
+    assert.ok(["unit", "decimal", "elsewhere", "misprint"].includes(api.STATS_CAUSE_FAMILY[cause]), `${cause} has no cause family`);
+  }
+  // The comparison's own list of databases (C7) names and orders them, and gives Browse's key; a sixth joins anywhere.
+  runtimeManifest.summary.database_comparison = { ...databaseComparison(), sources: [
+    { key: "uniprot", name: "UniProt", display: "UniProt" }, { key: "brenda", name: "BRENDA", display: "BRENDA" },
+    { key: "strenda", name: "STRENDA", display: "STRENDA DB" }] };
+  runtimeManifest.summary.database_comparison.values_by_database.UniProt = { same: 10, value_absent: 3, paper_absent: 126938 };
+  api.renderStats();
+  assert.deepEqual([...figureHtml("db-sources").matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["db_uniprot", "db_brenda", "db_strenda"]);
+  assert.match(plain(figureHtml("db-values")), /against what UniProt, BRENDA and STRENDA DB list for it/);
+  assert.match(figureHtml("db-causes"), /<th scope="col" class="stats-num">UniProt<\/th>[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
+  // Without that list, a database the counts name that the page does not know is drawn after the known ones by its own name.
+  runtimeManifest.summary.database_comparison = databaseComparison();
+  runtimeManifest.summary.database_comparison.values_by_database = { "Some DB": { same: 5, paper_absent: 1 }, ...databaseComparison().values_by_database };
+  assert.equal(JSON.stringify(api.statsDatabaseSources(runtimeManifest.summary.database_comparison).map((source) => [source.key, source.display])),
+    JSON.stringify([["brenda", "BRENDA"], ["sabio_rk", "SABIO-RK"], ["oed", "OED"], ["skid", "SKiD"], ["strenda", "STRENDA DB"], ["some_db", "Some DB"]]));
+  // Each figure needs its own keys; a damaged count drops that figure (and the lead with the values), never shows an
+  // empty heading.
+  const withOut = (change) => {
+    const data = databaseComparison();
+    change(data);
+    runtimeManifest.summary.database_comparison = data;
+    api.renderStats();
+    return [...databaseSection().matchAll(/data-figure="([^"]+)"/g)].map((match) => match[1]);
+  };
+  assert.deepEqual(withOut((data) => { data.values.kcat.confirmed = "34186"; }), ["db-sources", "db-paired", "db-found", "db-causes", "earlier-corrections", "replaced"]);
+  assert.doesNotMatch(databaseSection(), /stats-part-lead/);
+  assert.deepEqual(withOut((data) => { data.values.all.confirmed += 1; }).slice(0, 2), ["db-sources", "db-paired"], "Parameters that do not add up to all");
+  assert.deepEqual(withOut((data) => { delete data.values_by_database; }), ["db-values", "db-found", "db-causes", "earlier-corrections", "replaced"]);
+  assert.deepEqual(withOut((data) => { delete data.corrections.by_cause_database; }), ["db-values", "db-sources", "db-paired", "db-found", "earlier-corrections", "replaced"]);
+  assert.match(figureHtml("db-found"), /stats-wide/);
+  assert.deepEqual(withOut((data) => { data.corrections.values = 1549; }), ["db-values", "db-sources", "db-paired", "earlier-corrections", "replaced"], "Causes that do not add up to the corrections");
+  // Without corrections.by, or when the causes code finds do not add up to its code count, the bars are not split and
+  // the data line gives the two counts; a cause with no family is counted apart.
+  withOut((data) => { delete data.corrections.by; });
+  assert.doesNotMatch(figureHtml("db-found"), /Exact factor found by code|checked against the paper/);
+  withOut((data) => { data.corrections.by = { code: 900, paper_check: 648 }; });
+  assert.match(figureHtml("db-found"), /648 checked against the paper; for 900 code found an exact factor\./);
+  assert.doesNotMatch(figureHtml("db-found"), /<ul class="stats-legend">/);
+  withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
+  assert.match(figureHtml("db-found"), /2 corrections have causes not named here\./);
+  assert.match(figureHtml("db-causes"), /2 corrections have causes not named here; All causes counts them\./);
+  // Small counts: no shares on a base under 1,000 values, counts under the bars, singular words.
+  runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
+  api.renderStats();
+  assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
+    "Of 8 values read from 1 paper and compared, 4 are the number a database lists, 1 corrects a database's number, 1 differs without a known cause and 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), it is the paper's number for 4 of them.");
+  assert.match(figureHtml("db-values"), /<dt>All values<\/dt><dd><span><i class="stats-swatch stats-part-same" aria-hidden="true"><\/i>4<\/span>/);
+  assert.doesNotMatch(figureHtml("db-values"), /\(\d+\.\d%\)/);
+  // Without overview.earlier_corrections, quality's count (another snapshot's) is used, with its own caption.
+  delete runtimeManifest.summary.database_comparison;
   runtimeManifest.summary.overview = { ...overview, quality: {
-    db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, km: { same: 3, differs: 0, absent: 1 }, calculated: 2, papers_all_absent: 1, papers_some_absent: 2 },
     earlier_corrections: { records: 5, values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } }, before_listed: [3, 4] },
     replaced: { records: 7, accepted: 2, papers: 1, values: { kcat: [5, 6], km: [2, 2] } } } };
   api.renderStats();
-  const figures = element("statsCharts").innerHTML;
-  assert.deepEqual(headings().slice(-3), ["Values read from the paper against the databases",
-    "Corrections on records accepted after a correction", "Entries replaced by reading the paper"]);
+  figures = element("statsCharts").innerHTML;
+  assert.deepEqual(headings().slice(-2), ["Corrections on records not yet re-read", "Entries replaced by reading the paper"]);
   assert.equal(partTitles().at(-1), "7 Against the databases");
-  assert.match(figures, /<strong>Figure 6\.<\/strong> Values CatLog read from the paper/);
-  assert.match(figures, /data-row="all" data-count="14"/);
-  assert.match(figures, /a different number does not mean the database is wrong\. 2 kcat\/Km calculated by CatLog are not compared\. For 1 paper no database lists any of the parameters CatLog read from it; for 2 more, the databases list some of them but not all\./);
+  assert.doesNotMatch(figures, /stats-part-lead/);
+  assert.match(figures, /<strong>Figure 6\.<\/strong> Values the earlier review changed/);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
   assert.match(figures, /The 7 entries from the earlier version \(2 accepted\) of the 1 paper that CatLog has read and the earlier version also had: whether CatLog's reading has the same number/);
   assert.match(figures, /When CatLog reads a paper, its records replace these entries\./);
@@ -2040,19 +2239,16 @@ function row(overrides = {}) {
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
   assert.match(element("statsCharts").innerHTML, new RegExp(`on the ${correctedNow} records? accepted after a correction, by kind of change\\.`));
+  assert.match(element("statsCharts").innerHTML, /stats-wide[^"]*" aria-labelledby="statsCorrectionsTitle"/, "Without its pair it takes the row");
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow + 1,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
   assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\); Figure 1 counts \d+ in this snapshot\./);
-  // With no paper missing every parameter, the papers missing one are counted on their own.
-  runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 }, papers_all_absent: 0, papers_some_absent: 1 } } };
-  api.renderStats();
-  assert.match(element("statsCharts").innerHTML, /wrong\. For 1 paper the databases list some of the parameters CatLog read from it but not all\./);
-  // A figure whose counts are not whole numbers is not drawn (never an empty heading).
-  runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: "9", differs: 1, absent: 0 } },
+  // A figure whose counts are not whole numbers is not drawn, and part 7 without figures has no heading.
+  runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
   api.renderStats();
-  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|Entries replaced/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|Against the databases|Entries replaced/);
   // The match is the lead's (and the Guide lead's) side line; the Guide's Human review item adds nothing for it.
   assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "");
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ v2_approved_total: 4, v2_found: 3, v2_wrong: 1 })),

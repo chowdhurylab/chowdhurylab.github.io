@@ -3721,7 +3721,8 @@
   // carries its place as a share of that total (data-share), for a chart that can show either (statsSwitchMode); a
   // segment's exact count is in its tooltip line (data-tip). The reference lines of one axis are one group (stats-refs),
   // in the order of that axis's tick labels, so a gridline gives way where its label does (the stylesheet thins both
-  // alike).
+  // alike). A segment with an `href` opens Browse at those records when clicked (data-href; the same filter is a link in
+  // the chart's text, for the keyboard and screen readers, since the bar is hidden from them).
   function statsTrack(segments, scale, { refs = [0], overlay = false, shareOf = 0, shareRefs = null } = {}) {
     const main = statsPlaces(segments, scale, overlay);
     const share = shareOf > 0 ? statsPlaces(segments, shareOf, overlay) : null;
@@ -3731,7 +3732,7 @@
       const [start, width] = main[index];
       const ends = overlay || drawn.length === 1 ? " is-start is-end" : `${index === drawn[0] ? " is-start" : ""}${index === drawn[drawn.length - 1] ? " is-end" : ""}`;
       const places = share ? ` data-records="${start},${width}" data-share="${share[index][0]},${share[index][1]}"` : "";
-      return `<span class="stats-seg stats-part-${segment.part}${ends}" style="left:${start}%;width:${width}%"${places}${segment.title ? ` data-tip="${escapeHtml(segment.title)}"` : ""}></span>`;
+      return `<span class="stats-seg stats-part-${segment.part}${ends}" style="left:${start}%;width:${width}%"${places}${segment.title ? ` data-tip="${escapeHtml(segment.title)}"` : ""}${segment.href ? ` data-href="${escapeHtml(segment.href)}"` : ""}></span>`;
     }).join("");
     const lines = (list, extra) => `<span class="stats-refs${extra}">${list.map((ref) => `<i class="stats-ref" style="left:${ref}%"></i>`).join("")}</span>`;
     return `<span class="stats-track" aria-hidden="true">${shareRefs ? lines(refs, " stats-ref-records") + lines(shareRefs, " stats-ref-share") : lines(refs, "")}${parts}</span>`;
@@ -3750,7 +3751,8 @@
   }
 
   // Horizontal bars: per row a label (a link into Browse when one filter opens exactly those records), a bar of one or
-  // more segments and a value label; the legend above, an axis below. Percent charts draw each row as 100% of itself.
+  // more segments and a value label (row.aside: a muted line under the bar, its words also in the row's text); the
+  // legend above, an axis below. A percent chart's value column is 64px unless `valueWidth` says otherwise. Percent charts draw each row as 100% of itself.
   // Pointing at a row (or focusing its link) lights it and gives its exact counts in a tooltip line (data-hl, data-tip).
   // `switchable`: a count chart that can also draw each row as 100% of itself (the Records | Share switch).
   // A value label of several numbers (row.parts: [{ text, className }], e.g. the count, then the share) sets each number
@@ -3798,7 +3800,7 @@
       <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row${row.note ? " has-note" : ""}" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
         ${statsTrack(row.segments, percent ? row.count : scale, { refs, overlay, shareOf: switchable ? row.count : 0, shareRefs: switchable ? [0, 25, 50, 75, 100] : null })}
-        <span class="stats-chart-value${Array.isArray(row.parts) ? " has-parts" : ""}">${valueHtml(row)}</span>${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
+        <span class="stats-chart-value${Array.isArray(row.parts) ? " has-parts" : ""}">${valueHtml(row)}</span>${row.aside ? `<span class="stats-chart-aside" aria-hidden="true">${row.aside}</span>` : ""}${row.text ? `<span class="visually-hidden">${escapeHtml(row.text)}</span>` : ""}
       </li>`).join("")}</ul>
       ${axis}${switchable ? statsAxis(100, 25, { percent: true, mode: "share" }) : ""}
     </div>`;
@@ -4570,51 +4572,411 @@
     });
   }
 
-  // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text).
-  function statsShareLines(rows) {
-    return `<dl class="stats-share-lines">${rows.map((row) => `<div><dt>${row.label}</dt><dd>${row.shares.map((item) => `<span><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(statsShare(item.count, row.count))}</span>`).join("")}</dd></div>`).join("")}</dl>`;
+  // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text). With
+  // `rateBase`, a row of fewer values than that gives its counts instead of shares.
+  function statsShareLines(rows, { rateBase = 0 } = {}) {
+    return `<dl class="stats-share-lines">${rows.map((row) => `<div><dt>${row.label}</dt><dd>${row.shares.map((item) => `<span><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(row.count < rateBase ? formatInteger(item.count) : statsShare(item.count, row.count))}</span>`).join("")}</dd></div>`).join("")}</dl>`;
   }
 
-  function statsDbCompareFigure(quality) {
-    const data = quality?.db_compare;
-    if (!data || typeof data !== "object") return null;
-    const groups = [];
-    const all = { same: 0, differs: 0, absent: 0 };
-    for (const [key, html, label] of STATS_PARAMETERS) {
-      const item = data[key];
-      if (!item) continue;
-      const values = ["same", "differs", "absent"].map((part) => statsCount(item[part]));
-      if (values.includes(null)) return null;
-      if (!values.some(Boolean)) continue;
-      groups.push([key, html, label, values]);
-      ["same", "differs", "absent"].forEach((part, index) => { all[part] += values[index]; });
+  // Part 7, Against the databases: read only from the manifest's summary.database_comparison, which the CatLog side
+  // writes with the snapshot. Each figure is drawn only when its keys are there as whole counts that hold together;
+  // without them part 7 has only the earlier version's figures, or no heading at all. The databases, their order and
+  // their names come from the comparison's own list (sources: key, name, display); a comparison without that list names
+  // the databases its counts name, in STATS_DATABASE_ORDER, spelled as the Source filter spells them (STRENDA DB).
+  // Nothing here assumes how many databases there are.
+  const STATS_DATABASE_ORDER = ["brenda", "sabio_rk", "oed", "skid", "strenda", "uniprot"];
+  // The second and third sentences of every part-7 caption (and of the record's own footer).
+  const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
+  // Shares are printed only on a base of this many values; below it, counts alone.
+  const STATS_RATE_BASE = 1000;
+  // A value's result, in segment order, with Browse's words (#browse?db=<db>) and the statuses of summary values.
+  const STATS_DATABASE_RESULTS = [
+    { part: "same", label: "Same number", statuses: ["confirmed"],
+      title: "A database lists this number for this value." },
+    { part: "other-label", db: "other_label", label: "Same, other label", statuses: ["same_number_other_label"],
+      title: "A database lists this number for the paper under another substrate, variant or organism." },
+    { part: "corrects", db: "corrects", label: "Corrects a value", statuses: ["corrected"], thin: true,
+      title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
+    { part: "differs", db: "differs", label: "Different number", statuses: ["differs"], thin: true,
+      title: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
+    { part: "not-listed", db: "not_listed", label: "Not in the databases", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"],
+      title: "No compared database lists this value for this paper. The record says why and what they do list." },
+  ];
+  // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
+  // database's values from papers it does not list (paper_absent) stand beside its bar, never in it.
+  const STATS_DATABASE_KINDS = [
+    { part: "same", label: "Same number", kinds: ["same", "same_rounded"],
+      title: "The database lists this number for this value, or the same number rounded." },
+    { part: "other-label", db: "other_label", label: "Same, other label", kinds: ["same_number_other_label"],
+      title: "The database lists this number for the paper under another substrate, variant or organism." },
+    { part: "corrects", db: "corrects", label: "Corrects a value", kinds: ["corrected"],
+      title: "The database lists another number for this value; CatLog's value is the one the paper prints." },
+    { part: "differs", db: "differs", label: "Different number", kinds: ["differs", "other_number", "another_measurement"],
+      title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
+    { part: "not-listed", label: "Other values listed", kinds: ["other_values_only"],
+      title: "The database lists other numbers of this parameter for the paper, not this one." },
+    { part: "not-listed-2", label: "Parameter not listed", kinds: ["parameter_absent"],
+      title: "The database lists the paper, but no value of this parameter from it." },
+    { part: "not-listed-3", label: "Value not listed", kinds: ["value_absent"],
+      title: "The database lists the paper, but not this value; no compared database lists it." },
+  ];
+  // Parameters as the comparison names them (values: kcat, Km, kcat/Km), with Browse's dbpar key.
+  const STATS_DATABASE_PARAMETERS = [
+    { key: "kcat", names: ["kcat"], html: "<i>k</i><sub>cat</sub>", label: "kcat" },
+    { key: "km", names: ["Km", "km"], html: "<i>K</i><sub>m</sub>", label: "Km" },
+    { key: "kcatkm", names: ["kcat/Km", "kcat_over_km"], html: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", label: "kcat/Km", note: "printed" },
+  ];
+  // The causes of a corrected value, in four families (Browse's dbwhy keys); every cause code the CatLog side writes
+  // must have one (a unit test fails on one without).
+  const STATS_CAUSE_FAMILIES = [
+    { key: "unit", label: "Unit or scale", causes: ["unit_not_converted", "header_scale_inverted", "header_scale_ignored",
+      "uM_entered_as_mM", "mM_entered_as_uM", "time_unit", "power_of_ten", "time_factor", "printed_number_unit_not_applied"],
+      title: "Printed unit not converted, a table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, off by an exact power of ten, 60 or 3,600, or the printed number taken in another unit" },
+    { key: "decimal", label: "Decimal slip", causes: ["decimal_or_exponent_slip"],
+      title: "A decimal point or a power of ten slipped" },
+    { key: "elsewhere", label: "Another number", causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"],
+      title: "A number from another cell, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km" },
+    { key: "misprint", label: "Unit misprinted", causes: ["paper_unit_misprint"],
+      title: "A unit the paper misprints" },
+  ];
+  const STATS_CAUSE_FAMILY = Object.fromEntries(STATS_CAUSE_FAMILIES.flatMap((family) => family.causes.map((cause) => [cause, family.key])));
+  // The causes code finds as an exact factor (a power of ten, 60 or 3,600, a printed number taken in another unit); a
+  // separate AI check that read the paper names every other cause. corrections.by counts the two (code, paper_check).
+  const STATS_CODE_CAUSES = ["power_of_ten", "time_factor", "printed_number_unit_not_applied"];
+  const STATS_FOUND_BY = [
+    { key: "paper_check", part: "corrects", label: "Checked against the paper", title: "A separate AI check read the paper and named the cause" },
+    { key: "code", part: "corrects-2", label: "Exact factor found by code", title: "Code found the database's number is the paper's times an exact factor" },
+  ];
+
+  function statsDatabaseComparison() {
+    const data = manifest.summary?.database_comparison;
+    return data && typeof data === "object" && !Array.isArray(data) ? data : null;
+  }
+
+  // An object of whole counts (an absent key counts 0), or null when any of its counts is not a whole count.
+  function statsCountMap(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    return Object.values(value).every((count) => statsCount(count) !== null) ? value : null;
+  }
+
+  function statsSum(map, keys) {
+    return keys.reduce((total, key) => total + (map[key] || 0), 0);
+  }
+
+  // "BRENDA, SABIO-RK and OED": no serial comma.
+  function statsListText(names) {
+    return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
+  }
+
+  // The compared databases in order: { key (Browse's dbsrc), name (the comparison's own key for it), display }.
+  function statsDatabaseSources(comparison) {
+    if (!comparison) return [];
+    const keyOf = (name) => {
+      const folded = String(name).trim().toLowerCase().replace(/[\s-]+/g, "_");
+      return SOURCE_TOKENS[folded] || SOURCE_TOKENS[folded.split("_")[0]] || folded;
+    };
+    const displayOf = (key, name) => sourceFilters.find((item) => item.value === key && key !== "earlier_paper")?.tag || name;
+    const listed = (Array.isArray(comparison.sources) ? comparison.sources : [])
+      .filter((item) => item && typeof item === "object" && [item.name, item.display, item.key].some((text) => typeof text === "string" && text.trim()));
+    if (listed.length) {
+      return listed.map((item) => {
+        const name = String(item.name || item.display || item.key).trim();
+        const key = String(item.key || keyOf(name)).trim();
+        return { key, name, display: String(item.display || displayOf(keyOf(name), name)).trim() };
+      });
     }
-    if (!groups.length) return null;
-    groups.push(["all", "All values", "All values", [all.same, all.differs, all.absent]]);
-    const names = [["same", "Same number in a database"], ["differs", "A different number"], ["new", "No database value"]];
-    const rows = statsPercentRows(groups, (values) => names.map(([part, label], index) => ({ part, label, count: values[index] })));
-    const calculated = statsCount(data.calculated ?? data.calculated_not_compared);
-    const papersNone = statsCount(data.papers_all_absent);
-    const papersSome = statsCount(data.papers_some_absent);
-    // Papers the databases miss: papers_all_absent, where no database lists any parameter CatLog read from the paper,
-    // then (the other papers) papers_some_absent, where they list some of them but not all. A zero count is left out.
-    const papers = (count) => `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
-    const them = (count) => (count === 1 ? "it" : "them");
-    const papersMissing = [
-      papersNone ? `for ${papers(papersNone)} no database lists any of the parameters CatLog read from ${them(papersNone)}` : "",
-      papersSome ? (papersNone ? `for ${formatInteger(papersSome)} more, the databases list some of them but not all`
-        : `for ${papers(papersSome)} the databases list some of the parameters CatLog read from ${them(papersSome)} but not all`) : "",
-    ].filter(Boolean).join("; ");
+    const names = [...new Set([...Object.keys(comparison.values_by_database || {}), ...Object.keys(comparison.corrections?.by_database || {})])]
+      .filter((name) => name.trim());
+    const rank = (name) => {
+      const index = STATS_DATABASE_ORDER.indexOf(keyOf(name));
+      return index < 0 ? STATS_DATABASE_ORDER.length : index;
+    };
+    return names.map((name, index) => ({ name, index })).sort((a, b) => rank(a.name) - rank(b.name) || a.index - b.index)
+      .map(({ name }) => ({ key: keyOf(name), name, display: displayOf(keyOf(name), name) }));
+  }
+
+  // One database's entry in a map keyed by database (values_by_database, by_database, a cause's databases).
+  function statsDatabaseEntry(map, source) {
+    if (!map || typeof map !== "object") return undefined;
+    return [source.name, source.display, source.key].map((name) => map[name]).find((value) => value !== undefined);
+  }
+
+  // The values read from the paper by result, per parameter and for all (values.all, or the parameters' sum when the
+  // comparison has none); null when a count is not whole or the parameters do not add up to all.
+  function statsDatabaseValues(comparison) {
+    const values = comparison?.values;
+    if (!values || typeof values !== "object") return null;
+    const rows = [];
+    for (const parameter of STATS_DATABASE_PARAMETERS) {
+      const found = parameter.names.map((name) => values[name]).find((item) => item !== undefined);
+      if (found === undefined) continue;
+      const counts = statsCountMap(found);
+      if (!counts) return null;
+      rows.push({ ...parameter, counts });
+    }
+    if (!rows.length) return null;
+    const statuses = new Set(rows.flatMap((row) => Object.keys(row.counts)));
+    const sum = (status) => rows.reduce((total, row) => total + (row.counts[status] || 0), 0);
+    let all = null;
+    if (values.all !== undefined) {
+      all = statsCountMap(values.all);
+      if (!all || [...new Set([...statuses, ...Object.keys(all)])].some((status) => (all[status] || 0) !== sum(status))) return null;
+    } else {
+      all = Object.fromEntries([...statuses].map((status) => [status, sum(status)]));
+    }
+    const parts = (counts) => STATS_DATABASE_RESULTS.map((result) => statsSum(counts, result.statuses));
+    const shaped = rows.map((row) => ({ ...row, parts: parts(row.counts) })).filter((row) => row.parts.some(Boolean));
+    const allParts = parts(all);
+    const compared = allParts.reduce((total, count) => total + count, 0);
+    return compared ? { rows: shaped, all: allParts, compared, calculated: all.not_compared || 0 } : null;
+  }
+
+  // The part's lead: one sentence on all values compared, one on the values a database lists a number for (same,
+  // corrects or differs), its result names linking into Browse.
+  function statsDatabaseLeadHtml(comparison, values) {
+    const [same, , corrects, differs, notListed] = values.all;
+    const { compared } = values;
+    const papers = statsCount(comparison.papers);
+    const by = statsCountMap(comparison.corrections?.by);
+    const checked = by && statsCount(by.paper_check, corrects) !== null && corrects ? by.paper_check : null;
+    const link = (html, db) => `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db }))}">${html}</a>`;
+    const plural = (count, one, many) => (count === 1 ? one : many);
+    const clauses = [
+      `${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists`,
+      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects")}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
+      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs") : "",
+      notListed ? link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed") : "",
+    ].filter(Boolean);
+    const from = papers ? `${formatInteger(papers)} ${plural(papers, "paper", "papers")}` : "the paper";
+    const paired = same + corrects + differs;
+    const pairedText = paired
+      ? ` Where a database lists a number for the same measurement (${formatInteger(paired)} ${plural(paired, "value", "values")}), it is the paper's number for ${paired >= STATS_RATE_BASE ? qualityShare(same, paired) : `${formatInteger(same)} of them`}.`
+      : "";
+    return `<p class="stats-part-lead" data-lead="databases">Of ${formatInteger(compared)} ${plural(compared, "value", "values")} read from ${escapeHtml(from)} and compared, ${statsListText(clauses)}.${escapeHtml(pairedText)}</p>`;
+  }
+
+  // A row of a 100% bar chart of database results: the exact counts (and shares, on a base of 1,000 values or more) in
+  // its tooltip lines and screen-reader text; a segment with a Browse filter links there (data-href).
+  function statsDatabaseRow(key, labelHtml, label, parts, { note = "", value = "", aside = "", hrefOf = null } = {}) {
+    const count = parts.reduce((total, item) => total + item.count, 0);
+    const rate = (part) => (count >= STATS_RATE_BASE ? ` (${statsShare(part, count)})` : "");
+    return {
+      key, count, label: labelHtml, note, aside,
+      segments: parts.map((item) => ({ part: item.part, count: item.count, href: hrefOf ? hrefOf(item) : "",
+        title: `${label}, ${item.label}: ${formatInteger(item.count)}${rate(item.count)}` })),
+      value: value || formatInteger(count),
+      text: `${label}: ${parts.map((item) => `${item.label} ${formatInteger(item.count)}${rate(item.count)}`).join(", ")}.`,
+      shares: parts,
+    };
+  }
+
+  // A legend whose names link into Browse where a filter shows those records, each with its definition as its title.
+  function statsDatabaseLegend(items, params = {}) {
+    return items.map((item) => ({ part: item.part, label: item.db
+      ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: item.db, ...params }))}" title="${escapeHtml(item.title)}">${escapeHtml(item.label)}</a>`
+      : `<span title="${escapeHtml(item.title)}">${escapeHtml(item.label)}</span>` }));
+  }
+
+  // Figure: each value against the databases, a 100% bar per parameter and for all values; the thin results (corrects,
+  // differs) have their counts right of the bar, each linking into Browse for that parameter.
+  function statsDatabaseValuesFigure(comparison, values, sources) {
+    const thin = STATS_DATABASE_RESULTS.filter((result) => result.thin);
+    const rowOf = (key, labelHtml, label, counts, { note = "", dbpar = "" } = {}) => {
+      const parts = STATS_DATABASE_RESULTS.map((result, index) => ({ ...result, count: counts[index] }));
+      const params = dbpar ? { dbpar } : {};
+      const value = `<span class="stats-db-thin">${thin.map((result) => {
+        const count = counts[STATS_DATABASE_RESULTS.indexOf(result)];
+        const words = `${label}, ${result.label}: ${formatInteger(count)}`;
+        return `<span><i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${count
+          ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: result.db, ...params }))}" aria-label="${escapeHtml(words)}">${formatInteger(count)}</a>`
+          : formatInteger(count)}</span>`;
+      }).join("")}</span>`;
+      return statsDatabaseRow(key, labelHtml, label, parts, { note, value,
+        hrefOf: (item) => (item.db && item.count ? statsBrowseHref({ db: item.db, ...params }) : "") });
+    };
+    const rows = [
+      ...values.rows.map((row) => rowOf(row.key, row.html, row.note ? `${row.note} ${row.label}` : row.label, row.parts, { note: row.note || "", dbpar: row.key })),
+      rowOf("all", "All values", "All values", values.all),
+    ];
+    // The thin counts' column: both counts, their swatches and gaps (the value labels are 12px).
+    const chars = Math.max(...rows.map((row) => thin.reduce((total, result) => total + formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length, 0)));
+    const notReproduced = statsCountMap(comparison.not_reproduced?.distinct);
+    const elsewhere = notReproduced ? Object.values(notReproduced).reduce((total, count) => total + count, 0) : 0;
     const notes = [
-      "Numbers compared for the same paper and parameter; substrate, variant and conditions are not compared, and a different number does not mean the database is wrong.",
-      calculated ? `${formatInteger(calculated)} kcat/Km calculated by CatLog are not compared.` : "",
-      papersMissing ? `${papersMissing.charAt(0).toUpperCase()}${papersMissing.slice(1)}.` : "",
+      values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "",
+      elsewhere ? `The databases also list ${formatInteger(elsewhere)} ${elsewhere === 1 ? "number" : "numbers"} for these papers that CatLog does not have; the README gives the reasons.` : "",
+    ].filter(Boolean).join(" ");
+    const names = statsListText(sources.map((source) => source.display));
+    return {
+      id: "statsDbValuesTitle", key: "db-values", title: "Each value against the databases",
+      body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
+        axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)` })
+        + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
+      caption: `Each value read from the paper${names ? `, against what ${escapeHtml(names)} list for it` : ""}; the counts right of each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
+      data: statsDataLine(notes),
+    };
+  }
+
+  // Figure: each database against the values read from the papers it lists (values_by_database), a 100% bar each; the
+  // values of papers it does not list are counted beside the bar. Shares only on a base of 1,000 values or more.
+  function statsDatabaseSourcesFigure(comparison, sources) {
+    const byDatabase = comparison?.values_by_database;
+    if (!byDatabase || typeof byDatabase !== "object") return null;
+    const rows = [];
+    for (const source of sources) {
+      const entry = statsDatabaseEntry(byDatabase, source);
+      if (entry === undefined) continue;
+      const counts = statsCountMap(entry);
+      if (!counts) return null;
+      const parts = STATS_DATABASE_KINDS.map((kind) => ({ ...kind, count: statsSum(counts, kind.kinds) }));
+      const absent = counts.paper_absent || 0;
+      if (!parts.some((item) => item.count) && !absent) continue;
+      const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${escapeHtml(source.display)} does not list` : "";
+      rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
+        hrefOf: (item) => (item.db && item.count ? statsBrowseHref({ db: item.db, dbsrc: source.key }) : "") }));
+      const row = rows[rows.length - 1];
+      if (absent) row.text = `${row.text.slice(0, -1)}; ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers it does not list.`;
+    }
+    if (!rows.length) return null;
+    return {
+      id: "statsDbSourcesTitle", key: "db-sources", title: "Each database against the values read from its papers",
+      body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
+        axis: statsAxis(100, 25, { percent: true }),
+        valueWidth: `calc(${Math.max(...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
+      caption: `For each database, how it lists the values read from the papers it lists (the number right of its bar); the values from papers it does not list are counted under the bar. A value counts for every database. ${STATS_DATABASE_CAPTION}`,
+      data: statsDataLine(rows.some((row) => row.count < STATS_RATE_BASE) ? `Shares are given only for a database with ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
+    };
+  }
+
+  // Table: per database, the values for which it lists a number for the same measurement (paired: same, corrects,
+  // differs), with the share the paper's number; then all values, each once (values.all, when its counts hold together).
+  // Shares on a base of 1,000 values.
+  function statsDatabasePairedTable(comparison, sources, values) {
+    const byDatabase = comparison?.values_by_database;
+    if (!byDatabase || typeof byDatabase !== "object") return null;
+    const kinds = { same: STATS_DATABASE_KINDS[0].kinds, corrects: STATS_DATABASE_KINDS[2].kinds, differs: STATS_DATABASE_KINDS[3].kinds };
+    const rows = [];
+    for (const source of sources) {
+      const counts = statsCountMap(statsDatabaseEntry(byDatabase, source));
+      if (!counts) continue;
+      const row = { source, same: statsSum(counts, kinds.same), corrects: statsSum(counts, kinds.corrects), differs: statsSum(counts, kinds.differs) };
+      row.paired = row.same + row.corrects + row.differs;
+      if (row.paired) rows.push(row);
+    }
+    if (!rows.length) return null;
+    const [same, , corrects, differs] = values ? values.all : [0, 0, 0, 0];
+    const all = { same, corrects, differs, paired: same + corrects + differs };
+    const cell = (count, paired, params, label) => {
+      const number = count && params
+        ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(params))}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
+        : formatInteger(count);
+      return `<td class="stats-num" data-count="${count}">${number}${paired >= STATS_RATE_BASE ? `<small>${escapeHtml(statsShare(count, paired))}</small>` : ""}</td>`;
+    };
+    const line = (row, name, params) => `<th scope="row">${name}</th><td class="stats-num" data-count="${row.paired}">${formatInteger(row.paired)}</td>
+      ${cell(row.same, row.paired, null, "")}${cell(row.corrects, row.paired, { db: "corrects", ...params }, `${params.dbsrc ? row.source.display : "All"}, corrects a value`)}${cell(row.differs, row.paired, { db: "differs", ...params }, `${params.dbsrc ? row.source.display : "All"}, different number`)}`;
+    const names = new Set(sources.map((source) => source.key));
+    const derived = names.has("skid") && names.has("brenda") ? " (SKiD derives from BRENDA)" : "";
+    return {
+      id: "statsDbPairedTitle", key: "db-paired", title: "When a database lists a number for the same measurement", kind: "Table",
+      body: `<table class="stats-table stats-db-table">
+        <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
+        <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, escapeHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
+        ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
+      caption: `Values for which a database lists a number for the same measurement (paired), and how many it lists as the paper prints them. A number copied into several databases counts for each${derived}${all.paired ? "; the All row counts each value once" : ""}. ${STATS_DATABASE_CAPTION}`,
+      data: statsDataLine(rows.some((row) => row.paired < STATS_RATE_BASE) ? `Shares only where a database pairs ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
+    };
+  }
+
+  // The corrections by cause family (by_cause), and with by_cause_database per database; null when a count is not whole.
+  // Causes with no family are counted apart (unnamed), never put in a family.
+  function statsCorrectionFamilies(corrections) {
+    const byCause = statsCountMap(corrections?.by_cause);
+    const total = statsCount(corrections?.values);
+    if (!byCause || total === null) return null;
+    const families = Object.fromEntries(STATS_CAUSE_FAMILIES.map((family) => [family.key, statsSum(byCause, family.causes)]));
+    const unnamed = Object.entries(byCause).reduce((sum, [cause, count]) => sum + (STATS_CAUSE_FAMILY[cause] ? 0 : count), 0);
+    const named = Object.values(families).reduce((sum, count) => sum + count, 0);
+    return named + unnamed === total ? { byCause, families, unnamed, total } : null;
+  }
+
+  // Figure: how each correction was found, a bar per cause family. Until the comparison counts how each cause was found
+  // (by_cause_found_by), the split comes from corrections.by (paper_check, code), and only when the causes code finds
+  // (STATS_CODE_CAUSES) add up to exactly the corrections code found; otherwise the bars are not split and the data line
+  // gives the two counts.
+  function statsCorrectionsFoundFigure(comparison) {
+    const corrections = comparison?.corrections;
+    const found = statsCorrectionFamilies(corrections);
+    if (!found || !Object.values(found.families).some(Boolean)) return null;
+    const by = statsCountMap(corrections.by);
+    const code = by ? statsCount(by.code) : null;
+    const paperCheck = by ? statsCount(by.paper_check) : null;
+    const byValid = code !== null && paperCheck !== null && code + paperCheck === found.total;
+    const split = byValid && !found.unnamed && statsSum(found.byCause, STATS_CODE_CAUSES) === code;
+    const { max, step } = statsNiceScale(Math.max(...Object.values(found.families)));
+    const rate = found.total >= STATS_RATE_BASE;
+    const rows = STATS_CAUSE_FAMILIES.map((family) => {
+      const count = found.families[family.key];
+      const byCode = split ? statsSum(found.byCause, family.causes.filter((cause) => STATS_CODE_CAUSES.includes(cause))) : 0;
+      const levels = split ? [count - byCode, byCode] : [count];
+      const segments = (split ? STATS_FOUND_BY : [STATS_FOUND_BY[0]]).map((level, index) => ({ part: level.part, count: levels[index],
+        title: split ? `${family.label}, ${level.label}: ${formatInteger(levels[index])}` : `${family.label}: ${formatInteger(count)}` }));
+      return {
+        key: family.key, count, segments,
+        label: count ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: "corrects", dbwhy: family.key }))}" title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</a>`
+          : `<span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span>`,
+        parts: [{ text: formatInteger(count) }, ...(rate ? [{ text: statsShare(count, found.total), className: "stats-muted" }] : [])],
+        text: `${family.label}: ${formatInteger(count)}${rate ? ` (${statsShare(count, found.total)})` : ""}${split ? `; ${STATS_FOUND_BY.map((level, index) => `${level.label.toLowerCase()} ${formatInteger(levels[index])}`).join(", ")}` : ""}.`,
+      };
+    });
+    const notes = [
+      !split && byValid ? `${formatInteger(paperCheck)} checked against the paper; for ${formatInteger(code)} code found an exact factor.` : "",
+      found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here.` : "",
     ].filter(Boolean).join(" ");
     return {
-      id: "statsDbCompareTitle", key: "db-compare", title: "Values read from the paper against the databases",
-      body: statsBarChart({ key: "db-compare", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      caption: "Values CatLog read from the paper, compared with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper and parameter.",
+      id: "statsDbFoundTitle", key: "db-found", title: "How each correction was found",
+      body: statsBarChart({ key: "db-found", rows, scale: max, step, axis: statsAxis(max, step),
+        legend: split ? STATS_FOUND_BY.map((level) => ({ part: level.part, label: `<span title="${escapeHtml(level.title)}">${escapeHtml(level.label)}</span>` })) : [] }),
+      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, by the cause of the database's number${split ? " and how it was found" : ""}; each label gives the values${rate ? ", then their share" : ""}. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(notes),
+    };
+  }
+
+  // Table: the corrections by cause family and database (by_cause_database), with All counting each value once
+  // (by_cause); non-zero cells open Browse at those values. On phones, a line per database.
+  function statsCauseDatabaseTable(comparison, sources) {
+    const corrections = comparison?.corrections;
+    const found = statsCorrectionFamilies(corrections);
+    const byCauseDatabase = corrections?.by_cause_database;
+    if (!found || !found.total || !byCauseDatabase || typeof byCauseDatabase !== "object") return null;
+    const causes = Object.entries(byCauseDatabase);
+    if (!causes.every(([, map]) => statsCountMap(map))) return null;
+    const byDatabase = statsCountMap(corrections.by_database) || {};
+    const columns = sources.map((source) => {
+      const families = Object.fromEntries(STATS_CAUSE_FAMILIES.map((family) => [family.key,
+        causes.reduce((sum, [cause, map]) => sum + (STATS_CAUSE_FAMILY[cause] === family.key ? statsDatabaseEntry(map, source) || 0 : 0), 0)]));
+      const total = statsDatabaseEntry(byDatabase, source);
+      return { source, families, total: statsCount(total) ?? Object.values(families).reduce((sum, count) => sum + count, 0) };
+    });
+    if (!columns.some((column) => column.total)) return null;
+    const all = { source: null, families: found.families, total: found.total };
+    const link = (count, params, label) => (count
+      ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: "corrects", ...params }))}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
+      : `<span class="stats-muted">0</span>`);
+    const name = (column) => (column.source ? column.source.display : "All");
+    const params = (column, family) => ({ ...(column.source ? { dbsrc: column.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
+    const table = `<table class="stats-table stats-db-table stats-db-cause-table">
+      <thead><tr><th scope="col">Cause</th>${[...columns, all].map((column) => `<th scope="col" class="stats-num">${escapeHtml(name(column))}</th>`).join("")}</tr></thead>
+      <tbody>${STATS_CAUSE_FAMILIES.map((family) => `<tr data-stat-key="cause_${family.key}"><th scope="row"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>${[...columns, all]
+        .map((column) => `<td class="stats-num" data-count="${column.families[family.key]}">${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</td>`).join("")}</tr>`).join("")}</tbody>
+      <tfoot><tr data-stat-key="cause_all"><th scope="row">All causes</th>${[...columns, all]
+        .map((column) => `<td class="stats-num" data-count="${column.total}">${link(column.total, params(column, null), `${name(column)}, all causes`)}</td>`).join("")}</tr></tfoot></table>`;
+    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${escapeHtml(name(column))}:</strong> ${STATS_CAUSE_FAMILIES
+      .filter((family) => column.families[family.key]).map((family) => `${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}`).join(" · ")}</li>`).join("")}</ul>`;
+    return {
+      id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
+      body: table + blocks,
+      caption: `Values that correct a database's number, by cause and database. A value corrected in several databases counts for each; the All column counts each value once. ${STATS_DATABASE_CAPTION}`,
+      data: statsDataLine(found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here; All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""),
     };
   }
 
@@ -4623,10 +4985,15 @@
     return /^\d{4}-\d{2}-\d{2}/.test(String(quality?.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
   }
 
-  // snapshot.corrected: this snapshot's records accepted after a correction (figure 1). Counts made for another snapshot
-  // name both numbers, so the caption never contradicts figure 1.
-  function statsCorrectionsFigure(quality, snapshot = {}) {
-    const data = quality?.earlier_corrections;
+  // Corrections on records not yet re-read: the values CatLog's earlier version changed to what the paper prints, per
+  // parameter by kind of change. `earlier` is this snapshot's own count from its Full data (overview.earlier_corrections:
+  // the records whose corrections list Browse's Corrected earlier finds). Without it, the CatLog side's count
+  // (quality.earlier_corrections) is used, which may be another snapshot's: snapshot.corrected is this snapshot's records
+  // accepted after a correction (figure 1), and a count made for another snapshot names both numbers, so the caption
+  // never contradicts figure 1.
+  function statsCorrectionsFigure(quality, snapshot = {}, earlier = null) {
+    const own = Boolean(earlier && typeof earlier === "object" && statsCount(earlier.records));
+    const data = own ? earlier : quality?.earlier_corrections;
     const records = statsCount(data?.records);
     if (!records || !data.values || typeof data.values !== "object") return null;
     const names = [["rounding", "More digits or rounding"], ["differs", "A different number"], ["magnitude", "Unit or magnitude (× or ÷ 10ⁿ)"], ["new", "Added: the source had none"]];
@@ -4645,13 +5012,18 @@
     const listedText = listed && statsCount(listed[1]) && statsCount(listed[0], listed[1]) !== null
       ? `The value before the change equals a number a database lists for that paper for ${formatInteger(listed[0])} of ${formatInteger(listed[1])} changed values (${qualityShare(listed[0], listed[1])}).`
       : "";
+    const others = own ? statsCount(data.other_items) : null;
+    const othersText = others ? `These records also list ${formatInteger(others)} other ${others === 1 ? "change" : "changes"}.` : "";
+    const recordsLink = `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: "earlier" }))}">${formatInteger(records)} ${records === 1 ? "record" : "records"} not yet re-read</a>`;
     return {
-      id: "statsCorrectionsTitle", key: "earlier-corrections", title: "Corrections on records accepted after a correction",
+      id: "statsCorrectionsTitle", key: "earlier-corrections", title: "Corrections on records not yet re-read",
       body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
-      caption: Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
-        ? `Values the earlier review changed to the value the paper prints, by kind of change, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
-        : `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind of change.`,
-      data: statsDataLine(listedText),
+      caption: own
+        ? `Values CatLog's earlier version changed to what the paper prints, by kind of change, on the ${recordsLink} that ${records === 1 ? "lists its" : "list their"} changes.`
+        : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
+          ? `Values the earlier review changed to the value the paper prints, by kind of change, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
+          : `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind of change.`,
+      data: statsDataLine([listedText, othersText].filter(Boolean).join(" ")),
     };
   }
 
@@ -4807,6 +5179,8 @@
     view.addEventListener("click", (event) => {
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);
+      const segment = event.target?.closest?.(".stats-seg[data-href]");
+      if (segment && view.contains(segment)) window.location.href = segment.dataset.href;
     });
   }
 
@@ -5245,11 +5619,29 @@
         caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") }] });
     }
 
-    // 7. Against the databases: CatLog against the databases, the earlier corrections, and the earlier version's entries
-    // that reading the paper replaced, each only when the snapshot has its counts.
-    const databases = [statsDbCompareFigure, statsCorrectionsFigure, statsReplacedFigure]
-      .map((build) => build(overview?.quality, { corrected: counts.corrected })).filter(Boolean);
-    if (databases.length) parts.push({ key: "databases", title: "Against the databases", items: databases });
+    // 7. Against the databases (summary.database_comparison): a one-sentence lead, each value against the databases, each
+    // database against the values read from its papers beside the values it pairs, how each correction was found beside
+    // the corrections by cause and database; then the earlier version's corrections and its entries that reading the
+    // paper replaced. Each only when the snapshot has its counts; figures pair up two to a row (a pair with one figure
+    // gives it the row).
+    const comparison = statsDatabaseComparison();
+    const comparedSources = statsDatabaseSources(comparison);
+    const comparedValues = statsDatabaseValues(comparison);
+    const databases = [];
+    for (const pair of [
+      [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null],
+      [statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues)],
+      [statsCorrectionsFoundFigure(comparison), statsCauseDatabaseTable(comparison, comparedSources)],
+      [statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections), statsReplacedFigure(overview?.quality)],
+    ]) {
+      const shown = pair.filter(Boolean);
+      if (shown.length === 1) shown[0].wide = true;
+      databases.push(...shown);
+    }
+    if (databases.length) {
+      parts.push({ key: "databases", title: "Against the databases", items: databases,
+        intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) : "" });
+    }
 
     // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart); half-width items
     // stand two to a row and an odd one out takes the row.
@@ -5264,7 +5656,7 @@
       }
       const blocks = part.items.map((item) => (item.stack
         ? `<div class="stats-stack${item.wide ? " stats-wide" : ""}">${item.stack.map(html).join("")}</div>` : html(item)));
-      return statsPartHtml(index + 2, part.key, part.title, blocks);
+      return statsPartHtml(index + 2, part.key, part.title, blocks, { intro: part.intro || "" });
     });
     // The human review stands in Quality now; an older page with a slot above the counts leaves it empty.
     if ($("statsLead")) {
@@ -11371,6 +11763,8 @@
       statsDecadeTicks,
       statsUnacceptedFields,
       statsShare,
+      statsDatabaseSources,
+      STATS_CAUSE_FAMILY,
       statsTable,
       statsBarChart,
       statsValueSizer,
