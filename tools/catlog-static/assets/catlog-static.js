@@ -4999,6 +4999,11 @@
     return keys.reduce((total, key) => total + (map[key] || 0), 0);
   }
 
+  // A database's name as HTML that never breaks across lines ("SABIO-" / "RK", "STRENDA" / "DB"), as in the Guide.
+  function statsDatabaseNameHtml(name) {
+    return `<span class="nowrap">${escapeHtml(name)}</span>`;
+  }
+
   // "BRENDA, SABIO-RK and OED": no serial comma.
   function statsListText(names) {
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
@@ -5155,13 +5160,13 @@
       values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "",
       statsNotReproducedText(comparison),
     ].filter(Boolean).join(" ");
-    const names = statsListText(sources.map((source) => source.display));
+    const names = statsListText(sources.map((source) => statsDatabaseNameHtml(source.display)));
     return {
       id: "statsDbValuesTitle", key: "db-values", title: "Each value against the databases",
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)` })
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
-      caption: `Each value read from the paper${names ? `, against what ${escapeHtml(names)} list for it` : ""}; the two counts beside each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
+      caption: `Each value read from the paper${names ? `, against what ${names} list for it` : ""}; the two counts beside each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(notes),
     };
   }
@@ -5180,7 +5185,7 @@
       const parts = STATS_DATABASE_KINDS.map((kind) => ({ ...kind, count: statsSum(counts, kind.kinds) }));
       const absent = counts.paper_absent || 0;
       if (!parts.some((item) => item.count) && !absent) continue;
-      const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${escapeHtml(source.display)} does not list` : "";
+      const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${statsDatabaseNameHtml(source.display)} does not list` : "";
       rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, dbsrc: source.key }) : "") }));
       const row = rows[rows.length - 1];
@@ -5231,7 +5236,7 @@
       id: "statsDbPairedTitle", key: "db-paired", title: "When a database lists a number for the same measurement", kind: "Table",
       body: `<table class="stats-table stats-db-table">
         <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num stats-db-paired-col">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
-        <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, escapeHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
+        <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, statsDatabaseNameHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
         ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
       caption: `Values for which a database lists a number for the same measurement (paired), and how many it lists as the paper prints them. A number copied into several databases counts for each${derived}${all.paired ? "; the All row counts each value once" : ""}. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(rows.some((row) => row.paired < STATS_RATE_BASE) ? `Shares only where a database pairs ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
@@ -5323,12 +5328,12 @@
     const name = (column) => (column.source ? column.source.display : "All");
     const params = (column, family) => ({ ...(column.source ? { dbsrc: column.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
     const table = `<table class="stats-table stats-db-table stats-db-cause-table">
-      <thead><tr><th scope="col">Cause</th>${[...columns, all].map((column) => `<th scope="col" class="stats-num">${escapeHtml(name(column))}</th>`).join("")}</tr></thead>
+      <thead><tr><th scope="col">Cause</th>${[...columns, all].map((column) => `<th scope="col" class="stats-num">${statsDatabaseNameHtml(name(column))}</th>`).join("")}</tr></thead>
       <tbody>${STATS_CAUSE_FAMILIES.map((family) => `<tr data-stat-key="cause_${family.key}"><th scope="row"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>${[...columns, all]
         .map((column) => `<td class="stats-num" data-count="${column.families[family.key]}">${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</td>`).join("")}</tr>`).join("")}</tbody>
       <tfoot><tr data-stat-key="cause_all"><th scope="row">All causes</th>${[...columns, all]
         .map((column) => `<td class="stats-num" data-count="${column.total}">${link(column.total, params(column, null), `${name(column)}, all causes`)}</td>`).join("")}</tr></tfoot></table>`;
-    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${escapeHtml(name(column))}:</strong> ${STATS_CAUSE_FAMILIES
+    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${statsDatabaseNameHtml(name(column))}:</strong> ${STATS_CAUSE_FAMILIES
       .filter((family) => column.families[family.key]).map((family) => `<span class="nowrap">${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</span>`).join(" · ")}</li>`).join("")}</ul>`;
     return {
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",

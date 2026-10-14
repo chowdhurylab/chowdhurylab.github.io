@@ -114,7 +114,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   `corrections.values`); a figure whose keys are absent or damaged is left out, and the part has no heading without
   figures. The databases, their order and names come from its `sources` list (key, name, display), else from the
   databases its counts name in the Source filter's order and spelling (STRENDA DB), else BRENDA, SABIO-RK, OED, SKiD,
-  STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed.
+  STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed. A
+  database's name never breaks across lines (captions, table headings, the per-database lines), as in the Guide.
   Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
   does not by itself mean a database is wrong." Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,

@@ -2142,7 +2142,8 @@ function row(overrides = {}) {
   const bySource = figureHtml("db-sources");
   assert.deepEqual([...bySource.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["db_brenda", 101348], ["db_sabio_rk", 50411], ["db_oed", 74779], ["db_skid", 27849], ["db_strenda", 384]]);
-  assert.match(bySource, /<span class="stats-chart-aside" aria-hidden="true">\+ 25,603 values from papers BRENDA does not list<\/span>/);
+  // A database's name never breaks across lines in part 7 ("SABIO-" / "RK", "STRENDA" / "DB" with a wide font).
+  assert.match(bySource, /<span class="stats-chart-aside" aria-hidden="true">\+ 25,603 values from papers <span class="nowrap">BRENDA<\/span> does not list<\/span>/);
   assert.match(bySource, /<span class="stats-chart-label">STRENDA DB<\/span>/);
   assert.match(bySource, /STRENDA DB, Same number: 216"/, "No share on a base under 1,000 values");
   assert.match(bySource, /BRENDA, Same number: 63,927 \(63\.1%\)"/);
@@ -2155,8 +2156,8 @@ function row(overrides = {}) {
   assert.doesNotMatch(bySource, /Other values listed|Parameter not listed|Value not listed/);
   // Beside it, the values each database pairs: same with its share, corrects and differs linking into Browse.
   const paired = figureHtml("db-paired");
-  assert.match(paired, /<tr data-stat-key="db_brenda"><th scope="row">BRENDA<small class="stats-db-paired-note">66,170 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="66170">66,170<\/td>\s*<td class="stats-num" data-count="63927">63,927<small>96\.6%<\/small><\/td><td class="stats-num" data-count="1156">1,156<small>1\.7%<\/small><\/td><td class="stats-num" data-count="1087">1,087<small>/);
-  assert.match(paired, /<tr data-stat-key="db_strenda"><th scope="row">STRENDA DB<small class="stats-db-paired-note">230 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="230">230<\/td>\s*<td class="stats-num" data-count="216">216<\/td>/);
+  assert.match(paired, /<tr data-stat-key="db_brenda"><th scope="row"><span class="nowrap">BRENDA<\/span><small class="stats-db-paired-note">66,170 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="66170">66,170<\/td>\s*<td class="stats-num" data-count="63927">63,927<small>96\.6%<\/small><\/td><td class="stats-num" data-count="1156">1,156<small>1\.7%<\/small><\/td><td class="stats-num" data-count="1087">1,087<small>/);
+  assert.match(paired, /<tr data-stat-key="db_strenda"><th scope="row"><span class="nowrap">STRENDA DB<\/span><small class="stats-db-paired-note">230 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="230">230<\/td>\s*<td class="stats-num" data-count="216">216<\/td>/);
   assert.match(paired, /<tfoot><tr data-stat-key="db_all"><th scope="row">All, each value once<small class="stats-db-paired-note">100,390 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="100390">100,390<\/td>\s*<td class="stats-num" data-count="97791">97,791<small>97\.4%<\/small><\/td><td class="stats-num" data-count="1548"><a class="stats-link" href="[^"]*#browse\?db=corrects" aria-label="All, corrects a value: 1,548">1,548<\/a><small>1\.5%<\/small><\/td><td class="stats-num" data-count="1051"><a[^>]*>1,051<\/a><small>1\.0%<\/small>/);
   assert.match(plain(paired), /A number copied into several databases counts for each \(SKiD derives from BRENDA\); the All row counts each value once\./);
   assert.match(paired, /Shares only where a database pairs 1,000 values or more\./);
@@ -2174,7 +2175,8 @@ function row(overrides = {}) {
   assert.match(plain(found), /The 1,548 values that correct a database's number, by the cause of the database's number and how it was found; each label gives the values, then their share, and a bar split two ways gives its two counts under its name\./);
   // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
   const causes = figureHtml("db-causes");
-  assert.match(causes, /<thead><tr><th scope="col">Cause<\/th><th scope="col" class="stats-num">BRENDA<\/th><th scope="col" class="stats-num">SABIO-RK<\/th><th scope="col" class="stats-num">OED<\/th><th scope="col" class="stats-num">SKiD<\/th><th scope="col" class="stats-num">STRENDA DB<\/th><th scope="col" class="stats-num">All<\/th><\/tr><\/thead>/);
+  assert.match(plain(causes.match(/<thead>[\s\S]*?<\/thead>/)[0]), /^Cause ?BRENDA ?SABIO-RK ?OED ?SKiD ?STRENDA DB ?All$/);
+  assert.equal((causes.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th scope="col" class="stats-num"><span class="nowrap">[^<]+<\/span><\/th>/g) || []).length, 6);
   assert.deepEqual([...causes.match(/<tr data-stat-key="cause_unit">[\s\S]*?<\/tr>/)[0].matchAll(/data-count="(\d+)"/g)].map((match) => Number(match[1])),
     [979, 325, 526, 123, 12, 1320]);
   assert.match(causes, /data-count="979">979<\/td>/);
@@ -2243,7 +2245,7 @@ function row(overrides = {}) {
   api.renderStats();
   assert.deepEqual([...figureHtml("db-sources").matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["db_uniprot", "db_brenda", "db_strenda"]);
   assert.match(plain(figureHtml("db-values")), /against what UniProt, BRENDA and STRENDA DB list for it/);
-  assert.match(figureHtml("db-causes"), /<th scope="col" class="stats-num">UniProt<\/th>[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
+  assert.match(figureHtml("db-causes"), /<th scope="col" class="stats-num"><span class="nowrap">UniProt<\/span><\/th>[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
   // Without that list, a database the counts name that the page does not know is drawn after the known ones by its own name.
   runtimeManifest.summary.database_comparison = databaseComparison();
   runtimeManifest.summary.database_comparison.values_by_database = { "Some DB": { same: 5, paper_absent: 1 }, ...databaseComparison().values_by_database };
