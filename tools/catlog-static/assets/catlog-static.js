@@ -3706,6 +3706,13 @@
     return url.href;
   }
 
+  // A part-7 link into Browse, or "" (no link) while it names one database, cause or compared parameter (dbsrc, dbwhy,
+  // dbpar) that Browse does not read yet (DATABASE_REFINE_KEYS): Browse would drop that key and open a wider list than
+  // the link names. A link with db= alone is kept.
+  function statsDatabaseHref(params) {
+    return Object.keys(params).every((key) => !DATABASE_REFINE_PARAMS.includes(key) || DATABASE_REFINE_KEYS.has(key)) ? statsBrowseHref(params) : "";
+  }
+
   function statsNameHtml(item) {
     const label = item.labelHtml || escapeHtml(item.label);
     return item.params ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(item.params))}">${label}</a>` : label;
@@ -5088,12 +5095,13 @@
       const value = `<span class="stats-db-thin">${thin.map((result) => {
         const count = counts[STATS_DATABASE_RESULTS.indexOf(result)];
         const words = `${label}, ${result.label}: ${formatInteger(count)}`;
-        return `<span><i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${count
-          ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: result.db, ...params }))}" aria-label="${escapeHtml(words)}">${formatInteger(count)}</a>`
+        const href = count ? statsDatabaseHref({ db: result.db, ...params }) : "";
+        return `<span><i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${href
+          ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(words)}">${formatInteger(count)}</a>`
           : formatInteger(count)}</span>`;
       }).join("")}</span>`;
       return statsDatabaseRow(key, labelHtml, label, parts, { note, value,
-        hrefOf: (item) => (item.db && item.count ? statsBrowseHref({ db: item.db, ...params }) : "") });
+        hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, ...params }) : "") });
     };
     const rows = [
       ...values.rows.map((row) => rowOf(row.key, row.html, row.note ? `${row.note} ${row.label}` : row.label, row.parts, { note: row.note || "", dbpar: row.key })),
@@ -5134,7 +5142,7 @@
       if (!parts.some((item) => item.count) && !absent) continue;
       const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${escapeHtml(source.display)} does not list` : "";
       rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
-        hrefOf: (item) => (item.db && item.count ? statsBrowseHref({ db: item.db, dbsrc: source.key }) : "") }));
+        hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, dbsrc: source.key }) : "") }));
       const row = rows[rows.length - 1];
       if (absent) row.text = `${row.text.slice(0, -1)}; ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers it does not list.`;
     }
@@ -5168,8 +5176,9 @@
     const [same, , corrects, differs] = values ? values.all : [0, 0, 0, 0];
     const all = { same, corrects, differs, paired: same + corrects + differs };
     const cell = (count, paired, params, label) => {
-      const number = count && params
-        ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(params))}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
+      const href = count && params ? statsDatabaseHref(params) : "";
+      const number = href
+        ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
         : formatInteger(count);
       return `<td class="stats-num" data-count="${count}">${number}${paired >= STATS_RATE_BASE ? `<small>${escapeHtml(statsShare(count, paired))}</small>` : ""}</td>`;
     };
@@ -5221,9 +5230,10 @@
       const levels = split ? [count - byCode, byCode] : [count];
       const segments = (split ? STATS_FOUND_BY : [STATS_FOUND_BY[0]]).map((level, index) => ({ part: level.part, count: levels[index],
         title: split ? `${family.label}, ${level.label}: ${formatInteger(levels[index])}` : `${family.label}: ${formatInteger(count)}` }));
+      const href = count ? statsDatabaseHref({ db: "corrects", dbwhy: family.key }) : "";
       return {
         key: family.key, count, segments,
-        label: count ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: "corrects", dbwhy: family.key }))}" title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</a>`
+        label: href ? `<a class="stats-link" href="${escapeHtml(href)}" title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</a>`
           : `<span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span>`,
         parts: [{ text: formatInteger(count) }, ...(rate ? [{ text: statsShare(count, found.total), className: "stats-muted" }] : [])],
         text: `${family.label}: ${formatInteger(count)}${rate ? ` (${statsShare(count, found.total)})` : ""}${split ? `; ${STATS_FOUND_BY.map((level, index) => `${level.label.toLowerCase()} ${formatInteger(levels[index])}`).join(", ")}` : ""}.`,
@@ -5260,9 +5270,11 @@
     });
     if (!columns.some((column) => column.total)) return null;
     const all = { source: null, families: found.families, total: found.total };
-    const link = (count, params, label) => (count
-      ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db: "corrects", ...params }))}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
-      : `<span class="stats-muted">0</span>`);
+    const link = (count, params, label) => {
+      const href = count ? statsDatabaseHref({ db: "corrects", ...params }) : "";
+      if (!count) return `<span class="stats-muted">0</span>`;
+      return href ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>` : formatInteger(count);
+    };
     const name = (column) => (column.source ? column.source.display : "All");
     const params = (column, family) => ({ ...(column.source ? { dbsrc: column.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
     const table = `<table class="stats-table stats-db-table stats-db-cause-table">
@@ -10777,9 +10789,10 @@
     all_same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same"),
     earlier: (keys) => keys.has("earlier"),
   };
-  // The value-level address keys Browse reads (dbsrc: one database, dbpar: one compared parameter; round 9 brief
-  // section 3). A record's links carry them only once Browse matches them, so a link never opens a wider list than it
-  // says; the Browse code that reads them adds its keys here.
+  // The value-level address keys (dbsrc: one database, dbwhy: a cause family or why not listed, dbpar: one compared
+  // parameter; round 9 brief section 3) and those Browse reads. A record's and Stats' links carry one only once Browse
+  // matches it, so a link never opens a wider list than it says; the Browse code that reads them adds its keys here.
+  const DATABASE_REFINE_PARAMS = ["dbsrc", "dbwhy", "dbpar"];
   const DATABASE_REFINE_KEYS = new Set();
   // dbpar's values.
   const DATABASE_PARAMETER_KEYS = { kcat: "kcat", Km: "km", "kcat/Km": "kcatkm" };

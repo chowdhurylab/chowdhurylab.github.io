@@ -1184,8 +1184,9 @@ def check_stats_figures(driver, browser, url):
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
             driver.execute_script("document.querySelector('[data-figure=\"db-values\"]').scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-figures-{width}.png"))
-        # A segment that has a Browse filter opens Browse there: the kcat values in none of the databases. The address
-        # Browse opens with is read as the new page starts (sessionStorage), whatever Browse then makes of it.
+        # A segment that has a Browse filter opens Browse there: the values in none of the databases (All values' row; a
+        # parameter's segment links only once Browse reads dbpar). The address Browse opens with is read as the new page
+        # starts (sessionStorage), whatever Browse then makes of it.
         first = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": "try { sessionStorage.setItem('catlogFirstAddress', location.href); } catch (error) {}"})
         try:
@@ -1193,12 +1194,12 @@ def check_stats_figures(driver, browser, url):
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsDbValuesTitle"))
-            segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='kcat'] .stats-seg.stats-part-not-listed")
+            segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='all'] .stats-seg.stats-part-not-listed")
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", segment)
             segment.click()
             wait.until(lambda d: urlsplit(d.current_url).path.endswith("catlog-latest.html"))
             opened = driver.execute_script("return sessionStorage.getItem('catlogFirstAddress')")
-            assert urlsplit(opened).fragment == "browse?db=not_listed&dbpar=kcat", opened
+            assert urlsplit(opened).fragment == "browse?db=not_listed", opened
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": first["identifier"]})
     finally:
@@ -2093,6 +2094,29 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="db:all_not_listed"]').click()
         wait.until(lambda d: not fragment())
         assert database_ticked() == [] and not chip_keys(), (database_ticked(), chip_keys())
+        # Every link of Stats' Against the databases opens a Browse list that keeps all of its keys: Browse drops a key
+        # it does not read (dbsrc, dbwhy or dbpar before value-level matching) and would then show a wider list than the
+        # link names. One link for each set of keys the part's links use; once, on the published page.
+        if base.endswith("catlog-latest.html"):
+            driver.get("about:blank")
+            driver.get(base.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-part"))
+            targets = driver.execute_script("""
+                const part = document.querySelector("#statsCharts [data-part='databases']");
+                if (!part) return [];
+                return [...part.querySelectorAll('a[href]')].map(a => a.href)
+                    .concat([...part.querySelectorAll('[data-href]')].map(e => new URL(e.dataset.href, location.href).href));
+            """)
+            by_keys = {}
+            for href in targets:
+                target = urlsplit(href).fragment
+                assert target.startswith("browse?"), href
+                by_keys.setdefault(frozenset(key for key, _value in parse_qsl(target[len("browse?"):], keep_blank_values=True)), href)
+            for _keys, href in sorted(by_keys.items(), key=lambda item: sorted(item[0])):
+                open_page(href)
+                assert fragment() == urlsplit(href).fragment, f"Browse drops part of a Stats link: {urlsplit(href).fragment} opens {fragment()}"
+            found["stats_links"] = sorted("&".join(sorted(keys)) for keys in by_keys) if by_keys else "no part 7"
+            open_page(base + "#browse")
         # A record matches any result ticked: Corrects a value and Different number together give the records with either.
         if "corrects" in expected and "differs" in expected:
             open_page(base + "#browse?db=corrects,differs")
