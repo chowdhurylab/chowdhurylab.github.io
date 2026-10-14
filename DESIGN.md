@@ -120,9 +120,10 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
   - Lead (14px): "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database
-    lists, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and
-    20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it
-    is the paper's number for 97.4%." The three result phrases link into Browse (db=corrects, differs, not_listed).
+    lists, 5,574 are a number a database lists under another label, 1,548 correct a database's number (656 checked
+    against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database
+    lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%." Its counts add up to
+    the total; the four result phrases link into Browse (db=other_label, corrects, differs, not_listed).
   - Links never open a wider list than their count: a count, segment or label whose link would name a database
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.

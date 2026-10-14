@@ -5044,10 +5044,11 @@
     return compared ? { rows: shaped, all: allParts, compared, calculated: all.not_compared || 0 } : null;
   }
 
-  // The part's lead: one sentence on all values compared, one on the values a database lists a number for (same,
-  // corrects or differs), its result names linking into Browse.
+  // The part's lead: one sentence on all values compared, by result in Figure 8's order so its counts add up to the
+  // total, one on the values a database lists a number for (same, corrects or differs), its result names linking into
+  // Browse.
   function statsDatabaseLeadHtml(comparison, values) {
-    const [same, , corrects, differs, notListed] = values.all;
+    const [same, otherLabel, corrects, differs, notListed] = values.all;
     const { compared } = values;
     const papers = statsCount(comparison.papers);
     const by = statsCountMap(comparison.corrections?.by);
@@ -5056,6 +5057,7 @@
     const plural = (count, one, many) => (count === 1 ? one : many);
     const clauses = [
       `${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists`,
+      otherLabel ? link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} a number a database lists under another label`, "other_label") : "",
       corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects")}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
       differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs") : "",
       notListed ? link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed") : "",

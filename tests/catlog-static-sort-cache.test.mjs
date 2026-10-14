@@ -2093,7 +2093,9 @@ function row(overrides = {}) {
   assert.doesNotMatch(figures, /Values read from the paper against the databases|data-figure="db-compare"/);
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
-  assert.equal(plain(dbLead), "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database lists, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%.");
+  assert.equal(plain(dbLead), "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database lists, 5,574 are a number a database lists under another label, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%.");
+  // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.
+  assert.match(dbLead, /href="[^"]*#browse\?db=other_label">5,574 are a number a database lists under another label/);
   assert.match(dbLead, /href="[^"]*#browse\?db=corrects">1,548 correct a database/);
   assert.match(dbLead, /href="[^"]*#browse\?db=differs">1,051 differ/);
   assert.match(dbLead, /href="[^"]*#browse\?db=not_listed">20,987 are in none/);
