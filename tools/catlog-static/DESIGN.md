@@ -756,8 +756,9 @@ found at once: A, B, G, C, D, E, F, H.
   up to 400px) with rows that have content: Cause (database_cause in words,
   including the code-found power_of_ten "off by an exact power of ten",
   printed_number_unit_not_applied "the printed number taken in another unit",
-  time_factor "off by exactly 60 or 3,600"; left out when the line already says
-  what the check against the paper found; a code with no wording never shown)
+  time_factor "off by exactly 60 or 3,600"; shown whatever the line says, as the
+  brief's body without database_parts has it, since the line is never read; a
+  code with no wording never shown)
   and In the paper (database_evidence; a local path never). A note with an
   empty body is a plain line. Notes on a correction or a different number are
   open: every one from 641px, only the first on a phone; others closed; nothing

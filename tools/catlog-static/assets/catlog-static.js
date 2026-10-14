@@ -11047,8 +11047,8 @@
   }
 
   // One value that is not the same: a folding note. Its summary: the parameter, which databases list what, the result
-  // (square and word); its body: CatLog's line whole, the cause (unless the line gives the check's), where the paper
-  // prints it. A note with nothing in its body is a plain line.
+  // (square and word); its body: CatLog's line whole, the cause in words (database_cause, whatever the line says: the line
+  // is never read for it), where the paper prints it. A note with nothing in its body is a plain line.
   function databaseNoteHtml({ field, metric, facts }, open) {
     const result = databaseResult(facts.status);
     const phrase = databaseListPhrase(result?.filter, facts.sources);
@@ -11059,9 +11059,8 @@
     const line = lineText
       ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
-    const causeSaid = /checked against the paper/i.test(facts.sentence);
     const body = line + kvList([
-      facts.cause && !causeSaid ? linkedKv("Cause", metricWordsHtml(escapePublic(facts.cause))) : "",
+      facts.cause ? linkedKv("Cause", metricWordsHtml(escapePublic(facts.cause))) : "",
       facts.evidence ? linkedKv("In the paper", caretHtml(escapePublic(facts.evidence))) : "",
     ], "cmp-facts");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;

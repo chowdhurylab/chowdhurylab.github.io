@@ -3921,12 +3921,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists the value of another row.", database_cause: "value_from_other_row", database_sources: ["BRENDA"] })]));
   assert.match(html, /<span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong>/);
   assert.match(html, /<dt>Cause<\/dt><dd>a value from another cell of the table<\/dd>/);
-  // A line that already says what the check against the paper found is not repeated by the cause; a cause code found
-  // by code has its words.
+  // The cause comes from database_cause, never from the line: a line that says what the check against the paper found
+  // still has the Cause row (the line is shown whole and never read); a cause code found by code has its words.
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_cause: "uM_entered_as_mM", database_sources: ["BRENDA"],
     database_line: "BRENDA lists 630 mM, 1,000× higher. The paper prints 630 ± 170 µM (Table 1). Checked against the paper: µM entered as mM." })]));
-  assert.doesNotMatch(html, /<dt>Cause<\/dt>/);
-  assert.match(html, /Checked against the paper: µM entered as mM\.<\/p><\/div><\/details>/);
+  assert.match(html, /Checked against the paper: µM entered as mM\.<\/p><dl class="detail-kv cmp-facts"><div class="kv-line"><dt>Cause<\/dt><dd>a µM value entered as mM<\/dd><\/div><\/dl><\/div><\/details>/);
   for (const [code, words] of [["power_of_ten", "off by an exact power of ten"], ["printed_number_unit_not_applied", "the printed number taken in another unit"],
     ["time_factor", "off by exactly 60 or 3,600"], ["header_scale_inverted", "the table header&#39;s power of ten applied the wrong way"]]) {
     html = render(v2Summary, v2Detail([line("kcat", { database_status: "corrected", database_line: "OED lists 0.5 s⁻¹.", database_cause: code, database_sources: ["OED"] })]));
