@@ -5091,7 +5091,8 @@
   // The numbers the databases list for these papers that match no value CatLog read from them (not_reproduced.distinct:
   // each paper, parameter and number counted once, by the first reason that applies). Two reasons are numbers CatLog
   // does have, as a kcat/Km it calculated or under another parameter: they are named apart, never counted as numbers
-  // CatLog does not have.
+  // CatLog does not have. The README is named for the reasons only when this snapshot's README has its section on the
+  // comparison, which the CatLog side writes with the comparison download (manifest database_comparison_download).
   const STATS_NOT_REPRODUCED_HELD = [
     ["equals_catlog_calculated_ratio", "that equals a kcat/Km CatLog calculated", "that equal a kcat/Km CatLog calculated"],
     ["another_parameter_in_catlog", "that CatLog has under another parameter", "that CatLog has under another parameter"],
@@ -5106,7 +5107,8 @@
     const parts = [[missing, "that CatLog does not have", "that CatLog does not have"], ...held].filter(([count]) => count > 0);
     if (!parts.length) return "";
     const clauses = parts.map(([count, one, many], index) => `${formatInteger(count)}${index ? "" : ` ${count === 1 ? "number" : "numbers"} for these papers`} ${count === 1 ? one : many}`);
-    return `The databases also list ${statsListText(clauses)}; the README gives the reasons.`;
+    const readme = typeof manifest.database_comparison_download?.path === "string" ? "; the README gives the reasons" : "";
+    return `The databases also list ${statsListText(clauses)}${readme}.`;
   }
 
   // Figure: each value against the databases, a 100% bar per parameter and for all values; the thin results (corrects,

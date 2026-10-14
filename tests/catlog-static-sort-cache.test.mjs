@@ -2118,12 +2118,19 @@ function row(overrides = {}) {
   assert.match(values, /<ul class="stats-legend">[\s\S]*?<span title="A database lists this number for this value\.">Same number<\/span>[\s\S]*?#browse\?db=other_label" title="A database lists this number for the paper under another substrate, variant or organism\.">Same, other label<\/a>/);
   assert.match(plain(values), /Each value read from the paper, against what BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for it; the two counts beside each bar are the values that correct a database's number and those with a different number\. Numbers compared for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\./);
   // The numbers the databases list that match no value CatLog read: those CatLog has as a kcat/Km it calculated or
-  // under another parameter are named apart (14,633 = 12,483 + 1,687 + 463).
-  assert.match(values, /5,946 kcat\/Km calculated by CatLog are not compared\. The databases also list 12,483 numbers for these papers that CatLog does not have, 1,687 that equal a kcat\/Km CatLog calculated and 463 that CatLog has under another parameter; the README gives the reasons\./);
+  // under another parameter are named apart (14,633 = 12,483 + 1,687 + 463). The README is named for the reasons only
+  // when the snapshot has its comparison download (the README's section on the comparison comes with it).
+  assert.match(values, /5,946 kcat\/Km calculated by CatLog are not compared\. The databases also list 12,483 numbers for these papers that CatLog does not have, 1,687 that equal a kcat\/Km CatLog calculated and 463 that CatLog has under another parameter\./);
+  assert.doesNotMatch(values, /README/);
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { equals_catlog_calculated_ratio: 1, another_parameter_in_catlog: 0 } } }),
-    "The databases also list 1 number for these papers that equals a kcat/Km CatLog calculated; the README gives the reasons.");
-  assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1 } } }),
-    "The databases also list 1 number for these papers that CatLog does not have; the README gives the reasons.");
+    "The databases also list 1 number for these papers that equals a kcat/Km CatLog calculated.");
+  runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", rows: 10 };
+  try {
+    assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1 } } }),
+      "The databases also list 1 number for these papers that CatLog does not have; the README gives the reasons.");
+  } finally {
+    delete runtimeManifest.database_comparison_download;
+  }
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: {} } }), "");
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1.5 } } }), "");
   assert.match(values, /<dl class="stats-share-lines">[\s\S]*?82\.3%/);
