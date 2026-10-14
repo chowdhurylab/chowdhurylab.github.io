@@ -198,7 +198,9 @@ Corrected earlier's. The counts at rest equal the manifest's summary.database_co
 title is its definition, plus "N values in M records." where the manifest counts both. Each result has one name
 (DATABASE_RESULT_NAMES), the same in the option, its chip, a record's result word and its links to records like
 it; the top-level names keep one line beside a five-digit count in the 256px sidebar with a wide font (DejaVu
-Sans), "every value" may wrap. A record matches any option ticked, except that "every value" narrows Not in the
+Sans), also beside an 11px scrollbar (Chrome on Linux and Windows): the square sits 6px after the box and 4px before
+the name, the count comes 6px closer (the counts stay in line with the other groups') and the names are set 1px
+tighter between words and 0.01em between letters; "every value" may wrap. A record matches any option ticked, except that "every value" narrows Not in the
 databases: ticking it ticks that too, unticking that unticks it, and the pair is one chip, "Not in the
 databases: every value", that removes both. The "?" names the databases compared from the manifest (its
 sources list, else the databases values_by_database counts, else the five the comparison began with) and gives

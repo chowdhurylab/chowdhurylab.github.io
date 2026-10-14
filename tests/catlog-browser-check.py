@@ -1821,7 +1821,175 @@ def check_filters(driver, browser, url, route_label):
         text = driver.find_element(By.CSS_SELECTOR, f'#catalogFilters [data-count="{key}"]').get_attribute("textContent").strip()
         return int(text.replace(",", "")) if re.fullmatch(r"[\d,]+", text) else None
 
+    def database_ticked():
+        return driver.execute_script("return [...document.querySelectorAll('#databaseChecklist input:checked')].map(e => e.value)")
+
+    def click_database_option(value):
+        # Centred first (Safari clicks what is at the element's centre), then the box itself.
+        box = driver.find_element(By.CSS_SELECTOR, f'#databaseChecklist input[value="{value}"]')
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", box)
+        box.click()
+
+    def check_database_group():
+        """Round 9: Against the databases is the second group, after Source: Corrects a value, Different number, Same, other
+        label, Not in the databases with "every value" nested under it, All values the same, a rule, Corrected earlier;
+        each result's square, its definition as title; counts at rest are the manifest's keys; earlier addresses keep
+        their records; "every value" brings Not in the databases and is one chip with it; the names keep one line at
+        256px beside a five-digit count."""
+        found = {}
+        comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.summary?.database_comparison || null") or {}
+        open_page(base + "#browse")
+        second = driver.execute_script("return document.querySelectorAll('#catalogFilters .filter-section')[1].id")
+        assert second == "databaseFilterSection", second
+        rows = driver.execute_script("""
+            return [...document.querySelectorAll('#databaseChecklist .check-row')].map(row => {
+                const label = row.querySelector(':scope > span');
+                const shown = [...label.childNodes].filter(node => !(node.nodeType === 1 && node.matches('.visually-hidden, .db-mark')))
+                    .map(node => node.textContent).join('').trim();
+                const mark = label.querySelector('.db-mark');
+                return {value: row.querySelector('input').value, shown, nested: row.classList.contains('nested'),
+                        divided: row.classList.contains('after-divider'), title: row.title,
+                        name: label.textContent.replace(/\\s+/g, ' ').trim(),
+                        mark: mark ? {hidden: mark.getAttribute('aria-hidden'), colour: getComputedStyle(mark).backgroundColor,
+                                      size: [mark.getBoundingClientRect().width, mark.getBoundingClientRect().height]} : null};
+            });
+        """)
+        assert [row["value"] for row in rows] == ["corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"], rows
+        assert [row["shown"] for row in rows] == ["Corrects a value", "Different number", "Same, other label", "Not in the databases",
+                                                   "every value", "All values the same", "Corrected earlier"], rows
+        assert [row["nested"] for row in rows] == [False] * 4 + [True, False, False], rows
+        assert [row["divided"] for row in rows] == [False] * 6 + [True], rows
+        assert rows[4]["name"] == "Not in the databases: every value", rows[4]
+        colours = driver.execute_script("""
+            const probe = document.createElement('span');
+            document.body.appendChild(probe);
+            const colour = (token) => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
+            const out = ['--chg-magnitude', '--cmp-differs', '--bar-neutral', '--cmp-new', '--cmp-new', '--cmp-same'].map(colour);
+            probe.remove();
+            return out;
+        """)
+        assert [row["mark"]["colour"] for row in rows[:6]] == colours and rows[6]["mark"] is None, rows
+        assert all(row["mark"]["hidden"] == "true" and row["mark"]["size"] == [10, 10] for row in rows[:6]), rows
+        definitions = ("A database lists another number for this value. CatLog's value is the one the paper prints",
+                       "A database lists another number for this value and the cause is not yet known.",
+                       "A database lists this number for the paper under another substrate, variant or organism.",
+                       "No compared database lists this value for this paper.",
+                       "No compared database lists any value of the record.",
+                       "Every compared value is the number a database lists for it.",
+                       "Not yet re-read: CatLog's earlier version changed these values")
+        assert all(row["title"].startswith(text) for row, text in zip(rows, definitions)), rows
+        # The counts at rest are the manifest's keys; the titles add its values and records.
+        kinds, records = comparison.get("records_with_kind") or {}, comparison.get("records") or {}
+        expected = {"corrects": kinds.get("corrected"), "differs": kinds.get("differs"), "other_label": kinds.get("other_label"),
+                    "not_listed": kinds.get("new"), "all_not_listed": records.get("every_value_new"),
+                    "all_same": records.get("every_value_confirmed")}
+        expected = {key: value for key, value in expected.items() if isinstance(value, int)}
+        wait.until(lambda d: all(count_of(f"database:{key}") is not None for key in expected))
+        counted = {key: count_of(f"database:{key}") for key in expected}
+        assert counted == expected, (counted, expected)
+        found["counts"] = counted
+        corrected_values = ((comparison.get("values") or {}).get("all") or {}).get("corrected")
+        if isinstance(corrected_values, int) and "corrects" in expected:
+            assert rows[0]["title"].endswith(f" {corrected_values:,} values in {expected['corrects']:,} records."), rows[0]["title"]
+        # The "?" names the databases compared and defines every option.
+        about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutDatabases"]')
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
+        about.click()
+        about_text = driver.execute_script("return document.getElementById('aboutDatabases').innerText.trim()")
+        assert "with the numbers BRENDA" in about_text and "Every value (under Not in the databases)" in about_text, about_text
+        for word in ("v1", "v2", "independent", "claim", "agentic", "blind", "five"):
+            assert not re.search(rf"\b{word}\b", about_text, re.I), (word, about_text)
+        about.click()
+        # The names keep one line in the 256px sidebar (1280px window) beside today's counts and five-digit ones, in this
+        # browser's font (DejaVu Sans on Linux), also beside a scrollbar that takes room (11px, as in Chrome on Linux and
+        # Windows; where this browser's floats over the page, the room is taken for the measure); the nested name may
+        # wrap but never runs into its count.
+        set_browse_viewport(driver, browser, 1280, 1000)
+        lines = driver.execute_script("""
+            const rail = document.getElementById('catalogFilters');
+            const floating = rail.offsetWidth - rail.clientWidth < 1;
+            if (floating) rail.style.paddingRight = '11px';
+            const rows = [...document.querySelectorAll('#databaseChecklist .check-row')].filter(row => row.getClientRects().length);
+            const measure = () => rows.map(row => {
+                const label = row.querySelector(':scope > span');
+                const count = row.querySelector(':scope > strong').getBoundingClientRect();
+                const box = label.getBoundingClientRect();
+                return {value: row.querySelector('input').value, lines: Math.round(box.height / parseFloat(getComputedStyle(label).lineHeight)),
+                        apart: box.right <= count.left + 0.5, level: Math.abs(count.top - box.top) < 3};
+            });
+            const now = measure();
+            const counts = rows.map(row => row.querySelector('strong').textContent);
+            rows.forEach(row => { row.querySelector('strong').textContent = '88,888'; });
+            const grown = measure();
+            rows.forEach((row, index) => { row.querySelector('strong').textContent = counts[index]; });
+            rail.style.paddingRight = '';
+            return now.concat(grown);
+        """)
+        assert all(row["apart"] and row["level"] for row in lines), lines
+        assert all(row["lines"] == 1 for row in lines if row["value"] != "all_not_listed"), lines
+        set_browse_viewport(driver, browser, 1440, 1000)
+        # Earlier addresses keep their records: adds is Not in the databases, new no database listing any value (with
+        # Not in the databases, one chip), same All values the same.
+        for address, ticked, written, chips, key in (
+                ("db=adds", ["not_listed"], "db=not_listed", ["db:not_listed"], "not_listed"),
+                ("db=new", ["not_listed", "all_not_listed"], "db=not_listed,all_not_listed", ["db:all_not_listed"], "all_not_listed"),
+                ("db=same", ["all_same"], "db=all_same", ["db:all_same"], "all_same")):
+            open_page(base + "#browse?" + address)
+            assert database_ticked() == ticked and fragment() == "browse?" + written and chip_keys() == chips, \
+                (address, database_ticked(), fragment(), chip_keys())
+            if key in expected:
+                assert summary() == f"{expected[key]:,} records", (address, summary(), expected[key])
+        chip = driver.execute_script("return document.querySelector('#activeFilters [data-filter-key=\"db:all_same\"]').innerText.trim()")
+        assert chip == "All values the same", chip
+        # Ticking "every value" ticks Not in the databases; the pair is one chip that removes both; unticking Not in the
+        # databases unticks "every value".
+        open_page(base + "#browse")
+        click_database_option("all_not_listed")
+        wait.until(lambda d: fragment() == "browse?db=not_listed,all_not_listed")
+        wait_ready()
+        assert database_ticked() == ["not_listed", "all_not_listed"] and chip_keys() == ["db:all_not_listed"], (database_ticked(), chip_keys())
+        chip = driver.execute_script("return document.querySelector('#activeFilters [data-filter-key=\"db:all_not_listed\"]').innerText.trim()")
+        assert chip == "Not in the databases: every value", chip
+        if "all_not_listed" in expected:
+            assert summary() == f"{expected['all_not_listed']:,} records", summary()
+        click_database_option("not_listed")
+        wait.until(lambda d: not fragment())
+        assert database_ticked() == [] and not chip_keys(), (database_ticked(), chip_keys())
+        click_database_option("all_not_listed")
+        wait.until(lambda d: chip_keys() == ["db:all_not_listed"])
+        driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="db:all_not_listed"]').click()
+        wait.until(lambda d: not fragment())
+        assert database_ticked() == [] and not chip_keys(), (database_ticked(), chip_keys())
+        # A record matches any result ticked: Corrects a value and Different number together give the records with either.
+        if "corrects" in expected and "differs" in expected:
+            open_page(base + "#browse?db=corrects,differs")
+            either = int(summary().split()[0].replace(",", ""))
+            assert max(expected["corrects"], expected["differs"]) <= either <= expected["corrects"] + expected["differs"], (summary(), expected)
+            assert chip_keys() == ["db:corrects", "db:differs"], chip_keys()
+        if browser == "chrome":
+            # Phones: the group in the sheet, its rows 44px targets, nothing wider than the screen.
+            for width in (390, 320):
+                set_browse_viewport(driver, browser, width, 844)
+                if not driver.execute_script("return document.body.classList.contains('filters-open')"):
+                    driver.find_element(By.ID, "openFiltersButton").click()
+                wait.until(lambda d: d.find_element(By.ID, "showResultsButton").is_displayed())
+                phone = driver.execute_script("""
+                    const rows = [...document.querySelectorAll('#databaseChecklist .check-row')].filter(row => row.getClientRects().length);
+                    return {heights: rows.map(row => row.getBoundingClientRect().height),
+                            wide: document.documentElement.scrollWidth <= innerWidth + 1,
+                            inside: rows.every(row => row.getBoundingClientRect().right <= innerWidth + 0.5)};
+                """)
+                assert phone["heights"] and all(height >= 44 for height in phone["heights"]) and phone["wide"] and phone["inside"], (width, phone)
+                driver.find_element(By.ID, "showResultsButton").click()
+                wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
+            set_browse_viewport(driver, browser, 1440, 1000)
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('filters-open')"))
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment())
+        return found
+
     total_records = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.total_rows") or 0
+    database_results = None
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         # 1. An address with filters opens with them set, writes itself back in the same order, and shows one chip per
@@ -1955,7 +2123,7 @@ def check_filters(driver, browser, url, route_label):
         section_hidden = driver.execute_script("return document.getElementById('databaseFilterSection').hidden")
         if indexed:
             assert not section_hidden and chip_keys() == ["db:corrects"], (section_hidden, chip_keys())
-            assert driver.execute_script("return document.querySelectorAll('#databaseChecklist .check-row').length") >= 5
+            database_results = check_database_group()
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
         # 4. Source: the older status=v2 opens Read from the paper (source=paper), every row tagged "from
@@ -2052,7 +2220,8 @@ def check_filters(driver, browser, url, route_label):
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise
-    return {"route": route_label, "human_checked": checked, "passed": True}
+    return {"route": route_label, "human_checked": checked, "database_counts": database_results and database_results.get("counts"),
+            "passed": True}
 
 
 def check_layout(driver, browser, url, route_label):

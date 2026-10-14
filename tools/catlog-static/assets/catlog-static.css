@@ -339,11 +339,15 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 
 /* Against the databases: a 10px square in each result's colour before its name (the record and Stats use the same
    colours; Corrected earlier has none), "every value" nested under Not in the databases, and a rule before Corrected
-   earlier, which is about records not yet re-read. With its square, "Not in the databases" keeps one line beside a
-   five-digit count at 256px in a wide font (DejaVu Sans) because the count comes 4px closer, as Source's do. In the
-   phone sheet the rows are 44px targets. */
-.db-mark { display:inline-block; width:10px; height:10px; margin-right:5px; background:var(--db-mark, var(--bar-neutral)); vertical-align:-1px }
-#databaseChecklist .check-row > strong { margin-left:-4px }
+   earlier, which is about records not yet re-read. With its square, "Not in the databases" (135px in DejaVu Sans) keeps
+   one line beside a five-digit count in the 256px sidebar, also beside an 11px scrollbar (Chrome on Linux and
+   Windows): the square sits 6px after the box and 4px before the name, the count comes 6px closer (2px from the
+   names' column; the counts stay in line with the other groups'), and the names are set 1px tighter between words
+   and 0.01em between letters. In the phone sheet the rows are 44px targets. */
+.db-mark { display:inline-block; width:10px; height:10px; background:var(--db-mark, var(--bar-neutral)); vertical-align:-1px }
+#databaseChecklist .db-mark { margin:0 4px 0 -2px }
+#databaseChecklist .check-row > span { letter-spacing:-0.01em; word-spacing:-1px }
+#databaseChecklist .check-row > strong { margin-left:-6px }
 .db-mark-corrects { --db-mark:var(--chg-magnitude) }
 .db-mark-differs { --db-mark:var(--cmp-differs) }
 .db-mark-other-label { --db-mark:var(--bar-neutral) }
