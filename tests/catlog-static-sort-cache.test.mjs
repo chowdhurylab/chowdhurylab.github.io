@@ -2171,7 +2171,7 @@ function row(overrides = {}) {
   // A bar found both ways prints its two counts under its name, each after its colour; a bar found one way does not.
   assert.match(found, /data-row="unit"[^>]*>\s*<span class="stats-chart-label"><span title="[^"]*">Unit or scale<\/span><small><span class="stats-db-thin" aria-hidden="true"><span><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>428<\/span><span><i class="stats-swatch stats-part-corrects-2" aria-hidden="true"><\/i>892<\/span><\/span><\/small><\/span>/);
   assert.equal((found.match(/<small><span class="stats-db-thin"/g) || []).length, 1);
-  assert.match(found, /<span title="A decimal point or a power of ten slipped">Decimal slip<\/span>/);
+  assert.match(found, /<span title="A decimal point or exponent slip\.">Decimal slip<\/span>/);
   assert.match(plain(found), /The 1,548 values that correct a database's number, by the cause of the database's number and how it was found; each label gives the values, then their share, and a bar split two ways gives its two counts under its name\./);
   // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
   const causes = figureHtml("db-causes");
@@ -2217,7 +2217,7 @@ function row(overrides = {}) {
     assert.match(refined("db-paired"), /<td class="stats-num" data-count="1087">1,087<small>1\.6%<\/small><\/td>/);
     assert.match(refined("db-paired"), /<tfoot>[\s\S]*?href="[^"]*#browse\?db=differs" aria-label="All, different number: 1,051">1,051<\/a>/);
     assert.match(refined("db-sources"), /<ul class="stats-legend">[\s\S]*?<span title="[^"]*">Same, other label<\/span>[\s\S]*?#browse\?db=corrects"[^>]*>Corrects a value<\/a>[\s\S]*?<span title="[^"]*">Different number<\/span>/);
-    assert.match(refined("db-found"), /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or a power of ten slipped">Decimal slip<\/a>/);
+    assert.match(refined("db-found"), /href="[^"]*#browse\?db=corrects&amp;dbwhy=decimal" title="A decimal point or exponent slip\.">Decimal slip<\/a>/);
     assert.match(refined("db-causes"), /href="[^"]*#browse\?db=corrects&amp;dbsrc=brenda&amp;dbwhy=unit" aria-label="BRENDA, unit or scale: 979">979<\/a>/);
     // A key Browse still lacks keeps its counts plain: a database without a cause.
     api.databaseRefineKeys.delete("dbwhy");
@@ -4356,8 +4356,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.ok(results["All values the same"].endsWith("Every compared value is the number a database lists for it. 36,121 records"));
   assert.ok(results["Corrected earlier"].startsWith("Not yet re-read: CatLog’s earlier version changed these values"));
   assert.ok(results["Corrected earlier"].endsWith("2,881 records"));
+  // The Guide, Stats and Browse give a result one name and one definition: Browse's option's.
+  for (const item of api.GUIDE_DB_RESULTS) {
+    const option = api.databaseFilters.find((filter) => filter.value === item.key);
+    assert.equal(item.label, option.label, item.key);
+    assert.equal(item.text, option.title, item.key);
+  }
   // Every cause code has a family (a code without one would drop out of the counts); the families add up to the corrections.
-  const families = api.GUIDE_DB_CAUSE_FAMILIES;
+  // One list of families for the Guide and Stats (Stats' map is the same list's).
+  const families = api.DATABASE_CAUSE_FAMILIES;
+  for (const family of families) for (const code of family.causes) assert.equal(api.STATS_CAUSE_FAMILY[code], family.key, code);
   const codes = [...Object.keys(bundleComparison().corrections.by_cause)];
   for (const code of codes) assert.equal(families.filter((family) => family.causes.includes(code)).length, 1, code);
   const causes = items(html, "Cause of a correction");

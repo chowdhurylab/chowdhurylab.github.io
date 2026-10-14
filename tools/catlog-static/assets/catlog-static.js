@@ -4631,33 +4631,35 @@
   // missing count leaves its line out, never a guessed number). The databases are comparedDatabases': the manifest's
   // sources list with versions ([{key, name, display, version, retrieved, rows}]), else the databases it counts values
   // for, else six. Like the rest of the Guide it reads the manifest only, never the record index.
-  // Browse's options in its order (key = the address's db= value); mark: the result's colour, as in Browse.
+  // A result's definition as Browse's option gives it (databaseFilters' title): Browse, Stats and the Guide say it in
+  // these words only.
+  function databaseResultTitle(key) {
+    return databaseFilters.find((item) => item.value === key)?.title || "";
+  }
+  // Browse's options in its order (key = the address's db= value), with Browse's names and definitions; mark: the
+  // result's colour, as in Browse. The nested option's definition is said inside the sentence of its parent.
   const GUIDE_DB_RESULTS = [
-    { key: "corrects", label: "Corrects a value", mark: "corrects",
-      text: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
-    { key: "differs", label: "Different number", mark: "differs",
-      text: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
-    { key: "other_label", label: "Same, other label", mark: "other_label",
-      text: "A database lists this number for the paper under another substrate, variant or organism." },
-    { key: "not_listed", label: "Not in the databases", mark: "not_listed",
-      text: "No compared database lists this value for this paper. The record says why and what they do list.",
-      nested: { key: "all_not_listed", label: "every value", text: "no compared database lists any value of the record" } },
-    { key: "all_same", label: "All values the same", mark: "same",
-      text: "Every compared value is the number a database lists for it." },
-    { key: "earlier", label: "Corrected earlier", mark: "",
-      text: "Not yet re-read: CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
-  ];
-  // The cause of a correction in four families (Browse's Cause list, Stats); causes: the snapshot's cause codes in each.
-  const GUIDE_DB_CAUSE_FAMILIES = [
+    { key: "corrects", mark: "corrects" },
+    { key: "differs", mark: "differs" },
+    { key: "other_label", mark: "other_label" },
+    { key: "not_listed", mark: "not_listed", nested: { key: "all_not_listed", label: DATABASE_RESULT_NAMES.all_not_listed,
+      text: databaseResultTitle("all_not_listed").replace(/^./, (first) => first.toLowerCase()).replace(/\.$/, "") } },
+    { key: "all_same", mark: "same" },
+    { key: "earlier", mark: "" },
+  ].map((item) => ({ ...item, label: DATABASE_RESULT_NAMES[item.key], text: databaseResultTitle(item.key) }));
+  // The cause of a correction in four families (Browse's dbwhy keys), one list for the Guide, Stats and Browse's Cause
+  // list: label, title (its definition) and causes, the cause codes in each. Every cause code the CatLog side writes
+  // must have one (a unit test fails on one without).
+  const DATABASE_CAUSE_FAMILIES = [
     { key: "unit", label: "Unit or scale",
-      text: "The database's number is the paper's in another unit or scale: the printed unit not converted, the table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, the printed number taken in another unit, or a number off by an exact power of ten, 60 or 3,600.",
+      title: "The database's number is the paper's in another unit or scale: the printed unit not converted, the table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, the printed number taken in another unit, or a number off by an exact power of ten, 60 or 3,600.",
       causes: ["unit_not_converted", "header_scale_inverted", "header_scale_ignored", "uM_entered_as_mM", "mM_entered_as_uM",
         "time_unit", "power_of_ten", "printed_number_unit_not_applied", "time_factor"] },
-    { key: "decimal", label: "Decimal slip", text: "A decimal point or exponent slip.", causes: ["decimal_or_exponent_slip"] },
+    { key: "decimal", label: "Decimal slip", title: "A decimal point or exponent slip.", causes: ["decimal_or_exponent_slip"] },
     { key: "elsewhere", label: "Another number",
-      text: "A number from another cell of the table, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km.",
+      title: "A number from another cell of the table, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km.",
       causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"] },
-    { key: "misprint", label: "Unit misprinted", text: "A unit the paper misprints.", causes: ["paper_unit_misprint"] },
+    { key: "misprint", label: "Unit misprinted", title: "A unit the paper misprints.", causes: ["paper_unit_misprint"] },
   ];
   const GUIDE_DB_FOUND_BY = [
     { key: "paper_check", label: "Checked against the paper", text: "A separate AI check read the paper and named the cause." },
@@ -4676,7 +4678,6 @@
       text: "The databases list this parameter for this substrate, but not with this variant or organism." },
     { key: "paper_not_in_databases", label: "Paper not listed", text: "The paper is in none of the compared databases." },
   ];
-  const GUIDE_DB_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
 
   // The snapshot's comparison (manifest summary.database_comparison), or null.
   function guideDatabaseSummary() {
@@ -4751,7 +4752,7 @@
   function guideDatabaseListHtml(items, countOf, className = "") {
     return `<dl class="guide-term-list guide-db-list${className ? ` ${className}` : ""}">${items.map((item) => {
       const count = countOf(item);
-      return `<div><dt>${metricWordsHtml(escapeHtml(item.label))}</dt><dd>${metricWordsHtml(escapeHtml(item.text))}${count
+      return `<div><dt>${metricWordsHtml(escapeHtml(item.label))}</dt><dd>${metricWordsHtml(escapeHtml(item.text ?? item.title))}${count
         ? ` <span class="guide-db-count">${count}</span>` : ""}</dd></div>`;
     }).join("")}</dl>`;
   }
@@ -4864,13 +4865,13 @@
       <p>Browse&rsquo;s <em>Against the databases</em> group finds records by these results. A record matches a result when one of its values has it; <em>All values the same</em>, <em>every value</em> and <em>Corrected earlier</em> describe the whole record.</p>
       <dl class="guide-status-list guide-db-results">${results}</dl>
       <h3 id="guide-databases-causes">Cause of a correction</h3>
-      ${guideDatabaseListHtml(GUIDE_DB_CAUSE_FAMILIES, familyCount)}
+      ${guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount)}
       <h3 id="guide-databases-found">How a correction is found</h3>
       ${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}
       ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor, with or without the cross-check): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
       <h3 id="guide-databases-not-listed">Why no database lists a value</h3>
       ${guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount)}
-      <p class="guide-db-note">${escapeHtml(GUIDE_DB_CAPTION)} Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
+      <p class="guide-db-note">${escapeHtml(STATS_DATABASE_CAPTION)} Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
       // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
       .replace(/&#39;/g, "&rsquo;");
   }
@@ -4911,19 +4912,16 @@
   const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
   // Shares are printed only on a base of this many values; below it, counts alone.
   const STATS_RATE_BASE = 1000;
-  // A value's result, in segment order, with Browse's words (#browse?db=<db>) and the statuses of summary values.
+  // A value's result, in segment order, with Browse's names and definitions (#browse?db=<db>, databaseResultTitle) and
+  // the statuses of summary values.
   const STATS_DATABASE_RESULTS = [
-    { part: "same", label: "Same number", statuses: ["confirmed"],
+    { part: "same", label: DATABASE_RESULT_NAMES.same, statuses: ["confirmed"],
       title: "A database lists this number for this value." },
-    { part: "other-label", db: "other_label", label: "Same, other label", statuses: ["same_number_other_label"],
-      title: "A database lists this number for the paper under another substrate, variant or organism." },
-    { part: "corrects", db: "corrects", label: "Corrects a value", statuses: ["corrected"], thin: true,
-      title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
-    { part: "differs", db: "differs", label: "Different number", statuses: ["differs"], thin: true,
-      title: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
-    { part: "not-listed", db: "not_listed", label: "Not in the databases", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"],
-      title: "No compared database lists this value for this paper. The record says why and what they do list." },
-  ];
+    { part: "other-label", db: "other_label", statuses: ["same_number_other_label"] },
+    { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true },
+    { part: "differs", db: "differs", statuses: ["differs"], thin: true },
+    { part: "not-listed", db: "not_listed", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"] },
+  ].map((item) => (item.db ? { ...item, label: DATABASE_RESULT_NAMES[item.db], title: databaseResultTitle(item.db) } : item));
   // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
   // database's values from papers it does not list (paper_absent) stand beside its bar, never in it. db: Browse's
   // result, only where Browse finds exactly these values: a value Browse matches by its own result and the databases
@@ -4955,20 +4953,8 @@
     { key: "km", names: ["Km", "km"], html: "<i>K</i><sub>m</sub>", label: "Km" },
     { key: "kcatkm", names: ["kcat/Km", "kcat_over_km"], html: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", label: "kcat/Km", note: "printed" },
   ];
-  // The causes of a corrected value, in four families (Browse's dbwhy keys); every cause code the CatLog side writes
-  // must have one (a unit test fails on one without).
-  const STATS_CAUSE_FAMILIES = [
-    { key: "unit", label: "Unit or scale", causes: ["unit_not_converted", "header_scale_inverted", "header_scale_ignored",
-      "uM_entered_as_mM", "mM_entered_as_uM", "time_unit", "power_of_ten", "time_factor", "printed_number_unit_not_applied"],
-      title: "Printed unit not converted, a table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, off by an exact power of ten, 60 or 3,600, or the printed number taken in another unit" },
-    { key: "decimal", label: "Decimal slip", causes: ["decimal_or_exponent_slip"],
-      title: "A decimal point or a power of ten slipped" },
-    { key: "elsewhere", label: "Another number", causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"],
-      title: "A number from another cell, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km" },
-    { key: "misprint", label: "Unit misprinted", causes: ["paper_unit_misprint"],
-      title: "A unit the paper misprints" },
-  ];
-  const STATS_CAUSE_FAMILY = Object.fromEntries(STATS_CAUSE_FAMILIES.flatMap((family) => family.causes.map((cause) => [cause, family.key])));
+  // A cause code's family (DATABASE_CAUSE_FAMILIES, the Guide's list).
+  const STATS_CAUSE_FAMILY = Object.fromEntries(DATABASE_CAUSE_FAMILIES.flatMap((family) => family.causes.map((cause) => [cause, family.key])));
   // The causes code finds as an exact factor (a power of ten, 60 or 3,600, a printed number taken in another unit); a
   // separate AI check that read the paper names every other cause. corrections.by counts the two (code, paper_check).
   const STATS_CODE_CAUSES = ["power_of_ten", "time_factor", "printed_number_unit_not_applied"];
@@ -5263,7 +5249,7 @@
     const byCause = statsCountMap(corrections?.by_cause);
     const total = statsCount(corrections?.values);
     if (!byCause || total === null) return null;
-    const families = Object.fromEntries(STATS_CAUSE_FAMILIES.map((family) => [family.key, statsSum(byCause, family.causes)]));
+    const families = Object.fromEntries(DATABASE_CAUSE_FAMILIES.map((family) => [family.key, statsSum(byCause, family.causes)]));
     const unnamed = Object.entries(byCause).reduce((sum, [cause, count]) => sum + (STATS_CAUSE_FAMILY[cause] ? 0 : count), 0);
     const named = Object.values(families).reduce((sum, count) => sum + count, 0);
     return named + unnamed === total ? { byCause, families, unnamed, total } : null;
@@ -5284,7 +5270,7 @@
     const split = byValid && !found.unnamed && statsSum(found.byCause, STATS_CODE_CAUSES) === code;
     const { max, step } = statsNiceScale(Math.max(...Object.values(found.families)));
     const rate = found.total >= STATS_RATE_BASE;
-    const rows = STATS_CAUSE_FAMILIES.map((family) => {
+    const rows = DATABASE_CAUSE_FAMILIES.map((family) => {
       const count = found.families[family.key];
       const href = count ? statsDatabaseHref({ db: "corrects", dbwhy: family.key }) : "";
       const byCode = split ? statsSum(found.byCause, family.causes.filter((cause) => STATS_CODE_CAUSES.includes(cause))) : 0;
@@ -5328,7 +5314,7 @@
     const byDatabase = statsCountMap(corrections.by_database) || {};
     const none = statsDatabasesListingNone(comparison, sources);
     const columns = sources.filter((source) => !none.keys.has(source.key)).map((source) => {
-      const families = Object.fromEntries(STATS_CAUSE_FAMILIES.map((family) => [family.key,
+      const families = Object.fromEntries(DATABASE_CAUSE_FAMILIES.map((family) => [family.key,
         causes.reduce((sum, [cause, map]) => sum + (STATS_CAUSE_FAMILY[cause] === family.key ? statsDatabaseEntry(map, source) || 0 : 0), 0)]));
       const total = statsDatabaseEntry(byDatabase, source);
       return { source, families, total: statsCount(total) ?? Object.values(families).reduce((sum, count) => sum + count, 0) };
@@ -5344,11 +5330,11 @@
     const params = (column, family) => ({ ...(column.source ? { dbsrc: column.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
     const table = `<table class="stats-table stats-db-table stats-db-cause-table">
       <thead><tr><th scope="col">Cause</th>${[...columns, all].map((column) => `<th scope="col" class="stats-num">${statsDatabaseNameHtml(name(column))}</th>`).join("")}</tr></thead>
-      <tbody>${STATS_CAUSE_FAMILIES.map((family) => `<tr data-stat-key="cause_${family.key}"><th scope="row"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>${[...columns, all]
+      <tbody>${DATABASE_CAUSE_FAMILIES.map((family) => `<tr data-stat-key="cause_${family.key}"><th scope="row"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>${[...columns, all]
         .map((column) => `<td class="stats-num" data-count="${column.families[family.key]}">${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</td>`).join("")}</tr>`).join("")}</tbody>
       <tfoot><tr data-stat-key="cause_all"><th scope="row">All causes</th>${[...columns, all]
         .map((column) => `<td class="stats-num" data-count="${column.total}">${link(column.total, params(column, null), `${name(column)}, all causes`)}</td>`).join("")}</tr></tfoot></table>`;
-    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${statsDatabaseNameHtml(name(column))}:</strong> ${STATS_CAUSE_FAMILIES
+    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${statsDatabaseNameHtml(name(column))}:</strong> ${DATABASE_CAUSE_FAMILIES
       .filter((family) => column.families[family.key]).map((family) => `<span class="nowrap">${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</span>`).join(" · ")}</li>`).join("")}</ul>`;
     return {
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
@@ -12461,7 +12447,7 @@
       guideDatabaseFoundBy,
       guideDatabaseNotListed,
       guideDatabaseBrowseHref,
-      GUIDE_DB_CAUSE_FAMILIES,
+      DATABASE_CAUSE_FAMILIES,
       GUIDE_DB_RESULTS,
       toggleReveal,
       recordLink,

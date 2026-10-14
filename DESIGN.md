@@ -117,7 +117,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed. A
   database's name never breaks across lines (captions, table headings, the per-database lines), as in the Guide.
   Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
-  does not by itself mean a database is wrong." Shares only on a base of 1,000 values, else counts. Colours as Browse
+  does not by itself mean a database is wrong." (the Guide's note too). A result's name and definition are Browse's
+  option's (DATABASE_RESULT_NAMES, databaseFilters' title), in Stats and the Guide alike. Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
   - Lead (14px): "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database
@@ -147,7 +148,7 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
     value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
     which matches a value by its own result, would show fewer; the All row's Differs links (one result).
   - How each correction was found: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
-    misprinted; STATS_CAUSE_FAMILIES maps every cause code), split checked against the paper / an exact factor found by
+    misprinted; DATABASE_CAUSE_FAMILIES, the Guide's list too, maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
     add up to its code count; a bar split two ways prints its two counts under its name, each after its colour. Beside
     it Corrections by cause and database (`by_cause_database`), non-zero cells
