@@ -738,10 +738,9 @@ found at once: A, B, G, C, D, E, F, H.
   db=corrects). Then each value a database lists with the same number, in one
   13px line with a green square, values whose lines read the same sharing it
   ("kcat and Km: Same as BRENDA and OED."; the line whole, or "Same as <the
-  value's database_sources>." without one), and a kcat/Km CatLog calculated
-  ("kcat/Km: calculated by CatLog; not compared.", outlined square), once other
-  values are compared. Then one folding note (`<details>`) per value that is not
-  the same; its summary (13px, wraps): the parameter · which databases list
+  value's database_sources>." without one). Then one folding note
+  (`<details>`) per value that is not the same; its summary (13px, wraps): the
+  parameter · which databases list
   what, from database_sources and the result only ("BRENDA and STRENDA DB list
   another number" for a correction or a different number, "SABIO-RK lists this
   number" for the same number under another label, nothing for a value no
@@ -762,7 +761,9 @@ found at once: A, B, G, C, D, E, F, H.
   and In the paper (database_evidence; a local path never). A note with an
   empty body is a plain line. Notes on a correction or a different number are
   open: every one from 641px, only the first on a phone; others closed; nothing
-  is remembered. Display names come from the manifest
+  is remembered. Then a kcat/Km CatLog calculated, once other values are
+  compared: "kcat/Km: calculated by CatLog; not compared." (13px, muted, no
+  square: an empty one read as a box to tick), after the compared values. Display names come from the manifest
   (summary.database_comparison.sources: key, name, display, in order; STRENDA
   reads "STRENDA DB"), else the databases values_by_database counts, else the
   six in the code (with UniProt). Then a 12px footer: "Compared

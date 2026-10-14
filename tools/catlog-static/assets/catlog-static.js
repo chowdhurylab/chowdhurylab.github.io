@@ -11026,21 +11026,24 @@
   }
 
   // The values a database lists with the same number, in lines (values whose lines read the same share one: "kcat and
-  // Km: Same as BRENDA and OED."), and a kcat/Km CatLog calculated, which is not compared.
+  // Km: Same as BRENDA and OED.").
   function databaseSameLinesHtml(rows) {
     const lines = [];
     rows.forEach(({ metric, facts }) => {
-      const calculated = /^calc/i.test(facts.status);
       const names = sentenceList(facts.sources.map(databaseDisplayName));
-      const text = calculated
-        ? "calculated by CatLog; not compared."
-        : (facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : (names ? `Same as ${names}.` : "Same number in a database."));
-      const same = lines.find((line) => line.text === text && line.calculated === calculated);
+      const text = facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : (names ? `Same as ${names}.` : "Same number in a database.");
+      const same = lines.find((line) => line.text === text);
       if (same) same.metrics.push(metric);
-      else lines.push({ text, calculated, metrics: [metric] });
+      else lines.push({ text, metrics: [metric] });
     });
-    return lines.map(({ text, calculated, metrics }) => `<p class="cmp-same-line"><span class="cmp-mark${calculated ? "" : " cmp-same"}" aria-hidden="true"></span>`
+    return lines.map(({ text, metrics }) => `<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"></span>`
       + `<span>${metricWordsHtml(escapeHtml(sentenceList(metrics)))}: ${caretHtml(escapePublic(text))}</span></p>`).join("");
+  }
+
+  // A kcat/Km CatLog calculated: not compared, said last (after the compared values), muted and with no square (an empty
+  // one read as a box to tick).
+  function databaseCalculatedLineHtml(rows) {
+    return rows.length ? `<p class="cmp-calc-line">${metricWordsHtml(escapeHtml(sentenceList(rows.map((row) => row.metric))))}: calculated by CatLog; not compared.</p>` : "";
   }
 
   // One value that is not the same: a folding note. Its summary: the parameter, which databases list what, the result
@@ -11120,8 +11123,9 @@
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
       .map((note) => shownText(note, 600)).filter(Boolean);
     if (!rows.length && !paperNotes.length) return "";
-    const isSame = (row) => /^calc/i.test(row.facts.status) || databaseResult(row.facts.status)?.filter === "same";
-    const noteRows = rows.filter((row) => !isSame(row));
+    const isCalculated = (row) => /^calc/i.test(row.facts.status);
+    const isSame = (row) => !isCalculated(row) && databaseResult(row.facts.status)?.filter === "same";
+    const noteRows = rows.filter((row) => !isCalculated(row) && !isSame(row));
     const wide = Boolean(window.matchMedia?.("(min-width: 641px)")?.matches);
     let opened = 0;
     const notes = noteRows.map((row) => {
@@ -11132,6 +11136,7 @@
     return databasePaperNoteHtml(paperNotes, rows, summary.record_key, paperRef)
       + databaseSameLinesHtml(rows.filter(isSame))
       + (notes.length ? `<div class="cmp-notes">${notes.join("")}</div>` : "")
+      + databaseCalculatedLineHtml(rows.filter(isCalculated))
       + (rows.length ? databaseFooterHtml() : "")
       + databaseMoreLinksHtml(databaseResultKeys(rows), rows, summary.record_key, paperRef);
   }

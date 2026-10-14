@@ -766,6 +766,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 .cmp-same-line > span:last-child { min-width:0 }
 .cmp-notes { border-top:1px solid var(--line-soft) }
 .cmp-same-line + .cmp-notes { margin-top:8px }
+.cmp-calc-line { margin:8px 0 0; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
+.cmp-same-line + .cmp-calc-line { margin-top:0 }
 .cmp-note { margin:0; border-bottom:1px solid var(--line-soft); padding:8px 0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
 .cmp-note > summary { position:relative; display:block; cursor:pointer; padding-left:16px; list-style:none }
 .cmp-note > summary::-webkit-details-marker { display:none }

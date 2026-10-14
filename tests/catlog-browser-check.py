@@ -3612,9 +3612,11 @@ def check_record_panel(driver, browser, url, route_label):
 # orotidine 5'-monophosphate decarboxylase variant (PMID 24958125) whose kcat and Km correct OED's numbers and whose
 # kcat/Km no database lists; a glutamate racemase (PMID 19552402) with the paper's note on BRENDA; an earlier
 # methylglyoxal synthase record (PMID 23261063) whose kcat/Km the earlier version changed from 0.546667 to 0.544; a
-# record (PMID 24358164) whose kcat/Km no compared database lists, next to a Km that differs.
+# record (PMID 24358164) whose kcat/Km no compared database lists, next to a Km that differs; a record (PMID 11876827)
+# whose kcat/Km CatLog calculated, with a kcat that differs and a Km no database lists.
 DATABASE_NOTES_RECORD = "97138dce57908fb0"
 DATABASE_NOT_LISTED_RECORD = "8090b6354d18037c"
+DATABASE_CALCULATED_RECORD = "8db79c81e62be8af"
 DATABASE_PAPER_NOTE_RECORD = "d93a98fb48b46766"
 EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
 DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases")
@@ -3638,6 +3640,9 @@ DATABASE_SECTION_STATE = """
         before: [...section.querySelectorAll('.cmp-before')].map(e => strip(e.textContent)),
         text: strip(section.innerText),
         all: strip(section.textContent).replace(/\\s+/g, ' '),
+        sequence: [...section.querySelectorAll('.cmp-same-line, .cmp-note, .cmp-calc-line, .cmp-footer')]
+            .map(e => e.matches('.cmp-footer') ? 'footer' : e.matches('.cmp-calc-line') ? 'calculated' : e.matches('.cmp-note') ? 'note' : 'same'),
+        calculatedMarks: [...section.querySelectorAll('.cmp-calc-line .cmp-mark')].length,
         sideways: panel.scrollWidth - panel.clientWidth,
     };
 """
@@ -3671,7 +3676,8 @@ def check_record_databases(driver, browser, base, wait):
     first on a phone); one line under the Values table for each of those values, whose button opens its note in view;
     the compared databases and the caption under them; the paper's note in a box with its link into Browse; an earlier
     record's intro, numbers to at most 4 figures (the stored digits in the title) and Before line; the lines (a value no
-    database lists too) name the databases as the footer does, never counted in words. No record scrolls sideways.
+    database lists too) name the databases as the footer does, never counted in words; a calculated kcat/Km comes last,
+    without a square. No record scrolls sideways.
     Skipped where the snapshot does not have the record."""
     results = {}
 
@@ -3736,6 +3742,15 @@ def check_record_databases(driver, browser, base, wait):
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert "Not in the databases" in [note["word"] for note in state["notes"]], state["notes"]
             results["databases-not-listed-names"] = check_database_names(state, DATABASE_NOT_LISTED_RECORD)
+        if label == "desktop" and open_record(DATABASE_CALCULATED_RECORD):
+            # A kcat/Km CatLog calculated is said after the compared values and their notes, just before the footer, with
+            # no square (an empty one read as a box to tick).
+            state = driver.execute_script(DATABASE_SECTION_STATE)
+            sequence = state["sequence"]
+            assert "calculated" in sequence and "note" in sequence, sequence
+            assert sequence[-2:] == ["calculated", "footer"] and sequence.count("calculated") == 1, sequence
+            assert state["calculatedMarks"] == 0, "The calculated kcat/Km line carries a square"
+            results["databases-calculated-last"] = True
         if open_record(DATABASE_PAPER_NOTE_RECORD):
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert state["box"].startswith("Across this paper: "), state["box"]

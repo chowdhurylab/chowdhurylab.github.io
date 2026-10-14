@@ -3941,14 +3941,20 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A local file named as evidence is never shown.
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
   assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>/);
-  // Values whose lines read the same share one line; a kcat/Km CatLog calculated is not compared (its own line, once the
-  // other values have theirs; never alone).
+  // Values whose lines read the same share one line; a kcat/Km CatLog calculated is not compared (its own muted line
+  // with no square, after the compared values and their notes; never alone).
   const calculatedSummary = { ...v2Summary, record_key: "v2-db-calc", kcat_over_km_origin: "calculated" };
   html = render(calculatedSummary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
     line("Km", { database_status: "confirmed", database_line: "Same as BRENDA." })]));
   section = sectionOf(html);
-  assert.match(section, /<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub>: Same as BRENDA\.<\/span><\/p><p class="cmp-same-line"><span class="cmp-mark" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>: calculated by CatLog; not compared\.<\/span><\/p>/);
+  assert.match(section, /<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub>: Same as BRENDA\.<\/span><\/p><p class="cmp-calc-line"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>: calculated by CatLog; not compared\.<\/p><p class="section-note cmp-footer">/);
   assert.doesNotMatch(section, /cmp-note|cmp-pointer/);
+  // With a note, the calculated kcat/Km comes after it (the compared values first), before the footer.
+  html = render(calculatedSummary, v2Detail([line("kcat", { database_status: "differs", database_line: "OED lists 41 s⁻¹.", database_sources: ["OED"] }),
+    line("Km", { database_status: "confirmed", database_line: "Same as BRENDA." })]));
+  section = sectionOf(html);
+  assert.match(section, /<p class="cmp-same-line">[\s\S]*?Same as BRENDA\.<\/span><\/p><div class="cmp-notes"><details class="cmp-note" data-cmp-field="kcat"[\s\S]*?<\/details><\/div><p class="cmp-calc-line"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>: calculated by CatLog; not compared\.<\/p><p class="section-note cmp-footer">/);
+  assert.equal((section.match(/cmp-mark/g) || []).length, 2, "squares only on the same line and the note's result");
   html = render(calculatedSummary, v2Detail([line("kcat"), line("Km")]));
   assert.doesNotMatch(html, /Against the databases|not compared/, "no compared value, no section");
   // A database_check object (one field per fact) and its database value, said when there is no line; a same value
