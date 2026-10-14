@@ -1245,6 +1245,12 @@ a.stats-total-value:focus-visible { outline:0 }
 @media (max-width: 359px) {
   .stats-totals .stats-totals-main { grid-template-columns:1fr; gap:8px 0 }
   .stats-totals-main .stats-total::before { display:none }
+  /* A value heading of several words (Figure 5's From paper) takes one word per line, its column only as wide as its
+     longest word or count (data-sizer-narrow), so the class names beside it stay whole; the headings stand on their
+     last line, right above the counts. */
+  .stats-value-part[data-sizer-narrow]::before { content:attr(data-sizer-narrow) }
+  .stats-chart-head > .stats-chart-value.has-parts { align-items:flex-end }
+  .stats-chart-head .stats-value-part > span { width:min-content; white-space:normal }
 }
 
 @media (max-width: 640px) {

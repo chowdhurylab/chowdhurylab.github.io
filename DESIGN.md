@@ -143,7 +143,11 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   number in its own right-aligned column under a 12px muted heading line (Records, Accepted, From paper: the legend's
   order, the last in the short tag), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
   that heading line. On phones, as in every bar chart, its bars and axis span the row: the class name and its numbers
-  share the first line, under the headings, 8px apart, and a long class name hyphenates.
+  share the first line, under the headings, 8px apart, and a long class name hyphenates. Below 360px From paper takes
+  one word per line (From / paper, the headings standing on their last line) and its column is only as wide as its
+  longest word or count (data-sizer-narrow; the columns are fitted again when the width crosses 360px), so the class
+  names keep their room and stay whole at 320px; only a name wider than the whole label column (Oxidoreductases in
+  DejaVu Sans at 320px, as before round 8) may still break.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
   kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them, drawn on the log axis it shares with Values by enzyme class (the

@@ -10,6 +10,7 @@ const sourceCode = await readFile(
   new URL("../tools/catlog-static/assets/catlog-static.js", import.meta.url),
   "utf8",
 );
+const styleSource = await readFile(new URL("../tools/catlog-static/assets/catlog-static.css", import.meta.url), "utf8");
 const indexHtml = await readFile(
   new URL("../tools/catlog-static/index.html", import.meta.url),
   "utf8",
@@ -2110,8 +2111,12 @@ function row(overrides = {}) {
       metrics: { kcat: { ...overview.metrics.kcat, by_class: kcatClasses } } };
     api.renderStats();
     const more = element("statsCharts").innerHTML;
-    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;From paper"><span>From paper<\/span><\/span><\/span><\/div>/);
-    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;From paper"><span>2<\/span><\/span><\/span>/);
+    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;From paper" data-sizer-narrow="0&#10;From&#10;paper"><span>From paper<\/span><\/span><\/span><\/div>/);
+    // Below 360px From paper takes one word per line (data-sizer-narrow), so its column needs only its longest word or
+    // count and the class names keep their room; one-word headings need no second sizer.
+    assert.doesNotMatch(more, /data-sizer-narrow="0&#10;(?:Records|Accepted)"/);
+    assert.match(styleSource, /@media \(max-width: 359px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.stats-value-part\[data-sizer-narrow\]::before \{ content:attr\(data-sizer-narrow\) \}/);
+    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;From paper" data-sizer-narrow="0&#10;From&#10;paper"><span>2<\/span><\/span><\/span>/);
     assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 read from the paper \(50\.0%\)"/);
     assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
     assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Most common organisms among records read from the paper<\/h3>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);

@@ -96,6 +96,7 @@
   const filtersBesideRecordMedia = window.matchMedia("(min-width: 1600px)");
   // Stats fits some widths to the drawn text; once a font finishes loading it fits them again (one listener per page).
   let statsRefitOnFonts = false;
+  let statsRefitOnNarrow = false;
   // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
@@ -3739,6 +3740,8 @@
   // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
   // `valueHeads` (one per column; Figure 5's Records, Accepted, From paper) names the columns in a heading line above the
   // first row: then every column, the first too, is also as wide as its heading, which stands right-aligned over it.
+  // Below 360px a heading of several words takes one word per line (From / paper): its column then needs only its longest
+  // word or entry (a second sizer, data-sizer-narrow), so the class names beside it keep their room and stay whole.
   function statsValueSizer(texts) {
     const shapes = [...new Set(texts.map((text) => String(text).replace(/[0-9]/g, "0")).filter(Boolean))];
     return shapes.filter((shape) => !shapes.some((other) => other !== shape && other.endsWith(shape))).sort().join("\n");
@@ -3747,9 +3750,14 @@
   function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "", valueHeads = [] }) {
     const columns = Math.max(0, ...rows.map((row) => (Array.isArray(row.parts) ? row.parts.length : 0)));
     const heads = columns && valueHeads.length === columns ? valueHeads.map(String) : [];
-    const sizers = Array.from({ length: columns }, (_column, index) => [statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")), heads[index] || ""]
-      .filter(Boolean).join("\n"));
-    const partHtml = (part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index || heads.length ? ` data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${escapeHtml(part.text)}</span>` : `>${escapeHtml(part.text)}`}</span>`;
+    const sizerOf = (index, narrow) => [statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")),
+      ...(narrow ? String(heads[index] || "").split(" ") : [heads[index] || ""])].filter(Boolean).join("\n");
+    const sizers = Array.from({ length: columns }, (_column, index) => sizerOf(index, false));
+    const narrowSizers = Array.from({ length: columns }, (_column, index) => sizerOf(index, true));
+    const sizerAttr = (name, text) => ` ${name}="${escapeHtml(text).replace(/\n/g, "&#10;")}"`;
+    const partHtml = (part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index || heads.length
+      ? `${sizerAttr("data-sizer", sizers[index])}${narrowSizers[index] !== sizers[index] ? sizerAttr("data-sizer-narrow", narrowSizers[index]) : ""}><span>${escapeHtml(part.text)}</span>`
+      : `>${escapeHtml(part.text)}`}</span>`;
     const valueHtml = (row) => (Array.isArray(row.parts) ? row.parts.map(partHtml).join("") : row.value);
     const headHtml = heads.length
       ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts">${heads.map((text, index) => partHtml({ text }, index)).join("")}</span></div>`
@@ -5236,6 +5244,16 @@
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
         if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); }
+      });
+    }
+    // Across 360px a heading of several words changes between one line and one word per line (data-sizer-narrow): the
+    // value columns are fitted again then (a phone turned on its side).
+    const narrow = window.matchMedia?.("(max-width: 359px)");
+    if (!statsRefitOnNarrow && narrow?.addEventListener) {
+      statsRefitOnNarrow = true;
+      narrow.addEventListener("change", () => {
+        const root = $("statsCharts");
+        if (root?.isConnected) statsFitValueColumns(root);
       });
     }
   }

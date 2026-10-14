@@ -1377,10 +1377,48 @@ for (let node = walker.nextNode(); node; node = walker.nextNode()) {
 return found;
 """
 
+# Figure 5 (enzyme classes) on a phone: each value heading's lines and widths, whether the value headings fit their
+# column, and each class name's lines and full width against its label column.
+FIG5_JS = """
+const sec = document.querySelector('[data-chart="ec-classes"]');
+if (!sec) return null;
+const lines = (range) => { const tops = []; for (const r of range.getClientRects()) if (r.width > 0.5 && r.height > 0.5 && !tops.some((t) => Math.abs(t - r.top) < 2)) tops.push(r.top); return tops.length; };
+const width = (range) => [...range.getClientRects()].reduce((sum, r) => sum + r.width, 0);
+const label = sec.querySelector('.stats-chart-row .stats-chart-label').getBoundingClientRect().width;
+const line = sec.querySelector('.stats-chart-head .stats-chart-value');
+const parts = [...line.children];
+const gap = parseFloat(getComputedStyle(line).columnGap) || 0;
+const heads = parts.map((part) => { const r = document.createRange(); r.selectNodeContents(part.querySelector('span')); return { text: part.textContent, lines: lines(r) }; });
+const names = [...sec.querySelectorAll('.stats-ec-name')].map((el) => {
+  const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim());
+  const word = node.nodeValue.trim(), start = node.nodeValue.indexOf(word), r = document.createRange();
+  r.setStart(node, start); r.setEnd(node, start + word.length);
+  return { name: word, lines: lines(r), width: width(r) };
+});
+return { label, heads, names, column: line.getBoundingClientRect().width,
+         used: parts.reduce((sum, part) => sum + part.getBoundingClientRect().width, 0) + gap * (parts.length - 1) };
+"""
+
+
+def assert_fig5_fits(fig5, width):
+    """Below 360px a value heading of two words (From paper) takes two lines, so its column is no wider than its longest
+    word or count and the class names keep their room; from 360px each heading keeps one line. The headings fit their
+    column, and a class name that fits its label column is never cut inside the word (only one wider than the whole
+    column may break, as Oxidoreductases does at 320px in DejaVu Sans)."""
+    if not fig5:
+        return
+    for head in fig5["heads"]:
+        assert head["lines"] == (2 if width < 360 and " " in head["text"] else 1), (width, fig5["heads"])
+    assert fig5["used"] <= fig5["column"] + 1, f"Figure 5's value headings overflow their column at {width}px: {fig5}"
+    cut = [name for name in fig5["names"] if name["lines"] > 1 and name["width"] <= fig5["label"] - 1]
+    assert not cut, f"Figure 5 cuts class names that fit their {fig5['label']:.0f}px column at {width}px: {cut}"
+
 
 def check_word_breaks(driver, browser, url):
     """Round 8's labels never break inside a word: "re-read" never splits at its hyphen ("re-" at the end of one line,
-    "read" on the next) in Stats' figure titles and captions or in the Guide, at a phone, a small phone and a tablet."""
+    "read" on the next) in Stats' figure titles and captions or in the Guide, at a phone, a small phone and a tablet;
+    Figure 5's class names stay whole beside its value headings (assert_fig5_fits), also when a 320px phone turns to
+    375px (the value columns are fitted again)."""
     if browser != "chrome":
         return "skipped (Chrome only: phone widths by device emulation)"
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
@@ -1396,6 +1434,7 @@ def check_word_breaks(driver, browser, url):
             assert driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsVersionsTitle"), "re-read", False) == [], width
             split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsCharts"), "re-read", False)
             assert split == [], f"re-read splits at its hyphen on Stats at {width}px: {split}"
+            assert_fig5_fits(driver.execute_script(FIG5_JS), width)
             driver.get("about:blank")
             driver.get(url + "#guide-method")
             wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
@@ -1403,9 +1442,18 @@ def check_word_breaks(driver, browser, url):
             split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "guideView"), "re-read", True)
             assert split == [], f"re-read splits at its hyphen in the Guide at {width}px: {split}"
             checked.append(width)
+        # A phone turned from 320 to 375px: From paper goes back to one line and the value columns are fitted again.
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 320, "height": 900, "deviceScaleFactor": 1, "mobile": True})
+        driver.get("about:blank")
+        driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+        wait.until(lambda d: d.find_elements(By.ID, "statsVersionsTitle"))
+        driver.execute_async_script("const done = arguments[arguments.length - 1]; document.fonts.ready.then(() => setTimeout(done, 300))")
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 375, "height": 900, "deviceScaleFactor": 1, "mobile": True})
+        driver.execute_async_script("const done = arguments[arguments.length - 1]; requestAnimationFrame(() => setTimeout(done, 300))")
+        assert_fig5_fits(driver.execute_script(FIG5_JS), 375)
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
-    return {"re_read_whole_at": checked}
+    return {"re_read_whole_at": checked, "fig5_whole_at": checked + ["320 to 375"]}
 
 
 def check_team(driver, browser, url):
