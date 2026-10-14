@@ -2194,7 +2194,8 @@ def check_filters(driver, browser, url, route_label):
                             wide: document.documentElement.scrollWidth <= innerWidth + 1,
                             inside: rows.every(row => row.getBoundingClientRect().right <= innerWidth + 0.5)};
                 """)
-                assert phone["heights"] and all(height >= 44 for height in phone["heights"]) and phone["wide"] and phone["inside"], (width, phone)
+                # 44px to a hundredth: a row below a wrapped label can measure 43.99997 (sub-pixel layout, DejaVu Sans at 320).
+                assert phone["heights"] and all(height >= 43.99 for height in phone["heights"]) and phone["wide"] and phone["inside"], (width, phone)
                 driver.find_element(By.ID, "showResultsButton").click()
                 wait.until(lambda d: not d.execute_script("return document.body.classList.contains('filters-open')"))
             set_browse_viewport(driver, browser, 1440, 1000)
