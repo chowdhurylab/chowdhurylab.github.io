@@ -2542,10 +2542,12 @@ def check_layout(driver, browser, url, route_label):
             assert all(label["shown"] and label["italic"] and label["sub"] and label["unit"].startswith("(") and label["above"]
                        for label in labels), f"At 320px each card value is labelled with italic k and its subscript: {labels}"
             # A caution's short words beside its "!" ("above diffusion limit · kcat/Km mismatch") wrap inside the value's
-            # third of the card, never past it, in the system font at 320px and in a wide font (Verdana) at 375px.
+            # third of the card, never past it, in the system font at 320px and in a wide font (Verdana) at 375px. (Records
+            # not yet re-read: a record read from the paper is also in this group when the paper prints another unit,
+            # which its record says, not the table.)
             for width, wide in ((320, False), (375, True)):
                 set_browse_viewport(driver, browser, width, 800)
-                open_page("#browse?caution=units&rows=100")
+                open_page("#browse?caution=units&source=databases&rows=100")
                 flags = driver.execute_script("""
                     if (arguments[0]) {
                       const style = document.createElement('style');
@@ -2746,8 +2748,11 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
                 if kind.startswith("database"):
                     # A database record compares nothing with the databases: an unsettled one says its values are the
-                    # database's in Review and audit's Paper check row, never under Against the databases.
-                    assert panel["databasesText"] is None, panel["databasesText"]
+                    # database's in Review and audit's Paper check row, never under Against the databases. Only a record
+                    # the earlier review corrected has the section, when the snapshot lists what that review changed.
+                    if panel["databasesText"] is not None:
+                        assert "corrected" in panel["status"] and "Corrected earlier" in panel["databasesText"], \
+                            (panel["status"], panel["databasesText"])
                 if kind == "database-pending":
                     assert panel["status"].startswith("Not confirmed"), panel["status"]
                     assert panel["paperCheck"] == "Not yet checked against the paper: the values are the database's.", panel["paperCheck"]
