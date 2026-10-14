@@ -1382,6 +1382,8 @@ assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|g
 assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says records not yet re-read, never older records");
 assert.doesNotMatch(guideHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b|version 2/i);
 assert.match(guideHtml, /<summary>Evidence labels on records not yet re-read<\/summary>/);
+assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version, an automated pipeline of AI models and code checks\.<\/dd>/);
+assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
   const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
   assert.match(method, /<div><dt>Read from the paper<\/dt><dd>CatLog&rsquo;s current version, its second, reads papers directly\./);
@@ -5498,6 +5500,9 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
   assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
+  // Earlier extractions are CatLog's too, from its earlier version (one CatLog, round 8): never "not by CatLog".
+  assert.match(source, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, an automated pipeline of AI models and code checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
+  assert.doesNotMatch(source, /not by CatLog/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
   // against their papers).

@@ -120,7 +120,7 @@
 
   // Tag definitions, said the same way in the filter, the badges and the Guide.
   const CORRECTED_DEFINITION = "Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them.";
-  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by the earlier automated pipeline of AI models and code checks, not by CatLog.";
+  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by CatLog's earlier version, an automated pipeline of AI models and code checks.";
 
   const stateDescriptions = {
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
