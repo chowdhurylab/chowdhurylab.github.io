@@ -371,7 +371,7 @@ const sourceInputs = ["brenda", "sabio_rk", "oed", "uniprot", "skid", "strenda",
   value, type: "checkbox", name: "source", checked: false,
 }));
 // Against the databases (shown when the snapshot has the comparison).
-const databaseInputs = ["corrects", "differs", "same", "adds", "new", "earlier"].map((value) => ({
+const databaseInputs = ["corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"].map((value) => ({
   value, type: "checkbox", name: "database", checked: false,
 }));
 const detailBackgroundSelector = [
@@ -3817,7 +3817,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(section, /<table|Databases for this paper/, "no table: a list that wraps at any width");
   assert.match(section, /<span class="cmp-mark cmp-same" aria-hidden="true"><\/span><strong>Same number<\/strong><\/span><span class="cmp-line">Same as BRENDA, SABIO-RK\.<\/span><\/dd>/);
   assert.match(section, /<dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">549\.9 <small>mM<\/small><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><span class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/span><small class="cmp-cause">Checked against the paper: an mM value entered as µM<\/small><small class="cmp-where">In the paper: Table 1, row Cellobiose: 549\.9 ± 62\.5<\/small><\/dd>/);
-  assert.match(section, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in any database<\/strong>/);
+  assert.match(section, /<span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong>/);
   assert.match(section, /<p class="section-note">Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\. A different number can mean a different measurement\.<\/p>/);
   assert.doesNotMatch(section, /cmp-explore/, "no link to a Browse filter the page does not have");
   // Right after Values: what CatLog corrected against the databases is found at once.
@@ -3834,9 +3834,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   {
     const previousQuery = document.querySelector;
     const previousRecords = api.state.records;
-    const options = ["corrects", "same", "adds", "new", "earlier"];
+    const options = ["corrects", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"];
     document.querySelector = (selector) => {
-      const match = selector.match(/^#catalogFilters input\[name="database"\]\[value="([a-z]+)"\]$/);
+      const match = selector.match(/^#catalogFilters input\[name="database"\]\[value="([a-z_]+)"\]$/);
       return match && options.includes(match[1]) ? {} : null;
     };
     // The record's row in the index, with its comparison summary (same 1, corrected 2, differs 4, new 8, earlier 32).
@@ -3857,32 +3857,32 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       runtimeManifest.viewer_index.optional_fields = ["database_summary"];
       html = render(v2Summary, correctedAndNew());
       // Each link keeps the record open beside the list, as its paper's link does.
-      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects&amp;record=v2-db">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=adds&amp;record=v2-db">Adds a value<\/a><\/p>/);
+      assert.match(html, /<p class="cmp-explore">More records like this: <a href="#browse\?db=corrects&amp;record=v2-db">Corrects a value<\/a><span aria-hidden="true"> · <\/span><a href="#browse\?db=not_listed&amp;record=v2-db">Not in the databases<\/a><\/p>/);
       // An option the record's own row in the index does not match (the list would not hold the record): no link to it.
       indexRow("v2-db", 1 | 8);
       html = render(v2Summary, correctedAndNew());
-      assert.match(html, /More records like this: <a href="#browse\?db=adds&amp;record=v2-db">Adds a value<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=not_listed&amp;record=v2-db">Not in the databases<\/a><\/p>/);
       api.state.records = [];
       assert.doesNotMatch(render(v2Summary, correctedAndNew()), /cmp-explore/, "no row in the index, no link");
       indexRow("v2-db", 1);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same", database_line: "Same as OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
-      // The same number under another label: said in the reviews' own words, and found with the records whose numbers
-      // are the same.
+      assert.match(html, /More records like this: <a href="#browse\?db=all_same&amp;record=v2-db">All values the same<\/a><\/p>/);
+      // The same number under another label: said in the reviews' own words, and found under its own option (not with
+      // the records whose every value is the same).
       indexRow("v2-db", 1 | 16);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA." }),
         line("Km", { database_status: "same_number_other_label", database_line: "SABIO-RK lists this number for substrate NAD+." })]));
       assert.match(html, /<span class="cmp-mark cmp-neutral" aria-hidden="true"><\/span><strong>Same number, other label<\/strong><\/span><span class="cmp-line">SABIO-RK lists this number for substrate NAD\+\.<\/span>/);
       assert.doesNotMatch(html, />Other label</);
-      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=other_label&amp;record=v2-db">Same, other label<\/a><\/p>/);
       indexRow("v2-db", 16);
       html = render(v2Summary, v2Detail([line("Km", { database_status: "same_number_other_label", database_line: "BRENDA lists this number for another organism." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=same&amp;record=v2-db">Same number<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=other_label&amp;record=v2-db">Same, other label<\/a><\/p>/);
       indexRow("v2-db", 8);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: "Not in BRENDA." }),
         line("Km", { database_status: "new", database_line: "Not in OED." })]));
-      assert.match(html, /More records like this: <a href="#browse\?db=new&amp;record=v2-db">Not in any database<\/a><\/p>/);
+      assert.match(html, /More records like this: <a href="#browse\?db=all_not_listed&amp;record=v2-db">Not in the databases: every value<\/a><\/p>/);
       indexRow("v2-db", 4);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹." })]));
       assert.doesNotMatch(html, /cmp-explore/, "an option Browse does not have gets no link");
@@ -4736,23 +4736,120 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     sourceRow("db-earlier", { source_db: "brenda", verification_status: "corrected", corrections: [{ field: "km" }] }),
     sourceRow("db-plain", { source_db: "brenda" }),
   ];
-  // The same number under another label is found under "same".
-  assert.deepEqual(dbRows.map((item) => api.rowDatabaseBits(item)), [4, 1, 2 | 8, 8 | 16, 4, 32, 0]);
+  // The options' bits: corrects 1, differs 2, other_label 4, not_listed 8, all_not_listed 16, all_same 32, earlier 64. The
+  // same number under another label has its own option and is not All values the same.
+  const bit = Object.fromEntries(api.databaseFilters.map((item) => [item.value, item.bit]));
+  assert.deepEqual(bit, { corrects: 1, differs: 2, other_label: 4, not_listed: 8, all_not_listed: 16, all_same: 32, earlier: 64 });
+  assert.deepEqual(dbRows.map((item) => api.rowDatabaseBits(item)), [32, 1, 2 | 8, 8 | 16, 4, 64, 0]);
   assert.deepEqual(dbRows.map((item) => api.databaseSummaryBits(item)), [1, 3, 12, 8, 16, 32, 0]);
   api.indexLoadedRecords(dbRows);
   counts = await countsFor("db=corrected,new");
   assert.equal(databaseInputs.filter((input) => input.checked).length, 0, "db= is read only when the index carries the comparison");
   runtimeManifest.viewer_index.optional_fields = ["database_summary"];
+  // Earlier addresses keep working: corrected is corrects, new (no database lists any value) is "every value", which
+  // brings Not in the databases with it; the two are one filter, the records no database lists any value of.
   counts = await countsFor("db=corrected,new");
-  assert.deepEqual({ ...counts.database }, { corrects: 1, differs: 1, same: 2, adds: 2, new: 1, earlier: 1 });
-  assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects", "new"], "db= takes the aliases");
-  assert.equal(api.browseHash(), "#browse?db=corrects,new");
+  assert.deepEqual({ ...counts.database }, { corrects: 1, differs: 1, other_label: 1, not_listed: 2, all_not_listed: 1, all_same: 1, earlier: 1 });
+  assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects", "not_listed", "all_not_listed"],
+    "db= takes the aliases, and a nested option its parent");
+  assert.equal(api.browseHash(), "#browse?db=corrects,not_listed,all_not_listed");
   assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), ["db-fixed", "db-new"]);
   assert.deepEqual(JSON.parse(JSON.stringify(api.activeFilterItems().map((item) => [item.key, item.label]))),
-    [["db:corrects", "Corrects a value"], ["db:new", "Not in any database"]]);
-  // One name per result: the sidebar's options say what their chips, a record's result words and its links say.
-  assert.deepEqual([...element("databaseChecklist").innerHTML.matchAll(/<span>([^<]+)<\/span>/g)].map((match) => match[1]),
-    ["Corrects a value", "Different number", "Same number", "Adds a value", "Not in any database", "Corrected earlier"]);
+    [["db:corrects", "Corrects a value"], ["db:all_not_listed", "Not in the databases: every value"]]);
+  // Its chip removes both.
+  api.activeFilterItems().find((item) => item.key === "db:all_not_listed").clear();
+  assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects"]);
+  // adds (a value no database lists) is Not in the databases, same is All values the same, and each option finds its own.
+  for (const [address, ticked, keys] of [
+    ["db=adds", ["not_listed"], ["db-new", "db-open"]],
+    ["db=same", ["all_same"], ["db-same"]],
+    ["db=other_label", ["other_label"], ["db-label"]],
+    ["db=same_number_other_label,differs", ["differs", "other_label"], ["db-label", "db-open"]],
+    ["db=not_listed,all_not_listed", ["not_listed", "all_not_listed"], ["db-new"]],
+    ["db=every_value", ["not_listed", "all_not_listed"], ["db-new"]],
+    ["db=all_same,earlier", ["all_same", "earlier"], ["db-earlier", "db-same"]],
+  ]) {
+    await countsFor(address);
+    assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ticked, address);
+    assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), keys, address);
+  }
+  assert.equal(api.databaseFilterBits(["not_listed", "all_not_listed", "corrects"]), bit.corrects | bit.all_not_listed);
+  assert.equal(api.databaseFilterBits(["not_listed", "differs"]), bit.not_listed | bit.differs);
+  // One name per result: the sidebar's options say what their chips, a record's result words and its links say; each
+  // result has its square in the result's colour (none on Corrected earlier, which sits under a rule), "every value" is
+  // nested under Not in the databases and read with it.
+  {
+    const rows = [...element("databaseChecklist").innerHTML.matchAll(/<label class="check-row([^"]*)" title="([^"]*)">([\s\S]*?)<\/label>/g)];
+    const shown = rows.map((match) => match[3].match(/<span>([\s\S]*?)<\/span>\s*<strong/)[1]);
+    assert.deepEqual(shown.map((html) => html.replace(/<span class="visually-hidden">[^<]*<\/span>/g, "").replace(/<[^>]*>/g, "")),
+      ["Corrects a value", "Different number", "Same, other label", "Not in the databases", "every value", "All values the same", "Corrected earlier"]);
+    assert.deepEqual(shown.map((html) => html.replace(/<[^>]*aria-hidden[^>]*><\/span>/g, "").replace(/<[^>]*>/g, "")).slice(4, 5),
+      ["Not in the databases: every value"]);
+    assert.deepEqual(shown.map((html) => (html.match(/class="db-mark db-mark-([a-z-]+)" aria-hidden="true"/) || [])[1] || ""),
+      ["corrects", "differs", "other-label", "not-listed", "not-listed", "same", ""]);
+    assert.deepEqual(rows.map((match) => match[1].trim()), ["", "", "", "", "nested", "", "after-divider"]);
+    assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
+  }
+  // The "?" names the databases compared, from the manifest (here none listed: the five the comparison began with).
+  assert.match(element("aboutDatabases").innerHTML, /with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper/);
+  assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\): No compared database lists any value of the record\./);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
+  // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
+  // database_summary number) equal the manifest's keys: records_with_kind for the first four, records.every_value_new and
+  // records.every_value_confirmed; Corrected earlier equals the index builder's count of records with earlier changes.
+  {
+    const summaries = { 1: 36121, 2: 128, 3: 1059, 4: 124, 5: 630, 6: 2, 7: 29, 8: 6283, 9: 6364, 10: 46, 11: 163, 12: 50,
+      13: 89, 14: 4, 16: 1824, 17: 609, 18: 5, 19: 2, 20: 10, 21: 13, 24: 822, 25: 172, 26: 5, 28: 4, 32: 2881, null: 116807 };
+    const comparison = {
+      records: { every_value_new: 6283, any_value_new: 14002, every_value_confirmed: 36121, corrects_a_database_value: 1443, differs_not_yet_resolved: 955 },
+      records_with_kind: { same: 45251, corrected: 1443, differs: 955, other_label: 3466, new: 14002 },
+      values: { all: { new_paper_not_in_databases: 1382, confirmed: 97791, not_compared: 5946, differs: 1051, new: 14732,
+        same_number_other_label: 5574, corrected: 1548, new_ratio_only: 4873 } },
+    };
+    assert.equal(Object.values(summaries).reduce((total, count) => total + count, 0), 174246);
+    const optionCounts = Object.fromEntries(api.databaseFilters.map((item) => [item.value, 0]));
+    for (const [summary, count] of Object.entries(summaries)) {
+      const bits = api.rowDatabaseBits({ database_summary: summary === "null" ? null : Number(summary) });
+      api.databaseFilters.forEach((item) => { if (bits & item.bit) optionCounts[item.value] += count; });
+    }
+    assert.deepEqual(optionCounts, {
+      corrects: comparison.records_with_kind.corrected, differs: comparison.records_with_kind.differs,
+      other_label: comparison.records_with_kind.other_label, not_listed: comparison.records_with_kind.new,
+      all_not_listed: comparison.records.every_value_new, all_same: comparison.records.every_value_confirmed, earlier: 2881,
+    });
+    // Each option's title adds the manifest's counts where it has both values and records.
+    const previousSummary = runtimeManifest.summary;
+    runtimeManifest.summary = { ...(previousSummary || {}), database_comparison: comparison };
+    try {
+      const titles = Object.fromEntries(api.databaseFilters.map((item) => [item.value, api.databaseOptionTitle(item)]));
+      assert.ok(titles.corrects.endsWith("how it was found. 1,548 values in 1,443 records."), titles.corrects);
+      assert.ok(titles.differs.endsWith(" 1,051 values in 955 records."), titles.differs);
+      assert.ok(titles.other_label.endsWith(" 5,574 values in 3,466 records."), titles.other_label);
+      assert.ok(titles.not_listed.endsWith(" 20,987 values in 14,002 records."), titles.not_listed);
+      assert.equal(titles.all_not_listed, "No compared database lists any value of the record.");
+      assert.equal(titles.all_same, "Every compared value is the number a database lists for it.");
+      assert.ok(titles.earlier.startsWith("Not yet re-read: ") && titles.earlier.endsWith("before and after."), titles.earlier);
+      runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 1 }, values: { all: { corrected: 1 } } };
+      assert.ok(api.databaseOptionTitle(api.databaseFilters[0]).endsWith(" 1 value in 1 record."));
+      runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 2 }, values: { all: { corrected: "2" } } };
+      assert.equal(api.databaseOptionTitle(api.databaseFilters[0]), api.databaseFilters[0].title, "a count that is not a number is left out");
+      // The databases compared come from the manifest: its sources list (a sixth database joins there), else the
+      // databases values_by_database counts, else the five the comparison began with.
+      runtimeManifest.summary.database_comparison = { values_by_database: { BRENDA: {}, "SABIO-RK": {}, OED: {}, SKiD: {}, STRENDA: {} } };
+      assert.deepEqual(JSON.parse(JSON.stringify(api.comparedDatabases())), [
+        { key: "brenda", name: "BRENDA", display: "BRENDA" }, { key: "sabio_rk", name: "SABIO-RK", display: "SABIO-RK" },
+        { key: "oed", name: "OED", display: "OED" }, { key: "skid", name: "SKiD", display: "SKiD" },
+        { key: "strenda", name: "STRENDA", display: "STRENDA DB" }]);
+      runtimeManifest.summary.database_comparison = { sources: [{ key: "brenda", name: "BRENDA" }, { key: "strenda", name: "STRENDA", display: "STRENDA DB" },
+        { key: "uniprot", name: "UniProt", display: "UniProt" }, null, { name: "" }, "OED"], values_by_database: { SKiD: {} } };
+      assert.deepEqual([...api.comparedDatabases()].map((item) => `${item.key}:${item.display}`), ["brenda:BRENDA", "strenda:STRENDA DB", "uniprot:UniProt", "oed:OED"]);
+      delete runtimeManifest.summary.database_comparison;
+      assert.deepEqual([...api.comparedDatabases()].map((item) => item.display), ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA DB"]);
+    } finally {
+      if (previousSummary === undefined) delete runtimeManifest.summary;
+      else runtimeManifest.summary = previousSummary;
+    }
+  }
   // The index carries the number as an optional column; an index without it gives every row null (the group stays hidden).
   {
     const enumFields = ["enzyme_label_source", "source_db", "verification_status", "evidence_confidence_tier", "sequence_variant_status",

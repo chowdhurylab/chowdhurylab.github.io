@@ -203,36 +203,54 @@
     printed_unit_prefix_differs: 2,
   };
 
-  // Against the databases: how a record's values compare with the numbers BRENDA, SABIO-RK, OED, SKiD and STRENDA DB
+  // Against the databases: how a record's values compare with the numbers the compared databases (comparedDatabases())
   // list for the same paper. The record index carries it as one number per record (database_summary, written by
   // scripts/build-catlog-viewer-index.py when the Table download has the comparison; DATABASE_SUMMARY_BITS); the group
-  // shows only then. Each option is a test of that number (a record matches any option ticked).
+  // shows only then. Each option is a test of that number (rowDatabaseBits).
   const DATABASE_SUMMARY_BITS = { same: 1, corrected: 2, differs: 4, new: 8, otherLabel: 16, earlier: 32 };
   const DATABASE_STATUS_BITS = {
     confirmed: 1, same: 1, same_number: 1, corrected: 2, differs: 4, different: 4, differs_not_resolved: 4, new: 8,
     new_paper_not_in_databases: 8, paper_not_in_databases: 8, not_in_databases: 8, same_number_other_label: 16, other_label: 16,
   };
-  // One short name per result, the same in the sidebar, its chip, a record's result word and its links to records like
-  // it; each fits one line of the sidebar beside a five-digit count, with a wide font too (the group's heading says
-  // "databases"; the longer meaning is each option's title and its "?").
+  // One name per result, the same in the sidebar, its chip, a record's result word and its links to records like it.
+  // The top-level names keep one line of the 256px sidebar beside a five-digit count, with a wide font too (DejaVu Sans);
+  // the nested "every value" may wrap. Each option's definition is its title and stands behind the group's "?".
   const DATABASE_RESULT_NAMES = {
-    corrects: "Corrects a value", differs: "Different number", same: "Same number", adds: "Adds a value",
-    new: "Not in any database", earlier: "Corrected earlier",
+    corrects: "Corrects a value", differs: "Different number", other_label: "Same, other label",
+    not_listed: "Not in the databases", all_not_listed: "every value", all_same: "All values the same",
+    earlier: "Corrected earlier",
   };
+  // A record's words for one value (section G): the number a database lists, and a value no database lists.
+  DATABASE_RESULT_NAMES.same = "Same number";
+  DATABASE_RESULT_NAMES.new = DATABASE_RESULT_NAMES.not_listed;
+  // The options in the sidebar's order: the results of the values read from the paper (any value with that result; All
+  // values the same and "every value" ask it of every compared value), a rule, then Corrected earlier (records not yet
+  // re-read). mark: the colour of the 10px square before the name (the record and Stats use the same colours); records
+  // and values: where the manifest (summary.database_comparison) counts them, for the option's title. "every value"
+  // narrows its parent: ticking it ticks Not in the databases, and the two are one filter (databaseFilterBits).
   const databaseFilters = [
-    { value: "corrects", bit: 1,
-      title: "A database lists a different number for a value; the record says what the paper prints and why they differ" },
-    { value: "differs", bit: 2,
-      title: "A database lists another number for a value; not yet resolved" },
-    { value: "same", bit: 4,
-      title: "Every value is the number a database lists for it" },
-    { value: "adds", bit: 8,
-      title: "At least one value no database lists for this paper" },
-    { value: "new", bit: 16,
-      title: "No database lists any of the values" },
-    { value: "earlier", bit: 32, optional: true,
-      title: "A database record the earlier automated review corrected; the record lists what changed" },
-  ].map((item) => ({ ...item, label: DATABASE_RESULT_NAMES[item.value], chip: DATABASE_RESULT_NAMES[item.value] }));
+    { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
+      title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
+    { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs"],
+      title: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
+    { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
+      title: "A database lists this number for the paper under another substrate, variant or organism." },
+    { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
+      values: ["new", "new_ratio_only", "new_paper_not_in_databases"],
+      title: "No compared database lists this value for this paper. The record says why and what they do list." },
+    { value: "all_not_listed", bit: 16, mark: "not-listed", parent: "not_listed", records: ["records", "every_value_new"],
+      title: "No compared database lists any value of the record." },
+    { value: "all_same", bit: 32, mark: "same", records: ["records", "every_value_confirmed"],
+      title: "Every compared value is the number a database lists for it." },
+    { value: "earlier", bit: 64, optional: true, divided: true,
+      title: "Not yet re-read: CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
+  ].map((item) => {
+    const label = DATABASE_RESULT_NAMES[item.value];
+    // The nested option's chip and spoken name say what it narrows: "Not in the databases: every value".
+    const parent = item.parent ? `${DATABASE_RESULT_NAMES[item.parent]}: ` : "";
+    return { ...item, label, chip: `${parent}${label}`, spoken: parent };
+  });
+  const DATABASE_OPTION_BITS = Object.fromEntries(databaseFilters.map((item) => [item.value, item.bit]));
 
   // Source, the first filter: every record is either read from the paper by CatLog (isV2Row) or comes from the enzyme
   // databases. "By database" narrows the second group by source_db; a merged value such as "sabio_rk;brenda" counts for
@@ -6137,25 +6155,95 @@
     return bits;
   }
 
-  // The "Against the databases" options a record matches, as databaseFilters bits: a value corrected against a database,
-  // a different number not yet resolved, every compared value the same number as a database (a database that lists it
-  // under another label too: the record says which label), a value no database lists, none listed at all, and an
-  // earlier record the earlier review changed. 0 for a record that was not compared.
+  // The "Against the databases" options a record matches, as databaseFilters bits: a value that corrects a database's
+  // number, a different number whose cause is not yet known, the same number under another label, a value no database
+  // lists, no database listing any value, every compared value the number a database lists, and an earlier record its
+  // earlier version changed. The counts are the manifest's (summary.database_comparison: records_with_kind for the
+  // first four, records.every_value_new and records.every_value_confirmed). 0 for a record that was not compared.
   function rowDatabaseBits(row) {
     if (row._databaseBits == null) {
       const { same, corrected, differs, new: added, otherLabel, earlier } = DATABASE_SUMMARY_BITS;
       const summary = databaseSummaryBits(row);
       const compared = summary & (same | corrected | differs | added | otherLabel);
+      const option = DATABASE_OPTION_BITS;
       let bits = 0;
-      if (summary & corrected) bits |= 1;
-      if (summary & differs) bits |= 2;
-      if (compared && !(compared & ~(same | otherLabel))) bits |= 4;
-      if (summary & added) bits |= 8;
-      if (compared && !(compared & ~added)) bits |= 16;
-      if (summary & earlier) bits |= 32;
+      if (summary & corrected) bits |= option.corrects;
+      if (summary & differs) bits |= option.differs;
+      if (summary & otherLabel) bits |= option.other_label;
+      if (summary & added) bits |= option.not_listed;
+      if (compared === added) bits |= option.all_not_listed;
+      if (compared === same) bits |= option.all_same;
+      if (summary & earlier) bits |= option.earlier;
       row._databaseBits = bits;
     }
     return row._databaseBits;
+  }
+
+  // The options ticked as one test (a record matches any of them), where "every value" narrows Not in the databases: the
+  // two ticked together find the records no database lists any value of.
+  function databaseFilterBits(values) {
+    const bits = bitsFor(databaseFilters, values);
+    return bits & DATABASE_OPTION_BITS.all_not_listed ? bits & ~DATABASE_OPTION_BITS.not_listed : bits;
+  }
+
+  // The options an address or a click ticks: a nested option brings its parent (it narrows it), and a parent left
+  // unticked takes its nested option with it.
+  function withDatabaseParents(values) {
+    const ticked = new Set(values);
+    databaseFilters.forEach((item) => {
+      if (item.parent && ticked.has(item.value)) ticked.add(item.parent);
+    });
+    return databaseFilters.map((item) => item.value).filter((value) => ticked.has(value));
+  }
+
+  function syncNestedDatabaseOption(input) {
+    if (input?.name !== "database") return;
+    const option = databaseFilters.find((item) => item.value === input.value);
+    if (option?.parent && input.checked) setCheckboxes("database", withDatabaseParents([...selectedCheckboxes("database"), option.value]));
+    if (!option?.parent && !input.checked) {
+      const children = databaseFilters.filter((item) => item.parent === option?.value).map((item) => item.value);
+      if (children.length) setCheckboxes("database", selectedCheckboxes("database").filter((value) => !children.includes(value)));
+    }
+  }
+
+  // The databases compared, in the manifest's order with their display names ({key, name, display}): the snapshot's
+  // summary.database_comparison.sources when it lists them, else the databases its values_by_database counts, else the
+  // five the comparison began with. A database added to the comparison (UniProt) joins through the manifest.
+  const DATABASE_DISPLAY_NAMES = { strenda: "STRENDA DB" };
+  const DATABASES_COMPARED_FALLBACK = ["BRENDA", "SABIO-RK", "OED", "SKiD", "STRENDA"];
+
+  function databaseKey(name) {
+    return String(name ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  }
+
+  function comparedDatabases() {
+    const comparison = manifest.summary?.database_comparison || {};
+    const entry = (source) => {
+      const item = source && typeof source === "object" ? source : { name: source };
+      const name = String(item.name ?? item.display ?? item.key ?? "").trim();
+      const key = databaseKey(item.key ?? name);
+      if (!name || !key) return null;
+      return { key, name, display: String(item.display ?? "").trim() || DATABASE_DISPLAY_NAMES[databaseKey(name)] || name };
+    };
+    const listed = (Array.isArray(comparison.sources) ? comparison.sources : []).map(entry).filter(Boolean);
+    if (listed.length) return listed;
+    const counted = comparison.values_by_database && typeof comparison.values_by_database === "object"
+      ? Object.keys(comparison.values_by_database).map(entry).filter(Boolean) : [];
+    return counted.length ? counted : DATABASES_COMPARED_FALLBACK.map(entry);
+  }
+
+  // An option's title: its definition and, when the manifest counts them, how many values and records have that result
+  // ("1,548 values in 1,443 records.").
+  function databaseOptionTitle(item) {
+    const comparison = manifest.summary?.database_comparison || {};
+    const count = (value) => (Number.isInteger(value) && value >= 0 ? value : null);
+    const records = item.records ? count(item.records.reduce((object, key) => object?.[key], comparison)) : null;
+    const byStatus = comparison.values?.all && typeof comparison.values.all === "object" ? comparison.values.all : {};
+    const statuses = (item.values || []).filter((key) => byStatus[key] != null);
+    const values = statuses.length && statuses.every((key) => count(byStatus[key]) !== null)
+      ? statuses.reduce((total, key) => total + byStatus[key], 0) : null;
+    if (records === null || values === null) return item.title;
+    return `${item.title} ${formatInteger(values)} ${values === 1 ? "value" : "values"} in ${formatInteger(records)} ${records === 1 ? "record" : "records"}.`;
   }
 
   // Whether this snapshot carries the comparison (the group is shown only then), and which options any record matches
@@ -6419,18 +6507,23 @@
           name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
         })).join("") + `<p class="filter-note" id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records do not state wild type or variant.</span></p>`;
       }
+      // Against the databases: each result's square and name (a nested option's name is read with its parent's), its
+      // definition and counts in its title; Corrected earlier under a rule.
       if ($("databaseChecklist")) {
         $("databaseChecklist").innerHTML = databaseFilters.map((item) => checkRowHtml({
-          name: "database", value: item.value, label: item.label, title: item.title, count: `database:${item.value}`,
+          name: "database", value: item.value, label: item.chip, title: databaseOptionTitle(item), count: `database:${item.value}`,
+          labelHtml: `${item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>` : ""}${item.spoken
+            ? `<span class="visually-hidden">${escapeHtml(item.spoken)}</span>` : ""}${escapeHtml(item.label)}`,
+          className: [item.parent ? "nested" : "", item.divided ? "after-divider" : ""].filter(Boolean).join(" "),
         })).join("");
       }
       if ($("aboutDatabases")) {
+        const names = sentenceList(comparedDatabases().map((item) => item.display));
         $("aboutDatabases").innerHTML = `
-          <p>CatLog compares each value it reads from a paper with the numbers BRENDA, SABIO-RK, the Open Enzyme Database,
-            SKiD and STRENDA DB list for the same paper (same substrate, variant and organism). A different number can be a
-            different measurement.</p>
-          ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.title)}.</p>`).join("")}
-          <p>The record says which database lists what, and why a value differs.</p>`;
+          <p>CatLog compares each value it reads from a paper with the numbers ${escapeHtml(names)} list for the same paper
+            (same substrate, variant and organism). A different number can be a different measurement.</p>
+          ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
+            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}</p>`).join("")}`;
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
@@ -6625,7 +6718,7 @@
       temperature: numberRange(controls.tmin, controls.tmax),
       ph: numberRange(controls.phmin, controls.phmax),
       cautionBits: bitsFor(cautionFilters, controls.cautions),
-      databaseBits: bitsFor(databaseFilters, controls.databases || []),
+      databaseBits: databaseFilterBits(controls.databases || []),
       sourceBits: bitsFor(sourceFilters, controls.sources),
       sort: controls.sort,
     };
@@ -6682,10 +6775,14 @@
     differ: "differs", kcat_over_km_quotient_mismatch: "differs", kcat_over_km_source_mismatch: "differs", unit: "units", magnitude: "units",
     unit_not_recorded: "unit_missing", no_unit: "unit_missing", temp: "temperature", no_caution: "none",
   };
+  // Earlier addresses keep their records: adds (a value no database lists) is not_listed, new (none listed) is
+  // all_not_listed and same is all_same; the record's own status words open their option too.
   const DATABASE_ALIASES = {
     corrected: "corrects", correct: "corrects", corrections: "corrects", differ: "differs", different: "differs",
-    confirmed: "same", adds_a_value: "adds", added: "adds", has_new: "adds", not_in_databases: "new", none: "new",
-    earlier_review: "earlier", changed: "earlier",
+    same_other_label: "other_label", same_number_other_label: "other_label", otherlabel: "other_label",
+    adds: "not_listed", adds_a_value: "not_listed", added: "not_listed", has_new: "not_listed", not_in_the_databases: "not_listed",
+    new: "all_not_listed", none: "all_not_listed", not_in_databases: "all_not_listed", every_value: "all_not_listed",
+    same: "all_same", confirmed: "all_same", earlier_review: "earlier", changed: "earlier",
   };
   const SOURCE_ALIASES = {
     primary_paper_direct: "paper", primary_literature: "paper", v2: "paper", catlog: "paper", database: "databases",
@@ -6802,7 +6899,7 @@
     setText("phMaxInput", params.get("phmax"));
     syncRangeValidity();
     setCheckboxes("caution", listParam(params.get("caution"), CAUTION_ALIASES));
-    setCheckboxes("database", databaseComparisonIndexed() ? listParam(params.get("db"), DATABASE_ALIASES) : []);
+    setCheckboxes("database", databaseComparisonIndexed() ? withDatabaseParents(listParam(params.get("db"), DATABASE_ALIASES)) : []);
     syncDatabaseFilters();
     // source=paper (or the older status=v2) is Read from the paper by CatLog; source=databases, or databases by name, the
     // enzyme databases.
@@ -6938,8 +7035,15 @@
       const labelHtml = item.value === "none" ? "" : `Caution: ${item.labelHtml || escapeHtml(item.label)}`;
       add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
     });
-    databaseFilters.filter((item) => (controls.databases || []).includes(item.value)).forEach((item) => {
-      add(`db:${item.value}`, item.chip, () => uncheck("database", item.value));
+    // "every value" ticked with Not in the databases is one filter: one chip, "Not in the databases: every value", that
+    // removes both.
+    const databases = controls.databases || [];
+    databaseFilters.filter((item) => databases.includes(item.value)).forEach((item) => {
+      if (databaseFilters.some((child) => child.parent === item.value && databases.includes(child.value))) return;
+      add(`db:${item.value}`, item.chip, () => {
+        uncheck("database", item.value);
+        if (item.parent) uncheck("database", item.parent);
+      });
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);
@@ -7929,7 +8033,9 @@
     const next = { ...controls };
     const [group, value] = key.split(":");
     const lists = { metric: "metrics", variant: "variants", caution: "cautions", db: "databases", source: "sources" };
-    if (lists[group]) next[lists[group]] = controls[lists[group]].filter((item) => item !== value);
+    // A nested option's chip stands for its parent too (activeFilterItems).
+    const parent = group === "db" ? databaseFilters.find((item) => item.value === value)?.parent : "";
+    if (lists[group]) next[lists[group]] = controls[lists[group]].filter((item) => item !== value && item !== parent);
     if (group === "source" && !next.sources.length) next.sourceMode = "all";
     else if (group === "status") next.states = recordStates.map((item) => item.value);
     else if (group === "temperature") Object.assign(next, { tmin: "", tmax: "" });
@@ -10371,7 +10477,7 @@
   // (when Browse has that filter).
   const DATABASE_RESULTS = [
     // The same number under another label (substrate, organism, form): the reviews' own term; Browse finds it under its
-    // "same" option, and the line says which label the database gives.
+    // "Same, other label" option, and the line says which label the database gives.
     { test: /other[\s_-]*label/i, word: "Same number, other label", key: "neutral", filter: "other_label" },
     { test: /^(?:confirmed|same)/i, word: DATABASE_RESULT_NAMES.same, key: "same", filter: "same" },
     // "corrected": a database lists another number for the same measurement and code or a check against the paper
@@ -10409,9 +10515,10 @@
   const DATABASE_BROWSE_MATCHES = {
     corrects: (keys) => keys.has("corrected"),
     differs: (keys) => keys.has("differs"),
-    same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same" || key === "other_label"),
-    adds: (keys) => keys.has("new") && ![...keys].every((key) => key === "new"),
-    new: (keys) => keys.size > 0 && [...keys].every((key) => key === "new"),
+    other_label: (keys) => keys.has("other_label"),
+    not_listed: (keys) => keys.has("new") && ![...keys].every((key) => key === "new"),
+    all_not_listed: (keys) => keys.size > 0 && [...keys].every((key) => key === "new"),
+    all_same: (keys) => keys.size > 0 && [...keys].every((key) => key === "same"),
     earlier: (keys) => keys.has("earlier"),
   };
 
@@ -11494,8 +11601,14 @@
     $("measurementChecklist").addEventListener("change", () => {
       applyFiltersInBackground();
     });
-    ["variantChecklist", "cautionChecklist", "databaseChecklist"].forEach((id) => {
+    ["variantChecklist", "cautionChecklist"].forEach((id) => {
       $(id)?.addEventListener("change", () => applyFiltersInBackground());
+    });
+    // "every value" sits under Not in the databases: ticking it ticks Not in the databases too, and unticking that
+    // unticks it.
+    $("databaseChecklist")?.addEventListener("change", (event) => {
+      syncNestedDatabaseOption(event.target);
+      applyFiltersInBackground();
     });
     // A group's "?" shows or hides its explanations, under the group's title; opened near the sidebar's foot, the
     // sidebar scrolls just enough to keep the group's options in view (revealFilterSection).
@@ -11725,6 +11838,10 @@
       rowCautionBits,
       rowDatabaseBits,
       databaseSummaryBits,
+      databaseFilters,
+      databaseFilterBits,
+      databaseOptionTitle,
+      comparedDatabases,
       valueFlagBadgeHtml,
       temperatureFlagBadgeHtml,
       publicLoadMessage,

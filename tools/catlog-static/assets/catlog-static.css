@@ -337,6 +337,23 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .source-databases[open] > summary::after { content:"\2212"; content:"\2212" / "" }
 .source-databases > .check-stack { padding-top:var(--sp-1) }
 
+/* Against the databases: a 10px square in each result's colour before its name (the record and Stats use the same
+   colours; Corrected earlier has none), "every value" nested under Not in the databases, and a rule before Corrected
+   earlier, which is about records not yet re-read. With its square, "Not in the databases" keeps one line beside a
+   five-digit count at 256px in a wide font (DejaVu Sans) because the count comes 4px closer, as Source's do. In the
+   phone sheet the rows are 44px targets. */
+.db-mark { display:inline-block; width:10px; height:10px; margin-right:5px; background:var(--db-mark, var(--bar-neutral)); vertical-align:-1px }
+#databaseChecklist .check-row > strong { margin-left:-4px }
+.db-mark-corrects { --db-mark:var(--chg-magnitude) }
+.db-mark-differs { --db-mark:var(--cmp-differs) }
+.db-mark-other-label { --db-mark:var(--bar-neutral) }
+.db-mark-not-listed { --db-mark:var(--cmp-new) }
+.db-mark-same { --db-mark:var(--cmp-same) }
+.check-row.after-divider { margin-top:var(--sp-1); border-top:1px solid var(--line-soft); padding-top:9px }
+@media (max-width: 640px) {
+  #databaseChecklist .check-row { min-height:44px; padding-block:12px }
+}
+
 /* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
    at the bottom. */
 .filter-footer { display:none }

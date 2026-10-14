@@ -187,17 +187,24 @@ scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
 export puts them: each proof line's database_status, an earlier corrected
 record's corrections list; a Table field of the same name wins), the per-value
-database_status, a record summary or the corrections list; never an empty heading: Corrects a value,
-Different number (not yet resolved), Same number (every compared value), Adds a value (a
-value no database lists for the paper), Not in any database (none listed) and,
-when a record has one, Corrected earlier (by the earlier automated review). Each result has one short
-name (DATABASE_RESULT_NAMES), the same in the option, its chip, a record's result word and
-its links to records like it, and short enough for one line beside a five-digit count
-at 1024 to 1439px with a wide font or a scrollbar ("Corrects a database value" and
-"Changed in earlier review" took two); the group's heading says "databases" and the
-longer meaning is each option's title and the "?". A record matches any option
-ticked; its "?" says what is compared and what each option means; address key
-db=corrects,differs,same,adds,new,earlier), Review result (Accepted, Not
+database_status, a record summary or the corrections list; never an empty heading; round 9 brief section 3): Corrects
+a value, Different number (the cause not yet known), Same, other label, Not in the databases (a value no
+compared database lists) with "every value" nested under it (no database lists any value of the record), All
+values the same (every compared value), then under a --line-soft rule Corrected earlier (records not yet re-read
+whose earlier version changed values; shown only when a record has it). A 10px square in the result's colour
+(--chg-magnitude, --cmp-differs, --bar-neutral, --cmp-new, --cmp-same; aria-hidden) stands before each name but
+Corrected earlier's. The counts at rest equal the manifest's summary.database_comparison: records_with_kind
+(corrected, differs, other_label, new), records.every_value_new and records.every_value_confirmed; each option's
+title is its definition, plus "N values in M records." where the manifest counts both. Each result has one name
+(DATABASE_RESULT_NAMES), the same in the option, its chip, a record's result word and its links to records like
+it; the top-level names keep one line beside a five-digit count in the 256px sidebar with a wide font (DejaVu
+Sans), "every value" may wrap. A record matches any option ticked, except that "every value" narrows Not in the
+databases: ticking it ticks that too, unticking that unticks it, and the pair is one chip, "Not in the
+databases: every value", that removes both. The "?" names the databases compared from the manifest (its
+sources list, else the databases values_by_database counts, else the five the comparison began with) and gives
+each option's definition. In the phone sheet the group's rows are 44px. Address key
+db=corrects,differs,other_label,not_listed,all_not_listed,all_same,earlier; earlier addresses keep their records:
+adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
@@ -744,11 +751,11 @@ found at once: A, B, G, C, D, E, F, H.
   it. When Browse has the "Against the databases" filter group (options named
   database; address #browse?db=...), a last line links each option the record
   matches to the records like it, by the option's name: "More records like this:
-  Corrects a value · Adds a value" (corrects: a value corrected; differs:
-  a different number not yet resolved; same: every compared value the same
-  number, also one listed under another label;
-  adds: a value no database lists; new: no value in any database, said instead
-  of adds; earlier: an earlier corrected record), each keeping the record open
+  Corrects a value · Not in the databases" (corrects: a value corrected;
+  differs: a different number whose cause is not yet known; other_label: the
+  same number under another label; all_same: every compared value the same
+  number; not_listed: a value no database lists; all_not_listed: no value in any
+  database, said instead of not_listed; earlier: an earlier corrected record), each keeping the record open
   beside the list as its paper's link does (#browse?db=corrects&record=<key>;
   up to 1023px it shows the list instead, as that link does); an option the page does not
   have gets no link, and neither does one Browse cannot filter by: the record
