@@ -4786,28 +4786,30 @@
   function guideDatabasesHtml(data, overview) {
     if (!data) return "";
     const sources = guideDatabaseSources(data);
-    const names = sentenceList(sources.map((item) => item.name));
+    // A database's name never breaks across lines (SABIO-RK, STRENDA DB).
+    const nameHtml = (name) => `<span class="nowrap">${escapeHtml(name)}</span>`;
+    const names = sentenceList(sources.map((item) => nameHtml(item.name)));
+    const words = (text) => metricWordsHtml(escapeHtml(text));
     const all = data.values?.all || {};
     const compared = guideDatabaseSum(all, ["not_compared"]);
     const papers = statsCount(data.papers);
     const paired = ["confirmed", "corrected", "differs"].map((key) => statsCount(all[key]));
     const pairedTotal = paired.includes(null) ? null : paired[0] + paired[1] + paired[2];
-    const lead = [
-      `CatLog compares the values it reads from a paper with the values ${names} list for the same paper.`,
-      compared && papers ? `This snapshot compares ${guideCountWords(compared, "value", "values")} from ${guideCountWords(papers, "paper", "papers")}.` : "",
-      pairedTotal >= 1000 ? `Where a database lists a number for the same measurement (${formatInteger(pairedTotal)} values), it is the paper's number for ${qualityShare(paired[0], pairedTotal)}.` : "",
+    const leadHtml = [
+      `${words("CatLog compares the values it reads from a paper with the values")} ${names} ${words("list for the same paper.")}`,
+      compared && papers ? words(`This snapshot compares ${guideCountWords(compared, "value", "values")} from ${guideCountWords(papers, "paper", "papers")}.`) : "",
+      pairedTotal >= 1000 ? words(`Where a database lists a number for the same measurement (${formatInteger(pairedTotal)} values), it is the paper's number for ${qualityShare(paired[0], pairedTotal)}.`) : "",
     ].filter(Boolean).join(" ");
     const calculated = statsCount(all.not_compared);
-    const words = (text) => metricWordsHtml(escapeHtml(text));
     const whatHtml = `${words("Each kcat, Km and kcat/Km CatLog reads from a paper, in the catalog's units, against the numbers each database lists for that paper: for the same substrate, variant and organism, with pH and temperature used to pair the values. Not compared: a kcat/Km CatLog calculated (")}<em>calc.</em>${
       calculated ? escapeHtml(`; ${formatInteger(calculated)} in this snapshot`) : ""}${words(") and a value printed over a mass concentration (mg/mL). Records not yet re-read are not compared; those corrected earlier list what changed (")}<em>Corrected earlier</em>).`;
     const versions = sources.some((item) => item.version || item.retrieved || item.rows !== null && item.rows !== undefined);
     const databasesHtml = versions
-      ? `<ul class="guide-db-sources">${sources.map((item) => `<li>${escapeHtml([
-        `${item.name}${item.version ? ` ${item.version}` : ""}`,
-        item.retrieved ? `retrieved ${/^\d{4}-\d{2}-\d{2}/.test(item.retrieved) ? formatDate(item.retrieved.slice(0, 10)) : item.retrieved}` : "",
-      ].filter(Boolean).join(", "))}${item.rows !== null && item.rows !== undefined ? ` <span class="guide-db-count-inline">(${escapeHtml(guideCountWords(item.rows, "value", "values"))})</span>` : ""}</li>`).join("")}</ul>`
-      : `${escapeHtml(names)}.`;
+      ? `<ul class="guide-db-sources">${sources.map((item) => `<li>${nameHtml(item.name)}${escapeHtml([
+        item.version ? ` ${item.version}` : "",
+        item.retrieved ? `, retrieved ${/^\d{4}-\d{2}-\d{2}/.test(item.retrieved) ? formatDate(item.retrieved.slice(0, 10)) : item.retrieved}` : "",
+      ].join(""))}${item.rows !== null && item.rows !== undefined ? ` <span class="guide-db-count-inline">(${escapeHtml(guideCountWords(item.rows, "value", "values"))})</span>` : ""}</li>`).join("")}</ul>`
+      : `${names}.`;
     const counts = guideDatabaseCounts(data, overview);
     const results = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
       const count = guideDatabaseCountHtml(item.key, counts[item.key]);
@@ -4832,7 +4834,7 @@
       return escapeHtml(`${guideCountWords(total, "value", "values")}${papersText}`);
     };
     const stats = viewUrl("stats").href;
-    return keepReRead(`<p>${words(lead)}</p>
+    return keepReRead(`<p>${leadHtml}</p>
       <dl class="guide-term-list guide-db-list">
         <div><dt>What is compared</dt><dd>${whatHtml}</dd></div>
         <div><dt>Databases</dt><dd>${databasesHtml}</dd></div>

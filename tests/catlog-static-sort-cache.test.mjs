@@ -4244,7 +4244,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.ok(text.startsWith("CatLog compares the values it reads from a paper with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper. This snapshot compares 126,951 values from 2,650 papers. Where a database lists a number for the same measurement (100,390 values), it is the paper’s number for 97.4%."), text);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog reads from a paper/);
   assert.match(text, /Not compared: a kcat\/Km CatLog calculated \(calc\.; 5,946 in this snapshot\) and a value printed over a mass concentration \(mg\/mL\)\./);
-  assert.match(html, /<dt>Databases<\/dt><dd>BRENDA, SABIO-RK, OED, SKiD and STRENDA DB\.<\/dd>/);
+  assert.match(html, /<dt>Databases<\/dt><dd><span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span> and <span class="nowrap">STRENDA DB<\/span>\.<\/dd>/);
   // The six results in Browse's order, each with the square of its colour (none on Corrected earlier) and its counts.
   const results = items(html, "Results");
   assert.deepEqual(Object.keys(results), ["Corrects a value", "Different number", "Same, other label", "Not in the databases",
