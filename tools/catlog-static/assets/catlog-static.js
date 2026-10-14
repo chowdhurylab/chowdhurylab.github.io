@@ -3554,6 +3554,22 @@
     return browseHash(params);
   }
 
+  // A count in the band links to its records only when there are some: otherwise it is plain text, without the link's
+  // title (which would offer records the results do not have).
+  const COUNT_LINK_TITLES = {
+    fromPaperLink: "Show the records read from the paper by CatLog",
+    humanCheckedLink: "Show the accepted records a human reviewer approved",
+  };
+  function setCountLink(link, href) {
+    if (href) {
+      link.setAttribute("href", href);
+      link.setAttribute("title", COUNT_LINK_TITLES[link.id] || "");
+    } else {
+      link.removeAttribute("href");
+      link.removeAttribute("title");
+    }
+  }
+
   function renderFromPaperCount(rows) {
     const link = $("fromPaperLink");
     if (!link) return;
@@ -3566,8 +3582,7 @@
       return;
     }
     link.hidden = false;
-    if (count) link.setAttribute("href", fromPaperHref());
-    else link.removeAttribute("href");
+    setCountLink(link, count ? fromPaperHref() : "");
     if ($("fromPaperCount")) $("fromPaperCount").textContent = formatCount(count);
   }
 
@@ -3596,8 +3611,7 @@
       count = null;
     }
     link.hidden = false;
-    if (count) link.setAttribute("href", humanCheckedHref());
-    else link.removeAttribute("href");
+    setCountLink(link, count ? humanCheckedHref() : "");
     if ($("humanCheckedCount")) $("humanCheckedCount").textContent = formatCount(count);
   }
 

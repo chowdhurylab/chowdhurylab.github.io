@@ -1793,6 +1793,11 @@ def check_filters(driver, browser, url, route_label):
         assert len(second_tags()) == len(first_tags()) and all("SKiD" in tag for tag in second_tags()), second_tags()
         names = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(e => e.getAttribute('aria-label'))")
         assert all(", Not yet re-read, " in name and "not re-read" not in name for name in names), names
+        # None of these is read from the paper: the counts band's Read from the paper 0 is plain text, not a link.
+        zero = driver.execute_script("""const link = document.getElementById('fromPaperLink');
+            return [document.getElementById('fromPaperCount').textContent, link.getAttribute('href'), link.getAttribute('title'),
+                    link.matches(':any-link')];""")
+        assert zero == ["0", None, None, False], zero
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
