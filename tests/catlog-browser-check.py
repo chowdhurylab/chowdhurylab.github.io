@@ -2031,6 +2031,12 @@ def check_filters(driver, browser, url, route_label):
         about.click()
         about_text = driver.execute_script("return document.getElementById('aboutDatabases').innerText.trim()")
         assert "with the numbers BRENDA" in about_text and "Every value (under Not in the databases)" in about_text, about_text
+        # Each database's name keeps one line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space).
+        compared = re.match(r"CatLog compares each value it reads from a paper with the numbers (.+?) lists? for the same paper", about_text)
+        assert compared, about_text
+        names = "|".join(re.escape(name) for name in re.split(r", | and ", compared.group(1)))
+        split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "aboutDatabases"), names, False)
+        assert split == [], f"A database's name breaks across lines in Browse's \"?\": {split}"
         for word in ("v1", "v2", "independent", "claim", "agentic", "blind", "five"):
             assert not re.search(rf"\b{word}\b", about_text, re.I), (word, about_text)
         about.click()
@@ -3651,6 +3657,14 @@ DATABASE_SECTION_STATE = """
 PRE_C9_LINES = os.environ.get("CATLOG_CHECK_PRE_C9_LINES") == "1"
 
 
+def footer_database_names(footer):
+    """The compared databases a record's footer names ("Compared with the values BRENDA, ... and STRENDA DB list for the
+    same paper."), as it names them."""
+    match = re.match(r"Compared with the values (.+?) lists? for the same paper\.", footer)
+    assert match, footer
+    return re.split(r", | and ", match.group(1))
+
+
 def database_names_problems(state):
     """How section G names the databases, against its footer (the snapshot's list of compared databases, by their display
     names), over the whole section with its closed notes: no count of them in words ("None of the five databases": the
@@ -3661,9 +3675,7 @@ def database_names_problems(state):
     counted = re.search(r"\b(?:two|three|four|five|six|seven|eight|nine|ten)\s+(?:compared\s+|core\s+)?databases\b", text, re.I)
     if counted:
         problems.append(f"counts the databases: {counted.group(0)!r}")
-    match = re.match(r"Compared with the values (.+?) lists? for the same paper\.", state["footer"])
-    assert match, state["footer"]
-    for name in re.split(r", | and ", match.group(1)):
+    for name in footer_database_names(state["footer"]):
         first, _, rest = name.partition(" ")
         if rest and re.search(rf"\b{re.escape(first)}\b(?! {re.escape(rest)})", text):
             problems.append(f"names {first} without {rest!r} (the footer: {name})")
@@ -3719,6 +3731,11 @@ def check_record_databases(driver, browser, base, wait):
             assert state["footer"].startswith("Compared with the values ") and state["footer"].endswith(DATABASE_CAPTION_END), state["footer"]
             assert not re.search(r"\bfive\b|Not in any database|Same number, other label|Adds a value", state["text"]), state["text"]
             assert state["sideways"] <= 1, f"Against the databases scrolls sideways at {width}px: {state['sideways']}"
+            # Each database's name keeps one line in the footer (SABIO-RK never breaks at its hyphen, STRENDA DB at its
+            # space).
+            names = "|".join(re.escape(name) for name in footer_database_names(state["footer"]))
+            split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.CSS_SELECTOR, "#detailContent .cmp-footer"), names, False)
+            assert split == [], f"A database's name breaks across lines in the record's footer at {width}px: {split}"
             if label == "desktop":
                 check_database_names(state, DATABASE_NOTES_RECORD)
             # A pointer's button opens its note (a closed one where there is one) in view, its summary focused.

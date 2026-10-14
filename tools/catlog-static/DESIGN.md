@@ -203,8 +203,8 @@ the name, the count comes 6px closer (the counts stay in line with the other gro
 tighter between words and 0.01em between letters; "every value" may wrap. A record matches any option ticked, except that "every value" narrows Not in the
 databases: ticking it ticks that too, unticking that unticks it, and the pair is one chip, "Not in the
 databases: every value", that removes both. The "?" names the databases compared from the manifest (its
-sources list, else the databases values_by_database counts, else BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt) and gives
-each option's definition. In the phone sheet the group's rows are 44px. Address key
+sources list, else the databases values_by_database counts, else BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt; each
+name kept whole on one line) and gives each option's definition. In the phone sheet the group's rows are 44px. Address key
 db=corrects,differs,other_label,not_listed,all_not_listed,all_same,earlier; earlier addresses keep their records:
 adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each tick in its status colour; "Only
@@ -770,8 +770,9 @@ found at once: A, B, G, C, D, E, F, H.
   six in the code (with UniProt). Then a 12px footer: "Compared
   with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same
   paper. A different number can mean a different measurement; it does not by
-  itself mean a database is wrong." (names from the manifest; never a counted
-  "five"), and "More like this:" links, each keeping the record open beside the
+  itself mean a database is wrong." (names from the manifest, each kept whole on
+  one line: SABIO-RK never breaks at its hyphen nor STRENDA DB at its space;
+  never a counted "five"), and "More like this:" links, each keeping the record open beside the
   list as its paper's link does (#browse?db=corrects&record=<key>; up to
   1023px it shows the list instead): each Browse option the record matches
   (corrects, differs, other_label, not_listed or, when every value is not

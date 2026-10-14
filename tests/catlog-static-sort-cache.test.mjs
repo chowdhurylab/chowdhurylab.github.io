@@ -3871,9 +3871,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // paper prints it, in a definition list. On a phone only the first note on a correction or a different number is open.
   assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span>BRENDA and STRENDA DB list another number <\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><dl class="detail-kv cmp-facts"><div class="kv-line"><dt>Cause<\/dt><dd>an mM value entered as µM<\/dd><\/div><div class="kv-line"><dt>In the paper<\/dt><dd>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/dd><\/div><\/dl><\/div><\/details>/);
   assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this kcat\/Km for this paper\.<\/p><\/div><\/details>/);
-  // The compared databases (the six fallback names: this snapshot neither lists nor counts them) and the caption's second
-  // sentence.
-  assert.match(section, /<p class="section-note cmp-footer">Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
+  // The compared databases (the six fallback names: this snapshot neither lists nor counts them), each kept whole on one
+  // line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space), and the caption's second sentence.
+  assert.match(section, /<p class="section-note cmp-footer">Compared with the values <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for the same paper\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
   // More like this: the paper's records (always searchable); no result link while Browse cannot filter by it.
   assert.match(section, /<p class="cmp-explore">More like this: <a href="#browse\?q=pmid:31072150&amp;record=v2-db">All records of this paper<\/a><\/p>/);
   assert.doesNotMatch(section, /db=|<table|cmp-list|Not in any database|Same number, other label/);
@@ -3978,6 +3978,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // display names; a value's database_sources name them as the manifest's names do.
   {
     const previousSummary = runtimeManifest.summary;
+    const names = (text) => text.replace(/<span class="nowrap">([^<]*)<\/span>/g, "$1");
     runtimeManifest.summary = { ...(previousSummary || {}), database_comparison: { sources: [
       { key: "brenda", name: "BRENDA", display: "BRENDA" }, { key: "sabio_rk", name: "SABIO-RK", display: "SABIO-RK" },
       { key: "oed", name: "OED", display: "OED" }, { key: "skid", name: "SKiD", display: "SKiD" },
@@ -3985,15 +3986,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     ] } };
     try {
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "corrected", database_line: "UniProt lists 3 s⁻¹.", database_sources: ["UniProt", "STRENDA"] })]));
-      assert.match(html, /Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
+      assert.match(names(html), /Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
       assert.match(html, /UniProt and STRENDA DB list another number <\/span>/);
       runtimeManifest.summary.database_comparison.sources = [{ key: "brenda", name: "BRENDA", display: "BRENDA" }];
-      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA lists for the same paper\./);
+      assert.match(names(render(v2Summary, comparedDetail())), /Compared with the values BRENDA lists for the same paper\./);
       runtimeManifest.summary.database_comparison.sources = [{}, null, { key: "" }];
-      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list/, "an unusable list: the fallback");
+      assert.match(names(render(v2Summary, comparedDetail())), /Compared with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list/, "an unusable list: the fallback");
       // Without a list, the databases the snapshot counts the values' database_sources for (values_by_database), in order.
       runtimeManifest.summary.database_comparison = { values_by_database: { STRENDA: {}, OED: {}, BRENDA: {}, SKiD: {}, "SABIO-RK": {} } };
-      assert.match(render(v2Summary, comparedDetail()), /Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\./);
+      assert.match(names(render(v2Summary, comparedDetail())), /Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper\./);
     } finally {
       runtimeManifest.summary = previousSummary;
     }
@@ -5141,7 +5142,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
   }
   // The "?" names the databases compared, from the manifest (here none listed or counted: the six fallback names).
-  assert.match(element("aboutDatabases").innerHTML, /with the numbers BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper/);
+  assert.match(element("aboutDatabases").innerHTML, /with the numbers <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for the same paper/, "each name kept whole on one line");
   assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\): No compared database lists any value of the record\./);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each

@@ -6777,9 +6777,9 @@
         })).join("");
       }
       if ($("aboutDatabases")) {
-        const names = sentenceList(comparedDatabases().map((item) => item.display));
+        const names = databaseNamesHtml(comparedDatabases().map((item) => item.display));
         $("aboutDatabases").innerHTML = `
-          <p>CatLog compares each value it reads from a paper with the numbers ${escapeHtml(names)} list for the same paper
+          <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper
             (same substrate, variant and organism). A different number can be a different measurement.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
             item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}</p>`).join("")}`;
@@ -10837,6 +10837,12 @@
     return comparedDatabase(name)?.display || shownText(name, 60);
   }
 
+  // Database names as a list in a sentence ("BRENDA, SABIO-RK and STRENDA DB"), each kept whole on one line: SABIO-RK
+  // never breaks at its hyphen nor STRENDA DB at its space (the Guide's names do the same).
+  function databaseNamesHtml(names) {
+    return sentenceList(names.map((name) => `<span class="nowrap">${escapePublic(name)}</span>`));
+  }
+
   // A factor between two numbers, x = the database's ÷ CatLog's (or an earlier correction's before ÷ after): an exact power
   // of ten as "10×", "100×", "1,000×", "10⁴×"; 60 or 3,600 (a per-minute or per-hour number) as "60×" or "3,600×"; any
   // other at two figures ("4.5×", "960×"); then "higher" when x > 1, else "lower". "" when the two are the same at two
@@ -11111,7 +11117,7 @@
   // paper."), from the manifest, and the caption's second sentence.
   function databaseFooterHtml() {
     const sources = comparedDatabases();
-    return `<p class="section-note cmp-footer">Compared with the values ${escapePublic(sentenceList(sources.map((item) => item.display)))} `
+    return `<p class="section-note cmp-footer">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
       + `${sources.length > 1 ? "list" : "lists"} for the same paper. ${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>`;
   }
 
