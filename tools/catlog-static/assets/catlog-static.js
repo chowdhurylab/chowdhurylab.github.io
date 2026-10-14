@@ -4940,11 +4940,13 @@
       title: "The database lists another number for this value; CatLog's value is the one the paper prints." },
     { part: "differs", label: "Different number", kinds: ["differs", "other_number", "another_measurement"],
       title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
-    { part: "not-listed", label: "Other values listed", kinds: ["other_values_only"],
+    // One database's own words (it lists ...), never the Why not listed labels (the Guide, Browse), which say what all
+    // the databases list and count other values.
+    { part: "not-listed", label: "Lists other values only", kinds: ["other_values_only"],
       title: "The database lists other numbers of this parameter for the paper, not this one." },
-    { part: "not-listed-2", label: "Parameter not listed", kinds: ["parameter_absent"],
+    { part: "not-listed-2", label: "Lists none of this parameter", kinds: ["parameter_absent"],
       title: "The database lists the paper, but no value of this parameter from it." },
-    { part: "not-listed-3", label: "Value not listed", kinds: ["value_absent"],
+    { part: "not-listed-3", label: "Value in no database", kinds: ["value_absent"],
       title: "The database lists the paper, but not this value; no compared database lists it." },
   ];
   // Parameters as the comparison names them (values: kcat, Km, kcat/Km), with Browse's dbpar key.

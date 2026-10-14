@@ -2150,6 +2150,9 @@ function row(overrides = {}) {
   assert.doesNotMatch(bySource, /data-href/, "No database filter in Browse yet: no segment links");
   assert.match(bySource, /Shares are given only for a database with 1,000 values or more\./);
   for (const part of ["not-listed", "not-listed-2", "not-listed-3"]) assert.match(bySource, new RegExp(`stats-swatch stats-part-${part}"`));
+  // A database's own not-listed kinds in its own words, apart from the Why not listed labels (all the databases).
+  assert.match(bySource, /BRENDA: [^<]*Lists other values only 5,433 \(5\.4%\), Lists none of this parameter 6,268 \(6\.2%\), Value in no database 18,746 \(18\.5%\);/);
+  assert.doesNotMatch(bySource, /Other values listed|Parameter not listed|Value not listed/);
   // Beside it, the values each database pairs: same with its share, corrects and differs linking into Browse.
   const paired = figureHtml("db-paired");
   assert.match(paired, /<tr data-stat-key="db_brenda"><th scope="row">BRENDA<small class="stats-db-paired-note">66,170 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="66170">66,170<\/td>\s*<td class="stats-num" data-count="63927">63,927<small>96\.6%<\/small><\/td><td class="stats-num" data-count="1156">1,156<small>1\.7%<\/small><\/td><td class="stats-num" data-count="1087">1,087<small>/);

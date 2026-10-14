@@ -135,7 +135,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
   - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
-    values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Beside it,
+    values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Its own
+    not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
+    database), never the Why not listed labels, which say what all the databases list. Beside it,
     the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per
     database and "All, each value once" (`values.all`); below 400px the paired count goes under the name. Per
     database only Corrects links (bar, legend, table): a database's Different number also counts its other number for a
