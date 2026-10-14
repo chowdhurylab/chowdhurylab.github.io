@@ -5053,14 +5053,21 @@
     const papers = statsCount(comparison.papers);
     const by = statsCountMap(comparison.corrections?.by);
     const checked = by && statsCount(by.paper_check, corrects) !== null && corrects ? by.paper_check : null;
-    const link = (html, db) => `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db }))}">${html}</a>`;
     const plural = (count, one, many) => (count === 1 ? one : many);
+    // Browse lists records, the lead counts values: each link's title says how many records it opens, where the
+    // comparison counts them (the record count of Browse's option, databaseFilters' records key).
+    const link = (html, db, count) => {
+      const path = databaseFilters.find((item) => item.value === db)?.records;
+      const records = path ? statsCount(path.reduce((object, key) => object?.[key], comparison)) : null;
+      const title = records === null ? "" : ` title="${escapeHtml(`${formatInteger(count)} ${plural(count, "value", "values")} in ${formatInteger(records)} ${plural(records, "record", "records")}`)}"`;
+      return `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db }))}"${title}>${html}</a>`;
+    };
     const clauses = [
       `${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists`,
-      otherLabel ? link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} a number a database lists under another label`, "other_label") : "",
-      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects")}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
-      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs") : "",
-      notListed ? link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed") : "",
+      otherLabel ? link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} a number a database lists under another label`, "other_label", otherLabel) : "",
+      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
+      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs", differs) : "",
+      notListed ? link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed", notListed) : "",
     ].filter(Boolean);
     const from = papers ? `${formatInteger(papers)} ${plural(papers, "paper", "papers")}` : "the paper";
     const paired = same + corrects + differs;

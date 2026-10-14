@@ -2095,10 +2095,11 @@ function row(overrides = {}) {
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
   assert.equal(plain(dbLead), "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database lists, 5,574 are a number a database lists under another label, 1,548 correct a database's number (656 checked against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%.");
   // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.
-  assert.match(dbLead, /href="[^"]*#browse\?db=other_label">5,574 are a number a database lists under another label/);
-  assert.match(dbLead, /href="[^"]*#browse\?db=corrects">1,548 correct a database/);
-  assert.match(dbLead, /href="[^"]*#browse\?db=differs">1,051 differ/);
-  assert.match(dbLead, /href="[^"]*#browse\?db=not_listed">20,987 are in none/);
+  // Browse lists records: each link's title says how many it opens.
+  assert.match(dbLead, /href="[^"]*#browse\?db=other_label" title="5,574 values in 3,466 records">5,574 are a number a database lists under another label/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=corrects" title="1,548 values in 1,443 records">1,548 correct a database/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=differs" title="1,051 values in 955 records">1,051 differ/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=not_listed" title="20,987 values in 14,002 records">20,987 are in none/);
   // The lead stands right under the part's heading, before its figures.
   assert.match(figures, /<span>Against the databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
   // Each value against the databases: a 100% bar per parameter and for all, the thin counts right of each bar.
@@ -2280,6 +2281,11 @@ function row(overrides = {}) {
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
     "Of 8 values read from 1 paper and compared, 4 are the number a database lists, 1 corrects a database's number, 1 differs without a known cause and 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), it is the paper's number for 4 of them.");
+  assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
+  runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
+  api.renderStats();
+  assert.match(databaseSection(), /#browse\?db=corrects" title="1 value in 1 record">1 corrects/);
+  assert.match(databaseSection(), /#browse\?db=differs">1 differs/, "A damaged record count gives no title");
   assert.match(figureHtml("db-values"), /<dt>All values<\/dt><dd><span><i class="stats-swatch stats-part-same" aria-hidden="true"><\/i>4<\/span>/);
   assert.doesNotMatch(figureHtml("db-values"), /\(\d+\.\d%\)/);
   // Without overview.earlier_corrections, quality's count (another snapshot's) is used, with its own caption.
