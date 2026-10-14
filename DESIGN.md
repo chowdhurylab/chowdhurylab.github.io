@@ -146,7 +146,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   - How each correction was found: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; STATS_CAUSE_FAMILIES maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
-    add up to its code count. Beside it Corrections by cause and database (`by_cause_database`), non-zero cells
+    add up to its code count; a bar split two ways prints its two counts under its name, each after its colour. Beside
+    it Corrections by cause and database (`by_cause_database`), non-zero cells
     linking to db=corrects&dbsrc&dbwhy (see above); a line per database on phones, or wherever the table does not fit
     its column.
   - Corrections on records not yet re-read: `overview.earlier_corrections`, counted by the overview builder from the

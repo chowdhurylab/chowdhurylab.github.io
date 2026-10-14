@@ -5272,8 +5272,12 @@
       const levels = split ? [count - byCode, byCode] : [count];
       const segments = (split ? STATS_FOUND_BY : [STATS_FOUND_BY[0]]).map((level, index) => ({ part: level.part, count: levels[index],
         title: split ? `${family.label}, ${level.label}: ${formatInteger(levels[index])}` : `${family.label}: ${formatInteger(count)}` }));
+      // A bar split both ways prints its two counts under its name, each after its legend colour (the row's
+      // screen-reader text says them in words).
+      const shown = split ? STATS_FOUND_BY.map((level, index) => [level, levels[index]]).filter(([, value]) => value) : [];
+      const note = shown.length > 1 ? `<span class="stats-db-thin" aria-hidden="true">${shown.map(([level, value]) => `<span><i class="stats-swatch stats-part-${level.part}" aria-hidden="true"></i>${formatInteger(value)}</span>`).join("")}</span>` : "";
       return {
-        key: family.key, count, segments,
+        key: family.key, count, segments, note,
         label: href ? `<a class="stats-link" href="${escapeHtml(href)}" title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</a>`
           : `<span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span>`,
         parts: [{ text: formatInteger(count) }, ...(rate ? [{ text: statsShare(count, found.total), className: "stats-muted" }] : [])],
@@ -5288,7 +5292,7 @@
       id: "statsDbFoundTitle", key: "db-found", title: "How each correction was found",
       body: statsBarChart({ key: "db-found", rows, scale: max, step, axis: statsAxis(max, step),
         legend: split ? STATS_FOUND_BY.map((level) => ({ part: level.part, label: `<span title="${escapeHtml(level.title)}">${escapeHtml(level.label)}</span>` })) : [] }),
-      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, by the cause of the database's number${split ? " and how it was found" : ""}; each label gives the values${rate ? ", then their share" : ""}. ${STATS_DATABASE_CAPTION}`,
+      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, by the cause of the database's number${split ? " and how it was found" : ""}; each label gives the values${rate ? ", then their share" : ""}${rows.some((row) => row.note) ? ", and a bar split two ways gives its two counts under its name" : ""}. ${STATS_DATABASE_CAPTION}`,
       data: statsDataLine(notes),
     };
   }

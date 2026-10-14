@@ -2167,8 +2167,11 @@ function row(overrides = {}) {
     [["unit", 1320], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
   assert.match(found, /data-tip="Unit or scale, Checked against the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found by code: 892"/);
   assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); checked against the paper 428, exact factor found by code 892\.<\/span>/);
+  // A bar found both ways prints its two counts under its name, each after its colour; a bar found one way does not.
+  assert.match(found, /data-row="unit"[^>]*>\s*<span class="stats-chart-label"><span title="[^"]*">Unit or scale<\/span><small><span class="stats-db-thin" aria-hidden="true"><span><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>428<\/span><span><i class="stats-swatch stats-part-corrects-2" aria-hidden="true"><\/i>892<\/span><\/span><\/small><\/span>/);
+  assert.equal((found.match(/<small><span class="stats-db-thin"/g) || []).length, 1);
   assert.match(found, /<span title="A decimal point or a power of ten slipped">Decimal slip<\/span>/);
-  assert.match(plain(found), /The 1,548 values that correct a database's number, by the cause of the database's number and how it was found; each label gives the values, then their share\./);
+  assert.match(plain(found), /The 1,548 values that correct a database's number, by the cause of the database's number and how it was found; each label gives the values, then their share, and a bar split two ways gives its two counts under its name\./);
   // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
   const causes = figureHtml("db-causes");
   assert.match(causes, /<thead><tr><th scope="col">Cause<\/th><th scope="col" class="stats-num">BRENDA<\/th><th scope="col" class="stats-num">SABIO-RK<\/th><th scope="col" class="stats-num">OED<\/th><th scope="col" class="stats-num">SKiD<\/th><th scope="col" class="stats-num">STRENDA DB<\/th><th scope="col" class="stats-num">All<\/th><\/tr><\/thead>/);
