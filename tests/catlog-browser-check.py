@@ -559,7 +559,11 @@ def check_browse(driver, browser, url, route_label):
 
 
 STATS_LINK_KEYS = {"q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric", "variant", "tmin", "tmax",
-                   "phmin", "phmax", "caution", "source", "sort"}
+                   "phmin", "phmax", "caution", "source", "sort", "db", "dbsrc", "dbwhy", "dbpar"}
+# Against the databases in the address (round 9 brief sections 2-3): the results, the compared parameter and the cause
+# families Stats links with.
+STATS_DATABASE_LINK_VALUES = {"db": {"corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"},
+                              "dbpar": {"kcat", "km", "kcatkm"}, "dbwhy": {"unit", "decimal", "elsewhere", "misprint"}}
 
 
 def stats_overview(manifest):
@@ -865,11 +869,9 @@ def check_review_headline(driver, browser, url):
         driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
 
 
-# Figures 3-5 as the CatLog side will write them into overview.quality (the design spec's counts); no snapshot has them yet.
+# Part 7's earlier figures as the CatLog side writes them into overview.quality (the design spec's counts); a snapshot
+# whose overview counts the earlier corrections itself (overview.earlier_corrections) draws those instead.
 FIGURES_FIXTURE = {
-    "db_compare": {"kcat": {"same": 28743, "differs": 2964, "absent": 494}, "km": {"same": 32551, "differs": 2867, "absent": 307},
-                   "kcat_over_km": {"same": 20243, "differs": 3694, "absent": 5425}, "calculated": 4486,
-                   "papers_all_absent": 9, "papers_some_absent": 171},
     "earlier_corrections": {"records": 5838, "before_listed": [5513, 7449], "values": {
         "kcat": {"rounding": 960, "different": 450, "magnitude": 56, "added": 467},
         "km": {"rounding": 453, "different": 645, "magnitude": 130, "added": 565},
@@ -877,8 +879,69 @@ FIGURES_FIXTURE = {
     "replaced": {"records": 24433, "accepted": 3889, "papers": 1313,
                  "values": {"kcat": [19250, 21222], "km": [21071, 23351], "kcat_over_km": [1109, 1234]}},
 }
-FIGURE_TITLES = ("Values read from the paper against the databases", "Corrections on records accepted after a correction",
-                 "Entries replaced by reading the paper")
+# The comparison with the databases (manifest summary.database_comparison) of the test bundle of 2026-10-13, used when
+# the snapshot under test has none.
+DATABASE_COMPARISON_FIXTURE = {
+    "values": {
+        "kcat": {"new_paper_not_in_databases": 411, "confirmed": 34186, "differs": 269, "new": 4689, "same_number_other_label": 1658, "corrected": 328},
+        "Km": {"new_paper_not_in_databases": 635, "confirmed": 40117, "new": 4245, "same_number_other_label": 2467, "corrected": 381, "differs": 221},
+        "kcat/Km": {"new_paper_not_in_databases": 336, "confirmed": 23488, "not_compared": 5946, "same_number_other_label": 1449, "new": 5798,
+                    "differs": 561, "new_ratio_only": 4873, "corrected": 839},
+        "all": {"new_paper_not_in_databases": 1382, "confirmed": 97791, "not_compared": 5946, "differs": 1051, "new": 14732,
+                "same_number_other_label": 5574, "corrected": 1548, "new_ratio_only": 4873},
+    },
+    "corrections": {
+        "values": 1548,
+        "by_cause": {"power_of_ten": 557, "printed_number_unit_not_applied": 253, "header_scale_inverted": 179, "unit_not_converted": 126,
+                     "paper_unit_misprint": 91, "decimal_or_exponent_slip": 86, "time_factor": 82, "header_scale_ignored": 56,
+                     "mM_entered_as_uM": 28, "value_from_other_row": 22, "recomputed_ratio": 21, "time_unit": 21, "uM_entered_as_mM": 18,
+                     "value_not_in_paper": 8},
+        "by_database": {"BRENDA": 1156, "OED": 616, "SABIO-RK": 368, "SKiD": 130, "STRENDA": 12},
+        "by_cause_database": {
+            "power_of_ten": {"SABIO-RK": 97, "BRENDA": 456, "OED": 259, "SKiD": 51},
+            "header_scale_inverted": {"SABIO-RK": 130, "OED": 9, "BRENDA": 49},
+            "header_scale_ignored": {"SABIO-RK": 1, "BRENDA": 55, "OED": 8, "SKiD": 2},
+            "decimal_or_exponent_slip": {"BRENDA": 85, "OED": 48, "SKiD": 3},
+            "paper_unit_misprint": {"SABIO-RK": 43, "OED": 25, "BRENDA": 46, "SKiD": 4},
+            "mM_entered_as_uM": {"BRENDA": 28, "OED": 4, "SKiD": 1},
+            "time_factor": {"BRENDA": 82, "OED": 29, "SKiD": 6},
+            "value_from_other_row": {"BRENDA": 22, "OED": 5},
+            "recomputed_ratio": {"BRENDA": 21, "OED": 6},
+            "printed_number_unit_not_applied": {"BRENDA": 229, "OED": 133, "SABIO-RK": 24, "SKiD": 63},
+            "unit_not_converted": {"BRENDA": 48, "OED": 73, "STRENDA": 12, "SABIO-RK": 66},
+            "uM_entered_as_mM": {"SABIO-RK": 7, "BRENDA": 11, "OED": 11},
+            "value_not_in_paper": {"BRENDA": 3, "OED": 6},
+            "time_unit": {"BRENDA": 21},
+        },
+        "by": {"code": 892, "paper_check": 656},
+    },
+    "values_by_database": {
+        "BRENDA": {"same": 63221, "paper_absent": 25603, "value_absent": 18746, "parameter_absent": 6268, "other_values_only": 5433,
+                   "same_number_other_label": 4731, "corrected": 1156, "differs": 813, "same_rounded": 706, "other_number": 274},
+        "SABIO-RK": {"paper_absent": 76540, "same": 44991, "same_number_other_label": 3297, "value_absent": 1131, "corrected": 368,
+                     "other_values_only": 291, "parameter_absent": 136, "differs": 120, "other_number": 47, "same_rounded": 30},
+        "OED": {"paper_absent": 52172, "same": 45964, "other_values_only": 14719, "value_absent": 8126, "same_number_other_label": 2876,
+                "same_rounded": 1771, "corrected": 616, "differs": 478, "parameter_absent": 133, "other_number": 96},
+        "SKiD": {"paper_absent": 99102, "same": 8511, "other_values_only": 7141, "parameter_absent": 6219, "value_absent": 4762,
+                 "same_number_other_label": 844, "corrected": 130, "same_rounded": 107, "differs": 79, "other_number": 56},
+        "STRENDA": {"paper_absent": 126567, "same": 216, "same_number_other_label": 82, "other_values_only": 38, "value_absent": 34,
+                    "corrected": 12, "differs": 2},
+    },
+    "not_reproduced": {"distinct": {"paired_with_different_number": 5635, "reprinted_from_other_work": 2372}},
+    "papers": 2650,
+}
+DATABASE_TITLES = ("Each value against the databases", "Each database against the values read from its papers",
+                   "When a database lists a number for the same measurement", "How each correction was found",
+                   "Corrections by cause and database")
+FIGURE_TITLES = (*DATABASE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
+# Before the page starts: the snapshot's comparison with the databases, or the fixture when it has none.
+DATABASE_COMPARISON_JS = """
+    Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+      set(value) {
+        if (value?.summary && !value.summary.database_comparison) value.summary.database_comparison = %s;
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+      } });
+""" % json.dumps(DATABASE_COMPARISON_FIXTURE)
 
 
 # The axis ticks shown are evenly spaced, each label after "0" is centred on its tick (the end one too), no two labels
@@ -909,9 +972,11 @@ STATS_AXIS_EVEN = """
 
 
 def check_stats_figures(driver, browser, url):
-    """Figures 3-5 and figure 2 by review result, from a copy of the manifest set in Chrome before the page starts (the
-    data files are not changed): figures 3-5 follow figure 2 in order, their bars fill 100% per parameter with the shares
-    under them, figure 2 stacks each main source by review result, and nothing overflows at 1440 or 375px."""
+    """Part 7 and figure 2 by review result, from a copy of the manifest set in Chrome before the page starts (the data
+    files are not changed; the comparison with the databases is the snapshot's own, or the test bundle's when it has
+    none): part 7's figures follow in order, its lead links into Browse, its 100% bars fill 100% with the shares under
+    them, its All row counts every value compared, a segment opens Browse at its records, figure 2 stacks each main
+    source by review result, and nothing overflows at 1440 or 375px."""
     if browser != "chrome":
         return {"route": "stats-figures", "skipped": "Chrome only"}
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
@@ -926,20 +991,27 @@ def check_stats_figures(driver, browser, url):
               for (const item of value.summary.distributions?.verification_status || []) statuses[item.label] = item.count;
               overview.main_sources = { brenda: statuses };
             }
+            if (value?.summary && !value.summary.database_comparison) value.summary.database_comparison = %s;
             Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
           } });
-    """ % json.dumps(FIGURES_FIXTURE)})
+    """ % (json.dumps(FIGURES_FIXTURE), json.dumps(DATABASE_COMPARISON_FIXTURE))})
     try:
         for width, height in ((1440, 1000), (375, 812)):
             driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsReplacedTitle"))
-            # The comparison with the databases is the last numbered part, its three figures in order.
+            # The comparison with the databases is the last numbered part, its figures in order.
             part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
             assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")
             headings = [h.get_attribute("innerText").strip() for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
             assert headings == list(FIGURE_TITLES), headings
+            comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.summary.database_comparison")
+            compared = sum(count for status, count in comparison["values"]["all"].items() if status != "not_compared")
+            lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
+            assert lead.get_attribute("innerText").strip().startswith(f"Of {compared:,} values read from"), lead.get_attribute("innerText")
+            links = [urlsplit(a.get_attribute("href")).fragment for a in lead.find_elements(By.CSS_SELECTOR, "a")]
+            assert links == ["browse?db=corrects", "browse?db=differs", "browse?db=not_listed"], links
             figures = driver.execute_script("""
                 return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
                     key: chart.dataset.chart,
@@ -947,15 +1019,16 @@ def check_stats_figures(driver, browser, url):
                         key: row.dataset.row, count: +row.dataset.count,
                         width: [...row.querySelectorAll('.stats-seg')].reduce((sum, seg) => sum + parseFloat(seg.style.width), 0)}))}));
             """)
-            assert [figure["key"] for figure in figures] == ["db-compare", "earlier-corrections", "replaced"], figures
+            assert [figure["key"] for figure in figures] == ["db-values", "db-sources", "earlier-corrections", "replaced"], figures
             for figure in figures:
                 for row in figure["rows"]:
                     assert abs(row["width"] - 100) < 0.01, f"{figure['key']} {row['key']} fills {row['width']}%"
             rows = {row["key"]: row["count"] for row in figures[0]["rows"]}
-            assert rows["all"] == sum(sum(FIGURES_FIXTURE["db_compare"][key].values()) for key in ("kcat", "km", "kcat_over_km")), rows
-            assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-compare'] .stats-share-lines dd span"), "Shares under the bars"
-            caption = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-compare'] figcaption").text
-            assert "a different number does not mean the database is wrong" in caption, caption
+            assert rows["all"] == compared, rows
+            assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-share-lines dd span"), "Shares under the bars"
+            for key in ("db-values", "db-sources", "db-found"):
+                caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
+                assert "A different number can mean a different measurement; it does not by itself mean a database is wrong." in caption, caption
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):
@@ -976,12 +1049,123 @@ def check_stats_figures(driver, browser, url):
             assert driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] [data-axis-mode='records']").is_displayed()
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
-            driver.execute_script("document.querySelector('[data-figure=\"db-compare\"]').scrollIntoView()")
+            driver.execute_script("document.querySelector('[data-figure=\"db-values\"]').scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-figures-{width}.png"))
+        # A segment that has a Browse filter opens Browse there: the kcat values in none of the databases. The address
+        # Browse opens with is read as the new page starts (sessionStorage), whatever Browse then makes of it.
+        first = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "try { sessionStorage.setItem('catlogFirstAddress', location.href); } catch (error) {}"})
+        try:
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 1440, "height": 1000, "deviceScaleFactor": 1, "mobile": False})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.ID, "statsDbValuesTitle"))
+            segment = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-chart-row[data-row='kcat'] .stats-seg.stats-part-not-listed")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", segment)
+            segment.click()
+            wait.until(lambda d: urlsplit(d.current_url).path.endswith("catlog-latest.html"))
+            opened = driver.execute_script("return sessionStorage.getItem('catlogFirstAddress')")
+            assert urlsplit(opened).fragment == "browse?db=not_listed&dbpar=kcat", opened
+        finally:
+            driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": first["identifier"]})
     finally:
         driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
     return {"route": "stats-figures", "passed": True}
+
+
+# Part 7's layout at one width: per bar chart row, the label, bar, value and the line under the bar (a database's values
+# from papers it does not list) never overlap and stay inside the row; legend entries never overlap; every figure and
+# table stays inside its column; Corrections by cause and database is either its table (when it fits) or a line per
+# database, always the lines on phones. Returns the problems found.
+STATS_DATABASES_LAYOUT_JS = """
+    const part = document.querySelector("#statsCharts [data-part='databases']");
+    if (!part) return ['no part 7'];
+    const problems = [];
+    const box = (element) => element && element.getClientRects().length ? element.getBoundingClientRect() : null;
+    const overlap = (a, b) => a && b && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    part.querySelectorAll('.stats-chart-row').forEach((row) => {
+        const name = row.closest('.stats-chart').dataset.chart + ' ' + row.dataset.row;
+        const parts = ['.stats-chart-label', '.stats-track', '.stats-chart-value', '.stats-chart-aside'].map((selector) => box(row.querySelector(':scope > ' + selector)));
+        const own = box(row);
+        parts.forEach((a, i) => parts.forEach((b, j) => { if (i < j && overlap(a, b)) problems.push(name + ': parts ' + i + ' and ' + j + ' overlap'); }));
+        parts.forEach((a, i) => { if (a && (a.left < own.left - 1 || a.right > own.right + 1)) problems.push(name + ': part ' + i + ' leaves its row'); });
+        const thin = box(row.querySelector('.stats-db-thin'));
+        if (thin && thin.right > own.right + 1) problems.push(name + ': its counts leave the row');
+    });
+    part.querySelectorAll('.stats-legend').forEach((legend) => {
+        const items = [...legend.children].map(box);
+        items.forEach((a, i) => items.forEach((b, j) => { if (i < j && overlap(a, b)) problems.push('legend items overlap: ' + legend.innerText.trim().slice(0, 40)); }));
+    });
+    part.querySelectorAll('.stats-figure-section').forEach((section) => {
+        const figure = section.querySelector('.stats-fig');
+        if (figure.scrollWidth > figure.clientWidth + 1) problems.push(section.dataset.figure + ' is wider than its column');
+        section.querySelectorAll('table').forEach((table) => {
+            if (table.getClientRects().length && box(table).right > box(section).right + 1) problems.push(section.dataset.figure + ': table leaves the column');
+        });
+    });
+    const phone = matchMedia('(max-width: 640px)').matches;
+    const table = part.querySelector('.stats-db-cause-table'), blocks = part.querySelector('.stats-db-blocks');
+    if (table && blocks) {
+        const shown = [Boolean(box(table)), Boolean(box(blocks))];
+        if (shown[0] === shown[1]) problems.push('Corrections by cause and database: table shown ' + shown[0] + ', lines shown ' + shown[1]);
+        if (phone && shown[0]) problems.push('Corrections by cause and database: a table on a phone');
+    }
+    if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('the page scrolls sideways');
+    const view = document.querySelector('#statsView');
+    if (view.scrollWidth > view.clientWidth + 1) problems.push('Stats scrolls sideways');
+    return problems;
+"""
+
+
+def check_stats_databases(driver, browser, url):
+    """Part 7, Against the databases, holds its layout at 1440, 1280, 1024, 375 and 320px (STATS_DATABASES_LAYOUT_JS),
+    in the viewer's own font (a wide one too: the DejaVu run), with the snapshot's comparison or, in Chrome, the test
+    bundle's when the snapshot has none; its figures stand in order, two to a row from 1024px."""
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    injected = None
+    if browser == "chrome":
+        injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": DATABASE_COMPARISON_JS})
+    try:
+        driver.get("about:blank")
+        driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+        wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, ".stats-status-section"))
+        if not driver.execute_script("return Boolean(window.CATLOG_STATIC_MANIFEST.summary?.database_comparison)"):
+            return {"route": "stats-databases", "skipped": "no comparison with the databases in this snapshot"}
+        sizes = ((1440, 1000), (1280, 900), (1024, 800), (375, 812), (320, 700)) if browser == "chrome" else ((1440, 1000), (1280, 900))
+        for width, height in sizes:
+            if browser == "chrome":
+                driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
+            else:
+                set_browse_viewport(driver, browser, width, height)
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title"))
+            # Late fonts: measure once they are in.
+            driver.execute_script("return document.fonts ? document.fonts.ready.then(() => true) : true")
+            titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title")]
+            assert titles[:len(DATABASE_TITLES)] == list(DATABASE_TITLES), titles
+            problems = driver.execute_script(STATS_DATABASES_LAYOUT_JS)
+            assert not problems, f"Part 7 at {width}px: {problems}"
+            # Two to a row from 1024px: each database beside the values it pairs.
+            tops = driver.execute_script("""return ['db-sources', 'db-paired'].map(key => document.querySelector(`[data-figure='${key}']`).getBoundingClientRect().top)""")
+            assert (abs(tops[0] - tops[1]) < 1) == (width >= 1024), f"At {width}px Figure and Table rows: {tops}"
+            if browser == "chrome" and width == 1440:
+                # Corrections by cause and database gives a line per database wherever its table does not fit (here
+                # its figure is made 300px wide, as more databases or a wider font would make the table too wide).
+                lines_shown = "return Boolean(document.querySelector(\"[data-figure='db-causes'] .stats-db-blocks\").getClientRects().length)"
+                assert not driver.execute_script(lines_shown)
+                driver.execute_script("document.querySelector(\"[data-figure='db-causes']\").style.width = '300px'; window.dispatchEvent(new Event('resize'))")
+                wait.until(lambda d: d.execute_script(lines_shown))
+                assert not driver.execute_script("return Boolean(document.querySelector('.stats-db-cause-table').getClientRects().length)")
+            driver.execute_script("document.querySelector(\"#statsCharts [data-part='databases']\").scrollIntoView()")
+            driver.save_screenshot(str(OUTPUT / f"{browser}-stats-databases-{width}.png"))
+    finally:
+        if injected:
+            driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+        if browser == "chrome":
+            driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"route": "stats-databases", "passed": True}
 
 
 # Value labels of several numbers (count, then share; Figure 5's records, accepted, read from the paper) stand in columns:
@@ -3446,6 +3630,7 @@ def check(driver, browser, url):
         assert target.fragment.startswith("browse?"), target.fragment
         params = parse_qsl(target.fragment[len("browse?"):], keep_blank_values=True)
         assert params and {key for key, _value in params} <= STATS_LINK_KEYS, f"Unknown Browse filter: {params}"
+        assert all(value in STATS_DATABASE_LINK_VALUES[key] for key, value in params if key in STATS_DATABASE_LINK_VALUES), params
     hrefs = [link.get_attribute("href") for link in links]
     fragments = ["#browse?status=accepted", "#browse?status=curation_pending", "#browse?status=not_verified"]
     if expected.get("disputed", 0):
@@ -3768,12 +3953,20 @@ def check(driver, browser, url):
         """), "On phones each name sits above its bar"
         off_phone = driver.execute_script("""
             // On phones every bar spans its chart's row (the full width), and its numbers stand right-aligned on the name's
-            // line: its last line, or the first one when a breakdown follows the name (Figure 2's Other).
+            // line: its last line, or the first one when a breakdown follows the name (Figure 2's Other). The line is
+            // found from the name's own letters: a subscript (the cat of kcat) sits below the line and is left out.
+            const letters = (node) => {
+                if (node.nodeType === Node.TEXT_NODE) return node.parentElement.closest('sub, sup') ? [] : [node];
+                return [...node.childNodes].flatMap(letters);
+            };
             return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).filter(row => {
                 const box = row.getBoundingClientRect(), track = row.querySelector('.stats-track').getBoundingClientRect();
                 const label = row.querySelector('.stats-chart-label'), value = row.querySelector('.stats-chart-value').getBoundingClientRect();
-                const name = document.createRange(); name.selectNodeContents(row.classList.contains('has-note') ? label.firstChild : label);
-                const lines = [...name.getClientRects()].filter(line => line.width), line = row.classList.contains('has-note') ? lines[0] : lines[lines.length - 1];
+                const lines = letters(row.classList.contains('has-note') ? label.firstChild : label).flatMap((node) => {
+                    const name = document.createRange(); name.selectNodeContents(node);
+                    return [...name.getClientRects()].filter(line => line.width);
+                });
+                const line = row.classList.contains('has-note') ? lines[0] : lines[lines.length - 1];
                 return Math.abs(track.left - box.left) > 1 || Math.abs(track.right - box.right) > 1 || Math.abs(value.right - box.right) > 1
                     || value.bottom > track.top + 1 || Math.abs(value.bottom - line.bottom) > 2;
             }).map(row => `${row.closest('.stats-chart').dataset.chart}:${row.dataset.row}`);
@@ -3851,6 +4044,7 @@ def main():
             check_quality(driver, args.browser, url, quality)
         check_review_headline(driver, args.browser, url)
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
+        result["stats_databases"] = check_stats_databases(driver, args.browser, url)
         result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         result["word_breaks"] = check_word_breaks(driver, args.browser, url)
