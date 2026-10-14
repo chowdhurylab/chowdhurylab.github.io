@@ -4313,13 +4313,32 @@
   const REVIEW_VALUES = "kcat, Km or kcat/Km";
 
   // What reviewers checked, in words: "2,674 entries from the earlier version (408 papers)" (review.v1; the Stats
-  // headline's base, round 8), "40 records read from the paper (3 papers)" (review.v2).
-  function reviewBaseText(facts, { fromPaper = false } = {}) {
-    const papers = facts.papers ? ` (${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"})` : "";
+  // headline's base, round 8), "40 records read from the paper (3 papers)" (review.v2). As HTML its parenthesis keeps
+  // one line (a wide font once left "(408" at the end of a line and "papers)" on the next).
+  function reviewBaseParts(facts, { fromPaper = false } = {}) {
     const one = facts.entries === 1;
-    return fromPaper
-      ? `${formatInteger(facts.entries)} ${one ? "record" : "records"} read from the paper${papers}`
-      : `${formatInteger(facts.entries)} ${one ? "entry" : "entries"} from the earlier version${papers}`;
+    return {
+      what: fromPaper
+        ? `${formatInteger(facts.entries)} ${one ? "record" : "records"} read from the paper`
+        : `${formatInteger(facts.entries)} ${one ? "entry" : "entries"} from the earlier version`,
+      papers: facts.papers ? `(${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"})` : "",
+    };
+  }
+
+  function reviewBaseText(facts, options) {
+    const { what, papers } = reviewBaseParts(facts, options);
+    return papers ? `${what} ${papers}` : what;
+  }
+
+  function reviewBaseHtml(facts, options) {
+    const { what, papers } = reviewBaseParts(facts, options);
+    return papers ? `${escapeHtml(what)} <span class="nowrap">${escapeHtml(papers)}</span>` : escapeHtml(what);
+  }
+
+  // A sentence's HTML (escaped, perhaps with the site's italic kcat and Km) with the review's base in it kept as
+  // reviewBaseHtml does.
+  function keepReviewBase(html, facts, options) {
+    return facts ? String(html).replace(escapeHtml(reviewBaseText(facts, options)), () => reviewBaseHtml(facts, options)) : html;
   }
 
   // "Human reviewers checked 2,674 entries from the earlier version (408 papers): a reviewer disputed a kcat, Km or
@@ -4461,11 +4480,11 @@
     // kcat, Km and kcat/Km in the site's italic markup (metricWordsHtml, on escaped text only, never on a link).
     const words = (text) => metricWordsHtml(escapeHtml(text));
     return section("Human review",
-      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct of ${escapeHtml(reviewBaseText(review))}</span>`,
+      `<strong>${escapeHtml(review.correctShare)}</strong><span>values correct of ${reviewBaseHtml(review)}</span>`,
       `<p class="stats-lead-sentence">${words(reviewSentence(review, { opener: false }))}</p>
           ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
           ${notes.length ? `<p class="stats-lead-note">${words(notes.join(" "))}</p>` : ""}
-          ${v2Review ? `<p class="stats-lead-note">${words(reviewSentence(v2Review, { fromPaper: true, share: true }))}</p>` : ""}
+          ${v2Review ? `<p class="stats-lead-note">${keepReviewBase(words(reviewSentence(v2Review, { fromPaper: true, share: true })), v2Review, { fromPaper: true })}</p>` : ""}
           ${match ? `<p class="stats-lead-side">${escapeHtml(v2MatchSentence(match, { ofThese: true }))}</p>` : ""}
           <p class="stats-fig-data">${metricWordsHtml(statsDataLine(`${asOf}From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict. Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.${review.missing !== null ? " Values missing: the reviewer says the paper prints a value the entry lacks." : ""}${match ? ` ${sameDefinition}` : ""}`))}</p>`);
   }
@@ -4479,7 +4498,7 @@
     const match = v2MatchFacts(quality);
     if (!review && !match) return "";
     const headline = review
-      ? `<strong>${escapeHtml(review.correctShare)}</strong> values correct of ${escapeHtml(reviewBaseText(review))}.`
+      ? `<strong>${escapeHtml(review.correctShare)}</strong> values correct of ${reviewBaseHtml(review)}.`
       : "";
     const side = match ? escapeHtml(v2MatchSentence(match, { ofThese: Boolean(review) })) : "";
     return `<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
@@ -4509,7 +4528,10 @@
       // What the review found comes first (the user, 2026-10-12; what the lead above already says is not said again),
       // then the human-checked records and their rule; kcat, Km and kcat/Km in the Guide's italic markup.
       const comparison = humanComparisonText(overview, { afterLead: Boolean(leadHtml) });
-      $("guideMethodHuman").innerHTML = metricWordsHtml(escapeHtml(`${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`));
+      const html = metricWordsHtml(escapeHtml(`${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`));
+      const quality = overview?.quality || {};
+      $("guideMethodHuman").innerHTML = keepReviewBase(keepReviewBase(html, reviewFacts(quality.review?.v1)),
+        reviewFacts(quality.review?.v2), { fromPaper: true });
     }
   }
 
@@ -4800,7 +4822,8 @@
     // 1. At a glance: the headline band. Line 1 (32px, the key numbers in accent ink with a soft glow): records, accepted,
     // read from the paper and the human review's headline (99.9% values correct of 2,674 entries from the earlier version
     // (408 papers)); line 2 (20px): the catalog's scope. A number Browse can filter links there.
-    const reviewHeadline = review ? { value: review.correctShare, note: `values correct of ${reviewBaseText(review)}` }
+    const reviewHeadline = review ? { value: review.correctShare, note: `values correct of ${reviewBaseText(review)}`,
+      noteHtml: `values correct of ${reviewBaseHtml(review)}` }
       : match ? { value: qualityShare(match.same, match.approved), note: "of approved values the same, read from the paper again" } : null;
     const main = [
       { key: "records", label: "Records", value: formatInteger(total) },
@@ -4808,7 +4831,8 @@
         params: accepted ? { status: "accepted" } : null },
       fromPaper !== null ? { key: "catlog", label: SOURCE_CATLOG_LABEL, value: formatInteger(fromPaper),
         note: papersRead !== null ? `from ${formatInteger(papersRead)} papers` : "", params: fromPaper ? { source: "paper" } : null } : null,
-      reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note } : null,
+      reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note,
+        noteHtml: reviewHeadline.noteHtml } : null,
     ].filter(Boolean);
     const scope = [
       ["papers", "Papers", statsCount(overview?.papers)],
@@ -4819,7 +4843,7 @@
     ].filter(([, , value]) => value !== null).map(([key, label, value]) => ({ key, label, value: formatInteger(value) }));
     const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"><dt>${escapeHtml(item.label)}</dt><dd>${item.params
       ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
-      : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</dd></div>`;
+      : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${item.noteHtml || escapeHtml(item.note)}</small>` : ""}</dd></div>`;
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
     $("statsTotals").innerHTML = `<section class="stats-band" aria-labelledby="statsPartGlanceTitle">
       <h2 id="statsPartGlanceTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">1</span><span>At a glance</span></h2>

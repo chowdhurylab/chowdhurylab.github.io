@@ -733,6 +733,11 @@ REVIEW_SENTENCE = "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2
 # The Guide's Human review item, under the Guide's lead that already says how many entries reviewers checked, starts with
 # what the lead does not say (never the same sentence twice).
 REVIEW_ITEM_START = REVIEW_SENTENCE
+# The base's "(408 papers)" in the given places: its text and how many lines it takes.
+REVIEW_BASE_PARENS = """
+    return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
+        .map(e => [e.textContent, new Set([...e.getClientRects()].map(box => Math.round(box.top))).size]);
+"""
 REVIEW_SIDE_LINE = ("Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); "
                     "wrong CatLog values found: 0.")
 
@@ -819,6 +824,9 @@ def check_review_headline(driver, browser, url):
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
             figure = " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").get_attribute("innerText").split())
             assert figure == f"99.9% values correct {REVIEW_BASE}", figure
+            # The base's parenthesis never breaks inside: "(408" ending one line and "papers)" starting the next.
+            parens = driver.execute_script(REVIEW_BASE_PARENS, ".stats-total[data-total='review'], #statsCharts .stats-lead-figure")
+            assert len(parens) == 2 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").strip() == REVIEW_SENTENCE
             # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
             assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-sentence i + sub")) >= 4
@@ -835,6 +843,8 @@ def check_review_headline(driver, browser, url):
             wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
             guide = driver.execute_script(GUIDE_LEAD_JS)
             assert guide and f"99.9% values correct {REVIEW_BASE}." in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
+            parens = driver.execute_script(REVIEW_BASE_PARENS, "#guideMethodLead")
+            assert len(parens) == 1 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
             human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
             assert human.startswith(REVIEW_ITEM_START) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
             assert "Human reviewers checked 2,674" not in human, "The Human review item repeats the Guide's lead"

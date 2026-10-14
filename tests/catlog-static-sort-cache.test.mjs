@@ -1952,9 +1952,9 @@ function row(overrides = {}) {
   // Round 8's words: "Human review: 99.9% values correct" with its base, of 2,674 entries from the earlier version (408
   // papers); the sentence under it does not repeat the base.
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
-  // The band's Human review is the same headline.
-  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>values correct of 2,674 entries from the earlier version \(408 papers\)<\/small>/);
-  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct of 2,674 entries from the earlier version \(408 papers\)<\/span><\/div>/);
+  // The band's Human review is the same headline. The base's parenthesis keeps one line wherever it is shown.
+  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>values correct of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span><\/small>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>values correct of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span><\/span><\/div>/);
   assert.match(lead, /<p class="stats-lead-sentence">A reviewer disputed a kcat, Km or kcat\/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper\.<\/p>/);
   assert.match(lead, /<dt>Values missing<\/dt><dd>31 entries \(1\.2%\)<\/dd><\/div><div><dt>Other disagreements<\/dt><dd>177 entries \(6\.6%\)<\/dd>/);
   assert.match(lead, /<p class="stats-lead-note">Values missing: the paper prints a value the entry lacked, mostly the kcat; CatLog has read 53 of the 58 values reviewers named from the paper\. Other disagreements, by kind: could not find the value 153, organism name 13, DOI 5, substrate name 3, duplicate 2, paper evidence mismatch 1\.<\/p>/);
@@ -1969,7 +1969,7 @@ function row(overrides = {}) {
   assert.match(checks, /1,301 kept; 30 were wrong \(2\.3%\) and removed \(as of Oct 13, 2026\)\./);
   // The Guide: the headline and the match in the lead, the review in full under Human review.
   api.renderGuideMethod();
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> <strong>99.9%</strong> values correct of 2,674 entries from the earlier version (408 papers). Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong CatLog values found: 0. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> <strong>99.9%</strong> values correct of 2,674 entries from the earlier version <span class="nowrap">(408 papers)</span>. Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong CatLog values found: 0. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
   // The Human review item does not repeat the lead's sentence: it starts with what the lead does not say.
   assert.equal(metricPlain(element("guideMethodHuman").innerHTML), "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper. Values missing: 31 entries (1.2%) lacked a value the paper prints, mostly the kcat; CatLog has read 53 of the 58 values reviewers named from the paper. Other disagreements: 177 entries (6.6%). 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
   // Team's Human check: the values correct, on two lines on the wide loop and three on the upright one, one phrase for
@@ -1999,7 +1999,9 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: reviewV1,
     v2: { entries: 40, papers: 3, value_disputed: 1, value_disputed_checked_as_printed: 0 } } } };
   api.renderStats();
-  assert.match(metricPlain(leadHtml()), /<p class="stats-lead-note">Human reviewers checked 40 records read from the paper \(3 papers\): values correct \(kcat, Km, kcat\/Km\) 97\.5%; a reviewer disputed a kcat, Km or kcat\/Km value on 1 of them\.<\/p>/);
+  assert.match(metricPlain(leadHtml()), /<p class="stats-lead-note">Human reviewers checked 40 records read from the paper <span class="nowrap">\(3 papers\)<\/span>: values correct \(kcat, Km, kcat\/Km\) 97\.5%; a reviewer disputed a kcat, Km or kcat\/Km value on 1 of them\.<\/p>/);
+  api.renderGuideMethod();
+  assert.match(element("guideMethodHuman").innerHTML, /Human reviewers checked 40 records read from the paper <span class="nowrap">\(3 papers\)<\/span>: values correct/);
   // Counts that do not hold together are not shown: a dispute count above the entries drops the review (the lead falls
   // back to the match read from the paper again), kinds that are not whole counts are left out.
   runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: { ...reviewV1, value_disputed: 3000 } } } };
