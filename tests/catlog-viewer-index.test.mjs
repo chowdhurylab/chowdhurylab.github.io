@@ -99,12 +99,13 @@ for await (const line of lines(tableUrl)) {
   tableUncompressedBytes += Buffer.byteLength(line) + 1;
 }
 // Optional text fields (condition_note) are in the index only when the snapshot carries them. database_summary is not a
-// table field: the builder derives it from the Table row's comparison fields (DATABASE_FIELDS) or the Full data's (each
-// proof line's database_status, the record's corrections), one number per record.
+// table field: the builder derives it from the Table row's comparison fields (DATABASE_FIELDS: a summary such as "mixed"
+// and its database_kinds list, per-value statuses) or the Full data's (each proof line's database_status, the record's
+// summary, kinds and corrections), one number per record.
 const optionalFields = viewer.optional_fields || [];
 const DATABASE_FIELDS = new Set([
-  "database_summary", "database_statuses", "database_status", "kcat_database_status", "km_database_status",
-  "kcat_over_km_database_status", "corrections", "corrections_count", "database_note",
+  "database_summary", "database_kinds", "database_statuses", "database_status", "kcat_database_status",
+  "km_database_status", "kcat_over_km_database_status", "corrections", "corrections_count", "database_note",
 ]);
 const textOptionalFields = optionalFields.filter((field) => field !== "database_summary");
 assert.deepEqual(
@@ -212,6 +213,7 @@ let viewerUncompressedBytes = Buffer.byteLength(`${headerLine}\n`);
 const viewerContentHash = createHash("sha256").update(`${headerLine}\n`);
 const recordKeys = new Set();
 let previousKey = null;
+const databaseBitCounts = { 1: 0, 2: 0, 4: 0, 8: 0, 16: 0, 32: 0 };
 for await (const line of viewerLines) {
   const { row, shard, papers } = decode(JSON.parse(line));
   rowCount += 1;
@@ -231,6 +233,7 @@ for await (const line of viewerLines) {
       `database_summary of ${row.record_key} is not a set of comparison bits: ${row.database_summary}`);
     assert.ok(hasComparison(source.row) || enrichedCompared.has(row.record_key),
       `database_summary of ${row.record_key} has no comparison in the Table or Full data download`);
+    for (const bit of Object.keys(databaseBitCounts)) if (row.database_summary & Number(bit)) databaseBitCounts[bit] += 1;
   }
   assert.equal(shard, Math.floor(source.position / header.details_per_shard), `detail shard of ${row.record_key}`);
   if (papers) assert.deepEqual(papers, enrichedIds.get(row.record_key), `paper identifiers of ${row.record_key}`);
@@ -247,6 +250,17 @@ assert.equal(rowCount, manifest.total_rows);
 assert.equal(recordKeys.size, tableRows.size, "every table row is in the viewer index once");
 assert.equal(viewerUncompressedBytes, viewer.uncompressed_size_bytes);
 assert.equal(viewerContentHash.digest("hex"), viewer.content_sha256);
+// The sidebar counts records by these bits; the snapshot's Stats count the same records by kind (manifest
+// summary.database_comparison.records_with_kind), so the two agree whenever both are there.
+const recordsWithKind = manifest.summary?.database_comparison?.records_with_kind;
+if (recordsWithKind && optionalFields.includes("database_summary")) {
+  const bitOfKind = { same: 1, corrected: 2, differs: 4, new: 8, other_label: 16 };
+  for (const [kind, bit] of Object.entries(bitOfKind)) {
+    if (kind in recordsWithKind) {
+      assert.equal(databaseBitCounts[bit], recordsWithKind[kind], `records with a ${kind} value: index and manifest differ`);
+    }
+  }
+}
 assert.ok(
   viewerUncompressedBytes <= tableUncompressedBytes * 0.25,
   "the decoded viewer index should be at most a quarter of the table's size",

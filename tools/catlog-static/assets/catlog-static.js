@@ -5661,8 +5661,8 @@
       });
     };
     add(summary);
-    ["database_statuses", "database_status", "kcat_database_status", "km_database_status", "kcat_over_km_database_status"]
-      .forEach((field) => add(row[field]));
+    ["database_kinds", "database_statuses", "database_status", "kcat_database_status", "km_database_status",
+      "kcat_over_km_database_status"].forEach((field) => add(row[field]));
     if ((Array.isArray(row.corrections) && row.corrections.length) || Number(row.corrections_count) > 0) bits |= DATABASE_SUMMARY_BITS.earlier;
     return bits;
   }

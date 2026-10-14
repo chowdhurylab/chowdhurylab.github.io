@@ -205,15 +205,16 @@ TABLE_FIELDS = (
 # ("+10 mM FBP"), under the substrate in the table (about 100 records, so it is not a shared text).
 OPTIONAL_TEXT_FIELDS = ("condition_note",)
 
-# How a record compares with the enzyme databases (BRENDA, SABIO-RK, OED, SKiD, STRENDA DB for the same paper), for the
+# How a record compares with the enzyme databases (each database the manifest lists, for the same paper), for the
 # sidebar's "Against the databases" group. The Table download may carry it in any of these shapes (the CatLog side's
-# per-value database_status, a record-level summary, or the earlier review's corrections list), and so may the Full data
-# download of the same records (catlog-enriched: each proof line's database_status, the record's corrections), which is
-# where the CatLog side's export puts it (its Table rows are built without them); the index reads both and writes one
-# compact number per record, "database_summary" (after the optional text fields, null on rows without it), only when
-# some row has one. The per-value lines themselves stay in the record's detail file.
+# per-value database_status, a record-level summary and its list of kinds, or the earlier review's corrections list),
+# and so may the Full data download of the same records (catlog-enriched: each proof line's database_status, the
+# record's summary, kinds and corrections); the index reads both and writes one compact number per record,
+# "database_summary" (after the optional text fields, null on rows without it), only when some row has one. Every one
+# of these fields is optional. The per-value lines themselves stay in the record's detail file.
 DATABASE_FIELDS = (
     "database_summary",
+    "database_kinds",
     "database_statuses",
     "database_status",
     "kcat_database_status",
@@ -226,14 +227,15 @@ DATABASE_FIELDS = (
 DATABASE_SUMMARY_FIELD = "database_summary"
 # The summary's bits: a value the same as a database lists (1), a value CatLog corrected against a database (2), a
 # different number not yet resolved (4), a value no database lists (8), the same number under another label (16), and
-# an earlier "corrected" record whose changes are listed (32). A calculated kcat/Km is not compared (0).
+# an earlier "corrected" record whose changes are listed (32). A calculated kcat/Km is not compared (0); a record-level
+# "mixed" summary adds nothing itself (0): its database_kinds list ("same", "corrected", ...) carries the kinds.
 DATABASE_STATUS_BITS = {
     "confirmed": 1, "same": 1, "same_number": 1,
     "corrected": 2,
     "differs": 4, "different": 4, "differs_not_resolved": 4,
     "new": 8, "new_paper_not_in_databases": 8, "paper_not_in_databases": 8, "not_in_databases": 8,
     "same_number_other_label": 16, "other_label": 16,
-    "not_compared": 0, "calculated": 0,
+    "not_compared": 0, "calculated": 0, "mixed": 0,
 }
 DATABASE_EARLIER_CORRECTIONS_BIT = 32
 DATABASE_SUMMARY_MASK = 63
@@ -243,8 +245,8 @@ def database_summary(values: dict, unknown: dict[str, int]) -> int | None:
     """One record's comparison with the enzyme databases as DATABASE_STATUS_BITS (None when the row says nothing, or
     only that nothing was compared).
     A number is taken as it is (masked); statuses may be one text ("corrected", or "confirmed; new"), a list, or an
-    object keyed by parameter ({"kcat": "confirmed", "Km": {"status": "corrected"}}). A status this page does not know
-    counts in `unknown` and adds nothing."""
+    object keyed by parameter ({"kcat": "confirmed", "Km": {"status": "corrected"}}); database_kinds is a list of kinds
+    (["same", "new"]) and is optional. A status this page does not know counts in `unknown` and adds nothing."""
     bits = 0
 
     def add(status: object) -> None:
@@ -276,8 +278,8 @@ def database_summary(values: dict, unknown: dict[str, int]) -> int | None:
             add(value)
     else:
         add(summary)
-    for field in ("database_statuses", "database_status", "kcat_database_status", "km_database_status",
-                  "kcat_over_km_database_status"):
+    for field in ("database_kinds", "database_statuses", "database_status", "kcat_database_status",
+                  "km_database_status", "kcat_over_km_database_status"):
         value = values.get(field)
         add(list(value.values()) if isinstance(value, dict) else value)
     for line in values.get("proof_lines") or ():  # a Full data row: one database_status per value

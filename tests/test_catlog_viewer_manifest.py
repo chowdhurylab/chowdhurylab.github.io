@@ -250,6 +250,62 @@ class ViewerManifestTests(unittest.TestCase):
         self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", "s"])
         self.assertEqual(metadata["database_summary_sources"], {"table": 1, "full_data": 0})
 
+    def test_database_kinds_and_mixed_summary(self):
+        # The CatLog side writes a record-level summary (same | corrected | differs | other_label | new | mixed |
+        # not_compared) and the list of kinds its values carry, in the Table rows and the Full data. "mixed" says
+        # nothing itself: the kinds carry it. Either field may be absent; proof lines may be plain strings.
+        v2 = dict(verification_status="verified", source_db="primary_paper_direct", enzyme_label_source="explicit_enzyme_name")
+        rows = [
+            self.table_row("mixed", **v2, database_summary="mixed", database_kinds=["same", "corrected", "new"]),
+            self.table_row("label", **v2, database_summary="other_label", database_kinds=["other_label"]),
+            self.table_row("kinds", **v2, database_kinds=["same", "differs", "other_label"]),
+            self.table_row("bare", **v2, database_summary="mixed"),
+            self.table_row("none", **v2, database_summary="not_compared", database_kinds=[]),
+            self.table_row("plain"),
+        ]
+        # database_kinds may sit anywhere among the keys
+        moved = {}
+        for field, value in self.table_row("moved", **v2).items():
+            if field == "kcat":
+                moved["database_kinds"] = ["new"]
+                moved["database_summary"] = "new"
+            moved[field] = value
+        rows.append(moved)
+        metadata, header, encoded = self.build_rows(rows)
+        self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", "s"])
+        decoded = {row[0]: dict(zip(header["fields"], row))["database_summary"] for row in encoded}
+        self.assertEqual(decoded, {"mixed": 1 | 2 | 8, "label": 16, "kinds": 1 | 4 | 16, "bare": None, "none": None,
+                                   "plain": None, "moved": 8})
+        self.assertEqual(metadata["database_statuses_unknown"], {})
+        self.assertEqual(metadata["database_summary_bits"], {"1": 2, "2": 1, "4": 1, "8": 2, "16": 2, "32": 0})
+        # the same from the Full data alone, beside string proof lines and earlier corrections
+        table_rows = [self.table_row("mixed", **v2), self.table_row("earlier", verification_status="corrected"),
+                      self.table_row("text", **v2)]
+        full = {
+            "mixed": {"database_summary": "mixed", "database_kinds": ["same", "other_label"],
+                      "proof_lines": ["Table 2: kcat 4.1 s-1", {"metric": "kcat", "database_status": "confirmed"},
+                                      {"metric": "Km", "database_status": "same_number_other_label"}]},
+            "earlier": {"corrections": [{"field": "km", "before": 4.7, "after": 0.47, "kind": "magnitude", "listed": "BRENDA"}]},
+            "text": {"proof_lines": ["Table 1 prints 3.2 mM"]},
+        }
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        table = root / "catlog-table.000000000000.jsonl.gz"
+        table.write_bytes(gzip.compress("".join(json.dumps(row) + "\n" for row in table_rows).encode(), mtime=0))
+        enriched = root / "catlog-enriched.111111111111.jsonl.gz"
+        enriched.write_bytes(gzip.compress("".join(
+            json.dumps(dict(row, **full[row["record_key"]])) + "\n" for row in table_rows).encode(), mtime=0))
+        target = root / "viewer.jsonl.gz"
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            metadata = BUILD.build(table, target, details_per_shard=2, enriched_path=enriched)
+        lines = gzip.decompress(target.read_bytes()).decode().splitlines()
+        header = json.loads(lines[0])
+        decoded = {row[0]: dict(zip(header["fields"], row))["database_summary"] for row in map(json.loads, lines[1:])}
+        self.assertEqual(decoded, {"mixed": 1 | 16, "earlier": 32, "text": None})
+        self.assertEqual(metadata["database_statuses_unknown"], {})
+        self.assertEqual(metadata["database_summary_sources"], {"table": 0, "full_data": 2})
+
     def test_finalization_preserves_legacy_and_binds_new_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
