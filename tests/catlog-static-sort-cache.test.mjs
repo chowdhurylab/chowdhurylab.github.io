@@ -5145,6 +5145,10 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.match(element("aboutDatabases").innerHTML, /with the numbers <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for the same paper/, "each name kept whole on one line");
   assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\): No compared database lists any value of the record\./);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
+  // How values are paired, in words the options below do not contradict (Same, other label: another substrate, variant
+  // or organism).
+  assert.match(element("aboutDatabases").innerHTML, /list for the same paper,\s+pairing values by substrate, variant and organism\. A different number can be a different measurement\./);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML, /\(same substrate/);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
   // database_summary number) equal the manifest's keys: records_with_kind for the first four, records.every_value_new and
   // records.every_value_confirmed; Corrected earlier equals the index builder's count of records with earlier changes.

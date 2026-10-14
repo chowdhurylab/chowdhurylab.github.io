@@ -6779,8 +6779,8 @@
       if ($("aboutDatabases")) {
         const names = databaseNamesHtml(comparedDatabases().map((item) => item.display));
         $("aboutDatabases").innerHTML = `
-          <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper
-            (same substrate, variant and organism). A different number can be a different measurement.</p>
+          <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper,
+            pairing values by substrate, variant and organism. A different number can be a different measurement.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
             item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}</p>`).join("")}`;
       }
