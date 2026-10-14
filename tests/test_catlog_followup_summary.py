@@ -254,6 +254,40 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(followup.source_keys("unknown"), set())
         self.assertEqual(followup.field_words("β-Galactosidase  4 nitrophenyl"), ["betagalactosidase", "4nitrophenyl"])
 
+    def test_overview_counts_the_earlier_corrections_lists(self):
+        # Records not yet re-read list what the earlier version changed (corrections): the overview counts, per value
+        # field, the four kinds Stats draws, every other change apart, and the changed values whose number before the
+        # change a database lists ("listed"); a record read from the paper is never counted, and an empty or damaged
+        # list counts no record.
+        rows = overview_rows()
+        rows[1]["corrections"] = [
+            {"field": "km", "before": 20.0, "after": 2.0, "kind": "magnitude", "unit": "mM", "listed": "BRENDA"},
+            {"field": "kcat_over_km", "before": 0.546667, "after": 0.544, "kind": "rounding", "listed": "SABIO-RK"},
+            {"field": "kcat", "after": 3.0, "kind": "added", "unit": "s⁻¹"},
+            {"field": "km", "before": 1.5, "after": 2.0, "kind": "different", "listed": ""},
+            {"field": "uniprot_id", "after": "P12345", "kind": "added"},
+            {"field": "sequence", "kind": "replaced"},
+            {"field": "kcat", "kind": "removed"},
+            "not an item",
+        ]
+        rows[0]["corrections"] = [{"field": "kcat", "before": 1.0, "after": 2.0, "kind": "different"}]
+        rows[2]["corrections"] = []
+        rows[3]["corrections"] = {"field": "kcat"}
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, marks_path = self.write_fixture(directory, rows, {})
+            result = followup.build_overview(manifest, path, marks_path)
+        earlier = result["earlier_corrections"]
+        self.assertEqual((earlier["records"], earlier["items"], earlier["other_items"]), (1, 7, 3))
+        self.assertEqual(earlier["values"], {
+            "kcat": {"rounding": 0, "different": 0, "magnitude": 0, "added": 1},
+            "km": {"rounding": 0, "different": 1, "magnitude": 1, "added": 0},
+            "kcat_over_km": {"rounding": 1, "different": 0, "magnitude": 0, "added": 0}})
+        self.assertEqual(earlier["before_listed"], [2, 3])
+        # Without any list there is no figure to draw: the key is left out.
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {})
+            self.assertNotIn("earlier_corrections", followup.build_overview(manifest, path, marks_path))
+
     def test_overview_copies_the_marks_quality(self):
         quality = {"as_of": "2026-10-11T05:05:00", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
                    "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
@@ -292,11 +326,12 @@ class OverviewTests(unittest.TestCase):
         result = followup.marks_quality({"quality": quality})
         self.assertEqual(result["agreement"], {key: value for key, value in agreement.items()
                                                if key not in ("definitions", "unknown_field", "first_agree_pct_blind")})
-        self.assertEqual(result["db_compare"], {"kcat": {"same": 9, "differs": 1, "absent": 0}, "papers_all_absent": 2})
+        # The comparison with the databases is the manifest's summary.database_comparison: no db_compare is copied.
+        self.assertNotIn("db_compare", result)
         self.assertEqual(result["earlier_corrections"], figures["earlier_corrections"])
         # A list with anything but whole counts is dropped whole.
         self.assertEqual(result["replaced"], {"records": 7, "values": {"kcat": [5, 6]}})
-        self.assertNotIn("db_compare", followup.marks_quality({"quality": {"audit_values": 1, "db_compare": [1]}}))
+        self.assertNotIn("replaced", followup.marks_quality({"quality": {"audit_values": 1, "replaced": [1]}}))
 
     def test_overview_copies_the_headline_range_and_first_comparison_errors(self):
         # The headline is reported with its 95% range (a "low-high" string), its blind paper count and the errors the

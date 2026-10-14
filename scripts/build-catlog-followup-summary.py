@@ -523,6 +523,41 @@ def most_common(spellings):
     return top(spellings, 1)[0][0] if spellings else ""
 
 
+# Corrections on records not yet re-read (Stats part 7, "Corrections on records not yet re-read"): each earlier record's
+# corrections list in the Full data, as its record panel lists it under Against the databases. Per value field, the
+# changes of the four kinds the figure draws (more digits or rounding, a different number, unit or magnitude, added);
+# every other change (another field, or another kind) is counted apart; and of the changed values (those with a value
+# before), how many had before the change a number a database lists for that paper (the item names it: "listed").
+# A record read from the paper carries no such list.
+CORRECTION_FIELDS = ("kcat", "km", "kcat_over_km")
+CORRECTION_KINDS = ("rounding", "different", "magnitude", "added")
+CORRECTION_CHANGED = ("rounding", "different", "magnitude")
+
+
+def new_earlier_corrections():
+    return {"records": 0, "items": 0,
+            "values": {field: dict.fromkeys(CORRECTION_KINDS, 0) for field in CORRECTION_FIELDS},
+            "other_items": 0, "before_listed": [0, 0]}
+
+
+def add_earlier_corrections(counts, row):
+    corrections = row.get("corrections")
+    items = [item for item in corrections if isinstance(item, dict)] if isinstance(corrections, list) else []
+    if not items:
+        return
+    counts["records"] += 1
+    counts["items"] += len(items)
+    for item in items:
+        field, kind = item.get("field"), item.get("kind")
+        if field in CORRECTION_FIELDS and kind in CORRECTION_KINDS:
+            counts["values"][field][kind] += 1
+            if kind in CORRECTION_CHANGED:
+                counts["before_listed"][1] += 1
+                counts["before_listed"][0] += bool(str(item.get("listed") or "").strip())
+        else:
+            counts["other_items"] += 1
+
+
 def summarize_overview(rows, marks=None):
     statuses = Counter()
     papers, v2_papers = set(), set()
@@ -543,6 +578,7 @@ def summarize_overview(rows, marks=None):
     values = {metric: [] for metric in METRIC_UNITS}
     class_values = {metric: defaultdict(list) for metric in METRIC_UNITS}
     v2_records = with_paper = checked_accepted = marked = 0
+    earlier = new_earlier_corrections()
     for row in rows:
         status = row.get("verification_status")
         if not isinstance(status, str):
@@ -558,6 +594,8 @@ def summarize_overview(rows, marks=None):
             v2_papers |= keys
             for key in keys:
                 v2_paper_values[key] += paper_values(row)
+        else:
+            add_earlier_corrections(earlier, row)
         if marks is not None:
             mark = marks.get(str(row.get("measurement_key") or row.get("record_key") or ""))
             marked += mark is not None
@@ -644,6 +682,8 @@ def summarize_overview(rows, marks=None):
         grid = by_class(values[metric], class_values[metric])
         if grid and summary.get("n"):
             summary["by_class"] = grid
+    if earlier["records"]:
+        overview["earlier_corrections"] = earlier
     return overview, dict(statuses)
 
 
@@ -674,9 +714,11 @@ AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_
 # The first-comparison and blind fields are copied for reference only: the page reads none of them for a headline.
 AGREEMENT_RANGES = ("first_agree_unexposed_ci95",)
 AGREEMENT_RANGE = re.compile(r"^\d+(?:\.\d+)?-\d+(?:\.\d+)?$")
-# Stats figures 3-5 (design spec section 6), when the CatLog side writes them into the quality object: nested objects of
-# whole counts only (anything else in them is dropped), copied as they are; the page checks how they add up.
-QUALITY_FIGURES = ("db_compare", "earlier_corrections", "replaced")
+# Stats part 7's earlier figures, when the CatLog side writes them into the quality object: nested objects of whole
+# counts only (anything else in them is dropped), copied as they are; the page checks how they add up. The comparison
+# with the databases is the manifest's summary.database_comparison (the page reads no db_compare), and the earlier
+# version's corrections are counted from the Full data (overview.earlier_corrections), this copy being the fallback.
+QUALITY_FIGURES = ("earlier_corrections", "replaced")
 # The human-review headline (the user, 2026-10-13): quality.review, what the reviewers' own files say, one object per
 # catalog reviewed ("v1": CatLog v1 entries; "v2" once reviewers check CatLog v2 entries). Each keeps its numbers
 # (entries, papers, value_correct_pct, value_missing, ...), its short strings and the other_by_kind map (a kind of other
