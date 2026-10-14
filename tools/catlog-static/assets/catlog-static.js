@@ -5085,10 +5085,13 @@
         const next = perPaper.bins[index + 1];
         const label = next === undefined ? `${formatInteger(low)} or more` : next - 1 === low ? formatInteger(low) : `${formatInteger(low)}–${formatInteger(next - 1)}`;
         const count = perPaper.papers[index];
+        // "1 value: 6 papers", "2–4 values: 1 paper" (the screen reader's line and the tooltip)
+        const values = `${label} ${low === 1 && next === 2 ? "value" : "values"}`;
+        const papers = `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
         return { key: `values_${low}`, count, label: escapeHtml(label),
-          segments: [{ part: "catlog", count, title: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"} (${statsShare(count, papersRead)})` }],
+          segments: [{ part: "catlog", count, title: `${values}: ${papers} (${statsShare(count, papersRead)})` }],
           parts: [{ text: formatInteger(count) }, { text: statsShare(count, papersRead), className: "stats-muted" }],
-          text: `${label} values: ${formatInteger(count)} ${count === 1 ? "paper" : "papers"}.` };
+          text: `${values}: ${papers}.` };
       });
       // the first rows hold no paper on a small snapshot; the last row is shown only with papers in it
       while (rows.length > 1 && !rows[rows.length - 1].count) rows.pop();

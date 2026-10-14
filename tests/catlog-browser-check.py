@@ -1021,6 +1021,10 @@ def check_stats_more(driver, browser, overview, total):
     rows = [int(row.get_attribute("data-count")) for row in driver.find_elements(By.CSS_SELECTOR, "[data-figure='values-per-paper'] .stats-chart-row")]
     if per_paper:
         assert rows and sum(rows) + per_paper.get("no_values", 0) == overview["from_paper"]["papers"], (rows, per_paper)
+        # The screen reader's line per bar says one value and one paper in the singular ("1 value: 6 papers.").
+        lines = driver.execute_script(
+            "return [...document.querySelectorAll(\"[data-figure='values-per-paper'] .stats-chart-row .visually-hidden\")].map(e => e.textContent)")
+        assert len(lines) == len(rows) and not any(re.search(r"^1 values\b|\b1 papers\b", line) for line in lines), lines
     else:
         assert not rows
     classes = {item["class"]: item for item in overview.get("ec_classes") or []}

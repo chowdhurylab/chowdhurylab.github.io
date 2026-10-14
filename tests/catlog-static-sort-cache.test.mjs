@@ -2131,6 +2131,11 @@ function row(overrides = {}) {
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
     assert.match(more, /<span class="stats-chart-label">2–4<\/span>/);
     assert.match(more, /The 1 paper CatLog has read, by how many kcat, Km and kcat\/Km values CatLog read from each/);
+    // Its screen reader's lines and tooltips say one value and one paper in the singular.
+    assert.match(more, /1 value: 0 papers\./);
+    assert.match(more, /2–4 values: 1 paper\./);
+    assert.match(more, /data-tip="2–4 values: 1 paper \(100\.0%\)"/);
+    assert.doesNotMatch(more, /\b1 values: /);
     // Values by enzyme class: a ridge per class, its median dot and 10–90% line, a link to the class in Browse.
     assert.match(more, /<h3 id="statsClassValuesTitle" class="stats-fig-title">Values by enzyme class<\/h3>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
