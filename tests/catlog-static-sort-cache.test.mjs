@@ -2246,6 +2246,18 @@ function row(overrides = {}) {
   assert.deepEqual([...figureHtml("db-sources").matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["db_uniprot", "db_brenda", "db_strenda"]);
   assert.match(plain(figureHtml("db-values")), /against what UniProt, BRENDA and STRENDA DB list for it/);
   assert.match(figureHtml("db-causes"), /<th scope="col" class="stats-num"><span class="nowrap">UniProt<\/span><\/th>[\s\S]*?data-count="0"><span class="stats-muted">0<\/span>/);
+  assert.doesNotMatch(figureHtml("db-sources"), /lists none of these papers/);
+  // A database that lists none of the papers read gets a data line, not an empty bar or a column of zeros.
+  runtimeManifest.summary.database_comparison.values_by_database.UniProt = { paper_absent: 126951 };
+  api.renderStats();
+  assert.deepEqual([...figureHtml("db-sources").matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["db_brenda", "db_strenda"]);
+  assert.match(figureHtml("db-sources"), /Data ID [^<]*UniProt lists none of these papers\. Shares are given only for a database with 1,000 values or more\./);
+  assert.doesNotMatch(figureHtml("db-causes"), /UniProt<\/span><\/th>/);
+  assert.match(figureHtml("db-causes"), /UniProt lists none of these papers\./);
+  runtimeManifest.summary.database_comparison.values_by_database.SKiD = { paper_absent: 126951 };
+  runtimeManifest.summary.database_comparison.sources.push({ key: "skid", name: "SKiD", display: "SKiD" });
+  api.renderStats();
+  assert.match(figureHtml("db-sources"), /UniProt and SKiD list none of these papers\./);
   // Without that list, a database the counts name that the page does not know is drawn after the known ones by its own name.
   runtimeManifest.summary.database_comparison = databaseComparison();
   runtimeManifest.summary.database_comparison.values_by_database = { "Some DB": { same: 5, paper_absent: 1 }, ...databaseComparison().values_by_database };

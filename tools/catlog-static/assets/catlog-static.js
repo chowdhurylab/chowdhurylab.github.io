@@ -5171,12 +5171,26 @@
     };
   }
 
+  // The compared databases that list none of the papers read (values_by_database: every value of theirs paper_absent),
+  // as a data line ("UniProt lists none of these papers."), or "": such a database gets no empty bar or column of zeros.
+  function statsDatabasesListingNone(comparison, sources) {
+    const byDatabase = comparison?.values_by_database;
+    if (!byDatabase || typeof byDatabase !== "object") return { keys: new Set(), text: "" };
+    const none = sources.filter((source) => {
+      const counts = statsCountMap(statsDatabaseEntry(byDatabase, source));
+      return counts && counts.paper_absent > 0 && Object.entries(counts).every(([kind, count]) => kind === "paper_absent" || !count);
+    });
+    return { keys: new Set(none.map((source) => source.key)),
+      text: none.length ? `${statsListText(none.map((source) => source.display))} ${none.length === 1 ? "lists" : "list"} none of these papers.` : "" };
+  }
+
   // Figure: each database against the values read from the papers it lists (values_by_database), a 100% bar each; the
   // values of papers it does not list are counted beside the bar. Shares only on a base of 1,000 values or more.
   function statsDatabaseSourcesFigure(comparison, sources) {
     const byDatabase = comparison?.values_by_database;
     if (!byDatabase || typeof byDatabase !== "object") return null;
     const rows = [];
+    const none = statsDatabasesListingNone(comparison, sources);
     for (const source of sources) {
       const entry = statsDatabaseEntry(byDatabase, source);
       if (entry === undefined) continue;
@@ -5184,7 +5198,7 @@
       if (!counts) return null;
       const parts = STATS_DATABASE_KINDS.map((kind) => ({ ...kind, count: statsSum(counts, kind.kinds) }));
       const absent = counts.paper_absent || 0;
-      if (!parts.some((item) => item.count) && !absent) continue;
+      if (!parts.some((item) => item.count)) continue;
       const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${statsDatabaseNameHtml(source.display)} does not list` : "";
       rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, dbsrc: source.key }) : "") }));
@@ -5198,7 +5212,7 @@
         axis: statsAxis(100, 25, { percent: true }),
         valueWidth: `calc(${Math.max(...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
       caption: `For each database, how it lists the values read from the papers it lists (the number beside its bar); the values from papers it does not list are counted under the bar. A value counts for every database. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine(rows.some((row) => row.count < STATS_RATE_BASE) ? `Shares are given only for a database with ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
+      data: statsDataLine([none.text, rows.some((row) => row.count < STATS_RATE_BASE) ? `Shares are given only for a database with ${formatInteger(STATS_RATE_BASE)} values or more.` : ""].filter(Boolean).join(" ")),
     };
   }
 
@@ -5312,7 +5326,8 @@
     const causes = Object.entries(byCauseDatabase);
     if (!causes.every(([, map]) => statsCountMap(map))) return null;
     const byDatabase = statsCountMap(corrections.by_database) || {};
-    const columns = sources.map((source) => {
+    const none = statsDatabasesListingNone(comparison, sources);
+    const columns = sources.filter((source) => !none.keys.has(source.key)).map((source) => {
       const families = Object.fromEntries(STATS_CAUSE_FAMILIES.map((family) => [family.key,
         causes.reduce((sum, [cause, map]) => sum + (STATS_CAUSE_FAMILY[cause] === family.key ? statsDatabaseEntry(map, source) || 0 : 0), 0)]));
       const total = statsDatabaseEntry(byDatabase, source);
@@ -5339,7 +5354,7 @@
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
       caption: `Values that correct a database's number, by cause and database. A value corrected in several databases counts for each; All counts each value once. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine(found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here; All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""),
+      data: statsDataLine([none.text, found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here; All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""].filter(Boolean).join(" ")),
     };
   }
 
