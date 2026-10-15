@@ -445,8 +445,11 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-state.disputed { --status-color:var(--st-disputed) }
 .filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
 .filter-chip:hover .chip-x { color:var(--accent) }
+/* Undo and Clear all stand 4px further from the chips than the chips from each other. Clear all's room is the last
+   chip's right margin, so a Clear all that wraps starts its line where the chips do, never 4px in. */
 .filter-chips-undo { margin-right:var(--sp-1); font-size:var(--fs-12) }
-.filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
+.filter-chips-clear { font-size:var(--fs-12) }
+.filter-chip:has(+ .filter-chips-clear) { margin-right:var(--sp-1) }
 /* Undo and Clear all (beside the chips and in the sidebar's heading) and Clear search and filters: targets at least 24px
    tall. */
 :is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }

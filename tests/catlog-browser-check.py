@@ -2719,12 +2719,17 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             click('#activeFilters .filter-chip[data-filter-key="organism"]')
             wait.until(lambda d: state()["undo"])
             wrap = driver.execute_script("""
-                const items = [...document.getElementById('activeFilters').children].map(e => e.getBoundingClientRect());
+                const bar = document.getElementById('activeFilters');
+                const items = [...bar.children].map(e => e.getBoundingClientRect());
                 const overlap = items.some((a, i) => items.slice(i + 1).some(b => a.left < b.right - 0.5 && b.left < a.right - 0.5
                     && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5));
-                return {overlap, inside: items.every(r => r.right <= innerWidth + 0.5), wide: document.documentElement.scrollWidth <= innerWidth + 1};
+                // Each line starts where the bar does (a wrapped Undo or Clear all is not set 4px in).
+                const starts = items.filter((r, i) => i === 0 || r.top >= items[i - 1].bottom - 0.5).map(r => r.left - bar.getBoundingClientRect().left);
+                return {overlap, inside: items.every(r => r.right <= innerWidth + 0.5), wide: document.documentElement.scrollWidth <= innerWidth + 1,
+                        starts};
             """)
             assert not wrap["overlap"] and wrap["inside"] and wrap["wide"], (width, wrap)
+            assert all(abs(start) <= 0.5 for start in wrap["starts"]), (width, wrap)
             driver.save_screenshot(str(OUTPUT / f"{browser}-chips-undo-{width}.png"))
             results[f"phone-{width}"] = True
         set_browse_viewport(driver, browser, 1440, 1000)

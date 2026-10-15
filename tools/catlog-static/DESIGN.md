@@ -270,7 +270,8 @@ stays on Undo while there is more to undo, else goes to Clear all (the search bo
 hands the focus to Undo, the likely next step (the bar's, or the phone sheet's beside it; the sidebar beside the table
 keeps it), once the cleared results are kept; only with nothing to undo does it go where removing the last chip sends it. Sort, rows per page and the page are not filters: only
 an undone Clear all gives back the sort it reset, unless the sort changed since. The chips and Undo wrap within the
-toolbar at any width. Esc closes the panel (beside an open record, the one
+toolbar at any width, each line starting where the chips do: Undo and Clear all stand 4px further from the chips than
+the chips from each other, Clear all's room being the last chip's right margin, so a Clear all that wraps is not set in. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
 every record is prepared in idle moments once the search box or the filters
 get focus.
