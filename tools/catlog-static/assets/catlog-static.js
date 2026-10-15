@@ -7539,9 +7539,11 @@
   function undoFilterChange() {
     const top = state.filterHistory[state.filterHistory.length - 1] || null;
     let entry = top;
-    // Keys typed a moment ago that no pass has applied yet (180ms): Undo takes them back first, to the set the results
-    // show, unless they continue the typing the last step holds (then the whole typing goes, as it would a moment later).
-    if (state.filterTimerPending && state.filterBase) {
+    // A change the results do not show yet (keys typed a moment ago, in their 180ms pause, or a bound applied as it lost
+    // the focus to Undo, its pass still on its way): Undo takes it back first, to the set the results show, unless it
+    // continues the typing the last step holds (then the whole typing goes, as it would a moment later). Either way one
+    // press undoes one change.
+    if (state.filterBase) {
       const current = filterSetSnapshot();
       const typing = state.filterTyping;
       const field = typedFilterField(state.filterBase, current);
@@ -7611,11 +7613,15 @@
     }
     const bar = $("activeFilters");
     if (!bar) return;
-    const html = count || undo || state.filterUndoKeepsPlace
+    const shown = Boolean(count || undo || state.filterUndoKeepsPlace);
+    const undoHtml = shown
       ? `<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${escapeHtml(undoTitle)}" aria-label="${escapeHtml(undoName)}"${undo ? "" : " disabled"}>Undo</button>`
-        + items.map((item) => `<button class="filter-chip tone-${item.tone || filterChipTone(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
+      : "";
+    const restHtml = shown
+      ? items.map((item) => `<button class="filter-chip tone-${item.tone || filterChipTone(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
         + (count ? `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>` : "")
       : "";
+    const html = undoHtml + restHtml;
     if (html === renderedChipsHtml) return;
     // A chip with focus keeps it when the chips are redrawn (or the one now in its place takes it); Undo keeps it while
     // there is more to undo, else Clear all or the last chip takes it.
@@ -7625,7 +7631,18 @@
     const focusedIndex = focused ? [...bar.querySelectorAll("button")].indexOf(focused) : -1;
     renderedChipsHtml = html;
     bar.hidden = !html;
-    bar.innerHTML = html;
+    // Undo keeps its button when the chips are redrawn, so a press that a redraw falls inside (pressed on Undo, released
+    // after a bound left for it was applied) still reaches it.
+    const undoButton = shown && bar.firstElementChild?.hasAttribute?.("data-filter-undo") ? bar.firstElementChild : null;
+    if (undoButton) {
+      undoButton.title = undoTitle;
+      undoButton.setAttribute("aria-label", undoName);
+      undoButton.disabled = !undo;
+      while (undoButton.nextSibling) undoButton.nextSibling.remove();
+      undoButton.insertAdjacentHTML("afterend", restHtml);
+    } else {
+      bar.innerHTML = html;
+    }
     if (focused) {
       const buttons = [...bar.querySelectorAll("button")];
       const enabled = buttons.filter((button) => !button.disabled);

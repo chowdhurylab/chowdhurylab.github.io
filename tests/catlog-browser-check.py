@@ -2631,6 +2631,23 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
         # (the next Undo takes back the ticked Km)
         assert field.get_attribute("value") == "" and state()["undo"] == "Undo the last filter change, back to Source: Read from the paper", state()
         results["undo-typing"] = True
+        # A bound typed and Undo pressed at once: the bound applies as it loses the focus, between press and release, and
+        # the chips are redrawn; the press still reaches Undo and takes back the bound only (one press, one change).
+        open_page(base + "#browse?source=paper")
+        click('#measurementChecklist input[value="km"]')
+        wait.until(lambda d: "metric=km" in fragment() and state()["undo"])
+        bound = driver.find_element(By.ID, "temperatureMinInput")
+        driver.execute_script("const group = arguments[0].closest('details'); if (group) group.open = true;"
+                              " arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", bound)
+        x, y = state()["undoAt"]
+        ActionChains(driver).send_keys("25").perform()
+        driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1})
+        wait.until(lambda d: "tmin=25" in fragment())
+        driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1})
+        wait.until(lambda d: "tmin" not in fragment())
+        assert "metric=km" in fragment() and bound.get_attribute("value") == "", fragment()
+        assert state()["undo"] == "Undo the last filter change, back to Source: Read from the paper", state()
+        results["undo-bound-press"] = True
     if browser == "chrome":
         # The phone sheet's heading: Filters, the count, Clear all, Undo and × on one line, none overlapping; Undo always
         # shows right before × (dimmed with nothing to undo), so Clear all coming and going never moves it: a second tap

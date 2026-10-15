@@ -5138,6 +5138,13 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     await api.ensureCurrentFilters();
     assert.equal(api.browseHash(), shown);
     assert.equal(api.state.filterHistory.length, 7, "nothing kept was undone");
+    // So is a change whose pass has not finished (a bound applied as it lost the focus to Undo): one press, one change.
+    api.applyBrowseParams(new Map(new URLSearchParams("source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nad&phmin=7")));
+    api.state.filterTimerPending = false;
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), shown);
+    assert.equal(api.state.filterHistory.length, 7, "nothing kept was undone");
     // ...unless they continue the typing the last step holds: then the whole typing goes.
     await type("substrate", "source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nadh");
     assert.equal(api.state.filterHistory.length, 8);

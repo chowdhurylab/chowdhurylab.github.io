@@ -257,8 +257,10 @@ Clear all, Back or a link that sets filters; never the address a page opens with
 that change; the page keeps the last 30 sets, in this page only. Typing is one change, not one per pause: while one
 text field (the search, EC, enzyme, organism, substrate, a temperature or pH bound) keeps changing, the set before the
 typing began stays the step, so a word typed slowly goes in one press (a word typed and deleted leaves nothing to
-undo); another change, Undo, Clear all, a chip, Back or leaving the field starts a new step, and keys typed a moment ago
-(still in their 180ms pause) are undone first. It keeps its place however many chips there are, so
+undo); another change, Undo, Clear all, a chip, Back or leaving the field starts a new step, and a change the results
+do not show yet (keys typed a moment ago, still in their 180ms pause, or a bound applied as it loses the focus to Undo)
+is undone first, so one press undoes one change. Its button stays when the chips are redrawn, so a press a redraw falls
+inside is not lost. It keeps its place however many chips there are, so
 pressing it again undoes one more change and never lands on a chip or Clear all. It stays with no filter left (Clear all can be undone, the bar then holds Undo alone),
 and after an Undo the bar keeps it, dimmed once nothing is left, so the table does not move under the pointer. Its name and tooltip say what it gives back ("Undo the last filter
 change, back to Source: Read from the paper; EC 1.1"), the status line says "Filters restored: ..." and the focus
