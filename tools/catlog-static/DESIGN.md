@@ -266,7 +266,9 @@ inside is not lost. It keeps its place however many chips there are, so
 pressing it again undoes one more change and never lands on a chip or Clear all. It stays with no filter left (Clear all can be undone, the bar then holds Undo alone),
 and after an Undo the bar keeps it, dimmed once nothing is left, so the table does not move under the pointer. Its name and tooltip say what it gives back ("Undo the last filter
 change, back to Source: Read from the paper; EC 1.1"), the status line says "Filters restored: ..." and the focus
-stays on Undo while there is more to undo, else goes to Clear all (the search box when no filter is left). Sort, rows per page and the page are not filters: only
+stays on Undo while there is more to undo, else goes to Clear all (the search box when no filter is left). Clear all
+hands the focus to Undo, the likely next step (the bar's, or the phone sheet's beside it; the sidebar beside the table
+keeps it), once the cleared results are kept; only with nothing to undo does it go where removing the last chip sends it. Sort, rows per page and the page are not filters: only
 an undone Clear all gives back the sort it reset, unless the sort changed since. The chips and Undo wrap within the
 toolbar at any width. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of

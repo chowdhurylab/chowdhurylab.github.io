@@ -7603,12 +7603,6 @@
     });
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
     $("filterRailButton")?.setAttribute("aria-label", count ? `Show filters, ${count} active` : "Show filters");
-    // The sidebar's Clear all shows only while a filter is on, as the chips' does; the focus it held stays in the sidebar.
-    const sidebarClear = $("clearButton");
-    if (sidebarClear) {
-      if (!count && document.activeElement === sidebarClear) $("catalogFilters")?.focus?.({ preventScroll: true });
-      sidebarClear.hidden = count === 0;
-    }
     // Undo is enabled while there is a change to undo (also with no filter left: Clear all can be undone); its name says
     // what it gives back. It keeps its place, dimmed when there is nothing to undo, so pressing it again never lands on
     // something else: first in the bar above the table whenever the bar shows (and the bar stays after an Undo that
@@ -7617,14 +7611,21 @@
     const undoLabel = undo ? undoFilterLabel(undo) : "";
     const undoName = undoLabel || "Undo the last filter change";
     const undoTitle = undoLabel || "Nothing to undo";
+    const sidebarClear = $("clearButton");
     const sidebarUndo = $("undoFiltersButton");
     if (sidebarUndo) {
       if (!undo && document.activeElement === sidebarUndo) {
-        (sidebarClear && !sidebarClear.hidden ? sidebarClear : $("catalogFilters"))?.focus?.({ preventScroll: true });
+        (sidebarClear && count ? sidebarClear : $("catalogFilters"))?.focus?.({ preventScroll: true });
       }
       sidebarUndo.disabled = !undo;
       sidebarUndo.setAttribute("aria-label", undoName);
       sidebarUndo.title = undoTitle;
+    }
+    // The sidebar's Clear all shows only while a filter is on, as the chips' does; the focus it held goes to Undo beside
+    // it in the phone sheet, else stays in the sidebar.
+    if (sidebarClear) {
+      if (!count && document.activeElement === sidebarClear) focusUndoAfterClear(sidebarUndo, () => $("catalogFilters")?.focus?.({ preventScroll: true }));
+      sidebarClear.hidden = count === 0;
     }
     const bar = $("activeFilters");
     if (!bar) return;
@@ -7695,6 +7696,13 @@
   // which the next Enter would press), and to the Filters button on a phone.
   function focusAfterLastFilter() {
     (filtersDocked() ? $("globalSearchInput") : filtersToggleButton())?.focus({ preventScroll: true });
+  }
+
+  // After Clear all the focus goes to Undo, the likely next step, where it shows (the bar's, or the phone sheet's beside
+  // Clear all; the sidebar beside the table has none); with nothing to undo, to `otherwise`.
+  function focusUndoAfterClear(undo, otherwise) {
+    if (undo && !undo.disabled && undo.getClientRects?.().length) undo.focus({ preventScroll: true });
+    else otherwise?.();
   }
 
   function renderActiveFilterCount() {
@@ -12126,7 +12134,7 @@
     $("sortSelect").value = "evidence";
     syncSortHeaders();
     resetDetail();
-    applyFiltersInBackground();
+    return applyFiltersInBackground();
   }
 
   function applyPageSize(value) {
@@ -12477,7 +12485,11 @@
       });
       input.addEventListener("blur", () => endFilterTyping(FILTER_KEYS_BY_ID[id]));
     });
-    $("clearButton").addEventListener("click", clearFilters);
+    // (a click does not focus a button in Safari: Undo takes the focus once the cleared results are kept, as it does when
+    // Clear all held it)
+    $("clearButton").addEventListener("click", () => clearFilters().then((applied) => {
+      if (applied && document.body.classList.contains("filters-open")) focusUndoAfterClear($("undoFiltersButton"), null);
+    }));
     $("undoFiltersButton")?.addEventListener("click", undoFilterChange);
     $("activeFilters")?.addEventListener("click", (event) => {
       const chip = event.target?.closest?.("[data-filter-key]");
@@ -12491,8 +12503,10 @@
         return;
       }
       if (event.target?.closest?.("[data-filter-clear]")) {
-        clearFilters();
-        focusAfterLastFilter();
+        // Undo, dimmed until the cleared results are kept, then takes the focus.
+        clearFilters().then((applied) => {
+          if (applied) focusUndoAfterClear($("activeFilters")?.querySelector?.("[data-filter-undo]"), focusAfterLastFilter);
+        });
       }
     });
     // The filter changed last is the one the empty-results note offers to remove.

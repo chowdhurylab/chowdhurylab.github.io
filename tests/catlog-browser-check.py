@@ -2250,8 +2250,9 @@ def check_filters(driver, browser, url, route_label):
         assert chip_keys() == ["ec"]
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: fragment() == "browse?rows=50" and not chip_keys())
-        # With no chip left, focus goes to the search box, never to « Hide filters (the next Enter would press it).
-        assert driver.switch_to.active_element.get_attribute("id") == "globalSearchInput", "Focus after Clear all"
+        # Clear all hands the focus to Undo, the likely next step (never to « Hide filters, nor to the search box, whose
+        # examples would open over the counts).
+        wait.until(lambda d: d.execute_script("return document.activeElement.hasAttribute('data-filter-undo')"))
         driver.execute_script("document.activeElement.blur()")
 
         # 2. Human-checked: the filter sidebar is open beside the table (no dialog, the table stays usable); tick it, and
@@ -2574,11 +2575,13 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     wait.until(lambda d: state()["undo"] is None)
     assert state()["status"].startswith("Filters restored: "), state()
     results["undo-chip"] = True
-    # Clear all can be undone: Undo stays alone in the bar, and Enter on it brings every filter back.
+    # Clear all can be undone: Undo stays alone in the bar and takes the focus (the likely next step; not the search box,
+    # whose examples would open over the counts), and Enter on it brings every filter back.
     click('#activeFilters [data-filter-clear]')
     wait.until(lambda d: not fragment() and state()["undo"] and state()["chips"] == 0)
     assert state()["hidden"] is False, state()
-    driver.execute_script("document.querySelector('#activeFilters [data-filter-undo]').focus()")
+    wait.until(lambda d: state()["focused"] == "undo")
+    assert not driver.execute_script("return Boolean(document.getElementById('searchSuggestions')?.getClientRects().length)")
     ActionChains(driver).send_keys(Keys.ENTER).perform()
     wait.until(lambda d: chip_keys() == keys)
     wait.until(lambda d: state()["undo"] is None)
@@ -2701,6 +2704,8 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             assert sorted(chip_keys()) == sorted(keys), chip_keys()
             driver.find_element(By.ID, "clearButton").click()
             wait.until(lambda d: not fragment() and d.find_element(By.ID, "undoFiltersButton").is_enabled())
+            # Clear all hands the focus to Undo beside it, not to the sheet.
+            wait.until(lambda d: d.execute_script("return document.activeElement.id") == "undoFiltersButton")
             for _ in range(2):
                 click_at(sheet_at)
                 wait.until(lambda d: sorted(chip_keys()) == sorted(keys) and not d.find_element(By.ID, "undoFiltersButton").is_enabled())
