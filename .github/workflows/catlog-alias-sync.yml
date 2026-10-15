@@ -73,7 +73,8 @@ jobs:
           - os: macos-15
             browser: safari
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # Safari's driver is slow and the checks grew with the database comparison (2026-10-15: cut off at 15 minutes while passing)
+    timeout-minutes: 35
     steps:
       - name: Check out the browser test and public site
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
