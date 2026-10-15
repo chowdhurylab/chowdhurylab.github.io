@@ -7337,7 +7337,10 @@
     if (controls.q) add("q", `Search: ${controls.q}`, () => clearInputs("globalSearchInput"));
     if (controls.states.length !== recordStates.length) {
       const names = controls.states.map((value) => stateConfig(value).label);
-      add("status", `Review result: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)));
+      // Each result after its dot, as the table's status cells show it.
+      const namesHtml = controls.states.map((value) => `<span class="chip-state ${stateConfig(value).className}">${escapeHtml(stateConfig(value).label)}</span>`);
+      add("status", `Review result: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)),
+        names.length ? `Review result: ${namesHtml.join(", ")}` : "");
     }
     if (controls.sourceMode !== "all" && !controls.sources.length) {
       add(`source:${controls.sourceMode}`, `Source: ${(controls.sourceMode === "paper" ? SOURCE_CATLOG_LABEL : SOURCE_DATABASES_LABEL).replace(": ", ", ")}`,
@@ -7384,6 +7387,9 @@
       add(`source:${item.value}`, `Source: ${read}`, () => setSourceControls(others.length ? "databases" : "all", others),
         shown ? `Source: ${shown}` : "");
     });
+    items.forEach((item) => {
+      item.tone = filterChipTone(item.key, controls);
+    });
     return items;
   }
 
@@ -7416,16 +7422,32 @@
 
   const CHIP_CLOSE_ICON = '<svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
-  // Each active filter's group, by its key (activeFilterItems): its chip wears the group's colour, the colour of the dot
-  // beside that group in the sidebar (CSS .fg-<group>; colour is never the only carrier: the chip keeps its words).
+  // Each active filter's group, by its key (activeFilterItems).
   const FILTER_GROUPS = {
-    source: "source", status: "review", checked: "review", db: "databases", ec: "ec",
-    q: "text", enzyme: "text", organism: "text", substrate: "text", temperature: "range", ph: "range",
-    metric: "other", variant: "other", caution: "other",
+    source: "source", status: "review", checked: "review", db: "databases",
+    q: "identity", ec: "identity", enzyme: "identity", organism: "identity", substrate: "identity",
+    metric: "measurement", variant: "measurement", temperature: "measurement", ph: "measurement", caution: "caution",
   };
 
   function filterGroup(key) {
-    return FILTER_GROUPS[String(key).split(":")[0]] || "other";
+    return FILTER_GROUPS[String(key).split(":")[0]] || "measurement";
+  }
+
+  // A chip's colour (CSS .tone-<tone>; colour is never the only carrier: the chip keeps its words). An option that has a
+  // colour on this page wears it: a review result its status colour (several results: neutral, each named after its dot),
+  // human-checked green, a database result the colour of its square in the sidebar, a caution amber. Source, the enzyme,
+  // organism, substrate, EC and search fields, and the measurement (type, variant, temperature, pH) wear the colour of the
+  // dot beside their group in the sidebar, colours that mean nothing else on the page.
+  const STATE_TONES = { accepted: "st-accepted", curation_pending: "st-pending", not_verified: "st-unverified", disputed: "st-disputed" };
+  const DATABASE_MARK_TONES = { corrects: "cmp-corrects", differs: "cmp-differs", "not-listed": "cmp-new", same: "cmp-same" };
+
+  function filterChipTone(key, controls = filterControlState()) {
+    const [prefix, value] = String(key).split(":");
+    if (prefix === "status") return controls.states.length === 1 ? STATE_TONES[controls.states[0]] || "neutral" : "neutral";
+    if (prefix === "checked") return "checked";
+    if (prefix === "db") return DATABASE_MARK_TONES[databaseFilters.find((item) => item.value === value)?.mark] || "neutral";
+    const group = filterGroup(key);
+    return ["source", "identity", "measurement", "caution"].includes(group) ? group : "neutral";
   }
 
   // ---- Undo: the filter set before the last change ----
@@ -7521,7 +7543,7 @@
     const bar = $("activeFilters");
     if (!bar) return;
     const html = count || undo
-      ? items.map((item) => `<button class="filter-chip fg-${filterGroup(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
+      ? items.map((item) => `<button class="filter-chip tone-${item.tone || filterChipTone(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
         + (undo ? `<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${escapeHtml(undoLabel)}" aria-label="${escapeHtml(undoLabel)}">Undo</button>` : "")
         + (count ? `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>` : "")
       : "";
@@ -12519,6 +12541,7 @@
       rememberedRecordScroll,
       activeFilterItems,
       filterGroup,
+      filterChipTone,
       renderActiveFilters,
       undoFilterChange,
       clearFilters,

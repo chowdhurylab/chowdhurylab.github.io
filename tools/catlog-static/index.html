@@ -120,27 +120,27 @@
                 <button id="closeFiltersButton" class="icon-button close-filters" type="button" aria-label="Close filters">&times;</button>
               </div>
               <details class="filter-section has-about" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-source" aria-hidden="true"></span>Source</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"></span>Source</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutSource" title="About the sources"><span aria-hidden="true">?</span><span class="visually-hidden">About the sources</span></button>
                 <div class="filter-about" id="aboutSource" hidden></div>
                 <div class="check-stack" id="sourceChecklist"></div>
               </details>
               <details class="filter-section has-about" id="databaseFilterSection" open hidden>
-                <summary class="filter-section-title"><span><span class="group-dot fg-databases" aria-hidden="true"></span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutDatabases" title="About the comparison with the databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the comparison with the databases</span></button>
                 <div class="filter-about" id="aboutDatabases" hidden></div>
                 <div class="check-stack" id="databaseChecklist"></div>
               </details>
               <details class="filter-section has-about" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-review" aria-hidden="true"></span>Review result</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span>Review result</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutStatus" title="About the review results"><span aria-hidden="true">?</span><span class="visually-hidden">About the review results</span></button>
                 <div class="filter-about" id="aboutStatus" hidden></div>
                 <div class="check-stack" id="statusChecklist"></div>
               </details>
               <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-text" aria-hidden="true"></span>Enzyme, organism, substrate</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-identity" aria-hidden="true"></span>Enzyme, organism, substrate</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="field-grid">
-                  <label for="ecFilterInput"><span class="group-dot fg-ec" aria-hidden="true"></span>EC number</label>
+                  <label for="ecFilterInput">EC number</label>
                   <input id="ecFilterInput" type="search" placeholder="e.g. 1.1.1" autocomplete="off" />
                   <label for="enzymeFilterInput">Enzyme</label>
                   <input id="enzymeFilterInput" type="search" placeholder="e.g. lipase" autocomplete="off" />
@@ -151,15 +151,15 @@
                 </div>
               </details>
               <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-other" aria-hidden="true"></span>Measurement type</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Measurement type</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="check-stack" id="measurementChecklist"></div>
               </details>
               <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-other" aria-hidden="true"></span>Wild type or variant</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Wild type or variant</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="check-stack" id="variantChecklist"></div>
               </details>
               <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot fg-range" aria-hidden="true"></span>Assay conditions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Assay conditions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="range-stack">
                   <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
                     <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
@@ -178,7 +178,7 @@
                 </div>
               </details>
               <details class="filter-section">
-                <summary class="filter-section-title"><span><span class="group-dot fg-other" aria-hidden="true"></span>Cautions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <summary class="filter-section-title"><span><span class="group-dot tone-caution" aria-hidden="true"></span>Cautions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="check-stack" id="cautionChecklist"></div>
               </details>
               <div class="filter-footer">
@@ -374,7 +374,7 @@
             <h2 id="guide-find-title">Find records</h2>
             <p>Type an enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI in the search box: <strong>laccase</strong>, <strong>1.10.3.2</strong>, <strong>P11509</strong>, <strong>12514023</strong>. Several words narrow the search (<strong>Trametes laccase</strong>); common names such as human, mouse, yeast or E. coli find the species, and β-lactamase finds beta-lactamase. Gene names are not indexed.</p>
             <dl class="guide-term-list">
-              <div><dt>Filters</dt><dd>Source (read from the paper or not yet <span class="nowrap">re-read</span>, and the databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare with the numbers the enzyme databases list for the same paper (see <a href="#guide-databases">Against the databases</a>).</span> The filters on show above the table, each in the colour of the dot beside its group in the panel; <em>Undo</em> brings back the filters before the last change, <em>Clear all</em> removes them.</dd></div>
+              <div><dt>Filters</dt><dd>Source (read from the paper or not yet <span class="nowrap">re-read</span>, and the databases); review result, with human-checked records; enzyme, organism, substrate and EC number (1.1.1 lists the whole subclass); measurement type (<i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub>, <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>); wild type or variant; temperature and pH range; cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare with the numbers the enzyme databases list for the same paper (see <a href="#guide-databases">Against the databases</a>).</span> The filters in use are shown above the table: a review result or a database result in its own colour, the others in the colour of the dot beside their group in Filters. <em>Undo</em> brings back the filters before the last change and <em>Clear all</em> removes them.</dd></div>
               <div><dt>Sort</dt><dd>By review result (the default), EC number, name or value. A click on a value&rsquo;s column header sorts high to low, a second click low to high; records without the value stay last.</dd></div>
               <div><dt>Share</dt><dd>A filtered view has its own address: copy it from the address bar. So does an open record: the address adds <code>record=</code> and the record ID to the filters.</dd></div>
             </dl>

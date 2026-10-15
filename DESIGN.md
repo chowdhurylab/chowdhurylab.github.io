@@ -3,8 +3,11 @@
 Browse is the working table. Keep its header, search, compact counts, filters,
 record drawer and downloads intact. Stats is a separate page, not a drawer or
 expanding summary that takes space from the table. Browse's active-filter chips
-wear their filter group's Nature BPG colour (a 3px bar and a quiet tint, the
-colour of the dot beside the group in the sidebar; the words stay), and Undo,
+wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
+colour where it has one (a review result's status colour, a database result's
+square, a caution's amber), else the colour of the dot beside its group in the
+sidebar (Source purple, enzyme fields raspberry, measurement olive: colours that
+mean nothing else on the page), and Undo,
 before Clear all, restores the filter set before the last change, Clear all too
 (tools/catlog-static/DESIGN.md, Filters).
 

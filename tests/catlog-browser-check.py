@@ -2436,9 +2436,10 @@ def check_filters(driver, browser, url, route_label):
                 digits = text.replace(".", "").lstrip("0")
                 assert len(digits) <= 4 or "." not in text, (text, title)
                 assert title, text
-        # 9. Each chip wears its filter group's colour (a 3px bar and a quiet tint keeping its words at 4.5:1 or more), the
-        # colour of the dot beside that group in the sidebar; Undo, before Clear all, restores the filter set before the
-        # last change (Clear all too), by mouse and by keyboard, and is gone when there is nothing left to undo.
+        # 9. Each chip wears a colour (a 3px bar and a quiet tint keeping its words at 4.5:1 or more): a review result's or
+        # database result's own colour, a caution's amber, else the colour of the dot beside its group in the sidebar;
+        # Undo, before Clear all, restores the filter set before the last change (Clear all too), by mouse and by
+        # keyboard, and is gone when there is nothing left to undo.
         undo_results = check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment)
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
@@ -2450,21 +2451,34 @@ def check_filters(driver, browser, url, route_label):
 
 
 CHIP_COLOURS_JS = """
-    const rgb = text => (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+    // rgb(...) or, for a tint mixed in CSS (color-mix), color(srgb r g b) with 0-1 channels.
+    const rgb = text => (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number).map(v => text.startsWith('color(') ? v * 255 : v);
     const luminance = c => { const [r, g, b] = rgb(c).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
                              return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
     const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-    return [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
+    const probe = document.createElement('span');
+    document.body.appendChild(probe);
+    const token = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
+    const tokens = Object.fromEntries(['--st-accepted', '--st-pending', '--st-unverified', '--st-not-reviewed', '--st-disputed',
+        '--cmp-same', '--cmp-differs', '--cmp-new', '--chg-magnitude', '--chg-precision', '--caution', '--checked', '--accent',
+        '--bar-neutral'].map(name => [name, token(name)]));
+    probe.remove();
+    const square = mark => { const e = document.querySelector(`#databaseChecklist .db-mark-${mark}`); return e ? getComputedStyle(e).backgroundColor : null; };
+    const chips = [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
         const style = getComputedStyle(chip);
-        const group = [...chip.classList].find(name => name.startsWith('fg-')) || null;
-        const dots = group ? [...document.querySelectorAll(`#catalogFilters .group-dot.${group}`)] : [];
-        return {key: chip.dataset.filterKey, group, bar: style.borderLeftColor, barWidth: style.borderLeftWidth, tint: style.backgroundColor,
+        const tone = [...chip.classList].find(name => name.startsWith('tone-')) || null;
+        const dots = tone ? [...document.querySelectorAll(`#catalogFilters .group-dot.${tone}`)] : [];
+        return {key: chip.dataset.filterKey, tone, bar: style.borderLeftColor, barWidth: style.borderLeftWidth, tint: style.backgroundColor,
                 text: Math.round(contrast(style.color, style.backgroundColor) * 10) / 10,
                 cross: Math.round(contrast(getComputedStyle(chip.querySelector('.chip-x')).color, style.backgroundColor) * 10) / 10,
                 dots: dots.map(dot => ({colour: getComputedStyle(dot).backgroundColor, hidden: dot.getAttribute('aria-hidden'),
                                         shown: dot.getBoundingClientRect().width === 8})),
+                states: [...chip.querySelectorAll('.chip-state')].map(e => getComputedStyle(e, '::before').backgroundColor),
                 words: chip.textContent.trim()};
     });
+    return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed')},
+            plainDots: [...document.querySelectorAll('#catalogFilters .filter-section-title')].filter(title => /^(Review result|Against the databases)/.test(title.textContent.trim()))
+                .map(title => title.querySelectorAll('.group-dot').length)};
 """
 UNDO_STATE_JS = """
     const bar = document.getElementById('activeFilters');
@@ -2482,9 +2496,11 @@ UNDO_STATE_JS = """
 
 
 def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment):
-    """The active-filter chips are colour-coded by filter group (the user, 2026-10-15: "can the filters be different color
-    or sth so that its user friendly to keep track to undo"): each chip's 3px bar is the colour of the dot beside its group
-    in the sidebar, the groups' colours differ, the chip's words read 4.5:1 or more on its tint. Undo comes before Clear
+    """The active-filter chips are colour-coded (the user, 2026-10-15: "can the filters be different color or sth so that
+    its user friendly to keep track to undo"): a chip whose option has a colour on the page wears it (a review result its
+    status colour, human-checked green, a database result its square's colour, a caution amber), the other groups the
+    colour of the dot beside the group in the sidebar, colours that mean nothing else on the page; the chip's words read
+    4.5:1 or more on its tint. Undo comes before Clear
     all once a change is made, says what it gives back, restores the filter set before the last change (a removed chip,
     Clear all; Enter on it too) and is gone when there is nothing more to undo. On a phone the filter sheet's heading has
     it too ("Filters · Undo · Clear all · ×"), nothing overlapping. Clicks are centred first (Safari)."""
@@ -2501,16 +2517,39 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     # Every group at once (no record has them all: the bar then has no Clear all, "Clear search and filters" stands in).
     open_page(base + "#browse?source=paper&checked=1&db=differs&ec=1.1&organism=coli&metric=kcat&tmin=20")
     keys = chip_keys()
-    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)) == len(keys))
-    chips = driver.execute_script(CHIP_COLOURS_JS)
-    groups = {chip["key"]: chip["group"] for chip in chips}
-    assert groups == {"source:paper": "fg-source", "checked": "fg-review", "db:differs": "fg-databases", "ec": "fg-ec",
-                      "organism": "fg-text", "metric:kcat": "fg-other", "temperature": "fg-range"}, groups
+    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == len(keys))
+    page = driver.execute_script(CHIP_COLOURS_JS)
+    chips, tokens = page["chips"], page["tokens"]
+    tones = {chip["key"]: chip["tone"] for chip in chips}
+    assert tones == {"source:paper": "tone-source", "checked": "tone-checked", "db:differs": "tone-cmp-differs", "ec": "tone-identity",
+                     "organism": "tone-identity", "metric:kcat": "tone-measurement", "temperature": "tone-measurement"}, tones
+    plain = {}
     for chip in chips:
         assert chip["barWidth"] == "3px" and chip["text"] >= 4.5 and chip["cross"] >= 3, chip
-        assert chip["dots"] and all(dot["colour"] == chip["bar"] and dot["hidden"] == "true" and dot["shown"] for dot in chip["dots"]), chip
-    assert len({chip["bar"] for chip in chips}) == len(chips), "Each filter group has its own colour: " + str(chips)
-    results["colours"] = {chip["group"]: chip["bar"] for chip in chips}
+        if chip["tone"] in ("tone-source", "tone-identity", "tone-measurement"):
+            assert chip["dots"] and all(dot["colour"] == chip["bar"] and dot["hidden"] == "true" and dot["shown"] for dot in chip["dots"]), chip
+            plain[chip["tone"]] = chip["bar"]
+        else:
+            assert not chip["dots"], chip
+    by_key = {chip["key"]: chip["bar"] for chip in chips}
+    assert by_key["db:differs"] == page["squares"]["differs"] == tokens["--cmp-differs"], (by_key, page["squares"])
+    assert by_key["checked"] == tokens["--checked"], by_key
+    # The three plain groups differ from each other and from every colour that means something on the page.
+    assert len(set(plain.values())) == 3 and not set(plain.values()) & set(tokens.values()), (plain, tokens)
+    # Review result and Against the databases have no group dot: each of their options has its own colour.
+    assert page["plainDots"] == [0, 0], page["plainDots"]
+    # A Review result chip names each result after its status dot (several: a neutral bar); a caution is amber; Not in the
+    # databases wears its square's cyan.
+    open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed")
+    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 3)
+    page = driver.execute_script(CHIP_COLOURS_JS)
+    by_key = {chip["key"]: chip for chip in page["chips"]}
+    assert by_key["status"]["tone"] == "tone-neutral" and by_key["status"]["bar"] == tokens["--bar-neutral"], by_key["status"]
+    assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
+    assert by_key["caution:units"]["bar"] == tokens["--caution"] and by_key["caution:units"]["dots"], by_key["caution:units"]
+    assert by_key["db:not_listed"]["bar"] == page["squares"]["notListed"] == tokens["--cmp-new"], (by_key["db:not_listed"], page["squares"])
+    assert all(chip["text"] >= 4.5 and chip["cross"] >= 3 for chip in page["chips"]), page["chips"]
+    results["colours"] = {**plain, **{chip["key"]: chip["bar"] for chip in page["chips"]}}
     # Nothing to undo on a fresh page: the address's filters are the start. (A set with records, so Clear all shows.)
     start = "browse?source=paper&ec=1.1&organism=coli&metric=kcat&tmin=20"
     open_page(base + "#" + start)

@@ -236,16 +236,21 @@ extractions", read out in full as the sidebar reads them; an EC class "EC 1", as
 trailing dot), followed by Undo and Clear all (with no matching
 records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
 button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
-least); the count beside Filters is the number of chips. Each chip wears its filter group's colour (the user,
+least); the count beside Filters is the number of chips. Each chip wears a colour (the user,
 2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to undo"): a 3px bar
-at its left in the group's Nature BPG colour, a quiet tint of it behind the words and a lighter line round it, the
-colour of the 8px dot (aria-hidden, a faint 1px ring so the light ones show on white) beside that group's title in the
-sidebar, hung in the 16px gutter so the titles keep their width and wrap where they did: Source navy, Review result (human-checked too) green, Against the databases cyan, the EC number red (its dot
-beside the EC number's label), search, enzyme, organism and substrate salmon (the dot beside "Enzyme, organism,
-substrate"), the temperature and pH ranges slate (Assay conditions), and the rest brown (Measurement type, Wild type
-or variant, Cautions). Colour is never the only carrier: the chip keeps its words. Of two near hues the darker's tint
-is deeper (navy and slate, red and salmon, green and cyan), so neighbouring chips read apart; on every tint the words
-read 13:1 or more and the × 4.7:1. Undo shows once a change of the filters reaches the results (a box ticked, a field
+at its left, a quiet tint of it behind the words (12%) and a lighter line round it (45%). A chip whose option already
+has a colour on the page wears that colour, so a colour means one thing everywhere: a review result its status colour
+(Accepted navy, Not confirmed salmon, Not checked slate, Disputed dark red; a chip naming several results is neutral grey
+and names each result after its status dot, as the table does), Only human-checked green, a database result the colour
+of its square in the sidebar (Corrects a value red, Different number brown, Not in the databases cyan, All values the
+same green; Same, other label and Corrected earlier neutral grey), a caution amber. Review result and Against the
+databases therefore have no dot beside their title. The ten BPG colours all name a review result, a database result or
+a kind of change on this page, so the three groups without a colour of their own take colours that mean nothing else
+here (not BPG): Source purple, the enzyme, organism, substrate, EC number and search raspberry (the dot beside
+"Enzyme, organism, substrate"), and the measurement olive (Measurement type, Wild type or variant, Assay conditions).
+The 8px dot beside a group's title (aria-hidden, a faint 1px ring) is hung in the 16px gutter, so the titles keep
+their width and wrap where they did; Cautions has an amber one. Colour is never the only carrier: the chip keeps its words. The darker colours give the deeper
+tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo shows once a change of the filters reaches the results (a box ticked, a field
 typed, a chip removed, Clear all, Back or a link that sets filters; never the address a page opens with) and
 restores the set before it; the page keeps the last 30 sets, in this page only. It stays with no filter left (Clear all
 can be undone, the bar then holds Undo alone). Its name and tooltip say what it gives back ("Undo the last filter
@@ -499,7 +504,7 @@ its unit on a second line (2px below the name, clear of its subscript), as the t
 values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
 The phone filter sheet ends with a "Show N records" button. Filter chips use
-their group's tint, line and 3px bar (Filters, above), 12px text, and wrap within the toolbar.
+their colour's tint, line and 3px bar (Filters, above), 12px text, and wrap within the toolbar.
 
 White and neutral surfaces carry the data. One accent (--accent, 7.4:1) marks
 links, selection, buttons and the focus ring (2px, 2px offset). Status uses a
@@ -509,8 +514,9 @@ Not reviewed (the word says Not checked for both; its title names which),
 disputed dark red; the light salmon and tan dots carry a 1px darker ring. The
 filter's ticks use the status colour, or a darker form where it is light
 (salmon's ring colour, a darker slate), so a ticked box stands out on white and
-does not look disabled. The filter groups have their own BPG colours (--fg-*, chips and the sidebar's group dots
-only; the site has one light theme, so there are no dark-mode forms). Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
+does not look disabled. The filter chips reuse these colours only for the options they name (Filters, above);
+Source, the enzyme fields and the measurement take three colours outside BPG that mean nothing else on the page (--fg-*,
+chips and the sidebar's group dots only; the site has one light theme, so there are no dark-mode forms). Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
 "human-checked": a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records

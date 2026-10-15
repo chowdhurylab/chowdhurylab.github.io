@@ -5001,25 +5001,41 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.applyBrowseParams(new Map(new URLSearchParams("status=accepted,curation_pending,not_verified")));
   assert.equal(api.browseHash(), "", "every review result ticked");
 
-  // Each active filter's chip wears its group's colour (fg-<group>, the colour of the dot beside that group in the
-  // sidebar); its words stay. Undo (before Clear all) restores the filter set before the last change, Clear all too; its
-  // name says what it gives back; the sort comes back only with the Clear all that reset it (the user, 2026-10-15: "can
-  // the filters be different color or sth so that its user friendly to keep track to undo").
+  // Each active filter's chip wears a colour (tone-<tone>); its words stay. An option that has a colour on the page wears
+  // it (a review result its status colour, human-checked green, a database result its square's, a caution amber); the
+  // other groups wear the colour of the dot beside their group in the sidebar. Undo (before Clear all) restores the
+  // filter set before the last change, Clear all too; its name says what it gives back; the sort comes back only with the
+  // Clear all that reset it (the user, 2026-10-15: "can the filters be different color or sth so that its user friendly
+  // to keep track to undo").
   {
     assert.deepEqual(["source:paper", "status", "checked", "db:differs", "ec", "q", "enzyme", "organism", "substrate", "temperature", "ph",
       "metric:kcat", "variant:wild", "caution:units", "anything"].map(api.filterGroup),
-    ["source", "review", "review", "databases", "ec", "text", "text", "text", "text", "range", "range", "other", "other", "other", "other"]);
+    ["source", "review", "review", "databases", "identity", "identity", "identity", "identity", "identity", "measurement", "measurement",
+      "measurement", "measurement", "caution", "measurement"]);
+    const tones = (address, keys) => {
+      api.applyBrowseParams(new Map(new URLSearchParams(address)));
+      const controls = api.filterControlState();
+      return keys.map((key) => api.filterChipTone(key, controls));
+    };
+    assert.deepEqual(tones("status=disputed&caution=none", ["status", "checked", "caution:none", "source:brenda", "ec", "tmin"]),
+      ["st-disputed", "checked", "caution", "source", "identity", "measurement"]);
+    assert.deepEqual(tones("status=accepted,curation_pending", ["status"]), ["neutral"], "several results: each is named after its dot");
+    assert.deepEqual(tones("status=curation_pending", ["status"]), ["st-pending"]);
+    assert.deepEqual(["db:corrects", "db:differs", "db:other_label", "db:not_listed", "db:all_not_listed", "db:all_same", "db:earlier"]
+      .map((key) => api.filterChipTone(key)), ["cmp-corrects", "cmp-differs", "neutral", "cmp-new", "cmp-new", "cmp-same", "neutral"]);
+    await keysFor("status=accepted,curation_pending");
+    assert.match(element("activeFilters").innerHTML, /^<button class="filter-chip tone-neutral" type="button" data-filter-key="status" title="Remove filter: Review result: Accepted, Not confirmed" aria-label="Remove filter: Review result: Accepted, Not confirmed"><span>Review result: <span class="chip-state accepted">Accepted<\/span>, <span class="chip-state review">Not confirmed<\/span><\/span>/);
     const bar = () => element("activeFilters").innerHTML;
     api.state.filterHistory.length = 0;
     api.state.filterBase = null;
     await keysFor("source=paper");
     assert.equal(api.state.filterHistory.length, 0, "the address's filters are the start, not a change");
-    assert.match(bar(), /^<button class="filter-chip fg-source" type="button" data-filter-key="source:paper" title="Remove filter: Source: Read from the paper"/);
+    assert.match(bar(), /^<button class="filter-chip tone-source" type="button" data-filter-key="source:paper" title="Remove filter: Source: Read from the paper"/);
     assert.doesNotMatch(bar(), /data-filter-undo/);
     assert.equal(element("activeFilters").hidden, false);
     await keysFor("source=paper&ec=1.1.1&tmin=20");
     assert.equal(api.state.filterHistory.length, 1);
-    assert.deepEqual([...bar().matchAll(/class="filter-chip (fg-\w+)"/g)].map((match) => match[1]), ["fg-source", "fg-ec", "fg-range"]);
+    assert.deepEqual([...bar().matchAll(/class="filter-chip (tone-[\w-]+)"/g)].map((match) => match[1]), ["tone-source", "tone-identity", "tone-measurement"]);
     const back = "Undo the last filter change, back to Source: Read from the paper";
     assert.ok(bar().endsWith(`<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${back}" aria-label="${back}">Undo</button>`
       + '<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>'), bar());

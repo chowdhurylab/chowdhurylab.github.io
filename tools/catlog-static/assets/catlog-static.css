@@ -70,17 +70,16 @@
   --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
   --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
   --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
-  /* Filter groups (the active-filter chips and the dot beside each sidebar group): the BPG colour as a 3px bar and dot,
-     a quiet tint behind the chip's words and a lighter line round it. Tints keep text 13:1 or more and the chip's × 4.7:1;
-     each pair of near hues is set apart by its tint (the darker hue's tint deeper). The site has one light theme. */
-  --fg-source:#3C5488;    --fg-source-tint:#e4e7ef;    --fg-source-line:#bcc4d6;    /* BPG navy: Source */
-  --fg-review:#00A087;    --fg-review-tint:#d0ede9;    --fg-review-line:#85d2c6;    /* BPG green: Review result, human-checked */
-  --fg-databases:#4DBBD5; --fg-databases-tint:#e4f4f9; --fg-databases-line:#9ad8e7; /* BPG cyan: Against the databases */
-  --fg-ec:#E64B35;        --fg-ec-tint:#fbe1de;        --fg-ec-line:#f5b4ab;        /* BPG red: EC number */
-  --fg-text:#F39B7F;      --fg-text-tint:#fdefea;      --fg-text-line:#f8c2b2;      /* BPG salmon: search, enzyme, organism, substrate */
-  --fg-range:#8491B4;     --fg-range-tint:#f0f1f6;     --fg-range-line:#c9cede;     /* BPG slate: temperature and pH ranges */
-  --fg-other:#7E6148;     --fg-other-tint:#efece8;     --fg-other-line:#d3c9c0;     /* BPG brown: measurement type, variant, cautions */
-  --fg-dot-ring:rgba(23,33,32,0.24);  /* a 1px ring that keeps the light dots (cyan, salmon) visible on white */
+  /* Filter chips and the dot beside a sidebar group (tone-* below). A chip whose option already has a colour on this
+     page wears it: a review result its status colour, a database result the colour of its square, a caution amber,
+     human-checked green. The ten BPG colours all name a review result, a database result or a kind of change here, so the
+     three groups without a colour of their own take colours that mean nothing else on the page (not BPG): Source purple,
+     the enzyme, organism, substrate, EC number and search raspberry, the measurement (type, wild type or variant,
+     temperature and pH) olive. The site has one light theme. */
+  --fg-source:#6A3D9A;       /* purple 7.6:1 */
+  --fg-identity:#A20056;     /* raspberry 7.9:1 */
+  --fg-measurement:#6E7F1A;  /* olive 4.5:1 */
+  --fg-dot-ring:rgba(23,33,32,0.24);  /* a 1px ring round the sidebar's group dots */
   /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
   --accent-glow:rgba(36,95,88,0.26);
   --accent-wash:rgba(36,95,88,0.07);
@@ -408,20 +407,38 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-tools .button { white-space:nowrap }
 #openFiltersButton { display:none }
 .table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
-/* Active filters: one removable chip each, then Undo (while there is a change to undo) and Clear all. Each chip wears
-   its filter group's colour (a 3px bar at its left, a quiet tint, a lighter line), the colour of the dot beside that
-   group in the sidebar; its words still say what it is ("Source: Read from the paper"). */
+/* Active filters: one removable chip each, then Undo (while there is a change to undo) and Clear all. Each chip has a
+   3px bar at its left, a quiet tint and a lighter line in its colour: a review result's or database result's own colour,
+   a caution's amber, else the colour of the dot beside its group in the sidebar; its words still say what it is
+   ("Source: Read from the paper"). */
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
-.fg-source { --group:var(--fg-source); --group-tint:var(--fg-source-tint); --group-line:var(--fg-source-line) }
-.fg-review { --group:var(--fg-review); --group-tint:var(--fg-review-tint); --group-line:var(--fg-review-line) }
-.fg-databases { --group:var(--fg-databases); --group-tint:var(--fg-databases-tint); --group-line:var(--fg-databases-line) }
-.fg-ec { --group:var(--fg-ec); --group-tint:var(--fg-ec-tint); --group-line:var(--fg-ec-line) }
-.fg-text { --group:var(--fg-text); --group-tint:var(--fg-text-tint); --group-line:var(--fg-text-line) }
-.fg-range { --group:var(--fg-range); --group-tint:var(--fg-range-tint); --group-line:var(--fg-range-line) }
-.fg-other { --group:var(--fg-other); --group-tint:var(--fg-other-tint); --group-line:var(--fg-other-line) }
-.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--group-line, var(--accent-line)); border-left:3px solid var(--group, var(--accent)); border-radius:var(--radius); background:var(--group-tint, var(--accent-tint)); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
+/* A chip's colour (and the sidebar dot's): --group, with a 12% tint behind the words (text 13:1 or more, the × 4.5:1)
+   and a 45% line round it, the darker colours giving the deeper tints. */
+.tone-source { --group:var(--fg-source) }
+.tone-identity { --group:var(--fg-identity) }
+.tone-measurement { --group:var(--fg-measurement) }
+.tone-caution { --group:var(--caution); --group-tint:var(--caution-tint); --group-line:var(--caution-line) }
+.tone-checked { --group:var(--checked) }
+.tone-st-accepted { --group:var(--st-accepted) }
+.tone-st-pending { --group:var(--st-pending); --group-line:var(--st-pending-ring) }
+.tone-st-unverified { --group:var(--st-unverified) }
+.tone-st-disputed { --group:var(--st-disputed) }
+.tone-cmp-corrects { --group:var(--chg-magnitude) }
+.tone-cmp-differs { --group:var(--cmp-differs) }
+.tone-cmp-new { --group:var(--cmp-new) }
+.tone-cmp-same { --group:var(--cmp-same) }
+/* Same, other label (its square is grey), Corrected earlier (no square) and a Review result chip naming several results
+   (each result's dot is in its words). */
+.tone-neutral { --group:var(--bar-neutral) }
+.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--group-line, color-mix(in srgb, var(--group, var(--accent)) 45%, var(--bg))); border-left:3px solid var(--group, var(--accent)); border-radius:var(--radius); background:var(--group-tint, color-mix(in srgb, var(--group, var(--accent)) 12%, var(--bg))); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--muted) }
+/* The Review result chip names each result after its dot, as the table's status cells do. */
+.chip-state::before { content:""; display:inline-block; width:8px; height:8px; margin:0 4px 1px 0; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent); vertical-align:middle }
+.chip-state.accepted { --status-color:var(--st-accepted) }
+.chip-state.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
+.chip-state.unresolved { --status-color:var(--st-unverified) }
+.chip-state.disputed { --status-color:var(--st-disputed) }
 .filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
 .filter-chip:hover .chip-x { color:var(--accent) }
 .filter-chips-undo { margin-left:var(--sp-1); font-size:var(--fs-12) }
@@ -431,8 +448,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    tall. */
 :is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }
 .active-filters.results-empty .filter-chips-clear { display:none }
-/* The dot beside a sidebar group's title (or the EC number's label), in the colour its chips wear. It hangs in the 16px
-   gutter (4px from the edge, 4px before the words), so the titles keep their width and wrap where they did. */
+/* The dot beside a sidebar group's title, in the colour its chips wear (Review result and Against the databases have
+   none: each option has its own colour). It hangs in the 16px gutter (4px from the edge, 4px before the words), so the
+   titles keep their width and wrap where they did. */
 .group-dot { display:inline-block; width:8px; height:8px; margin:0 4px 1px -12px; border-radius:50%; background:var(--group); box-shadow:inset 0 0 0 1px var(--fg-dot-ring); vertical-align:middle }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
