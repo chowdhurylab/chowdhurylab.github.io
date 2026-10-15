@@ -1064,6 +1064,9 @@ a.stats-total-value:focus-visible { outline:0 }
    database's name and its own column goes, so the table fits 320px in a wide font. */
 .stats-db-paired-note { display:none }
 @media (max-width: 400px) {
+  /* In a wide font (Linux's DejaVu Sans) the paired table still ran past its column at 320px: fixed layout, cells wrap. */
+  .stats-table.stats-db-table { table-layout:fixed; width:100% }
+  .stats-table.stats-db-table :is(th,td) { padding-inline:4px; white-space:normal; overflow-wrap:anywhere }
   .stats-db-table .stats-db-paired-col { display:none }
   .stats-db-table .stats-db-paired-note { display:block; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 }

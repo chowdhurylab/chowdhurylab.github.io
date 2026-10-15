@@ -1900,6 +1900,12 @@
   // CatLog is the one name (round 8): a note written with the version names says what they stand for, as the record
   // panel says it ("the review of CatLog v1 entries": "the review of the earlier version's entries"; a CatLog v2 entry
   // is a record read from the paper).
+  // A snapshot's database lines name STRENDA DB "STRENDA" (catlog-v2 writes its short source names there): the record
+  // shows the name the Source filter, Stats and its own footer use.
+  function databaseWords(text) {
+    return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB");
+  }
+
   function versionWords(text) {
     return String(text)
       .replace(/\b([Tt]he) CatLog v1 (entry|entries)\b/g, "$1 earlier version's $2")
@@ -10918,10 +10924,10 @@
   function databaseFacts(line) {
     const check = line?.database_check && typeof line.database_check === "object" ? line.database_check : {};
     const status = shownText(line?.database_status ?? check.status);
-    const sentence = shownText(line?.database_line ?? check.line, 600);
+    const sentence = databaseWords(shownText(line?.database_line ?? check.line, 600));
     const causeCode = shownText(line?.database_cause ?? check.cause);
     const cause = databaseCauseText(causeCode);
-    const evidence = shownText(line?.database_evidence ?? check.evidence);
+    const evidence = databaseWords(shownText(line?.database_evidence ?? check.evidence));
     if (!status && !sentence && !cause && !evidence) return null;
     const listedSources = line?.database_sources ?? check.sources;
     const sources = (Array.isArray(listedSources) ? listedSources : String(listedSources ?? "").split(/\s*,\s*/))
@@ -11176,7 +11182,7 @@
   function v2DatabaseComparisonHtml(summary, detail, proof, check, paperRef) {
     const rows = v2DatabaseRows(summary, detail, proof, check);
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
-      .map((note) => shownText(note, 600)).filter(Boolean);
+      .map((note) => databaseWords(shownText(note, 600))).filter(Boolean);
     if (!rows.length && !paperNotes.length) return "";
     const isCalculated = (row) => /^calc/i.test(row.facts.status);
     const isSame = (row) => !isCalculated(row) && databaseResult(row.facts.status)?.filter === "same";
