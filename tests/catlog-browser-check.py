@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import threading
 import urllib.request
-from urllib.parse import parse_qsl, unquote_plus, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, unquote_plus, urlencode, urljoin, urlsplit, urlunsplit
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -3486,6 +3486,24 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert order and order["name"] <= order["form"][0] + 1 and order["form"][1] <= order["organism"] + 1 and (
                 order["substrate"] <= order["note"] + 1), f"At 320px a card reads name, variant, organism · substrate, note: {order}"
+            # With nothing to show, the notice's long "Remove Organism: ... (N records)" button wraps inside the table
+            # area (it once ran past the right edge at 320px, its end cut off); the table does not scroll sideways.
+            driver.get("about:blank")
+            driver.get(base + "#browse?caution=units&organism=" + quote("an organism name that no record in CatLog has"))
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '#recordsBody .empty-notice [data-action="remove-last-filter"]'))
+            notice = driver.execute_script("""
+                const wrap = document.getElementById('recordTableWrap');
+                const box = document.querySelector('#recordsBody .empty-notice').getBoundingClientRect();
+                const buttons = [...document.querySelectorAll('#recordsBody .empty-notice button')].map(e => e.getBoundingClientRect());
+                const remove = document.querySelector('#recordsBody .empty-notice [data-action="remove-last-filter"]');
+                return {inside: box.left >= wrap.getBoundingClientRect().left - 0.5 && box.right <= wrap.getBoundingClientRect().right + 0.5
+                            && buttons.every(r => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
+                        wrapped: remove.getBoundingClientRect().height > 40, text: remove.textContent.trim(),
+                        sideways: wrap.scrollWidth - wrap.clientWidth, page: document.documentElement.scrollWidth - innerWidth};
+            """)
+            assert notice["inside"] and notice["wrapped"] and notice["sideways"] <= 1 and notice["page"] <= 1, (
+                f"At 320px the empty-results notice and its buttons wrap inside the table: {notice}")
+            results["phone-320-empty-notice"] = True
             # A card's tag line starts "not re-read" for a record not yet re-read; where the line is too long for the card
             # (with human-checked at 320px), human-checked is the check after the review result, never cut by the "…".
             if isinstance(((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted"), int):

@@ -335,7 +335,9 @@ that PMID, and a DOI (in full or its beginning, with or without doi.org) those
 of its paper: the index carries each record's PMIDs and DOIs from the Full data
 download of the same snapshot. When nothing matches, the table names the
 filters that are on and offers to remove the one set last that brings records
-back (with how many) or to clear everything. The header's tabs are the
+back (with how many) or to clear everything; a button too long for the table's
+width wraps onto a second line inside it (at 320px "Remove Caution: Possible unit
+or magnitude error (144 records)"), never past its edge. The header's tabs are the
 catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
 behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on

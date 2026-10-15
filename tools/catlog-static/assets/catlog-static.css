@@ -565,7 +565,9 @@ td.c-form { display:none }
 
 .loading-row, .loading-row:hover, .empty-row, .empty-row:hover { height:auto; cursor:default; background:var(--bg) }
 .loading-row td, .empty-row td { border-right:0; padding:28px 16px }
-.load-notice { display:grid; gap:6px; max-width:520px; margin:0 auto; border-left:3px solid var(--caution); background:var(--caution-tint); padding:14px 16px; color:var(--caution-ink); font-size:var(--fs-13); line-height:1.5; text-align:left }
+/* One column that may be narrower than its longest button, so a long "Remove ..." button wraps inside a 320px table
+   instead of running past it. */
+.load-notice { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; max-width:520px; margin:0 auto; border-left:3px solid var(--caution); background:var(--caution-tint); padding:14px 16px; color:var(--caution-ink); font-size:var(--fs-13); line-height:1.5; text-align:left }
 .load-notice strong { color:var(--caution-ink) }
 .load-notice .button { width:max-content; margin-top:4px; border-color:var(--caution-line) }
 .load-notice.empty-notice { border-left-color:var(--line-strong); background:var(--surface-2); color:var(--text-2) }
