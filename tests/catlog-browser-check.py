@@ -3841,7 +3841,9 @@ def check_record_databases(driver, browser, base, wait):
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert state["intro"] == EARLIER_CORRECTIONS_INTRO, state["intro"]
             assert ["0.5467 mM⁻¹ s⁻¹", "As stored: 0.546667"] in state["stored"], state["stored"]
-            assert "Before: as BRENDA lists it for this paper" in state["before"], state["before"]
+            # A database is named for the value before only when its number is that value (catlog-v2 export_site._listed,
+            # 2026-10-14): a rounding correction whose database lists the corrected number reads as the earlier version's value.
+            assert any(re.match(r"Before: (as \S.* lists it for this paper|the earlier version's value)", x) for x in state["before"]), state["before"]
             assert state["sideways"] <= 1, f"The earlier corrections scroll sideways at {width}px"
             results[f"databases-earlier-{label}"] = True
     set_browse_viewport(driver, browser, 1440, 1000)
