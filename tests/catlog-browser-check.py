@@ -3694,7 +3694,15 @@ DATABASE_SECTION_STATE = """
             open: note.tagName === 'DETAILS' ? note.open : null, word: strip(note.querySelector('.cmp-result strong')?.textContent)})),
         pointers: [...document.querySelectorAll('#detailContent .values-section .cmp-pointer-link')].map(button => button.dataset.showNote),
         pointerLines: [...document.querySelectorAll('#detailContent .values-section .cmp-pointer')].map(line => strip(line.innerText)),
-        footer: strip(section.querySelector('.cmp-footer')?.textContent),
+        about: strip(section.querySelector('.detail-about .cmp-compared')?.textContent),
+        aboutButton: (() => {
+            const button = section.querySelector(':scope > .section-about');
+            const box = button && document.getElementById(button.getAttribute('aria-controls'));
+            return button ? {expanded: button.getAttribute('aria-expanded'), hidden: Boolean(box?.hidden), inSection: Boolean(box && section.contains(box)),
+                             afterHeading: button.previousElementSibling?.tagName === 'H3'} : null;
+        })(),
+        footers: section.querySelectorAll('.cmp-footer').length,
+        cautions: [...section.querySelectorAll('.cmp-caution-line')].map(e => strip(e.textContent)),
         box: strip(section.querySelector('.cmp-paper-note')?.innerText),
         boxLink: section.querySelector('.cmp-paper-note a')?.getAttribute('href') || null,
         intro: strip(section.querySelector('.cmp-intro')?.textContent),
@@ -3702,8 +3710,8 @@ DATABASE_SECTION_STATE = """
         before: [...section.querySelectorAll('.cmp-before')].map(e => strip(e.textContent)),
         text: strip(section.innerText),
         all: strip(section.textContent).replace(/\\s+/g, ' '),
-        sequence: [...section.querySelectorAll('.cmp-same-line, .cmp-note, .cmp-calc-line, .cmp-footer')]
-            .map(e => e.matches('.cmp-footer') ? 'footer' : e.matches('.cmp-calc-line') ? 'calculated' : e.matches('.cmp-note') ? 'note' : 'same'),
+        sequence: [...section.querySelectorAll('.cmp-same-line, .cmp-note, .cmp-caution-line, .cmp-calc-line')]
+            .map(e => e.matches('.cmp-caution-line') ? 'caution' : e.matches('.cmp-calc-line') ? 'calculated' : e.matches('.cmp-note') ? 'note' : 'same'),
         calculatedMarks: [...section.querySelectorAll('.cmp-calc-line .cmp-mark')].length,
         sideways: panel.scrollWidth - panel.clientWidth,
     };
@@ -3713,36 +3721,73 @@ DATABASE_SECTION_STATE = """
 PRE_C9_LINES = os.environ.get("CATLOG_CHECK_PRE_C9_LINES") == "1"
 
 
-def footer_database_names(footer):
-    """The compared databases a record's footer names ("Compared with the values BRENDA, ... and STRENDA DB list for the
-    same paper."), as it names them."""
-    match = re.match(r"Compared with the values (.+?) lists? for the same paper\.", footer)
-    assert match, footer
+def footer_database_names(about):
+    """The compared databases a record's "?" box names ("Compared with the values BRENDA, ... and STRENDA DB list for the
+    same paper."; until 2026-10-15 a footer on every record), as it names them."""
+    match = re.match(r"Compared with the values (.+?) lists? for the same paper\.", about)
+    assert match, about
     return re.split(r", | and ", match.group(1))
 
 
 def database_names_problems(state):
-    """How section G names the databases, against its footer (the snapshot's list of compared databases, by their display
+    """How section G names the databases, against its "?" box (the snapshot's list of compared databases, by their display
     names), over the whole section with its closed notes: no count of them in words ("None of the five databases": the
-    lines say "the compared databases", round 9 brief C9) and every database named as the footer names it ("STRENDA
+    lines say "the compared databases", round 9 brief C9) and every database named as the box names it ("STRENDA
     DB", never "STRENDA" alone)."""
     text = state["all"]
     problems = []
     counted = re.search(r"\b(?:two|three|four|five|six|seven|eight|nine|ten)\s+(?:compared\s+|core\s+)?databases\b", text, re.I)
     if counted:
         problems.append(f"counts the databases: {counted.group(0)!r}")
-    for name in footer_database_names(state["footer"]):
+    for name in footer_database_names(state["about"]):
         first, _, rest = name.partition(" ")
         if rest and re.search(rf"\b{re.escape(first)}\b(?! {re.escape(rest)})", text):
-            problems.append(f"names {first} without {rest!r} (the footer: {name})")
+            problems.append(f"names {first} without {rest!r} (the \"?\" box: {name})")
     return problems
+
+
+def check_database_caution(state):
+    """The caption's caution ("A different number can mean a different measurement; ...") shows under the notes as one
+    line only on a record with a Different number (the user, 2026-10-15: not on every record)."""
+    differs = any(note["word"] == "Different number" for note in state["notes"])
+    assert state["cautions"] == ([DATABASE_CAPTION_END] if differs else []), (state["cautions"], state["notes"])
+
+
+def open_database_about(driver, wait, width):
+    """Opens the record's Against the databases "?" box (centred first, for Safari) and returns where the "?" and the box
+    sit: the "?" on the heading's line just after its words, the box under the heading, inside the panel."""
+    button = driver.find_element(By.CSS_SELECTOR, "#detailContent .databases-section > .section-about")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", button)
+    button.click()
+    wait.until(lambda d: d.execute_script("""
+        const button = document.querySelector('#detailContent .databases-section > .section-about');
+        const box = document.getElementById(button.getAttribute('aria-controls'));
+        return button.getAttribute('aria-expanded') === 'true' && !box.hidden && box.getBoundingClientRect().height > 0;"""))
+    place = driver.execute_script("""
+        const section = document.querySelector('#detailContent .databases-section');
+        const heading = section.querySelector(':scope > h3').getBoundingClientRect();
+        const words = document.createRange();
+        words.selectNodeContents(section.querySelector(':scope > h3'));
+        const text = words.getBoundingClientRect();
+        const button = section.querySelector(':scope > .section-about').getBoundingClientRect();
+        const box = section.querySelector('.detail-about');
+        const boxRect = box.getBoundingClientRect();
+        const panel = document.getElementById('detailPanel');
+        return {gap: Math.round(button.left - text.right), middle: Math.abs((button.top + button.bottom) / 2 - (heading.top + heading.bottom) / 2),
+                below: Math.round(boxRect.top - heading.bottom), size: [Math.round(button.width), Math.round(button.height)],
+                guide: box.querySelector('a') ? box.querySelector('a').getAttribute('href') : null,
+                sideways: panel.scrollWidth - panel.clientWidth};""")
+    assert 4 <= place["gap"] <= 12 and place["middle"] <= 1.5 and place["size"] == [24, 24], f"The record's \"?\" at {width}px: {place}"
+    assert place["below"] >= 0 and place["sideways"] <= 1, f"The record's \"?\" box at {width}px: {place}"
+    return place
 
 
 def check_record_databases(driver, browser, base, wait):
     """Section G, Against the databases (round 9 brief, section 4): a folding note for each value that is not the same,
     the result's word in its summary; notes on a correction or a different number open (every one from 641px, only the
     first on a phone); one line under the Values table for each of those values, whose button opens its note in view;
-    the compared databases and the caption under them; the paper's note in a box with its link into Browse; an earlier
+    the compared databases and the caption once, in the heading's "?" box (the "?" on the heading's line; the box's link
+    opens the Guide's section), never a footer; the caption under the notes only on a record with a Different number; the paper's note in a box with its link into Browse; an earlier
     record's intro, numbers to at most 4 figures (the stored digits in the title) and Before line; the lines (a value no
     database lists too) name the databases as the footer does, never counted in words; a calculated kcat/Km comes last,
     without a square. No record scrolls sideways.
@@ -3761,7 +3806,7 @@ def check_record_databases(driver, browser, base, wait):
         if problems and PRE_C9_LINES:
             results.setdefault("databases-names-pre-c9", {})[key] = problems
             return "waived (lines before C9)"
-        assert not problems, (f"Record {key}: Against the databases names the databases unlike its footer: {problems}. The "
+        assert not problems, (f"Record {key}: Against the databases names the databases unlike its \"?\" box: {problems}. The "
                               "snapshot's database_line predates C9 (catlog-v2 tools/site_release.py: 'None of the compared "
                               "databases', display names such as STRENDA DB); publish this section only with C9. For a pre-C9 "
                               "test bundle only, CATLOG_CHECK_PRE_C9_LINES=1 lists this instead of failing.")
@@ -3784,14 +3829,26 @@ def check_record_databases(driver, browser, base, wait):
             assert state["pointers"] == [note["field"] for note in changed], (state["pointers"], state["notes"])
             assert all(line.endswith("list another number. See Against the databases ↓") or line.endswith("lists another number. See Against the databases ↓")
                        for line in state["pointerLines"]), state["pointerLines"]
-            assert state["footer"].startswith("Compared with the values ") and state["footer"].endswith(DATABASE_CAPTION_END), state["footer"]
+            # The compared databases and the caption are said once, in the heading's "?" box (closed at first), never as a
+            # footer on every record; the caption shows under the notes only on a record with a Different number.
+            assert state["about"].startswith("Compared with the values ") and state["about"].endswith(DATABASE_CAPTION_END), state["about"]
+            assert state["aboutButton"] == {"expanded": "false", "hidden": True, "inSection": True, "afterHeading": True}, state["aboutButton"]
+            assert state["footers"] == 0, "Against the databases still ends with a footer"
+            check_database_caution(state)
             assert not re.search(r"\bfive\b|Not in any database|Same number, other label|Adds a value", state["text"]), state["text"]
             assert state["sideways"] <= 1, f"Against the databases scrolls sideways at {width}px: {state['sideways']}"
-            # Each database's name keeps one line in the footer (SABIO-RK never breaks at its hyphen, STRENDA DB at its
-            # space).
-            names = "|".join(re.escape(name) for name in footer_database_names(state["footer"]))
-            split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.CSS_SELECTOR, "#detailContent .cmp-footer"), names, False)
-            assert split == [], f"A database's name breaks across lines in the record's footer at {width}px: {split}"
+            # The "?" opens the box under the heading (on the heading's line, after its words), where each database's
+            # name keeps one line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space); it closes again.
+            about = open_database_about(driver, wait, width)
+            names = "|".join(re.escape(name) for name in footer_database_names(state["about"]))
+            split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.CSS_SELECTOR, "#detailContent .detail-about .cmp-compared"), names, False)
+            assert split == [], f"A database's name breaks across lines in the record's \"?\" box at {width}px: {split}"
+            assert about["guide"] in (None, "#guide-databases"), about
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", driver.find_element(By.CSS_SELECTOR, "#detailContent .databases-section > .section-about"))
+            driver.find_element(By.CSS_SELECTOR, "#detailContent .databases-section > .section-about").click()
+            wait.until(lambda d: d.execute_script("""
+                const button = document.querySelector('#detailContent .databases-section > .section-about');
+                return button.getAttribute('aria-expanded') === 'false' && document.getElementById(button.getAttribute('aria-controls')).hidden;"""))
             if label == "desktop":
                 check_database_names(state, DATABASE_NOTES_RECORD)
             # A pointer's button opens its note (a closed one where there is one) in view, its summary focused.
@@ -3810,18 +3867,33 @@ def check_record_databases(driver, browser, base, wait):
             assert driver.execute_script("const p = document.getElementById('detailPanel'); return p.scrollWidth - p.clientWidth") <= 1
             driver.save_screenshot(str(OUTPUT / f"{browser}-record-databases-{label}.png"))
             results[f"databases-notes-{label}"] = True
+            if label == "desktop" and about["guide"]:
+                # The box's link opens the Guide at its Against the databases section.
+                open_database_about(driver, wait, width)
+                link = driver.find_element(By.CSS_SELECTOR, "#detailContent .detail-about a[href='#guide-databases']")
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
+                link.click()
+                wait.until(lambda d: d.execute_script("""
+                    const section = document.getElementById('guide-databases');
+                    const view = document.getElementById('guideView');
+                    return location.hash === '#guide-databases' && section && view && !view.hidden && section.getBoundingClientRect().height > 0;"""))
+                results["databases-about-guide-link"] = True
         if label == "desktop" and open_record(DATABASE_NOT_LISTED_RECORD):
             # A value no compared database lists: its note's line (closed) names the databases as the footer does.
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert "Not in the databases" in [note["word"] for note in state["notes"]], state["notes"]
+            check_database_caution(state)
             results["databases-not-listed-names"] = check_database_names(state, DATABASE_NOT_LISTED_RECORD)
         if label == "desktop" and open_record(DATABASE_CALCULATED_RECORD):
-            # A kcat/Km CatLog calculated is said after the compared values and their notes, just before the footer, with
-            # no square (an empty one read as a box to tick).
+            # A kcat/Km CatLog calculated is said last, after the compared values, their notes and the caution line a
+            # Different number brings, with no square (an empty one read as a box to tick).
             state = driver.execute_script(DATABASE_SECTION_STATE)
             sequence = state["sequence"]
             assert "calculated" in sequence and "note" in sequence, sequence
-            assert sequence[-2:] == ["calculated", "footer"] and sequence.count("calculated") == 1, sequence
+            assert sequence[-1] == "calculated" and sequence.count("calculated") == 1, sequence
+            check_database_caution(state)
+            if state["cautions"]:
+                assert sequence[sequence.index("caution") - 1] == "note" and sequence.count("caution") == 1, sequence
             assert state["calculatedMarks"] == 0, "The calculated kcat/Km line carries a square"
             results["databases-calculated-last"] = True
         if open_record(DATABASE_PAPER_NOTE_RECORD):

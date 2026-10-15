@@ -274,9 +274,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* A group's "?" (beside its chevron) shows its explanations in a quiet box under the title: the options keep one short
    line each. Its 24px circle is centred on the title's first line (top 10px + 12px = 13px + 9px), as the chevron is. */
 .filter-section.has-about > .filter-section-title > span { margin-right:36px }
-.filter-section > .section-about { position:absolute; top:10px; right:38px; display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
-.filter-section > .section-about:hover { border-color:var(--accent); color:var(--accent) }
-.filter-section > .section-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }
+.section-about { display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
+.section-about:hover { border-color:var(--accent); color:var(--accent) }
+.section-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }
+.filter-section > .section-about { position:absolute; top:10px; right:38px }
 .filter-about { display:grid; gap:6px; border-radius:var(--radius); background:var(--surface-2); padding:var(--sp-2) 10px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-about p { margin:0 }
 .filter-about strong { color:var(--text); font-weight:600 }
@@ -754,7 +755,8 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 /* G. Against the databases (round 9 brief, section 4): the paper's note in a box (--surface-2, 1px --line, 13px), the
    values a database lists with the same number in 13px lines, then one folding note per other value (13px summary:
    the parameter, which databases list what, the result; a body of 13px lines and a definition list with 112px labels,
-   96px on phones), a 12px footer and links to records like this one. A 10px square in the result colour beside each
+   96px on phones), a 12px caution line under them on a record with a Different number and links to records like this
+   one; the compared databases are named once, in the heading's "?" box. A 10px square in the result colour beside each
    result word (colour never alone: corrects --chg-magnitude, differs --cmp-differs, same other label --bar-neutral,
    not in the databases --cmp-new, same --cmp-same). Everything wraps at any width. An earlier record's corrections: one
    list like the record's others, the field beside before -> after and the kind of change, then the Before line. */
@@ -784,7 +786,13 @@ p.cmp-note { padding-left:16px }
 .cmp-pointer { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); overflow-wrap:break-word }
 .cmp-pointer + .cmp-pointer { margin-top:2px }
 .cmp-pointer .cmp-pointer-link { font-size:inherit; line-height:inherit; vertical-align:baseline }
-.cmp-footer { margin-top:12px }
+/* The record's "?" (Against the databases) sits 8px after its heading's words, centred on its 20px line (the 24px circle
+   overhangs it by 2px each way); its box opens under the heading. A record with a Different number says the caution
+   in one 12px line under its notes. */
+.detail-section.has-about > h3 { display:inline-block; margin-right:var(--sp-2); vertical-align:top }
+.detail-section.has-about > .section-about { margin:-2px 0; vertical-align:top }
+.detail-about { margin:0 0 12px; overflow-wrap:break-word }
+.cmp-caution-line { margin-top:8px }
 .cmp-intro.section-text { margin-bottom:12px; font-size:var(--fs-13); line-height:var(--lh-13) }
 .cmp-where-once { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); overflow-wrap:break-word }
 .cmp-list { gap:0 }

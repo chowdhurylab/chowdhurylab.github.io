@@ -304,7 +304,7 @@
 
   // The databases CatLog compares each value with, in order, as the snapshot names them: {key (Browse's dbsrc), name (as
   // the values' database_sources and the manifest's counts write it), display, and version, retrieved, rows when the
-  // snapshot gives them}. Every place that names them reads this list (Browse's "?", a record's footer, the Guide,
+  // snapshot gives them}. Every place that names them reads this list (Browse's "?", a record's "?" box, the Guide,
   // Stats): the snapshot's summary.database_comparison.sources when it lists them; else the databases the values'
   // database_sources name, as the snapshot counts them (values_by_database, corrections.by_database), in
   // COMPARED_DATABASE_ORDER with one it does not know after the known ones by its own name; else the six below. Display
@@ -1901,7 +1901,7 @@
   // panel says it ("the review of CatLog v1 entries": "the review of the earlier version's entries"; a CatLog v2 entry
   // is a record read from the paper).
   // A snapshot's database lines name STRENDA DB "STRENDA" (catlog-v2 writes its short source names there): the record
-  // shows the name the Source filter, Stats and its own footer use.
+  // shows the name the Source filter, Stats and its own "?" box use.
   function databaseWords(text) {
     return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB");
   }
@@ -4914,7 +4914,7 @@
   // without them part 7 has only the earlier version's figures, or no heading at all. The databases, their order and
   // their names are comparedDatabases' (the comparison's own list, else the databases its counts name, else six).
   // Nothing here assumes how many databases there are.
-  // The second and third sentences of every part-7 caption (and of the record's own footer).
+  // The second and third sentences of every part-7 caption (the record's "?" box says the last).
   const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
   // Shares are printed only on a base of this many values; below it, counts alone.
   const STATS_RATE_BASE = 1000;
@@ -6779,6 +6779,16 @@
   // A filter group that has grown (its "?" opened) near the foot of the sidebar or the phone sheet scrolls up just enough
   // to show its last option, and never so far that its title goes under the sticky heading: the rail's scroll-padding
   // keeps the heading's room at the top and, on phones, the Show records bar's at the foot.
+  // A "?" (a filter group's or a record section's) shows or hides the box it controls; returns whether it opened it.
+  function toggleSectionAbout(button) {
+    const panel = $(button?.getAttribute?.("aria-controls"));
+    if (!panel) return false;
+    const open = panel.hidden;
+    panel.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+    return open;
+  }
+
   function revealFilterSection(section) {
     const rail = section?.closest?.(".filter-rail");
     if (!rail?.getBoundingClientRect || !rail.scrollBy) return;
@@ -9134,9 +9144,16 @@
   }
 
   // One section of the record panel (design spec 5, B-H): a 14px heading and what follows it.
-  function detailSection(key, title, body) {
-    return `<section class="detail-section ${key}-section" aria-labelledby="detail-${key}-title">`
-      + `<h3 id="detail-${key}-title">${escapeHtml(title)}</h3>${body}</section>`;
+  // A section of the record panel. With `about` (HTML), its heading gets a small round "?" (the filter groups' pattern and
+  // look) that shows the explanation in a quiet box under the heading, and hides it again.
+  function detailSection(key, title, body, { about = "", aboutLabel = "" } = {}) {
+    const heading = `<h3 id="detail-${key}-title">${escapeHtml(title)}</h3>`;
+    if (!about) return `<section class="detail-section ${key}-section" aria-labelledby="detail-${key}-title">${heading}${body}</section>`;
+    const label = escapeHtml(aboutLabel || `About ${title}`);
+    return `<section class="detail-section ${key}-section has-about" aria-labelledby="detail-${key}-title">${heading}`
+      + `<button class="section-about" type="button" aria-expanded="false" aria-controls="detail-${key}-about" title="${label}">`
+      + `<span aria-hidden="true">?</span><span class="visually-hidden">${label}</span></button>`
+      + `<div class="filter-about detail-about" id="detail-${key}-about" hidden>${about}</div>${body}</section>`;
   }
 
   // ---- Record panel: numbers ----
@@ -10827,7 +10844,8 @@
     printed_number_unit_not_applied: "the printed number taken in another unit",
     time_factor: "off by exactly 60 or 3,600",
   };
-  // The second sentence of the caption every comparison figure carries (and the record's footer).
+  // The second sentence of the caption every comparison figure carries (and the record's "?" box; a record with a
+  // Different number says it under its notes too).
   const DATABASE_COMPARED_CAPTION = "A different number can mean a different measurement; it does not by itself mean a database is wrong.";
   const EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints. CatLog has not read this paper again yet.";
   const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
@@ -11169,18 +11187,26 @@
     return links.length ? `<p class="cmp-explore">More like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
-  // The databases compared ("Compared with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same
-  // paper."), from the manifest, and the caption's second sentence.
-  function databaseFooterHtml() {
+  // Said once, not on every record (the user, 2026-10-15): the heading's "?" box names the databases compared ("Compared
+  // with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper."), from the manifest, with the
+  // caption's second sentence and a link to the Guide's section when the Guide has it (renderGuideDatabases).
+  function databaseAboutHtml() {
     const sources = comparedDatabases();
-    return `<p class="section-note cmp-footer">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
-      + `${sources.length > 1 ? "list" : "lists"} for the same paper. ${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>`;
+    const guide = guideDatabaseSummary() || databaseComparisonIndexed()
+      ? `<p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>` : "";
+    return `<p class="cmp-compared">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
+      + `${sources.length > 1 ? "list" : "lists"} for the same paper. ${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>${guide}`;
+  }
+
+  // A record with a Different number says the caution where it applies: one short line under its notes.
+  function databaseCautionLineHtml(rows) {
+    return rows.some((row) => databaseResult(row.facts.status)?.filter === "differs")
+      ? `<p class="section-note cmp-caution-line">${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>` : "";
   }
 
   // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
   // Notes on a value that corrects or differs are open: every one from 641px, only the first on a phone (not remembered).
-  function v2DatabaseComparisonHtml(summary, detail, proof, check, paperRef) {
-    const rows = v2DatabaseRows(summary, detail, proof, check);
+  function v2DatabaseComparisonHtml(summary, detail, rows, paperRef) {
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
       .map((note) => databaseWords(shownText(note, 600))).filter(Boolean);
     if (!rows.length && !paperNotes.length) return "";
@@ -11197,8 +11223,8 @@
     return databasePaperNoteHtml(paperNotes, rows, summary.record_key, paperRef)
       + databaseSameLinesHtml(rows.filter(isSame))
       + (notes.length ? `<div class="cmp-notes">${notes.join("")}</div>` : "")
+      + databaseCautionLineHtml(noteRows)
       + databaseCalculatedLineHtml(rows.filter(isCalculated))
-      + (rows.length ? databaseFooterHtml() : "")
       + databaseMoreLinksHtml(databaseResultKeys(rows), rows, summary.record_key, paperRef);
   }
 
@@ -11434,12 +11460,17 @@
   function databasesSection(summary, detail, { proof = null, check = null, v2Record = false, paper = null } = {}) {
     const paperRef = databasePaperRef(paper);
     let body = "";
-    if (v2Record) body = v2DatabaseComparisonHtml(summary, detail, proof, check, paperRef);
-    else {
+    // The "?" box goes with a record whose values were compared (an earlier record's correction trail compares nothing).
+    let about = "";
+    if (v2Record) {
+      const rows = v2DatabaseRows(summary, detail, proof, check);
+      body = v2DatabaseComparisonHtml(summary, detail, rows, paperRef);
+      if (body && rows.length) about = databaseAboutHtml();
+    } else {
       const corrections = correctionItems(detail, check);
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
     }
-    return body ? detailSection("databases", "Against the databases", body) : "";
+    return body ? detailSection("databases", "Against the databases", body, { about, aboutLabel: "About the comparison with the databases" }) : "";
   }
 
   // A database record the earlier review did not settle, with a paper to check it against: its values are the database's
@@ -11727,6 +11758,9 @@
     });
     document.querySelectorAll("#detailContent [data-show-note]").forEach((button) => {
       button.addEventListener("click", () => showDatabaseNote(button.dataset.showNote));
+    });
+    document.querySelectorAll("#detailContent .section-about").forEach((button) => {
+      button.addEventListener("click", () => toggleSectionAbout(button));
     });
     document.querySelectorAll("#detailContent .detail-section .copy-button").forEach((button) => {
       button.addEventListener("click", () => copyDetailValue(button));
@@ -12197,12 +12231,7 @@
     // sidebar scrolls just enough to keep the group's options in view (revealFilterSection).
     document.querySelectorAll?.("#catalogFilters .section-about").forEach((button) => {
       button.addEventListener("click", () => {
-        const panel = $(button.getAttribute("aria-controls"));
-        if (!panel) return;
-        const open = panel.hidden;
-        panel.hidden = !open;
-        button.setAttribute("aria-expanded", String(open));
-        if (open) revealFilterSection(button.closest?.(".filter-section"));
+        if (toggleSectionAbout(button)) revealFilterSection(button.closest?.(".filter-section"));
       });
     });
     // Source: ticking a database selects From enzyme databases; All records or Read from the paper clears the databases.

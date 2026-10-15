@@ -727,7 +727,19 @@ found at once: A, B, G, C, D, E, F, H.
   “(2.2 ± 0.1) x 10-2”"), "+/-" reads ±, "PubMed XML abstract PMID n" reads
   "Abstract" and "ScienceDirect HTML Table 1" "Table 1".
 - G. Against the databases (only when there is something to say; round 9 brief,
-  section 4). For a record read from the paper, in this order: the paper's note
+  section 4). A record whose values were compared has a 24px round "?" 8px after
+  its heading's words (the filter groups' "?": the same circle, `--line-strong`
+  outline, accent tint while open; centred on the heading's 20px line), which
+  shows and hides a quiet `--surface-2` box under the heading (12px): "Compared
+  with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for
+  the same paper. A different number can mean a different measurement; it does
+  not by itself mean a database is wrong." (names from the manifest, each kept
+  whole on one line: SABIO-RK never breaks at its hyphen nor STRENDA DB at its
+  space; never a counted "five"), then "Against the databases in the Guide →"
+  (#guide-databases, when the Guide has that section). It is said once there,
+  never as a footer on every record (the user, 2026-10-15: "do we need to write
+  it every time?"); an earlier record's correction trail compares nothing and has
+  no "?". For a record read from the paper, in this order: the paper's note
   (database_note: one database lists its values at one factor throughout) in a
   box (`--surface-2`, 1px `--line`, 13px), "Across this paper:" and the note as
   given, then a link to those values: "Show these 12 values →" (q=pmid:<PMID>
@@ -749,10 +761,10 @@ found at once: A, B, G, C, D, E, F, H.
   cause), "Different number" (`--cmp-differs`), "Same, other label"
   (`--bar-neutral`), "Not in the databases" (`--cmp-new`). Its body: the
   snapshot's line whole (never parsed for reasons, factors, numbers or
-  databases; so the lines must name the databases as the footer does, "None of
+  databases; so the lines must name the databases as the "?" box does, "None of
   the compared databases" and "STRENDA DB", round 9 brief C9 on the CatLog
   side: the browser check reads every note, closed ones too, and fails on a
-  count in words or a name the footer spells otherwise), then a definition list (112px labels, 96px on phones, one column
+  count in words or a name the "?" box spells otherwise), then a definition list (112px labels, 96px on phones, one column
   up to 400px) with rows that have content: Cause (database_cause in words,
   including the code-found power_of_ten "off by an exact power of ten",
   printed_number_unit_not_applied "the printed number taken in another unit",
@@ -764,15 +776,13 @@ found at once: A, B, G, C, D, E, F, H.
   open: every one from 641px, only the first on a phone; others closed; nothing
   is remembered. Then a kcat/Km CatLog calculated, once other values are
   compared: "kcat/Km: calculated by CatLog; not compared." (13px, muted, no
-  square: an empty one read as a box to tick), after the compared values. Display names come from the manifest
+  square: an empty one read as a box to tick), after the compared values. A record with a Different number says
+  the caution where it applies: one 12px `--muted` line right under its notes (before the calculated kcat/Km),
+  "A different number can mean a different measurement; it does not by itself mean a database is wrong.", once
+  however many values differ; no other record has it. Display names come from the manifest
   (summary.database_comparison.sources: key, name, display, in order; STRENDA
   reads "STRENDA DB"), else the databases values_by_database counts, else the
-  six in the code (with UniProt). Then a 12px footer: "Compared
-  with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same
-  paper. A different number can mean a different measurement; it does not by
-  itself mean a database is wrong." (names from the manifest, each kept whole on
-  one line: SABIO-RK never breaks at its hyphen nor STRENDA DB at its space;
-  never a counted "five"), and "More like this:" links, each keeping the record open beside the
+  six in the code (with UniProt). Then "More like this:" links, each keeping the record open beside the
   list as its paper's link does (#browse?db=corrects&record=<key>; up to
   1023px it shows the list instead): each Browse option the record matches
   (corrects, differs, other_label, not_listed or, when every value is not
