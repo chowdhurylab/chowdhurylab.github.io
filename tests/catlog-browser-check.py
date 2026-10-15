@@ -2436,12 +2436,155 @@ def check_filters(driver, browser, url, route_label):
                 digits = text.replace(".", "").lstrip("0")
                 assert len(digits) <= 4 or "." not in text, (text, title)
                 assert title, text
+        # 9. Each chip wears its filter group's colour (a 3px bar and a quiet tint keeping its words at 4.5:1 or more), the
+        # colour of the dot beside that group in the sidebar; Undo, before Clear all, restores the filter set before the
+        # last change (Clear all too), by mouse and by keyboard, and is gone when there is nothing left to undo.
+        undo_results = check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment)
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
         raise
     return {"route": route_label, "human_checked": checked, "database_counts": database_results and database_results.get("counts"),
+            "chips_undo": undo_results,
             "database_stats_links": database_results and database_results.get("stats_links"),
             "passed": True}
+
+
+CHIP_COLOURS_JS = """
+    const rgb = text => (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+    const luminance = c => { const [r, g, b] = rgb(c).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+                             return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+    return [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
+        const style = getComputedStyle(chip);
+        const group = [...chip.classList].find(name => name.startsWith('fg-')) || null;
+        const dots = group ? [...document.querySelectorAll(`#catalogFilters .group-dot.${group}`)] : [];
+        return {key: chip.dataset.filterKey, group, bar: style.borderLeftColor, barWidth: style.borderLeftWidth, tint: style.backgroundColor,
+                text: Math.round(contrast(style.color, style.backgroundColor) * 10) / 10,
+                cross: Math.round(contrast(getComputedStyle(chip.querySelector('.chip-x')).color, style.backgroundColor) * 10) / 10,
+                dots: dots.map(dot => ({colour: getComputedStyle(dot).backgroundColor, hidden: dot.getAttribute('aria-hidden'),
+                                        shown: dot.getBoundingClientRect().width === 8})),
+                words: chip.textContent.trim()};
+    });
+"""
+UNDO_STATE_JS = """
+    const bar = document.getElementById('activeFilters');
+    const undo = bar.querySelector('[data-filter-undo]');
+    const clear = bar.querySelector('[data-filter-clear]');
+    const buttons = [...bar.querySelectorAll('button')];
+    return {hidden: bar.hidden, undo: undo ? undo.getAttribute('aria-label') : null, undoTitle: undo ? undo.title : null,
+            undoHeight: undo ? undo.getBoundingClientRect().height : null,
+            beforeClear: Boolean(undo && clear && buttons.indexOf(undo) === buttons.indexOf(clear) - 1),
+            chips: bar.querySelectorAll('.filter-chip').length,
+            focused: document.activeElement && bar.contains(document.activeElement)
+                ? (document.activeElement.hasAttribute('data-filter-undo') ? 'undo' : document.activeElement.hasAttribute('data-filter-clear') ? 'clear' : 'chip') : null,
+            status: (document.getElementById('tableStatus').textContent || '').trim()};
+"""
+
+
+def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment):
+    """The active-filter chips are colour-coded by filter group (the user, 2026-10-15: "can the filters be different color
+    or sth so that its user friendly to keep track to undo"): each chip's 3px bar is the colour of the dot beside its group
+    in the sidebar, the groups' colours differ, the chip's words read 4.5:1 or more on its tint. Undo comes before Clear
+    all once a change is made, says what it gives back, restores the filter set before the last change (a removed chip,
+    Clear all; Enter on it too) and is gone when there is nothing more to undo. On a phone the filter sheet's heading has
+    it too ("Filters · Undo · Clear all · ×"), nothing overlapping. Clicks are centred first (Safari)."""
+    results = {}
+
+    def state():
+        return driver.execute_script(UNDO_STATE_JS)
+
+    def click(selector):
+        element = driver.find_element(By.CSS_SELECTOR, selector)
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
+        element.click()
+
+    # Every group at once (no record has them all: the bar then has no Clear all, "Clear search and filters" stands in).
+    open_page(base + "#browse?source=paper&checked=1&db=differs&ec=1.1&organism=coli&metric=kcat&tmin=20")
+    keys = chip_keys()
+    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)) == len(keys))
+    chips = driver.execute_script(CHIP_COLOURS_JS)
+    groups = {chip["key"]: chip["group"] for chip in chips}
+    assert groups == {"source:paper": "fg-source", "checked": "fg-review", "db:differs": "fg-databases", "ec": "fg-ec",
+                      "organism": "fg-text", "metric:kcat": "fg-other", "temperature": "fg-range"}, groups
+    for chip in chips:
+        assert chip["barWidth"] == "3px" and chip["text"] >= 4.5 and chip["cross"] >= 3, chip
+        assert chip["dots"] and all(dot["colour"] == chip["bar"] and dot["hidden"] == "true" and dot["shown"] for dot in chip["dots"]), chip
+    assert len({chip["bar"] for chip in chips}) == len(chips), "Each filter group has its own colour: " + str(chips)
+    results["colours"] = {chip["group"]: chip["bar"] for chip in chips}
+    # Nothing to undo on a fresh page: the address's filters are the start. (A set with records, so Clear all shows.)
+    start = "browse?source=paper&ec=1.1&organism=coli&metric=kcat&tmin=20"
+    open_page(base + "#" + start)
+    keys = chip_keys()
+    assert state()["undo"] is None, state()
+    # Removing a chip can be undone; Undo sits right before Clear all and names what it gives back.
+    click('#activeFilters .filter-chip[data-filter-key="ec"]')
+    wait.until(lambda d: "ec" not in chip_keys() and state()["undo"])
+    now = state()
+    assert now["beforeClear"] and now["undoHeight"] >= 24 and now["undo"] == now["undoTitle"], now
+    assert now["undo"].startswith("Undo the last filter change, back to ") and "EC 1.1" in now["undo"], now
+    click('#activeFilters [data-filter-undo]')
+    wait.until(lambda d: chip_keys() == keys and "ec=1.1" in fragment())
+    wait.until(lambda d: state()["undo"] is None)
+    assert state()["status"].startswith("Filters restored: "), state()
+    results["undo-chip"] = True
+    # Clear all can be undone: Undo stays alone in the bar, and Enter on it brings every filter back.
+    click('#activeFilters [data-filter-clear]')
+    wait.until(lambda d: not fragment() and state()["undo"] and state()["chips"] == 0)
+    assert state()["hidden"] is False, state()
+    driver.execute_script("document.querySelector('#activeFilters [data-filter-undo]').focus()")
+    ActionChains(driver).send_keys(Keys.ENTER).perform()
+    wait.until(lambda d: chip_keys() == keys)
+    wait.until(lambda d: state()["undo"] is None)
+    # The focus stays in the bar (Undo is gone: Clear all takes it).
+    assert state()["focused"] == "clear", state()
+    results["undo-clear-all"] = True
+    if browser == "chrome":
+        # The phone sheet's heading: Filters, the count, Undo, Clear all and × on one line, none overlapping.
+        for width in (390, 320):
+            set_browse_viewport(driver, browser, width, 844)
+            open_page(base + "#" + start)
+            driver.find_element(By.ID, "openFiltersButton").click()
+            wait.until(lambda d: d.find_element(By.ID, "showResultsButton").is_displayed())
+            assert not driver.find_element(By.ID, "undoFiltersButton").is_displayed()
+            click('#measurementChecklist input[value="km"]')
+            wait.until(lambda d: d.find_element(By.ID, "undoFiltersButton").is_displayed())
+            heading = driver.execute_script("""
+                const items = [...document.querySelector('#catalogFilters .rail-heading').children]
+                    .filter(e => e.getClientRects().length && getComputedStyle(e).display !== 'none').map(e => e.getBoundingClientRect());
+                const overlap = items.some((a, i) => items.slice(i + 1).some(b => a.left < b.right - 0.5 && b.left < a.right - 0.5));
+                const ids = [...document.querySelector('#catalogFilters .rail-heading').children]
+                    .filter(e => e.getClientRects().length && getComputedStyle(e).display !== 'none').map(e => e.id || e.className);
+                const undo = document.getElementById('undoFiltersButton');
+                return {overlap, ids, inside: items.every(r => r.right <= innerWidth + 0.5 && r.left >= -0.5),
+                        oneLine: Math.max(...items.map(r => r.top)) - Math.min(...items.map(r => r.top)) < 20,
+                        label: undo.getAttribute('aria-label'), height: undo.getBoundingClientRect().height};
+            """)
+            assert not heading["overlap"] and heading["inside"] and heading["oneLine"] and heading["height"] >= 24, (width, heading)
+            assert heading["ids"][-3:] == ["undoFiltersButton", "clearButton", "closeFiltersButton"], heading
+            assert heading["label"].startswith("Undo the last filter change, back to "), heading
+            driver.find_element(By.ID, "undoFiltersButton").click()
+            wait.until(lambda d: not d.find_element(By.ID, "undoFiltersButton").is_displayed())
+            assert not driver.find_element(By.CSS_SELECTOR, '#measurementChecklist input[value="km"]').is_selected()
+            assert sorted(chip_keys()) == sorted(keys), chip_keys()
+            driver.find_element(By.ID, "showResultsButton").click()
+            # (the sheet slides away in 200ms: the screenshot below shows the page without it)
+            wait.until(lambda d: d.execute_script("return !document.body.classList.contains('filters-open')"
+                                                  " && getComputedStyle(document.getElementById('catalogFilters')).visibility === 'hidden'"))
+            # The chips wrap within the width, Undo and Clear all with them, nothing overlapping or wider than the screen.
+            click('#activeFilters .filter-chip[data-filter-key="organism"]')
+            wait.until(lambda d: state()["undo"])
+            wrap = driver.execute_script("""
+                const items = [...document.getElementById('activeFilters').children].map(e => e.getBoundingClientRect());
+                const overlap = items.some((a, i) => items.slice(i + 1).some(b => a.left < b.right - 0.5 && b.left < a.right - 0.5
+                    && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5));
+                return {overlap, inside: items.every(r => r.right <= innerWidth + 0.5), wide: document.documentElement.scrollWidth <= innerWidth + 1};
+            """)
+            assert not wrap["overlap"] and wrap["inside"] and wrap["wide"], (width, wrap)
+            driver.save_screenshot(str(OUTPUT / f"{browser}-chips-undo-{width}.png"))
+            results[f"phone-{width}"] = True
+        set_browse_viewport(driver, browser, 1440, 1000)
+    open_page(base + "#browse")
+    return results
 
 
 def check_layout(driver, browser, url, route_label):

@@ -70,6 +70,17 @@
   --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
   --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
   --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
+  /* Filter groups (the active-filter chips and the dot beside each sidebar group): the BPG colour as a 3px bar and dot,
+     a quiet tint behind the chip's words and a lighter line round it. Tints keep text 13:1 or more and the chip's × 4.7:1;
+     each pair of near hues is set apart by its tint (the darker hue's tint deeper). The site has one light theme. */
+  --fg-source:#3C5488;    --fg-source-tint:#e4e7ef;    --fg-source-line:#bcc4d6;    /* BPG navy: Source */
+  --fg-review:#00A087;    --fg-review-tint:#d0ede9;    --fg-review-line:#85d2c6;    /* BPG green: Review result, human-checked */
+  --fg-databases:#4DBBD5; --fg-databases-tint:#e4f4f9; --fg-databases-line:#9ad8e7; /* BPG cyan: Against the databases */
+  --fg-ec:#E64B35;        --fg-ec-tint:#fbe1de;        --fg-ec-line:#f5b4ab;        /* BPG red: EC number */
+  --fg-text:#F39B7F;      --fg-text-tint:#fdefea;      --fg-text-line:#f8c2b2;      /* BPG salmon: search, enzyme, organism, substrate */
+  --fg-range:#8491B4;     --fg-range-tint:#f0f1f6;     --fg-range-line:#c9cede;     /* BPG slate: temperature and pH ranges */
+  --fg-other:#7E6148;     --fg-other-tint:#efece8;     --fg-other-line:#d3c9c0;     /* BPG brown: measurement type, variant, cautions */
+  --fg-dot-ring:rgba(23,33,32,0.24);  /* a 1px ring that keeps the light dots (cyan, salmon) visible on white */
   /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
   --accent-glow:rgba(36,95,88,0.26);
   --accent-wash:rgba(36,95,88,0.07);
@@ -259,6 +270,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .rail-heading #clearButton { margin-left:auto; font-size:var(--fs-13) }
 /* Without a filter on, Clear all is hidden and the « (or ×) keeps the heading's right end. */
 .rail-heading #clearButton[hidden] ~ .icon-button { margin-left:auto }
+/* Undo in the heading is for the phone sheet, which covers the chips (wider, the chips' Undo is in view beside the
+   sidebar); it comes before Clear all and takes the heading's free space. */
+.rail-heading #undoFiltersButton { display:none; margin-left:auto; font-size:var(--fs-13) }
 .rail-heading .icon-button { flex:0 0 32px }
 .filter-toggle { width:max-content }
 .filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }
@@ -359,8 +373,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   #databaseChecklist .check-row { min-height:44px; padding-block:12px }
 }
 
-/* Phones: the filters are a full-screen sheet that slides up, "Filters · Clear all · ×" at the top and "Show N records"
-   at the bottom. */
+/* Phones: the filters are a full-screen sheet that slides up, "Filters · Undo · Clear all · ×" at the top (Undo and
+   Clear all when they have something to do) and "Show N records" at the bottom. */
 .filter-footer { display:none }
 @media (max-width: 640px) {
   /* ...and clear of the sticky 69px "Show N records" footer. */
@@ -372,6 +386,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .filter-footer { display:block; position:sticky; bottom:0; z-index:2; margin-top:auto; border-top:1px solid var(--line); background:var(--bg); padding:var(--sp-3) var(--sp-4) }
   .filter-footer .button { width:100%; min-height:44px; border-color:var(--accent); background:var(--accent); color:var(--bg); font-size:var(--fs-14) }
   .filter-footer .button:hover { border-color:var(--accent-hover); background:var(--accent-hover) }
+  /* "Filters · Undo · Clear all · ×": the sheet covers the chips, so their Undo is here too. */
+  .rail-heading #undoFiltersButton { display:block }
+  .rail-heading #undoFiltersButton:not([hidden]) ~ #clearButton,
+  .rail-heading #undoFiltersButton:not([hidden]) ~ #clearButton[hidden] ~ .icon-button { margin-left:0 }
 }
 
 /* Records: a 48px toolbar (Filters on phones, the active filters as chips and Clear all; Columns, Export and Sort at the
@@ -390,17 +408,32 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-tools .button { white-space:nowrap }
 #openFiltersButton { display:none }
 .table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
-/* Active filters: one removable chip each, then Clear all. */
+/* Active filters: one removable chip each, then Undo (while there is a change to undo) and Clear all. Each chip wears
+   its filter group's colour (a 3px bar at its left, a quiet tint, a lighter line), the colour of the dot beside that
+   group in the sidebar; its words still say what it is ("Source: Read from the paper"). */
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
-.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--accent-line); border-radius:var(--radius); background:var(--accent-tint); color:var(--text); cursor:pointer; padding:2px 6px 2px var(--sp-2); font-size:var(--fs-12); line-height:var(--lh-12) }
+.fg-source { --group:var(--fg-source); --group-tint:var(--fg-source-tint); --group-line:var(--fg-source-line) }
+.fg-review { --group:var(--fg-review); --group-tint:var(--fg-review-tint); --group-line:var(--fg-review-line) }
+.fg-databases { --group:var(--fg-databases); --group-tint:var(--fg-databases-tint); --group-line:var(--fg-databases-line) }
+.fg-ec { --group:var(--fg-ec); --group-tint:var(--fg-ec-tint); --group-line:var(--fg-ec-line) }
+.fg-text { --group:var(--fg-text); --group-tint:var(--fg-text-tint); --group-line:var(--fg-text-line) }
+.fg-range { --group:var(--fg-range); --group-tint:var(--fg-range-tint); --group-line:var(--fg-range-line) }
+.fg-other { --group:var(--fg-other); --group-tint:var(--fg-other-tint); --group-line:var(--fg-other-line) }
+.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--group-line, var(--accent-line)); border-left:3px solid var(--group, var(--accent)); border-radius:var(--radius); background:var(--group-tint, var(--accent-tint)); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--muted) }
-.filter-chip:hover { border-color:var(--accent) }
+.filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
 .filter-chip:hover .chip-x { color:var(--accent) }
+.filter-chips-undo { margin-left:var(--sp-1); font-size:var(--fs-12) }
 .filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
-/* Clear all (beside the chips and in the sidebar's heading) and Clear search and filters: targets at least 24px tall. */
-:is(.filter-chips-clear, #clearButton, #clearResultsButton) { min-height:24px }
+.filter-chips-undo + .filter-chips-clear { margin-left:var(--sp-1) }
+/* Undo and Clear all (beside the chips and in the sidebar's heading) and Clear search and filters: targets at least 24px
+   tall. */
+:is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }
 .active-filters.results-empty .filter-chips-clear { display:none }
+/* The dot beside a sidebar group's title (or the EC number's label), in the colour its chips wear. It hangs in the 16px
+   gutter (4px from the edge, 4px before the words), so the titles keep their width and wrap where they did. */
+.group-dot { display:inline-block; width:8px; height:8px; margin:0 4px 1px -12px; border-radius:50%; background:var(--group); box-shadow:inset 0 0 0 1px var(--fg-dot-ring); vertical-align:middle }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
 .table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }

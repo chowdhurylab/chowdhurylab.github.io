@@ -139,8 +139,9 @@ it was when the record closes (opening it closes the record); from 1600px the
 sidebar, the table and the record sit side by side. From 641 to 1023px it starts
 as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
-"Filters · Clear all · ×" at the top (Clear all while a filter is on) and "Show N records" (accent, 44px) at the
-bottom; Esc, × or that button close it, and Escape never closes the sidebar.
+"Filters · Undo · Clear all · ×" at the top (Undo while there is a change to undo, Clear all while a filter is on;
+the sheet covers the chips, so their Undo is here too, 13px like Clear all, none of them overlapping at 320px) and
+"Show N records" (accent, 44px) at the bottom; Esc, × or that button close it, and Escape never closes the sidebar.
 A control reached with Tab or Shift+Tab scrolls clear of the sticky heading and
 footer, focus ring included (scroll padding 56px at the top, 80px at the bottom
 of the phone sheet).
@@ -157,7 +158,8 @@ stays narrow, with the Columns control (‹ › step one column), Enzyme kept in
 view and edge shadows drawn over the rows inside the visible area (beside
 Enzyme, before the vertical scrollbar). The
 sidebar has a sticky 48px heading ("Filters" 14px/600, the count, Clear all
-while a filter is on, «);
+while a filter is on, «; its Undo shows only in the phone sheet: beside the sidebar the chips' Undo is in view, and a
+wide font has no room for both in 256px);
 its groups are native disclosures with 13px/600 summaries (13px 16px, 44px for
 one line; the chevron and any "?" stay level with the title's first line when a
 wide font wraps it), a soft rule between them, options in 28px rows (14px box, 13px label, the 12px --muted
@@ -231,10 +233,26 @@ and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
 above the table that removes it, in the sidebar's words ("Source: Read from the paper", "Source: OED", "Source: Earlier
 extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's
-trailing dot), followed by Clear all (with no matching
-records, "Clear search and filters" takes its place, so the toolbar has one clear
-button; Clear all here and in the sidebar's heading are 24px tall targets at
-least); the count beside Filters is the number of chips. Esc closes the panel (beside an open record, the one
+trailing dot), followed by Undo and Clear all (with no matching
+records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
+button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
+least); the count beside Filters is the number of chips. Each chip wears its filter group's colour (the user,
+2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to undo"): a 3px bar
+at its left in the group's Nature BPG colour, a quiet tint of it behind the words and a lighter line round it, the
+colour of the 8px dot (aria-hidden, a faint 1px ring so the light ones show on white) beside that group's title in the
+sidebar, hung in the 16px gutter so the titles keep their width and wrap where they did: Source navy, Review result (human-checked too) green, Against the databases cyan, the EC number red (its dot
+beside the EC number's label), search, enzyme, organism and substrate salmon (the dot beside "Enzyme, organism,
+substrate"), the temperature and pH ranges slate (Assay conditions), and the rest brown (Measurement type, Wild type
+or variant, Cautions). Colour is never the only carrier: the chip keeps its words. Of two near hues the darker's tint
+is deeper (navy and slate, red and salmon, green and cyan), so neighbouring chips read apart; on every tint the words
+read 13:1 or more and the × 4.7:1. Undo shows once a change of the filters reaches the results (a box ticked, a field
+typed, a chip removed, Clear all, Back or a link that sets filters; never the address a page opens with) and
+restores the set before it; the page keeps the last 30 sets, in this page only. It stays with no filter left (Clear all
+can be undone, the bar then holds Undo alone). Its name and tooltip say what it gives back ("Undo the last filter
+change, back to Source: Read from the paper; EC 1.1"), the status line says "Filters restored: ..." and the focus
+stays on Undo while there is more to undo, else on Clear all (the search box when no filter is left). Sort, rows per page and the page are not filters: only
+an undone Clear all gives back the sort it reset, unless the sort changed since. The chips and Undo wrap within the
+toolbar at any width. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of
 every record is prepared in idle moments once the search box or the filters
 get focus.
@@ -481,7 +499,7 @@ its unit on a second line (2px below the name, clear of its subscript), as the t
 values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
 The phone filter sheet ends with a "Show N records" button. Filter chips use
-the accent tint with a thin accent line, 12px text, and wrap within the toolbar.
+their group's tint, line and 3px bar (Filters, above), 12px text, and wrap within the toolbar.
 
 White and neutral surfaces carry the data. One accent (--accent, 7.4:1) marks
 links, selection, buttons and the focus ring (2px, 2px offset). Status uses a
@@ -491,7 +509,8 @@ Not reviewed (the word says Not checked for both; its title names which),
 disputed dark red; the light salmon and tan dots carry a 1px darker ring. The
 filter's ticks use the status colour, or a darker form where it is light
 (salmon's ring colour, a darker slate), so a ticked box stands out on white and
-does not look disabled. Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
+does not look disabled. The filter groups have their own BPG colours (--fg-*, chips and the sidebar's group dots
+only; the site has one light theme, so there are no dark-mode forms). Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
 "human-checked": a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records

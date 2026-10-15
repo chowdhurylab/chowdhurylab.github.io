@@ -5001,6 +5001,69 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   api.applyBrowseParams(new Map(new URLSearchParams("status=accepted,curation_pending,not_verified")));
   assert.equal(api.browseHash(), "", "every review result ticked");
 
+  // Each active filter's chip wears its group's colour (fg-<group>, the colour of the dot beside that group in the
+  // sidebar); its words stay. Undo (before Clear all) restores the filter set before the last change, Clear all too; its
+  // name says what it gives back; the sort comes back only with the Clear all that reset it (the user, 2026-10-15: "can
+  // the filters be different color or sth so that its user friendly to keep track to undo").
+  {
+    assert.deepEqual(["source:paper", "status", "checked", "db:differs", "ec", "q", "enzyme", "organism", "substrate", "temperature", "ph",
+      "metric:kcat", "variant:wild", "caution:units", "anything"].map(api.filterGroup),
+    ["source", "review", "review", "databases", "ec", "text", "text", "text", "text", "range", "range", "other", "other", "other", "other"]);
+    const bar = () => element("activeFilters").innerHTML;
+    api.state.filterHistory.length = 0;
+    api.state.filterBase = null;
+    await keysFor("source=paper");
+    assert.equal(api.state.filterHistory.length, 0, "the address's filters are the start, not a change");
+    assert.match(bar(), /^<button class="filter-chip fg-source" type="button" data-filter-key="source:paper" title="Remove filter: Source: Read from the paper"/);
+    assert.doesNotMatch(bar(), /data-filter-undo/);
+    assert.equal(element("activeFilters").hidden, false);
+    await keysFor("source=paper&ec=1.1.1&tmin=20");
+    assert.equal(api.state.filterHistory.length, 1);
+    assert.deepEqual([...bar().matchAll(/class="filter-chip (fg-\w+)"/g)].map((match) => match[1]), ["fg-source", "fg-ec", "fg-range"]);
+    const back = "Undo the last filter change, back to Source: Read from the paper";
+    assert.ok(bar().endsWith(`<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${back}" aria-label="${back}">Undo</button>`
+      + '<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>'), bar());
+    assert.equal(element("undoFiltersButton").hidden, false, "the phone sheet's Undo too");
+    assert.equal(element("undoFiltersButton").getAttribute("aria-label"), back);
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), "#browse?source=paper");
+    assert.equal(api.state.filterHistory.length, 0, "applying the restored set keeps nothing for Undo");
+    assert.equal(element("tableStatus").textContent, "Filters restored: Source: Read from the paper");
+    assert.doesNotMatch(bar(), /data-filter-undo/);
+    assert.equal(element("undoFiltersButton").hidden, true);
+    // Clear all can be undone: with no filter left the bar shows Undo alone; the sort Clear all reset comes back.
+    await keysFor("source=paper&ec=1.1.1&sort=km");
+    api.state.filterHistory.length = 0;
+    api.clearFilters();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), "");
+    assert.equal(element("sortSelect").value, "evidence");
+    assert.equal(bar(), '<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="Undo the last filter change, back to Source: Read from the paper; EC 1.1.1" aria-label="Undo the last filter change, back to Source: Read from the paper; EC 1.1.1">Undo</button>');
+    assert.equal(element("activeFilters").hidden, false);
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), "#browse?ec=1.1.1&source=paper&sort=km");
+    // A sort changed after the change undone stays.
+    api.applyBrowseParams(new Map(new URLSearchParams("ec=1.1.1&source=paper&sort=km&tmin=20")));
+    await api.ensureCurrentFilters();
+    api.applyBrowseParams(new Map(new URLSearchParams("ec=1.1.1&source=paper&sort=enzyme&tmin=20")));
+    await api.ensureCurrentFilters();
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), "#browse?ec=1.1.1&source=paper&sort=enzyme");
+    // At most 30 changes are kept, newest last.
+    for (let index = 0; index < 35; index += 1) await keysFor(`tmin=${index}`);
+    assert.equal(api.state.filterHistory.length, 30);
+    assert.equal(api.state.filterHistory.at(-1).key, "#browse?tmin=33");
+    api.state.filterHistory.length = 0;
+    await keysFor("");
+    api.state.filterHistory.length = 0;
+    api.renderActiveFilters();
+    assert.equal(bar(), "");
+    assert.equal(element("activeFilters").hidden, true);
+  }
+
   // An address's page: page=1, a page that is no page number or no page= at all is the first page. An address that
   // says what the table does not show (rows=37) is rewritten to what it shows.
   {

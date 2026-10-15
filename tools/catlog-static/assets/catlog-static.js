@@ -56,6 +56,9 @@
     pendingPage: 0,
     // Active filter keys, the one changed last at the end.
     filterOrder: [],
+    // Undo: the filter sets before the last changes (newest last), and the set the results show now (filterSetSnapshot).
+    filterHistory: [],
+    filterBase: null,
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
@@ -7413,7 +7416,73 @@
 
   const CHIP_CLOSE_ICON = '<svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
-  // The count beside Filters and one removable chip per active filter above the table, with Clear all.
+  // Each active filter's group, by its key (activeFilterItems): its chip wears the group's colour, the colour of the dot
+  // beside that group in the sidebar (CSS .fg-<group>; colour is never the only carrier: the chip keeps its words).
+  const FILTER_GROUPS = {
+    source: "source", status: "review", checked: "review", db: "databases", ec: "ec",
+    q: "text", enzyme: "text", organism: "text", substrate: "text", temperature: "range", ph: "range",
+    metric: "other", variant: "other", caution: "other",
+  };
+
+  function filterGroup(key) {
+    return FILTER_GROUPS[String(key).split(":")[0]] || "other";
+  }
+
+  // ---- Undo: the filter set before the last change ----
+  // Every change of the filters that reaches the results (a box ticked, a field typed, a chip removed, Clear all, Back or
+  // a link that sets filters) keeps the set before it, the last FILTER_HISTORY_LIMIT of them, in this page only. Undo
+  // (before Clear all, and in the phone sheet's heading) restores the last one. Sort, rows per page and the page are not
+  // filters; only an undone change that also reset the sort (Clear all) gets the sort back, unless it was changed since.
+  const FILTER_HISTORY_LIMIT = 30;
+  const FILTER_HISTORY_SKIP = new Set(["sort", "rows", "page"]);
+
+  // The filter set of the controls: its address keys, as one string, the sort beside it and its chips' words.
+  function filterSetSnapshot(controls = filterControlState()) {
+    const params = browseParamsFromControls(controls).filter(([key]) => !FILTER_HISTORY_SKIP.has(key));
+    return { params, key: browseHash(params), sort: controls.sort, labels: activeFilterItems(controls).map((item) => item.label) };
+  }
+
+  // Called with the controls a filter pass applied: a set that differs from the one shown before keeps that one for Undo.
+  // Nothing is kept before the record index is ready (the address's filters are the start, not a change).
+  function recordFilterHistory(controls) {
+    const now = filterSetSnapshot(controls);
+    const before = state.filterBase;
+    state.filterBase = state.recordsReady ? now : null;
+    if (!before || !state.recordsReady || before.key === now.key) return;
+    state.filterHistory.push({ ...before, sortAfter: now.sort });
+    if (state.filterHistory.length > FILTER_HISTORY_LIMIT) state.filterHistory.shift();
+  }
+
+  // What Undo gives back, for its name and tooltip: "Undo the last filter change, back to EC 1.1; Organism: coli" (a
+  // label may hold commas: "Review result: Accepted, Not confirmed").
+  function filterSetWords(entry) {
+    return entry.labels.length ? entry.labels.join("; ") : "no filters";
+  }
+
+  function undoFilterLabel(entry) {
+    return `Undo the last filter change, back to ${filterSetWords(entry)}`;
+  }
+
+  function undoFilterChange() {
+    const entry = state.filterHistory.pop();
+    if (!entry) return;
+    window.clearTimeout(state.filterTimer);
+    state.filterTimerPending = false;
+    const current = $("sortSelect")?.value || "evidence";
+    const sort = entry.sort !== entry.sortAfter && current === entry.sortAfter ? entry.sort : current;
+    const params = new Map(entry.params);
+    if (sort && sort !== "evidence") params.set("sort", sort);
+    applyBrowseParams(params);
+    state.pendingPage = 0;
+    // The restored set is the one the results will show: applying it keeps nothing for Undo.
+    state.filterBase = filterSetSnapshot();
+    const status = $("tableStatus");
+    if (status) status.textContent = `Filters restored: ${filterSetWords(entry)}`;
+    renderActiveFilters();
+    applyFiltersInBackground();
+  }
+
+  // The count beside Filters and one removable chip per active filter above the table, with Undo and Clear all.
   function renderActiveFilters(items = activeFilterItems()) {
     const keys = items.map((item) => item.key);
     state.filterOrder = state.filterOrder.filter((key) => keys.includes(key));
@@ -7436,24 +7505,42 @@
       if (!count && document.activeElement === sidebarClear) $("catalogFilters")?.focus?.({ preventScroll: true });
       sidebarClear.hidden = count === 0;
     }
+    // Undo shows while there is a change to undo (also with no filter left: Clear all can be undone); its name says
+    // what it gives back.
+    const undo = state.filterHistory[state.filterHistory.length - 1] || null;
+    const undoLabel = undo ? undoFilterLabel(undo) : "";
+    const sidebarUndo = $("undoFiltersButton");
+    if (sidebarUndo) {
+      if (!undo && document.activeElement === sidebarUndo) {
+        (sidebarClear && !sidebarClear.hidden ? sidebarClear : $("catalogFilters"))?.focus?.({ preventScroll: true });
+      }
+      sidebarUndo.hidden = !undo;
+      sidebarUndo.setAttribute("aria-label", undoLabel || "Undo the last filter change");
+      sidebarUndo.title = undoLabel;
+    }
     const bar = $("activeFilters");
     if (!bar) return;
-    const html = count
-      ? items.map((item) => `<button class="filter-chip" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
-        + `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>`
+    const html = count || undo
+      ? items.map((item) => `<button class="filter-chip fg-${filterGroup(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
+        + (undo ? `<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${escapeHtml(undoLabel)}" aria-label="${escapeHtml(undoLabel)}">Undo</button>` : "")
+        + (count ? `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>` : "")
       : "";
     if (html === renderedChipsHtml) return;
-    // A chip with focus keeps it when the chips are redrawn (or the one now in its place takes it).
+    // A chip with focus keeps it when the chips are redrawn (or the one now in its place takes it); Undo keeps it while
+    // there is more to undo, else Clear all or the last chip takes it.
     const focused = bar.contains?.(document.activeElement) ? document.activeElement : null;
     const focusedKey = focused?.dataset?.filterKey || "";
+    const focusedUndo = Boolean(focused?.hasAttribute?.("data-filter-undo"));
     const focusedIndex = focused ? [...bar.querySelectorAll("button")].indexOf(focused) : -1;
     renderedChipsHtml = html;
-    bar.hidden = !count;
+    bar.hidden = !html;
     bar.innerHTML = html;
     if (focused) {
       const buttons = [...bar.querySelectorAll("button")];
-      const target = (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey))
-        || buttons[Math.min(focusedIndex, buttons.length - 1)];
+      const target = focusedUndo
+        ? buttons.find((button) => button.hasAttribute("data-filter-undo")) || buttons.find((button) => button.hasAttribute("data-filter-clear"))
+          || buttons[buttons.length - 1]
+        : (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey)) || buttons[Math.min(focusedIndex, buttons.length - 1)];
       if (target) target.focus({ preventScroll: true });
       else focusAfterLastFilter();
     }
@@ -7768,7 +7855,8 @@
   async function applyFilters({ resetPage = true, runId = null } = {}) {
     const filterRunId = runId == null ? ++state.filterRunId : runId;
     const recordsGeneration = state.recordsGeneration;
-    const filters = currentFilters();
+    const controls = filterControlState();
+    const filters = currentFilters(controls);
     const orderedRecords = await orderedRecordsFor(filters.sort);
     if (
       !orderedRecords
@@ -7777,6 +7865,7 @@
     ) return false;
 
     state.filterFailure = "";
+    recordFilterHistory(controls);
     renderActiveFilterCount();
     state.filtered = orderedRecords.filter((row) => rowMatches(row, filters));
     if (resetPage) state.page = 1;
@@ -12255,11 +12344,16 @@
       });
     });
     $("clearButton").addEventListener("click", clearFilters);
+    $("undoFiltersButton")?.addEventListener("click", undoFilterChange);
     $("activeFilters")?.addEventListener("click", (event) => {
       const chip = event.target?.closest?.("[data-filter-key]");
       if (chip) {
         const chips = [...$("activeFilters").querySelectorAll(".filter-chip")];
         removeActiveFilter(chip.dataset.filterKey, { focusIndex: chips.indexOf(chip) });
+        return;
+      }
+      if (event.target?.closest?.("[data-filter-undo]")) {
+        undoFilterChange();
         return;
       }
       if (event.target?.closest?.("[data-filter-clear]")) {
@@ -12424,6 +12518,10 @@
       rememberRecordScroll,
       rememberedRecordScroll,
       activeFilterItems,
+      filterGroup,
+      renderActiveFilters,
+      undoFilterChange,
+      clearFilters,
       countFacets,
       filterControlState,
       humanCheckedHref,
