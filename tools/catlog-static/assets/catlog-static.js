@@ -59,6 +59,9 @@
     // Undo: the filter sets before the last changes (newest last), and the set the results show now (filterSetSnapshot).
     filterHistory: [],
     filterBase: null,
+    // The filter set Back or Forward is applying (its key), until its pass keeps it: landing on the set Undo would bring
+    // back takes that step off.
+    filterTraversalKey: "",
     filterUndoKeepsPlace: false,
     // The text field being typed in, as one Undo step: { field, entry (the step it holds, once kept), closing }.
     filterTyping: null,
@@ -7258,7 +7261,8 @@
 
   // Back, Forward or an edited address: the controls follow the address, and the records follow when it changed them.
   // A bare #record= address has no filters, as on a fresh load. Returns whether a filter pass started.
-  function applyLocationFilters() {
+  // `traversal`: Back or Forward (popstate, hashchange), not a link followed in this page.
+  function applyLocationFilters({ traversal = false } = {}) {
     const params = RECORD_HASH.test(window.location.hash || "") ? new Map() : browseParamsFromLocation();
     if (!params) return false;
     const before = browseHash();
@@ -7270,7 +7274,10 @@
       if (!state.selectedKey && !recordKeyFromLocation()) syncBrowseUrl();
       return false;
     }
-    if (state.records.length) applyFiltersInBackground({ resetPage: !state.pendingPage });
+    if (state.records.length) {
+      state.filterTraversalKey = traversal ? filterSetSnapshot().key : "";
+      applyFiltersInBackground({ resetPage: !state.pendingPage });
+    }
     return true;
   }
 
@@ -7504,12 +7511,20 @@
     const now = filterSetSnapshot(controls);
     const before = state.filterBase;
     const typing = state.filterTyping;
+    const traversed = state.filterTraversalKey === now.key;
+    state.filterTraversalKey = "";
     state.filterBase = state.recordsReady ? now : null;
     if (typing?.closing) state.filterTyping = null;
     if (!before || !state.recordsReady || before.key === now.key) return;
+    const top = state.filterHistory[state.filterHistory.length - 1];
+    // Back or Forward landing on the set Undo would bring back takes that step off instead of adding the opposite one,
+    // so Back then Forward leaves one step, not two that undo each other.
+    if (traversed && top?.key === now.key) {
+      state.filterHistory.pop();
+      return;
+    }
     const field = typing ? typedFilterField(before, now) : "";
     const sameTyping = Boolean(field) && field === typing.field;
-    const top = state.filterHistory[state.filterHistory.length - 1];
     let entry = null;
     if (sameTyping && typing.entry && typing.entry === top) {
       // Still the same typing: the step keeps the set before it began; back at that set, nothing is left to undo.
@@ -12275,7 +12290,7 @@
       const view = viewFromLocation();
       if (view === "browse") ensureRecordsLoaded();
       renderView(view);
-      const filtering = applyLocationFilters() && state.records.length > 0;
+      const filtering = applyLocationFilters({ traversal: Boolean(event) }) && state.records.length > 0;
       const recordKey = recordKeyFromLocation();
       if (recordKey && (filtering || recordKey !== state.selectedKey)) {
         // Back or Forward to a record the visitor left by a link, a tab or ×: it opens where they left it.

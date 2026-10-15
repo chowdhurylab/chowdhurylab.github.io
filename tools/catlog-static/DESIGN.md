@@ -254,7 +254,9 @@ their width and wrap where they did; Cautions has an amber one. Colour is never 
 tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
-that change; the page keeps the last 30 sets, in this page only. Typing is one change, not one per pause: while one
+that change; the page keeps the last 30 sets, in this page only. Back or Forward that lands on the set Undo would bring
+back takes that step off instead of adding the opposite one, so Back then Forward leaves one step, not two that undo
+each other. Typing is one change, not one per pause: while one
 text field (the search, EC, enzyme, organism, substrate, a temperature or pH bound) keeps changing, the set before the
 typing began stays the step, so a word typed slowly goes in one press (a word typed and deleted leaves nothing to
 undo); another change, Undo, Clear all, a chip, Back or leaving the field starts a new step, and a change the results

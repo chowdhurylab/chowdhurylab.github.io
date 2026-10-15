@@ -2613,6 +2613,24 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     assert sorted(seen[-1]) == sorted(keys) and state()["undoDisabled"], (seen, keys, state())
     assert "km" in fragment() and "variant=wild" in fragment(), fragment()
     results["undo-same-point"] = True
+    # Back then Forward is no change for Undo (the reviewer's case): a record opened from Source and EC 1.1, EC removed,
+    # Back (onto the set Undo would bring back: that step comes off) and Forward again leave one step, EC 1.1, and Undo
+    # then has nothing more to undo instead of taking EC off again.
+    open_page(base + "#browse?source=paper&ec=1.1")
+    click("#recordsBody tr[data-key] .primary-cell")
+    wait.until(lambda d: "record=" in fragment() and d.execute_script("return document.body.classList.contains('detail-open')"))
+    click('#activeFilters .filter-chip[data-filter-key="ec"]')
+    wait.until(lambda d: "ec" not in chip_keys() and "ec=" not in fragment() and state()["undo"])
+    driver.back()
+    wait.until(lambda d: "ec=1.1" in fragment() and "ec" in chip_keys())
+    wait.until(lambda d: state()["undo"] is None)
+    driver.forward()
+    wait.until(lambda d: "ec=" not in fragment() and "ec" not in chip_keys() and state()["undo"])
+    assert state()["undo"] == "Undo the last filter change, back to Source: Read from the paper; EC 1.1", state()
+    click('#activeFilters [data-filter-undo]')
+    wait.until(lambda d: "ec" in chip_keys() and "ec=1.1" in fragment())
+    wait.until(lambda d: state()["undoDisabled"])
+    results["undo-back-forward"] = True
     if browser == "chrome":
         # Typing a word at an ordinary pace (250ms a key: a filter pass after each pause) is one Undo step, not one per
         # pause (lipas, lipa, lip, li, l).

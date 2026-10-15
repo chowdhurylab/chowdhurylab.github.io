@@ -5172,6 +5172,30 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     api.state.filterUndoKeepsPlace = false;
   }
 
+  // Back or Forward landing on the set Undo would bring back takes that step off (the reviewer: Back then Forward left two
+  // steps that undo each other); a link followed in the page that lands there is a change like any other.
+  {
+    const visit = async (hash, traversal) => {
+      window.location.hash = hash;
+      api.applyLocationFilters({ traversal });
+      await api.ensureCurrentFilters();
+      return [...api.state.filterHistory].map((entry) => [...entry.labels].join("; "));
+    };
+    await keysFor("source=paper&ec=1.1");
+    api.state.filterHistory.length = 0;
+    await keysFor("source=paper");
+    assert.equal(api.state.filterHistory.length, 1);
+    assert.deepEqual(await visit("#browse?ec=1.1&source=paper", true), [], "Back onto the set before the change");
+    assert.deepEqual(await visit("#browse?source=paper", true), ["Source: Read from the paper; EC 1.1"], "Forward again: one step");
+    assert.deepEqual(await visit("#browse?ec=1.1&source=paper", false), ["Source: Read from the paper; EC 1.1", "Source: Read from the paper"],
+      "a link is a change");
+    window.location.hash = "";
+    api.state.filterHistory.length = 0;
+    await keysFor("");
+    api.state.filterHistory.length = 0;
+    api.state.filterUndoKeepsPlace = false;
+  }
+
   // An address's page: page=1, a page that is no page number or no page= at all is the first page. An address that
   // says what the table does not show (rows=37) is rewritten to what it shows.
   {
