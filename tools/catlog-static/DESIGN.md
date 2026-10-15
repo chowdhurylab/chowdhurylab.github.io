@@ -168,7 +168,8 @@ count at the right; a label a wide font wraps takes a second line, box and count
 on its first, and never runs into the next row) and 32px fields, their labels in
 a column as wide as the longest. The sidebar is compact (the user, 2026-10-13):
 one short line per option and no help paragraphs; a group with explanations has a
-24px round "?" beside its chevron that shows them in a quiet --surface-2 box under
+24px round "?" beside its chevron (on phones and touch screens a 44px target: its hit area reaches 10px round the
+circle, inside the 44px title row and clear of the chevron) that shows them in a quiet --surface-2 box under
 its title (and hides them again); opened near the foot of the sidebar or the phone sheet, the sidebar scrolls just
 enough to keep the group's options in view, never taking its title under the sticky heading. The panel order: Source (three
 radio buttons: All records, Read from the paper and Not yet re-read: each record labelled by what happened to it, with
@@ -768,7 +769,9 @@ found at once: A, B, G, C, D, E, F, H.
 - G. Against the databases (only when there is something to say; round 9 brief,
   section 4). A record whose values were compared has a 24px round "?" 8px after
   its heading's words (the filter groups' "?": the same circle, `--line-strong`
-  outline, accent tint while open; centred on the heading's 20px line), which
+  outline, accent tint while open; centred on the heading's 20px line; on phones
+  and touch screens a 44px target, as ‹ › × are there, its hit area 10px round
+  the circle and above the section's first line), which
   shows and hides a quiet `--surface-2` box under the heading (12px): "Compared
   with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for
   the same paper. A different number can mean a different measurement; it does

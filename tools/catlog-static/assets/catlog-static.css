@@ -1781,6 +1781,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @media (max-width: 640px), (max-height: 900px) and (pointer: coarse) {
   .detail-title { padding-right:148px }
 }
+/* Phones and touch screens: a "?" (a filter group's, the record's Against the databases) keeps its 24px circle and
+   is a 44px target, its hit area 10px round the circle (inside the group's 44px title row, clear of the chevron; above
+   the record section's first line). */
+@media (max-width: 640px), (pointer: coarse) {
+  .detail-section.has-about > .section-about { position:relative }
+  .section-about::after { content:""; position:absolute; inset:-11px }
+}
 
 /* Phones below 390px: kcat/Km (s⁻¹ mM⁻¹) does not fit its card's third, so every value label puts its unit on a second
    line ("kcat" over "(s⁻¹)"), as the table's headings do, and the three values stay on one line. */

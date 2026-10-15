@@ -2697,6 +2697,11 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             assert not heading["overlap"] and heading["inside"] and heading["oneLine"] and heading["height"] >= 24, (width, heading)
             assert heading["ids"][-3:] == ["clearButton", "undoFiltersButton", "closeFiltersButton"], heading
             assert heading["label"].startswith("Undo the last filter change, back to "), heading
+            # Each group's "?" in the sheet keeps its 24px circle and is a 44px target.
+            for about in driver.find_elements(By.CSS_SELECTOR, "#catalogFilters .filter-section > .section-about"):
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
+                size = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.width, r.height]", about)
+                assert size == [24, 24] and driver.execute_script(ABOUT_TARGET_JS, about) == 44, (width, about.get_attribute("aria-controls"), size)
             sheet_at = driver.execute_script("const r = document.getElementById('undoFiltersButton').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]")
             driver.find_element(By.ID, "undoFiltersButton").click()
             wait.until(lambda d: not d.find_element(By.ID, "undoFiltersButton").is_enabled())
@@ -4046,11 +4051,30 @@ def check_database_caution(state):
     assert state["cautions"] == ([DATABASE_CAPTION_END] if differs else []), (state["cautions"], state["notes"])
 
 
+# The side of the square, centred on a "?", that a tap anywhere in reaches it: 44 (a 44px target round the 24px circle,
+# on phones and touch screens), 24 (the circle alone) or 0. The "?" is scrolled into view first.
+ABOUT_TARGET_JS = """
+    const button = arguments[0];
+    const r = button.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    // (the circle's corners are outside it: only its edges are probed)
+    const hits = (half, points) => points.every(([x, y]) => {
+        const e = document.elementFromPoint(cx + x * half, cy + y * half);
+        return Boolean(e && button.contains(e));
+    });
+    const edges = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    return hits(21.5, [[-1, -1], [1, -1], [-1, 1], [1, 1], ...edges]) ? 44 : hits(11.5, edges) ? 24 : 0;
+"""
+
+
 def open_database_about(driver, wait, width):
     """Opens the record's Against the databases "?" box (centred first, for Safari) and returns where the "?" and the box
     sit: the "?" on the heading's line just after its words, the box under the heading, inside the panel."""
     button = driver.find_element(By.CSS_SELECTOR, "#detailContent .databases-section > .section-about")
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", button)
+    # On phones the "?" is a 44px target round its 24px circle, as the record's ‹ › × are 44px there.
+    target = driver.execute_script(ABOUT_TARGET_JS, button)
+    assert target == (44 if width <= 640 else 24), f"The record's \"?\" target at {width}px: {target}px"
     button.click()
     wait.until(lambda d: d.execute_script("""
         const button = document.querySelector('#detailContent .databases-section > .section-about');
