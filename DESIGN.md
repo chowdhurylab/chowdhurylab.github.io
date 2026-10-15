@@ -8,7 +8,8 @@ colour where it has one (a review result's status colour, a database result's
 square, a caution's amber), else the colour of the dot beside its group in the
 sidebar (Source purple, enzyme fields raspberry, measurement olive: colours that
 mean nothing else on the page), and Undo,
-before Clear all, restores the filter set before the last change, Clear all too
+first in the bar (it keeps its place, dimmed with nothing to undo), restores the filter set before the last change,
+Clear all too
 (tools/catlog-static/DESIGN.md, Filters).
 
 ## Stats

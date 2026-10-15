@@ -139,8 +139,9 @@ it was when the record closes (opening it closes the record); from 1600px the
 sidebar, the table and the record sit side by side. From 641 to 1023px it starts
 as the rail and opening it pushes the table (which scrolls sideways). On phones
 (640px and below) only, the filters are a full-screen sheet that slides up:
-"Filters · Undo · Clear all · ×" at the top (Undo while there is a change to undo, Clear all while a filter is on;
-the sheet covers the chips, so their Undo is here too, 13px like Clear all, none of them overlapping at 320px) and
+"Filters · Clear all · Undo · ×" at the top (Clear all while a filter is on; Undo always, dimmed with nothing to undo,
+right before ×, so Clear all coming and going never moves it under the finger; the sheet covers the chips, so their Undo
+is here too, 13px like Clear all and 16px from it, none of them overlapping at 320px) and
 "Show N records" (accent, 44px) at the bottom; Esc, × or that button close it, and Escape never closes the sidebar.
 A control reached with Tab or Shift+Tab scrolls clear of the sticky heading and
 footer, focus ring included (scroll padding 56px at the top, 80px at the bottom
@@ -233,7 +234,7 @@ and a newer change restarts them; meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
 above the table that removes it, in the sidebar's words ("Source: Read from the paper", "Source: OED", "Source: Earlier
 extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's
-trailing dot), followed by Undo and Clear all (with no matching
+trailing dot), after Undo and followed by Clear all (with no matching
 records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
 button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
 least); the count beside Filters is the number of chips. Each chip wears a colour (the user,
@@ -250,12 +251,14 @@ here (not BPG): Source purple, the enzyme, organism, substrate, EC number and se
 "Enzyme, organism, substrate"), and the measurement olive (Measurement type, Wild type or variant, Assay conditions).
 The 8px dot beside a group's title (aria-hidden, a faint 1px ring) is hung in the 16px gutter, so the titles keep
 their width and wrap where they did; Cautions has an amber one. Colour is never the only carrier: the chip keeps its words. The darker colours give the deeper
-tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo shows once a change of the filters reaches the results (a box ticked, a field
-typed, a chip removed, Clear all, Back or a link that sets filters; never the address a page opens with) and
-restores the set before it; the page keeps the last 30 sets, in this page only. It stays with no filter left (Clear all
-can be undone, the bar then holds Undo alone). Its name and tooltip say what it gives back ("Undo the last filter
+tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
+("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
+Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
+that change; the page keeps the last 30 sets, in this page only. It keeps its place however many chips there are, so
+pressing it again undoes one more change and never lands on a chip or Clear all. It stays with no filter left (Clear all can be undone, the bar then holds Undo alone),
+and after an Undo the bar keeps it, dimmed once nothing is left, so the table does not move under the pointer. Its name and tooltip say what it gives back ("Undo the last filter
 change, back to Source: Read from the paper; EC 1.1"), the status line says "Filters restored: ..." and the focus
-stays on Undo while there is more to undo, else on Clear all (the search box when no filter is left). Sort, rows per page and the page are not filters: only
+stays on Undo while there is more to undo, else goes to Clear all (the search box when no filter is left). Sort, rows per page and the page are not filters: only
 an undone Clear all gives back the sort it reset, unless the sort changed since. The chips and Undo wrap within the
 toolbar at any width. Esc closes the panel (beside an open record, the one
 holding the focus). Typing filters 180ms after the last key; the search text of

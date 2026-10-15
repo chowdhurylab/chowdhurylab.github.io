@@ -5024,30 +5024,35 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(["db:corrects", "db:differs", "db:other_label", "db:not_listed", "db:all_not_listed", "db:all_same", "db:earlier"]
       .map((key) => api.filterChipTone(key)), ["cmp-corrects", "cmp-differs", "neutral", "cmp-new", "cmp-new", "cmp-same", "neutral"]);
     await keysFor("status=accepted,curation_pending");
-    assert.match(element("activeFilters").innerHTML, /^<button class="filter-chip tone-neutral" type="button" data-filter-key="status" title="Remove filter: Review result: Accepted, Not confirmed" aria-label="Remove filter: Review result: Accepted, Not confirmed"><span>Review result: <span class="chip-state accepted">Accepted<\/span>, <span class="chip-state review">Not confirmed<\/span><\/span>/);
+    assert.match(element("activeFilters").innerHTML, /<\/button><button class="filter-chip tone-neutral" type="button" data-filter-key="status" title="Remove filter: Review result: Accepted, Not confirmed" aria-label="Remove filter: Review result: Accepted, Not confirmed"><span>Review result: <span class="chip-state accepted">Accepted<\/span>, <span class="chip-state review">Not confirmed<\/span><\/span>/);
     const bar = () => element("activeFilters").innerHTML;
+    // Undo keeps its place first in the bar, dimmed when there is nothing to undo, so pressing it again never lands on a
+    // chip or Clear all.
+    const nothing = '<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="Nothing to undo" aria-label="Undo the last filter change" disabled>Undo</button>';
     api.state.filterHistory.length = 0;
     api.state.filterBase = null;
+    api.state.filterUndoKeepsPlace = false;
     await keysFor("source=paper");
     assert.equal(api.state.filterHistory.length, 0, "the address's filters are the start, not a change");
-    assert.match(bar(), /^<button class="filter-chip tone-source" type="button" data-filter-key="source:paper" title="Remove filter: Source: Read from the paper"/);
-    assert.doesNotMatch(bar(), /data-filter-undo/);
+    assert.ok(bar().startsWith(`${nothing}<button class="filter-chip tone-source" type="button" data-filter-key="source:paper" title="Remove filter: Source: Read from the paper"`), bar());
     assert.equal(element("activeFilters").hidden, false);
+    assert.equal(element("undoFiltersButton").disabled, true, "the phone sheet's Undo is dimmed too");
+    assert.equal(element("undoFiltersButton").title, "Nothing to undo");
     await keysFor("source=paper&ec=1.1.1&tmin=20");
     assert.equal(api.state.filterHistory.length, 1);
     assert.deepEqual([...bar().matchAll(/class="filter-chip (tone-[\w-]+)"/g)].map((match) => match[1]), ["tone-source", "tone-identity", "tone-measurement"]);
     const back = "Undo the last filter change, back to Source: Read from the paper";
-    assert.ok(bar().endsWith(`<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${back}" aria-label="${back}">Undo</button>`
-      + '<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>'), bar());
-    assert.equal(element("undoFiltersButton").hidden, false, "the phone sheet's Undo too");
+    assert.ok(bar().startsWith(`<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${back}" aria-label="${back}">Undo</button><button class="filter-chip `), bar());
+    assert.ok(bar().endsWith('<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>'), bar());
+    assert.equal(element("undoFiltersButton").disabled, false, "the phone sheet's Undo too");
     assert.equal(element("undoFiltersButton").getAttribute("aria-label"), back);
     api.undoFilterChange();
     await api.ensureCurrentFilters();
     assert.equal(api.browseHash(), "#browse?source=paper");
     assert.equal(api.state.filterHistory.length, 0, "applying the restored set keeps nothing for Undo");
     assert.equal(element("tableStatus").textContent, "Filters restored: Source: Read from the paper");
-    assert.doesNotMatch(bar(), /data-filter-undo/);
-    assert.equal(element("undoFiltersButton").hidden, true);
+    assert.ok(bar().startsWith(nothing), bar());
+    assert.equal(element("undoFiltersButton").disabled, true);
     // Clear all can be undone: with no filter left the bar shows Undo alone; the sort Clear all reset comes back.
     await keysFor("source=paper&ec=1.1.1&sort=km");
     api.state.filterHistory.length = 0;
@@ -5075,6 +5080,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     api.state.filterHistory.length = 0;
     await keysFor("");
     api.state.filterHistory.length = 0;
+    api.renderActiveFilters();
+    assert.equal(bar(), nothing, "after an Undo the bar keeps Undo's place, so the table does not move under the pointer");
+    api.state.filterUndoKeepsPlace = false;
     api.renderActiveFilters();
     assert.equal(bar(), "");
     assert.equal(element("activeFilters").hidden, true);

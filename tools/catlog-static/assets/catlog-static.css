@@ -270,8 +270,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* Without a filter on, Clear all is hidden and the « (or ×) keeps the heading's right end. */
 .rail-heading #clearButton[hidden] ~ .icon-button { margin-left:auto }
 /* Undo in the heading is for the phone sheet, which covers the chips (wider, the chips' Undo is in view beside the
-   sidebar); it comes before Clear all and takes the heading's free space. */
-.rail-heading #undoFiltersButton { display:none; margin-left:auto; font-size:var(--fs-13) }
+   sidebar). */
+.rail-heading #undoFiltersButton { display:none; font-size:var(--fs-13) }
 .rail-heading .icon-button { flex:0 0 32px }
 .filter-toggle { width:max-content }
 .filter-count { display:inline-grid; min-width:18px; height:18px; place-items:center; border-radius:9px; background:var(--accent-tint); color:var(--accent); padding:0 5px; font-size:var(--fs-12); font-weight:600; line-height:1 }
@@ -385,10 +385,13 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .filter-footer { display:block; position:sticky; bottom:0; z-index:2; margin-top:auto; border-top:1px solid var(--line); background:var(--bg); padding:var(--sp-3) var(--sp-4) }
   .filter-footer .button { width:100%; min-height:44px; border-color:var(--accent); background:var(--accent); color:var(--bg); font-size:var(--fs-14) }
   .filter-footer .button:hover { border-color:var(--accent-hover); background:var(--accent-hover) }
-  /* "Filters · Undo · Clear all · ×": the sheet covers the chips, so their Undo is here too. */
+  /* "Filters · Clear all · Undo · ×": the sheet covers the chips, so their Undo is here too. It always shows (dimmed with
+     nothing to undo) right before ×, so Clear all coming and going never moves it under the finger, and Clear all keeps
+     8px more room before it. */
   .rail-heading #undoFiltersButton { display:block }
-  .rail-heading #undoFiltersButton:not([hidden]) ~ #clearButton,
-  .rail-heading #undoFiltersButton:not([hidden]) ~ #clearButton[hidden] ~ .icon-button { margin-left:0 }
+  .rail-heading #clearButton { margin-right:var(--sp-2) }
+  .rail-heading #clearButton[hidden] + #undoFiltersButton { margin-left:auto }
+  .rail-heading #clearButton[hidden] ~ .icon-button { margin-left:0 }
 }
 
 /* Records: a 48px toolbar (Filters on phones, the active filters as chips and Clear all; Columns, Export and Sort at the
@@ -407,7 +410,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-tools .button { white-space:nowrap }
 #openFiltersButton { display:none }
 .table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
-/* Active filters: one removable chip each, then Undo (while there is a change to undo) and Clear all. Each chip has a
+/* Active filters: Undo first (dimmed with nothing to undo: it keeps its place however many chips there are, so pressing
+   it again never lands on a chip or Clear all), then one removable chip each and Clear all. Each chip has a
    3px bar at its left, a quiet tint and a lighter line in its colour: a review result's or database result's own colour,
    a caution's amber, else the colour of the dot beside its group in the sidebar; its words still say what it is
    ("Source: Read from the paper"). */
@@ -441,9 +445,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-state.disputed { --status-color:var(--st-disputed) }
 .filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
 .filter-chip:hover .chip-x { color:var(--accent) }
-.filter-chips-undo { margin-left:var(--sp-1); font-size:var(--fs-12) }
+.filter-chips-undo { margin-right:var(--sp-1); font-size:var(--fs-12) }
 .filter-chips-clear { margin-left:var(--sp-1); font-size:var(--fs-12) }
-.filter-chips-undo + .filter-chips-clear { margin-left:var(--sp-1) }
 /* Undo and Clear all (beside the chips and in the sidebar's heading) and Clear search and filters: targets at least 24px
    tall. */
 :is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }

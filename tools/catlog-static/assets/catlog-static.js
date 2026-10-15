@@ -59,6 +59,7 @@
     // Undo: the filter sets before the last changes (newest last), and the set the results show now (filterSetSnapshot).
     filterHistory: [],
     filterBase: null,
+    filterUndoKeepsPlace: false,
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
@@ -7496,8 +7497,10 @@
     if (sort && sort !== "evidence") params.set("sort", sort);
     applyBrowseParams(params);
     state.pendingPage = 0;
-    // The restored set is the one the results will show: applying it keeps nothing for Undo.
+    // The restored set is the one the results will show: applying it keeps nothing for Undo. The bar keeps Undo's place
+    // (dimmed) even when no filter and nothing to undo is left, so the table does not move under the pointer.
     state.filterBase = filterSetSnapshot();
+    state.filterUndoKeepsPlace = true;
     const status = $("tableStatus");
     if (status) status.textContent = `Filters restored: ${filterSetWords(entry)}`;
     renderActiveFilters();
@@ -7527,24 +7530,28 @@
       if (!count && document.activeElement === sidebarClear) $("catalogFilters")?.focus?.({ preventScroll: true });
       sidebarClear.hidden = count === 0;
     }
-    // Undo shows while there is a change to undo (also with no filter left: Clear all can be undone); its name says
-    // what it gives back.
+    // Undo is enabled while there is a change to undo (also with no filter left: Clear all can be undone); its name says
+    // what it gives back. It keeps its place, dimmed when there is nothing to undo, so pressing it again never lands on
+    // something else: first in the bar above the table whenever the bar shows (and the bar stays after an Undo that
+    // leaves no filter), right before × in the phone sheet's heading.
     const undo = state.filterHistory[state.filterHistory.length - 1] || null;
     const undoLabel = undo ? undoFilterLabel(undo) : "";
+    const undoName = undoLabel || "Undo the last filter change";
+    const undoTitle = undoLabel || "Nothing to undo";
     const sidebarUndo = $("undoFiltersButton");
     if (sidebarUndo) {
       if (!undo && document.activeElement === sidebarUndo) {
         (sidebarClear && !sidebarClear.hidden ? sidebarClear : $("catalogFilters"))?.focus?.({ preventScroll: true });
       }
-      sidebarUndo.hidden = !undo;
-      sidebarUndo.setAttribute("aria-label", undoLabel || "Undo the last filter change");
-      sidebarUndo.title = undoLabel;
+      sidebarUndo.disabled = !undo;
+      sidebarUndo.setAttribute("aria-label", undoName);
+      sidebarUndo.title = undoTitle;
     }
     const bar = $("activeFilters");
     if (!bar) return;
-    const html = count || undo
-      ? items.map((item) => `<button class="filter-chip tone-${item.tone || filterChipTone(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
-        + (undo ? `<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${escapeHtml(undoLabel)}" aria-label="${escapeHtml(undoLabel)}">Undo</button>` : "")
+    const html = count || undo || state.filterUndoKeepsPlace
+      ? `<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="${escapeHtml(undoTitle)}" aria-label="${escapeHtml(undoName)}"${undo ? "" : " disabled"}>Undo</button>`
+        + items.map((item) => `<button class="filter-chip tone-${item.tone || filterChipTone(item.key)}" type="button" data-filter-key="${escapeHtml(item.key)}" title="Remove filter: ${escapeHtml(item.label)}" aria-label="Remove filter: ${escapeHtml(item.label)}"><span>${item.labelHtml}</span>${CHIP_CLOSE_ICON}</button>`).join("")
         + (count ? `<button class="text-button filter-chips-clear" type="button" data-filter-clear="">Clear all</button>` : "")
       : "";
     if (html === renderedChipsHtml) return;
@@ -7559,10 +7566,12 @@
     bar.innerHTML = html;
     if (focused) {
       const buttons = [...bar.querySelectorAll("button")];
+      const enabled = buttons.filter((button) => !button.disabled);
       const target = focusedUndo
-        ? buttons.find((button) => button.hasAttribute("data-filter-undo")) || buttons.find((button) => button.hasAttribute("data-filter-clear"))
-          || buttons[buttons.length - 1]
-        : (focusedKey && buttons.find((button) => button.dataset.filterKey === focusedKey)) || buttons[Math.min(focusedIndex, buttons.length - 1)];
+        ? enabled.find((button) => button.hasAttribute("data-filter-undo")) || enabled.find((button) => button.hasAttribute("data-filter-clear"))
+          || enabled[enabled.length - 1]
+        : (focusedKey && enabled.find((button) => button.dataset.filterKey === focusedKey))
+          || (buttons[Math.min(focusedIndex, buttons.length - 1)]?.disabled ? enabled[enabled.length - 1] : buttons[Math.min(focusedIndex, buttons.length - 1)]);
       if (target) target.focus({ preventScroll: true });
       else focusAfterLastFilter();
     }
