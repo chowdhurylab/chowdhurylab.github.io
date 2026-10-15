@@ -60,6 +60,8 @@
     filterHistory: [],
     filterBase: null,
     filterUndoKeepsPlace: false,
+    // The text field being typed in, as one Undo step: { field, entry (the step it holds, once kept), closing }.
+    filterTyping: null,
     // Human review marks (data/human-review-marks.json): loaded, and how many times they arrived (for the counts).
     humanMarksLoaded: false,
     humanMarksVersion: 0,
@@ -7260,6 +7262,7 @@
     const params = RECORD_HASH.test(window.location.hash || "") ? new Map() : browseParamsFromLocation();
     if (!params) return false;
     const before = browseHash();
+    state.filterTyping = null;
     applyBrowseParams(params);
     if (browseHash() === before) {
       // Nothing to change, but the address may still say what the table does not show (rows=37 keeps the page size
@@ -7465,15 +7468,62 @@
     return { params, key: browseHash(params), sort: controls.sort, labels: activeFilterItems(controls).map((item) => item.label) };
   }
 
-  // Called with the controls a filter pass applied: a set that differs from the one shown before keeps that one for Undo.
-  // Nothing is kept before the record index is ready (the address's filters are the start, not a change).
+  // Typing is one Undo step, not one per pause (filters apply 180ms after a key: "lipase" typed slowly would otherwise
+  // take five presses, lipas, lipa, lip, li, l): while one text field (the search, EC, enzyme, organism, substrate, a
+  // temperature or pH bound) keeps changing, the set before the typing began stays the step. Another change, Undo, Clear
+  // all, a chip, Back or leaving the field starts a new one.
+  const TYPED_FILTER_PARAMS = {
+    q: "q", ec: "ec", enzyme: "enzyme", organism: "organism", substrate: "substrate",
+    tmin: "temperature", tmax: "temperature", phmin: "ph", phmax: "ph",
+  };
+
+  // The one typed field whose address keys are all that differ between two filter sets, or "".
+  function typedFilterField(before, now) {
+    const a = new Map(before.params);
+    const b = new Map(now.params);
+    const fields = new Set([...new Set([...a.keys(), ...b.keys()])].filter((key) => a.get(key) !== b.get(key))
+      .map((key) => TYPED_FILTER_PARAMS[key] || "*"));
+    return fields.size === 1 && !fields.has("*") ? [...fields][0] : "";
+  }
+
+  // A key typed in a field (its input event) opens that field's step; leaving the field closes it once the pass for the
+  // last keys has been kept (the change event of a bound, or the 180ms pause, may still be on its way).
+  function noteFilterTyping(field) {
+    const typing = state.filterTyping;
+    if (!typing || typing.field !== field || typing.closing) state.filterTyping = { field, entry: null, closing: false };
+  }
+
+  function endFilterTyping(field) {
+    if (state.filterTyping?.field === field) state.filterTyping.closing = true;
+  }
+
+  // Called with the controls a filter pass applied: a set that differs from the one shown before keeps that one for Undo
+  // (typing in one field: one step, above). Nothing is kept before the record index is ready (the address's filters are
+  // the start, not a change).
   function recordFilterHistory(controls) {
     const now = filterSetSnapshot(controls);
     const before = state.filterBase;
+    const typing = state.filterTyping;
     state.filterBase = state.recordsReady ? now : null;
+    if (typing?.closing) state.filterTyping = null;
     if (!before || !state.recordsReady || before.key === now.key) return;
-    state.filterHistory.push({ ...before, sortAfter: now.sort });
-    if (state.filterHistory.length > FILTER_HISTORY_LIMIT) state.filterHistory.shift();
+    const field = typing ? typedFilterField(before, now) : "";
+    const sameTyping = Boolean(field) && field === typing.field;
+    const top = state.filterHistory[state.filterHistory.length - 1];
+    let entry = null;
+    if (sameTyping && typing.entry && typing.entry === top) {
+      // Still the same typing: the step keeps the set before it began; back at that set, nothing is left to undo.
+      if (top.key === now.key) state.filterHistory.pop();
+      else entry = top;
+    } else {
+      entry = { ...before, sortAfter: now.sort };
+      state.filterHistory.push(entry);
+      if (state.filterHistory.length > FILTER_HISTORY_LIMIT) state.filterHistory.shift();
+    }
+    // A change of anything else ends a typing step that holds one; typing whose keys no pass has kept yet goes on (the
+    // change came from before it, still on its way).
+    if (sameTyping) state.filterTyping = typing.closing ? null : { field, entry, closing: false };
+    else if (!typing || typing.entry || typing.closing) state.filterTyping = null;
   }
 
   // What Undo gives back, for its name and tooltip: "Undo the last filter change, back to EC 1.1; Organism: coli" (a
@@ -7487,8 +7537,20 @@
   }
 
   function undoFilterChange() {
-    const entry = state.filterHistory.pop();
+    const top = state.filterHistory[state.filterHistory.length - 1] || null;
+    let entry = top;
+    // Keys typed a moment ago that no pass has applied yet (180ms): Undo takes them back first, to the set the results
+    // show, unless they continue the typing the last step holds (then the whole typing goes, as it would a moment later).
+    if (state.filterTimerPending && state.filterBase) {
+      const current = filterSetSnapshot();
+      const typing = state.filterTyping;
+      const field = typedFilterField(state.filterBase, current);
+      const continues = Boolean(field) && typing?.field === field && Boolean(typing.entry) && typing.entry === top;
+      if (current.key !== state.filterBase.key && !continues) entry = { ...state.filterBase, sortAfter: state.filterBase.sort };
+    }
     if (!entry) return;
+    if (entry === top) state.filterHistory.pop();
+    state.filterTyping = null;
     window.clearTimeout(state.filterTimer);
     state.filterTimerPending = false;
     const current = $("sortSelect")?.value || "evidence";
@@ -7584,6 +7646,7 @@
   function removeActiveFilter(key, { focusIndex = -1 } = {}) {
     const item = activeFilterItems().find((candidate) => candidate.key === key);
     if (!item) return;
+    state.filterTyping = null;
     item.clear();
     state.pendingPage = 0;
     renderActiveFilters();
@@ -12007,6 +12070,8 @@
 
   function clearFilters() {
     window.clearTimeout(state.filterTimer);
+    state.filterTimerPending = false;
+    state.filterTyping = null;
     [
       "globalSearchInput",
       "ecFilterInput",
@@ -12083,8 +12148,11 @@
       $(id).addEventListener("input", () => {
         if (id === "globalSearchInput" && viewFromLocation() !== "browse") navigateTo("browse");
         if ($(id).value.trim()) hideSuggestions();
+        noteFilterTyping(FILTER_KEYS_BY_ID[id]);
         scheduleFilters();
       });
+      // Typing in a field is one Undo step until the field is left.
+      $(id).addEventListener("blur", () => endFilterTyping(FILTER_KEYS_BY_ID[id]));
     });
     $("sortSelect").addEventListener("change", () => {
       syncSortHeaders();
@@ -12367,12 +12435,15 @@
       if (!input) return;
       input.addEventListener("input", () => {
         syncRangeValidity();
+        noteFilterTyping(FILTER_KEYS_BY_ID[id]);
         scheduleFilters();
       });
       input.addEventListener("change", () => {
         window.clearTimeout(state.filterTimer);
+        state.filterTimerPending = false;
         applyFiltersInBackground();
       });
+      input.addEventListener("blur", () => endFilterTyping(FILTER_KEYS_BY_ID[id]));
     });
     $("clearButton").addEventListener("click", clearFilters);
     $("undoFiltersButton")?.addEventListener("click", undoFilterChange);
@@ -12551,6 +12622,8 @@
       activeFilterItems,
       filterGroup,
       filterChipTone,
+      noteFilterTyping,
+      endFilterTyping,
       renderActiveFilters,
       undoFilterChange,
       clearFilters,

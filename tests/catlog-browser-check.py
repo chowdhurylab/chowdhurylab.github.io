@@ -2614,6 +2614,24 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     assert "km" in fragment() and "variant=wild" in fragment(), fragment()
     results["undo-same-point"] = True
     if browser == "chrome":
+        # Typing a word at an ordinary pace (250ms a key: a filter pass after each pause) is one Undo step, not one per
+        # pause (lipas, lipa, lip, li, l).
+        open_page(base + "#browse?source=paper")
+        click('#measurementChecklist input[value="km"]')
+        wait.until(lambda d: "metric=km" in fragment() and state()["undo"])
+        field = driver.find_element(By.ID, "enzymeFilterInput")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", field)
+        typing = ActionChains(driver)
+        for key in "lipase":
+            typing.send_keys(key).pause(0.25)
+        typing.perform()
+        wait.until(lambda d: "enzyme=lipase" in fragment())
+        click('#activeFilters [data-filter-undo]')
+        wait.until(lambda d: "enzyme" not in fragment() and "metric=km" in fragment())
+        # (the next Undo takes back the ticked Km)
+        assert field.get_attribute("value") == "" and state()["undo"] == "Undo the last filter change, back to Source: Read from the paper", state()
+        results["undo-typing"] = True
+    if browser == "chrome":
         # The phone sheet's heading: Filters, the count, Clear all, Undo and × on one line, none overlapping; Undo always
         # shows right before × (dimmed with nothing to undo), so Clear all coming and going never moves it: a second tap
         # on Undo after Clear all and Undo does nothing.

@@ -254,7 +254,11 @@ their width and wrap where they did; Cautions has an amber one. Colour is never 
 tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
-that change; the page keeps the last 30 sets, in this page only. It keeps its place however many chips there are, so
+that change; the page keeps the last 30 sets, in this page only. Typing is one change, not one per pause: while one
+text field (the search, EC, enzyme, organism, substrate, a temperature or pH bound) keeps changing, the set before the
+typing began stays the step, so a word typed slowly goes in one press (a word typed and deleted leaves nothing to
+undo); another change, Undo, Clear all, a chip, Back or leaving the field starts a new step, and keys typed a moment ago
+(still in their 180ms pause) are undone first. It keeps its place however many chips there are, so
 pressing it again undoes one more change and never lands on a chip or Clear all. It stays with no filter left (Clear all can be undone, the bar then holds Undo alone),
 and after an Undo the bar keeps it, dimmed once nothing is left, so the table does not move under the pointer. Its name and tooltip say what it gives back ("Undo the last filter
 change, back to Source: Read from the paper; EC 1.1"), the status line says "Filters restored: ..." and the focus

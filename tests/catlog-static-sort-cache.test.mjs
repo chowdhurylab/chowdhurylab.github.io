@@ -5088,6 +5088,83 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.equal(element("activeFilters").hidden, true);
   }
 
+  // Typing in one field is one Undo step, not one per pause (the reviewer: "lipase" typed at 250ms a key took five
+  // presses); leaving the field, or another field, starts a new step; typing back to where it began leaves nothing to
+  // undo; keys no pass has applied yet are undone first.
+  {
+    const hashFor = (address) => {
+      api.applyBrowseParams(new Map(new URLSearchParams(address)));
+      return api.browseHash();
+    };
+    const type = async (field, address) => {
+      api.noteFilterTyping(field);
+      await keysFor(address);
+    };
+    api.state.filterTyping = null;
+    await keysFor("source=paper&metric=km");
+    api.state.filterHistory.length = 0;
+    const start = api.browseHash();
+    for (const text of ["l", "li", "lip", "lipa", "lipas", "lipase"]) await type("enzyme", `source=paper&metric=km&enzyme=${text}`);
+    assert.deepEqual([...api.state.filterHistory].map((entry) => entry.key), [start], "one step for the typed word");
+    api.endFilterTyping("enzyme");
+    await type("enzyme", "source=paper&metric=km&enzyme=lipase A");
+    assert.equal(api.state.filterHistory.length, 2, "leaving the field ends the step");
+    const withWord = api.state.filterHistory[1].key;
+    assert.equal(withWord, hashFor("source=paper&metric=km&enzyme=lipase"));
+    await type("organism", "source=paper&metric=km&enzyme=lipase A&organism=c");
+    await type("organism", "source=paper&metric=km&enzyme=lipase A&organism=coli");
+    assert.equal(api.state.filterHistory.length, 3, "another field is another step");
+    // The two temperature bounds are one field.
+    await type("temperature", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=2");
+    await type("temperature", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=25");
+    await type("temperature", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=25&tmax=4");
+    assert.equal(api.state.filterHistory.length, 4);
+    // Typed and deleted again: nothing to undo for it.
+    await type("substrate", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=n");
+    assert.equal(api.state.filterHistory.length, 5);
+    await type("substrate", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=25&tmax=4");
+    assert.equal(api.state.filterHistory.length, 4);
+    // A box ticked while a step is open ends it.
+    await type("substrate", "source=paper&metric=km&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=n");
+    await keysFor("source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=n");
+    await type("substrate", "source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nad");
+    assert.equal(api.state.filterHistory.length, 7);
+    // Keys no pass has applied yet (still in their 180ms pause) are undone first, back to the set the results show...
+    const shown = api.browseHash();
+    api.noteFilterTyping("ec");
+    api.applyBrowseParams(new Map(new URLSearchParams("source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nad&ec=1.1")));
+    api.state.filterTimerPending = true;
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), shown);
+    assert.equal(api.state.filterHistory.length, 7, "nothing kept was undone");
+    // ...unless they continue the typing the last step holds: then the whole typing goes.
+    await type("substrate", "source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nadh");
+    assert.equal(api.state.filterHistory.length, 8);
+    const beforeTyping = api.state.filterHistory[7].key;
+    api.noteFilterTyping("substrate");
+    api.applyBrowseParams(new Map(new URLSearchParams("source=paper&metric=km,kcat&enzyme=lipase A&organism=coli&tmin=25&tmax=4&substrate=nadph")));
+    api.state.filterTimerPending = true;
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), beforeTyping);
+    assert.equal(api.state.filterHistory.length, 7);
+    // Undo steps back through them one at a time: the typed word goes in one press.
+    while (api.state.filterHistory.length > 1) {
+      api.undoFilterChange();
+      await api.ensureCurrentFilters();
+    }
+    assert.equal(api.browseHash(), withWord);
+    api.undoFilterChange();
+    await api.ensureCurrentFilters();
+    assert.equal(api.browseHash(), start);
+    api.state.filterHistory.length = 0;
+    api.state.filterTyping = null;
+    await keysFor("");
+    api.state.filterHistory.length = 0;
+    api.state.filterUndoKeepsPlace = false;
+  }
+
   // An address's page: page=1, a page that is no page number or no page= at all is the first page. An address that
   // says what the table does not show (rows=37) is rewritten to what it shows.
   {
