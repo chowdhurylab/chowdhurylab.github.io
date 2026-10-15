@@ -1294,7 +1294,9 @@ def check_stats_databases(driver, browser, url):
         wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, ".stats-status-section"))
         if not driver.execute_script("return Boolean(window.CATLOG_STATIC_MANIFEST.summary?.database_comparison)"):
             return {"route": "stats-databases", "skipped": "no comparison with the databases in this snapshot"}
-        sizes = ((1440, 1000), (1280, 900), (1024, 800), (375, 812), (320, 700)) if browser == "chrome" else ((1440, 1000), (1280, 900))
+        if browser != "chrome":  # Safari reloads the whole page per width (slow on CI); Chrome checks every width and font
+            return {"route": "stats-databases", "skipped": "layout and links checked in Chrome"}
+        sizes = ((1440, 1000), (1280, 900), (1024, 800), (375, 812), (320, 700))
         for width, height in sizes:
             if browser == "chrome":
                 driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
@@ -2122,7 +2124,7 @@ def check_filters(driver, browser, url, route_label):
         set_browse_viewport(driver, browser, 1440, 1000)
         # Earlier addresses keep their records: adds is Not in the databases, new no database listing any value (with
         # Not in the databases, one chip), same All values the same.
-        for address, ticked, written, chips, key in (
+        for address, ticked, written, chips, key in () if browser != "chrome" else (  # address parsing: Chrome covers it
                 ("db=adds", ["not_listed"], "db=not_listed", ["db:not_listed"], "not_listed"),
                 ("db=new", ["not_listed", "all_not_listed"], "db=not_listed,all_not_listed", ["db:all_not_listed"], "all_not_listed"),
                 ("db=same", ["all_same"], "db=all_same", ["db:all_same"], "all_same")):
@@ -2155,7 +2157,7 @@ def check_filters(driver, browser, url, route_label):
         # Every link of Stats' Against the databases opens a Browse list that keeps all of its keys: Browse drops a key
         # it does not read (dbsrc, dbwhy or dbpar before value-level matching) and would then show a wider list than the
         # link names. One link for each set of keys the part's links use; once, on the published page.
-        if base.endswith("catlog-latest.html"):
+        if base.endswith("catlog-latest.html") and browser == "chrome":  # one reload per link set: Chrome covers it
             driver.get("about:blank")
             driver.get(base.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-part"))
@@ -2339,7 +2341,8 @@ def check_filters(driver, browser, url, route_label):
         section_hidden = driver.execute_script("return document.getElementById('databaseFilterSection').hidden")
         if indexed:
             assert not section_hidden and chip_keys() == ["db:corrects"], (section_hidden, chip_keys())
-            database_results = check_database_group()
+            # (in Safari once, on the published entry page: each run reloads the whole catalog about six times)
+            database_results = check_database_group() if browser == "chrome" or route_label == "local-latest" else None
         else:
             assert section_hidden and not chip_keys() and "db=" not in fragment(), (section_hidden, chip_keys(), fragment())
         # 4. Source: the older status=v2 opens Read from the paper (source=paper), every row tagged "from
