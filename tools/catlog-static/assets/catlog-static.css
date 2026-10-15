@@ -443,6 +443,14 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-state.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
 .chip-state.unresolved { --status-color:var(--st-unverified) }
 .chip-state.disputed { --status-color:var(--st-disputed) }
+/* The other marks a chip's option has on the page, before its name like the status dot, so a chip's group is told by
+   more than its colour (two colours can look alike to a colour-blind reader): human-checked's green tick, a caution's
+   amber "!" (the table's, at 12px) and a database result's square (the sidebar's, at 8px like the dot). */
+.chip-check { color:var(--checked) }
+.chip-check .check-icon { width:12px; height:12px; margin-right:2px; vertical-align:-2px }
+.chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution); color:var(--bg); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
+.chip-flag::before { content:"!" }
+.filter-chip .db-mark { width:8px; height:8px; margin:0 4px 1px 0; vertical-align:middle }
 .filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
 .filter-chip:hover .chip-x { color:var(--accent) }
 /* Undo and Clear all stand 4px further from the chips than the chips from each other. Clear all's room is the last

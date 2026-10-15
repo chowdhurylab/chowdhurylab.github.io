@@ -2476,6 +2476,12 @@ CHIP_COLOURS_JS = """
                 dots: dots.map(dot => ({colour: getComputedStyle(dot).backgroundColor, hidden: dot.getAttribute('aria-hidden'),
                                         shown: dot.getBoundingClientRect().width === 8})),
                 states: [...chip.querySelectorAll('.chip-state')].map(e => getComputedStyle(e, '::before').backgroundColor),
+                // the option's own mark before its name: the status dot, human-checked's tick, a caution's "!", a database
+                // result's square, each in its colour (none for Source, the enzyme fields and the measurement)
+                mark: chip.querySelector('.chip-state') ? 'dot' : chip.querySelector('.chip-check') ? 'tick'
+                    : chip.querySelector('.chip-flag') ? 'flag' : chip.querySelector('.db-mark') ? 'square' : null,
+                markColour: (e => e ? (e.matches('.chip-check') ? getComputedStyle(e).color : getComputedStyle(e).backgroundColor) : null)(
+                    chip.querySelector('.chip-check, .chip-flag, .db-mark')),
                 words: chip.textContent.trim()};
     });
     return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed')},
@@ -2537,6 +2543,12 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             plain[chip["tone"]] = chip["bar"]
         else:
             assert not chip["dots"], chip
+    # Colour is not all that tells a chip's group from another (the reviewer: some colours look alike to colour-blind
+    # readers): an option with a mark on the page shows it, in its colour; the three plain groups have none.
+    marks = {chip["key"]: chip["mark"] for chip in chips}
+    assert marks == {"source:paper": None, "checked": "tick", "db:differs": "square", "ec": None, "organism": None, "metric:kcat": None,
+                     "temperature": None}, marks
+    assert all(chip["markColour"] in (None, chip["bar"]) for chip in chips), chips
     by_key = {chip["key"]: chip["bar"] for chip in chips}
     assert by_key["db:differs"] == page["squares"]["differs"] == tokens["--cmp-differs"], (by_key, page["squares"])
     assert by_key["checked"] == tokens["--checked"], by_key
@@ -2554,6 +2566,8 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
     assert by_key["caution:units"]["bar"] == tokens["--caution"] and by_key["caution:units"]["dots"], by_key["caution:units"]
     assert by_key["db:not_listed"]["bar"] == page["squares"]["notListed"] == tokens["--cmp-new"], (by_key["db:not_listed"], page["squares"])
+    assert {key: (chip["mark"], chip["markColour"]) for key, chip in by_key.items()} == {
+        "status": ("dot", None), "caution:units": ("flag", tokens["--caution"]), "db:not_listed": ("square", tokens["--cmp-new"])}, by_key
     assert all(chip["text"] >= 4.5 and chip["cross"] >= 3 for chip in page["chips"]), page["chips"]
     results["colours"] = {**plain, **{chip["key"]: chip["bar"] for chip in page["chips"]}}
     # Nothing to undo on a fresh page: the address's filters are the start; Undo is in its place, first, dimmed. (A set

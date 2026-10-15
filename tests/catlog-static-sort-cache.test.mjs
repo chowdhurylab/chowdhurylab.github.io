@@ -5026,6 +5026,14 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(tones("status=curation_pending", ["status"]), ["st-pending"]);
     assert.deepEqual(["db:corrects", "db:differs", "db:other_label", "db:not_listed", "db:all_not_listed", "db:all_same", "db:earlier"]
       .map((key) => api.filterChipTone(key)), ["cmp-corrects", "cmp-differs", "neutral", "cmp-new", "cmp-new", "cmp-same", "neutral"]);
+    // A chip whose option has a mark on the page shows it before the option's name, so colour is not all that tells
+    // the groups apart (the reviewer: some chip colours look alike to colour-blind readers): human-checked its tick (a
+    // caution its "!" and a database result its square: the browser check); Source, the enzyme fields and the
+    // measurement have none.
+    api.applyBrowseParams(new Map(new URLSearchParams("checked=1&source=paper&ec=1.1&metric=kcat")));
+    const marks = Object.fromEntries([...api.activeFilterItems()].map((item) => [item.key, item.labelHtml]));
+    assert.match(marks.checked, /^<span class="chip-check"><svg class="check-icon" [^>]*aria-hidden="true"[\s\S]*<\/svg><\/span>Only human-checked$/);
+    assert.deepEqual([marks["source:paper"], marks.ec, marks["metric:kcat"]].map((html) => /class="(?:chip-|db-mark)/.test(html)), [false, false, false]);
     await keysFor("status=accepted,curation_pending");
     assert.match(element("activeFilters").innerHTML, /<\/button><button class="filter-chip tone-neutral" type="button" data-filter-key="status" title="Remove filter: Review result: Accepted, Not confirmed" aria-label="Remove filter: Review result: Accepted, Not confirmed"><span>Review result: <span class="chip-state accepted">Accepted<\/span>, <span class="chip-state review">Not confirmed<\/span><\/span>/);
     const bar = () => element("activeFilters").innerHTML;

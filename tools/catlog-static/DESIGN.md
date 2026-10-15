@@ -251,7 +251,12 @@ a kind of change on this page, so the three groups without a colour of their own
 here (not BPG): Source purple, the enzyme, organism, substrate, EC number and search raspberry (the dot beside
 "Enzyme, organism, substrate"), and the measurement olive (Measurement type, Wild type or variant, Assay conditions).
 The 8px dot beside a group's title (aria-hidden, a faint 1px ring) is hung in the 16px gutter, so the titles keep
-their width and wrap where they did; Cautions has an amber one. Colour is never the only carrier: the chip keeps its words. The darker colours give the deeper
+their width and wrap where they did; Cautions has an amber one. Colour is never the only carrier: the chip keeps its
+words, and an option with a mark on the page shows it before its name, in its colour (a review result its status dot,
+Only human-checked its tick, a caution the table's "!" at 12px, a database result the sidebar's square at 8px; No
+cautions and Corrected earlier have none, as in the sidebar; Source, the enzyme fields and the measurement have none),
+so a group is told from another by more than its colour, also by a colour-blind reader, to whom some of the colours
+look alike (the measurement's olive and a caution's amber, Source's purple and Accepted's navy). The darker colours give the deeper
 tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before

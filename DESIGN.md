@@ -7,7 +7,9 @@ wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
 colour where it has one (a review result's status colour, a database result's
 square, a caution's amber), else the colour of the dot beside its group in the
 sidebar (Source purple, enzyme fields raspberry, measurement olive: colours that
-mean nothing else on the page), and Undo,
+mean nothing else on the page); an option's own mark shows before its name too
+(the status dot, human-checked's tick, a caution's "!", a database result's
+square), so colour is not all that tells the groups apart; and Undo,
 first in the bar (it keeps its place, dimmed with nothing to undo), restores the filter set before the last change,
 Clear all too
 (tools/catlog-static/DESIGN.md, Filters).

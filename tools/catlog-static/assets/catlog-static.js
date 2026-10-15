@@ -7357,7 +7357,10 @@
       add(`source:${controls.sourceMode}`, `Source: ${(controls.sourceMode === "paper" ? SOURCE_CATLOG_LABEL : SOURCE_DATABASES_LABEL).replace(": ", ", ")}`,
         () => setSourceControls("all"));
     }
-    if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"));
+    // A chip whose option has a mark on this page shows it before the option's name (a review result its dot, as above;
+    // human-checked its tick; a caution its "!"; a database result its square), so colour is not all that tells its
+    // group from another: Source, the enzyme fields and the measurement have no mark of their own.
+    if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"), `<span class="chip-check">${CHECK_ICON_HTML}</span>Only human-checked`);
     // "EC 1" for ec=1. (the EC classes Stats links to), as Stats names them: a trailing dot is left out.
     if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "").replace(/(\d)\.+(?=[\s,;]|$)/g, "$1")}`, () => clearInputs("ecFilterInput"));
     if (controls.enzyme) add("enzyme", `Enzyme: ${controls.enzyme}`, () => clearInputs("enzymeFilterInput"));
@@ -7375,7 +7378,7 @@
     if (ph) add("ph", rangeLabel("pH", ph), () => clearInputs("phMinInput", "phMaxInput"));
     cautionFilters.filter((item) => controls.cautions.includes(item.value)).forEach((item) => {
       const label = item.value === "none" ? item.label : `Caution: ${item.label}`;
-      const labelHtml = item.value === "none" ? "" : `Caution: ${item.labelHtml || escapeHtml(item.label)}`;
+      const labelHtml = item.value === "none" ? "" : `Caution: <span class="chip-flag" aria-hidden="true"></span>${item.labelHtml || escapeHtml(item.label)}`;
       add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
     });
     // "every value" ticked with Not in the databases is one filter: one chip, "Not in the databases: every value", that
@@ -7386,7 +7389,7 @@
       add(`db:${item.value}`, item.chip, () => {
         uncheck("database", item.value);
         if (item.parent) uncheck("database", item.parent);
-      });
+      }, item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>${escapeHtml(item.chip)}` : "");
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);
@@ -7444,8 +7447,8 @@
     return FILTER_GROUPS[String(key).split(":")[0]] || "measurement";
   }
 
-  // A chip's colour (CSS .tone-<tone>; colour is never the only carrier: the chip keeps its words). An option that has a
-  // colour on this page wears it: a review result its status colour (several results: neutral, each named after its dot),
+  // A chip's colour (CSS .tone-<tone>; colour is never the only carrier: the chip keeps its words, and an option with a
+  // mark on the page shows it, activeFilterItems). An option that has a colour on this page wears it: a review result its status colour (several results: neutral, each named after its dot),
   // human-checked green, a database result the colour of its square in the sidebar, a caution amber. Source, the enzyme,
   // organism, substrate, EC and search fields, and the measurement (type, variant, temperature, pH) wear the colour of the
   // dot beside their group in the sidebar, colours that mean nothing else on the page.
