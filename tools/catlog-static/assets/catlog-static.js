@@ -11412,19 +11412,24 @@
 
   // Said once, not on every record (the user, 2026-10-15): the heading's "?" box names the databases compared ("Compared
   // with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper."), from the manifest, with the
-  // caption's second sentence and a link to the Guide's section when the Guide has it (renderGuideDatabases).
-  function databaseAboutHtml() {
+  // caption's second sentence (left out when the record says it under its notes) and a link to the Guide's section when
+  // the Guide has it (renderGuideDatabases).
+  function databaseAboutHtml({ caution = true } = {}) {
     const sources = comparedDatabases();
     const guide = guideDatabaseSummary() || databaseComparisonIndexed()
       ? `<p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>` : "";
     return `<p class="cmp-compared">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
-      + `${sources.length > 1 ? "list" : "lists"} for the same paper. ${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>${guide}`;
+      + `${sources.length > 1 ? "list" : "lists"} for the same paper.${caution ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>${guide}`;
   }
 
-  // A record with a Different number says the caution where it applies: one short line under its notes.
+  // A record with a Different number (on a value read, not calculated) says the caution where it applies: one short line
+  // under its notes; its "?" box then leaves it out, so the record says it once.
+  function databaseCautionShown(rows) {
+    return rows.some((row) => !/^calc/i.test(row.facts.status) && databaseResult(row.facts.status)?.filter === "differs");
+  }
+
   function databaseCautionLineHtml(rows) {
-    return rows.some((row) => databaseResult(row.facts.status)?.filter === "differs")
-      ? `<p class="section-note cmp-caution-line">${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>` : "";
+    return databaseCautionShown(rows) ? `<p class="section-note cmp-caution-line">${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>` : "";
   }
 
   // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
@@ -11688,7 +11693,7 @@
     if (v2Record) {
       const rows = v2DatabaseRows(summary, detail, proof, check);
       body = v2DatabaseComparisonHtml(summary, detail, rows, paperRef);
-      if (body && rows.length) about = databaseAboutHtml();
+      if (body && rows.length) about = databaseAboutHtml({ caution: !databaseCautionShown(rows) });
     } else {
       const corrections = correctionItems(detail, check);
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);

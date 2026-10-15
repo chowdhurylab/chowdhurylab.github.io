@@ -4046,9 +4046,13 @@ def database_names_problems(state):
 
 def check_database_caution(state):
     """The caption's caution ("A different number can mean a different measurement; ...") shows under the notes as one
-    line only on a record with a Different number (the user, 2026-10-15: not on every record)."""
+    line only on a record with a Different number (the user, 2026-10-15: not on every record); the "?" box says it only
+    when that line does not, so the record says it once (the reviewer saw it twice with the box open)."""
     differs = any(note["word"] == "Different number" for note in state["notes"])
     assert state["cautions"] == ([DATABASE_CAPTION_END] if differs else []), (state["cautions"], state["notes"])
+    if state["about"]:
+        assert state["about"].endswith(" for the same paper." if differs else DATABASE_CAPTION_END), (state["about"], differs)
+        assert state["all"].count(DATABASE_CAPTION_END) == 1, state["all"]
 
 
 # The side of the square, centred on a "?", that a tap anywhere in reaches it: 44 (a 44px target round the 24px circle,
@@ -4148,7 +4152,7 @@ def check_record_databases(driver, browser, base, wait):
                        for line in state["pointerLines"]), state["pointerLines"]
             # The compared databases and the caption are said once, in the heading's "?" box (closed at first), never as a
             # footer on every record; the caption shows under the notes only on a record with a Different number.
-            assert state["about"].startswith("Compared with the values ") and state["about"].endswith(DATABASE_CAPTION_END), state["about"]
+            assert state["about"].startswith("Compared with the values "), state["about"]
             assert state["aboutButton"] == {"expanded": "false", "hidden": True, "inSection": True, "afterHeading": True}, state["aboutButton"]
             assert state["footers"] == 0, "Against the databases still ends with a footer"
             check_database_caution(state)

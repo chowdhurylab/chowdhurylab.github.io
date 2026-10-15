@@ -821,7 +821,8 @@ found at once: A, B, G, C, D, E, F, H.
   square: an empty one read as a box to tick), after the compared values. A record with a Different number says
   the caution where it applies: one 12px `--muted` line right under its notes (before the calculated kcat/Km),
   "A different number can mean a different measurement; it does not by itself mean a database is wrong.", once
-  however many values differ; no other record has it. Display names come from the manifest
+  however many values differ; no other record has it, and its "?" box then keeps only the compared databases and the
+  Guide link, so the record says the caution once. Display names come from the manifest
   (summary.database_comparison.sources: key, name, display, in order; STRENDA
   reads "STRENDA DB"), else the databases values_by_database counts, else the
   six in the code (with UniProt). Then "More like this:" links, each keeping the record open beside the

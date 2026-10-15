@@ -125,9 +125,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed. A
   database's name never breaks across lines (captions, table headings, the per-database lines), as in the Guide.
   Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
-  does not by itself mean a database is wrong." (the Guide's note too; a record says it once, in the "?" box beside
-  its Against the databases heading with the compared databases and a link to the Guide, and under its notes only
-  when a value has a Different number: the user, 2026-10-15, "do we need to write it every time?"). A result's name and definition are Browse's
+  does not by itself mean a database is wrong." (the Guide's note too; a record says it once: in the "?" box beside
+  its Against the databases heading with the compared databases and a link to the Guide, or, when a value has a
+  Different number, under its notes instead: the user, 2026-10-15, "do we need to write it every time?"). A result's name and definition are Browse's
   option's (DATABASE_RESULT_NAMES, databaseFilters' title), in Stats and the Guide alike. Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).

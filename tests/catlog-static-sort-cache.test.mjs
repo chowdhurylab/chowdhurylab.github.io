@@ -3976,15 +3976,18 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(notesOpen(twoChanged, true), [["kcat", true], ["km", false], ["kcat_over_km", true]]);
   assert.deepEqual(notesOpen(twoChanged, false), [["kcat", true], ["km", false], ["kcat_over_km", false]]);
   html = render(v2Summary, twoChanged);
-  // A record with a Different number says the caution in one line right under its notes (and in its "?" box).
+  // A record with a Different number says the caution in one line right under its notes, and its "?" box leaves it out:
+  // the record says it once (the reviewer: with the box open it showed twice).
   assert.match(sectionOf(html), /<\/details><\/div><p class="section-note cmp-caution-line">A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
   assert.equal((sectionOf(html).match(/cmp-caution-line/g) || []).length, 1, "one line, however many values differ");
+  assert.equal((sectionOf(html).match(/A different number can mean/g) || []).length, 1, "said once");
+  assert.match(sectionOf(html), /<p class="cmp-compared">Compared with the values [^<]*(?:<span class="nowrap">[^<]*<\/span>[^<]*)* for the same paper\.<\/p>/);
   // The "?" box links the Guide's section when the Guide has it (the manifest's comparison or the record index's).
   {
     const previousSummary = runtimeManifest.summary;
     runtimeManifest.summary = { ...(previousSummary || {}), database_comparison: { values_by_database: { BRENDA: {} } } };
     try {
-      assert.match(sectionOf(render(v2Summary, twoChanged)), /<div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">Compared with the values <span class="nowrap">BRENDA<\/span> lists for the same paper\. [^<]*<\/p><p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;<\/span><\/a><\/p><\/div>/);
+      assert.match(sectionOf(render(v2Summary, twoChanged)), /<div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">Compared with the values <span class="nowrap">BRENDA<\/span> lists for the same paper\.<\/p><p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;<\/span><\/a><\/p><\/div>/);
     } finally {
       runtimeManifest.summary = previousSummary;
     }
