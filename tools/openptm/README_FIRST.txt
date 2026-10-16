@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-13
+Release: 2026-10-16
 
 Browse PTMs, sites, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -9,10 +9,10 @@ Open index.html locally, or keep it beside the Excel file when publishing.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,339 function/regulation records.
+- 27,165 site records and 14,380 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 164 selected paper comparisons, containing 170 measurement entries from
-  31 primary papers across 30 families with numeric measurements.
+- 205 selected paper comparisons, containing 217 measurement entries from
+  68 primary papers across 68 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -22,7 +22,19 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
-New measurements
+New measurements since the previous published release
+- 41 additional comparisons with 47 measurement entries, adding 37 primary
+  papers and numerical coverage for 38 more PTM families.
+- The latest addition contains four Rab1b phosphocholination comparisons and
+  one anhydrotrypsin comparison with two ligand-specific binding entries.
+  Source uncertainty, nucleotide analogues, processing differences, weaker
+  effects and unresolved construct labels remain attached to the values.
+- Later breadth batches include independent source reviews recorded per batch.
+  Source checking does not reproduce experiments or isolate chemical-bond effects.
+- 43 of the 111 audit families still have no numerical comparison in this
+  selection; this does not mean published measurements or biology are absent.
+
+Earlier measured additions (retained)
 - Citrullination: the complete Table 1 panel of four matched peptides against
   28 HLA molecules. Two comparisons were already present; 110 are new. These
   are one paper's results, not independent studies. Dashes remain >30,000 nM;
@@ -36,8 +48,9 @@ New measurements
 - Engineered thiocarboxylation: thioredoxin and DTNB kinetics from Tables 4–5.
   Engineered material, conflicting Table 4 footnote letters and the reporter
   substrate are labelled explicitly. These are not native PTM samples.
-The 13 October additions were checked by one reviewer against original
-articles and tables. This is source checking, not experimental validation.
+The earlier 13 October panel and recovered-paper additions were checked by
+one reviewer against original articles and tables. This is source checking,
+not experimental validation.
 
 Source records retained
 - PTMPhaSe: 855 qualitative annotations, not 855 independent experiments.
@@ -70,7 +83,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-ded7cea965fd837f5d79f2d351fc6fa597cceb81a1ebcca684c53ccdd3ef6205
+d42e26f54cbdf79898ac672dba601a23fdad6241e9d9d58321172e302e5365fa
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
