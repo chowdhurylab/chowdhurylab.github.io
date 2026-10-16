@@ -2120,7 +2120,7 @@ function row(overrides = {}) {
       equals_catlog_calculated_ratio: 1687, possible_catlog_miss: 1118, another_parameter_in_catlog: 463, possible_miss_weak: 448,
       not_in_paper_text: 409, rejected_by_catlog_checks: 322, no_substrate_named_paper_has_several: 222, next_to_other_quantity: 154,
       another_measurement_per_paper_check: 10 } },
-    papers: 2650,
+    papers: 2650, papers_compared: 2598,
   });
   const databaseSection = () => element("statsCharts").innerHTML.match(/<section class="stats-part" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part"|<details|$)/)?.[0] || "";
   const figureHtml = (key) => element("statsCharts").innerHTML.match(new RegExp(`<section class="stats-section[^"]*" aria-labelledby="[^"]+" data-figure="${key}">[\\s\\S]*?</figure>[\\s\\S]*?</section>`))?.[0] || "";
@@ -2141,7 +2141,8 @@ function row(overrides = {}) {
   assert.doesNotMatch(figures, /Values read from the paper against the databases|data-figure="db-compare"/);
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,650 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+  // The lead names the papers with a compared value (papers_compared), never more than CatLog has read.
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
   // The caveat is said once in part 7, here, never under each figure.
   assert.equal((databaseSection().match(/does not by itself mean a database is wrong/g) || []).length, 1);
   // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.

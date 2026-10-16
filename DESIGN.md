@@ -156,7 +156,8 @@ its accessible description; no figure or table has a data line. The parts' figur
   option's (DATABASE_RESULT_NAMES, databaseFilters' title), in Stats and the Guide alike. Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
-  - Lead (14px), one idea per sentence: "CatLog compared 126,951 values read from 2,650 papers with what the
+  - Lead (14px), one idea per sentence (its papers are `papers_compared`, the papers with a compared value, so never
+    more than CatLog has read; `papers` only for an older comparison without it): "CatLog compared 126,951 values read from 2,598 papers with what the
     databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed
     under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ
     for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same

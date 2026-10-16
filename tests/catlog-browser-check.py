@@ -1165,6 +1165,10 @@ def check_stats_figures(driver, browser, url):
             lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
             lead_text = lead.get_attribute("innerText").strip()
             assert lead_text.startswith(f"CatLog compared {compared:,} values read from"), lead_text
+            # The papers named are those with a compared value, never more than CatLog has read.
+            lead_papers = comparison.get("papers_compared", comparison.get("papers"))
+            if isinstance(lead_papers, int):
+                assert f"values read from {lead_papers:,} paper" in lead_text, (lead_papers, lead_text)
             # The caveat is said once in part 7, at the end of its lead, never under each figure.
             assert lead_text.endswith("it does not by itself mean a database is wrong.") and part.get_attribute("innerText").count("by itself mean a database") == 1
             # Its result phrases link into Browse in Figure 8's order (a result with no values has none), each titled

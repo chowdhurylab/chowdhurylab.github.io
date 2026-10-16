@@ -5119,7 +5119,9 @@
   function statsDatabaseLeadHtml(comparison, values) {
     const [same, otherLabel, corrects, differs, notListed] = values.all;
     const { compared } = values;
-    const papers = statsCount(comparison.papers);
+    // The papers with a compared value (papers_compared, at most the papers CatLog has read); an older comparison without
+    // it gives its papers.
+    const papers = statsCount(comparison.papers_compared) ?? statsCount(comparison.papers);
     const by = statsCountMap(comparison.corrections?.by);
     const checked = by && statsCount(by.paper_check, corrects) !== null && corrects ? by.paper_check : null;
     const plural = (count, one, many) => (count === 1 ? one : many);
