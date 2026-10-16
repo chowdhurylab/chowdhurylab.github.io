@@ -451,8 +451,8 @@ and its short words, T questionable, open the grey line under the substrate, on
 desktop too (before any condition or series note, "· +10 mM FBP"; the "!" has the
 record's note as its tooltip); the record says it on its Temperature line, and the
 Cautions filter finds it. A caution states the problem, never an
-order: the tooltip is the record's note ("The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is
-1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
+order: the tooltip is the record's note ("The paper's kcat/Km (2.2 mM⁻¹ s⁻¹) is
+1.6-fold above kcat ÷ Km (1.3 mM⁻¹ s⁻¹). All three are stored as the paper gives
 them."; a familiar factor is named as a fact, and on a record read from the
 paper the printed numbers' own arithmetic says when they agree in one unit); the
 short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the stored
@@ -530,7 +530,7 @@ the variant's mutation (under the name, as in the table); organism · substrate,
 its own grey line; kcat, Km and kcat/Km with their units as labels, written as the table's headings and the counts
 band write them (italic k and K, subscript cat and m: real elements in each value cell, hidden in the table, as a CSS
 attr() label cannot draw them); the
-two-line status badge. Below 390px kcat/Km (s⁻¹ mM⁻¹) does not fit a third of the card, so every value label puts
+two-line status badge. Below 390px kcat/Km (mM⁻¹ s⁻¹) does not fit a third of the card, so every value label puts
 its unit on a second line (2px below the name, clear of its subscript), as the table's headings do, and the three
 values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
@@ -661,7 +661,7 @@ found at once: A, B, G, C, D, E, F, H.
   Value heading keeps the same unseen spaces (no height; calc. drawn by the stylesheet,
   so its text stays "Value"), so it ends where the numbers end at every width. Under the table: the
   kcat/Km a merged older record's sources list ("kcat/Km listed by OED: 3.0–6.1
-  s⁻¹ mM⁻¹, 5 values", in the catalog unit, a range to 2 significant figures
+  mM⁻¹ s⁻¹, 5 values", in the catalog unit, a range to 2 significant figures
   and a single value by the display rule, 126.667 showing 127; each end of a
   range is one unbroken number, so a long range breaks after its dash or before
   its unit and fits at 320px; shown when it differs from the
@@ -794,10 +794,11 @@ found at once: A, B, G, C, D, E, F, H.
   not by itself mean a database is wrong." (names from the manifest, each kept
   whole on one line: SABIO-RK never breaks at its hyphen nor STRENDA DB at its
   space; never a counted "five"), then "Against the databases in the Guide →"
-  (#guide-databases, when the Guide has that section). It is said once there,
-  never as a footer on every record (the user, 2026-10-15: "do we need to write
-  it every time?"); an earlier record's correction trail compares nothing and has
-  no "?". For a record read from the paper, in this order: the paper's note
+  (#guide-databases, when the Guide has that section). The caveat is not in the
+  box: it stands under Different number only, as one line under the notes of a
+  record with such a value, never as a footer on every record (the user, 2026-10-15:
+  "do we need to write it every time?"); an earlier record's correction trail
+  compares nothing and has no "?" (its heading is "Corrected earlier"). For a record read from the paper, in this order: the paper's note
   (database_note: one database lists its values at one factor throughout) in a
   box (`--surface-2`, 1px `--line`, 13px), "Across this paper:" and the note as
   given, then a link to those values: "Show these 12 values →" (q=pmid:<PMID>
@@ -841,8 +842,9 @@ found at once: A, B, G, C, D, E, F, H.
   square: an empty one read as a box to tick), after the compared values. A record with a Different number says
   the caution where it applies: one 12px `--muted` line right under its notes (before the calculated kcat/Km),
   "A different number can mean a different measurement; it does not by itself mean a database is wrong.", once
-  however many values differ; no other record has it, and its "?" box then keeps only the compared databases and the
-  Guide link, so the record says the caution once. Display names come from the manifest
+  however many values differ; no other record has it, and the "?" box keeps only the compared databases and the
+  Guide link, so the page says the caution once, under Different number. A snapshot's line that says "not yet
+  resolved" reads "cause not yet known" (databaseWords), Browse's words. Display names come from the manifest
   (summary.database_comparison.sources: key, name, display, in order; STRENDA
   reads "STRENDA DB"), else the databases values_by_database counts, else the
   six in the code (with UniProt). Then "More like this:" links, each keeping the record open beside the
@@ -934,7 +936,7 @@ A merged older record whose listed kcat/Km values are all more than 2-fold from
 kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"; a familiar factor such as
 1000 is named, and a fold past 10,000 reads "more than 10,000-fold"). A stored
 kcat/Km flagged both against kcat ÷ Km and against every listed kcat/Km gets one
-note for both ("The stored kcat/Km ... BRENDA lists kcat/Km 18.6 s⁻¹ mM⁻¹ for
+note for both ("The stored kcat/Km ... BRENDA lists kcat/Km 18.6 mM⁻¹ s⁻¹ for
 this record, which agrees with kcat ÷ Km."). An older record whose
 stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number.
@@ -1047,7 +1049,10 @@ the contents list) opens it in the page with focus on its heading (made
 focusable then, so a page opened at a section shows no focus ring); the Guide never downloads the record index. Terms and
 meanings are two-column lists, one line each where they fit; no walls of text.
 Records are "read from the paper" and "not yet re-read" there, as in the Source
-filter and Stats (never "older records", never v1 or v2; "Evidence labels on records not yet re-read"); the earlier
+filter and Stats (never "older records", never v1 or v2; "Evidence labels on records not yet re-read"); the record's
+status line carries the table's tags, "from paper" or "not re-read" then the source (one tag set for the table and the
+record, the user 2026-10-15), and the Guide's Header example says so; the human reviewer's mark is a "tick" in the
+Guide's words; the Guide's Units names Ki once (mM, on the few records whose source lists one); the earlier
 version is named only in the method section and in a tag's or status's help.
 Long lists of labels go in native disclosures. Shorten duplicate instructions
 rather than scientific qualifications. When the table or the record panel

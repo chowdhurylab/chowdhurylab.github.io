@@ -251,7 +251,10 @@
     { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
       title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
     { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs", ...FACTOR_ONLY_STATUSES],
-      title: "A database lists another number for this value and the cause is not yet known. Where the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper, the record says Different number (exact factor, not yet checked) and names the factor. A different number can be a different measurement." },
+      // The caveat ("A different number can mean a different measurement; ...") is said once per page, with this result
+      // only (the user, 2026-10-15): Browse's "?" box and the Guide's results add it to this definition, Stats' lead says
+      // it right after the different numbers; a tooltip never carries it.
+      title: "A database lists another number for this value and the cause is not yet known. Where the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper, the record says Different number (exact factor, not yet checked) and names the factor." },
     { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
       title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
@@ -1618,8 +1621,15 @@
     return `<small class="metric-unit-missing" title="${escapeHtml(UNIT_NOT_RECORDED_NOTE)}">${escapeHtml(UNIT_NOT_RECORDED_LABEL)}</small>`;
   }
 
+  // kcat/Km's unit reads concentration first, mM⁻¹ s⁻¹, wherever the page shows it (the user, 2026-10-15); the file
+  // string the downloads keep stays s^(-1)*mM^(-1). A stored unit written time first (s^(-1)*mM^(-1), s^-1 M^-1,
+  // s-1 mM-1) is turned round before it is written out.
+  function efficiencyUnitOrder(value) {
+    return String(value ?? "").replace(/^s(\^?\(?-1\)?|[−-]1)\s*[* ]\s*(m?M)(\^?\(?-1\)?|[−-]1)$/, "$2$3*s$1");
+  }
+
   function unitHtml(value) {
-    return escapeHtml(value)
+    return escapeHtml(efficiencyUnitOrder(value))
       .replace(/\^?\(-1\)|\^-1/g, "<sup>-1</sup>")
       .replace(/\*/g, " ");
   }
@@ -1685,9 +1695,9 @@
 
   const SUPERSCRIPT_DIGITS = { "-": "⁻", "−": "⁻", "+": "⁺", ".": "·", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
 
-  // A unit as plain text for a tooltip: s^(-1)*mM^(-1) -> s⁻¹ mM⁻¹.
+  // A unit as plain text for a tooltip: s^(-1)*mM^(-1) -> mM⁻¹ s⁻¹ (concentration first, efficiencyUnitOrder).
   function unitText(value) {
-    return String(value || "")
+    return efficiencyUnitOrder(String(value || ""))
       .replace(/\^\(([−+-]?[\d.]+)\)|\^\{([−+-]?[\d.]+)\}|\^([−+-]?[\d.]+)/g, (_m, a, b, c) => [...(a ?? b ?? c)].map((ch) => SUPERSCRIPT_DIGITS[ch] ?? ch).join(""))
       .replace(/\*/g, " ")
       .trim();
@@ -1974,8 +1984,10 @@
   // is a record read from the paper).
   // A snapshot's database lines name STRENDA DB "STRENDA" (catlog-v2 writes its short source names there): the record
   // shows the name the Source filter, Stats and its own "?" box use.
+  // A database named as the snapshot writes it reads as the page names it (STRENDA DB), and a difference the snapshot
+  // calls "not yet resolved" reads "cause not yet known", Browse's words for Different number (the user, 2026-10-15).
   function databaseWords(text) {
-    return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB");
+    return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB").replace(/\bnot yet resolved\b/g, "cause not yet known");
   }
 
   function versionWords(text) {
@@ -4101,7 +4113,7 @@
   const STATS_METRICS = [
     { key: "kcat", html: "<i>k</i><sub>cat</sub>", unit: "s⁻¹" },
     { key: "km", html: "<i>K</i><sub>m</sub>", unit: "mM" },
-    { key: "kcat_over_km", html: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", unit: "s⁻¹ mM⁻¹" },
+    { key: "kcat_over_km", html: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", unit: "mM⁻¹ s⁻¹" },
   ];
 
   function statsPowerOfTen(exponent) {
@@ -5022,7 +5034,9 @@
       const nested = item.nested
         ? ` <span class="guide-db-nested">Under it, <em>${escapeHtml(item.nested.label)}</em>: ${escapeHtml(item.nested.text)}${counts[item.nested.key].records !== null
           ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : (item.key === "differs" ? factorOnlyHtml : "");
-      return `<div><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(item.text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
+      // (the caveat with Different number only, once in the Guide)
+      const text = item.key === "differs" ? `${item.text} ${DATABASE_COMPARED_CAPTION}` : item.text;
+      return `<div><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
     }).join("");
     const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
     const familyCount = (family) => {
@@ -5055,7 +5069,7 @@
       ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
       <h3 id="guide-databases-not-listed">Why no database lists a value</h3>
       ${guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount)}
-      <p class="guide-db-note">${escapeHtml(STATS_DATABASE_CAPTION)} Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
+      <p class="guide-db-note">All comparisons are within one paper. Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
       // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
       .replace(/&#39;/g, "&rsquo;");
   }
@@ -5287,13 +5301,15 @@
     ].filter(Boolean);
     const paired = same + corrects + differs;
     const rate = paired >= STATS_RATE_BASE;
+    // The caveat right after the different numbers, once on the page (the user, 2026-10-15: under Different number only).
     const sentences = [
       escapeHtml(`CatLog compared ${formatInteger(compared)} ${plural(compared, "value", "values")} read from ${from} with what the databases list for the same ${papers === 1 ? "paper" : "papers"}.`),
       `Of these, ${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists${otherLabel ? `, and ${link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} the same number under another label`, "other_label", otherLabel)}` : ""}.`,
       changed.length ? `Another ${changed.join(changed.length > 1 && (how || factorOnly) ? ", and " : " and ")}.` : "",
+      changed.length ? escapeHtml(STATS_DATABASE_CAVEAT) : "",
       notListed ? `The remaining ${link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed", notListed)}.` : "",
       paired ? escapeHtml(`Where a database lists a number for the same measurement (${formatInteger(paired)} ${plural(paired, "value", "values")}), ${rate ? qualityShare(same, paired) : formatInteger(same)} of those numbers ${!rate && same === 1 ? "is" : "are"} the paper's.`) : "",
-      escapeHtml(STATS_DATABASE_CAVEAT),
+      changed.length ? "" : escapeHtml(STATS_DATABASE_CAVEAT),
     ].filter(Boolean);
     return `<p class="stats-part-lead" data-lead="databases">${sentences.join(" ")}</p>`;
   }
@@ -7134,9 +7150,9 @@
         const names = databaseNamesHtml(comparedDatabases().map((item) => item.display));
         $("aboutDatabases").innerHTML = `
           <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper,
-            pairing values by substrate, variant and organism. A different number can be a different measurement.</p>
+            pairing values by substrate, variant and organism.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
-            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}</p>`).join("")}`;
+            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
@@ -8615,7 +8631,7 @@
   const CARD_VALUE_LABELS = {
     kcat: '<span class="card-label"><i>k</i><sub>cat</sub> <span class="card-label-unit">(s⁻¹)</span></span>',
     km: '<span class="card-label"><i>K</i><sub>m</sub> <span class="card-label-unit">(mM)</span></span>',
-    kcat_over_km: '<span class="card-label"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> <span class="card-label-unit">(s⁻¹&nbsp;mM⁻¹)</span></span>',
+    kcat_over_km: '<span class="card-label"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> <span class="card-label-unit">(mM⁻¹&nbsp;s⁻¹)</span></span>',
   };
 
   // Column widths follow the page. Values, EC and Review result are as wide as their widest entry and never wrap.
@@ -11127,7 +11143,8 @@
 
   // ---- Record panel: header and source details ----
   // The record's status as one line, in the table's words and colours: a dot, the review result (a Not checked record
-  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the source ("read from the paper", "BRENDA", ...), then
+  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the table's tags ("from paper"; "not
+  // re-read" then the source, "BRENDA", ...; one tag set for the table and the record, the user, 2026-10-15), then
   // "corrected", "no paper linked" or "human-checked".
   function detailStatusHtml(row, { v2Record = isV2Row(row), detail = null } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
@@ -11138,8 +11155,9 @@
       || (status === "mathematically_inferred" ? "not-reviewed" : "unverified");
     const words = [
       rowStatusLabel(row, { exact: true }),
+      v2Record ? SOURCE_CATLOG_TAG : SOURCE_DATABASES_TAG,
       // With the record's detail, the databases it merges when its source_db names none (recordSourceDb).
-      v2Record ? "read from the paper" : sourceTagText(detail ? { source_db: recordSourceDb(row, detail) } : row),
+      v2Record ? "" : sourceTagText(detail ? { source_db: recordSourceDb(row, detail) } : row),
       status === "corrected" ? "corrected" : "",
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
@@ -11724,20 +11742,20 @@
     return links.length ? `<p class="cmp-explore">More like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
-  // Said once, not on every record (the user, 2026-10-15): the heading's "?" box names the databases compared ("Compared
-  // with the values BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper."), from the manifest, with the
-  // caption's second sentence (left out when the record says it under its notes) and a link to the Guide's section when
-  // the Guide has it (renderGuideDatabases).
-  function databaseAboutHtml({ caution = true } = {}) {
+  // The heading's "?" box names the databases compared ("Compared with the values BRENDA, SABIO-RK, OED, SKiD and
+  // STRENDA DB list for the same paper."), from the manifest, with a link to the Guide's section when the Guide has it
+  // (renderGuideDatabases). The caveat is not here: it stands under Different number only (the user, 2026-10-15), as
+  // one line under the notes of a record with such a value.
+  function databaseAboutHtml() {
     const sources = comparedDatabases();
     const guide = guideDatabaseSummary() || databaseComparisonIndexed()
       ? `<p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>` : "";
     return `<p class="cmp-compared">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
-      + `${sources.length > 1 ? "list" : "lists"} for the same paper.${caution ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>${guide}`;
+      + `${sources.length > 1 ? "list" : "lists"} for the same paper.</p>${guide}`;
   }
 
   // A record with a Different number (on a value read, not calculated) says the caution where it applies: one short line
-  // under its notes; its "?" box then leaves it out, so the record says it once.
+  // under its notes, once, however many values differ.
   function databaseCautionShown(rows) {
     return rows.some((row) => !/^calc/i.test(row.facts.status) && databaseResult(row.facts.status)?.filter === "differs");
   }
@@ -12007,7 +12025,7 @@
     if (v2Record) {
       const rows = v2DatabaseRows(summary, detail, proof, check);
       body = v2DatabaseComparisonHtml(summary, detail, rows, paperRef);
-      if (body && rows.length) about = databaseAboutHtml({ caution: !databaseCautionShown(rows) });
+      if (body && rows.length) about = databaseAboutHtml();
     } else {
       const corrections = correctionItems(detail, check);
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);

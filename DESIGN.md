@@ -163,11 +163,16 @@ its accessible description; no figure or table has a data line. The parts' figur
   STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed. A
   database's name never breaks across lines (captions, table headings, the per-database lines), as in the Guide.
   Stats says "A different number can mean a different measurement; it does not by itself mean a database is wrong."
-  once, at the end of the part's lead (alone as the lead when the values' counts for one are missing but a figure
-  compares values), never under each figure; How these numbers are counted says the numbers are compared for the same
-  paper and parameter (the Guide's note says both; a record says it once: in the "?" box beside
-  its Against the databases heading with the compared databases and a link to the Guide, or, when a value has a
-  Different number, under its notes instead: the user, 2026-10-15, "do we need to write it every time?"). A result's name and definition are Browse's
+  once, right after the lead's sentence on the values that correct a database's number and differ (under Different
+  number only, the user 2026-10-15; alone as the lead when the values' counts for one are missing but a figure
+  compares values), never under each figure or in a tooltip; How these numbers are counted says the numbers are
+  compared for the same paper and parameter. The same rule everywhere: the caveat once per page and with Different
+  number only: Browse's "?" box adds it to that option's definition (never the group's intro), the Guide's results
+  add it to that result (its closing note says only that all comparisons are within one paper), and a record says
+  it only under its notes when a value has a Different number (its "?" box never: the user, 2026-10-15, "do we need
+  to write it every time?"). Units are written concentration first wherever the page shows kcat/Km's unit, "mM⁻¹ s⁻¹"
+  (efficiencyUnitOrder turns a stored s^(-1)*mM^(-1) round for unitText and unitHtml; the table's heading, the phone
+  card's label, Stats' value ranges and the Guide write it so; the downloads keep the file string). A result's name and definition are Browse's
   option's (DATABASE_RESULT_NAMES, databaseFilters' title), in Stats and the Guide alike. Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
@@ -258,7 +263,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   names keep their room and stay whole at 320px; only a name wider than the whole label column (Oxidoreductases in
   DejaVu Sans at 320px, as before round 8) may still break.
 - Value ranges (full width): per metric in catalog units (kcat s⁻¹, Km mM,
-  kcat/Km s⁻¹ mM⁻¹) the median, the 10–90% range and a histogram per power of
+  kcat/Km mM⁻¹ s⁻¹) the median, the 10–90% range and a histogram per power of
   ten whose end bars hold every value beyond them, drawn on the log axis it shares with Values by enzyme class (the
   whole decades around that parameter's class grid; bars beyond it join the end bars) in the class panels' columns
   (their label, median and n columns left blank beside it), so a reader can run an eye down from the whole

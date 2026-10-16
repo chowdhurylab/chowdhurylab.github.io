@@ -1191,7 +1191,7 @@ def check_stats_figures(driver, browser, url):
             if isinstance(lead_papers, int):
                 assert f"values read from {lead_papers:,} paper" in lead_text, (lead_papers, lead_text)
             # The caveat is said once in part 7, at the end of its lead, never under each figure.
-            assert lead_text.endswith("it does not by itself mean a database is wrong.") and part.get_attribute("innerText").count("by itself mean a database") == 1
+            assert "it does not by itself mean a database is wrong." in lead_text and part.get_attribute("innerText").count("by itself mean a database") == 1
             # Its result phrases link into Browse in Figure 8's order (a result with no values has none), each titled
             # with the records it opens where the comparison counts them.
             links = [urlsplit(a.get_attribute("href")).fragment for a in lead.find_elements(By.CSS_SELECTOR, "a")]
@@ -1238,8 +1238,9 @@ def check_stats_figures(driver, browser, url):
             for key in ("db-values", "db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
                 assert "by itself mean a database is wrong" not in caption, caption
-            assert lead.get_attribute("innerText").strip().endswith(
-                "A different number can mean a different measurement; it does not by itself mean a database is wrong.")
+            # ...and stands right after the different numbers (under Different number only).
+            lead_sentences = lead.get_attribute("innerText").strip()
+            assert re.search(r"differ, cause not yet known[^.]*\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.", lead_sentences), lead_sentences
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):
@@ -3654,7 +3655,7 @@ LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
 # A triose phosphate isomerase read from the paper whose calculated kcat/Km (8.49 × 10⁷) carries calc. and a "!".
 CALC_FLAG_RECORD = "1704dd2d6297af79"
 # A biotinidase read from the paper (its Method line's Guide link once ran past the panel at 361-389px) and an older alcohol
-# dehydrogenase whose SABIO-RK kcat/Km range (6.7 × 10⁻⁴–2.3 × 10³ s⁻¹ mM⁻¹, 115 values) once ran past it at 320px.
+# dehydrogenase whose SABIO-RK kcat/Km range (6.7 × 10⁻⁴–2.3 × 10³ mM⁻¹ s⁻¹, 115 values) once ran past it at 320px.
 PHONE_PAPER_RECORD = "50abd2bbc472636a"
 # An older laccase record (OED) with no As printed column whose calculated kcat/Km (1.3 × 10⁴) carries calc., and an older
 # record without As printed whose Km carries a caution "!" beside a calc. kcat/Km (the "!"'s unseen copy keeps its width).
@@ -3780,7 +3781,7 @@ def check_record_panel(driver, browser, url, route_label):
                 if kind == "from-paper":
                     assert panel["paperCheck"] is None, panel["paperCheck"]
                 if kind == "from-paper":
-                    assert "read from the paper" in panel["status"], panel["status"]
+                    assert "from paper" in panel["status"] and "read from the paper" not in panel["status"], panel["status"]
                     assert panel["method"] and panel["method"].startswith(
                         "Read from the paper by an AI model; a second, separate AI check compared each value with the paper;"), panel["method"]
                     assert panel["methodLink"] == "#guide-method"
@@ -4154,11 +4155,12 @@ def check_database_caution(state):
     """The caption's caution ("A different number can mean a different measurement; ...") shows under the notes as one
     line only on a record with a Different number (the user, 2026-10-15: not on every record); the "?" box says it only
     when that line does not, so the record says it once (the reviewer saw it twice with the box open)."""
-    differs = any(note["word"] == "Different number" for note in state["notes"])
+    differs = any(note["word"].startswith("Different number") for note in state["notes"])
     assert state["cautions"] == ([DATABASE_CAPTION_END] if differs else []), (state["cautions"], state["notes"])
+    # The "?" box never says it (the caveat stands under Different number only, the user 2026-10-15).
     if state["about"]:
-        assert state["about"].endswith(" for the same paper." if differs else DATABASE_CAPTION_END), (state["about"], differs)
-        assert state["all"].count(DATABASE_CAPTION_END) == 1, state["all"]
+        assert state["about"].endswith(" for the same paper."), state["about"]
+    assert state["all"].count(DATABASE_CAPTION_END) == (1 if differs else 0), state["all"]
 
 
 # The side of the square, centred on a "?", that a tap anywhere in reaches it: 44 (a 44px target round the 24px circle,
