@@ -3733,21 +3733,19 @@
   // count is exact and counted over all records. Colours are stylesheet tokens, named by the stats-part-* classes:
   // review results (stats-part-accepted, -pending, -unverified, -not-reviewed, -not-checked, -disputed), comparisons
   // (-same, -differs, -new, -rounding, -magnitude), -neutral and -open. Figures fill at 60% with a 1px opaque outline.
-  function statsDataLine(definition = "") {
-    const id = snapshotDataId();
-    return [manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "", id ? `Data ID ${id}` : "", definition]
-      .filter(Boolean).map(escapeHtml).join(" · ");
-  }
-
-  // One numbered figure or table: its heading, the plot, then "Figure N." with one sentence and a data line (snapshot,
-  // data ID, definition), then anything that belongs under it (a note, a disclosure). Figures sit inside the numbered
-  // parts of the page (statsPartHtml), so their headings are one level down.
-  function statsFigureHtml({ id, key, title, body, caption, data = "", wide = false, kind = "Figure", number = 0, after = "", className = "" }) {
+  //
+  // One numbered figure or table: its heading, the plot, then "Figure N." with its caption (the figure's accessible
+  // description), then anything that belongs under it (a note, a disclosure). No data line under it (the user,
+  // 2026-10-15, of "Snapshot ... · Data ID ... · 143,184 values in all; ...": "Do we need this???"): the snapshot, its
+  // Data ID and the counting rules are said once, in How these numbers are counted, the figure's own rules (`rules`,
+  // plain text) under its number there. Figures sit inside the numbered parts of the page (statsPartHtml), so their
+  // headings are one level down.
+  function statsFigureHtml({ id, key, title, body, caption, wide = false, kind = "Figure", number = 0, after = "", className = "" }) {
     return `<section class="stats-section stats-figure-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}" data-figure="${key}">
       <h3 id="${id}" class="stats-fig-title">${title}</h3>
       <figure class="stats-fig" aria-labelledby="${id}" aria-describedby="${id}Caption">
         ${body}
-        <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${kind} ${number}.</strong> ${caption}</span>${data ? `<span class="stats-fig-data">${data}</span>` : ""}</figcaption>
+        <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${kind} ${number}.</strong> ${caption}</span></figcaption>
       </figure>${after}</section>`;
   }
 
@@ -4268,7 +4266,7 @@
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
       caption: `Values in catalog units on a log scale, one curve per enzyme class drawn through ${binWord} bins and scaled to its own peak, with the median as a dot and the middle 80% of values as a line; n is the class's number of values.`,
-      data: statsDataLine(`A record in several classes counts in each;${few ? ` a lighter, dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values;` : ""} each end bin also holds every value beyond it, so the curve leaves it out and a hatched stub marks it, with its count in the tooltip line; values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures.`),
+      rules: `A record in several classes counts in each. The two end bins also hold every value beyond them: the curve leaves them out and a hatched stub marks them, with the count in the tooltip line.${few ? ` A lighter, dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values.` : ""} Values without a recorded unit, or in another unit, are left out. Medians are given to two significant figures.`,
     };
   }
 
@@ -4554,8 +4552,6 @@
     const review = reviewFacts(quality.review?.v1);
     const match = v2MatchFacts(quality);
     if (!review && !match) return "";
-    const asOf = /^\d{4}-\d{2}-\d{2}/.test(String(quality.as_of || "")) ? `Counted ${formatDate(String(quality.as_of).slice(0, 10))}. ` : "";
-    const sameDefinition = "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection; the same value: the same paper, metric, protein, variant and substrate, and a value within 2%.";
     const links = `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>`;
     const section = (title, figure, body) => `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsReviewTitle" data-figure="review">
       <h3 id="statsReviewTitle" class="stats-fig-title">${escapeHtml(title)}</h3>
@@ -4570,8 +4566,7 @@
       return section("Human review",
         `<strong>${escapeHtml(qualityShare(match.same, match.approved))}</strong><span>of the values human reviewers approved are the same, read from the paper again</span>`,
         `<p class="stats-lead-sentence">${escapeHtml(v2MatchSentence(match))}</p>
-          ${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}
-          <p class="stats-fig-data">${statsDataLine(`${asOf}${sameDefinition}`)}</p>`);
+          ${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}`);
     }
     const missing = reviewMissingText(review, quality.agreement, { counted: true });
     const kinds = reviewKindsText(review);
@@ -4592,8 +4587,25 @@
           ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
           ${notes.length ? `<p class="stats-lead-note">${words(notes.join(" "))}</p>` : ""}
           ${v2Review ? `<p class="stats-lead-note">${keepReviewBase(words(reviewSentence(v2Review, { fromPaper: true, share: true })), v2Review, { fromPaper: true })}</p>` : ""}
-          ${match ? `<p class="stats-lead-side">${escapeHtml(v2MatchSentence(match, { ofThese: true }))}</p>` : ""}
-          <p class="stats-fig-data">${metricWordsHtml(statsDataLine(`${asOf}From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict. Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.${review.missing !== null ? " Values missing: the reviewer says the paper prints a value the entry lacks." : ""}${match ? ` ${sameDefinition}` : ""}`))}</p>`);
+          ${match ? `<p class="stats-lead-side">${escapeHtml(v2MatchSentence(match, { ofThese: true }))}</p>` : ""}`);
+  }
+
+  // What the lead's numbers count, said once under How these numbers are counted: the date they were counted and the
+  // definitions. "" without a lead.
+  function reviewRulesText(overview) {
+    const quality = overview?.quality || {};
+    const review = reviewFacts(quality.review?.v1);
+    const match = v2MatchFacts(quality);
+    if (!review && !match) return "";
+    const asOf = statsAsOf(quality);
+    return [
+      asOf ? `Counted ${asOf}.` : "",
+      review ? "From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict." : "",
+      review ? `Values correct: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.` : "",
+      review && review.missing !== null ? "Values missing: the reviewer says the paper prints a value the entry lacks." : "",
+      match ? "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection." : "",
+      match ? "The same value: the same paper, metric, protein, variant and substrate, and a value within 2%." : "",
+    ].filter(Boolean).join(" ");
   }
 
   // The Guide's method section opens with the human review (the user's headline, first on Stats too): the values correct
@@ -5171,7 +5183,7 @@
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)` })
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
       caption: `Each value read from the paper${names ? `, against what ${names} list for it` : ""}; the two counts beside each bar are the values that correct a database's number and those with a different number. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine(notes),
+      rules: notes,
     };
   }
 
@@ -5216,7 +5228,7 @@
         axis: statsAxis(100, 25, { percent: true }),
         valueWidth: `calc(${Math.max(...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
       caption: `For each database, how it lists the values read from the papers it lists (the number beside its bar); the values from papers it does not list are counted under the bar. A value counts for every database. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine([none.text, rows.some((row) => row.count < STATS_RATE_BASE) ? `Shares are given only for a database with ${formatInteger(STATS_RATE_BASE)} values or more.` : ""].filter(Boolean).join(" ")),
+      rules: none.text,
     };
   }
 
@@ -5257,7 +5269,6 @@
         <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, statsDatabaseNameHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
         ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
       caption: `Values for which a database lists a number for the same measurement (paired), and how many it lists as the paper prints them. A number copied into several databases counts for each${derived}${all.paired ? "; the All row counts each value once" : ""}. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine(rows.some((row) => row.paired < STATS_RATE_BASE) ? `Shares only where a database pairs ${formatInteger(STATS_RATE_BASE)} values or more.` : ""),
     };
   }
 
@@ -5316,7 +5327,7 @@
       body: statsBarChart({ key: "db-found", rows, scale: max, step, axis: statsAxis(max, step),
         legend: split ? STATS_FOUND_BY.map((level) => ({ part: level.part, label: `<span title="${escapeHtml(level.title)}">${escapeHtml(level.label)}</span>` })) : [] }),
       caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, by the cause of the database's number${split ? " and how it was found" : ""}; each label gives the values${rate ? ", then their share" : ""}${rows.some((row) => row.note) ? ", and a bar split two ways gives its two counts under its name" : ""}. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine(notes),
+      rules: notes,
     };
   }
 
@@ -5358,7 +5369,7 @@
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
       caption: `Values that correct a database's number, by cause and database. A value corrected in several databases counts for each; All counts each value once. ${STATS_DATABASE_CAPTION}`,
-      data: statsDataLine([none.text, found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here; All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""].filter(Boolean).join(" ")),
+      rules: [none.text, found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""].filter(Boolean).join(" "),
     };
   }
 
@@ -5405,7 +5416,7 @@
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
           ? `Values the earlier review changed to the value the paper prints, by kind of change, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
           : `Values the earlier review changed to the value the paper prints, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind of change.`,
-      data: statsDataLine([listedText, othersText].filter(Boolean).join(" ")),
+      rules: [listedText, othersText].filter(Boolean).join(" "),
     };
   }
 
@@ -5430,7 +5441,7 @@
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       // papers: the papers CatLog has read that the earlier version also had (fewer than the papers CatLog has read).
       caption: `The ${formatInteger(records)} ${records === 1 ? "entry" : "entries"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""}${papers !== null ? ` of the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} that CatLog has read and the earlier version also had` : " of the papers CatLog has read"}: whether CatLog's reading has the same number for that paper and parameter.`,
-      data: statsDataLine("When CatLog reads a paper, its records replace these entries. kcat/Km calculated from kcat and Km are left out."),
+      rules: "When CatLog reads a paper, its records replace these entries. A kcat/Km calculated from kcat and Km is left out.",
     };
   }
 
@@ -5665,8 +5676,7 @@
           <span class="stats-check-unit">${escapeHtml(card.unit)}</span>
           ${card.share !== null && card.share !== undefined ? `<span class="stats-meter" aria-hidden="true"><span style="width:${+(Math.max(0, Math.min(1, card.share)) * 100).toFixed(4)}%"></span></span>` : `<span class="stats-meter is-blank" aria-hidden="true"></span>`}
           <span class="stats-check-result">${metricWordsHtml(escapeHtml(card.result))}</span></li>`).join("")}</ul>
-        ${lead ? "" : `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`}
-        <p class="stats-fig-data">${statsDataLine()}</p></section>` });
+        ${lead ? "" : `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>`}</section>` });
     }
     if (quality_.length) parts.push({ key: "quality", title: "Quality", items: quality_ });
 
@@ -5726,7 +5736,6 @@
       id: "statsStatusTitle", key: "status", className: "stats-status-section", title: "Review result",
       body: `<div class="stats-donut-layout">${statsDonut(donutParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
       caption: "Review result of every record in this snapshot; each record has exactly one.",
-      data: statsDataLine("Shares of all records."),
       after: `${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} ${noPaperRule ? "records have no PMID or DOI linked, so their values cannot be traced to a paper; they are counted under Not checked, not Accepted." : "accepted records have no PMID or DOI linked, so their values cannot be traced to a paper."}</p>` : ""}
         ${statsUnacceptedFields(counts)}`,
     });
@@ -5797,12 +5806,12 @@
         caption: byStatus
           ? "Records by main source, coloured by review result; each label gives the records, then the share accepted."
           : "Records by main source.",
-        data: statsDataLine(`Main source: CatLog's own reading of the paper, or the database a record came from; a record merged from several databases counts once, under Several databases.${byStatus ? " Share draws each source as 100%." : ""}`),
+        rules: `A record merged from several databases counts once here, under Several databases. The list under the bars counts it under each, as Browse does.${byStatus ? " Share draws each source as 100%." : ""}`,
         after: byDatabase,
       });
     } else {
       content.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
-        caption: "Records per source.", data: statsDataLine() });
+        caption: "Records per source." });
     }
 
     // Records read from the paper and those not yet re-read, by review result (read from the paper: the main source
@@ -5830,7 +5839,7 @@
           body: statsBarChart({ key: "versions", rows, scale: max, step, axis: statsAxis(max, step),
             legend: statusParts.map(([part, label]) => ({ part, label })) }),
           caption: "Records read from the paper by CatLog and records not yet re-read, by review result; each label gives the records, then the share accepted.",
-          data: statsDataLine("Together they are all records; How these numbers are counted says what each means."),
+          rules: "The two bars together hold every record.",
         };
       }
     }
@@ -5861,7 +5870,7 @@
         id: "statsPerPaperTitle", key: "values-per-paper", title: "Values read from each paper",
         body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step) }),
         caption: `The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label gives the papers, then their share.`,
-        data: statsDataLine(`${formatInteger(perPaper.values)} values in all; a kcat/Km calculated from kcat and Km is not counted.`),
+        rules: `${formatInteger(perPaper.values)} kcat, Km and kcat/Km values from ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"}. A kcat/Km calculated from kcat and Km is not counted.`,
       };
     }
 
@@ -5892,7 +5901,7 @@
         id: "statsContentsTitle", key: "contents", title: "What the records contain", kind: "Table",
         body: statsTable(contents, total, { head: "Value or field" }),
         caption: "Records with each value or field; a record usually has several.",
-        data: statsDataLine(notes),
+        rules: notes,
         after: sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
           ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
         </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : "",
@@ -5906,7 +5915,7 @@
     ];
     const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
-      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it.", data: statsDataLine("Shares of all records.") } : null;
+      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Records by enzyme form, as the table tags it." } : null;
     // Two to a row: the review result beside the main sources; the two figures of records read from the paper; the
     // fields beside the forms.
     content.push(...[versions, valuesPerPaper].filter(Boolean));
@@ -5945,7 +5954,7 @@
           valueHeads: ["Records", "Accepted", ...(withV2 ? ["From paper"] : [])] }),
         caption: withV2 ? "Records per enzyme class, with the accepted ones and those read from the paper; each label gives records, accepted, then read from the paper."
           : "Records per enzyme class, with the accepted ones; each label gives records, then accepted.",
-        data: statsDataLine(notes),
+        rules: notes,
       });
     }
     const topItems = (list, toItem, max = total) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
@@ -5960,22 +5969,22 @@
     if (organisms.length) {
       biology.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
         body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
-        caption: `The ${formatInteger(organisms.length)} organisms with the most records; strains are counted with their species.`, data: statsDataLine("Bars against the most common organism.") });
+        caption: `The ${formatInteger(organisms.length)} organisms with the most records; strains are counted with their species.`, rules: "Bars are drawn against the most common organism." });
     }
     if (ecNumbers.length) {
       biology.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
         body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
-        caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, data: statsDataLine("Bars against the most common EC number.") });
+        caption: `The ${formatInteger(ecNumbers.length)} EC numbers with the most records, each with the enzyme name its records use most.`, rules: "Bars are drawn against the most common EC number." });
     }
     if (v2Organisms.length) {
       biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Most common organisms among records read from the paper", kind: "Table",
         body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", part: "catlog" }),
-        caption: `The ${formatInteger(v2Organisms.length)} organisms with the most records read from the paper; strains are counted with their species.`, data: statsDataLine("Shares of the records read from the paper.") });
+        caption: `The ${formatInteger(v2Organisms.length)} organisms with the most records read from the paper; strains are counted with their species.`, rules: "Shares are of the records read from the paper." });
     }
     if (v2EcNumbers.length) {
       biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "Most common EC numbers among records read from the paper", kind: "Table",
         body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", part: "catlog" }),
-        caption: `The ${formatInteger(v2EcNumbers.length)} EC numbers with the most records read from the paper, each with the enzyme name its records use most.`, data: statsDataLine("Shares of the records read from the paper.") });
+        caption: `The ${formatInteger(v2EcNumbers.length)} EC numbers with the most records read from the paper, each with the enzyme name its records use most.`, rules: "Shares are of the records read from the paper." });
     }
     if (biology.length) parts.push({ key: "biology", title: "Biology", items: biology });
 
@@ -5989,7 +5998,7 @@
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
         body: `<div class="stats-ranges">${ranges.join("")}</div>`,
         caption: "Values in catalog units on a log scale, one bar per power of ten (the end bars include all values beyond them), with the median as a dot and the middle 80% of values as a line.",
-        data: statsDataLine("Values without a recorded unit, or in a unit other than the catalog's, are left out; medians to two significant figures."),
+        rules: "Values without a recorded unit, or in another unit, are left out. Medians are given to two significant figures.",
       });
     }
     const ridges = statsRidgeFigure(overview);
@@ -6003,7 +6012,7 @@
     if (cautions.every((item) => item.count !== null)) {
       parts.push({ key: "cautions", title: "Cautions", items: [{ id: "statsCautionsTitle", key: "cautions", title: "Cautions on values", kind: "Table", wide: true,
         className: "stats-narrow", body: statsTable(cautions, total, { head: "Caution" }),
-        caption: "A caution marks a value that may be wrong; a record can carry more than one.", data: statsDataLine("Shares of all records.") }] });
+        caption: "A caution marks a value that may be wrong; a record can carry more than one." }] });
     }
 
     // 7. Against the databases (summary.database_comparison): a one-sentence lead, each value against the databases, each
@@ -6033,7 +6042,14 @@
     // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart); half-width items
     // stand two to a row and an odd one out takes the row.
     const numbers = { Figure: 0, Table: 0 };
-    const html = (item) => (item.html !== undefined ? item.html : statsFigureHtml({ ...item, number: ++numbers[item.kind || "Figure"] }));
+    const figureRules = [];
+    const html = (item) => {
+      if (item.html !== undefined) return item.html;
+      const kind = item.kind || "Figure";
+      const number = ++numbers[kind];
+      if (item.rules) figureRules.push([`${kind} ${number}`, item.title, item.rules]);
+      return statsFigureHtml({ ...item, number });
+    };
     const sections = parts.filter((part) => part.items.length).map((part, index) => {
       const halves = part.items.filter((item) => !item.wide && item.html === undefined);
       if (halves.length % 2) {
@@ -6050,17 +6066,24 @@
       $("statsLead").innerHTML = "";
       $("statsLead").hidden = true;
     }
-    if (overview) {
-      sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
-        <div><dt>Papers</dt><dd>Distinct PMIDs; a record without a PMID counts by its DOI.</dd></div>
-        <div><dt>Names</dt><dd>Enzymes, organisms and substrates are distinct names, ignoring capitals; "Unknown" is not a name. EC numbers are complete four-part numbers.</dd></div>
-        <div><dt>Human-checked</dt><dd>Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).</dd></div>
-        <div><dt>Main source</dt><dd>The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.</dd></div>
-        <div><dt>${escapeHtml(SOURCE_CATLOG_LABEL)}</dt><dd>Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}</dd></div>
-        <div><dt>${escapeHtml(SOURCE_DATABASES_LABEL)}</dt><dd>All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}</dd></div>
-        <div><dt>Source</dt><dd>All numbers are counted from this snapshot's Full data download and its human-review results.</dd></div>
-      </dl></details>`);
-    }
+    // How these numbers are counted closes the page: the snapshot and its Data ID (said only here), the rules every figure
+    // follows, then each figure's own rules under its number.
+    const dataId = snapshotDataId();
+    const snapshot = [manifest.generated_at ? formatDate(manifest.generated_at) : "", dataId ? `Data ID ${dataId}` : ""].filter(Boolean).join(", ");
+    const reviewRules = reviewRulesText(overview);
+    const ruleRow = (term, html) => `<div><dt>${term}</dt><dd>${html}</dd></div>`;
+    sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
+        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Every number on this page is counted from this snapshot's Full data download${overview ? " and its human-review results" : ""}.`))}
+        ${ruleRow("Shares", "Of all records unless a caption says otherwise, to one decimal place; a share above 0 but below 0.1% is written &lt;0.1%.")}
+        ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
+        ${ruleRow("Names", "Enzymes, organisms and substrates are distinct names, ignoring capitals; \"Unknown\" is not a name. EC numbers are complete four-part numbers.")}
+        ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).`)}
+        ${ruleRow("Main source", "The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.")}
+        ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
+        ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
+        ${reviewRules ? ruleRow("Human review", escapeHtml(reviewRules)) : ""}
+        ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
+      </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));

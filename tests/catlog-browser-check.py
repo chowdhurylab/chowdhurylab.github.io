@@ -1504,9 +1504,12 @@ def check_stats_more(driver, browser, overview, total):
         assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-chart-value.has-parts")
     ragged = driver.execute_script(STATS_VALUE_COLUMNS_JS)
     assert not ragged, f"Value labels do not line up: {ragged}"
-    # Every figure is named and described: its heading, one numbered caption, a data line.
+    # Every figure is named and described: its heading and one numbered caption (its accessible description); no data
+    # line under it (said once in How these numbers are counted).
     for figure in driver.find_elements(By.CSS_SELECTOR, "#statsCharts figure.stats-fig"):
         assert figure.get_attribute("aria-labelledby") and figure.find_elements(By.CSS_SELECTOR, "figcaption .stats-fig-caption strong")
+        assert driver.execute_script("const d = document.getElementById(arguments[0].getAttribute('aria-describedby')); return Boolean(d && d.textContent.trim())", figure)
+    assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-data")
     if browser != "chrome":
         return
     # Pointing at the Not confirmed slice lights it and its table row, dims the rest and gives its exact count.
@@ -4749,7 +4752,17 @@ def check(driver, browser, url):
     for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2, #statsCharts h3"):
         section = heading.find_element(By.XPATH, "..")
         assert section.find_elements(By.CSS_SELECTOR, "li, figure, p"), f"Empty Stats section: {heading.text}"
-    # Figures and tables are numbered in reading order, each with one caption and a data line.
+    # Figures and tables are numbered in reading order, each with one caption and no data line: the snapshot, its Data ID
+    # and the counting rules are said once, in How these numbers are counted, which closes the page.
+    assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-data")
+    provenance = driver.execute_script("""
+        const method = document.querySelector('#statsCharts > details.stats-method:last-child');
+        const row = method && [...method.querySelectorAll('dl > div')].find((item) => item.querySelector('dt')?.textContent === 'Snapshot');
+        return {text: row ? row.querySelector('dd').textContent : null,
+                ids: (document.getElementById('statsView').textContent.match(/Data ID/g) || []).length};
+    """)
+    assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Every number on this page is counted from this snapshot's Full data download",
+                                                provenance["text"] or ""), provenance
     for kind in ("Figure", "Table"):
         numbers = [int(match) for match in re.findall(kind + r" (\d+)\.", " ".join(
             caption.text for caption in driver.find_elements(By.CSS_SELECTOR, ".stats-fig > figcaption .stats-fig-caption")))]

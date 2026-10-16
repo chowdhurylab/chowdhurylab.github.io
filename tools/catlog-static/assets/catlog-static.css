@@ -978,7 +978,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-fig > figcaption { display:grid; gap:4px; margin-top:12px; max-width:80ch }
 .stats-fig-caption { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-fig-caption strong { color:var(--text); font-weight:600 }
-.stats-fig-data { margin:0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 
 /* Colours of figure parts: fills at 60% with a 1px opaque outline (a ring colour where the fill is light). */
 .stats-part-accepted { --part:var(--st-accepted) }
@@ -1338,6 +1337,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-unaccepted-fields { margin-top:8px }
 .stats-unaccepted-fields table { max-width:760px }
 .stats-method { border-top:1px solid var(--line); padding-top:8px }
+/* Each figure's own rules, under its number (Figure 4, Table 1), its title first. */
+.stats-method-figures { border-top:1px solid var(--line-soft); padding-top:4px }
+.stats-method-title { color:var(--text); font-weight:500 }
 
 /* Team: the loop of people and AI agents. */
 .team-shell { max-width:1200px; margin:0 auto; padding:32px 24px 48px }
@@ -1522,7 +1524,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-totals dl { grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); gap:0 }
   .stats-total:nth-child(n)::before { display:block }
   .stats-total:first-child::before { display:none }
-  .stats-lead-figure, .stats-lead-sentence, .stats-lead-facts > div, .stats-lead-note, .stats-lead-side, .stats-lead-text > .stats-fig-data { break-inside:avoid }
+  .stats-lead-figure, .stats-lead-sentence, .stats-lead-facts > div, .stats-lead-note, .stats-lead-side { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }

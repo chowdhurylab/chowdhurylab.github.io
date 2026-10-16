@@ -69,7 +69,15 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    was found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
    replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
 
-A closed "How these numbers are counted" ends the page. The parts' figures and tables:
+A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
+rules are said (the user, 2026-10-15, of the line that stood under every figure, "Snapshot Oct 15, 2026 · Data ID ... ·
+143,184 values in all; ...": "Do we need this???"). It gives Snapshot (the date and Data ID, counted from this
+snapshot's Full data download and its human-review results), Shares (of all records unless a caption says otherwise,
+one decimal, a nonzero share under 0.1% written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
+and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Against the databases
+(with part 7: same paper and parameter, shares only on 1,000 values or more), then each figure's or table's own rules
+under its number ("Figure 4", "Table 1", the title first), in reading order. A figure keeps its caption as its
+accessible description; no figure or table has a data line. The parts' figures and tables:
 
 - Lead (first in Quality, full width): Human review of the earlier version's entries, what the reviewers'
   own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
@@ -90,8 +98,9 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   its left: "Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong
   CatLog values found: 0." (`agreement.agree` of `values_approved`, else
   `v2_found` of `v2_approved_total`: the match as it is now; `agreement.catlog_value_wrong`, else `v2_wrong`). Then
-  a data line with the definitions and links to the Guide's method and to Team. kcat, Km and kcat/Km in the lead's
-  text (the big number's words, the sentence, the notes, the data line) take the site's italic markup with a
+  links to the Guide's method and to Team; the date the review was counted and its definitions are said once, under
+  How these numbers are counted (Human review). kcat, Km and kcat/Km in the lead's
+  text (the big number's words, the sentence, the notes) take the site's italic markup with a
   subscript (metricWordsHtml, on escaped text only), as the Values lines and the Guide write them. The first-comparison and blind
   fields (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no
   "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with that match ("of the
@@ -152,15 +161,16 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
   - Each value against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above);
-    shares under the bars; a segment with a filter opens Browse when clicked; data line: calculated kcat/Km not
-    compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
+    shares under the bars; a segment with a filter opens Browse when clicked; its rules (How these numbers are
+    counted): calculated kcat/Km not compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
   - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Its own
     not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
     database), never the Why not listed labels, which say what all the databases list. A database that lists none of
-    the papers read gets a data line ("UniProt lists none of these papers."), no empty bar, and no column in
+    the papers read is named under How these numbers are counted ("UniProt lists none of these papers."), with no
+    empty bar and no column in
     Corrections by cause and database. Beside it,
     the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per
     database and "All, each value once" (`values.all`); below 400px the paired count goes under the name. Per
@@ -227,8 +237,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
   row's summary. A fill from the parameter's colour to its tint, the 10–90% range as a line on the baseline
   with the median as a dot, the median at the right to two significant figures and the class's number of values
   after it (a muted n column sized in ch to its longest count), a class with fewer than 300 values drawn lighter
-  (fill at 45%) with a dashed outline so it does not look as solid as a big one (the data line says so when one is
-  shown), a shared log axis per panel, the one Value ranges uses (a tick per decade, labelled at the even powers when there are more than 7 ticks, so
+  (fill at 45%) with a dashed outline so it does not look as solid as a big one (How these numbers are counted says
+  so when one is shown), a shared log axis per panel, the one Value ranges uses (a tick per decade, labelled at the even powers when there are more than 7 ticks, so
   10⁰ is always labelled; every second label thins out when narrow, the power of ten with it). EC N links into Browse with the panel's parameter (the
   class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
@@ -241,8 +251,8 @@ A closed "How these numbers are counted" ends the page. The parts' figures and t
 Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette but a bit glowing"): every figure
 and table has a heading (16px; the parts' headings are 20px), the plot, then
 "Figure N." or "Table N." (numbered in reading order, figures and tables
-apart, so without figures 3-5 the next figure is 3) with one sentence (13px) and a 12px data line (snapshot, Data ID,
-definition). Bars 16px thick, 8px apart, their outer ends rounded 2px; fills run from the colour to its tint, top
+apart, so without figures 3-5 the next figure is 3) with a short caption (13px), its accessible description; no data
+line (the snapshot, Data ID and rules are said once, at the end). Bars 16px thick, 8px apart, their outer ends rounded 2px; fills run from the colour to its tint, top
 to bottom, with a 1px opaque outline; legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
