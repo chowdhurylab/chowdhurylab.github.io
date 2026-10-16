@@ -333,7 +333,8 @@ per page is remembered in this browser (localStorage, optional).
 The search box's placeholder is short enough to fit on a laptop ("Enzyme, EC,
 organism or substrate"); its accessible name says all it finds (enzyme, EC
 number, organism, substrate, UniProt ID or PMID), and so does the line of
-examples. Empty, it offers one fixed line of examples
+examples. Its "/" badge (the shortcut that focuses it) shows only where there is
+a keyboard: a touch screen (pointer: coarse) shows none. Empty, it offers one fixed line of examples
 ("Try: hexokinase · 1.1.1.1 · Escherichia coli · NADH · P00330 · PMID
 15989682"), each a search with results; the name fields offer three of their
 own; nothing is drawn at random. The box is as wide as that line wherever the

@@ -762,6 +762,8 @@
 
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
+  // A Stats part's address (#stats-quality, from the page's On this page line): Stats, opened at that part.
+  const STATS_SECTION_HASH = /^#stats-[a-z-]+$/;
 
   // A Guide section's heading: the one the section is labelled by, or the target itself when it is a heading
   // (#guide-cautions).
@@ -774,6 +776,7 @@
   function viewFromLocation() {
     if (["#browse", "#guide", "#stats", "#team"].includes(window.location.hash)) return window.location.hash.slice(1);
     if (GUIDE_SECTION_HASH.test(window.location.hash)) return "guide";
+    if (STATS_SECTION_HASH.test(window.location.hash)) return "stats";
     // Browse with filters: #browse?q=...&ec=... (see browseParamsFromLocation).
     if (/^#browse\?/.test(window.location.hash || "")) return "browse";
     return new URL(window.location.href).pathname.endsWith("/catlog-stats.html") ? "stats" : "browse";
@@ -837,6 +840,11 @@
       ? document.getElementById(window.location.hash.slice(1))
       : null;
     if (guideSection) window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
+    // A part's address (#stats-quality) shows that part of Stats, also when the page opens at it.
+    const statsSection = statsOpen && STATS_SECTION_HASH.test(window.location.hash)
+      ? document.getElementById(window.location.hash.slice(1))
+      : null;
+    if (statsSection) window.requestAnimationFrame?.(() => statsSection.scrollIntoView?.({ block: "start" }));
     if (scroll) {
       if (guideOpen) $("guideView").scrollTop = 0;
       if (teamOpen && $("teamView")) {
@@ -3847,7 +3855,7 @@
   // Cautions, Against the databases), with one plain heading and its figures on a 12-column grid.
   function statsPartHtml(number, key, title, blocks, { intro = "" } = {}) {
     const id = `statsPart${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;
-    return `<section class="stats-part" data-part="${key}" aria-labelledby="${id}">
+    return `<section class="stats-part" id="stats-${escapeHtml(key)}" data-part="${key}" aria-labelledby="${id}">
       <h2 id="${id}" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">${number}</span><span>${escapeHtml(title)}</span></h2>
       ${intro}<div class="stats-part-grid">${blocks.join("")}</div></section>`;
   }
@@ -5901,7 +5909,7 @@
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
     const entering = !statsBandEntered;
     statsBandEntered = true;
-    $("statsTotals").innerHTML = `<section class="stats-band${entering ? " is-entering" : ""}" aria-labelledby="statsPartGlanceTitle">
+    $("statsTotals").innerHTML = `<section class="stats-band${entering ? " is-entering" : ""}" id="stats-glance" aria-labelledby="statsPartGlanceTitle">
       <h2 id="statsPartGlanceTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">1</span><span>At a glance</span></h2>
       ${totalsHtml(main, "stats-totals-main")}${scope.length ? totalsHtml(scope, "stats-totals-scope") : ""}</section>`;
     // Once the numbers have risen (the last starts at 270ms and takes 900ms), the band drops is-entering, so Stats shown
@@ -6361,6 +6369,17 @@
         ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Its papers are those with at least one compared value: fewer than the papers read when none of a paper's values could be compared. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
+    // On this page: the parts in one line under the title, each a link to its part (#stats-<key>, the part's own
+    // address), numbered as their headings are; on a phone Stats is 17 screens long and this is the way to a part
+    // (2026-10-15). Hidden until drawn, so a page without parts shows no empty line.
+    const contentsLine = $("statsContents");
+    if (contentsLine) {
+      const entries = [{ number: 1, key: "glance", title: "At a glance" },
+        ...parts.filter((part) => part.items.length).map((part, index) => ({ number: index + 2, key: part.key, title: part.title }))];
+      contentsLine.innerHTML = `<span class="stats-contents-title">On this page</span><ul>${entries.map((entry) =>
+        `<li><a href="#stats-${escapeHtml(entry.key)}"><span class="stats-contents-number" aria-hidden="true">${entry.number}</span> ${escapeHtml(entry.title)}</a></li>`).join("")}</ul>`;
+      contentsLine.hidden = false;
+    }
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
@@ -12784,18 +12803,20 @@
       }
       // A link to a Guide section (#guide-method from Stats, a record or the filters; the Guide's own contents) opens it
       // in this page with focus on the section's heading, so the next Tab goes on from there, not from the link left behind.
-      const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : null;
+      // The same for a Stats part (#stats-quality, from Stats' own On this page line): its heading takes the focus.
+      const statsSection = STATS_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : null;
+      const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : statsSection;
       if (section) {
         event.preventDefault();
         afterRecordEntryLeft(() => {
-          const url = viewUrl("guide");
+          const url = viewUrl(statsSection ? "stats" : "guide");
           url.hash = target.hash;
           if (window.location.href !== url.href) {
             rememberRecordScroll();
-            window.history.pushState({ catlogView: "guide" }, "", url);
+            window.history.pushState({ catlogView: statsSection ? "stats" : "guide" }, "", url);
           }
           showLocationView();
-          const heading = guideSectionHeading(section);
+          const heading = statsSection ? section.querySelector?.(".stats-part-title") : guideSectionHeading(section);
           // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
           if (heading && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
           heading?.focus({ preventScroll: true });

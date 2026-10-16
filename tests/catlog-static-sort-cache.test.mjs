@@ -1857,6 +1857,17 @@ function row(overrides = {}) {
   // Human-checked is a check under Quality; the band has no Human review without the review's counts.
   assert.doesNotMatch(totalsHtml, /Human-checked|Human review/);
   assert.deepEqual(partTitles(), ["1 At a glance", "2 Quality", "3 What is in the catalog", "4 Biology", "5 Values", "6 Cautions"]);
+  // On this page: one line under the title listing the parts as their headings number them, each a link to the part's
+  // own address (#stats-<key>, the section's id), so a phone visitor reaches a part without scrolling the whole page.
+  const contentsItems = () => [...element("statsContents").innerHTML
+    .matchAll(/<li><a href="#stats-([a-z]+)"><span class="stats-contents-number" aria-hidden="true">(\d+)<\/span> ([^<]+)<\/a><\/li>/g)]
+    .map((match) => [match[1], `${match[2]} ${match[3]}`]);
+  assert.equal(element("statsContents").hidden, false);
+  assert.match(element("statsContents").innerHTML, /^<span class="stats-contents-title">On this page<\/span><ul><li>/);
+  assert.deepEqual(contentsItems().map(([, title]) => title), partTitles());
+  for (const [key] of contentsItems()) {
+    assert.match(element("statsTotals").innerHTML + element("statsCharts").innerHTML, new RegExp(`<section class="stats-(?:band|part)[^"]*" id="stats-${key}"`), `#stats-${key} is a part`);
+  }
   assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "Read from the paper and not yet re-read",
     "What the records contain", "Wild type and variants", "Enzyme classes", "Most common organisms", "Most common EC numbers", "Value ranges",
     "Cautions on values"]);
@@ -1980,7 +1991,7 @@ function row(overrides = {}) {
   // The lead opens Quality, the first part after the headline band.
   let lead = leadHtml();
   assert.equal((element("statsCharts").innerHTML.match(/data-figure="review"/g) || []).length, 1, "The lead is shown once");
-  assert.match(element("statsCharts").innerHTML, /^<section class="stats-part" data-part="quality" aria-labelledby="statsPartQualityTitle">\s*<h2 id="statsPartQualityTitle"[^>]*>[\s\S]*?<\/h2>\s*<div class="stats-part-grid"><section class="stats-section stats-lead/);
+  assert.match(element("statsCharts").innerHTML, /^<section class="stats-part" id="stats-quality" data-part="quality" aria-labelledby="statsPartQualityTitle">\s*<h2 id="statsPartQualityTitle"[^>]*>[\s\S]*?<\/h2>\s*<div class="stats-part-grid"><section class="stats-section stats-lead/);
   assert.equal(element("statsLead").hidden, true, "An older page's slot above the counts stays empty");
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
   assert.match(lead, /<div class="stats-lead-figure"><strong>89\.7%<\/strong><span>of the values human reviewers approved are the same where CatLog has <span class="nowrap">re-read<\/span> the paper \(98 papers\)<\/span><\/div>/);
@@ -2144,7 +2155,7 @@ function row(overrides = {}) {
       another_measurement_per_paper_check: 10 } },
     papers: 2650, papers_compared: 2598,
   });
-  const databaseSection = () => element("statsCharts").innerHTML.match(/<section class="stats-part" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part"|<details|$)/)?.[0] || "";
+  const databaseSection = () => element("statsCharts").innerHTML.match(/<section class="stats-part" id="stats-databases" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part"|<details|$)/)?.[0] || "";
   const figureHtml = (key) => element("statsCharts").innerHTML.match(new RegExp(`<section class="stats-section[^"]*" aria-labelledby="[^"]+" data-figure="${key}">[\\s\\S]*?</figure>[\\s\\S]*?</section>`))?.[0] || "";
   const plain = (html) => html.replace(/<[^>]*>/g, "").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
   const earlierCounts = { records: 2881, items: 5059, other_items: 889, before_listed: [2601, 3635], values: {

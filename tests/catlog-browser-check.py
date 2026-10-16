@@ -572,6 +572,11 @@ def check_browse(driver, browser, url, route_label):
         for viewport, width, height in sizes:
             set_browse_viewport(driver, browser, width, height)
             driver.execute_script("window.scrollTo(0, 0)")
+            # The "/" shortcut badge in the search box shows only where there is a keyboard: not on a touch screen
+            # (pointer: coarse; the 390px viewport emulates one).
+            coarse, badge = driver.execute_script(
+                "const k = document.querySelector('.global-search kbd'); return [matchMedia('(pointer: coarse)').matches, k && getComputedStyle(k).display]")
+            assert coarse == (width == 390) and (badge == "none") == coarse, (viewport, coarse, badge)
             assert driver.find_element(By.ID, "pageSizeSelect").get_attribute("value") == "25"
             first_keys = row_keys()
             assert len(first_keys) == len(set(first_keys)) == 25
@@ -1156,6 +1161,37 @@ STATS_AXIS_EVEN = """
 """
 
 
+def check_stats_contents(driver, width):
+    """On this page, under the Stats title: the parts as their headings number them, each a link to its own address
+    (#stats-<key>); the line fits the window, wrapping between parts only; following the last link scrolls that part to
+    the top of the Stats view (the page itself never scrolls) with its heading focused, and the address names it."""
+    contents = driver.find_element(By.ID, "statsContents")
+    assert contents.is_displayed()
+    items = driver.execute_script("""
+        return [...document.querySelectorAll('#statsContents li')].map(li => ({text: li.innerText.replace(/\\s+/g, ' ').trim(),
+            href: li.querySelector('a').getAttribute('href'), box: li.getBoundingClientRect()}));
+    """)
+    headings = [h.get_attribute("innerText").replace("\n", " ").strip()
+                for h in driver.find_elements(By.CSS_SELECTOR, "#statsTotals .stats-part-title, #statsCharts .stats-part-title")]
+    assert [item["text"].rstrip(" ·").strip() for item in items] == headings, (items, headings)
+    assert all(item["href"] == f"#stats-{driver.execute_script('return arguments[0]', item['href'])[7:]}" for item in items)
+    assert all(item["box"]["left"] >= 0 and item["box"]["right"] <= width + 1 for item in items), (width, items)
+    assert all(item["box"]["height"] < 40 for item in items), "a part keeps its number and name on one line"
+    last = items[-1]["href"][1:]
+    assert driver.execute_script("return !!document.getElementById(arguments[0])", last), last
+    driver.find_element(By.CSS_SELECTOR, f'#statsContents a[href="#{last}"]').click()
+    WebDriverWait(driver, 10).until(lambda d: urlsplit(d.current_url).fragment == last)
+    assert driver.find_element(By.ID, "statsView").is_displayed()
+    top = driver.execute_script("""
+        const view = document.getElementById('statsView').getBoundingClientRect();
+        return document.getElementById(arguments[0]).getBoundingClientRect().top - view.top;
+    """, last)
+    assert -2 <= top <= 48, f"{last} scrolled to {top}px from the top of the Stats view"
+    assert driver.execute_script("return document.activeElement && document.activeElement.classList.contains('stats-part-title')")
+    assert_document_stays(driver, "stats")
+    driver.execute_script("document.getElementById('statsView').scrollTop = 0")
+
+
 def check_stats_figures(driver, browser, url):
     """Part 7 and figure 2 by review result, from a copy of the manifest set in Chrome before the page starts (the data
     files are not changed; the comparison with the databases is the snapshot's own, or the test bundle's when it has
@@ -1186,6 +1222,7 @@ def check_stats_figures(driver, browser, url):
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsReplacedTitle"))
+            check_stats_contents(driver, width)
             # The comparison with the databases is the last numbered part, its figures in order.
             part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
             assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")

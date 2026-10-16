@@ -158,6 +158,10 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
 .global-search input { width:100%; min-height:36px; border:0; outline:0; background:transparent; color:var(--text); font-size:var(--fs-14) }
 .global-search input::placeholder { color:var(--muted) }
 .global-search kbd { min-width:20px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); color:var(--muted); text-align:center; font:var(--fs-12)/18px var(--font-mono) }
+/* Touch screens (pointer: coarse): the "/" shortcut badge means nothing without a keyboard, so the box shows none. */
+@media (pointer: coarse) {
+  .global-search kbd { display:none }
+}
 .header-actions { display:flex; min-width:max-content; align-items:center; gap:12px }
 .download-menu { position:relative }
 .download-menu summary { gap:8px; border-color:var(--accent-line); color:var(--accent); list-style:none; user-select:none }
@@ -918,6 +922,16 @@ p.cmp-note { padding-left:16px }
 .stats-heading h1 { margin:0; font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
 .stats-heading .snapshot-date { color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .stats-heading p { margin:var(--sp-1) 0 0; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
+/* On this page: the parts in one line under the title, each a link to its part (#stats-<key>), wrapping between parts
+   only (a part keeps its number and name together), so on a phone, where Stats runs 17 screens, a part is one tap away. */
+.stats-contents { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px var(--sp-3); margin:var(--sp-3) 0 0; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
+.stats-contents-title { font-weight:500 }
+.stats-contents ul { display:flex; flex-wrap:wrap; gap:4px 0; margin:0; padding:0; list-style:none }
+.stats-contents li { white-space:nowrap }
+.stats-contents li:not(:last-child)::after { content:"·"; margin:0 var(--sp-2); color:var(--muted) }
+.stats-contents a { color:var(--accent); text-decoration:none }
+.stats-contents a:hover, .stats-contents a:focus-visible { text-decoration:underline }
+.stats-contents-number { color:var(--muted); font-variant-numeric:tabular-nums }
 /* 1. At a glance: the headline band, the page's focal point (the user, 2026-10-13: "can it glow a bit or more focus
    driving"; 2026-10-15: "more focusing ... with some glow"). A card with a 1px accent line and a gentle accent glow
    round it, a thin accent rule along its top and a calm wash; the four key numbers (line 1, 40px) in accent ink, each
@@ -1526,7 +1540,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-band.is-entering .stats-totals-main dd { animation:none }
   .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
   .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
-  .stats-tip, .stats-switch { display:none !important }
+  .stats-tip, .stats-switch, .stats-contents { display:none !important }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
      this where a browser prints without telling the page. */
   .stats-method::details-content { content-visibility:visible; display:block }

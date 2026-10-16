@@ -27,7 +27,10 @@ An older manifest without an overview shows what it has: never an empty
 heading, a headline without its number, or a count above the record total.
 
 Order (the user, 2026-10-13: "more stuff in Stats or make it better organized"): the title (24px) with the snapshot
-line, then numbered parts, each with one plain heading (20px, its number in a small accent disc) and its figures and
+line, under it one 14px line "On this page" naming the parts as their headings number them, each a link to the part's
+own address (#stats-<key>, the part section's id: it opens Stats at that part, with the heading focused when followed
+in the page; the line wraps between parts only and is left out of print), the way to a part on a phone, where Stats
+runs 17 screens (2026-10-15); then numbered parts, each with one plain heading (20px, its number in a small accent disc) and its figures and
 tables on a 12-column grid (max 1200px, gaps 48px and 32px), two to a row from 1024px (an odd one out spans the row;
 a bar chart that spans it keeps its labels within 240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row
 each, so the legend table keeps its room beside the donut), one below. Figures and tables are numbered across parts.
