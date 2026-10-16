@@ -104,8 +104,11 @@ def check_browse_assets(driver, url):
 
 def set_browse_viewport(driver, browser, width, height):
     if browser == "chrome":
+        # A phone width is emulated as a phone (overlay scrollbars, as every other phone check here does): in desktop mode
+        # Browse, which scrolls as a whole page on phones, gets a 15px classic scrollbar no phone has, and at 320px that
+        # left the Sort menu 104px instead of 119px.
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
-            "width": width, "height": height, "deviceScaleFactor": 1, "mobile": width == 390,
+            "width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640,
         })
         driver.execute_cdp_cmd("Emulation.setTouchEmulationEnabled", {"enabled": width == 390})
     else:
