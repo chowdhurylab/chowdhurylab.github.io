@@ -58,15 +58,14 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    print drops every glow and wash.
 2. Quality: the lead, then Checks on the values.
 3. What is in the catalog: Review result (the donut), Records by main source, Read from the paper and not yet re-read,
-   Values read from each paper, then What the records contain beside Wild type and variants.
+   Values per paper, then What the records contain beside Wild type and variants.
 4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the same among records read from the
    paper.
 5. Values: Value ranges, then Values by enzyme class.
 6. Cautions.
-7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a one-sentence lead, Each
-   value against the databases (alone in its row until Why no database lists a value joins it), Each database against
-   the values read from its papers beside When a database lists a number for the same measurement, How each correction
-   was found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
+7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
+   against the databases (alone in its row until Why no database lists a value joins it), Results by database beside
+   Paired values by database, Corrections by cause beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
    replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
 
 A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
@@ -89,8 +88,8 @@ accessible description; no figure or table has a data line. The parts' figures a
   without repeating the base: "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3
   are as printed in the paper." (`value_disputed_checked_as_printed`). Two facts: Values missing ("31 entries
   (1.2%)") and Other disagreements ("177 entries (6.6%)"), then one note: what values missing means ("the paper
-  prints a value the entry lacked, mostly the kcat"), with how many of the values reviewers named CatLog has read from
-  the paper since ("CatLog has read 53 of the 58 values reviewers named from the paper";
+  prints a value the entry lacked, most often the kcat"), then, as its own sentence, how many of the values reviewers
+  named CatLog has read from the paper since ("CatLog has since read 53 of the 58 values the reviewers named";
   `agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, a minor line
   ("could not find the value 153, organism name 13, DOI 5, ..."). A review of records read from the paper
   (`review.v2`, once reviewers check them) adds one sentence of the same shape ("Human reviewers checked 40 records
@@ -121,7 +120,7 @@ accessible description; no figure or table has a data line. The parts' figures a
   CatLog's own reading, one database, Several databases, Other for STRENDA DB,
   earlier paper extractions and no source recorded, named in its note),
   stacked by review result (Accepted, Not confirmed, Not checked, Disputed);
-  each value label gives the records, then the share accepted. Only CatLog's
+  its two number columns are named above them, Records and Accepted (the share accepted). Only CatLog's
   own records are linked (no single filter opens a main source). Under it, the
   per-database counts Browse's source filter finds (a merged record counts
   under each, as the Guide's source list), each linked. A snapshot without
@@ -129,12 +128,12 @@ accessible description; no figure or table has a data line. The parts' figures a
   redraws each source as 100% of itself (the accepted share by source, with its own 0-100% axis), eased unless the
   viewer asks for less motion.
 - Read from the paper and not yet re-read: two bars stacked by review result (Read from the paper: the main source
-  CatLog's own reading; Not yet re-read: every other record, so the two make all records), each label the records,
-  then the share accepted; both names link into Browse (source=paper, source=databases). What each means is said once,
+  CatLog's own reading; Not yet re-read: every other record, so the two make all records, as its caption says), its
+  number columns named Records and Accepted (the share accepted); both names link into Browse (source=paper, source=databases). What each means is said once,
   in How these numbers are counted.
-- Values read from each paper (`overview.from_paper_values`): the papers CatLog has read, by how many kcat, Km and
+- Values per paper (`overview.from_paper_values`): the papers CatLog has read, by how many kcat, Km and
   printed kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a
-  calculated kcat/Km is not a value read), each label the papers, then their share; drawn only when the bins add up to
+  calculated kcat/Km is not a value read), its number columns named Papers and Share; drawn only when the bins add up to
   the papers CatLog has read. No publication years: the data has none.
 - Part 7, Against the databases, reads only the manifest's `summary.database_comparison` (the page never parses a
   value's database line): whole counts, checked to add up (the parameters to `values.all`, the causes to
@@ -143,41 +142,44 @@ accessible description; no figure or table has a data line. The parts' figures a
   databases its counts name in the Source filter's order and spelling (STRENDA DB), else BRENDA, SABIO-RK, OED, SKiD,
   STRENDA DB and UniProt (the one list Browse, the record and the Guide use too): no number of databases is fixed. A
   database's name never breaks across lines (captions, table headings, the per-database lines), as in the Guide.
-  Every caption ends "Numbers compared for the same paper. A different number can mean a different measurement; it
-  does not by itself mean a database is wrong." (the Guide's note too; a record says it once: in the "?" box beside
+  Stats says "A different number can mean a different measurement; it does not by itself mean a database is wrong."
+  once, at the end of the part's lead (alone as the lead when the values' counts for one are missing but a figure
+  compares values), never under each figure; How these numbers are counted says the numbers are compared for the same
+  paper and parameter (the Guide's note says both; a record says it once: in the "?" box beside
   its Against the databases heading with the compared databases and a link to the Guide, or, when a value has a
   Different number, under its notes instead: the user, 2026-10-15, "do we need to write it every time?"). A result's name and definition are Browse's
   option's (DATABASE_RESULT_NAMES, databaseFilters' title), in Stats and the Guide alike. Shares only on a base of 1,000 values, else counts. Colours as Browse
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
-  - Lead (14px): "Of 126,951 values read from 2,650 papers and compared, 97,791 (77.0%) are the number a database
-    lists, 5,574 are a number a database lists under another label, 1,548 correct a database's number (656 checked
-    against the paper), 1,051 differ without a known cause and 20,987 are in none of the databases. Where a database
-    lists a number for the same measurement (100,390 values), it is the paper's number for 97.4%." Its counts add up to
-    the total; the four result phrases link into Browse (db=other_label, corrects, differs, not_listed), each titled
+  - Lead (14px), one idea per sentence: "CatLog compared 126,951 values read from 2,650 papers with what the
+    databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed
+    under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ
+    for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same
+    measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different
+    measurement; it does not by itself mean a database is wrong." Its counts add up to the total; the four result phrases link into Browse (db=other_label, corrects, differs, not_listed), each titled
     with the records it opens ("1,548 values in 1,443 records", from the option's record count).
   - Links never open a wider list than their count: a count, segment or label whose link would name a database
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
-  - Each value against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
+  - Values against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above);
     shares under the bars; a segment with a filter opens Browse when clicked; its rules (How these numbers are
     counted): calculated kcat/Km not compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
-  - Each database against the values read from its papers (`values_by_database`): a 100% bar per database, the
+  - Results by database (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Its own
     not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
     database), never the Why not listed labels, which say what all the databases list. A database that lists none of
     the papers read is named under How these numbers are counted ("UniProt lists none of these papers."), with no
     empty bar and no column in
     Corrections by cause and database. Beside it,
-    the table When a database lists a number for the same measurement: Paired, Same (share), Corrects, Differs per
+    the table Paired values by database (paired: the database lists a number for the same measurement): Paired, Same (share), Corrects, Differs per
     database and "All, each value once" (`values.all`); below 400px the paired count goes under the name. Per
     database only Corrects links (bar, legend, table): a database's Different number also counts its other number for a
     value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
     which matches a value by its own result, would show fewer; the All row's Differs links (one result).
-  - How each correction was found: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
+  - Corrections by cause: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; DATABASE_CAUSE_FAMILIES, the Guide's list too, maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
     add up to its code count; a bar split two ways prints its two counts under its name, each after its colour. Beside
@@ -247,6 +249,19 @@ accessible description; no figure or table has a data line. The parts' figures a
   EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, navy
   bars, linked with source=paper),
   What the records contain, Wild type and variants, Cautions.
+
+Wording (the user, 2026-10-15: "the figures have some weird ai ish wording right?"): titles are short noun phrases;
+a caption is one or two short plain sentences that say what the title does not (how the figure is drawn, what a share
+is of), one idea per sentence, no stacked semicolons, never "in all", and no filler about where the numbers stand: a
+chart whose numbers need naming names its columns above them (Records / Accepted, Papers / Share, Figure 5's
+Records / Accepted / From paper). Before -> after: "Records by main source, coloured by review result; each label gives
+the records, then the share accepted." -> "Each record counts once, under the source it came from, coloured by review
+result."; "The 3,104 papers CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label
+gives the papers, then their share." -> "The 3,104 papers CatLog has read, by the number of kcat, Km and kcat/Km values
+read from each."; "For each database, how it lists the values read from the papers it lists (the number beside its
+bar); ..." -> "A database's bar covers only the papers it lists, so one value can count for several databases."
+Round 8's binding words stay as they are (the human review's headline and side line, "among records read from the
+paper").
 
 Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette but a bit glowing"): every figure
 and table has a heading (16px; the parts' headings are 20px), the plot, then

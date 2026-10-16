@@ -990,7 +990,7 @@ def check_review_headline(driver, browser, url):
             # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
             assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-sentence i + sub")) >= 4
             text = lead.get_attribute("innerText")
-            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog has read 53 of the 58 values reviewers named from the paper" in text, text
+            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog has since read 53 of the 58 values the reviewers named" in text, text
             assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
             assert "could not find the value 153, organism name 13, DOI 5" in text, text
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").strip() == REVIEW_SIDE_LINE
@@ -1085,8 +1085,7 @@ DATABASE_COMPARISON_FIXTURE = {
     "not_reproduced": {"distinct": {"paired_with_different_number": 5635, "reprinted_from_other_work": 2372}},
     "papers": 2650,
 }
-DATABASE_TITLES = ("Each value against the databases", "Each database against the values read from its papers",
-                   "When a database lists a number for the same measurement", "How each correction was found",
+DATABASE_TITLES = ("Values against the databases", "Results by database", "Paired values by database", "Corrections by cause",
                    "Corrections by cause and database")
 FIGURE_TITLES = (*DATABASE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
 # Before the page starts: the snapshot's comparison with the databases, or the fixture when it has none.
@@ -1164,7 +1163,10 @@ def check_stats_figures(driver, browser, url):
             comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.summary.database_comparison")
             compared = sum(count for status, count in comparison["values"]["all"].items() if status != "not_compared")
             lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
-            assert lead.get_attribute("innerText").strip().startswith(f"Of {compared:,} values read from"), lead.get_attribute("innerText")
+            lead_text = lead.get_attribute("innerText").strip()
+            assert lead_text.startswith(f"CatLog compared {compared:,} values read from"), lead_text
+            # The caveat is said once in part 7, at the end of its lead, never under each figure.
+            assert lead_text.endswith("it does not by itself mean a database is wrong.") and part.get_attribute("innerText").count("by itself mean a database") == 1
             # Its result phrases link into Browse in Figure 8's order (a result with no values has none), each titled
             # with the records it opens where the comparison counts them.
             links = [urlsplit(a.get_attribute("href")).fragment for a in lead.find_elements(By.CSS_SELECTOR, "a")]
@@ -1189,9 +1191,12 @@ def check_stats_figures(driver, browser, url):
             rows = {row["key"]: row["count"] for row in figures[0]["rows"]}
             assert rows["all"] == compared, rows
             assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-share-lines dd span"), "Shares under the bars"
+            # The caveat is the lead's last sentence, said once, not repeated under the figures.
             for key in ("db-values", "db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
-                assert "A different number can mean a different measurement; it does not by itself mean a database is wrong." in caption, caption
+                assert "by itself mean a database is wrong" not in caption, caption
+            assert lead.get_attribute("innerText").strip().endswith(
+                "A different number can mean a different measurement; it does not by itself mean a database is wrong.")
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):
@@ -1703,7 +1708,7 @@ def check_stats_new_figures(driver, browser, url):
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
-            for title in ("Values read from each paper", "Most common organisms among records read from the paper", "Values by enzyme class"):
+            for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class"):
                 assert title in titles, titles
             assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
@@ -4767,6 +4772,9 @@ def check(driver, browser, url):
         numbers = [int(match) for match in re.findall(kind + r" (\d+)\.", " ".join(
             caption.text for caption in driver.find_elements(By.CSS_SELECTOR, ".stats-fig > figcaption .stats-fig-caption")))]
         assert numbers == list(range(1, len(numbers) + 1)), f"{kind} numbers: {numbers}"
+    # Captions in plain words: no filler about where the numbers stand, never "in all", no stacked semicolons.
+    for caption in driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"):
+        assert not re.search(r"\bin all\b|each label gives|beside each bar|Numbers compared for the same paper", caption) and caption.count(";") <= 1, caption
     assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
     for removed in ("not split by field", "How these groups differ", "Example checks", "Fields in these records"):
         assert removed not in stats_text, f"Removed Stats text is back: {removed}"

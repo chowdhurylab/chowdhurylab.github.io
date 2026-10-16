@@ -955,11 +955,12 @@ One page from the snapshot manifest (never the record index) in numbered parts, 
 2 Quality (the lead, the user's headline: "Human review", 99.9% values correct of 2,674 entries from the earlier
 version (408 papers), with "Read from the paper again: same value as the reviewers for ..." as a side line; then the
 checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a
-Records | Share switch, Read from the paper and not yet re-read, values read from each paper, what the records
+Records | Share switch, Read from the paper and not yet re-read, values per paper, what the records
 contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
 organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
-as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a one-sentence lead, each value against the databases, each database against the values read from its papers beside the values it pairs, how each correction was found beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
-Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption and no data
+as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a short lead that says once that a different number can mean a different measurement, values against the databases, results by database beside paired values by database, corrections by cause beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
+Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
+(one or two sentences, no filler: a chart names its number columns above them instead) and no data
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
 the closed How these numbers are counted that ends the page; fills run from the colour to its tint with 1px outlines, in the
 review-result and comparison tokens and --bar-neutral for the single-series value figures (every BPG hue already

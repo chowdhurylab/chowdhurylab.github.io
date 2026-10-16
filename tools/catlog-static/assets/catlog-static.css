@@ -1480,7 +1480,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-db-cause-table { display:none }
   .stats-db-blocks { display:grid }
   .stats-chart-label { grid-column:1; grid-row:1; align-self:end }
-  .stats-chart.has-value-heads .stats-chart-label { -webkit-hyphens:auto; hyphens:auto }
+  .stats-chart.has-value-heads[data-chart="ec-classes"] .stats-chart-label { -webkit-hyphens:auto; hyphens:auto }
   .stats-chart-value { grid-column:2; grid-row:1; align-self:end }
   .stats-chart-row.has-note > .stats-chart-value { align-self:start }
   .stats-track { grid-column:1 / -1; grid-row:2 }
