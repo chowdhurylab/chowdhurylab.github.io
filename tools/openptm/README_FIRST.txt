@@ -3,9 +3,14 @@ openPTM
 Website: https://chowdhurylab.github.io/tools/openptm/
 Release: 2026-10-16
 
-Browse PTMs, sites, disease studies and methods. The page contains its data,
+Browse PTMs, sites and function, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
+
+Design update, 16 October
+- The PTM directory uses aligned rows for modification, chemistry and available
+  data, with simpler navigation and readable phone layouts.
+- Scientific data, source qualifications and the audit workbook are unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
@@ -22,7 +27,7 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
-New measurements since the previous published release
+Measurements published earlier on 16 October
 - 41 additional comparisons with 47 measurement entries, adding 37 primary
   papers and numerical coverage for 38 more PTM families.
 - The latest addition contains four Rab1b phosphocholination comparisons and
@@ -83,7 +88,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-d42e26f54cbdf79898ac672dba601a23fdad6241e9d9d58321172e302e5365fa
+29d95f685d6c2de33c487bd7eaaffe1e2a515483b07ef6dfc536c198c0b56158
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 

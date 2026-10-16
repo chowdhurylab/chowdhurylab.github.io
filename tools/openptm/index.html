@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Browse PTM families, source catalogs, protein sites, function and regulation findings, and disease studies. Sources and counting methods accompany the data. Chowdhury Lab, Iowa State University.">
 <title>openPTM | PTM databases and studies</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2324675f'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='white' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='4' fill='white'/%3E%3C/svg%3E">
-<style>/* openPTM — DESIGN.md v3.0.0 */
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23285577'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='white' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='4' fill='white'/%3E%3C/svg%3E">
+<style>/* openPTM — DESIGN.md v4.0.0 */
 
 :root {
-  --primary: #24675F;
-  --bg: #F5F6F2;
+  --primary: #285577;
+  --bg: #F6F7F8;
   --panel: #FFFFFF;
-  --panel-muted: #F7F8F5;
-  --zebra: #FCFCFA;
-  --ink: #1C2420;
-  --muted: #536159;
-  --quiet: #66726A;
-  --line: #D8DED6;
-  --line-soft: #E8ECE6;
-  --accent: #24675F;
-  --accent-dark: #1D514C;
-  --accent-soft: #E9F2EF;
+  --panel-muted: #F6F7F8;
+  --zebra: #FAFBFC;
+  --ink: #22272B;
+  --muted: #565E65;
+  --quiet: #626B73;
+  --line: #D5DADF;
+  --line-soft: #E8EBEE;
+  --accent: #285577;
+  --accent-dark: #24465F;
+  --accent-soft: #EEF3F7;
   --warning: #A96D28;
   --warning-soft: #FFF3E4;
   --danger: #A94448;
   --danger-soft: #FAEAEB;
-  --row-hover: #F2F7F3;
-  --row-selected: #E7F1EB;
+  --row-hover: #F4F7F9;
+  --row-selected: #EAF1F6;
   --shadow: 0 10px 26px rgba(20, 34, 31, 0.09);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
   --reading-font: var(--font);
+  --title-font: Georgia, "Times New Roman", serif;
 }
 
 * { box-sizing: border-box; }
@@ -147,7 +148,7 @@ a { color: var(--accent); }
 .button:active { background: var(--accent-soft); }
 .button[disabled] { color: var(--quiet); border-color: var(--line-soft); cursor: default; background: var(--panel); }
 
-.header-download { border-color: var(--accent); color: var(--accent); }
+.header-download { border-color: var(--line); color: var(--muted); font-weight: 400; }
 
 .text-button {
   appearance: none; border: 0; background: none; font: inherit; font-size: 12px;
@@ -529,12 +530,12 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   background: var(--panel);
   scrollbar-gutter: stable;
 }
-.library-inner { padding: 20px 28px 32px; }
+.library-inner { max-width: 1240px; margin: 0 auto; padding: 32px 36px 40px; }
 .library-heading h1, .family-page-heading h1 {
   margin: 0;
-  font-family: var(--reading-font);
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--title-font);
+  font-size: 32px;
+  font-weight: 400;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -551,8 +552,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   gap: 8px 12px;
   padding-bottom: 10px;
 }
-.directory-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 14px; }
+.directory-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 24px; }
 .directory-heading p { margin: 0; }
+.directory-heading .directory-description { margin-top: 8px; font-size: 14px; }
 .library-tools label {
   display: flex;
   flex-direction: column;
@@ -579,6 +581,8 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 .library-tools select:hover { border-color: var(--accent); }
 .ptm-library .library-tools label { flex-direction: row; align-items: center; gap: 8px; }
 .ptm-library #directoryCollection { width: 200px; }
+.ptm-library .library-tools { gap: 12px 20px; padding-bottom: 16px; }
+.ptm-library .library-tools > strong { margin-left: auto; }
 .library-tools > strong {
   margin-left: 4px;
   padding-bottom: 7px;
@@ -602,7 +606,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   min-height: 32px;
   padding: 4px 7px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 0;
   background: none;
   color: var(--accent);
   font: inherit;
@@ -614,19 +618,21 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   border-color: var(--line);
 }
 .directory-alphabet button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent-dark);
+  background: none;
+  border-bottom-color: var(--ink);
+  color: var(--ink);
   font-weight: 600;
 }
 .directory-alphabet button:active, .ptm-library #directoryReset:active { background: var(--row-selected); }
 .directory-alphabet button:disabled { color: var(--quiet); background: none; border-color: transparent; cursor: default; }
-.directory-group { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; padding-top: 12px; }
+.directory-columns { display: grid; grid-template-columns: 1.15fr 1fr 0.95fr; gap: 24px; margin-left: 50px; padding: 14px 8px 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+.directory-group { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; padding-top: 0; }
 .directory-group h2 {
-  margin: 0 0 4px;
-  font-family: var(--reading-font);
-  font-size: 17px;
-  font-weight: 600;
+  margin: 0;
+  padding-top: 12px;
+  font-family: var(--title-font);
+  font-size: 22px;
+  font-weight: 400;
   line-height: 1.3;
 }
 .directory-group h2 small {
@@ -639,30 +645,32 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 }
 .family-directory {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
   list-style: none;
   padding: 0;
   margin: 0;
 }
 .family-directory li { min-width: 0; border-bottom: 1px solid var(--line-soft); }
 .family-entry {
-  display: block;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 0.95fr;
+  align-items: baseline;
+  gap: 24px;
   height: 100%;
-  padding: 8px 6px;
+  padding: 13px 8px;
   color: var(--ink);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
 .family-entry h3 {
   margin: 0;
-  color: var(--accent-dark);
+  color: var(--ink);
   font-family: var(--font);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
 }
-.family-entry p { margin: 3px 0 0; font-size: 12px; line-height: 1.4; }
+.family-entry p { margin: 0; font-size: 12px; line-height: 1.5; }
 .family-entry-chemistry { color: var(--muted); }
 .family-entry-data { color: var(--quiet); font-variant-numeric: tabular-nums; }
 .family-entry:hover { background: var(--row-hover); }
@@ -681,7 +689,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.family-page-inner { max-width: 1280px; padding: 20px 32px 40px; }
+.family-page-inner { max-width: 1240px; margin: 0 auto; padding: 28px 36px 40px; }
 .family-breadcrumb {
   display: flex;
   align-items: baseline;
@@ -733,9 +741,6 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 #proteinContextScope { color: var(--muted); font-size: 12px; }
 .sheet-tabs a.sheet-tab { text-decoration: none; }
 
-@media (min-width: 1200px) {
-  .family-directory { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 @media (min-width: 1040px) {
   .family-page .family-profile {
     display: grid;
@@ -754,23 +759,29 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   .family-page .family-original, .family-page .family-related { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
-  .library-inner, .family-page-inner, .lookup-inner { padding: 18px 12px 28px; }
-  .library-heading h1, .family-page-heading h1 { font-size: 23px; }
+  .library-inner, .family-page-inner, .lookup-inner { padding: 20px 16px 28px; }
+  .library-heading h1, .family-page-heading h1 { font-size: 28px; }
   .library-heading p { margin-bottom: 14px; }
   .directory-heading p { margin-bottom: 0; }
+  .directory-heading { margin-bottom: 20px; }
+  .directory-heading .directory-description { font-size: 13px; max-width: 42ch; }
   .library-tools { gap: 10px 12px; }
   .library-tools label { flex: 1 1 132px; }
   .ptm-library .library-tools label { flex-direction: column; align-items: stretch; }
   .ptm-library #directoryCollection { width: 100%; }
   .library-tools select { width: 100%; min-height: 38px; }
   .library-tools > strong { width: 100%; margin-left: 0; padding-bottom: 0; }
-  .directory-alphabet { flex-wrap: nowrap; overflow-x: auto; gap: 2px; padding: 6px 0; }
-  .directory-alphabet button { min-width: 36px; min-height: 40px; flex: 0 0 auto; }
+  .ptm-library .library-tools { gap: 8px 12px; padding-bottom: 12px; }
+  .directory-alphabet { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0; padding: 4px 0; }
+  .directory-alphabet::-webkit-scrollbar { display: none; }
+  .directory-alphabet button { min-width: 32px; min-height: 36px; flex: 0 0 auto; }
+  .directory-columns { display: none; }
   .family-directory { grid-template-columns: minmax(0, 1fr); }
-  .family-entry { padding: 10px 2px; }
+  .family-entry { display: block; padding: 12px 2px; }
+  .family-entry p { margin-top: 3px; }
   .family-entry h3 { font-size: 15px; }
-  .directory-group { grid-template-columns: 32px minmax(0, 1fr); gap: 8px; padding-top: 10px; }
-  .directory-group h2 { font-size: 15px; }
+  .directory-group { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding-top: 0; }
+  .directory-group h2 { font-size: 20px; white-space: nowrap; }
   .family-page .family-profile p { font-size: 13px; }
   .family-breadcrumb { margin-bottom: 12px; }
   .library-footer { margin-top: 22px; }
@@ -784,7 +795,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
 .guide { flex: 1; overflow-y: auto; }
 .guide-inner { max-width: 900px; margin: 0; padding: 28px 32px 60px; }
-.guide h1 { font-family: var(--reading-font); font-size: 29px; font-weight: 400; margin: 0 0 6px; }
+.guide h1 { font-family: var(--title-font); font-size: 32px; font-weight: 400; margin: 0 0 6px; }
 .guide-lede { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
 .guide h2 { font-size: 16px; margin: 26px 0 8px; border-top: 1px solid var(--line); padding-top: 18px; }
 .guide p, .guide li { font-size: 13px; color: var(--ink); }
@@ -873,8 +884,8 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 
 /* 720 and below */
 @media (max-width: 720px) {
-  .app-header { flex-wrap: wrap; height: auto; padding: 8px 10px; gap: 8px; }
-  .top-nav { order: 3; height: 40px; scrollbar-width: none; }
+  .app-header { flex-wrap: wrap; height: auto; padding: 6px 12px; gap: 4px 8px; }
+  .top-nav { order: 3; height: 36px; scrollbar-width: none; }
   .top-nav::-webkit-scrollbar { display: none; }
   .nav-long { display: none; }
   .nav-short { display: inline; }
@@ -972,10 +983,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
     </button>
     <nav class="top-nav" aria-label="Views">
       <button id="navWorkbench" class="nav-tab active" type="button" aria-current="page"><span class="nav-long">Browse PTMs</span><span class="nav-short">PTMs</span></button>
-      <button id="navSites" class="nav-tab" type="button">Sites</button>
+      <button id="navSites" class="nav-tab" type="button"><span class="nav-long">Sites &amp; function</span><span class="nav-short">Data</span></button>
       <button id="navDisease" class="nav-tab" type="button"><span class="nav-long">Disease studies</span><span class="nav-short">Disease</span></button>
       <button id="navGuide" class="nav-tab" type="button">Methods</button>
-      <a class="nav-tab nav-lab" href="https://chowdhurylab.github.io/" target="_blank" rel="noreferrer">Chowdhury Lab</a>
     </nav>
     <div class="global-search-wrap">
       <label class="global-search">
@@ -991,12 +1001,12 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   <main id="libraryView" class="ptm-library">
     <div class="library-inner">
       <header class="library-heading directory-heading">
-        <h1>PTM families</h1>
+        <div><h1>PTM families</h1><p class="directory-description">Post-translational modifications and their reported biological effects.</p></div>
         <p><a href="#view=proteins">Find a protein →</a></p>
       </header>
       <div class="library-tools">
         <label>Chemistry<select id="directoryChemistry"><option value="">All classes</option></select></label>
-        <label>Show<select id="directoryCollection">
+        <label>Available data<select id="directoryCollection">
           <option value="">All families</option>
           <option value="sites">Site records</option>
           <option value="findings">Function and regulation</option>
@@ -1005,9 +1015,10 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
         <strong id="directoryCount" aria-live="polite"></strong>
       </div>
       <nav id="directoryAlphabet" class="directory-alphabet" aria-label="Browse by first letter"></nav>
+      <div class="directory-columns" aria-hidden="true"><span>Modification</span><span>Chemistry</span><span>Available data</span></div>
       <div id="directoryResults" tabindex="-1"></div>
       <p id="directoryEmpty" class="empty-state" hidden>No families match these filters. <button id="directoryReset" class="text-button" type="button">Clear filters</button></p>
-      <footer class="library-footer">Family audit · August 2026 <button class="text-button" type="button" data-goto="resource-roster">Source directory</button> <a href="#view=guide">Methods and sources</a></footer>
+      <footer class="library-footer"><a class="nav-lab" href="https://chowdhurylab.github.io/" target="_blank" rel="noreferrer">Chowdhury Lab · Iowa State University</a><span>Family audit · August 2026</span> <button class="text-button" type="button" data-goto="resource-roster">Source directory</button> <a href="#view=guide">Methods and sources</a></footer>
     </div>
   </main>
 
@@ -2048,7 +2059,7 @@ function decodeOpenPTMData(data) {
     const groups = new Map();
     rows.forEach(({ row }) => { const letter = directoryLetter(row); if (!groups.has(letter)) groups.set(letter, []); groups.get(letter).push(row); });
     $("#directoryResults").innerHTML = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([letter, group]) =>
-      `<section class="directory-group"><h2>${letter === "#" ? "0–9" : letter}<small>${group.length}</small></h2><ul class="family-directory">${group.map(row => {
+      `<section class="directory-group"><h2>${letter === "#" ? "0–9" : letter}</h2><ul class="family-directory">${group.map(row => {
         const available = [[sitesByFamily, "Site records"], [effectsByFamily, "Function / regulation"]].filter(([map]) => (map.get(row[0]) || []).length).map(([, label]) => label);
         if (familyConnections(row).length) available.push("Disease studies");
         return `<li><a class="family-entry" href="#view=family&amp;family=${esc(row[0])}"><h3>${esc(familyNameLabel(row, familySheet))}</h3>
