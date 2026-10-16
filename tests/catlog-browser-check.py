@@ -2161,9 +2161,19 @@ def check_filters(driver, browser, url, route_label):
         counted = {key: count_of(f"database:{key}") for key in expected}
         assert counted == expected, (counted, expected)
         found["counts"] = counted
-        corrected_values = ((comparison.get("values") or {}).get("all") or {}).get("corrected")
+        # (the titles count a database's number at an exact factor nothing has yet checked under Different number, as
+        # the Guide does: an older comparison's factor_only among its corrections is moved; its own status is added)
+        values_all = (comparison.get("values") or {}).get("all") or {}
+        found_by = (comparison.get("corrections") or {}).get("by_cause_found_by") or {}
+        factor_only = sum(ways.get("factor_only", 0) for ways in found_by.values() if isinstance(ways, dict)) \
+            if "factor_only" not in found_by else sum(found_by["factor_only"].values())
+        differs_extra = sum(values_all.get(key, 0) for key in ("differs_factor_only", "differs_exact_factor"))
+        corrected_values = values_all.get("corrected")
         if isinstance(corrected_values, int) and "corrects" in expected:
-            assert rows[0]["title"].endswith(f" {corrected_values:,} values in {expected['corrects']:,} records."), rows[0]["title"]
+            assert rows[0]["title"].endswith(f" {corrected_values - factor_only:,} values in {expected['corrects']:,} records."), rows[0]["title"]
+        differs_values = values_all.get("differs")
+        if isinstance(differs_values, int) and "differs" in expected:
+            assert rows[1]["title"].endswith(f" {differs_values + factor_only + differs_extra:,} values in {expected['differs']:,} records."), rows[1]["title"]
         # The "?" names the databases compared and defines every option.
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutDatabases"]')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
