@@ -1399,13 +1399,14 @@ assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
   const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
-  assert.match(method, /<div><dt>Read from the paper<\/dt><dd>CatLog&rsquo;s current version, its second, reads papers directly\./);
+  assert.match(method, /<div><dt>Read from the paper<\/dt><dd>The current, second version of CatLog reads papers directly\./);
   assert.match(method, /<div><dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>Records from CatLog&rsquo;s earlier version, which started from enzyme database entries \([^)]*\) and checked part of them against their papers[^<]*When CatLog reads a paper, its records replace these\.<\/dd>/);
-  assert.equal((guideHtml.match(/its second/g) || []).length, 1, "The Guide says once that the current version is the second");
+  assert.equal((guideHtml.match(/second version/g) || []).length, 1, "The Guide says once that the current version is the second");
 }
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
-// Guide says so where it says the table has no temperature or pH column.
-assert.match(guideHtml, /The table has no temperature or pH column: they show under the substrate only to tell apart records of one paper that differ in them/);
+// Guide says so once, in Units, where it says the table has no column for them (not again under Cautions).
+assert.match(guideHtml, /the table has no column for them and shows them only to tell apart records of one paper/);
+assert.equal((guideHtml.match(/tell apart records of one paper/g) || []).length, 1, "said once, in Units");
 assert.doesNotMatch(guideHtml, /table does not show (?:temperature|them)/);
 // The counts band names the records read from the paper by CatLog as Stats and the Source filter do: Read from the paper
 // (its short tag, From paper, where the band's first line is tight; a screen reader reads the whole label).
@@ -2846,7 +2847,7 @@ function row(overrides = {}) {
     // The Guide's Not checked definition counts these records under Not reviewed, as Stats does, and says how the record
     // shows them.
     api.renderGuideMethod();
-    assert.match(element("guideNotCheckedDefinition").innerHTML, /never reviewed, or that the earlier review accepted \(tag: <em>no paper linked<\/em>\)\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>; a record with no paper linked reads <em>Not checked<\/em> with that tag\.$/);
+    assert.match(element("guideNotCheckedDefinition").innerHTML, /^No review result\. The record names which kind: <em>Unverified<\/em> \(the earlier review recorded no final check\) or <em>Not reviewed<\/em> \(a SKiD or BRENDA record with no PMID or DOI, including records the earlier review accepted, tagged <em>no paper linked<\/em>\)\.$/);
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
     api.setHumanReviewMarks({ approved: { checked: true } });
     // human-checked's rule (the user, 2026-10-13): every kcat and Km, and the kcat/Km approved too or agreeing with kcat ÷ Km.
@@ -2858,7 +2859,7 @@ function row(overrides = {}) {
     runtimeManifest.summary = savedSummary;
     // An older snapshot accepts these records, so its Not reviewed is only the records nobody reviewed.
     api.renderGuideMethod();
-    assert.match(element("guideNotCheckedDefinition").innerHTML, /that was never reviewed\. The record shows which, for example <em>Not checked \(Unverified\)<\/em>\.$/);
+    assert.match(element("guideNotCheckedDefinition").innerHTML, /or <em>Not reviewed<\/em> \(a SKiD or BRENDA record with no PMID or DOI that was never reviewed\)\.$/);
   }
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.
@@ -6713,11 +6714,14 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // The Review result "?" is a short line per result and for human-checked, then the Guide (the tags are defined there),
   // so the box never pushes the options out of view.
   const aboutStatus = element("aboutStatus").innerHTML;
-  assert.match(aboutStatus, /<strong>Accepted<\/strong>: Passed review: read from the paper by CatLog/);
-  assert.match(aboutStatus, /<strong>Not confirmed<\/strong>: The earlier automated review left a question open\./);
-  assert.match(aboutStatus, /<strong>Not checked<\/strong>: No review result\./);
-  assert.match(aboutStatus, /<strong>Disputed<\/strong>: A check found a problem; not accepted\./);
-  assert.match(aboutStatus, /<strong>human-checked<\/strong>: A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\./);
+  // "Accepted — passed review: ...": one dash, no double colon, the line in lower case after it.
+  assert.match(aboutStatus, /<strong>Accepted<\/strong> — passed review: read from the paper by CatLog/);
+  assert.match(aboutStatus, /<strong>Not confirmed<\/strong> — the earlier automated review left a question open\./);
+  assert.match(aboutStatus, /<strong>Not checked<\/strong> — no review result\./);
+  assert.match(aboutStatus, /<strong>Disputed<\/strong> — a check found a problem; not accepted\./);
+  assert.match(aboutStatus, /<strong>human-checked<\/strong> — a human reviewer approved every kcat and Km shown/);
+  assert.doesNotMatch(aboutStatus, /<\/strong>: /, "no result reads 'Accepted: Passed review:'");
+  assert.match(aboutStatus, /<strong>human-checked<\/strong> — a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\./);
   assert.match(aboutStatus, /href="#guide-status">Review result and tags in the Guide/);
   assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
   assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);

@@ -225,7 +225,9 @@ human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, 
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
 hyphen, never into its count), its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
-the four results and human-checked in one short sentence each (each option's
+the four results and human-checked in one short sentence each, "Accepted — passed
+review: ...", a dash after the result and the sentence in lower case after it, never
+"Accepted: Passed review:" (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
 the tags are defined, so the box stays small and the options stay in view), Enzyme, organism,
 substrate (labelled fields, the EC number first), Measurement type
@@ -1011,7 +1013,8 @@ values (#guide-method: the only place the method is said in full; it opens
 with the human review in a light box ("No value disputed on 2,767 of 2,770 entries (99.9%) from the
 earlier version (431 papers); the 3 disputed values are as printed in the paper." and "Where CatLog has re-read a
 paper the reviewers checked, ...", the Stats lead's side line) linked to Stats, left out without those counts;
-then a definition list of Read from the paper (CatLog's current version, which the Guide says once is its second),
+then a definition list of Read from the paper ("The current, second version of CatLog reads papers directly": the Guide
+says once that it is the second),
 AI audits, Human review
 (what the lead does not say: "In 153 entries (5.5%) the reviewer could not find the value in the paper.", values
 missing and other disagreements, then the

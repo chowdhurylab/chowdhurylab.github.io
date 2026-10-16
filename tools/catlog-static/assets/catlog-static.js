@@ -148,7 +148,7 @@
     // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
     // (Stats counts them there; the record reads "Not checked" with the tag "no paper linked").
     get not_verified() {
-      return `No review result. Unverified: the earlier review recorded no final check. Not reviewed: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed${followsReviewRules() ? ", or that the earlier review accepted (tag: no paper linked)" : ""}.`;
+      return `No review result. The record names which kind: Unverified (the earlier review recorded no final check) or Not reviewed (a SKiD or BRENDA record with no PMID or DOI${followsReviewRules() ? ", including records the earlier review accepted, tagged no paper linked" : " that was never reviewed"}).`;
     },
     disputed: "A check found a problem; not accepted.",
   };
@@ -478,8 +478,8 @@
   // The Guide's Not checked definition, with its words in italics as the static page has them.
   function guideNotCheckedHtml() {
     return followsReviewRules()
-      ? "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed, or that the earlier review accepted (tag: <em>no paper linked</em>). The record shows which, for example <em>Not checked (Unverified)</em>; a record with no paper linked reads <em>Not checked</em> with that tag."
-      : "No review result. <em>Unverified</em>: the earlier review recorded no final check. <em>Not reviewed</em>: a database record without a PMID or DOI (SKiD or BRENDA) that was never reviewed. The record shows which, for example <em>Not checked (Unverified)</em>.";
+      ? "No review result. The record names which kind: <em>Unverified</em> (the earlier review recorded no final check) or <em>Not reviewed</em> (a SKiD or BRENDA record with no PMID or DOI, including records the earlier review accepted, tagged <em>no paper linked</em>)."
+      : "No review result. The record names which kind: <em>Unverified</em> (the earlier review recorded no final check) or <em>Not reviewed</em> (a SKiD or BRENDA record with no PMID or DOI that was never reviewed).";
   }
   // Records accepted on a human reviewer's approval (accepted_basis "human review", human-checked's rule).
   function humanAcceptedCount() {
@@ -6076,7 +6076,7 @@
           valueHeads: byStatus ? ["Records", STATS_HEAD_ACCEPTED] : [],
         }),
         caption: `Each record counts once, under the source it came from${byStatus ? ", coloured by review result" : ""}.`,
-        rules: `A record merged from several databases counts once here, under Several databases. The list under the bars counts it under each, as Browse does.${byStatus ? " Share draws each source as 100%." : ""}`,
+        rules: `A record merged from several databases counts once here, under Several databases. The list under the bars counts it under each, as Browse does.${byStatus ? " In the Share view each bar is scaled to 100%." : ""}`,
         after: byDatabase,
       });
     } else {
@@ -6428,13 +6428,13 @@
     { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
     { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
-    { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and docs" },
+    { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and documentation" },
   ];
   // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
   const TEAM_LEGEND = [
     { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and turns findings into better rules" },
     { actors: ["aarna", "erin"], text: "<strong>Aarna</strong> and <strong>Erin</strong> check values against the papers" },
-    { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and docs" },
+    { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and documentation" },
     { actors: ["reading"], text: "<strong>Reading agents</strong> (AI) read each value" },
     { actors: ["checking"], text: "<strong>Checking agents</strong> (AI) check it again, separately" },
     { actors: ["audit"], text: "<strong>Audit agents</strong> (AI) re-check samples" },
@@ -7147,9 +7147,11 @@
         label: "Only human-checked", title: HUMAN_CHECKED_DESCRIPTION, count: "checked", className: "human-checked nested",
       }) : "")).join("");
       if ($("aboutStatus")) {
+        // "Accepted — passed review: ...": the result, a dash, then its line (never "Accepted: Passed review:").
+        const aboutLine = (label, text) => `<p><strong>${escapeHtml(label)}</strong> — ${escapeHtml(`${text.charAt(0).toLowerCase()}${text.slice(1)}`)}</p>`;
         $("aboutStatus").innerHTML = `
-          ${recordStates.map((item) => `<p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(stateShortDescription(item.value))}</p>`).join("")}
-          <p><strong>human-checked</strong>: ${escapeHtml(HUMAN_CHECKED_DESCRIPTION)}</p>
+          ${recordStates.map((item) => aboutLine(item.label, stateShortDescription(item.value))).join("")}
+          ${aboutLine("human-checked", HUMAN_CHECKED_DESCRIPTION)}
           <p><a href="#guide-status">Review result and tags in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       $("measurementChecklist").innerHTML = measurementFilters.map((item) => checkRowHtml({
