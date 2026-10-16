@@ -5182,6 +5182,8 @@ def check(driver, browser, url):
         assert all(b[1] >= a[1] and (b[0] - a[0] > 1 or b[1] - a[1] <= 0.5) for a, b in zip(sizes, sizes[1:])), f"Key numbers jump or shrink: {sizes}"
     for width in (1700, 1280, 884, 760):
         driver.set_window_size(width, 1000)
+        # Clearing the emulated viewport above lands a moment later: measured too soon, the page is still 1200px wide.
+        wait.until(lambda d: d.execute_script("return innerWidth") == width)
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         if width >= 1280:
             layout = driver.execute_script(first_figures)
