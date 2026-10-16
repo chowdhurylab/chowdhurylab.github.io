@@ -210,7 +210,10 @@ its accessible description; no figure or table has a data line. The parts' figur
     shares under the bars; a segment with a filter opens Browse when clicked; its rule (How these numbers are
     counted): calculated kcat/Km not compared; a note under the figure (a result, so beside it): the numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
-    has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
+    has its comparison download (`database_comparison_download`), whose build writes the README's section on it; that
+    file is also the Download menu's and the Guide's Downloads' "Against the databases" item (one row per value and
+    database, CSV; rows and size from the manifest, saved as catlog-<date>-database-comparison.csv.gz), hidden
+    without it.
   - Results by database (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it under the heading Values, "+ N values from papers X does not list" under it, never in it. Its own
     not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no

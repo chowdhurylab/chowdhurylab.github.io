@@ -2902,6 +2902,24 @@ function row(overrides = {}) {
   assert.equal(element("guideFullDataLink").getAttribute("download"), "catlog-2026-10-12-full.jsonl.gz");
   assert.equal(element("exportSnapshotButton").getAttribute("download"), "catlog-2026-10-12-table.jsonl.gz");
   assert.equal(element("guideDataIdFile").textContent, "catlog-2026-10-12-full.jsonl.gz");
+  // The comparison with the databases as a file (the README documents it): in the Download menu and the Guide's
+  // Downloads when the manifest has it (database_comparison_download), with its rows and size, hidden otherwise.
+  const savedComparison = runtimeManifest.database_comparison_download;
+  runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", size_bytes: 5437467, rows: 295792 };
+  api.renderDownloadMetadata();
+  assert.equal(element("comparisonDataButton").hidden, false);
+  assert.equal(element("guideComparisonDownload").hidden, false);
+  assert.ok(element("comparisonDataButton").href.endsWith("/data/catlog-database-comparison.0123456789ab.csv.gz"), element("comparisonDataButton").href);
+  assert.equal(element("guideComparisonLink").href, element("comparisonDataButton").href);
+  assert.equal(element("comparisonDataButton").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
+  assert.equal(element("guideComparisonLink").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
+  assert.equal(element("comparisonDataDescription").textContent, "One row per value read from the paper and each database that lists its paper (CSV) · 295,792 rows · 5.2 MB");
+  delete runtimeManifest.database_comparison_download;
+  api.renderDownloadMetadata();
+  assert.equal(element("comparisonDataButton").hidden, true);
+  assert.equal(element("guideComparisonDownload").hidden, true);
+  assert.equal(element("comparisonDataDescription").textContent, "One row per value read from the paper and each database that lists its paper (CSV)");
+  if (savedComparison) runtimeManifest.database_comparison_download = savedComparison;
   assert.equal(element("guideSourceId").textContent, "14ffa6600b");
   assert.match(element("guideCitationLine").textContent, /^CatLog snapshot 2026-10-12 \(data ID 14ffa6600b\), Chowdhury Lab, /);
   Object.assign(runtimeManifest, saved);

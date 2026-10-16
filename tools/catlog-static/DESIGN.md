@@ -1047,7 +1047,8 @@ Different number, with a line of their own there when counted); Why no database 
 reasons, counts summed over the parameters where the manifest has them); then the
 comparison caption and a link to Stats. A count the manifest lacks leaves its line
 out),
-Units (#guide-units), Downloads (#guide-downloads), Before you use the values
+Units (#guide-units), Downloads (#guide-downloads: Full data, Table, Against the databases when the manifest
+has its comparison download, Results and record, Format, Review files), Before you use the values
 (#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
 Questions (#guide-questions, native disclosures). A section's address opens the
 Guide at that section, and a link to one (from Stats, a record, the filters or

@@ -1162,6 +1162,25 @@
     if ($("datasetNotesLink")) {
       $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
     }
+    // The comparison with the databases as a file (manifest database_comparison_download: the README documents it), in
+    // the Download menu and the Guide's Downloads, hidden when the snapshot has none.
+    const comparison = manifest.database_comparison_download;
+    const comparisonPath = comparison && typeof comparison === "object" && typeof comparison.path === "string" ? comparison.path.trim() : "";
+    if ($("guideComparisonDownload")) $("guideComparisonDownload").hidden = !comparisonPath;
+    for (const id of ["comparisonDataButton", "guideComparisonLink"]) {
+      const link = $(id);
+      if (!link) continue;
+      link.hidden = !comparisonPath;
+      if (comparisonPath) link.href = new URL(comparisonPath, catalogBaseUrl).href;
+    }
+    if ($("comparisonDataDescription")) {
+      const rows = statsCount(comparison?.rows);
+      $("comparisonDataDescription").textContent = [
+        "One row per value read from the paper and each database that lists its paper (CSV)",
+        rows ? `${formatInteger(rows)} rows` : "",
+        comparisonPath ? formatFileSize(comparison.size_bytes) : "",
+      ].filter(Boolean).join(" · ");
+    }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
     const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);
     if ($("guideSnapshotDate")) $("guideSnapshotDate").textContent = snapshotDate;
@@ -1181,6 +1200,7 @@
       for (const [id, part] of [["enrichedDataButton", "full"], ["guideFullDataLink", "full"], ["exportSnapshotButton", "table"]]) {
         $(id)?.setAttribute("download", `catlog-${day}-${part}.jsonl.gz`);
       }
+      for (const id of ["comparisonDataButton", "guideComparisonLink"]) $(id)?.setAttribute("download", `catlog-${day}-database-comparison.csv.gz`);
       if ($("guideDataIdFile")) $("guideDataIdFile").textContent = `catlog-${day}-full.jsonl.gz`;
     }
   }

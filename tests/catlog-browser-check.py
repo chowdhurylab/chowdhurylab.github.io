@@ -161,6 +161,15 @@ def check_guide(driver, wait):
     day = driver.execute_script("return new Date(window.CATLOG_STATIC_MANIFEST.generated_at).toISOString().slice(0, 10)")
     for identifier, part in (("guideFullDataLink", "full"), ("enrichedDataButton", "full"), ("exportSnapshotButton", "table")):
         assert driver.find_element(By.ID, identifier).get_attribute("download") == f"catlog-{day}-{part}.jsonl.gz", identifier
+    # The comparison with the databases as a file: the Guide's Downloads item and link show only with the manifest's
+    # database_comparison_download, named after the snapshot's date like the other downloads.
+    comparison_download = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.database_comparison_download?.path || null")
+    comparison_item = driver.find_element(By.ID, "guideComparisonDownload")
+    assert comparison_item.is_displayed() == bool(comparison_download), comparison_download
+    if comparison_download:
+        link = driver.find_element(By.ID, "guideComparisonLink")
+        assert link.get_attribute("download") == f"catlog-{day}-database-comparison.csv.gz"
+        assert link.get_attribute("href").endswith(comparison_download), link.get_attribute("href")
     assert driver.find_element(By.ID, "guideDataIdFile").get_attribute("textContent") == f"catlog-{day}-full.jsonl.gz"
     # Sources and licenses: the records read by CatLog have the count Browse and Stats give them, with CatLog's licence;
     # the earlier paper extractions are a row of their own.
@@ -4920,11 +4929,14 @@ def check(driver, browser, url):
         toggled.until(lambda _d: (parent.get_attribute("open") is not None) == was_open)
     driver.execute_script("window.scrollTo(0, 0)")
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
-    for identifier in ("enrichedDataButton", "exportSnapshotButton"):
+    comparison_download = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.database_comparison_download?.path || null")
+    for identifier in ("enrichedDataButton", "exportSnapshotButton", *(["comparisonDataButton"] if comparison_download else [])):
         link = driver.find_element(By.ID, identifier)
         assert link.is_displayed()
         with urllib.request.urlopen(urllib.request.Request(link.get_attribute("href"), method="HEAD"), timeout=30) as response:
             assert response.status == 200 and int(response.headers["Content-Length"]) > 1_000_000
+    # Without the file in the snapshot the menu has no item for it.
+    assert driver.find_element(By.ID, "comparisonDataButton").is_displayed() == bool(comparison_download)
     driver.find_element(By.ID, "downloadMenu").find_element(By.TAG_NAME, "summary").click()
 
     # A linked Stats count is the number of records its link opens: the most common organism (with its strains),

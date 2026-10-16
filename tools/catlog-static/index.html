@@ -65,6 +65,10 @@
                 <strong>Table</strong>
                 <span id="tableIndexDescription">Table columns only: no sequences, SMILES or paper links</span>
               </a>
+              <a id="comparisonDataButton" href="#" download="catlog-database-comparison.csv.gz" hidden>
+                <strong>Against the databases</strong>
+                <span id="comparisonDataDescription">One row per value read from the paper and each database that lists its paper (CSV)</span>
+              </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
@@ -544,6 +548,7 @@
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, including sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>Table columns only: no sequences, SMILES or paper links (pH and temperature are kept). Join it to Full data on record_key.</dd></div>
+              <div id="guideComparisonDownload" hidden><dt>Against the databases</dt><dd>One row per value read from the paper and each database that lists its paper, as gzip-compressed CSV: the result, the cause, how it was found and the database&rsquo;s number. The Dataset notes list its columns. <a id="guideComparisonLink" href="#" download="catlog-database-comparison.csv.gz">Download the comparison</a>.</dd></div>
               <div><dt>Results, record</dt><dd><strong>Export results</strong> saves every matching record, or this page, as CSV (the table&rsquo;s columns with units, temperature, pH, review result, source and paper IDs), or this page as JSON; <strong>Download record</strong> saves the open record as JSON: its values with units, review result, method, check, cautions, human review, paper IDs, sequence, SMILES and license. Full data holds every field.</dd></div>
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines, one row per line: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind records not yet <span class="nowrap">re-read</span>: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
