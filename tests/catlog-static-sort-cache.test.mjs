@@ -1991,7 +1991,7 @@ function row(overrides = {}) {
   // The Guide's method section opens with the same, in one sentence linked to Stats.
   api.renderGuideMethod();
   assert.equal(element("guideMethodLead").hidden, false);
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 (89.7%). Of the other 257, 16 are the same value under another name, 109 are values the paper supports as CatLog reads them (the earlier entry&#39;s number or label was wrong), 3 differ by rounding, 24 cannot be compared and 105 are not yet checked; none is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> Where CatLog has <span class="nowrap">re-read</span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 (89.7%). Of the other 257, 16 are the same value under another name, 109 are values the paper supports as CatLog reads them (the earlier entry&#39;s number or label was wrong), 3 differ by rounding, 24 cannot be compared and 105 are not yet checked; none is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
   // With the reviewers' own counts (quality.review.v1, as the marks file has them on 2026-10-13) the lead is the human
   // review of the earlier version's entries; the first-comparison and blind fields are reference only and never read.
   const reviewV1 = { entries: 2674, papers: 408, entries_without_paper: 166, approved: 2464, rejected: 210, value_disputed: 3,
@@ -2038,7 +2038,7 @@ function row(overrides = {}) {
   assert.match(checks, /1,301 kept and 30 removed as wrong \(2\.3%\), as of Oct 13, 2026\./);
   // The Guide: the headline and the match in the lead, the review in full under Human review.
   api.renderGuideMethod();
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> No value disputed on <strong>2,671 of 2,674 entries (99.9%)</strong> from the earlier version <span class="nowrap">(408 papers)</span>; the 3 disputed values are as printed in the paper. Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 (89.0%). None of the other 449 is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> No value disputed on <strong>2,671 of 2,674 entries (99.9%)</strong> from the earlier version <span class="nowrap">(408 papers)</span>; the 3 disputed values are as printed in the paper. Where CatLog has <span class="nowrap">re-read</span> a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 (89.0%). None of the other 449 is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
   // The Human review item does not repeat the lead's sentence: it starts with what the lead does not say.
   assert.equal(metricPlain(element("guideMethodHuman").innerHTML), "In 153 entries (5.7%) the reviewer could not find the value in the paper. Values missing: 31 entries (1.2%) lacked a value the paper prints, most often the kcat. CatLog has since read 53 of the 58 values the reviewers named. Other disagreements: 177 entries (6.6%). 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
   // Team's Human check: no value disputed, on two lines on the wide loop and four on the upright one, one phrase for
@@ -3525,6 +3525,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(api.catlogUnitText("min-1 µM-1"), "min⁻¹ µM⁻¹");
   assert.equal(api.catlogUnitText("mmol-1 L-1"), "mmol⁻¹ L⁻¹");
   assert.equal(api.catlogUnitText("s^(-1)*mM^(-1)"), "mM⁻¹ s⁻¹");
+  // An earlier correction's unit stored with its superscripts, and the file string, both read concentration first.
+  assert.equal(api.catlogUnitText("s⁻¹ mM⁻¹"), "mM⁻¹ s⁻¹");
+  assert.equal(api.catlogUnitText("s^-1 M^-1"), "M⁻¹ s⁻¹");
+  assert.equal(api.catlogUnitText("s⁻¹ μM⁻¹"), "s⁻¹ μM⁻¹", "a printed unit in another concentration unit is left as it is");
   assert.equal(api.catlogUnitText("mM"), "mM");
   assert.equal(api.catlogUnitText("Ser-1 pH-7 mM-1.5"), "Ser-1 pH-7 mM-1.5", "only a unit's whole-number exponent");
 }

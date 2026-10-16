@@ -1643,9 +1643,9 @@
 
   // kcat/Km's unit reads concentration first, mM⁻¹ s⁻¹, wherever the page shows it (the user, 2026-10-15); the file
   // string the downloads keep stays s^(-1)*mM^(-1). A stored unit written time first (s^(-1)*mM^(-1), s^-1 M^-1,
-  // s-1 mM-1) is turned round before it is written out.
+  // s-1 mM-1, or an earlier correction's "s⁻¹ mM⁻¹") is turned round before it is written out.
   function efficiencyUnitOrder(value) {
-    return String(value ?? "").replace(/^s(\^?\(?-1\)?|[−-]1)\s*[* ]\s*(m?M)(\^?\(?-1\)?|[−-]1)$/, "$2$3*s$1");
+    return String(value ?? "").replace(/^s(\^?\(?[−-]1\)?|⁻¹)\s*[* ]\s*(m?M)(\^?\(?[−-]1\)?|⁻¹)$/, "$2$3*s$1");
   }
 
   function unitHtml(value) {
@@ -4795,7 +4795,8 @@
       ? `No value disputed on <strong>${formatInteger(review.undisputed)} of ${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"} (${escapeHtml(review.share)})</strong> from the earlier version${review.papers ? ` <span class="nowrap">${escapeHtml(reviewBaseParts(review).papers)}</span>` : ""}${after ? `; ${escapeHtml(after.charAt(0).toLowerCase() + after.slice(1))}` : "."}`
       : "";
     const side = match ? escapeHtml(v2MatchSentence(match)) : "";
-    return `<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")} <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
+    // ("re-read" never breaks at its hyphen, as everywhere in the Guide)
+    return keepReRead(`<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")}`) + ` <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
   }
 
   // The Guide's method section: the human-review lead, then the audit and human-review items get this snapshot's numbers
