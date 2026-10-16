@@ -1032,8 +1032,9 @@ def check_review_headline(driver, browser, url):
             guide = driver.execute_script(GUIDE_LEAD_JS)
             guide_text = " ".join(guide["text"].split()) if guide else ""
             assert guide and REVIEW_GUIDE_LEAD in guide_text and REVIEW_SIDE_LINE in guide_text and "values correct" not in guide_text, guide
+            # (the Guide's lead keeps "(408 papers)" and "re-read" each on one line)
             parens = driver.execute_script(REVIEW_BASE_PARENS, "#guideMethodLead")
-            assert len(parens) == 1 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
+            assert [text for text, _lines in parens] == ["(408 papers)", "re-read"] and all(lines == 1 for _text, lines in parens), parens
             human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
             assert human.startswith(REVIEW_ITEM_START) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
             assert "Human reviewers checked 2,674" not in human and "disputed" not in human, "The Human review item repeats the Guide's lead"
