@@ -4861,7 +4861,7 @@ def check(driver, browser, url):
         """), "Stats labels and captions keep 13px"
         assert driver.execute_script("""
             const size = (selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
-            return size('.stats-totals-main dd') >= (innerWidth <= 720 ? 28 : innerWidth <= 1199 ? 24 : 40) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
+            return size('.stats-totals-main dd') >= (innerWidth <= 1199 ? 28 : 40) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
         """), "Stats headline numbers keep the type scale"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
@@ -4999,6 +4999,26 @@ def check(driver, browser, url):
     # 1024-1279px: Figure 1 takes the row (its legend table beside the 200px donut) and Figure 2 the next one.
     layout = driver.execute_script(first_figures)
     assert layout["wide"] and layout["beside"] and all(abs(size - 200) <= 0.5 for size in layout["donut"]), f"Figures 1 and 2 at 1080px: {layout}"
+    if browser == "chrome":
+        # The key numbers grow with the window, from the phones' 28px to 40px at 1200px: never smaller on a wider window,
+        # no jump where the layout changes (720/721, 1023/1024, 1199/1200), and each number inside its item.
+        sizes = []
+        try:
+            for width in (720, 721, 960, 1023, 1024, 1100, 1199, 1200):
+                driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": 900, "deviceScaleFactor": 1, "mobile": False})
+                sizes.append(driver.execute_script("""
+                    const items = [...document.querySelectorAll('.stats-totals-main .stats-total')];
+                    const fits = items.every((item) => {
+                        const box = item.getBoundingClientRect(), value = item.querySelector('.stats-total-value').getBoundingClientRect();
+                        return value.left >= box.left - 0.5 && value.right <= box.right + 0.5;
+                    });
+                    return [innerWidth, parseFloat(getComputedStyle(items[0].querySelector('dd')).fontSize), fits];
+                """))
+        finally:
+            driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        assert all(fits for _width, _size, fits in sizes), f"A key number leaves its item: {sizes}"
+        assert sizes[0][1] == 28 and sizes[-1][1] == 40, sizes
+        assert all(b[1] >= a[1] and (b[0] - a[0] > 1 or b[1] - a[1] <= 0.5) for a, b in zip(sizes, sizes[1:])), f"Key numbers jump or shrink: {sizes}"
     for width in (1700, 1280, 884, 760):
         driver.set_window_size(width, 1000)
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")

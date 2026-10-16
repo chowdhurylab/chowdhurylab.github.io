@@ -951,7 +951,7 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 ## Stats
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
-1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in accent ink, each over a soft radial halo, fading and rising once on first show unless the viewer asks for less motion (24-32px with the window between 721 and 1199px, so a wide font keeps a six-digit count inside its column; 28px on phones), then 20px scope counts),
+1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in accent ink, each over a soft radial halo, fading and rising once on first show unless the viewer asks for less motion (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
 2 Quality (the lead, the user's headline: "Human review", 99.9% values correct of 2,674 entries from the earlier
 version (408 papers), with "Read from the paper again: same value as the reviewers for ..." as a side line; then the
 checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a

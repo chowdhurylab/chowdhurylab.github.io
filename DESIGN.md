@@ -46,8 +46,10 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    rise once (900ms, 90ms apart), the first time Stats is drawn, and only when the viewer has not asked for less
    motion (the band drops is-entering after 1.5s, so Stats shown again does not replay it). Line 2 (20px): Papers,
    Enzymes, EC numbers, Organisms, Substrates. Accepted and Read from the paper link into Browse: the whole item is the
-   link and tints calmly under the pointer. From 721 to 1199px line 1 scales between 24 and 32px with the window, so
-   a six-digit count keeps inside its column in a wide font (DejaVu Sans). Phones (720px and under): 28/20px (18px
+   link and tints calmly under the pointer. From 721 to 1199px line 1 grows with the window from the phones' 28px to
+   40px, never smaller on a wider window and with no jump at 721, 1024 or 1200px: to 30px at 1023px (the page keeps a
+   760px column there, a band column about 146px, and a six-digit count in DejaVu Sans Bold at 30px is 137px), then on
+   to 40px at 1200px. Phones (720px and under): 28/20px (18px
    from 640px), two to a row, the halos a little tighter; below 360px line 1 stands one under the other, so Read from
    the paper keeps one line in a wide font. Paper: no halo, glow or wash, and nothing moves. CatLog is the one name (round 8): records are Read from the paper or
    Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on

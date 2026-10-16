@@ -1436,10 +1436,16 @@ a.stats-total-value:focus-visible { outline:0 }
   .team-legend { grid-template-columns:1fr }
 }
 
-/* Four headline numbers on a tablet: a wide font (Linux's DejaVu, Verdana) would push a six-digit count past its column
-   at 32px or more, so the number scales between 24 and 32px with the window (40px from 1200px). */
+/* Four headline numbers on a tablet: the number grows with the window from the phones' 28px (at 721px) to the 40px of
+   1200px and over, so it never jumps or shrinks as the window widens. Below 1024px the page keeps a 760px column, so a
+   column of the band is about 146px: there the number grows only to 30px, where a six-digit count in a wide font
+   (Linux's DejaVu Sans Bold: 137px) still fits; from 1024px, with room, it grows on to 40px. The line stays 4px taller
+   than the number, as at 28px and 40px. */
 @media (min-width: 721px) and (max-width: 1199px) {
-  .stats-totals .stats-totals-main dd { font-size:clamp(var(--fs-24), 2.7vw, var(--fs-32)); line-height:var(--lh-32) }
+  .stats-totals .stats-totals-main dd { font-size:clamp(var(--fs-28), calc(28px + (100vw - 721px) * 0.0066), 30px); line-height:calc(1em + 4px) }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .stats-totals .stats-totals-main dd { font-size:clamp(30px, calc(30px + (100vw - 1024px) * 0.0569), var(--fs-40)) }
 }
 
 /* Phones: 28px key numbers two to a row (one under the other below 360px), their halos a little tighter. */
