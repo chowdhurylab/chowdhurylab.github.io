@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import threading
+import time
 import urllib.request
 from urllib.parse import parse_qsl, quote, unquote_plus, urlencode, urljoin, urlsplit, urlunsplit
 
@@ -20,7 +21,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -1182,11 +1183,15 @@ def check_stats_contents(driver, width):
     driver.find_element(By.CSS_SELECTOR, f'#statsContents a[href="#{last}"]').click()
     WebDriverWait(driver, 10).until(lambda d: urlsplit(d.current_url).fragment == last)
     assert driver.find_element(By.ID, "statsView").is_displayed()
-    top = driver.execute_script("""
+    # The view scrolls to the part on the next animation frame after the address changes.
+    part_top = """
         const view = document.getElementById('statsView').getBoundingClientRect();
         return document.getElementById(arguments[0]).getBoundingClientRect().top - view.top;
-    """, last)
-    assert -2 <= top <= 48, f"{last} scrolled to {top}px from the top of the Stats view"
+    """
+    try:
+        WebDriverWait(driver, 10).until(lambda d: -2 <= d.execute_script(part_top, last) <= 48)
+    except TimeoutException:
+        raise AssertionError(f"{last} scrolled to {driver.execute_script(part_top, last)}px from the top of the Stats view")
     assert driver.execute_script("return document.activeElement && document.activeElement.classList.contains('stats-part-title')")
     assert_document_stays(driver, "stats")
     driver.execute_script("document.getElementById('statsView').scrollTop = 0")
