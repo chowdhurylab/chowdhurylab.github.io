@@ -886,19 +886,23 @@ REVIEW_FIXTURE = {
                   "papers_unexposed": 291, "first_agree_unexposed_pct": 85.9, "first_agree_unexposed_ci95": "81.6-89.7",
                   "catlog_value_wrong": 0, "stated_values": 58, "stated_values_catlog_has": 53},
 }
-# Round 8's headline: "Human review: 99.9% values correct" with its base; the sentence under it does not repeat the base.
-REVIEW_BASE = "of 2,674 entries from the earlier version (408 papers)"
-REVIEW_SENTENCE = "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3 are as printed in the paper."
-# The Guide's Human review item, under the Guide's lead that already says how many entries reviewers checked, starts with
-# what the lead does not say (never the same sentence twice).
-REVIEW_ITEM_START = REVIEW_SENTENCE
+# The headline (the user's words, 2026-10-15): "Human review: 99.9%", no value disputed on 2,671 of 2,674 entries from
+# the earlier version (408 papers); the sentence under it says the disputed values as printed and the entries whose
+# value the reviewer could not find, never the base again.
+REVIEW_HEADLINE_NOTE = "no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers)"
+REVIEW_SENTENCE = "The 3 disputed values are as printed in the paper. In 153 entries (5.7%) the reviewer could not find the value in the paper."
+REVIEW_GUIDE_LEAD = ("No value disputed on 2,671 of 2,674 entries (99.9%) from the earlier version (408 papers); the 3 disputed values are "
+                     "as printed in the paper.")
+# The Guide's Human review item, under the Guide's lead that already says the headline and the disputed values, starts
+# with what the lead does not say (never the same sentence twice).
+REVIEW_ITEM_START = "In 153 entries (5.7%) the reviewer could not find the value in the paper."
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
     return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
         .map(e => [e.textContent, new Set([...e.getClientRects()].map(box => Math.round(box.top))).size]);
 """
-REVIEW_SIDE_LINE = ("Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); "
-                    "wrong CatLog values found: 0.")
+REVIEW_SIDE_LINE = ("Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 "
+                    "(89.0%). None of the other 449 is a CatLog value found wrong.")
 
 
 # Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
@@ -955,10 +959,10 @@ TEAM_LABELS_CLEAR = """
 
 def check_review_headline(driver, browser, url):
     """With the reviewers' own counts in the snapshot, Stats' lead says the human review of the earlier version's entries
-    (values correct, values missing, other disagreements by kind) with the match read from the paper again as a side
-    line; the Guide's method
-    section and Team's Human check say it shortened; the first-comparison and blind fields are never shown. The fixture
-    is set in Chrome before the page starts (the data files are not changed)."""
+    (no value disputed, the disputed values as printed, the entries whose value the reviewer could not find, values
+    missing, other disagreements by kind) with the match where CatLog has re-read the paper as a side line; the Guide's
+    method section and Team's Human check say it shortened; the first-comparison and blind fields are never shown. The
+    fixture is set in Chrome before the page starts (the data files are not changed)."""
     if browser != "chrome":
         return
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
@@ -979,21 +983,23 @@ def check_review_headline(driver, browser, url):
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
             assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
-            assert "99.9%" in band and f"values correct {REVIEW_BASE}" in band, band
+            assert "99.9%" in band and REVIEW_HEADLINE_NOTE in " ".join(band.split()) and "values correct" not in band, band
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
             figure = " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").get_attribute("innerText").split())
-            assert figure == f"99.9% values correct {REVIEW_BASE}", figure
+            assert figure == f"99.9% {REVIEW_HEADLINE_NOTE}", figure
             # The base's parenthesis never breaks inside: "(408" ending one line and "papers)" starting the next.
             parens = driver.execute_script(REVIEW_BASE_PARENS, ".stats-total[data-total='review'], #statsCharts .stats-lead-figure")
             assert len(parens) == 2 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").strip() == REVIEW_SENTENCE
+            assert " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").split()) == REVIEW_SENTENCE
             # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
-            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-sentence i + sub")) >= 4
+            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-note i + sub")) >= 1
             text = lead.get_attribute("innerText")
             assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog has since read 53 of the 58 values the reviewers named" in text, text
             assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
-            assert "could not find the value 153, organism name 13, DOI 5" in text, text
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").strip() == REVIEW_SIDE_LINE
+            # The kinds of other disagreement, counts in brackets, without the one the sentence above says.
+            assert "Other disagreements, by kind: organism name (13), DOI (5), substrate name (3)" in text, text
+            assert text.count("could not find") == 1 and "values correct" not in text, text
+            assert " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").split()) == REVIEW_SIDE_LINE
             for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
                 assert word not in text, f"The lead says {word}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
@@ -1001,23 +1007,24 @@ def check_review_headline(driver, browser, url):
             driver.get(url + "#guide-method")
             wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
             guide = driver.execute_script(GUIDE_LEAD_JS)
-            assert guide and f"99.9% values correct {REVIEW_BASE}." in guide["text"] and REVIEW_SIDE_LINE in guide["text"], guide
+            guide_text = " ".join(guide["text"].split()) if guide else ""
+            assert guide and REVIEW_GUIDE_LEAD in guide_text and REVIEW_SIDE_LINE in guide_text and "values correct" not in guide_text, guide
             parens = driver.execute_script(REVIEW_BASE_PARENS, "#guideMethodLead")
             assert len(parens) == 1 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
             human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
             assert human.startswith(REVIEW_ITEM_START) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
-            assert "Human reviewers checked 2,674" not in human, "The Human review item repeats the Guide's lead"
+            assert "Human reviewers checked 2,674" not in human and "disputed" not in human, "The Human review item repeats the Guide's lead"
             # kcat, Km and kcat/Km in the site's italic markup in the Human review item, as Stats' lead
             assert driver.execute_script("""return document.getElementById('guideMethodHuman').querySelectorAll('i + sub').length >= 3"""), \
                 "kcat, Km and kcat/Km are in italics"
             assert_document_stays(driver, "Guide with the human review")
-            # Team's Human check says the values correct, on the wide and the upright loop, and its lines touch no other
+            # Team's Human check says no value disputed, on the wide and the upright loop, and its lines touch no other
             # station's.
             layout = "wide" if width >= 960 else "narrow"
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "99.9% values correct of 2,674 entries from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "no value disputed on 2,671 of 2,674 entries (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})

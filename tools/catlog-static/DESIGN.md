@@ -952,9 +952,10 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in accent ink, each over a soft radial halo, fading and rising once on first show unless the viewer asks for less motion (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (the lead, the user's headline: "Human review", 99.9% values correct of 2,674 entries from the earlier
-version (408 papers), with "Read from the paper again: same value as the reviewers for ..." as a side line; then the
-checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a
+2 Quality (the lead, the user's headline: "Human review", 99.9%, no value disputed on 2,767 of 2,770 entries from the
+earlier version (431 papers), the disputed values as printed and the entries whose value the reviewer could not find,
+with "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ..." and what
+the other values are as a side line; then the checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a
 Records | Share switch, Read from the paper and not yet re-read, values per paper, what the records
 contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
 organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
@@ -988,13 +989,13 @@ points to the method ("How this catalog is built: see ..."). Then "On this
 page", a short contents list (three columns, two on phones) linking to the
 sections, in this order and with these addresses: How CatLog reads and checks
 values (#guide-method: the only place the method is said in full; it opens
-with the human review in a light box ("99.9% values correct of 2,674 entries from the
-earlier version (408 papers)." and "Read from the paper again: ...", the Stats lead's
-side line) linked to Stats, left out without those counts;
+with the human review in a light box ("No value disputed on 2,767 of 2,770 entries (99.9%) from the
+earlier version (431 papers); the 3 disputed values are as printed in the paper." and "Where CatLog has re-read a
+paper the reviewers checked, ...", the Stats lead's side line) linked to Stats, left out without those counts;
 then a definition list of Read from the paper (CatLog's current version, which the Guide says once is its second),
 AI audits, Human review
-(what the lead does not say: "A reviewer disputed a kcat, Km or kcat/Km value on 3
-of the 2,674 entries, ...", values missing and other disagreements, then the
+(what the lead does not say: "In 153 entries (5.5%) the reviewer could not find the value in the paper.", values
+missing and other disagreements, then the
 human-checked records and their rule; the lead's sentence is never said twice;
 kcat, Km and kcat/Km in italics with a subscript in this item), Not yet re-read (records from CatLog's earlier
 version; when CatLog reads a paper, its records replace these) and Who does it (linking to Team); the

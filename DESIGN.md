@@ -37,8 +37,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    line (--accent-line), a gentle accent glow round it (--band-glow: a 3px ring at 4.5% and a soft 36px shadow below
    at 34%, never neon), a 2px accent rule along its top fading to the right and a calm wash (a corner tint over a
    top-to-bottom fade). Line 1 (40px, tabular numbers): Records, Accepted with its share, Read from the paper with its
-   papers, Human review ("99.9%", "values correct of 2,674 entries from the earlier version (408 papers)"; a snapshot
-   without the review's counts gives the share of approved values the same, read from the paper again), the numbers
+   papers, Human review ("99.9%", "no value disputed on 2,767 of 2,770 entries from the earlier version (431 papers)"; a
+   snapshot without the review's counts gives the share of approved values the same where CatLog has re-read the
+   paper), the numbers
    in accent ink, each over a soft radial halo of the accent (its own background, 13% at the centre to 7.5% at the
    edge, carried 24-40px out by a low-alpha box-shadow; never a text-shadow, so the digits stay crisp, and a
    box-shadow adds nothing to the page's width); the halo grows a little under the pointer, and the item's
@@ -90,30 +91,40 @@ its accessible description; no figure or table has a data line. The parts' figur
   own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
   `overview.quality.review.v1` (catlog-v2 HUMAN_REVIEW.md "Measuring CatLog against the reviewers"; `build_overview`
   copies each reviewed catalog's numbers, strings and `other_by_kind`). Each entry a reviewer checked counts once, by
-  its final verdict. Its heading is "Human review"; the big number is the values correct (kcat, Km, kcat/Km): entries
-  where no reviewer disputed a number or its unit, worked out from `entries` and `value_disputed` ("99.9%"), with its
-  base under it as one phrase, "values correct of 2,674 entries from the earlier version (408 papers)". One sentence,
-  without repeating the base: "A reviewer disputed a kcat, Km or kcat/Km value on 3 of the 2,674 entries, and all 3
-  are as printed in the paper." (`value_disputed_checked_as_printed`). Two facts: Values missing ("31 entries
-  (1.2%)") and Other disagreements ("177 entries (6.6%)"), then one note: what values missing means ("the paper
+  its final verdict. Its heading is "Human review"; the big number is the share of entries where no reviewer disputed
+  a kcat, Km or kcat/Km number or its unit, worked out from `entries` and `value_disputed` ("99.9%"), with the
+  headline's words under it as one phrase (the user's words, 2026-10-15; the same on the band, in the Guide's lead and
+  at Team's Human check; never "values correct"): "no value disputed on 2,767 of 2,770 entries from the earlier
+  version (431 papers)". One sentence, without repeating the base: "The 3 disputed values are as printed in the
+  paper." (`value_disputed_checked_as_printed`; "Of the 3 disputed values, 1 is as printed in the paper." for part of
+  them) and, with the headline wherever it stands, "In 153 entries (5.5%) the reviewer could not find the value in the
+  paper." (`other_by_kind`'s "could not find the value" kind of `entries`). Two facts: Values missing ("27 entries
+  (1.0%)") and Other disagreements ("177 entries (6.4%)"), then one note: what values missing means ("the paper
   prints a value the entry lacked, most often the kcat"), then, as its own sentence, how many of the values reviewers
   named CatLog has read from the paper since ("CatLog has since read 53 of the 58 values the reviewers named";
-  `agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, a minor line
-  ("could not find the value 153, organism name 13, DOI 5, ..."). A review of records read from the paper
-  (`review.v2`, once reviewers check them) adds one sentence of the same shape ("Human reviewers checked 40 records
-  read from the paper (3 papers): ..."). CatLog's reading against the review is one side line, set off by a rule at
-  its left: "Read from the paper again: same value as the reviewers for 3,625 of 4,074 approved values (89.0%); wrong
-  CatLog values found: 0." (`agreement.agree` of `values_approved`, else
-  `v2_found` of `v2_approved_total`: the match as it is now; `agreement.catlog_value_wrong`, else `v2_wrong`). Then
-  links to the Guide's method and to Team; the date the review was counted and its definitions are said once, under
-  How these numbers are counted (Human review). kcat, Km and kcat/Km in the lead's
-  text (the big number's words, the sentence, the notes) take the site's italic markup with a
-  subscript (metricWordsHtml, on escaped text only), as the Values lines and the Guide write them. The first-comparison and blind
-  fields (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no
-  "first comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with that match ("of the
-  values human reviewers approved are the same, read from the paper again"; its sentence names the papers: "Read from
-  the paper again (98 papers human reviewers checked): ...") and what reviewers found in entries from the earlier
-  version (`compared_values_v1`); one with neither has no lead. Counts that do not hold together are not shown.
+  `agreement.stated_values_catlog_has` of `stated_values`), and the other disagreements by kind, counts in brackets,
+  without the kind the sentence above says ("organism name (13), DOI (5), ..."). A review of records read from the
+  paper (`review.v2`, once reviewers check them) adds one sentence of the same shape ("Human reviewers checked 40
+  records read from the paper (3 papers): no value disputed on 39 of them (97.5%); ..."). CatLog's reading against
+  the review is one side line, set off by a rule at its left (the user's sentence, 2026-10-15): "Where CatLog has
+  re-read a paper the reviewers checked, its value matches the approved value for 3,903 of 4,441 (87.9%). Of the
+  other 538, 134 are the same value under another name, 142 are values the paper supports as CatLog reads them (the
+  earlier entry's number or label was wrong), 3 differ by rounding, 44 cannot be compared and 215 are not yet
+  checked; none is a CatLog value found wrong." (`agreement.agree` of `values_approved`, else `v2_found` of
+  `v2_approved_total`: the match as it is now; the other values' kinds from `differ_same_value_other_name`,
+  `differ_catlog_right`, `differ_rounding`, `differ_not_comparable` and `differ_not_adjudicated`, said only when each
+  is a whole count and they add up, with the wrong values found, to the values that differ; the wrong values found
+  from `differ_catlog_wrong`, else `catlog_value_wrong`, else `v2_wrong`; without the kinds only "None of the other 538
+  is a CatLog value found wrong."). Then links to the Guide's method and to Team; the date the review was counted and
+  its definitions (No value disputed, Could not find the value, Values missing, Approved values, The same value) are
+  said once, under How these numbers are counted (Human review). kcat, Km and kcat/Km in the lead's text (the big
+  number's words, the sentence, the notes) take the site's italic markup with a subscript (metricWordsHtml, on
+  escaped text only), as the Values lines and the Guide write them. The first-comparison and blind fields
+  (`first_agree*`, `papers_unexposed`, the 95% range) are reference only: never read, never shown; no "first
+  comparison", "read blind" or "95% range" anywhere. A snapshot without `review` leads with that match ("of the
+  values human reviewers approved are the same where CatLog has re-read the paper (366 papers)") and what reviewers
+  found in entries from the earlier version (`compared_values_v1`); one with neither has no lead. Counts that do not
+  hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
   hole; each slice has one fill, its colour at 60% with a 1px opaque outline, so navy and slate stay apart (the
@@ -400,10 +411,10 @@ stations come from the manifest (papers read and records at AI reading,
 values re-checked by AI audits at CatLog, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
 its field is absent. Human check says the Stats lead's headline shortened, never
-a bare "agreement": "99.9% values correct" over "of 2,674 entries from the earlier version"
-("99.9% values correct" over "of 2,674 entries from" over "the earlier version" on the upright loop),
-its label one phrase; without the review's counts, "89.0% of approved values the same,"
-over "read from the paper again" (three lines on the upright loop). No station's
+a bare "agreement": "no value disputed on 2,767 of 2,770 entries" over "(99.9%) from the earlier version"
+("no value disputed on" over "2,767 of 2,770 entries" over "(99.9%) from the" over "earlier version" on the upright
+loop), its label one phrase; without the review's counts, "87.9% of approved values the same"
+over "where CatLog has re-read the paper" (four lines on the upright loop). No station's
 name and numbers come within 12px of another station's,
 the track, or the chips and their lines, also in a wider font (Linux Chrome): on
 the wide loop CatLog's stand up and left of its dot, clear of the arc, Rules
