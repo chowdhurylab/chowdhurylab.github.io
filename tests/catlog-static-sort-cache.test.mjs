@@ -1741,6 +1741,24 @@ function row(overrides = {}) {
   // Shares say what they are out of: all records only in the figures and tables that count all records (here Figure 1
   // and Table 1); elsewhere the bar's, row's or card's own total, or the total the caption names.
   assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figure 1 and Table 1 a share is out of all records; elsewhere it is out of its own bar&#39;s, row&#39;s or card&#39;s total, or the total its caption names\. Shares are given to one decimal place; a share above 0 but below 0\.1% is written &lt;0\.1%\.<\/dd>/);
+  // Paper and PDF: How these numbers are counted (the one place of the Data ID and the rules) prints open, then closes
+  // again unless the viewer had opened it; the stylesheet opens it too where a browser prints without telling the page.
+  {
+    const closed = { open: false, dataset: {} };
+    const opened = { open: true, dataset: {} };
+    const previousAll = document.querySelectorAll;
+    document.querySelectorAll = (selector) => (selector === ".stats-method:not([open])" ? [closed, opened].filter((item) => !item.open)
+      : selector === ".stats-method[data-print-opened]" ? [closed, opened].filter((item) => item.dataset.printOpened) : previousAll(selector));
+    try {
+      api.statsOpenMethodForPrint();
+      assert.deepEqual([closed.open, opened.open], [true, true]);
+      api.statsCloseMethodAfterPrint();
+      assert.deepEqual([closed.open, opened.open, closed.dataset.printOpened], [false, true, undefined]);
+    } finally {
+      document.querySelectorAll = previousAll;
+    }
+    assert.match(styleSource, /@media print \{[^@]*?\.stats-method::details-content \{ content-visibility:visible; display:block \}/);
+  }
   assert.deepEqual(api.statsNumbersText("Table", [1, 2, 3, 4, 7]), "Tables 1–4 and 7");
   assert.deepEqual(api.statsNumbersText("Table", [1, 2, 5]), "Tables 1, 2 and 5");
   assert.deepEqual(api.statsNumbersText("Figure", [1]), "Figure 1");

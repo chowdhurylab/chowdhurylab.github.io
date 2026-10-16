@@ -107,6 +107,7 @@
   let statsRefitOnFonts = false;
   let statsRefitOnNarrow = false;
   let statsRefitOnResize = false;
+  let statsPrintMethod = false;
   // The headline band's numbers fade and rise once, the first time Stats is drawn (is-entering; never under reduced
   // motion, which the stylesheet decides).
   let statsBandEntered = false;
@@ -3980,6 +3981,22 @@
     }
   }
 
+  // How these numbers are counted (the one place the Data ID and the counting rules are said) prints open: opened for
+  // printing when closed, then closed again.
+  function statsOpenMethodForPrint() {
+    for (const method of document.querySelectorAll?.(".stats-method:not([open])") || []) {
+      method.dataset.printOpened = "1";
+      method.open = true;
+    }
+  }
+
+  function statsCloseMethodAfterPrint() {
+    for (const method of document.querySelectorAll?.(".stats-method[data-print-opened]") || []) {
+      delete method.dataset.printOpened;
+      method.open = false;
+    }
+  }
+
   // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
   // an 80px bar, the count, and its share of all records (or a second count). Bars are drawn against `scale`.
   function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral", countHead = "Records" } = {}) {
@@ -6142,6 +6159,14 @@
       });
     }
     // A window that changes width changes the room of Corrections by cause and database's table (once per page).
+    // Paper and PDF: How these numbers are counted prints open, so a printed page keeps its snapshot's Data ID and the
+    // counting rules (the stylesheet opens it too where the browser prints without these events); afterwards it closes
+    // again if the viewer had not opened it (once per page).
+    if (!statsPrintMethod && window.addEventListener) {
+      statsPrintMethod = true;
+      window.addEventListener("beforeprint", statsOpenMethodForPrint);
+      window.addEventListener("afterprint", statsCloseMethodAfterPrint);
+    }
     if (!statsRefitOnResize && window.addEventListener) {
       statsRefitOnResize = true;
       let pending = false;
@@ -12886,6 +12911,8 @@
       statsRangeNumber,
       statsFitDonutTotals,
       statsFitValueColumns,
+      statsOpenMethodForPrint,
+      statsCloseMethodAfterPrint,
       reviewLeadHtml,
       renderTeam,
       teamNumbers,

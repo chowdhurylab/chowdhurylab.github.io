@@ -4786,6 +4786,16 @@ def check(driver, browser, url):
     """)
     assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Every number on this page is counted from this snapshot's Full data download",
                                                 provenance["text"] or ""), provenance
+    # Paper and PDF: the closed section prints open (its Data ID and rules), then closes again.
+    printed = driver.execute_script("""
+        const method = document.querySelector('#statsCharts > details.stats-method');
+        const before = method.open;
+        window.dispatchEvent(new Event('beforeprint'));
+        const during = method.open;
+        window.dispatchEvent(new Event('afterprint'));
+        return [before, during, method.open];
+    """)
+    assert printed == [False, True, False], printed
     for kind in ("Figure", "Table"):
         numbers = [int(match) for match in re.findall(kind + r" (\d+)\.", " ".join(
             caption.text for caption in driver.find_elements(By.CSS_SELECTOR, ".stats-fig > figcaption .stats-fig-caption")))]

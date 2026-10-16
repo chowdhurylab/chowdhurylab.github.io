@@ -1513,6 +1513,9 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
   .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
   .stats-tip, .stats-switch { display:none !important }
+  /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
+     this where a browser prints without telling the page. */
+  .stats-method::details-content { content-visibility:visible; display:block }
   .stats-part-title { break-after:avoid }
   .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-ridges, .stats-range { --ridge-label:44px }

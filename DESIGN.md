@@ -77,8 +77,10 @@ elsewhere its own bar's, row's or card's total or the total its caption names; o
 written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
 and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Against the databases
 (with part 7: same paper and parameter, shares only on 1,000 values or more), then each figure's or table's own rules
-under its number ("Figure 4", "Table 1", the title first), in reading order. A figure keeps its caption as its
-accessible description; no figure or table has a data line. The parts' figures and tables:
+under its number ("Figure 4", "Table 1", the title first), in reading order. It prints open, so paper and PDF keep
+the Data ID and the rules: beforeprint opens it and afterprint closes it again unless the viewer had opened it, and the
+print stylesheet opens its ::details-content where a browser prints without those events. A figure keeps its caption as
+its accessible description; no figure or table has a data line. The parts' figures and tables:
 
 - Lead (first in Quality, full width): Human review of the earlier version's entries, what the reviewers'
   own files say (the user, 2026-10-13: "keep it simple, reflect the review document"), from
