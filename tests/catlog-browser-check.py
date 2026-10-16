@@ -1085,8 +1085,8 @@ DATABASE_COMPARISON_FIXTURE = {
     "not_reproduced": {"distinct": {"paired_with_different_number": 5635, "reprinted_from_other_work": 2372}},
     "papers": 2650,
 }
-DATABASE_TITLES = ("Values against the databases", "Results by database", "Paired values by database", "Corrections by cause",
-                   "Corrections by cause and database")
+DATABASE_TITLES = ("Values against the databases", "Results by database", "Paired values by database",
+                   "Corrections by cause and how found", "Corrections by cause and database")
 FIGURE_TITLES = (*DATABASE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
 # Before the page starts: the snapshot's comparison with the databases, or the fixture when it has none.
 DATABASE_COMPARISON_JS = """

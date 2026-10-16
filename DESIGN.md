@@ -68,13 +68,14 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
 6. Cautions.
 7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
    against the databases (alone in its row until Why no database lists a value joins it), Results by database beside
-   Paired values by database, Corrections by cause beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
+   Paired values by database, Corrections by cause and how found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
    replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
 
 A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
 rules are said (the user, 2026-10-15, of the line that stood under every figure, "Snapshot Oct 15, 2026 · Data ID ... ·
 143,184 values in all; ...": "Do we need this???"). It gives Snapshot (the date and Data ID, counted from this
-snapshot's Full data download and its human-review results), Shares (what a share is out of: all records in the
+snapshot's Full data download, the human-review results and, when the audits are shown, the AI audit records),
+Shares (what a share is out of: all records in the
 figures and tables that count all records, named by number (Figure 1 and Tables 1-4 and 7 today; `STATS_SHARES_OF_ALL`),
 elsewhere its own bar's, row's or card's total or the total its caption names; one decimal, a nonzero share under 0.1%
 written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
@@ -161,9 +162,9 @@ its accessible description; no figure or table has a data line. The parts' figur
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
   - Lead (14px), one idea per sentence (its papers are `papers_compared`, the papers with a compared value, so never
     more than CatLog has read; `papers` only for an older comparison without it): "CatLog compared 126,951 values read from 2,598 papers with what the
-    databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed
-    under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ
-    for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same
+    databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same
+    number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051
+    differ without a known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same
     measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different
     measurement; it does not by itself mean a database is wrong." Its counts add up to the total; the four result phrases link into Browse (db=other_label, corrects, differs, not_listed), each titled
     with the records it opens ("1,548 values in 1,443 records", from the option's record count).
@@ -191,7 +192,8 @@ its accessible description; no figure or table has a data line. The parts' figur
     database only Corrects links (bar, legend, table): a database's Different number also counts its other number for a
     value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
     which matches a value by its own result, would show fewer; the All row's Differs links (one result).
-  - Corrections by cause: a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
+  - Corrections by cause and how found ("Corrections by cause" without the split; its caption: "The 1,548 values
+    that correct a database's number, each counted once.", as Table 9 counts one per database): a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; DATABASE_CAUSE_FAMILIES, the Guide's list too, maps every cause code), split checked against the paper / an exact factor found by
     code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
     add up to its code count; a bar split two ways prints its two counts under its name, each after its colour. Beside

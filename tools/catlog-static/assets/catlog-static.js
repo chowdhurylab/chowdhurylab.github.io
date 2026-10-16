@@ -5141,13 +5141,13 @@
     const from = papers ? `${formatInteger(papers)} ${plural(papers, "paper", "papers")}` : "their papers";
     const changed = [
       corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
-      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} for no known cause`, "differs", differs) : "",
+      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs", differs) : "",
     ].filter(Boolean);
     const paired = same + corrects + differs;
     const rate = paired >= STATS_RATE_BASE;
     const sentences = [
       escapeHtml(`CatLog compared ${formatInteger(compared)} ${plural(compared, "value", "values")} read from ${from} with what the databases list for the same ${papers === 1 ? "paper" : "papers"}.`),
-      `Of these, ${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists${otherLabel ? `, and ${link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} listed under another label`, "other_label", otherLabel)}` : ""}.`,
+      `Of these, ${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists${otherLabel ? `, and ${link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} the same number under another label`, "other_label", otherLabel)}` : ""}.`,
       changed.length ? `Another ${changed.join(changed.length > 1 && checked !== null ? ", and " : " and ")}.` : "",
       notListed ? `The remaining ${link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed", notListed)}.` : "",
       paired ? escapeHtml(`Where a database lists a number for the same measurement (${formatInteger(paired)} ${plural(paired, "value", "values")}), ${rate ? qualityShare(same, paired) : formatInteger(same)} of those numbers ${!rate && same === 1 ? "is" : "are"} the paper's.`) : "",
@@ -5390,10 +5390,10 @@
       found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here.` : "",
     ].filter(Boolean).join(" ");
     return {
-      id: "statsDbFoundTitle", key: "db-found", title: "Corrections by cause",
+      id: "statsDbFoundTitle", key: "db-found", title: split ? "Corrections by cause and how found" : "Corrections by cause",
       body: statsBarChart({ key: "db-found", rows, scale: max, step, axis: statsAxis(max, step),
         legend: split ? STATS_FOUND_BY.map((level) => ({ part: level.part, label: `<span title="${escapeHtml(level.title)}">${escapeHtml(level.label)}</span>` })) : [] }),
-      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, by cause${split ? " and by how the error was found" : ""}.`,
+      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, each counted once.`,
       rules: notes,
     };
   }
@@ -5737,7 +5737,7 @@
     if (checkCards.length) {
       quality_.push({ html: `<section class="stats-section stats-checks-section stats-wide" aria-labelledby="statsChecksTitle" data-figure="checks">
         <h3 id="statsChecksTitle" class="stats-fig-title">Checks on the values</h3>
-        <p class="stats-checks-intro">${escapeHtml(v2Sentence)} AI audits and human reviewers then check samples against the papers.</p>
+        <p class="stats-checks-intro">${escapeHtml(v2Sentence)} AI audits and human reviewers then checked samples against the papers.</p>
         <ul class="stats-checks" style="--stats-checks:${checkCards.length}">${checkCards.map((card) => `<li class="stats-check" data-check="${card.key}">
           <span class="stats-check-name">${escapeHtml(card.name)}</span>
           <span class="stats-check-number">${card.href ? `<a class="stats-link" href="${escapeHtml(card.href)}">${card.number}</a>` : card.number}</span>
@@ -6144,7 +6144,7 @@
     const reviewRules = reviewRulesText(overview);
     const ruleRow = (term, html) => `<div><dt>${term}</dt><dd>${html}</dd></div>`;
     sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
-        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Every number on this page is counted from this snapshot's Full data download${overview ? " and its human-review results" : ""}.`))}
+        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Every number on this page is counted from ${statsListText(["this snapshot's Full data download", overview ? "the human-review results" : "", audit ? "the AI audit records" : ""].filter(Boolean))}.`))}
         ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
         ${ruleRow("Names", "Enzymes, organisms and substrates are distinct names, ignoring capitals; \"Unknown\" is not a name. EC numbers are complete four-part numbers.")}
@@ -6152,7 +6152,7 @@
         ${ruleRow("Main source", "The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
-        ${reviewRules ? ruleRow("Human review", escapeHtml(reviewRules)) : ""}
+        ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
         ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));

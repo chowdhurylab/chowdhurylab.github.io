@@ -1873,7 +1873,9 @@ function row(overrides = {}) {
   assert.match(chart, /<strong>Figure 3\.<\/strong> Together the two bars hold every record, coloured by review result\./);
   assert.match(methodHtml(), /<dl class="stats-method-figures"><div><dt>Figure 2<\/dt><dd><span class="stats-method-title">Records by main source\.<\/span> A record merged from several databases counts once here, under Several databases\./);
   assert.match(methodHtml(), /<dt>Table 1<\/dt><dd><span class="stats-method-title">What the records contain\.<\/span> 1 kcat\/Km values were calculated as kcat ÷ Km/);
-  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Full data download and its human-review results\.<\/dd>/);
+  // The numbers come from the snapshot's Full data download and, where the page has them, the human-review results and
+  // the AI audit records (dated where they are shown).
+  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Every number on this page is counted from this snapshot&#39;s Full data download and the human-review results\.<\/dd>/);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]+"><span>3<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="[^"]+"><span>0\.0%<\/span><\/span><\/span>/);
   assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>/);
@@ -1899,7 +1901,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(element("statsCharts").innerHTML, /BRENDA, Not confirmed/);
   runtimeManifest.summary.overview = overview;
   api.renderStats();
-  assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper. AI audits and human reviewers then check samples against the papers."));
+  assert.ok(chart.includes("Read from the paper by an AI model; a second, separate AI check compared each value with the paper. AI audits and human reviewers then checked samples against the papers."));
   // Every caption is "Figure N." or "Table N." and a short, plain caption.
   const captions = chart.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g) || [];
   assert.ok(captions.length >= 3, "Stats has numbered captions");
@@ -1938,6 +1940,8 @@ function row(overrides = {}) {
   // correct never without the label errors beside it; the checks repeat neither.
   assert.match(leadHtml(), /In entries from the earlier version, 9 of 2,431 values reviewers compared had a wrong number or unit \(99\.6% correct\), and 114 had a wrong enzyme, organism, substrate, variant or protein label\./);
   assert.doesNotMatch(qualityChart, /data-check="review"|data-check="agreement"/);
+  // With the audits shown, their records are named among the sources of the page's numbers.
+  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Every number on this page is counted from this snapshot&#39;s Full data download, the human-review results and the AI audit records\.<\/dd>/);
   // v2_found of v2_approved_total: the reviewers' approved values CatLog has, read from the paper again (a snapshot
   // without quality.agreement).
   assert.match(leadHtml(), /Read from the paper again: same value as the reviewers for 2,160 of 2,380 approved values \(90\.8%\); wrong CatLog values found: 0\./);
@@ -2016,7 +2020,9 @@ function row(overrides = {}) {
   assert.doesNotMatch(lead.replace(/<[^>]*>/g, " "), /\bv[12]\b/, "CatLog is the one name");
   // What the review counts is said once, under How these numbers are counted, not under the lead.
   assert.doesNotMatch(lead, /Counted|own files|stats-fig-data/);
-  assert.match(methodHtml(), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\. Values correct: no reviewer disputed the entry&#39;s kcat, Km or kcat\/Km number or unit\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
+  // Its definitions set kcat and Km in italic as everywhere else on the page.
+  assert.match(methodHtml(), /<dt>Human review<\/dt><dd>[^<]*no reviewer disputed the entry&#39;s <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or/);
+  assert.match(metricPlain(methodHtml()), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\. Values correct: no reviewer disputed the entry&#39;s kcat, Km or kcat\/Km number or unit\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
   assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
   // The checks: the second AI check, the AI audits and the human-checked records; the review and the match are the
   // lead's.
@@ -2138,19 +2144,19 @@ function row(overrides = {}) {
   api.renderStats();
   let figures = element("statsCharts").innerHTML;
   assert.deepEqual(headings().slice(-7), ["Values against the databases", "Results by database",
-    "Paired values by database", "Corrections by cause", "Corrections by cause and database",
+    "Paired values by database", "Corrections by cause and how found", "Corrections by cause and database",
     "Corrections on records not yet re-read", "Entries replaced by reading the paper"]);
   assert.equal(partTitles().at(-1), "7 Against the databases");
   assert.doesNotMatch(figures, /Values read from the paper against the databases|data-figure="db-compare"/);
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
   // The lead names the papers with a compared value (papers_compared), never more than CatLog has read.
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are listed under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ for no known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ without a known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
   // The caveat is said once in part 7, here, never under each figure.
   assert.equal((databaseSection().match(/does not by itself mean a database is wrong/g) || []).length, 1);
   // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.
   // Browse lists records: each link's title says how many it opens.
-  assert.match(dbLead, /href="[^"]*#browse\?db=other_label" title="5,574 values in 3,466 records">5,574 are listed under another label/);
+  assert.match(dbLead, /href="[^"]*#browse\?db=other_label" title="5,574 values in 3,466 records">5,574 are the same number under another label/);
   assert.match(dbLead, /href="[^"]*#browse\?db=corrects" title="1,548 values in 1,443 records">1,548 correct a database/);
   assert.match(dbLead, /href="[^"]*#browse\?db=differs" title="1,051 values in 955 records">1,051 differ/);
   assert.match(dbLead, /href="[^"]*#browse\?db=not_listed" title="20,987 values in 14,002 records">20,987 are in none/);
@@ -2241,7 +2247,9 @@ function row(overrides = {}) {
   assert.match(found, /data-row="unit"[^>]*>\s*<span class="stats-chart-label"><span title="[^"]*">Unit or scale<\/span><small><span class="stats-db-thin" aria-hidden="true"><span><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>428<\/span><span><i class="stats-swatch stats-part-corrects-2" aria-hidden="true"><\/i>892<\/span><\/span><\/small><\/span>/);
   assert.equal((found.match(/<small><span class="stats-db-thin"/g) || []).length, 1);
   assert.match(found, /<span title="A decimal point or exponent slip\.">Decimal slip<\/span>/);
-  assert.match(plain(found), /The 1,548 values that correct a database's number, by cause and by how the error was found\./);
+  // Its title names both splits; the caption says each value counts once (Table 9 counts one per database).
+  assert.match(found, /<h3 id="statsDbFoundTitle" class="stats-fig-title">Corrections by cause and how found<\/h3>/);
+  assert.match(plain(found), /The 1,548 values that correct a database's number, each counted once\./);
   // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
   const causes = figureHtml("db-causes");
   assert.match(plain(causes.match(/<thead>[\s\S]*?<\/thead>/)[0]), /^Cause ?BRENDA ?SABIO-RK ?OED ?SKiD ?STRENDA DB ?All$/);
@@ -2375,7 +2383,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper. Of these, 4 are the number a database lists. Another 1 corrects a database's number and 1 differs for no known cause. The remaining 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), 4 of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper. Of these, 4 are the number a database lists. Another 1 corrects a database's number and 1 differs without a known cause. The remaining 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), 4 of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
   assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
   runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
   api.renderStats();
