@@ -6404,8 +6404,10 @@
 
   // Team (#team): the people and AI agents behind CatLog and the loop they work in. Drawn from the manifest the first time
   // it is shown, like Stats; never loads the record index. No model or vendor names, first names only, no titles.
+  // The station where audit agents re-check samples of the catalog is "AI audit" (2026-10-15: "CatLog" named the
+  // whole site as a step of its own loop); its key stays catlog (the layouts, actors and the stylesheet use it).
   const TEAM_STATIONS = {
-    papers: "Papers", reading: "AI reading", check: "AI check", catlog: "CatLog", human: "Human check",
+    papers: "Papers", reading: "AI reading", check: "AI check", catlog: "AI audit", human: "Human check",
     rules: "Rules updated", website: "Website", paper: "The paper",
   };
   // Where a person or agent works, as "At Papers, CatLog, Rules updated, Website": in the loop's order (the order of
@@ -6451,7 +6453,7 @@
         papers: { x: 290, y: 140, label: [290, 172, "middle"] },
         reading: { x: 470, y: 140, label: [470, 172, "middle"] },
         check: { x: 650, y: 140, label: [650, 172, "middle"] },
-        // CatLog's name and numbers stand up and to the left of it, clear of the arc and ending above its dot, so Human
+        // AI audit's name and numbers stand up and to the left of it, clear of the arc and ending above its dot, so Human
         // check's lines below start well apart from them.
         catlog: { x: 780, y: 250, label: [746, 206, "end"] },
         // Stations on the lower straight: their name and numbers stand just above the track. Rules updated sits near the
@@ -6463,7 +6465,7 @@
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
       },
       arrows: [[380, 140, 0], [465, 360, 180], [160, 250, 270]],
-      // Audit agents stand up and to the right of CatLog, so their line meets it between the track's arc and the
+      // Audit agents stand up and to the right of AI audit, so their line meets it between the track's arc and the
       // Website branch instead of running beside the arc.
       actors: {
         download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [850, 58],
@@ -6481,7 +6483,7 @@
         check: { x: 280, y: 340, label: [264, 336, "end"] },
         // inside the lower arc, where the loop narrows: its numbers break into short lines
         catlog: { x: 180, y: 580, label: [180, 500, "middle"], wrap: 16 },
-        // up from the arc so Human check's lines end well above CatLog's name, on the straight part of the track
+        // up from the arc so Human check's lines end well above AI audit's name, on the straight part of the track
         human: { x: 80, y: 375, label: [96, 371, "start"] },
         rules: { x: 80, y: 285, label: [96, 281, "start"] },
         website: { x: 90, y: 650, label: [90, 678, "middle"], branch: true },
@@ -6512,7 +6514,7 @@
     const records = statsCount(overview?.from_paper?.records, total);
     numbers.reading = [papers !== null ? `${formatInteger(papers)} papers read` : "", records !== null ? `${formatInteger(records)} records` : ""].filter(Boolean);
     const audit = auditFacts(overview);
-    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked\nby AI audits`] : [];
+    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked`] : [];
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     // the review first: the records line is the shortest, so on the wide loop it is the one level with Rules updated
@@ -6581,7 +6583,7 @@
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, CatLog, human check, rules updated and back to papers; CatLog also feeds the website and the paper.">
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to papers; the catalog also feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${dots}${stations}${actors}
     </svg>`;
@@ -8563,8 +8565,10 @@
       }
     }
     const focusedRowKey = state.preserveRenderedRows && body.contains?.(document.activeElement) ? state.activeRowKey : "";
-    if ((loading && !pageRows.length && !state.records.length) || awaitingMarks || sortWaits) {
-      body.innerHTML = skeletonRowsHtml();
+    if ((loading && !pageRows.length) || awaitingMarks || sortWaits) {
+      // A search or filter typed while the index still downloads finds nothing among the rows in yet: the skeleton rows
+      // stay, with a line saying why (never a blank list), until every record is in and the search runs on them all.
+      body.innerHTML = skeletonRowsHtml() + (loading && !awaitingMarks && !sortWaits && state.records.length ? loadingSearchRowHtml() : "");
       fitTableColumns();
       return;
     }
@@ -8886,6 +8890,12 @@
 
   // Placeholder rows while nothing has loaded: the table keeps its shape and the count says how far loading is. Each
   // cell takes its column's role class from the header, so number placeholders sit on the right.
+  // Under the skeleton rows while a search or filter waits for the whole record index (a first visit on a phone network
+  // downloads it in 10-45 s; the count beside Filters keeps the progress): why the list shows nothing yet.
+  function loadingSearchRowHtml() {
+    return `<tr class="loading-row notice-row"><td colspan="${tableColumnCount()}"><div class="load-notice" role="status"><strong>Still loading the records</strong><span>The search runs on every record once they are all in.</span></div></td></tr>`;
+  }
+
   function skeletonRowsHtml(count = 10) {
     const headers = [...(document.querySelectorAll?.("#recordTableWrap thead th") || [])];
     const cells = headers.length

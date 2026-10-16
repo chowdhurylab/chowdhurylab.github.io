@@ -1296,7 +1296,7 @@ assert.equal(document.title, "Team | CatLog");
   for (const name of ["Supantha", "Aarna", "Erin", "Mohammad", "Reading agents", "Checking agents", "Audit agents", "Download agent"]) {
     assert.match(team, new RegExp(name), name);
   }
-  for (const station of ["Papers", "AI reading", "AI check", "CatLog", "Human check", "Rules updated", "Website", "The paper"]) {
+  for (const station of ["Papers", "AI reading", "AI check", "AI audit", "Human check", "Rules updated", "Website", "The paper"]) {
     assert.match(team, new RegExp(`>${station}</text>`), station);
   }
   assert.doesNotMatch(team, /Claude|Codex|Anthropic|OpenAI|GPT|Dr\.|Prof|PhD|independent/);
@@ -1305,9 +1305,9 @@ assert.equal(document.title, "Team | CatLog");
   // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
   // Where each works, in the loop's order and mid-sentence case.
-  assert.match(team, /<small [^>]*>At Papers, CatLog, Rules updated, Website<\/small>/);
+  assert.match(team, /<small [^>]*>At Papers, AI audit, Rules updated, Website<\/small>/);
   assert.match(team, /<small [^>]*>At the paper<\/small>/);
-  assert.match(team, /aria-label="Supantha: builds CatLog and turns findings into better rules\. At Papers, CatLog, Rules updated, Website\."/);
+  assert.match(team, /aria-label="Supantha: builds CatLog and turns findings into better rules\. At Papers, AI audit, Rules updated, Website\."/);
   assert.doesNotMatch(team, /At The paper/);
   // Tab follows the drawing: the agents above, left to right, then the people below.
   assert.deepEqual(
@@ -1324,7 +1324,8 @@ assert.equal(document.title, "Team | CatLog");
   const figureHtml = element("teamFigure").innerHTML;
   assert.doesNotMatch(figureHtml, /<title/);
   assert.equal((figureHtml.match(/role="group" aria-label="CatLog's loop: /g) || []).length, 2);
-  if (numbers.catlog.length) assert.match(figureHtml, /aria-label="CatLog: [\d,]+ values re-checked by AI audits"/);
+  if (numbers.catlog.length) assert.match(figureHtml, /aria-label="AI audit: [\d,]+ values re-checked"/);
+  assert.doesNotMatch(figureHtml, /aria-label="CatLog: /, "no station named after the whole site");
   // On the upright loop a drawn line breaks at a space after 23 characters (16 in CatLog's, inside the lower arc), so no
   // line reaches the far side of the track in a wider font; the station's label still reads each fact whole.
   const narrowLines = (station) => [...figureHtml.match(/class="team-loop team-loop-narrow"[\s\S]*?<\/svg>/)[0]
@@ -1966,10 +1967,10 @@ function row(overrides = {}) {
     differ_rounding: 3, differ_catlog_wrong: 0, differ_not_comparable: 24, differ_not_adjudicated: 105, stated_values: 58,
     stated_values_catlog_has: 53 };
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", audit_values: 973, audit_wrong: 2, agreement: agreementFixture } };
-  // The Team loop draws CatLog's number on two lines and its label reads it as one phrase.
+  // The Team loop's AI audit station gives the values re-checked (on two lines inside the upright loop's arc).
   api.renderTeam();
-  assert.match(element("teamFigure").innerHTML, /aria-label="CatLog: 973 values re-checked by AI audits"/);
-  assert.match(element("teamFigure").innerHTML, />973 values re-checked<\/text><text class="team-station-number"[^>]*>by AI audits<\/text>/);
+  assert.match(element("teamFigure").innerHTML, /aria-label="AI audit: 973 values re-checked"/);
+  assert.match(element("teamFigure").innerHTML, />973 values<\/text><text class="team-station-number"[^>]*>re-checked<\/text>/);
   // Without the review's counts, Human check gives the share of approved values the same where CatLog has re-read the
   // paper (never "agreement" alone).
   assert.match(element("teamFigure").innerHTML, /aria-label="Human check: 89\.7% of approved values the same where CatLog has re-read the paper[",]/);
@@ -6151,6 +6152,26 @@ assert.equal(
     api.state.page = 1;
     api.state.selectedKey = "";
     document.body.classList.remove("detail-open");
+  }
+}
+
+// A search typed while the record index still downloads (some records in, none matching yet) keeps the skeleton rows
+// with a line saying why, never a blank list; with no record in yet, the skeleton alone.
+{
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady };
+  try {
+    api.state.records = [row({ record_key: "early" })];
+    api.state.filtered = [];
+    api.state.recordsReady = false;
+    api.renderRows();
+    assert.match(element("recordsBody").innerHTML, /^(?:<tr class="skeleton-row" aria-hidden="true">[\s\S]*?<\/tr>){10}<tr class="loading-row notice-row"><td colspan="\d+"><div class="load-notice" role="status"><strong>Still loading the records<\/strong><span>The search runs on every record once they are all in\.<\/span><\/div><\/td><\/tr>$/);
+    api.state.records = [];
+    api.renderRows();
+    assert.match(element("recordsBody").innerHTML, /skeleton-row/);
+    assert.doesNotMatch(element("recordsBody").innerHTML, /loading-row/);
+  } finally {
+    Object.assign(api.state, previous);
+    api.renderRows();
   }
 }
 

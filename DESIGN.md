@@ -423,16 +423,18 @@ numbered onboarding strip or a repeated workflow illustration.
 
 Team (#team, in catlog-latest.html like the Guide; its own view, never the
 record index) is "People behind CatLog": one plain line, then the loop the
-user approved: a racetrack of stations Papers, AI reading, AI check, CatLog,
-Human check, Rules updated and back to Papers (clockwise, small arrows), with
-Website and The paper branching off CatLog. AI agents stand above their
-stations (Download agent at Papers, Reading agents at AI reading, Checking
-agents at AI check, Audit agents at CatLog; rectangles on the accent tint), people below
-(Supantha at Rules updated, also lighting Papers, CatLog and Website; Aarna and
+user approved: a racetrack of stations Papers, AI reading, AI check, AI audit
+(2026-10-15: "CatLog" named the whole site as a step of its own loop; the
+station's key stays catlog), Human check, Rules updated and back to Papers
+(clockwise, small arrows), with Website and The paper branching off AI audit.
+AI agents stand above their stations (Download agent at Papers, Reading agents
+at AI reading, Checking agents at AI check, Audit agents at AI audit;
+rectangles on the accent tint), people below
+(Supantha at Rules updated, also lighting Papers, AI audit and Website; Aarna and
 Erin at Human check; Mohammad at The paper; grey pills). First names only: no titles, ranks, model or vendor
 names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
-values re-checked by AI audits at CatLog, the human review's headline and
+values re-checked at AI audit, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
 its field is absent. Human check says the Stats lead's headline shortened, never
 a bare "agreement": "no value disputed on 2,767 of 2,770 entries" over "(99.9%) from the earlier version"
@@ -441,7 +443,7 @@ loop), its label one phrase; without the review's counts, "87.9% of approved val
 over "where CatLog has re-read the paper" (four lines on the upright loop). No station's
 name and numbers come within 12px of another station's,
 the track, or the chips and their lines, also in a wider font (Linux Chrome): on
-the wide loop CatLog's stand up and left of its dot, clear of the arc, Rules
+the wide loop AI audit's stand up and left of its dot, clear of the arc, Rules
 updated sits near the lower straight's left end and Human check right of its
 middle, so Human check's lines start well below CatLog's and its last line is
 far from Rules updated's name; on the upright loop AI check stands higher than
