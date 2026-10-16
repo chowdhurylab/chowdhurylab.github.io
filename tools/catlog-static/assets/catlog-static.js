@@ -5317,7 +5317,8 @@
       crossChecked !== null && checked !== null && checked + crossChecked === corrects ? `${formatInteger(crossChecked)} by an exact factor the paper's own kcat ÷ Km confirms` : "",
     ].filter(Boolean).join(", ");
     const changed = [
-      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${how ? ` (${how})` : ""}` : "",
+      // (kcat and Km in the site's italic markup, as the part's other sentences write them)
+      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${how ? ` (${metricWordsHtml(escapeHtml(how))})` : ""}` : "",
       differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}, cause not yet known`, "differs", differs)}${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "",
     ].filter(Boolean);
     const paired = same + corrects + differs;

@@ -1766,6 +1766,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #openFiltersButton { display:inline-flex; grid-column:1; grid-row:1 }
   .records-tools { grid-column:2; grid-row:1; flex-wrap:nowrap; min-width:0 }
   #pageSummary, #clearResultsButton, #activeFilters { grid-column:1 / -1; grid-row:auto; justify-self:start }
+  /* The chips row never grows past its row (a long chip ends in "…"): the table's box no longer clips it on phones. */
+  #activeFilters { max-width:100%; min-width:0 }
   /* "Sort" stays visible beside the menu, so it never reads as a review-result filter. */
   .records-tools label { color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
   .records-tools .sort-label-detail { display:none }
