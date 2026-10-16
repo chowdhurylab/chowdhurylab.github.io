@@ -33,7 +33,11 @@ assert.equal(viewer.scope, "browser_runtime_row_index");
 assert.equal(viewer.schema_version, 2);
 assert.equal(viewer.row_count, manifest.total_rows);
 assert.equal(viewer.field_count, viewer.retained_fields.length);
-assert.equal(viewer.row_order, "default_review_status");
+// The index is in the order its header names: "default_review_enzyme" (review result, then the enzyme's name with a
+// paper's records together: build-catlog-viewer-index.py default_order_key) or, built before 2026-10-15,
+// "default_review_status" (review result, source count, EC number); the page draws page 1 early only for the first.
+const INDEX_ORDERS = ["default_review_enzyme", "default_review_status"];
+assert.ok(INDEX_ORDERS.includes(viewer.row_order), viewer.row_order);
 assert.equal(viewer.details_per_shard, manifest.details_per_shard);
 assert.deepEqual(viewer.derived_fields, { measurement_key: "record_key", ph: "ph_display" });
 assert.equal(viewer.source_table_sha256, table.sha256);
@@ -124,7 +128,7 @@ const header = JSON.parse(headerLine);
 assert.equal(header.kind, "catlog_viewer_index");
 assert.equal(header.schema_version, 2);
 assert.equal(header.row_count, manifest.total_rows);
-assert.equal(header.order, "default_review_status");
+assert.equal(header.order, viewer.row_order);
 assert.equal(header.details_per_shard, manifest.details_per_shard);
 // Paper identifiers (PMIDs, DOIs) from the Full data download, when the index was built with it.
 const paperFields = viewer.paper_id_fields || [];
@@ -179,7 +183,7 @@ if (paperFields.length) {
   assert.equal(enrichedIds.size, manifest.total_rows, "the Full data download holds every record");
 }
 
-// rowComparator("evidence") from catlog-static.js, with localeCompare as the page uses it.
+// rowComparator("evidence") from catlog-static.js for the order the header names (localeCompare where the page uses it).
 const recordStates = { verified: 0, corrected: 0, manual_review_required: 1 };
 const tierOrder = {
   paper_grounded_high_confidence: 0,
@@ -191,12 +195,20 @@ const tierOrder = {
 const isV2Row = (row) => row.source_db === "primary_paper_direct"
   && row.verification_status === "verified"
   && row.enzyme_label_source === "explicit_enzyme_name";
-const orderKey = (row) => ({
+// The page's sortText: a name without its leading marks (a name of marks only as it is).
+const sortText = (value) => {
+  const text = String(value || "");
+  if (!text || /^[\p{L}\p{N}]/u.test(text)) return text;
+  return text.replace(/^[^\p{L}\p{N}]+/u, "") || text;
+};
+const orderKey = (row, papers) => ({
   stateRank: recordStates[row.verification_status] ?? 2,
   tierRank: isV2Row(row) ? -1 : (tierOrder[row.evidence_confidence_tier] ?? 99),
   sourceCount: Number(row.source_record_count || 0),
   ec: String(row.ec_number || ""),
   ecParts: String(row.ec_number || "").split(".").map((part) => (/^\d+$/.test(part) ? Number(part) : Number.MAX_SAFE_INTEGER)),
+  name: sortText(row.enzyme_display_name),
+  paper: papers?.pmids?.length ? papers.pmids[0] : Number.MAX_SAFE_INTEGER,
 });
 function ecSort(a, b) {
   for (let index = 0; index < Math.max(a.ecParts.length, b.ecParts.length); index += 1) {
@@ -205,8 +217,22 @@ function ecSort(a, b) {
   }
   return a.ec.localeCompare(b.ec);
 }
-const evidence = (a, b) => (a.stateRank - b.stateRank) || (a.tierRank - b.tierRank)
-  || (b.sourceCount - a.sourceCount) || ecSort(a, b);
+// The page's compareDefaultName: A-Z folded to a-z, the rest by code unit, an unnamed record after the named ones.
+function compareDefaultName(a, b) {
+  if (!a || !b) return (a ? 0 : 1) - (b ? 0 : 1);
+  const length = Math.min(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    let left = a.charCodeAt(index);
+    let right = b.charCodeAt(index);
+    if (left >= 65 && left <= 90) left += 32;
+    if (right >= 65 && right <= 90) right += 32;
+    if (left !== right) return left - right;
+  }
+  return a.length - b.length;
+}
+const evidence = header.order === "default_review_enzyme"
+  ? (a, b) => (a.stateRank - b.stateRank) || (a.tierRank - b.tierRank) || compareDefaultName(a.name, b.name) || (a.paper - b.paper)
+  : (a, b) => (a.stateRank - b.stateRank) || (a.tierRank - b.tierRank) || (b.sourceCount - a.sourceCount) || ecSort(a, b);
 
 let rowCount = 0;
 let viewerUncompressedBytes = Buffer.byteLength(`${headerLine}\n`);
@@ -238,7 +264,7 @@ for await (const line of viewerLines) {
   assert.equal(shard, Math.floor(source.position / header.details_per_shard), `detail shard of ${row.record_key}`);
   if (papers) assert.deepEqual(papers, enrichedIds.get(row.record_key), `paper identifiers of ${row.record_key}`);
   assert.ok(manifest.detail_shards[shard], `detail shard ${shard} is not in the manifest`);
-  const key = orderKey(row);
+  const key = orderKey(row, papers);
   if (previousKey) assert.ok(evidence(previousKey, key) <= 0, `viewer row ${rowCount} is out of the default order`);
   previousKey = key;
   const viewerLine = `${line}\n`;

@@ -6283,6 +6283,18 @@ function referenceEcSort(a, b) {
   return String(a.ec_number || "").localeCompare(String(b.ec_number || ""));
 }
 
+function referenceNameSort(a, b) {
+  if (!a || !b) return (a ? 0 : 1) - (b ? 0 : 1);
+  const fold = (text) => text.replace(/[A-Z]/g, (letter) => letter.toLowerCase());
+  const [left, right] = [fold(a), fold(b)];
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function referencePaper(row) {
+  const first = Array.isArray(row._pmids) ? row._pmids[0] : row._pmids;
+  return typeof first === "number" ? first : Number.MAX_SAFE_INTEGER;
+}
+
 function referenceComparator(sort) {
   const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
   const numericDesc = (field) => (a, b) => {
@@ -6297,11 +6309,13 @@ function referenceComparator(sort) {
     return left - right;
   };
   const comparators = {
+    // The default order: review result, tier, then the enzyme's name (A-Z folded to a-z, then by code unit, unnamed
+    // last) and the paper (first PMID, none last); the load order breaks the rest.
     evidence: (a, b) => (
       (a._stateRank - b._stateRank)
       || (a._tierRank - b._tierRank)
-      || (b._sourceCount - a._sourceCount)
-      || referenceEcSort(a, b)
+      || referenceNameSort(a._sortEnzyme, b._sortEnzyme)
+      || (referencePaper(a) - referencePaper(b))
     ),
     ec_number: referenceEcSort,
     enzyme: textKey("_sortEnzyme"),
@@ -6376,6 +6390,23 @@ assert.deepEqual(Array.from(await api.orderedRecordsFor("enzyme"), (item) => ite
   ["marks", "bracketed", "plain-a", "quoted", "plain-d"], "enzyme sorts skip a leading bracket");
 assert.deepEqual(Array.from(await api.orderedRecordsFor("substrate"), (item) => item.record_key),
   ["marks", "bracketed", "plain-a", "plain-d", "quoted"], "substrate sorts skip leading quotes and brackets");
+
+// The default order (the one the index is built in, 2026-10-15): accepted first, then the enzyme's name A to Z with A-Z
+// folded to a-z and the rest by code unit (digits before letters, leading marks skipped), a nameless record last; within
+// one name the paper's first PMID (none last), so a paper's records of one enzyme stand together; then the load order.
+api.indexLoadedRecords([
+  row({ record_key: "unnamed", verification_status: "verified", enzyme_display_name: "", _pmids: 1 }),
+  row({ record_key: "lipase-paper2", verification_status: "verified", enzyme_display_name: "lipase", _pmids: 200 }),
+  row({ record_key: "Lipase-paper1", verification_status: "verified", enzyme_display_name: "Lipase", _pmids: 100 }),
+  row({ record_key: "quoted", verification_status: "verified", enzyme_display_name: '"Chelatobacter" amidase', _pmids: 5 }),
+  row({ record_key: "digit", verification_status: "verified", enzyme_display_name: "1,3-glucanase", _pmids: 7 }),
+  row({ record_key: "lipase-paper1-again", verification_status: "verified", enzyme_display_name: "lipase", _pmids: [100, 300] }),
+  row({ record_key: "lipase-no-paper", verification_status: "verified", enzyme_display_name: "lipase", _pmids: null }),
+  row({ record_key: "unverified-a", verification_status: "unverified", enzyme_display_name: "aldolase", _pmids: 1 }),
+]);
+assert.deepEqual(Array.from(await api.orderedRecordsFor("evidence"), (item) => item.record_key),
+  ["digit", "quoted", "Lipase-paper1", "lipase-paper1-again", "lipase-paper2", "lipase-no-paper", "unnamed", "unverified-a"],
+  "the default order: review result, enzyme name, paper, load order");
 
 const tiedRows = Array.from({ length: 24 }, (_, index) => row({ record_key: `tie-${index}` }));
 api.indexLoadedRecords(tiedRows);

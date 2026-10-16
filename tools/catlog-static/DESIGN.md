@@ -399,15 +399,23 @@ records…" when only the files are counted). Loading and failure notices use
 plain words, never file, shard or chunk names: a page older than its data says
 "This page is out of date. Reload to update it."; the technical detail goes to
 the console. Page 1 appears
-from the first rows of the index, which arrives in Review-status order, and
+from the first rows of the index, which arrives in the default order, and
 stays in place when the rest arrives; sorting waits for all records (an address
 with a value sort keeps the placeholder rows and says "then sorting" until
 then, never a provisional top 25). Stats and
 Guide never download the record index. kcat, Km and kcat/Km sort both
 ways, from the Sort menu or by clicking the column header (high to low first,
 then low to high); the header's arrow shows the direction, and records without
-the value stay last. Review result stays the default order (Disputed sorts with
-Not checked, as the index arrives). Enzyme, organism and substrate sort A to Z
+the value stay last. Review result stays the default order: accepted first (read
+from the paper leading them, then by tier; Disputed sorts with Not checked), then
+the enzyme's name A to Z (A-Z folded to a-z, the rest by code unit, a nameless record
+last) with a paper's records of one enzyme together (by its first PMID, a record
+without one last), then the table's order: the index is built in this order
+(scripts/build-catlog-viewer-index.py default_order_key, header order
+"default_review_enzyme") and the page draws page 1 from its first rows only for
+this order (an index in an older order is sorted once it has arrived), so the
+first page shows the first enzymes A to Z, not 25 records of one paper's EC
+1.1.1.1 (2026-10-15). Enzyme, organism and substrate sort A to Z
 skipping a name's leading quotes and brackets ('"Chelatobacter" strain ...' under
 C, "[Bacillus] caldolyticus" under B). On a desktop the Sort menu is 180px, or as wide
 as its longest option when a wider font needs more, so the chosen order always

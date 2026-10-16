@@ -333,7 +333,7 @@ async function runSchemaTwoCase() {
     "wild_type", "pmids", "dois", "s",
   ];
   const header = {
-    kind: "catlog_viewer_index", schema_version: 2, row_count: 3, order: "default_review_status",
+    kind: "catlog_viewer_index", schema_version: 2, row_count: 3, order: "default_review_enzyme",
     details_per_shard: 2, fields,
     enums: {
       enzyme_label_source: ["explicit_enzyme_name", "ec_name_fallback"],
@@ -415,7 +415,7 @@ async function runSchemaTwoCase() {
   const { state, delays, orderedRecordsFor, publicSummaryRecord, rowMatches, searchWords, helpers } = await runSchemaTwoCase();
   assert.equal(state.recordsReady, true);
   assert.deepEqual(delays, [], "a healthy schema-2 index needs no retry");
-  assert.equal(state.indexOrder, "default_review_status");
+  assert.equal(state.indexOrder, "default_review_enzyme");
   const [first, second, third] = state.records;
   // arrays come from the viewer's realm: compare their items
   const pick = (row, keys) => Object.fromEntries(keys.map((key) => [key, Array.isArray(row[key]) ? [...row[key]] : row[key]]));

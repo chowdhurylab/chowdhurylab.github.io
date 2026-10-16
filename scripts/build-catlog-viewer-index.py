@@ -3,7 +3,8 @@
 
 Schema 2 (``encoding: header_arrays_enums``): line 1 is a header naming the fields and the shared values of the
 low-cardinality fields; every further line is one JSON array per record, already in the page's default order
-(Review status), so the first rows can be shown while the rest of the file is still downloading.
+(review result, then the enzyme's name with a paper's records together: default_order_key), so the first rows can be
+shown while the rest of the file is still downloading.
 
 The search box also finds a paper's records by PMID or DOI: when the Full data download of the same snapshot sits
 next to the table (or is named), each row also carries its paper identifiers (PAPER_FIELDS).
@@ -30,7 +31,7 @@ MANIFEST_PREFIX = "window.CATLOG_STATIC_MANIFEST = "
 
 SCHEMA_VERSION = 2
 ENCODING = "header_arrays_enums"
-ROW_ORDER = "default_review_status"
+ROW_ORDER = "default_review_enzyme"  # the page draws page 1 early only for the order it knows
 DETAILS_PER_SHARD = 250  # the exporter's detail-shard size; build(..., details_per_shard=) overrides it
 
 # Keep this explicit: a changed source schema must trigger a review of what the
@@ -360,19 +361,31 @@ def _number(value: object) -> float:
     return float(value)
 
 
-def default_order_key(row: dict, position: int) -> tuple:
-    """The page's rowComparator("evidence"): accepted first, CatLog v2 rows leading them, then tier, more source
-    records, EC number by its numeric parts, the EC text and the table position. Python compares the EC text by code
-    point where the page uses localeCompare; the page checks the order once and sorts again if they ever disagree."""
-    ec = str(row["ec_number"] or "")
-    parts = tuple(int(part) if re.fullmatch(r"[0-9]+", part) else MAX_SAFE_INTEGER for part in ec.split("."))
+def sort_text(value: object) -> str:
+    """The page's sortText(): a name without its leading quotes, brackets and other marks (a name of marks only as it
+    is), so '"Chelatobacter" strain ...' sorts under C."""
+    text = str(value or "")
+    stripped = text.lstrip("".join(c for c in text if not c.isalnum())) if text and not text[0].isalnum() else text
+    return stripped or text
+
+
+ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
+
+
+def default_order_key(row: dict, pmid: int | None, position: int) -> tuple:
+    """The page's rowComparator("evidence"), the default order (ROW_ORDER): accepted first, CatLog v2 rows (read from
+    the paper) leading them, then tier, then the enzyme's name A to Z (leading marks skipped, A-Z folded to a-z, the
+    rest by code point: the same in Python and in the page, which compares code units; a record without a name after
+    the named ones), then the paper (its first PMID; records without one after those with one), so a paper's records
+    of one enzyme stand together, then the table position. The page checks the order once as the index arrives and
+    sorts again if they ever disagree."""
+    name = sort_text(row["enzyme_display_name"]).translate(ASCII_LOWER)
     tier = -1 if is_v2_row(row) else TIER_ORDER.get(row["evidence_confidence_tier"], 99)
     return (
         STATE_RANK.get(row["verification_status"], 2),
         tier,
-        -_number(row["source_record_count"]),
-        parts,
-        ec,
+        (1, "") if not name else (0, name),
+        (1, 0) if pmid is None else (0, pmid),
         position,
     )
 
@@ -508,7 +521,7 @@ def build(
     record_keys: set[str] = set()
     enum_values: dict[str, list] = {field: [] for field in ENUM_FIELDS}
     enum_index: dict[str, dict[str, int]] = {field: {} for field in ENUM_FIELDS}
-    rows: list[tuple[tuple, list, str, int]] = []
+    rows: list[tuple[dict, list, str, int]] = []
     optional_values: dict[str, dict[str, str]] = {field: {} for field in OPTIONAL_TEXT_FIELDS}
     database_values: dict[str, int] = {}
     database_unknown: dict[str, int] = {}
@@ -573,11 +586,12 @@ def build(
                     value = True
                     encoded_numbers[field] += 1
                 values.append(value)
-            rows.append((default_order_key(row, position), values, record_key, position))
+            rows.append((row, values, record_key, position))
 
-    rows.sort(key=lambda item: item[0])
     database_full: dict[str, dict] = {}
     papers_path, ids = paper_ids(source_path, record_keys, enriched_path, database_full)
+    # The default order needs each record's paper, known once the Full data download has been read.
+    rows.sort(key=lambda item: default_order_key(item[0], (ids[item[2]][0] or [None])[0] if item[2] in ids else None, item[3]))
     paper_fields = PAPER_FIELDS if papers_path else ()
     # A record's comparison from both downloads; where both name the same field, the Table row's is kept.
     database_sources = {"table": 0, "full_data": 0}
@@ -594,7 +608,7 @@ def build(
     dois = sorted({doi for _pmids, row_dois in ids.values() for doi in row_dois})
     doi_index = {doi: index for index, doi in enumerate(dois)}
     encoded_rows: list[bytes] = []
-    for _order, values, record_key, position in rows:
+    for _row, values, record_key, position in rows:
         values += [database_values.get(record_key) if field == DATABASE_SUMMARY_FIELD else optional_values[field].get(record_key)
                    for field in optional_fields]
         if paper_fields:

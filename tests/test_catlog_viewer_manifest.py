@@ -84,7 +84,7 @@ class ViewerManifestTests(unittest.TestCase):
         ]
         metadata, header, encoded = self.build_rows(rows)
         self.assertEqual((header["kind"], header["schema_version"], header["order"]),
-                         ("catlog_viewer_index", 2, "default_review_status"))
+                         ("catlog_viewer_index", 2, "default_review_enzyme"))
         self.assertEqual((header["row_count"], header["details_per_shard"]), (4, 2))
         self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "s"])
         decoded = []
@@ -105,7 +105,7 @@ class ViewerManifestTests(unittest.TestCase):
         metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
         descriptor = BUILD.viewer_descriptor(metadata)
         self.assertEqual((descriptor["schema_version"], descriptor["encoding"], descriptor["row_order"]),
-                         (2, "header_arrays_enums", "default_review_status"))
+                         (2, "header_arrays_enums", "default_review_enzyme"))
         self.assertEqual(descriptor["details_per_shard"], 2)
         self.assertEqual(descriptor["derived_fields"], {"measurement_key": "record_key", "ph": "ph_display"})
         self.assertEqual(sorted(descriptor["retained_fields"] + descriptor["omitted_fields"]), sorted(BUILD.TABLE_FIELDS))
@@ -143,6 +143,44 @@ class ViewerManifestTests(unittest.TestCase):
         self.assertEqual(metadata["paper_ids_source"], "catlog-enriched.111111111111.jsonl.gz")
         metadata["viewer_path"] = "data/catlog-viewer-index.000000000000.jsonl.gz"
         self.assertEqual(BUILD.viewer_descriptor(metadata)["paper_id_fields"], ["pmids", "dois"])
+
+    def test_default_order_is_review_result_then_enzyme_name_with_a_papers_records_together(self):
+        # The page's default order (rowComparator("evidence"), 2026-10-15): accepted first, then the enzyme's name A to Z
+        # with A-Z folded to a-z and the rest by code point (digits before letters, as the page compares code units),
+        # leading marks skipped, a nameless record last; within one name the paper's first PMID (none last), so a
+        # paper's records of one enzyme stand together; then the table position.
+        rows = [
+            self.table_row("z-unnamed", verification_status="verified", enzyme_display_name=None),
+            self.table_row("lipase-paper2", verification_status="verified", enzyme_display_name="lipase"),
+            self.table_row("Lipase-paper1", verification_status="verified", enzyme_display_name="Lipase"),
+            self.table_row("quoted", verification_status="verified", enzyme_display_name='"Chelatobacter" amidase'),
+            self.table_row("digit", verification_status="verified", enzyme_display_name="1,3-glucanase"),
+            self.table_row("lipase-paper1-again", verification_status="verified", enzyme_display_name="lipase"),
+            self.table_row("lipase-no-paper", verification_status="verified", enzyme_display_name="lipase"),
+            self.table_row("unverified-first-name", verification_status="unverified", enzyme_display_name="aldolase"),
+        ]
+        pmids = {"lipase-paper2": ["200"], "Lipase-paper1": ["100"], "lipase-paper1-again": ["100", "300"], "quoted": ["5"],
+                 "digit": ["7"], "z-unnamed": ["1"], "unverified-first-name": ["1"]}
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        table = root / "catlog-table.000000000000.jsonl.gz"
+        table.write_bytes(gzip.compress("".join(json.dumps(row) + "\n" for row in rows).encode(), mtime=0))
+        enriched = [dict(row, pubmed_id=(pmids.get(row["record_key"]) or [None])[0],
+                         supporting_pmids=pmids.get(row["record_key"], [])[1:]) for row in rows]
+        (root / "catlog-enriched.111111111111.jsonl.gz").write_bytes(
+            gzip.compress("".join(json.dumps(row) + "\n" for row in enriched).encode(), mtime=0))
+        target = root / "viewer.jsonl.gz"
+        with patch.object(BUILD, "REPOSITORY_ROOT", root):
+            BUILD.build(table, target, details_per_shard=4)
+        lines = gzip.decompress(target.read_bytes()).decode().splitlines()
+        self.assertEqual(json.loads(lines[0])["order"], "default_review_enzyme")
+        self.assertEqual([json.loads(line)[0] for line in lines[1:]],
+                         ["digit", "quoted", "Lipase-paper1", "lipase-paper1-again", "lipase-paper2", "lipase-no-paper",
+                          "z-unnamed", "unverified-first-name"])
+        self.assertEqual(BUILD.sort_text('"Chelatobacter" amidase'), "Chelatobacter\" amidase")
+        self.assertEqual(BUILD.sort_text("-"), "-")
+        self.assertEqual(BUILD.sort_text(None), "")
 
     def test_condition_note_is_optional_and_read_when_present(self):
         # The exporter adds condition_note to the Table rows of records read by CatLog that read the same as a sibling

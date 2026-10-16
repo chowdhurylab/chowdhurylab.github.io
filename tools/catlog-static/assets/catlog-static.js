@@ -87,7 +87,9 @@
   // Hovering or focusing a row this long starts loading its record.
   const DETAIL_PREFETCH_DELAY_MS = 120;
   const SORT_LOADING_TITLE = "Sorting is available when all records have loaded";
-  const DEFAULT_INDEX_ORDER = "default_review_status";
+  // The order the index is built in (scripts/build-catlog-viewer-index.py ROW_ORDER): page 1 is drawn from its first rows
+  // only when its header names this order; an index in another order is sorted here once it has arrived.
+  const DEFAULT_INDEX_ORDER = "default_review_enzyme";
   const FILTER_FAILURE_MAX_LENGTH = 160;
   const FILTER_TYPING_DELAY_MS = 180;
   // Below 1024px an open record is a full-height dialog; from 1024px it is a column beside the table.
@@ -2487,7 +2489,7 @@
       row._loadIndex = index;
       row._recordState = recordStateForRow(row);
       row._stateRank = stateRanks[row._recordState];
-      // Review-status sort: CatLog v2 accepted rows (read from the paper) lead the accepted block.
+      // Default order: CatLog v2 accepted rows (read from the paper) lead the accepted block.
       row._tierRank = isV2Row(row)
         ? -1
         : (tierOrder[row.evidence_confidence_tier] ?? 99);
@@ -8146,6 +8148,28 @@
     return String(a.ec_number || "").localeCompare(String(b.ec_number || ""));
   }
 
+  // Names in the default order: A-Z folded to a-z, the rest by code unit (the builder compares the same way in Python,
+  // so the index's order and this one agree without a locale), a record without a name after the named ones.
+  function compareDefaultName(a, b) {
+    if (!a || !b) return (a ? 0 : 1) - (b ? 0 : 1);
+    const length = Math.min(a.length, b.length);
+    for (let index = 0; index < length; index += 1) {
+      let left = a.charCodeAt(index);
+      let right = b.charCodeAt(index);
+      if (left >= 65 && left <= 90) left += 32;
+      if (right >= 65 && right <= 90) right += 32;
+      if (left !== right) return left - right;
+    }
+    return a.length - b.length;
+  }
+
+  // A record's paper in the default order: its first PMID; a record without one sorts after those with one.
+  function rowPaperNumber(row) {
+    const pmids = row._pmids;
+    const first = Array.isArray(pmids) ? pmids[0] : pmids;
+    return typeof first === "number" && Number.isFinite(first) ? first : Number.MAX_SAFE_INTEGER;
+  }
+
   function rowComparator(sort) {
     const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
     const numericDesc = (field) => (a, b) => {
@@ -8170,12 +8194,15 @@
       km_asc: numericAsc("km"),
       kcat_over_km: numericDesc("kcat_over_km"),
       kcat_over_km_asc: numericAsc("kcat_over_km"),
+      // The default order, the one the index is built in (build-catlog-viewer-index.py default_order_key): accepted
+      // first, read from the paper leading them, then tier; then the enzyme's name A to Z, so page 1 is not one paper's
+      // 25 records of EC 1.1.1.1 (2026-10-15), with a paper's records of one enzyme together, then the load order.
       evidence: (a, b) => {
         const stateDelta = a._stateRank - b._stateRank;
         if (stateDelta !== 0) return stateDelta;
         const tierDelta = a._tierRank - b._tierRank;
         if (tierDelta !== 0) return tierDelta;
-        return (b._sourceCount - a._sourceCount) || ecSort(a, b);
+        return compareDefaultName(a._sortEnzyme, b._sortEnzyme) || (rowPaperNumber(a) - rowPaperNumber(b));
       },
     };
     const primaryComparator = sorters[sort] || sorters.evidence;
