@@ -71,8 +71,10 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
 A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
 rules are said (the user, 2026-10-15, of the line that stood under every figure, "Snapshot Oct 15, 2026 · Data ID ... ·
 143,184 values in all; ...": "Do we need this???"). It gives Snapshot (the date and Data ID, counted from this
-snapshot's Full data download and its human-review results), Shares (of all records unless a caption says otherwise,
-one decimal, a nonzero share under 0.1% written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
+snapshot's Full data download and its human-review results), Shares (what a share is out of: all records in the
+figures and tables that count all records, named by number (Figure 1 and Tables 1-4 and 7 today; `STATS_SHARES_OF_ALL`),
+elsewhere its own bar's, row's or card's total or the total its caption names; one decimal, a nonzero share under 0.1%
+written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
 and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Against the databases
 (with part 7: same paper and parameter, shares only on 1,000 values or more), then each figure's or table's own rules
 under its number ("Figure 4", "Table 1", the title first), in reading order. A figure keeps its caption as its
@@ -120,7 +122,8 @@ accessible description; no figure or table has a data line. The parts' figures a
   CatLog's own reading, one database, Several databases, Other for STRENDA DB,
   earlier paper extractions and no source recorded, named in its note),
   stacked by review result (Accepted, Not confirmed, Not checked, Disputed);
-  its two number columns are named above them, Records and Accepted (the share accepted). Only CatLog's
+  its two number columns are named above them, Records and % accepted (of the bar's own records; a no-break space
+  keeps the heading on one line), so Accepted heads only Figure 5's count. Only CatLog's
   own records are linked (no single filter opens a main source). Under it, the
   per-database counts Browse's source filter finds (a merged record counts
   under each, as the Guide's source list), each linked. A snapshot without
@@ -129,11 +132,11 @@ accessible description; no figure or table has a data line. The parts' figures a
   viewer asks for less motion.
 - Read from the paper and not yet re-read: two bars stacked by review result (Read from the paper: the main source
   CatLog's own reading; Not yet re-read: every other record, so the two make all records, as its caption says), its
-  number columns named Records and Accepted (the share accepted); both names link into Browse (source=paper, source=databases). What each means is said once,
+  number columns named Records and % accepted; both names link into Browse (source=paper, source=databases). What each means is said once,
   in How these numbers are counted.
 - Values per paper (`overview.from_paper_values`): the papers CatLog has read, by how many kcat, Km and
   printed kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a
-  calculated kcat/Km is not a value read), its number columns named Papers and Share; drawn only when the bins add up to
+  calculated kcat/Km is not a value read), its number columns named Papers and % of papers; drawn only when the bins add up to
   the papers CatLog has read. No publication years: the data has none.
 - Part 7, Against the databases, reads only the manifest's `summary.database_comparison` (the page never parses a
   value's database line): whole counts, checked to add up (the parameters to `values.all`, the causes to
@@ -253,8 +256,8 @@ accessible description; no figure or table has a data line. The parts' figures a
 Wording (the user, 2026-10-15: "the figures have some weird ai ish wording right?"): titles are short noun phrases;
 a caption is one or two short plain sentences that say what the title does not (how the figure is drawn, what a share
 is of), one idea per sentence, no stacked semicolons, never "in all", and no filler about where the numbers stand: a
-chart whose numbers need naming names its columns above them (Records / Accepted, Papers / Share, Figure 5's
-Records / Accepted / From paper). Before -> after: "Records by main source, coloured by review result; each label gives
+chart whose numbers need naming names its columns above them (Records / % accepted, Papers / % of papers, Figure 5's
+Records / Accepted / From paper): a share column says what it is out of. Before -> after: "Records by main source, coloured by review result; each label gives
 the records, then the share accepted." -> "Each record counts once, under the source it came from, coloured by review
 result."; "The 3,104 papers CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label
 gives the papers, then their share." -> "The 3,104 papers CatLog has read, by the number of kcat, Km and kcat/Km values

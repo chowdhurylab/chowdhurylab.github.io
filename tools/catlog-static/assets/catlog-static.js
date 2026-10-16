@@ -5027,6 +5027,31 @@
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
   }
 
+  // The figures and tables (by key) whose shares are of all records; every other share is of its own bar's, row's or
+  // card's total, or of the total its caption names. The share columns of Figures 2-4 say their base in their heading
+  // (a no-break space keeps "% accepted" on one line where a heading of several words wraps).
+  const STATS_SHARES_OF_ALL = new Set(["status", "contents", "forms", "organisms", "ec-numbers", "cautions"]);
+  const STATS_HEAD_ACCEPTED = "%\u00a0accepted";
+
+  // "Tables 1–4 and 7": numbers in order, a run of three or more as a range.
+  function statsNumbersText(kind, list) {
+    const runs = [];
+    for (const number of list) {
+      const run = runs[runs.length - 1];
+      if (run && number === run[1] + 1) run[1] = number;
+      else runs.push([number, number]);
+    }
+    const names = runs.flatMap(([from, to]) => (to - from >= 2 ? [`${from}–${to}`] : to > from ? [String(from), String(to)] : [String(from)]));
+    return `${kind}${list.length > 1 ? "s" : ""} ${statsListText(names)}`;
+  }
+
+  // How these numbers are counted, Shares: which figures and tables give shares of all records (ofAll: their numbers by
+  // kind) and what every other share is out of.
+  function statsSharesRule(ofAll) {
+    const named = ["Figure", "Table"].filter((kind) => ofAll[kind]?.length).map((kind) => statsNumbersText(kind, ofAll[kind]));
+    return `${named.length ? `In ${named.join(" and ")} a share is out of all records; elsewhere it is` : "A share is"} out of its own bar's, row's or card's total, or the total its caption names. Shares are given to one decimal place; a share above 0 but below 0.1% is written <0.1%.`;
+  }
+
   // The compared databases in order (comparedDatabases): { key (Browse's dbsrc), name (the comparison's own key for it),
   // display }; none without a comparison.
   function statsDatabaseSources(comparison) {
@@ -5807,7 +5832,7 @@
         body: statsBarChart({
           key: "main-source", rows, scale: max, step, axis: statsAxis(max, step, { mode: byStatus ? "records" : "" }),
           legend: byStatus ? statusParts.map(([part, label]) => ({ part, label })) : [], switchable: byStatus,
-          valueHeads: byStatus ? ["Records", "Accepted"] : [],
+          valueHeads: byStatus ? ["Records", STATS_HEAD_ACCEPTED] : [],
         }),
         caption: `Each record counts once, under the source it came from${byStatus ? ", coloured by review result" : ""}.`,
         rules: `A record merged from several databases counts once here, under Several databases. The list under the bars counts it under each, as Browse does.${byStatus ? " Share draws each source as 100%." : ""}`,
@@ -5841,7 +5866,7 @@
         versions = {
           id: "statsVersionsTitle", key: "versions", title: "Read from the paper and not yet re-read",
           body: statsBarChart({ key: "versions", rows, scale: max, step, axis: statsAxis(max, step),
-            legend: statusParts.map(([part, label]) => ({ part, label })), valueHeads: ["Records", "Accepted"] }),
+            legend: statusParts.map(([part, label]) => ({ part, label })), valueHeads: ["Records", STATS_HEAD_ACCEPTED] }),
           caption: "Together the two bars hold every record, coloured by review result.",
         };
       }
@@ -5871,7 +5896,7 @@
       const { max, step } = statsNiceScale(Math.max(...rows.map((row) => row.count)));
       valuesPerPaper = {
         id: "statsPerPaperTitle", key: "values-per-paper", title: "Values per paper",
-        body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Papers", "Share"] }),
+        body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Papers", "%\u00a0of\u00a0papers"] }),
         caption: `The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by the number of kcat, Km and kcat/Km values read from each.`,
         rules: `${formatInteger(perPaper.values)} kcat, Km and kcat/Km values from ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"}. A kcat/Km calculated from kcat and Km is not counted.`,
       };
@@ -6049,11 +6074,13 @@
     // stand two to a row and an odd one out takes the row.
     const numbers = { Figure: 0, Table: 0 };
     const figureRules = [];
+    const ofAll = { Figure: [], Table: [] };
     const html = (item) => {
       if (item.html !== undefined) return item.html;
       const kind = item.kind || "Figure";
       const number = ++numbers[kind];
       if (item.rules) figureRules.push([`${kind} ${number}`, item.title, item.rules]);
+      if (STATS_SHARES_OF_ALL.has(item.key)) ofAll[kind].push(number);
       return statsFigureHtml({ ...item, number });
     };
     const sections = parts.filter((part) => part.items.length).map((part, index) => {
@@ -6080,7 +6107,7 @@
     const ruleRow = (term, html) => `<div><dt>${term}</dt><dd>${html}</dd></div>`;
     sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
         ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Every number on this page is counted from this snapshot's Full data download${overview ? " and its human-review results" : ""}.`))}
-        ${ruleRow("Shares", "Of all records unless a caption says otherwise, to one decimal place; a share above 0 but below 0.1% is written &lt;0.1%.")}
+        ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
         ${ruleRow("Names", "Enzymes, organisms and substrates are distinct names, ignoring capitals; \"Unknown\" is not a name. EC numbers are complete four-part numbers.")}
         ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).`)}
@@ -12834,6 +12861,8 @@
       STATS_CAUSE_FAMILY,
       statsTable,
       statsBarChart,
+      statsNumbersText,
+      statsSharesRule,
       statsValueSizer,
       statsDonut,
       statsNiceScale,

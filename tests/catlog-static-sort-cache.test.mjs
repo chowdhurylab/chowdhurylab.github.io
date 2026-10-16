@@ -1738,7 +1738,13 @@ function row(overrides = {}) {
   assert.doesNotMatch(element("statsCharts").innerHTML, /stats-fig-data|Snapshot [A-Z][a-z]{2} \d/);
   assert.equal((element("statsCharts").innerHTML.match(/Data ID/g) || []).length, 1, "The Data ID is said once");
   assert.match(methodHtml(), /^<details class="stats-explanation stats-method"><summary>How these numbers are counted<\/summary><dl>\s*<div><dt>Snapshot<\/dt><dd>[^<]*Data ID [0-9a-f]{10}\. Every number on this page is counted from this snapshot&#39;s Full data download\.<\/dd><\/div>/);
-  assert.match(methodHtml(), /<dt>Shares<\/dt><dd>Of all records unless a caption says otherwise, to one decimal place; a share above 0 but below 0\.1% is written &lt;0\.1%\.<\/dd>/);
+  // Shares say what they are out of: all records only in the figures and tables that count all records (here Figure 1
+  // and Table 1); elsewhere the bar's, row's or card's own total, or the total the caption names.
+  assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figure 1 and Table 1 a share is out of all records; elsewhere it is out of its own bar&#39;s, row&#39;s or card&#39;s total, or the total its caption names\. Shares are given to one decimal place; a share above 0 but below 0\.1% is written &lt;0\.1%\.<\/dd>/);
+  assert.deepEqual(api.statsNumbersText("Table", [1, 2, 3, 4, 7]), "Tables 1–4 and 7");
+  assert.deepEqual(api.statsNumbersText("Table", [1, 2, 5]), "Tables 1, 2 and 5");
+  assert.deepEqual(api.statsNumbersText("Figure", [1]), "Figure 1");
+  assert.equal(api.statsSharesRule({ Figure: [], Table: [] }).slice(0, 37), "A share is out of its own bar's, row'");
   assert.match(element("statsCharts").innerHTML, /<strong>Figure 1\.<\/strong> Each record has exactly one review result\.<\/span><\/figcaption>/);
   assert.match(element("statsCharts").innerHTML, /<strong>Table 1\.<\/strong> A record usually has several of these\.<\/span><\/figcaption>/);
   // The review result is a donut (the one partition that is a true whole) beside its legend table; Accepted is split in
@@ -1837,9 +1843,11 @@ function row(overrides = {}) {
   // A figure's caption ends its figcaption; its own rules stand under its number at the end of the page.
   assert.match(chart, /<strong>Table 2\.<\/strong> Each record's enzyme form, as Browse tags it\.<\/span><\/figcaption>/);
   assert.match(chart, /<strong>Table \d+\.<\/strong> A caution marks a value that may be wrong\. One record can carry several\.<\/span><\/figcaption>/);
-  // Bar charts name their number columns above them instead of saying in the caption what each number is.
-  assert.match(chart, /data-chart="main-source"[\s\S]*?<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part"[^>]*><span>Records<\/span><\/span><span class="stats-value-part"[^>]*><span>Accepted<\/span>/);
-  assert.match(chart, /data-chart="versions"[\s\S]*?<span>Records<\/span><\/span><span class="stats-value-part"[^>]*><span>Accepted<\/span>/);
+  // Bar charts name their number columns above them instead of saying in the caption what each number is; a share
+  // column says its base (% accepted: of the bar's own records), so Accepted heads only a count (Figure 5).
+  assert.match(chart, /data-chart="main-source"[\s\S]*?<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part"[^>]*><span>Records<\/span><\/span><span class="stats-value-part"[^>]*><span>% accepted<\/span>/);
+  assert.match(chart, /data-chart="versions"[\s\S]*?<span>Records<\/span><\/span><span class="stats-value-part"[^>]*><span>% accepted<\/span>/);
+  assert.doesNotMatch(chart, /data-sizer-narrow="[^"]*accepted/, "% accepted keeps one line on the narrowest phones");
   assert.match(chart, /<strong>Figure 2\.<\/strong> Each record counts once, under the source it came from, coloured by review result\./);
   assert.match(chart, /<strong>Figure 3\.<\/strong> Together the two bars hold every record, coloured by review result\./);
   assert.match(methodHtml(), /<dl class="stats-method-figures"><div><dt>Figure 2<\/dt><dd><span class="stats-method-title">Records by main source\.<\/span> A record merged from several databases counts once here, under Several databases\./);
@@ -1855,8 +1863,8 @@ function row(overrides = {}) {
   // Read from the paper and not yet re-read by review result: the first is the main source catlog, the second every
   // other record. CatLog is the one name: no v1 or v2 anywhere on Stats.
   assert.doesNotMatch((chart + totalsHtml).replace(/<[^>]*>/g, " "), /\bv[12]\b/);
-  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>2<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;Accepted"><span>100\.0%<\/span>/);
-  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">Not yet <span class="nowrap">re-read<\/span><\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;Accepted"><span>25\.0%<\/span>/);
+  assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>2<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;%\u00a0accepted"><span>100\.0%<\/span>/);
+  assert.match(chart, /data-row="v1" data-count="4"[\s\S]*?#browse\?source=databases">Not yet <span class="nowrap">re-read<\/span><\/a>[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="000\.0%&#10;%\u00a0accepted"><span>25\.0%<\/span>/);
   assert.match(chart, /data-tip="Not yet re-read, Not confirmed: 1 \(25\.0%\)"/);
   // How these numbers are counted says what each means, the earlier version once, in its help.
   assert.match(chart, /<dt>Read from the paper<\/dt><dd>Records read from the paper by an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
@@ -2453,8 +2461,8 @@ function row(overrides = {}) {
     assert.doesNotMatch(more.replace(/<[^>]*>/g, " "), /\bv[12]\b|Entries/, "CatLog is the one name");
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
     assert.match(more, /<span class="stats-chart-label">2–4<\/span>/);
-    // Its columns are named above the bars (Papers, Share); its counting rule is said once, at the end.
-    assert.match(more, /data-chart="values-per-paper"[\s\S]*?<span>Papers<\/span><\/span><span class="stats-value-part"[^>]*><span>Share<\/span>/);
+    // Its columns are named above the bars (Papers, % of papers); its counting rule is said once, at the end.
+    assert.match(more, /data-chart="values-per-paper"[\s\S]*?<span>Papers<\/span><\/span><span class="stats-value-part"[^>]*><span>% of papers<\/span>/);
     assert.match(more, /<span class="stats-method-title">Values per paper\.<\/span> \d[\d,]* kcat, Km and kcat\/Km values from 1 paper\. A kcat\/Km calculated from kcat and Km is not counted\./);
     // Its screen reader's lines and tooltips say one value and one paper in the singular.
     assert.match(more, /1 value: 0 papers\./);
