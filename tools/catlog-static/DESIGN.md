@@ -1022,7 +1022,8 @@ its line in the contents and under Questions; shown when the manifest's
 summary.database_comparison is there, or the record index lists database_summary,
 then without counts; written from the manifest only: a lead naming the compared
 databases from the manifest's sources list, else the databases its counts name, in
-its order, else the six in the code (never a typed "five"), with the values compared, the papers and the
+its order, else the six in the code (never a typed "five"), with the values compared, the papers with a compared value
+(papers_compared, as Stats' lead; papers for an older comparison without it) and the
 share where a database lists a number for the same measurement (from 1,000
 values); What is compared and Databases (versions, dates and values when the
 sources list has them); Results, the six of Browse's group in its order, each after

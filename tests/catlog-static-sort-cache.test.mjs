@@ -2206,7 +2206,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(values, /not compared|README/);
   assert.doesNotMatch(methodHtml(), /README|databases also list/);
   // Part 7's own rules, once.
-  assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared for the same paper and parameter\. Shares are given only on 1,000 values or more; below that, counts\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared for the same paper and parameter\. Its papers are those with at least one compared value: fewer than the papers read when none of a paper&#39;s values could be compared\. Shares are given only on 1,000 values or more; below that, counts\.<\/dd>/);
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { equals_catlog_calculated_ratio: 1, another_parameter_in_catlog: 0 } } }),
     "The databases also list 1 number for these papers that equals a kcat/Km CatLog calculated.");
   runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", rows: 10 };
@@ -4646,6 +4646,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       api.renderGuideDatabases();
       assert.deepEqual(sectionItems.map((item) => item.hidden), [false, false, false]);
       assert.match(element("guideDatabasesBody").innerHTML, /This snapshot compares 126,951 values from 2,650 papers\./);
+      // One paper count per set: the Guide names the papers with a compared value, as Stats' lead does.
+      runtimeManifest.summary.database_comparison = { ...bundleComparison(), papers_compared: 2598 };
+      api.renderGuideDatabases();
+      assert.match(element("guideDatabasesBody").innerHTML, /This snapshot compares 126,951 values from 2,598 papers\./);
       delete runtimeManifest.summary.database_comparison;
       runtimeManifest.viewer_index.optional_fields = ["database_summary"];
       api.renderGuideDatabases();

@@ -277,7 +277,9 @@ def check_guide_databases(driver, browser, url):
         kinds = comparison.get("records_with_kind") or {}
         records = comparison.get("records") or {}
         compared = sum(count for key, count in values.items() if key != "not_compared")
-        assert f"This snapshot compares {words(compared, 'value', 'values')} from {words(comparison['papers'], 'paper', 'papers')}." in text, text[:400]
+        # One paper count per set: the papers with a compared value (papers_compared), as Stats' lead names them.
+        lead_papers = comparison.get("papers_compared", comparison.get("papers"))
+        assert f"This snapshot compares {words(compared, 'value', 'values')} from {words(lead_papers, 'paper', 'papers')}." in text, text[:400]
         counts = {row["label"]: row["count"] for row in rows}
         # An exact factor nothing has yet checked against the paper is Different number, never a correction: a
         # comparison that counts such values among its corrections (by_cause_found_by[cause].factor_only) has them

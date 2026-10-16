@@ -4992,7 +4992,9 @@
     const words = (text) => metricWordsHtml(escapeHtml(text));
     const all = data.values?.all || {};
     const compared = guideDatabaseSum(all, ["not_compared"]);
-    const papers = statsCount(data.papers);
+    // The papers with a compared value (papers_compared), as Stats' lead counts them (one count per set: the papers
+    // read are the band's); an older comparison without it gives its papers.
+    const papers = statsCount(data.papers_compared) ?? statsCount(data.papers);
     const paired = ["confirmed", "corrected", "differs"].map((key) => statsCount(all[key]));
     const pairedTotal = paired.includes(null) ? null : paired[0] + paired[1] + paired[2];
     const leadHtml = [
@@ -6316,7 +6318,7 @@
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
-        ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
+        ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Its papers are those with at least one compared value: fewer than the papers read when none of a paper's values could be compared. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
     statsFitDonutTotals($("statsCharts"));

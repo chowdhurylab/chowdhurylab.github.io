@@ -172,7 +172,10 @@ its accessible description; no figure or table has a data line. The parts' figur
   gives the results: same green, same number under another label --bar-neutral, corrects red, different number brown,
   not in the databases cyan (a database's own not-listed kinds at three cyan strengths; how found at two reds).
   - Lead (14px), one idea per sentence (its papers are `papers_compared`, the papers with a compared value, so never
-    more than CatLog has read; `papers` only for an older comparison without it): "CatLog compared 126,951 values read from 2,598 papers with what the
+    more than CatLog has read; `papers` only for an older comparison without it; the Guide's lead names the same
+    count, and How these numbers are counted says why it can be one fewer than the papers read: one paper count per
+    set, each from one manifest key, the band's and Team's papers read from `from_paper.papers`, Figure 4's values
+    from `from_paper_values.values`, never typed): "CatLog compared 126,951 values read from 2,598 papers with what the
     databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same
     number under another label. Another 1,353 correct a database's number (656 checked against the paper, 697 by an
     exact factor the paper's own kcat ÷ Km confirms), and 1,461 differ, cause not yet known (246 by an exact factor,
