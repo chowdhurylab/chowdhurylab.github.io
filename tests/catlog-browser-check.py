@@ -5094,6 +5094,8 @@ def main():
             options.add_argument("--headless=new")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            # On macOS every automated launch otherwise leaves a clone of Chrome.app in /var/folders (thousands pile up).
+            options.add_argument("--disable-features=MacAppCodeSignClone")
             driver = webdriver.Chrome(options=options)
         result = check(driver, args.browser, url)
         manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
