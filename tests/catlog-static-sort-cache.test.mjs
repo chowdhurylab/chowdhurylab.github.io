@@ -2141,7 +2141,12 @@ function row(overrides = {}) {
     [["kcat", 41541], ["km", 48066], ["kcatkm", 37344], ["all", 126951]]);
   // Until Browse matches a compared parameter (dbpar), a parameter's counts are plain numbers: a link would open every
   // record with that result. All values links by result alone.
-  assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span><span><i class="stats-swatch stats-part-differs" aria-hidden="true"><\/i>269<\/span>/);
+  assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span><\/span><span class="stats-value-part" data-sizer="[^"]*"><span><i class="stats-swatch stats-part-differs" aria-hidden="true"><\/i>269<\/span><\/span>/);
+  // The two counts beside each bar stand under their headings, Corrects and Differs (Table 8's names), each column as
+  // wide as its widest count or its heading.
+  assert.match(values, /<div class="stats-chart stats-chart-percent has-value-heads" data-chart="db-values"/);
+  assert.match(values, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value"><span class="stats-db-thin"><span class="stats-value-part" data-sizer="0,000&#10;Corrects"><span>Corrects<\/span><\/span><span class="stats-value-part" data-sizer="0,000&#10;Differs"><span>Differs<\/span><\/span><\/span><\/span><\/div>/);
+  assert.match(styleSource, /\.stats-db-thin > \.stats-value-part\[data-sizer\]::before \{ padding-left:14px \}/);
   assert.match(values, /data-row="kcatkm"[\s\S]*?<small>printed<\/small>/);
   assert.match(values, /data-row="all"[\s\S]*?href="[^"]*#browse\?db=corrects" aria-label="All values, Corrects a value: 1,548">1,548<\/a>/);
   // Segments with a Browse filter open it (data-href); Same number has none.
@@ -2181,6 +2186,10 @@ function row(overrides = {}) {
   // A database's name never breaks across lines in part 7 ("SABIO-" / "RK", "STRENDA" / "DB" with a wide font).
   assert.match(bySource, /<span class="stats-chart-aside" aria-hidden="true">\+ 25,603 values from papers <span class="nowrap">BRENDA<\/span> does not list<\/span>/);
   assert.match(bySource, /<span class="stats-chart-label">STRENDA DB<\/span>/);
+  // The number beside each bar is headed Values; the caption says what a bar covers and why a value counts more than once.
+  assert.match(bySource, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]*&#10;Values"><span>Values<\/span><\/span><\/span><\/div>/);
+  assert.match(bySource, /data-row="db_brenda" data-count="101348"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]*"><span>101,348<\/span><\/span><\/span>/);
+  assert.match(plain(bySource), /Figure \d+\. Each bar covers only the values from papers that database lists\. A value counts for every database that lists its paper\./);
   assert.match(bySource, /STRENDA DB, Same number: 216"/, "No share on a base under 1,000 values");
   assert.match(bySource, /BRENDA, Same number: 63,927 \(63\.1%\)"/);
   assert.match(bySource, /BRENDA: Same number 63,927 \(63\.1%\),[^<]*; 25,603 values from papers it does not list\./);

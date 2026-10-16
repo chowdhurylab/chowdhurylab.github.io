@@ -165,13 +165,15 @@ accessible description; no figure or table has a data line. The parts' figures a
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
   - Values against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
-    corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above);
+    corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above), each
+    after its swatch in a right-aligned column under its heading, Corrects and Differs (Table 8's names; each column as
+    wide as its widest count or heading plus the swatch, a sizer as in Figure 5, fitted to the heading line once drawn);
     shares under the bars; a segment with a filter opens Browse when clicked; its rules (How these numbers are
     counted): calculated kcat/Km not compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
   - Results by database (`values_by_database`): a 100% bar per database, the
-    values from papers it lists beside it, "+ N values from papers X does not list" under it, never in it. Its own
+    values from papers it lists beside it under the heading Values, "+ N values from papers X does not list" under it, never in it. Its own
     not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
     database), never the Why not listed labels, which say what all the databases list. A database that lists none of
     the papers read is named under How these numbers are counted ("UniProt lists none of these papers."), with no
@@ -262,7 +264,8 @@ the records, then the share accepted." -> "Each record counts once, under the so
 result."; "The 3,104 papers CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label
 gives the papers, then their share." -> "The 3,104 papers CatLog has read, by the number of kcat, Km and kcat/Km values
 read from each."; "For each database, how it lists the values read from the papers it lists (the number beside its
-bar); ..." -> "A database's bar covers only the papers it lists, so one value can count for several databases."
+bar); ..." -> "Each bar covers only the values from papers that database lists. A value counts for every database
+that lists its paper." (a value counts for several databases because several list its paper, not because of the bar).
 Round 8's binding words stay as they are (the human review's headline and side line, "among records read from the
 paper").
 

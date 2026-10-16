@@ -1191,6 +1191,24 @@ def check_stats_figures(driver, browser, url):
             rows = {row["key"]: row["count"] for row in figures[0]["rows"]}
             assert rows["all"] == compared, rows
             assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-share-lines dd span"), "Shares under the bars"
+            # The numbers beside the bars are named: Figure 8's two counts stand right-aligned under Corrects and Differs
+            # (each count's swatch and number inside its column), Figure 9's under Values.
+            columns = driver.execute_script("""
+                return ['db-values', 'db-sources'].map((key) => {
+                    const chart = document.querySelector(`[data-chart="${key}"]`);
+                    const rights = (line) => [...line.querySelectorAll('.stats-value-part')].map((part) => {
+                        const box = part.getBoundingClientRect(), inner = part.firstElementChild.getBoundingClientRect();
+                        return { right: box.right, inside: inner.left >= box.left - 1 && inner.right <= box.right + 1 };
+                    });
+                    return { key, head: chart.querySelector('.stats-chart-head').innerText.replace(/\\s+/g, ' ').trim(),
+                             lines: [chart.querySelector('.stats-chart-head'), ...chart.querySelectorAll('.stats-chart-row')].map(rights) };
+                });
+            """)
+            assert [column["head"] for column in columns] == ["Corrects Differs", "Values"], columns
+            for column in columns:
+                for line in column["lines"]:
+                    assert len(line) == len(column["lines"][0]) and all(part["inside"] for part in line), column
+                    assert all(abs(part["right"] - head["right"]) <= 1 for part, head in zip(line, column["lines"][0])), column
             # The caveat is the lead's last sentence, said once, not repeated under the figures.
             for key in ("db-values", "db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()

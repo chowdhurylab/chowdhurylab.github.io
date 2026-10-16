@@ -3839,6 +3839,7 @@
   // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
   // `valueHeads` (one per column; Figure 5's Records, Accepted, From paper) names the columns in a heading line above the
   // first row: then every column, the first too, is also as wide as its heading, which stands right-aligned over it.
+  // `valueHead` is that line as HTML, for a chart whose value labels are not plain text (Figure 8's linked counts).
   // Below 360px a heading of several words takes one word per line (From / paper): its column then needs only its longest
   // word or entry (a second sizer, data-sizer-narrow), so the class names beside it keep their room and stay whole.
   function statsValueSizer(texts) {
@@ -3846,7 +3847,7 @@
     return shapes.filter((shape) => !shapes.some((other) => other !== shape && other.endsWith(shape))).sort().join("\n");
   }
 
-  function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "", valueHeads = [] }) {
+  function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "", valueHeads = [], valueHead = "" }) {
     const columns = Math.max(0, ...rows.map((row) => (Array.isArray(row.parts) ? row.parts.length : 0)));
     const heads = columns && valueHeads.length === columns ? valueHeads.map(String) : [];
     const sizerOf = (index, narrow) => [statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")),
@@ -3860,7 +3861,7 @@
     const valueHtml = (row) => (Array.isArray(row.parts) ? row.parts.map(partHtml).join("") : row.value);
     const headHtml = heads.length
       ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts">${heads.map((text, index) => partHtml({ text }, index)).join("")}</span></div>`
-      : "";
+      : valueHead ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value">${valueHead}</span></div>` : "";
     // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px; a
     // label in columns needs each column's longest entry and a 6px gap between them.
     const longest = columns
@@ -3872,7 +3873,7 @@
       ? `<div class="stats-chart-tools">${legend.length ? statsLegend(legend) : ""}<div class="stats-switch" role="group" aria-label="Bar length">${[["records", "Records"], ["share", "Share"]]
         .map(([mode, label]) => `<button type="button" class="stats-switch-button" data-stats-mode="${mode}" aria-pressed="${mode === "records"}">${label}</button>`).join("")}</div></div>`
       : legend.length ? statsLegend(legend) : "";
-    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}${heads.length ? " has-value-heads" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
+    return `<div class="stats-chart${percent ? " stats-chart-percent" : ""}${headHtml ? " has-value-heads" : ""}" data-chart="${key}"${valueWidth ? ` style="--value-w:${valueWidth}"` : ""}>
       ${tools}${headHtml}
       <ul class="stats-chart-rows">${rows.map((row) => `<li class="stats-chart-row${row.note ? " has-note" : ""}" data-row="${escapeHtml(row.key)}" data-count="${row.count}" data-hl="${escapeHtml(row.key)}"${row.text ? ` data-tip="${escapeHtml(row.text)}"` : ""}>
         <span class="stats-chart-label">${row.label}${row.note ? `<small>${row.note}</small>` : ""}</span>
@@ -4950,8 +4951,9 @@
     { part: "same", label: DATABASE_RESULT_NAMES.same, statuses: ["confirmed"],
       title: "A database lists this number for this value." },
     { part: "other-label", db: "other_label", statuses: ["same_number_other_label"] },
-    { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true },
-    { part: "differs", db: "differs", statuses: ["differs"], thin: true },
+    // thin: too thin to read in the bar, so its count stands beside it, under its heading (Table 8's column names).
+    { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true, head: "Corrects" },
+    { part: "differs", db: "differs", statuses: ["differs"], thin: true, head: "Differs" },
     { part: "not-listed", db: "not_listed", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"] },
   ].map((item) => (item.db ? { ...item, label: DATABASE_RESULT_NAMES[item.db], title: databaseResultTitle(item.db) } : item));
   // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
@@ -5182,16 +5184,22 @@
   // differs) have their counts right of the bar, each linking into Browse for that parameter.
   function statsDatabaseValuesFigure(comparison, values, sources) {
     const thin = STATS_DATABASE_RESULTS.filter((result) => result.thin);
+    // Each count's column is as wide as its widest count or its heading (a sizer, as in statsBarChart), so the headings
+    // stand right-aligned over the counts.
+    const allCounts = [...values.rows.map((row) => row.parts), values.all];
+    const sizers = thin.map((result) => [statsValueSizer(allCounts.map((counts) => formatInteger(counts[STATS_DATABASE_RESULTS.indexOf(result)]))), result.head]
+      .filter(Boolean).join("\n"));
+    const column = (index, html) => `<span class="stats-value-part" data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${html}</span></span>`;
     const rowOf = (key, labelHtml, label, counts, { note = "", dbpar = "" } = {}) => {
       const parts = STATS_DATABASE_RESULTS.map((result, index) => ({ ...result, count: counts[index] }));
       const params = dbpar ? { dbpar } : {};
-      const value = `<span class="stats-db-thin">${thin.map((result) => {
+      const value = `<span class="stats-db-thin">${thin.map((result, index) => {
         const count = counts[STATS_DATABASE_RESULTS.indexOf(result)];
         const words = `${label}, ${result.label}: ${formatInteger(count)}`;
         const href = count ? statsDatabaseHref({ db: result.db, ...params }) : "";
-        return `<span><i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${href
+        return column(index, `<i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${href
           ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(words)}">${formatInteger(count)}</a>`
-          : formatInteger(count)}</span>`;
+          : formatInteger(count)}`);
       }).join("")}</span>`;
       return statsDatabaseRow(key, labelHtml, label, parts, { note, value,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, ...params }) : "") });
@@ -5200,8 +5208,10 @@
       ...values.rows.map((row) => rowOf(row.key, row.html, row.note ? `${row.note} ${row.label}` : row.label, row.parts, { note: row.note || "", dbpar: row.key })),
       rowOf("all", "All values", "All values", values.all),
     ];
-    // The thin counts' column: both counts, their swatches and gaps (the value labels are 12px).
-    const chars = Math.max(...rows.map((row) => thin.reduce((total, result) => total + formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length, 0)));
+    // The thin counts' column: both counts or their headings, their swatches and gaps (the value labels are 12px); fitted
+    // to the heading line once drawn (statsFitValueColumns).
+    const chars = thin.reduce((total, result, index) => total + Math.max(String(result.head || "").length,
+      ...rows.map((row) => formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length)), 0);
     const notes = [
       values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "",
       statsNotReproducedText(comparison),
@@ -5210,7 +5220,8 @@
     return {
       id: "statsDbValuesTitle", key: "db-values", title: "Values against the databases",
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
-        axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)` })
+        axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)`,
+        valueHead: `<span class="stats-db-thin">${thin.map((result, index) => column(index, escapeHtml(result.head || ""))).join("")}</span>` })
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
       caption: `Values read from the paper, compared with ${names || "the databases"}.`,
       rules: notes,
@@ -5249,15 +5260,16 @@
       rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, dbsrc: source.key }) : "") }));
       const row = rows[rows.length - 1];
+      row.parts = [{ text: formatInteger(row.count) }];
       if (absent) row.text = `${row.text.slice(0, -1)}; ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers it does not list.`;
     }
     if (!rows.length) return null;
     return {
       id: "statsDbSourcesTitle", key: "db-sources", title: "Results by database",
       body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
-        axis: statsAxis(100, 25, { percent: true }),
-        valueWidth: `calc(${Math.max(...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
-      caption: "A database's bar covers only the papers it lists, so one value can count for several databases.",
+        axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"],
+        valueWidth: `calc(${Math.max(6, ...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
+      caption: "Each bar covers only the values from papers that database lists. A value counts for every database that lists its paper.",
       rules: none.text,
     };
   }
