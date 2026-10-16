@@ -12030,7 +12030,8 @@
       const corrections = correctionItems(detail, check);
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
     }
-    return body ? detailSection("databases", "Against the databases", body, { about, aboutLabel: "About the comparison with the databases" }) : "";
+    // An earlier record's section is headed as Browse's option names it (Corrected earlier): no database is compared there.
+    return body ? detailSection("databases", v2Record ? "Against the databases" : DATABASE_RESULT_NAMES.earlier, body, { about, aboutLabel: "About the comparison with the databases" }) : "";
   }
 
   // A database record the earlier review did not settle, with a paper to check it against: its values are the database's
@@ -12119,6 +12120,26 @@
     line.outerHTML = paperRecordsRow(row, state.selectedPaperIds.pmids, state.selectedPaperIds.dois);
   }
 
+  // An earlier "corrected" record (not yet re-read) whose every kinetic value shown was added by the earlier version
+  // from the paper ("added: the source had none" on each of them): its values come from the paper, read by the earlier
+  // version, not from the database its entry names, so its Source line never names a database as the source of values
+  // the same record says it never had (the user, 2026-10-15). False for a record read from the paper, one with no
+  // kinetic correction, or one with a value a database had; a kcat/Km CatLog calculated is not a value to account for.
+  const EARLIER_VALUES_FROM_PAPER = "The paper (read by CatLog's earlier version)";
+  function earlierValuesAdded(summary, detail, { v2Record = isV2Row(summary) } = {}) {
+    if (v2Record) return false;
+    const shown = ["kcat", "km", "kcat_over_km"].filter((field) => metricHasValue(summary, field)
+      && !(field === "kcat_over_km" && summary.kcat_over_km_origin === "calculated"));
+    if (!shown.length) return false;
+    const hadBefore = new Map();
+    correctionItems(detail, recordCheck(summary)).forEach((item) => {
+      const field = CORRECTION_FIELDS[item.field.toLowerCase().replace(/\s+/g, "")];
+      if (!field) return;
+      hadBefore.set(field, Boolean(hadBefore.get(field)) || (item.before != null && item.before !== ""));
+    });
+    return shown.every((field) => hadBefore.has(field) && !hadBefore.get(field));
+  }
+
   // ---- Record panel: C. Source ----
   // The source and its own details in one list (each row wraps; nothing to open): where the values come from (named
   // "Values from", so the list does not repeat the section's heading), what it merges, where the enzyme name comes from
@@ -12128,8 +12149,11 @@
     const facts = proof?.facts || null;
     const dataId = snapshotDataId();
     const dataOrigin = publicEvidenceString(detail.data_origin);
+    // An earlier record whose every value the earlier version added from the paper names the paper, not its database.
+    const added = earlierValuesAdded(summary, detail, { v2Record });
     return detailSection("source", "Source", kvList([
-      kv("Values from", recordSourceName(recordSourceDb(summary, detail), v2Record)),
+      kv("Values from", added ? EARLIER_VALUES_FROM_PAPER : recordSourceName(recordSourceDb(summary, detail), v2Record)),
+      added ? kv("Database entry", `${recordSourceName(recordSourceDb(summary, detail))}; its entry had none of these values`) : "",
       // How many database rows a record merges is said once, here.
       mergedRows > 1
         ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
@@ -12190,7 +12214,7 @@
   // The record's review in one sentence, the AI audit (date and result only), what a human reviewer found, then the
   // record's actions.
   const V2_STATUS_SENTENCE = "Accepted: read from the paper by CatLog.";
-  const CORRECTED_LISTED_SENTENCE = "Corrected and accepted in the earlier automated review; the changes are listed under Against the databases.";
+  const CORRECTED_LISTED_SENTENCE = `Corrected and accepted in the earlier automated review; the changes are listed under ${DATABASE_RESULT_NAMES.earlier}.`;
 
   function sideFileAuditText(check) {
     if (!Array.isArray(check?.audit) || !check.audit.length) return "";

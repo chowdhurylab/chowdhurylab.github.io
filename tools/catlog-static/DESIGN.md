@@ -693,7 +693,11 @@ found at once: A, B, G, C, D, E, F, H.
   extracted" when the lines name their values) with that warning.
 - C. Source: Values from ("The paper (read by CatLog)", so "Read from the paper" is said once, by the Method line
   under it; or the databases by
-  name, never a raw key; not "Source", which would repeat the heading); Merged
+  name, never a raw key; not "Source", which would repeat the heading; an earlier corrected record whose every
+  kinetic value shown was added from the paper, "added: the source had none" on each, says "The paper (read by
+  CatLog's earlier version)" with a Database entry row naming the database "; its entry had none of these values",
+  never a database as the source of values the record says it never had, the user 2026-10-15; a value the database
+  had keeps the database); Merged
   from (database entries and papers); the source's own details as rows of the
   same list, each wrapping (nothing to open at the record's end): Databases, the
   databases a merged record combines when they are not those Values from names
@@ -862,7 +866,9 @@ found at once: A, B, G, C, D, E, F, H.
   gets one 12px line in words, "kcat/Km: BRENDA and OED list another number.
   See Against the databases ↓" (no square beside CatLog's number), whose button
   opens that value's note, scrolls it to the middle and focuses it.
-  An earlier corrected record (not yet re-read) with its correction trail: the
+  An earlier corrected record (not yet re-read) with its correction trail, headed
+  "Corrected earlier" (Browse's name for it; no database is compared there, the
+  user 2026-10-15): the
   intro "CatLog's earlier version changed these values to what the paper
   prints. CatLog has not read this paper again yet.", then one item per changed
   field, "66 mM → **0.066 mM**" with the kind of change ("unit or magnitude",

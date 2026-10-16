@@ -3744,8 +3744,10 @@ def check_record_panel(driver, browser, url, route_label):
             for kind, address in (("from-paper", "#browse?source=paper&status=accepted"), ("database", "#browse?source=brenda"),
                                   ("database-pending", "#browse?source=brenda&status=curation_pending")):
                 panel = open_first_record(address)
-                expected = [name for name in RECORD_SECTIONS if name != "Against the databases" or name in panel["sections"]]
-                assert panel["sections"] == expected, panel["sections"]
+                # (an earlier corrected record's section in that slot is headed Corrected earlier: no database is compared there)
+                sections = ["Against the databases" if name == "Corrected earlier" else name for name in panel["sections"]]
+                expected = [name for name in RECORD_SECTIONS if name != "Against the databases" or name in sections]
+                assert sections == expected, panel["sections"]
                 assert panel["headingSize"] == "14px", panel["headingSize"]
                 assert panel["subtitle"].startswith("EC "), panel["subtitle"]
                 assert panel["substrate"].startswith("Substrate: "), panel["substrate"]

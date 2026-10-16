@@ -4322,6 +4322,17 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       indexRow("corrected-explore", 32);
       // (Its Paper section links the paper's records.)
       assert.equal(explore(render(correctedRecord, trail)), 'More like this: <a href="#browse?db=earlier&amp;record=corrected-explore">Corrected earlier</a>');
+      // A value a database had: the database stays the source. Every value added from the paper ("added: the source
+      // had none"): the paper, read by the earlier version, is the source, and the database entry is named apart (the
+      // user, 2026-10-15); a value the database had, or a value with no correction, keeps the database as the source.
+      assert.match(render(correctedRecord, trail), /<dt>Values from<\/dt><dd>Open Enzyme Database \(OED\)<\/dd>/);
+      const allAdded = { supporting_pmids: ["1"], corrections: [
+        { field: "kcat", before: null, after: 0.35, unit: "s-1", kind: "added" }, { field: "km", before: null, after: 0.32, unit: "mM", kind: "added" },
+        { field: "kcat_over_km", before: null, after: 1.09, unit: "mM-1 s-1", kind: "added" }, { field: "doi", before: null, after: "10.1/x", kind: "added" }] };
+      assert.match(render(correctedRecord, allAdded), /<dt>Values from<\/dt><dd>The paper \(read by CatLog&#39;s earlier version\)<\/dd><\/div><div class="kv-line"><dt>Database entry<\/dt><dd>Open Enzyme Database \(OED\); its entry had none of these values<\/dd>/);
+      assert.match(render(correctedRecord, { ...allAdded, corrections: allAdded.corrections.slice(0, 2) }), /<dt>Values from<\/dt><dd>Open Enzyme Database \(OED\)<\/dd>/, "a kcat/Km with no correction: the database had it");
+      assert.match(render({ ...correctedRecord, kcat_over_km_origin: "calculated" }, { ...allAdded, corrections: allAdded.corrections.slice(0, 2) }), /<dt>Values from<\/dt><dd>The paper \(read by CatLog&#39;s earlier version\)<\/dd>/, "a calculated kcat/Km is not a value to account for");
+      assert.doesNotMatch(render(correctedRecord, allAdded), /<dt>Database entry<\/dt>[\s\S]*<dt>Database entry<\/dt>/);
       indexRow("corrected-explore", 0);
       assert.equal(explore(render(correctedRecord, trail)), "", "an index without the earlier changes: no link");
       delete runtimeManifest.viewer_index.optional_fields;
@@ -4382,7 +4393,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "smiles", kind: "replaced" },
   ] });
   const trail = sectionOf(html);
-  assert.match(trail, /<h3 id="detail-databases-title">Against the databases<\/h3><p class="section-text cmp-intro">CatLog&#39;s earlier version changed these values to what the paper prints\. CatLog has not read this paper again yet\.<\/p><dl class="detail-kv cmp-list">/);
+  // Headed as Browse's option names it: no database is compared on an earlier record.
+  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">CatLog&#39;s earlier version changed these values to what the paper prints\. CatLog has not read this paper again yet\.<\/p><dl class="detail-kv cmp-list">/);
   assert.doesNotMatch(trail, /<table|Changed in the earlier automated review|cmp-footer|Compared with the values|section-about|detail-about|cmp-caution-line/, "an earlier correction trail compares nothing: no \"?\" box");
   // "Before: as STRENDA DB lists it for this paper" with the factor between the two numbers (the database's 1,000× higher).
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude<\/span><\/span><small class="cmp-before">Before: as STRENDA DB lists it for this paper \(1,000× higher\)<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
@@ -4413,7 +4425,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1200 nmol\/min\/mg<\/strong><\/span>/);
   assert.match(trail, /<dt>SMILES<\/dt><dd><span class="cmp-value">Replaced<\/span><\/dd>/);
   assert.doesNotMatch(trail, /papers\\x\.pdf|x\.pdf|cmp-where-once/, "a local path never; places differ, so each item says its own");
-  assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Against the databases\./);
+  assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Corrected earlier\./);
   assert.doesNotMatch(html, /value before correction was not kept/);
   // A place every item shares is said once, under the list.
   html = render(corrected, { supporting_pmids: ["2226453"], corrections: [
