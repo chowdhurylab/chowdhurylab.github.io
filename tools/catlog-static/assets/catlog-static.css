@@ -946,6 +946,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-total:has(> dd > a.stats-total-value:focus-visible) { outline:2px solid var(--accent); outline-offset:-2px }
 .stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint) }
 .stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { box-shadow:0 0 32px 14px var(--accent-halo-hover) }
+/* Under the pointer the tint and the larger halo darken the item's ground: its label and note step up to --text-2, so
+   they keep AA contrast (muted there drops just under 4.5:1). */
+.stats-total:has(> dd > a.stats-total-value:hover) :is(dt, dd small) { color:var(--text-2) }
 @media (prefers-reduced-motion: no-preference) {
   .stats-total { transition:background-color 200ms ease }
   .stats-totals-main .stats-total-value { transition:box-shadow 200ms ease }

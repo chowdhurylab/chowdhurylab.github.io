@@ -1759,6 +1759,9 @@ function row(overrides = {}) {
     }
     assert.match(styleSource, /@media print \{[^@]*?\.stats-method::details-content \{ content-visibility:visible; display:block \}/);
   }
+  // A linked key number under the pointer: the tint and larger halo darken its ground, so its label and note step up
+  // to --text-2 and keep AA contrast.
+  assert.match(styleSource, /\.stats-total:has\(> dd > a\.stats-total-value:hover\) :is\(dt, dd small\) \{ color:var\(--text-2\) \}/);
   assert.deepEqual(api.statsNumbersText("Table", [1, 2, 3, 4, 7]), "Tables 1–4 and 7");
   assert.deepEqual(api.statsNumbersText("Table", [1, 2, 5]), "Tables 1, 2 and 5");
   assert.deepEqual(api.statsNumbersText("Figure", [1]), "Figure 1");

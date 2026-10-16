@@ -4733,6 +4733,21 @@ def check(driver, browser, url):
         band_links = {item.get_attribute("data-total"): urlsplit(item.find_element(By.CSS_SELECTOR, "a.stats-total-value").get_attribute("href")).fragment
                       for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
         assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
+        if browser == "chrome":
+            # Under the pointer the tint and the larger halo darken the item: its label and note step up to --text-2
+            # (muted there measured 4.46:1), and go back once the pointer leaves.
+            link = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='accepted'] a.stats-total-value")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
+            x, y = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]", link)
+            label_colors = "return [...document.querySelectorAll(\".stats-total[data-total='accepted'] :is(dt, dd small)\")].map(e => getComputedStyle(e).color)"
+            text_2 = driver.execute_script("const p = document.createElement('i'); p.style.color = 'var(--text-2)'; document.body.append(p); const c = getComputedStyle(p).color; p.remove(); return c")
+            driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x, "y": y})
+            try:
+                hovered = driver.execute_script(label_colors)
+                assert hovered and all(color == text_2 for color in hovered), (hovered, text_2)
+            finally:
+                driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 1, "y": 1})
+            assert all(color != text_2 for color in driver.execute_script(label_colors)), driver.execute_script(label_colors)
         # Numbered parts in order, from the band's 1.
         parts = [heading.get_attribute("innerText").strip().split("\n") for heading in driver.find_elements(By.CSS_SELECTOR, ".stats-part-title")]
         assert [int(number) for number, *_rest in parts] == list(range(1, len(parts) + 1)), parts

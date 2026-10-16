@@ -41,7 +41,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    without the review's counts gives the share of approved values the same, read from the paper again), the numbers
    in accent ink, each over a soft radial halo of the accent (its own background, 13% at the centre to 7.5% at the
    edge, carried 24-40px out by a low-alpha box-shadow; never a text-shadow, so the digits stay crisp, and a
-   box-shadow adds nothing to the page's width); the halo grows a little under the pointer. The four numbers fade and
+   box-shadow adds nothing to the page's width); the halo grows a little under the pointer, and the item's
+   label and note then step up to --text-2 (on the tint and the larger halo, muted fell to 4.46:1; --text-2 is 7.3:1). The four numbers fade and
    rise once (900ms, 90ms apart), the first time Stats is drawn, and only when the viewer has not asked for less
    motion (the band drops is-entering after 1.5s, so Stats shown again does not replay it). Line 2 (20px): Papers,
    Enzymes, EC numbers, Organisms, Substrates. Accepted and Read from the paper link into Browse: the whole item is the
