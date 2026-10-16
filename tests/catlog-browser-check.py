@@ -2567,7 +2567,9 @@ def check_filters(driver, browser, url, route_label):
         """)
         wait.until(lambda d: fragment() == "browse?q=laccase&source=paper" and summary_count() == paper)
         time.sleep(3)
-        assert count_of("source:all") == paper and count_of("source:paper") == paper, (count_of("source:all"), paper)
+        # This view's counts: All records is what ticking it would show (every laccase record), Read from the paper the
+        # records shown; the other view's would count dehydrogenase records.
+        assert count_of("source:all") == found and count_of("source:paper") == paper, (count_of("source:all"), found, count_of("source:paper"), paper)
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
