@@ -232,7 +232,7 @@ DATABASE_SUMMARY_FIELD = "database_summary"
 DATABASE_STATUS_BITS = {
     "confirmed": 1, "same": 1, "same_number": 1,
     "corrected": 2,
-    "differs": 4, "different": 4, "differs_not_resolved": 4,
+    "differs": 4, "different": 4, "differs_not_resolved": 4, "differs_factor_only": 4, "differs_exact_factor": 4,
     "new": 8, "new_paper_not_in_databases": 8, "paper_not_in_databases": 8, "not_in_databases": 8,
     "same_number_other_label": 16, "other_label": 16,
     "not_compared": 0, "calculated": 0, "mixed": 0,
@@ -284,7 +284,14 @@ def database_summary(values: dict, unknown: dict[str, int]) -> int | None:
         add(list(value.values()) if isinstance(value, dict) else value)
     for line in values.get("proof_lines") or ():  # a Full data row: one database_status per value
         if isinstance(line, dict):
-            add(line.get("database_status"))
+            # An exact factor nothing has yet checked against the paper (database_found_by factor_only) is Different
+            # number, never a correction (the page says "Different number (exact factor, not yet checked)"), whatever
+            # an older snapshot's status calls it.
+            status = line.get("database_status")
+            if str(line.get("database_found_by") or "").strip().lower() == "factor_only" \
+                    and isinstance(status, str) and status.strip().lower().startswith("correct"):
+                status = "differs"
+            add(status)
     corrections = values.get("corrections")
     count = values.get("corrections_count")
     if (isinstance(corrections, list) and corrections) or (
@@ -407,12 +414,14 @@ def shared_texts(source_path: Path) -> dict[str, list[str]]:
 
 def full_data_database_fields(row: dict) -> dict:
     """What a Full data row says about its comparison with the enzyme databases, for database_summary: its
-    DATABASE_FIELDS and its proof lines' database_status (only those, so the record's quotes are not kept)."""
+    DATABASE_FIELDS and its proof lines' database_status with how it was found (only those, so the record's quotes are
+    not kept)."""
     fields = {field: row[field] for field in DATABASE_FIELDS if row.get(field) not in (None, "", [], {})}
-    statuses = [line.get("database_status") for line in row.get("proof_lines") or ()
-                if isinstance(line, dict) and line.get("database_status") not in (None, "")]
-    if statuses:
-        fields["proof_lines"] = [{"database_status": status} for status in statuses]
+    lines = [{"database_status": line.get("database_status"), "database_found_by": line.get("database_found_by")}
+             for line in row.get("proof_lines") or ()
+             if isinstance(line, dict) and line.get("database_status") not in (None, "")]
+    if lines:
+        fields["proof_lines"] = lines
     return fields
 
 

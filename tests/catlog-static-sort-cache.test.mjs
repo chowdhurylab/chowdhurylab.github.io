@@ -2162,7 +2162,7 @@ function row(overrides = {}) {
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
   // The lead names the papers with a compared value (papers_compared), never more than CatLog has read.
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ without a known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ, cause not yet known. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
   // The caveat is said once in part 7, here, never under each figure.
   assert.equal((databaseSection().match(/does not by itself mean a database is wrong/g) || []).length, 1);
   // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.
@@ -2390,11 +2390,30 @@ function row(overrides = {}) {
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause\.<\/span> [^<]*2 corrections have causes not named here\.<\/dd>/);
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause and database\.<\/span> 2 corrections have causes not named here\. All causes counts them\.<\/dd>/);
+  // An older comparison counts its factor-only values (an exact factor nothing has yet checked) among the corrections:
+  // the lead counts them under Different number, a note after it says the figures still hold them under Corrects,
+  // Figure 10 and the All column take them out of their causes (the per-database columns keep them, said in the rule).
+  withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
+    /Another 1,291 correct a database's number \(126 checked against the paper\), and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\)\. The remaining/);
+  assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
+    /^In this snapshot's figures and tables, 257 values a database lists at an exact factor from the paper's number, not yet checked against the paper, still stand under Corrects; the lead and the Guide count them under Different number \(exact factor, not yet checked\)\.$/);
+  assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
+    [["unit", 1063], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
+  assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found by code: 635"/);
+  assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database's number, each counted once\./);
+  assert.match(methodHtml(), /Corrections by cause and database\.<\/span> 257 values a database lists at an exact factor, not yet checked against the paper, are Different number, left out of All; the columns per database still hold them\.<\/dd>/);
+  // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
+  // move and no note.
+  withOut((data) => { data.values.kcat.differs_factor_only = 40; data.values.all.differs_factor_only = 40; data.values.all.differs += 0; });
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Another 1,548 correct a database's number \(656 checked against the paper\), and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\)\./);
+  assert.doesNotMatch(databaseSection(), /stats-part-note/);
+  assert.match(figureHtml("db-values"), /kcat, Different number: 309 \(0\.7%\)"/);
   // Small counts: no shares on a base under 1,000 values, counts under the bars, singular words.
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper. Of these, 4 are the number a database lists. Another 1 corrects a database's number and 1 differs without a known cause. The remaining 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), 4 of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper. Of these, 4 are the number a database lists. Another 1 corrects a database's number and 1 differs, cause not yet known. The remaining 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), 4 of those numbers are the paper's. A different number can mean a different measurement; it does not by itself mean a database is wrong.");
   assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
   runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
   api.renderStats();
@@ -4121,6 +4140,25 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     html = render(v2Summary, v2Detail([line("kcat", { database_status: "corrected", database_line: "OED lists 0.5 s⁻¹.", database_cause: code, database_sources: ["OED"] })]));
     assert.match(html, new RegExp(`<dt>Cause</dt><dd>${words}</dd>`), code);
   }
+  // An exact factor nothing has yet checked against the paper (database_found_by factor_only) is Different number
+  // (exact factor, not yet checked), in brown, whatever the snapshot's status calls it; its cause names the factor
+  // (database_by_source x = the database's ÷ CatLog's) and that it is not yet checked; the download says the same.
+  const factorOnly = line("Km", { database_status: "corrected", database_found_by: "factor_only", database_cause: "power_of_ten", database_sources: ["SABIO-RK"],
+    database_line: "SABIO-RK lists 0.0036 mM, 1,000× lower. The paper prints 3.6 mM (Results p.1059).",
+    database_by_source: [{ db: "SABIO-RK", kind: "corrected", unit: "mM", value: 0.0036, x: 0.001 }, { db: "OED", kind: "other_values_only" }] });
+  html = render(v2Summary, v2Detail([factorOnly]));
+  assert.match(html, /SABIO-RK lists another number <\/span><span class="cmp-result"><span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><strong>Different number \(exact factor, not yet checked\)<\/strong>/);
+  assert.doesNotMatch(html, /Corrects a value|cmp-magnitude/);
+  assert.match(html, /<dt>Cause<\/dt><dd>SABIO-RK lists a number 1,000× lower \(off by an exact power of ten\); not yet checked against the paper<\/dd>/);
+  assert.match(html, /cmp-caution-line/, "a Different number: the record says the caution");
+  assert.match(valuesOf(html), /<i>K<\/i><sub>m<\/sub>: SABIO-RK lists another number\. <button[^>]*data-show-note="km"/);
+  assert.deepEqual(JSON.parse(JSON.stringify(api.publicRecordObject(v2Summary, v2Detail([factorOnly])).database_comparison)), [{ metric: "Km",
+    result: "Different number (exact factor, not yet checked)", line: "SABIO-RK lists 0.0036 mM, 1,000× lower. The paper prints 3.6 mM (Results p.1059).",
+    databases: "SABIO-RK", cause: "SABIO-RK lists a number 1,000× lower (off by an exact power of ten); not yet checked against the paper", evidence: null }]);
+  // A status of its own says it too; without a factor to name, the cause says an exact factor.
+  html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs_factor_only", database_line: "OED lists 0.5 s⁻¹.", database_sources: ["OED"] })]));
+  assert.match(html, /<strong>Different number \(exact factor, not yet checked\)<\/strong>/);
+  assert.match(html, /<dt>Cause<\/dt><dd>OED lists a number an exact factor from the paper&#39;s; not yet checked against the paper<\/dd>/);
   // A cause code with no wording is not shown (never the raw code with spaces); a cause given as a phrase is shown as given.
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists 5 mM.", database_cause: "some_new_cause" })]));
   assert.doesNotMatch(html, /<dt>Cause<\/dt>|some new cause|some_new_cause/);
@@ -4507,10 +4545,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(Object.values(causes).map((value) => value.match(/([\d,]+) values$/)[1]), ["1,320", "86", "51", "91"]);
   // How found: this snapshot counts the paper check apart and code's two ways together.
   const found = items(html, "How a correction is found");
-  assert.deepEqual(Object.keys(found), ["Checked against the paper", "Exact factor; the paper’s kcat ÷ Km agrees", "Exact factor only"]);
+  // Two ways: an exact factor alone, nothing else checked, is no correction (the user, 2026-10-15).
+  assert.deepEqual(Object.keys(found), ["Checked against the paper", "Exact factor; the paper’s kcat ÷ Km agrees"]);
   assert.ok(found["Checked against the paper"].endsWith("named the cause. 656 values"));
-  assert.ok(found["Exact factor only"].endsWith("nothing else was checked."));
-  assert.match(text, /Found by code \(an exact factor, with or without the cross-check\): 892 values\./);
+  assert.doesNotMatch(text, /Exact factor only|nothing else was checked/);
+  assert.match(text, /Found by code \(an exact factor the paper’s own kcat ÷ Km agrees with\): 892 values\./);
+  assert.doesNotMatch(text, /Among them, exact factor/, "no factor-only count in this comparison: no line for it");
   // Why not listed: the two kinds values.all counts apart, the paper count from the papers no database lists.
   const why = items(html, "Why no database lists a value");
   assert.deepEqual(Object.keys(why), ["kcat and Km listed", "Other values listed", "Substrate not listed", "Parameter not listed",
@@ -4556,12 +4596,26 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   counted.values.not_listed_by_reason = { kcat: { ratio_only: 0, condition_absent: 1792, substrate_absent: 10 },
     Km: { condition_absent: 1607, metric_absent: 3, variant_absent: 4 }, "kcat/Km": { condition_absent: 1130, ratio_only: 4873, paper_not_in_databases: 336 } };
   html = api.guideDatabasesHtml(counted);
-  assert.deepEqual(Object.values(items(html, "How a correction is found")).map((value) => value.match(/([\d,]+) values$/)?.[1]), ["126", "300", "257"]);
+  assert.deepEqual(Object.values(items(html, "How a correction is found")).map((value) => value.match(/([\d,]+) values$/)?.[1]), ["126", "300"]);
   assert.doesNotMatch(plain(html), /Found by code/);
+  // An older comparison counts its factor-only values among the corrections: the Guide moves them under Different
+  // number (1,548 - 257 correct; 1,051 + 257 differ), with their own line and count there.
+  assert.match(items(html, "Results")["Corrects a value"], /1,291 values in 1,443 records$/);
+  assert.match(items(html, "Results")["Different number"], /1,308 values in 955 records Among them, exact factor, not yet checked: the database's number is the paper's times an exact factor \(a power of ten, 60 or 3,600\) and nothing has yet checked it against the paper; the record says Different number \(exact factor, not yet checked\) and names the factor \(257 values\)\.$/);
   assert.deepEqual(Object.values(items(html, "Why no database lists a value")).map((value) => value.match(/([\d,]+) values(?: from [\d,]+ papers?)?$/)?.[1]),
     ["4,873", "4,529", "10", "3", "4", "336"]);
   counted.corrections.by_cause_found_by = { paper_check: { unit_not_converted: 5 }, factor_only: { power_of_ten: 2 } };
-  assert.deepEqual(Object.values(items(api.guideDatabasesHtml(counted), "How a correction is found")).map((value) => value.match(/([\d,]+) values?$/)?.[1]), ["5", "0", "2"]);
+  assert.deepEqual(Object.values(items(api.guideDatabasesHtml(counted), "How a correction is found")).map((value) => value.match(/([\d,]+) values?$/)?.[1]), ["5", "0"]);
+  assert.match(items(api.guideDatabasesHtml(counted), "Results")["Different number"], /1,053 values in 955 records Among them, [^]*\(2 values\)\.$/);
+  // A comparison that counts them under Different number itself: as a status of their own (counted into Different
+  // number, no move), or as a count under differs.
+  const ownStatus = bundleComparison();
+  ownStatus.values.all.differs_factor_only = 40;
+  assert.match(items(api.guideDatabasesHtml(ownStatus), "Results")["Different number"], /^[^]*1,091 values in 955 records Among them, [^]*\(40 values\)\.$/);
+  assert.match(items(api.guideDatabasesHtml(ownStatus), "Results")["Corrects a value"], /1,548 values in 1,443 records$/);
+  const underDiffers = bundleComparison();
+  underDiffers.differs = { by_found_by: { factor_only: 12 } };
+  assert.match(items(api.guideDatabasesHtml(underDiffers), "Results")["Different number"], /1,051 values in 955 records Among them, [^]*\(12 values\)\.$/);
   // Without counts: the words alone, never an empty count, a guessed number or a heading without its list.
   html = api.guideDatabasesHtml({});
   text = plain(html);

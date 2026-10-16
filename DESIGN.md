@@ -174,11 +174,24 @@ its accessible description; no figure or table has a data line. The parts' figur
   - Lead (14px), one idea per sentence (its papers are `papers_compared`, the papers with a compared value, so never
     more than CatLog has read; `papers` only for an older comparison without it): "CatLog compared 126,951 values read from 2,598 papers with what the
     databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same
-    number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051
-    differ without a known cause. The remaining 20,987 are in none of the databases. Where a database lists a number for the same
+    number under another label. Another 1,353 correct a database's number (656 checked against the paper, 697 by an
+    exact factor the paper's own kcat ÷ Km confirms), and 1,461 differ, cause not yet known (246 by an exact factor,
+    not yet checked). The remaining 20,987 are in none of the databases. Where a database lists a number for the same
     measurement (100,390 values), 97.4% of those numbers are the paper's. A different number can mean a different
     measurement; it does not by itself mean a database is wrong." Its counts add up to the total; the four result phrases link into Browse (db=other_label, corrects, differs, not_listed), each titled
     with the records it opens ("1,548 values in 1,443 records", from the option's record count).
+  - An exact factor alone (found_by factor_only: a database's number is the paper's times a power of ten, 60 or
+    3,600 and nothing else was checked) is no correction (the user, 2026-10-15): the value is "Different number
+    (exact factor, not yet checked)" and counts under Different number everywhere (comparisonFactorOnly,
+    comparisonWordCounts). The comparison counts such values under Different number itself, as a status of their own
+    in values.all (differs_factor_only or differs_exact_factor, added into the Differs segment and the differs
+    option) or as a count under differs (differs.by_found_by.factor_only, else differs.factor_only); an older
+    comparison that counts them among its corrections (corrections.by_cause_found_by[cause].factor_only, else
+    corrections.by.factor_only) has them moved in the words (the lead, the Guide's results, the option titles), taken
+    out of Figure 10's causes and the All column of Table 9 (its rule says the per-database columns keep them), and a
+    note right after the lead says the figures still hold them under Corrects; nothing per parameter or per database
+    is guessed. The record says the result word with the factor (database_by_source's x) and that nothing has yet
+    checked it against the paper under Cause.
   - Links never open a wider list than their count: a count, segment or label whose link would name a database
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
@@ -203,11 +216,11 @@ its accessible description; no figure or table has a data line. The parts' figur
     database only Corrects links (bar, legend, table): a database's Different number also counts its other number for a
     value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
     which matches a value by its own result, would show fewer; the All row's Differs links (one result).
-  - Corrections by cause and how found ("Corrections by cause" without the split; its caption: "The 1,548 values
+  - Corrections by cause and how found ("Corrections by cause" without the split; its caption: "The 1,353 values
     that correct a database's number, each counted once.", as Table 9 counts one per database): a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; DATABASE_CAUSE_FAMILIES, the Guide's list too, maps every cause code), split checked against the paper / an exact factor found by
-    code from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
-    add up to its code count; a bar split two ways prints its two counts under its name, each after its colour. Beside
+    code (the paper's own kcat ÷ Km agreeing) from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
+    add up to its code count, an older comparison's factor-only values taken out of both; a bar split two ways prints its two counts under its name, each after its colour. Beside
     it Corrections by cause and database (`by_cause_database`), non-zero cells
     linking to db=corrects&dbsrc&dbwhy (see above); a line per database on phones, or wherever the table does not fit
     its column.

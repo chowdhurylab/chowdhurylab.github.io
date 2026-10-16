@@ -199,7 +199,9 @@ fields or the Full data download of the same records (where the CatLog side's
 export puts them: each proof line's database_status, an earlier corrected
 record's corrections list; a Table field of the same name wins), the per-value
 database_status, a record summary or the corrections list; never an empty heading; round 9 brief section 3): Corrects
-a value, Different number (the cause not yet known), Same, other label, Not in the databases (a value no
+a value, Different number (the cause not yet known; a value a database lists at an exact factor nothing has yet checked
+against the paper is "Different number (exact factor, not yet checked)", under it, never a correction: its definition
+says so and names the factor), Same, other label, Not in the databases (a value no
 compared database lists) with "every value" nested under it (no database lists any value of the record), All
 values the same (every compared value), then under a --line-soft rule Corrected earlier (records not yet re-read
 whose earlier version changed values; shown only when a record has it). A 10px square in the result's colour
@@ -821,7 +823,11 @@ found at once: A, B, G, C, D, E, F, H.
   the compared databases" and "STRENDA DB", round 9 brief C9 on the CatLog
   side: the browser check reads every note, closed ones too, and fails on a
   count in words or a name the "?" box spells otherwise), then a definition list (112px labels, 96px on phones, one column
-  up to 400px) with rows that have content: Cause (database_cause in words,
+  up to 400px) with rows that have content: Cause (database_cause in words; on a value found by an exact factor alone
+  (database_found_by factor_only, or a status that says so, whatever an older snapshot calls it: its result word is
+  "Different number (exact factor, not yet checked)", brown) the databases, the factor from database_by_source and
+  "not yet checked against the paper", as in "SABIO-RK lists a number 1,000× lower (off by an exact power of ten); not
+  yet checked against the paper";
   including the code-found power_of_ten "off by an exact power of ten",
   printed_number_unit_not_applied "the printed number taken in another unit",
   time_factor "off by exactly 60 or 3,600"; shown whatever the line says, as the
@@ -1025,8 +1031,10 @@ Browse's options give, "N values in M records", the records linked to
 #browse?db=<key> only where Browse has that option, every value under Not in the
 databases, Corrected earlier left out when the snapshot counts 0; Cause of a
 correction (the four families, each cause code in one); How a correction is found
-(the three ways, counted when the manifest counts them, else the paper check and a
-line for code's two ways together); Why no database lists a value (the six
+(the two ways, checked against the paper and an exact factor the paper's own kcat ÷ Km
+agrees with, counted when the manifest counts them, else the paper check and a
+line for code's way; an exact factor alone is no correction: its values stand under
+Different number, with a line of their own there when counted); Why no database lists a value (the six
 reasons, counts summed over the parameters where the manifest has them); then the
 comparison caption and a link to Stats. A count the manifest lacks leaves its line
 out),

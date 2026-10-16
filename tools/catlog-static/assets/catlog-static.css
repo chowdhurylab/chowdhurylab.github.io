@@ -1141,6 +1141,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-seg[data-href] { cursor:pointer }
 /* Part 7's lead: one 14px sentence under the part's heading, its result names linking into Browse. */
 .stats-part-lead { margin:0 0 var(--sp-5); max-width:80ch; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* A note right after a part's lead (an older comparison's factor-only values, still under Corrects in its figures). */
+.stats-part-note { margin:calc(-1 * var(--sp-3)) 0 var(--sp-5); max-width:80ch }
 /* Each value against the databases: the counts of the thin results right of each bar, each after its swatch. */
 .stats-db-thin { display:inline-flex; justify-content:flex-end; gap:8px; font-variant-numeric:tabular-nums lining-nums }
 .stats-db-thin > span { display:inline-flex; align-items:center; gap:4px }

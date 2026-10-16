@@ -212,7 +212,7 @@ class ViewerManifestTests(unittest.TestCase):
         # database_status, an earlier corrected record's corrections. The index reads it there, with the paper ids.
         v2 = dict(verification_status="verified", source_db="primary_paper_direct", enzyme_label_source="explicit_enzyme_name")
         rows = [self.table_row("fixed", **v2), self.table_row("same", **v2), self.table_row("earlier", verification_status="corrected"),
-                self.table_row("both", **v2, km_database_status="differs"), self.table_row("plain")]
+                self.table_row("both", **v2, km_database_status="differs"), self.table_row("plain"), self.table_row("factor", **v2)]
         full = {
             "fixed": {"proof_lines": [{"metric": "kcat", "database_status": "corrected", "database_line": "BRENDA lists 47,000."},
                                       {"metric": "Km", "database_status": "confirmed"}, {"metric": "kcat/Km"}],
@@ -221,6 +221,10 @@ class ViewerManifestTests(unittest.TestCase):
             "earlier": {"corrections": [{"field": "km", "before": 4.7, "after": 0.47, "kind": "magnitude"}]},
             "both": {"proof_lines": [{"metric": "kcat", "database_status": "new"}]},
             "plain": {"proof_lines": [{"metric": "kcat", "check": "confirmed"}], "corrections": []},
+            # an exact factor nothing has yet checked (found_by factor_only) is Different number, not a correction,
+            # whatever an older snapshot's status calls it; a status of its own says the same
+            "factor": {"proof_lines": [{"metric": "kcat", "database_status": "corrected", "database_found_by": "factor_only"},
+                                       {"metric": "Km", "database_status": "differs_factor_only"}]},
         }
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -237,9 +241,9 @@ class ViewerManifestTests(unittest.TestCase):
         header = json.loads(lines[0])
         self.assertEqual(header["fields"], [*BUILD.VIEWER_FIELDS, "database_summary", *BUILD.PAPER_FIELDS, "s"])
         decoded = {row[0]: dict(zip(header["fields"], row))["database_summary"] for row in map(json.loads, lines[1:])}
-        self.assertEqual(decoded, {"fixed": 3, "same": 1, "earlier": 32, "both": 12, "plain": None})
-        self.assertEqual(metadata["rows_with_optional"], {"database_summary": 4})
-        self.assertEqual(metadata["database_summary_sources"], {"table": 1, "full_data": 4})
+        self.assertEqual(decoded, {"fixed": 3, "same": 1, "earlier": 32, "both": 12, "plain": None, "factor": 4})
+        self.assertEqual(metadata["rows_with_optional"], {"database_summary": 5})
+        self.assertEqual(metadata["database_summary_sources"], {"table": 1, "full_data": 5})
         # without a Full data download of the same records nothing comes from another snapshot's
         other = root / "catlog-enriched.222222222222.jsonl.gz"
         other.write_bytes(gzip.compress((json.dumps(dict(rows[0], record_key="z", **full["fixed"])) + "\n").encode(), mtime=0))

@@ -279,9 +279,16 @@ def check_guide_databases(driver, browser, url):
         compared = sum(count for key, count in values.items() if key != "not_compared")
         assert f"This snapshot compares {words(compared, 'value', 'values')} from {words(comparison['papers'], 'paper', 'papers')}." in text, text[:400]
         counts = {row["label"]: row["count"] for row in rows}
+        # An exact factor nothing has yet checked against the paper is Different number, never a correction: a
+        # comparison that counts such values among its corrections (by_cause_found_by[cause].factor_only) has them
+        # moved in the Guide's words, and the line under Different number counts them.
+        found_by = (comparison.get("corrections") or {}).get("by_cause_found_by") or {}
+        factor_only = sum(ways.get("factor_only", 0) for ways in found_by.values() if isinstance(ways, dict)) \
+            if "factor_only" not in found_by else sum(found_by["factor_only"].values())
+        differs_extra = sum(values.get(key, 0) for key in ("differs_factor_only", "differs_exact_factor"))
         expected = {
-            "Corrects a value": f"{words(values['corrected'], 'value', 'values')} in {words(kinds['corrected'], 'record', 'records')}",
-            "Different number": f"{words(values['differs'], 'value', 'values')} in {words(kinds['differs'], 'record', 'records')}",
+            "Corrects a value": f"{words(values['corrected'] - factor_only, 'value', 'values')} in {words(kinds['corrected'], 'record', 'records')}",
+            "Different number": f"{words(values['differs'] + factor_only + differs_extra, 'value', 'values')} in {words(kinds['differs'], 'record', 'records')}",
             "Same, other label": f"{words(values['same_number_other_label'], 'value', 'values')} in {words(kinds['other_label'], 'record', 'records')}",
             "Not in the databases": f"{words(values['new'] + values.get('new_ratio_only', 0) + values.get('new_paper_not_in_databases', 0), 'value', 'values')} in {words(kinds['new'], 'record', 'records')}",
             "All values the same": words(records["every_value_confirmed"], "record", "records"),
@@ -289,6 +296,11 @@ def check_guide_databases(driver, browser, url):
         assert {key: counts[key] for key in expected} == expected, counts
         nested = next(row["nested"] for row in rows if row["label"] == "Not in the databases")
         assert nested == f"Under it, every value: no compared database lists any value of the record ({words(records['every_value_new'], 'record', 'records')}).", nested
+        if factor_only or differs_extra:
+            differs_nested = next(row["nested"] for row in rows if row["label"] == "Different number")
+            assert differs_nested.startswith("Among them, exact factor, not yet checked:") and differs_nested.endswith(
+                f"the record says Different number (exact factor, not yet checked) and names the factor ({words(factor_only or differs_extra, 'value', 'values')})."), differs_nested
+        assert "Exact factor only" not in text and "nothing else was checked" not in text, "an exact factor alone is no correction"
         # The databases named in the lead come from the manifest; no hard-coded number of them.
         for name in (comparison.get("values_by_database") or {}):
             assert ("STRENDA DB" if name == "STRENDA" else name) in text.split("\n", 1)[0], (name, text[:300])
@@ -4070,7 +4082,8 @@ DATABASE_NOT_LISTED_RECORD = "8090b6354d18037c"
 DATABASE_CALCULATED_RECORD = "8db79c81e62be8af"
 DATABASE_PAPER_NOTE_RECORD = "d93a98fb48b46766"
 EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
-DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases")
+DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)", "Same, other label",
+                         "Not in the databases")
 DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
 EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints. CatLog has not read this paper again yet."
 DATABASE_SECTION_STATE = """
@@ -4231,7 +4244,7 @@ def check_record_databases(driver, browser, base, wait):
             state = driver.execute_script(DATABASE_SECTION_STATE)
             assert state["order"][:2] == ["Values", "Against the databases"], state["order"]
             assert state["notes"] and all(note["word"] in DATABASE_RESULT_WORDS for note in state["notes"]), state["notes"]
-            changed = [note for note in state["notes"] if note["word"] in ("Corrects a value", "Different number")]
+            changed = [note for note in state["notes"] if note["word"] in ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)")]
             assert changed and all(note["details"] for note in changed), state["notes"]
             # Notes on a correction or a different number are open: every one from 641px, only the first on a phone.
             expected = [width >= 641 or index == 0 for index, _ in enumerate(changed)]

@@ -222,7 +222,8 @@
   // shows only then. Each option is a test of that number (rowDatabaseBits).
   const DATABASE_SUMMARY_BITS = { same: 1, corrected: 2, differs: 4, new: 8, otherLabel: 16, earlier: 32 };
   const DATABASE_STATUS_BITS = {
-    confirmed: 1, same: 1, same_number: 1, corrected: 2, differs: 4, different: 4, differs_not_resolved: 4, new: 8,
+    confirmed: 1, same: 1, same_number: 1, corrected: 2, differs: 4, different: 4, differs_not_resolved: 4,
+    differs_factor_only: 4, differs_exact_factor: 4, new: 8,
     new_paper_not_in_databases: 8, paper_not_in_databases: 8, not_in_databases: 8, same_number_other_label: 16, other_label: 16,
   };
   // One name per result, the same in the sidebar, its chip, a record's result word and its links to records like it.
@@ -232,7 +233,12 @@
     corrects: "Corrects a value", differs: "Different number", other_label: "Same, other label",
     not_listed: "Not in the databases", all_not_listed: "every value", all_same: "All values the same",
     earlier: "Corrected earlier",
+    // A different number that is the paper's times an exact factor nothing has yet checked against the paper (the
+    // user, 2026-10-15: never a correction); counted under Different number everywhere.
+    differs_factor_only: "Different number (exact factor, not yet checked)",
   };
+  // The comparison's own statuses for such values, when it counts them apart (both are Different number).
+  const FACTOR_ONLY_STATUSES = ["differs_factor_only", "differs_exact_factor"];
   // A record's words for one value (section G): the number a database lists, and a value no database lists.
   DATABASE_RESULT_NAMES.same = "Same number";
   DATABASE_RESULT_NAMES.new = DATABASE_RESULT_NAMES.not_listed;
@@ -244,8 +250,8 @@
   const databaseFilters = [
     { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
       title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
-    { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs"],
-      title: "A database lists another number for this value and the cause is not yet known. A different number can be a different measurement." },
+    { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs", ...FACTOR_ONLY_STATUSES],
+      title: "A database lists another number for this value and the cause is not yet known. Where the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper, the record says Different number (exact factor, not yet checked) and names the factor. A different number can be a different measurement." },
     { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
       title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
@@ -329,6 +335,59 @@
   function comparedDatabaseKey(name) {
     const folded = String(name ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
     return [folded, folded.split("_")[0]].map((token) => SOURCE_TOKENS[token]).find((key) => COMPARED_DATABASE_ORDER.includes(key)) || folded;
+  }
+
+  // Values a database lists at an exact factor (a power of ten, 60 or 3,600) from the paper's number that nothing has
+  // yet checked against the paper (found_by factor_only): Different number (exact factor, not yet checked), never a
+  // correction (the user, 2026-10-15), everywhere they are counted. A comparison counts them under Different number
+  // itself, as a status of their own among its values (FACTOR_ONLY_STATUSES in values.all) or as a count under differs
+  // (differs.by_found_by.factor_only, else differs.factor_only); an older comparison counts them among its corrections
+  // (corrections.by_cause_found_by[cause].factor_only, or the way first, by_cause_found_by.factor_only[cause]; else
+  // corrections.by.factor_only), and the page then moves them in its words (comparisonWordCounts): Corrects a value
+  // less them, Different number plus them. {count (null when not counted), amongCorrections, byCause}.
+  function comparisonFactorOnly(comparison) {
+    const data = comparison && typeof comparison === "object" ? comparison : {};
+    const all = data.values?.all && typeof data.values.all === "object" ? data.values.all : null;
+    const own = all ? FACTOR_ONLY_STATUSES.map((key) => statsCount(all[key])).find((count) => count !== null) : undefined;
+    if (own !== undefined) return { count: own, amongCorrections: false, byCause: null };
+    const differs = data.differs && typeof data.differs === "object" ? data.differs : null;
+    const under = differs ? statsCount(differs.by_found_by?.factor_only) ?? statsCount(differs.factor_only) : null;
+    if (under !== null) return { count: under, amongCorrections: false, byCause: null };
+    const nested = data.corrections?.by_cause_found_by;
+    if (nested && typeof nested === "object") {
+      const byCause = {};
+      let total = 0;
+      let seen = false;
+      const wayFirst = nested.factor_only && typeof nested.factor_only === "object";
+      for (const [outer, inner] of Object.entries(wayFirst ? nested.factor_only : nested)) {
+        const count = wayFirst ? statsCount(inner) : (inner && typeof inner === "object" ? statsCount(inner.factor_only) : null);
+        if (count === null) continue;
+        byCause[outer] = count;
+        total += count;
+        seen = true;
+      }
+      if (seen) return { count: total, amongCorrections: true, byCause };
+    }
+    const by = statsCount(data.corrections?.by?.factor_only);
+    if (by !== null) return { count: by, amongCorrections: true, byCause: null };
+    return { count: null, amongCorrections: false, byCause: null };
+  }
+
+  // The values that correct a database's number and the values with a different number as the words say them (the
+  // Stats lead, the Guide's results, Browse's option titles), from a values map (values.all): the factor-only values
+  // under Different number. {corrects, differs, factorOnly}, each null where the comparison does not count it.
+  function comparisonWordCounts(all, comparison) {
+    const corrected = statsCount(all?.corrected);
+    const differs = statsCount(all?.differs);
+    const factor = comparisonFactorOnly(comparison);
+    const moved = factor.amongCorrections ? factor.count || 0 : 0;
+    const own = factor.amongCorrections ? 0 : FACTOR_ONLY_STATUSES.reduce((sum, key) => sum + (statsCount(all?.[key]) || 0), 0);
+    return {
+      corrects: corrected === null ? null : Math.max(0, corrected - moved),
+      differs: differs === null ? null : differs + moved + own,
+      factorOnly: factor.count,
+      moved: moved > 0 ? moved : 0,
+    };
   }
 
   function comparedDatabases(comparison = manifest.summary?.database_comparison) {
@@ -3254,10 +3313,10 @@
       const phrase = databaseResultPhrase(facts);
       return {
         metric,
-        result: phrase || databaseResult(facts.status)?.word || null,
+        result: phrase || databaseResultWord(facts) || null,
         line: phrase ? null : facts.sentence || null,
         databases: facts.databases || null,
-        cause: facts.cause || null,
+        cause: databaseCauseLine(facts) || null,
         evidence: facts.evidence || null,
       };
     });
@@ -4775,11 +4834,12 @@
       causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"] },
     { key: "misprint", label: "Unit misprinted", title: "A unit the paper misprints.", causes: ["paper_unit_misprint"] },
   ];
+  // The two ways a correction is found. An exact factor alone, with nothing else checked, is no correction: that value
+  // is Different number (exact factor, not yet checked), under Different number (comparisonFactorOnly).
   const GUIDE_DB_FOUND_BY = [
     { key: "paper_check", label: "Checked against the paper", text: "A separate AI check read the paper and named the cause." },
     { key: "factor_cross_checked", label: "Exact factor; the paper's kcat ÷ Km agrees",
       text: "Code found the database's number is the paper's times an exact factor, and the paper's own kcat ÷ Km matches CatLog's value, not the database's." },
-    { key: "factor_only", label: "Exact factor only", text: "Code found an exact factor; nothing else was checked." },
   ];
   const GUIDE_DB_NOT_LISTED = [
     { key: "ratio_only", label: "kcat and Km listed",
@@ -4825,9 +4885,10 @@
     const records = data?.records || {};
     const notListed = statsCount(all.new);
     const earlier = overview?.earlier_corrections ?? overview?.quality?.earlier_corrections;
+    const words = comparisonWordCounts(all, data);
     return {
-      corrects: { values: statsCount(all.corrected), records: statsCount(kinds.corrected ?? records.corrects_a_database_value) },
-      differs: { values: statsCount(all.differs), records: statsCount(kinds.differs ?? records.differs_not_yet_resolved) },
+      corrects: { values: words.corrects, records: statsCount(kinds.corrected ?? records.corrects_a_database_value) },
+      differs: { values: words.differs, records: statsCount(kinds.differs ?? records.differs_not_yet_resolved), factorOnly: words.factorOnly },
       other_label: { values: statsCount(all.same_number_other_label), records: statsCount(kinds.other_label) },
       not_listed: {
         values: notListed === null ? null
@@ -4871,14 +4932,16 @@
     }).join("")}</dl>`;
   }
 
-  // How many corrections each way of finding them found: the three ways where the manifest counts them
-  // (corrections.by_cause_found_by, by cause then way or by way then cause; or the three keys in corrections.by), else
-  // code and the paper check (corrections.by: code, paper_check). code: the corrections code found, counted together.
+  // How many corrections each way of finding them found: the two ways where the manifest counts them
+  // (corrections.by_cause_found_by, by cause then way or by way then cause, an older comparison's factor_only left
+  // out; or the two keys in corrections.by), else code and the paper check (corrections.by: code, paper_check). code:
+  // the corrections code found, counted together, less an older comparison's factor-only values when it counts them.
   function guideDatabaseFoundBy(corrections) {
     const ways = GUIDE_DB_FOUND_BY.map((item) => item.key);
+    const known = [...ways, "factor_only"];
     const nested = corrections?.by_cause_found_by;
     if (nested && typeof nested === "object" && Object.values(nested).every((inner) => inner && typeof inner === "object")) {
-      const byWay = Object.keys(nested).every((key) => ways.includes(key));
+      const byWay = Object.keys(nested).every((key) => known.includes(key));
       const totals = Object.fromEntries(ways.map((key) => [key, 0]));
       let seen = false;
       for (const [outer, inner] of Object.entries(nested)) {
@@ -4893,8 +4956,9 @@
     }
     const by = corrections?.by && typeof corrections.by === "object" ? corrections.by : {};
     const totals = Object.fromEntries(ways.map((key) => [key, statsCount(by[key])]));
+    const factorOnly = statsCount(by.factor_only);
     const code = ways.slice(1).some((key) => totals[key] !== null) ? null : statsCount(by.code);
-    return { totals, code };
+    return { totals, code: code !== null && factorOnly !== null ? Math.max(0, code - factorOnly) : code };
   }
 
   // Values no database lists, by why: the counts per parameter (values.not_listed_by_reason) summed, else the two
@@ -4947,11 +5011,15 @@
       ].join(""))}${item.rows !== null && item.rows !== undefined ? ` <span class="guide-db-count-inline">(${escapeHtml(guideCountWords(item.rows, "value", "values"))})</span>` : ""}</li>`).join("")}</ul>`
       : `${names}.`;
     const counts = guideDatabaseCounts(data, overview);
+    // Under Different number: the values a database lists at an exact factor nothing has yet checked (counted there).
+    const factorOnlyHtml = counts.differs.factorOnly
+      ? ` <span class="guide-db-nested">Among them, <em>exact factor, not yet checked</em>: the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper; the record says <em>${escapeHtml(DATABASE_RESULT_NAMES.differs_factor_only)}</em> and names the factor (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}).</span>`
+      : "";
     const results = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
       const count = guideDatabaseCountHtml(item.key, counts[item.key]);
       const nested = item.nested
         ? ` <span class="guide-db-nested">Under it, <em>${escapeHtml(item.nested.label)}</em>: ${escapeHtml(item.nested.text)}${counts[item.nested.key].records !== null
-          ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : "";
+          ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : (item.key === "differs" ? factorOnlyHtml : "");
       return `<div><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(item.text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
     }).join("");
     const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
@@ -4982,7 +5050,7 @@
       ${guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount)}
       <h3 id="guide-databases-found">How a correction is found</h3>
       ${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}
-      ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor, with or without the cross-check): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
+      ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
       <h3 id="guide-databases-not-listed">Why no database lists a value</h3>
       ${guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount)}
       <p class="guide-db-note">${escapeHtml(STATS_DATABASE_CAPTION)} Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
@@ -5036,7 +5104,7 @@
     { part: "other-label", db: "other_label", statuses: ["same_number_other_label"] },
     // thin: too thin to read in the bar, so its count stands beside it, under its heading (Table 8's column names).
     { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true, head: "Corrects" },
-    { part: "differs", db: "differs", statuses: ["differs"], thin: true, head: "Differs" },
+    { part: "differs", db: "differs", statuses: ["differs", ...FACTOR_ONLY_STATUSES], thin: true, head: "Differs" },
     { part: "not-listed", db: "not_listed", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"] },
   ].map((item) => (item.db ? { ...item, label: DATABASE_RESULT_NAMES[item.db], title: databaseResultTitle(item.db) } : item));
   // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
@@ -5053,7 +5121,7 @@
       title: "The database lists this number for the paper under another substrate, variant or organism." },
     { part: "corrects", db: "corrects", label: "Corrects a value", kinds: ["corrected"],
       title: "The database lists another number for this value; CatLog's value is the one the paper prints." },
-    { part: "differs", label: "Different number", kinds: ["differs", "other_number", "another_measurement"],
+    { part: "differs", label: "Different number", kinds: ["differs", ...FACTOR_ONLY_STATUSES, "other_number", "another_measurement"],
       title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
     // One database's own words (it lists ...), never the Why not listed labels (the Guide, Browse), which say what all
     // the databases list and count other values.
@@ -5183,13 +5251,20 @@
   // total, one on the values a database lists a number for (same, corrects or differs), its result names linking into
   // Browse.
   function statsDatabaseLeadHtml(comparison, values) {
-    const [same, otherLabel, corrects, differs, notListed] = values.all;
+    const [same, otherLabel, figureCorrects, figureDiffers, notListed] = values.all;
     const { compared } = values;
     // The papers with a compared value (papers_compared, at most the papers CatLog has read); an older comparison without
     // it gives its papers.
     const papers = statsCount(comparison.papers_compared) ?? statsCount(comparison.papers);
-    const by = statsCountMap(comparison.corrections?.by);
-    const checked = by && statsCount(by.paper_check, corrects) !== null && corrects ? by.paper_check : null;
+    // Corrects and Different number as the words count them: an older comparison's factor-only values moved from the
+    // first to the second (comparisonWordCounts); a note after the lead says so (statsFactorOnlyNoteHtml).
+    const words = comparisonWordCounts(comparison.values?.all, comparison);
+    const corrects = words.moved ? words.corrects : figureCorrects;
+    const differs = words.moved ? words.differs : figureDiffers;
+    const factorOnly = words.factorOnly;
+    const found = guideDatabaseFoundBy(comparison.corrections);
+    const checked = statsCount(found.totals.paper_check, corrects);
+    const crossChecked = statsCount(found.totals.factor_cross_checked, corrects);
     const plural = (count, one, many) => (count === 1 ? one : many);
     // Browse lists records, the lead counts values: each link's title says how many records it opens, where the
     // comparison counts them (the record count of Browse's option, databaseFilters' records key).
@@ -5200,21 +5275,34 @@
       return `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ db }))}"${title}>${html}</a>`;
     };
     const from = papers ? `${formatInteger(papers)} ${plural(papers, "paper", "papers")}` : "their papers";
+    const how = [
+      checked !== null ? `${formatInteger(checked)} checked against the paper` : "",
+      crossChecked !== null && checked !== null && checked + crossChecked === corrects ? `${formatInteger(crossChecked)} by an exact factor the paper's own kcat ÷ Km confirms` : "",
+    ].filter(Boolean).join(", ");
     const changed = [
-      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${checked !== null ? ` (${formatInteger(checked)} checked against the paper)` : ""}` : "",
-      differs ? link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")} without a known cause`, "differs", differs) : "",
+      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects)}${how ? ` (${how})` : ""}` : "",
+      differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}, cause not yet known`, "differs", differs)}${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "",
     ].filter(Boolean);
     const paired = same + corrects + differs;
     const rate = paired >= STATS_RATE_BASE;
     const sentences = [
       escapeHtml(`CatLog compared ${formatInteger(compared)} ${plural(compared, "value", "values")} read from ${from} with what the databases list for the same ${papers === 1 ? "paper" : "papers"}.`),
       `Of these, ${formatInteger(same)}${compared >= STATS_RATE_BASE ? ` (${qualityShare(same, compared)})` : ""} ${plural(same, "is", "are")} the number a database lists${otherLabel ? `, and ${link(`${formatInteger(otherLabel)} ${plural(otherLabel, "is", "are")} the same number under another label`, "other_label", otherLabel)}` : ""}.`,
-      changed.length ? `Another ${changed.join(changed.length > 1 && checked !== null ? ", and " : " and ")}.` : "",
+      changed.length ? `Another ${changed.join(changed.length > 1 && (how || factorOnly) ? ", and " : " and ")}.` : "",
       notListed ? `The remaining ${link(`${formatInteger(notListed)} ${plural(notListed, "is", "are")} in none of the databases`, "not_listed", notListed)}.` : "",
       paired ? escapeHtml(`Where a database lists a number for the same measurement (${formatInteger(paired)} ${plural(paired, "value", "values")}), ${rate ? qualityShare(same, paired) : formatInteger(same)} of those numbers ${!rate && same === 1 ? "is" : "are"} the paper's.`) : "",
       escapeHtml(STATS_DATABASE_CAVEAT),
     ].filter(Boolean);
     return `<p class="stats-part-lead" data-lead="databases">${sentences.join(" ")}</p>`;
+  }
+
+  // An older comparison counts its factor-only values among the corrections in every figure and table: said once, after
+  // the lead, so the lead's and the Guide's Different number (which count them) and the figures' Corrects (which still
+  // hold them) read together. "" for a comparison that counts them under Different number itself.
+  function statsFactorOnlyNoteHtml(comparison) {
+    const words = comparisonWordCounts(comparison?.values?.all, comparison);
+    if (!words.moved) return "";
+    return `<p class="stats-note stats-part-note">${metricWordsHtml(escapeHtml(`In this snapshot's figures and tables, ${formatInteger(words.moved)} ${words.moved === 1 ? "value" : "values"} a database lists at an exact factor from the paper's number, not yet checked against the paper, still ${words.moved === 1 ? "stands" : "stand"} under Corrects; the lead and the Guide count ${words.moved === 1 ? "it" : "them"} under Different number (exact factor, not yet checked).`))}</p>`;
   }
 
   // A row of a 100% bar chart of database results: the exact counts (and shares, on a base of 1,000 values or more) in
@@ -5401,15 +5489,24 @@
   }
 
   // The corrections by cause family (by_cause), and with by_cause_database per database; null when a count is not whole.
-  // Causes with no family are counted apart (unnamed), never put in a family.
-  function statsCorrectionFamilies(corrections) {
-    const byCause = statsCountMap(corrections?.by_cause);
-    const total = statsCount(corrections?.values);
+  // Causes with no family are counted apart (unnamed), never put in a family. An older comparison's factor-only values
+  // (comparisonFactorOnly: counted among its corrections by cause) are taken out of each cause and of the total: they
+  // are Different number, not corrections.
+  function statsCorrectionFamilies(corrections, comparison = null) {
+    let byCause = statsCountMap(corrections?.by_cause);
+    let total = statsCount(corrections?.values);
+    let moved = 0;
     if (!byCause || total === null) return null;
+    const factor = comparison ? comparisonFactorOnly(comparison) : { count: null };
+    if (factor.amongCorrections && factor.byCause && Object.entries(factor.byCause).every(([cause, count]) => count <= (byCause[cause] || 0))) {
+      byCause = Object.fromEntries(Object.entries(byCause).map(([cause, count]) => [cause, count - (factor.byCause[cause] || 0)]));
+      total = Math.max(0, total - factor.count);
+      moved = factor.count;
+    }
     const families = Object.fromEntries(DATABASE_CAUSE_FAMILIES.map((family) => [family.key, statsSum(byCause, family.causes)]));
     const unnamed = Object.entries(byCause).reduce((sum, [cause, count]) => sum + (STATS_CAUSE_FAMILY[cause] ? 0 : count), 0);
     const named = Object.values(families).reduce((sum, count) => sum + count, 0);
-    return named + unnamed === total ? { byCause, families, unnamed, total } : null;
+    return named + unnamed === total ? { byCause, families, unnamed, total, moved } : null;
   }
 
   // Figure: how each correction was found, a bar per cause family. Until the comparison counts how each cause was found
@@ -5418,10 +5515,12 @@
   // gives the two counts.
   function statsCorrectionsFoundFigure(comparison) {
     const corrections = comparison?.corrections;
-    const found = statsCorrectionFamilies(corrections);
+    const found = statsCorrectionFamilies(corrections, comparison);
     if (!found || !Object.values(found.families).some(Boolean)) return null;
     const by = statsCountMap(corrections.by);
-    const code = by ? statsCount(by.code) : null;
+    const factorOnly = comparisonFactorOnly(comparison);
+    // (an older comparison's code count holds its factor-only values, which the families no longer do)
+    const code = by ? (statsCount(by.code) !== null && factorOnly.amongCorrections ? Math.max(0, by.code - factorOnly.count) : statsCount(by.code)) : null;
     const paperCheck = by ? statsCount(by.paper_check) : null;
     const byValid = code !== null && paperCheck !== null && code + paperCheck === found.total;
     const split = byValid && !found.unnamed && statsSum(found.byCause, STATS_CODE_CAUSES) === code;
@@ -5463,7 +5562,7 @@
   // (by_cause); non-zero cells open Browse at those values. On phones, a line per database.
   function statsCauseDatabaseTable(comparison, sources) {
     const corrections = comparison?.corrections;
-    const found = statsCorrectionFamilies(corrections);
+    const found = statsCorrectionFamilies(corrections, comparison);
     const byCauseDatabase = corrections?.by_cause_database;
     if (!found || !found.total || !byCauseDatabase || typeof byCauseDatabase !== "object") return null;
     const causes = Object.entries(byCauseDatabase);
@@ -5497,7 +5596,10 @@
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
       caption: "A value corrected in several databases counts for each, but once under All.",
-      rules: found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : "",
+      rules: [
+        found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : "",
+        found.moved ? `${formatInteger(found.moved)} ${found.moved === 1 ? "value" : "values"} a database lists at an exact factor, not yet checked against the paper, ${found.moved === 1 ? "is" : "are"} Different number, left out of All; the columns per database still hold ${found.moved === 1 ? "it" : "them"}.` : "",
+      ].filter(Boolean).join(" "),
       after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
   }
@@ -6165,7 +6267,7 @@
       // Without the counts for a lead, a figure that compares values with the databases still gets the caveat once.
       const compares = databases.some((item) => item.key !== "earlier-corrections" && item.key !== "replaced");
       parts.push({ key: "databases", title: "Against the databases", items: databases,
-        intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues)
+        intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) + statsFactorOnlyNoteHtml(comparison)
           : compares ? `<p class="stats-part-lead" data-lead="databases">${escapeHtml(STATS_DATABASE_CAVEAT)}</p>` : "" });
     }
 
@@ -6731,8 +6833,10 @@
     const records = item.records ? count(item.records.reduce((object, key) => object?.[key], comparison)) : null;
     const byStatus = comparison.values?.all && typeof comparison.values.all === "object" ? comparison.values.all : {};
     const statuses = (item.values || []).filter((key) => byStatus[key] != null);
-    const values = statuses.length && statuses.every((key) => count(byStatus[key]) !== null)
+    let values = statuses.length && statuses.every((key) => count(byStatus[key]) !== null)
       ? statuses.reduce((total, key) => total + byStatus[key], 0) : null;
+    // Corrects a value and Different number as the words count them (the factor-only values under Different number).
+    if (values !== null && (item.value === "corrects" || item.value === "differs")) values = comparisonWordCounts(byStatus, comparison)[item.value];
     if (records === null || values === null) return item.title;
     return `${item.title} ${formatInteger(values)} ${values === 1 ? "value" : "values"} in ${formatInteger(records)} ${records === 1 ? "record" : "records"}.`;
   }
@@ -11339,12 +11443,12 @@
   // database_evidence, or one database_check object), or null. sources: the databases that list a number for it.
   function databaseFacts(line) {
     const check = line?.database_check && typeof line.database_check === "object" ? line.database_check : {};
-    const status = shownText(line?.database_status ?? check.status);
+    const given = shownText(line?.database_status ?? check.status);
     const sentence = databaseWords(shownText(line?.database_line ?? check.line, 600));
     const causeCode = shownText(line?.database_cause ?? check.cause);
     const cause = databaseCauseText(causeCode);
     const evidence = databaseWords(shownText(line?.database_evidence ?? check.evidence));
-    if (!status && !sentence && !cause && !evidence) return null;
+    if (!given && !sentence && !cause && !evidence) return null;
     const listedSources = line?.database_sources ?? check.sources;
     const sources = (Array.isArray(listedSources) ? listedSources : String(listedSources ?? "").split(/\s*,\s*/))
       .map((item) => shownText(item, 60)).filter(Boolean);
@@ -11352,8 +11456,40 @@
     const listed = number != null && number !== "" && Number.isFinite(Number(number))
       ? `${numberText(String(number))}${check.database_unit ? ` ${unitText(shownText(check.database_unit))}` : ""}`
       : "";
+    // An exact factor nothing has yet checked against the paper (database_found_by factor_only, or a status that says
+    // so): Different number (exact factor, not yet checked), whatever the snapshot's status calls it, with the factor
+    // between the database's number and CatLog's from database_by_source (x = the database's ÷ CatLog's).
+    const foundBy = shownText(line?.database_found_by ?? check.found_by, 40);
+    const factorOnly = /^factor[\s_-]*only$/i.test(foundBy) || /factor[\s_-]*only|exact[\s_-]*factor/i.test(given);
+    const status = factorOnly && /^correct/i.test(given) ? "differs" : given;
+    const bySource = Array.isArray(line?.database_by_source) ? line.database_by_source : [];
+    const factor = factorOnly
+      ? bySource.filter((entry) => entry && typeof entry === "object" && /^(?:correct|differ)/i.test(String(entry.kind ?? ""))
+        && sources.some((source) => comparedDatabaseKey(source) === comparedDatabaseKey(entry.db)))
+        .map((entry) => databaseFactorText(entry.x)).find(Boolean) || ""
+      : "";
     return { status, sentence, cause, causeCode, sources, evidence: looksLikeLocalPath(evidence) ? "" : evidence,
-      databases: [sources.join(", "), listed].filter(Boolean).join(": ") };
+      databases: [sources.join(", "), listed].filter(Boolean).join(": "), factorOnly, factor };
+  }
+
+  // The result's word for one value: "Different number (exact factor, not yet checked)" for a factor-only value, else
+  // the result's name (databaseResult), or "" without a result.
+  function databaseResultWord(facts) {
+    const result = databaseResult(facts.status);
+    if (!result) return "";
+    return facts.factorOnly && result.filter === "differs" ? DATABASE_RESULT_NAMES.differs_factor_only : result.word;
+  }
+
+  // The cause as the note says it: for a factor-only value, the factor between the numbers and that nothing has yet
+  // checked it against the paper ("SABIO-RK lists a number 1,000× lower (off by an exact power of ten); not yet checked
+  // against the paper"); otherwise the cause in words (database_cause).
+  function databaseCauseLine(facts) {
+    if (!facts.factorOnly) return facts.cause;
+    const names = sentenceList(facts.sources.map(databaseDisplayName));
+    const what = facts.factor
+      ? `${names || "A database"} ${facts.sources.length > 1 ? "list" : "lists"} a number ${facts.factor}`
+      : `${names || "A database"} ${facts.sources.length > 1 ? "list" : "lists"} a number an exact factor from the paper's`;
+    return `${what}${facts.cause ? ` (${facts.cause})` : ""}; not yet checked against the paper`;
   }
 
   // The side file's comparison of one parameter (["same", "BRENDA,SABIO-RK"], ["differs", "BRENDA", 3]) in the spec's
@@ -11371,7 +11507,7 @@
     } else if (result?.key === "new") sentence = `no database lists a ${metric} for this paper`;
     else if (/^calc/i.test(String(status))) sentence = "calculated; not compared";
     // The phrase is the result and names the databases; nothing repeats them.
-    return { status: String(status), sentence, cause: "", evidence: "", sources, databases: "", phraseOnly: Boolean(sentence) };
+    return { status: String(status), sentence, cause: "", evidence: "", sources, databases: "", phraseOnly: Boolean(sentence), factorOnly: false, factor: "" };
   }
 
   // A record read from the paper: one row per value the snapshot compares ({field, metric, label, facts}), in the
@@ -11532,13 +11668,14 @@
     const phrase = databaseListPhrase(result?.filter, facts.sources);
     const summary = `<span class="cmp-note-head">${metricWordsHtml(escapeHtml(metric))}<span class="cmp-sep" aria-hidden="true"> · </span>`
       + `${phrase ? `${escapePublic(phrase)} ` : ""}</span>`
-      + (result ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(result.word)}</strong></span>` : "");
+      + (result ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(databaseResultWord(facts))}</strong></span>` : "");
     const lineText = facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
     const line = lineText
       ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
+    const cause = databaseCauseLine(facts);
     const body = line + kvList([
-      facts.cause ? linkedKv("Cause", metricWordsHtml(escapePublic(facts.cause))) : "",
+      cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
       facts.evidence ? linkedKv("In the paper", caretHtml(escapePublic(facts.evidence))) : "",
     ], "cmp-facts");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;
