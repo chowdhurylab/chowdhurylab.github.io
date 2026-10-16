@@ -171,15 +171,16 @@ its accessible description; no figure or table has a data line. The parts' figur
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above), each
     after its swatch in a right-aligned column under its heading, Corrects and Differs (Table 8's names; each column as
     wide as its widest count or heading plus the swatch, a sizer as in Figure 5, fitted to the heading line once drawn);
-    shares under the bars; a segment with a filter opens Browse when clicked; its rules (How these numbers are
-    counted): calculated kcat/Km not compared, numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
+    shares under the bars; a segment with a filter opens Browse when clicked; its rule (How these numbers are
+    counted): calculated kcat/Km not compared; a note under the figure (a result, so beside it): the numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it.
   - Results by database (`values_by_database`): a 100% bar per database, the
     values from papers it lists beside it under the heading Values, "+ N values from papers X does not list" under it, never in it. Its own
     not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
     database), never the Why not listed labels, which say what all the databases list. A database that lists none of
-    the papers read is named under How these numbers are counted ("UniProt lists none of these papers."), with no
+    the papers read is named in a note under the figure and under Corrections by cause and database ("UniProt lists
+    none of these papers."), so a missing bar or column is explained where it is missing, with no
     empty bar and no column in
     Corrections by cause and database. Beside it,
     the table Paired values by database (paired: the database lists a number for the same measurement): Paired, Same (share), Corrects, Differs per
@@ -247,8 +248,9 @@ its accessible description; no figure or table has a data line. The parts' figur
   row's summary. A fill from the parameter's colour to its tint, the 10–90% range as a line on the baseline
   with the median as a dot, the median at the right to two significant figures and the class's number of values
   after it (a muted n column sized in ch to its longest count), a class with fewer than 300 values drawn lighter
-  (fill at 45%) with a dashed outline so it does not look as solid as a big one (How these numbers are counted says
-  so when one is shown), a shared log axis per panel, the one Value ranges uses (a tick per decade, labelled at the even powers when there are more than 7 ticks, so
+  (fill at 45%) with a dashed outline so it does not look as solid as a big one (the caption's second sentence names
+  the marks shown: "A hatched stub at either end marks the values beyond the curve; a lighter, dashed curve has fewer
+  than 300 values."; Value ranges' caption says its end bars hold every value beyond them), a shared log axis per panel, the one Value ranges uses (a tick per decade, labelled at the even powers when there are more than 7 ticks, so
   10⁰ is always labelled; every second label thins out when narrow, the power of ten with it). EC N links into Browse with the panel's parameter (the
   class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.

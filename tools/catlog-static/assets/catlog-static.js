@@ -4280,11 +4280,16 @@
     }
     if (!panels.length) return null;
     const binWord = width === 0.5 ? "half-decade" : `${width}-decade`;
+    // The figure's marks are said under it, in its second sentence: the hatched stubs (where an end bin holds values)
+    // and the dashed curves (where a class has few values).
+    const stubs = panels.some((panel) => panel.includes('class="stats-ridge-end"'));
+    const marks = [stubs ? "a hatched stub at either end marks the values beyond the curve" : "",
+      few ? `a lighter, dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values` : ""].filter(Boolean).join("; ");
     return {
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
-      caption: "One curve per enzyme class, each scaled to its own peak, with the median (dot) and the middle 80% of values (line).",
-      rules: `Each curve runs through ${binWord} bins on a log scale, and n is the class's number of values. A record in several classes counts in each. The two end bins also hold every value beyond them: the curve leaves them out and a hatched stub marks them, with the count in the tooltip line.${few ? ` A lighter, dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values.` : ""} Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.`,
+      caption: `One curve per enzyme class, each scaled to its own peak, with the median (dot) and the middle 80% of values (line).${marks ? ` ${marks.charAt(0).toUpperCase()}${marks.slice(1)}.` : ""}`,
+      rules: `Each curve runs through ${binWord} bins on a log scale, and n is the class's number of values. A record in several classes counts in each. The two end bins also hold every value beyond them, so the curve leaves them out; the tooltip line gives their counts. Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.`,
     };
   }
 
@@ -5231,10 +5236,9 @@
     // to the heading line once drawn (statsFitValueColumns).
     const chars = thin.reduce((total, result, index) => total + Math.max(String(result.head || "").length,
       ...rows.map((row) => formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length)), 0);
-    const notes = [
-      values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "",
-      statsNotReproducedText(comparison),
-    ].filter(Boolean).join(" ");
+    const notes = values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "";
+    // A result, not a rule: said under the figure.
+    const notReproduced = statsNotReproducedText(comparison);
     const names = statsListText(sources.map((source) => statsDatabaseNameHtml(source.display)));
     return {
       id: "statsDbValuesTitle", key: "db-values", title: "Values against the databases",
@@ -5244,6 +5248,7 @@
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
       caption: `Values read from the paper, compared with ${names || "the databases"}.`,
       rules: notes,
+      after: notReproduced ? `<p class="stats-note">${metricWordsHtml(escapeHtml(notReproduced))}</p>` : "",
     };
   }
 
@@ -5289,7 +5294,8 @@
         axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"],
         valueWidth: `calc(${Math.max(6, ...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
       caption: "Each bar covers only the values from papers that database lists. A value counts for every database that lists its paper.",
-      rules: none.text,
+      // Why a database has no bar is said under the figure.
+      after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
   }
 
@@ -5430,7 +5436,8 @@
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
       caption: "A value corrected in several databases counts for each, but once under All.",
-      rules: [none.text, found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : ""].filter(Boolean).join(" "),
+      rules: found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : "",
+      after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
   }
 
@@ -6056,8 +6063,8 @@
       values.push({
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
         body: `<div class="stats-ranges">${ranges.join("")}</div>`,
-        caption: "Values per power of ten on a log scale, with the median (dot) and the middle 80% of values (line).",
-        rules: "The two end bars also hold every value beyond them. Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.",
+        caption: "Values per power of ten on a log scale, with the median (dot) and the middle 80% of values (line). The two end bars also hold every value beyond them.",
+        rules: "Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.",
       });
     }
     const ridges = statsRidgeFigure(overview);
