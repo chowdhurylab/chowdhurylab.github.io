@@ -1147,6 +1147,9 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Figure 8: each count is a column as wide as its widest count or its heading (Corrects, Differs) plus the swatch (10px
    and a 4px gap), its swatch right before the number; the headings stand right-aligned over the counts. */
 .stats-db-thin > .stats-value-part[data-sizer]::before { padding-left:14px }
+/* The columns' sizers have no baseline of their own: set the counts at the top of their 16px line, so the value stays one
+   line tall and stands on the name's line (Figure 8's printed kcat/Km, a name with a note under it). */
+.stats-chart-value > .stats-db-thin { vertical-align:top }
 .stats-db-thin > .stats-value-part > span { display:inline-flex; align-items:center; gap:4px }
 /* Part 7's tables: a count with its share under it. */
 .stats-db-table td small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
