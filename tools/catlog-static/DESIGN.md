@@ -242,7 +242,9 @@ index arrives, Review result, Measurement type and the three Source choices show
 the snapshot's own counts (Read from the paper is the counts band's figure,
 Not yet re-read the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
-and a newer change restarts them; meanwhile the panel is marked busy
+and a newer change restarts them (a view returned to within a moment shows its
+counts at once and drops the count still running for the view left, so an older
+count never overwrites a newer one); meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
 above the table that removes it, in the sidebar's words ("Source: Read from the paper", "Source: OED", "Source: Earlier
 extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's

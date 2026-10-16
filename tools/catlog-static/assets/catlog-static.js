@@ -7045,6 +7045,12 @@
   function countFacets(controls, onDone) {
     const key = facetCountKey(controls);
     if (facetCountJob.key === key && facetCountJob.counts) {
+      // Counts already worked out (a view the visitor returns to): drawn at once, and a count still running for the view
+      // left a moment ago is dropped, so it never finishes later and overwrites these (a typed address while a record
+      // was open left the sidebar with the earlier view's counts, 2026-10-15).
+      facetCountJob.run += 1;
+      facetCountJob.pendingKey = "";
+      facetCountJob.waiting = [];
       onDone(facetCountJob.counts);
       return;
     }

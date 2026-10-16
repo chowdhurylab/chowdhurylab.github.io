@@ -2516,6 +2516,16 @@ def check_filters(driver, browser, url, route_label):
         assert summary_count() == accepted, (summary(), accepted)
         open_page(base + "#browse?q=laccase&source=paper")
         assert summary_count() == paper, (summary(), paper)
+        # A view whose counts are already worked out (this one) is drawn at once when the address goes to another view
+        # and back within a moment; the other view's count, still running, is dropped and never overwrites it (a typed
+        # address while a record was open had left the sidebar with the earlier view's counts).
+        driver.execute_script("""
+            location.hash = '#browse?q=dehydrogenase';
+            setTimeout(() => { location.hash = '#browse?q=laccase&source=paper'; }, 40);
+        """)
+        wait.until(lambda d: fragment() == "browse?q=laccase&source=paper" and summary_count() == paper)
+        time.sleep(3)
+        assert count_of("source:all") == paper and count_of("source:paper") == paper, (count_of("source:all"), paper)
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
