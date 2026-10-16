@@ -2839,6 +2839,66 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     return results
 
 
+def check_phone_scroll(driver, browser, url):
+    """Phones (2026-10-15): the page scrolls as a whole, never a letterbox of one or two cards under a pinned header; the
+    pager sticks to the foot of the window and is in reach on an iPhone SE (320x568); a new page opens at the table's
+    top; the page keeps its place while a record is open. From 641px the table scrolls inside its box as before."""
+    if browser != "chrome":
+        return {"route": "phone-scroll", "skipped": "Chrome only"}
+    wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
+    loaded = lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]") and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row")
+    state_js = """
+        const page = document.scrollingElement, wrap = document.getElementById('recordTableWrap');
+        const pager = document.querySelector('.pagination'), box = pager.getBoundingClientRect();
+        return {pageScrolls: page.scrollHeight > page.clientHeight + 1, wrapOverflow: getComputedStyle(wrap).overflowY,
+                sticky: getComputedStyle(pager).position, pagerInView: box.top >= 0 && box.bottom <= innerHeight + 1,
+                nextInView: document.getElementById('nextButton').getBoundingClientRect().bottom <= innerHeight + 1,
+                scrollTop: page.scrollTop, wrapTop: wrap.getBoundingClientRect().top + page.scrollTop};
+    """
+    results = {}
+    try:
+        for width, height in ((320, 568), (390, 664)):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": True})
+            driver.get("about:blank")
+            driver.get(url + "#browse")
+            wait.until(loaded)
+            top = driver.execute_script(state_js)
+            assert top["pageScrolls"] and top["wrapOverflow"] == "visible" and top["sticky"] == "sticky", (width, top)
+            assert top["pagerInView"] and top["nextInView"], f"The pager is out of reach at {width}x{height}: {top}"
+            driver.execute_script("window.scrollTo(0, document.scrollingElement.scrollHeight)")
+            bottom = driver.execute_script(state_js)
+            assert bottom["scrollTop"] > 0 and bottom["pagerInView"], (width, bottom)
+            # Next opens the new page at the table's top (the window, not the table's box, scrolls here).
+            first_keys = [row.get_attribute("data-key") for row in driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")]
+            driver.find_element(By.ID, "nextButton").click()
+            wait.until(lambda d: loaded(d) and [row.get_attribute("data-key") for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")] != first_keys)
+            turned = driver.execute_script(state_js)
+            assert abs(turned["scrollTop"] - turned["wrapTop"]) <= 2, (width, turned)
+            # A record keeps the page where it was.
+            driver.execute_script("window.scrollTo(0, document.scrollingElement.scrollHeight)")
+            before = driver.execute_script("return document.scrollingElement.scrollTop")
+            cards = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell")
+            cards[-1].click()
+            wait.until(lambda d: d.execute_script("return document.body.classList.contains('detail-open') && !document.querySelector('#detailLoadStatus')"))
+            assert driver.execute_script("return document.scrollingElement.scrollTop") == before, "The page moved under the record"
+            driver.find_element(By.ID, "closeDetailButton").click()
+            wait.until(lambda d: not d.execute_script("return document.body.classList.contains('detail-open')"))
+            assert abs(driver.execute_script("return document.scrollingElement.scrollTop") - before) <= 2, "The page moved while the record was open"
+            driver.save_screenshot(str(OUTPUT / f"{browser}-phone-scroll-{width}x{height}.png"))
+            results[f"{width}x{height}"] = True
+        # From 641px the table scrolls inside its box and the page does not.
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 800, "height": 600, "deviceScaleFactor": 1, "mobile": False})
+        driver.get("about:blank")
+        driver.get(url + "#browse")
+        wait.until(loaded)
+        wide = driver.execute_script(state_js)
+        assert not wide["pageScrolls"] and wide["wrapOverflow"] == "auto", wide
+        results["800x600"] = True
+    finally:
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"route": "phone-scroll", "passed": True, "checked": results}
+
+
 def check_layout(driver, browser, url, route_label):
     """The page grid: a 56px header, a 64px counts band (20px numbers, 13px labels), the filter sidebar beside the table
     (open from 1200px and the rail from 1024 to 1199px, a viewer's other choice remembered; the rail while a record is
@@ -5214,6 +5274,7 @@ def main():
         result["team"] = check_team(driver, args.browser, url)
         result["guide_databases"] = check_guide_databases(driver, args.browser, url)
         result["word_breaks"] = check_word_breaks(driver, args.browser, url)
+        result["phone_scroll"] = check_phone_scroll(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":

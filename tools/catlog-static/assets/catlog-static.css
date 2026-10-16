@@ -1751,6 +1751,15 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }
   body.filters-open { overflow:hidden }
   body.filters-open .skip-link { display:none }
+  /* The page scrolls as a whole (2026-10-15: a pinned header, counts band and toolbar left 1.5-2.5 cards of list in
+     view, kept Safari's toolbars from collapsing, and on an iPhone SE put the pager below the window): the list is as
+     tall as its cards, the pager sticks to the foot of the window, and the page keeps its place behind the filter sheet
+     and an open record. */
+  .static-app { height:auto; min-height:100vh; min-height:100dvh }
+  #catalogView, .workbench, .table-panel { min-height:0; overflow:visible }
+  .table-wrap { flex:none; overflow:visible }
+  .pagination { position:sticky; bottom:0; z-index:5 }
+  body.detail-open { overflow:hidden }
   /* One toolbar row (Filters, Export, Sort); the chips and a count that is not the page range go below it. */
   .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:var(--sp-2); padding:var(--sp-2) var(--sp-4) }
   .records-title { display:contents }

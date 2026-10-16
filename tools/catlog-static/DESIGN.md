@@ -525,7 +525,12 @@ Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
 12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
-stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) each record is a card: name and EC;
+stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) the page scrolls
+as a whole (2026-10-15: the pinned header, counts band and toolbar had left 1.5-2.5 cards in view, kept Safari's toolbars
+from collapsing and put the pager below an iPhone SE's window): the list is as tall as its cards, the pager sticks to the
+foot of the window, a new page opens at the table's top (showTableTop scrolls the window where the table's box cannot
+scroll), and the page keeps its place behind the filter sheet and an open record (body overflow hidden); from 641px the
+table scrolls inside its box as before. Each record is a card: name and EC;
 the variant's mutation (under the name, as in the table); organism · substrate, with any note under the substrate on
 its own grey line; kcat, Km and kcat/Km with their units as labels, written as the table's headings and the counts
 band write them (italic k and K, subscript cat and m: real elements in each value cell, hidden in the table, as a CSS

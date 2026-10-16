@@ -12545,10 +12545,15 @@
   }
 
   // A new page (Previous, Next, another page size) opens at its first row: the table scrolls inside its own box, so
-  // its offset would otherwise carry over and show the new page near its bottom. The sideways offset stays.
+  // its offset would otherwise carry over and show the new page near its bottom. The sideways offset stays. On a phone
+  // the page scrolls instead of the table (the box does not scroll): the window goes to the table's top.
   function showTableTop() {
     const wrap = $("recordTableWrap");
-    if (wrap) wrap.scrollTop = 0;
+    if (!wrap) return;
+    wrap.scrollTop = 0;
+    if (wrap.scrollHeight > wrap.clientHeight + 1 || typeof wrap.getBoundingClientRect !== "function" || typeof window.scrollTo !== "function") return;
+    const top = wrap.getBoundingClientRect().top + (window.scrollY || 0);
+    if ((window.scrollY || 0) > top) window.scrollTo({ top: Math.max(0, top) });
   }
 
   function bindControls() {
