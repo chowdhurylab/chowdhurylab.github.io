@@ -12,7 +12,9 @@
   --fs-18:18px; --lh-18:24px;   /* Stats section headings */
   --fs-20:20px; --lh-20:24px;   /* counts band numbers, record title, Stats headline line 2 */
   --fs-24:24px; --lh-24:28px;   /* Stats page title, donut centre total */
-  --fs-32:32px; --lh-32:36px;   /* Stats headline line 1 */
+  --fs-28:28px; --lh-28:32px;   /* Stats headline key numbers on phones */
+  --fs-32:32px; --lh-32:36px;   /* Stats lead figure; headline key numbers' top on tablets */
+  --fs-40:40px; --lh-40:44px;   /* Stats headline key numbers */
   /* Spacing: a 4px grid. Radius 4px for controls, 0 for bars. */
   --sp-1:4px;
   --sp-2:8px;
@@ -83,7 +85,15 @@
   /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
   --accent-glow:rgba(36,95,88,0.26);
   --accent-wash:rgba(36,95,88,0.07);
-  /* Shadows only on the phone sheet, dialogs, menus and Stats' tooltip line. */
+  /* Stats' headline band is the page's focal point (the user, 2026-10-15: "more focusing ... with some glow"): a soft
+     halo behind each key number (crisp digits, no text-shadow), a calm wash down the card and a gentle accent glow
+     round it. The site has one light theme, so these are its only forms. */
+  --accent-halo-core:rgba(36,95,88,0.13);
+  --accent-halo:rgba(36,95,88,0.075);
+  --accent-halo-hover:rgba(36,95,88,0.12);
+  --accent-wash-soft:rgba(36,95,88,0.035);
+  --band-glow:0 0 0 3px rgba(36,95,88,0.045), 0 14px 36px -16px rgba(36,95,88,0.34);
+  /* Shadows only on the phone sheet, dialogs, menus, Stats' tooltip line and Stats' headline band. */
   --tip-shadow:0 6px 20px rgba(20,34,31,0.22);
   --overlay:rgba(20,34,31,0.24);
   --scroll-edge:rgba(23,33,32,0.5);
@@ -908,11 +918,14 @@ p.cmp-note { padding-left:16px }
 .stats-heading h1 { margin:0; font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
 .stats-heading .snapshot-date { color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .stats-heading p { margin:var(--sp-1) 0 0; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
-/* 1. At a glance: the headline band (the user, 2026-10-13: "can it glow a bit or more focus driving"). A thin accent rule
-   along its top, a soft accent wash, the key numbers (line 1, 32px) in accent ink with a soft glow; a linked number
-   opens Browse and its whole item tints calmly under the pointer. */
+/* 1. At a glance: the headline band, the page's focal point (the user, 2026-10-13: "can it glow a bit or more focus
+   driving"; 2026-10-15: "more focusing ... with some glow"). A card with a 1px accent line and a gentle accent glow
+   round it, a thin accent rule along its top and a calm wash; the four key numbers (line 1, 40px) in accent ink, each
+   over a soft radial halo (its background and a wide low-alpha box-shadow: the digits stay crisp, and the halo adds
+   nothing to the page's width); a linked number opens Browse and its whole item tints calmly under the pointer. The
+   numbers fade and rise once, the first time the band is shown, unless the viewer asks for less motion. */
 .stats-totals { margin:var(--sp-5) 0 var(--sp-7) }
-.stats-band { position:relative; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:radial-gradient(90% 140% at 0% 0%, var(--accent-wash), transparent 60%), var(--bg); padding:var(--sp-4) var(--sp-4) var(--sp-2) }
+.stats-band { position:relative; overflow:hidden; border:1px solid var(--accent-line); border-radius:10px; background:radial-gradient(80% 130% at 0% 0%, var(--accent-wash), transparent 62%), linear-gradient(180deg, var(--accent-wash-soft), transparent 72%), var(--bg); box-shadow:var(--band-glow); padding:var(--sp-4) var(--sp-4) var(--sp-2) }
 .stats-band::before { content:""; position:absolute; inset:0 0 auto; height:2px; background:linear-gradient(90deg, var(--accent), var(--accent-line) 50%, transparent 95%) }
 .stats-band > .stats-part-title { margin:0 0 var(--sp-1) var(--sp-2); border:0; padding:0 }
 .stats-totals dl { display:grid; grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); margin:0; padding:var(--sp-2) 0 }
@@ -922,19 +935,26 @@ p.cmp-note { padding-left:16px }
 .stats-totals dt { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-totals dd { margin:4px 0 0; font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
 .stats-totals dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-13); font-weight:400; line-height:var(--lh-13) }
+.stats-totals .stats-totals-main dd { font-size:var(--fs-40); line-height:var(--lh-40) }
 .stats-totals .stats-totals-scope dd { font-size:var(--fs-20); line-height:var(--lh-20) }
 .stats-total-value { color:var(--text) }
-.stats-totals-main .stats-total-value { color:var(--accent); text-shadow:0 0 14px var(--accent-glow) }
+.stats-totals-main .stats-total-value { display:inline-block; border-radius:999px; background:radial-gradient(closest-side, var(--accent-halo-core), var(--accent-halo)); box-shadow:0 0 28px 12px var(--accent-halo); color:var(--accent) }
 /* A linked number: the whole item is its target. */
 a.stats-total-value { text-decoration:none }
 a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:6px }
 a.stats-total-value:focus-visible { outline:0 }
 .stats-total:has(> dd > a.stats-total-value:focus-visible) { outline:2px solid var(--accent); outline-offset:-2px }
 .stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint) }
-.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { text-shadow:0 0 18px var(--accent-glow) }
+.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { box-shadow:0 0 32px 14px var(--accent-halo-hover) }
 @media (prefers-reduced-motion: no-preference) {
   .stats-total { transition:background-color 200ms ease }
+  .stats-totals-main .stats-total-value { transition:box-shadow 200ms ease }
+  .stats-band.is-entering .stats-totals-main dd { animation:stats-total-rise 900ms cubic-bezier(0.22, 0.7, 0.2, 1) both }
+  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(2) dd { animation-delay:90ms }
+  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(3) dd { animation-delay:180ms }
+  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(4) dd { animation-delay:270ms }
 }
+@keyframes stats-total-rise { from { opacity:0; transform:translateY(8px) } }
 /* The numbered parts after the band: one plain heading each, figures on a 12-column grid (two to a row from 1280px). */
 .stats-charts { display:block }
 .stats-part + .stats-part, .stats-part + .stats-method { margin-top:var(--sp-7) }
@@ -1408,14 +1428,17 @@ a.stats-total-value:focus-visible { outline:0 }
 }
 
 /* Four headline numbers on a tablet: a wide font (Linux's DejaVu, Verdana) would push a six-digit count past its column
-   at 32px, so the number scales between 24 and 32px with the window. */
+   at 32px or more, so the number scales between 24 and 32px with the window (40px from 1200px). */
 @media (min-width: 721px) and (max-width: 1199px) {
-  .stats-totals dd { font-size:clamp(var(--fs-24), 2.7vw, var(--fs-32)) }
+  .stats-totals .stats-totals-main dd { font-size:clamp(var(--fs-24), 2.7vw, var(--fs-32)); line-height:var(--lh-32) }
 }
 
+/* Phones: 28px key numbers two to a row (one under the other below 360px), their halos a little tighter. */
 @media (max-width: 720px) {
   .stats-totals dl { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0 }
   .stats-total:nth-child(odd)::before { display:none }
+  .stats-totals .stats-totals-main dd { font-size:var(--fs-28); line-height:var(--lh-28) }
+  .stats-totals-main .stats-total-value { box-shadow:0 0 22px 8px var(--accent-halo) }
 }
 /* The narrowest phones: the four headline numbers one under the other, so Read from the paper keeps one line, also in a
    wide font (DejaVu Sans), and the human review's base reads in two lines, not five. */
@@ -1432,7 +1455,6 @@ a.stats-total-value:focus-visible { outline:0 }
 
 @media (max-width: 640px) {
   .stats-shell, .team-shell { padding:24px 16px 32px }
-  .stats-totals dd { font-size:var(--fs-24); line-height:var(--lh-24) }
   .stats-totals .stats-totals-scope dd { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-stack { gap:40px }
   .stats-lead { padding:16px }
@@ -1477,8 +1499,11 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   .stats-charts, .stats-part-grid { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
-  /* Paper: no glow, no wash, no tooltip or switch. */
+  /* Paper: no glow, halo, wash, tooltip or switch; the numbers stand still. */
   .stats-view *, .snapshot-band * { text-shadow:none !important; filter:none !important }
+  .stats-band { box-shadow:none; border-color:var(--line) }
+  .stats-totals-main .stats-total-value { background:none; box-shadow:none !important; transition:none }
+  .stats-band.is-entering .stats-totals-main dd { animation:none }
   .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
   .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
   .stats-tip, .stats-switch { display:none !important }

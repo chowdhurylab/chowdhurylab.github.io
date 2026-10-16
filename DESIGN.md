@@ -32,19 +32,27 @@ tables on a 12-column grid (max 1200px, gaps 48px and 32px), two to a row from 1
 a bar chart that spans it keeps its labels within 240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row
 each, so the legend table keeps its room beside the donut), one below. Figures and tables are numbered across parts.
 
-1. At a glance, the headline band (the user: "the stats bar on top - can it glow a bit or more focus driving"): a box
-   with a 2px accent rule along its top, fading to the right, and a soft accent wash in its corner. Line 1 (32px):
-   Records, Accepted with its share, Read from the paper with its papers, Human review ("99.9%", "values correct of
-   2,674 entries from the earlier version (408 papers)"; a snapshot without the review's counts gives the share of
-   approved values the same, read from the paper again), the numbers in accent ink with a soft
-   glow (a 14px text-shadow of the accent at 26%, never neon). Line 2 (20px): Papers, Enzymes, EC numbers, Organisms,
-   Substrates. Accepted and Read from the paper link into Browse: the whole item is the link and tints calmly under
-   the pointer. Phones: 24/18px, two to a row; below 360px line 1 stands one under the other, so Read from the paper
-   keeps one line in a wide font (DejaVu Sans). CatLog is the one name (round 8): records are Read from the paper or
+1. At a glance, the headline band, the page's focal point (the user: "the stats bar on top - can it glow a bit or
+   more focus driving"; 2026-10-15: "can that be more focusing idk with some glow maybe?"): a card with a 1px accent
+   line (--accent-line), a gentle accent glow round it (--band-glow: a 3px ring at 4.5% and a soft 36px shadow below
+   at 34%, never neon), a 2px accent rule along its top fading to the right and a calm wash (a corner tint over a
+   top-to-bottom fade). Line 1 (40px, tabular numbers): Records, Accepted with its share, Read from the paper with its
+   papers, Human review ("99.9%", "values correct of 2,674 entries from the earlier version (408 papers)"; a snapshot
+   without the review's counts gives the share of approved values the same, read from the paper again), the numbers
+   in accent ink, each over a soft radial halo of the accent (its own background, 13% at the centre to 7.5% at the
+   edge, carried 24-40px out by a low-alpha box-shadow; never a text-shadow, so the digits stay crisp, and a
+   box-shadow adds nothing to the page's width); the halo grows a little under the pointer. The four numbers fade and
+   rise once (900ms, 90ms apart), the first time Stats is drawn, and only when the viewer has not asked for less
+   motion (the band drops is-entering after 1.5s, so Stats shown again does not replay it). Line 2 (20px): Papers,
+   Enzymes, EC numbers, Organisms, Substrates. Accepted and Read from the paper link into Browse: the whole item is the
+   link and tints calmly under the pointer. From 721 to 1199px line 1 scales between 24 and 32px with the window, so
+   a six-digit count keeps inside its column in a wide font (DejaVu Sans). Phones (720px and under): 28/20px (18px
+   from 640px), two to a row, the halos a little tighter; below 360px line 1 stands one under the other, so Read from
+   the paper keeps one line in a wide font. Paper: no halo, glow or wash, and nothing moves. CatLog is the one name (round 8): records are Read from the paper or
    Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on
    Stats), in the human review's base and in the Guide's method section. "re-read" never breaks at its hyphen ("re-" /
-   "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band gets the same treatment at 20px: its key numbers
-   in accent ink with the glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
+   "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band keeps its quieter look at 20px: its key numbers
+   in accent ink with a soft text glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
    linked count tints around itself without moving the line. Its With counts (kcat, Km, kcat/Km) are secondary:
    16px/500 in --text-2 with their 13px labels, so the key numbers lead. Nothing moves when the viewer asks for less motion;
    print drops every glow and wash.

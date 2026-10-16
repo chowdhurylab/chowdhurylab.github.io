@@ -107,6 +107,9 @@
   let statsRefitOnFonts = false;
   let statsRefitOnNarrow = false;
   let statsRefitOnResize = false;
+  // The headline band's numbers fade and rise once, the first time Stats is drawn (is-entering; never under reduced
+  // motion, which the stylesheet decides).
+  let statsBandEntered = false;
   // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
@@ -5612,9 +5615,14 @@
       ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
       : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${item.noteHtml || escapeHtml(item.note)}</small>` : ""}</dd></div>`;
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
-    $("statsTotals").innerHTML = `<section class="stats-band" aria-labelledby="statsPartGlanceTitle">
+    const entering = !statsBandEntered;
+    statsBandEntered = true;
+    $("statsTotals").innerHTML = `<section class="stats-band${entering ? " is-entering" : ""}" aria-labelledby="statsPartGlanceTitle">
       <h2 id="statsPartGlanceTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">1</span><span>At a glance</span></h2>
       ${totalsHtml(main, "stats-totals-main")}${scope.length ? totalsHtml(scope, "stats-totals-scope") : ""}</section>`;
+    // Once the numbers have risen (the last starts at 270ms and takes 900ms), the band drops is-entering, so Stats shown
+    // again later does not replay it.
+    if (entering) window.setTimeout?.(() => $("statsTotals")?.querySelector?.(".stats-band")?.classList?.remove("is-entering"), 1500);
 
     // The parts after the band, each a list of figures (half width, two to a row from 1280px; `wide` ones take the row;
     // `stack` puts two in one column) or ready blocks (`html`).

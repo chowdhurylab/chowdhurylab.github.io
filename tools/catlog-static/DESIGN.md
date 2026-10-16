@@ -33,6 +33,10 @@ colors:
   figure-kcat-km: "#00A087"
   accent-glow: "rgba(36,95,88,0.26)"
   accent-wash: "rgba(36,95,88,0.07)"
+  accent-halo-core: "rgba(36,95,88,0.13)"
+  accent-halo: "rgba(36,95,88,0.075)"
+  accent-halo-hover: "rgba(36,95,88,0.12)"
+  accent-wash-soft: "rgba(36,95,88,0.035)"
 typography:
   body:
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif'
@@ -43,7 +47,7 @@ typography:
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
   table:
     fontSize: 13px
-  scale: 12/16, 13/18, 14/20, 16/24, 18/24, 20/24, 24/28, 32/36px (size/line height)
+  scale: 12/16, 13/18, 14/20, 16/24, 18/24, 20/24, 24/28, 28/32, 32/36, 40/44px (size/line height)
   weights: 400, 500, 600
   numbers: tabular-nums lining-nums
 spacing: 4, 8, 12, 16, 24, 32, 48px
@@ -65,8 +69,11 @@ scale with 24px gutters (16px below 1024px): a 56px header, a 64px counts band,
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
 and --line-soft inside them; shadows only on the phone sheet, dialogs, menus and
 Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"): the
-counts band and Stats' headline band carry a soft accent wash, a thin accent rule and their key numbers in accent
-ink with a soft glow (--accent-glow), and Stats' figures fill from colour to tint; never neon, none in print.
+counts band carries a soft accent wash, a thin accent rule and its key numbers in accent ink with a soft glow
+(--accent-glow); Stats' headline band, the page's focal point (the user, 2026-10-15: "more focusing ... with some
+glow"), is a card with a 1px accent line, a gentle accent glow round it and a calm wash, its key numbers in accent ink
+over soft radial halos (--accent-halo*, crisp digits); Stats' figures fill from colour to tint; never neon, none in
+print.
 Stats, the Guide and Team scroll inside their own view under the header; the
 document itself never scrolls (each view is positioned, so screen-reader-only
 text deep in a page cannot reach past it).
@@ -944,7 +951,7 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 ## Stats
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
-1 At a glance (the headline band: 32px key numbers in accent ink with a soft glow (24-32px with the window between 721 and 1199px, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
+1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in accent ink, each over a soft radial halo, fading and rising once on first show unless the viewer asks for less motion (24-32px with the window between 721 and 1199px, so a wide font keeps a six-digit count inside its column; 28px on phones), then 20px scope counts),
 2 Quality (the lead, the user's headline: "Human review", 99.9% values correct of 2,674 entries from the earlier
 version (408 papers), with "Read from the paper again: same value as the reviewers for ..." as a side line; then the
 checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a

@@ -715,6 +715,27 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
                    "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0}
 
 
+# The headline band is Stats' focal point: each key number over a soft halo (a radial background and a low-alpha
+# box-shadow, the digits crisp, with no text-shadow) and the card with a gentle glow round it; none of it on paper.
+STATS_BAND_GLOW_JS = """
+    const value = document.querySelector('.stats-totals-main .stats-total-value');
+    const band = document.querySelector('#statsTotals > .stats-band');
+    if (!value || !band) return null;
+    const v = getComputedStyle(value), b = getComputedStyle(band);
+    return {halo: v.backgroundImage.includes('radial-gradient') && v.boxShadow !== 'none', crisp: v.textShadow === 'none',
+            card: b.boxShadow !== 'none'};
+"""
+
+# The band's numbers fade and rise once (is-entering), only when the viewer has not asked for less motion.
+STATS_BAND_RISE_JS = """
+    const band = document.querySelector('#statsTotals > .stats-band');
+    band.classList.add('is-entering');
+    const name = getComputedStyle(document.querySelector('.stats-totals-main dd')).animationName;
+    band.classList.remove('is-entering');
+    return name;
+"""
+
+
 # The human review leads Quality, the first numbered part after the headline band (part 1), and is shown once.
 LEAD_FIRST_JS = """
     const band = document.querySelector('#statsTotals > .stats-band');
@@ -1700,8 +1721,9 @@ def check_stats_new_figures(driver, browser, url):
             labels = driver.execute_script(RIDGE_TICKS_JS)
             assert labels and all(axis and all(label.startswith("10") and len(label) > 2 for label in axis) for axis in labels), (
                 f"At {narrow}px a ridge axis label is not a whole power of ten: {labels}")
-        # The key numbers glow on screen and not on paper; with less motion asked for, nothing moves.
-        glow = "return getComputedStyle(document.querySelector('.stats-totals-main .stats-total-value')).textShadow"
+        # The key numbers glow on screen (a halo, never a text-shadow) and not on paper; with less motion asked for,
+        # nothing moves.
+        glow = "return getComputedStyle(document.querySelector('.stats-totals-main .stats-total-value')).boxShadow"
         assert driver.execute_script(glow) not in ("", "none")
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
         assert driver.execute_script(glow) == "none"
@@ -4648,6 +4670,23 @@ def check(driver, browser, url):
                 if isinstance(listed.get(key[len("source_"):]), int):
                     assert count == listed[key[len("source_"):]], f"Stats and the Guide count {key} differently"
 
+    # The headline band glows on screen (Chrome: not on paper), and its numbers rise once, never with less motion asked for.
+    assert driver.execute_script(STATS_BAND_GLOW_JS) == {"halo": True, "crisp": True, "card": True}, driver.execute_script(STATS_BAND_GLOW_JS)
+    WebDriverWait(driver, 5).until(lambda d: d.execute_script(
+        "return !document.querySelector('#statsTotals > .stats-band').classList.contains('is-entering')"))
+    if browser == "chrome":
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
+        try:
+            assert driver.execute_script(STATS_BAND_GLOW_JS) == {"halo": False, "crisp": True, "card": False}
+        finally:
+            driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": ""})
+        driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
+        try:
+            assert driver.execute_script(STATS_BAND_RISE_JS) == "none"
+        finally:
+            driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
+        assert driver.execute_script(STATS_BAND_RISE_JS) == "stats-total-rise"
+
     # The overview, when this snapshot has one; otherwise no section or headline without its numbers.
     headline = driver.find_element(By.ID, "statsTotals").text
     stats_text = driver.find_element(By.ID, "statsCharts").get_attribute("textContent")
@@ -4754,7 +4793,7 @@ def check(driver, browser, url):
         """), "Stats labels and captions keep 13px"
         assert driver.execute_script("""
             const size = (selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
-            return size('.stats-totals-main dd') >= (innerWidth <= 640 || (innerWidth >= 721 && innerWidth <= 1199) ? 24 : 32) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
+            return size('.stats-totals-main dd') >= (innerWidth <= 720 ? 28 : innerWidth <= 1199 ? 24 : 40) && size('.stats-totals-scope dd') >= (innerWidth <= 640 ? 18 : 20);
         """), "Stats headline numbers keep the type scale"
         viewports[label] = driver.execute_script("""
             const page = document.scrollingElement, stats = document.querySelector('#statsView');
