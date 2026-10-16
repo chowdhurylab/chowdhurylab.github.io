@@ -5573,13 +5573,21 @@
     const code = by ? (statsCount(by.code) !== null && factorOnly.amongCorrections ? Math.max(0, by.code - factorOnly.count) : statsCount(by.code)) : null;
     const paperCheck = by ? statsCount(by.paper_check) : null;
     const byValid = code !== null && paperCheck !== null && code + paperCheck === found.total;
-    const split = byValid && !found.unnamed && statsSum(found.byCause, STATS_CODE_CAUSES) === code;
+    // The comparison's own count of how each cause was found (by_cause_found_by), when it adds up cause by cause, splits
+    // every bar exactly: code can now state a cause the paper checks also name (a unit misprint the paper's own kcat ÷ Km
+    // settles). Without it, the older rule below.
+    const byFound = corrections?.by_cause_found_by && typeof corrections.by_cause_found_by === "object" ? corrections.by_cause_found_by : null;
+    const foundCount = (cause, how) => statsCount(byFound?.[cause]?.[how]) || 0;
+    const foundValid = Boolean(byFound) && !found.unnamed && Object.entries(found.byCause)
+      .every(([cause, count]) => foundCount(cause, "paper_check") + foundCount(cause, "factor_cross_checked") === count);
+    const split = foundValid || (byValid && !found.unnamed && statsSum(found.byCause, STATS_CODE_CAUSES) === code);
     const { max, step } = statsNiceScale(Math.max(...Object.values(found.families)));
     const rate = found.total >= STATS_RATE_BASE;
     const rows = DATABASE_CAUSE_FAMILIES.map((family) => {
       const count = found.families[family.key];
       const href = count ? statsDatabaseHref({ db: "corrects", dbwhy: family.key }) : "";
-      const byCode = split ? statsSum(found.byCause, family.causes.filter((cause) => STATS_CODE_CAUSES.includes(cause))) : 0;
+      const byCode = !split ? 0 : foundValid ? family.causes.reduce((sum, cause) => sum + foundCount(cause, "factor_cross_checked"), 0)
+        : statsSum(found.byCause, family.causes.filter((cause) => STATS_CODE_CAUSES.includes(cause)));
       const levels = split ? [count - byCode, byCode] : [count];
       const segments = (split ? STATS_FOUND_BY : [STATS_FOUND_BY[0]]).map((level, index) => ({ part: level.part, count: levels[index],
         title: split ? `${family.label}, ${level.label}: ${formatInteger(levels[index])}` : `${family.label}: ${formatInteger(count)}` }));
