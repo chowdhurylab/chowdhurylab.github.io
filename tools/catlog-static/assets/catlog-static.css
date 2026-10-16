@@ -1754,8 +1754,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The page scrolls as a whole (2026-10-15: a pinned header, counts band and toolbar left 1.5-2.5 cards of list in
      view, kept Safari's toolbars from collapsing, and on an iPhone SE put the pager below the window): the list is as
      tall as its cards, the pager sticks to the foot of the window, and the page keeps its place behind the filter sheet
-     and an open record. */
-  .static-app { height:auto; min-height:100vh; min-height:100dvh }
+     and an open record. Browse only: Stats, the Guide and Team keep scrolling inside their own view under the header. */
+  body:not(.stats-open,.guide-open,.team-open) .static-app { height:auto; min-height:100vh; min-height:100dvh }
   #catalogView, .workbench, .table-panel { min-height:0; overflow:visible }
   .table-wrap { flex:none; overflow:visible }
   .pagination { position:sticky; bottom:0; z-index:5 }
