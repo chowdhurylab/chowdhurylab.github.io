@@ -14,10 +14,10 @@ Design update, 16 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,385 function/regulation records.
+- 27,165 site records and 14,387 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 210 selected paper comparisons, containing 226 measurement entries from
-  71 primary papers across 69 families with numeric measurements.
+- 212 selected paper comparisons, containing 230 measurement entries from
+  72 primary papers across 70 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -26,6 +26,19 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 15
+- Two deamination comparisons and four measurement entries from one additional
+  paper: Roth and Hurley (1966), PMID 5971772, DOI 10.1042/bj1010112.
+- Ordinary-RNA activity retains the source's 100% modified value and explicit
+  100% native reference, without a statistical equivalence claim.
+- Three paired absorbance endpoints use the same chemically deaminated RNA
+  substrate at matched enzyme quantities; they are not kinetic constants.
+- Preparation-level chemistry, unresolved sites and occupancy, and absent
+  statistical uncertainties remain explicit. No species or accession inferred.
+- Original-source extraction and independent source review support both rows.
+- 41 of 111 audit families remain without a numerical comparison in this
+  selection; this does not imply absence from the published literature.
 
 New paper measurements, reading round 14
 - Five comparisons and nine measurement entries from three additional papers.
@@ -37,8 +50,8 @@ New paper measurements, reading round 14
   Raw slopes retain shared controls, mixed occupancy and preparation limits;
   conflicting normalized-activity units are excluded.
 - Source values and admissions were independently reviewed.
-- 42 of 111 audit families remain without a numerical comparison in this
-  selection; this does not imply absence from the published literature.
+- That publication left 42 of the 111 audit families without a numerical
+  comparison in its selection.
 
 Measurements published earlier on 16 October
 - 41 additional comparisons with 47 measurement entries, adding 37 primary
@@ -101,7 +114,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-11e0939ba3481b91a731d5ef43634849f94898c9a63e28612e8cc510974e1a31
+89ef4ad2f431cb4332fab743f387094e9ab79f6db9b04888adfaec5237fd189b
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
