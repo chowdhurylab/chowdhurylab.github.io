@@ -10,14 +10,14 @@ Open index.html locally, or keep it beside the Excel file when publishing.
 Design update, 16 October
 - The PTM directory uses aligned rows for modification, chemistry and available
   data, with simpler navigation and readable phone layouts.
-- Scientific data, source qualifications and the audit workbook are unchanged.
+- The revised design is retained for this data release.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,380 function/regulation records.
+- 27,165 site records and 14,385 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 205 selected paper comparisons, containing 217 measurement entries from
-  68 primary papers across 68 families with numeric measurements.
+- 210 selected paper comparisons, containing 226 measurement entries from
+  71 primary papers across 69 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -27,17 +27,30 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+New paper measurements, reading round 14
+- Five comparisons and nine measurement entries from three additional papers.
+- Human PP2C-alpha S-glutathionylation kinetics retain the near-null result,
+  activity-aliquot occupancy limits and unspecified fitted-error basis.
+- Tubulin peptide binding to engineered A1aY1 retains the >60 micromolar
+  bound, shared control and peptide/reader scope.
+- Human ARSA preparations add the first numerical formylglycine entries.
+  Raw slopes retain shared controls, mixed occupancy and preparation limits;
+  conflicting normalized-activity units are excluded.
+- Source values and admissions were independently reviewed.
+- 42 of 111 audit families remain without a numerical comparison in this
+  selection; this does not imply absence from the published literature.
+
 Measurements published earlier on 16 October
 - 41 additional comparisons with 47 measurement entries, adding 37 primary
   papers and numerical coverage for 38 more PTM families.
-- The latest addition contains four Rab1b phosphocholination comparisons and
+- That addition contains four Rab1b phosphocholination comparisons and
   one anhydrotrypsin comparison with two ligand-specific binding entries.
   Source uncertainty, nucleotide analogues, processing differences, weaker
   effects and unresolved construct labels remain attached to the values.
 - Later breadth batches include independent source reviews recorded per batch.
   Source checking does not reproduce experiments or isolate chemical-bond effects.
-- 43 of the 111 audit families still have no numerical comparison in this
-  selection; this does not mean published measurements or biology are absent.
+- That publication left 43 of the 111 audit families without a numerical
+  comparison in its selection.
 
 Earlier measured additions (retained)
 - Citrullination: the complete Table 1 panel of four matched peptides against
@@ -88,7 +101,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-29d95f685d6c2de33c487bd7eaaffe1e2a515483b07ef6dfc536c198c0b56158
+11e0939ba3481b91a731d5ef43634849f94898c9a63e28612e8cc510974e1a31
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
