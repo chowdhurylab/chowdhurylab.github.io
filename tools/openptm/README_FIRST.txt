@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-16
+Release: 2026-10-17
 
 Browse PTMs, sites and function, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -14,10 +14,10 @@ Design update, 16 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,387 function/regulation records.
+- 27,165 site records and 14,388 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 212 selected paper comparisons, containing 230 measurement entries from
-  72 primary papers across 70 families with numeric measurements.
+- 213 selected paper comparisons, containing 232 measurement entries from
+  73 primary papers across 71 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -26,6 +26,20 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 16
+- One comparison with two optical measurements from Subach et al. (2009),
+  PMID 19169259, DOI 10.1038/nmeth.1298, adds decarboxylation coverage.
+- Same engineered PAmCherry1 sequence before and after photoactivation:
+  absorption maxima 404 and 564 nm; extinction coefficients 6500 and 18000
+  M^-1 cm^-1 at each state's own peak. These are not fixed-wavelength brightness.
+- Later structural/MS evidence (PMID 19934036) supports decarboxylation with
+  coupled chromophore oxidation; it is not counted as another numerical study.
+- Calibration assumptions, absent n and errors, and the affiliation-only
+  publisher erratum remain explicit. No canonical site or occupancy inferred.
+- Independent review verified original table values, chemistry and notices.
+- 40 of 111 audit families remain without a numerical comparison in this
+  selection; this does not imply absence from the published literature.
 
 New paper measurements, reading round 15
 - Two deamination comparisons and four measurement entries from one additional
@@ -37,8 +51,8 @@ New paper measurements, reading round 15
 - Preparation-level chemistry, unresolved sites and occupancy, and absent
   statistical uncertainties remain explicit. No species or accession inferred.
 - Original-source extraction and independent source review support both rows.
-- 41 of 111 audit families remain without a numerical comparison in this
-  selection; this does not imply absence from the published literature.
+- That publication left 41 of the 111 audit families without a numerical
+  comparison in its selection.
 
 New paper measurements, reading round 14
 - Five comparisons and nine measurement entries from three additional papers.
@@ -114,7 +128,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-89ef4ad2f431cb4332fab743f387094e9ab79f6db9b04888adfaec5237fd189b
+dc695f3ce8ae49e7635f7684ef48040cd6502a7908241dda9dba5435466b68d2
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
