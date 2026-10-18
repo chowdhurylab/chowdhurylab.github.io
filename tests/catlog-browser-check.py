@@ -3489,7 +3489,11 @@ def check_layout(driver, browser, url, route_label):
             const rows = [...section.querySelectorAll('.check-row')].filter(e => e.getClientRects().length);
             const last = rows[rows.length - 1].getBoundingClientRect();
             const title = section.querySelector(':scope > summary').getBoundingClientRect();
+            // a group taller than the sidebar's view (a wide font's longer "?" box in a short window) scrolls until its
+            // title meets the scroll padding under the heading, and no further
+            const pad = parseFloat(getComputedStyle(document.getElementById('catalogFilters')).scrollPaddingTop) || 0;
             return {lastShown: last.bottom <= rail.bottom + 0.5, titleClear: title.top >= heading.bottom - 0.5,
+                    tall: last.bottom - title.top > rail.bottom - (rail.top + pad), titleAtPad: Math.abs(title.top - (rail.top + pad)) < 1.5,
                     scrolled: document.getElementById('catalogFilters').scrollTop};
         """
         positions = []
@@ -3500,7 +3504,8 @@ def check_layout(driver, browser, url, route_label):
 
         WebDriverWait(driver, 5, poll_frequency=0.1).until(scroll_settled)
         shown = driver.execute_script(reveal)
-        assert shown["lastShown"] and shown["titleClear"] and shown["scrolled"] > 0, f"Review result's '?' hides its options: {shown}"
+        assert (shown["lastShown"] or (shown["tall"] and shown["titleAtPad"])) and shown["titleClear"] and shown["scrolled"] > 0, \
+            f"Review result's '?' hides its options: {shown}"
         status_about.click()
         assert not driver.find_element(By.ID, "aboutStatus").is_displayed()
         # (unless the sidebar, shorter now, ends above that: then it stays at its end)
