@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- Scientific data is byte-identical to reading round 17. The Excel is unchanged.
+- This interface is retained in reading round 18. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,390 function/regulation records.
+- 27,165 site records and 14,393 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 215 selected paper comparisons, containing 238 measurement entries from
-  75 primary papers across 73 families with numeric measurements.
+- 218 selected paper comparisons, containing 246 measurement entries from
+  78 primary papers across 76 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,26 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 18
+- Three comparisons with eight measurement entries from three additional papers,
+  adding numerical coverage for biotinylation, glycylation and UFMylation.
+- Yeast Arc1p: approximately 37 and 47 degrees C melting temperatures, PMID
+  27330079. The same-sequence preparations differ in growth conditions; the
+  biotinylated preparation has approximately 15% occupancy. Causality is unresolved.
+- Tubulin glycylation: source-printed 79% decrease in katanin-mediated severing,
+  PMID 36347241. This is a relative endpoint, not two absolute rates. Mixed
+  tubulin preparations, cross-species assay and unavailable SI spectra are explicit.
+- CYB5R3 UFMylation: six author-supplied raw activity observations, PMID36543799,
+  grouped as one comparison without paired-replicate assumptions or calculated
+  means. Source units, nonzero background, tags/truncation, equal-mass inputs
+  and the unquantified FAD-occupancy interpretation remain attached.
+- Original sources and numerical transcription were independently checked.
+  Thirteen newly obtained main originals were read in selected relevant sections;
+  three were recovered prior access-held leads. Other papers remain documented holds.
+- 35 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the clean interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 17
 - Two comparisons with six measurement entries from two additional papers.
@@ -47,8 +67,8 @@ New paper measurements, reading round 17
   or an isolated dityrosine-bond effect. Source SD and replication limits remain.
 - Original values, chemical assignments and notice metadata were independently
   reviewed. Earlier records, the interface and the audit workbook are preserved.
-- 38 of 111 audit families remain without a numerical comparison in this
-  selection; this does not imply absence from the published literature.
+- That publication left 38 of 111 audit families without a numerical
+  comparison in its selection.
 
 New paper measurements, reading round 16
 - One comparison with two optical measurements from Subach et al. (2009),
@@ -151,7 +171,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-dc695f3ce8ae49e7635f7684ef48040cd6502a7908241dda9dba5435466b68d2
+0af0ee91ea8fccd115944a31f84de1aa3cb4aaec8cd197aca74b02e1279daa9b
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
