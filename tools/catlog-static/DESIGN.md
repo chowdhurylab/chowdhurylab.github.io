@@ -456,8 +456,9 @@ Colours are tokens in the stylesheet's :root, the only place hex values appear
 with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
 of change, --bar-neutral for single-series bars and table bars, --caution* for cautions,
 --checked for human-checked, --accent* for actions and for what CatLog itself read, --src-paper, --ec-1 to --ec-7 for
-the enzyme classes where a Stats figure draws the classes apart and as the short bar before a class's number, always
-beside that number).
+the enzyme classes only in the Stats figures where nothing else is coloured (Values by enzyme class and kcat against
+Km: a class's curve, its median dot and the short bar before its number, always beside that number); Enzyme classes
+and the EC number tables carry no class colour, since their bars wear review-result or Read from the paper colours).
 
 Colour meanings (round 13, the user: "within the Nature BPG color palette we are using - we can make things include
 some more palette colors or improve visual?"). One meaning per colour, the same meaning wherever it shows, and colour
@@ -485,8 +486,9 @@ backgrounds, text in AA contrast (a light colour's text takes its darker ring or
 - Human-checked: --checked green with the tick (and Human review's numbers on Stats). Cautions: amber (--caution) with
   the "!". The sidebar's group dots (Source purple, identity raspberry, measurement olive) mean only their group; the
   Source dot wears --src-paper while Read from the paper is chosen, as its chip does.
-- A view that colours by enzyme class gives each class its colour only where no review-result or database-result colour
-  stands beside it (a class's swatch, curve or the short bar before its number, never a status bar), so a hue there
+- A view that colours by enzyme class gives each class its colour only where nothing else in the figure is coloured
+  (Values by enzyme class, kcat against Km: a class's curve, dot or the short bar before its number; never in Enzyme
+  classes or the EC number tables, whose bars wear review-result or Read from the paper colours), so a hue there
   names a class alone: --ec-1 to --ec-7 (BPG red, cyan, green, navy, salmon, slate, brown; mint is too light for a line).
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric

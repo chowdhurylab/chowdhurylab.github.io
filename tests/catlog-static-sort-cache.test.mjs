@@ -2601,8 +2601,8 @@ function row(overrides = {}) {
     assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
     assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Most common organisms among records read from the paper<\/h3>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
-    // An EC number wears its class's colour as the short bar before it, outside its link.
-    assert.match(more, /<span class="stats-name"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
+    // An EC number in a table carries no class colour (the bars beside it wear other meanings).
+    assert.match(more, /<span class="stats-name"><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
     // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
     assert.match(more, /<h3 id="statsPerPaperTitle" class="stats-fig-title">Values per paper<\/h3>/);
     assert.match(more, /<strong>Figure 4\.<\/strong> The 1 paper CatLog has read, by the number of kcat, Km and kcat\/Km values read from each\./);
@@ -2638,7 +2638,9 @@ function row(overrides = {}) {
     assert.match(more, /<linearGradient id="statsRidgeFill-kcat-1" class="stats-ec-1"/);
     assert.match(more, /<linearGradient id="statsRidgeFill-kcat-3" class="stats-ec-3"/);
     assert.match(more, /<span class="stats-ridge-label"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><a class="stats-link"/);
-    assert.match(more, /<span class="stats-ec-label" data-stat-key="ec_1" data-count="4"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><a /);
+    // Enzyme classes (Figure 5) carries no class colour: its bars wear review-result and Read from the paper colours.
+    assert.match(more, /<span class="stats-ec-label" data-stat-key="ec_1" data-count="4"><a /);
+    assert.doesNotMatch(more.slice(more.indexOf('data-figure="ec-classes"'), more.indexOf('data-figure="ec-classes"') + 4000), /stats-ec-key/);
     for (let number = 1; number <= 7; number += 1) assert.match(styleSource, new RegExp(`\\.stats-ec-${number} \\{ --part:var\\(--ec-${number}\\) \\}`));
     // the median of class 1 (2 s⁻¹ = 10^0.301) on a 7-decade grid from 10^-1: (0.301 + 1) / 7
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));

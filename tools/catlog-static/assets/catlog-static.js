@@ -6595,7 +6595,10 @@
       const { max, step } = statsNiceScale(Math.max(...classes.map((item) => item.count)));
       const rows = classes.map((item) => ({
         key: `ec_${item.class}`, count: item.count,
-        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}">${statsClassKey(item.class)}<a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
+        // (no class colour here: the bars beside the names wear review-result and Read from the paper colours, so a class
+        // colour would give a colour a second meaning in the figure; the class colours stay in Values by enzyme class and
+        // kcat against Km, where nothing else is coloured)
+        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
         segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
           { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
           ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} read from the paper (${statsShare(item.from_paper, item.count)})` }] : [])],
@@ -6620,9 +6623,9 @@
     const topItems = (list, toItem, max = total) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
     const organismItem = (extra) => (item, index) => ({ value: `organism_${extra ? "v2_" : ""}${index}`, label: String(item.name || ""),
       labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { ...(extra || {}), organism: String(item.name || "") } });
-    // An EC number wears its class's colour as the short bar before it.
+    // An EC number carries no class colour: its table's bars are neutral or Read from the paper's colour, and a class
+    // colour beside them would mean a second thing in one view.
     const ecItem = (extra) => (item) => ({ value: `ec_${extra ? "v2_" : ""}${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
-      keyHtml: statsClassKey(Number(String(item.ec || "").split(".")[0])),
       labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ...(extra || {}), ec: String(item.ec || "") } });
     const organisms = topItems(overview?.top_organisms, organismItem(null));
     const ecNumbers = topItems(overview?.top_ec, ecItem(null));

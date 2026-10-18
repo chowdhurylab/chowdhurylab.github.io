@@ -264,7 +264,9 @@ its accessible description; no figure or table has a data line. The parts' figur
   its result lines are in italics, as in the lead. Each card with a share (kept of the values audited; human-checked
   of the records with a reviewer's verdict) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
-- Enzyme classes (the key to the class colours: a 3px bar of its colour before each EC N): records bars (light) with the accepted drawn over them and the records read from the paper as a
+- Enzyme classes (no class colour: its bars wear review-result and Read from the paper colours, so a class colour
+  beside them would mean a second thing; the class colours are keyed in Values by enzyme class and kcat against Km):
+  records bars (light) with the accepted drawn over them and the records read from the paper as a
   stripe of Read from the paper's colour (--src-paper) inside the accepted bar, set off from its fill by a 1px white gap above and below, so it
   parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
   accepted swatch with the stripe through it, named Read from the paper); a nonzero accepted or read-from-the-paper
@@ -352,10 +354,10 @@ its accessible description; no figure or table has a data line. The parts' figur
   (EC N and its name) links to ec=N.&source=paper; its Values column names the compared values; shares in the tooltip
   lines on 1,000 values or more. The class colour stays off this figure: its segments carry the results' colours.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC
-  with the enzyme name its records use most and its class's 3px colour bar before it, outside its link; bars against
+  with the enzyme name its records use most, no class colour; bars against
   the largest), then Most common organisms and Most common
-  EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, navy
-  bars, linked with source=paper),
+  EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, bars in
+  Read from the paper's colour, linked with source=paper),
   What the records contain, Wild type and variants, Cautions.
 
 Wording (the user, 2026-10-15: "the figures have some weird ai ish wording right?"): titles are short noun phrases;
