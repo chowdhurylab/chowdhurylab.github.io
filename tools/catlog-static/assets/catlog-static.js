@@ -12169,7 +12169,8 @@
 
   // One value that is not the same: a folding note. Its summary: the parameter and the result (square and word); its
   // body: CatLog's line whole (it names the databases and their numbers), the cause when the line does not say it
-  // (databaseCauseShown), then where the paper prints it. Each fact is said once. A note with nothing in its body is a plain line.
+  // (databaseCauseShown), then the checker's own notes folded under "How it was checked" (databaseEvidenceText). Each
+  // fact is said once. A note with nothing in its body is a plain line.
   function databaseNoteHtml({ field, metric, facts }, open) {
     const result = databaseResult(facts.status);
     const summary = `<span class="cmp-note-head">${metricWordsHtml(escapeHtml(metric))}${result ? '<span class="cmp-sep" aria-hidden="true"> · </span>' : ""}</span>`
@@ -12179,14 +12180,40 @@
       ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
     const cause = databaseCauseShown(facts);
-    const body = line + kvList([
-      cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
-      facts.evidence ? linkedKv("In the paper", caretHtml(escapePublic(facts.evidence))) : "",
-    ], "cmp-facts");
+    const evidence = databaseEvidenceText(facts);
+    const body = line + kvList([cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : ""], "cmp-facts")
+      + (evidence ? `<details class="cmp-how"><summary>How it was checked</summary><p>${caretHtml(escapePublic(evidence))}</p></details>` : "");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;
     return body
       ? `<details ${attributes}${open ? " open" : ""}><summary>${summary}</summary><div class="cmp-note-body">${body}</div></details>`
       : `<p ${attributes}>${summary}</p>`;
+  }
+
+  // The checker's notes on a value (database_evidence: where the paper prints it and the arithmetic checked), without a
+  // last part that only gives again the database's number its line names first ("...; OED and SABIO-RK list 917.7
+  // mM⁻¹ s⁻¹", "SABIO-RK 2.4 × 10⁻⁹ mM⁻¹ s⁻¹ (=...)"): a part that starts with database names and whose first number is
+  // the first number of the line.
+  const NUMBER_PATTERN = /(\d[\d,]*(?:\.\d+)?)(?:\s*[×x]\s*10([⁻-]?[⁰¹²³⁴⁵⁶⁷⁸⁹\d]+))?/;
+  const SUPERSCRIPT_VALUES = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+  function firstNumber(text) {
+    const match = NUMBER_PATTERN.exec(String(text || ""));
+    if (!match) return null;
+    const exponent = match[2] ? Number([...match[2]].map((character) => SUPERSCRIPT_VALUES[character] ?? character).join("")) : 0;
+    const value = Number(match[1].replace(/,/g, "")) * 10 ** exponent;
+    return Number.isFinite(value) ? value : null;
+  }
+  function databaseEvidenceText(facts) {
+    const text = facts.evidence || "";
+    const cut = Math.max(text.lastIndexOf("; "), text.lastIndexOf(". "));
+    if (cut < 0) return text;
+    const last = text.slice(cut + 2);
+    const names = comparedDatabases().flatMap((item) => [item.display, item.name, item.key]).concat(["SABIO"]).filter(Boolean)
+      .map((name) => String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).sort((a, b) => b.length - a.length).join("|");
+    const startsWithDatabases = new RegExp(`^(?:(?:${names})(?:,\\s*|\\s+and\\s+|\\s+))+`).test(last);
+    const listed = firstNumber(facts.sentence);
+    const repeated = firstNumber(last.replace(new RegExp(`^(?:(?:${names})(?:,\\s*|\\s+and\\s+|\\s+))+(?:lists?\\s+)?`), ""));
+    const same = listed !== null && repeated !== null && Math.abs(repeated - listed) <= Math.abs(listed) * 1e-9;
+    return startsWithDatabases && same ? text.slice(0, cut).replace(/[;.]?$/, ".") : text;
   }
 
   // Values whose notes would read alike (the same result, line, databases, cause and place in the paper; "Not in the

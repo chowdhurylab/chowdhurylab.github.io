@@ -914,6 +914,14 @@ p.cmp-note { padding-left:16px }
 .cmp-note-body .cmp-line { margin:0; color:var(--text-2) }
 .cmp-note-body .cmp-facts { margin-top:6px }
 .cmp-facts .kv-line > dd { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+/* The checker's own notes on a value, folded and muted under its line: "How it was checked" (12px, a + or − before it). */
+.cmp-how { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.cmp-how > summary { display:inline-block; cursor:pointer; list-style:none; color:var(--muted) }
+.cmp-how > summary::-webkit-details-marker { display:none }
+.cmp-how > summary::before { content:"+"; content:"+" / ""; display:inline-block; width:12px; color:var(--muted) }
+.cmp-how[open] > summary::before { content:"\2212"; content:"\2212" / "" }
+.cmp-how > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+.cmp-how > p { margin:4px 0 0; overflow-wrap:anywhere }
 .cmp-pointer { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); overflow-wrap:break-word }
 .cmp-pointer + .cmp-pointer { margin-top:2px }
 .cmp-pointer .cmp-pointer-link { font-size:inherit; line-height:inherit; vertical-align:baseline }

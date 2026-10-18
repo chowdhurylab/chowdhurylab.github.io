@@ -892,8 +892,11 @@ come first, the context after.
   code with no wording never shown; on a value found by an exact factor alone, database_found_by factor_only or a
   status that says so, whatever an older snapshot calls it, whose result word "Different number (exact factor, not
   yet checked)", brown, says it is not yet checked, only the factor from database_by_source with its cause, "1,000×
-  lower (off by an exact power of ten)", when the line does not give it) and In the paper (database_evidence; a local
-  path never). A note with an
+  lower (off by an exact power of ten)", when the line does not give it). Then the checker's own notes
+  (database_evidence: where the paper prints the value and the arithmetic checked; a local path never) folded under
+  "How it was checked" (a 12px `--muted` `<details>`, closed; never labelled "In the paper", which names the printed
+  quote), without a last part that only gives again the number the line names first ("...; OED and SABIO-RK list 917.7
+  mM⁻¹ s⁻¹": a part starting with database names whose first number is the line's first number). A note with an
   empty body is a plain line. Notes on a correction or a different number are
   open: every one from 641px, only the first on a phone; others closed; nothing
   is remembered. Then a kcat/Km CatLog calculated, once other values are

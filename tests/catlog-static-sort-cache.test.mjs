@@ -4244,10 +4244,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(section, /<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub>: Same as BRENDA, SABIO-RK\.<\/span><\/p>/);
   // A value that is not the same: a folding note. Its summary says the parameter and the result (the line names the
   // databases); its body CatLog's line whole, the cause only where the line does not say it (here the factor does), and
-  // where the paper prints it. On a phone only the first note on a correction or a different
+  // the checker's notes folded under "How it was checked". On a phone only the first note on a correction or a different
   // number is open.
-  assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><dl class="detail-kv cmp-facts"><div class="kv-line"><dt>In the paper<\/dt><dd>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/dd><\/div><\/dl><\/div><\/details>/);
-  assert.doesNotMatch(section, /<dt>Cause<\/dt>|list another number/);
+  assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><details class="cmp-how"><summary>How it was checked<\/summary><p>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/p><\/details><\/div><\/details>/);
+  assert.doesNotMatch(section, /<dt>Cause<\/dt>|<dt>In the paper<\/dt>|list another number/);
   assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this kcat\/Km for this paper\.<\/p><\/div><\/details>/);
   // The compared databases (the six fallback names: this snapshot neither lists nor counts them), each kept whole on one
   // line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space), and the caption's second sentence: said once, in
@@ -4376,9 +4376,23 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(valuesOf(html), /data-show-note="km">corrects a database</, "no database named: no name made up");
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists 5 mM.", database_cause: "a misread header" })]));
   assert.match(html, /<dt>Cause<\/dt><dd>a misread header<\/dd>/);
+  // The checker's notes are folded and muted under "How it was checked" (never labelled "In the paper", which names the
+  // printed quote), without a last part that only gives again the number the line names first.
+  html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK", "OED"], database_cause: "paper_unit_misprint",
+    database_line: "SABIO-RK and OED list 917.7 mM⁻¹ s⁻¹: the printed value in its printed unit. The paper prints 55.06 µM⁻¹ min⁻¹ (Table I).",
+    database_evidence: "Table I, wild type: kcat/Km column prints 55.06; kcat 12.45 min⁻¹ / Km 228.78 µM = 0.0544 µM⁻¹ min⁻¹ (54.4 mM⁻¹ min⁻¹). OED and SABIO-RK list 917.7 mM⁻¹ s⁻¹" })]));
+  assert.match(html, /<details class="cmp-how"><summary>How it was checked<\/summary><p>Table I, wild type: kcat\/Km column prints 55\.06; kcat 12\.45 min⁻¹ \/ Km 228\.78 µM = 0\.0544 µM⁻¹ min⁻¹ \(54\.4 mM⁻¹ min⁻¹\)\.<\/p><\/details>/);
+  assert.equal((html.match(/917\.7/g) || []).length, 1, "the database's number once, in the line");
+  html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK"],
+    database_line: "SABIO-RK lists 2.4 × 10⁻⁹ mM⁻¹ s⁻¹, 10¹²× lower.", database_evidence: "Table 5 prints 2.4; footnote b '(kcat/Km) x 10⁶ M⁻¹ s⁻¹'; SABIO-RK 2.4 × 10⁻⁹ mM⁻¹ s⁻¹ (=x10⁻⁶ M⁻¹ s⁻¹)" })]));
+  assert.match(html, /<p>Table 5 prints 2\.4; footnote b &#39;\(kcat\/Km\) x 10⁶ M⁻¹ s⁻¹&#39;\.<\/p><\/details>/);
+  // A last part with other facts stays (BRENDA's own kcat and Km, the arithmetic).
+  html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["BRENDA"],
+    database_line: "BRENDA lists 0.01 mM⁻¹ s⁻¹ (1.1 × 10⁴× lower than CatLog's value).", database_evidence: "Table 1 prints 105.58 ± 12.16; BRENDA lists kcat 0.042 s⁻¹, Km 4.1 mM" })]));
+  assert.match(html, /<p>Table 1 prints 105\.58 ± 12\.16; BRENDA lists kcat 0\.042 s⁻¹, Km 4\.1 mM<\/p>/);
   // A local file named as evidence is never shown.
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
-  assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>/);
+  assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>|How it was checked/);
   // Values whose lines read the same share one line; a kcat/Km CatLog calculated is not compared (its own muted line
   // with no square, after the compared values and their notes; never alone).
   const calculatedSummary = { ...v2Summary, record_key: "v2-db-calc", kcat_over_km_origin: "calculated" };
