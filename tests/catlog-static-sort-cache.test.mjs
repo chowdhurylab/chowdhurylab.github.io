@@ -2690,6 +2690,91 @@ function row(overrides = {}) {
     api.renderStats();
   }
 
+  // What the values read from the paper show (overview.from_paper_insights): kcat against Km, variants against their
+  // wild type and the assay temperature and pH close Values; the database results by enzyme class follow Values against
+  // the databases. Each only when its counts hold together.
+  {
+    const classNames = { 1: "Oxidoreductases", 3: "Hydrolases" };
+    // A 4 x 4 grid of quarter decades (kcat 10⁰-10¹ s⁻¹, Km 10⁻¹-10⁰ mM): 3 records.
+    const map = { records: 3, linked: 3, bin_width: 0.25, kcat_log10_start: 0, km_log10_start: -1,
+      counts: [[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 2, 0], [0, 0, 0, 0]], ratio_median: 17.3, at_diffusion_limit: [1, 0],
+      classes: [{ class: 1, n: 2, kcat_median: 4.4, km_median: 0.23 }, { class: 3, n: 1, kcat_median: 1, km_median: 0.1 }, { class: 9, n: 1, kcat_median: 1, km_median: 1 }] };
+    const figure = api.statsKcatKmFigure(map, classNames);
+    assert.equal(figure.key, "kcat-km");
+    // Equal decades: the plot keeps the grid's shape, a cell per non-empty bin with its count in its tooltip line.
+    assert.match(figure.body, /<div class="stats-map-plot" style="aspect-ratio:4 \/ 4" role="img" aria-label="kcat against Km of 3 records read from the paper, on log scales; median kcat ÷ Km 17 mM⁻¹ s⁻¹; 1 at the diffusion limit or above\. Class medians: EC 1 kcat 4\.4 s⁻¹, Km 0\.23 mM; EC 3 kcat 1\.0 s⁻¹, Km 0\.10 mM\."/);
+    assert.equal((figure.body.match(/<rect /g) || []).length, 2);
+    assert.match(figure.body, /<rect x="2" y="1" width="1" height="1" style="fill-opacity:0\.92" data-tip="kcat 10⁰·⁵–10⁰·⁷⁵ s⁻¹, Km 10⁻⁰·⁵–10⁻⁰·²⁵ mM: 2 records"\/>/);
+    assert.match(figure.body, /<rect x="0" y="3" [^>]*data-tip="kcat below 10⁰·²⁵ s⁻¹, Km below 10⁻⁰·⁷⁵ mM: 1 record"\/>/);
+    // A dot per class 1-7 in its class colour, its median in the tooltip line; a row of the class table lights it.
+    assert.equal((figure.body.match(/class="stats-map-dot /g) || []).length, 2);
+    assert.match(figure.body, /<i class="stats-map-dot stats-ec-1" data-hl="ec_1" data-tip="EC 1 Oxidoreductases: median kcat 4\.4 s⁻¹, median Km 0\.23 mM; 2 records\."/);
+    assert.match(figure.body, /<tr data-hl="ec_1"[^>]*>[\s\S]*?<i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><span><a class="stats-link" href="[^"]*#browse\?ec=1\.&amp;source=paper&amp;metric=kcat%2Ckm">EC 1<\/a>/);
+    // The records link to them in Browse when Browse finds the same number; the median kcat ÷ Km in both units; the
+    // diffusion limit in M⁻¹ s⁻¹, as are the lines of equal kcat/Km.
+    assert.match(figure.body, /<dt>Records<\/dt><dd><a class="stats-link" href="[^"]*#browse\?source=paper&amp;metric=kcat%2Ckm">3<\/a><\/dd>/);
+    assert.match(figure.body, /17 mM⁻¹ s⁻¹<small>17,000 M⁻¹ s⁻¹<\/small>/);
+    assert.match(figure.body, /<dd>1 <span class="stats-muted">\(33\.3%\)<\/span><small>10⁸ M⁻¹ s⁻¹ or more; 0 at 10⁹ or more<\/small>/);
+    assert.match(figure.body, /Diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹/);
+    assert.match(figure.body, /Equal <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> \(M⁻¹ s⁻¹\), every 100-fold/);
+    assert.doesNotMatch(api.statsKcatKmFigure({ ...map, linked: 4 }, classNames).body, /<dd><a class="stats-link"/, "No link when Browse would list another number");
+    // Counts that do not add up, or a grid that is not whole decades, draw nothing.
+    assert.equal(api.statsKcatKmFigure({ ...map, records: 4 }, classNames), null);
+    assert.equal(api.statsKcatKmFigure({ ...map, counts: map.counts.slice(0, 3) }, classNames), null);
+    assert.equal(api.statsKcatKmFigure(null, classNames), null);
+
+    const fold = (n, lower, higher) => ({ n, median: 0.3, lower, higher, tenfold_lower: 1, tenfold_higher: 0, counts: [1, 0, 0, 0, n - 2, 1] });
+    const mutations = { variants: 5, papers: 2, ambiguous: 3, no_wild_type: 4, bin_width: 0.25, log10_start: -1,
+      metrics: { kcat: fold(4, 3, 1), kcat_over_km: fold(5, 4, 0) } };
+    const folds = api.statsMutationsFigure(mutations);
+    assert.deepEqual([...folds.body.matchAll(/data-metric="(\w+)"/g)].map((match) => match[1]), ["kcat", "kcat_over_km"]);
+    // The dashed line at the wild type: bins centred on whole quarters from 10⁻¹, so 1 (10⁰) is 4.5 of 6 bins along.
+    assert.match(folds.body, /<i class="stats-fold-zero" style="left:75%" aria-hidden="true"><span>wild type<\/span><\/i>/);
+    assert.match(folds.body, /<dt>Lower<\/dt><dd>75\.0%<\/dd>/);
+    // Each bar's range in its tooltip line, the end bars open-ended.
+    assert.match(folds.body, /data-tip="kcat 0\.13 times the wild type or less: 1 variant \(25\.0%\)"/);
+    assert.match(folds.body, /data-tip="kcat 0\.75 to 1\.3 times the wild type: 2 variants \(50\.0%\)"/);
+    assert.match(folds.body, /data-tip="kcat 1\.3 times the wild type or more: 1 variant \(25\.0%\)"/);
+    assert.match(folds.rules, /^5 variants from 2 papers\. A variant is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature: 3 variants whose paper gives several such wild-type records and 4 with none are left out\./);
+    assert.match(folds.after, /#browse\?source=paper&amp;variant=variant">Variants read from the paper<\/a> in Browse/);
+    assert.equal(api.statsMutationsFigure({ ...mutations, metrics: { kcat: { ...fold(4, 3, 1), n: 5 } } }), null);
+
+    // Temperature: a bar per 1 °C, each bar with records a Browse range exact to the values' decimals (25 to 25.9 °C).
+    const temperature = { n: 6, start: 0, width: 1, decimals: 1, counts: Array.from({ length: 101 }, (_value, index) => (index === 25 ? 4 : index === 0 || index === 100 ? 1 : 0)) };
+    const ph = { n: 3, start: 2, width: 0.1, decimals: 2, counts: Array.from({ length: 101 }, (_value, index) => (index === 55 ? 3 : 0)) };
+    const conditions = api.statsConditionsFigure({ temperature, ph }, 10);
+    assert.match(conditions.body, /data-tip="25 °C \(25 °C–25\.9 °C\): 4 records \(66\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmin=25\.0&amp;tmax=25\.9"/);
+    assert.match(conditions.body, /data-tip="below 1 °C: 1 record \(16\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmax=0\.9"/);
+    assert.match(conditions.body, /data-tip="100 °C and above: 1 record \(16\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmin=100\.0"/);
+    assert.match(conditions.body, /#browse\?source=paper&amp;phmin=7\.50&amp;phmax=7\.59" title="3 records \(pH 7\.5–7\.59\)">pH 7\.5<\/a> <span class="stats-muted">100\.0%<\/span>/);
+    assert.match(conditions.body, /<p class="stats-range-count">6 records of 10<\/p>/);
+    assert.equal((conditions.body.match(/<div class="stats-condition-bars">/g) || []).length, 2);
+    // Without the values' decimals no bar links (a range could miss a value); counts that do not add up draw nothing.
+    assert.doesNotMatch(api.statsConditionsFigure({ temperature: { ...temperature, decimals: null } }, 10).body, /data-href/);
+    assert.equal(api.statsConditionsFigure({ temperature: { ...temperature, n: 7 } }, 10), null);
+
+    const byClass = api.statsDatabaseClassFigure([{ class: 1, same: 8, other_label: 1, corrects: 1, differs: 0, not_listed: 2 },
+      { class: 3, same: 0, other_label: 0, corrects: 0, differs: 0, not_listed: 0 }, { class: 2, same: "8" }], classNames);
+    assert.deepEqual([...byClass.body.matchAll(/data-row="(\w+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["ec_1:12"]);
+    assert.match(byClass.body, /data-tip="EC 1 Oxidoreductases, Corrects a value: 1"/);
+    assert.match(byClass.body, /#browse\?ec=1\.&amp;source=paper">EC 1<\/a><span class="stats-ec-name"> Oxidoreductases<\/span>/);
+    assert.equal(api.statsDatabaseClassFigure([], classNames), null);
+
+    // In the page: Values ends with the three, the class figure follows Values against the databases.
+    // (The page's records read from the paper bound the conditions' counts: here 2.)
+    const two = (index) => Array.from({ length: 101 }, (_value, bin) => (bin === index ? 2 : 0));
+    runtimeManifest.summary.overview = { ...overview, from_paper_insights: { kcat_km: map, mutations,
+      conditions: { temperature: { ...temperature, n: 2, counts: two(25) }, ph: { ...ph, n: 2, counts: two(55) } },
+      database_by_class: [{ class: 1, same: 8, other_label: 1, corrects: 1, differs: 0, not_listed: 2 }] } };
+    api.renderStats();
+    const titles = headings();
+    assert.deepEqual(titles.slice(titles.indexOf("Value ranges"), titles.indexOf("Value ranges") + 5),
+      ["Value ranges", "kcat against Km", "Variants against their wild type", "Assay temperature and pH", "Cautions on values"]);
+    assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
+    runtimeManifest.summary.overview = overview;
+    api.renderStats();
+  }
+
   // Decade ticks: one per decade, labelled every other decade on an axis of more than 7 ticks, at multiples of 2 (10⁰
   // always labelled), every second label marked to give way on a narrow axis; up to 7 ticks, every decade labelled.
   const ticks = api.statsDecadeTicks(-5, 3);
