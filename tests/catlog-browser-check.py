@@ -4522,6 +4522,9 @@ DATABASE_NOT_LISTED_RECORD = "8090b6354d18037c"
 DATABASE_CALCULATED_RECORD = "8db79c81e62be8af"
 DATABASE_PAPER_NOTE_RECORD = "d93a98fb48b46766"
 EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
+# A 3alpha-HSD record (PMID 16788056) whose Km SABIO-RK lists 1,000× lower, found by the exact factor alone: its result,
+# "Different number (exact factor, not yet checked)", is wider than a 320px phone's note in any font (375px in DejaVu).
+EXACT_FACTOR_RECORD = "4719b1575bee89df"
 DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)", "Same, other label",
                          "Not in the databases")
 DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
@@ -4789,6 +4792,22 @@ def check_record_databases(driver, browser, base, wait):
             assert any(re.match(r"Before: (as \S.* lists it for this paper|the earlier version's value)", x) for x in state["before"]), state["before"]
             assert state["sideways"] <= 1, f"The earlier corrections scroll sideways at {width}px"
             results[f"databases-earlier-{label}"] = True
+    # The longest result wraps inside its note: the record never scrolls sideways on a 320 or 375px phone, and no result
+    # ends past its note (the page's own overflow check cannot see an overflow inside the panel).
+    for width in ((320, 375) if browser == "chrome" else ()):
+        set_browse_viewport(driver, browser, width, 800)
+        if not open_record(EXACT_FACTOR_RECORD):
+            break
+        fit = driver.execute_script("""
+            const panel = document.getElementById('detailPanel');
+            const results = [...panel.querySelectorAll('.cmp-note .cmp-result')].map(e => {
+                const note = e.closest('.cmp-note').getBoundingClientRect();
+                return [e.textContent.trim(), Math.round(e.getBoundingClientRect().right - note.right)];
+            });
+            return {sideways: panel.scrollWidth - panel.clientWidth, results};""")
+        assert fit["sideways"] <= 1 and fit["results"] and all(past <= 1 for _, past in fit["results"]), \
+            f"A database result runs past the record at {width}px: {fit}"
+        results[f"databases-result-fits-{width}"] = True
     set_browse_viewport(driver, browser, 1440, 1000)
     return results
 

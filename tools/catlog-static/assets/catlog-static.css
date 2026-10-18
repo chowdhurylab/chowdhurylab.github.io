@@ -907,7 +907,9 @@ button.value-flag { border:0; padding:0; cursor:pointer }
 p.cmp-note { padding-left:16px }
 .cmp-note:is(:focus-visible,.is-target), .cmp-note > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 .cmp-sep { color:var(--muted) }
-.cmp-note .cmp-result { white-space:nowrap }
+/* The result keeps its square beside its first word and wraps inside the note: "Different number (exact factor, not yet
+   checked)" is wider than a 320px phone's note in any font, and a 375px one's in DejaVu. */
+.cmp-note .cmp-result { white-space:normal; max-width:100% }
 .cmp-note-body { margin:6px 0 0 16px }
 .cmp-note-body .cmp-line { margin:0; color:var(--text-2) }
 .cmp-note-body .cmp-facts { margin-top:6px }
