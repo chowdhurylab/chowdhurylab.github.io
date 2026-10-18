@@ -12,6 +12,8 @@ colors:
   accent: "#245f58"
   accent-hover: "#1b4a44"
   accent-tint: "#e8f2ef"
+  source-paper: "#245f58 (the accent: Read from the paper)"
+  band-card-line: "#c9ddd6"
   status-accepted: "#3C5488"
   status-pending: "#F39B7F"
   status-pending-ring: "#c4664a"
@@ -54,7 +56,7 @@ spacing: 4, 8, 12, 16, 24, 32, 48px
 radius: 4px (controls), 2px (Stats bars' outer ends), 0 (table bars)
 layout:
   header: 56px
-  counts-band: 64px
+  counts-band: 83px (a card; 103px on tablets, 127px on phones)
   gutter: 24px (16px below 1024px)
   sidebar: 256px (to 1439px), 288px (1440px and up); rail 48px
   record: 440px (1024-1439px), 480px (1440px and up)
@@ -65,12 +67,13 @@ layout:
 ## Layout
 
 Start with the table, not a landing page. The page is one grid on a 4px spacing
-scale with 24px gutters (16px below 1024px): a 56px header, a 64px counts band,
+scale with 24px gutters (16px below 1024px): a 56px header, the counts band (an 83px card),
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
 and --line-soft inside them; shadows only on the phone sheet, dialogs, menus and
-Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"): the
-counts band carries a soft accent wash, a thin accent rule and its key numbers in accent ink with a soft glow
-(--accent-glow); Stats' headline band, the page's focal point (the user, 2026-10-15: "more focusing ... with some
+Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"; 2026-10-18:
+"the numbers ... so small and colour same so it doesn't capture any attention"): the counts band is a soft card
+(--band-card-line, a calm accent wash, --band-card-glow) whose key numbers glow softly, each in its own colour;
+Stats' headline band, the page's focal point (the user, 2026-10-15: "more focusing ... with some
 glow"), is a card with a 1px accent line, a gentle accent glow round it and a calm wash, its key numbers in accent ink
 over soft radial halos (--accent-halo*, crisp digits); Stats' figures fill from colour to tint; never neon, none in
 print.
@@ -85,21 +88,24 @@ apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
 so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
-Keep Records, Accepted, Read from the paper, Human-checked and the three "With
-kcat · Km · kcat/Km" counts in one 64px line: numbers 20px/600, labels 13px
---muted, on one baseline (Records, Accepted and Read from the paper in accent ink with the soft glow,
-Human-checked in its green; a linked count tints around itself on hover without moving the line), the snapshot date (12px) at its end (its title is the
-Data ID; Stats is a tab, not a band link). From 641 to 1439px the gaps tighten.
-From 1181 to 1439px "With" is read out but not shown; a window still too narrow
-(or "Matching records") moves the date under the counts, inside the same 64px.
-From 641 to 1180px, too narrow for the counts on one line, the band always takes
-the same two lines (Records, Accepted, Read from the paper, Human-checked; then the With
-counts and the date, with no divider at the start of a line); from 641 to 799px Read from the paper shows its short
-tag, From paper (a wide font such as Linux's DejaVu Sans needs 780px for the whole label; a screen reader still reads
-Read from the paper), and below about 710px Human-checked moves to a line of its own. On phones the line keeps Records and Accepted (numbers still 20px;
-a filtered "Matching records" count too wide for one line puts Accepted under it),
-Human-checked takes the next line with the More button, and More shows the rest
-(Read from the paper first). Read from the paper N (the name Stats and the Source filter give that count; its title
+The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
+quieter. Inside the band (8px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
+key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted) over its number
+(600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number wears the colour
+its meaning has across the site (Type And Color, "Colour meanings"): Records the page's ink (--text), Accepted the
+status navy (--st-accepted) with the status dot before its label, Read from the paper CatLog's own colour (--src-paper,
+the accent; its label too, as a link), Human-checked its green (--checked) with the tick and a green label; each with a
+soft text glow of its own colour (Records the accent's), none on paper. Beside them, behind a 1px --line-soft rule,
+the With counts: three 12/16px lines (kcat, Km, kcat/Km, each count right-aligned under the other; "With" heads the
+first line), 500 in --text-2, as tall as a label and its number, so the key numbers lead; the snapshot date (12px, its
+title the Data ID) at the card's top right. From 1024px up this is one row that never wraps or moves as the window
+widens (in a wide font such as Linux's DejaVu Sans the With counts end 40px before the date at 1024px). Tablets
+(641-1023px): two rows, the key numbers, then the With counts on one line and the date at its end (no divider), one
+height (103px) across the range. Phones: the four key numbers two by two (Records and Accepted, then Read from the
+paper and Human-checked), More at the first row's right; More shows the With counts (the same three lines, under a
+thin rule) and the date under them, rows that exist only while shown. Read from the paper keeps its whole label down
+to 360px and takes its short tag, From paper, below it (a screen reader still reads Read from the paper). A filtered
+view says "Matching records". Read from the paper N (the name Stats and the Source filter give that count; its title
 says "Show the records read from the paper by CatLog") links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's
 summary.overview.from_paper.records on an unfiltered view until the records
@@ -428,8 +434,9 @@ Use the existing system font (no web font), tabular lining numerals, and zero
 letter spacing; mono only for record keys, mutations, SMILES and sequences. One
 scale of sizes with their line heights (12/16 units, ticks and counts in filter
 options; 13/18 table cells, chips, labels and captions; 14/20 UI text and record
-values; 16/24 Guide body, Stats figure headings and the counts band's With counts (500, --text-2); 18/24 Stats part
-headings on phones; 20/24 counts band key numbers, record title and Stats part headings; 24/28 Stats and Guide titles; 32/36 Stats headline),
+values; 16/24 Guide body and Stats figure headings; 18/24 Stats part headings on phones; 20/24 the counts band's key
+numbers on phones, record title and Stats part headings; 24/28 Stats and Guide titles and the counts band's key numbers
+on tablets; 28/32 the counts band's key numbers from 1024px; 32/36 Stats headline; the counts band's With counts 12/16, 500),
 each a --fs-N / --lh-N token in the stylesheet. Table
 names break between words and hyphenate a word longer than its column (a break
 inside a word only as a last resort; the Organism column is at least about 13
@@ -440,7 +447,32 @@ Colours are tokens in the stylesheet's :root, the only place hex values appear
 (other areas use the tokens: --st-* for review status, which figures fill at 60%
 with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
 of change, --bar-neutral for single-series bars and table bars, --caution* for cautions,
---checked for human-checked, --accent* for actions).
+--checked for human-checked, --accent* for actions and for what CatLog itself read, --src-paper).
+
+Colour meanings (round 13, the user: "within the Nature BPG color palette we are using - we can make things include
+some more palette colors or improve visual?"). One meaning per colour, the same meaning wherever it shows, and colour
+never alone (a dot, a square, a tick, a "!" or the words go with it); tints (the colour at 9-12% on white) for
+backgrounds, text in AA contrast (a light colour's text takes its darker ring or tick form):
+- Review result: the five status colours of the Nature BPG palette, always with the round dot: Accepted navy
+  (--st-accepted), Not confirmed salmon (--st-pending, ringed), Not checked slate (Unverified, --st-unverified) and tan
+  (Not reviewed, --st-not-reviewed, ringed), Disputed deep red (--st-disputed). They colour the table's cells, the
+  filter's ticks and chips, the record, Stats' figures, and now the counts band's Accepted (its number navy, the dot
+  before its label). No other meaning takes these five hues.
+- Database result: --cmp-same green, --cmp-differs brown, --cmp-new cyan and --chg-magnitude red (corrects a value),
+  Same, other label grey (--bar-neutral), always with the square; --chg-precision mint and the same red, brown and cyan
+  for the kinds of change on records not yet re-read (the same meanings: a different number, a unit or scale, a value
+  added).
+- Source (the round's palette decision for database sources): Read from the paper, CatLog's own reading, wears CatLog's
+  own colour, the accent (--src-paper): its count on the counts band and on Stats' headline band, its link label. The
+  databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB) are named, never given a colour each: every view that
+  lists them already colours its marks by review result or database result (Records by main source, Part 7's figures
+  and tables, the record's comparison, the Source filter beside Against the databases), so a hue per database would
+  give a colour a second meaning in the same view, and their names already tell them apart (colour there would be
+  decoration). Where a figure splits the two sources, Not yet re-read is neutral (--bar-neutral).
+- Human-checked: --checked green with the tick. Cautions: amber (--caution) with the "!". The sidebar's group dots
+  (Source purple, identity raspberry, measurement olive) mean only their group.
+- A view that colours by enzyme class gives each class its colour only where no review-result or database-result colour
+  stands beside it (a class's swatch or ridge, never a status bar), so a hue there names a class alone.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on

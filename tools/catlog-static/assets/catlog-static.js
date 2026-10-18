@@ -3698,26 +3698,24 @@
     const rows = Array.isArray(rowsForSummary()) ? rowsForSummary() : [];
     const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
+    // Each key number wears its meaning's colour (the card's records and accepted classes; the stylesheet's band).
     const cards = [
-      [isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows],
-      ["Accepted", recordStateCounts(rows).accepted || 0],
+      ["records", isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows],
+      ["accepted", "Accepted", recordStateCounts(rows).accepted || 0],
     ];
-    const countHtml = ([label, value]) => `
-      <div class="summary-card">
-        <span>${escapeHtml(label)}</span>
-        <strong>${formatCount(value)}</strong>
-      </div>
-    `;
+    const countHtml = ([key, label, value]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span><strong>${formatCount(value)}</strong></div>`;
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
-    $("snapshotMeta").innerHTML = `
-      <span class="snapshot-title">With</span>
-      <span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>
-      <span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>
-      <span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>
-    `;
+    // The With counts: one line each beside the key numbers (one line in all on tablets and phones), so no spaces
+    // between the lines' boxes.
+    $("snapshotMeta").innerHTML = [
+      '<span class="snapshot-title">With</span>',
+      `<span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>`,
+      `<span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>`,
+      `<span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>`,
+    ].join("");
     renderFromPaperCount(rows);
     renderHumanCheckedCount(rows);
     $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";

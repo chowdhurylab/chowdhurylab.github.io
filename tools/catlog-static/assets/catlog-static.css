@@ -82,6 +82,13 @@
   --fg-identity:#A20056;     /* raspberry 7.9:1 */
   --fg-measurement:#6E7F1A;  /* olive 4.5:1 */
   --fg-dot-ring:rgba(23,33,32,0.24);  /* a 1px ring round the sidebar's group dots */
+  /* Where a record's values come from (round 13 palette decision, DESIGN.md "Type And Color"): Read from the paper,
+     CatLog's own reading, wears CatLog's own colour, the accent (its numbers on Browse's counts band and Stats' headline
+     band); the databases are named, never given a colour each. */
+  --src-paper:var(--accent);
+  /* Browse's counts band card: a lighter line than Stats' band and a quieter glow (a 2px ring at 3%, a 26px shadow). */
+  --band-card-line:#c9ddd6;
+  --band-card-glow:0 0 0 2px rgba(36,95,88,0.03), 0 10px 26px -18px rgba(36,95,88,0.36);
   /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
   --accent-glow:rgba(36,95,88,0.26);
   --accent-wash:rgba(36,95,88,0.07);
@@ -204,51 +211,81 @@ button:disabled { cursor:not-allowed; opacity:0.5 }
 .catalog-load-progress.stalled > span { transform:scaleX(1); background:var(--caution); opacity:0.6 }
 body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:none }
 
-/* Counts band (64px): numbers 20px/600 and labels 13px on one baseline, the snapshot date at the line's end. */
-.snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:radial-gradient(60% 220% at 0% 0%, var(--accent-wash), transparent 70%), var(--bg); padding:0 var(--gutter) }
-/* A thin accent rule along the band's foot, fading out to the right (the user, 2026-10-13: "more focus driving"). */
-.snapshot-band::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:linear-gradient(90deg, var(--accent), var(--accent-line) 35%, transparent 80%); pointer-events:none }
-.snapshot-overview { display:flex; flex-wrap:wrap; min-height:var(--band-h); align-items:baseline; align-content:center; gap:var(--sp-2) var(--sp-5); padding:var(--sp-2) 0 }
-.summary-grid, .snapshot-meta, .snapshot-controls { display:flex; min-width:0; align-items:baseline; gap:var(--sp-5) }
-.snapshot-meta { gap:var(--sp-4); border-left:1px solid var(--line); padding-left:var(--sp-5) }
-.summary-card, .snapshot-line, .snapshot-checked, .snapshot-paper { display:inline-flex; align-items:baseline; gap:var(--sp-2); color:var(--text); white-space:nowrap }
-.summary-card span, .snapshot-title, .snapshot-line > span, .snapshot-paper > span { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
-.snapshot-line > span { color:var(--text-2) }
-.summary-card strong, .snapshot-line strong, .snapshot-checked > strong, .snapshot-paper > strong { color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
-/* The key numbers (records, accepted, read from the paper) in accent ink with a soft glow; human-checked in its green. */
-.summary-card strong, .snapshot-paper > strong { color:var(--accent); text-shadow:0 0 12px var(--accent-glow) }
-.snapshot-checked > strong { color:var(--checked); text-shadow:0 0 12px color-mix(in srgb, var(--checked) 24%, transparent) }
-/* The With counts (kcat, Km, kcat/Km rows) are secondary: 16px/500 in --text-2, so the key numbers in accent ink lead
-   the band (dark 20px numbers drew the eye first). The line height stays, so the band keeps its height. */
-.snapshot-line strong { color:var(--text-2); font-size:var(--fs-16); font-weight:500; line-height:var(--lh-20) }
-/* A linked count tints calmly under the pointer; the tint is drawn around it (::before), so the band's line keeps its place. */
-.snapshot-paper[href], .snapshot-checked[href] { position:relative; isolation:isolate }
-.snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-3px -6px; z-index:-1; border-radius:6px; background:transparent; pointer-events:none }
-.snapshot-paper[href]:hover::before, .snapshot-checked[href]:hover::before { background:var(--accent-tint) }
+/* Counts band, the first thing a visitor sees (round 13, the user: "the numbers and overall progress ... so small and
+   colour same so it doesn't capture any attention"): a focal point like Stats' headline band, a step quieter. A soft
+   card (a light accent line, a calm wash and a gentle glow) holds the four key numbers, each label over its number and
+   each number in the colour its meaning has across the site (Records the page's ink, Accepted its status navy with the
+   status dot, Read from the paper CatLog's own colour, Human-checked its green with the tick), then the With counts
+   (kcat, Km, kcat/Km), smaller, and the snapshot date at the card's top right. One layout from 1024px up (nothing
+   wraps or moves as the window widens), two rows on tablets, a 2 x 2 grid on phones. */
+.snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:var(--sp-2) var(--gutter) }
+.snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--band-card-line); border-radius:8px; background:radial-gradient(70% 160% at 0% 0%, var(--accent-wash), transparent 64%), linear-gradient(180deg, var(--accent-wash-soft), transparent 80%), var(--bg); box-shadow:var(--band-card-glow); padding:var(--sp-2) var(--sp-5) var(--sp-2) var(--sp-4) }
+/* Records and Accepted sit in the band's row like the other key numbers. */
+.summary-grid { display:contents }
+.summary-card, .snapshot-paper, .snapshot-checked { --key:var(--text); --key-glow:var(--accent-glow); position:relative; display:inline-flex; min-width:0; flex-direction:column; align-items:flex-start; color:var(--text); white-space:nowrap }
+.summary-card > span, .snapshot-paper > span, .snapshot-checked > span { display:inline-flex; align-items:center; color:var(--muted); font-size:var(--fs-13); line-height:16px }
+.summary-card > strong, .snapshot-paper > strong, .snapshot-checked > strong { color:var(--key); font-size:var(--band-num); font-weight:600; line-height:var(--band-num-lh); text-shadow:0 0 14px var(--key-glow) }
+/* The meaning colours: the same as everywhere else on the site (DESIGN.md "Type And Color", one meaning per colour). */
+.summary-card.summary-accepted { --key:var(--st-accepted); --key-glow:color-mix(in srgb, var(--st-accepted) 26%, transparent) }
+.summary-accepted > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted) }
+.snapshot-paper { --key:var(--src-paper); --key-glow:var(--accent-glow) }
+.snapshot-checked { --key:var(--checked); --key-glow:color-mix(in srgb, var(--checked) 26%, transparent) }
+.snapshot-checked > span { color:var(--checked); font-weight:500 }
+.snapshot-checked .check-icon { margin-right:3px }
+.snapshot-paper[href] > span { color:var(--src-paper) }
+/* A linked count tints in its own colour around itself under the pointer (::before), so nothing moves. */
+.snapshot-paper[href], .snapshot-checked[href] { isolation:isolate }
+.snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:6px; background:transparent; pointer-events:none }
+.snapshot-paper[href]:hover::before, .snapshot-checked[href]:hover::before { background:color-mix(in srgb, var(--key) 9%, var(--bg)) }
 @media (prefers-reduced-motion: no-preference) {
   .snapshot-paper[href]::before, .snapshot-checked[href]::before { transition:background-color 200ms ease }
 }
-/* Human-checked N: a link to those records, its label in the human-checked green. */
-.snapshot-checked > span { color:var(--checked); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
-.snapshot-checked:hover { text-decoration:none }
-.snapshot-checked[href]:hover > span { text-decoration:underline }
-.snapshot-checked .check-icon { margin-right:3px }
-/* Read from the paper N: a link to those records, a label like the others. */
-.snapshot-paper:hover { text-decoration:none }
-.snapshot-paper[href] > span { color:var(--accent) }
-.snapshot-paper[href]:hover > span { text-decoration:underline }
-.snapshot-controls { gap:var(--sp-4); margin-left:auto }
+.snapshot-paper:hover, .snapshot-checked:hover { text-decoration:none }
+.snapshot-paper[href]:hover > span, .snapshot-checked[href]:hover > span { text-decoration:underline }
+/* The With counts: three 12px lines beside the key numbers, as tall as a label and its number ("With" heads the
+   first), each count right-aligned under the other. */
+.snapshot-meta { display:grid; grid-template-columns:auto auto auto; justify-content:start; align-items:baseline; gap:0 6px; border-left:1px solid var(--line-soft); padding-left:var(--sp-5) }
+.snapshot-title { grid-column:1; color:var(--muted); font-size:var(--fs-12); line-height:16px }
+.snapshot-line { display:contents }
+.snapshot-line > span { grid-column:2; color:var(--text-2); font-size:var(--fs-12); line-height:16px; white-space:nowrap }
+.snapshot-line > strong { grid-column:3; color:var(--text-2); font-size:var(--fs-12); font-weight:500; line-height:16px; text-align:right; white-space:nowrap }
+.snapshot-controls { display:flex; min-width:0; margin-left:auto; padding-top:1px }
 .snapshot-date { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); white-space:nowrap }
 .snapshot-more { display:none }
-/* Laptops and tablets: tighter gaps. From 1181px, with no visible "With", the counts keep one line; a window still too
-   narrow (or "Matching records") moves the date under them, inside the same 64px. */
-@media (min-width: 641px) and (max-width: 1439px) {
-  .snapshot-overview { gap:var(--sp-1) var(--sp-3) }
-  .summary-grid { gap:var(--sp-3) }
-  .snapshot-meta { gap:var(--sp-3); padding-left:var(--sp-3) }
+.snapshot-paper-short { display:none }
+/* Tablets: the key numbers 24px on the first row; the With counts on one line under them, the date at its end. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .snapshot-overview { --band-num:var(--fs-24); --band-num-lh:var(--lh-24); display:grid; grid-template-columns:repeat(4,max-content) minmax(0,1fr); grid-template-areas:"records accepted paper checked ." "foot foot foot foot foot"; gap:var(--sp-2) var(--sp-5) }
+  .summary-records { grid-area:records }
+  .summary-accepted { grid-area:accepted }
+  .snapshot-paper { grid-area:paper }
+  .snapshot-checked { grid-area:checked }
+  .snapshot-meta, .snapshot-controls { grid-area:foot; align-self:end }
+  .snapshot-meta { display:flex; justify-self:start; align-items:baseline; gap:var(--sp-3); border-left:0; padding-left:0 }
+  .snapshot-line { display:inline-flex; align-items:baseline; gap:6px }
+  .snapshot-controls { justify-self:end; margin-left:0; padding-top:0 }
 }
-@media (min-width: 1181px) and (max-width: 1439px) {
-  .snapshot-title { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+/* Phones: Records and Accepted, then Read from the paper and Human-checked, labels over 20px numbers, with More at the
+   right of the first row; More shows the With counts and the date under them. */
+@media (max-width: 640px) {
+  .snapshot-band { padding:var(--sp-2) var(--gutter) }
+  .snapshot-overview { --band-num:var(--fs-20); --band-num-lh:var(--lh-20); display:grid; grid-template-columns:max-content max-content minmax(0,1fr); grid-template-areas:"records accepted more" "paper checked checked"; gap:var(--sp-2) var(--sp-4); padding:10px var(--sp-3) }
+  .summary-records { grid-area:records }
+  .summary-accepted { grid-area:accepted }
+  .snapshot-paper { grid-area:paper }
+  .snapshot-checked { grid-area:checked }
+  .snapshot-more { grid-area:more; display:inline-flex; justify-self:end; align-self:start; align-items:center; gap:4px; min-height:28px; margin:-4px -4px 0 0 }
+  /* The With counts as on wider screens (three lines) under a thin rule, then the date: rows of their own only while
+     shown, so a closed More leaves no empty row's gap. */
+  .snapshot-meta { grid-column:1 / -1; border-top:1px solid var(--line-soft); border-left:0; padding:var(--sp-2) 0 0 }
+  .snapshot-controls { grid-column:1 / -1; margin-left:0; padding-top:0 }
+  .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls) { display:none }
+}
+/* Read from the paper takes its short tag, From paper, only where a phone is narrower than 360px (a screen reader
+   still reads Read from the paper). */
+@media (max-width: 359px) {
+  .snapshot-paper-long { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .snapshot-paper-short { display:inline }
 }
 
 /* Workbench: one grid, [filter sidebar | table | open record]. The sidebar is a column from 641px (open, or a 48px rail
@@ -1539,7 +1576,8 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-totals-main .stats-total-value { background:none; box-shadow:none !important; transition:none }
   .stats-band.is-entering .stats-totals-main dd { animation:none }
   .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
-  .stats-band, .stats-lead, .snapshot-band { background:var(--bg) }
+  .stats-band, .stats-lead, .snapshot-band, .snapshot-overview { background:var(--bg) }
+  .snapshot-overview { box-shadow:none; border-color:var(--line) }
   .stats-tip, .stats-switch, .stats-contents { display:none !important }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
      this where a browser prints without telling the page. */
@@ -1677,23 +1715,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .col-open { width:20px }
 }
 
-/* Tablets and laptops up to 1180px (too narrow for the counts on one line): the counts band always takes two lines,
-   Records, Accepted, Read from the paper and Human-checked, then the rows with values and the snapshot date, so the
-   second line never starts with a divider and the band keeps one height. */
-@media (min-width: 641px) and (max-width: 1180px) {
-  .snapshot-overview { row-gap:0 }
-  .snapshot-overview::before { content:""; order:1; flex-basis:100%; height:0 }
-  .snapshot-meta, .snapshot-controls { order:2; margin-top:8px }
-  .snapshot-meta { border-left:0; padding-left:0 }
-}
-/* Read from the paper N takes its short tag, From paper, where the first line is tight (641-799px; a wide font such as
-   Linux's DejaVu Sans needs 780px for the whole label); a screen reader still reads Read from the paper. */
-.snapshot-paper-short { display:none }
-@media (min-width: 641px) and (max-width: 799px) {
-  .snapshot-paper-long { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
-  .snapshot-paper-short { display:inline }
-}
-
 @media (max-width: 720px) {
   .brand-lockup { flex-wrap:wrap; min-width:0 }
   .header-actions { flex-wrap:wrap }
@@ -1755,14 +1776,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .values-table td.vt-value .value-approved.vt-ghost { display:inline }
   .values-table th.vt-value .vt-ghost:not(.value-approved) { display:none }
   .values-table .vt-printed { overflow-wrap:anywhere }
-  .snapshot-overview { min-height:40px; row-gap:6px }
-  .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-controls,.snapshot-paper) { display:none }
-  .snapshot-more { display:inline-flex; align-items:center; gap:4px; margin-left:auto; min-height:28px }
-  .snapshot-checked, .snapshot-paper { align-self:center; padding:5px 0 }
-  /* A filtered count ("Matching records") that does not fit beside Accepted puts Accepted on the next line. */
-  .summary-grid { flex-wrap:wrap; gap:6px 16px }
-  .snapshot-meta { flex-basis:100%; flex-wrap:wrap; gap:4px 16px; border-left:0; padding-left:0 }
-  .snapshot-controls { flex-basis:100%; justify-content:space-between; margin-left:0 }
   body.filters-open { overflow:hidden }
   body.filters-open .skip-link { display:none }
   /* The page scrolls as a whole (2026-10-15: a pinned header, counts band and toolbar left 1.5-2.5 cards of list in

@@ -3039,7 +3039,7 @@ def check_layout(driver, browser, url, route_label):
         # Header and counts band.
         assert box(".app-header")["height"] == 56, box(".app-header")
         band = box(".snapshot-band")
-        assert 64 <= band["height"] <= 66, f"The counts band is one 64px line: {band}"
+        assert 80 <= band["height"] <= 86, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
                 .map(e => getComputedStyle(e)[prop]);
@@ -3048,8 +3048,26 @@ def check_layout(driver, browser, url, route_label):
                     th: px('#recordTableWrap thead th', 'fontSize'), thWeight: px('#recordTableWrap thead th', 'fontWeight'),
                     td: px('#recordsBody td.c-organism', 'fontSize')};
         """)
-        # the key numbers 20px; the With counts (kcat, Km, kcat/Km) are secondary at 16px
-        assert set(sizes["numbers"]) == {"20px"} and set(sizes["with"]) == {"16px"} and set(sizes["labels"]) == {"13px"}, sizes
+        # the key numbers 28px (round 13: a focal point); the With counts (kcat, Km, kcat/Km) are secondary at 12px
+        assert set(sizes["numbers"]) == {"28px"} and set(sizes["with"]) == {"12px"} and set(sizes["labels"]) == {"13px"}, sizes
+        # Each key number in its meaning's colour (Records the page's ink, Accepted the status navy, Read from the paper
+        # CatLog's own colour, Human-checked its green), in a card with a soft glow.
+        colours = driver.execute_script("""
+            const css = getComputedStyle(document.documentElement), probe = document.createElement('i');
+            document.body.appendChild(probe);
+            const resolve = name => { probe.style.color = css.getPropertyValue(name).trim(); return getComputedStyle(probe).color; };
+            const ink = selector => getComputedStyle(document.querySelector(selector)).color;
+            const card = getComputedStyle(document.querySelector('.snapshot-overview'));
+            const result = {records: [ink('.summary-records strong'), resolve('--text')], accepted: [ink('.summary-accepted strong'), resolve('--st-accepted')],
+                paper: [ink('#fromPaperCount'), resolve('--accent')], checked: [ink('#humanCheckedCount'), resolve('--checked')],
+                shadow: card.boxShadow, radius: parseFloat(card.borderTopLeftRadius)};
+            probe.remove();
+            return result;
+        """)
+        for key in ("records", "accepted", "paper", "checked"):
+            assert colours[key][0] == colours[key][1], (key, colours)
+        assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
+        assert colours["shadow"] not in ("", "none") and colours["radius"] >= 6, colours
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
         date, records = box("#snapshotDate"), box(".summary-card strong")
         # on the counts' line where the fonts allow, else under them; always inside the 64px band (Linux fonts are wider)
@@ -3581,30 +3599,43 @@ def check_layout(driver, browser, url, route_label):
             wait.until(lambda d: not is_open())
             assert stored() is None, "Collapsing it again below 1200px goes back to the default"
         results["laptop-1100"] = True
-        # While the header is in rows (641-1180px) the counts band always takes the same two lines: Records to
-        # Human-checked, then the With counts and the date, with no divider at the start of a line.
-        band_heights = set()
-        for width in (1180, 1024, 744):
+        # From 1024px up the counts band is one row that never wraps or moves as the window widens: the key numbers,
+        # the With counts beside them (behind a thin rule) and the date at the card's top right, all inside the card; on
+        # tablets (641-1023px) two rows, the With counts and the date under the key numbers, with no divider. Each
+        # range keeps one height; Read from the paper keeps its whole label (a phone under 360px takes From paper).
+        band_heights = {"row": set(), "tablet": set()}
+        for width in (1700, 1280, 1180, 1024, 1023, 800, 744, 641):
             set_browse_viewport(driver, browser, width, 900)
             band = driver.execute_script("""
-                const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
-                return {height: Math.round(document.querySelector('.snapshot-band').getBoundingClientRect().height),
-                        records: top('.summary-card'), checked: top('#humanCheckedLink'), meta: top('#snapshotMeta .snapshot-line'),
-                        date: top('#snapshotDate'), divider: getComputedStyle(document.getElementById('snapshotMeta')).borderLeftWidth};
+                const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                const top = selector => Math.round(rect(selector).top);
+                const card = rect('.snapshot-overview');
+                const inside = [...document.querySelectorAll('.snapshot-overview > *, .summary-grid > *')].filter(e => e.getClientRects().length)
+                    .every(e => { const r = e.getBoundingClientRect(); return r.left >= card.left - 0.5 && r.right <= card.right + 0.5 && r.bottom <= card.bottom + 0.5; });
+                return {height: Math.round(rect('.snapshot-band').height),
+                        records: top('.summary-card'), checked: top('#humanCheckedLink'), meta: top('#snapshotMeta'), metaRight: Math.round(rect('#snapshotMeta').right),
+                        date: top('#snapshotDate'), dateLeft: Math.round(rect('#snapshotDate').left), inside,
+                        divider: getComputedStyle(document.getElementById('snapshotMeta')).borderLeftWidth};
             """)
-            assert (band["checked"] == band["records"] and band["meta"] > band["records"] + 12
-                    and abs(band["date"] - band["meta"]) < 12 and band["divider"] == "0px"), (
-                f"At {width}px the counts band takes two lines: {band}")
-            # Read from the paper takes its short tag, From paper, below 800px (a screen reader reads the whole label).
+            assert band["inside"], f"At {width}px everything in the counts band stays inside its card: {band}"
+            if width >= 1024:
+                assert (band["checked"] == band["records"] == band["meta"] and abs(band["date"] - band["records"]) < 6
+                        and band["dateLeft"] >= band["metaRight"] + 12 and band["divider"] == "1px"), (
+                    f"At {width}px the counts band is one row: {band}")
+                band_heights["row"].add(band["height"])
+            else:
+                assert (band["checked"] == band["records"] and band["meta"] > band["records"] + 24
+                        and abs(band["date"] - band["meta"]) < 6 and band["divider"] == "0px"), (
+                    f"At {width}px the counts band takes two rows: {band}")
+                band_heights["tablet"].add(band["height"])
             shown = driver.execute_script("""const link = document.getElementById('fromPaperLink');
                 return [...link.querySelectorAll('.snapshot-paper-long, .snapshot-paper-short')]
                     .filter(e => e.getBoundingClientRect().width > 1).map(e => e.textContent)""")
             if driver.find_element(By.ID, "fromPaperLink").is_displayed():
-                assert shown == (["From paper"] if width < 800 else ["Read from the paper"]), (width, shown)
-            band_heights.add(band["height"])
-        assert len(band_heights) == 1, f"The two-line counts band keeps one height: {band_heights}"
-        # The band's key numbers glow softly in accent ink (Human-checked in its green); a linked count's hover tint is
-        # drawn around it, so it never moves the line.
+                assert shown == ["Read from the paper"], (width, shown)
+        assert all(len(heights) == 1 for heights in band_heights.values()), f"Each layout of the counts band keeps one height: {band_heights}"
+        # The band's key numbers glow softly, each in its own colour; a linked count's hover tint is drawn around it, so it
+        # never moves the line.
         glow = driver.execute_script("""
             const shadow = selector => getComputedStyle(document.querySelector(selector)).textShadow;
             const font = selector => { const style = getComputedStyle(document.querySelector(selector));
@@ -3617,7 +3648,7 @@ def check_layout(driver, browser, url, route_label):
         # The With counts are secondary: smaller, lighter and without the glow, so the key numbers lead the band.
         assert (glow["with"]["size"] < glow["key"]["size"] and glow["with"]["weight"] < glow["key"]["weight"]
                 and glow["withShadow"] in ("", "none")), glow
-        results["band-two-lines"] = True
+        results["band-rows"] = True
         # Tablets: the rail; the record is a dialog.
         set_browse_viewport(driver, browser, 800, 1000)
         open_page()
@@ -3650,6 +3681,40 @@ def check_layout(driver, browser, url, route_label):
             # The links out never run into the brand (a wide font puts them on two lines instead).
             brand, links = box(".brand-lockup strong"), box(".external-nav")
             assert brand["left"] + brand["width"] <= links["left"] + 1, f"At 320px the links out overlap the brand: {brand} {links}"
+            # Phones: the counts band's four key numbers (20px) stand two by two in their card, More at the first row's
+            # right; More shows the With counts and the date under them, and closes them again. At 320px with a filter
+            # ("Matching records") and at 375px nothing leaves the card or the window.
+            band_js = """
+                const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                const card = rect('.snapshot-overview');
+                const shown = selector => document.querySelector(selector).getClientRects().length > 0;
+                const items = ['.summary-records', '.summary-accepted', '#fromPaperLink', '#humanCheckedLink', '#snapshotMoreButton'].map(rect);
+                return {tops: items.map(r => Math.round(r.top)), lefts: items.map(r => Math.round(r.left)),
+                        inside: items.every(r => r.left >= card.left - 0.5 && r.right <= card.right + 0.5),
+                        size: getComputedStyle(document.querySelector('.summary-records strong')).fontSize,
+                        meta: shown('#snapshotMeta'), date: shown('#snapshotDate'), scroll: document.documentElement.scrollWidth > innerWidth + 1};
+            """
+            for width, address in ((320, "#browse?metric=kcat"), (375, "")):
+                if width == 375:
+                    set_browse_viewport(driver, browser, 375, 800)
+                    open_page(address)
+                phone_band = driver.execute_script(band_js)
+                tops, lefts = phone_band["tops"], phone_band["lefts"]
+                assert (tops[0] == tops[1] and tops[2] == tops[3] and tops[2] > tops[0] + 24 and lefts[0] == lefts[2]
+                        and lefts[1] == lefts[3] and lefts[4] > lefts[1] and tops[4] < tops[2] and phone_band["inside"]
+                        and phone_band["size"] == "20px" and not phone_band["meta"] and not phone_band["date"]
+                        and not phone_band["scroll"]), f"At {width}px the counts band is two by two: {phone_band}"
+                more = driver.find_element(By.ID, "snapshotMoreButton")
+                more.click()
+                wait.until(lambda d: d.execute_script(band_js)["meta"])
+                assert driver.execute_script(band_js)["date"] and more.get_attribute("aria-expanded") == "true"
+                assert not driver.execute_script(band_js)["scroll"], f"At {width}px More keeps the band in the window"
+                more.click()
+                wait.until(lambda d: not d.execute_script(band_js)["meta"])
+            results["phone-band"] = True
+            # back to the 320px page the checks below look at
+            set_browse_viewport(driver, browser, 320, 800)
+            open_page("#browse?metric=kcat")
             # Phone cards at 320px: each value label puts its unit on a second line, so kcat, Km and kcat/Km start on one
             # line, and no value (1.667 × 10⁻⁶ among the lowest lipase Km) runs past its third of the card.
             open_page("#browse?q=lipase&sort=km_asc")

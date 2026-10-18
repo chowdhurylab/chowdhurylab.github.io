@@ -58,11 +58,15 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    the paper keeps one line in a wide font. Paper: no halo, glow or wash, and nothing moves. CatLog is the one name (round 8): records are Read from the paper or
    Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on
    Stats), in the human review's base and in the Guide's method section. "re-read" never breaks at its hyphen ("re-" /
-   "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band keeps its quieter look at 20px: its key numbers
-   in accent ink with a soft text glow (Human-checked in its green), a soft wash and a thin accent rule along its foot; a
-   linked count tints around itself without moving the line. Its With counts (kcat, Km, kcat/Km) are secondary:
-   16px/500 in --text-2 with their 13px labels, so the key numbers lead. Nothing moves when the viewer asks for less motion;
-   print drops every glow and wash.
+   "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band is a step quieter (round 13, the user:
+   "the numbers and overall progress ... so small and colour same so it doesn't capture any attention"): a soft card
+   (a light accent line, a calm wash, a gentle glow) with the four key numbers at 28px (24px on tablets, 20px on phones),
+   each label over its number and each number in its meaning's colour (Records ink, Accepted navy with its status dot,
+   Read from the paper the accent, CatLog's own colour, Human-checked green with its tick) with a soft glow of that
+   colour; a linked count tints in its colour around itself without moving anything. Its With counts (kcat, Km,
+   kcat/Km) are secondary: three 12px lines beside the key numbers, 500 in --text-2, as tall as a label and its number.
+   One row from 1024px up, two rows on tablets, two by two on phones (tools/catlog-static/DESIGN.md, Layout). Nothing
+   moves when the viewer asks for less motion; print drops every glow and wash.
 2. Quality: the lead, then Checks on the values.
 3. What is in the catalog: Review result (the donut), Records by main source, Read from the paper and not yet re-read,
    Values per paper, then What the records contain beside Wild type and variants.
