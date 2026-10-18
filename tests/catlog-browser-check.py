@@ -495,6 +495,10 @@ def check_human_checked(driver, url):
     return total
 
 
+# The search's chip as it reads now ("Search: lipase"), or null.
+SEARCH_CHIP_JS = "return document.querySelector('#activeFilters [data-filter-key=\"q\"]')?.textContent.trim() ?? null"
+
+
 def check_browse(driver, browser, url, route_label):
     """Exercise public Browse, using only rendered rows and generated JSON Blobs."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
@@ -738,7 +742,10 @@ def check_browse(driver, browser, url, route_label):
             screenshots.append(capture(viewport, "search"))
             search.clear()
             search.send_keys("zzzz-no-match-catlog-browser-check", Keys.TAB)
-            wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records")
+            # The whole word, not a pass for its first keys (Safari types key by key; "zzzz" already finds nothing, and
+            # the chip then widens under a click that follows too soon).
+            wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records"
+                       and d.execute_script(SEARCH_CHIP_JS) == "Search: zzzz-no-match-catlog-browser-check")
             assert row_keys() == []
             assert driver.find_element(By.ID, "pageLabel").text == "No records"
             for identifier in ("downloadPageButton", "exportPageCsvButton", "exportAllCsvButton", "prevButton", "nextButton"):
@@ -5596,7 +5603,8 @@ def check(driver, browser, url):
     assert len(driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) == 25
     search = driver.find_element(By.ID, "globalSearchInput")
     search.send_keys("zzzz-no-match-catlog", Keys.TAB)
-    wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records")
+    # (the whole word applied, not a pass for its first keys: see check_browse)
+    wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == "0 records" and d.execute_script(SEARCH_CHIP_JS) == "Search: zzzz-no-match-catlog")
     assert not driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
     for identifier in ("downloadPageButton", "prevButton", "nextButton"):
         assert not driver.find_element(By.ID, identifier).is_enabled()
