@@ -4280,6 +4280,17 @@
     return d;
   }
 
+  // Enzyme classes 1-7 each have a colour (--ec-N; the user, 2026-10-18): the class's colour on a mark (" stats-ec-N",
+  // or "" for any other number) and the short bar of it before the class's number.
+  function statsClassColour(number) {
+    return Number.isInteger(number) && number >= 1 && number <= 7 ? ` stats-ec-${number}` : "";
+  }
+
+  function statsClassKey(number) {
+    const colour = statsClassColour(number);
+    return colour ? `<i class="stats-ec-key${colour}" aria-hidden="true"></i>` : "";
+  }
+
   // Values by enzyme class (overview.metrics.<metric>.by_class): per metric one shared grid of half-decade bins, per
   // class its count, median, 10th and 90th percentiles and bin counts. Null for a grid that does not hold together.
   function statsClassGrid(summary, classNames) {
@@ -4345,9 +4356,9 @@
       // The class's link opens Browse on its records with this parameter, which also lists values in another unit or
       // with none recorded, so Browse can count more than n: the tooltip line says so.
       const tip = `${text} The link lists every EC ${item.class} record with a ${metric.label}, in any unit.`;
-      return `<li class="stats-ridge-row${item.n < STATS_RIDGE_FEW ? " is-few" : ""}" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
-        <span class="stats-ridge-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, metric: metric.key }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
-        <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key})" d="${line}L${x(last + 1)} ${STATS_RIDGE_BASE}L${x(first)} ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg>${stubs}<span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
+      return `<li class="stats-ridge-row${item.n < STATS_RIDGE_FEW ? " is-few" : ""}${statsClassColour(item.class)}" data-hl="ec_${item.class}" data-class="${item.class}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
+        <span class="stats-ridge-label">${statsClassKey(item.class)}<a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, metric: metric.key }))}">EC ${item.class}</a>${item.name ? `<span class="stats-ridge-name"> ${escapeHtml(item.name)}</span>` : ""}</span>
+        <span class="stats-ridge-plot"><svg class="stats-ridge-svg" viewBox="0 0 100 ${STATS_RIDGE_BASE}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(text)}"><path class="stats-ridge-area" style="fill:url(#statsRidgeFill-${metric.key}${statsClassColour(item.class) ? `-${item.class}` : ""})" d="${line}L${x(last + 1)} ${STATS_RIDGE_BASE}L${x(first)} ${STATS_RIDGE_BASE}Z"/><path class="stats-ridge-line" d="${line}"/></svg>${stubs}<span class="stats-ridge-range" style="left:${+low.toFixed(3)}%;width:${+Math.max(high - low, 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(item.median).toFixed(3)}%"></i></span>
         <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
         <span class="stats-ridge-n">${formatInteger(item.n)}</span>
       </li>`;
@@ -4355,7 +4366,8 @@
     // The n column fits its longest count (in ch at the panel's 12px, so a wider font widens it).
     const longest = Math.max(1, ...grid.classes.map((item) => formatInteger(item.n).length));
     return `<div class="stats-ridges stats-metric-${metric.key}" data-metric="${metric.key}" style="--ridge-n:calc(${longest}ch + 4px)">
-      <svg class="stats-ridge-defs" aria-hidden="true" focusable="false"><defs><linearGradient id="statsRidgeFill-${metric.key}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stats-ridge-stop-top"/><stop offset="1" class="stats-ridge-stop-bottom"/></linearGradient></defs></svg>
+      <svg class="stats-ridge-defs" aria-hidden="true" focusable="false"><defs>${[null, ...grid.classes.filter((item) => statsClassColour(item.class)).map((item) => item.class)]
+        .map((number) => `<linearGradient id="statsRidgeFill-${metric.key}${number ? `-${number}` : ""}"${number ? ` class="${statsClassColour(number).trim()}"` : ""} x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="stats-ridge-stop-top"/><stop offset="1" class="stats-ridge-stop-bottom"/></linearGradient>`).join("")}</defs></svg>
       <p class="stats-ridges-title"><span>${metric.html} <span class="stats-range-unit">(${escapeHtml(unit)})</span></span><span class="stats-ridges-head">Median</span><span class="stats-ridges-head">n</span></p>
       <ol class="stats-ridge-rows">${rows}</ol>
       <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${statsDecadeTicks(from, from + span)}</span><span></span><span></span></div>
@@ -6220,7 +6232,7 @@
       const { max, step } = statsNiceScale(Math.max(...classes.map((item) => item.count)));
       const rows = classes.map((item) => ({
         key: `ec_${item.class}`, count: item.count,
-        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
+        label: `<span class="stats-ec-label" data-stat-key="ec_${item.class}" data-count="${item.count}">${statsClassKey(item.class)}<a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.` }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(item.name || "")}</span></span>`,
         segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
           { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
           ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} read from the paper (${statsShare(item.from_paper, item.count)})` }] : [])],

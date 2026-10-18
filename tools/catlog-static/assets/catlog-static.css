@@ -72,6 +72,17 @@
   --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
   --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
   --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
+  /* Enzyme classes EC 1-7 (the user, 2026-10-18: more of the palette where colour carries meaning): each class its own
+     BPG colour where Stats draws the classes apart (Values by enzyme class, kcat against Km) and as a short bar before
+     a class's number (Enzyme classes, those figures' labels), always beside that number, so colour is never all that
+     tells two classes apart. In those figures the colour means the class. Mint is left out (too light for a line). */
+  --ec-1:#E64B35;             /* BPG red */
+  --ec-2:#4DBBD5;             /* BPG cyan */
+  --ec-3:#00A087;             /* BPG green */
+  --ec-4:#3C5488;             /* BPG navy */
+  --ec-5:#F39B7F;             /* BPG salmon */
+  --ec-6:#8491B4;             /* BPG slate */
+  --ec-7:#7E6148;             /* BPG brown */
   /* Filter chips and the dot beside a sidebar group (tone-* below). A chip whose option already has a colour on this
      page wears it: a review result its status colour, a database result the colour of its square, a caution amber,
      human-checked green. The ten BPG colours all name a review result, a database result or a kind of change here, so the
@@ -1053,6 +1064,16 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution) }
 .stats-part-records { --part:var(--line-strong) }
+/* Enzyme classes: the class's colour (--ec-N), and a short bar of it before the class's number (deepened a little, so
+   the light classes still show on white). */
+.stats-ec-1 { --part:var(--ec-1) }
+.stats-ec-2 { --part:var(--ec-2) }
+.stats-ec-3 { --part:var(--ec-3) }
+.stats-ec-4 { --part:var(--ec-4) }
+.stats-ec-5 { --part:var(--ec-5) }
+.stats-ec-6 { --part:var(--ec-6) }
+.stats-ec-7 { --part:var(--ec-7) }
+.stats-ec-key { display:inline-block; flex:0 0 3px; width:3px; height:12px; margin-right:5px; border-radius:2px; background:var(--part); background:color-mix(in srgb, var(--part) 85%, var(--text)); vertical-align:-1px }
 /* Against the databases (part 7), as Browse colours them: same green, same number under another label neutral grey,
    corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds are cyan at
    three strengths (other values listed, parameter not listed, value not listed: the fill at about 60%, 40% and 20%),
@@ -1322,9 +1343,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-range-numbers dd { margin:2px 0 0; font-size:var(--fs-14); font-weight:500 }
 .stats-histogram { position:relative; padding-bottom:24px }
 .stats-histogram-bars { display:flex; align-items:flex-end; gap:2px; height:72px; border-bottom:1px solid var(--line) }
-/* Value ranges and the per-class small multiples are single-series figures: --bar-neutral (design spec figure 7). Every
-   Nature BPG hue already has a meaning on this page (review results, the database comparison and kinds of change), so a
-   parameter colour would read as one of those; each panel's heading names its parameter. */
+/* Value ranges is a single-series figure: --bar-neutral (design spec figure 7); each panel's heading names its
+   parameter. The per-class small multiples draw each class's ridge in its class colour (.stats-ec-N on the row, the
+   fill from that row's own gradient), its number beside it. */
 .stats-range, .stats-ridges { --part:var(--bar-neutral) }
 /* The light fills carry no information on their own: the bars' 1px outline and the ridge line give the shapes, so they
    are drawn darker than the colour (75% of it with --text: 5.3:1 for --bar-neutral, at least 3:1 for any BPG hue but
@@ -1341,7 +1362,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-histogram-axis sup { font-size:var(--fs-12) }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
-   pointer glows softly in the parameter's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
+   pointer glows softly in its class's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
 .stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
 .stats-ridges, .stats-range { --ridge-label:44px; --ridge-n:5ch }

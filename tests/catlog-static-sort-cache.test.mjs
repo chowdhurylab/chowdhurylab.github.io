@@ -2581,7 +2581,7 @@ function row(overrides = {}) {
     // A class with fewer than 300 values is drawn lighter and dashed (is-few), and the caption's second sentence says so,
     // with the hatched stub where an end bin holds values; the bins and end-bin rule are said under How these numbers are
     // counted.
-    assert.match(more, /<li class="stats-ridge-row is-few" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
+    assert.match(more, /<li class="stats-ridge-row is-few stats-ec-1" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
     assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Each curve runs through half-decade bins on a log scale, and n is the class&#39;s number of values\. A record in several classes counts in each\. The two end bins also hold every value beyond them, so the curve leaves them out; the tooltip line gives their counts\./);
     assert.match(more, /<strong>Figure 7\.<\/strong> One curve per enzyme class, each scaled to its own peak, with the median \(dot\) and the middle 80% of values \(line\)\. A hatched stub at either end marks the values beyond the curve; a lighter, dashed curve has fewer than 300 values\.<\/span>/);
     assert.doesNotMatch(methodHtml(), /dashed|hatched/);
@@ -2590,8 +2590,14 @@ function row(overrides = {}) {
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-n">([^<]+)<\/span>/g)].map((match) => match[1]), ["3", "1"]);
     assert.match(more, /data-metric="kcat" style="--ridge-n:calc\(1ch \+ 4px\)"/);
     assert.match(more, /<svg class="stats-ridge-svg" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="EC 3 Hydrolases, kcat: 1 values; median 4\.5 s⁻¹/);
-    assert.match(more, /fill:url\(#statsRidgeFill-kcat\)/);
-    assert.match(more, /<linearGradient id="statsRidgeFill-kcat"/);
+    // Each class's ridge is drawn in its class colour (--ec-N, the row's stats-ec-N), the fill from its own gradient, and
+    // a short bar of that colour stands before the class's number.
+    assert.match(more, /fill:url\(#statsRidgeFill-kcat-1\)/);
+    assert.match(more, /<linearGradient id="statsRidgeFill-kcat-1" class="stats-ec-1"/);
+    assert.match(more, /<linearGradient id="statsRidgeFill-kcat-3" class="stats-ec-3"/);
+    assert.match(more, /<span class="stats-ridge-label"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><a class="stats-link"/);
+    assert.match(more, /<span class="stats-ec-label" data-stat-key="ec_1" data-count="4"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><a /);
+    for (let number = 1; number <= 7; number += 1) assert.match(styleSource, new RegExp(`\\.stats-ec-${number} \\{ --part:var\\(--ec-${number}\\) \\}`));
     // the median of class 1 (2 s⁻¹ = 10^0.301) on a 7-decade grid from 10^-1: (0.301 + 1) / 7
     assert.match(more, new RegExp(`<i class="stats-ridge-median" style="left:${+((Math.log10(2) + 1) / 7 * 100).toFixed(3)}%"></i>`));
     // Value ranges and Values by enzyme class share one axis per parameter: the whole decades around the class grid
@@ -2613,7 +2619,7 @@ function row(overrides = {}) {
     // The end bins hold every value beyond the grid: the curve covers the inner bins only (here bins 1-12 of 14, from
     // 7.143% to 92.857%), a class with values in an end bin gets a hatched stub there with the count in its tooltip line,
     // and its summary says so; class 1 has none in its end bins, so no stub and its curve falls to the baseline.
-    assert.match(more, /data-class="1"[^>]*>[\s\S]*?<path class="stats-ridge-area" style="fill:url\(#statsRidgeFill-kcat\)" d="M7\.14 40C[^"]*L92\.857 40L7\.143 40Z"\/>/);
+    assert.match(more, /data-class="1"[^>]*>[\s\S]*?<path class="stats-ridge-area" style="fill:url\(#statsRidgeFill-kcat-1\)" d="M7\.14 40C[^"]*L92\.857 40L7\.143 40Z"\/>/);
     assert.doesNotMatch(more.split('data-class="3"')[0], /stats-ridge-end/);
     assert.match(more, /<i class="stats-ridge-end" style="left:92\.857%;width:7\.143%" data-tip="EC 3 Hydrolases, kcat 10⁵·⁵ s⁻¹ and above: 1 values \(end bin, not in the curve\)"><\/i>/);
     assert.match(more, /aria-label="EC 3 Hydrolases, kcat: 1 values; [^"]*; in the end bins, not in the curve: 1 at 10⁵·⁵ s⁻¹ and above\."/);
@@ -2635,7 +2641,7 @@ function row(overrides = {}) {
       // 300 values or more: drawn in full, n with thousands separators, no word about lighter curves.
       const full = api.statsRidgeFigure({ metrics: { km: { by_class: { log10_start: 0, bin_width: 0.5,
         classes: [{ class: 2, n: 18789, median: 3, p10: 1, p90: 10, counts: [0, 9000, 9789, 0] }] } } } });
-      assert.match(full.body, /<li class="stats-ridge-row" data-hl="ec_2"/);
+      assert.match(full.body, /<li class="stats-ridge-row stats-ec-2" data-hl="ec_2"/);
       assert.match(full.body, /<span class="stats-ridge-n">18,789<\/span>/);
       assert.match(full.body, /style="--ridge-n:calc\(6ch \+ 4px\)"/);
       assert.doesNotMatch(full.rules + full.caption, /lighter|hatched/, "No end-bin values and no small class: the caption has one sentence");
