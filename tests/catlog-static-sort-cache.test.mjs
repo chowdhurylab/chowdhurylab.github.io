@@ -2076,8 +2076,8 @@ function row(overrides = {}) {
   // reviewer could not find, never the base again.
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
   // The band's Human review is the same headline. The base's parenthesis keeps one line wherever it is shown.
-  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>no value disputed on 2,671 of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span><\/small>/);
-  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>no value disputed on 2,671 of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span><\/span><\/div>/);
+  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>no value disputed on 2,671 of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>; 153 \(5\.7%\) with the value not found in the paper<\/small>/);
+  assert.match(lead, /<div class="stats-lead-figure"><strong>99\.9%<\/strong><span>no value disputed on 2,671 of 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>; 153 \(5\.7%\) with the value not found in the paper<\/span><\/div>/);
   assert.match(lead, /<p class="stats-lead-sentence">A check of the paper found all 3 disputed values printed as the entry gives them\. In 153 entries \(5\.7%\) the reviewer could not find the value in the paper\.<\/p>/);
   assert.doesNotMatch(lead, /values correct|A reviewer disputed/);
   assert.match(lead, /<dt>Values missing<\/dt><dd>31 entries \(1\.2%\)<\/dd><\/div><div><dt>Other disagreements<\/dt><dd>177 entries \(6\.6%\)<\/dd>/);

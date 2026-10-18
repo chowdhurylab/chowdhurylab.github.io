@@ -5006,6 +5006,14 @@
     return `no value disputed on ${formatInteger(facts.undisputed)} of ${reviewBaseHtml(facts, options)}`;
   }
 
+  // The headline's own tail where it stands as a big number (Stats' At a glance and the Human review figure): the
+  // entries whose value the reviewer could not find, said right beside the share ("; 153 (5.5%) with the value not
+  // found in the paper"), so the share never reads alone; "" when the files do not count them.
+  function reviewHeadlineTail(facts) {
+    if (!facts || facts.notFound === null || facts.notFound === undefined) return "";
+    return `; ${formatInteger(facts.notFound)} (${qualityShare(facts.notFound, facts.entries)}) with the value not found in the paper`;
+  }
+
   // What became of the disputed values, said as what a check found (never "disputed, yet as printed"): "A check of the
   // paper found all 3 disputed values printed as the entry gives them." when it found every one so, "A check of the
   // paper found 1 of the 2 disputed values printed as the entry gives it." for part of them, "No value was disputed."
@@ -5217,7 +5225,7 @@
     const words = (text) => metricWordsHtml(escapeHtml(text));
     const sentences = [reviewDisputedText(review), reviewNotFoundText(review)].filter(Boolean);
     return section("Human review",
-      `<strong>${escapeHtml(review.share)}</strong><span>${reviewHeadlineHtml(review)}</span>`,
+      `<strong>${escapeHtml(review.share)}</strong><span>${reviewHeadlineHtml(review)}${escapeHtml(reviewHeadlineTail(review))}</span>`,
       `${sentences.length ? `<p class="stats-lead-sentence">${words(sentences.join(" "))}</p>` : ""}
           ${facts.length ? `<dl class="stats-lead-facts">${facts.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
           ${notes.length ? `<p class="stats-lead-note">${words(notes.join(" "))}</p>` : ""}
@@ -6320,7 +6328,8 @@
     // 1. At a glance: the headline band. Line 1 (32px, the key numbers in accent ink with a soft glow): records, accepted,
     // read from the paper and the human review's headline (99.9%, no value disputed on 2,767 of 2,770 entries from the
     // earlier version (431 papers)); line 2 (20px): the catalog's scope. A number Browse can filter links there.
-    const reviewHeadline = review ? { value: review.share, note: reviewHeadlineText(review), noteHtml: reviewHeadlineHtml(review) }
+    const reviewHeadline = review ? { value: review.share, note: reviewHeadlineText(review) + reviewHeadlineTail(review),
+      noteHtml: reviewHeadlineHtml(review) + escapeHtml(reviewHeadlineTail(review)) }
       : match ? { value: qualityShare(match.same, match.approved), note: "of approved values the same where CatLog has re-read the paper",
         noteHtml: keepReRead("of approved values the same where CatLog has re-read the paper") } : null;
     const main = [
