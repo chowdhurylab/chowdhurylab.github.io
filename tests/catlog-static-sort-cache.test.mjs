@@ -2745,7 +2745,7 @@ function row(overrides = {}) {
     const temperature = { n: 6, start: 0, width: 1, decimals: 1, counts: Array.from({ length: 101 }, (_value, index) => (index === 25 ? 4 : index === 0 || index === 100 ? 1 : 0)) };
     const ph = { n: 3, start: 2, width: 0.1, decimals: 2, counts: Array.from({ length: 101 }, (_value, index) => (index === 55 ? 3 : 0)) };
     const conditions = api.statsConditionsFigure({ temperature, ph }, 10);
-    assert.match(conditions.body, /data-tip="25 °C \(25 °C–25\.9 °C\): 4 records \(66\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmin=25\.0&amp;tmax=25\.9"/);
+    assert.match(conditions.body, /data-tip="25 °C \(25–25\.9 °C\): 4 records \(66\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmin=25\.0&amp;tmax=25\.9"/);
     assert.match(conditions.body, /data-tip="below 1 °C: 1 record \(16\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmax=0\.9"/);
     assert.match(conditions.body, /data-tip="100 °C and above: 1 record \(16\.7%\)" data-href="[^"]*#browse\?source=paper&amp;tmin=100\.0"/);
     assert.match(conditions.body, /#browse\?source=paper&amp;phmin=7\.50&amp;phmax=7\.59" title="3 records \(pH 7\.5–7\.59\)">pH 7\.5<\/a> <span class="stats-muted">100\.0%<\/span>/);

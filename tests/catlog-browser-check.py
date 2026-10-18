@@ -1128,6 +1128,16 @@ DATABASE_COMPARISON_FIXTURE = {
 DATABASE_TITLES = ("Values against the databases", "Results by database", "Paired values by database",
                    "Corrections by cause and how found", "Corrections by cause and database")
 FIGURE_TITLES = (*DATABASE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
+# The database results by enzyme class follow Values against the databases when the overview counts them.
+DATABASE_CLASS_TITLE = "Against the databases by enzyme class"
+
+
+def with_class_figure(titles, driver):
+    """Part 7's expected titles, with the class figure after the first when the page draws it."""
+    titles = list(titles)
+    if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
+        titles.insert(1, DATABASE_CLASS_TITLE)
+    return titles
 # Before the page starts: the snapshot's comparison with the databases, or the fixture when it has none.
 DATABASE_COMPARISON_JS = """
     Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
@@ -1235,7 +1245,7 @@ def check_stats_figures(driver, browser, url):
             part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
             assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")
             headings = [h.get_attribute("innerText").strip() for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
-            assert headings == list(FIGURE_TITLES), headings
+            assert headings == with_class_figure(FIGURE_TITLES, driver), headings
             comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.summary.database_comparison")
             compared = sum(count for status, count in comparison["values"]["all"].items() if status != "not_compared")
             lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
@@ -1264,7 +1274,10 @@ def check_stats_figures(driver, browser, url):
                         key: row.dataset.row, count: +row.dataset.count,
                         width: [...row.querySelectorAll('.stats-seg')].reduce((sum, seg) => sum + parseFloat(seg.style.width), 0)}))}));
             """)
-            assert [figure["key"] for figure in figures] == ["db-values", "db-sources", "earlier-corrections", "replaced"], figures
+            percent_keys = ["db-values", "db-sources", "earlier-corrections", "replaced"]
+            if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
+                percent_keys.insert(1, "db-classes")
+            assert [figure["key"] for figure in figures] == percent_keys, figures
             for figure in figures:
                 for row in figure["rows"]:
                     assert abs(row["width"] - 100) < 0.01, f"{figure['key']} {row['key']} fills {row['width']}%"
@@ -1434,7 +1447,8 @@ def check_stats_databases(driver, browser, url):
             # Late fonts: measure once they are in.
             driver.execute_script("return document.fonts ? document.fonts.ready.then(() => true) : true")
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title")]
-            assert titles[:len(DATABASE_TITLES)] == list(DATABASE_TITLES), titles
+            expected = with_class_figure(DATABASE_TITLES, driver)
+            assert titles[:len(expected)] == expected, titles
             problems = driver.execute_script(STATS_DATABASES_LAYOUT_JS)
             assert not problems, f"Part 7 at {width}px: {problems}"
             # Two to a row from 1024px: each database beside the values it pairs.
@@ -1505,6 +1519,99 @@ STATS_DIMMED_JS = """
 """
 
 
+# What the values show, as drawn: the map's cells and dots, each histogram's bars (their counts from the tooltip lines),
+# the condition links, the class figure's rows; and whether any label leaves its figure.
+STATS_INSIGHTS_JS = """
+    const tips = (selector) => [...document.querySelectorAll(selector)].map((mark) => mark.dataset.tip || '');
+    const count = (tip) => { const m = tip.match(/: ([\\d,]+) (?:records?|variants?)/); return m ? Number(m[1].replace(/,/g, '')) : 0; };
+    const box = (element) => element.getBoundingClientRect();
+    const out = [];
+    const map = document.querySelector('[data-figure="kcat-km"]');
+    let mapFacts = null;
+    if (map) {
+      const plot = box(map.querySelector('.stats-map-plot'));
+      const svg = map.querySelector('.stats-map-svg').viewBox.baseVal;
+      mapFacts = { cells: tips('[data-figure="kcat-km"] .stats-map-cells rect').reduce((sum, tip) => sum + count(tip), 0),
+        dots: [...map.querySelectorAll('.stats-map-dot')].map((dot) => { const b = box(dot);
+          return { key: dot.dataset.hl, inside: b.left + b.width / 2 >= plot.left - 1 && b.right - b.width / 2 <= plot.right + 1
+            && b.top + b.height / 2 >= plot.top - 1 && b.bottom - b.height / 2 <= plot.bottom + 1 }; }),
+        rows: [...map.querySelectorAll('.stats-map-classes tbody tr')].map((row) => row.dataset.hl),
+        shape: Math.abs(plot.width / plot.height - svg.width / svg.height) < 0.02,
+        records: map.querySelector('.stats-map-facts dd').innerText.trim() };
+    }
+    const panels = (selector) => [...document.querySelectorAll(selector)].map((panel) => ({
+      key: panel.dataset.metric || panel.dataset.condition, n: Number(panel.dataset.count),
+      sum: [...panel.querySelectorAll('[data-tip]')].filter((bar) => bar.matches('.stats-histogram-bars > span, .stats-condition-bars > span'))
+        .reduce((sum, bar) => sum + count(bar.dataset.tip), 0),
+      links: [...panel.querySelectorAll('.stats-condition-top a')].map((link) => link.getAttribute('href').split('#')[1]),
+      hrefs: [...panel.querySelectorAll('[data-href]')].length }));
+    const fold = document.querySelector('[data-figure="mutations"] .stats-fold');
+    let zero = null;
+    if (fold) {
+      // the dashed line stands at the middle of the bar that holds the wild type's own value
+      const line = box(fold.querySelector('.stats-fold-zero'));
+      const bars = [...fold.querySelectorAll('.stats-histogram-bars > span')];
+      const middle = bars.find((bar) => /0\\.75 to 1\\.3 times/.test(bar.dataset.tip));
+      zero = middle ? Math.abs(line.left - (box(middle).left + box(middle).width / 2)) : null;
+    }
+    for (const section of document.querySelectorAll('[data-figure="kcat-km"], [data-figure="mutations"], [data-figure="conditions"], [data-figure="db-classes"]')) {
+      const own = box(section);
+      section.querySelectorAll('.stats-map-iso-label, .stats-map-limit-label, .stats-map-x > span, .stats-map-y > span, .stats-histogram-axis > span, .stats-condition-axis > span, .stats-chart-value, .stats-fold-zero > span')
+        .forEach((label) => { const b = box(label); if (b.width && (b.left < own.left - 1 || b.right > own.right + 1)) out.push(section.dataset.figure + ': ' + label.textContent.trim() + ' leaves its figure'); });
+    }
+    return { map: mapFacts, folds: panels('[data-figure="mutations"] .stats-fold'), conditions: panels('[data-figure="conditions"] .stats-condition'),
+      zero, classes: [...document.querySelectorAll('[data-figure="db-classes"] .stats-chart-row')].map((row) => [row.dataset.row, Number(row.dataset.count)]),
+      out };
+"""
+
+
+def check_stats_insights(driver, browser, overview):
+    """What the values show (overview.from_paper_insights), each figure only when the overview counts it: the map's cells
+    hold its records and a dot per class stands in the plot, drawn with equal decades; each histogram's bars hold its
+    values; the dashed line stands on the wild type's own bar; the condition links open Browse at records read from
+    the paper in a temperature or pH range; the class figure counts each class's values; no label leaves its figure.
+    In Chrome, focusing a class's link in the map's table lights its dot and dims the others."""
+    insights = overview.get("from_paper_insights") or {}
+    drawn = driver.execute_script(STATS_INSIGHTS_JS)
+    assert not drawn["out"], drawn["out"]
+    grid = insights.get("kcat_km")
+    if grid:
+        facts = drawn["map"]
+        assert facts and facts["cells"] == grid["records"] and facts["shape"], facts
+        classes = [f"ec_{item['class']}" for item in grid.get("classes") or [] if 1 <= item["class"] <= 7]
+        assert [dot["key"] for dot in facts["dots"]] == classes == facts["rows"] and all(dot["inside"] for dot in facts["dots"]), facts
+        assert facts["records"] == f"{grid['records']:,}", facts
+    else:
+        assert drawn["map"] is None
+    metrics = (insights.get("mutations") or {}).get("metrics") or {}
+    assert [panel["key"] for panel in drawn["folds"]] == [key for key in ("kcat", "km", "kcat_over_km") if key in metrics], drawn["folds"]
+    assert all(panel["sum"] == panel["n"] == metrics[panel["key"]]["n"] for panel in drawn["folds"]), drawn["folds"]
+    if drawn["folds"]:
+        assert drawn["zero"] is not None and drawn["zero"] <= 1.5, drawn["zero"]
+    conditions = insights.get("conditions") or {}
+    assert [panel["key"] for panel in drawn["conditions"]] == [key for key in ("temperature", "ph") if key in conditions], drawn["conditions"]
+    for panel in drawn["conditions"]:
+        assert panel["sum"] == panel["n"] == conditions[panel["key"]]["n"], panel
+        keys = ("tmin", "tmax") if panel["key"] == "temperature" else ("phmin", "phmax")
+        assert panel["links"] and panel["hrefs"], panel
+        for link in panel["links"]:
+            params = dict(parse_qsl(link.partition("?")[2]))
+            assert link.startswith("browse?") and params.get("source") == "paper" and set(params) - {"source"} <= set(keys), link
+    by_class = insights.get("database_by_class") or []
+    if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
+        assert drawn["classes"] == [[f"ec_{item['class']}", sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))]
+                                    for item in by_class if sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))], drawn["classes"]
+    if browser == "chrome" and grid and drawn["map"]["dots"]:
+        link = driver.find_element(By.CSS_SELECTOR, "[data-figure='kcat-km'] .stats-map-classes tbody tr a.stats-link")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", link)
+        lit = driver.execute_script("""const figure = document.querySelector('[data-figure="kcat-km"]');
+            return [...figure.querySelectorAll('.stats-map-dot')].map((dot) => [dot.classList.contains('is-active'), +getComputedStyle(dot).opacity]);""")
+        assert lit[0][0] and all(not on for on, _opacity in lit[1:]), lit
+        WebDriverWait(driver, 5).until(lambda d: all(opacity < 0.5 for _on, opacity in d.execute_script(
+            "return [...document.querySelectorAll('[data-figure=\"kcat-km\"] .stats-map-dot')].slice(1).map((dot) => [0, +getComputedStyle(dot).opacity])")))
+        driver.execute_script("document.activeElement.blur()")
+
+
 def check_stats_more(driver, browser, overview, total):
     """The figures the overview can add (each only when the snapshot counts it), and that their numbers add up: the
     records read from the paper and those not yet re-read make all records, values per paper make the papers CatLog read,
@@ -1555,6 +1662,7 @@ def check_stats_more(driver, browser, overview, total):
             return Math.max(...[...name.getClientRects()].map((box) => box.right)) > row.querySelector('.stats-value-part').getBoundingClientRect().left - 4;
         }).map((row) => row.dataset.row)""")
         assert not crowded, f"Class names run into Figure 5's numbers: {crowded}"
+    check_stats_insights(driver, browser, overview)
     ridges = driver.find_elements(By.CSS_SELECTOR, "[data-figure='class-values'] .stats-ridges")
     expected = [key for key in ("kcat", "km", "kcat_over_km") if (overview["metrics"].get(key) or {}).get("by_class")]
     assert [panel.get_attribute("data-metric") for panel in ridges] == expected, [panel.get_attribute("data-metric") for panel in ridges]
@@ -1711,6 +1819,25 @@ MORE_FIXTURE_JS = """
           overview.metrics.kcat.by_class = { log10_start: -4, bin_width: 0.5, classes: (overview.ec_classes || []).slice(0, 3)
             .map((item) => ({ class: item.class, n: 20, median: 0.5, p10: 0.02, p90: 4, counts: counts(20) })) };
           overview.top_organisms_from_paper = (overview.top_organisms || []).slice(0, 3).map((item) => ({ ...item, count: Math.min(item.count, overview.from_paper.records) }));
+          // What the values show: a 9 x 8 decade map of 6 records, three classes' medians; variants against their wild
+          // type; temperature and pH (within the records read from the paper); database results for three classes.
+          const grid = Array.from({ length: 36 }, () => new Array(32).fill(0));
+          grid[17][18] = 3; grid[20][14] = 2; grid[35][0] = 1;
+          const classes = (overview.ec_classes || []).slice(0, 3);
+          const fold = (n) => ({ n, median: 0.3, lower: n - 1, higher: 1, tenfold_lower: 1, tenfold_higher: 0,
+            counts: [1, ...new Array(15).fill(0), n - 2, 1, ...new Array(11).fill(0)] });
+          const bins = (n, at) => Array.from({ length: 101 }, (_value, index) => (index === at ? n - 1 : index === 100 ? 1 : 0));
+          const read = Math.max(2, Math.min(overview.from_paper.records, 50));
+          overview.from_paper_insights = {
+            kcat_km: { records: 6, linked: 6, bin_width: 0.25, kcat_log10_start: -4, km_log10_start: -5, counts: grid,
+              ratio_median: 17.3, at_diffusion_limit: [1, 0],
+              classes: classes.map((item, index) => ({ class: item.class, n: 2, kcat_median: [4.4, 1.2, 6.1][index], km_median: [0.23, 0.16, 0.13][index] })) },
+            mutations: { variants: 6, papers: 2, ambiguous: 3, no_wild_type: 1, bin_width: 0.25, log10_start: -4,
+              metrics: { kcat: fold(5), km: fold(4), kcat_over_km: fold(6) } },
+            conditions: { temperature: { n: read, start: 0, width: 1, decimals: 1, counts: bins(read, 25) },
+              ph: { n: read, start: 2, width: 0.1, decimals: 2, counts: bins(read, 55) } },
+            database_by_class: classes.map((item) => ({ class: item.class, same: 1200, other_label: 40, corrects: 9, differs: 7, not_listed: 300 })),
+          };
         }
         Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
       } });
@@ -1807,9 +1934,16 @@ def check_stats_new_figures(driver, browser, url):
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
-            for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class"):
+            for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class",
+                          "kcat against Km", "Variants against their wild type", "Assay temperature and pH"):
                 assert title in titles, titles
-            assert titles.index("Value ranges") < titles.index("Values by enzyme class"), titles
+            assert titles.index("Value ranges") < titles.index("Values by enzyme class") < titles.index("kcat against Km") \
+                < titles.index("Variants against their wild type") < titles.index("Assay temperature and pH") < titles.index("Cautions on values"), titles
+            if driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases']"):
+                assert titles.index(DATABASE_CLASS_TITLE) == titles.index("Values against the databases") + 1, titles
+            # Each enzyme class wears its own colour in Values by enzyme class (a ridge line per class, none alike).
+            strokes = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"class-values\"] .stats-ridges:first-of-type .stats-ridge-line')].map((line) => getComputedStyle(line).stroke)")
+            assert len(strokes) == len(set(strokes)) >= 2, strokes
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats overflows at {width}px"
             assert driver.execute_script("const p=document.querySelector('#statsView'); return p.scrollWidth <= p.clientWidth + 1"), f"Stats overflows inside at {width}px"
             # Figure 3's six ticks (0-125,000) thin to every other one where they would touch, gridlines with them.

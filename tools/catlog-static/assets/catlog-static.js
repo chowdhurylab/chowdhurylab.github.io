@@ -4622,7 +4622,7 @@
     return {
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
-      caption: "Each variant read from the paper against the wild type its paper gives for the same enzyme, organism, substrate, pH and temperature; left of the dashed line is lower than the wild type.",
+      caption: "Each variant read from the paper against the wild type its paper gives for the same enzyme, organism, substrate, pH and temperature.",
       rules: `${formatInteger(variants)} ${variants === 1 ? "variant" : "variants"}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the two end bars also hold every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
@@ -4635,9 +4635,11 @@
   // the three most common bars are links above the plot, for the keyboard.
   const STATS_CONDITIONS = [
     { key: "temperature", label: "Temperature", unit: "°C", min: "tmin", max: "tmax", tick: 10, every: 2, steps: 100,
-      name: (value) => `${formatNumber(value, { maximumFractionDigits: 1 })} °C` },
+      name: (value) => `${formatNumber(value, { maximumFractionDigits: 1 })} °C`,
+      range: (low, high) => `${formatNumber(low, { maximumFractionDigits: 1 })}–${high} °C` },
     { key: "ph", label: "pH", unit: "", min: "phmin", max: "phmax", tick: 1, every: 2, steps: 100,
-      name: (value) => `pH ${formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}` },
+      name: (value) => `pH ${formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`,
+      range: (low, high) => `pH ${formatNumber(low, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}–${high}` },
   ];
 
   function statsConditionPanel(condition, summary, records) {
@@ -4660,7 +4662,7 @@
     };
     const name = (index) => (index === 0 ? `below ${condition.name(lower(1))}` : index === bins - 1 ? `${condition.name(lower(index))} and above` : condition.name(lower(index)));
     const span = (index) => (index > 0 && index < bins - 1 && decimals !== null && decimals > widthPlaces
-      ? ` (${condition.name(lower(index))}–${fixed(lower(index + 1) - step)}${condition.unit ? ` ${condition.unit}` : ""})` : "");
+      ? ` (${condition.range(lower(index), fixed(lower(index + 1) - step))})` : "");
     const highest = Math.max(...counts);
     const bars = counts.map((count, index) => {
       const href = count && params(index) ? statsBrowseHref(params(index)) : "";
