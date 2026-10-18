@@ -202,7 +202,7 @@
   // 256px width); the chips, the Guide and Stats say the label.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above the diffusion limit or a printed unit that differs from the one CatLog read",
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above 10¹⁰ M⁻¹ s⁻¹ (faster than diffusion allows) or a printed unit that differs from the one CatLog read",
       short: "Unit or magnitude error" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
@@ -495,7 +495,8 @@
     // The magnitude cautions end alike, here, in the record's notes and in the Guide: "the unit or the value may be wrong".
     km_magnitude_needs_check: "Km above 10 M; the unit or the value may be wrong",
     kcat_magnitude_needs_check: "kcat above 10⁸ s⁻¹; the unit or the value may be wrong",
-    efficiency_above_diffusion_limit: "kcat/Km above the diffusion limit; the unit or the value may be wrong",
+    // (the realkcat exporter's limit, _DIFFUSION_LIMIT_PER_S_PER_MM: above 10⁷ mM⁻¹ s⁻¹; Stats' diffusion band is 10⁸–10⁹)
+    efficiency_above_diffusion_limit: "kcat/Km above 10¹⁰ M⁻¹ s⁻¹ (10⁷ mM⁻¹ s⁻¹), faster than diffusion allows; the unit or the value may be wrong",
     // CatLog's flag for a value stored in another concentration unit than the paper prints (name to be confirmed).
     printed_unit_prefix_differs: "The paper prints another concentration unit than the one CatLog uses (printed unit differs).",
     temperature_value_needs_check: "Temperature value questionable",
@@ -4500,11 +4501,14 @@
   // of quarter decades and drawn as a density map on log axes whose decades are one size, so a line of equal kcat/Km
   // runs at 45°. Grey cells (darker = more records, on a log scale; each cell's count in its tooltip line), thin lines
   // of equal kcat/Km every hundredfold (labelled in M⁻¹ s⁻¹ where they leave the plot), the diffusion limit (10⁵–10⁶
-  // mM⁻¹ s⁻¹, i.e. 10⁸–10⁹ M⁻¹ s⁻¹) as a light amber band (amber: a value beyond it carries a caution), and each enzyme
+  // mM⁻¹ s⁻¹, i.e. 10⁸–10⁹ M⁻¹ s⁻¹) as a light amber band (the caution's colour: a value far beyond it, above 10¹⁰
+  // M⁻¹ s⁻¹, carries the above-diffusion-limit caution; the facts beside the map say so), and each enzyme
   // class's median kcat and median Km as a dot in its class colour. Beside the map: the records (a link to them when
   // Browse finds the same number), the median kcat ÷ Km, the records at the limit or above, and the class medians (a row
   // lights its dot, as the dot lights its row).
   const STATS_DIFFUSION_LIMIT = [5, 6];
+  // The above-diffusion-limit caution's limit (log10 mM⁻¹ s⁻¹): 10⁷ mM⁻¹ s⁻¹ = 10¹⁰ M⁻¹ s⁻¹.
+  const STATS_CAUTION_LIMIT = 7;
   const STATS_MAP_ISO_STEP = 2;
   // mM⁻¹ s⁻¹ to M⁻¹ s⁻¹: three powers of ten.
   const STATS_MOLAR = 3;
@@ -4593,7 +4597,7 @@
     const facts = [
       `<div><dt>Records</dt><dd>${recordsHtml}</dd></div>`,
       ratio ? `<div><dt>Median <i>k</i><sub>cat</sub> ÷ <i>K</i><sub>m</sub></dt><dd>${statsRangeNumber(ratio, { html: true, figures: 2 })} mM⁻¹ s⁻¹<small>${statsRangeNumber(ratio * 1000, { html: true, figures: 2 })} M⁻¹ s⁻¹</small></dd></div>` : "",
-      limits ? `<div><dt>At the diffusion limit or above</dt><dd>${formatInteger(limits[0])} <span class="stats-muted">(${escapeHtml(statsShare(limits[0], records))})</span><small>${molar(limitLow)} M⁻¹ s⁻¹ or more; ${formatInteger(limits[1])} at ${molar(limitHigh)} or more</small></dd></div>` : "",
+      limits ? `<div><dt>At the diffusion limit or above</dt><dd>${formatInteger(limits[0])} <span class="stats-muted">(${escapeHtml(statsShare(limits[0], records))})</span><small>${molar(limitLow)} M⁻¹ s⁻¹ or more; ${formatInteger(limits[1])} at ${molar(limitHigh)} or more (the caution marks those above ${molar(STATS_CAUTION_LIMIT)})</small></dd></div>` : "",
     ].join("");
     const classRows = classes.map((item) => `<tr data-hl="ec_${item.class}" data-tip="${escapeHtml(medianText(item))}">
         <th scope="row"><span class="stats-name">${statsClassKey(item.class)}<span><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, source: "paper", metric: "kcat,km" }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(classNames[item.class] || "")}</span></span></span></th>
@@ -10621,7 +10625,7 @@
 
   const metricNames = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km", ki: "Ki" };
   const flagNoteTexts = {
-    efficiency_above_diffusion_limit: "kcat/Km is above the diffusion limit; the unit or the value may be wrong.",
+    efficiency_above_diffusion_limit: "kcat/Km is above 10¹⁰ M⁻¹ s⁻¹ (10⁷ mM⁻¹ s⁻¹), faster than diffusion allows; the unit or the value may be wrong.",
     kcat_over_km_source_mismatch: "Every kcat/Km the source databases list for this record is more than 2-fold from the kcat/Km shown.",
   };
 

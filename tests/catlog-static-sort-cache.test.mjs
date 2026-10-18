@@ -2761,7 +2761,7 @@ function row(overrides = {}) {
     // diffusion limit in M⁻¹ s⁻¹, as are the lines of equal kcat/Km.
     assert.match(figure.body, /<dt>Records<\/dt><dd><a class="stats-link" href="[^"]*#browse\?source=paper&amp;metric=kcat%2Ckm">3<\/a><\/dd>/);
     assert.match(figure.body, /17 mM⁻¹ s⁻¹<small>17,000 M⁻¹ s⁻¹<\/small>/);
-    assert.match(figure.body, /<dd>1 <span class="stats-muted">\(33\.3%\)<\/span><small>10⁸ M⁻¹ s⁻¹ or more; 0 at 10⁹ or more<\/small>/);
+    assert.match(figure.body, /<dd>1 <span class="stats-muted">\(33\.3%\)<\/span><small>10⁸ M⁻¹ s⁻¹ or more; 0 at 10⁹ or more \(the caution marks those above 10¹⁰\)<\/small>/);
     assert.match(figure.body, /Diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹/);
     assert.match(figure.body, /Equal <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> \(M⁻¹ s⁻¹\), every 100-fold/);
     assert.doesNotMatch(api.statsKcatKmFigure({ ...map, linked: 4 }, classNames).body, /<dd><a class="stats-link"/, "No link when Browse would list another number");
@@ -3325,7 +3325,8 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   assert.match(high, /kcat is above 10⁸ s⁻¹; the unit or the value may be wrong\./);
   // Every magnitude caution ends as the Guide's does.
   const diffusion = measurementSection(row({ kcat_over_km: 5e9, kcat_over_km_display: "5e+9", condition_flags: ["efficiency_above_diffusion_limit"] }), {});
-  assert.match(diffusion, /kcat\/Km is above the diffusion limit; the unit or the value may be wrong\./);
+  // The caution says where it fires (10¹⁰ M⁻¹ s⁻¹), not "the diffusion limit", which Stats draws at 10⁸–10⁹.
+  assert.match(diffusion, /kcat\/Km is above 10¹⁰ M⁻¹ s⁻¹ \(10⁷ mM⁻¹ s⁻¹\), faster than diffusion allows; the unit or the value may be wrong\./);
   const guideCautions = indexHtml.match(/<dl class="guide-caution-list">[\s\S]*?<\/dl>/)[0];
   assert.equal((guideCautions.match(/the unit or the value may be wrong\./g) || []).length, 3, "Km, kcat and diffusion limit say it alike");
   assert.doesNotMatch(guideCautions, /the unit may be wrong|magnitude may be wrong/);

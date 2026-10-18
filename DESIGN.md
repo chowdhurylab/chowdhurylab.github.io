@@ -319,7 +319,9 @@ its accessible description; no figure or table has a data line. The parts' figur
     tooltip line; thin lines of equal kcat/Km every hundredfold, labelled in M⁻¹ s⁻¹ where they leave the plot (top,
     else right; "10" and a 12px `<sup>` exponent, as the axis ticks are, one exponent style per figure), the unit the diffusion limit is known in, so no label reads as the limit in another unit; the
     diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹ (10⁵–10⁶ mM⁻¹ s⁻¹), as a light amber band with dashed amber edges and
-    "diffusion limit" along it (amber, because a value beyond it carries a caution); each enzyme class's median kcat
+    "diffusion limit" along it (amber, the caution's colour: a value far beyond it, above 10¹⁰ M⁻¹ s⁻¹, carries the
+    above-diffusion-limit caution, and the facts beside the map say "(the caution marks those above 10¹⁰)"; the
+    caution, its filter's title and the Guide give that limit, never "the diffusion limit" alone); each enzyme class's median kcat
     and median Km as a 16px dot in its class colour with its class number in it (ink, white on navy and brown), ringed white, the smaller classes on top; dots that would cover each other at the plot's size (EC 2 and EC 6 stand a tenth of a decade apart) are pushed apart until 20px separate their centres, each moved one with a 1px line and a 5px dot of its colour back at its own place (statsPlaceMapDots, again when the plot changes size). A legend above (records per cell 1 to the largest,
     equal kcat/Km, the limit, a class median with a dot of all seven colours). Beside the map (under it below 1024px):
     Records (linked to source=paper&metric=kcat,km only when `linked`, the records Browse finds with both values in any
