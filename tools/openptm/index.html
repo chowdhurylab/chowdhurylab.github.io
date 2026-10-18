@@ -6,7 +6,7 @@
 <meta name="description" content="Browse PTM families, source catalogs, protein sites, function and regulation findings, and disease studies. Sources and counting methods accompany the data. Chowdhury Lab, Iowa State University.">
 <title>openPTM | PTM databases and studies</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23285577'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='white' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='4' fill='white'/%3E%3C/svg%3E">
-<style>/* openPTM — DESIGN.md v4.0.0 */
+<style>/* openPTM — DESIGN.md v5.0.0 */
 
 :root {
   --primary: #285577;
@@ -31,7 +31,7 @@
   --shadow: 0 10px 26px rgba(20, 34, 31, 0.09);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
   --reading-font: var(--font);
-  --title-font: Georgia, "Times New Roman", serif;
+  --title-font: var(--font);
 }
 
 * { box-sizing: border-box; }
@@ -67,7 +67,7 @@ html, body {
 }
 .skip-link:focus { top: 8px; }
 
-:is(a, button, input, select, [tabindex]):focus-visible {
+:is(a, button, input, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -80,7 +80,7 @@ a { color: var(--accent); }
   height: 58px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 0 16px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
@@ -94,7 +94,7 @@ a { color: var(--accent); }
   appearance: none; background: none; border: 0; padding: 0;
   font: inherit; color: inherit; text-align: left; cursor: pointer;
 }
-.brand-lockup strong { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.brand-lockup strong { font-size: 21px; font-weight: 700; line-height: 1.2; }
 .brand-lockup:hover strong { color: var(--accent); }
 
 .top-nav { display: flex; align-items: stretch; gap: 4px; height: 100%; }
@@ -106,7 +106,8 @@ a { color: var(--accent); }
   text-decoration: none;
 }
 .nav-tab:hover { color: var(--ink); background: var(--panel-muted); }
-.nav-tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+.nav-tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+.nav-tab:focus-visible { outline-offset: -3px; }
 .nav-short { display: none; }
 .nav-lab { color: var(--accent); }
 
@@ -205,25 +206,25 @@ a { color: var(--accent); }
 .facet-count-note { color: var(--quiet); font-size: 11px; margin: 8px 2px; }
 
 /* The companion evidence view has its own scope and review date. */
-.disease-intro { flex: 0 0 auto; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.disease-intro { flex: 0 0 auto; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
 .disease-heading { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.disease-heading h1 { font-family: var(--reading-font); font-size: 26px; font-weight: 400; line-height: 1.2; margin: 0; }
+.disease-heading h1 { font-family: var(--font); font-size: 22px; font-weight: 600; line-height: 1.25; margin: 0; }
 .disease-heading span, .disease-meta { color: var(--muted); font-size: 12px; }
 .disease-intro p { max-width: 950px; font-size: 13px; margin: 7px 0; }
 .disease-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .disease-table { table-layout: fixed; min-width: 800px; }
-.disease-table th:nth-child(1) { width: 20%; }
-.disease-table th:nth-child(2) { width: 23%; }
-.disease-table th:nth-child(3) { width: 41%; }
-.disease-table th:nth-child(4) { width: 16%; }
-.disease-table td { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.disease-table > thead > tr > th:nth-child(1) { width: 20%; }
+.disease-table > thead > tr > th:nth-child(2) { width: 23%; }
+.disease-table > thead > tr > th:nth-child(3) { width: 41%; }
+.disease-table > thead > tr > th:nth-child(4) { width: 16%; }
+.disease-table > tbody > tr > td { font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
 .disease-table th { white-space: normal; }
 .disease-table .cell-secondary { color: var(--muted); font-size: 12px; margin-top: 5px; }
 .selected-table { table-layout: fixed; min-width: 840px; }
-.selected-table th:nth-child(1) { width: 22%; }
-.selected-table th:nth-child(2) { width: 18%; }
-.selected-table th:nth-child(3) { width: 18%; }
-.selected-table th:nth-child(4) { width: 42%; }
+.selected-table > thead > tr > th:nth-child(1) { width: 22%; }
+.selected-table > thead > tr > th:nth-child(2) { width: 18%; }
+.selected-table > thead > tr > th:nth-child(3) { width: 18%; }
+.selected-table > thead > tr > th:nth-child(4) { width: 42%; }
 .selected-table th { white-space: normal; }
 .selected-table td { line-height: 1.45; }
 .selected-table .cell-primary { font-family: var(--reading-font); font-size: 15px; color: var(--accent-dark); }
@@ -232,32 +233,39 @@ a { color: var(--accent); }
 .selected-source-line .cell-secondary { margin-top: 0; }
 .expanded-table { table-layout: fixed; min-width: 880px; }
 .expanded-table th { white-space: normal; }
-.expanded-table td { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-.catalog-table th:nth-child(1) { width: 22%; }
-.catalog-table th:nth-child(2) { width: 15%; }
-.catalog-table th:nth-child(3) { width: 44%; }
-.catalog-table th:nth-child(4) { width: 19%; }
+.expanded-table > tbody > tr > td { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.catalog-table > thead > tr > th:nth-child(1) { width: 22%; }
+.catalog-table > thead > tr > th:nth-child(2) { width: 15%; }
+.catalog-table > thead > tr > th:nth-child(3) { width: 44%; }
+.catalog-table > thead > tr > th:nth-child(4) { width: 19%; }
 .catalog-count-line { display: block; margin-bottom: 5px; font-variant-numeric: tabular-nums; }
 .catalog-count-line:last-child { margin-bottom: 0; }
-.site-table th:nth-child(1) { width: 31%; }
-.site-table th:nth-child(2) { width: 11%; }
-.site-table th:nth-child(3) { width: 19%; }
-.site-table th:nth-child(4) { width: 14%; }
-.site-table th:nth-child(5) { width: 25%; }
+.site-table > thead > tr > th:nth-child(1) { width: 31%; }
+.site-table > thead > tr > th:nth-child(2) { width: 11%; }
+.site-table > thead > tr > th:nth-child(3) { width: 19%; }
+.site-table > thead > tr > th:nth-child(4) { width: 14%; }
+.site-table > thead > tr > th:nth-child(5) { width: 25%; }
 .regulation-table { min-width: 1000px; }
-.regulation-table th:nth-child(1) { width: 23%; }
-.regulation-table th:nth-child(2) { width: 18%; }
-.regulation-table th:nth-child(3) { width: 33%; }
-.regulation-table th:nth-child(4) { width: 16%; }
-.regulation-table th:nth-child(5) { width: 9%; }
+.regulation-table > thead > tr > th:nth-child(1) { width: 22%; }
+.regulation-table > thead > tr > th:nth-child(2) { width: 17%; }
+.regulation-table > thead > tr > th:nth-child(3) { width: 36%; }
+.regulation-table > thead > tr > th:nth-child(4) { width: 15%; }
+.regulation-table > thead > tr > th:nth-child(5) { width: 10%; }
+.measured-table > thead > tr > th:nth-child(1) { width: 24%; }
+.measured-table > thead > tr > th:nth-child(2) { width: 18%; }
+.measured-table > thead > tr > th:nth-child(3), .measured-table > thead > tr > th:nth-child(4) { width: 23%; }
+.measured-table > thead > tr > th:nth-child(5) { width: 12%; }
+.measurement-state-value { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.35; }
+.measurement-state-label { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.measurement-metric { font-size: 13px; line-height: 1.4; }
 .regulation-target { display: block; margin-top: 4px; }
 .study-evidence-layer { border-top: 1px solid var(--line-soft); padding-top: 8px; }
 .study-evidence-layer h4 { margin: 6px 0; font-size: 13px; }
-.measurement-comparison { margin: 8px 0; table-layout: fixed; }
+.measurement-comparison { margin: 6px 0; table-layout: fixed; }
 .measurement-comparison tr { cursor: default; background: none; border-bottom: 1px solid var(--line-soft); }
 .measurement-comparison tr:hover { background: none; }
-.measurement-comparison th { width: 65%; padding: 8px 10px 8px 0; text-align: left; font-weight: 400; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
-.measurement-comparison td { width: 35%; padding: 8px 0; text-align: right; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
+.measurement-comparison th { width: 62%; padding: 6px 10px 6px 0; vertical-align: top; text-align: left; font-weight: 400; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.measurement-comparison td { width: 38%; padding: 6px 0; vertical-align: top; text-align: right; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
 .site-values-scroll { max-width: 100%; overflow-x: auto; }
 .site-values { width: 100%; table-layout: auto; font-variant-numeric: tabular-nums; }
 .site-values th, .site-values td { padding: 8px 7px; font-size: 12px; line-height: 1.4; white-space: normal; text-align: right; font-weight: 400; }
@@ -269,8 +277,18 @@ a { color: var(--accent); }
 .measurement-cell .study-evidence-layer + .study-evidence-layer { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
 .measurement-cell .study-evidence-layer h4 { margin-top: 0; }
 .measurement-cell .measurement-comparison { margin: 4px 0 0; }
-.measurement-cell .measurement-comparison th { width: 59%; font-size: 12px; }
-.measurement-cell .measurement-comparison td { width: 41%; font-size: 13px; }
+.measurement-cell .measurement-comparison th { width: 62%; padding: 4px 8px 4px 0; font-size: 12px; }
+.measurement-cell .measurement-comparison td { width: 38%; padding: 4px 0; font-size: 13px; }
+.measurement-preview { min-width: 0; }
+.measurement-preview .study-evidence-layer h4 { margin: 0 0 4px; line-height: 1.35; }
+.measurement-more { display: block; margin-top: 4px; padding: 2px 0; text-align: left; font-size: 12px; line-height: 1.4; }
+.record-values { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.evidence-detail .record-values > h3 { margin: 8px 0; }
+.record-summary { padding: 10px 0; }
+.record-limits { margin: 12px 0; padding-left: 10px; border-left: 2px solid var(--warning); }
+.evidence-detail .record-limits > h3 { margin: 0 0 6px; }
+.record-limits p { margin: 6px 0; }
+.evidence-detail .record-limits .detail-qualification { border: 0; padding: 0; color: var(--ink); }
 .record-site { font-size: 13px; color: var(--muted); margin: 6px 0; }
 .source-field-list { margin: 0; padding-left: 16px; }
 .source-field-list li { margin: 4px 0; overflow-wrap: anywhere; }
@@ -400,7 +418,7 @@ a { color: var(--accent); }
 
 table { border-collapse: collapse; width: 100%; }
 
-thead th {
+#sheetTable > thead > tr > th {
   position: sticky; top: 0; z-index: 5;
   background: var(--panel-muted);
   border-bottom: 1px solid var(--line);
@@ -409,7 +427,8 @@ thead th {
   padding: 0;
   white-space: nowrap;
 }
-thead th.num { text-align: right; }
+#sheetTable > thead > tr > th.num { text-align: right; }
+#sheetTable:is(.disease-table, .selected-table, .expanded-table, .family-table) > thead > tr > th { white-space: normal; }
 th .th-button {
   appearance: none; border: 0; background: none; font: inherit; color: inherit;
   cursor: pointer; padding: 8px 10px; width: 100%; text-align: inherit;
@@ -419,28 +438,28 @@ thead th.num .th-button { justify-content: flex-end; }
 th .th-button:hover { color: var(--ink); }
 th .sort-arrow { font-size: 10px; color: var(--accent); }
 
-tbody tr {
+#sheetTable > tbody > tr {
   border-bottom: 1px solid var(--line-soft);
   cursor: pointer;
 }
-tbody tr:nth-child(even) { background: var(--zebra); }
-tbody tr:hover { background: var(--row-hover); }
-tbody tr[aria-selected="true"] {
+#sheetTable > tbody > tr:nth-child(even) { background: var(--zebra); }
+#sheetTable > tbody > tr:hover { background: var(--row-hover); }
+#sheetTable > tbody > tr[aria-selected="true"] {
   background: var(--row-selected);
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
-tbody td {
-  padding: 9px 10px;
+#sheetTable > tbody > tr > td {
+  padding: 8px 10px;
   vertical-align: top;
-  font-size: 13.5px;
+  font-size: 13px;
   max-width: 340px;
   overflow-wrap: break-word;
 }
 .family-table { table-layout: fixed; min-width: 680px; }
-.family-table th:nth-child(1) { width: 34%; }
-.family-table th:nth-child(2) { width: 29%; }
-.family-table th:nth-child(3) { width: 37%; }
+.family-table > thead > tr > th:nth-child(1) { width: 34%; }
+.family-table > thead > tr > th:nth-child(2) { width: 29%; }
+.family-table > thead > tr > th:nth-child(3) { width: 37%; }
 .family-table td { line-height: 1.4; padding-top: 10px; padding-bottom: 10px; }
 .family-table .cell-secondary { font-size: 12px; margin-top: 4px; }
 .family-name { display: block; color: var(--accent-dark); font-family: var(--reading-font); font-size: 15.5px; line-height: 1.3; }
@@ -505,18 +524,18 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 }
 .detail-links { margin: 2px 0 0; padding-left: 16px; }
 .detail-links li { margin: 2px 0; overflow-wrap: anywhere; }
-.family-profile { line-height: 1.6; }
-.family-profile p { margin: 12px 0; overflow-wrap: anywhere; }
+.family-profile { line-height: 1.5; }
+.family-profile p { margin: 8px 0; overflow-wrap: anywhere; }
 .profile-definition { font-size: 14px; }
 .profile-meta { color: var(--muted); font-size: 12px; }
-.family-profile h3 { margin: 20px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; }
+.family-profile h3 { margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
 .family-profile h3 small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
 .profile-studies { list-style: none; padding: 0; margin: 0; }
 .profile-studies li { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
 .profile-studies a { font-weight: 600; }
 .profile-studies span { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
-.source-record { margin-top: 20px; border-top: 1px solid var(--line); }
-.source-record summary { padding: 12px 0; color: var(--accent); font-weight: 600; cursor: pointer; }
+.source-record { margin-top: 14px; border-top: 1px solid var(--line); }
+.source-record summary { padding: 10px 0; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* ---------- Family directory and full family pages ---------- */
 
@@ -530,13 +549,13 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   background: var(--panel);
   scrollbar-gutter: stable;
 }
-.library-inner { max-width: 1240px; margin: 0 auto; padding: 32px 36px 40px; }
+.library-inner { max-width: 1240px; margin: 0 auto; padding: 20px 24px 32px; }
 .library-heading h1, .family-page-heading h1 {
   margin: 0;
   font-family: var(--title-font);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.2;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 .library-heading p {
@@ -552,9 +571,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   gap: 8px 12px;
   padding-bottom: 10px;
 }
-.directory-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 24px; }
+.directory-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 12px; }
 .directory-heading p { margin: 0; }
-.directory-heading .directory-description { margin-top: 8px; font-size: 14px; }
+.directory-heading .directory-description { margin-top: 6px; font-size: 13px; }
 .library-tools label {
   display: flex;
   flex-direction: column;
@@ -581,7 +600,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 .library-tools select:hover { border-color: var(--accent); }
 .ptm-library .library-tools label { flex-direction: row; align-items: center; gap: 8px; }
 .ptm-library #directoryCollection { width: 200px; }
-.ptm-library .library-tools { gap: 12px 20px; padding-bottom: 16px; }
+.ptm-library .library-tools { gap: 8px 16px; padding-bottom: 10px; }
 .ptm-library .library-tools > strong { margin-left: auto; }
 .library-tools > strong {
   margin-left: 4px;
@@ -625,14 +644,14 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 }
 .directory-alphabet button:active, .ptm-library #directoryReset:active { background: var(--row-selected); }
 .directory-alphabet button:disabled { color: var(--quiet); background: none; border-color: transparent; cursor: default; }
-.directory-columns { display: grid; grid-template-columns: 1.15fr 1fr 0.95fr; gap: 24px; margin-left: 50px; padding: 14px 8px 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
-.directory-group { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; padding-top: 0; }
+.directory-columns { display: grid; grid-template-columns: 1.15fr 1fr 0.95fr; gap: 16px; margin-left: 44px; padding: 10px 8px 8px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+.directory-group { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding-top: 0; }
 .directory-group h2 {
   margin: 0;
-  padding-top: 12px;
+  padding-top: 9px;
   font-family: var(--title-font);
-  font-size: 22px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.3;
 }
 .directory-group h2 small {
@@ -655,11 +674,9 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   display: grid;
   grid-template-columns: 1.15fr 1fr 0.95fr;
   align-items: baseline;
-  gap: 24px;
-  height: 100%;
-  padding: 13px 8px;
+  gap: 16px;
+  padding: 9px 8px;
   color: var(--ink);
-  text-decoration: none;
   overflow-wrap: anywhere;
 }
 .family-entry h3 {
@@ -667,58 +684,66 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   color: var(--ink);
   font-family: var(--font);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.35;
 }
 .family-entry p { margin: 0; font-size: 12px; line-height: 1.5; }
 .family-entry-chemistry { color: var(--muted); }
 .family-entry-data { color: var(--quiet); font-variant-numeric: tabular-nums; }
+.family-entry-name { color: var(--ink); text-decoration: none; }
+.family-entry-data a { display: inline-block; text-decoration: none; }
 .family-entry:hover { background: var(--row-hover); }
-.family-entry:hover h3, .family-entry:focus-visible h3 { text-decoration: underline; text-underline-offset: 3px; }
-.family-entry:active { background: var(--row-selected); }
+.family-entry-name:hover h3, .family-entry-name:focus-visible h3, .family-entry-data a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .ptm-library .empty-state { padding: 24px 0; text-align: left; }
 .library-footer {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 6px 14px;
-  margin-top: 28px;
+  margin-top: 20px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.family-page-inner { max-width: 1240px; margin: 0 auto; padding: 28px 36px 40px; }
+.family-page-inner { max-width: 1040px; margin: 0 auto; padding: 20px 24px 32px; }
 .family-breadcrumb {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 5px 10px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   font-size: 12px;
   color: var(--quiet);
   overflow-wrap: anywhere;
 }
 .family-breadcrumb a { text-decoration: none; }
 .family-breadcrumb a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.family-page-heading { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.family-page-heading { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .family-page-heading p { margin: 8px 0 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-.family-page-body { padding-top: 18px; }
+.family-page-body { padding-top: 12px; }
 .family-page .family-profile > * { min-width: 0; }
-.family-page .family-profile p { margin: 10px 0; font-size: 14px; }
-.family-page .family-profile .profile-definition { margin-top: 0; font-size: 15px; }
+.family-page .family-profile p { margin: 8px 0; font-size: 13px; }
+.family-page .family-profile .profile-definition { margin-top: 0; font-size: 14px; }
 .family-page .family-profile .profile-meta { font-size: 12px; }
 .family-page .family-profile h3 {
   font-family: var(--reading-font);
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.3;
 }
 .family-page .detail-row dt { font-size: 12px; }
 .family-page .detail-row dd { font-size: 13px; }
-.family-page .profile-studies li { padding: 10px 0; }
+.family-page .profile-studies li { padding: 8px 0; }
 .family-page .profile-studies span { font-size: 13px; }
+.family-measurement { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(0, 3fr); gap: 2px 20px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.family-measurement > h4 { margin: 0; font-size: 13px; line-height: 1.4; }
+.family-measurement > .measurement-preview { grid-column: 2; grid-row: 1 / span 3; }
+.family-measurement > .profile-meta, .family-measurement > .measurement-more { grid-column: 1; margin: 0; }
+.family-measurement .study-evidence-layer { border: 0; padding: 0; }
+.family-measurement .measurement-comparison { margin: 4px 0 0; }
+.family-measurement .measurement-comparison th, .family-measurement .measurement-comparison td { padding-top: 4px; padding-bottom: 4px; font-size: 13px; }
 .family-related ul { list-style: none; padding: 0; margin: 0; }
 .family-related li { padding: 5px 0; overflow-wrap: anywhere; }
 .term-sources { margin: 10px 0; font-size: 12px; }
@@ -727,7 +752,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 .lookup-tabs a { padding: 12px 14px; color: var(--muted); font-size: 13px; text-decoration: none; border-bottom: 2px solid transparent; }
 .lookup-tabs a:hover { color: var(--accent); background: var(--row-hover); }
 .lookup-tabs a[aria-current] { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
-.lookup-inner { padding: 24px 32px 36px; }
+.lookup-inner { padding: 20px 24px 32px; }
 .lookup-tools { border-bottom: 1px solid var(--line); }
 .protein-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 15px 2px; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
 .protein-entry h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.35; }
@@ -741,48 +766,35 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 #proteinContextScope { color: var(--muted); font-size: 12px; }
 .sheet-tabs a.sheet-tab { text-decoration: none; }
 
-@media (min-width: 1040px) {
-  .family-page .family-profile {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    column-gap: 32px;
-    align-items: start;
-  }
-  .family-page .family-overview, .family-page .family-coverage, .family-page .family-studies { grid-column: 1; }
-  .family-page .family-data {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    padding-left: 24px;
-    border-left: 1px solid var(--line);
-  }
-  .family-page .family-data > h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-  .family-page .family-original, .family-page .family-related { grid-column: 1 / -1; }
-}
 @media (max-width: 720px) {
-  .library-inner, .family-page-inner, .lookup-inner { padding: 20px 16px 28px; }
-  .library-heading h1, .family-page-heading h1 { font-size: 28px; }
+  .library-inner, .family-page-inner, .lookup-inner { padding: 16px 12px 24px; }
+  .library-heading h1, .family-page-heading h1 { font-size: 22px; }
   .library-heading p { margin-bottom: 14px; }
   .directory-heading p { margin-bottom: 0; }
-  .directory-heading { margin-bottom: 20px; }
+  .directory-heading { margin-bottom: 12px; }
   .directory-heading .directory-description { font-size: 13px; max-width: 42ch; }
   .library-tools { gap: 10px 12px; }
   .library-tools label { flex: 1 1 132px; }
   .ptm-library .library-tools label { flex-direction: column; align-items: stretch; }
   .ptm-library #directoryCollection { width: 100%; }
-  .library-tools select { width: 100%; min-height: 38px; }
+  .library-tools select { width: 100%; min-height: 40px; font-size: 16px; }
   .library-tools > strong { width: 100%; margin-left: 0; padding-bottom: 0; }
   .ptm-library .library-tools { gap: 8px 12px; padding-bottom: 12px; }
   .directory-alphabet { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0; padding: 4px 0; }
   .directory-alphabet::-webkit-scrollbar { display: none; }
-  .directory-alphabet button { min-width: 32px; min-height: 36px; flex: 0 0 auto; }
+  .directory-alphabet button { min-width: 36px; min-height: 40px; flex: 0 0 auto; }
   .directory-columns { display: none; }
   .family-directory { grid-template-columns: minmax(0, 1fr); }
-  .family-entry { display: block; padding: 12px 2px; }
+  .family-entry { display: block; padding: 9px 2px; }
   .family-entry p { margin-top: 3px; }
-  .family-entry h3 { font-size: 15px; }
-  .directory-group { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding-top: 0; }
-  .directory-group h2 { font-size: 20px; white-space: nowrap; }
+  .family-entry h3 { font-size: 14px; }
+  .family-entry-data a { padding: 4px 0; }
+  .directory-group { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; padding-top: 0; }
+  .directory-group h2 { font-size: 18px; white-space: nowrap; }
   .family-page .family-profile p { font-size: 13px; }
+  .family-measurement { display: block; }
+  .family-measurement > h4 { margin-bottom: 6px; }
+  .family-measurement > .profile-meta { margin-top: 6px; }
   .family-breadcrumb { margin-bottom: 12px; }
   .library-footer { margin-top: 22px; }
   .lookup-tabs { padding: 0 4px; }
@@ -794,10 +806,10 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 /* ---------- Guide ---------- */
 
 .guide { flex: 1; overflow-y: auto; }
-.guide-inner { max-width: 900px; margin: 0; padding: 28px 32px 60px; }
-.guide h1 { font-family: var(--title-font); font-size: 32px; font-weight: 400; margin: 0 0 6px; }
+.guide-inner { max-width: 900px; margin: 0; padding: 20px 24px 48px; }
+.guide h1 { font-family: var(--title-font); font-size: 24px; font-weight: 600; line-height: 1.25; margin: 0 0 6px; }
 .guide-lede { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
-.guide h2 { font-size: 16px; margin: 26px 0 8px; border-top: 1px solid var(--line); padding-top: 18px; }
+.guide h2 { font-size: 15px; margin: 20px 0 8px; border-top: 1px solid var(--line); padding-top: 14px; }
 .guide p, .guide li { font-size: 13px; color: var(--ink); }
 .guide ul { padding-left: 18px; }
 
@@ -885,30 +897,40 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 /* 720 and below */
 @media (max-width: 720px) {
   .app-header { flex-wrap: wrap; height: auto; padding: 6px 12px; gap: 4px 8px; }
-  .top-nav { order: 3; height: 36px; scrollbar-width: none; }
+  .top-nav { order: 3; height: 40px; scrollbar-width: none; }
   .top-nav::-webkit-scrollbar { display: none; }
   .nav-long { display: none; }
   .nav-short { display: inline; }
   .global-search-wrap { order: 4; flex: 1 1 100%; max-width: none; margin-left: 0; }
+  .global-search { height: 40px; }
+  .global-search input { font-size: 16px; }
   .header-download { margin-left: auto; }
+  .button, .pager .button { min-height: 40px; }
+  .icon-button { width: 44px; height: 44px; flex: 0 0 auto; }
   .table-toolbar { padding: 8px 10px; }
   .overview-summary { padding: 8px 12px; }
   .overview-date { font-size: 11px; }
   .overview-date { border-right: 0; padding-right: 0; }
   .sheet-tabs { flex-wrap: wrap; padding: 0 8px; gap: 0; overflow: visible; }
   .sheet-tab, .audit-picker { display: none; }
+  .measurement-tabs { flex-wrap: nowrap; overflow-x: auto; }
+  .measurement-tabs .sheet-tab { display: inline-flex; min-height: 40px; align-items: center; }
   .mobile-sheet-picker { display: block; width: 100%; padding: 6px 4px; }
-  .mobile-sheet-picker select { width: 100%; min-height: 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font: inherit; font-weight: 600; color: var(--ink); padding: 4px 8px; }
+  .mobile-sheet-picker select { width: 100%; min-height: 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font: inherit; font-size: 16px; font-weight: 600; color: var(--ink); padding: 4px 8px; }
   #sheetTable:not(.disease-table):not(.family-table) { table-layout: fixed; }
   #sheetTable { min-width: 800px; }
   #sheetTable.selected-table { min-width: 840px; }
   #sheetTable.catalog-table { min-width: 880px; }
   #sheetTable.site-table { min-width: 900px; }
   #sheetTable.regulation-table { min-width: 1000px; }
+  #sheetTable.measured-table { min-width: 800px; }
   #sheetTable.family-table { min-width: 680px; }
   #sheetTable:not(.disease-table) > thead > tr > th:not(:first-child) { width: auto; }
   #sheetTable:not(.disease-table) > thead > tr > th:first-child { width: 168px; }
   #sheetTable.regulation-table > thead > tr > th:nth-child(3) { width: 320px; }
+  #sheetTable.measured-table > thead > tr > th:first-child { width: 136px; }
+  #sheetTable.measured-table > thead > tr > th:nth-child(2), #sheetTable.measured-table > thead > tr > th:nth-child(3), #sheetTable.measured-table > thead > tr > th:nth-child(4) { width: 176px; }
+  #sheetTable.measured-table > thead > tr > th:nth-child(5) { width: 136px; }
   #sheetTable.selected-table > thead > tr > th:first-child { width: 152px; }
   #sheetTable.selected-table > thead > tr > th:nth-child(2), #sheetTable.selected-table > thead > tr > th:nth-child(3) { width: 136px; }
   .family-name {
@@ -922,21 +944,22 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
   .toolbar-tools .button { padding: 0 8px; }
   .active-filters { padding: 6px 10px; max-height: 92px; }
   .check-option { min-height: 36px; align-items: center; }
-  tbody td, thead th .th-button { padding-left: 8px; padding-right: 8px; }
+  #sheetTable > tbody > tr > td, #sheetTable > thead > tr > th .th-button { padding-left: 8px; padding-right: 8px; }
   .col-nav[data-scrollable="true"] { display: flex; }
 
   /* sticky first column so rows stay identifiable while scrolling */
-  thead th:first-child, tbody td:first-child {
+  #sheetTable > thead > tr > th:first-child, #sheetTable > tbody > tr > td:first-child {
     position: sticky; left: 0; z-index: 6;
     background: var(--panel);
     box-shadow: 1px 0 0 var(--line-soft);
   }
-  thead th:first-child { z-index: 7; background: var(--panel-muted); }
-  tbody tr:nth-child(even) td:first-child { background: var(--zebra); }
-  tbody tr:hover td:first-child { background: var(--row-hover); }
-  tbody tr[aria-selected="true"] td:first-child { background: var(--row-selected); }
+  #sheetTable > thead > tr > th:first-child { z-index: 7; background: var(--panel-muted); }
+  #sheetTable > tbody > tr:nth-child(even) > td:first-child { background: var(--zebra); }
+  #sheetTable > tbody > tr:hover > td:first-child { background: var(--row-hover); }
+  #sheetTable > tbody > tr[aria-selected="true"] > td:first-child { background: var(--row-selected); }
 
-  .guide-inner { padding: 20px 16px 48px; }
+  .guide-inner { padding: 16px 12px 40px; }
+  .guide h1 { font-size: 22px; }
   .guide-ladder .ladder-row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 2px 8px; }
   .guide-ladder .ladder-count { grid-column: 1; grid-row: 1; min-width: 0; text-align: left; }
   .guide-ladder .ladder-row > span:nth-child(2) { grid-column: 2 / -1; grid-row: 1; }
@@ -974,7 +997,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 </style>
 </head>
 <body>
-<a class="skip-link" id="skipToTable" href="#directoryResults">Skip to content</a>
+<a class="skip-link" id="skipToTable" href="#tableWrap">Skip to content</a>
 <div class="app">
 
   <header class="app-header">
@@ -982,10 +1005,11 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       <strong>openPTM</strong>
     </button>
     <nav class="top-nav" aria-label="Views">
-      <button id="navWorkbench" class="nav-tab active" type="button" aria-current="page"><span class="nav-long">Browse PTMs</span><span class="nav-short">PTMs</span></button>
-      <button id="navSites" class="nav-tab" type="button"><span class="nav-long">Sites &amp; function</span><span class="nav-short">Data</span></button>
-      <button id="navDisease" class="nav-tab" type="button"><span class="nav-long">Disease studies</span><span class="nav-short">Disease</span></button>
-      <button id="navGuide" class="nav-tab" type="button">Methods</button>
+      <button id="navMeasurements" class="nav-tab active" type="button" aria-current="page">Measurements</button>
+      <button id="navWorkbench" class="nav-tab" type="button">PTMs</button>
+      <button id="navSites" class="nav-tab" type="button">Sites</button>
+      <button id="navDisease" class="nav-tab" type="button">Disease</button>
+      <button id="navGuide" class="nav-tab" type="button">Guide</button>
     </nav>
     <div class="global-search-wrap">
       <label class="global-search">
@@ -1008,6 +1032,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
         <label>Chemistry<select id="directoryChemistry"><option value="">All classes</option></select></label>
         <label>Available data<select id="directoryCollection">
           <option value="">All families</option>
+          <option value="measurements">Measurements</option>
           <option value="sites">Site records</option>
           <option value="findings">Function and regulation</option>
           <option value="studies">Disease studies</option>
@@ -1737,8 +1762,8 @@ function decodeOpenPTMData(data) {
     "reported-regulation": {
       primary: "Protein / relationship",
       display: [
-        { col: "Protein / relationship", kind: "assertionRelationship" },
-        { col: "Mechanism", label: "PTM / mechanism", kind: "mechanism" }, { col: "Effect", label: "Reported effect", kind: "text" },
+        { col: "Protein / relationship", label: "Protein", kind: "assertionRelationship" },
+        { col: "Mechanism", label: "Modification", kind: "mechanism" }, { col: "Effect", label: "Result", kind: "text" },
         { col: "Setting", label: "Context", kind: "regulationSetting" }, { col: "Source", kind: "text" },
       ],
       facets: [{ col: "Assertion type", label: "Finding type" },
@@ -1914,7 +1939,14 @@ function decodeOpenPTMData(data) {
 
   const sheetState = () => state.perSheet[state.activeSheet];
   const activeSheet = () => sheetsById[state.activeSheet];
-  const cfg = () => CONFIG[state.activeSheet];
+  const measuredDisplay = [
+    { col: "Protein / relationship", label: "Protein", kind: "measuredProtein" },
+    { col: "Effect", label: "Measurement", kind: "measurementMetric", sort: false },
+    { col: "Mechanism", label: "State 1", kind: "measurementState", side: "modified", sort: false },
+    { col: "Setting", label: "State 2", kind: "measurementState", side: "comparator", sort: false },
+    { col: "Source", kind: "text" },
+  ];
+  const cfg = () => isMeasuredView() ? { ...CONFIG[state.activeSheet], display: measuredDisplay } : CONFIG[state.activeSheet];
 
   // Layout-truth mode checks (computed styles beat matchMedia in embedded contexts)
   const drawerMode = () => getComputedStyle(document.getElementById("filterRail")).position === "fixed";
@@ -2030,6 +2062,7 @@ function decodeOpenPTMData(data) {
   const directoryClasses = [...new Set(familySheet.rows.map(familyChemistry))].sort((a, b) => a.localeCompare(b));
   const directoryLetters = [...new Set(familySheet.rows.map(directoryLetter))].sort();
   const familyHasCollection = (row, collection) => !collection
+    || (collection === "measurements" && (effectsByFamily.get(row[0]) || []).some(record => record.measurements?.length))
     || (collection === "sites" && (sitesByFamily.get(row[0]) || []).length > 0)
     || (collection === "findings" && (effectsByFamily.get(row[0]) || []).length > 0)
     || (collection === "studies" && familyConnections(row).length > 0);
@@ -2060,14 +2093,32 @@ function decodeOpenPTMData(data) {
     rows.forEach(({ row }) => { const letter = directoryLetter(row); if (!groups.has(letter)) groups.set(letter, []); groups.get(letter).push(row); });
     $("#directoryResults").innerHTML = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([letter, group]) =>
       `<section class="directory-group"><h2>${letter === "#" ? "0–9" : letter}</h2><ul class="family-directory">${group.map(row => {
-        const available = [[sitesByFamily, "Site records"], [effectsByFamily, "Function / regulation"]].filter(([map]) => (map.get(row[0]) || []).length).map(([, label]) => label);
-        if (familyConnections(row).length) available.push("Disease studies");
-        return `<li><a class="family-entry" href="#view=family&amp;family=${esc(row[0])}"><h3>${esc(familyNameLabel(row, familySheet))}</h3>
-          <p class="family-entry-chemistry">${esc(familyChemistry(row))}</p>${available.length ? `<p class="family-entry-data">${available.join(" · ")}</p>` : ""}</a></li>`;
+        const id = row[0], findings = effectsByFamily.get(id) || [];
+        const measured = findings.filter(record => record.measurements?.length).length;
+        const siteCount = (sitesByFamily.get(id) || []).length, studyCount = familyConnections(row).length;
+        const familyFilter = encodeURIComponent(JSON.stringify(["Family ID", id]));
+        const measuredFilter = encodeURIComponent(JSON.stringify(["Values", "Measured comparison"]));
+        const available = [];
+        if (measured) available.push(`<a href="#sheet=reported-regulation&amp;filter=${familyFilter}&amp;filter=${measuredFilter}">${fmtNum(measured)} ${measured === 1 ? "comparison" : "comparisons"}</a>`);
+        else if (findings.length) available.push(`<a href="#sheet=reported-regulation&amp;filter=${familyFilter}">${fmtNum(findings.length)} ${findings.length === 1 ? "finding" : "findings"}</a>`);
+        if (siteCount) available.push(`<a href="#sheet=site-records&amp;filter=${familyFilter}">${fmtNum(siteCount)} ${siteCount === 1 ? "site record" : "site records"}</a>`);
+        if (studyCount) available.push(`<a href="#sheet=disease-connections&amp;filter=${encodeURIComponent(JSON.stringify(["PTM family", row[familySheet.colIndex["PTM family"]]]))}">${studyCount} ${studyCount === 1 ? "disease entry" : "disease entries"}</a>`);
+        return `<li class="family-entry"><a class="family-entry-name" href="#view=family&amp;family=${esc(id)}"><h3>${esc(familyNameLabel(row, familySheet))}</h3></a>
+          <p class="family-entry-chemistry">${esc(familyChemistry(row))}</p><p class="family-entry-data">${available.join('<span aria-hidden="true"> · </span>') || '<span class="profile-meta">No records yet</span>'}</p></li>`;
       }).join("")}</ul></section>`).join("");
     $("#directoryEmpty").hidden = rows.length !== 0;
     updateViewChrome();
     syncHash();
+  }
+
+  const isMeasuredView = () => state.activeSheet === "reported-regulation"
+    && sheetState().facets.Values?.size === 1 && sheetState().facets.Values.has("Measured comparison");
+  function showMeasurements() {
+    setView("workbench");
+    activateSheet("reported-regulation");
+    Object.assign(sheetState(), { q: "", facets: measuredRecords.size ? { Values: new Set(["Measured comparison"]) } : {}, page: 1, sort: null, proteinKey: null, lookupOrigin: null });
+    $("#globalSearch").value = "";
+    renderRail(); renderTable();
   }
 
   function showDirectory({ reset = false } = {}) {
@@ -2129,8 +2180,15 @@ function decodeOpenPTMData(data) {
   /* ---------- Rendering: sheet tabs ---------- */
 
   function renderTabs() {
+    const findings = state.activeSheet === "reported-regulation";
+    $("#sheetTabs").classList.toggle("measurement-tabs", findings);
+    if (findings) {
+      $("#sheetTabs").innerHTML = `<button class="sheet-tab" data-measured-mode="measured" ${isMeasuredView() ? 'aria-current="page"' : ""}>Measured comparisons</button>
+        <button class="sheet-tab" data-measured-mode="all" ${!isMeasuredView() ? 'aria-current="page"' : ""}>All findings</button>`;
+      return;
+    }
     if (siteSheetIds.has(state.activeSheet)) {
-      const ids = ["site-catalogs", "site-records", "reported-regulation"];
+      const ids = ["site-records", "site-catalogs"];
       if (state.activeSheet === "selected-ptms") ids.push("selected-ptms");
       $("#sheetTabs").innerHTML = ids.map(id => `<button class="sheet-tab" data-sheet="${id}"
         ${id === state.activeSheet ? 'aria-current="page"' : ""}>${esc(viewName(sheetsById[id]))}</button>`).join("")
@@ -2164,10 +2222,11 @@ function decodeOpenPTMData(data) {
 
     if (c.facets.length) parts.push('<p class="facet-count-note">Counts before filters</p>');
     (c.facets || []).forEach((facet, fi) => {
-      if (facet.hidden) return;
       const key = facet.label || facet.col;
+      if (facet.hidden || (isMeasuredView() && key === "Values")) return;
       const counts = new Map();
       sheet.rows.forEach((row) => {
+        if (isMeasuredView() && !measuredRecordIds.has(row[0])) return;
         const v = facetValue(facet, row, sheet);
         counts.set(v, (counts.get(v) || 0) + 1);
       });
@@ -2199,6 +2258,16 @@ function decodeOpenPTMData(data) {
     const v = spec.derive ? spec.derive(row) : row[sheet.colIndex[spec.col]];
     const c = cfg();
     const value = name => row[sheet.colIndex[name]];
+    if (spec.kind === "measuredProtein") return `<td><span class="cell-primary">${esc(value("Target"))}</span><span class="cell-secondary">${esc(value("PTM"))}</span></td>`;
+    if (spec.kind === "measurementMetric" || spec.kind === "measurementState") {
+      const record = measuredRecords.get(value("Record ID"));
+      const { measurement } = measurementAt(record, 0);
+      if (spec.kind === "measurementState") return `<td><span class="measurement-state-value">${measurementSideHtml(record, 0, spec.side)}</span><span class="measurement-state-label">${esc(measurement[`${spec.side}_label`] || (spec.side === "modified" ? "Modified state" : "Comparator"))}</span></td>`;
+      return `<td class="measurement-metric">${esc(measurement.metric || "Reported value")}
+        ${measurement.approximate ? '<span class="cell-secondary">Approximate</span>' : ""}
+        ${DATA.primaryPaperChecks?.record_notes[record.id] ? '<span class="review-notice">Figure/text unit check pending</span>' : ""}
+        <button class="text-button measurement-more" type="button">${record.measurements.length > 1 ? `All ${record.measurements.length} measurements` : "Details"} &amp; study limits →</button></td>`;
+    }
     if (spec.kind === "catalogSource") return `<td><span class="cell-primary">${esc(v)}</span><span class="cell-secondary">${esc(value("Release"))}</span></td>`;
     if (spec.kind === "catalogCounts") return `<td>${String(v).split(" | ").map(line => `<span class="catalog-count-line">${esc(line)}</span>`).join("") || "—"}</td>`;
     if (spec.kind === "siteProtein") return `<td><span class="cell-primary">${esc(v || "—")}</span><span class="cell-secondary">${esc([value("Gene"), value("Accession"), value("Accession source")].filter(Boolean).join(" · "))}</span></td>`;
@@ -2216,7 +2285,11 @@ function decodeOpenPTMData(data) {
       const record = sheet.records.find(item => item.id === value("Record ID"));
       return `<td>${esc(v)}<span class="cell-secondary">PTMPhaSe annotation</span>${record?.study_check?.status === "direction_conflict" ? '<span class="detail-qualification">Direction conflicts with cited paper</span>' : ""}</td>`;
     }
-    if (spec.kind === "mechanism") return `<td>${esc(v || "—")}<span class="cell-secondary">${esc(value("PTM"))} · ${esc(value("Site set"))}</span></td>`;
+    if (spec.kind === "mechanism") {
+      const measured = measuredRecords.get(value("Record ID"));
+      if (measured) return `<td>${esc(value("PTM"))}${measured.site_set?.length ? `<span class="cell-secondary">${esc(value("Site set"))}</span>` : ""}</td>`;
+      return `<td>${esc(v || "—")}<span class="cell-secondary">${esc(value("PTM"))} · ${esc(value("Site set"))}</span></td>`;
+    }
     if (spec.kind === "regulationSetting") {
       if (value("Assertion type") === "source_curated_llps") return `<td>${esc(value("Source organism") || "Not reported")}<span class="cell-secondary">Source organism</span></td>`;
       const reference = value("Taxon basis") === "reference_entry";
@@ -2273,7 +2346,8 @@ function decodeOpenPTMData(data) {
       return `<td>${esc(v)}<span class="review-notice">Figure/text unit check pending</span></td>`;
     if (sheet.id === "reported-regulation" && spec.col === "Effect" && measuredRecords.has(value("Record ID"))) {
       const measured = measuredRecords.get(value("Record ID"));
-      return `<td class="measurement-cell">${measured.display_note ? `<p class="detail-qualification">${esc(measured.display_note)}</p>` : ""}${measured.measurements.map((_, index) => measurementBlockHtml(measured, index, false)).join("")}</td>`;
+      return `<td class="measurement-cell"><div class="measurement-preview">${measurementBlockHtml(measured, 0, false)}</div>
+        <button class="text-button measurement-more" type="button">${measured.measurements.length > 1 ? `All ${measured.measurements.length} measurements` : "Details"} &amp; study limits →</button></td>`;
     }
     const shown = sheet.id === "reported-regulation" && spec.col === "Effect"
       ? readablePaperProse({ id: value("Record ID") }, v) : v;
@@ -2285,6 +2359,7 @@ function decodeOpenPTMData(data) {
     const st = sheetState();
     const c = cfg();
     const rows = filteredRows();
+    renderTabs();
     updateViewChrome();
     $("#sheetTable").classList.toggle("disease-table", sheet.kind === "companion");
     $("#sheetTable").classList.toggle("family-table", sheet.id === "family-ledger");
@@ -2293,6 +2368,7 @@ function decodeOpenPTMData(data) {
     $("#sheetTable").classList.toggle("catalog-table", sheet.id === "site-catalogs");
     $("#sheetTable").classList.toggle("site-table", sheet.id === "site-records");
     $("#sheetTable").classList.toggle("regulation-table", sheet.id === "reported-regulation");
+    $("#sheetTable").classList.toggle("measured-table", isMeasuredView());
 
     const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
     if (st.page > pages) st.page = pages;
@@ -2301,6 +2377,7 @@ function decodeOpenPTMData(data) {
     if (state.detailRow != null && !visible.some(({ i }) => i === state.detailRow)) closeDetail(false);
 
     $("#tableHead").innerHTML = `<tr>${c.display.map((spec) => {
+      if (spec.sort === false) return `<th scope="col">${esc(spec.label || spec.col)}</th>`;
       const sorted = st.sort && st.sort.col === spec.col;
       const dir = sorted ? st.sort.dir : null;
       const ariaSort = sorted ? (dir === "asc" ? "ascending" : "descending") : "none";
@@ -2327,10 +2404,12 @@ function decodeOpenPTMData(data) {
       : sheet.id === "reported-regulation" ? ["record", "records"]
       : sheet.id === "family-ledger" ? ["family", "families"]
         : sheet.id === "resource-roster" ? ["resource", "resources"] : ["row", "rows"];
-    const unit = units[sheet.rows.length === 1 ? 0 : 1];
-    $("#rowSummary").textContent = rows.length === sheet.rows.length
-      ? `${fmtNum(sheet.rows.length)} ${unit}`
-      : `${fmtNum(rows.length)} of ${fmtNum(sheet.rows.length)} ${unit}`;
+    const total = isMeasuredView() ? measuredRecords.size : sheet.rows.length;
+    const unit = isMeasuredView() ? (total === 1 ? "comparison" : "comparisons") : units[total === 1 ? 0 : 1];
+    $("#rowSummary").textContent = rows.length === total
+      ? `${fmtNum(total)} ${unit}`
+      : `${fmtNum(rows.length)} of ${fmtNum(total)} ${unit}`;
+    if (isMeasuredView()) $("#tableCaption").textContent = `Measurements: ${rows.length} of ${total} comparisons. The first measurement is shown; select a row for all values and study limits.`;
 
     const nFilters = countActiveFilters();
     $("#clearFilters").hidden = nFilters === 0;
@@ -2362,7 +2441,7 @@ function decodeOpenPTMData(data) {
   function countActiveFilters() {
     const st = sheetState();
     let n = st.q.trim() ? 1 : 0;
-    Object.values(st.facets).forEach((set) => { if (set && set.size) n += set.size; });
+    Object.entries(st.facets).forEach(([key, set]) => { if (!(isMeasuredView() && key === "Values") && set && set.size) n += set.size; });
     return n + Number(Boolean(st.proteinKey));
   }
 
@@ -2371,7 +2450,7 @@ function decodeOpenPTMData(data) {
     const buttons = [];
     if (st.proteinKey) buttons.push(`<button class="filter-chip" type="button" data-clear-protein aria-label="Remove identifier filter">Identifier: ${esc(proteinEntries.get(st.proteinKey)?.accession || "Entry not found")} <span aria-hidden="true">×</span></button>`);
     if (st.q.trim()) buttons.push(`<button class="filter-chip" type="button" data-clear-query aria-label="Remove search filter">Search: ${esc(st.q)} <span aria-hidden="true">×</span></button>`);
-    Object.entries(st.facets).forEach(([key, values]) => values.forEach(value => buttons.push(
+    Object.entries(st.facets).filter(([key]) => !(isMeasuredView() && key === "Values")).forEach(([key, values]) => values.forEach(value => buttons.push(
       `<button class="filter-chip" type="button" data-remove-facet="${esc(key)}" data-value="${esc(value)}" aria-label="Remove ${esc(displayLabel(key))}: ${esc(displayLabel(value))}">${esc(displayLabel(key))}: ${esc(displayLabel(value))} <span aria-hidden="true">×</span></button>`)));
     $("#activeFilters").innerHTML = buttons.join("");
     $("#activeFilters").hidden = !buttons.length;
@@ -2649,6 +2728,12 @@ function decodeOpenPTMData(data) {
     "taxon_scope", "limits", "scope", "siteSpecificity", "site_specificity",
     ]);
   };
+  const measurementLimitsHtml = record => {
+    const context = { ...record, ...paperRecheck(record)?.context };
+    const fields = ["curation_note", "material_scope", "limits", "scope", "siteSpecificity", "site_specificity"];
+    for (const key of fields) if (key in context) context[key] = readablePaperProse(record, context[key]);
+    return selectedFieldsHtml(context, fields);
+  };
   const recordTaxonHtml = record => record.taxon_basis === "reference_entry"
     ? `<p class="profile-meta">Reference taxon${record.reference_taxon_id ? ` ${esc(record.reference_taxon_id)}` : " unassigned"}; experimental species not assigned.</p>`
     : record.species || record.taxon_id ? `<p class="profile-meta">${esc(record.species || "")}${record.taxon_id ? `${record.species ? " · " : ""}Experimental taxon ${esc(record.taxon_id)}` : ""}</p>` : "";
@@ -2683,25 +2768,44 @@ function decodeOpenPTMData(data) {
     "PAPER-20348589-HGBP1-FARNESYLATION-GMP-FRACTION": "Fig. 4C · original inset",
     "PAPER-17934141-RABBIT-GAPDH-SUCCINATION-05MM-24H-ACTIVITY-LOSS": "Results · original manuscript",
   }[record.id] || readablePaperProse(record, locator));
+  const measurementAt = (record, index) => ({
+    measurement: { ...record.measurements[index], ...paperRecheck(record)?.measurements?.[index] },
+    display: [DATA.primaryPaperAdditions, DATA.primaryPaperSparseAdditions,
+      ...(DATA.primaryPaperBatches || [])].find(batch => batch?.value_display?.[record.id])?.value_display[record.id]?.[index] || {},
+  });
+  const measurementSideHtml = (record, index, side) => {
+    const { measurement, display } = measurementAt(record, index);
+    const printed = measurement[`${side}_text`] || (side === "modified" ? DATA.primaryValueDisplay?.values[record.id]?.[index]?.modified_text : undefined);
+    const uncertainty = display[`${side}_uncertainty_text`] ?? measurement[`${side}_uncertainty_text`]
+      ?? (measurement[`${side}_uncertainty_value`] != null ? String(measurement[`${side}_uncertainty_value`]) : undefined);
+    const ci = measurement[`${side}_confidence_interval_95`];
+    return `${measurementValueHtml(measurement[`${side}_value`], measurement.unit, printed, uncertainty)}${ci ? `<br><span class="profile-meta">95% CI ${ci.map(value => esc(value)).join("–")}</span>` : ""}`;
+  };
   const measurementBlockHtml = (record, index, includeNotes = true) => {
-      const original = record.measurements[index];
-      const measurement = { ...original, ...paperRecheck(record)?.measurements?.[index] };
+      const { measurement } = measurementAt(record, index);
       const sourceUrl = measurement.source_url || record.source_url;
-      const display = [DATA.primaryPaperAdditions, DATA.primaryPaperSparseAdditions,
-        ...(DATA.primaryPaperBatches || [])].find(batch => batch?.value_display?.[record.id])?.value_display[record.id]?.[index] || {};
       return `<section class="study-evidence-layer">
       <h4>${esc(measurement.metric || "Reported value")}</h4>
       ${measurement.approximate ? '<p class="profile-meta">Approximate values, as reported.</p>' : ""}
       <table class="measurement-comparison"><caption class="sr-only">${esc(measurement.metric || "Reported value")} comparison</caption><tbody>
-        <tr><th scope="row">${esc(measurement.modified_label || "Modified state")}</th><td>${measurementValueHtml(measurement.modified_value, measurement.unit, measurement.modified_text || DATA.primaryValueDisplay?.values[record.id]?.[index]?.modified_text, display.modified_uncertainty_text ?? measurement.modified_uncertainty_text ?? (measurement.modified_uncertainty_value != null ? String(measurement.modified_uncertainty_value) : undefined))}${measurement.modified_confidence_interval_95 ? `<br><span class="profile-meta">95% CI ${measurement.modified_confidence_interval_95.map(value => esc(value)).join("–")}</span>` : ""}</td></tr>
-        <tr><th scope="row">${esc(measurement.comparator_label || "Comparator")}</th><td>${measurementValueHtml(measurement.comparator_value, measurement.unit, measurement.comparator_text, display.comparator_uncertainty_text ?? measurement.comparator_uncertainty_text ?? (measurement.comparator_uncertainty_value != null ? String(measurement.comparator_uncertainty_value) : undefined))}${measurement.comparator_confidence_interval_95 ? `<br><span class="profile-meta">95% CI ${measurement.comparator_confidence_interval_95.map(value => esc(value)).join("–")}</span>` : ""}</td></tr>
+        <tr><th scope="row">${esc(measurement.modified_label || "Modified state")}</th><td>${measurementSideHtml(record, index, "modified")}</td></tr>
+        <tr><th scope="row">${esc(measurement.comparator_label || "Comparator")}</th><td>${measurementSideHtml(record, index, "comparator")}</td></tr>
       </tbody></table>
       ${includeNotes && measurement.uncertainty ? `<p class="profile-meta">${esc(textValue(readablePaperProse(record, measurement.uncertainty)))}</p>` : ""}
       ${includeNotes && measurement.source_locator ? `<p class="profile-meta">${sourceUrl ? `<a href="${esc(sourceUrl)}" title="${esc(measurement.source_locator)}" target="_blank" rel="noopener noreferrer">${esc(measurementSourceLabel(record, measurement.source_locator))}</a>` : esc(readablePaperProse(record, measurement.source_locator))}</p>` : ""}
       </section>`;
   };
-  const measurementsHtml = record => Array.isArray(record.measurements) && record.measurements.length
-    ? `<h3>Reported measurements</h3>${record.measurements.map((_, index) => measurementBlockHtml(record, index)).join("")}` : "";
+  const measurementsHtml = record => {
+    if (!Array.isArray(record.measurements) || !record.measurements.length) return "";
+    const measurements = record.measurements.map((item, index) => ({ ...item, ...paperRecheck(record)?.measurements?.[index] }));
+    const first = measurements[0];
+    const sharedNotes = measurements.length > 1 && measurements.every(item =>
+      item.uncertainty === first.uncertainty && item.source_locator === first.source_locator && item.source_url === first.source_url);
+    const sourceUrl = first.source_url || record.source_url;
+    return `<h3>Measurements</h3>${record.measurements.map((_, index) => measurementBlockHtml(record, index, !sharedNotes)).join("")}
+      ${sharedNotes && first.uncertainty ? `<p class="profile-meta">${esc(textValue(readablePaperProse(record, first.uncertainty)))}</p>` : ""}
+      ${sharedNotes && first.source_locator ? `<p class="profile-meta">${sourceUrl ? `<a href="${esc(sourceUrl)}" title="${esc(first.source_locator)}" target="_blank" rel="noopener noreferrer">${esc(measurementSourceLabel(record, first.source_locator))}</a>` : esc(first.source_locator)}</p>` : ""}`;
+  };
   const siteValuesHtml = record => {
     const table = (headers, rows) => `<div class="site-values-scroll" tabindex="0" role="region" aria-label="Source measurement values"><table class="site-values"><thead><tr>${headers.map(label => `<th scope="col">${esc(label)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map((value, index) => `<${index ? 'td' : 'th scope="row"'}>${value == null || value === "" ? "—" : esc(value)}</${index ? 'td' : 'th'}>`).join("")}</tr>`).join("")}</tbody></table></div>`;
     if (record.localization_probability_percent && record.source_fields?.observations) {
@@ -2761,6 +2865,15 @@ function decodeOpenPTMData(data) {
     const regulation = isRegulatorAssertion(record);
     const finding = readablePaperProse(record, record.effect || record.finding || "");
     const comment = record.source_comment && textValue(record.source_comment).trim() !== textValue(finding).trim();
+    if (record.measurements?.length) return `<p class="record-site">${esc(record.ptm_type)}${Array.isArray(record.site_set) && record.site_set.length > 1 && record.coordinate_check !== "preparation_level_ptm_no_canonical_site_mapping" ? ` · ${esc(siteLabel(record))} · sites reported together` : ""}</p>
+      <section class="record-values">${measurementsHtml(record)}${paperStatisticsHtml(record)}</section>
+      <section class="record-summary"><h3>Finding</h3><p>${esc(finding)}</p>
+        ${record.partner_name || record.partner_accession ? `<p class="profile-meta">Partner: ${esc(record.partner_name ? readablePaperProse(record, record.partner_name) : record.partner_accession)}</p>` : ""}</section>
+      <section class="record-limits"><h3>Study limits</h3>${assertionLimitHtml(record)}${measurementLimitsHtml(record)}${paperCheckHtml(record)}</section>
+      ${sourceLinksHtml(record)}
+      <details class="source-record record-methods"><summary>Assay conditions and preparation</summary>${recordContextHtml(record)}${recordTaxonHtml(record)}
+        <p class="profile-meta">${esc(siteLabel(record))}</p>${comment ? `<h3>Source comment</h3><p>${esc(record.source_comment)}</p>` : ""}</details>
+      ${originalRecordHtml(record, paperRecheck(record), Boolean(paperRecheck(record)))}`;
     return `<p class="detail-finding">${esc(finding)}</p>
       ${regulation ? '<p class="profile-meta">Regulator-to-target effect, not the effect of installing the PTM.</p>' : ""}
       <p class="record-site">${esc(record.ptm_type)} · ${esc(siteLabel(record))}${Array.isArray(record.site_set) && record.site_set.length > 1 && record.coordinate_check !== "preparation_level_ptm_no_canonical_site_mapping" ? " · sites reported together" : ""}</p>
@@ -2836,6 +2949,20 @@ function decodeOpenPTMData(data) {
     return `<div class="detail-row">${dt}<dd>${/https?:\/\//.test(String(v)) ? linkifyHtml(String(v)) : esc(v)}</dd></div>`;
   }).join("")}</dl>`;
 
+  const familyMeasurementsHtml = id => {
+    const records = (effectsByFamily.get(id) || []).filter(record => record.measurements?.length);
+    const filters = `filter=${encodeURIComponent(JSON.stringify(["Family ID", id]))}&amp;filter=${encodeURIComponent(JSON.stringify(["Values", "Measured comparison"]))}`;
+    return `<section class="family-measurements"><h3>Measurements <small>${records.length} ${records.length === 1 ? "comparison" : "comparisons"}</small></h3>
+      ${records.length ? `<div class="family-measurement-list">${records.slice(0, 3).map(record => {
+        const url = `#sheet=reported-regulation&amp;${filters}&amp;record=${encodeURIComponent(record.id)}`;
+        return `<article class="family-measurement"><h4><a href="${url}">${esc(assertionProtein(record))}</a></h4>
+          <div class="measurement-preview">${measurementBlockHtml(record, 0, false)}</div>
+          <p class="profile-meta">${esc(record.source || "")}</p>
+          <a class="measurement-more" href="${url}">${record.measurements.length > 1 ? `All ${record.measurements.length} measurements` : "Full comparison"} &amp; study limits →</a></article>`;
+      }).join("")}</div><p><a href="#sheet=reported-regulation&amp;${filters}">View ${records.length === 1 ? "comparison" : `all ${records.length} comparisons`} →</a></p>`
+        : '<p class="profile-meta">No numerical comparisons included in this selection.</p>'}</section>`;
+  };
+
   function familyProfileHtml(row, rowIndex, fullPage = false) {
     const sheet = familySheet, id = row[sheet.colIndex["Family ID"]];
     const matches = familyConnections(row), cov = coverageByFamily.get(id);
@@ -2846,17 +2973,22 @@ function decodeOpenPTMData(data) {
       .map(other => ({ id: other[0], name: familyNameLabel(other, sheet) })).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 6) : [];
     const term = familyTerms.get(id);
     return `<div class="family-profile">
-      <section class="family-overview">${term ? `<p class="profile-definition">${esc(term.definition)}</p>${term.scope_note ? `<p class="profile-meta">${esc(term.scope_note)}</p>` : ""}
-        ${term.aliases.length ? `<p class="profile-meta">Names and subtypes: ${esc(term.aliases.join("; "))}.</p>` : ""}
-        <details class="source-record term-sources"><summary>Terminology sources</summary><ul>${term.sources.map(source => `<li><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.label)}</a>${source.review_status === "inherited_from_frozen_ledger" ? ' <span class="profile-meta">(August audit)</span>' : ""}</li>`).join("")}</ul></details>
-        ${term.audit_note ? `<p class="detail-qualification">${esc(term.audit_note.finding)} The original audit is retained below.</p>` : ""}` : ""}<p><strong>Examples</strong><br>${esc(familyExampleLabel(row))}</p>
-        <p class="profile-meta">${fullPage ? "" : `${esc(v("Primary chemistry class"))} · `}${esc(humanStatus(v("Evidence tier")))}</p>
-        ${v("Scope tier") !== "inclusive_biological" ? `<p>Scope: ${esc(humanStatus(v("Scope tier")))}</p>` : ""}</section>
+      <section class="family-overview">${term ? `<p class="profile-definition">${esc(term.definition)}</p>
+        ${term.audit_note ? `<p class="detail-qualification">${esc(term.audit_note.finding)} The original audit is retained below.</p>` : ""}` : ""}
+        <details class="source-record term-sources"><summary>About this modification</summary>
+          ${term?.scope_note ? `<p>${esc(term.scope_note)}</p>` : ""}
+          ${term?.aliases.length ? `<p>Names and subtypes: ${esc(term.aliases.join("; "))}.</p>` : ""}
+          <p><strong>Examples</strong><br>${esc(familyExampleLabel(row))}</p>
+          <p class="profile-meta">${fullPage ? "" : `${esc(v("Primary chemistry class"))} · `}${esc(humanStatus(v("Evidence tier")))}</p>
+          ${v("Scope tier") !== "inclusive_biological" ? `<p>Scope: ${esc(humanStatus(v("Scope tier")))}</p>` : ""}
+          ${term ? `<h4>Terminology sources</h4><ul>${term.sources.map(source => `<li><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.label)}</a>${source.review_status === "inherited_from_frozen_ledger" ? ' <span class="profile-meta">(August audit)</span>' : ""}</li>`).join("")}</ul>` : ""}
+        </details></section>
+      ${familyMeasurementsHtml(id)}
+      <section class="family-data">${familySourceLinksHtml(id) || (fullPage ? '<h3>Other records</h3><p>No source records included here yet.</p>' : "")}</section>
       <section class="family-coverage"><h3>Database coverage <small>August 2026</small></h3>
         <p><strong>${esc(displayLabel(familyCoverage(row)))}</strong>${bestResource === "none dedicated found" ? "" : `<br>${esc(bestResource)}`}</p>
         <p>${esc(countText)}<br><span class="profile-meta">${esc(cv("Count snapshot"))}</span></p>
         <button class="text-button" type="button" data-open-coverage="${cov.i}">Database details →</button></section>
-      <section class="family-data">${familySourceLinksHtml(id) || (fullPage ? '<h3>Sites and findings</h3><p>No source records included here yet.</p>' : "")}</section>
       <section class="family-studies"><h3>Disease examples <small>${matches.length}</small></h3>
         ${matches.length ? `<ul class="profile-studies">${matches.map(r => `<li><a href="#sheet=disease-connections&amp;connection=${r[0]}">${esc(r[5])}</a><span>${esc(r[7])} · ${r[11]} ${r[11] === 1 ? "paper" : "papers"}</span></li>`).join("")}</ul>
           <button class="text-button" type="button" data-disease-family="${esc(id)}">View examples →</button>` : '<p>No studies listed here yet.</p>'}
@@ -3203,7 +3335,8 @@ function decodeOpenPTMData(data) {
     $("#proteinLookup").hidden = state.view !== "proteins";
     const titleRow = state.view === "family" ? familySheet.rows.find(row => row[0] === state.familyId) : null;
     document.title = `${titleRow ? familyNameLabel(titleRow, familySheet) : state.view === "ptms" ? "PTM families"
-      : state.view === "proteins" ? "Protein lookup" : state.view === "guide" ? "Methods and sources" : viewName(activeSheet())} | openPTM`;
+      : state.view === "proteins" ? "Protein lookup" : state.view === "guide" ? "Methods and sources"
+      : state.activeSheet === "reported-regulation" ? (isMeasuredView() ? "Measurements" : "All findings") : viewName(activeSheet())} | openPTM`;
     $("#sheetTabs").hidden = disease;
     $("#diseaseIntro").hidden = !wb || !disease;
     $("#selectedIntro").hidden = !wb || !selected;
@@ -3212,13 +3345,14 @@ function decodeOpenPTMData(data) {
     if (inSites && !selected) {
       const catalogView = state.activeSheet === "site-catalogs";
       const siteView = state.activeSheet === "site-records";
-      $("#sitesTitle").textContent = catalogView ? "Source catalogs" : siteView ? "Site records" : "Function and regulation";
-      $("#sitesCounts").textContent = catalogView ? `${catalogRecords.length} source summaries` : "";
-      $("#sitesScope").textContent = catalogView ? "Counts use different units and may overlap; don’t add them."
+      $("#sitesTitle").textContent = catalogView ? "Source catalogs" : siteView ? "Site records" : isMeasuredView() ? "Measurements" : "All findings";
+      const numerical = [...measuredRecords.values()];
+      $("#sitesCounts").textContent = catalogView ? `${catalogRecords.length} source summaries` : isMeasuredView()
+        ? `${numerical.length} comparisons · ${new Set(numerical.flatMap(record => record.pmids || [])).size} papers · ${new Set(numerical.map(record => record.family_id)).size} PTM families` : "";
+      $("#sitesScope").textContent = catalogView ? "Counts use different units and may overlap."
         : siteView ? "Source sites in original coordinates. Detection does not imply function."
-          : "Function, binding and regulator-to-target findings.";
-      if (!catalogView && !siteView && measuredRecordIds.size) $("#sitesScope").innerHTML +=
-        ` <a href="#sheet=reported-regulation&amp;filter=${encodeURIComponent(JSON.stringify(["Values", "Measured comparison"]))}">Measured comparisons →</a>`;
+          : isMeasuredView() ? "Selected comparisons from primary papers. Both protein states may be modified."
+            : "Measured effects and database annotations, with their original sources.";
       $("#sitesReviewDate").textContent = "";
       $("#sitesReviewDate").hidden = true;
     }
@@ -3240,7 +3374,7 @@ function decodeOpenPTMData(data) {
       $("#proteinContextLink").setAttribute("href", sheetState().lookupOrigin || lookupHash({ q: protein?.accession || "" }));
       $("#proteinContextScope").textContent = protein ? "Source-scoped records; original coordinates." : "Source entry not found.";
     }
-    for (const [id, active] of [["navWorkbench", ["ptms", "family"].includes(state.view) || wb && !disease && !inSites], ["navSites", state.view === "proteins" || wb && inSites], ["navDisease", wb && disease], ["navGuide", state.view === "guide"]]) {
+    for (const [id, active] of [["navWorkbench", ["ptms", "family"].includes(state.view) || wb && !disease && !inSites], ["navMeasurements", wb && state.activeSheet === "reported-regulation"], ["navSites", state.view === "proteins" || wb && inSites && state.activeSheet !== "reported-regulation"], ["navDisease", wb && disease], ["navGuide", state.view === "guide"]]) {
       $("#" + id).classList.toggle("active", active);
       if (active) $("#" + id).setAttribute("aria-current", "page");
       else $("#" + id).removeAttribute("aria-current");
@@ -3384,12 +3518,13 @@ function decodeOpenPTMData(data) {
   function restoreFromHash() {
     const params = new URLSearchParams(window.location.hash.slice(1));
     restoring = true;
-    if (params.get("view") === "ptms" || !window.location.hash) {
+    if (!window.location.hash) { showMeasurements(); restoring = false; syncHash(); return; }
+    if (params.get("view") === "ptms") {
       Object.assign(state.directory, {
         q: params.get("q") || "",
         chemistry: directoryClasses.includes(params.get("chemistry")) ? params.get("chemistry") : "",
         letter: directoryLetters.includes(params.get("letter")) ? params.get("letter") : "",
-        collection: ["sites", "findings", "studies"].includes(params.get("collection")) ? params.get("collection") : "",
+        collection: ["measurements", "sites", "findings", "studies"].includes(params.get("collection")) ? params.get("collection") : "",
       });
       showDirectory();
       restoring = false; syncHash(); return;
@@ -3456,8 +3591,9 @@ function decodeOpenPTMData(data) {
       (state.view === "ptms" ? $("#directoryResults") : state.view === "family" ? $("#familyPageTitle") : state.view === "proteins" ? $("#lookupResults")
         : state.view === "guide" ? $("#guideView") : $("#tableWrap")).focus();
     });
+    $("#navMeasurements").addEventListener("click", () => navigateTo(() => showMeasurements()));
     $("#navWorkbench").addEventListener("click", () => navigateTo(() => showDirectory({ reset: true })));
-    $("#navSites").addEventListener("click", () => navigateTo(() => { setView("workbench"); activateSheet("site-catalogs"); }));
+    $("#navSites").addEventListener("click", () => navigateTo(() => { setView("workbench"); activateSheet("site-records"); }));
     $("#navDisease").addEventListener("click", () => navigateTo(() => { setView("workbench"); activateSheet("disease-connections"); }));
     $("#navGuide").addEventListener("click", () => navigateTo(() => setView("guide")));
     const profileClick = e => navigateTo(() => {
@@ -3510,11 +3646,16 @@ function decodeOpenPTMData(data) {
 
     // Brand lockup acts as a home button: back to the fresh-load state.
     $("#brandHome").addEventListener("click", () => navigateTo(() => {
-      showDirectory({ reset: true });
-      $("#libraryView").scrollTop = 0;
+      showMeasurements();
     }));
 
     $("#sheetTabs").addEventListener("click", (e) => {
+      const mode = e.target.closest("[data-measured-mode]");
+      if (mode) navigateTo(() => {
+        if (mode.dataset.measuredMode === "measured") sheetState().facets.Values = new Set(["Measured comparison"]);
+        else delete sheetState().facets.Values;
+        sheetState().page = 1; closeDetail(false); renderRail(); renderTable();
+      });
       const tab = e.target.closest("[data-sheet]");
       if (tab) navigateTo(() => activateSheet(tab.dataset.sheet));
     });
@@ -3551,11 +3692,12 @@ function decodeOpenPTMData(data) {
       if (box.checked) st.facets[key].add(box.value);
       else st.facets[key].delete(box.value);
       st.page = 1;
+      if (key === "Values") renderRail();
       renderTable();
     });
     const clearAll = () => {
       const st = sheetState();
-      st.q = ""; st.facets = {}; st.page = 1; st.sort = null; st.proteinKey = null;
+      st.q = ""; st.facets = isMeasuredView() ? { Values: new Set(["Measured comparison"]) } : {}; st.page = 1; st.sort = null; st.proteinKey = null;
       $("#globalSearch").value = "";
       renderRail();
       renderTable();
@@ -3776,7 +3918,7 @@ function decodeOpenPTMData(data) {
   initEvents();
   restoring = false;
   if (window.location.hash) restoreFromHash();
-  else showDirectory();
+  else showMeasurements();
   syncDrawerAccess();
 })();
 </script>

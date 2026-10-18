@@ -3,14 +3,22 @@ openPTM
 Website: https://chowdhurylab.github.io/tools/openptm/
 Release: 2026-10-18
 
-Browse PTMs, sites and function, disease studies and methods. The page contains its data,
+Browse measurements, PTM families, sites, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
 
-Design update, 16 October
-- The PTM directory uses aligned rows for modification, chemistry and available
-  data, with simpler navigation and readable phone layouts.
-- The revised design is retained for this data release.
+Design update, 18 October
+- Measurements opens first, with compact protein, measurement, state-value and
+  source columns. Exact state labels remain beside their values.
+- Measured comparisons and All findings have separate tabs. Filters and counts
+  stay within the chosen collection; clearing filters keeps that collection.
+- PTM directory counts link directly to records. Family pages show measurement
+  previews before database coverage and audit details.
+- Record details show all values first, with study limits visible below them.
+  Assay preparation and original source fields remain available in disclosures.
+- System typography, shorter headings, quieter spacing and phone controls
+  replace the longer, more repetitive presentation.
+- Scientific data is byte-identical to reading round 17. The Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
