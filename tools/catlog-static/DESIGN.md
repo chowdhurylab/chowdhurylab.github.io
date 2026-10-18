@@ -752,7 +752,9 @@ come first, the context after.
   name gives it in brackets, "In the paper (Table VIII):"; more than one line name
   their values instead, "In the paper (kcat and kcat/Km):" (at most 240 characters, table markers removed, K_M set as
   K<sub>m</sub>, caret exponents and charges set as superscripts: s^-1, mM^{−1},
-  NADP^+, Mn^2+, and an exponent extraction split, min^− 1 or 10^−^3, as one);
+  NADP^+, Mn^2+, and an exponent extraction split, min^− 1 or 10^−^3, as one; a hyphen or dash before an exponent's
+  digits or in a charge is set as the minus sign U+2212, as in every superscript the page sets: s<sup>−1</sup>,
+  10<sup>−4</sup>, the Guide's too);
   a row of more than four cells, or one whose ± signs extraction
   dropped, is folded under "Show the printed line" ("Show the printed kcat line" when the lines name their values)
   with that warning.

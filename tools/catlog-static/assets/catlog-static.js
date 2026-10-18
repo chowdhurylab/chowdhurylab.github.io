@@ -1584,8 +1584,9 @@
     const coefficient = match[1];
     const exponent = String(Number(match[2]));
     const accessibleValue = `${coefficient} times 10 to the power of ${exponent}`;
-    // "× 10" never breaks after the "×": a phone card's narrow value may break before it.
-    return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times;&nbsp;10<sup>${escapeHtml(exponent)}</sup></span></span>`;
+    // "× 10" never breaks after the "×": a phone card's narrow value may break before it. A negative exponent's sign is a
+    // minus sign (U+2212), as in every exponent the page sets.
+    return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times;&nbsp;10<sup>${escapeHtml(exponent.replace("-", "−"))}</sup></span></span>`;
   }
 
   const UNIT_NOT_RECORDED_LABEL = "no unit";
@@ -1658,23 +1659,24 @@
     return String(value ?? "").replace(/^s(\^?\(?[−-]1\)?|⁻¹)\s*[* ]\s*(m?M)(\^?\(?[−-]1\)?|⁻¹)$/, "$2$3*s$1");
   }
 
+  // (A superscript's minus is U+2212 wherever the page sets one: units, exponents, charges.)
   function unitHtml(value) {
     return escapeHtml(efficiencyUnitOrder(value))
-      .replace(/\^?\(-1\)|\^-1/g, "<sup>-1</sup>")
+      .replace(/\^?\(-1\)|\^-1/g, "<sup>−1</sup>")
       .replace(/\*/g, " ");
   }
 
   // Escaped text with caret exponents (s^-1, mM^(-1), M^{-2}) and caret charges (NADP^+, Mn^2+, Mn^{2+}, CN^−): the exponent
   // or charge becomes a superscript; the numbers stay as printed. A unit's exponent that extraction split from its minus
-  // ("min^− 1" or "10^−^3") is read whole; a dash in a charge reads as a minus sign.
+  // ("min^− 1" or "10^−^3") is read whole; a hyphen or dash in an exponent or a charge reads as a minus sign (U+2212).
   const CARET_SPLIT_EXPONENT = /(?<![A-Za-z])(s|sec|min|h|hr|[mµμnp]?M|L)\^([−–—-])\s+(\d)(?![\d.,])/g;
   const CARET_CHARGE = /\^(?:\{\s*(\d*[+−–—-])\s*\}|(\d*[+−–—-])(?![\d.(]))/g;
   function caretHtml(html) {
     return html
-      .replace(CARET_SPLIT_EXPONENT, (_m, unit, sign, digit) => `${unit}<sup>${sign.replace(/[–—]/, "−")}${digit}</sup>`)
-      .replace(CARET_CHARGE, (_m, braced, bare) => `<sup>${(braced ?? bare).replace(/[–—]/, "−")}</sup>`)
+      .replace(CARET_SPLIT_EXPONENT, (_m, unit, sign, digit) => `${unit}<sup>${sign.replace(/[–—-]/, "−")}${digit}</sup>`)
+      .replace(CARET_CHARGE, (_m, braced, bare) => `<sup>${(braced ?? bare).replace(/[–—-]/, "−")}</sup>`)
       .replace(/\^\(\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\)|\^\{\s*([−–—-]?)\s*(\d+(?:\.\d+)?)\s*\}|\^([−-]?\d+(?:\.\d+)?)/g,
-        (_m, s1, d1, s2, d2, c) => `<sup>${c ?? `${s1 || s2 ? (s1 || s2).replace(/[–—]/, "−") : ""}${d1 ?? d2}`}</sup>`)
+        (_m, s1, d1, s2, d2, c) => `<sup>${c ? c.replace("-", "−") : `${s1 || s2 ? (s1 || s2).replace(/[–—-]/, "−") : ""}${d1 ?? d2}`}</sup>`)
       // An exponent extraction split in two ("10^−^3") is one superscript.
       .replace(/<\/sup><sup>/g, "")
       .replace(/<\/sup>\*(?=[A-Za-zµμ])/g, "</sup> ");
@@ -4497,9 +4499,10 @@
       if (k >= limitLow && k <= limitHigh) continue;
       isoLines.push(`<path class="stats-map-iso" d="${line(k)}"/>`);
       const exit = exitOf(k);
-      if (exit && exit.at > 0.5) exits.push({ ...exit, text: statsPowerOfTen(k + STATS_MOLAR) });
+      if (exit && exit.at > 0.5) exits.push({ ...exit, exponent: k + STATS_MOLAR });
     }
-    const label = (exit) => `<span class="stats-map-iso-label is-${exit.side}" style="${exit.side === "top" ? "left" : "bottom"}:${+exit.at.toFixed(3)}%">${escapeHtml(exit.text)}</span>`;
+    // Labelled as the axes' ticks are (10 and a superscript), one exponent style in the figure.
+    const label = (exit) => `<span class="stats-map-iso-label is-${exit.side}" style="${exit.side === "top" ? "left" : "bottom"}:${+exit.at.toFixed(3)}%">10<sup>${String(exit.exponent).replace("-", "−")}</sup></span>`;
     // "diffusion limit" runs along the band, a decade in from where its middle line leaves the plot (the decades are one
     // size, so the band runs at 45°), where the band crosses at least two decades of the plot.
     const middle = (limitLow + limitHigh) / 2;
@@ -11028,7 +11031,7 @@
       .replace(/\b([Kk])_\{((?:cat|m|M|i|d)\b[^{}]*)\}/g, (_match, letter, content) => `<i>${letter}</i><sub>${sub(content)}</sub>`)
       .replace(/\b([Kk])_(cat|m|M|i|d)\b/g, (_match, letter, content) => `<i>${letter}</i><sub>${sub(content)}</sub>`)
       .replace(/_\{([^{}]{1,24})\}/g, "<sub>$1</sub>")
-      .replace(/\^\{([^{}]{1,12})\}/g, "<sup>$1</sup>"));
+      .replace(/\^\{([^{}]{1,12})\}/g, (_match, content) => `<sup>${content.replace(/^\s*[-–—]\s*(?=\d)/, "−")}</sup>`));
   }
 
   // Where the line is, "Table 2 row" for a table, then the line; a long table row (more than four cells) or one whose

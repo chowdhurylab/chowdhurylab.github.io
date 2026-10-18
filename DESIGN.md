@@ -313,7 +313,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     runs at 45° (the plot keeps the grid's shape by aspect-ratio). Grey cells, darker for more records (opacity
     0.08-0.92 on the log of the count, bent by 1.6 so the crowded core stands out), each cell's range and count in its
     tooltip line; thin lines of equal kcat/Km every hundredfold, labelled in M⁻¹ s⁻¹ where they leave the plot (top,
-    else right), the unit the diffusion limit is known in, so no label reads as the limit in another unit; the
+    else right; "10" and a 12px `<sup>` exponent, as the axis ticks are, one exponent style per figure), the unit the diffusion limit is known in, so no label reads as the limit in another unit; the
     diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹ (10⁵–10⁶ mM⁻¹ s⁻¹), as a light amber band with dashed amber edges and
     "diffusion limit" along it (amber, because a value beyond it carries a caution); each enzyme class's median kcat
     and median Km as a 12px dot in its class colour, ringed white. A legend above (records per cell 1 to the largest,

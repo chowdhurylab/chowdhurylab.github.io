@@ -93,9 +93,9 @@ process.stdout.write(JSON.stringify([
                 self.assertFalse((value.text or "").strip())
                 self.assertFalse((number_line.tail or "").strip())
                 self.assertEqual(
-                    [sup.text for sup in number_line.findall("sup")], ["-1", "-1"]
+                    [sup.text for sup in number_line.findall("sup")], ["−1", "−1"]
                 )
-                self.assertIn("mM-1 s-1", "".join(number_line.itertext()))
+                self.assertIn("mM−1 s−1", "".join(number_line.itertext()))
                 self.assertIsNone(number_line.find("small"))
                 scientific = number_line.find(".//span[@class='scientific-number']")
                 if index == 0:
@@ -114,7 +114,7 @@ process.stdout.write(JSON.stringify([
         (value,) = root.findall(".//span[@class='source-efficiency-value']")
         self.assertEqual([child.tag for child in value], ["span", "small"])
         number_line, count = value
-        self.assertEqual("".join(number_line.itertext()), "3.0–6.1 mM-1 s-1")
+        self.assertEqual("".join(number_line.itertext()), "3.0–6.1 mM−1 s−1")
         self.assertEqual("".join(count.itertext()), "2 values")
 
 

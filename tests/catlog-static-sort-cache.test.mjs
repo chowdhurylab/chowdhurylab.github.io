@@ -185,7 +185,7 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // A number stays with its unit, and a range with its power of ten, on one line.
   const cautionsHtml = pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0];
   assert.ok(cautionsHtml.includes("exactly 0&nbsp;&deg;C"));
-  assert.ok(cautionsHtml.includes('<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>-1</sup></span>'));
+  assert.ok(cautionsHtml.includes('<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>'));
   assert.doesNotMatch(cautionsHtml, /\d (?:&deg;C|M\b|nM\b|s<sup>)/);
   // The release tool writes both descriptions: its earlier wording, or the site's words (records, review results, no
   // serial comma) once it uses them.
@@ -3188,10 +3188,10 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   api.renderDetail(v2, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"],
     proof_lines: [line("kcat", "135.0 ± 15.1 sec−1", "135.0"), line("Km", "30 µM", "0.030"), line("kcat/Km", "4.5 × 10^3", "4501")] });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
+  assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>−1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
   assert.match(html, /<span class="vt-number">0\.03<\/span><\/td><td class="vt-unit">mM<\/td>/,
     "a printed integer's zero (30 µM) is no printed figure: the stored digits show, as in the table");
-  assert.match(html, /<span class="vt-number">4500<\/span><\/td><td class="vt-unit">mM<sup>-1<\/sup> s<sup>-1<\/sup><\/td>/, "a value_display that is not the stored number is not used");
+  assert.match(html, /<span class="vt-number">4500<\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/, "a value_display that is not the stored number is not used");
   assert.match(html, /<caption>Printed in Table 1<\/caption>/, "a place every value shares is said once");
   assert.doesNotMatch(html, /class="vt-where/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
@@ -3222,8 +3222,8 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
     proof_lines: [line("kcat", "1285.4 ± 124.7", "sec−1", "1285.4"), line("Km", "13.5 ± 2.2", "mM", "13.5"),
       line("kcat/Km", "621.92 ± 7.30", "mM^{−1}·s^{−1}", "621.92")] });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<span class="vt-number">1285\.4<\/span><\/td><td class="vt-unit">s<sup>-1<\/sup><\/td>/, "kcat as the paper prints it");
-  assert.match(html, /<span class="vt-number">621\.92<\/span><\/td><td class="vt-unit">mM<sup>-1<\/sup> s<sup>-1<\/sup><\/td>/);
+  assert.match(html, /<span class="vt-number">1285\.4<\/span><\/td><td class="vt-unit">s<sup>−1<\/sup><\/td>/, "kcat as the paper prints it");
+  assert.match(html, /<span class="vt-number">621\.92<\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
   assert.match(body, /kcat 1285\.4 s⁻¹; Km 13\.5 mM; kcat\/Km 621\.92 mM⁻¹ s⁻¹/);
   // The same digits on an older record follow the display rule.
@@ -3252,7 +3252,7 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
     proof_lines: [line("kcat", "8", "s^-1", "8"), line("Km", "9440 ± 780", "µM", "9.440"), line("kcat/Km", "47,000", "M^-1 s^-1", "47.000")] });
   const html = element("detailContent").innerHTML;
   assert.match(html, /<span class="vt-number">9\.44<\/span><\/td><td class="vt-unit">mM<\/td><td class="vt-printed">9440 ± 780 µM/);
-  assert.match(html, /<span class="vt-number">47<\/span><\/td><td class="vt-unit">mM<sup>-1<\/sup> s<sup>-1<\/sup><\/td><td class="vt-printed">47,000 M/);
+  assert.match(html, /<span class="vt-number">47<\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td><td class="vt-printed">47,000 M/);
   const zero = row({ record_key: "decimal-zero", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     km: 0.03, km_display: "0.03", km_unit: "mM" });
   api.renderDetail(zero, { verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["15863831"],
@@ -3354,18 +3354,18 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   // Its empty line and the listed values' label name the parameters as the Values table does.
   assert.match(empty, /<p class="values-empty">No <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> is stored/);
   assert.match(empty, /<dt><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> listed by BRENDA<\/dt>/);
-  assert.match(plainMetricNames(empty), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">0\.50<\/span>–<span class="listed-end">50<\/span> mM<sup>-1<\/sup> s<sup>-1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
+  assert.match(plainMetricNames(empty), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">0\.50<\/span>–<span class="listed-end">50<\/span> mM<sup>−1<\/sup> s<sup>−1<\/sup><\/span><small>2 values<\/small><\/span><\/dd>/);
   assert.doesNotMatch(empty, /no unit/, "a number BRENDA also gives with no unit is listed once, in its unit");
   const pair = api.valuesSection(row({ record_key: "listed-pair", source_db: "brenda", kcat: 17479, km: 1.86, kcat_over_km: null,
     kcat_display: "17479", km_display: "1.86", kcat_over_km_display: null }), { source_kcat_over_km_values: [brenda(9397, "s^(-1)*mM^(-1)"), brenda(9397, null)] });
-  assert.match(plainMetricNames(pair), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> mM<sup>-1<\/sup> s<sup>-1<\/sup>/);
+  assert.match(plainMetricNames(pair), /<dt>kcat\/Km listed by BRENDA<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">9397<\/span> mM<sup>−1<\/sup> s<sup>−1<\/sup>/);
   assert.doesNotMatch(pair, /flag-notes|kcat\/Km mismatch/, "no new caution: the table's cautions stay CatLog's flags");
   // One listed value follows the display rule too, as the range's ends are rounded (341905f35e2de883: OED's 126.667 shows
   // 127, a ÷60 artefact; 9397 keeps its 4 figures).
   const one = api.valuesSection(row({ record_key: "listed-one", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
     kcat_display: "11.333", km_display: "0.09", kcat_over_km_display: "125.92", kcat_over_km_origin: "calculated",
     kcat_over_km_source_differs: true }), { source_kcat_over_km_values: [{ value: 126.667, unit: "s^(-1)*mM^(-1)", source_db: "oed", pmids: ["11054102"] }] });
-  assert.match(plainMetricNames(one), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> mM<sup>-1<\/sup> s<sup>-1<\/sup>/);
+  assert.match(plainMetricNames(one), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">127<\/span> mM<sup>−1<\/sup> s<sup>−1<\/sup>/);
   assert.doesNotMatch(one, /126\.667/);
   // The report email quotes the listed kcat/Km the record shows, as it shows them.
   api.renderDetail(row({ record_key: "listed-email", source_db: "oed", kcat: 11.333, km: 0.09, kcat_over_km: 125.92,
@@ -3619,7 +3619,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
   assert.match(html, /<caption>Printed in Table 2<\/caption><thead><tr><th scope="col">Parameter<\/th>/);
-  assert.match(html, /<td class="vt-printed">68 s<sup>-1<\/sup><\/td><\/tr>/);
+  assert.match(html, /<td class="vt-printed">68 s<sup>−1<\/sup><\/td><\/tr>/);
   assert.doesNotMatch(html, /<dt>Location<\/dt>/, "the Values caption says where the values are printed");
   assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>License<\/dt>|<dt>Data ID<\/dt>/);
   assert.doesNotMatch(html, /Against the databases/, "no database comparison in the snapshot: no section");
@@ -3731,7 +3731,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(confirmedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"[^>]*aria-label="kcat\/Km: printed unit differs\. Show the note\."/);
   // The value carries the "!" (its amber note says which unit and why); the grey note says only that code converted it.
   assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
-  assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>-1<\/sup> min<sup>-1<\/sup>/);
+  assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>−1<\/sup> min<sup>−1<\/sup>/);
   assert.doesNotMatch(confirmedHtml, /converted by code/, "As printed shows each printed cell; no line repeats the method");
   assert.doesNotMatch(confirmedHtml, /printed unit read as/);
   const bothSummary = v2({ record_key: "unit-both", kcat: 150, km: 2.9, kcat_over_km: 54, kcat_display: "150", km_display: "2.9",
@@ -3780,7 +3780,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_unit: "s^(-1)*mM^(-1)", kcat_over_km_source_differs: true, source_db: "oed" });
   const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
   const html = measurementSection(merged, { source_kcat_over_km_values: listed });
-  assert.match(plainMetricNames(html), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> mM<sup>-1<\/sup> s<sup>-1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
+  assert.match(plainMetricNames(html), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> mM<sup>−1<\/sup> s<sup>−1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
   assert.match(html, /kcat ÷ Km \(15 mM⁻¹ s⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   // Every number in the Value column ends at the same place: a row without calc. or "!" keeps their space, unseen.
@@ -3937,10 +3937,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A caret charge is a superscript too (NADP^+, Mn^2+, Mn^{2+}, CN^−, a bare "^-" extraction left), and an exponent
   // extraction split ("min^− 1", "10^−^3") is read whole; exponents stay as they were.
   html = quoted("Km[NADP^+] 4 mM with Mn^2+ or Mn^{2+}; CN^− → OAS; 590 min^− 1; 9.1 × 10^- ; 9.1 × 10^−^3; Cl^− 5 mM; k_{cat} 3 s^-1, 2 M^(-2)");
-  assert.match(html, /Km\[NADP<sup>\+<\/sup>\] 4 mM with Mn<sup>2\+<\/sup> or Mn<sup>2\+<\/sup>; CN<sup>−<\/sup> → OAS; 590 min<sup>−1<\/sup>; 9\.1 × 10<sup>-<\/sup> ; 9\.1 × 10<sup>−3<\/sup>;/);
+  assert.match(html, /Km\[NADP<sup>\+<\/sup>\] 4 mM with Mn<sup>2\+<\/sup> or Mn<sup>2\+<\/sup>; CN<sup>−<\/sup> → OAS; 590 min<sup>−1<\/sup>; 9\.1 × 10<sup>−<\/sup> ; 9\.1 × 10<sup>−3<\/sup>;/);
   assert.match(html, /Cl<sup>−<\/sup> 5 mM/, "an ion's charge before a concentration is not an exponent");
-  assert.match(html, /<i>k<\/i><sub>cat<\/sub> 3 s<sup>-1<\/sup>, 2 M<sup>-2<\/sup>/);
-  assert.equal(api.caretHtml("NAD^{+}-dependent, 10^3 M^-1 s^-1"), "NAD<sup>+</sup>-dependent, 10<sup>3</sup> M<sup>-1</sup> s<sup>-1</sup>");
+  assert.match(html, /<i>k<\/i><sub>cat<\/sub> 3 s<sup>−1<\/sup>, 2 M<sup>−2<\/sup>/);
+  assert.equal(api.caretHtml("NAD^{+}-dependent, 10^3 M^-1 s^-1"), "NAD<sup>+</sup>-dependent, 10<sup>3</sup> M<sup>−1</sup> s<sup>−1</sup>");
   html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
   assert.match(html, /<details class="printed-line-disclosure"><summary>Show the printed line<\/summary><p class="evidence-note-plain">In the paper: /);
   assert.match(html, /<p class="printed-line-note">Text extraction dropped the ± signs from this line\.<\/p><\/details>/);
@@ -4039,8 +4039,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const html = element("detailContent").innerHTML;
   assert.match(html, /<summary>Earlier automated review: where the values are printed<\/summary>/);
   assert.match(html, /<dt>Where<\/dt><dd>Table III · row Butanol<\/dd>/);
-  assert.match(html, /<dt>As printed<\/dt><dd>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>-1<\/sup>\)<\/dd>/);
-  assert.match(html, /<dt>Conversion<\/dt><dd>kcat: paper V1 cell 5\.2 s<sup>-1<\/sup> → 5\.2 s<sup>-1<\/sup> \(no conversion\)\.<\/dd>/);
+  assert.match(html, /<dt>As printed<\/dt><dd>Table III, row Butanol: V1 = 5\.2 \(unit row: s<sup>−1<\/sup>\)<\/dd>/);
+  assert.match(html, /<dt>Conversion<\/dt><dd>kcat: paper V1 cell 5\.2 s<sup>−1<\/sup> → 5\.2 s<sup>−1<\/sup> \(no conversion\)\.<\/dd>/);
   // The earlier pipeline's reasoning goes; what was printed and the arithmetic stay (6d4893fb4e83eb11, a6c5593105452783).
   assert.equal(api.conversionFacts("Km: printed Table 1 cell 14.8 uM; 1 uM is 0.001 mM, so 14.8 / 1000 = 0.0148 mM; kcat: printed Table 1 cell 0.610 s-1; the printed unit is already the canonical s-1, so no unit conversion applies and the paper-side value is 0.61 s-1"),
     "Km: printed Table 1 cell 14.8 µM; 14.8 / 1000 = 0.0148 mM. kcat: printed Table 1 cell 0.610 s-1 (no conversion).");
@@ -4087,17 +4087,17 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     raw_value_unit_evidence: "Km raw_value=1.27 mM raw_unit=mM", normalized_value_unit_evidence: "Km normalized_value=1.27 normalized_unit=mM" }),
   "|Where|Abstract · Citrobacter glycerol dehydrogenase / glycerol|As printed|Km 1.27 mM|Conversion|Km 1.27 mM.|");
   assert.match(note({ table_label: "Table 5", raw_value_unit_evidence: "Km raw_value=75 +/- 5 raw_unit=uM raw_cell=75 +/- 5; kcat raw_value=0.05 raw_unit=s^-1 raw_cell=0.05; kcat/Km raw_value=6.00 x 10^2 raw_unit=M^-1*s^-1 raw_cell=6.00 x 10^2" }),
-    /\|As printed\|Km 75 ± 5 µM; kcat 0\.05 s\|-1\|; kcat\/Km 6\.00 × 10\|2\| M\|-1\| s\|-1\|$/);
+    /\|As printed\|Km 75 ± 5 µM; kcat 0\.05 s\|−1\|; kcat\/Km 6\.00 × 10\|2\| M\|−1\| s\|−1\|$/);
   assert.match(note({ table_label: "Abstract kinetic prose segment", raw_value_unit_evidence: "Km raw_value=60 microM raw_unit=microM raw_cell=Kms were 66 microM (NADPH) and 60 microM [(S)-HMG-CoA]" }),
     /\|As printed\|Km 60 µM, printed “Kms were 66 µM \(NADPH\) and 60 µM \[\(S\)-HMG-CoA\]”\|$/);
   assert.match(note({ table_label: "Table 2", raw_value_unit_evidence: "kcat raw_value=0.022 raw_unit=s^-1 raw_cell=(2.2 +/- 0.1) x 10-2; KM raw_value=184 raw_unit=uM raw_uncertainty=+/- 6 uM" }),
-    /\|As printed\|kcat 0\.022 s\|-1\|, printed “\(2\.2 ± 0\.1\) x 10-2”; KM 184 µM ± 6 µM\|$/);
+    /\|As printed\|kcat 0\.022 s\|−1\|, printed “\(2\.2 ± 0\.1\) x 10-2”; KM 184 µM ± 6 µM\|$/);
   assert.equal(note({ table_label: "TABLE 4 'Steady-state kinetic constants'", row_label: "TABLE 4, decoded plain-numeral transcription, substrate row `NADH`",
     normalized_value_unit_evidence: "kcat/Km: the paper PRINTS the kcat/Km cell 1490 s^-1 mM^-1 for this substrate row" }),
-  "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|-1| mM|-1| for this substrate row.|");
+  "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|−1| mM|−1| for this substrate row.|");
   assert.equal(note({ table_label: "ScienceDirect HTML Table 1, Kinetic properties of I. isl MalDH", row_label: "Pyruvate",
     normalized_value_unit_evidence: "kcat=8 s^-1. No Km was populated in the expected row, and Table 1 leaves Km blank for pyruvate." }),
-  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|-1|. The earlier version's entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
+  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|−1|. The earlier version's entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
   assert.match(note({ table_label: "Official PMC full-text Table 1", row_label: "x", normalized_value_unit_evidence: "kcat/Km 81.3 s^-1 mM^-1; current_export_kcat_over_km=86.0 s^-1 mM^-1; current_export_km=1.21 mM; kcat_over_km 0.755 s^-1 mM^-1" }),
     /^\|Where\|Table 1 · x\|Conversion\|kcat\/Km 81\.3 .*; earlier kcat\/Km 86\.0 .*; earlier Km 1\.21 mM; kcat\/Km 0\.755 /);
   assert.match(note({ table_label: "PMID 17041055 PMC full text", row_label: "Sulfolobus tokodaii reductase", raw_value_unit_evidence: "Km 0.015 mM mM; normalized to 0.015 mM" }),
