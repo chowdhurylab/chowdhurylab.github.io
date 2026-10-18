@@ -1293,27 +1293,37 @@ assert.equal(document.body.classList.contains("team-open"), true);
 assert.equal(document.title, "Team | CatLog");
 {
   const team = element("teamFigure").innerHTML + element("teamLegend").innerHTML;
-  for (const name of ["Supantha", "Aarna", "Erin", "Mohammad", "Reading agents", "Checking agents", "Audit agents", "Download agent"]) {
+  for (const name of ["Supantha", "Aarna", "Erin", "Mohammad", "Source agents", "Reading agents", "Verification agents", "Audit agents"]) {
     assert.match(team, new RegExp(name), name);
   }
-  for (const station of ["Papers", "AI reading", "AI check", "AI audit", "Human check", "Rules updated", "Website", "The paper"]) {
+  for (const station of ["Cited papers", "AI reading", "AI check", "AI audit", "Human check", "Rules updated", "Website", "The paper"]) {
     assert.match(team, new RegExp(`>${station}</text>`), station);
   }
   assert.doesNotMatch(team, /Claude|Codex|Anthropic|OpenAI|GPT|Dr\.|Prof|PhD|independent/);
-  assert.match(team, /<strong>Supantha<\/strong> builds CatLog and turns findings into better rules/);
+  // CatLog re-verifies what is published: no agent downloads or fetches papers (round 13).
+  assert.doesNotMatch(team + element("teamView").innerHTML, /[Dd]ownload|[Ff]etch|>Papers</);
+  assert.match(team, /<strong>Source agents<\/strong> \(AI\) find the paper each database value cites/);
+  assert.match(team, /<strong>Verification agents<\/strong> \(AI\) check each value against the paper, separately/);
+  assert.match(team, /<strong>Supantha<\/strong> builds CatLog and its website, and turns findings into better rules/);
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
-  // Supantha's line meets Rules updated; pointing at him also lights Papers, CatLog and the website.
+  // Supantha's line meets Rules updated; pointing at him also lights Cited papers, AI audit and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
   // Where each works, in the loop's order and mid-sentence case.
-  assert.match(team, /<small [^>]*>At Papers, AI audit, Rules updated, Website<\/small>/);
+  assert.match(team, /<small [^>]*>At Cited papers, AI audit, Rules updated, Website<\/small>/);
   assert.match(team, /<small [^>]*>At the paper<\/small>/);
-  assert.match(team, /aria-label="Supantha: builds CatLog and turns findings into better rules\. At Papers, AI audit, Rules updated, Website\."/);
+  assert.match(team, /aria-label="Supantha: builds CatLog and its website, and turns findings into better rules\. At Cited papers, AI audit, Rules updated, Website\."/);
   assert.doesNotMatch(team, /At The paper/);
-  // Tab follows the drawing: the agents above, left to right, then the people below.
+  // Tab follows the drawing: the agents above, left to right, then the people below; Supantha's second chip, at the
+  // Website station (he builds the website), is drawn last and is no second tab stop.
   assert.deepEqual(
     [...element("teamFigure").innerHTML.matchAll(/class="team-actor [^"]*" data-actor="(\w+)"/g)].map((match) => match[1]),
-    ["download", "reading", "checking", "audit", "supantha", "aarna", "erin", "mohammad"],
+    ["source", "reading", "checking", "audit", "supantha", "aarna", "erin", "mohammad", "supantha"],
   );
+  {
+    const also = element("teamFigure").innerHTML.match(/<g class="team-actor team-actor-person team-actor-also" data-actor="supantha"[^>]*>[\s\S]*?<\/g>/);
+    assert.ok(also && /aria-hidden="true"/.test(also[0]) && !/tabindex/.test(also[0]) && />Supantha<\/text>/.test(also[0]), "Supantha also stands at Website");
+    assert.equal((element("teamFigure").innerHTML.match(/class="team-actor [^"]*" data-actor="\w+" data-stations="[^"]*" tabindex="0"/g) || []).length, 8, "one tab stop per person or agent");
+  }
   assert.match(team, /<animateMotion dur="24s"/, "Dots move round the loop unless the viewer asks for less motion");
   assert.equal((team.match(/class="team-loop team-loop-(wide|narrow)"/g) || []).length, 2);
   const numbers = api.teamNumbers();

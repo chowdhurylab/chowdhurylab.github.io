@@ -6437,8 +6437,10 @@
   // it is shown, like Stats; never loads the record index. No model or vendor names, first names only, no titles.
   // The station where audit agents re-check samples of the catalog is "AI audit" (2026-10-15: "CatLog" named the
   // whole site as a step of its own loop); its key stays catlog (the layouts, actors and the stylesheet use it).
+  // CatLog re-verifies published values (round 13): the loop starts at the paper a database value cites ("Cited papers",
+  // key papers), never at collecting papers.
   const TEAM_STATIONS = {
-    papers: "Papers", reading: "AI reading", check: "AI check", catlog: "AI audit", human: "Human check",
+    papers: "Cited papers", reading: "AI reading", check: "AI check", catlog: "AI audit", human: "Human check",
     rules: "Rules updated", website: "Website", paper: "The paper",
   };
   // Where a person or agent works, as "At Papers, CatLog, Rules updated, Website": in the loop's order (the order of
@@ -6449,25 +6451,27 @@
       .map((key) => TEAM_STATIONS[key].replace(/^The /, "the ")).join(", ");
   }
   // In the order the wide figure draws them, so Tab follows it: the agents above, left to right, then the people below.
+  // The agents re-verify what is already published (round 13: never a "download" agent): source agents find the paper
+  // a database value cites, reading agents read its values, verification agents check each one against the paper.
   const TEAM_ACTORS = [
-    { key: "download", name: "Download agent", kind: "ai", stations: ["papers"], phrase: "fetches papers" },
-    { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value" },
-    { key: "checking", name: "Checking agents", kind: "ai", stations: ["check"], phrase: "check it again, separately" },
+    { key: "source", name: "Source agents", kind: "ai", stations: ["papers"], phrase: "find the paper each database value cites" },
+    { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value in the paper" },
+    { key: "checking", name: "Verification agents", kind: "ai", stations: ["check"], phrase: "check each value against the paper, separately" },
     { key: "audit", name: "Audit agents", kind: "ai", stations: ["catlog"], phrase: "re-check samples" },
-    { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and turns findings into better rules" },
+    { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and its website, and turns findings into better rules" },
     { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and documentation" },
   ];
   // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
   const TEAM_LEGEND = [
-    { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and turns findings into better rules" },
+    { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and its website, and turns findings into better rules" },
     { actors: ["aarna", "erin"], text: "<strong>Aarna</strong> and <strong>Erin</strong> check values against the papers" },
     { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and documentation" },
-    { actors: ["reading"], text: "<strong>Reading agents</strong> (AI) read each value" },
-    { actors: ["checking"], text: "<strong>Checking agents</strong> (AI) check it again, separately" },
+    { actors: ["source"], text: "<strong>Source agents</strong> (AI) find the paper each database value cites" },
+    { actors: ["reading"], text: "<strong>Reading agents</strong> (AI) read each value in the paper" },
+    { actors: ["checking"], text: "<strong>Verification agents</strong> (AI) check each value against the paper, separately" },
     { actors: ["audit"], text: "<strong>Audit agents</strong> (AI) re-check samples" },
-    { actors: ["download"], text: "<strong>Download agent</strong> (AI) fetches papers" },
   ];
 
   // Two drawings of one loop: wide (stations along a racetrack, AI agents above, people below) and narrow (an upright
@@ -6496,12 +6500,15 @@
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
       },
       arrows: [[380, 140, 0], [465, 360, 180], [160, 250, 270]],
-      // Audit agents stand up and to the right of AI audit, so their line meets it between the track's arc and the
-      // Website branch instead of running beside the arc.
+      // Audit agents stand right of AI audit, between its two branches, their line level with it; above the Website
+      // branch Supantha stands again (he builds the website), as Mohammad stands below The paper.
       actors: {
-        download: [290, 58], reading: [470, 58], checking: [650, 58], audit: [850, 58],
+        source: [290, 58], reading: [470, 58], checking: [650, 58], audit: [912, 250],
         supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
       },
+      // A second chip of a person at another of their stations: drawn with its own line, lit with the first, not a
+      // second tab stop (the first chip names every station).
+      also: [{ actor: "supantha", at: [870, 82], station: "website" }],
     },
     narrow: {
       viewBox: "36 20 288 690",
@@ -6594,27 +6601,32 @@
       return `<g class="team-station${station.branch ? " team-station-branch" : ""}" data-station="${key}" data-actors="${actorsFor(key)}" role="img" aria-label="${escapeHtml(`${TEAM_STATIONS[key]}${facts.length ? `: ${facts.map((fact) => typeof fact === "string" ? fact.replace(/\n/g, " ") : fact.label).join(", ")}` : ""}`)}">
         <circle class="team-station-dot" cx="${station.x}" cy="${station.y}" r="${station.branch ? 6 : 8}"/>${text}</g>`;
     }).join("");
-    const actors = layout.actors ? TEAM_ACTORS.map((actor) => {
-      const [x, y] = layout.actors[actor.key];
+    // A chip and a thin line from it to its station on the track, aimed at the station's centre and stopping just short
+    // of its dot: from the chip's top or foot, or from its side when the station is level with the chip.
+    const chip = (actor, [x, y], target, extra) => {
       const width = Math.round(actor.name.length * 8.2 + 28);
       const height = 28;
-      // A thin line from the chip to its first station on the track (Supantha's to Rules updated only), aimed at the
-      // station's centre and stopping just short of its dot.
-      const target = layout.stations[actor.stations[0]];
-      const fromY = target.y < y ? y - height / 2 : y + height / 2;
-      const length = Math.hypot(target.x - x, target.y - fromY) || 1;
-      const toX = Math.round((target.x - ((target.x - x) / length) * 9) * 10) / 10;
+      const level = Math.abs(target.y - y) <= height / 2;
+      const fromX = level ? x + (target.x < x ? -width / 2 : width / 2) : x;
+      const fromY = level ? y : target.y < y ? y - height / 2 : y + height / 2;
+      const length = Math.hypot(target.x - fromX, target.y - fromY) || 1;
+      const toX = Math.round((target.x - ((target.x - fromX) / length) * 9) * 10) / 10;
       const toY = Math.round((target.y - ((target.y - fromY) / length) * 9) * 10) / 10;
-      return `<g class="team-actor team-actor-${actor.kind}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}">
-        <line class="team-link" x1="${x}" y1="${fromY}" x2="${toX}" y2="${toY}"/>
+      return `<g class="team-actor team-actor-${actor.kind}${extra ? " team-actor-also" : ""}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" ${extra ? 'aria-hidden="true"' : `tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}"`}>
+        <line class="team-link" x1="${fromX}" y1="${fromY}" x2="${toX}" y2="${toY}"/>
         <rect class="team-chip" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
         <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text>
-        <rect class="team-focus-ring" x="${x - width / 2 - 4}" y="${y - height / 2 - 4}" width="${width + 8}" height="${height + 8}" rx="${actor.kind === "ai" ? 6 : height / 2 + 4}"/></g>`;
-    }).join("") : "";
+        ${extra ? "" : `<rect class="team-focus-ring" x="${x - width / 2 - 4}" y="${y - height / 2 - 4}" width="${width + 8}" height="${height + 8}" rx="${actor.kind === "ai" ? 6 : height / 2 + 4}"/>`}</g>`;
+    };
+    // Each chip's line meets its first station (Supantha's meets Rules updated; his second chip, Website).
+    const actors = layout.actors ? [
+      ...TEAM_ACTORS.map((actor) => chip(actor, layout.actors[actor.key], layout.stations[actor.stations[0]], false)),
+      ...(layout.also || []).map((item) => chip(TEAM_ACTORS.find((actor) => actor.key === item.actor), item.at, layout.stations[item.station], true)),
+    ].join("") : "";
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to papers; the catalog also feeds the website and the paper.">
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; the catalog also feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${dots}${stations}${actors}
     </svg>`;

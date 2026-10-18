@@ -1005,9 +1005,9 @@ DESIGN.md, "Stats".
 
 ## Team
 
-"People behind CatLog" (#team): one line, then the loop of stations (Papers, AI
-reading, AI check, AI audit, Human check, Rules updated) with AI agents above
-and people below by first name, live numbers from the manifest, dots moving
+"People behind CatLog" (#team): one line (CatLog re-verifies published enzyme kinetics), then the loop of stations
+(Cited papers, AI reading, AI check, AI audit, Human check, Rules updated) with AI agents above
+and people below by first name (Supantha also above Website), live numbers from the manifest, dots moving
 round it unless the viewer asks for less motion, and a legend whose lines
 light their stations on hover or while pressed (toggle buttons). Upright below 960px. The full rules are
 in the site's DESIGN.md, "Team".

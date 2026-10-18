@@ -1991,8 +1991,20 @@ def check_team(driver, browser, url):
     text = driver.find_element(By.ID, "teamView").text
     for word in ("Claude", "Codex", "Anthropic", "OpenAI", "independent", "Dr.", "Professor"):
         assert word not in text, f"Team says {word}"
+    # CatLog re-verifies published values: no agent downloads, fetches or collects papers (round 13).
+    assert "re-verifies published enzyme kinetics" in text and not re.search(r"(?i)download|fetch|collect", text), text[:600]
     wide = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide")
     assert wide.is_displayed()
+    # Supantha also stands at Website (he builds the website): a second chip with its own line to that station, lit with
+    # his first, with no tab stop of its own.
+    also = wide.find_elements(By.CSS_SELECTOR, ".team-actor-also[data-actor='supantha']")
+    assert len(also) == 1 and also[0].get_attribute("aria-hidden") == "true" and also[0].get_attribute("tabindex") is None, \
+        "Supantha's second chip stands at Website"
+    assert driver.execute_script("""
+        const chip = arguments[0].querySelector('.team-chip').getBoundingClientRect();
+        const dot = document.querySelector("svg.team-loop-wide [data-station='website'] .team-station-dot").getBoundingClientRect();
+        return Math.abs((chip.left + chip.right) / 2 - (dot.left + dot.right) / 2) < 4 && chip.bottom < dot.top;
+    """, also[0]), "Supantha's second chip stands above the Website station"
     assert sorted(g.get_attribute("data-station") for g in wide.find_elements(By.CSS_SELECTOR, "[data-station]")) == sorted(TEAM_STATIONS)
     manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
     overview = stats_overview(manifest)

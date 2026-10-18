@@ -426,16 +426,27 @@ numbered onboarding strip or a repeated workflow illustration.
 
 Team (#team, in catlog-latest.html like the Guide; its own view, never the
 record index) is "People behind CatLog": one plain line, then the loop the
-user approved: a racetrack of stations Papers, AI reading, AI check, AI audit
-(2026-10-15: "CatLog" named the whole site as a step of its own loop; the
-station's key stays catlog), Human check, Rules updated and back to Papers
+user approved. The words say what CatLog is (the user, 2026-10-18: "we are in the verification scientific progress,
+not sending AI to get paper business"): CatLog re-verifies published enzyme kinetics; its agents find the paper each
+database value cites, read the values in it and check each one against the paper; people review samples. The line:
+"CatLog re-verifies published enzyme kinetics. AI agents find the paper each database value cites, read the values in
+it and check each one against the paper. People review samples, and what they find improves the rules for the next
+papers." The caption starts "Clockwise, the loop re-verifies published values against their papers." No agent is a
+"download" agent and nothing says papers are fetched or collected (the Guide alone says, where needed, that papers come
+through the library's licensed and open-access routes). The loop: a racetrack of stations Cited papers (key papers), AI
+reading, AI check, AI audit (2026-10-15: "CatLog" named the whole site as a step of its own loop; the
+station's key stays catlog), Human check, Rules updated and back to Cited papers
 (clockwise, small arrows), with Website and The paper branching off AI audit.
-AI agents stand above their stations (Download agent at Papers, Reading agents
-at AI reading, Checking agents at AI check, Audit agents at AI audit;
-rectangles on the accent tint), people below
-(Supantha at Rules updated, also lighting Papers, AI audit and Website; Aarna and
-Erin at Human check; Mohammad at The paper; grey pills). First names only: no titles, ranks, model or vendor
-names; individual review decisions stay anonymous. Live numbers at the
+AI agents stand above their stations (Source agents at Cited papers, "find the paper each database value cites";
+Reading agents at AI reading, "read each value in the paper"; Verification agents at AI check, "check each value
+against the paper, separately"; rectangles on the accent tint), Audit agents ("re-check samples") right of AI audit
+between its two branches, their line level with it; people below
+(Supantha at Rules updated, also lighting Cited papers, AI audit and Website, "builds CatLog and its website, and
+turns findings into better rules"; Aarna and Erin at Human check; Mohammad at The paper; grey pills). Supantha stands
+a second time above Website (he built and maintains the website; the user, 2026-10-18: "website making should have my
+name"), as Mohammad stands below The paper: a second chip with its own line, lit with the first and with no tab stop
+or name of its own (aria-hidden: the first chip names every station). First names only: no titles, ranks, model or
+vendor names; individual review decisions stay anonymous. Live numbers at the
 stations come from the manifest (papers read and records at AI reading,
 values re-checked at AI audit, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
