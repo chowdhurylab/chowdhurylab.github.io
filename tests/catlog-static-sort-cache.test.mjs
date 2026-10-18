@@ -5429,6 +5429,11 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.browseHash(), "#browse?source=sabio_rk,unrecorded");
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.key), ["source:sabio_rk", "source:unrecorded"]);
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: SABIO-RK", "Source: not recorded"]);
+  // A database of Not yet re-read is set under More filters: More filters counts it (Source: Read from the paper, in view,
+  // it does not).
+  assert.deepEqual(["source:sabio_rk", "source:unrecorded", "source:paper", "source:databases", "db:differs", "variant:wild",
+    "temperature", "ph", "caution:none", "metric:kcat", "status", "checked", "ec", "q"].map(api.isMoreFilterKey),
+  [true, true, false, false, true, true, true, true, true, false, false, false, false, false]);
   assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
   // A chip says what the sidebar says ("Earlier extractions", "OED"); its button and the no-results note read the name in
   // full, as the sidebar does.
@@ -5499,6 +5504,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.equal(element("undoFiltersButton").disabled, true, "the phone sheet's Undo is dimmed too");
     assert.equal(element("undoFiltersButton").title, "Nothing to undo");
     await keysFor("source=paper&ec=1.1.1&tmin=20");
+    // More filters counts the chips of its own groups (here the temperature), as Filters counts them all.
+    assert.deepEqual([element("moreFiltersCount").textContent, element("moreFiltersWords").textContent], ["1", ", 1 active"]);
+    assert.equal(element("moreFiltersCount").classList.contains("hidden"), false);
     assert.equal(api.state.filterHistory.length, 1);
     assert.deepEqual([...bar().matchAll(/class="filter-chip (tone-[\w-]+)"/g)].map((match) => match[1]), ["tone-paper", "tone-identity", "tone-measurement"]);
     const back = "Undo the last filter change, back to Source: Read from the paper";
@@ -6967,15 +6975,34 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.doesNotMatch(source + element("aboutSource").innerHTML, /\bv[12]\b|source-mode-what/);
   assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);
   assert.doesNotMatch(source, /source-help|aria-describedby|<p class="filter-note/);
+  // The databases of Not yet re-read are their own group under More filters (Source database, round 13), not in Source.
+  assert.doesNotMatch(source, /name="source"|By database|<details/);
+  const sourceDatabases = element("sourceDatabaseChecklist").innerHTML;
   // The longest names are short in the sidebar (one line at 256px): OED as the table's tag, its name read out and on hover;
   // the caution without "Possible", which its chip and the Guide keep.
-  assert.match(source, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
-  assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
+  assert.match(sourceDatabases, /<label class="check-row" title="Open Enzyme Database \(OED\)">\s*<input type="checkbox" name="source" value="oed" \/>\s*<span>OED<span class="visually-hidden"> \(Open Enzyme Database\)<\/span><\/span>/);
+  assert.match(sourceDatabases, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
   // Earlier extractions are CatLog's too, from its earlier version (one CatLog, round 8): never "not by CatLog".
-  assert.match(source, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, a pipeline of AI models and automated checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
-  assert.doesNotMatch(source, /not by CatLog/);
+  assert.match(sourceDatabases, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, a pipeline of AI models and automated checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
+  assert.equal((sourceDatabases.match(/name="source"/g) || []).length, 8, "every database keeps its option");
+  assert.doesNotMatch(sourceDatabases, /not by CatLog/);
+  // Its "?" says what the group holds and that a merged record counts under each database (no longer in Source's).
+  assert.match(element("aboutSourceDatabases").innerHTML, /ticking one selects Not yet <span class="nowrap">re-read<\/span>\./);
+  assert.match(element("aboutSourceDatabases").innerHTML, /<p>A merged record counts under each database it came from\.<\/p>/);
+  assert.doesNotMatch(element("aboutSource").innerHTML, /merged record/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
+  // No help text in view (the user, 2026-10-18): the notes of Measurement type and Wild type or variant are behind their
+  // "?", the cautions' definitions behind Cautions' "?" (Km and kcat keep their capitals after the dash).
+  assert.doesNotMatch(element("measurementChecklist").innerHTML + element("variantChecklist").innerHTML, /filter-note|<p/);
+  assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value. Ticking more than one shows records with all of them.</p>");
+  assert.match(element("aboutVariant").innerHTML, /<p id="variantNoneNote" hidden><span data-count="variant:none">/);
+  const aboutCautions = element("aboutCautions").innerHTML;
+  assert.match(aboutCautions, /<strong><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> mismatch<\/strong> — the printed or listed kcat\/Km differs from kcat ÷ Km\.<\/p>/);
+  assert.match(aboutCautions, /<strong>Possible unit or magnitude error<\/strong> — Km above 10 M or below 1 nM, /);
+  assert.match(aboutCautions, /<strong>No cautions<\/strong> — records without any caution\.<\/p>/);
+  assert.match(aboutCautions, /href="#guide-cautions">Cautions in the Guide/);
+  assert.equal((aboutCautions.match(/<p>/g) || []).length, 6);
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
   // against their papers).
   assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper<\/strong>: by an AI model; a second, separate AI check compared each value with the paper\./);

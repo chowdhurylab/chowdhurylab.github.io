@@ -123,17 +123,24 @@
                 <button id="collapseFiltersButton" class="icon-button collapse-filters" type="button" aria-controls="catalogFilters" aria-expanded="true" aria-label="Hide filters" title="Hide filters"><svg class="double-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8.5 4 4.5 8l4 4M12.5 4l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <button id="closeFiltersButton" class="icon-button close-filters" type="button" aria-label="Close filters">&times;</button>
               </div>
-              <details class="filter-section has-about" open>
-                <summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"></span>Source</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutSource" title="About the sources"><span aria-hidden="true">?</span><span class="visually-hidden">About the sources</span></button>
-                <div class="filter-about" id="aboutSource" hidden></div>
-                <div class="check-stack" id="sourceChecklist"></div>
+              <details class="filter-section" open>
+                <summary class="filter-section-title"><span><span class="group-dot tone-identity" aria-hidden="true"></span>Enzyme, organism, substrate</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <div class="field-grid">
+                  <label for="enzymeFilterInput">Enzyme</label>
+                  <input id="enzymeFilterInput" type="search" placeholder="e.g. lipase" autocomplete="off" />
+                  <label for="ecFilterInput">EC number</label>
+                  <input id="ecFilterInput" type="search" placeholder="e.g. 3 or 1.1.1" autocomplete="off" title="A class (3), subclass (3.1) or full EC number lists every enzyme under it; several, separated by spaces, list any of them" />
+                  <label for="organismFilterInput">Organism</label>
+                  <input id="organismFilterInput" type="search" placeholder="e.g. E. coli" autocomplete="off" />
+                  <label for="substrateFilterInput">Substrate</label>
+                  <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" />
+                </div>
               </details>
-              <details class="filter-section has-about" id="databaseFilterSection" open hidden>
-                <summary class="filter-section-title"><span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutDatabases" title="About the comparison with the databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the comparison with the databases</span></button>
-                <div class="filter-about" id="aboutDatabases" hidden></div>
-                <div class="check-stack" id="databaseChecklist"></div>
+              <details class="filter-section has-about" open>
+                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Measurement type</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutMeasurement" title="About the measurement types"><span aria-hidden="true">?</span><span class="visually-hidden">About the measurement types</span></button>
+                <div class="filter-about" id="aboutMeasurement" hidden></div>
+                <div class="check-stack" id="measurementChecklist"></div>
               </details>
               <details class="filter-section has-about" open>
                 <summary class="filter-section-title"><span>Review result</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
@@ -141,49 +148,61 @@
                 <div class="filter-about" id="aboutStatus" hidden></div>
                 <div class="check-stack" id="statusChecklist"></div>
               </details>
-              <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot tone-identity" aria-hidden="true"></span>Enzyme, organism, substrate</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <div class="field-grid">
-                  <label for="ecFilterInput">EC number</label>
-                  <input id="ecFilterInput" type="search" placeholder="e.g. 1.1.1" autocomplete="off" />
-                  <label for="enzymeFilterInput">Enzyme</label>
-                  <input id="enzymeFilterInput" type="search" placeholder="e.g. lipase" autocomplete="off" />
-                  <label for="organismFilterInput">Organism</label>
-                  <input id="organismFilterInput" type="search" placeholder="e.g. E. coli" autocomplete="off" />
-                  <label for="substrateFilterInput">Substrate</label>
-                  <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" />
-                </div>
+              <details class="filter-section has-about" open>
+                <summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"></span>Source</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutSource" title="About the sources"><span aria-hidden="true">?</span><span class="visually-hidden">About the sources</span></button>
+                <div class="filter-about" id="aboutSource" hidden></div>
+                <div class="check-stack" id="sourceChecklist"></div>
               </details>
-              <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Measurement type</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <div class="check-stack" id="measurementChecklist"></div>
-              </details>
-              <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Wild type or variant</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <div class="check-stack" id="variantChecklist"></div>
-              </details>
-              <details class="filter-section" open>
-                <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Assay conditions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <div class="range-stack">
-                  <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
-                    <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
-                    <strong data-count="range:temperature" title="Records that give an assay temperature">—</strong>
-                    <input id="temperatureMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="Temperature from, °C" />
-                    <span class="range-dash" aria-hidden="true">–</span>
-                    <input id="temperatureMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="Temperature to, °C" />
+              <details class="filter-more" id="moreFilters">
+                <summary class="filter-section-title filter-more-title"><span>More filters<span class="filter-count hidden" id="moreFiltersCount" aria-hidden="true"></span><span class="visually-hidden" id="moreFiltersWords"></span></span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                <details class="filter-section has-about" open>
+                  <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Wild type or variant</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutVariant" title="About wild type and variant"><span aria-hidden="true">?</span><span class="visually-hidden">About wild type and variant</span></button>
+                  <div class="filter-about" id="aboutVariant" hidden></div>
+                  <div class="check-stack" id="variantChecklist"></div>
+                </details>
+                <details class="filter-section has-about" open>
+                  <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Assay conditions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutConditions" title="About the assay conditions"><span aria-hidden="true">?</span><span class="visually-hidden">About the assay conditions</span></button>
+                  <div class="filter-about" id="aboutConditions" hidden>
+                    <p>Records whose assay temperature or pH lies in the range; either bound may be left empty. The count beside each is the records that give one.</p>
                   </div>
-                  <div class="range-row" role="group" aria-labelledby="phRangeLabel">
-                    <span id="phRangeLabel" class="range-label">pH</span>
-                    <strong data-count="range:ph" title="Records that give an assay pH">—</strong>
-                    <input id="phMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="pH from" />
-                    <span class="range-dash" aria-hidden="true">–</span>
-                    <input id="phMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="pH to" />
+                  <div class="range-stack">
+                    <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
+                      <span id="temperatureRangeLabel" class="range-label">Temperature (°C)</span>
+                      <strong data-count="range:temperature" title="Records that give an assay temperature">—</strong>
+                      <input id="temperatureMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="Temperature from, °C" />
+                      <span class="range-dash" aria-hidden="true">–</span>
+                      <input id="temperatureMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="Temperature to, °C" />
+                    </div>
+                    <div class="range-row" role="group" aria-labelledby="phRangeLabel">
+                      <span id="phRangeLabel" class="range-label">pH</span>
+                      <strong data-count="range:ph" title="Records that give an assay pH">—</strong>
+                      <input id="phMinInput" class="range-input" type="text" inputmode="decimal" placeholder="Min" autocomplete="off" aria-label="pH from" />
+                      <span class="range-dash" aria-hidden="true">–</span>
+                      <input id="phMaxInput" class="range-input" type="text" inputmode="decimal" placeholder="Max" autocomplete="off" aria-label="pH to" />
+                    </div>
                   </div>
-                </div>
-              </details>
-              <details class="filter-section">
-                <summary class="filter-section-title"><span><span class="group-dot tone-caution" aria-hidden="true"></span>Cautions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-                <div class="check-stack" id="cautionChecklist"></div>
+                </details>
+                <details class="filter-section has-about" id="databaseFilterSection" hidden>
+                  <summary class="filter-section-title"><span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutDatabases" title="About the comparison with the databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the comparison with the databases</span></button>
+                  <div class="filter-about" id="aboutDatabases" hidden></div>
+                  <div class="check-stack" id="databaseChecklist"></div>
+                </details>
+                <details class="filter-section has-about">
+                  <summary class="filter-section-title"><span><span class="group-dot tone-caution" aria-hidden="true"></span>Cautions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutCautions" title="About the cautions"><span aria-hidden="true">?</span><span class="visually-hidden">About the cautions</span></button>
+                  <div class="filter-about" id="aboutCautions" hidden></div>
+                  <div class="check-stack" id="cautionChecklist"></div>
+                </details>
+                <details class="filter-section has-about" id="sourceDatabases">
+                  <summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"></span>Source database</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutSourceDatabases" title="About the source databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the source databases</span></button>
+                  <div class="filter-about" id="aboutSourceDatabases" hidden></div>
+                  <div class="check-stack" id="sourceDatabaseChecklist"></div>
+                </details>
               </details>
               <div class="filter-footer">
                 <button id="showResultsButton" class="button" type="button">Show records</button>

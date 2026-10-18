@@ -400,18 +400,25 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
 .check-row.is-zero .human-checked-word { color:inherit }
 
-/* Source: three choices, one line each (the help is behind the group's "?"); the databases fold under "By database".
+/* Source: three choices, one line each (the help is behind the group's "?"); the databases of Not yet re-read are
+   their own group, Source database, under More filters.
    Read from the paper keeps one line beside a six-figure count in the 256px sidebar, also in a wide font (DejaVu Sans):
    a count may come 4px closer to its label than elsewhere. */
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
 .radio-row > strong { margin-left:-4px }
-.source-databases { margin-left:22px; color:var(--muted); font-size:var(--fs-12) }
-.source-databases > summary { display:flex; width:max-content; min-height:24px; align-items:center; gap:6px; color:var(--accent); cursor:pointer; font-weight:500; list-style:none }
-.source-databases > summary::-webkit-details-marker { display:none }
-.source-databases > summary::after { content:"+"; content:"+" / ""; color:var(--muted); font-size:var(--fs-16); line-height:1 }
-.source-databases[open] > summary::after { content:"\2212"; content:"\2212" / "" }
-.source-databases > .check-stack { padding-top:var(--sp-1) }
+
+/* More filters: one disclosure after the four groups in view, holding the specialist groups (Wild type or variant and
+   Assay conditions open inside it; Against the databases, Cautions and Source database closed). Its title is a group
+   title in the accent colour with the count of its filters set (the Filters badge's look, 6px after the words); it
+   opens by itself when one of them is set. Inside, the groups keep their look; a soft rule closes the last one. */
+.filter-more { border-bottom:1px solid var(--line-soft) }
+.filter-more-title { color:var(--accent) }
+.filter-more-title .chevron { color:var(--accent) }
+.filter-more-title .filter-count { margin-left:6px; vertical-align:1px }
+.filter-more:not([open]) > .filter-more-title .chevron { transform:rotate(180deg) }
+.filter-more[open] > .filter-more-title { border-bottom:1px solid var(--line-soft) }
+.filter-more > .filter-section:last-child { border-bottom:0 }
 
 /* Against the databases: a 10px square in each result's colour before its name (the record and Stats use the same
    colours; Corrected earlier has none), "every value" nested under Not in the databases, and a rule before Corrected

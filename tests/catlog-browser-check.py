@@ -2338,6 +2338,20 @@ def check_filters(driver, browser, url, route_label):
         text = driver.find_element(By.CSS_SELECTOR, f'#catalogFilters [data-count="{key}"]').get_attribute("textContent").strip()
         return int(text.replace(",", "")) if re.fullmatch(r"[\d,]+", text) else None
 
+    def open_more(section_id=None):
+        """Opens More filters, and one of its groups, by their titles as a visitor does (a scripted click on the summary in
+        Safari, whose driver may not click a <summary>)."""
+        for selector in ["#moreFilters"] + ([f"#{section_id}"] if section_id else []):
+            if driver.execute_script("return document.querySelector(arguments[0]).open", selector):
+                continue
+            title = driver.find_element(By.CSS_SELECTOR, f"{selector} > summary")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", title)
+            if browser == "safari":
+                driver.execute_script("arguments[0].click()", title)
+            else:
+                title.click()
+            wait.until(lambda d: d.execute_script("return document.querySelector(arguments[0]).open", selector))
+
     def database_ticked():
         return driver.execute_script("return [...document.querySelectorAll('#databaseChecklist input:checked')].map(e => e.value)")
 
@@ -2356,8 +2370,15 @@ def check_filters(driver, browser, url, route_label):
         found = {}
         comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.summary?.database_comparison || null") or {}
         open_page(base + "#browse")
-        second = driver.execute_script("return document.querySelectorAll('#catalogFilters .filter-section')[1].id")
-        assert second == "databaseFilterSection", second
+        # Round 13: the group is the third under More filters (after Wild type or variant and Assay conditions), closed
+        # at rest with More filters; a visitor opens both by their titles.
+        place = driver.execute_script("""
+            const more = document.getElementById('moreFilters'), section = document.getElementById('databaseFilterSection');
+            return {inMore: section.parentElement === more, index: [...more.querySelectorAll(':scope > .filter-section')].indexOf(section),
+                    moreOpen: more.open, open: section.open};
+        """)
+        assert place == {"inMore": True, "index": 2, "moreOpen": False, "open": False}, place
+        open_more("databaseFilterSection")
         rows = driver.execute_script("""
             return [...document.querySelectorAll('#databaseChecklist .check-row')].map(row => {
                 const label = row.querySelector(':scope > span');
@@ -2477,6 +2498,7 @@ def check_filters(driver, browser, url, route_label):
         # Ticking "every value" ticks Not in the databases; the pair is one chip that removes both; unticking Not in the
         # databases unticks "every value".
         open_page(base + "#browse")
+        open_more("databaseFilterSection")
         click_database_option("all_not_listed")
         wait.until(lambda d: fragment() == "browse?db=not_listed,all_not_listed")
         wait_ready()
@@ -2549,6 +2571,60 @@ def check_filters(driver, browser, url, route_label):
     database_results = None
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
+        # 0. Round 13 (the user, 2026-10-18: "too many options and a bit confusing"): in view, the filters most visitors use
+        # (Enzyme, organism, substrate; Measurement type; Review result; Source), then one closed More filters holding the
+        # specialist groups; no help text in view (each group's "?" holds it); no option removed.
+        open_page(base + "#browse")
+        rest = driver.execute_script(SIDEBAR_GROUPS_JS)
+        assert rest["top"] == ["Enzyme, organism, substrate", "Measurement type", "Review result", "Source", "More filters"], rest
+        assert rest["more"] == ["Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"], rest
+        assert rest["moreOpen"] is False and rest["moreOpenInside"] == [True, True, False, False, False], rest
+        assert rest["countHidden"] and rest["words"] == "", rest
+        assert rest["notes"] == [], f"Help text in view: {rest['notes']}"
+        assert rest["inputs"] == {"checkbox": 30, "radio": 3, "search": 4, "text": 4}, rest["inputs"]
+        # Every group has its "?" but the enzyme fields (labelled, with examples; the EC field's title says the rest).
+        assert rest["withAbout"] == [False, True, True, True, True, True, True, True, True], rest["withAbout"]
+        # At 1440 x 1000 the groups in view and More filters' title show without scrolling the sidebar.
+        assert rest["moreTitleShown"], rest
+        # An address that sets a filter under More filters opens it and the group (Cautions and Source database start
+        # closed); closed again, its title counts them: "More filters, 3 active" (the badge 3, then hidden words).
+        open_page(base + "#browse?caution=units&variant=wild&source=brenda")
+        opened = driver.execute_script(SIDEBAR_GROUPS_JS)
+        assert opened["moreOpen"] and opened["moreOpenInside"] == [True, True, False, True, True], opened
+        assert not opened["countHidden"] and opened["count"] == "3" and opened["words"] == ", 3 active", opened
+        driver.execute_script("document.getElementById('moreFilters').open = false")
+        closed = driver.execute_script(SIDEBAR_GROUPS_JS)
+        assert closed["count"] == "3" and closed["countShown"] and closed["name"] == "More filters, 3 active", closed
+        assert chip_keys() == ["variant:wild", "caution:units", "source:brenda"], chip_keys()
+        # A chip removed leaves the count right; Clear all empties it.
+        driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="caution:units"]').click()
+        wait.until(lambda d: d.execute_script(SIDEBAR_GROUPS_JS)["count"] == "2")
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment() and d.execute_script(SIDEBAR_GROUPS_JS)["countHidden"])
+        if browser == "chrome":
+            # Opened by its title in a short window, More filters scrolls just enough to show its groups, never taking its
+            # title under the sticky heading.
+            set_browse_viewport(driver, browser, 1440, 700)
+            open_page(base + "#browse")
+            driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
+            driver.find_element(By.CSS_SELECTOR, "#moreFilters > summary").click()
+            positions = []
+
+            def settled(d):
+                positions.append(d.execute_script("return document.getElementById('catalogFilters').scrollTop"))
+                return len(positions) > 2 and positions[-1] == positions[-2] == positions[-3]
+
+            WebDriverWait(driver, 5, poll_frequency=0.1).until(settled)
+            shown = driver.execute_script("""
+                const rail = document.getElementById('catalogFilters').getBoundingClientRect();
+                const heading = document.querySelector('.rail-heading').getBoundingClientRect();
+                const title = document.querySelector('#moreFilters > summary').getBoundingClientRect();
+                const first = document.querySelector('#variantChecklist .check-row').getBoundingClientRect();
+                return {scrolled: document.getElementById('catalogFilters').scrollTop, titleClear: title.top >= heading.bottom - 0.5,
+                        firstShown: first.bottom <= rail.bottom + 0.5};
+            """)
+            assert shown["scrolled"] > 0 and shown["titleClear"] and shown["firstShown"], shown
+            set_browse_viewport(driver, browser, 1440, 1000)
         # 1. An address with filters opens with them set, writes itself back in the same order, and shows one chip per
         # filter; every row fits the filters.
         address = "#browse?ec=1.1.1&tmin=20&tmax=30&sort=kcat&rows=50"
@@ -2626,6 +2702,8 @@ def check_filters(driver, browser, url, route_label):
 
         # 3. A pH range typed into the sidebar: every row shown has a pH inside it, and the address carries it.
         open_page(base)
+        assert not driver.find_element(By.ID, "phMinInput").is_displayed(), "pH is under More filters, closed at rest"
+        open_more()
         wait.until(lambda d: d.find_element(By.ID, "phMinInput").is_displayed())
         driver.find_element(By.ID, "phMinInput").send_keys("7")
         driver.find_element(By.ID, "phMaxInput").send_keys("7.5", Keys.TAB)
@@ -2802,6 +2880,30 @@ def check_filters(driver, browser, url, route_label):
             "passed": True}
 
 
+SIDEBAR_GROUPS_JS = """
+    // The sidebar's groups in view and under More filters, More filters' count, text shown outside the "?" boxes, and the
+    // controls (every option, whether in view or not).
+    const rail = document.getElementById('catalogFilters');
+    const more = document.getElementById('moreFilters');
+    const name = (group) => [...group.querySelector(':scope > summary > span').childNodes]
+        .filter(node => node.nodeType === 3 || !node.matches('.filter-count, .visually-hidden, .group-dot')).map(node => node.textContent).join('').trim();
+    const top = [...rail.querySelectorAll(':scope > :is(.filter-section, .filter-more)')].filter(group => !group.hidden).map(name);
+    const inside = [...more.querySelectorAll(':scope > .filter-section')];
+    const badge = document.getElementById('moreFiltersCount');
+    const notes = [...rail.querySelectorAll('p, .filter-note')].filter(e => e.getClientRects().length && !e.closest('.filter-about'))
+        .map(e => e.textContent.trim());
+    const inputs = {};
+    rail.querySelectorAll('input').forEach(input => { inputs[input.type] = (inputs[input.type] || 0) + 1; });
+    const view = rail.getBoundingClientRect(), moreTitle = more.querySelector(':scope > summary').getBoundingClientRect();
+    // the name a screen reader gives the title: its words without the aria-hidden badge
+    const spoken = [...more.querySelector(':scope > summary > span').childNodes].filter(node => node.nodeType === 3 || node.getAttribute('aria-hidden') !== 'true')
+        .map(node => node.textContent).join('').trim();
+    return {top, more: inside.map(name), moreOpen: more.open, moreOpenInside: inside.map(group => group.open),
+            count: badge.textContent, countHidden: badge.classList.contains('hidden'), countShown: badge.getBoundingClientRect().width > 0,
+            words: document.getElementById('moreFiltersWords').textContent, name: spoken, notes, inputs,
+            withAbout: [...rail.querySelectorAll('.filter-section')].map(group => Boolean(group.querySelector(':scope > .section-about'))),
+            moreTitleShown: moreTitle.bottom <= view.bottom + 0.5 && moreTitle.top >= view.top};
+"""
 CHIP_COLOURS_JS = """
     // rgb(...) or, for a tint mixed in CSS (color-mix), color(srgb r g b) with 0-1 channels.
     const rgb = text => (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number).map(v => text.startsWith('color(') ? v * 255 : v);
@@ -3034,8 +3136,8 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
         click('#measurementChecklist input[value="km"]')
         wait.until(lambda d: "metric=km" in fragment() and state()["undo"])
         bound = driver.find_element(By.ID, "temperatureMinInput")
-        driver.execute_script("const group = arguments[0].closest('details'); if (group) group.open = true;"
-                              " arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", bound)
+        driver.execute_script("for (let group = arguments[0].closest('details'); group; group = group.parentElement.closest('details'))"
+                              " group.open = true; arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", bound)
         x, y = state()["undoAt"]
         ActionChains(driver).send_keys("25").perform()
         driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1})
@@ -3073,8 +3175,9 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             assert not heading["overlap"] and heading["inside"] and heading["oneLine"] and heading["height"] >= 24, (width, heading)
             assert heading["ids"][-3:] == ["clearButton", "undoFiltersButton", "closeFiltersButton"], heading
             assert heading["label"].startswith("Undo the last filter change, back to "), heading
-            # Each group's "?" in the sheet keeps its 24px circle and is a 44px target.
-            for about in driver.find_elements(By.CSS_SELECTOR, "#catalogFilters .filter-section > .section-about"):
+            # Each group's "?" in the sheet keeps its 24px circle and is a 44px target (every group opened, More filters too).
+            driver.execute_script("document.querySelectorAll('#catalogFilters details').forEach(group => { group.open = true; })")
+            for about in [e for e in driver.find_elements(By.CSS_SELECTOR, "#catalogFilters .filter-section > .section-about") if e.is_displayed()]:
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
                 size = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.width, r.height]", about)
                 assert size == [24, 24] and driver.execute_script(ABOUT_TARGET_JS, about) == 44, (width, about.get_attribute("aria-controls"), size)
@@ -3293,8 +3396,12 @@ def check_layout(driver, browser, url, route_label):
         results["sidebar-1440"] = True
         # The sidebar is compact: no option's text runs past its row or into the next one, and a group's "?" shows its
         # explanations under its title (and hides them again).
+        # (every group opened, More filters' too, then put back as it was)
         overlaps = driver.execute_script("""
             const bad = [];
+            const groups = [...document.querySelectorAll('#catalogFilters details')];
+            const was = groups.map(group => group.open);
+            groups.forEach(group => { group.open = true; });
             const rows = [...document.querySelectorAll('#catalogFilters :is(.check-row, .range-row, .field-grid label)')].filter(e => e.getClientRects().length);
             rows.forEach((row, i) => {
                 const r = row.getBoundingClientRect();
@@ -3305,12 +3412,17 @@ def check_layout(driver, browser, url, route_label):
                 const next = rows[i + 1]?.getBoundingClientRect();
                 if (next && Math.abs(next.left - r.left) < 1 && next.top < r.bottom - 0.5 && !row.matches('label')) bad.push(row.innerText.trim());
             });
+            groups.forEach((group, index) => { group.open = was[index]; });
             return bad;
         """)
         assert not overlaps, f"Sidebar options overlap: {overlaps}"
         # A group's chevron and "?" stay level with its title's first line, also when a wide font wraps the title.
+        # (every group opened, More filters' too, then put back as it was)
         misaligned = driver.execute_script("""
             const bad = [];
+            const groups = [...document.querySelectorAll('#catalogFilters details')];
+            const was = groups.map(group => group.open);
+            groups.forEach(group => { group.open = true; });
             document.querySelectorAll('#catalogFilters .filter-section').forEach(section => {
                 if (!section.getClientRects().length) return;
                 const summary = section.querySelector(':scope > summary');
@@ -3323,6 +3435,7 @@ def check_layout(driver, browser, url, route_label):
                     .filter(e => e && e.getClientRects().length);
                 if (marks.some(e => Math.abs(centre(e.getBoundingClientRect()) - centre(first)) > 1.5)) bad.push(summary.innerText.trim());
             });
+            groups.forEach((group, index) => { group.open = was[index]; });
             return bad;
         """)
         assert not misaligned, f"Group chevron or '?' off its title's first line: {misaligned}"
@@ -3390,7 +3503,9 @@ def check_layout(driver, browser, url, route_label):
         assert shown["lastShown"] and shown["titleClear"] and shown["scrolled"] > 0, f"Review result's '?' hides its options: {shown}"
         status_about.click()
         assert not driver.find_element(By.ID, "aboutStatus").is_displayed()
-        assert driver.execute_script(reveal)["scrolled"] == shown["scrolled"], "Closing a '?' moved the sidebar"
+        # (unless the sidebar, shorter now, ends above that: then it stays at its end)
+        end = driver.execute_script("const rail = document.getElementById('catalogFilters'); return rail.scrollHeight - rail.clientHeight")
+        assert driver.execute_script(reveal)["scrolled"] == min(shown["scrolled"], end), "Closing a '?' moved the sidebar"
         driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
         set_browse_viewport(driver, browser, 1440, 1000)
         # The browser's own colour (theme-color) is the accent token.
@@ -3555,6 +3670,10 @@ def check_layout(driver, browser, url, route_label):
             const style = document.createElement('style');
             style.textContent = '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.5px !important }';
             document.head.appendChild(style);
+            // every group opened (More filters' too), then put back as it was
+            const groups = [...document.querySelectorAll('#catalogFilters details')];
+            const was = groups.map(group => group.open);
+            groups.forEach(group => { group.open = true; });
             const out = [];
             let rows = 0;
             for (const row of document.querySelectorAll('#catalogFilters .check-row')) {
@@ -3574,6 +3693,7 @@ def check_layout(driver, browser, url, route_label):
             }
             const word = document.querySelector('#statusChecklist .human-checked-word').getBoundingClientRect();
             style.remove();
+            groups.forEach((group, index) => { group.open = was[index]; });
             return {rows, tight: out, humanChecked: word.width > 20};
         """)
         assert tight["rows"] >= 8 and tight["humanChecked"] and not tight["tight"], (

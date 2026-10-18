@@ -2,7 +2,13 @@
 
 Browse is the working table. Keep its header, search, compact counts, filters,
 record drawer and downloads intact. Stats is a separate page, not a drawer or
-expanding summary that takes space from the table. Browse's active-filter chips
+expanding summary that takes space from the table. The filter sidebar shows in view only
+the filters most visitors use (Enzyme, organism, substrate; Measurement type; Review result
+with human-checked; Source), each option one short line with its count, and folds the
+specialist groups (Wild type or variant, Assay conditions, Against the databases, Cautions,
+Source database) under one "More filters", which opens by itself when one of them is set
+and counts them on its title; help text sits behind each group's "?", never in view; no
+option, address or chip changed (the user, 2026-10-18). Browse's active-filter chips
 wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
 colour where it has one (a review result's status colour, a database result's
 square, a caution's amber), else the colour of the dot beside its group in the

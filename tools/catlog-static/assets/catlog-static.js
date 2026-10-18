@@ -7418,6 +7418,13 @@
       const row = input?.closest?.(".check-row");
       if (row) row.hidden = !(seen & item.bit) && !input.checked;
     });
+    // More filters' tooltip names the groups it holds (Against the databases only when shown).
+    const more = $("moreFilters");
+    const title = more?.querySelector?.(":scope > summary");
+    if (title) {
+      title.title = [...more.querySelectorAll(":scope > .filter-section")].filter((group) => !group.hidden)
+        .map((group) => group.querySelector(":scope > summary")?.textContent.replace(/\s+/g, " ").trim()).filter(Boolean).join(", ");
+    }
   }
 
   const sourceBitsByValue = new Map();
@@ -7644,13 +7651,22 @@
           ${aboutLine("human-checked", HUMAN_CHECKED_DESCRIPTION)}
           <p><a href="#guide-status">Review result and tags in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
+      // No help text in view (the user, 2026-10-18: "too many options and a bit confusing"): each group's notes are
+      // behind its "?".
       $("measurementChecklist").innerHTML = measurementFilters.map((item) => checkRowHtml({
         name: "measurement", value: item.value, labelHtml: item.labelHtml, count: `metric:${item.value}`,
-      })).join("") + `<p class="filter-note">Ticking more than one shows records with all of them.</p>`;
+      })).join("");
+      if ($("aboutMeasurement")) {
+        $("aboutMeasurement").innerHTML = "<p>Records that give the value. Ticking more than one shows records with all of them.</p>";
+      }
       if ($("variantChecklist")) {
         $("variantChecklist").innerHTML = variantFilters.map((item) => checkRowHtml({
           name: "variant", value: item.value, label: item.label, count: `variant:${item.value}`,
-        })).join("") + `<p class="filter-note" id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records do not state wild type or variant.</span></p>`;
+        })).join("");
+      }
+      if ($("aboutVariant")) {
+        $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant's mutation shows under the enzyme's name in the table.</p>
+          <p id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records do not state wild type or variant.</span></p>`;
       }
       // Against the databases: each result's square and name (a nested option's name is read with its parent's), its
       // definition and counts in its title; Corrected earlier under a rule.
@@ -7676,6 +7692,16 @@
           count: `caution:${item.value}`,
         })).join("");
       }
+      if ($("aboutCautions")) {
+        // Each caution's definition (its option's title), "label — definition" as in Review result's "?".
+        // (lower case after the dash, unless the definition starts with Km or kcat)
+        const definition = (title) => (/^(Km|kcat)\b/.test(title) ? title : `${title.charAt(0).toLowerCase()}${title.slice(1)}`);
+        $("aboutCautions").innerHTML = cautionFilters.map((item) => `<p><strong>${item.labelHtml || escapeHtml(item.label)}</strong> — ${
+          escapeHtml(definition(item.title))}.</p>`).join("")
+          + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
+      }
+      // Source: the three choices in view; the databases of Not yet re-read are their own group under More filters
+      // (Source database), and ticking one selects Not yet re-read.
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
@@ -7683,20 +7709,22 @@
             <span>${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
-        </div>
-        <details class="source-databases" id="sourceDatabases">
-          <summary>By database</summary>
-          <div class="check-stack">${sourceFilters.map((item) => checkRowHtml({
-            name: "source", value: item.value, label: item.label, labelHtml: item.shortHtml, title: item.title || "", count: `source:${item.value}`,
-          })).join("")}
-          </div>
-        </details>`;
+        </div>`;
+      }
+      if ($("sourceDatabaseChecklist")) {
+        $("sourceDatabaseChecklist").innerHTML = sourceFilters.map((item) => checkRowHtml({
+          name: "source", value: item.value, label: item.label, labelHtml: item.shortHtml, title: item.title || "", count: `source:${item.value}`,
+        })).join("");
       }
       if ($("aboutSource")) {
         $("aboutSource").innerHTML = sourceModes.filter((item) => item.help).map((item) => `
           <p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.help)}</p>`).join("") + `
-          <p>A merged record counts under each database it came from.</p>
           <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
+      }
+      if ($("aboutSourceDatabases")) {
+        $("aboutSourceDatabases").innerHTML = `<p>The records not yet <span class="nowrap">re-read</span>, by the database or earlier extraction they
+          come from; ticking one selects Not yet <span class="nowrap">re-read</span>.</p>
+          <p>A merged record counts under each database it came from.</p>`;
       }
     }
     syncDatabaseFilters();
@@ -8000,9 +8028,10 @@
     });
   }
 
-  // A group a filter is set in opens (each group is a <details>), so nothing active is hidden in a closed group.
+  // A group a filter is set in opens (each group is a <details>), so nothing active is hidden in a closed group; More
+  // filters opens too when one of its groups has one.
   function openActiveFilterSections() {
-    document.querySelectorAll?.("#catalogFilters .filter-section").forEach((section) => {
+    document.querySelectorAll?.("#catalogFilters :is(.filter-section, .filter-more)").forEach((section) => {
       const active = [...section.querySelectorAll("input")].some((input) => {
         if (input.type === "radio") return input.checked && input.value !== "all";
         return input.type === "checkbox" ? input.checked && input.name !== "recordState" : Boolean(String(input.value || "").trim());
@@ -8419,6 +8448,7 @@
     });
     $("openFiltersButton")?.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
     $("filterRailButton")?.setAttribute("aria-label", count ? `Show filters, ${count} active` : "Show filters");
+    syncMoreFiltersCount(items);
     // Undo is enabled while there is a change to undo (also with no filter left: Clear all can be undone); its name says
     // what it gives back. It keeps its place, dimmed when there is nothing to undo, so pressing it again never lands on
     // something else: first in the bar above the table whenever the bar shows (and the bar stays after an Undo that
@@ -8486,6 +8516,28 @@
       if (target) target.focus({ preventScroll: true });
       else focusAfterLastFilter();
     }
+  }
+
+  // More filters holds the specialist groups (the user, 2026-10-18): Wild type or variant, Assay conditions, Against the
+  // databases, Cautions and Source database (a database of Not yet re-read). Its title counts the chips of those
+  // filters, as Filters counts all of them, so a filter set there is never out of sight unannounced while it is closed
+  // ("More filters, 2 active"). The keys follow the markup's groups.
+  const MORE_FILTER_PREFIXES = new Set(["variant", "temperature", "ph", "db", "caution"]);
+
+  function isMoreFilterKey(key) {
+    const [prefix, value] = String(key).split(":");
+    return MORE_FILTER_PREFIXES.has(prefix) || (prefix === "source" && sourceFilters.some((item) => item.value === value));
+  }
+
+  function syncMoreFiltersCount(items) {
+    const badge = $("moreFiltersCount");
+    const words = $("moreFiltersWords");
+    const count = items.filter((item) => isMoreFilterKey(item.key)).length;
+    if (badge) {
+      badge.textContent = count ? String(count) : "";
+      badge.classList.toggle("hidden", count === 0);
+    }
+    if (words) words.textContent = count ? `, ${count} active` : "";
   }
 
   let renderedChipsHtml = "";
@@ -13451,12 +13503,25 @@
         if (toggleSectionAbout(button)) revealFilterSection(button.closest?.(".filter-section"));
       });
     });
-    // Source: ticking a database selects From enzyme databases; All records or Read from the paper clears the databases.
-    $("sourceChecklist")?.addEventListener("change", (event) => {
-      const input = event.target;
-      if (input?.name === "sourceMode" && input.value !== "databases") setCheckboxes("source", []);
-      if (input?.name === "source" && input.checked) setSourceControls("databases", selectedCheckboxes("source"));
-      applyFiltersInBackground();
+    // Source: ticking a database (Source database, under More filters) selects Not yet re-read; All records or Read from
+    // the paper clears the databases.
+    ["sourceChecklist", "sourceDatabaseChecklist"].forEach((id) => {
+      $(id)?.addEventListener("change", (event) => {
+        const input = event.target;
+        if (input?.name === "sourceMode" && input.value !== "databases") setCheckboxes("source", []);
+        if (input?.name === "source" && input.checked) setSourceControls("databases", selectedCheckboxes("source"));
+        applyFiltersInBackground();
+      });
+    });
+    // A group (or More filters) opened by its title near the sidebar's foot scrolls just enough into view to show its
+    // options, as a "?" does; one opened by an address or Undo leaves the sidebar where it is.
+    document.querySelectorAll?.("#catalogFilters :is(.filter-section, .filter-more) > summary").forEach((summary) => {
+      summary.addEventListener("click", () => {
+        const group = summary.parentElement;
+        window.requestAnimationFrame(() => {
+          if (group?.open) revealFilterSection(group);
+        });
+      });
     });
     // Range bounds apply a moment after typing stops, and at once on Enter or when the field is left.
     RANGE_INPUT_IDS.forEach((id) => {
@@ -13630,6 +13695,7 @@
       state,
       init,
       filterCountValue,
+      isMoreFilterKey,
       loadScript,
       loadDetailShard,
       parseCompressedDetailShard,
