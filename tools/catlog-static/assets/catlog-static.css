@@ -324,7 +324,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* The sidebar (and, on phones, the sheet): a sticky heading, then the filter groups. */
 /* A control reached with Tab or Shift+Tab scrolls clear of the sticky 48px heading, with room for its focus ring. */
 /* A thin scrollbar (11px where scrollbars take room, as in Chrome on Linux and Windows) leaves the options 4px more. */
-.filter-rail { display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:56px; scrollbar-width:thin }
+/* position:relative: the rail is the containing block of what it holds, so a visually hidden label inside it is
+   clipped by its scroll box instead of lengthening the page. */
+.filter-rail { position:relative; display:flex; flex-direction:column; width:100%; min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; scroll-padding-top:56px; scrollbar-width:thin }
 .filter-rail:focus { outline:none }
 .rail-heading { position:sticky; top:0; z-index:2; display:flex; flex-shrink:0; min-height:48px; align-items:center; gap:var(--sp-2); border-bottom:1px solid var(--line-soft); background:var(--bg); padding:0 var(--sp-2) 0 var(--sp-4) }
 .rail-title { margin:0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
