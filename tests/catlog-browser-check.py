@@ -3278,6 +3278,16 @@ def check_phone_scroll(driver, browser, url):
         wide = driver.execute_script(state_js)
         assert not wide["pageScrolls"] and wide["wrapOverflow"] == "auto", wide
         results["800x600"] = True
+        # Nor on a desktop (round 13: a label hidden for screen readers in More filters once lengthened the page by 187px,
+        # so a wheel over the header slid the header, the counts band and the toolbar away).
+        for width, height in ((1280, 708), (1440, 708)):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": False})
+            driver.get("about:blank")
+            driver.get(url + "#browse")
+            wait.until(loaded)
+            wide = driver.execute_script(state_js)
+            assert not wide["pageScrolls"], (width, height, wide)
+            results[f"{width}x{height}"] = True
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
     return {"route": "phone-scroll", "passed": True, "checked": results}
@@ -3343,7 +3353,10 @@ def check_layout(driver, browser, url, route_label):
         # Header and counts band.
         assert box(".app-header")["height"] == 56, box(".app-header")
         band = box(".snapshot-band")
-        assert 72 <= band["height"] <= 78, f"The counts band is one row of key numbers in its card: {band}"
+        # One line on what CatLog is opens the band (round 13: the visitors' "what is this?"), then the card.
+        lead = box(".snapshot-lead")
+        assert lead["height"] == 18 and "re-checked against their papers" in driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").text, lead
+        assert 72 <= band["height"] - lead["height"] - 6 <= 78, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
                 .map(e => getComputedStyle(e)[prop]);
