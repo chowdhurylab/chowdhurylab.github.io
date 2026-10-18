@@ -11108,9 +11108,10 @@
       const place = v2LinePlace(line);
       const same = quoted.find((item) => item.text.startsWith(text) || text.startsWith(item.text));
       if (!same) {
-        quoted.push({ text, printedLine, place, metrics: [line.metric] });
+        quoted.push({ text, printedLine, place, metrics: [line.metric], note: typeof line.printed_line_note === "string" ? line.printed_line_note : "" });
         return;
       }
+      if (!same.note && typeof line.printed_line_note === "string") same.note = line.printed_line_note;
       if (!same.metrics.includes(line.metric)) same.metrics.push(line.metric);
       if (same.place !== place) same.mixed = true;
       if (text.length > same.text.length) Object.assign(same, { text, printedLine });
@@ -11118,8 +11119,8 @@
     // More than one line: each names its values ("kcat line"), whose places the table gives. One line: its place, unless
     // the caption above the table already names it.
     const quotes = quoted.map((item) => printedLineNoteHtml(item.printedLine, quoted.length > 1 || item.mixed
-      ? { metrics: item.metrics }
-      : { place: sharedPlace ? "" : item.place }));
+      ? { metrics: item.metrics, note: item.note }
+      : { place: sharedPlace ? "" : item.place, note: item.note }));
     // The Value heading keeps the same unseen spaces after it (calc. drawn by the stylesheet, so the heading's text stays
     // "Value"), so it ends where the numbers end at every width.
     const headSlots = `${checkSlot}${calcSlot ? '<small class="metric-origin vt-ghost" aria-hidden="true"></small>' : ""}${flagSlot}`;
@@ -11175,17 +11176,24 @@
   // "In the paper:" and the line; in brackets the values it gives ("In the paper (kcat and kcat/Km):") when the record
   // quotes several lines, else its place ("In the paper (Table VIII):") when the Values caption does not already name it.
   // A folded line names its values too ("Show the printed kcat line").
-  function printedLineNoteHtml(printedLine, { place = "", metrics = [] } = {}) {
+  // note: the line's printed_line_note (the CatLog side's "Text extraction dropped some symbols from this line." for a
+  // line whose PDF text layer lost symbols), said under the quote; a line with a replacement or private-use character
+  // (a symbol the text layer could not name, drawn as a box) says the same when its snapshot gives no note.
+  function printedLineNoteHtml(printedLine, { place = "", metrics = [], note = "" } = {}) {
     const cells = String(printedLine).split("|").length;
     const what = metrics.length ? sentenceList(metrics) : "";
     const label = `In the paper${what || place ? ` (${what || place})` : ""}:`;
     const quote = `<p class="evidence-note-plain">${metricWordsHtml(escapePublic(label))} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
     const lostPlusMinus = /\d \( \d/.test(printedLine);
-    if (cells <= 4 && !lostPlusMinus) return quote;
+    const lostText = String(note || "").trim()
+      || (/[\uFFFD\uE000-\uF8FF\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(String(printedLine)) ? PRINTED_LINE_LOST_NOTE : "");
+    const lost = lostText ? `<p class="printed-line-note">${escapePublic(lostText)}</p>` : "";
+    if (cells <= 4 && !lostPlusMinus) return quote + lost;
     // The warning only where the ± signs were lost; a long row is folded without it.
     return `<details class="printed-line-disclosure"><summary>${metricWordsHtml(escapePublic(`Show the printed ${what ? `${what} ` : ""}line`))}</summary>${quote}`
-      + `${lostPlusMinus ? '<p class="printed-line-note">Text extraction dropped the ± signs from this line.</p>' : ""}</details>`;
+      + `${lostPlusMinus && !lostText ? '<p class="printed-line-note">Text extraction dropped the ± signs from this line.</p>' : lost}</details>`;
   }
+  const PRINTED_LINE_LOST_NOTE = "Text extraction dropped some symbols from this line.";
 
   // ---- Record panel: what the AI check found ----
   // A check ("confirmed", "corrected: <what>; <what>", or plain phrases) as phrases that give the new state: those about
