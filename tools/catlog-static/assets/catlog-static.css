@@ -1703,18 +1703,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .team-legend { grid-template-columns:repeat(2,minmax(0,1fr)); break-inside:avoid }
 }
 
-.guide-record-example figcaption > span { display:block; font-weight:600 }
-.guide-record-example figcaption > strong { display:block; line-height:1.35 }
-.guide-example-compare { align-items:center }
-.guide-example-level { display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; border:1px solid var(--line); border-top-width:3px; border-radius:var(--radius) }
-.guide-example-level.public { border-top-color:var(--accent); background:var(--accent-tint) }
-.guide-example-value { display:grid; gap:2px; border-bottom:1px solid var(--line-soft); padding-bottom:14px }
-.guide-example-value span { color:var(--muted) }
-.guide-example-level dl { display:grid; align-content:start; gap:0; margin:10px 0 0 }
-.guide-example-level dl > div { display:grid; border-bottom:1px solid var(--line-soft) }
-.guide-example-level dl > div:last-child { border-bottom:0 }
-.guide-example-level dt, .guide-example-level dd { margin:0 }
-.guide-example-level dt { color:var(--muted) }
 .guide-choice-link { grid-row:4; align-self:end; justify-self:start; white-space:nowrap }
 .guide-note { margin:0 }
 .guide-status-list dt { align-items:center; gap:7px }
@@ -1818,8 +1806,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The record's values: Where goes under As printed. */
   .values-table :is(th,td).vt-where { display:none }
   .values-table small.vt-where-inline { display:block }
-  .guide-record-example figcaption { grid-template-columns:1fr }
-  .guide-record-example figcaption > .guide-example-source { grid-column:1; grid-row:auto; justify-content:flex-start }
 }
 
 /* The narrowest phones: each row of a record's lists (Source, Against the databases, Conditions, ...) puts its label above
@@ -2297,6 +2283,5 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 
 @media (max-width: 640px) {
   .guide-view .guide-shell { padding:24px 16px 40px }
-  .guide-view .guide-status-list > div, .guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div, .guide-view .guide-example-level dl > div { grid-template-columns:minmax(0, 1fr); gap:2px }
-  .guide-view .guide-example-level { padding:14px 16px 16px }
+  .guide-view .guide-status-list > div, .guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div { grid-template-columns:minmax(0, 1fr); gap:2px }
 }
