@@ -2843,7 +2843,7 @@ function row(overrides = {}) {
   // An older record's review says it was the earlier automated review, and what it found.
   for (const [status, sentence] of [
     ["corrected", "Corrected and accepted in the earlier automated review; this snapshot does not list the changes."],
-    ["verified", "Accepted as printed, in the earlier automated review."],
+    ["verified", "Accepted as printed in the earlier automated review."],
     ["manual_review_required", "Not confirmed: the earlier automated review left a question open on the value, unit, protein or substrate."],
     ["unverified", "Not checked: the earlier automated review recorded no final check."],
     ["disputed", "Disputed in the earlier automated review; not accepted (no reason recorded)."],
@@ -2876,7 +2876,7 @@ function row(overrides = {}) {
     assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or on a human reviewer&#39;s approval\. Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
     assert.equal(api.reviewOutcome(approved, { accepted_basis: "human review" }),
       "Accepted on a human reviewer's approval (human-checked); the earlier automated review had not accepted it.");
-    assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed, in the earlier automated review.");
+    assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed in the earlier automated review.");
     api.setHumanReviewMarks({});
     runtimeManifest.summary = savedSummary;
     // An older snapshot accepts these records, so its Not reviewed is only the records nobody reviewed.

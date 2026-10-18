@@ -1920,7 +1920,7 @@
       case "corrected":
         return "Corrected and accepted in the earlier automated review; this snapshot does not list the changes.";
       case "verified":
-        return "Accepted as printed, in the earlier automated review.";
+        return "Accepted as printed in the earlier automated review.";
       case "manual_review_required":
         return "Not confirmed: the earlier automated review left a question open on the value, unit, protein or substrate.";
       case "mathematically_inferred":
@@ -12331,7 +12331,9 @@
   // review result in one sentence and, when the earlier review did not settle it, that its values are the database's. The
   // method itself is the Guide's (one link at the end), never a sentence repeated on every record.
   const CORRECTED_LISTED_SENTENCE = `Corrected and accepted in the earlier automated review (see ${DATABASE_RESULT_NAMES.earlier}).`;
-  const HOW_READ_LINK = { href: "#guide-how-read", text: "How CatLog reads a value" };
+  // The Guide's "How CatLog reads a value" (#guide-how-read, round 13); a page whose Guide has no such section yet links
+  // its method section instead, so the link never opens the Guide at a section it lacks.
+  const HOW_READ_LINK = { href: "#guide-how-read", fallback: "#guide-method", text: "How CatLog reads a value" };
   const HOW_EARLIER_LINK = { href: "#guide-method", text: "How the earlier review worked" };
 
   function sideFileAuditText(check) {
@@ -12345,8 +12347,9 @@
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
-  function guideLinkHtml({ href, text }) {
-    return `<p class="section-link"><a class="method-link" href="${escapeHtml(href)}">${escapeHtml(text)}<span aria-hidden="true"> →</span></a></p>`;
+  function guideLinkHtml({ href, fallback = "", text }) {
+    const target = fallback && !document.getElementById?.(href.slice(1)) ? fallback : href;
+    return `<p class="section-link"><a class="method-link" href="${escapeHtml(target)}">${escapeHtml(text)}<span aria-hidden="true"> →</span></a></p>`;
   }
 
   function checksSection(summary, detail, { v2Record, proof, check, hasCorrections, hasPaper = true }) {

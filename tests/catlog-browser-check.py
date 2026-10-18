@@ -3865,13 +3865,17 @@ def check_layout(driver, browser, url, route_label):
 RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|earlier catalog|old catalog", re.I)
 
 
-RECORD_SECTIONS = ["Values", "Against the databases", "Source", "Conditions", "Protein and substrate", "Paper", "Review and audit"]
+RECORD_SECTIONS = ["Values", "Against the databases", "Checks", "Source", "Conditions", "Protein and substrate", "Paper"]
+# Round 13 (a curated entry, not a log): what is the same on every record is the Guide's (one link under Checks), never a
+# sentence of the record.
+RECORD_BOILERPLATE = re.compile(r"converted by code|as extracted from the paper|Read from the paper by an AI model|"
+                                r"Accepted: read from the paper by CatLog|CatLog has not read this paper again yet", re.I)
 
 # A malic enzyme variant with 28 substitutions (PMID 24998673): its sequence line is one long run with no spaces.
 LONG_VARIANT_RECORD = "e15d2d23d7f3db24"
 # A triose phosphate isomerase read from the paper whose calculated kcat/Km (8.49 × 10⁷) carries calc. and a "!".
 CALC_FLAG_RECORD = "1704dd2d6297af79"
-# A biotinidase read from the paper (its Method line's Guide link once ran past the panel at 361-389px) and an older alcohol
+# A biotinidase read from the paper (its Guide link once ran past the panel at 361-389px) and an older alcohol
 # dehydrogenase whose SABIO-RK kcat/Km range (6.7 × 10⁻⁴–2.3 × 10³ mM⁻¹ s⁻¹, 115 values) once ran past it at 320px.
 PHONE_PAPER_RECORD = "50abd2bbc472636a"
 # An older laccase record (OED) with no As printed column whose calculated kcat/Km (1.3 × 10⁴) carries calc., and an older
@@ -3888,11 +3892,12 @@ PHONE_APPROVED_SCIENTIFIC_RECORD = "9f56345af45ee06e"
 
 
 def check_record_panel(driver, browser, url, route_label):
-    """The record (design spec 5): header lines, then Values, Against the databases (only when it has something to say),
-    Source, Conditions, Protein and substrate, Paper, Review and audit with the record's actions last (the source's own
-    details are rows of Source, nothing to open at the end); a record read from the paper
-    says how in its Method line (with the Guide link) and gives its values as printed; an older record names the earlier
-    automated review; no labelled row shows a bare dash; Show opens a sequence under its row."""
+    """The record (design spec 5, round 13): header lines, then Values, Against the databases (only when it has something
+    to say), Checks, Source (an older record's database; a record read from the paper has none), Conditions, Protein and
+    substrate, Paper, then the record's actions and its footnote (license, snapshot, data ID); a record read from the
+    paper gives its values as printed and one Guide link under Checks ("How CatLog reads a value"), no method sentence;
+    an older record names the earlier automated review; no labelled row shows a bare dash; Show opens a sequence under
+    its row."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     base = url.split("#", 1)[0]
     results = {}
@@ -3911,6 +3916,8 @@ def check_record_panel(driver, browser, url, route_label):
             const row = (label) => [...content.querySelectorAll('.kv-line')]
                 .filter(e => e.querySelector('dt')?.textContent === label).map(e => e.querySelector('dd'));
             const method = row('Method')[0];
+            const guideLink = content.querySelector('.checks-section .section-link a.method-link');
+            const footnote = content.querySelector('.detail-footer .detail-footnote');
             // Show opens the first sequence (or SMILES) under its row and says Hide.
             const reveal = content.querySelector('[data-reveal-target]');
             let revealed = null;
@@ -3943,6 +3950,11 @@ def check_record_panel(driver, browser, url, route_label):
                 dashes: [...content.querySelectorAll('.kv-line > dd')].filter(e => e.textContent.trim() === '—').length,
                 method: method ? method.textContent : null,
                 methodLink: method?.querySelector('a.method-link')?.getAttribute('href') || null,
+                guideLink: guideLink ? [guideLink.textContent.trim(), guideLink.getAttribute('href')] : null,
+                howReadInGuide: Boolean(document.getElementById('guide-how-read')),
+                footnote: footnote ? footnote.innerText.trim() : null,
+                lastPart: content.lastElementChild ? content.lastElementChild.className : null,
+                quotes: [...content.querySelectorAll('.values-section .printed-lines .evidence-note-plain')].map(e => e.textContent.trim().slice(0, 40)),
                 review: row('Review result')[0]?.textContent || null,
                 paperCheck: row('Paper check')[0]?.textContent || null,
                 valuesHead: [...content.querySelectorAll('.values-section .values-table thead th')].map(e => e.textContent),
@@ -3963,8 +3975,16 @@ def check_record_panel(driver, browser, url, route_label):
                 panel = open_first_record(address)
                 # (an earlier corrected record's section in that slot is headed Corrected earlier: no database is compared there)
                 sections = ["Against the databases" if name == "Corrected earlier" else name for name in panel["sections"]]
-                expected = [name for name in RECORD_SECTIONS if name != "Against the databases" or name in sections]
+                expected = [name for name in RECORD_SECTIONS if (name != "Against the databases" or name in sections)
+                            and (name != "Source" or kind != "from-paper" or name in sections)]
                 assert sections == expected, panel["sections"]
+                if kind != "from-paper":
+                    assert "Source" in sections, panel["sections"]
+                assert not RECORD_BOILERPLATE.search(panel["text"]), RECORD_BOILERPLATE.search(panel["text"]).group(0)
+                # The actions and the footnote close the record: the license and the snapshot, said once.
+                assert panel["lastPart"] == "detail-footer", panel["lastPart"]
+                assert panel["footnote"] and panel["footnote"].startswith("License: ") and re.search(r"Data ID [0-9a-f]{10}$", panel["footnote"]), panel["footnote"]
+                assert all(quote.startswith("In the paper") for quote in panel["quotes"]), panel["quotes"]
                 assert panel["headingSize"] == "14px", panel["headingSize"]
                 assert panel["subtitle"].startswith("EC "), panel["subtitle"]
                 assert panel["substrate"].startswith("Substrate: "), panel["substrate"]
@@ -3989,7 +4009,7 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
                 if kind.startswith("database"):
                     # A database record compares nothing with the databases: an unsettled one says its values are the
-                    # database's in Review and audit's Paper check row, never under Against the databases. Only a record
+                    # database's in Checks' Paper check row, never under Against the databases. Only a record
                     # the earlier review corrected has the section, when the snapshot lists what that review changed.
                     if panel["databasesText"] is not None:
                         assert "corrected" in panel["status"] and "Corrected earlier" in panel["databasesText"], \
@@ -4001,12 +4021,13 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["paperCheck"] is None, panel["paperCheck"]
                 if kind == "from-paper":
                     assert "from paper" in panel["status"] and "read from the paper" not in panel["status"], panel["status"]
-                    assert panel["method"] and panel["method"].startswith(
-                        "Read from the paper by an AI model; a second, separate AI check compared each value with the paper;"), panel["method"]
-                    assert panel["methodLink"] == "#guide-method"
-                    assert panel["review"] == "Accepted: read from the paper by CatLog.", panel["review"]
+                    # No method sentence and no review sentence repeating the header: one Guide link under Checks.
+                    assert panel["method"] is None and panel["review"] is None, (panel["method"], panel["review"])
+                    assert panel["guideLink"] == ["How CatLog reads a value →",
+                                                  "#guide-how-read" if panel["howReadInGuide"] else "#guide-method"], panel["guideLink"]
                 else:
                     assert panel["method"] is None and "earlier automated review" in (panel["review"] or ""), panel["review"]
+                    assert panel["guideLink"] == ["How the earlier review worked →", "#guide-method"], panel["guideLink"]
                 if label == "desktop":
                     # With a record open the table's Status cells keep their source line (innerText: what is shown).
                     status_lines = driver.execute_script("""
@@ -4235,7 +4256,7 @@ def check_record_panel(driver, browser, url, route_label):
                         assert printed["figures"] and not printed["split"], f"As printed breaks a number at {phone_width}px in a wide font: {printed}"
                         assert printed["past"] <= 1, f"The Values table runs past its section at {phone_width}px in a wide font: {printed}"
                         results[f"values-printed-whole-{phone_width}"] = True
-                # No record scrolls sideways on a phone: a record read from the paper (its Method line's Guide link wraps),
+                # No record scrolls sideways on a phone: a record read from the paper (its Guide link wraps),
                 # a long listed kcat/Km range (it breaks after its dash) and an Assay item with a long word, from 320 to
                 # 389px (skipped when this snapshot does not have the record).
                 for phone_width in (375, 361, 320):
@@ -4307,7 +4328,9 @@ EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
 DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)", "Same, other label",
                          "Not in the databases")
 DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
-EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints. CatLog has not read this paper again yet."
+# (A record whose every value the earlier version added says so instead: "... added these values from the paper; ...".)
+EARLIER_CORRECTIONS_INTRO = ("CatLog's earlier version changed these values to what the paper prints.",
+                             "CatLog's earlier version added these values from the paper; the source had none.")
 DATABASE_SECTION_STATE = """
     const strip = (text) => (text || '').trim();
     const section = document.querySelector('#detailContent .databases-section');
@@ -4562,7 +4585,7 @@ def check_record_databases(driver, browser, base, wait):
             results[f"databases-paper-note-{label}"] = True
         if open_record(EARLIER_CORRECTIONS_RECORD):
             state = driver.execute_script(DATABASE_SECTION_STATE)
-            assert state["intro"] == EARLIER_CORRECTIONS_INTRO, state["intro"]
+            assert state["intro"] in EARLIER_CORRECTIONS_INTRO, state["intro"]
             assert ["0.5467 mM⁻¹ s⁻¹", "As stored: 0.546667"] in state["stored"], state["stored"]
             # A database is named for the value before only when its number is that value (catlog-v2 export_site._listed,
             # 2026-10-14): a rounding correction whose database lists the corrected number reads as the earlier version's value.
@@ -4616,7 +4639,7 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
         assert marks["sideways"] <= 1, marks
         results["value-approved-checks"] = True
-        # "see Human review below" shows that row of Review and audit: scrolled into the panel's view and focused.
+        # "see Human review below" shows that row of Checks: scrolled into the panel's view and focused.
         review_link = driver.find_elements(By.CSS_SELECTOR, "#detailContent .value-notes .review-row-link")
         if review_link:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", review_link[0])
@@ -4720,7 +4743,7 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     wait.until(lambda d: urlsplit(d.current_url).path != urlsplit(base).path)
     assert driver.execute_script("return history.length") == length, "Closing a record left an entry behind"
     results["record-close-history"] = True
-    # A link followed from a record (here its Method line's Guide link), then Back: the record opens where it was left,
+    # A link followed from a record (here its Guide link under Checks), then Back: the record opens where it was left,
     # not at its top.
     driver.get("about:blank")
     driver.get(base + "#browse?source=paper")
@@ -4729,9 +4752,9 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     first = driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
     opened = first.get_attribute("data-key")
     first.find_element(By.CSS_SELECTOR, ".primary-cell").click()
-    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .source-section a.method-link")
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#detailContent .checks-section a.method-link")
                and not d.find_elements(By.ID, "detailLoadStatus"))
-    method_link = driver.find_element(By.CSS_SELECTOR, "#detailContent .source-section a.method-link")
+    method_link = driver.find_element(By.CSS_SELECTOR, "#detailContent .checks-section a.method-link")
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", method_link)
     left_at = driver.execute_script("return document.getElementById('detailPanel').scrollTop")
     assert left_at > 0, "The record did not scroll"
