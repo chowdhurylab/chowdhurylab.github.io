@@ -1357,9 +1357,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-histogram-range { position:relative; height:12px }
 .stats-histogram-range > span { position:absolute; top:5px; height:2px; border-radius:1px; background:color-mix(in srgb, var(--part) 60%, var(--text)) }
 .stats-histogram-range > i { position:absolute; top:1px; width:10px; height:10px; margin-left:-5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2.5px color-mix(in srgb, var(--part) 60%, var(--text)) }
-.stats-histogram-axis { position:absolute; left:0; right:0; bottom:0; height:22px; font-size:var(--fs-12); color:var(--muted); container:ridge-axis / inline-size }
-.stats-histogram-axis > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap; line-height:1.2 }
-.stats-histogram-axis > span::before { content:""; position:absolute; left:50%; top:-16px; height:4px; border-left:1px solid var(--line-strong) }
+:is(.stats-histogram-axis, .stats-condition-axis) { position:absolute; left:0; right:0; bottom:0; height:22px; font-size:var(--fs-12); color:var(--muted); container:ridge-axis / inline-size }
+:is(.stats-histogram-axis, .stats-condition-axis) > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap; line-height:1.2 }
+:is(.stats-histogram-axis, .stats-condition-axis) > span::before { content:""; position:absolute; left:50%; top:-16px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-histogram-axis sup { font-size:var(--fs-12) }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
 /* kcat against Km: a density map on log axes whose decades are one size (so a line of equal kcat/Km runs at 45°): grey
@@ -1398,7 +1398,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-map-facts dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 .stats-map-facts dd .stats-muted { font-size:var(--fs-14); font-weight:500 }
 .stats-map-classes tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
-.stats-map-classes .stats-name { gap:0 }
+/* Before a name in a table, the class bar stands 6px from it (the name's flex gap, less its own margin). */
+.stats-name > .stats-ec-key { margin-right:-2px }
 .stats-map-legend li { align-items:center }
 .stats-map-key-cells { display:inline-block; flex:0 0 28px; width:28px; height:10px; border-radius:2px; background:linear-gradient(90deg, color-mix(in srgb, var(--bar-neutral) 16%, var(--bg)), color-mix(in srgb, var(--bar-neutral) 55%, var(--text))) }
 .stats-map-key-iso { display:inline-block; flex:0 0 14px; width:14px; height:0; border-top:1px solid color-mix(in srgb, var(--text) 45%, var(--bg)); transform:rotate(-45deg) }
@@ -1622,9 +1623,10 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-checks { grid-template-columns:1fr }
-  /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line). */
+  /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line); the
+     same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges, .stats-range { --ridge-label:44px }
-  .stats-ridge-name { display:none }
+  .stats-ridge-name, .stats-map-classes .stats-ec-name { display:none }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
      headings), 8px from it, and the bar and the axis span the row, so the bars take the full width and a small segment

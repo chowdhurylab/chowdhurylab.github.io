@@ -2561,6 +2561,8 @@ function row(overrides = {}) {
     assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
     assert.match(more, /<h3 id="statsV2OrganismsTitle" class="stats-fig-title">Most common organisms among records read from the paper<\/h3>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
+    // An EC number wears its class's colour as the short bar before it, outside its link.
+    assert.match(more, /<span class="stats-name"><i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
     // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
     assert.match(more, /<h3 id="statsPerPaperTitle" class="stats-fig-title">Values per paper<\/h3>/);
     assert.match(more, /<strong>Figure 4\.<\/strong> The 1 paper CatLog has read, by the number of kcat, Km and kcat\/Km values read from each\./);

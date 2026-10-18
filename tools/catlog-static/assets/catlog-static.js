@@ -4105,7 +4105,7 @@
         const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
         const last = extra ? formatInteger(item[extra.key]) : escapeHtml(statsShare(item.count, total));
         return `<tr class="${item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
-          <th scope="row"><span class="stats-name"><span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
+          <th scope="row"><span class="stats-name">${item.keyHtml || ""}<span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
           <td class="stats-col-bar" aria-hidden="true">${item.group ? "" : `<span class="stats-minibar"><span class="stats-seg stats-part-${item.part || part}" style="width:${+width.toFixed(4)}%"></span></span>`}</td>
           <td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${last}</td></tr>`;
       }).join("")}</tbody></table>`;
@@ -4679,7 +4679,7 @@
       <dl class="stats-range-numbers stats-condition-top"><div><dt>Most common</dt><dd>${topHtml}</dd></div></dl>
       <div class="stats-histogram stats-condition-plot" role="img" aria-label="${escapeHtml(text)}">
         <div class="stats-condition-bars">${bars}</div>
-        <div class="stats-histogram-axis" aria-hidden="true">${statsLinearTicks(start, bins * width, condition.tick, condition.every)}</div>
+        <div class="stats-condition-axis" aria-hidden="true">${statsLinearTicks(start, bins * width, condition.tick, condition.every)}</div>
       </div>
       <p class="stats-range-count">${formatInteger(n)} records${records ? ` of ${formatInteger(records)}` : ""}</p>
     </figure>`;
@@ -6574,7 +6574,9 @@
     const topItems = (list, toItem, max = total) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
     const organismItem = (extra) => (item, index) => ({ value: `organism_${extra ? "v2_" : ""}${index}`, label: String(item.name || ""),
       labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { ...(extra || {}), organism: String(item.name || "") } });
+    // An EC number wears its class's colour as the short bar before it.
     const ecItem = (extra) => (item) => ({ value: `ec_${extra ? "v2_" : ""}${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
+      keyHtml: statsClassKey(Number(String(item.ec || "").split(".")[0])),
       labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ...(extra || {}), ec: String(item.ec || "") } });
     const organisms = topItems(overview?.top_organisms, organismItem(null));
     const ecNumbers = topItems(overview?.top_ec, ecItem(null));
