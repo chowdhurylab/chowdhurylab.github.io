@@ -558,6 +558,163 @@ def add_earlier_corrections(counts, row):
             counts["other_items"] += 1
 
 
+# What the values show (Stats part 5), from the records read from the paper only (CatLog's own reading: each value
+# checked against its paper, wild type and variant as the paper names them).
+#
+# kcat against Km: the records with both a kcat and a Km in catalog units, counted on a grid of quarter decades
+# (rows: log10 kcat in s^-1 from the bottom; columns: log10 Km in mM from the left), each axis the whole decades around
+# the middle 99% of its values, the end bins holding every value beyond them; per enzyme class its records' median kcat
+# and median Km (a record in several classes counts in each); and how many records have kcat ÷ Km at or above the
+# diffusion limit, 10^5 and 10^6 mM^-1 s^-1 (10^8 and 10^9 M^-1 s^-1). `linked` is the records Browse finds with
+# source=paper and metric=kcat,km (both values, in any unit), so the page links the count only where they agree.
+MAP_BIN_WIDTH = 0.25
+DIFFUSION_LIMIT = (1e5, 1e6)
+
+
+def decade_span(ordered):
+    """The whole decades (low, high) around the middle 99% of sorted positive values, at least one decade."""
+    low = math.floor(math.log10(percentile(ordered, 0.005)))
+    high = math.ceil(math.log10(percentile(ordered, 0.995)))
+    return low, max(high, low + 1)
+
+
+def grid_index(value, start, bins, width):
+    return min(max(math.floor((math.log10(value) - start) / width + 1e-9), 0), bins - 1)
+
+
+def kcat_km_map(pairs, linked):
+    """pairs: (kcat, km, classes) per record read from the paper with both values in catalog units."""
+    if not pairs:
+        return None
+    kcat_start, kcat_end = decade_span(sorted(kcat for kcat, _km, _classes in pairs))
+    km_start, km_end = decade_span(sorted(km for _kcat, km, _classes in pairs))
+    rows = round((kcat_end - kcat_start) / MAP_BIN_WIDTH)
+    columns = round((km_end - km_start) / MAP_BIN_WIDTH)
+    counts = [[0] * columns for _row in range(rows)]
+    per_class = defaultdict(lambda: ([], []))
+    ratios = []
+    for kcat, km, classes in pairs:
+        counts[grid_index(kcat, kcat_start, rows, MAP_BIN_WIDTH)][grid_index(km, km_start, columns, MAP_BIN_WIDTH)] += 1
+        ratios.append(kcat / km)
+        for number in classes:
+            per_class[number][0].append(kcat)
+            per_class[number][1].append(km)
+    ratios.sort()
+    return {
+        "records": len(pairs), "linked": linked, "bin_width": MAP_BIN_WIDTH,
+        "kcat_log10_start": kcat_start, "km_log10_start": km_start, "counts": counts,
+        "ratio_median": significant(percentile(ratios, 0.5)),
+        "at_diffusion_limit": [sum(ratio >= limit for ratio in ratios) for limit in DIFFUSION_LIMIT],
+        "classes": [{"class": number, "n": len(kcats), "kcat_median": significant(percentile(sorted(kcats), 0.5)),
+                     "km_median": significant(percentile(sorted(kms), 0.5))}
+                    for number, (kcats, kms) in sorted(per_class.items()) if kcats],
+    }
+
+
+# Mutations against the wild type: each variant record paired with the one wild-type record of its paper with the same
+# enzyme, organism, substrate, pH and temperature (a variant whose paper gives several such wild-type records, or none,
+# is left unpaired: an ambiguous pairing is never made), and per parameter the log10 of the variant's value over the
+# wild type's, in quarter-decade bins centred on whole quarters from 10^-4 to 10^3 (the bin at 0 holds a change under
+# 1.33x either way; the end bins hold every change beyond them).
+MUTATION_BIN_WIDTH = 0.25
+MUTATION_RANGE = (-4, 3)
+
+
+def mutation_key(row):
+    return (tuple(sorted(paper_keys(row))), name_key(row.get("enzyme_display_name")), name_key(row.get("organism")),
+            name_key(row.get("substrate_name")), ph_value(row), temperature_c(row))
+
+
+def fold_summary(changes):
+    if not changes:
+        return None
+    ordered = sorted(changes)
+    low, high = (round(edge / MUTATION_BIN_WIDTH) for edge in MUTATION_RANGE)
+    counts = [0] * (high - low + 1)
+    for change in ordered:
+        counts[min(max(math.floor(change / MUTATION_BIN_WIDTH + 0.5) - low, 0), len(counts) - 1)] += 1
+    return {"n": len(ordered), "median": significant(10 ** percentile(ordered, 0.5), 2),
+            "lower": sum(change < 0 for change in ordered), "higher": sum(change > 0 for change in ordered),
+            "tenfold_lower": sum(change <= -1 for change in ordered), "tenfold_higher": sum(change >= 1 for change in ordered),
+            "counts": counts}
+
+
+def mutation_effects(groups):
+    """groups: mutation_key -> {"wild": [values], "variant": [(values, papers)]}, values a dict of catalog values."""
+    changes = {metric: [] for metric in METRIC_UNITS}
+    paired = ambiguous = no_wild_type = 0
+    papers = set()
+    for group in groups.values():
+        variants = group["variant"]
+        if not variants:
+            continue
+        if len(group["wild"]) != 1:
+            ambiguous += len(variants) if group["wild"] else 0
+            no_wild_type += 0 if group["wild"] else len(variants)
+            continue
+        wild = group["wild"][0]
+        for values, keys in variants:
+            found = False
+            for metric in changes:
+                if values.get(metric) and wild.get(metric):
+                    changes[metric].append(math.log10(values[metric] / wild[metric]))
+                    found = True
+            paired += found
+            if found:
+                papers |= keys
+    metrics = {metric: summary for metric, summary in ((metric, fold_summary(found)) for metric, found in changes.items()) if summary}
+    if not metrics:
+        return None
+    return {"variants": paired, "papers": len(papers), "ambiguous": ambiguous, "no_wild_type": no_wild_type,
+            "bin_width": MUTATION_BIN_WIDTH, "log10_start": MUTATION_RANGE[0], "metrics": metrics}
+
+
+# Assay temperature and pH: the records read from the paper that give each, in steps of 1 °C from 0 to 100 °C and of
+# 0.1 from pH 2 to 12 (each bin from its lower edge; the first also holds every value below it, the last every value at
+# its edge and above), with the most decimals any value has (`decimals`, null past 3), so the page can give each bin a
+# Browse range (tmin, tmax, phmin, phmax) that opens exactly its records.
+CONDITION_GRIDS = {"temperature": (0, 1, 100), "ph": (2, 0.1, 100)}
+
+
+def decimals_of(value):
+    text = f"{round(value, 6):.6f}".rstrip("0")
+    return len(text.split(".", 1)[1])
+
+
+def condition_summary(values, key):
+    if not values:
+        return None
+    start, width, steps = CONDITION_GRIDS[key]
+    counts = [0] * (steps + 1)
+    for value in values:
+        # whole thousandths, so 7.3 falls in its own bin and not the one below it
+        index = round(value * 1000) // round(width * 1000) - round(start / width)
+        counts[min(max(index, 0), steps)] += 1
+    places = max(decimals_of(value) for value in values)
+    return {"n": len(values), "start": start, "width": width, "counts": counts, "decimals": places if places <= 3 else None}
+
+
+# The values read from the paper against the databases, by enzyme class: each value's own result (its proof line's
+# database_status), as Stats part 7 and Browse name them: the same number, the same number under another label, corrects
+# a database's number, a different number (with a correction found only by an exact factor, not yet checked) or in none of
+# the databases. A record in several classes counts in each.
+DATABASE_CLASS_RESULTS = {"confirmed": "same", "same_number_other_label": "other_label", "corrected": "corrects",
+                          "differs": "differs", "new": "not_listed"}
+
+
+def database_results(row):
+    results = []
+    for line in row.get("proof_lines") or []:
+        if not isinstance(line, dict):
+            continue
+        result = DATABASE_CLASS_RESULTS.get(str(line.get("database_status") or ""))
+        if result == "corrects" and line.get("database_found_by") == "factor_only":
+            result = "differs"
+        if result:
+            results.append(result)
+    return results
+
+
 def summarize_overview(rows, marks=None):
     statuses = Counter()
     papers, v2_papers = set(), set()
@@ -579,6 +736,11 @@ def summarize_overview(rows, marks=None):
     class_values = {metric: defaultdict(list) for metric in METRIC_UNITS}
     v2_records = with_paper = checked_accepted = marked = 0
     earlier = new_earlier_corrections()
+    # What the values show: records read from the paper only
+    v2_pairs, v2_linked = [], 0
+    v2_groups = defaultdict(lambda: {"wild": [], "variant": []})
+    v2_conditions = {"temperature": [], "ph": []}
+    v2_database = defaultdict(Counter)
     for row in rows:
         status = row.get("verification_status")
         if not isinstance(status, str):
@@ -629,7 +791,8 @@ def summarize_overview(rows, marks=None):
             enzyme = " ".join(str(row.get("enzyme_display_name") or "").split())
             if name_key(enzyme):
                 ec_names[numbers[0]][enzyme] += 1
-        forms[enzyme_form(row)] += 1
+        form = enzyme_form(row)
+        forms[form] += 1
         has_temperature, has_ph = temperature_c(row) is not None, ph_value(row) is not None
         conditions["temperature"] += has_temperature
         conditions["ph"] += has_ph
@@ -638,12 +801,29 @@ def summarize_overview(rows, marks=None):
         cautions.update(found or {"none"})
         sources.update(source_keys(row.get("source_db")) or {"other"})
         main_sources[main_source(row)][status] += 1
+        own = {}
         for metric, units in METRIC_UNITS.items():
             value = _number(row.get(metric))
             if value is not None and value > 0 and unit_key(row.get(f"{metric}_unit")) in units:
+                own[metric] = value
                 values[metric].append(value)
                 for number in classes:
                     class_values[metric][number].append(value)
+        if v2:
+            v2_linked += row.get("kcat") is not None and row.get("km") is not None
+            if "kcat" in own and "km" in own:
+                v2_pairs.append((own["kcat"], own["km"], classes))
+            if form == "wild":
+                v2_groups[mutation_key(row)]["wild"].append(own)
+            elif form == "variant":
+                v2_groups[mutation_key(row)]["variant"].append((own, keys))
+            if has_temperature:
+                v2_conditions["temperature"].append(temperature_c(row))
+            if has_ph:
+                v2_conditions["ph"].append(ph_value(row))
+            for result in database_results(row):
+                for number in classes:
+                    v2_database[number][result] += 1
     total = sum(statuses.values())
     overview = {
         "records": total,
@@ -684,6 +864,17 @@ def summarize_overview(rows, marks=None):
             summary["by_class"] = grid
     if earlier["records"]:
         overview["earlier_corrections"] = earlier
+    # What the values show (records read from the paper): each only when it has values.
+    insights = {
+        "kcat_km": kcat_km_map(v2_pairs, v2_linked),
+        "mutations": mutation_effects(v2_groups),
+        "conditions": {key: summary for key, summary in ((key, condition_summary(found, key)) for key, found in v2_conditions.items()) if summary},
+        "database_by_class": [{"class": number, **{result: counts[result] for result in DATABASE_CLASS_RESULTS.values()}}
+                              for number, counts in sorted(v2_database.items()) if sum(counts.values())],
+    }
+    insights = {key: value for key, value in insights.items() if value}
+    if insights:
+        overview["from_paper_insights"] = insights
     return overview, dict(statuses)
 
 

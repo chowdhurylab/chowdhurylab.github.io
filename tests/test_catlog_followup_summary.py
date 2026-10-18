@@ -397,6 +397,68 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["agreement"], fresh)
         self.assertEqual((result["v2_found"], result["v2_found_after_fixes"]), (3332, 3412))
 
+    def test_what_the_values_show_counts_records_read_from_the_paper(self):
+        def read(key, **fields):
+            row = {"record_key": key, "verification_status": "verified", "verification_method": "catlog_v2_read_and_independent_verify",
+                   "source_db": "primary_paper_direct", "supporting_pmids": ["500"], "pubmed_id": "500", "ec_number": "3.1.1.1",
+                   "enzyme_display_name": "esterase", "organism": "Bacillus subtilis", "substrate_name": "pNPA",
+                   "kcat_unit": "s^(-1)", "km_unit": "mM", "kcat_over_km_unit": "s^(-1)*mM^(-1)",
+                   "temperature_display": "25", "ph_display": 7.5}
+            row.update(fields)
+            return row
+        rows = [
+            # The wild type and a variant of one paper, enzyme, substrate, pH and temperature: 10x lower kcat, 2x Km.
+            read("wt", wild_type=True, kcat=10.0, km=1.0, kcat_over_km=10.0, proof_lines=[
+                {"metric": "kcat", "database_status": "confirmed"}, {"metric": "Km", "database_status": "corrected", "database_found_by": "paper_check"},
+                {"metric": "kcat/Km", "database_status": "corrected", "database_found_by": "factor_only"}, "a line of text"]),
+            read("v1", wild_type=False, mutation_signature="H57A", kcat=1.0, km=2.0, kcat_over_km=0.5,
+                 proof_lines=[{"metric": "kcat", "database_status": "new"}, {"metric": "Km", "database_status": "same_number_other_label"}]),
+            # Two wild-type records for one substrate: its variant is not paired (an ambiguous pairing is never made).
+            read("wt2a", substrate_name="pNPB", wild_type=True, kcat=5.0, km=0.1, temperature_display="25.5", ph_display=7.25),
+            read("wt2b", substrate_name="pNPB", wild_type=True, kcat=6.0, km=0.2, temperature_display="25.5", ph_display=7.25),
+            read("v2", substrate_name="pNPB", mutation_signature="S10A", kcat=0.5, km=0.1, temperature_display="25.5", ph_display=7.25),
+            # A variant with no wild type, in two classes, at 100 °C and pH 1.6; a value in another unit.
+            read("v3", substrate_name="pNPC", ec_number="3.1.1.1; 4.2.1.1", mutation_signature="D5N", kcat=2e5, km=1.0,
+                 kcat_over_km=2e5, temperature_display="100", ph_display=1.6, proof_lines=[{"metric": "kcat", "database_status": "differs"}]),
+            read("v4", substrate_name="pNPD", kcat=3.0, kcat_unit="min^(-1)", km=1.0, temperature_display="n/a", ph_display=None, wild_type=None),
+            # A record not read from the paper never counts here.
+            {"record_key": "old", "verification_status": "unverified", "source_db": "brenda", "ec_number": "3.1.1.1",
+             "enzyme_display_name": "esterase", "organism": "Bacillus subtilis", "substrate_name": "pNPA", "wild_type": False,
+             "mutation_signature": "H57Q", "kcat": 0.1, "kcat_unit": "s^-1", "km": 9.0, "km_unit": "mM", "temperature_display": "25",
+             "ph_display": 7.5, "proof_lines": [{"metric": "kcat", "database_status": "confirmed"}]},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, _marks = self.write_fixture(directory, rows, {})
+            insights = followup.build_overview(manifest, path)["from_paper_insights"]
+        # kcat against Km: the six records read from the paper with both values in catalog units (v4's kcat is in min^-1,
+        # so Browse, which finds both values in any unit, lists one more).
+        grid = insights["kcat_km"]
+        self.assertEqual((grid["records"], grid["linked"]), (6, 7))
+        self.assertEqual(sum(map(sum, grid["counts"])), 6)
+        self.assertEqual(len(grid["counts"]), round(len(grid["counts"]) / 4) * 4, "Whole decades of quarter-decade bins")
+        self.assertEqual({item["class"]: item["n"] for item in grid["classes"]}, {3: 6, 4: 1})
+        self.assertEqual(grid["at_diffusion_limit"], [1, 0], "2e5 mM^-1 s^-1 is 2 x 10^8 M^-1 s^-1")
+        # Mutations: v1 against wt only (kcat 10x lower, Km 2x higher, kcat/Km 20x lower); v2 has two wild types, v3 none.
+        mutations = insights["mutations"]
+        self.assertEqual((mutations["variants"], mutations["papers"], mutations["ambiguous"], mutations["no_wild_type"]), (1, 1, 1, 1))
+        kcat = mutations["metrics"]["kcat"]
+        self.assertEqual((kcat["n"], kcat["median"], kcat["lower"], kcat["tenfold_lower"], kcat["higher"]), (1, 0.1, 1, 1, 0))
+        self.assertEqual(kcat["counts"].index(1), -1 / 0.25 - mutations["log10_start"] / 0.25, "Bins centred on whole quarters")
+        self.assertEqual(len(kcat["counts"]), 29)
+        self.assertEqual((mutations["metrics"]["km"]["median"], mutations["metrics"]["kcat_over_km"]["median"]), (2.0, 0.05))
+        # Temperature in steps of 1 °C from 0 (25.5 in the 25 bin; 100 in the last), pH in steps of 0.1 from 2 (7.25 in
+        # 7.2, 1.6 in the first bin); the most decimals any value has.
+        temperature, ph = insights["conditions"]["temperature"], insights["conditions"]["ph"]
+        self.assertEqual((temperature["n"], temperature["counts"][25], temperature["counts"][100], temperature["decimals"]), (6, 5, 1, 1))
+        self.assertEqual((ph["n"], ph["counts"][55], ph["counts"][52], ph["counts"][0], ph["decimals"]), (6, 2, 3, 1, 2))
+        self.assertEqual(sum(temperature["counts"]), temperature["n"])
+        self.assertEqual(followup.condition_summary([7.3], "ph")["counts"][53], 1, "7.3 is in its own bin")
+        # Against the databases by class: each value's own result; a correction found only by an exact factor is a
+        # different number; a record in two classes counts in each; text lines and other records are left out.
+        self.assertEqual(insights["database_by_class"], [
+            {"class": 3, "same": 1, "other_label": 1, "corrects": 1, "differs": 2, "not_listed": 1},
+            {"class": 4, "same": 0, "other_label": 0, "corrects": 0, "differs": 1, "not_listed": 0}])
+
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, _marks = self.write_fixture(directory, overview_rows(), {})
