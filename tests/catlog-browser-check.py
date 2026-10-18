@@ -2825,13 +2825,15 @@ CHIP_COLOURS_JS = """
     const token = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
     const tokens = Object.fromEntries(['--st-accepted', '--st-pending', '--st-unverified', '--st-not-reviewed', '--st-disputed',
         '--cmp-same', '--cmp-differs', '--cmp-new', '--chg-magnitude', '--chg-precision', '--caution', '--checked', '--accent',
-        '--bar-neutral'].map(name => [name, token(name)]));
+        '--bar-neutral', '--src-paper'].map(name => [name, token(name)]));
     probe.remove();
     const square = mark => { const e = document.querySelector(`#databaseChecklist .db-mark-${mark}`); return e ? getComputedStyle(e).backgroundColor : null; };
     const chips = [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
         const style = getComputedStyle(chip);
         const tone = [...chip.classList].find(name => name.startsWith('tone-')) || null;
-        const dots = tone ? [...document.querySelectorAll(`#catalogFilters .group-dot.${tone}`)] : [];
+        // (Read from the paper's chip: the Source group's dot, which wears its colour while that option is chosen)
+        const dots = tone === 'tone-paper' ? [...document.querySelectorAll('#catalogFilters .filter-section:has(input[name="sourceMode"]) > .filter-section-title .group-dot')]
+            : tone ? [...document.querySelectorAll(`#catalogFilters .group-dot.${tone}`)] : [];
         return {key: chip.dataset.filterKey, tone, bar: style.borderLeftColor, barWidth: style.borderLeftWidth, tint: style.backgroundColor,
                 text: Math.round(contrast(style.color, style.backgroundColor) * 10) / 10,
                 cross: Math.round(contrast(getComputedStyle(chip.querySelector('.chip-x')).color, style.backgroundColor) * 10) / 10,
@@ -2895,12 +2897,12 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     page = driver.execute_script(CHIP_COLOURS_JS)
     chips, tokens = page["chips"], page["tokens"]
     tones = {chip["key"]: chip["tone"] for chip in chips}
-    assert tones == {"source:paper": "tone-source", "checked": "tone-checked", "db:differs": "tone-cmp-differs", "ec": "tone-identity",
+    assert tones == {"source:paper": "tone-paper", "checked": "tone-checked", "db:differs": "tone-cmp-differs", "ec": "tone-identity",
                      "organism": "tone-identity", "metric:kcat": "tone-measurement", "temperature": "tone-measurement"}, tones
     plain = {}
     for chip in chips:
         assert chip["barWidth"] == "3px" and chip["text"] >= 4.5 and chip["cross"] >= 3, chip
-        if chip["tone"] in ("tone-source", "tone-identity", "tone-measurement"):
+        if chip["tone"] in ("tone-source", "tone-paper", "tone-identity", "tone-measurement"):
             assert chip["dots"] and all(dot["colour"] == chip["bar"] and dot["hidden"] == "true" and dot["shown"] for dot in chip["dots"]), chip
             plain[chip["tone"]] = chip["bar"]
         else:
@@ -2914,6 +2916,16 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     by_key = {chip["key"]: chip["bar"] for chip in chips}
     assert by_key["db:differs"] == page["squares"]["differs"] == tokens["--cmp-differs"], (by_key, page["squares"])
     assert by_key["checked"] == tokens["--checked"], by_key
+    # Read from the paper wears its own colour (the counts band's and Stats'), and so does the Source group's dot while
+    # it is chosen; a database source chip and the dot then wear the group's purple.
+    assert by_key["source:paper"] == tokens["--src-paper"], (by_key, tokens)
+    paper_colour = plain.pop("tone-paper")
+    open_page(base + "#browse?source=brenda")
+    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 1)
+    source_chip = driver.execute_script(CHIP_COLOURS_JS)["chips"][0]
+    assert source_chip["tone"] == "tone-source" and source_chip["dots"] and all(dot["colour"] == source_chip["bar"] for dot in source_chip["dots"]), source_chip
+    assert source_chip["bar"] != paper_colour, source_chip
+    plain["tone-source"] = source_chip["bar"]
     # The three plain groups differ from each other and from every colour that means something on the page.
     assert len(set(plain.values())) == 3 and not set(plain.values()) & set(tokens.values()), (plain, tokens)
     # Review result and Against the databases have no group dot: each of their options has its own colour.

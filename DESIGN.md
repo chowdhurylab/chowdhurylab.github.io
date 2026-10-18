@@ -43,7 +43,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    papers, Human review ("99.9%", "no value disputed on 2,767 of 2,770 entries from the earlier version (431 papers)"; a
    snapshot without the review's counts gives the share of approved values the same where CatLog has re-read the
    paper), the numbers
-   in accent ink, each over a soft radial halo of the accent (its own background, 13% at the centre to 7.5% at the
+   in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from the paper --src-paper, Human
+   review the human-checked green: one meaning per colour), each over a soft radial halo of its colour (the accent's
+   for Records; its own background, 13% at the centre to 7.5% at the
    edge, carried 24-40px out by a low-alpha box-shadow; never a text-shadow, so the digits stay crisp, and a
    box-shadow adds nothing to the page's width); the halo grows a little under the pointer, and the item's
    label and note then step up to --text-2 (on the tint and the larger halo, muted fell to 4.46:1; --text-2 is 7.3:1). The four numbers fade and
@@ -262,11 +264,11 @@ its accessible description; no figure or table has a data line. The parts' figur
   its result lines are in italics, as in the lead. Each card with a share (kept of the values audited; human-checked
   of the records with a reviewer's verdict) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
-- Enzyme classes (the key to the class colours: a 3px bar of its colour before each EC N): records bars (light) with the accepted drawn over them and the records read from the paper as a darker navy
-  stripe inside the accepted bar (70% navy, 30% text), set off from its fill by a 1px white gap above and below, so it
+- Enzyme classes (the key to the class colours: a 3px bar of its colour before each EC N): records bars (light) with the accepted drawn over them and the records read from the paper as a
+  stripe of Read from the paper's colour (--src-paper) inside the accepted bar, set off from its fill by a 1px white gap above and below, so it
   parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
   accepted swatch with the stripe through it, named Read from the paper); a nonzero accepted or read-from-the-paper
-  count draws at least 2px wide; each label gives records, accepted, then read from the paper (navy), each
+  count draws at least 2px wide; each label gives records, accepted, then read from the paper (--src-paper), each
   number in its own right-aligned column under a 12px muted heading line (Records, Accepted, From paper: the legend's
   order, the last in the short tag), every column as wide as its heading or widest entry; once drawn, the value column takes exactly the width of
   that heading line. On phones, as in every bar chart, its bars and axis span the row: the class name and its numbers

@@ -481,6 +481,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* A chip's colour (and the sidebar dot's): --group, with a 12% tint behind the words (text 13:1 or more, the × 4.5:1)
    and a 45% line round it, the darker colours giving the deeper tints. */
 .tone-source { --group:var(--fg-source) }
+/* Read from the paper: its own colour, as on the counts band and Stats; the Source group's dot wears it while that
+   option is chosen, so the dot and the chip agree. */
+.tone-paper { --group:var(--src-paper) }
+.filter-section:has(input[name="sourceMode"][value="paper"]:checked) > .filter-section-title .group-dot { --group:var(--src-paper) }
 .tone-identity { --group:var(--fg-identity) }
 .tone-measurement { --group:var(--fg-measurement) }
 .tone-caution { --group:var(--caution); --group-tint:var(--caution-tint); --group-line:var(--caution-line) }
@@ -1015,14 +1019,21 @@ p.cmp-note { padding-left:16px }
 .stats-totals .stats-totals-main dd { font-size:var(--fs-40); line-height:var(--lh-40) }
 .stats-totals .stats-totals-scope dd { font-size:var(--fs-20); line-height:var(--lh-20) }
 .stats-total-value { color:var(--text) }
-.stats-totals-main .stats-total-value { display:inline-block; border-radius:999px; background:radial-gradient(closest-side, var(--accent-halo-core), var(--accent-halo)); box-shadow:0 0 28px 12px var(--accent-halo); color:var(--accent) }
+/* The key numbers in the colours Browse's counts band gives them (one meaning per colour): Records ink, Accepted
+   Accepted's navy, Read from the paper its own colour, Human review the human-checked green; each halo in its colour. */
+.stats-totals-main .stats-total { --key:var(--text); --key-halo-core:var(--accent-halo-core); --key-halo:var(--accent-halo); --key-halo-hover:var(--accent-halo-hover) }
+.stats-totals-main .stats-total[data-total="accepted"] { --key:var(--st-accepted) }
+.stats-totals-main .stats-total[data-total="catlog"] { --key:var(--src-paper) }
+.stats-totals-main .stats-total[data-total="review"] { --key:var(--checked) }
+.stats-totals-main .stats-total:is([data-total="accepted"], [data-total="review"]) { --key-halo-core:color-mix(in srgb, var(--key) 13%, transparent); --key-halo:color-mix(in srgb, var(--key) 7.5%, transparent); --key-halo-hover:color-mix(in srgb, var(--key) 12%, transparent) }
+.stats-totals-main .stats-total-value { display:inline-block; border-radius:999px; background:radial-gradient(closest-side, var(--key-halo-core), var(--key-halo)); box-shadow:0 0 28px 12px var(--key-halo); color:var(--key) }
 /* A linked number: the whole item is its target. */
 a.stats-total-value { text-decoration:none }
 a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:6px }
 a.stats-total-value:focus-visible { outline:0 }
 .stats-total:has(> dd > a.stats-total-value:focus-visible) { outline:2px solid var(--accent); outline-offset:-2px }
-.stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint) }
-.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { box-shadow:0 0 32px 14px var(--accent-halo-hover) }
+.stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint); background:color-mix(in srgb, var(--key, var(--accent)) 9%, var(--bg)) }
+.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { box-shadow:0 0 32px 14px var(--key-halo-hover, var(--accent-halo-hover)) }
 /* Under the pointer the tint and the larger halo darken the item's ground: its label and note step up to --text-2, so
    they keep AA contrast (muted there drops just under 4.5:1). */
 .stats-total:has(> dd > a.stats-total-value:hover) :is(dt, dd small) { color:var(--text-2) }
@@ -1095,21 +1106,23 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-not-listed { --part:var(--cmp-new) }
 .stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new) }
 .stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new) }
-/* Records read from the paper are accepted: navy, and on the enzyme classes a darker stripe inside the accepted bar. */
-.stats-part-catlog, .stats-part-catlog-mark { --part:var(--st-accepted) }
+/* Records read from the paper wear Read from the paper's own colour (--src-paper, as on Browse's counts band and its
+   chip), never Accepted's navy: Values per paper, the stripe inside Enzyme classes' accepted bars, the From paper
+   counts and the bars of the tables of records read from the paper. */
+.stats-part-catlog, .stats-part-catlog-mark { --part:var(--src-paper) }
 /* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
 .stats-seg, .stats-swatch { background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
-/* The read-from-the-paper stripe (Figure 5) is a darker navy (70% navy, 30% text) inside the accepted bar, set off from the accepted
+/* The read-from-the-paper stripe (Figure 5) is Read from the paper's colour inside the accepted bar, set off from the accepted
    fill by a 1px white gap above and below, so it parts from that fill by more than lightness, in grey print too; it
    never glows. A nonzero accepted or read-from-the-paper count is drawn at least 2px wide, so EC 7's 44 entries show and the
    stripe stays within its accepted bar. The legend's swatch is an accepted swatch with the stripe through it. */
-.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--st-accepted); background:color-mix(in srgb, var(--st-accepted) 70%, var(--text)); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
+.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--src-paper); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
 .stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
-.stats-legend .stats-swatch.stats-part-catlog-mark { background:var(--st-accepted); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, color-mix(in srgb, var(--st-accepted) 70%, var(--text)) 3px 7px, var(--bg) 7px 8px, transparent 8px), linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))) }
-.stats-v2-count { color:var(--st-accepted); font-weight:600 }
+.stats-legend .stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, var(--src-paper) 3px 7px, var(--bg) 7px 8px, transparent 8px), linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--st-accepted) }
+.stats-v2-count { color:var(--src-paper); font-weight:600 }
 /* Glow is for the key numbers (the headline band, the lead of Quality) and for the mark under the pointer only: at rest
    the marks of a figure have plain outlines. Pointing at a mark (or focusing the link in its row) lights it with a soft
    glow in its own colour and dims the other marks of its figure (data-hl: bars, slices, ridges with their range, median
@@ -1325,7 +1338,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-lead { border:1px solid var(--line); border-radius:8px; background:radial-gradient(70% 120% at 0% 0%, var(--accent-wash), transparent 70%), var(--surface-2); padding:24px }
 .stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
 .stats-lead-figure { display:grid; gap:4px }
-.stats-lead-figure strong { color:var(--accent); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32); text-shadow:0 0 16px var(--accent-glow) }
+/* Human review's lead number: the human-checked green, as on Stats' band and Browse's. */
+.stats-lead-figure strong { color:var(--checked); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32); text-shadow:0 0 16px color-mix(in srgb, var(--checked) 26%, transparent) }
 .stats-lead-figure span { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-lead-text { display:grid; gap:12px; min-width:0 }
 .stats-lead-text > p { margin:0 }

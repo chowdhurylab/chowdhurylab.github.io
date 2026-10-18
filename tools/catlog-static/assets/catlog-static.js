@@ -6612,7 +6612,7 @@
         body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
           legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: SOURCE_CATLOG_LABEL }] : [])],
           valueHeads: ["Records", "Accepted", ...(withV2 ? ["From paper"] : [])] }),
-        caption: withV2 ? "Accepted records are drawn over all records, with those read from the paper as a dark stripe."
+        caption: withV2 ? "Accepted records are drawn over all records, with those read from the paper as a stripe inside them."
           : "Accepted records are drawn over all records.",
         rules: notes,
       });
@@ -8208,6 +8208,9 @@
 
   function filterChipTone(key, controls = filterControlState()) {
     const [prefix, value] = String(key).split(":");
+    // Read from the paper wears its own colour (--src-paper), as on the counts band and Stats; the Source group's other
+    // chips (From databases, a database) the group's purple.
+    if (key === "source:paper") return "paper";
     if (prefix === "status") return controls.states.length === 1 ? STATE_TONES[controls.states[0]] || "neutral" : "neutral";
     if (prefix === "checked") return "checked";
     if (prefix === "db") return DATABASE_MARK_TONES[databaseFilters.find((item) => item.value === value)?.mark] || "neutral";

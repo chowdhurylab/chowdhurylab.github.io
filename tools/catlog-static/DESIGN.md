@@ -81,8 +81,9 @@ Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit
 "the numbers ... so small and colour same so it doesn't capture any attention"): the counts band is a soft card
 (--band-card-line, a calm accent wash, --band-card-glow) whose key numbers glow softly, each in its own colour;
 Stats' headline band, the page's focal point (the user, 2026-10-15: "more focusing ... with some
-glow"), is a card with a 1px accent line, a gentle accent glow round it and a calm wash, its key numbers in accent ink
-over soft radial halos (--accent-halo*, crisp digits); Stats' figures fill from colour to tint; never neon, none in
+glow"), is a card with a 1px accent line, a gentle accent glow round it and a calm wash, its key numbers in the counts
+band's meaning colours (Records ink, Accepted navy, Read from the paper --src-paper, Human review --checked) over soft
+radial halos of those colours (--accent-halo* for Records, crisp digits); Stats' figures fill from colour to tint; never neon, none in
 print.
 Stats, the Guide and Team scroll inside their own view under the header; the
 document itself never scrolls (each view is positioned, so screen-reader-only
@@ -472,14 +473,18 @@ backgrounds, text in AA contrast (a light colour's text takes its darker ring or
   for the kinds of change on records not yet re-read (the same meanings: a different number, a unit or scale, a value
   added).
 - Source (the round's palette decision for database sources): Read from the paper, CatLog's own reading, wears CatLog's
-  own colour, the accent (--src-paper): its count on the counts band and on Stats' headline band, its link label. The
+  own colour, the accent (--src-paper), and only that: its count on the counts band and on Stats' headline band, its
+  link label, its filter chip (tone-paper) and the Source group's dot while it is chosen, and every from-paper mark and
+  count on Stats (Values per paper, Enzyme classes' stripe and From paper column, the bars of the tables of records read
+  from the paper), never Accepted's navy. The
   databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB) are named, never given a colour each: every view that
   lists them already colours its marks by review result or database result (Records by main source, Part 7's figures
   and tables, the record's comparison, the Source filter beside Against the databases), so a hue per database would
   give a colour a second meaning in the same view, and their names already tell them apart (colour there would be
   decoration). Where a figure splits the two sources, Not yet re-read is neutral (--bar-neutral).
-- Human-checked: --checked green with the tick. Cautions: amber (--caution) with the "!". The sidebar's group dots
-  (Source purple, identity raspberry, measurement olive) mean only their group.
+- Human-checked: --checked green with the tick (and Human review's numbers on Stats). Cautions: amber (--caution) with
+  the "!". The sidebar's group dots (Source purple, identity raspberry, measurement olive) mean only their group; the
+  Source dot wears --src-paper while Read from the paper is chosen, as its chip does.
 - A view that colours by enzyme class gives each class its colour only where no review-result or database-result colour
   stands beside it (a class's swatch, curve or the short bar before its number, never a status bar), so a hue there
   names a class alone: --ec-1 to --ec-7 (BPG red, cyan, green, navy, salmon, slate, brown; mint is too light for a line).
@@ -1036,7 +1041,7 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 ## Stats
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
-1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in accent ink, each over a soft radial halo, fading and rising once on first show unless the viewer asks for less motion (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
+1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in the counts band's meaning colours, each over a soft radial halo of its colour, fading and rising once on first show unless the viewer asks for less motion (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
 2 Quality (the lead, the user's headline: "Human review", 99.9%, no value disputed on 2,767 of 2,770 entries from the
 earlier version (431 papers), the disputed values as printed and the entries whose value the reviewer could not find,
 with "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ..." and what
