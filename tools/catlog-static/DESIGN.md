@@ -97,7 +97,9 @@ so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
-quieter. Inside the band (6px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
+quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is ("Enzyme kcat, Km and kcat/Km
+values, re-checked against their papers.") and links the Guide ("How it works →"); one line from 641px, two on
+phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
 key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted) over its number
 (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number wears the colour
 its meaning has across the site (Type And Color, "Colour meanings"): Records the page's ink (--text), Accepted the
@@ -1195,3 +1197,16 @@ Use the existing data loader, immutable manifest, downloads, and stable URL.
 Verify real desktop and mobile layouts, filters, empty results, page changes,
 keyboard focus, overlay dismissal, record downloads, and unchanged data hashes.
 Generated mockups guide layout only; their text is not a scientific source.
+
+## Round 13 visitor fixes
+
+- The filter sidebar is position:relative, so what it holds (the visually hidden More filters label) is clipped by its
+  scroll box and never lengthens the page: the Browse page does not scroll as a whole on a desktop.
+- Phone cards: organism and substrate each wrap to two lines before they are cut; at 360px and below the substrate takes
+  its own line under the organism, without the dot.
+- A record's In the paper quote shows the JBC fonts' code points for ±, ×, − and µ as printed, and a 12px --muted line
+  under it when the text layer lost symbols (the snapshot's printed_line_note, or a replacement or private-use
+  character).
+- Stats' Human review headline says beside its share how many entries had a value the reviewer could not find.
+- Stats' Against the databases figures and tables count the exact-factor values not yet checked against the paper
+  under Different number, as the lead does (overview.database_factor_only splits them by parameter and database).
