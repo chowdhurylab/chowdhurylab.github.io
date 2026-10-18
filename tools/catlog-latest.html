@@ -574,7 +574,7 @@
             </div>
 
             <h3 id="guide-cautions">Cautions</h3>
-            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; the record says what it is. For the unit and magnitude cautions, the unit or the value may be wrong. The Cautions filter finds them by group; <em>No cautions</em> finds records with none.</p>
+            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; the record says what it is. For the unit and magnitude cautions, the unit or the value may be wrong. The Cautions filter, under More filters, finds them by group; <em>No cautions</em> finds records with none.</p>
             <table class="guide-caution-table">
               <thead><tr><th scope="col">Caution</th><th scope="col">Filter group</th><th scope="col">Means</th></tr></thead>
               <tbody>
@@ -623,7 +623,8 @@
               <summary><h3 id="guide-find-title">Find records</h3><span class="guide-ref-gist">Search, filters and shareable addresses</span></summary>
               <dl class="guide-term-list">
                 <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. More words narrow it; human or E. coli finds the species; gene names are not indexed.</dd></div>
-                <div><dt>Filters</dt><dd>Source, review result (with human-checked), enzyme, organism, substrate, EC number (1.1.1 lists the subclass), parameter, wild type or variant, temperature, pH and cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare.</span></dd></div>
+                <div><dt>Filters</dt><dd>Enzyme, EC number (3 or 1.1.1 lists everything under it), organism, substrate; measurement type; review result, with human-checked; source: read from the paper or not yet <span class="nowrap">re-read</span>. A group&rsquo;s <em>?</em> says what its options mean.</dd></div>
+                <div><dt>More filters</dt><dd>Wild type or variant, assay conditions (temperature, pH),<span data-guide-databases hidden> against the databases (how a record&rsquo;s values compare),</span> cautions and source database. It opens by itself when one of them is set; its title counts them.</dd></div>
                 <div><dt>Sort</dt><dd>By review result (accepted first), EC number, name or value; click a value&rsquo;s header for high to low.</dd></div>
                 <div><dt>Share</dt><dd>Every view and open record has its own address: copy it from the address bar.</dd></div>
               </dl>
@@ -647,7 +648,7 @@
                 <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> (<a href="#guide-cautions">mismatch</a>).</dd></div>
                 <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>Numbers of 100,000 or more and below 0.001: 8.2 &times; 10<sup>&minus;4</sup>.</dd></div>
                 <div><dt>Digits</dt><dd>A value read from the paper keeps the paper&rsquo;s significant figures, at least 2 (135.0 stays 135.0); a unit conversion keeps one more where rounding would shift the printed last digit (87.3&nbsp;min<sup>&minus;1</sup> is 1.455&nbsp;s<sup>&minus;1</sup>). Records not yet <span class="nowrap">re-read</span>: at most 4 (3 after a per-minute conversion). The downloads keep the stored digits.</dd></div>
-                <div><dt><i>K</i><sub>i</sub>, T, pH</dt><dd><i>K</i><sub>i</sub> in mM, on the few records whose source lists one; temperature (&deg;C) and pH with the record&rsquo;s conditions, in the filters and in the downloads (the table has no column for them and shows them only to tell apart records of one paper).</dd></div>
+                <div><dt><i>K</i><sub>i</sub>, T, pH</dt><dd><i>K</i><sub>i</sub> in mM, on the few records whose source lists one; temperature (&deg;C) and pH with the record&rsquo;s conditions, in More filters (Assay conditions) and in the downloads (the table has no column for them and shows them only to tell apart records of one paper).</dd></div>
                 <div><dt>Missing</dt><dd>A dash, used only in table cells, means no value. In a record, a <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that is not stored has no row, and the Values section says when none is stored; another missing detail reads <em>Not stated in the paper</em> (read by CatLog) or <em>Not recorded</em> (database records), and a missing PMID or DOI, sequence or SMILES reads <em>None</em>.</dd></div>
                 <div><dt>Other units</dt><dd>A few records not yet <span class="nowrap">re-read</span> keep another unit (min<sup>&minus;1</sup>, mg/mL) or <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               </dl>

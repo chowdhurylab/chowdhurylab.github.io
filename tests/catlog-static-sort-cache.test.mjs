@@ -1470,6 +1470,11 @@ for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<(?:secti
 const guideFind = guideHtml.match(/<details [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/details>/)[1];
 assert.match(guideFind, /laccase/);
 assert.match(guideFind, /href="#browse\?checked=1"/);
+// The Guide lists the filters as the sidebar shows them (round 13): the common groups in view, the specialist ones under
+// More filters, which opens by itself when one of them is set.
+assert.match(guideFind, /<dt>Filters<\/dt><dd>Enzyme, EC number [^<]*organism, substrate; measurement type; review result, with human-checked; source:/);
+assert.match(guideFind, /<dt>More filters<\/dt><dd>Wild type or variant, assay conditions \(temperature, pH\),<span data-guide-databases hidden> against the databases[^<]*<\/span> cautions and source database\. It opens by itself/);
+assert.match(guideHtml, /The Cautions filter, under More filters, finds them by group/);
 for (const [, href] of guideFind.matchAll(/<a href="(#browse[^"]*)"/g)) {
   const params = new URLSearchParams(href.replace(/&amp;/g, "&").slice("#browse?".length));
   assert.ok([...params.keys()].every((key) => ["q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric",

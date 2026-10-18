@@ -1166,8 +1166,9 @@ small buttons that wrap, in this order and with these addresses (other pages lin
   closed at first, its summary one row (44px or more): a + or − in the accent, the name as an h3 (16px/600, its id the
   one a link focuses) and a 14px gist of what it holds ("kcat s⁻¹ · Km mM · kcat/Km mM⁻¹ s⁻¹" for Units). An address or
   a link to one (the contents, "Units" in the checklist, "Sources and licenses" in Cite) opens it (openGuidePart, from
-  renderView and guideSectionHeading). Inside: Find records (Search with example chips, Filters, Sort, Share; "Try":
-  example views in the #browse? format); Units (the three catalog units as cards, rows on phones, then Conversion,
+  renderView and guideSectionHeading). Inside: Find records (Search with example chips, Filters (the groups in view, in the
+  sidebar's order), More filters (the groups under it; Against the databases only when the Guide shows its database
+  section), Sort, Share; "Try": example views in the #browse? format); Units (the three catalog units as cards, rows on phones, then Conversion,
   calc., Printed kcat/Km, × 10ⁿ, Digits (a value read from the paper keeps the paper's significant figures, at least
   2, and one more where a unit conversion would shift the printed last digit, 87.3 min⁻¹ is 1.455 s⁻¹, as catlog-v2
   site_release._printed rounds; records not yet re-read at most 4, 3 after a per-minute conversion), Ki, T and pH,
