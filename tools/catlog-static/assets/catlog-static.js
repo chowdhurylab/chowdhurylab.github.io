@@ -4174,6 +4174,66 @@
       && summary.p10 <= summary.median && summary.median <= summary.p90);
   }
 
+  // kcat against Km's class dots (16px, the class number in each) where two would cover each other at the plot's size:
+  // pushed apart along the line between them (straight up and down for two at one Km) until 20px separate their
+  // centres (16px and their white rings), kept inside the plot, each moved dot with a 1px line and a small dot of its colour at its own place. Run
+  // when Stats is drawn and whenever a plot changes size (a phone turned, the window narrowed).
+  const STATS_MAP_DOT_GAP = 20;
+  function statsPlaceMapDots(root) {
+    root?.querySelectorAll?.(".stats-map-plot").forEach((plot) => {
+      const width = plot.clientWidth;
+      const height = plot.clientHeight;
+      const leaders = plot.querySelector(".stats-map-leaders");
+      const dots = [...plot.querySelectorAll(".stats-map-dot")];
+      if (!width || !height || !leaders || !dots.length) return;
+      const anchors = dots.map((dot) => ({ x: parseFloat(dot.style.left) / 100 * width, y: height - parseFloat(dot.style.bottom) / 100 * height }));
+      const places = anchors.map((anchor) => ({ ...anchor }));
+      const half = STATS_MAP_DOT_GAP / 2;
+      for (let round = 0; round < 80; round += 1) {
+        let moved = false;
+        for (let i = 0; i < places.length; i += 1) {
+          for (let j = i + 1; j < places.length; j += 1) {
+            let dx = places[j].x - places[i].x;
+            let dy = places[j].y - places[i].y;
+            let distance = Math.hypot(dx, dy);
+            if (distance >= STATS_MAP_DOT_GAP - 0.01) continue;
+            if (distance < 0.01) { dx = 0; dy = anchors[j].y >= anchors[i].y ? 1 : -1; distance = 1; }
+            const push = (STATS_MAP_DOT_GAP - distance) / 2;
+            places[i].x -= dx / distance * push; places[i].y -= dy / distance * push;
+            places[j].x += dx / distance * push; places[j].y += dy / distance * push;
+            moved = true;
+          }
+        }
+        places.forEach((place) => { place.x = Math.min(Math.max(place.x, half), width - half); place.y = Math.min(Math.max(place.y, half), height - half); });
+        if (!moved) break;
+      }
+      const lines = [];
+      dots.forEach((dot, index) => {
+        const { x, y } = places[index];
+        const anchor = anchors[index];
+        const shift = [x - anchor.x, y - anchor.y];
+        dot.style.setProperty("--dx", `${+shift[0].toFixed(1)}px`);
+        dot.style.setProperty("--dy", `${+shift[1].toFixed(1)}px`);
+        if (Math.hypot(...shift) > 2) {
+          lines.push(`<g class="${statsClassColour(Number(dot.dataset.class)).trim()}"><line x1="${+anchor.x.toFixed(1)}" y1="${+anchor.y.toFixed(1)}" x2="${+x.toFixed(1)}" y2="${+y.toFixed(1)}"/><circle cx="${+anchor.x.toFixed(1)}" cy="${+anchor.y.toFixed(1)}" r="2.5"/></g>`);
+        }
+      });
+      leaders.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      leaders.innerHTML = lines.join("");
+    });
+  }
+  let statsMapObserver = null;
+  function statsWatchMapDots(root) {
+    statsPlaceMapDots(root);
+    statsMapObserver?.disconnect?.();
+    statsMapObserver = null;
+    if (typeof ResizeObserver !== "function") return;
+    const plots = [...(root?.querySelectorAll?.(".stats-map-plot") || [])];
+    if (!plots.length) return;
+    statsMapObserver = new ResizeObserver(() => statsPlaceMapDots(root));
+    plots.forEach((plot) => statsMapObserver.observe(plot));
+  }
+
   // Decade ticks of a log axis from 10^start to 10^end, the same in Value ranges and Values by enzyme class, so a power
   // of ten stands at one x in both: a tick per decade, labelled every other decade on an axis of more than 7 ticks, at
   // multiples of that step (10⁰ is labelled whenever it is on the axis); on a narrow axis every second label gives way
@@ -4517,7 +4577,11 @@
       && statsCount(item.n, records) && item.kcat_median > 0 && item.km_median > 0);
     const className = (item) => `EC ${item.class}${classNames[item.class] ? ` ${classNames[item.class]}` : ""}`;
     const medianText = (item) => `${className(item)}: median kcat ${statsRangeNumber(item.kcat_median, { figures: 2 })} s⁻¹, median Km ${statsRangeNumber(item.km_median, { figures: 2 })} mM; ${formatInteger(item.n)} ${item.n === 1 ? "record" : "records"}.`;
-    const dots = classes.map((item) => `<i class="stats-map-dot${statsClassColour(item.class)}" data-hl="ec_${item.class}" data-tip="${escapeHtml(medianText(item))}" style="left:${+place(item.km_median, kmStart, spanX).toFixed(3)}%;bottom:${+place(item.kcat_median, kcatStart, spanY).toFixed(3)}%"></i>`).join("");
+    // Each dot carries its class's number (colour is never all that tells two classes apart), the smaller classes on top
+    // (--z: EC 2 and EC 6 stand a tenth of a decade apart); statsPlaceMapDots moves dots that would cover each other
+    // apart, each with a short line back to its own place.
+    const byFew = [...classes].sort((a, b) => b.n - a.n).map((item) => item.class);
+    const dots = classes.map((item) => `<i class="stats-map-dot${statsClassColour(item.class)}" data-hl="ec_${item.class}" data-class="${item.class}" data-tip="${escapeHtml(medianText(item))}" style="left:${+place(item.km_median, kmStart, spanX).toFixed(3)}%;bottom:${+place(item.kcat_median, kcatStart, spanY).toFixed(3)}%;--z:${2 + byFew.indexOf(item.class)}">${item.class}</i>`).join("");
     // Facts beside the map.
     const linked = statsCount(map.linked) === records;
     const recordsHtml = linked ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", metric: "kcat,km" }))}">${formatInteger(records)}</a>` : formatInteger(records);
@@ -4542,7 +4606,7 @@
         <li><i class="stats-map-key-cells" aria-hidden="true"></i><span>Records per cell, 1 to ${formatInteger(highest)}</span></li>
         <li><i class="stats-map-key-iso" aria-hidden="true"></i><span>Equal <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> (M⁻¹ s⁻¹), every 100-fold</span></li>
         <li><i class="stats-map-key-limit" aria-hidden="true"></i><span>Diffusion limit, ${molar(limitLow)}–${molar(limitHigh)} M⁻¹ s⁻¹</span></li>
-        ${classes.length ? `<li><i class="stats-map-key-dot" aria-hidden="true"></i><span>Median of an enzyme class</span></li>` : ""}</ul>`;
+        ${classes.length ? `<li><i class="stats-map-key-dot" aria-hidden="true"></i><span>Median of an enzyme class, by its number</span></li>` : ""}</ul>`;
     const yTicks = statsDecadeTicks(kcatStart, kcatEnd).replace(/style="left:/g, 'style="bottom:');
     return {
       id: "statsKcatKmTitle", key: "kcat-km", title: "<i>k</i><sub>cat</sub> against <i>K</i><sub>m</sub>", wide: true,
@@ -4554,14 +4618,14 @@
             <svg class="stats-map-svg" viewBox="0 0 ${columns} ${rows}" preserveAspectRatio="none" aria-hidden="true" focusable="false">
               <path class="stats-map-limit" d="${band}"/><g class="stats-map-cells">${cells.join("")}</g>${isoLines.join("")}
               <path class="stats-map-limit-edge" d="${line(limitLow)}"/><path class="stats-map-limit-edge" d="${line(limitHigh)}"/>
-            </svg>${labels}${dots}
+            </svg><svg class="stats-map-leaders" aria-hidden="true" focusable="false"></svg>${labels}${dots}
           </div>
           <div class="stats-map-x" aria-hidden="true">${statsDecadeTicks(kmStart, kmEnd)}</div>
           <p class="stats-map-x-title" aria-hidden="true"><i>K</i><sub>m</sub> <span class="stats-range-unit">(mM)</span></p>
         </div>
         <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classTable}</div>
       </div>`,
-      caption: "Records read from the paper that give both a kcat and a Km, with each enzyme class's median as a dot.",
+      caption: "Records read from the paper that give both a kcat and a Km, with each enzyme class's median as a dot numbered by its class.",
       rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns also hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each class's medians. Values without a recorded unit, or in another unit, are left out.",
     };
   }
@@ -6777,6 +6841,7 @@
     statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
+    statsWatchMapDots($("statsCharts"));
     // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
     if (!statsRefitOnFonts && document.fonts?.addEventListener) {
       statsRefitOnFonts = true;
@@ -6803,7 +6868,7 @@
         window.requestAnimationFrame(() => {
           pending = false;
           const root = $("statsCharts");
-          if (root?.isConnected) statsFitDatabaseTables(root);
+          if (root?.isConnected) { statsFitDatabaseTables(root); if (typeof ResizeObserver !== "function") statsPlaceMapDots(root); }
         });
       });
     }

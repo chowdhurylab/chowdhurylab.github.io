@@ -1408,9 +1408,16 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-map-iso-label.is-top { top:-20px; transform:translateX(-50%) }
 .stats-map-iso-label.is-right { left:calc(100% + 6px); transform:translateY(50%) }
 .stats-map-limit-label { position:absolute; z-index:1; color:var(--caution); font-weight:500; white-space:nowrap; transform:translate(-50%, 50%) rotate(-45deg); pointer-events:none }
-.stats-map-dot { position:absolute; z-index:2; width:12px; height:12px; border-radius:50%; background:var(--part); box-shadow:0 0 0 1.5px var(--bg), 0 0 0 2.5px color-mix(in srgb, var(--part) 55%, var(--text)); transform:translate(-50%, 50%) }
-.stats-map-dot.is-active { z-index:3; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 70%, transparent)) }
+/* A class median: a 16px dot of its class colour with the class number in it (ink, white on navy and brown: 4.2:1 or
+   more), ringed white, the smaller classes on top (--z); one moved off another (--dx, --dy) has a 1px line and a 5px
+   dot of its colour back at its own place (.stats-map-leaders). */
+.stats-map-dot { --dot-ink:var(--text); position:absolute; z-index:var(--z, 2); display:flex; width:16px; height:16px; align-items:center; justify-content:center; border-radius:50%; background:var(--part); box-shadow:0 0 0 1.5px var(--bg), 0 0 0 2.5px color-mix(in srgb, var(--part) 55%, var(--text)); color:var(--dot-ink); font-size:10px; font-style:normal; font-weight:600; line-height:1; transform:translate(calc(-50% + var(--dx, 0px)), calc(50% + var(--dy, 0px))) }
+.stats-map-dot:is(.stats-ec-4, .stats-ec-7) { --dot-ink:#fff }
+.stats-map-dot.is-active { z-index:20; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 70%, transparent)) }
 .stats-fig.has-active .stats-map-dot[data-hl]:not(.is-active) { opacity:0.3 }
+.stats-map-leaders { position:absolute; inset:0; z-index:1; width:100%; height:100%; overflow:visible; pointer-events:none }
+.stats-map-leaders line { stroke:var(--text-2); stroke-width:1 }
+.stats-map-leaders circle { fill:var(--part); stroke:var(--bg); stroke-width:1 }
 .stats-map-x { position:relative; grid-column:2; grid-row:3; height:22px }
 .stats-map-x > span { position:absolute; top:6px; transform:translateX(-50%); white-space:nowrap }
 .stats-map-x > span::before { content:""; position:absolute; left:50%; top:-6px; height:4px; border-left:1px solid var(--line-strong) }

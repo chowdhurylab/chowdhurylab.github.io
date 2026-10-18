@@ -2750,9 +2750,12 @@ function row(overrides = {}) {
     assert.equal((figure.body.match(/<rect /g) || []).length, 2);
     assert.match(figure.body, /<rect x="2" y="1" width="1" height="1" style="fill-opacity:0\.92" data-tip="kcat 10⁰·⁵–10⁰·⁷⁵ s⁻¹, Km 10⁻⁰·⁵–10⁻⁰·²⁵ mM: 2 records"\/>/);
     assert.match(figure.body, /<rect x="0" y="3" [^>]*data-tip="kcat below 10⁰·²⁵ s⁻¹, Km below 10⁻⁰·⁷⁵ mM: 1 record"\/>/);
-    // A dot per class 1-7 in its class colour, its median in the tooltip line; a row of the class table lights it.
+    // A dot per class 1-7 in its class colour with its class number in it, its median in the tooltip line, the smaller
+    // classes on top (--z); a row of the class table lights it; a layer for the lines back from moved dots.
     assert.equal((figure.body.match(/class="stats-map-dot /g) || []).length, 2);
-    assert.match(figure.body, /<i class="stats-map-dot stats-ec-1" data-hl="ec_1" data-tip="EC 1 Oxidoreductases: median kcat 4\.4 s⁻¹, median Km 0\.23 mM; 2 records\."/);
+    assert.match(figure.body, /<i class="stats-map-dot stats-ec-1" data-hl="ec_1" data-class="1" data-tip="EC 1 Oxidoreductases: median kcat 4\.4 s⁻¹, median Km 0\.23 mM; 2 records\." style="left:[\d.]+%;bottom:[\d.]+%;--z:2">1<\/i>/);
+    assert.match(figure.body, /<i class="stats-map-dot stats-ec-3" data-hl="ec_3" data-class="3" [^>]*;--z:3">3<\/i>/);
+    assert.match(figure.body, /<svg class="stats-map-leaders" aria-hidden="true" focusable="false"><\/svg>/);
     assert.match(figure.body, /<tr data-hl="ec_1"[^>]*>[\s\S]*?<i class="stats-ec-key stats-ec-1" aria-hidden="true"><\/i><span><a class="stats-link" href="[^"]*#browse\?ec=1\.&amp;source=paper&amp;metric=kcat%2Ckm">EC 1<\/a>/);
     // The records link to them in Browse when Browse finds the same number; the median kcat ÷ Km in both units; the
     // diffusion limit in M⁻¹ s⁻¹, as are the lines of equal kcat/Km.
