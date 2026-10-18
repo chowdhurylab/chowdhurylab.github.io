@@ -2171,7 +2171,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-legend-group .guide-status-list .state-badge, .guide-view .guide-legend-group .guide-tag-list .state-tag { font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-legend-wide { grid-column:1 / -1 }
 .guide-view .guide-legend-group .guide-db-legend dt { display:flex; align-items:baseline; gap:8px; font-weight:500 }
-.guide-view .guide-legend-group .guide-db-legend .db-mark { flex:0 0 10px; align-self:center }
+.guide-view .guide-legend-group .guide-db-legend .db-mark { flex:0 0 10px; align-self:flex-start; margin-top:5px }
+.guide-view .guide-legend-group .guide-db-legend > div { grid-template-columns:11.5em minmax(0, 1fr) }
 .guide-view .guide-mark-sample { display:inline-flex; min-width:24px; align-items:center; color:var(--text-2) }
 .guide-view .guide-mark-tick { color:var(--checked) }
 .guide-view .guide-mark-tick .check-icon { width:14px; height:14px }
