@@ -688,7 +688,8 @@ come first, the context after.
   rest), and when its earlier review noted where the paper prints the values,
   a grey line under the table points to those notes under Paper. A calculated
   kcat/Km carries "calc." (on phones calc. and a "!" go under the number, so
-  As printed keeps about 100px at 375px; at 320px a two-part unit may take two
+  As printed keeps about 100px at 375px (Unit's cells take 3px a side on phones, since a unit's U+2212 minus signs
+  are wider than hyphens, most in DejaVu Sans: 92px for As printed at 390px there); at 320px a two-part unit may take two
   lines and the table still fits; an older record, with no As printed, keeps
   them beside the number from 361 to 640px, so every row stays one line, and its
   unit wraps before the table outgrows the section; a record with checks keeps

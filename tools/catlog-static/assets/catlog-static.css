@@ -1876,6 +1876,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .detail-top h2 { font-size:var(--fs-18) }
   /* The record's values: calc. and "!" go under the number, so As printed keeps its room and the table its width. */
   .values-table :is(th,td) { padding-right:6px; padding-left:6px }
+  /* Unit's own cells 3px each side: a unit's minus signs (U+2212, wider than a hyphen, in DejaVu Sans most) would
+     otherwise take As printed's room. */
+  .values-table :is(thead th, tbody td):nth-child(3) { padding-right:3px; padding-left:3px }
   .values-table td.vt-value .vt-number { display:block }
   .values-table td.vt-value .vt-ghost { display:none }
   .values-table td.vt-value .metric-origin { margin-left:0 }
