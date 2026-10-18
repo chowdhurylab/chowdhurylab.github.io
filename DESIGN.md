@@ -72,10 +72,13 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    Values per paper, then What the records contain beside Wild type and variants.
 4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the same among records read from the
    paper.
-5. Values: Value ranges, then Values by enzyme class.
+5. Values: Value ranges, then Values by enzyme class, then what the values read from the paper show (the user,
+   2026-10-18: "more figures or more scientific insights"): kcat against Km, Variants against their wild type and
+   Assay temperature and pH, each full width.
 6. Cautions.
 7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
-   against the databases (alone in its row until Why no database lists a value joins it), Results by database beside
+   against the databases (alone in its row until Why no database lists a value joins it), Against the databases by
+   enzyme class (its own row), Results by database beside
    Paired values by database, Corrections by cause and how found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
    replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
 
@@ -259,7 +262,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   its result lines are in italics, as in the lead. Each card with a share (kept of the values audited; human-checked
   of the records with a reviewer's verdict) has a
   thin accent bar for it; the second AI check covers every value, so it has none (no completion bar).
-- Enzyme classes: records bars (light) with the accepted drawn over them and the records read from the paper as a darker navy
+- Enzyme classes (the key to the class colours: a 3px bar of its colour before each EC N): records bars (light) with the accepted drawn over them and the records read from the paper as a darker navy
   stripe inside the accepted bar (70% navy, 30% text), set off from its fill by a 1px white gap above and below, so it
   parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
   accepted swatch with the stripe through it, named Read from the paper); a nonzero accepted or read-from-the-paper
@@ -280,15 +283,16 @@ its accessible description; no figure or table has a data line. The parts' figur
   distribution to the classes and 10⁰ stands at one x in all of Part 5; without a class grid, or when the histogram
   does not reach that far, each keeps its own axis; values without a recorded
   unit or in another unit are left out; the median (here, in Values by enzyme class, in every tooltip line and in
-  the figures' accessible text) and the 10–90% bounds have two significant figures. The value figures (these and the next) are single-series and use --bar-neutral: every Nature BPG hue
-  already means a review result, a database comparison or a kind of change on this page (green would read as "same
-  number as a database" in Part 7), so the panels' own headings name the parameter. The light fills carry nothing on
+  the figures' accessible text) and the 10–90% bounds have two significant figures. Value ranges is single-series and
+  uses --bar-neutral (the panels' own headings name the parameter); Values by enzyme class draws each class in its
+  class colour (below). The light fills carry nothing on
   their own: the bars' 1px outline and the ridge lines, which give the shapes, are drawn darker than the colour (75% of
   it with --text, 5.3:1 against the page), as the 10–90% line and the median dot are.
 - Values by enzyme class (full width, small multiples): per parameter a ridgeline panel, one ridge per EC class
   drawn through its half-decade bins (`overview.metrics.<metric>.by_class`: one grid of 14-18 bins per parameter
   shared by every class, the end bins holding every value beyond them; a record in several classes counts in
-  each), each scaled to its own peak (shapes compare whatever the class's size) with a smooth curve that never
+  each), each in its class's colour (--ec-N on the row, its fill from its own gradient, the short class bar before
+  EC N), each scaled to its own peak (shapes compare whatever the class's size) with a smooth curve that never
   overshoots its bins. The open-ended end bins are not in the curve (a pile there is not a peak in the data): the
   curve covers the inner bins, cut off level at an end with values beyond it (falling to the baseline where there are
   none), and each end bin with values gets a 6px hatched stub of fixed height, its count in the tooltip line and the
@@ -301,8 +305,53 @@ its accessible description; no figure or table has a data line. The parts' figur
   10⁰ is always labelled; every second label thins out when narrow, the power of ten with it). EC N links into Browse with the panel's parameter (the
   class's records with it in any unit, so Browse can count more than n; the tooltip line says so); the class name stands beside it only where a panel has the
   row to itself (641-1023px); three panels side by side, phones and paper show the class number alone.
+- What the values show (`overview.from_paper_insights`, counted by `build_overview` from the Full data's records read
+  from the paper only, about 6 KB; each figure only when its counts hold together, so an older snapshot shows none):
+  - kcat against Km (`kcat_km`): a density map of the records read from the paper with both a kcat and a Km in
+    catalog units, on a grid of quarter decades whose axes are the whole decades around the middle 99% of each value
+    (the outer rows and columns hold every value beyond), drawn with decades of one size, so a line of equal kcat/Km
+    runs at 45° (the plot keeps the grid's shape by aspect-ratio). Grey cells, darker for more records (opacity
+    0.08-0.92 on the log of the count, bent by 1.6 so the crowded core stands out), each cell's range and count in its
+    tooltip line; thin lines of equal kcat/Km every hundredfold, labelled in M⁻¹ s⁻¹ where they leave the plot (top,
+    else right), the unit the diffusion limit is known in, so no label reads as the limit in another unit; the
+    diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹ (10⁵–10⁶ mM⁻¹ s⁻¹), as a light amber band with dashed amber edges and
+    "diffusion limit" along it (amber, because a value beyond it carries a caution); each enzyme class's median kcat
+    and median Km as a 12px dot in its class colour, ringed white. A legend above (records per cell 1 to the largest,
+    equal kcat/Km, the limit, a class median with a dot of all seven colours). Beside the map (under it below 1024px):
+    Records (linked to source=paper&metric=kcat,km only when `linked`, the records Browse finds with both values in any
+    unit, is the same number), the median kcat ÷ Km in mM⁻¹ s⁻¹ with M⁻¹ s⁻¹ under it, the records at the diffusion
+    limit or above (10⁸, and how many at 10⁹), then a table of the class medians (Enzyme class, kcat, Km, Records;
+    each class linked to ec=N.&source=paper&metric=kcat,km): a row lights its dot and the dot its row, the other dots
+    dimmed; on phones the table gives the class number alone (the names are in Biology and the dots' tooltip lines),
+    so its numbers keep their columns at 320px in DejaVu Sans. The plot is an image with its summary in aria-label.
+  - Variants against their wild type (`mutations`): each variant read from the paper paired with the one wild-type
+    record its paper gives for the same enzyme, organism, substrate, pH and temperature (a paper with several such
+    wild-type records, or none, leaves its variant unpaired: an ambiguous pairing is never made; the counts left out
+    are said in the figure's rules), per parameter (kcat, Km, kcat/Km) a histogram of log10(variant ÷ wild type) in
+    quarter-decade bars centred on whole quarters from 10⁻⁴ to 10³ (the bar at 1 holds changes under 1.33-fold either
+    way; the end bars hold every change beyond), drawn like Value ranges (--bar-neutral) with a dashed line on the wild
+    type's own bar and "wild type" above the bars; Median (×), Lower and Higher above each, the variants and the
+    shares at a tenth or less and at ten times or more under it. A link to the variants read from the paper in Browse
+    (source=paper&variant=variant) under the figure.
+  - Assay temperature and pH (`conditions`): the records read from the paper by the temperature and pH their paper
+    gives, a bar per 1 °C from 0 to 100 °C and per 0.1 from pH 2 to 12 (the first bar holds every value below it, the
+    last every value at its edge and above), solid narrow bars with 1px gaps (75% of --bar-neutral with --text, at
+    least 3:1); each bar with records opens them in Browse when clicked (source=paper with tmin/tmax or phmin/phmax:
+    the bin's lower edge to the next edge less one step of the most decimals any value has, `decimals`, so the range
+    opens exactly that bar's records; no links when a value has more than 3 decimals; the tooltip line gives the range
+    when the values have decimals, "37 °C (37–37.9 °C)"), and Most common gives the three largest bars as links with
+    their shares, for the keyboard. Its axes have their own class (stats-condition-axis), since their labels are not
+    powers of ten. Axes 0-100 °C (every 10, labelled every 20) and pH 2-12
+    (every 1, labelled every 2).
+- Against the databases by enzyme class (`from_paper_insights.database_by_class`, part 7, after Values against the
+  databases, only with the comparison): a 100% bar per class of the values read from the paper by each value's own
+  result (its proof line's database_status, as part 7's figures count them: a correction found by an exact factor alone
+  stands under Corrects where this snapshot's figures keep it there), in part 7's colours and legend; the class
+  (EC N and its name) links to ec=N.&source=paper; its Values column names the compared values; shares in the tooltip
+  lines on 1,000 values or more. The class colour stays off this figure: its segments carry the results' colours.
 - Tables: Most common organisms and Most common EC numbers (top 10, the EC
-  with the enzyme name its records use most, bars against the largest), then Most common organisms and Most common
+  with the enzyme name its records use most and its class's 3px colour bar before it, outside its link; bars against
+  the largest), then Most common organisms and Most common
   EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, navy
   bars, linked with source=paper),
   What the records contain, Wild type and variants, Cautions.
@@ -353,8 +402,11 @@ right-aligned under their headings. Colours are tokens: review results
 --st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5
 (--cmp-same green, --cmp-differs brown, --cmp-new cyan) with the kinds of
 change in figure 4 (--chg-precision mint, --chg-magnitude red), --bar-neutral for
-single-series bars and table bars (Table 1 included) and amber only for
-cautions. No gauges, completion bars or confidence scores; the review-result
+single-series bars and table bars (Table 1 included), amber only for
+cautions, and the enzyme classes' colours (--ec-1 to --ec-7: BPG red, cyan, green, navy, salmon, slate and brown;
+mint is too light for a line; the user, 2026-10-18, "include some more palette colors") only where a figure draws the
+classes apart (Values by enzyme class, kcat against Km) and as a 3px bar before a class's number (Enzyme classes,
+those figures' labels), always beside the class's number, so colour is never all that tells two classes apart. No gauges, completion bars or confidence scores; the review-result
 donut is the only ring; the glow stays soft (never neon) and only marks focus: at rest only the headline band's key
 numbers and the lead figure of Quality glow; a mark (bar, slice, ridge, median dot) glows only while pointed at or
 focused, so the part numbers, meters, the median dots, the ridges and the pressed switch button have plain 1px

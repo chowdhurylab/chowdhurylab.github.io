@@ -30,6 +30,13 @@ colors:
   change-magnitude: "#E64B35"
   change-precision: "#91D1C2"
   bar-neutral: "#7d8885"
+  enzyme-class-1: "#E64B35"
+  enzyme-class-2: "#4DBBD5"
+  enzyme-class-3: "#00A087"
+  enzyme-class-4: "#3C5488"
+  enzyme-class-5: "#F39B7F"
+  enzyme-class-6: "#8491B4"
+  enzyme-class-7: "#7E6148"
   figure-kcat: "#E64B35"
   figure-km: "#4DBBD5"
   figure-kcat-km: "#00A087"
@@ -447,7 +454,9 @@ Colours are tokens in the stylesheet's :root, the only place hex values appear
 (other areas use the tokens: --st-* for review status, which figures fill at 60%
 with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
 of change, --bar-neutral for single-series bars and table bars, --caution* for cautions,
---checked for human-checked, --accent* for actions and for what CatLog itself read, --src-paper).
+--checked for human-checked, --accent* for actions and for what CatLog itself read, --src-paper, --ec-1 to --ec-7 for
+the enzyme classes where a Stats figure draws the classes apart and as the short bar before a class's number, always
+beside that number).
 
 Colour meanings (round 13, the user: "within the Nature BPG color palette we are using - we can make things include
 some more palette colors or improve visual?"). One meaning per colour, the same meaning wherever it shows, and colour
@@ -472,7 +481,8 @@ backgrounds, text in AA contrast (a light colour's text takes its darker ring or
 - Human-checked: --checked green with the tick. Cautions: amber (--caution) with the "!". The sidebar's group dots
   (Source purple, identity raspberry, measurement olive) mean only their group.
 - A view that colours by enzyme class gives each class its colour only where no review-result or database-result colour
-  stands beside it (a class's swatch or ridge, never a status bar), so a hue there names a class alone.
+  stands beside it (a class's swatch, curve or the short bar before its number, never a status bar), so a hue there
+  names a class alone: --ec-1 to --ec-7 (BPG red, cyan, green, navy, salmon, slate, brown; mint is too light for a line).
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
@@ -1032,13 +1042,16 @@ the other values are as a side line; then the checks), 3 What is in the catalog 
 Records | Share switch, Read from the paper and not yet re-read, values per paper, what the records
 contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
 organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
-as ridgeline small multiples, both on one log axis per parameter so 10⁰ stands at one x), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a short lead that says once that a different number can mean a different measurement, values against the databases, results by database beside paired values by database, corrections by cause beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
+as ridgeline small multiples in the classes' colours, both on one log axis per parameter so 10⁰ stands at one x; then,
+from the records read from the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion
+limit and each class's median, variants against their wild type of the same paper, enzyme, substrate, pH and
+temperature, and the assay temperature and pH, each bar a link into Browse), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a short lead that says once that a different number can mean a different measurement, values against the databases, the same by enzyme class, results by database beside paired values by database, corrections by cause beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
 (one or two sentences, no filler: a chart names its number columns above them instead) and no data
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
 the closed How these numbers are counted that ends the page; fills run from the colour to its tint with 1px outlines, in the
-review-result and comparison tokens and --bar-neutral for the single-series value figures (every BPG hue already
-has a meaning on the page); pointing at a mark lights it with a soft glow and gives its exact count. The donut, the
+review-result and comparison tokens, --bar-neutral for the single-series value figures and the enzyme classes' own
+colours where a figure draws the classes apart; pointing at a mark lights it with a soft glow and gives its exact count. The donut, the
 histograms and the ridges are images with a summary;
 the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
