@@ -1765,9 +1765,10 @@
   }
 
   // A kcat/Km worked out as kcat ÷ Km ("calc."), in the table's tooltip and the record's note. A record read from the
-  // paper has one only when the paper prints none; an older record's source may still list a kcat/Km of its own (the
-  // record shows it), so its note never says none is printed.
-  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; not printed in the paper.";
+  // paper has one only where CatLog read no printed kcat/Km for the measurement (which is all CatLog knows: a paper can
+  // print one its reader did not record); an older record's source may still list a kcat/Km of its own (the record
+  // shows it), so its note says only that CatLog calculated it.
+  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; no printed kcat/Km was read for this measurement.";
   const CALCULATED_OLDER_NOTE = "kcat ÷ Km, calculated by CatLog.";
   const EQUALS_QUOTIENT_NOTE = "Equals kcat ÷ Km; the source does not say whether it was printed or calculated. Shown with the significant figures of kcat and Km.";
 

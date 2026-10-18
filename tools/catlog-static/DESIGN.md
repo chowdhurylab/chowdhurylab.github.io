@@ -567,8 +567,8 @@ printed digits stay as stored, trailing zeros included (135.0, 0.030). A kcat/Km
 CatLog calculated (kcat_over_km_origin "calculated"; an earlier-catalog kcat/Km of
 unstated origin is never called calculated, even when it equals kcat ÷ Km) carries
 "calc." and the significant figures of kcat and Km, at most 4. Its title is "kcat ÷
-Km, calculated by CatLog; not printed in the paper." on a record read from the
-paper and "kcat ÷ Km, calculated by CatLog." on an older one, whose source may list
+Km, calculated by CatLog; no printed kcat/Km was read for this measurement." on a record read from the
+paper (all CatLog knows: a paper can print one its reader did not record) and "kcat ÷ Km, calculated by CatLog." on an older one, whose source may list
 a kcat/Km of its own (often the printed one). Tooltips and the downloads keep the stored
 digits. The record's Value column follows the table's rule, except that a record
 read by CatLog shows its values exactly as CatLog gives them, to the figures the
@@ -741,8 +741,8 @@ come first, the context after.
   printed unit read in a stated way keeps its own line, "kcat/Km: printed unit read as 10³ M⁻¹
   s⁻¹." (a unit in CatLog's own words, in these notes, the Second check and the
   unit cautions, reads s⁻¹ whether the reader typed s^-1 or s-1; As printed
-  keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; not printed
-  in the paper."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists its
+  keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; no printed
+  kcat/Km was read for this measurement."; an older record's "calc. kcat ÷ Km, calculated by CatLog." adds "OED lists its
   own kcat/Km (above)." when its sources list one, never "not printed" or
   "different": a listed value is often the printed one, the same to the figures shown;
   in the grey notes, the empty line and the "kcat/Km listed by OED" label kcat, Km, kcat/Km

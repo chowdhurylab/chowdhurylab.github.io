@@ -3148,12 +3148,12 @@ assert.deepEqual(["30.333", "5.1667", "0.0516667", "12345.6", "1234.56", "11.579
   assert.equal(api.efficiencyOriginHtml(printedRow, { short: true }), "");
   const fromPaperRow = { ...quotientRow, source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" };
   assert.equal(api.efficiencyOriginHtml(fromPaperRow, { short: true }), "", "a value read from the paper is never called calculated");
-  // A calculated kcat/Km's tooltip: "not printed in the paper" only on a record read from the paper; an older record's
-  // source may list (and its paper print) a kcat/Km of its own.
+  // A calculated kcat/Km's tooltip: that no printed kcat/Km was read, only on a record read from the paper (all CatLog
+  // knows; it never says the paper prints none); an older record's source may list (and its paper print) one of its own.
   const calcOlder = { ...quotientRow, kcat_over_km_origin: "calculated", source_db: "oed" };
   assert.equal(api.efficiencyOriginHtml(calcOlder, { short: true }), '<small class="metric-origin" title="kcat ÷ Km, calculated by CatLog.">calc.</small>');
   const calcV2 = { ...calcOlder, source_db: "primary_paper_direct", verification_status: "verified", enzyme_label_source: "explicit_enzyme_name" };
-  assert.match(api.efficiencyOriginHtml(calcV2, { short: true }), /title="kcat ÷ Km, calculated by CatLog; not printed in the paper\."/);
+  assert.match(api.efficiencyOriginHtml(calcV2, { short: true }), /title="kcat ÷ Km, calculated by CatLog; no printed kcat\/Km was read for this measurement\."/);
 }
 // A per-minute value stored with 4 figures shows its ÷60 repeat in its ending (7.333 = 440/60, 0.1833 = 11/60): 3 figures
 // for kcat and kcat/Km; other 4-figure values, and Km, stay as stored.
