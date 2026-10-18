@@ -252,6 +252,19 @@ def check_guide(driver, wait):
     """))
     assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
     assert_document_stays(driver, "Guide")
+    # How CatLog reads a value (#guide-how-read, which a record links to): a link to it opens the Guide there with focus
+    # on its heading, as a section's link does.
+    driver.execute_script("""const link = document.createElement('a'); link.id = 'howReadProbe'; link.href = '#guide-how-read';
+        link.textContent = 'How CatLog reads a value'; document.getElementById('guide-units').append(link);""")
+    driver.execute_script("document.getElementById('howReadProbe').click()")
+    wait.until(lambda d: urlsplit(d.current_url).fragment == "guide-how-read")
+    wait.until(lambda d: d.execute_script("return document.activeElement?.id") == "guide-how-read-title")
+    wait.until(lambda d: d.execute_script("""
+        const view = document.querySelector('#guideView').getBoundingClientRect();
+        const top = document.querySelector('#guide-how-read').getBoundingClientRect().top;
+        return top >= view.top - 1 && top <= view.top + 48;
+    """))
+    driver.execute_script("document.getElementById('howReadProbe').remove()")
 
 
 GUIDE_DB_RESULTS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases", "All values the same",

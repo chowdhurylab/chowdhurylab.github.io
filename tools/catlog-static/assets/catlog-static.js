@@ -5149,7 +5149,7 @@
           ? `${formatInteger(match.wrong)} of the other ${formatInteger(match.differ)} ${match.wrong === 1 ? "is a CatLog value" : "are CatLog values"} found wrong.`
           : `None of the other ${formatInteger(match.differ)} is a CatLog value found wrong.`)
         : "";
-      tiles.push(tile("reread", "Reviewers' values", escapeHtml(qualityShare(match.same, match.approved)),
+      tiles.push(tile("reread", "Reviewers’ values", escapeHtml(qualityShare(match.same, match.approved)),
         escapeHtml(`of approved values the same where CatLog has re-read the paper (${formatInteger(match.same)} of ${formatInteger(match.approved)})`),
         escapeHtml(others)));
     }
