@@ -623,9 +623,16 @@ loading takes a moment (after 240ms), "Loading record…" and a quiet outline of
 the values in `--line-soft` bars (no animation with reduced motion). Another
 record opens at its top. The heading takes focus for screen readers; its focus
 ring shows after a key press (Enter on a row), not after a click or a link that
-opens the record. The order is design spec 5's, with G (Against the databases)
-moved up right after B (Values), so what CatLog corrected against the databases is
-found at once: A, B, G, C, D, E, F, H.
+opens the record. Round 13 (the user, 2026-10-18: the record "reads a lot of AI inside jargon and repetitive words
+for all entries"): a record is a curated entry, not a log. Each section says only what is specific to this record;
+what is the same on every record (how CatLog reads and checks a value, that code converts units, the license and the
+snapshot) is the Guide's, linked once under Checks ("How CatLog reads a value →", #guide-how-read), or the footnote's.
+A field the header gives (form, the source of a record read from the paper, where the values are printed) is not
+repeated in a section. The order: A (header), B (Values), G (Against the databases, or Corrected earlier), H (Checks),
+C (Source: an older record's database only), D (Conditions), E (Protein and substrate), F (Paper), then the footer
+(Download record and Report a problem, then a 12px muted footnote: "License: ..." and "Snapshot Oct 15, 2026 · Data ID
+8a39252508" on lines of their own). So the values, how they compare with the databases and how far they were checked
+come first, the context after.
 
 - A. Header (stays in view; on phones and on screens up to 900px tall, where
   the whole header would take a third of the record or more, only the name and
@@ -700,8 +707,8 @@ found at once: A, B, G, C, D, E, F, H.
   joiner ties the two, and up to 360px the check hangs in a 16px margin of its
   own, so every line of every number ends at the same place. The first grey note under the table says what the check
   means: "✓ Approved by a human reviewer (see Human review below)." ("Human review"
-  is a link-styled button that scrolls the panel to that row of Review and audit,
-  the record's last section, focuses it and outlines it a moment); beside a
+  is a link-styled button that scrolls the panel to that row of Checks,
+  focuses it and outlines it a moment); beside a
   calc. kcat/Km it adds "The calc. kcat/Km carries no check: CatLog calculated
   it.", so checks on kcat and Km alone never read as a value the review left
   out. A row without
@@ -719,8 +726,9 @@ found at once: A, B, G, C, D, E, F, H.
   Km or kcat/Km is stored for this record; BRENDA lists a kcat/Km for it
   (below)."; a number a source also gives with no unit is listed once; Download
   record carries them as source_kcat_over_km_values), each caution once as an amber note
-  its value's "!" moves to, the grey notes ("kcat and Km: converted by code from
-  the printed units.", "kcat/Km: converted by code, printed unit read as 10³ M⁻¹
+  its value's "!" moves to, the grey notes (no line says "converted by code" on every record: As printed shows each
+  printed cell beside the stored value, so a changed unit shows there, and the Guide says that code converts; a
+  printed unit read in a stated way keeps its own line, "kcat/Km: printed unit read as 10³ M⁻¹
   s⁻¹." (a unit in CatLog's own words, in these notes, the Second check and the
   unit cautions, reads s⁻¹ whether the reader typed s^-1 or s-1; As printed
   keeps the text as read), "calc. kcat ÷ Km, calculated by CatLog; not printed
@@ -730,19 +738,16 @@ found at once: A, B, G, C, D, E, F, H.
   in the grey notes, the empty line and the "kcat/Km listed by OED" label kcat, Km, kcat/Km
   and Ki are set as the table's rows set them, italic k or K with a subscript),
   then each quoted line once (a line another value's line continues, one excerpt
-  cut at two lengths, is quoted once, the longer): one line gives its place,
-  "Table 2 row, as extracted from the paper's text" ("Table 2, as extracted ..."
-  for a sentence, a line with no cells), or "As extracted from the paper's text"
-  when the caption already names it; more than one line name
-  their values instead, "kcat and kcat/Km line, as extracted from the paper's
-  text" (at most 240 characters, table markers removed, K_M set as
+  cut at two lengths, is quoted once, the longer), after "In the paper:"; one line whose place the caption does not
+  name gives it in brackets, "In the paper (Table VIII):"; more than one line name
+  their values instead, "In the paper (kcat and kcat/Km):" (at most 240 characters, table markers removed, K_M set as
   K<sub>m</sub>, caret exponents and charges set as superscripts: s^-1, mM^{−1},
   NADP^+, Mn^2+, and an exponent extraction split, min^− 1 or 10^−^3, as one);
   a row of more than four cells, or one whose ± signs extraction
-  dropped, is folded under "Show the line as extracted" ("Show the kcat line as
-  extracted" when the lines name their values) with that warning.
-- C. Source: Values from ("The paper (read by CatLog)", so "Read from the paper" is said once, by the Method line
-  under it; or the databases by
+  dropped, is folded under "Show the printed line" ("Show the printed kcat line" when the lines name their values)
+  with that warning.
+- C. Source (an older record; a record read from the paper has no Source section, its header says "from paper", unless
+  it has a detail of its own: a plain data origin, merged entries): Values from (the databases by
   name, never a raw key; not "Source", which would repeat the heading; an earlier corrected record whose every
   kinetic value shown was added from the paper, "added: the source had none" on each, says "The paper (read by
   CatLog's earlier version)" with a Database entry row naming the database "; its entry had none of these values",
@@ -754,26 +759,13 @@ found at once: A, B, G, C, D, E, F, H.
   (compared as a set, named in its order); Name
   from on an older record ("BRENDA recommended name", "The source database's
   entry", "The EC list's accepted name"; a record read from the paper takes its
-  name from the paper, which its Values from says); Data origin when it is a plain
-  word other than "experimental"; for a record read
-  by CatLog a Method line (the short method sentence ending "units converted by
-  code" or "values stored as printed", with "How CatLog reads and checks values
-  →", the Guide section's own name, as every link to it reads; the link moves to
-  the next line whole when it does not fit and wraps only on a line narrower than
-  itself, so no phone scrolls the record sideways) and a
-  Second check line (one result for every value, "All values confirmed." or
-  "Unit set to mM for every value.", or each value's result, "kcat: confirmed;
-  Km: unit set to mM.", kcat, Km and kcat/Km in italics with subscripts as in the Values table; then once what the check changed on the record, "The AI
-  check also removed EC 2.7.2.12 and corrected the assay conditions"; a removed
-  EC the header still shows says where the shown one comes from, "removed EC
-  1.1.1.25 (not printed in the paper; the EC shown comes from the enzyme
-  databases)" or "... from the UniProt entry A0A5H2WVH6"); for an
-  older record an Evidence line ("Located in the paper", "Paper cited" on an
+  name from the paper); Data origin when it is a plain
+  word other than "experimental"; an Evidence line ("Located in the paper", "Paper cited" on an
   accepted record or "Paper cited (values not located)" on one that is not,
-  "Several database records" or "Database record only"); one
-  license line (a source that names none reads "See the source's terms", as the
+  "Several database records" or "Database record only"); the license and the snapshot's data ID are the footnote's
+  (a source that names none reads "License: See the source's terms", as the
   Guide's Sources and licenses list says "License: see the source's terms"; a
-  record with no recorded source reads "Not recorded"); the snapshot's data ID;
+  record with no recorded source reads "License: Not recorded");
   a database note on request, headed by
   its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a
   record merged from several databases, which do not say whose note it is),
@@ -798,7 +790,8 @@ found at once: A, B, G, C, D, E, F, H.
   the bracket or quote it opened, and an item left with only "buffer" is not
   shown. A bracket that never closes holds no "; ", so a cofactor after it keeps
   its own row.
-- E. Protein and substrate: Enzyme form ("Variant H150A", "Wild type"); one
+- E. Protein and substrate: Enzyme form only when the header names no form ("Not recorded"; the header's "Wild type"
+  or "Variant H150A" is not repeated); one
   UniProt line, the accession and how it was found ("(inferred from EC number
   and organism)") or "Sequence known, no UniProt entry", "Several possible
   UniProt entries", "Not matched to UniProt"; each sequence as "605 aa" with Show
@@ -808,7 +801,8 @@ found at once: A, B, G, C, D, E, F, H.
   recorded"; the substrate in full; SMILES with Show and Copy, or "None
   recorded".
 - F. Paper: the title and year when the record carries them; PubMed and DOI
-  links (a stand-in ID is text); where the values are printed; In CatLog, a
+  links (a stand-in ID is text); where the values are printed is the Values caption's or Where column's, not repeated
+  here; In CatLog, a
   link to the paper's records in Browse with this record kept open
   (#browse?q=pmid:<PMID>&record=<key>, or doi:<DOI>), "89 records from this
   paper →" once the record index is loaded ("Only this record" when it is the
@@ -864,7 +858,10 @@ found at once: A, B, G, C, D, E, F, H.
   13px line with a green square, values whose lines read the same sharing it
   ("kcat and Km: Same as BRENDA and OED."; the line whole, or "Same as <the
   value's database_sources>." without one). Then one folding note
-  (`<details>`) per value that is not the same; its summary (13px, wraps): the
+  (`<details>`) per value that is not the same, values whose notes would read alike (the same result, line,
+  databases, cause and place; most often "Not in the databases" with one line for the whole paper) sharing one note
+  ("kcat, Km and kcat/Km · Not in the databases"), a value that corrects or differs keeping its own (the Values
+  pointer opens it by its parameter); its summary (13px, wraps): the
   parameter · which databases list
   what, from database_sources and the result only ("BRENDA and STRENDA DB list
   another number" for a correction or a different number, "SABIO-RK lists this
@@ -888,7 +885,8 @@ found at once: A, B, G, C, D, E, F, H.
   time_factor "off by exactly 60 or 3,600"; shown whatever the line says, as the
   brief's body without database_parts has it, since the line is never read; a
   code with no wording never shown)
-  and In the paper (database_evidence; a local path never). A note with an
+  (left out when the line already says the cause word for word) and In the paper (database_evidence; a local path
+  never). A note with an
   empty body is a plain line. Notes on a correction or a different number are
   open: every one from 641px, only the first on a phone; others closed; nothing
   is remembered. Then a kcat/Km CatLog calculated, once other values are
@@ -910,9 +908,8 @@ found at once: A, B, G, C, D, E, F, H.
   cannot filter by (the record index must carry the comparison and the record's
   own row in it must match the option); once Browse matches dbsrc and dbpar,
   each database of the record's strongest result for that parameter ("BRENDA",
-  titled "Corrects a value · Database: BRENDA · Compared value: kcat"); and "All
-  records of this paper" (#browse?q=pmid:<PMID>) unless it is the paper's only
-  record. Under the Values table (section B), a value that corrects or differs
+  titled "Corrects a value · Database: BRENDA · Compared value: kcat"); the paper's other records are linked once,
+  under Paper (no "All records of this paper" here). Under the Values table (section B), a value that corrects or differs
   gets one 12px line in words, "kcat/Km: BRENDA and OED list another number.
   See Against the databases ↓" (no square beside CatLog's number), whose button
   opens that value's note, scrolls it to the middle and focuses it.
@@ -920,7 +917,9 @@ found at once: A, B, G, C, D, E, F, H.
   "Corrected earlier" (Browse's name for it; no database is compared there, the
   user 2026-10-15): the
   intro "CatLog's earlier version changed these values to what the paper
-  prints. CatLog has not read this paper again yet.", then one item per changed
+  prints." (the header's "not re-read" says it has not read the paper again; when every item was added, the source
+  having none, "CatLog's earlier version added these values from the paper; the source had none." and no item repeats
+  "added: the source had none"), then one item per changed
   field, "66 mM → **0.066 mM**" with the kind of change ("unit or magnitude",
   "more digits / rounding", "different number", "added: the source had none",
   "removed", "replaced"), "Before: as BRENDA lists it for this paper" or
@@ -948,9 +947,17 @@ found at once: A, B, G, C, D, E, F, H.
   exact powers of ten "10×", "100×", "1,000×", "10⁶×", 60 or 3,600 "60×" /
   "3,600×", any other at two figures ("4.5×", "960×"), then "higher" (x > 1) or
   "lower".
-- H. Review and audit: Review result in one sentence ("Accepted: read from the paper
-  by CatLog.", or the earlier automated review's result with "How the earlier
-  review worked →"); for a database record the earlier review did not settle
+- H. Checks (right after G; on a record read from the paper: Second check, AI audit, Human review, then one Guide link
+  under the rows, "How CatLog reads a value →" (#guide-how-read; #guide-method while the Guide has no such section),
+  13px, moving to the next line whole when it does not fit, so no phone scrolls the record sideways; its header already
+  says Accepted · from paper, so no Review result row repeats it): Second check (one result for every value, "All
+  values confirmed." or "Unit set to mM for every value.", or each value's result, "kcat: confirmed; Km: unit set to
+  mM.", kcat, Km and kcat/Km in italics with subscripts as in the Values table; then once what the check changed on the
+  record, "The AI check also removed EC 2.7.2.12 and corrected the assay conditions"; a removed EC the header still
+  shows says where the shown one comes from, "removed EC 1.1.1.25 (not printed in the paper; the EC shown comes from
+  the enzyme databases)" or "... from the UniProt entry A0A5H2WVH6"); an older record: Review result in one sentence
+  (the earlier automated review's result; "Corrected and accepted in the earlier automated review (see Corrected
+  earlier)."), and the one link "How the earlier review worked →" (#guide-method) under the rows; for a database record the earlier review did not settle
   (Not confirmed, Not checked) with a paper, a Paper check row under it, "Not
   yet checked against the paper: the values are the database's." (not on one
   whose Evidence reads "Located in the paper", nor on one that names no
@@ -960,7 +967,8 @@ found at once: A, B, G, C, D, E, F, H.
   "the earlier version's entries" (versionWords; CatLog is the one name); the review notes of a record not yet re-read
   say "the earlier version's entry" where the earlier review wrote "expected row"; a checked record without a note names the values it shows that a reviewer approved, "A human
   reviewer approved the Km shown." or "... the kcat and Km shown; the kcat/Km agrees with kcat ÷ Km.", never a value
-  the record does not have; human-checked's whole rule only when it shows all three and the mark lists none); then Download record (the primary button) and
+  the record does not have; human-checked's whole rule only when it shows all three and the mark lists none). The
+  footer, the record's last part: Download record (the primary button) and
   Report a problem side by side (prefilled with the record ID, the snapshot and
   the values as the record shows them, a Ki included, and the kcat/Km its
   sources list when the record shows one, "kcat/Km listed by OED 3.0–6.1 s⁻¹
@@ -975,7 +983,8 @@ found at once: A, B, G, C, D, E, F, H.
   evidence; or the earlier review's changes, Before, After and the kind of
   change; never an empty list or a local path); the license as the record
   shows it, once. The earlier pipeline's internal fields stay in the
-  Full data.
+  Full data. Under the buttons, the footnote (12px muted, a line each): "License: CC BY 4.0 (CatLog compilation)" (or
+  the source's terms) and "Snapshot Oct 15, 2026 · Data ID 8a39252508".
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one

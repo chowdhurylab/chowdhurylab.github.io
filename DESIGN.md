@@ -492,3 +492,14 @@ Not reviewed is the label for the legacy mathematically_inferred record status
 source-derived records. Do not describe every value in that group as
 calculated. A calculated ratio field is separate from record acceptance;
 changing these labels must not alter the scientific data.
+
+## Record
+
+A record is a curated entry, not a log (round 13, the user 2026-10-18: "reads a lot of AI inside jargon and repetitive
+words for all entries"). Each section says only what is specific to this record: the values with the cell as printed
+and where it is printed ("In the paper:" before a quoted line), how they compare with the databases, how far they were
+checked (Checks: the second AI check, an AI audit, a human review), then conditions, protein and substrate, and the
+paper. What is the same on every record (how CatLog reads, checks and converts a value) is the Guide's, linked once
+under Checks ("How CatLog reads a value →", #guide-how-read); the license and the snapshot are one footnote under the
+record's buttons; nothing the header says (form, "from paper") is repeated in a section
+(tools/catlog-static/DESIGN.md, Record Details).
