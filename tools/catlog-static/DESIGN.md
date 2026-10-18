@@ -210,7 +210,7 @@ title has the full definition) with a link to the Guide's #guide-status, where
 the tags are defined, so the box stays small and the options stay in view) and Source (three
 radio buttons: All records, Read from the paper and Not yet re-read: each record labelled by what happened to it, with
 CatLog the one name (the user, 2026-10-13, round 8; never v1 or v2; "re-read" never breaks at its hyphen: Stats'
-figure titles, captions and tables and the Guide keep it in a nowrap span); each label on one line beside its count in the
+figure titles, captions and tables, the Guide and the sidebar's "?" boxes keep it in a nowrap span); each label on one line beside its count in the
 256px sidebar, also in a wide font (DejaVu Sans) beside a six-figure count: the sidebar's scrollbar is thin and a
 radio's count may come 4px closer to its label than elsewhere); its "?" says what each is ("Read from the paper: by an
 AI model; a second, separate AI check compared each value with the paper." and "Not yet re-read: from CatLog's earlier

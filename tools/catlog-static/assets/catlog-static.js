@@ -7684,7 +7684,9 @@
           <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper,
             pairing values by substrate, variant and organism.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
-            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${escapeHtml(item.title)}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
+            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${
+            // ("re-read" never breaks at its hyphen, as in Stats and the Guide)
+            escapeHtml(item.title).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({

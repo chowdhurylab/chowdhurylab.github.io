@@ -5901,6 +5901,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal((element("aboutDatabases").innerHTML.match(/does not by itself mean a database is wrong/g) || []).length, 1);
   assert.match(element("aboutDatabases").innerHTML, /<strong>Different number<\/strong>: [^<]*it does not by itself mean a database is wrong\.<\/p>/);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\(same substrate/);
+  // "re-read" never breaks at its hyphen in the box (Corrected earlier's "Not yet re-read: ...").
+  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong>: Not yet <span class="nowrap">re-read<\/span>: /);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML.replace(/<span class="nowrap">re-read<\/span>/g, ""), /re-read/);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
   // database_summary number) equal the manifest's keys: records_with_kind for the first four, records.every_value_new and
   // records.every_value_confirmed; Corrected earlier equals the index builder's count of records with earlier changes.
