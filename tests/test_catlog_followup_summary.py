@@ -486,6 +486,20 @@ class OverviewTests(unittest.TestCase):
             {"class": 3, "same": 1, "other_label": 1, "corrects": 2, "differs": 1, "not_listed": 1},
             {"class": 4, "same": 0, "other_label": 0, "corrects": 0, "differs": 1, "not_listed": 0}])
 
+    def test_overview_counts_factor_only_corrections_by_parameter_and_database(self):
+        line = lambda metric, found, sources: {"metric": metric, "database_status": "corrected", "database_found_by": found,
+                                               "database_by_source": [{"db": db, "kind": kind} for db, kind in sources]}
+        rows = [
+            {"verification_status": "verified", "proof_lines": [line("Km", "factor_only", [("BRENDA", "corrected"), ("OED", "other_values_only")]),
+                                                                 line("kcat", "paper_check", [("BRENDA", "corrected")])]},
+            {"verification_status": "verified", "proof_lines": [line("Km", "factor_only", [("BRENDA", "corrected"), ("SKiD", "corrected")]),
+                                                                 line("kcat/Km", "factor_cross_checked", [("OED", "corrected")])]},
+        ]
+        overview, _ = followup.summarize_overview(rows)
+        self.assertEqual(overview["database_factor_only"], {"values": 2, "by_parameter": {"Km": 2}, "by_database": {"BRENDA": 2, "SKiD": 1}})
+        overview, _ = followup.summarize_overview([{"verification_status": "verified"}])
+        self.assertNotIn("database_factor_only", overview)
+
     def test_overview_without_marks_and_hash_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, _marks = self.write_fixture(directory, overview_rows(), {})

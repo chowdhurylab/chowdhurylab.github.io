@@ -5636,6 +5636,52 @@
     return data && typeof data === "object" && !Array.isArray(data) ? data : null;
   }
 
+  // An older comparison counts its factor-only values (comparisonFactorOnly) among its corrections in values and
+  // values_by_database too. This snapshot's overview, counted from its Full data, splits them by parameter and database
+  // (overview.database_factor_only); with it, the figures and tables count them under Different number as the lead and
+  // the Guide do: {values, valuesByDatabase}, each a copy with those values moved from corrected to differs_factor_only.
+  // null when the comparison counts them under Different number itself, or the split is missing or does not add up.
+  function statsFactorOnlyMoved(comparison) {
+    const factor = comparisonFactorOnly(comparison);
+    if (!factor.amongCorrections || !factor.count) return null;
+    const overview = manifest.summary?.overview;
+    if (!overview || overview.download_sha256 !== manifest.enriched_download?.sha256 || overview.source_sha256 !== manifest.source_sha256) return null;
+    const split = overview.database_factor_only;
+    const byParameter = statsCountMap(split?.by_parameter);
+    const byDatabase = statsCountMap(split?.by_database);
+    if (statsCount(split?.values) !== factor.count || !byParameter || !byDatabase
+      || Object.values(byParameter).reduce((total, count) => total + count, 0) !== factor.count) return null;
+    const move = (counts, count) => {
+      const map = statsCountMap(counts);
+      if (!map || !count) return map ? counts : null;
+      if ((map.corrected || 0) < count) return null;
+      return { ...map, corrected: map.corrected - count, differs_factor_only: (map.differs_factor_only || 0) + count };
+    };
+    const values = { ...comparison.values };
+    for (const [name, count] of Object.entries(byParameter)) {
+      const parameter = STATS_DATABASE_PARAMETERS.find((item) => item.names.includes(name));
+      const key = parameter?.names.find((item) => values[item] !== undefined);
+      if (!key) return null;
+      values[key] = move(values[key], count);
+      if (!values[key]) return null;
+    }
+    if (values.all !== undefined) {
+      values.all = move(values.all, factor.count);
+      if (!values.all) return null;
+    }
+    const sources = comparison.values_by_database && typeof comparison.values_by_database === "object" ? comparison.values_by_database : null;
+    let valuesByDatabase = sources;
+    if (sources) {
+      valuesByDatabase = { ...sources };
+      for (const [name, count] of Object.entries(byDatabase)) {
+        if (valuesByDatabase[name] === undefined) return null;
+        valuesByDatabase[name] = move(valuesByDatabase[name], count);
+        if (!valuesByDatabase[name]) return null;
+      }
+    }
+    return { values, valuesByDatabase };
+  }
+
   // A part-7 link into Browse, or "" when it names an address key Browse does not match yet (a database, a cause or a
   // compared parameter: DATABASE_REFINE_KEYS). Browse would drop that key and open more records than the count says,
   // so the count stays a plain number until Browse reads the key; result-only links (db=) always open.
@@ -5703,7 +5749,7 @@
   // The values read from the paper by result, per parameter and for all (values.all, or the parameters' sum when the
   // comparison has none); null when a count is not whole or the parameters do not add up to all.
   function statsDatabaseValues(comparison) {
-    const values = comparison?.values;
+    const values = (comparison && statsFactorOnlyMoved(comparison)?.values) || comparison?.values;
     if (!values || typeof values !== "object") return null;
     const rows = [];
     for (const parameter of STATS_DATABASE_PARAMETERS) {
@@ -5787,8 +5833,8 @@
   // hold them) read together. "" for a comparison that counts them under Different number itself.
   function statsFactorOnlyNoteHtml(comparison) {
     const words = comparisonWordCounts(comparison?.values?.all, comparison);
-    if (!words.moved) return "";
-    return `<p class="stats-note stats-part-note">${metricWordsHtml(escapeHtml(`In this snapshot's figures and tables, ${formatInteger(words.moved)} ${words.moved === 1 ? "value" : "values"} a database lists at an exact factor from the paper's number, not yet checked against the paper, still ${words.moved === 1 ? "stands" : "stand"} under Corrects; the lead and the Guide count ${words.moved === 1 ? "it" : "them"} under Different number (exact factor, not yet checked).`))}</p>`;
+    if (!words.moved || statsFactorOnlyMoved(comparison)) return "";
+    return `<p class="stats-note stats-part-note">${escapeHtml(`The figures below still count ${formatInteger(words.moved)} exact-factor ${words.moved === 1 ? "value" : "values"} not yet checked against the paper under Corrects.`)}</p>`;
   }
 
   // A row of a 100% bar chart of database results: the exact counts (and shares, on a base of 1,000 values or more) in
@@ -5903,7 +5949,7 @@
   // Figure: each database against the values read from the papers it lists (values_by_database), a 100% bar each; the
   // values of papers it does not list are counted beside the bar. Shares only on a base of 1,000 values or more.
   function statsDatabaseSourcesFigure(comparison, sources) {
-    const byDatabase = comparison?.values_by_database;
+    const byDatabase = (comparison && statsFactorOnlyMoved(comparison)?.valuesByDatabase) || comparison?.values_by_database;
     if (!byDatabase || typeof byDatabase !== "object") return null;
     const rows = [];
     const none = statsDatabasesListingNone(comparison, sources);
@@ -5938,7 +5984,7 @@
   // differs), with the share the paper's number; then all values, each once (values.all, when its counts hold together).
   // Shares on a base of 1,000 values.
   function statsDatabasePairedTable(comparison, sources, values) {
-    const byDatabase = comparison?.values_by_database;
+    const byDatabase = (comparison && statsFactorOnlyMoved(comparison)?.valuesByDatabase) || comparison?.values_by_database;
     if (!byDatabase || typeof byDatabase !== "object") return null;
     const kinds = { same: STATS_DATABASE_KINDS[0].kinds, corrects: STATS_DATABASE_KINDS[2].kinds, differs: STATS_DATABASE_KINDS[3].kinds };
     const rows = [];

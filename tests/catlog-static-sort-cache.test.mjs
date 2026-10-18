@@ -2457,12 +2457,31 @@ function row(overrides = {}) {
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
     /Another 1,291 correct a database's number \(126 checked against the paper\), and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\)\. A different number can mean/);
   assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
-    /^In this snapshot's figures and tables, 257 values a database lists at an exact factor from the paper's number, not yet checked against the paper, still stand under Corrects; the lead and the Guide count them under Different number \(exact factor, not yet checked\)\.$/);
+    /^The figures below still count 257 exact-factor values not yet checked against the paper under Corrects\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1063], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
   assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found automatically: 635"/);
   assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database's number, each counted once\./);
   assert.match(methodHtml(), /Corrections by cause and database\.<\/span> 257 values a database lists at an exact factor, not yet checked against the paper, are Different number, left out of All; the columns per database still hold them\.<\/dd>/);
+  // With the overview's split of those values by parameter and database (counted from the Full data), the figures and
+  // tables count them under Different number too, as the lead does, and the note goes.
+  {
+    const before = runtimeManifest.summary.overview;
+    runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 257, by_parameter: { kcat: 57, Km: 100, "kcat/Km": 100 }, by_database: { BRENDA: 200 } } };
+    withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
+    assert.doesNotMatch(databaseSection(), /stats-part-note/);
+    assert.match(figureHtml("db-values"), /aria-label="All values, Corrects a value: 1,291">1,291<\/a>/);
+    assert.match(figureHtml("db-values"), /aria-label="All values, Different number: 1,308">1,308<\/a>/);
+    assert.match(figureHtml("db-values"), /kcat, Corrects a value: 271\b/);
+    assert.match(figureHtml("db-values"), /kcat, Different number: 326\b/);
+    assert.match(figureHtml("db-paired"), /<td class="stats-num" data-count="956">[\s\S]*?956/);
+    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Another 1,291 correct a database's number/);
+    // A split that does not add up to the comparison's count is not used: the note stays.
+    runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 250, by_parameter: { Km: 250 }, by_database: {} } };
+    withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
+    assert.match(databaseSection(), /stats-part-note/);
+    runtimeManifest.summary.overview = before;
+  }
   // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
   // move and no note.
   withOut((data) => { data.values.kcat.differs_factor_only = 40; data.values.all.differs_factor_only = 40; data.values.all.differs += 0; });

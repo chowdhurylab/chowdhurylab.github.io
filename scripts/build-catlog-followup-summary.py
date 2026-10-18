@@ -729,6 +729,22 @@ def database_results(row):
     return results
 
 
+# Values a database lists at an exact factor from the paper's number that nothing has yet checked against the paper (a
+# proof line's database_status corrected, database_found_by factor_only): Stats counts them under Different number, not
+# Corrects. A comparison that still counts them among its corrections gives their split by parameter and database
+# nowhere else, so the overview counts it from the Full data: {"values", "by_parameter", "by_database"} (a value counts
+# for each database whose kind is corrected; by_parameter by the line's metric).
+def add_factor_only(counts, row):
+    for line in row.get("proof_lines") or []:
+        if not isinstance(line, dict) or line.get("database_status") != "corrected" or line.get("database_found_by") != "factor_only":
+            continue
+        counts["values"] += 1
+        counts["by_parameter"][str(line.get("metric") or "")] += 1
+        for source in line.get("database_by_source") or []:
+            if isinstance(source, dict) and source.get("kind") == "corrected" and source.get("db"):
+                counts["by_database"][str(source["db"])] += 1
+
+
 def summarize_overview(rows, marks=None):
     statuses = Counter()
     papers, v2_papers = set(), set()
@@ -755,7 +771,9 @@ def summarize_overview(rows, marks=None):
     v2_groups = defaultdict(lambda: {"wild": [], "variant": []})
     v2_conditions = {"temperature": [], "ph": []}
     v2_database = defaultdict(Counter)
+    factor_only = {"values": 0, "by_parameter": Counter(), "by_database": Counter()}
     for row in rows:
+        add_factor_only(factor_only, row)
         status = row.get("verification_status")
         if not isinstance(status, str):
             raise ValueError("Missing review status in public record")
@@ -878,6 +896,10 @@ def summarize_overview(rows, marks=None):
             summary["by_class"] = grid
     if earlier["records"]:
         overview["earlier_corrections"] = earlier
+    if factor_only["values"]:
+        overview["database_factor_only"] = {"values": factor_only["values"],
+                                            "by_parameter": dict(factor_only["by_parameter"].most_common()),
+                                            "by_database": dict(factor_only["by_database"].most_common())}
     # What the values show (records read from the paper): each only when it has values.
     insights = {
         "kcat_km": kcat_km_map(v2_pairs, v2_linked),
