@@ -479,8 +479,11 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    right), the table, page controls. With its 1px rule it is 48px like the sidebar's heading, so the two rules line up
    (7px above and below a 32px control). */
 .table-panel { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden }
-.records-header { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:48px; flex-shrink:0; align-items:center; gap:var(--sp-3); border-bottom:1px solid var(--line); background:var(--bg); padding:7px var(--sp-4) }
-.records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0 }
+/* The toolbar and the chips start at the row's top, the chips' first line 2px down so it centres on the 32px toolbar:
+   a chip that wraps the bar onto a second line then leaves the first line (and Undo, which keeps its place) where it was
+   (centred, a two-line bar had moved it up 2.5px, so a second click at the same point missed Undo's middle). */
+.records-header { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:48px; flex-shrink:0; align-items:start; gap:var(--sp-3); border-bottom:1px solid var(--line); background:var(--bg); padding:7px var(--sp-4) }
+.records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0; min-height:30px; padding-top:2px }
 .records-title > span { color:var(--text-2); font-size:var(--fs-13) }
 .records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
 /* The Sort menu is 180px, or as wide as its longest option when a wider font needs more ("kcat/Km, high to low" was cut
@@ -1917,7 +1920,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .pagination { position:sticky; bottom:0; z-index:5 }
   body.detail-open { overflow:hidden }
   /* One toolbar row (Filters, Export, Sort); the chips and a count that is not the page range go below it. */
-  .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; gap:var(--sp-2); padding:var(--sp-2) var(--sp-4) }
+  .records-header { grid-template-columns:max-content minmax(0,1fr); min-height:0; align-items:center; gap:var(--sp-2); padding:var(--sp-2) var(--sp-4) }
   .records-title { display:contents }
   #openFiltersButton { display:inline-flex; grid-column:1; grid-row:1 }
   .records-tools { grid-column:2; grid-row:1; flex-wrap:nowrap; min-width:0 }
