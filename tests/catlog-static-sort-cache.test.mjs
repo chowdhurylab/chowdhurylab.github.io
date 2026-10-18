@@ -1383,7 +1383,7 @@ assert.deepEqual(guideAnchors, ["guide-method", "guide-record", "guide-status", 
 // starts hidden, and its line in the contents with it.
 assert.match(guideContents, /<li data-guide-database-section hidden><a href="#guide-databases">Against the databases<\/a><\/li>/);
 assert.match(guideHtml, /<section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>\s*<h2 id="guide-databases-title">Against the databases<\/h2>\s*<div id="guideDatabasesBody"><\/div>\s*<\/section>/);
-assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 3, "the contents, Read a record and Questions link to it");
+assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 4, "the contents, Read a record, the legend and Questions link to it");
 // The method is said in full once, in its own section (with the model's name); nowhere else in the Guide.
 const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.match(guideMethod, /<a href="#team">People behind CatLog<\/a>/);

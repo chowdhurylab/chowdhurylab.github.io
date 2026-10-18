@@ -2169,6 +2169,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-legend-group .guide-status-list > div { grid-template-columns:9.5em minmax(0, 1fr); gap:2px 12px; padding:8px 0 }
 .guide-view .guide-shell .guide-legend-group :is(dt, dd) { font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-legend-group .guide-status-list .state-badge, .guide-view .guide-legend-group .guide-tag-list .state-tag { font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-legend-wide { grid-column:1 / -1 }
+.guide-view .guide-legend-group .guide-db-legend dt { display:flex; align-items:baseline; gap:8px; font-weight:500 }
+.guide-view .guide-legend-group .guide-db-legend .db-mark { flex:0 0 10px; align-self:center }
 .guide-view .guide-mark-sample { display:inline-flex; min-width:24px; align-items:center; color:var(--text-2) }
 .guide-view .guide-mark-tick { color:var(--checked) }
 .guide-view .guide-mark-tick .check-icon { width:14px; height:14px }
@@ -2259,6 +2262,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-db-more > :is(dl, p) { margin:8px 0 0 }
 .guide-view .guide-shell .guide-db-note { margin:16px 0 0; color:var(--muted) }
 @media (max-width: 899px) {
+  .guide-view .guide-check-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) }
   .guide-view .guide-flow { grid-template-columns:minmax(0, 1fr); gap:16px }
   .guide-view .guide-shell .guide-flow-step { grid-template-columns:36px minmax(0, 1fr); column-gap:12px; row-gap:2px; border-top-width:1px; border-left:3px solid var(--accent) }
   .guide-view .guide-flow-icon { grid-row:span 2 }
@@ -2271,6 +2275,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 }
 @media (max-width: 640px) {
   .guide-view .guide-shell .guide-lead { font-size:var(--fs-16); line-height:var(--lh-16) }
+  .guide-view .guide-check-grid { grid-template-columns:minmax(0, 1fr) }
   .guide-view .guide-caution-list { grid-template-columns:minmax(0, 1fr) }
   /* The units as three short rows: name, unit, meaning. */
   .guide-view .guide-unit-cards { grid-template-columns:minmax(0, 1fr); gap:8px }
