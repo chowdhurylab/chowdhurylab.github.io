@@ -475,8 +475,10 @@ Team are real links; normal clicks retain the loaded table, while
 modified clicks and copying work normally. Strip only deployment-check query
 tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
 catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
-The Guide starts with three plain tasks and a real search example, not a
-numbered onboarding strip or a repeated workflow illustration.
+The Guide is short and visual (the user, 2026-10-18): pictures built from the
+page's own parts (how a value is read and checked, a numbered record, one legend
+of labels and colours), one plain sentence per idea, reference in disclosures
+(tools/catlog-static/DESIGN.md, Guide).
 
 ## Team
 

@@ -1068,82 +1068,84 @@ in the site's DESIGN.md, "Team".
 
 ## Guide
 
-One reading column (72ch, 16px body). The introduction says what CatLog is and,
-in one sentence, that the CatRange paper (PNAS Nexus, linked in the header) describes
-CatLog-27k and that this site is the growing catalog that followed, then
-points to the method ("How this catalog is built: see ..."). Then "On this
-page", a short contents list (three columns, two on phones) linking to the
-sections, in this order and with these addresses: How CatLog reads and checks
-values (#guide-method: the only place the method is said in full; it opens
-with the human review in a light box ("No value disputed on 2,767 of 2,770 entries (99.9%) from the
-earlier version (431 papers); the 3 disputed values are as printed in the paper." and "Where CatLog has re-read a
-paper the reviewers checked, ...", the Stats lead's side line) linked to Stats, left out without those counts;
-then a definition list of Read from the paper ("The current, second version of CatLog reads papers directly": the Guide
-says once that it is the second),
-AI audits, Human review
-(what the lead does not say: "In 153 entries (5.5%) the reviewer could not find the value in the paper.", values
-missing and other disagreements, then the
-human-checked records and their rule; the lead's sentence is never said twice;
-kcat, Km and kcat/Km in italics with a subscript in this item), Not yet re-read (records from CatLog's earlier
-version; when CatLog reads a paper, its records replace these) and Who does it (linking to Team); the
-audit and human-review numbers are filled from the snapshot's overview when it
-has them, never typed, and the items read without numbers otherwise; badges,
-filters and Stats say it in one line and link here), Find records (#guide-find:
-search, filters, sort, sharing a view, and example views linked in the
-#browse? format), Read a record (#guide-record: the panel's sections, one worked
-from-paper record drawn as the table and the panel draw it, and Cautions, one
-line per short caution word; the Filters sentence and the section item on
-Against the databases, marked data-guide-databases, show only when the
-manifest's record index lists database_summary, as Browse's group does),
-Review result (#guide-status: Accepted, Not confirmed, Not checked and
-Disputed, each with the table's own badge, then each tag, human-checked with
-its check and green),
-Against the databases (#guide-databases, marked data-guide-database-section with
-its line in the contents and under Questions; shown when the manifest's
-summary.database_comparison is there, or the record index lists database_summary,
-then without counts; written from the manifest only: a lead naming the compared
-databases from the manifest's sources list, else the databases its counts name, in
-its order, else the six in the code (never a typed "five"), with the values compared, the papers with a compared value
-(papers_compared, as Stats' lead; papers for an older comparison without it) and the
-share where a database lists a number for the same measurement (from 1,000
-values); What is compared and Databases (versions, dates and values when the
-sources list has them); Results, the six of Browse's group in its order, each after
-a 10px square in its result colour (none on Corrected earlier) with the counts
-Browse's options give, "N values in M records", the records linked to
-#browse?db=<key> only where Browse has that option, every value under Not in the
-databases, Corrected earlier left out when the snapshot counts 0; Cause of a
-correction (the four families, each cause code in one); How a correction is found
-(the two ways, checked against the paper and an exact factor the paper's own kcat ÷ Km
-agrees with, counted when the manifest counts them, else the paper check and a
-line for code's way; an exact factor alone is no correction: its values stand under
-Different number, with a line of their own there when counted); Why no database lists a value (the six
-reasons, counts summed over the parameters where the manifest has them); then the
-comparison caption and a link to Stats. A count the manifest lacks leaves its line
-out),
-Units (#guide-units), Downloads (#guide-downloads: Full data, Table, Against the databases when the manifest
-has its comparison download, Results and record, Format, Review files), Before you use the values
-(#guide-caveats), Cite (#guide-cite), Sources and licenses (#guide-sources) and
-Questions (#guide-questions, native disclosures). A section's address opens the
-Guide at that section, and a link to one (from Stats, a record, the filters or
-the contents list) opens it in the page with focus on its heading (made
-focusable then, so a page opened at a section shows no focus ring); the Guide never downloads the record index. Terms and
-meanings are two-column lists, one line each where they fit; no walls of text.
-Records are "read from the paper" and "not yet re-read" there, as in the Source
-filter and Stats (never "older records", never v1 or v2; "Evidence labels on records not yet re-read"); the record's
-status line carries the table's tags, "from paper" or "not re-read" then the source (one tag set for the table and the
-record, the user 2026-10-15), and the Guide's Header example says so; the human reviewer's mark is a "tick" in the
-Guide's words; the Guide's Units names Ki once (mM, on the few records whose source lists one); the earlier
-version is named only in the method section and in a tag's or status's help.
-Long lists of labels go in native disclosures. Shorten duplicate instructions
-rather than scientific qualifications. When the table or the record panel
-changes, the Guide's wording and example change with it. The page keeps exactly
-two Full data links (Download menu and Downloads) and one Table link: the
-release script rewrites them by count. They save as
-catlog-<snapshot date>-full.jsonl.gz and catlog-<snapshot date>-table.jsonl.gz
-(set from the manifest when the page starts). Cite gives the snapshot date and
-the Data ID with the command that checks it (the first 10 characters of the
-SHA-256 of the decompressed Full data file), says to keep the file used and to
-cite a database whose rows are used; the exporter commit stays in the README.
+Short, scannable and visual (the user, 2026-10-18: "too lengthy and too AI and hard to follow. Visuals help more ... a
+better to-the-point guide"): a reader finds what a field, label or colour means in seconds. Pictures first, each built
+from the page's own components (status dot, tags, values table, filter chips, database squares, the "!" and the tick),
+so their colours follow the tokens; one plain sentence per idea; prose only where a picture cannot say it; reference
+detail in native disclosures. One column up to 1000px: the pictures use its width, prose keeps to 72ch (16px body).
+
+The introduction (h1 "Using CatLog") is the framing in two lines: "CatLog re-verifies published enzyme kinetics: kcat,
+Km and kcat/Km. Its agents find the paper each database value cites, read the values in it and check them against the
+paper; people review samples." and, in small type, the Chowdhury Lab and CatLog-27k of the CatRange paper (PNAS Nexus).
+Never a "download" agent or papers collected in bulk. Then "On this page": the sections as a row of small buttons that
+wrap, in this order and with these addresses (other pages link to every one; keep them):
+
+- How CatLog reads and checks values (#guide-method; heading #guide-method-title, which Stats' and a record's links focus).
+  Its first part is How CatLog reads a value (#guide-how-read, heading #guide-how-read-title: the record links its moved
+  method boilerplate here as "How CatLog reads a value →"): four steps as numbered cards with an icon, in a row with
+  arrows (one under another below 900px): Find the paper (the paper a database value cites, by its PMID or DOI), Read
+  (an AI model, Claude, Anthropic, named once in the Guide, reads each value with its unit, conditions and the line it is
+  printed in), Check ("A second, separate AI check compares every value with the paper." and code confirms the line is
+  in the paper's text), Compare (code compares each value with the numbers the enzyme databases list for the same
+  paper); then what the record keeps, four short items: As printed, Units by code (a model never types a converted
+  number), Accepted (added only after the second check and the code checks; tagged from paper), Human-checked. Then the
+  loop in a dashed accent box ("Then checked again": AI audits and people review samples; what they find improves the
+  next reading; link to Team). Then What the checks found (#guideMethodLead, from the manifest only, left out without
+  numbers): tiles of one figure, one phrase and one note each, in this order when present: Human review (the share, the
+  headline's words "no value disputed on 2,767 of 2,770 entries from the earlier version (431 papers)", the disputed
+  values as printed), Reviewers' values (the share of approved values the same where CatLog has re-read the paper, its
+  counts, no CatLog value found wrong), AI audits (values re-checked, wrong and removed, as of), Human-checked (the tick
+  and the count in green, linked to #browse?checked=1); four in a row, two below 900px, one on phones; "More on Stats".
+  The review in full sits in the disclosure "What the human review found" (#guideMethodMore / #guideMethodHuman: what
+  the tiles do not say, the match with what the other values are, the human-checked rule; never the tiles' headline
+  again). Last, Two kinds of record side by side: Read from the paper (by the current, second version: said once) and
+  Not yet re-read (CatLog's earlier version, which started from database entries; replaced when CatLog reads the paper).
+- Read a record (#guide-record): a record drawn as the panel draws it (title, EC · organism · form, substrate; the status
+  line with tags; the values table with ticks and As printed; the quoted line "In the paper, Table 1:"; Against the
+  databases; the further sections as small labels), each part numbered by a CSS counter, beside a numbered key (under it
+  below 900px); a part the snapshot lacks (Against the databases) is hidden with its key line, so the numbers stay in
+  sequence. On phones the example's values table puts each As printed under its value. A tip line names ‹ ›, Copy link,
+  Download record and Report a problem.
+- Labels and colours (#guide-status): "Each colour means one thing everywhere on the site". A grid of legends (two
+  columns, one below 760px): Review result (the table's badges: Accepted, Not confirmed, Not checked, Disputed; the
+  Accepted, Not checked and no paper linked definitions are set by the review rules the snapshot follows), Tags (from
+  paper, linked to the method; not re-read; earlier extraction; corrected; no paper linked; human-checked with its tick
+  and green), Marks beside a value (tick, "!", calc., dash), Against the databases (the five squares in Browse's colours,
+  shown with the comparison), Filters in use (the chips as Browse draws them, each in its group's colour, across both
+  columns). Then Cautions (#guide-cautions, an h3): the short caution names in two columns, one line each; the
+  Cautions filter's groups named in full; the evidence labels of records not yet re-read in a disclosure.
+- Against the databases (#guide-databases, marked data-guide-database-section with its line in the contents and under
+  Questions; shown when the manifest's summary.database_comparison is there, or the record index lists database_summary;
+  written from the manifest only): the lead (the compared databases from the manifest's sources list, else the databases
+  its counts name, else the six in the code, never a typed "five"; the values compared and the papers with a compared
+  value; the share where a database lists a number for the same measurement, from 1,000 values); Results (h3) as cards,
+  two columns (one below 760px): each result after a 10px square in its colour (none on Corrected earlier), Browse's
+  option definition (Different number its first sentence and the caveat "A different number can mean a different
+  measurement; it does not by itself mean a database is wrong.", said once), "N values in M records" (records linked to
+  #browse?db=<key> only where Browse has that option), the nested lines (every value under Not in the databases; the
+  exact factor not yet checked under Different number when counted); Corrected earlier left out when the snapshot counts
+  0. Then four disclosures, each summary one h3: What is compared (values and databases with versions, dates and values),
+  Cause of a correction (the four families), How a correction is found (the two ways; an exact factor alone is no
+  correction), Why no database lists a value (the six reasons); then the caption and a link to Stats. A count the
+  manifest lacks leaves its line out.
+- Find records (#guide-find): Search (examples as small code chips), Filters, Sort, Share; "Try": example views linked
+  in the #browse? format.
+- Units (#guide-units): the three catalog units as cards (rows on phones), then Conversion, calc., Printed kcat/Km and
+  × 10ⁿ; Digits, Ki, T and pH (the table has no column for them), missing values and other units in a disclosure.
+- Downloads (#guide-downloads: Full data, Table, Against the databases when the manifest has its comparison download,
+  Results and record, Format, Review files), Before you use the values (#guide-caveats, a short checklist), Cite
+  (#guide-cite), Sources and licenses (#guide-sources) and Questions (#guide-questions, native disclosures).
+
+A section's address opens the Guide at that section, and a link to one (from Stats, a record, the filters or the
+contents) opens it in the page with focus on its heading (made focusable then, so a page opened at a section shows no
+focus ring); the Guide never downloads the record index. Records are "read from the paper" and "not yet re-read" there,
+as in the Source filter and Stats (never "older records", never v1 or v2); every "re-read" keeps one line. The earlier
+version is named only in the method section and in a tag's or status's help. When the table or the record panel
+changes, the Guide's picture and wording change with it. The page keeps exactly two Full data links (Download menu and
+Downloads) and one Table link: the release script rewrites them by count. They save as catlog-<snapshot date>-full.jsonl.gz
+and catlog-<snapshot date>-table.jsonl.gz (set from the manifest when the page starts). Cite gives the snapshot date and
+the Data ID with the command that checks it (the first 10 characters of the SHA-256 of the decompressed Full data file),
+says to keep the file used and to cite a database whose rows are used; the exporter commit stays in the README.
 
 ## Verification
 
