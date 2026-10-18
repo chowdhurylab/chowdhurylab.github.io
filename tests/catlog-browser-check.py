@@ -4698,8 +4698,11 @@ def check_record_databases(driver, browser, base, wait):
             assert not any(note["open"] for note in state["notes"] if note not in changed), state["notes"]
             # One line under the Values table for each of them, in words.
             assert state["pointers"] == [note["field"] for note in changed], (state["pointers"], state["notes"])
-            assert all(line.endswith("list another number. See Against the databases ↓") or line.endswith("lists another number. See Against the databases ↓")
+            # ("kcat/Km: corrects SABIO-RK and OED ↓": the note names the numbers, once)
+            assert all(re.fullmatch(r"\S+: (?:corrects|differs from) \S[\s\S]* ↓", line) and "another number" not in line
                        for line in state["pointerLines"]), state["pointerLines"]
+            # Each fact once: the summary says the parameter and the result (no databases).
+            assert "list another number" not in state["all"] and "lists another number" not in state["all"], state["all"]
             # The compared databases and the caption are said once, in the heading's "?" box (closed at first), never as a
             # footer on every record; the caption shows under the notes only on a record with a Different number.
             assert state["about"].startswith("Compared with the values "), state["about"]

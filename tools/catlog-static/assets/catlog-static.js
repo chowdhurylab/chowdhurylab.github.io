@@ -3358,7 +3358,7 @@
         result: phrase || databaseResultWord(facts) || null,
         line: phrase ? null : facts.sentence || null,
         databases: facts.databases || null,
-        cause: databaseCauseLine(facts) || null,
+        cause: facts.cause || null,
         evidence: facts.evidence || null,
       };
     });
@@ -11832,7 +11832,8 @@
     unit_not_converted: "the printed unit not converted",
     uM_entered_as_mM: "a µM value entered as mM",
     mM_entered_as_uM: "an mM value entered as µM",
-    time_unit: "a per-minute or per-hour value not converted",
+    // (CatLog's line words it the same way: catlog-v2 site_release.CAUSE_TEXT)
+    time_unit: "a time unit taken for another (seconds, minutes or hours)",
     decimal_or_exponent_slip: "a decimal point or exponent slip",
     value_from_other_row: "a value from another cell of the table",
     value_not_in_paper: "a value the paper does not print",
@@ -11968,8 +11969,11 @@
         && sources.some((source) => comparedDatabaseKey(source) === comparedDatabaseKey(entry.db)))
         .map((entry) => databaseFactorText(entry.x)).find(Boolean) || ""
       : "";
+    // The line's own parts (database_parts): a "cause" part means the line ends with the cause a check against the
+    // paper found ("Checked against the paper: ...").
+    const parts = line?.database_parts && typeof line.database_parts === "object" ? line.database_parts : {};
     return { status, sentence, cause, causeCode, sources, evidence: looksLikeLocalPath(evidence) ? "" : evidence,
-      databases: [sources.join(", "), listed].filter(Boolean).join(": "), factorOnly, factor };
+      databases: [sources.join(", "), listed].filter(Boolean).join(": "), factorOnly, factor, lineHasCause: Boolean(shownText(parts.cause)) };
   }
 
   // The result's word for one value: "Different number (exact factor, not yet checked)" for a factor-only value, else
@@ -11980,16 +11984,19 @@
     return facts.factorOnly && result.filter === "differs" ? DATABASE_RESULT_NAMES.differs_factor_only : result.word;
   }
 
-  // The cause as the note says it: for a factor-only value, the factor between the numbers and that nothing has yet
-  // checked it against the paper ("SABIO-RK lists a number 1,000× lower (off by an exact power of ten); not yet checked
-  // against the paper"); otherwise the cause in words (database_cause).
-  function databaseCauseLine(facts) {
-    if (!facts.factorOnly) return facts.cause;
-    const names = sentenceList(facts.sources.map(databaseDisplayName));
-    const what = facts.factor
-      ? `${names || "A database"} ${facts.sources.length > 1 ? "list" : "lists"} a number ${facts.factor}`
-      : `${names || "A database"} ${facts.sources.length > 1 ? "list" : "lists"} a number an exact factor from the paper's`;
-    return `${what}${facts.cause ? ` (${facts.cause})` : ""}; not yet checked against the paper`;
+  // The cause a note adds under its line (database_cause in words), or "" when the line already says it: word for word,
+  // as its own last part ("Checked against the paper: ...", database_parts.cause), by the factor between the two numbers
+  // ("10× lower", "60× CatLog's value", "= the printed 21 × 60", "the printed number in mM": what a cause found
+  // automatically is), or as another measurement. A factor-only value's result already says "exact factor, not yet
+  // checked"; its row then gives only the factor, when its line does not.
+  const LINE_GIVES_FACTOR = /[\d⁰¹²³⁴⁵⁶⁷⁸⁹]× |[×÷] (?:60|3,600)\b|\bthe printed (?:number|value)\b|\bexact factor\b/;
+  function databaseCauseShown(facts) {
+    const line = facts.sentence || "";
+    if (facts.lineHasCause || LINE_GIVES_FACTOR.test(line)) return "";
+    if (facts.factorOnly) return facts.factor ? `${facts.factor}${facts.cause ? ` (${facts.cause})` : ""}` : "";
+    const cause = facts.cause;
+    if (!cause || line.toLowerCase().includes(cause.toLowerCase())) return "";
+    return facts.causeCode === "different_measurement" && /\banother measurement\b/i.test(line) ? "" : cause;
   }
 
   // The side file's comparison of one parameter (["same", "BRENDA,SABIO-RK"], ["differs", "BRENDA", 3]) in the spec's
@@ -12036,26 +12043,26 @@
     return facts.phraseOnly || lineIsResult ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
   }
 
-  // Which databases list what, from the value's result and database_sources (never from its line): "BRENDA and OED list
-  // another number" (corrects, differs), "SABIO-RK lists this number" (same, other label); "" otherwise.
-  function databaseListPhrase(filter, sources = []) {
+  // What a value does against the databases, from its result and database_sources (never from its line), for the
+  // pointer under the Values table: "corrects SABIO-RK and OED", "differs from BRENDA".
+  function databasePointerPhrase(filter, sources = []) {
     const names = sentenceList(sources.map(databaseDisplayName));
-    const verb = sources.length > 1 ? "list" : "lists";
-    if (filter === "corrects" || filter === "differs") return names ? `${names} ${verb} another number` : "A database lists another number";
-    if (filter === "other_label") return names ? `${names} ${verb} this number` : "";
-    return "";
+    if (filter === "corrects") return names ? `corrects ${names}` : "corrects a database";
+    return names ? `differs from ${names}` : "differs from a database";
   }
 
-  // Section B's pointer (a value that corrects or differs): one 12px line under the Values table, in words (no red square
-  // beside CatLog's number), with a button that opens the value's note under Against the databases.
+  // Section B's pointer (a value that corrects or differs): one 12px line under the Values table, the parameter and a
+  // link-like button that opens the value's note under Against the databases ("kcat/Km: corrects SABIO-RK and OED ↓");
+  // the note says the rest, once.
   function databasePointersHtml(proof) {
     return (proof?.lines || []).map((line) => {
       const field = (v2MetricLabels[line.metric] || [])[0];
       const facts = databaseFacts(line);
       const filter = databaseResult(facts?.status)?.filter;
       if (!field || (filter !== "corrects" && filter !== "differs")) return "";
-      return `<p class="cmp-pointer">${metricWordsHtml(escapeHtml(line.metric))}: ${escapePublic(databaseListPhrase(filter, facts.sources))}. `
-        + `<button class="text-button cmp-pointer-link" type="button" data-show-note="${escapeHtml(field)}">See Against the databases<span aria-hidden="true"> ↓</span></button></p>`;
+      return `<p class="cmp-pointer">${metricWordsHtml(escapeHtml(line.metric))}: `
+        + `<button class="text-button cmp-pointer-link" type="button" data-show-note="${escapeHtml(field)}">${escapePublic(databasePointerPhrase(filter, facts.sources))}`
+        + `<span class="visually-hidden">, see Against the databases</span><span aria-hidden="true"> ↓</span></button></p>`;
     }).join("");
   }
 
@@ -12155,29 +12162,25 @@
   }
 
   // A kcat/Km CatLog calculated: not compared, said last (after the compared values), muted and with no square (an empty
-  // one read as a box to tick).
+  // one read as a box to tick). The Values table's note says what calc. means; this line does not say it again.
   function databaseCalculatedLineHtml(rows) {
-    return rows.length ? `<p class="cmp-calc-line">${metricWordsHtml(escapeHtml(sentenceList(rows.map((row) => row.metric))))}: calculated by CatLog; not compared.</p>` : "";
+    return rows.length ? `<p class="cmp-calc-line">${metricWordsHtml(escapeHtml(sentenceList(rows.map((row) => row.metric))))} (calc.): not compared.</p>` : "";
   }
 
-  // One value that is not the same: a folding note. Its summary: the parameter, which databases list what, the result
-  // (square and word); its body: CatLog's line whole, the cause in words (database_cause, whatever the line says: the line
-  // is never read for it), where the paper prints it. A note with nothing in its body is a plain line.
+  // One value that is not the same: a folding note. Its summary: the parameter and the result (square and word); its
+  // body: CatLog's line whole (it names the databases and their numbers), the cause when the line does not say it
+  // (databaseCauseShown), then where the paper prints it. Each fact is said once. A note with nothing in its body is a plain line.
   function databaseNoteHtml({ field, metric, facts }, open) {
     const result = databaseResult(facts.status);
-    const phrase = databaseListPhrase(result?.filter, facts.sources);
-    const summary = `<span class="cmp-note-head">${metricWordsHtml(escapeHtml(metric))}<span class="cmp-sep" aria-hidden="true"> · </span>`
-      + `${phrase ? `${escapePublic(phrase)} ` : ""}</span>`
+    const summary = `<span class="cmp-note-head">${metricWordsHtml(escapeHtml(metric))}${result ? '<span class="cmp-sep" aria-hidden="true"> · </span>' : ""}</span>`
       + (result ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(databaseResultWord(facts))}</strong></span>` : "");
     const lineText = facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
     const line = lineText
       ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
-    const cause = databaseCauseLine(facts);
-    // A cause the line already says word for word is not said again under it.
-    const causeSaid = Boolean(cause) && lineText.toLowerCase().includes(cause.toLowerCase());
+    const cause = databaseCauseShown(facts);
     const body = line + kvList([
-      cause && !causeSaid ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
+      cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
       facts.evidence ? linkedKv("In the paper", caretHtml(escapePublic(facts.evidence))) : "",
     ], "cmp-facts");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;

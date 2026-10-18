@@ -871,12 +871,9 @@ come first, the context after.
   (`<details>`) per value that is not the same, values whose notes would read alike (the same result, line,
   databases, cause and place; most often "Not in the databases" with one line for the whole paper) sharing one note
   ("kcat, Km and kcat/Km · Not in the databases"), a value that corrects or differs keeping its own (the Values
-  pointer opens it by its parameter); its summary (13px, wraps): the
-  parameter · which databases list
-  what, from database_sources and the result only ("BRENDA and STRENDA DB list
-  another number" for a correction or a different number, "SABIO-RK lists this
-  number" for the same number under another label, nothing for a value no
-  database lists), then the result's 10px square and word, the name Browse's
+  pointer opens it by its parameter); its summary (13px, wraps, the result too: "Different number (exact factor, not
+  yet checked)" is wider than a 320px phone's note): the parameter · the result only (the line names the databases;
+  each fact is said once), the result's 10px square and word, the name Browse's
   option and chip have: "Corrects a value" (`--chg-magnitude`, whatever the
   cause), "Different number" (`--cmp-differs`), "Same, other label"
   (`--bar-neutral`), "Not in the databases" (`--cmp-new`). Its body: the
@@ -885,22 +882,22 @@ come first, the context after.
   the compared databases" and "STRENDA DB", round 9 brief C9 on the CatLog
   side: the browser check reads every note, closed ones too, and fails on a
   count in words or a name the "?" box spells otherwise), then a definition list (112px labels, 96px on phones, one column
-  up to 400px) with rows that have content: Cause (database_cause in words; on a value found by an exact factor alone
-  (database_found_by factor_only, or a status that says so, whatever an older snapshot calls it: its result word is
-  "Different number (exact factor, not yet checked)", brown) the databases, the factor from database_by_source and
-  "not yet checked against the paper", as in "SABIO-RK lists a number 1,000× lower (off by an exact power of ten); not
-  yet checked against the paper";
-  including the code-found power_of_ten "off by an exact power of ten",
-  printed_number_unit_not_applied "the printed number taken in another unit",
-  time_factor "off by exactly 60 or 3,600"; shown whatever the line says, as the
-  brief's body without database_parts has it, since the line is never read; a
-  code with no wording never shown)
-  (left out when the line already says the cause word for word) and In the paper (database_evidence; a local path
-  never). A note with an
+  up to 400px) with rows that have content: Cause (database_cause in words, said only where the line does not say it:
+  not when the line has its own cause part, database_parts.cause, "Checked against the paper: ..."; not when it names
+  the factor between the two numbers, "10× lower", "60× CatLog's value", "= the printed 21 × 60", "the printed number in
+  mM", which is what a cause found automatically is: power_of_ten "off by an exact power of ten",
+  printed_number_unit_not_applied "the printed number taken in another unit", time_factor "off by exactly 60 or
+  3,600"; not when it says the cause word for word, time_unit worded as CatLog's line words it, "a time unit taken for
+  another (seconds, minutes or hours)"; not for different_measurement on a line that says "another measurement"; a
+  code with no wording never shown; on a value found by an exact factor alone, database_found_by factor_only or a
+  status that says so, whatever an older snapshot calls it, whose result word "Different number (exact factor, not
+  yet checked)", brown, says it is not yet checked, only the factor from database_by_source with its cause, "1,000×
+  lower (off by an exact power of ten)", when the line does not give it) and In the paper (database_evidence; a local
+  path never). A note with an
   empty body is a plain line. Notes on a correction or a different number are
   open: every one from 641px, only the first on a phone; others closed; nothing
   is remembered. Then a kcat/Km CatLog calculated, once other values are
-  compared: "kcat/Km: calculated by CatLog; not compared." (13px, muted, no
+  compared: "kcat/Km (calc.): not compared." (the Values table's note says what calc. means; 13px, muted, no
   square: an empty one read as a box to tick), after the compared values. A record with a Different number says
   the caution where it applies: one 12px `--muted` line right under its notes (before the calculated kcat/Km),
   "A different number can mean a different measurement; it does not by itself mean a database is wrong.", once
@@ -920,8 +917,8 @@ come first, the context after.
   each database of the record's strongest result for that parameter ("BRENDA",
   titled "Corrects a value · Database: BRENDA · Compared value: kcat"); the paper's other records are linked once,
   under Paper (no "All records of this paper" here). Under the Values table (section B), a value that corrects or differs
-  gets one 12px line in words, "kcat/Km: BRENDA and OED list another number.
-  See Against the databases ↓" (no square beside CatLog's number), whose button
+  gets one short 12px line, the parameter and a link-like button, "kcat/Km: corrects BRENDA and OED ↓" or "Km: differs
+  from SABIO-RK ↓" (its accessible name adds "see Against the databases"; no square beside CatLog's number), whose button
   opens that value's note, scrolls it to the middle and focuses it.
   An earlier corrected record (not yet re-read) with its correction trail, headed
   "Corrected earlier" (Browse's name for it; no database is compared there, the

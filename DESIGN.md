@@ -208,8 +208,8 @@ its accessible description; no figure or table has a data line. The parts' figur
     corrections.by.factor_only) has them moved in the words (the lead, the Guide's results, the option titles), taken
     out of Figure 10's causes and the All column of Table 9 (its rule says the per-database columns keep them), and a
     note right after the lead says the figures still hold them under Corrects; nothing per parameter or per database
-    is guessed. The record says the result word with the factor (database_by_source's x) and that nothing has yet
-    checked it against the paper under Cause.
+    is guessed. The record says it in the result word, "Different number (exact factor, not yet checked)"; its line gives
+    the factor (database_by_source's x under Cause when the line does not).
   - Links never open a wider list than their count: a count, segment or label whose link would name a database
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
