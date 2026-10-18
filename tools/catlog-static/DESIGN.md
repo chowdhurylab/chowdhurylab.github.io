@@ -1102,8 +1102,9 @@ wrap, in this order and with these addresses (other pages link to every one; kee
   next reading; link to Team). Then What the checks found (#guideMethodLead, from the manifest only, left out without
   numbers): tiles of one figure, one phrase and one note each, in this order when present: Human review (the share, the
   headline's words "no value disputed on 2,767 of 2,770 entries from the earlier version (431 papers)", the disputed
-  values as printed), Reviewers' values (the share of approved values the same where CatLog has re-read the paper, its
-  counts, no CatLog value found wrong), AI audits (values re-checked, wrong and removed, as of), Human-checked (the tick
+  values a check of the paper found as the entry gives them), Reviewers' values (the share of approved values the same
+  where CatLog has re-read the paper, its counts, and no more than was checked: "Of the other 538, 279 were checked and
+  none is a CatLog error; 44 cannot be compared and 215 are still to check."), AI audits (values re-checked, wrong and removed, as of), Human-checked (the tick
   and the count in green, linked to #browse?checked=1); four in a row, two below 900px, one on phones; "More on Stats".
   The review in full sits in the disclosure "What the human review found" (#guideMethodMore / #guideMethodHuman: what
   the tiles do not say, the match with what the other values are, the human-checked rule; never the tiles' headline

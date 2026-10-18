@@ -4995,16 +4995,18 @@
     return `no value disputed on ${formatInteger(facts.undisputed)} of ${reviewBaseHtml(facts, options)}`;
   }
 
-  // What became of the disputed values: "The 3 disputed values are as printed in the paper." when a check against the
-  // paper found every one as printed, "Of the 3 disputed values, 1 is as printed in the paper." for part of them, "No
-  // value was disputed." without a dispute; "" when the check is not counted.
+  // What became of the disputed values, said as what a check found (never "disputed, yet as printed"): "A check of the
+  // paper found all 3 disputed values printed as the entry gives them." when it found every one so, "A check of the
+  // paper found 1 of the 2 disputed values printed as the entry gives it." for part of them, "No value was disputed."
+  // without a dispute; "" when the check is not counted.
   function reviewDisputedText(facts) {
     const { disputed, asPrinted } = facts;
     if (!disputed) return "No value was disputed.";
     if (asPrinted === disputed) {
-      return disputed === 1 ? "The one disputed value is as printed in the paper." : `The ${formatInteger(disputed)} disputed values are as printed in the paper.`;
+      return disputed === 1 ? "A check of the paper found the disputed value printed as the entry gives it."
+        : `A check of the paper found all ${formatInteger(disputed)} disputed values printed as the entry gives them.`;
     }
-    return asPrinted ? `Of the ${formatInteger(disputed)} disputed values, ${formatInteger(asPrinted)} ${asPrinted === 1 ? "is" : "are"} as printed in the paper.` : "";
+    return asPrinted ? `A check of the paper found ${formatInteger(asPrinted)} of the ${formatInteger(disputed)} disputed values printed as the entry gives ${asPrinted === 1 ? "it" : "them"}.` : "";
   }
 
   // The review in one sentence: "Human reviewers checked 2,770 entries from the earlier version (431 papers): no value
@@ -5083,23 +5085,54 @@
     return { approved, same, differ, papers: statsCount(a.papers_compared), wrong, breakdown };
   }
 
+  // The values that differ, by how far they were checked (match.breakdown): the checked ones (the same value under
+  // another name, values the paper supports as CatLog reads them, rounding, CatLog errors) and those not checked (cannot
+  // be compared, still to check). null without the parts.
+  const V2_DIFFER_OPEN = ["differ_not_comparable", "differ_not_adjudicated"];
+  function v2DifferChecks(match) {
+    if (!match?.breakdown) return null;
+    const open = V2_DIFFER_OPEN.reduce((sum, key) => sum + (match.breakdown[key] || 0), 0);
+    return { checked: match.differ - open, notComparable: match.breakdown.differ_not_comparable || 0, toCheck: match.breakdown.differ_not_adjudicated || 0 };
+  }
+
+  // What became of the values that differ, never more than was checked: "Of the other 538, 279 were checked and none
+  // is a CatLog error; 44 cannot be compared and 215 are still to check." (the Guide's short form); without the parts,
+  // "Of the other 449, none has been found to be a CatLog error."; "" when the errors are not counted.
+  function v2DifferShortText(match) {
+    if (!match?.differ || match.wrong === null) return "";
+    const errors = (n) => (n ? `${formatInteger(n)} ${n === 1 ? "is a CatLog error" : "are CatLog errors"}` : "none is a CatLog error");
+    const checks = v2DifferChecks(match);
+    if (!checks) {
+      const found = match.wrong ? `${formatInteger(match.wrong)} ${match.wrong === 1 ? "has been found to be a CatLog error" : "have been found to be CatLog errors"}`
+        : "none has been found to be a CatLog error";
+      return `Of the other ${formatInteger(match.differ)}, ${found}.`;
+    }
+    const open = [checks.notComparable ? `${formatInteger(checks.notComparable)} cannot be compared` : "",
+      checks.toCheck ? `${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""].filter(Boolean);
+    return `Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked and ${errors(match.wrong)}${open.length ? `; ${sentenceList(open)}` : ""}.`;
+  }
+
   // "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,903 of 4,441
-  // (87.9%). Of the other 538, 134 are the same value under another name, 142 are values the paper supports as CatLog
-  // reads them (the earlier entry's number or label was wrong), 3 differ by rounding, 44 cannot be compared and 215 are
-  // not yet checked; none is a CatLog value found wrong." Without the parts, the second sentence says only the wrong
-  // values found ("none of the other 538 is a CatLog value found wrong"), or nothing when they are not counted.
+  // (87.9%). Of the other 538, 279 were checked: 134 are the same value under another name, 142 are values the paper
+  // supports as CatLog reads them (the earlier entry's number or label was wrong) and 3 differ by rounding; none is a
+  // CatLog error. 44 cannot be compared and 215 are still to check." Without the parts, the second sentence says only
+  // the errors found (v2DifferShortText), or nothing when they are not counted.
   function v2MatchSentence(match) {
     const first = `Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ${formatInteger(match.same)} of ${formatInteger(match.approved)} (${qualityShare(match.same, match.approved)}).`;
     if (!match.differ) return first;
-    const wrongText = match.wrong === null ? ""
-      : match.wrong ? `${formatInteger(match.wrong)} ${match.wrong === 1 ? "is a CatLog value" : "are CatLog values"} found wrong`
-        : "none is a CatLog value found wrong";
-    if (match.breakdown) {
-      const parts = V2_DIFFER_PARTS.filter(([key]) => match.breakdown[key] > 0).map(([key, words]) => words(match.breakdown[key]));
-      if (parts.length) return `${first} Of the other ${formatInteger(match.differ)}, ${sentenceList(parts)}${wrongText ? `; ${wrongText}` : ""}.`;
+    const checks = v2DifferChecks(match);
+    if (checks && match.wrong !== null) {
+      const parts = V2_DIFFER_PARTS.filter(([key]) => !V2_DIFFER_OPEN.includes(key) && match.breakdown[key] > 0).map(([key, words]) => words(match.breakdown[key]));
+      const errors = match.wrong ? `${formatInteger(match.wrong)} ${match.wrong === 1 ? "is a CatLog error" : "are CatLog errors"}` : "none is a CatLog error";
+      const open = [checks.notComparable ? `${formatInteger(checks.notComparable)} cannot be compared` : "",
+        checks.toCheck ? `${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""].filter(Boolean);
+      const openText = open.length ? ` ${open.join(" and ").replace(/^./, (character) => character.toUpperCase())}.` : "";
+      if (parts.length) return `${first} Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked: ${sentenceList(parts)}; ${errors}.${openText}`;
+      if (checks.checked) return `${first} Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked and ${errors}.${openText}`;
+      return `${first}${openText}`;
     }
-    if (!wrongText) return first;
-    return `${first} ${match.wrong ? `Of the other ${formatInteger(match.differ)}, ${wrongText}` : `None of the other ${formatInteger(match.differ)} is a CatLog value found wrong`}.`;
+    const short = v2DifferShortText(match);
+    return short ? `${first} ${short}` : first;
   }
 
   // A snapshot without the reviewers' own counts: what reviewers found when they compared the earlier version's entries'
@@ -5223,11 +5256,7 @@
         review.disputed ? escapeHtml(reviewDisputedText(review)) : ""));
     }
     if (match) {
-      const others = match.differ && match.wrong !== null
-        ? (match.wrong
-          ? `${formatInteger(match.wrong)} of the other ${formatInteger(match.differ)} ${match.wrong === 1 ? "is a CatLog value" : "are CatLog values"} found wrong.`
-          : `None of the other ${formatInteger(match.differ)} is a CatLog value found wrong.`)
-        : "";
+      const others = v2DifferShortText(match);
       tiles.push(tile("reread", "Reviewers’ values", escapeHtml(qualityShare(match.same, match.approved)),
         escapeHtml(`of approved values the same where CatLog has re-read the paper (${formatInteger(match.same)} of ${formatInteger(match.approved)})`),
         escapeHtml(others)));

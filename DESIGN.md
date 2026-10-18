@@ -107,9 +107,10 @@ its accessible description; no figure or table has a data line. The parts' figur
   a kcat, Km or kcat/Km number or its unit, worked out from `entries` and `value_disputed` ("99.9%"), with the
   headline's words under it as one phrase (the user's words, 2026-10-15; the same on the band, in the Guide's lead and
   at Team's Human check; never "values correct"): "no value disputed on 2,767 of 2,770 entries from the earlier
-  version (431 papers)". One sentence, without repeating the base: "The 3 disputed values are as printed in the
-  paper." (`value_disputed_checked_as_printed`; "Of the 3 disputed values, 1 is as printed in the paper." for part of
-  them) and, with the headline wherever it stands, "In 153 entries (5.5%) the reviewer could not find the value in the
+  version (431 papers)". One sentence, without repeating the base, said as what a check found (never "disputed, yet
+  as printed"): "A check of the paper found all 3 disputed values printed as the entry gives them."
+  (`value_disputed_checked_as_printed`; "A check of the paper found 1 of the 2 disputed values printed as the entry
+  gives it." for part of them) and, with the headline wherever it stands, "In 153 entries (5.5%) the reviewer could not find the value in the
   paper." (`other_by_kind`'s "could not find the value" kind of `entries`). Two facts: Values missing ("27 entries
   (1.0%)") and Other disagreements ("177 entries (6.4%)"), then one note: what values missing means ("the paper
   prints a value the entry lacked, most often the kcat"), then, as its own sentence, how many of the values reviewers
@@ -120,14 +121,14 @@ its accessible description; no figure or table has a data line. The parts' figur
   records read from the paper (3 papers): no value disputed on 39 of them (97.5%); ..."). CatLog's reading against
   the review is one side line, set off by a rule at its left (the user's sentence, 2026-10-15): "Where CatLog has
   re-read a paper the reviewers checked, its value matches the approved value for 3,903 of 4,441 (87.9%). Of the
-  other 538, 134 are the same value under another name, 142 are values the paper supports as CatLog reads them (the
-  earlier entry's number or label was wrong), 3 differ by rounding, 44 cannot be compared and 215 are not yet
-  checked; none is a CatLog value found wrong." (`agreement.agree` of `values_approved`, else `v2_found` of
+  other 538, 279 were checked: 134 are the same value under another name, 142 are values the paper supports as CatLog
+  reads them (the earlier entry's number or label was wrong) and 3 differ by rounding; none is a CatLog error. 44
+  cannot be compared and 215 are still to check." (never more than was checked; `agreement.agree` of `values_approved`, else `v2_found` of
   `v2_approved_total`: the match as it is now; the other values' kinds from `differ_same_value_other_name`,
   `differ_catlog_right`, `differ_rounding`, `differ_not_comparable` and `differ_not_adjudicated`, said only when each
   is a whole count and they add up, with the wrong values found, to the values that differ; the wrong values found
-  from `differ_catlog_wrong`, else `catlog_value_wrong`, else `v2_wrong`; without the kinds only "None of the other 538
-  is a CatLog value found wrong."). Then links to the Guide's method and to Team; the date the review was counted and
+  from `differ_catlog_wrong`, else `catlog_value_wrong`, else `v2_wrong`; without the kinds only "Of the other 538,
+  none has been found to be a CatLog error."). Then links to the Guide's method and to Team; the date the review was counted and
   its definitions (No value disputed, Could not find the value, Values missing, Approved values, The same value) are
   said once, under How these numbers are counted (Human review). kcat, Km and kcat/Km in the lead's text (the big
   number's words, the sentence, the notes) take the site's italic markup with a subscript (metricWordsHtml, on

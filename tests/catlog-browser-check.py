@@ -978,13 +978,13 @@ REVIEW_FIXTURE = {
                   "catlog_value_wrong": 0, "stated_values": 58, "stated_values_catlog_has": 53},
 }
 # The headline (the user's words, 2026-10-15): "Human review: 99.9%", no value disputed on 2,671 of 2,674 entries from
-# the earlier version (408 papers); the sentence under it says the disputed values as printed and the entries whose
+# the earlier version (408 papers); the sentence under it says what a check of the paper found for the disputed values and the entries whose
 # value the reviewer could not find, never the base again.
 REVIEW_HEADLINE_NOTE = "no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers)"
-REVIEW_SENTENCE = "The 3 disputed values are as printed in the paper. In 153 entries (5.7%) the reviewer could not find the value in the paper."
+REVIEW_SENTENCE = "A check of the paper found all 3 disputed values printed as the entry gives them. In 153 entries (5.7%) the reviewer could not find the value in the paper."
 # The Guide's tiles (round 13): the headline's share and words, the disputed values as printed; the match in short.
-REVIEW_GUIDE_TILE = "Human review 99.9% no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers) The 3 disputed values are as printed in the paper."
-REVIEW_GUIDE_MATCH = "89.0% of approved values the same where CatLog has re-read the paper (3,625 of 4,074) None of the other 449 is a CatLog value found wrong."
+REVIEW_GUIDE_TILE = "Human review 99.9% no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers) A check of the paper found all 3 disputed values printed as the entry gives them."
+REVIEW_GUIDE_MATCH = "89.0% of approved values the same where CatLog has re-read the paper (3,625 of 4,074) Of the other 449, none has been found to be a CatLog error."
 # The Guide's Human review item, under the Guide's lead that already says the headline and the disputed values, starts
 # with what the lead does not say (never the same sentence twice).
 REVIEW_ITEM_START = "In 153 entries (5.7%) the reviewer could not find the value in the paper."
@@ -994,7 +994,7 @@ REVIEW_BASE_PARENS = """
         .map(e => [e.textContent, new Set([...e.getClientRects()].map(box => Math.round(box.top))).size]);
 """
 REVIEW_SIDE_LINE = ("Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 "
-                    "(89.0%). None of the other 449 is a CatLog value found wrong.")
+                    "(89.0%). Of the other 449, none has been found to be a CatLog error.")
 
 
 # Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
