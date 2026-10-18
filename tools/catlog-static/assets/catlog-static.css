@@ -1950,7 +1950,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody :is(td.c-organism,td.c-substrate) { order:2; flex:1 1 0; color:var(--text-2) }
   /* "organism · substrate": the card's 12px gap is taken back, so the dot has the same 4px on each side. */
   #recordsBody td.c-organism { flex:0 1 auto; max-width:60%; margin-right:-12px }
-  #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:block; max-height:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  /* Each wraps to two lines before it is cut, so cards that differ only in their substrate read apart on a phone (the
+     full name stays in the title). */
+  #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:-webkit-box; max-height:none; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere; white-space:normal }
   #recordsBody td.c-substrate .clamp-2::before { content:"\00b7"; margin:0 4px }
   /* The variant line comes right under the name, as in the table (the name keeps its two lines), then organism ·
      substrate and any note under them: a note never parts a variant from its enzyme. */
