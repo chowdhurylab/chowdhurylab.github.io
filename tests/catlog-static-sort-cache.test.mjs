@@ -171,9 +171,10 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
   assert.ok(pageHtml.includes("A dash, used only in table cells, means no value."));
+  assert.ok(pageHtml.includes("<dd>No value (table cells only).</dd>"), "the Guide's marks legend says what a dash is");
   assert.doesNotMatch(pageHtml, /c-temp|c-ph|value="temperature"|value="ph"/, "the table shows no temperature or pH and does not sort by them");
   // The record leaves out a value it does not store; a missing linked item reads None (the Guide says what the record does).
-  assert.ok(pageHtml.includes("that is not stored has no row, and the Values section says when none is stored."));
+  assert.ok(pageHtml.includes("that is not stored has no row, and the Values section says when none is stored;"));
   assert.ok(pageHtml.includes("a missing PMID or DOI, sequence or SMILES reads <em>None</em>"));
   assert.doesNotMatch(pageHtml, /is a dash too|None recorded/);
   assert.doesNotMatch(pageHtml, /hidden after a data check/, "A dash never suggests values were suppressed");
@@ -1374,17 +1375,29 @@ assert.doesNotMatch(indexHtml, /ChowdhuryLab</);
 const guideHtml = indexHtml.match(/<main id="guideView"[\s\S]*?<\/main>/)[0];
 const guideContents = guideHtml.match(/<nav class="guide-contents"[^>]*>([\s\S]*?)<\/nav>/)[1];
 const guideAnchors = [...guideContents.matchAll(/href="#(guide-[a-z-]+)"/g)].map((match) => match[1]);
-assert.deepEqual(guideAnchors, ["guide-method", "guide-find", "guide-record", "guide-status", "guide-databases", "guide-units",
+// (round 13, the user: a short, visual Guide: how a value is read and checked first, then a record's parts, then the labels
+// and colours, before the reference parts)
+assert.deepEqual(guideAnchors, ["guide-method", "guide-record", "guide-status", "guide-databases", "guide-find", "guide-units",
   "guide-downloads", "guide-caveats", "guide-cite", "guide-sources", "guide-questions"]);
 // Against the databases is a section of its own, written from the manifest when the snapshot carries the comparison: it
 // starts hidden, and its line in the contents with it.
 assert.match(guideContents, /<li data-guide-database-section hidden><a href="#guide-databases">Against the databases<\/a><\/li>/);
 assert.match(guideHtml, /<section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>\s*<h2 id="guide-databases-title">Against the databases<\/h2>\s*<div id="guideDatabasesBody"><\/div>\s*<\/section>/);
-assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 4, "the contents, Find records, Read a record and Questions link to it");
+assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 3, "the contents, Read a record and Questions link to it");
 // The method is said in full once, in its own section (with the model's name); nowhere else in the Guide.
 const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
 assert.match(guideMethod, /<a href="#team">People behind CatLog<\/a>/);
 assert.match(guideMethod, /An AI model \(Claude, Anthropic\) reads each/);
+// How CatLog reads a value (#guide-how-read, which a record's "How CatLog reads a value" link opens): the four steps in
+// order, each one sentence, then what the record keeps (the boilerplate records no longer repeat).
+const howRead = guideMethod.match(/<div class="guide-how-read" id="guide-how-read" aria-labelledby="guide-how-read-title">([\s\S]*?)<\/div>\s*<div class="guide-loop">/)[1];
+assert.match(howRead, /<h3 id="guide-how-read-title">How CatLog reads a value<\/h3>/);
+assert.deepEqual([...howRead.matchAll(/<strong class="guide-flow-name">([^<]*)<\/strong>/g)].map((match) => match[1]), ["Find the paper", "Read", "Check", "Compare"]);
+assert.match(howRead, /a model never types a converted number/);
+assert.match(howRead, /tagged <em>from paper<\/em>/);
+// The framing (round 13): CatLog re-verifies published values; never a download agent or papers in bulk.
+assert.match(guideHtml, /CatLog re-verifies published enzyme kinetics/);
+assert.doesNotMatch(guideHtml, /download agent|in bulk|mass download/i);
 assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);
 // printed unit differs belongs to the Possible unit or magnitude error group (CAUTION_FLAG_BITS), in the Guide and the filter.
 assert.match(guideHtml, /<em>Possible unit or magnitude error<\/em> \([^)]*above diffusion limit, printed unit differs\)/);
@@ -1404,13 +1417,14 @@ assert.doesNotMatch(guideHtml, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "
 assert.equal(api.keepReRead('Not yet re-read <a title="not yet re-read">pre-reading re-read</a>'),
   'Not yet <span class="nowrap">re-read</span> <a title="not yet re-read">pre-reading <span class="nowrap">re-read</span></a>');
 // The tag a record not yet re-read carries where one read from the paper says "from paper".
-assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>Not yet <span class="nowrap">re-read<\/span> by CatLog: /);
-assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version, an automated pipeline of AI models and code checks\.<\/dd>/);
+assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>From CatLog&rsquo;s earlier version; its source follows /);
+assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version \(AI models and code checks\)\.<\/dd>/);
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
   const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
-  assert.match(method, /<div><dt>Read from the paper<\/dt><dd>The current, second version of CatLog reads papers directly\./);
-  assert.match(method, /<div><dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>Records from CatLog&rsquo;s earlier version, which started from enzyme database entries \([^)]*\) and checked part of them against their papers[^<]*When CatLog reads a paper, its records replace these\.<\/dd>/);
+  // Two kinds of record, side by side: read from the paper (by the current, second version) and not yet re-read.
+  assert.match(method, /<strong>Read from the paper<\/strong>\s*<p>Read and checked against its paper by the current, second version of CatLog, as above\.<\/p>/);
+  assert.match(method, /<strong>Not yet <span class="nowrap">re-read<\/span><\/strong>\s*<p>From CatLog&rsquo;s earlier version, which started from database entries \([^)]*\) and checked part of them[^<]*When CatLog reads the paper, its records replace these\.<\/p>/);
   assert.equal((guideHtml.match(/second version/g) || []).length, 1, "The Guide says once that the current version is the second");
 }
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
@@ -1944,14 +1958,17 @@ function row(overrides = {}) {
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
   // How these numbers are counted: human-checked's rule as one clause after "where".
   assert.match(chart, /<dt>Human-checked<\/dt><dd>Accepted records where a human reviewer approved every kcat and Km shown and the kcat\/Km was approved too or agrees with kcat ÷ Km \(the human-checked tag\)\.<\/dd>/);
-  // The Guide's method section gets the same human-review number; its audit item keeps the words without numbers.
-  element("guideMethodAudits").textContent = "static audits";
+  // The Guide's method section: what the checks found, as tiles (one figure, one phrase, one note each), from the same
+  // numbers; without the review's counts only the human-checked records, and no disclosure of what the review found.
+  const guideTiles = () => [...element("guideMethodLead").innerHTML.matchAll(/data-guide-check="([^"]+)"/g)].map((match) => match[1]);
+  const guideTile = (key) => element("guideMethodLead").innerHTML.match(new RegExp(`<li class="guide-check" data-guide-check="${key}">[\\s\\S]*?</li>`))?.[0] || "";
   element("guideMethodHuman").innerHTML = "static human";
   api.renderGuideMethod();
-  assert.equal(element("guideMethodLead").hidden, true, "No human-review line without its counts");
-  assert.equal(element("guideMethodAudits").textContent, "static audits");
-  assert.equal(metricPlain(element("guideMethodHuman").innerHTML), "1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
-  assert.match(element("guideMethodHuman").innerHTML, /approved every <i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub> they show/);
+  assert.deepEqual(guideTiles(), ["checked"], "Only the human-checked records without the review's counts");
+  assert.equal(metricPlain(guideTile("checked")), '<li class="guide-check" data-guide-check="checked"><span class="guide-check-title">Human-checked</span><span class="guide-check-figure"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>1</span><span class="guide-check-text">accepted records: a human reviewer approved every kcat and Km they show</span><span class="guide-check-note"><a href="#browse?checked=1">Show them</a></span></li>');
+  assert.match(guideTile("checked"), /approved every <i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub> they show/);
+  assert.match(element("guideMethodLead").innerHTML, /<a href="https:\/\/example\.test\/tools\/catlog-stats\.html">More on Stats<\/a>/);
+  assert.equal(element("guideMethodMore").hidden, true, "No disclosure of what the review found without its counts");
   // With the audit and review results (overview.quality, copied from the human-review marks file at build time).
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-11", audit_values: 742, audit_wrong: 2,
     compared_values_v1: 2431, compared_papers_v1: 312, wrong_v1: 9, label_or_annotation_v1: 114, v2_found: 2160,
@@ -1972,8 +1989,11 @@ function row(overrides = {}) {
   // The band gives the same share as the lead.
   assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">90\.8%<\/span><small>of approved values the same where CatLog has <span class="nowrap">re-read<\/span> the paper<\/small>/);
   api.renderGuideMethod();
-  assert.equal(element("guideMethodAudits").textContent, "742 values re-checked against their papers by a separate AI auditor that tries to find errors; 2 were wrong (0.3%) and removed. As of Oct 11, 2026.");
-  // the comparison with human reviewers comes first, then the human-checked count
+  assert.deepEqual(guideTiles(), ["reread", "audit", "checked"]);
+  assert.equal(guideTile("audit"), '<li class="guide-check" data-guide-check="audit"><span class="guide-check-title">AI audits</span><span class="guide-check-figure">742</span><span class="guide-check-text">values re-checked against their papers by a separate AI auditor</span><span class="guide-check-note">2 were wrong (0.3%) and removed. As of Oct 11, 2026.</span></li>');
+  assert.match(guideTile("reread"), /<span class="guide-check-figure">90\.8%<\/span><span class="guide-check-text">of approved values the same where CatLog has <span class="nowrap">re-read<\/span> the paper \(2,160 of 2,380\)<\/span><span class="guide-check-note">None of the other 220 is a CatLog value found wrong\.<\/span>/);
+  // the comparison with human reviewers comes first, then the match and the human-checked count
+  assert.equal(element("guideMethodMore").hidden, false);
   assert.match(metricPlain(element("guideMethodHuman").innerHTML), /^In entries from the earlier version, 9 of 2,431 values.* 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat\/Km was approved too or agrees with kcat ÷ Km\.$/);
   // Numbers that do not hold together are not shown: the share correct never appears without the label errors.
   runtimeManifest.summary.overview = { ...overview, quality: { audit_values: 5, audit_wrong: 6, compared_values_v1: 10, wrong_v1: 1,
@@ -2011,10 +2031,12 @@ function row(overrides = {}) {
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /data-check="agreement"/, "The match is the lead's, not repeated in the checks");
-  // The Guide's method section opens with the same, in one sentence linked to Stats.
+  // The Guide's tiles give the same share, linked to Stats; the disclosure gives the other values by kind.
   api.renderGuideMethod();
   assert.equal(element("guideMethodLead").hidden, false);
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> Where CatLog has <span class="nowrap">re-read</span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 (89.7%). Of the other 257, 16 are the same value under another name, 109 are values the paper supports as CatLog reads them (the earlier entry&#39;s number or label was wrong), 3 differ by rounding, 24 cannot be compared and 105 are not yet checked; none is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
+  assert.deepEqual(guideTiles(), ["reread", "audit", "checked"]);
+  assert.match(guideTile("reread"), /<span class="guide-check-figure">89\.7%<\/span>[\s\S]*\(2,232 of 2,489\)<\/span><span class="guide-check-note">None of the other 257 is a CatLog value found wrong\.<\/span>/);
+  assert.match(element("guideMethodHuman").innerHTML, /Of the other 257, 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry&#39;s number or label was wrong\), 3 differ by rounding, 24 cannot be compared and 105 are not yet checked; none is a CatLog value found wrong\./);
   // With the reviewers' own counts (quality.review.v1, as the marks file has them on 2026-10-13) the lead is the human
   // review of the earlier version's entries; the first-comparison and blind fields are reference only and never read.
   const reviewV1 = { entries: 2674, papers: 408, entries_without_paper: 166, approved: 2464, rejected: 210, value_disputed: 3,
@@ -2059,11 +2081,15 @@ function row(overrides = {}) {
   const checks = element("statsCharts").innerHTML.match(/<ul class="stats-checks"[\s\S]*?<\/ul>/)[0];
   assert.deepEqual([...checks.matchAll(/data-check="([^"]+)"/g)].map((match) => match[1]), ["second_check", "audit", "human_checked"]);
   assert.match(checks, /1,301 kept and 30 removed as wrong \(2\.3%\), as of Oct 13, 2026\./);
-  // The Guide: the headline and the match in the lead, the review in full under Human review.
+  // The Guide: the headline first among the tiles (the base's parenthesis on one line), then the match, the audits and
+  // the human-checked records; the review in full in the disclosure.
   api.renderGuideMethod();
-  assert.equal(element("guideMethodLead").innerHTML, '<span class="guide-method-lead-title">Human review</span> No value disputed on <strong>2,671 of 2,674 entries (99.9%)</strong> from the earlier version <span class="nowrap">(408 papers)</span>; the 3 disputed values are as printed in the paper. Where CatLog has <span class="nowrap">re-read</span> a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 (89.0%). None of the other 449 is a CatLog value found wrong. <a href="https://example.test/tools/catlog-stats.html">More on Stats</a>');
-  // The Human review item does not repeat the lead's sentence: it starts with what the lead does not say.
-  assert.equal(metricPlain(element("guideMethodHuman").innerHTML), "In 153 entries (5.7%) the reviewer could not find the value in the paper. Values missing: 31 entries (1.2%) lacked a value the paper prints, most often the kcat. CatLog has since read 53 of the 58 values the reviewers named. Other disagreements: 177 entries (6.6%). 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
+  assert.deepEqual(guideTiles(), ["review", "reread", "audit", "checked"]);
+  assert.equal(guideTile("review"), '<li class="guide-check" data-guide-check="review"><span class="guide-check-title">Human review</span><span class="guide-check-figure">99.9%</span><span class="guide-check-text">no value disputed on 2,671 of 2,674 entries from the earlier version <span class="nowrap">(408 papers)</span></span><span class="guide-check-note">The 3 disputed values are as printed in the paper.</span></li>');
+  assert.match(guideTile("reread"), /<span class="guide-check-figure">89\.0%<\/span>[\s\S]*\(3,625 of 4,074\)<\/span><span class="guide-check-note">None of the other 449 is a CatLog value found wrong\.<\/span>/);
+  assert.match(guideTile("audit"), /<span class="guide-check-figure">1,331<\/span>[\s\S]*<span class="guide-check-note">30 were wrong \(2\.3%\) and removed\. As of Oct 13, 2026\.<\/span>/);
+  // The disclosure does not repeat the tiles' headline: it starts with what they do not say.
+  assert.equal(metricPlain(element("guideMethodHuman").innerHTML), "In 153 entries (5.7%) the reviewer could not find the value in the paper. Values missing: 31 entries (1.2%) lacked a value the paper prints, most often the kcat. CatLog has since read 53 of the 58 values the reviewers named. Other disagreements: 177 entries (6.6%). Where CatLog has <span class=\"nowrap\">re-read</span> a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 (89.0%). None of the other 449 is a CatLog value found wrong. 1 accepted records are human-checked: a human reviewer approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km.");
   // Team's Human check: no value disputed, on two lines on the wide loop and four on the upright one, one phrase for
   // its label.
   api.renderTeam();
@@ -3273,7 +3299,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   // Every magnitude caution ends as the Guide's does.
   const diffusion = measurementSection(row({ kcat_over_km: 5e9, kcat_over_km_display: "5e+9", condition_flags: ["efficiency_above_diffusion_limit"] }), {});
   assert.match(diffusion, /kcat\/Km is above the diffusion limit; the unit or the value may be wrong\./);
-  const guideCautions = indexHtml.match(/<dl class="guide-term-list guide-caution-list">[\s\S]*?<\/dl>/)[0];
+  const guideCautions = indexHtml.match(/<dl class="guide-caution-list">[\s\S]*?<\/dl>/)[0];
   assert.equal((guideCautions.match(/the unit or the value may be wrong\./g) || []).length, 3, "Km, kcat and diffusion limit say it alike");
   assert.doesNotMatch(guideCautions, /the unit may be wrong|magnitude may be wrong/);
   // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
@@ -4693,7 +4719,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const plain = (html) => html.replace(/<[^>]+>/g, "").replace(/&rsquo;/g, "’").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ");
   const items = (html, title) => {
     const list = html.split(new RegExp(`<h3 id="[^"]+">${title}</h3>`))[1].split("<h3")[0];
-    return Object.fromEntries([...list.matchAll(/<div><dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd><\/div>/g)]
+    return Object.fromEntries([...list.matchAll(/<div(?: data-result="[a-z_]+")?><dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd><\/div>/g)]
       .map(([, label, text]) => [plain(label).trim(), plain(text).trim()]));
   };
   const earlierOverview = { earlier_corrections: { records: 2881 } };
@@ -4791,7 +4817,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // An older comparison counts its factor-only values among the corrections: the Guide moves them under Different
   // number (1,548 - 257 correct; 1,051 + 257 differ), with their own line and count there.
   assert.match(items(html, "Results")["Corrects a value"], /1,291 values in 1,443 records$/);
-  assert.match(items(html, "Results")["Different number"], /1,308 values in 955 records Among them, exact factor, not yet checked: the database's number is the paper's times an exact factor \(a power of ten, 60 or 3,600\) and nothing has yet checked it against the paper; the record says Different number \(exact factor, not yet checked\) and names the factor \(257 values\)\.$/);
+  assert.match(items(html, "Results")["Different number"], /1,308 values in 955 records Among them, exact factor, not yet checked: [^;]*; the record says Different number \(exact factor, not yet checked\) and names the factor \(257 values\)\.$/);
+  // (shortened in round 13: the database's number is the paper's times a power of ten, 60 or 3,600, not yet checked)
+  assert.match(items(html, "Results")["Different number"], /Among them, exact factor, not yet checked: the database’s number is the paper’s times a power of ten, 60 or 3,600, not yet checked against the paper;/);
   assert.deepEqual(Object.values(items(html, "Why no database lists a value")).map((value) => value.match(/([\d,]+) values(?: from [\d,]+ papers?)?$/)?.[1]),
     ["4,873", "4,529", "10", "3", "4", "336"]);
   counted.corrections.by_cause_found_by = { paper_check: { unit_not_converted: 5 }, factor_only: { power_of_ten: 2 } };
@@ -4812,7 +4840,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /guide-db-count|guide-db-note">Found by code|<li>/);
   assert.doesNotMatch(text, /undefined|NaN|null|This snapshot compares|Where a database lists a number for the same measurement|in this snapshot/);
   assert.match(text, /with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
-  assert.equal([...html.matchAll(/<h3 /g)].length, 4);
+  assert.equal([...html.matchAll(/<h3 /g)].length, 5);
+  // The section at a glance (round 13): the lead and the results as cards; what is compared, the causes, how a correction
+  // is found and why no database lists a value in disclosures, each headed by its h3.
+  assert.deepEqual([...html.matchAll(/<summary><h3 id="([a-z-]+)">/g)].map((match) => match[1]),
+    ["guide-databases-compared", "guide-databases-causes", "guide-databases-found", "guide-databases-not-listed"]);
+  assert.match(html, /<dl class="guide-status-list guide-db-results guide-db-cards">/);
   assert.equal(Object.keys(items(html, "Results")).length, 6);
   assert.equal(api.guideDatabasesHtml(null), "");
   // A snapshot whose records carry no earlier corrections leaves Corrected earlier out (Browse has no such option then).

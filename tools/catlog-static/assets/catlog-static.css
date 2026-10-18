@@ -2063,53 +2063,142 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .stats-section { break-inside:avoid }
 }
 
-/* Guide: one reading column (72ch, body 16px/24px), the same status badges as the table, plain section rules. Every rule is scoped to .guide-view, so it wins over the older Guide rules above. */
-.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:72ch; margin:0 auto; padding:32px 24px 56px; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
+/* Guide: short, scannable and visual (round 13, the user: "visuals help more ... a better to-the-point guide"). One
+   column up to 1000px: the pictures (the reading steps, the numbered record, the legend of labels and colours, the
+   results against the databases, the units) use its width, prose keeps to 72ch. Every rule is scoped to .guide-view, so
+   it wins over the older Guide rules above. The parts reuse the page's own components (status dot, tags, values table,
+   filter chips, database squares), so their colours follow the tokens. */
+.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:1000px; margin:0 auto; padding:32px 24px 56px; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell :is(p, dd, dt, li, summary) { font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell :is(h1, h2, h3) { color:var(--text); font-weight:600; letter-spacing:0 }
-.guide-view .guide-heading { max-width:none }
+.guide-view .guide-shell :where(.guide-section, .guide-citation, .guide-sources, .guide-heading) > :where(p, dl, ul, details),
+.guide-view .guide-shell :where(.guide-citation > div > p) { max-width:72ch }
 .guide-view .guide-heading h1 { margin:0; font-size:var(--fs-24); line-height:var(--lh-24) }
-.guide-view .guide-heading > h1 ~ p { max-width:none; margin:12px 0 0; color:var(--text) }
+.guide-view .guide-shell .guide-lead { margin:12px 0 0; color:var(--text); font-size:var(--fs-18); line-height:28px }
+.guide-view .guide-shell .guide-byline { margin:8px 0 0; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-shell h2 { margin:0 0 12px; font-size:var(--fs-20); line-height:var(--lh-20) }
 .guide-view .guide-shell h3 { margin:0 0 6px; font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell p { margin:0 0 12px; color:var(--text) }
 .guide-view .guide-shell :is(sub, sup) { line-height:0 }
 .guide-view .guide-shell code { font-family:var(--font-mono); font-size:var(--fs-14); overflow-wrap:anywhere }
+.guide-view .guide-shell .guide-small { color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 /* Sections stack in one column, divided by a rule. */
-.guide-view :is(.guide-section, .guide-downloads, .guide-citation, .guide-sources) { display:block; margin:36px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
+.guide-view :is(.guide-section, .guide-citation, .guide-sources) { display:block; margin:40px 0 0; border:0; border-top:1px solid var(--line); padding:28px 0 0 }
 .guide-view .guide-shell .guide-section > h3 { margin:28px 0 8px }
 .guide-view .guide-shell .guide-section > dl + p { margin-top:16px }
 /* A section reached from the contents (or its own address, #guide-units) keeps a little room above its rule. */
 .guide-view [id^="guide-"] { scroll-margin-top:16px }
-/* Contents: one short list of the sections, three columns (two on phones). */
+/* Contents: the sections as a row of small buttons that wrap. */
 .guide-view .guide-contents { margin:24px 0 0; border-top:1px solid var(--line); padding:16px 0 0 }
-.guide-view .guide-shell .guide-contents h2 { margin:0 0 8px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:1.4 }
-.guide-view .guide-contents ul { columns:3 9.5em; column-gap:24px; margin:0; padding:0; list-style:none }
-.guide-view .guide-shell .guide-contents li { break-inside:avoid; padding:2px 0; font-size:var(--fs-16); line-height:var(--lh-16) }
-/* Example views: the link, then its address in small type. */
-.guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:1.4 }
+.guide-view .guide-shell .guide-contents h2 { margin:0 0 8px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14) }
+.guide-view .guide-contents ul { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-contents li { display:flex; padding:0 }
+.guide-view .guide-contents a { display:inline-flex; min-height:32px; align-items:center; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:5px 12px; color:var(--accent); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14) }
+.guide-view .guide-contents a:hover { border-color:var(--accent-line); background:var(--accent-tint); text-decoration:none }
+
+/* How CatLog reads a value: four steps in a row, each a card with its icon and number, an arrow between them; then what
+   the record keeps, and the loop of audits and human review under them. Upright below 900px. */
+.guide-view .guide-shell .guide-how-read > h3 { margin:0 0 12px }
+.guide-view .guide-flow { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:20px; margin:0; padding:0; list-style:none; counter-reset:flow }
+.guide-view .guide-shell .guide-flow-step { position:relative; display:grid; grid-template-columns:minmax(0, 1fr); align-content:start; gap:8px; border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:var(--radius); background:var(--bg); padding:14px 16px 16px; counter-increment:flow }
+.guide-view .guide-flow-step::after { content:counter(flow); position:absolute; top:12px; right:14px; color:var(--muted); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+.guide-view .guide-flow-step + .guide-flow-step::before { content:""; position:absolute; top:31px; left:-15px; width:8px; height:8px; border-top:2px solid var(--muted); border-right:2px solid var(--muted); transform:rotate(45deg) }
+.guide-view .guide-flow-icon { display:inline-grid; flex:0 0 36px; width:36px; height:36px; place-items:center; border-radius:50%; background:var(--accent-tint); color:var(--accent) }
+.guide-view .guide-flow-icon svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round }
+.guide-view .guide-flow-name { font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.guide-view .guide-flow-text { color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-keeps { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px 28px; max-width:none; margin:20px 0 0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-keeps li { border-left:2px solid var(--accent-line); padding:0 0 0 12px; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-keeps strong { display:block; margin-bottom:2px; color:var(--text) }
+.guide-view .guide-loop { display:flex; align-items:center; gap:12px; margin:20px 0 0; border:1px dashed var(--accent-line); border-radius:var(--radius); background:var(--accent-wash); padding:12px 16px }
+.guide-view .guide-shell .guide-loop p { margin:0; font-size:var(--fs-14); line-height:var(--lh-14) }
+/* What the checks found: the snapshot's numbers as tiles (one figure, one phrase, one note each), filled from the
+   manifest; left out without them. */
+.guide-view .guide-checks { margin:24px 0 0 }
+.guide-view .guide-shell .guide-checks > h3 { margin:0 0 10px }
+.guide-view .guide-check-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin:0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-check { display:grid; align-content:start; gap:4px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:14px 16px }
+.guide-view .guide-check-title { color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+.guide-view .guide-check-figure { color:var(--text); font-size:var(--fs-28); font-weight:600; line-height:var(--lh-28) }
+.guide-view .guide-check[data-check="checked"] .guide-check-figure { display:inline-flex; align-items:center; gap:6px; color:var(--checked) }
+.guide-view .guide-check-figure .check-icon { width:20px; height:20px }
+.guide-view .guide-check-text { color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-check-note { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
+.guide-view .guide-shell .guide-checks-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:10px 0 0; font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-method-more > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
+/* Two kinds of record, side by side. */
+.guide-view .guide-kinds { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; align-items:start }
+.guide-view .guide-shell .guide-kind { display:grid; align-content:start; gap:4px; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px }
+.guide-view .guide-kind-tag { justify-self:start; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
+.guide-view .guide-shell .guide-kind p { margin:0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+
+/* Read a record: a record drawn with the panel's own parts, each numbered, beside the key to the numbers. The numbers
+   are CSS counters, so a part the snapshot does not have (Against the databases) leaves no gap. */
+.guide-view .guide-anatomy { display:grid; grid-template-columns:minmax(0, 440px) minmax(0, 1fr); gap:24px 32px; align-items:start; margin:16px 0 0 }
+.guide-view .guide-anatomy-card { border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); counter-reset:part }
+.guide-view .guide-anatomy-part { position:relative; border-bottom:1px solid var(--line-soft); padding:12px 16px 12px 44px; counter-increment:part }
+.guide-view .guide-anatomy-part:last-child { border-bottom:0 }
+.guide-view .guide-pin, .guide-view .guide-anatomy-key li::before { display:grid; width:22px; height:22px; place-items:center; border-radius:50%; background:var(--accent); color:var(--bg); font-size:var(--fs-12); font-weight:600; line-height:1 }
+.guide-view .guide-pin { position:absolute; top:12px; left:12px }
+.guide-view .guide-pin::before { content:counter(part) }
+.guide-view .guide-shell .guide-anatomy-card :is(p, li) { margin:0; font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-shell .guide-anatomy-card .guide-anatomy-title { font-size:var(--fs-18); font-weight:600; line-height:var(--lh-18) }
+.guide-view .guide-shell .guide-anatomy-card .guide-anatomy-meta { margin-top:2px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.guide-view .guide-shell .guide-anatomy-card .guide-anatomy-heading { margin-bottom:6px; font-weight:600 }
+.guide-view .guide-anatomy-status { --status-color:var(--st-accepted); margin:0 }
+.guide-view .guide-anatomy-card .values-table { margin:0 }
+.guide-view .guide-shell .guide-anatomy-card .guide-anatomy-quote { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2) }
+.guide-view .guide-anatomy-quote > span { color:var(--text); font-weight:600 }
+.guide-view .guide-anatomy-db { display:grid; gap:4px; padding:0; list-style:none }
+.guide-view .guide-anatomy-db .db-mark { margin-right:6px }
+.guide-view .guide-shell .guide-anatomy-more p { display:flex; flex-wrap:wrap; gap:6px }
+.guide-view .guide-anatomy-more p > span { border:1px solid var(--line-soft); border-radius:var(--radius); background:var(--surface-2); padding:2px 8px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.guide-view .guide-anatomy-key ol { margin:0; padding:0; list-style:none; counter-reset:key }
+.guide-view .guide-shell .guide-anatomy-key li { position:relative; padding:0 0 14px 34px; counter-increment:key }
+.guide-view .guide-anatomy-key li::before { content:counter(key); position:absolute; top:1px; left:0 }
+.guide-view .guide-anatomy-key strong { display:block }
+.guide-view .guide-shell .guide-tip { margin:16px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+
+/* Labels and colours: four small legends in a grid (review result, tags, marks beside a value, filters in use), each
+   drawn with the table's own dot, tags, marks and chips. */
+.guide-view .guide-legend-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; margin:16px 0 0 }
+.guide-view .guide-legend-group { min-width:0; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px 6px }
+.guide-view .guide-shell .guide-legend-group > h3 { margin:0 0 4px; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-shell .guide-legend-group > p { margin:6px 0 10px; font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-legend-group .guide-status-list { margin:0; border-top:0 }
+.guide-view .guide-legend-group .guide-status-list > div { grid-template-columns:9.5em minmax(0, 1fr); gap:2px 12px; padding:8px 0 }
+.guide-view .guide-shell .guide-legend-group :is(dt, dd) { font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-legend-group .guide-status-list .state-badge, .guide-view .guide-legend-group .guide-tag-list .state-tag { font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-mark-sample { display:inline-flex; min-width:24px; align-items:center; color:var(--text-2) }
+.guide-view .guide-mark-tick { color:var(--checked) }
+.guide-view .guide-mark-tick .check-icon { width:14px; height:14px }
+.guide-view .guide-chip-row { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; padding:0; list-style:none }
+.guide-view .guide-shell .guide-chip-row li { display:flex; max-width:100% }
+.guide-view .guide-chip-row .filter-chip { cursor:default }
+.guide-view .guide-chip-row .filter-chip:hover { border-color:var(--group-line, color-mix(in srgb, var(--group, var(--accent)) 45%, var(--bg))); border-left-color:var(--group, var(--accent)) }
+.guide-view .guide-chip-row .filter-chip:hover .chip-x { color:var(--muted) }
+.guide-view .guide-shell .guide-legend-group .guide-chip-key { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+
 .guide-view .guide-link-list { display:grid; gap:8px; margin:0; padding:0; list-style:none }
-.guide-view .guide-shell .guide-link-list li { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px }
-.guide-view .guide-shell .guide-link-list code { color:var(--muted); font-size:var(--fs-13) }
+.guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14) }
+.guide-view .guide-shell code.guide-try { border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:0 6px; white-space:nowrap }
 .guide-view .guide-flag { vertical-align:-2px; cursor:default }
+/* Cautions: the short names and their meaning in two columns, each name over its line. */
+.guide-view .guide-caution-list { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 28px; max-width:none; margin:12px 0 0 }
+.guide-view .guide-caution-list > div { border-top:1px solid var(--line-soft); padding:10px 0 }
+.guide-view .guide-shell .guide-caution-list dt { font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.guide-view .guide-shell .guide-caution-list dd { margin:2px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-questions .guide-details > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
-/* The worked example: two stacked cards; the open-record card has a neutral border. */
-.guide-view .guide-record-example { display:block; margin:20px 0 0 }
-.guide-view .guide-record-example figcaption { display:block; margin:0 0 12px }
-.guide-view .guide-record-example figcaption > span:first-child { margin:0; color:var(--accent); font-size:var(--fs-14); font-weight:600 }
-.guide-view .guide-record-example figcaption > strong { font-size:var(--fs-18); font-weight:600 }
-.guide-view .guide-record-example figcaption > .guide-example-source { display:block; margin:4px 0 0; color:var(--muted); font-size:var(--fs-16) }
-.guide-view .guide-example-compare { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px }
-.guide-view .guide-example-level { height:auto; padding:16px 20px 18px }
-.guide-view .guide-example-level.research { border-color:var(--line); background:var(--bg) }
-.guide-view .guide-example-level header > span { color:var(--muted); font-size:var(--fs-14); font-weight:500 }
-.guide-view .guide-example-level header > h3 { margin:2px 0 12px; font-size:var(--fs-18) }
-.guide-view .guide-example-value strong { font-size:var(--fs-20); font-weight:600 }
-.guide-view .guide-example-value span { font-size:var(--fs-16) }
-.guide-view .guide-example-value strong span { color:inherit; font-size:inherit }
-.guide-view .guide-example-level dl > div { grid-template-columns:8em minmax(0, 1fr); gap:4px 16px; padding:8px 0 }
-.guide-view .guide-example-level :is(dt, dd) { font-size:var(--fs-16); line-height:var(--lh-16) }
-.guide-view .guide-example-level dd { color:var(--text); font-weight:500 }
+/* Units: the three catalog units as cards, then the rules in a list. */
+.guide-view .guide-unit-cards { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; max-width:none; margin:0 0 16px; padding:0; list-style:none }
+.guide-view .guide-shell .guide-unit-cards li { display:grid; align-content:start; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:12px 16px }
+.guide-view .guide-unit-name { color:var(--text-2); font-size:var(--fs-14); font-weight:600 }
+.guide-view .guide-unit-value { color:var(--text); font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
+.guide-view .guide-unit-what { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
+/* Before you use the values: a short checklist. */
+.guide-view .guide-checklist { display:grid; gap:8px; margin:0; padding:0; list-style:none }
+.guide-view .guide-shell .guide-checklist li { position:relative; padding-left:22px }
+.guide-view .guide-checklist li::before { content:""; position:absolute; top:8px; left:3px; width:6px; height:6px; border-top:2px solid var(--muted); border-right:2px solid var(--muted); transform:rotate(45deg) }
 .guide-view .guide-choice-link { margin-top:16px; font-size:var(--fs-14) }
 .guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
 /* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
@@ -2131,43 +2220,72 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-tag-list .state-tag { color:var(--muted); font-size:var(--fs-16); font-weight:500; white-space:nowrap }
 .guide-view .guide-tag-list .state-tag.human-checked { color:var(--checked) }
 .guide-view .guide-tag-list .check-icon { width:14px; height:14px; margin-right:4px; vertical-align:-1px }
-/* Lists of terms (caveats, downloads, sources, citation details): term left, meaning right. */
+/* Lists of terms (units, downloads, sources, citation details): term left, meaning right. */
 .guide-view :is(.guide-download-list, .guide-term-list) { display:block; margin:4px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view :is(.guide-download-list, .guide-term-list) > div, .guide-view .guide-citation-meta > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; border-bottom:1px solid var(--line-soft); padding:10px 0 }
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-status-list) > div:last-child { border-bottom:0 }
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dt { color:var(--text); font-weight:600 }
 .guide-view :is(.guide-download-list, .guide-term-list, .guide-citation-meta) dd { margin:0; color:var(--text); font-weight:400 }
-/* The method section opens with the agreement with human reviewers, in a light box like the lead of Stats. */
-.guide-view .guide-shell .guide-method-lead { max-width:none; margin:4px 0 16px; border:1px solid var(--line); border-radius:4px; background:var(--surface-2); padding:12px 16px; color:var(--text) }
-.guide-view .guide-method-lead-title { display:block; margin-bottom:4px; color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
-.guide-view .guide-method-lead strong { font-weight:600 }
-.guide-view .guide-citation p { max-width:none; margin:0 0 12px; color:var(--text) }
-.guide-view .guide-citation-meta { display:block; margin:8px 0 0; border-top:1px solid var(--line-soft) }
+.guide-view .guide-citation p { margin:0 0 12px; color:var(--text) }
+.guide-view .guide-citation-meta { display:block; max-width:72ch; margin:8px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view .guide-data-id-note { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-data-id-note code { overflow-wrap:anywhere }
 .guide-view .guide-citation-links { display:flex; flex-wrap:wrap; gap:8px 24px; margin:16px 0 0; font-size:var(--fs-16); font-weight:500 }
-.guide-view .guide-shell .guide-sources .guide-note { max-width:none; margin:0 0 12px; color:var(--text) }
+.guide-view .guide-shell .guide-sources .guide-note { margin:0 0 12px; color:var(--text) }
 .guide-view .guide-shell .guide-sources .guide-curation-license { margin:16px 0 0; font-weight:400 }
-/* Guide example (R2 content): the open record's values table at the record panel's size, its printed line below it. */
-.guide-view .guide-example-level .evidence-note-plain { margin:12px 0 0; font-size:var(--fs-14) }
-/* The example's Values table and note, as the open record draws them. */
-.guide-view .guide-example-level .value-notes { margin:12px 0 0; padding:0 }
-.guide-view .guide-example-level .value-notes li { margin:0; font-size:var(--fs-13); line-height:var(--lh-13) }
-/* Against the databases (#guide-databases): each result after a 10px square in its colour, as Browse's group draws it
-   (the word is always printed; Corrected earlier keeps the square's room without one), and each count on a muted line. */
-.guide-view .guide-shell .guide-databases h3 { margin:28px 0 8px }
-.guide-view .guide-db-result { display:inline-flex; align-items:flex-start; gap:8px; font-weight:500 }
+/* Against the databases (#guide-databases): the results as cards, each after a 10px square in its colour, as Browse's
+   group draws it (the word is always printed; Corrected earlier has no square), its count on a muted line; what is
+   compared, the causes, how a correction is found and why no database lists a value in disclosures under them. */
+.guide-view .guide-shell .guide-db-lead { max-width:72ch }
+.guide-view .guide-db-cards { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; margin:16px 0 0; border-top:0 }
+.guide-view .guide-db-cards > div { display:block; min-width:0; border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px }
+.guide-view .guide-db-cards > div:last-child { border-bottom:1px solid var(--line) }
+.guide-view .guide-shell .guide-db-cards :is(dt, dd) { font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-shell .guide-db-cards dt { margin-bottom:4px; font-size:var(--fs-16); line-height:var(--lh-16) }
+.guide-view .guide-db-result { display:inline-flex; align-items:flex-start; gap:8px; font-weight:600 }
 .guide-view .guide-db-mark { flex:0 0 10px; width:10px; height:10px; box-sizing:border-box; margin-top:7px }
 .guide-view .guide-db-mark[data-result="corrects"] { background:var(--chg-magnitude) }
 .guide-view .guide-db-mark[data-result="differs"] { background:var(--cmp-differs) }
 .guide-view .guide-db-mark[data-result="other_label"] { background:var(--bar-neutral) }
 .guide-view .guide-db-mark[data-result="not_listed"] { background:var(--cmp-new) }
 .guide-view .guide-db-mark[data-result="same"] { background:var(--cmp-same) }
-.guide-view .guide-db-count { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
-.guide-view .guide-db-nested { display:block; margin-top:6px }
+.guide-view .guide-db-count { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
+.guide-view .guide-db-nested { display:block; margin-top:6px; color:var(--text-2) }
 .guide-view .guide-db-sources { margin:0; padding:0; list-style:none }
 .guide-view .guide-db-count-inline { color:var(--muted) }
+.guide-view .guide-db-more { max-width:72ch; margin:0; border-top:1px solid var(--line-soft); padding:12px 0 }
+.guide-view .guide-db-cards + .guide-db-more { margin-top:20px }
+.guide-view .guide-db-more > summary h3 { display:inline; margin:0; color:inherit; font-size:var(--fs-16); font-weight:500; line-height:var(--lh-16) }
+.guide-view .guide-db-more > :is(dl, p) { margin:8px 0 0 }
 .guide-view .guide-shell .guide-db-note { margin:16px 0 0; color:var(--muted) }
+@media (max-width: 899px) {
+  .guide-view .guide-flow { grid-template-columns:minmax(0, 1fr); gap:16px }
+  .guide-view .guide-shell .guide-flow-step { grid-template-columns:36px minmax(0, 1fr); column-gap:12px; row-gap:2px; border-top-width:1px; border-left:3px solid var(--accent) }
+  .guide-view .guide-flow-icon { grid-row:span 2 }
+  .guide-view .guide-flow-step + .guide-flow-step::before { top:-13px; left:31px; transform:rotate(135deg) }
+  .guide-view .guide-anatomy { grid-template-columns:minmax(0, 1fr) }
+  .guide-view .guide-anatomy-card { max-width:480px }
+}
+@media (max-width: 760px) {
+  .guide-view :is(.guide-legend-grid, .guide-db-cards, .guide-kinds, .guide-keeps) { grid-template-columns:minmax(0, 1fr) }
+}
+@media (max-width: 640px) {
+  .guide-view .guide-shell .guide-lead { font-size:var(--fs-16); line-height:var(--lh-16) }
+  .guide-view .guide-caution-list { grid-template-columns:minmax(0, 1fr) }
+  /* The units as three short rows: name, unit, meaning. */
+  .guide-view .guide-unit-cards { grid-template-columns:minmax(0, 1fr); gap:8px }
+  .guide-view .guide-shell .guide-unit-cards li { grid-template-columns:4.5em max-content minmax(0, 1fr); align-items:baseline; column-gap:12px; padding:8px 12px }
+  .guide-view .guide-unit-value { font-size:var(--fs-16); line-height:var(--lh-16) }
+  /* The example record's values: each printed form on its own line under its value, as a phone has room for. */
+  .guide-view .guide-values-table, .guide-view .guide-values-table tbody { display:block; width:100% }
+  .guide-view .guide-values-table thead { display:none }
+  .guide-view .guide-values-table tbody tr { display:grid; grid-template-columns:4.5em minmax(0, 1fr) 6.5em; align-items:baseline; column-gap:8px; border-bottom:1px solid var(--line-soft) }
+  .guide-view .guide-values-table tbody :is(th, td) { width:auto; border-bottom:0; padding:6px 0 0 }
+  .guide-view .guide-values-table td.vt-printed { grid-column:1 / -1; padding:2px 0 6px; color:var(--text-2) }
+  .guide-view .guide-values-table td.vt-printed::before { content:"As printed: "; color:var(--muted) }
+  .guide-view .guide-legend-group .guide-status-list > div { grid-template-columns:minmax(0, 1fr) }
+  .guide-view .guide-anatomy-part { padding-left:40px }
+}
 
 @media (max-width: 640px) {
   .guide-view .guide-shell { padding:24px 16px 40px }

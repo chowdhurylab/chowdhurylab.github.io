@@ -5121,25 +5121,73 @@
     ].filter(Boolean).join(" ");
   }
 
-  // The Guide's method section opens with the human review (the user's headline, first on Stats too): no value disputed
-  // on 2,767 of 2,770 entries (99.9%) from the earlier version (431 papers), the disputed values as printed, and the
-  // match read from the paper again, linked to Stats. Empty without either.
-  function guideReviewLeadHtml(overview) {
+  // The Guide's method section: under the reading steps, what the checks found as tiles (#guideMethodLead, the user,
+  // 2026-10-18: "visuals help more ... a better to-the-point guide"): the human review's headline (no value disputed on
+  // 2,767 of 2,770 entries, the disputed values as printed), the match where CatLog has re-read the paper, the AI audits
+  // and the human-checked records, each one figure, one phrase and one note; then what the human review found, in full,
+  // in a disclosure (#guideMethodMore). Each tile is left out without its numbers, and both without any. The Guide reads
+  // only the manifest, never the record index.
+  function guideChecksHtml(overview) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     const match = v2MatchFacts(quality);
-    if (!review && !match) return "";
-    const after = review && review.disputed ? reviewDisputedText(review) : "";
-    const headline = review
-      ? `No value disputed on <strong>${formatInteger(review.undisputed)} of ${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"} (${escapeHtml(review.share)})</strong> from the earlier version${review.papers ? ` <span class="nowrap">${escapeHtml(reviewBaseParts(review).papers)}</span>` : ""}${after ? `; ${escapeHtml(after.charAt(0).toLowerCase() + after.slice(1))}` : "."}`
-      : "";
-    const side = match ? escapeHtml(v2MatchSentence(match)) : "";
-    // ("re-read" never breaks at its hyphen, as everywhere in the Guide)
-    return keepReRead(`<span class="guide-method-lead-title">Human review</span> ${[headline, side].filter(Boolean).join(" ")}`) + ` <a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a>`;
+    const audit = auditFacts(overview);
+    const counts = manifestDistribution("verification_status");
+    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
+    const sentence = (text) => (text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : "");
+    const tile = (key, title, figure, text, note = "") => `<li class="guide-check" data-guide-check="${key}">`
+      + `<span class="guide-check-title">${escapeHtml(title)}</span><span class="guide-check-figure">${figure}</span>`
+      + `<span class="guide-check-text">${text}</span>${note ? `<span class="guide-check-note">${note}</span>` : ""}</li>`;
+    const tiles = [];
+    if (review) {
+      tiles.push(tile("review", "Human review", escapeHtml(review.share), reviewHeadlineHtml(review),
+        review.disputed ? escapeHtml(reviewDisputedText(review)) : ""));
+    }
+    if (match) {
+      const others = match.differ && match.wrong !== null
+        ? (match.wrong
+          ? `${formatInteger(match.wrong)} of the other ${formatInteger(match.differ)} ${match.wrong === 1 ? "is a CatLog value" : "are CatLog values"} found wrong.`
+          : `None of the other ${formatInteger(match.differ)} is a CatLog value found wrong.`)
+        : "";
+      tiles.push(tile("reread", "Reviewers' values", escapeHtml(qualityShare(match.same, match.approved)),
+        escapeHtml(`of approved values the same where CatLog has re-read the paper (${formatInteger(match.same)} of ${formatInteger(match.approved)})`),
+        escapeHtml(others)));
+    }
+    if (audit) {
+      tiles.push(tile("audit", "AI audits", escapeHtml(formatInteger(audit.values)),
+        "values re-checked against their papers by a separate AI auditor",
+        escapeHtml(`${sentence(auditOutcomeText(audit))}.${audit.date ? ` As of ${audit.date}.` : ""}`)));
+    }
+    if (humanChecked !== null) {
+      tiles.push(tile("checked", "Human-checked", `${CHECK_ICON_HTML}${escapeHtml(formatInteger(humanChecked))}`,
+        metricWordsHtml(escapeHtml(`accepted records: ${HUMAN_CHECKED_RULE} they show`)),
+        `<a href="#browse?checked=1">Show them</a>`));
+    }
+    if (!tiles.length) return "";
+    return keepReRead(`<h3 id="guide-checks">What the checks found</h3><ul class="guide-check-grid">${tiles.join("")}</ul>`
+      + `<p class="guide-checks-links"><a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a></p>`);
   }
 
-  // The Guide's method section: the human-review lead, then the audit and human-review items get this snapshot's numbers
-  // when it has them (they read without numbers otherwise). The Guide reads only the manifest, never the record index.
+  // What the human review found, in full (the disclosure under the tiles): the entries whose value the reviewer could not
+  // find, values missing and other disagreements (the tiles already say the headline and the disputed values), the match
+  // where CatLog has re-read the paper with what the other values are, and the human-checked records with their rule;
+  // kcat, Km and kcat/Km in the Guide's italic markup. "" without any of it.
+  function guideHumanReviewHtml(overview) {
+    const quality = overview?.quality || {};
+    const match = v2MatchFacts(quality);
+    const counts = manifestDistribution("verification_status");
+    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
+    const comparison = humanComparisonText(overview, { afterLead: Boolean(reviewFacts(quality.review?.v1)) });
+    const parts = [
+      comparison,
+      match ? v2MatchSentence(match) : "",
+      humanChecked !== null ? `${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.` : "",
+    ].filter(Boolean);
+    if (!comparison && !match) return "";
+    const html = metricWordsHtml(escapeHtml(parts.join(" ")));
+    return keepReRead(keepReviewBase(keepReviewBase(html, reviewFacts(quality.review?.v1)), reviewFacts(quality.review?.v2), { fromPaper: true }));
+  }
+
   function renderGuideMethod() {
     // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
@@ -5147,25 +5195,16 @@
     if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
     const overview = statsOverview(Number(manifest.total_rows || 0));
     const lead = $("guideMethodLead");
-    const leadHtml = lead ? guideReviewLeadHtml(overview) : "";
     if (lead) {
-      lead.innerHTML = leadHtml;
-      lead.hidden = !leadHtml;
+      const html = guideChecksHtml(overview);
+      lead.innerHTML = html;
+      lead.hidden = !html;
     }
-    const audit = auditFacts(overview);
-    if ($("guideMethodAudits") && audit) {
-      $("guideMethodAudits").textContent = `${formatInteger(audit.values)} values re-checked against their papers by a separate AI auditor that tries to find errors; ${auditOutcomeText(audit)}.${audit.date ? ` As of ${audit.date}.` : ""}`;
-    }
-    const counts = manifestDistribution("verification_status");
-    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
-    if ($("guideMethodHuman") && humanChecked !== null) {
-      // What the review found comes first (the user, 2026-10-12; what the lead above already says is not said again),
-      // then the human-checked records and their rule; kcat, Km and kcat/Km in the Guide's italic markup.
-      const comparison = humanComparisonText(overview, { afterLead: Boolean(leadHtml) });
-      const html = metricWordsHtml(escapeHtml(`${comparison ? `${comparison} ` : ""}${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.`));
-      const quality = overview?.quality || {};
-      $("guideMethodHuman").innerHTML = keepReviewBase(keepReviewBase(html, reviewFacts(quality.review?.v1)),
-        reviewFacts(quality.review?.v2), { fromPaper: true });
+    const more = $("guideMethodMore");
+    if (more && $("guideMethodHuman")) {
+      const html = guideHumanReviewHtml(overview);
+      $("guideMethodHuman").innerHTML = html;
+      more.hidden = !html;
     }
   }
 
@@ -5387,16 +5426,17 @@
     const counts = guideDatabaseCounts(data, overview);
     // Under Different number: the values a database lists at an exact factor nothing has yet checked (counted there).
     const factorOnlyHtml = counts.differs.factorOnly
-      ? ` <span class="guide-db-nested">Among them, <em>exact factor, not yet checked</em>: the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper; the record says <em>${escapeHtml(DATABASE_RESULT_NAMES.differs_factor_only)}</em> and names the factor (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}).</span>`
+      ? ` <span class="guide-db-nested">Among them, <em>exact factor, not yet checked</em>: the database&rsquo;s number is the paper&rsquo;s times a power of ten, 60 or 3,600, not yet checked against the paper; the record says <em>${escapeHtml(DATABASE_RESULT_NAMES.differs_factor_only)}</em> and names the factor (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}).</span>`
       : "";
+    // Each result a card: its square and name, one sentence (Browse's definition; Different number's first sentence and
+    // the caveat, said once here, since its exact-factor case has a line of its own), its count, then its nested line.
     const results = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
       const count = guideDatabaseCountHtml(item.key, counts[item.key]);
       const nested = item.nested
         ? ` <span class="guide-db-nested">Under it, <em>${escapeHtml(item.nested.label)}</em>: ${escapeHtml(item.nested.text)}${counts[item.nested.key].records !== null
           ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : (item.key === "differs" ? factorOnlyHtml : "");
-      // (the caveat with Different number only, once in the Guide)
-      const text = item.key === "differs" ? `${item.text} ${DATABASE_COMPARED_CAPTION}` : item.text;
-      return `<div><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
+      const text = item.key === "differs" ? `${item.text.replace(/^(.*?\.)\s.*$/s, "$1")} ${DATABASE_COMPARED_CAPTION}` : item.text;
+      return `<div${item.mark ? ` data-result="${item.mark}"` : ""}><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
     }).join("");
     const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
     const familyCount = (family) => {
@@ -5414,21 +5454,21 @@
       return escapeHtml(`${guideCountWords(total, "value", "values")}${papersText}`);
     };
     const stats = viewUrl("stats").href;
-    return keepReRead(`<p>${leadHtml}</p>
-      <dl class="guide-term-list guide-db-list">
-        <div><dt>What is compared</dt><dd>${whatHtml}</dd></div>
-        <div><dt>Databases</dt><dd>${databasesHtml}</dd></div>
-      </dl>
+    // The reference parts in disclosures, each headed by its h3 (the summary's one heading), so the section reads as the
+    // lead and the results at a glance.
+    const more = (id, title, body) => `<details class="guide-details guide-db-more"><summary><h3 id="${id}">${escapeHtml(title)}</h3></summary>${body}</details>`;
+    return keepReRead(`<p class="guide-db-lead">${leadHtml}</p>
       <h3 id="guide-databases-results">Results</h3>
-      <p>Browse&rsquo;s <em>Against the databases</em> group finds records by these results. A record matches a result when one of its values has it; <em>All values the same</em>, <em>every value</em> and <em>Corrected earlier</em> describe the whole record.</p>
-      <dl class="guide-status-list guide-db-results">${results}</dl>
-      <h3 id="guide-databases-causes">Cause of a correction</h3>
-      ${guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount)}
-      <h3 id="guide-databases-found">How a correction is found</h3>
-      ${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}
-      ${found.code !== null ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}
-      <h3 id="guide-databases-not-listed">Why no database lists a value</h3>
-      ${guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount)}
+      <p class="guide-small">A record has a result when one of its values has it; <em>All values the same</em>, <em>every value</em> and <em>Corrected earlier</em> describe the whole record. Browse&rsquo;s <em>Against the databases</em> filter finds them.</p>
+      <dl class="guide-status-list guide-db-results guide-db-cards">${results}</dl>
+      ${more("guide-databases-compared", "What is compared", `<dl class="guide-term-list guide-db-list">
+        <div><dt>Values</dt><dd>${whatHtml}</dd></div>
+        <div><dt>Databases</dt><dd>${databasesHtml}</dd></div>
+      </dl>`)}
+      ${more("guide-databases-causes", "Cause of a correction", guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount))}
+      ${more("guide-databases-found", "How a correction is found", `${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}${found.code !== null
+        ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}`)}
+      ${more("guide-databases-not-listed", "Why no database lists a value", guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount))}
       <p class="guide-db-note">All comparisons are within one paper. Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
       // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
       .replace(/&#39;/g, "&rsquo;");
