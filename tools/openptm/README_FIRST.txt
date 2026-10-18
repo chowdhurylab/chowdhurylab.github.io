@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-17
+Release: 2026-10-18
 
 Browse PTMs, sites and function, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -14,10 +14,10 @@ Design update, 16 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,388 function/regulation records.
+- 27,165 site records and 14,390 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 213 selected paper comparisons, containing 232 measurement entries from
-  73 primary papers across 71 families with numeric measurements.
+- 215 selected paper comparisons, containing 238 measurement entries from
+  75 primary papers across 73 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -26,6 +26,21 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 17
+- Two comparisons with six measurement entries from two additional papers.
+- Fast-FT blue/red chromophore maturation: five optical entries from Subach
+  et al. (2009), PMID 19136976, DOI 10.1038/nchembio.138. Both states are
+  already modified. Later chemistry (PMID 20121102) is corroboration, not
+  another numerical paper. Calibration and preparation limits are retained.
+- Silk-fibroin hydrogels: one water-content comparison from Mu et al. (2022),
+  PMID 35074913, DOI 10.1073/pnas.2115523119. Both preparations are already
+  crosslinked; the response after three days in saline is not proven equilibrium
+  or an isolated dityrosine-bond effect. Source SD and replication limits remain.
+- Original values, chemical assignments and notice metadata were independently
+  reviewed. Earlier records, the interface and the audit workbook are preserved.
+- 38 of 111 audit families remain without a numerical comparison in this
+  selection; this does not imply absence from the published literature.
 
 New paper measurements, reading round 16
 - One comparison with two optical measurements from Subach et al. (2009),
@@ -38,8 +53,8 @@ New paper measurements, reading round 16
 - Calibration assumptions, absent n and errors, and the affiliation-only
   publisher erratum remain explicit. No canonical site or occupancy inferred.
 - Independent review verified original table values, chemistry and notices.
-- 40 of 111 audit families remain without a numerical comparison in this
-  selection; this does not imply absence from the published literature.
+- That publication left 40 of the 111 audit families without a numerical
+  comparison in its selection.
 
 New paper measurements, reading round 15
 - Two deamination comparisons and four measurement entries from one additional
