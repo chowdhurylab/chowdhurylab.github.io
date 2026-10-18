@@ -6483,7 +6483,8 @@
       viewBox: "130 30 870 440",
       track: "M270 140 H670 A110 110 0 0 1 670 360 H270 A110 110 0 0 1 270 140 Z",
       stations: {
-        papers: { x: 290, y: 140, label: [290, 172, "middle"] },
+        // "Cited papers" stands a little in from the arc, so a wide font (DejaVu Sans) keeps 12px from the track.
+        papers: { x: 302, y: 140, label: [302, 172, "middle"] },
         reading: { x: 470, y: 140, label: [470, 172, "middle"] },
         check: { x: 650, y: 140, label: [650, 172, "middle"] },
         // AI audit's name and numbers stand up and to the left of it, clear of the arc and ending above its dot, so Human
@@ -6501,7 +6502,7 @@
       // Audit agents stand right of AI audit, between its two branches, their line level with it; above the Website
       // branch Supantha stands again (he builds the website), as Mohammad stands below The paper.
       actors: {
-        source: [290, 58], reading: [470, 58], checking: [650, 58], audit: [912, 250],
+        source: [302, 58], reading: [470, 58], checking: [650, 58], audit: [912, 250],
         supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
       },
       // A second chip of a person at another of their stations: drawn with its own line, lit with the first, not a

@@ -56,7 +56,7 @@ spacing: 4, 8, 12, 16, 24, 32, 48px
 radius: 4px (controls), 2px (Stats bars' outer ends), 0 (table bars)
 layout:
   header: 56px
-  counts-band: 83px (a card; 103px on tablets, 127px on phones)
+  counts-band: 75px (a card; 95px on tablets, 127px on phones)
   gutter: 24px (16px below 1024px)
   sidebar: 256px (to 1439px), 288px (1440px and up); rail 48px
   record: 440px (1024-1439px), 480px (1440px and up)
@@ -67,7 +67,7 @@ layout:
 ## Layout
 
 Start with the table, not a landing page. The page is one grid on a 4px spacing
-scale with 24px gutters (16px below 1024px): a 56px header, the counts band (an 83px card),
+scale with 24px gutters (16px below 1024px): a 56px header, the counts band (a 75px card from 1024px),
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
 and --line-soft inside them; shadows only on the phone sheet, dialogs, menus and
 Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"; 2026-10-18:
@@ -89,7 +89,7 @@ so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
-quieter. Inside the band (8px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
+quieter. Inside the band (6px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
 key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted) over its number
 (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number wears the colour
 its meaning has across the site (Type And Color, "Colour meanings"): Records the page's ink (--text), Accepted the
@@ -101,7 +101,7 @@ first line), 500 in --text-2, as tall as a label and its number, so the key numb
 title the Data ID) at the card's top right. From 1024px up this is one row that never wraps or moves as the window
 widens (in a wide font such as Linux's DejaVu Sans the With counts end 40px before the date at 1024px). Tablets
 (641-1023px): two rows, the key numbers, then the With counts on one line and the date at its end (no divider), one
-height (103px) across the range. Phones: the four key numbers two by two (Records and Accepted, then Read from the
+height (95px) across the range. Phones: the four key numbers two by two (Records and Accepted, then Read from the
 paper and Human-checked), More at the first row's right; More shows the With counts (the same three lines, under a
 thin rule) and the date under them, rows that exist only while shown. Read from the paper keeps its whole label down
 to 360px and takes its short tag, From paper, below it (a screen reader still reads Read from the paper). A filtered

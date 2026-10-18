@@ -2025,7 +2025,9 @@ def check_team(driver, browser, url):
     legend = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='aarna erin'] button[aria-pressed]")
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", legend)
     legend.click()
-    driver.execute_script("document.querySelector('#teamHeading').focus()")
+    # Focus leaves the button without scrolling the page: a scroll would slide another legend line (Supantha's, whose
+    # line grew in round 13) under the resting pointer, and Chrome's pointerover after a scroll would light his stations.
+    driver.execute_script("document.querySelector('#teamHeading').focus({preventScroll: true})")
     assert driver.execute_script(lit_js) == ["human"], driver.execute_script(lit_js)
     assert legend.get_attribute("aria-pressed") == "true"
     # Supantha's line meets Rules updated; his legend line also lights Papers, CatLog and the website.
@@ -3039,7 +3041,7 @@ def check_layout(driver, browser, url, route_label):
         # Header and counts band.
         assert box(".app-header")["height"] == 56, box(".app-header")
         band = box(".snapshot-band")
-        assert 80 <= band["height"] <= 86, f"The counts band is one row of key numbers in its card: {band}"
+        assert 72 <= band["height"] <= 78, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
                 .map(e => getComputedStyle(e)[prop]);
@@ -3164,8 +3166,9 @@ def check_layout(driver, browser, url, route_label):
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
         # In a short window, opening Review result's "?" scrolls the sidebar just enough to keep its options in view, never
-        # taking its title under the sticky heading; closing it again leaves the sidebar where it is.
-        set_browse_viewport(driver, browser, 1440, 700)
+        # taking its title under the sticky heading; closing it again leaves the sidebar where it is. (720px: the counts
+        # band's card, round 13, is 11px taller than the old 64px band, so the sidebar is as tall as it was at 700px.)
+        set_browse_viewport(driver, browser, 1440, 720)
         driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
         status_about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutStatus"]')
         status_about.click()

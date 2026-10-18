@@ -218,8 +218,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    status dot, Read from the paper CatLog's own colour, Human-checked its green with the tick), then the With counts
    (kcat, Km, kcat/Km), smaller, and the snapshot date at the card's top right. One layout from 1024px up (nothing
    wraps or moves as the window widens), two rows on tablets, a 2 x 2 grid on phones. */
-.snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:var(--sp-2) var(--gutter) }
-.snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--band-card-line); border-radius:8px; background:radial-gradient(70% 160% at 0% 0%, var(--accent-wash), transparent 64%), linear-gradient(180deg, var(--accent-wash-soft), transparent 80%), var(--bg); box-shadow:var(--band-card-glow); padding:var(--sp-2) var(--sp-5) var(--sp-2) var(--sp-4) }
+.snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:6px var(--gutter) }
+.snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--band-card-line); border-radius:8px; background:radial-gradient(70% 160% at 0% 0%, var(--accent-wash), transparent 64%), linear-gradient(180deg, var(--accent-wash-soft), transparent 80%), var(--bg); box-shadow:var(--band-card-glow); padding:6px var(--sp-5) 6px var(--sp-4) }
 /* Records and Accepted sit in the band's row like the other key numbers. */
 .summary-grid { display:contents }
 .summary-card, .snapshot-paper, .snapshot-checked { --key:var(--text); --key-glow:var(--accent-glow); position:relative; display:inline-flex; min-width:0; flex-direction:column; align-items:flex-start; color:var(--text); white-space:nowrap }
