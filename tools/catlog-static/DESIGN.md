@@ -1146,7 +1146,10 @@ wrap, in this order and with these addresses (other pages link to every one; kee
 - Find records (#guide-find): Search (examples as small code chips), Filters, Sort, Share; "Try": example views linked
   in the #browse? format.
 - Units (#guide-units): the three catalog units as cards (rows on phones), then Conversion, calc., Printed kcat/Km and
-  × 10ⁿ; Digits, Ki, T and pH (the table has no column for them), missing values and other units in a disclosure.
+  × 10ⁿ; Digits (a value read from the paper keeps the paper's significant figures, at least 2, and one more where a
+  unit conversion would shift the printed last digit, 87.3 min⁻¹ is 1.455 s⁻¹, as catlog-v2 site_release._printed
+  rounds; records not yet re-read at most 4, 3 after a per-minute conversion), Ki, T and pH (the table has no column
+  for them), missing values and other units in a disclosure.
 - Downloads (#guide-downloads: Full data, Table, Against the databases when the manifest has its comparison download,
   Results and record, Format, Review files), Before you use the values (#guide-caveats, a short checklist), Cite
   (#guide-cite), Sources and licenses (#guide-sources) and Questions (#guide-questions, native disclosures).
