@@ -940,9 +940,14 @@ p.cmp-note { padding-left:16px }
 .section-text { margin:0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .section-note { margin:8px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 
-/* H. Actions side by side (Download record is the primary button), the record's last line. */
-.detail-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:16px }
+/* The record's footer: the actions side by side (Download record is the primary button), then one muted footnote with
+   the license and the snapshot (date and data ID), each on its own line. */
+.detail-footer { border-top:1px solid var(--line-soft); padding:16px 20px 20px }
+.detail-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
 .detail-actions .button { min-height:36px }
+.detail-footnote { display:grid; gap:2px; margin:12px 0 0; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); overflow-wrap:break-word }
+/* A section's one Guide link (Checks: "How CatLog reads a value →"), under its rows. */
+.section-link { margin:10px 0 0; font-size:var(--fs-13); line-height:var(--lh-13) }
 .button.primary { border-color:var(--accent); background:var(--accent); color:var(--bg) }
 .button.primary:hover:not(:disabled) { border-color:var(--accent-hover); background:var(--accent-hover); text-decoration:none }
 .detail-load-error { display:grid; gap:6px; margin:16px 20px; border-left:3px solid var(--caution); background:var(--caution-tint); padding:12px 14px; color:var(--caution-ink); font-size:var(--fs-13) }

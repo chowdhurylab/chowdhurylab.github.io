@@ -10441,29 +10441,21 @@
     return v2Record ? CALCULATED_V2_NOTE : CALCULATED_OLDER_NOTE;
   }
 
-  // How code converted each value (a record read from the paper): "kcat and Km: converted by code from the printed
-  // units." once, and a value whose printed unit was read in a stated way on its own ("kcat/Km: converted by code, printed
-  // unit read as 10³ M⁻¹ s⁻¹."). A value with a printed-unit caution says the rest in its amber note.
+  // How a value's printed unit was read, when that is the record's own (a record read from the paper): "kcat/Km: printed
+  // unit read as 10³ M⁻¹ s⁻¹." That code converts every printed number into the catalog's units is the method, said by
+  // the Guide's "How CatLog reads a value": the As printed column shows each printed cell beside the stored value, so a
+  // changed unit shows there, and no line repeats "converted by code" on every record. A value with a printed-unit caution
+  // says the rest in its amber note.
   function conversionNotesHtml(proof, unitCautions) {
     if (!proof) return [];
-    const plain = [];
     const own = [];
     proof.lines.forEach((line, index) => {
       const field = (v2MetricLabels[line.metric] || [])[0];
-      let conversion = String(proof.facts[index].conversion || "").trim();
-      if (unitCautions.some((item) => item.field === field)) conversion = conversion.replace(/,?\s*printed unit read as .+$/, "").trim();
-      if (!conversion) return;
-      if (/^converted by code$/i.test(conversion)) {
-        if (!plain.includes(line.metric)) plain.push(line.metric);
-      } else {
-        const said = conversion.replace(/(printed unit read as )(.+)$/, (_m, head, unit) => `${head}${catlogUnitText(unit)}`);
-        own.push(`${metricWordsHtml(escapePublic(line.metric))}: ${caretHtml(escapePublic(said))}.`);
-      }
+      if (unitCautions.some((item) => item.field === field)) return;
+      const readAs = String(proof.facts[index].conversion || "").match(/printed unit read as (.+)$/);
+      if (readAs) own.push(`${metricWordsHtml(escapePublic(line.metric))}: printed unit read as ${caretHtml(escapePublic(catlogUnitText(readAs[1].trim())))}.`);
     });
-    const shared = plain.length
-      ? [`${metricWordsHtml(escapePublic(sentenceList(plain)))}: converted by code from the printed ${plain.length > 1 ? "units" : "unit"}.`]
-      : [];
-    return [...shared, ...own];
+    return own;
   }
 
   // As printed in a table with checks: each number of two or more figures (0.00048, 2,800) and each unit written with
@@ -10670,19 +10662,18 @@
     return `${(cut > PRINTED_LINE_MAX / 2 ? head.slice(0, cut) : head).replace(/[\s|,;]+$/, "")}…`;
   }
 
-  // The label names the values ("kcat and kcat/Km line, as extracted ...") when it is given them, else the place: "Table 2
-  // row" for a line with cells, "Table 2" for a sentence. A folded line names its values too ("Show the kcat line as
-  // extracted").
+  // "In the paper:" and the line; in brackets the values it gives ("In the paper (kcat and kcat/Km):") when the record
+  // quotes several lines, else its place ("In the paper (Table VIII):") when the Values caption does not already name it.
+  // A folded line names its values too ("Show the printed kcat line").
   function printedLineNoteHtml(printedLine, { place = "", metrics = [] } = {}) {
     const cells = String(printedLine).split("|").length;
-    const what = metrics.length ? `${sentenceList(metrics)} line` : "";
-    const where = what || (cells > 1 && /^(?:supplementary )?table\s+\S+$/i.test(place) ? `${place} row` : place);
-    const label = `${where ? `${where}, as` : "As"} extracted from the paper’s text:`;
-    const quote = `<p class="evidence-note-plain">${escapePublic(label)} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
+    const what = metrics.length ? sentenceList(metrics) : "";
+    const label = `In the paper${what || place ? ` (${what || place})` : ""}:`;
+    const quote = `<p class="evidence-note-plain">${metricWordsHtml(escapePublic(label))} “${printedLineHtml(shortPrintedLine(printedLine))}”</p>`;
     const lostPlusMinus = /\d \( \d/.test(printedLine);
     if (cells <= 4 && !lostPlusMinus) return quote;
     // The warning only where the ± signs were lost; a long row is folded without it.
-    return `<details class="printed-line-disclosure"><summary>${escapePublic(`Show the ${what || "line"} as extracted`)}</summary>${quote}`
+    return `<details class="printed-line-disclosure"><summary>${metricWordsHtml(escapePublic(`Show the printed ${what ? `${what} ` : ""}line`))}</summary>${quote}`
       + `${lostPlusMinus ? '<p class="printed-line-note">Text extraction dropped the ± signs from this line.</p>' : ""}</details>`;
   }
 
@@ -11137,7 +11128,8 @@
     const v2Record = isV2Row(summary) || String(detail.verification_method || "").startsWith(v2Method);
     const substrate = recordedName(summary.substrate_name) || (v2Record ? "Not stated in the paper" : "Not recorded");
     return detailSection("protein", "Protein and substrate", kvList([
-      linkedKv("Enzyme form", detailFormHtml({ ...summary, ...detail }) || escapePublic(enzymeForm)),
+      // The header names the form (Wild type, Variant H150A); the row is here only when the header names none.
+      detailFormHtml(summary) ? "" : linkedKv("Enzyme form", detailFormHtml({ ...summary, ...detail }) || escapePublic(enzymeForm)),
       identityRow,
       sourceProteinAccession ? kv("Source-listed accession", sourceProteinAccession) : "",
       // No sequence: the row says why (the note) or None.
@@ -11474,7 +11466,9 @@
   // The second sentence of the caption every comparison figure carries (and the record's "?" box; a record with a
   // Different number says it under its notes too).
   const DATABASE_COMPARED_CAPTION = "A different number can mean a different measurement; it does not by itself mean a database is wrong.";
-  const EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints. CatLog has not read this paper again yet.";
+  // (The header's "not re-read" says that CatLog has not read the paper again yet.)
+  const EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints.";
+  const EARLIER_ADDITIONS_INTRO = "CatLog's earlier version added these values from the paper; the source had none.";
   const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
   // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
@@ -11799,14 +11793,33 @@
       ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
     const cause = databaseCauseLine(facts);
+    // A cause the line already says word for word is not said again under it.
+    const causeSaid = Boolean(cause) && lineText.toLowerCase().includes(cause.toLowerCase());
     const body = line + kvList([
-      cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
+      cause && !causeSaid ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : "",
       facts.evidence ? linkedKv("In the paper", caretHtml(escapePublic(facts.evidence))) : "",
     ], "cmp-facts");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;
     return body
       ? `<details ${attributes}${open ? " open" : ""}><summary>${summary}</summary><div class="cmp-note-body">${body}</div></details>`
       : `<p ${attributes}>${summary}</p>`;
+  }
+
+  // Values whose notes would read alike (the same result, line, databases, cause and place in the paper; "Not in the
+  // databases" with one line for the whole paper, most often) share one note, "kcat, Km and kcat/Km · Not in the
+  // databases", as the same-number lines share one. A value that corrects or differs keeps its own note: the Values
+  // table's pointer opens it by its parameter.
+  function databaseNoteGroups(rows) {
+    const groups = [];
+    rows.forEach((row) => {
+      const filter = databaseResult(row.facts.status)?.filter;
+      const key = JSON.stringify([filter, row.facts.status, row.facts.sentence, row.facts.databases, row.facts.cause,
+        row.facts.evidence, row.facts.sources]);
+      const same = filter !== "corrects" && filter !== "differs" ? groups.find((group) => group.key === key) : null;
+      if (same) same.metrics.push(row.metric);
+      else groups.push({ ...row, key, metrics: [row.metric] });
+    });
+    return groups.map(({ key, metrics, ...row }) => ({ ...row, metric: sentenceList(metrics) }));
   }
 
   // The results of a record's values as filter keys ("same", "corrects", ...; a calculated kcat/Km has none).
@@ -11841,9 +11854,7 @@
         }
       }
     }
-    if (paperRef && paperRecordCounts([paperRef.id], paperRef.byPmid)?.get(paperRef.id) !== 1) {
-      links.push(databaseBrowseLink("All records of this paper", [["q", paperRef.query]], { recordKey, keep: true }));
-    }
+    // (The paper's other records are linked once, under Paper.)
     return links.length ? `<p class="cmp-explore">More like this: ${links.join('<span aria-hidden="true"> · </span>')}</p>` : "";
   }
 
@@ -11880,7 +11891,7 @@
     const noteRows = rows.filter((row) => !isCalculated(row) && !isSame(row));
     const wide = Boolean(window.matchMedia?.("(min-width: 641px)")?.matches);
     let opened = 0;
-    const notes = noteRows.map((row) => {
+    const notes = databaseNoteGroups(noteRows).map((row) => {
       const filter = databaseResult(row.facts.status)?.filter;
       const open = (filter === "corrects" || filter === "differs") && (wide || opened++ === 0);
       return databaseNoteHtml(row, open);
@@ -12080,7 +12091,12 @@
       ? ["Replaced"]
       : correctionOtherPair(item).map((part) => part.text)));
     if (!valueItems.length && !otherItems.length) return "";
+    // Every item added (the source had none of them): said once, in the intro, not as a tag on each item.
+    const hasBefore = (item) => item.before != null && item.before !== "";
+    const allAdded = [...valueItems, ...otherItems].every((item) => /sequence|smiles/.test(item.key || "") || !hasBefore(item))
+      && valueItems.length > 0;
     const changeHtml = (item) => {
+      if (allAdded && !hasBefore(item)) return "";
       const change = changeWords(item);
       return `<span class="cmp-result"><span class="cmp-mark${change.key ? ` cmp-${change.key}` : ""}" aria-hidden="true"></span>`
         + `<span>${escapeHtml(change.word)}</span></span>`;
@@ -12112,7 +12128,7 @@
           (item.kind && !/^chang/i.test(item.kind) ? changeHtml(item) : "") + whereHtml(item));
       }),
     ];
-    return `<p class="section-text cmp-intro">${escapeHtml(EARLIER_CORRECTIONS_INTRO)}</p>`
+    return `<p class="section-text cmp-intro">${escapeHtml(allAdded ? EARLIER_ADDITIONS_INTRO : EARLIER_CORRECTIONS_INTRO)}</p>`
       + kvList(rows, "cmp-list")
       + (sharedWhere ? `<p class="cmp-where-once">In the paper: ${caretHtml(escapePublic(sharedWhere))}</p>` : "")
       + databaseMoreLinksHtml(new Set(["earlier"]), [], recordKey, null);
@@ -12246,18 +12262,17 @@
   }
 
   // ---- Record panel: C. Source ----
-  // The source and its own details in one list (each row wraps; nothing to open): where the values come from (named
-  // "Values from", so the list does not repeat the section's heading), what it merges, where the enzyme name comes from
-  // (an older record; a record read from the paper takes it from the paper), how the values were read or what stands
-  // behind them, the license and the snapshot.
-  function sourceSection(summary, detail, { v2Record, proof, mergedRows, paperCount, evidence, sourceNoteHtml }) {
-    const facts = proof?.facts || null;
-    const dataId = snapshotDataId();
+  // An older record's source and its own details in one list (each row wraps; nothing to open): which database the values
+  // come from (named "Values from", so the list does not repeat the section's heading), what it merges, where the enzyme
+  // name comes from and what stands behind its values. A record read from the paper says nothing here that the header
+  // ("from paper") and the Guide's "How CatLog reads a value" do not: its section is left out unless it has a detail of its
+  // own (a plain data origin, merged entries). The license and the snapshot are the record's footnote (detailFooterHtml).
+  function sourceSection(summary, detail, { v2Record, mergedRows, paperCount, evidence, sourceNoteHtml }) {
     const dataOrigin = publicEvidenceString(detail.data_origin);
     // An earlier record whose every value the earlier version added from the paper names the paper, not its database.
     const added = earlierValuesAdded(summary, detail, { v2Record });
-    return detailSection("source", "Source", kvList([
-      kv("Values from", added ? EARLIER_VALUES_FROM_PAPER : recordSourceName(recordSourceDb(summary, detail), v2Record)),
+    const rows = [
+      v2Record ? "" : kv("Values from", added ? EARLIER_VALUES_FROM_PAPER : recordSourceName(recordSourceDb(summary, detail))),
       added ? kv("Database entry", `${recordSourceName(recordSourceDb(summary, detail))}; its entry had none of these values`) : "",
       // How many database rows a record merges is said once, here.
       mergedRows > 1
@@ -12267,22 +12282,17 @@
       v2Record ? "" : kv("Name from", sourceLabels[summary.enzyme_label_source] || "Not recorded"),
       // Only a plain origin other than the usual "experimental" (internal tokens are not shown).
       dataOrigin && !/^experimental$/i.test(dataOrigin) && !/[_\d]/.test(dataOrigin) ? kv("Data origin", dataOrigin) : "",
-      // A record read by CatLog: how (Method) and what the second AI check found; an older record: what stands behind
-      // its values.
-      v2Record
-        ? linkedKv("Method", `${escapePublic(v2MethodSentence(facts, { unitChanged: measurementNotes(summary, detail, { proof }).unitCautions.length > 0 }))} <a class="method-link" href="#guide-method">How CatLog reads and checks values<span aria-hidden="true"> →</span></a>`)
-        : (evidence && evidence !== "Database note" ? kv("Evidence", evidence) : ""),
-      // kcat, Km and kcat/Km in italics with subscripts, as the Values table and the lines under it write them.
-      v2Record && facts ? kv("Second check", v2CheckText(facts, v2CheckOptions(summary, detail, proof)), { metricWords: true }) : "",
-      kv("License", detailLicense(summary, detail, v2Record)),
-      dataId ? kv("Data ID", `${dataId}${manifest.generated_at ? ` (snapshot ${formatDate(manifest.generated_at)})` : ""}`) : "",
-    ]) + sourceNoteHtml);
+      // What stands behind an older record's values.
+      !v2Record && evidence && evidence !== "Database note" ? kv("Evidence", evidence) : "",
+    ].filter(Boolean);
+    return rows.length || sourceNoteHtml ? detailSection("source", "Source", kvList(rows) + sourceNoteHtml) : "";
   }
 
   // ---- Record panel: F. Paper ----
-  function paperSection(summary, detail, { pmids, standInIds, dois, proof, notesHtml }) {
+  // The paper's title, IDs and its other records in CatLog. Where in the paper the values are printed is said once, by
+  // the Values table (its caption or Where column), not again here.
+  function paperSection(summary, detail, { pmids, standInIds, dois, notesHtml }) {
     const title = paperTitleText(summary, detail);
-    const places = proof ? [...new Set(proof.lines.map((line) => v2LinePlace(line)).filter(Boolean))] : [];
     const noPaper = !pmids.length && !standInIds.length && !dois.length;
     // Several papers: each one's records are linked beside its ID (paperRecordsRow), in place of the plain list.
     const cited = citedPapers(pmids, dois);
@@ -12295,13 +12305,12 @@
       perPaper === "doi" ? paperRecordsRow(summary, pmids, dois) : "",
       standInIds.length ? kv(standInIds.length === 1 ? "Paper ID" : "Paper IDs", `${standInIds.join(", ")} (no PMID)`) : "",
       noPaper ? kv("PMID or DOI", "None") : "",
-      places.length ? kv("Location", places.join("; ")) : "",
       perPaper ? "" : paperRecordsRow(summary, pmids, dois),
     ]) + notesHtml);
   }
 
-  // The Values legend's "see Human review below" shows that row (in Review and audit, the record's last section, several
-  // screens down on a phone): scrolled into view and focused, as a value's "!" shows its note.
+  // The Values legend's "see Human review below" shows that row (in Checks, a screen or more down on a phone): scrolled
+  // into view and focused, as a value's "!" shows its note.
   const HUMAN_REVIEW_LINK_HTML = '<button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review</button>';
 
   // A row of the record (by its class), scrolled into view and focused, outlined a moment.
@@ -12315,11 +12324,15 @@
     window.setTimeout(() => row.classList?.remove("is-target"), 1600);
   }
 
-  // ---- Record panel: H. Review and audit ----
-  // The record's review in one sentence, the AI audit (date and result only), what a human reviewer found, then the
-  // record's actions.
-  const V2_STATUS_SENTENCE = "Accepted: read from the paper by CatLog.";
-  const CORRECTED_LISTED_SENTENCE = `Corrected and accepted in the earlier automated review; the changes are listed under ${DATABASE_RESULT_NAMES.earlier}.`;
+  // ---- Record panel: Checks ----
+  // How far the record's values were checked, right after the values and their comparison with the databases: a record
+  // read from the paper gives what the second AI check found, the AI audit (date and result only) and what a human reviewer
+  // found (its header already says Accepted · from paper, so no review sentence repeats it); an older record gives its
+  // review result in one sentence and, when the earlier review did not settle it, that its values are the database's. The
+  // method itself is the Guide's (one link at the end), never a sentence repeated on every record.
+  const CORRECTED_LISTED_SENTENCE = `Corrected and accepted in the earlier automated review (see ${DATABASE_RESULT_NAMES.earlier}).`;
+  const HOW_READ_LINK = { href: "#guide-how-read", text: "How CatLog reads a value" };
+  const HOW_EARLIER_LINK = { href: "#guide-method", text: "How the earlier review worked" };
 
   function sideFileAuditText(check) {
     if (!Array.isArray(check?.audit) || !check.audit.length) return "";
@@ -12332,26 +12345,48 @@
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
-  function reviewSection(summary, detail, { v2Record, proof, check, hasCorrections, reportHref, hasPaper = true }) {
+  function guideLinkHtml({ href, text }) {
+    return `<p class="section-link"><a class="method-link" href="${escapeHtml(href)}">${escapeHtml(text)}<span aria-hidden="true"> →</span></a></p>`;
+  }
+
+  function checksSection(summary, detail, { v2Record, proof, check, hasCorrections, hasPaper = true }) {
     const humanNote = humanReviewNote(summary);
+    const accepted = (summary._recordState || recordStateForRow(summary)) === "accepted";
+    // A record read from the paper and accepted says so in its header; any other gives its review result here.
     const status = v2Record
-      ? escapePublic(V2_STATUS_SENTENCE)
+      ? (accepted ? "" : rowStatusLabel(summary, { exact: true }))
       // The earlier review was an automated pipeline of AI models and code checks: the Guide's method section says so.
-      : `${escapePublic(hasCorrections && summary.verification_status === "corrected" ? CORRECTED_LISTED_SENTENCE : reviewOutcome(summary, detail))} <a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →</span></a>`;
+      : (hasCorrections && summary.verification_status === "corrected" ? CORRECTED_LISTED_SENTENCE : reviewOutcome(summary, detail));
     const audit = (proof && v2AuditText(proof.lines, proof.facts)) || sideFileAuditText(check);
-    return detailSection("review", "Review and audit", kvList([
-      linkedKv("Review result", status),
+    const secondCheck = v2Record && proof?.facts ? v2CheckText(proof.facts, v2CheckOptions(summary, detail, proof)) : "";
+    return detailSection("checks", "Checks", kvList([
+      status ? kv("Review result", status) : "",
       !v2Record && databaseValuesUnchecked(summary, detail, { hasPaper }) ? kv("Paper check", DATABASE_VALUES_NOTE) : "",
+      // kcat, Km and kcat/Km in italics with subscripts, as the Values table and the lines under it write them.
+      secondCheck ? kv("Second check", secondCheck, { metricWords: true }) : "",
       audit ? kv("AI audit", audit) : "",
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
         ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}`, { className: "human-review-line" })
         : "",
-    ]) + `
-      <div class="detail-actions">
-        <button id="downloadSelectedJson" class="button primary" type="button">Download record</button>
-        <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportHref)}">Report a problem</a>
-      </div>`);
+    ]) + guideLinkHtml(v2Record ? HOW_READ_LINK : HOW_EARLIER_LINK));
+  }
+
+  // The record's last part: Download record (the primary button) and Report a problem side by side, then one small line
+  // with what holds for the whole snapshot: the license and the snapshot's date and data ID (said once, not as rows of a
+  // section on every record).
+  function detailFooterHtml(summary, detail, { v2Record, reportHref }) {
+    const dataId = snapshotDataId();
+    const snapshot = manifest.generated_at ? formatDate(manifest.generated_at) : "";
+    const snapshotText = [snapshot ? `Snapshot ${snapshot}` : "", dataId ? `Data ID ${dataId}` : ""].filter(Boolean).join(" · ");
+    return `
+      <footer class="detail-footer">
+        <div class="detail-actions">
+          <button id="downloadSelectedJson" class="button primary" type="button">Download record</button>
+          <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportHref)}">Report a problem</a>
+        </div>
+        <p class="detail-footnote"><span class="detail-license">License: ${escapePublic(detailLicense(summary, detail, v2Record))}</span>${snapshotText ? `<span class="detail-snapshot">${escapeHtml(snapshotText)}</span>` : ""}</p>
+      </footer>`;
   }
 
   // The header (section A): name, close, EC · organism · form, substrate (with its condition note), status, record ID.
@@ -12425,18 +12460,19 @@
     const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
     const reportHref = reportProblemHref(metricSummaryFor(summary, detail), pmids,
       { dois, standInIds, shown: shownValues, listed: listedEfficiencyTexts(summary, detail) });
-    // The order (design spec 5, with the databases moved up so what CatLog corrected is found at once): what was
-    // measured and how it compares with the enzyme databases, where it comes from and how it was checked, under which
-    // conditions, which protein and substrate, the paper, the review and the record's actions.
+    // The order (round 13: a curated entry, not a log): what was measured and how it compares with the enzyme databases,
+    // how far it was checked, an older record's source database, under which conditions, which protein and substrate,
+    // the paper, then the record's actions with its license and snapshot.
     $("detailContent").innerHTML = `
       ${detailTopHtml(summary, detail, { v2Record })}
       ${valuesSection(summary, detail, { proof: v2Proof, printedUnderPaper: Boolean(paperNotesHtml) })}
       ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, paper: { pmids, dois } })}
-      ${sourceSection(summary, detail, { v2Record, proof: v2Proof, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
+      ${checksSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, hasPaper: paperIds.length + dois.length > 0 })}
+      ${sourceSection(summary, detail, { v2Record, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
       ${conditionsSection(summary, detail)}
       ${proteinSection(summary, detail)}
-      ${paperSection(summary, detail, { pmids, standInIds, dois, proof: v2Proof, notesHtml: paperNotesHtml })}
-      ${reviewSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, reportHref, hasPaper: paperIds.length + dois.length > 0 })}
+      ${paperSection(summary, detail, { pmids, standInIds, dois, notesHtml: paperNotesHtml })}
+      ${detailFooterHtml(summary, detail, { v2Record, reportHref })}
     `;
     bindDetailTop();
     document.querySelectorAll("#detailContent [data-flag-note]").forEach((button) => {

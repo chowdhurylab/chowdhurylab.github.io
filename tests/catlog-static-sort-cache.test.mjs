@@ -1597,7 +1597,8 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
     { sequence_source: "uniprot_accession", sequence_variant_status: "reconstructed_variant_sequence", wild_type_sequence: "MAAA",
       variant_sequence: "MAAG", sequence_variant_note: "H150A applied to the UniProt canonical sequence" },
   );
-  assert.match(variantHtml, /<dt>Enzyme form<\/dt><dd><span class="detail-form">Variant <code class="mutation">H150A<\/code><\/span><\/dd>/);
+  // The header names the form ("Variant H150A"): the section does not repeat it.
+  assert.doesNotMatch(variantHtml, /<dt>Enzyme form<\/dt>/);
   assert.match(variantHtml, /<dt>Variant sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa, UniProt P22498 with H150A<\/span>/);
   assert.match(variantHtml, /<dt>Wild-type sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/);
   // Show opens the sequence under its row; Copy copies it.
@@ -1607,7 +1608,7 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
   assert.doesNotMatch(variantHtml, /Sequence note|Sequence source|Variant: /);
   const wildHtml = api.proteinSection({ primary_uniprot_id: "P1", wild_type: true },
     { sequence_variant_status: "canonical_wild_type_sequence", wild_type_sequence: "MAAA", sequence_variant_note: "UniProt canonical sequence" });
-  assert.match(wildHtml, /<dt>Enzyme form<\/dt><dd>Wild type<\/dd>/);
+  assert.doesNotMatch(wildHtml, /<dt>Enzyme form<\/dt>/, "the header says Wild type");
   assert.match(wildHtml, /<dt>Sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/, "a wild-type record's sequence is its Sequence");
   assert.doesNotMatch(wildHtml, /Sequence note|UniProt canonical sequence/);
   assert.match(api.proteinSection({}, { identity_resolution_state: "sequence_resolved_no_accession", sequence: "MAAA" }),
@@ -3459,8 +3460,9 @@ assert.match(plainMetricNames(referenceHtml), /No kcat, Km or kcat\/Km is stored
 assert.match(referenceHtml, /<dt>SMILES<\/dt><dd>None<\/dd>/);
 assert.doesNotMatch(referenceHtml, /Protein identity/);
 assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
-// The record (design spec 5): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values (with
-// the values as printed), Source, Conditions, Protein and substrate, Paper, Review and audit with the record's actions last.
+// The record (design spec 5, round 13): name; EC, organism and form; substrate; status; record ID and Copy link. Then Values
+// (with the values as printed), Checks, Conditions, Protein and substrate, Paper, and the record's actions with its license
+// and snapshot last. A record read from the paper has no Source section: its header says "from paper".
 {
   const v2Summary = row({ record_key: "v2-structure", measurement_key: "v2-structure", source_db: "primary_paper_direct",
     enzyme_label_source: "explicit_enzyme_name", ec_number: "1.4.1.20", organism: "Bacillus sphaericus",
@@ -3478,16 +3480,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
-  const order = ['class="detail-top"', ">Values</h3>", ">Source</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
-    ">Review and audit</h3>", 'id="downloadSelectedJson"'];
+  const order = ['class="detail-top"', ">Values</h3>", ">Checks</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
+    'id="downloadSelectedJson"', 'class="detail-footnote"'];
   const positions = order.map((part) => html.indexOf(part));
   assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
   assert.match(html, /<caption>Printed in Table 2<\/caption><thead><tr><th scope="col">Parameter<\/th>/);
   assert.match(html, /<td class="vt-printed">68 s<sup>-1<\/sup><\/td><\/tr>/);
-  assert.match(html, /<dt>Location<\/dt><dd>Table 2<\/dd>/);
+  assert.doesNotMatch(html, /<dt>Location<\/dt>/, "the Values caption says where the values are printed");
+  assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>License<\/dt>|<dt>Data ID<\/dt>/);
   assert.doesNotMatch(html, /Against the databases/, "no database comparison in the snapshot: no section");
-  assert.match(html, /<dt>Review result<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd>/);
+  assert.doesNotMatch(html, /<dt>Review result<\/dt>|Accepted: read from the paper by CatLog/, "the header says Accepted · from paper");
+  assert.match(html, /<p class="section-link"><a class="method-link" href="#guide-how-read">How CatLog reads a value<span aria-hidden="true"> →<\/span><\/a><\/p><\/section>/);
+  assert.match(html, /<p class="detail-footnote"><span class="detail-license">License: CC BY 4\.0 \(CatLog compilation\)<\/span>/);
   // Organism names: the binomial in italics; a strain or "sp." stays roman; a virus stays roman.
   assert.equal(api.organismHtml("Escherichia coli K-12"), "<i>Escherichia coli</i> K-12");
   assert.equal(api.organismHtml("Bacillus sp. A1"), "<i>Bacillus</i> sp. A1");
@@ -3520,17 +3525,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify; ec_from_databases",
     proof_lines: [line("kcat", ""), line("Km", "")] });
   let html = element("detailContent").innerHTML;
-  assert.match(html, /<dt>Method<\/dt><dd>Read from the paper by an AI model; a second, separate AI check compared each value with the paper; values stored as printed\. <a class="method-link" href="#guide-method">How CatLog reads and checks values<span aria-hidden="true"> →<\/span><\/a><\/dd>/);
-  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
+  // The method is the Guide's, linked once under Checks; no Method line repeats it on every record.
+  assert.doesNotMatch(html, /<dt>Method<\/dt>|values stored as printed|second, separate AI check/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd><\/div><\/dl><p class="section-link"><a class="method-link" href="#guide-how-read">/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
   assert.doesNotMatch(html, /<dt>Evidence<\/dt>|second, separate AI run|independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
   html = element("detailContent").innerHTML;
-  assert.match(html, /compared each value with the paper; units converted by code\./);
+  assert.doesNotMatch(html, /units converted by code/);
   // The Second check line sets kcat, Km and kcat/Km as the Values table does (italics, subscripts).
   assert.match(html, /<dt>Second check<\/dt><dd><i>k<\/i><sub>cat<\/sub>: confirmed; <i>K<\/i><sub>m<\/sub>: unit set to mM\.<\/dd>/);
-  assert.match(html, /<ul class="value-notes"><li><i>k<\/i><sub>cat<\/sub>: converted by code from the printed unit\.<\/li><\/ul>/);
+  // As printed shows the printed cell beside the stored value: no line says "converted by code" on every record.
+  assert.doesNotMatch(html, /converted by code|<ul class="value-notes">/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
   assert.match(badge, /aria-label="Accepted, from paper"/);
@@ -3541,7 +3548,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", "converted by code, printed unit read as 10^3 s-1", "corrected: unit set to 10^3 s-1")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /<dt>Second check<\/dt><dd>Unit set to 10³ s⁻¹ for every value\.<\/dd>/);
-  assert.match(html, /<li><i>k<\/i><sub>cat<\/sub>: converted by code, printed unit read as 10³ s⁻¹\.<\/li>/);
+  assert.match(html, /<li><i>k<\/i><sub>cat<\/sub>: printed unit read as 10³ s⁻¹\.<\/li>/);
   assert.equal(api.catlogUnitText("s-1 mM-1"), "mM⁻¹ s⁻¹");
   assert.equal(api.catlogUnitText("M-1s-1"), "M⁻¹s⁻¹");
   assert.equal(api.catlogUnitText("min-1 µM-1"), "min⁻¹ µM⁻¹");
@@ -3564,7 +3571,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", { audit_date: "2026-10-11", audit_result: "kept" }), line("Km", { audit_date: "2026-10-11", audit_result: "kept" })] });
   let html = element("detailContent").innerHTML;
   assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd>/);
-  assert.match(html, /<dt>Review result<\/dt><dd>Accepted: read from the paper by CatLog\.<\/dd><\/div><div class="kv-line"><dt>AI audit<\/dt><dd>Oct 11, 2026: re-checked against the paper and kept\.<\/dd>/);
+  assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd><\/div><div class="kv-line"><dt>AI audit<\/dt><dd>Oct 11, 2026: re-checked against the paper and kept\.<\/dd>/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", { check: "confirmed; re-checked in an independent audit (2026-10-11)" }),
       line("Km", { check: "confirmed; unit corrected in an independent audit (2026-10-11)" })] });
@@ -3592,7 +3599,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The value carries the "!" (its amber note says which unit and why); the grey note says only that code converted it.
   assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
   assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>-1<\/sup> min<sup>-1<\/sup>/);
-  assert.match(plainMetricNames(confirmedHtml), /<li>kcat, Km and kcat\/Km: converted by code from the printed units\.<\/li>/);
+  assert.doesNotMatch(confirmedHtml, /converted by code/, "As printed shows each printed cell; no line repeats the method");
   assert.doesNotMatch(confirmedHtml, /printed unit read as/);
   const bothSummary = v2({ record_key: "unit-both", kcat: 150, km: 2.9, kcat_over_km: 54, kcat_display: "150", km_display: "2.9",
     kcat_over_km_display: "54", kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)" });
@@ -3624,13 +3631,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   const methodHtml = element("detailContent").innerHTML;
-  assert.doesNotMatch(methodHtml, /values stored as printed/);
-  assert.match(methodHtml, /compared each value with the paper; not every value is stored in the unit the paper prints \(see the notes\)\./);
+  assert.doesNotMatch(methodHtml, /values stored as printed|<dt>Method<\/dt>/);
+  assert.match(methodHtml, /The paper prints μM; CatLog stores mM/, "the amber notes say which values are stored in another unit");
   // The same prefix read differently (M^-1 s^-1 for m^-1 s^-1) keeps the plain grey hint.
   const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
-  assert.match(plainMetricNames(sameHtml), /<li>kcat\/Km: converted by code, printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
+  assert.match(plainMetricNames(sameHtml), /<li>kcat\/Km: printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
 // when every one is more than 2-fold from kcat ÷ Km, an amber note says so.
@@ -3777,8 +3784,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const without = api.checkedViewerIndexHeader({ schema_version: 2, details_per_shard: 250, enums, texts: {}, fields: [...baseFields, "s"] }, 250);
   assert.equal(new (api.viewerRowConstructor(without, ["details-000.js"]))([...values("z"), 0]).condition_note, null);
 }
-// The line quoted from the paper: where it is ("Table 2 row"), table markers gone, K_M and k_{cat} as K<sub>m</sub> and
-// k<sub>cat</sub>; a long table row or one whose ± signs were lost is folded away with a warning.
+// The line quoted from the paper: "In the paper:" (with its place or its values in brackets when needed), table markers
+// gone, K_M and k_{cat} as K<sub>m</sub> and k<sub>cat</sub>; a long table row or one whose ± signs were lost is folded
+// away with a warning.
 {
   const v2Summary = row({ record_key: "printed-lines", source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" });
   const quoted = (printed_line, metric = "Km") => measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
@@ -3786,7 +3794,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   let html = quoted("mpCAR [rowspan] | K_m [mm] | 20±4*");
   // The caption above the table names the place, so the line does not repeat it.
   assert.match(html, /<caption>Printed in Table 2<\/caption>/);
-  assert.match(html, /<p class="evidence-note-plain">As extracted from the paper’s text: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
+  assert.match(html, /<p class="evidence-note-plain">In the paper: “mpCAR \| <i>K<\/i><sub>m<\/sub> \[mm\] \| 20±4\*”<\/p>/);
+  assert.doesNotMatch(html, /as extracted|As extracted/);
   assert.doesNotMatch(html, /rowspan|<details class="printed-line-disclosure"/);
   html = quoted("We fitted K_M = 4.6 ± 1.0 μM, k_{cat} = 9.7 s^{−1} and K_{m L}-methionine");
   assert.match(html, /<i>K<\/i><sub>m<\/sub> = 4\.6/);
@@ -3800,34 +3809,34 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub> 3 s<sup>-1<\/sup>, 2 M<sup>-2<\/sup>/);
   assert.equal(api.caretHtml("NAD^{+}-dependent, 10^3 M^-1 s^-1"), "NAD<sup>+</sup>-dependent, 10<sup>3</sup> M<sup>-1</sup> s<sup>-1</sup>");
   html = quoted("L-phenylalanine wt 1.1 ( 0.070 68 ( 1.4 62");
-  assert.match(html, /<details class="printed-line-disclosure"><summary>Show the line as extracted<\/summary><p class="evidence-note-plain">As extracted/);
+  assert.match(html, /<details class="printed-line-disclosure"><summary>Show the printed line<\/summary><p class="evidence-note-plain">In the paper: /);
   assert.match(html, /<p class="printed-line-note">Text extraction dropped the ± signs from this line\.<\/p><\/details>/);
   const longRow = quoted("2Np-Gal | 0.9 ± 0.1 | 295.0 ± 6.3 | 310.0 | 24.7 ± 3.9");
   assert.match(longRow, /<details class="printed-line-disclosure">/, "more than four cells");
   assert.doesNotMatch(longRow, /printed-line-note/, "a row that kept its ± signs gets no warning");
   assert.doesNotMatch(measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [{ metric: "Km", table_label: "Results, p. 4", printed: "1 mM", printed_line: "a Km of 1 mM", check: "confirmed", conversion: "" }] }),
-  /row, as extracted/, "only a table's line is a row");
+  /In the paper \(/, "the caption names the place: the line does not repeat it");
   const lines = (...entries) => measurementSection(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: entries.map(([metric, table_label, printed_line, printed = "1 mM"]) => ({ metric, table_label, printed, printed_line, check: "confirmed", conversion: "" })) });
   // One line, places that differ: the line gives its place (the Where column has both).
   html = lines(["kcat", "Table 2", "wt | 1 | 2", "1 s^-1"], ["Km", "Table 3", "1 mM"]);
-  assert.match(html, /<p class="evidence-note-plain">Table 2 row, as extracted from the paper’s text: “wt/);
+  assert.match(html, /<p class="evidence-note-plain">In the paper \(Table 2\): “wt/);
   // A sentence (no cells) is not a row, even when the values are said to be in a table.
   html = lines(["kcat", "Table VIII", "the K values for ETF were 3.8, 4.5 and 8.3", "1 s^-1"], ["Km", "Table 3", "1 mM"]);
-  assert.match(html, /<p class="evidence-note-plain">Table VIII, as extracted from the paper’s text: “the K values/);
+  assert.match(html, /<p class="evidence-note-plain">In the paper \(Table VIII\): “the K values/);
   // More than one line: each names its values, and a line another value's line continues is quoted once, the longer.
   const excerpt = "kcat = 4.0 ± 0.4 s–1 and Km = 3.1 mM catalyze the conversion";
   html = lines(["kcat", "Results", excerpt, "4.0 ± 0.4 s^-1"], ["Km", "Results", "a Km of 3.1 ± 0.3 mM was found"],
     ["kcat/Km", "Results", `${excerpt} of this peptide …`, "1.4 mM^-1 s^-1"]);
   assert.equal((html.match(/class="evidence-note-plain"/g) || []).length, 2);
-  assert.match(html, /<p class="evidence-note-plain">kcat and kcat\/Km line, as extracted from the paper’s text: “kcat = 4\.0 ± 0\.4 s–1 and Km = 3\.1 mM catalyze the conversion of this peptide …”<\/p>/);
-  assert.match(html, /<p class="evidence-note-plain">Km line, as extracted from the paper’s text: “a Km of 3\.1/);
-  assert.doesNotMatch(html, /Results, as extracted/, "the caption names the place");
+  assert.match(plainMetricNames(html), /<p class="evidence-note-plain">In the paper \(kcat and kcat\/Km\): “kcat = 4\.0 ± 0\.4 s–1 and Km = 3\.1 mM catalyze the conversion of this peptide …”<\/p>/);
+  assert.match(plainMetricNames(html), /<p class="evidence-note-plain">In the paper \(Km\): “a Km of 3\.1/);
+  assert.doesNotMatch(html, /In the paper \(Results\)/, "the caption names the place");
   // Folded lines name their values, so two toggles never read alike.
   html = lines(["kcat", "Table 2", "kcat | 1 | 2 | 3 | 4", "1 s^-1"], ["Km", "Table 2", "Km | 1 | 2 | 3 | 4"]);
-  assert.match(html, /<summary>Show the kcat line as extracted<\/summary><p class="evidence-note-plain">kcat line, as extracted/);
-  assert.match(html, /<summary>Show the Km line as extracted<\/summary>/);
+  assert.match(plainMetricNames(html), /<summary>Show the printed kcat line<\/summary><p class="evidence-note-plain">In the paper \(kcat\): /);
+  assert.match(plainMetricNames(html), /<summary>Show the printed Km line<\/summary>/);
 }
 // What the AI check found, in words that give the new state: per value in the AI check column ("Unit set to mM"), once
 // for the record in the Check line ("The AI check also removed EC 2.7.2.12 and corrected the assay conditions").
@@ -3978,11 +3987,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   };
   let html = render({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" },
     { verification_method: "catlog_v2_read_and_independent_verify" });
-  // The paper, read by CatLog; the Method row says how it was read ("Read from the paper" once).
-  assert.match(html, /<dt>Values from<\/dt><dd>The paper \(read by CatLog\)<\/dd>/);
-  assert.equal((html.match(/Read from the paper/g) || []).length, 1, "Read from the paper is said once in the record's Source");
+  // A record read by CatLog has no Source section: its header says "from paper", the Guide how it was read, and its
+  // footnote gives the license and the snapshot.
+  assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>Method<\/dt>|<dt>Name from<\/dt>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
-  assert.doesNotMatch(html, /<dt>Name from<\/dt>/, "a record read from the paper takes its name from the paper: Values from says so");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).
   assert.doesNotMatch(html, /Source details|<details class="detail-disclosure"/);
   html = render({ source_db: "strenda", proof_kind: "source_note", has_proof_excerpt: false },
@@ -4070,7 +4079,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     api.renderDetail(summary, detail);
     return element("detailContent").innerHTML;
   };
-  const sectionOf = (html) => html.slice(html.indexOf('class="detail-section databases-section'), html.indexOf('class="detail-section source-section"'));
+  const sectionOf = (html) => html.slice(html.indexOf('class="detail-section databases-section'), html.indexOf('class="detail-section checks-section"'));
   const valuesOf = (html) => html.slice(html.indexOf('class="detail-section values-section"'), html.indexOf('class="detail-section databases-section'));
   const v2Detail = (lines, extra = {}) => ({ verification_method: "catlog_v2_read_and_independent_verify", supporting_pmids: ["31072150"], proof_lines: lines, ...extra });
   // A phone (the test page's media queries match nothing) or a wider screen (641px and up).
@@ -4112,11 +4121,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(section, /cmp-footer|guide-databases/);
   assert.equal((section.match(/does not by itself mean a database is wrong/g) || []).length, 0, "no Different number: no caveat anywhere in the record");
   assert.doesNotMatch(section, /cmp-caution-line/);
-  // More like this: the paper's records (always searchable); no result link while Browse cannot filter by it.
-  assert.match(section, /<p class="cmp-explore">More like this: <a href="#browse\?q=pmid:31072150&amp;record=v2-db">All records of this paper<\/a><\/p>/);
+  // No More like this while Browse cannot filter by a result: the paper's records are linked once, under Paper.
+  assert.doesNotMatch(section, /cmp-explore|All records of this paper/);
   assert.doesNotMatch(section, /db=|<table|cmp-list|Not in any database|Same number, other label/);
-  // Right after Values: what CatLog corrected against the databases is found at once.
-  assert.ok(html.indexOf(">Values</h3>") < html.indexOf(">Against the databases</h3>") && html.indexOf(">Against the databases</h3>") < html.indexOf(">Source</h3>"));
+  // Right after Values: what CatLog corrected against the databases is found at once; Checks follow it.
+  assert.ok(html.indexOf(">Values</h3>") < html.indexOf(">Against the databases</h3>") && html.indexOf(">Against the databases</h3>") < html.indexOf(">Checks</h3>"));
   // Section B: a value that corrects or differs gets one line under the Values table, in words, with a button that opens
   // its note; the table itself carries no comparison mark.
   const values = valuesOf(html);
@@ -4230,6 +4239,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal((section.match(/cmp-mark/g) || []).length, 2, "squares only on the same line and the note's result");
   html = render(calculatedSummary, v2Detail([line("kcat"), line("Km")]));
   assert.doesNotMatch(html, /Against the databases|not compared/, "no compared value, no section");
+  // Values whose notes read alike share one note ("kcat and Km · Not in the databases"), as the same lines do; a value
+  // that corrects or differs keeps its own (the Values pointer opens it by its parameter).
+  const noneLine = "BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list no kcat, Km or kcat/Km for this paper.";
+  html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: noneLine }), line("Km", { database_status: "new", database_line: noneLine })]));
+  section = sectionOf(html);
+  assert.equal((section.match(/<details class="cmp-note"/g) || []).length, 1, "one note for both values");
+  assert.equal(section.split(noneLine).length - 1, 1, "the line once");
+  assert.match(section, /<details class="cmp-note" data-cmp-field="kcat"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong>/);
+  html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] }),
+    line("Km", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] })]));
+  assert.equal((sectionOf(html).match(/<details class="cmp-note"/g) || []).length, 2, "a different number keeps its own note");
+  // A cause the line already says word for word is not said again under it.
+  html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_sources: ["BRENDA"], database_cause: "header_scale_inverted",
+    database_line: "BRENDA lists 5 mM, 1,000× lower. Checked against the paper: the table header's power of ten applied the wrong way." })]));
+  assert.doesNotMatch(html, /<dt>Cause<\/dt>/);
+  assert.equal((html.match(/applied the wrong way/g) || []).length, 1);
   // A database_check object (one field per fact) and its database value, said when there is no line; a same value
   // without a line says which databases list it.
   html = render(v2Summary, v2Detail([line("Km", { database_check: { status: "differs", sources: ["BRENDA", "OED"], database_value: 0.0028, database_unit: "mM" } })]));
@@ -4299,14 +4324,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       // The records' own fields carry the comparison, the record index does not: the group is hidden, so no link.
       indexRow("v2-db", 1 | 2 | 8);
       html = render(v2Summary, comparedDetail());
-      assert.equal(explore(html), 'More like this: <a href="#browse?q=pmid:31072150&amp;record=v2-db">All records of this paper</a>');
+      assert.equal(explore(html), "", "no result link, and the paper's records are linked under Paper");
       assert.equal(noteLinks(html), "");
       runtimeManifest.viewer_index.optional_fields = ["database_summary"];
       html = render(v2Summary, comparedDetail());
       // Each link keeps the record open beside the list, as its paper's link does.
       assert.equal(explore(html), 'More like this: <a href="#browse?db=corrects&amp;record=v2-db">Corrects a value</a><span aria-hidden="true"> · </span>'
-        + '<a href="#browse?db=not_listed&amp;record=v2-db">Not in the databases</a><span aria-hidden="true"> · </span>'
-        + '<a href="#browse?q=pmid:31072150&amp;record=v2-db">All records of this paper</a>');
+        + '<a href="#browse?db=not_listed&amp;record=v2-db">Not in the databases</a>');
       assert.equal(noteLinks(html), '<a href="#browse?q=pmid:31072150&amp;db=corrects&amp;record=v2-db">Records of this paper that correct a value<span aria-hidden="true"> →</span></a>');
       // An option the record's own row in the index does not match (the list would not hold the record): no link to
       // it, and the paper's records that correct a value open without it.
@@ -4342,7 +4366,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       assert.doesNotMatch(explore(html), /db=not_listed/);
       indexRow("v2-db", 4);
       html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] })]));
-      // A paper with only this record: no link to its records.
+      // (The paper's records are linked under Paper, never here.)
       api.state.records = [{ ...row({ record_key: "v2-db", database_summary: 4 }), _pmids: 31072150 }];
       api.state.recordsReady = true;
       assert.equal(explore(render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] })]))),
@@ -4439,7 +4463,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   ] });
   const trail = sectionOf(html);
   // Headed as Browse's option names it: no database is compared on an earlier record.
-  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">CatLog&#39;s earlier version changed these values to what the paper prints\. CatLog has not read this paper again yet\.<\/p><dl class="detail-kv cmp-list">/);
+  // (The header's "not re-read" says CatLog has not read the paper again yet.)
+  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">CatLog&#39;s earlier version changed these values to what the paper prints\.<\/p><dl class="detail-kv cmp-list">/);
   assert.doesNotMatch(trail, /<table|Changed in the earlier automated review|cmp-footer|Compared with the values|section-about|detail-about|cmp-caution-line/, "an earlier correction trail compares nothing: no \"?\" box");
   // "Before: as STRENDA DB lists it for this paper" with the factor between the two numbers (the database's 1,000× higher).
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude<\/span><\/span><small class="cmp-before">Before: as STRENDA DB lists it for this paper \(1,000× higher\)<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
@@ -4470,8 +4495,19 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1200 nmol\/min\/mg<\/strong><\/span>/);
   assert.match(trail, /<dt>SMILES<\/dt><dd><span class="cmp-value">Replaced<\/span><\/dd>/);
   assert.doesNotMatch(trail, /papers\\x\.pdf|x\.pdf|cmp-where-once/, "a local path never; places differ, so each item says its own");
-  assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review; the changes are listed under Corrected earlier\./);
+  assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review \(see Corrected earlier\)\.<\/dd>/);
   assert.doesNotMatch(html, /value before correction was not kept/);
+  // Every value added (the source had none of them): said once in the intro, not as a tag on each item.
+  html = render(corrected, { supporting_pmids: ["2226453"], corrections: [
+    { field: "kcat", before: null, after: 2.67, unit: "s^(-1)", kind: "added" },
+    { field: "km", before: null, after: 0.066, unit: "mM", kind: "added" },
+    { field: "uniprot_id", before: null, after: "P00326", kind: "added" },
+    { field: "sequence", kind: "replaced" },
+  ] });
+  const addedTrail = sectionOf(html);
+  assert.match(addedTrail, /<p class="section-text cmp-intro">CatLog&#39;s earlier version added these values from the paper; the source had none\.<\/p>/);
+  assert.doesNotMatch(addedTrail, /added: the source had none|cmp-result/);
+  assert.match(addedTrail, /<span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span>/);
   // A place every item shares is said once, under the list.
   html = render(corrected, { supporting_pmids: ["2226453"], corrections: [
     { field: "kcat", before: 2.667, after: 2.66667, unit: "s^(-1)", kind: "rounding", where: "PMC4133812 Table 1; TMGS D10N", listed: "SABIO-RK" },
@@ -4490,20 +4526,22 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /Corrected and accepted in the earlier automated review; this snapshot does not list the changes\./);
   assert.doesNotMatch(html, /was not kept/);
 
-  // A database record the earlier review did not settle: the values are the database's, said in Review and audit's Paper
-  // check row, never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an
-  // earlier extraction: no such line.
+  // A database record the earlier review did not settle: the values are the database's, said in Checks' Paper check row,
+  // never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an earlier
+  // extraction: no such line.
   const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked against the paper: the values are the database&#39;s.</dd>";
   const paperCheckOf = (summary, detail = { supporting_pmids: ["1"] }) => {
     const html = render(summary, detail);
     assert.doesNotMatch(html, /Against the databases/, "no comparison, no section");
-    const review = html.match(/<h3 id="detail-review-title">Review and audit<\/h3>([\s\S]*?)<\/section>/)?.[1] ?? "";
+    const review = html.match(/<h3 id="detail-checks-title">Checks<\/h3>([\s\S]*?)<\/section>/)?.[1] ?? "";
     return review.includes(NOT_YET) ? review : null;
   };
   const unverified = paperCheckOf(row({ record_key: "db-unverified", verification_status: "unverified", source_db: "brenda", has_proof_excerpt: false }));
   assert.ok(unverified);
   // Right after the review result.
-  assert.match(unverified, /<dt>Review result<\/dt><dd>Not checked: the earlier automated review recorded no final check\. <a class="method-link"[^>]*>How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/dd><\/div><div class="kv-line"><dt>Paper check<\/dt>/);
+  assert.match(unverified, /<dt>Review result<\/dt><dd>Not checked: the earlier automated review recorded no final check\.<\/dd><\/div><div class="kv-line"><dt>Paper check<\/dt>/);
+  // One Guide link, under the rows: how the earlier review worked.
+  assert.match(unverified, /<\/dl><p class="section-link"><a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/p>$/);
   assert.ok(paperCheckOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk", has_proof_excerpt: false })));
   // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no line.
   assert.equal(paperCheckOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);
