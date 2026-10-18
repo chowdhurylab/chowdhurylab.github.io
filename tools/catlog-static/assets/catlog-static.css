@@ -1214,6 +1214,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart-rows:has(.stats-chart-aside) + .stats-chart-axis { margin-top:8px }
 /* Database names as labels: STRENDA DB keeps one line in a wide font (Verdana with letter-spacing). */
 .stats-chart-percent[data-chart="db-sources"] { --label-w:104px }
+.stats-chart-percent[data-chart="db-classes"] { --label-w:minmax(96px,168px) }
 /* A segment that opens Browse (the same filter is a link in the chart's text). */
 .stats-seg[data-href] { cursor:pointer }
 /* Part 7's lead: one 14px sentence under the part's heading, its result names linking into Browse. */
@@ -1361,6 +1362,65 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-histogram-axis > span::before { content:""; position:absolute; left:50%; top:-16px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-histogram-axis sup { font-size:var(--fs-12) }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
+/* kcat against Km: a density map on log axes whose decades are one size (so a line of equal kcat/Km runs at 45°): grey
+   cells, darker for more records; thin lines of equal kcat/Km every hundredfold, labelled where they leave the plot;
+   the diffusion limit as a light amber band with dashed amber edges (amber: a value beyond it carries a caution); each
+   enzyme class's median as a dot in its class colour, ringed white. Beside it the facts and the class medians, a row
+   lighting its dot; below 1024px the facts go under the map. */
+.stats-map { display:grid; grid-template-columns:minmax(0,560px) minmax(260px,1fr); gap:24px 48px; align-items:start }
+.stats-map-frame { display:grid; grid-template-columns:44px minmax(0,1fr) 40px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-map-y-title { grid-column:1 / 3; grid-row:1; margin:0 0 24px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-map-y { position:relative; grid-column:1; grid-row:2 }
+.stats-map-y > span { position:absolute; right:8px; transform:translateY(50%); white-space:nowrap }
+.stats-map-y > span::after { content:""; position:absolute; top:50%; right:-8px; width:4px; border-top:1px solid var(--line-strong) }
+.stats-map-y sup, .stats-map-x sup { font-size:var(--fs-12) }
+.stats-map-plot { position:relative; grid-column:2; grid-row:2; box-shadow:0 0 0 1px var(--line) }
+.stats-map-svg { position:absolute; inset:0; display:block; width:100%; height:100%; overflow:hidden }
+.stats-map-cells rect { fill:color-mix(in srgb, var(--bar-neutral) 55%, var(--text)); shape-rendering:crispEdges }
+.stats-map-iso { fill:none; stroke:var(--text); stroke-opacity:0.3; stroke-width:1; vector-effect:non-scaling-stroke }
+.stats-map-limit { fill:var(--caution-line); fill-opacity:0.42; stroke:none }
+.stats-map-limit-edge { fill:none; stroke:var(--caution); stroke-width:1; stroke-dasharray:4 3; vector-effect:non-scaling-stroke }
+.stats-map-iso-label { position:absolute; white-space:nowrap }
+.stats-map-iso-label.is-top { top:-20px; transform:translateX(-50%) }
+.stats-map-iso-label.is-right { left:calc(100% + 6px); transform:translateY(50%) }
+.stats-map-limit-label { position:absolute; z-index:1; color:var(--caution); font-weight:500; white-space:nowrap; transform:translate(-50%, 50%) rotate(-45deg); pointer-events:none }
+.stats-map-dot { position:absolute; z-index:2; width:12px; height:12px; border-radius:50%; background:var(--part); box-shadow:0 0 0 1.5px var(--bg), 0 0 0 2.5px color-mix(in srgb, var(--part) 55%, var(--text)); transform:translate(-50%, 50%) }
+.stats-map-dot.is-active { z-index:3; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 70%, transparent)) }
+.stats-fig.has-active .stats-map-dot[data-hl]:not(.is-active) { opacity:0.3 }
+.stats-map-x { position:relative; grid-column:2; grid-row:3; height:22px }
+.stats-map-x > span { position:absolute; top:6px; transform:translateX(-50%); white-space:nowrap }
+.stats-map-x > span::before { content:""; position:absolute; left:50%; top:-6px; height:4px; border-left:1px solid var(--line-strong) }
+.stats-map-x-title { grid-column:2; grid-row:4; margin:4px 0 0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14); text-align:center }
+.stats-map-side { display:grid; align-content:start; gap:24px; min-width:0 }
+.stats-map-facts { display:grid; gap:14px; margin:0 }
+.stats-map-facts dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-map-facts dd { margin:2px 0 0; color:var(--text); font-size:var(--fs-18); font-weight:600; line-height:var(--lh-18) }
+.stats-map-facts dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+.stats-map-facts dd .stats-muted { font-size:var(--fs-14); font-weight:500 }
+.stats-map-classes tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
+.stats-map-classes .stats-name { gap:0 }
+.stats-map-legend li { align-items:center }
+.stats-map-key-cells { display:inline-block; flex:0 0 28px; width:28px; height:10px; border-radius:2px; background:linear-gradient(90deg, color-mix(in srgb, var(--bar-neutral) 16%, var(--bg)), color-mix(in srgb, var(--bar-neutral) 55%, var(--text))) }
+.stats-map-key-iso { display:inline-block; flex:0 0 14px; width:14px; height:0; border-top:1px solid color-mix(in srgb, var(--text) 45%, var(--bg)); transform:rotate(-45deg) }
+.stats-map-key-limit { display:inline-block; flex:0 0 10px; width:10px; height:10px; border-radius:2px; background:color-mix(in srgb, var(--caution-line) 42%, var(--bg)); box-shadow:inset 0 0 0 1px var(--caution) }
+.stats-map-key-dot { display:inline-block; flex:0 0 10px; width:10px; height:10px; border-radius:50%; background:conic-gradient(var(--ec-1) 0 14.3%, var(--ec-2) 0 28.6%, var(--ec-3) 0 42.9%, var(--ec-4) 0 57.1%, var(--ec-5) 0 71.4%, var(--ec-6) 0 85.7%, var(--ec-7) 0) }
+/* Variants against their wild type: three histograms like Value ranges, a dashed line at the wild type (its name above
+   the bars, clear of the peak beside it). */
+/* Their axes' end labels stand centred on the end ticks: the plots keep 16px either side for them. */
+.stats-fold-plot, .stats-condition-plot { margin-inline:16px }
+.stats-fold-plot { padding-top:18px }
+.stats-fold-zero { position:absolute; top:0; bottom:24px; z-index:1; border-left:1px dashed var(--text-2); pointer-events:none }
+.stats-fold-zero > span { position:absolute; top:0; left:4px; color:var(--text-2); font-size:var(--fs-12); font-style:normal; line-height:var(--lh-12); white-space:nowrap }
+/* Assay temperature and pH: a bar per step, so a bar is a few pixels wide: solid bars (75% of the colour with --text,
+   so each bar shows at 3:1 or more without an outline) with 1px gaps; a bar with records opens them in Browse. */
+.stats-conditions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 48px }
+.stats-condition-bars { display:flex; align-items:flex-end; gap:1px; height:96px; border-bottom:1px solid var(--line) }
+.stats-condition-bars > span { flex:1 1 0; min-width:0; background:color-mix(in srgb, var(--part) 75%, var(--text)) }
+.stats-condition-bars > span.has-values { min-height:1px }
+.stats-condition-bars > [data-href] { cursor:pointer }
+.stats-condition-bars > span:hover { background:var(--accent) }
+.stats-condition-top dd { display:flex; flex-wrap:wrap; gap:2px 16px }
+.stats-condition-value { white-space:nowrap }
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
    pointer glows softly in its class's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
@@ -1499,6 +1559,8 @@ a.stats-total-value:focus-visible { outline:0 }
 
 @media (max-width: 1023px) {
   .stats-part-grid > * { grid-column:1 / -1 }
+  .stats-map { grid-template-columns:minmax(0,560px) }
+  .stats-conditions { grid-template-columns:1fr; max-width:560px }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:560px }
   .stats-lead-body { grid-template-columns:1fr; gap:12px }

@@ -4404,6 +4404,323 @@
     };
   }
 
+  // What the values show (overview.from_paper_insights; the user, 2026-10-18: "more figures or more scientific
+  // insights"): counted by the overview builder from the records read from the paper only, each figure only when its
+  // counts hold together.
+  function statsInsights(overview) {
+    const insights = overview?.from_paper_insights;
+    return insights && typeof insights === "object" && !Array.isArray(insights) ? insights : {};
+  }
+
+  // A list of whole counts (of `length` when given), not empty.
+  function statsWholeList(list, length = 0) {
+    return Array.isArray(list) && list.length > 0 && (!length || list.length === length) && list.every((count) => statsCount(count) !== null);
+  }
+
+  function statsListSum(list) {
+    return list.reduce((total, count) => total + count, 0);
+  }
+
+  // Ticks of a linear axis from `start` over `span` (the axis's width in its own unit), one every `tick`, labelled every
+  // `every` ticks (the others are tick marks only), as statsDecadeTicks draws a log axis.
+  function statsLinearTicks(start, span, tick, every = 1) {
+    const ticks = [];
+    for (let step = 0; start + step * tick <= start + span + 1e-9; step += 1) {
+      const value = +(start + step * tick).toFixed(6);
+      const labelled = step % every === 0;
+      ticks.push(`<span${labelled ? "" : ' class="stats-tick-minor"'} style="left:${+((value - start) / span * 100).toFixed(3)}%">${labelled ? escapeHtml(formatNumber(value, { maximumFractionDigits: 2 })) : ""}</span>`);
+    }
+    return ticks.join("");
+  }
+
+  // kcat against Km (from_paper_insights.kcat_km): the records read from the paper with both values, counted on a grid
+  // of quarter decades and drawn as a density map on log axes whose decades are one size, so a line of equal kcat/Km
+  // runs at 45°. Grey cells (darker = more records, on a log scale; each cell's count in its tooltip line), thin lines
+  // of equal kcat/Km every hundredfold (labelled in M⁻¹ s⁻¹ where they leave the plot), the diffusion limit (10⁵–10⁶
+  // mM⁻¹ s⁻¹, i.e. 10⁸–10⁹ M⁻¹ s⁻¹) as a light amber band (amber: a value beyond it carries a caution), and each enzyme
+  // class's median kcat and median Km as a dot in its class colour. Beside the map: the records (a link to them when
+  // Browse finds the same number), the median kcat ÷ Km, the records at the limit or above, and the class medians (a row
+  // lights its dot, as the dot lights its row).
+  const STATS_DIFFUSION_LIMIT = [5, 6];
+  const STATS_MAP_ISO_STEP = 2;
+  // mM⁻¹ s⁻¹ to M⁻¹ s⁻¹: three powers of ten.
+  const STATS_MOLAR = 3;
+
+  function statsKcatKmFigure(map, classNames) {
+    const counts = map?.counts;
+    const width = map?.bin_width;
+    const records = statsCount(map?.records);
+    const rows = Array.isArray(counts) ? counts.length : 0;
+    const columns = rows && Array.isArray(counts[0]) ? counts[0].length : 0;
+    const kcatStart = map?.kcat_log10_start;
+    const kmStart = map?.km_log10_start;
+    const whole = (value) => Number.isFinite(value) && Math.abs(value - Math.round(value)) < 1e-6 && Math.round(value) >= 1;
+    if (!records || !(width > 0) || rows < 4 || columns < 4 || !Number.isInteger(kcatStart) || !Number.isInteger(kmStart)
+      || !whole(rows * width) || !whole(columns * width) || !counts.every((row) => statsWholeList(row, columns))
+      || statsListSum(counts.map(statsListSum)) !== records) return null;
+    const spanY = Math.round(rows * width);
+    const spanX = Math.round(columns * width);
+    const kcatEnd = kcatStart + spanY;
+    const kmEnd = kmStart + spanX;
+    const highest = Math.max(...counts.map((row) => Math.max(...row)));
+    // Darker for more records: the opacity follows the log of the count, bent so the crowded core stands out from the
+    // many sparse cells around it.
+    const shade = (count) => +(0.08 + 0.84 * (Math.log(count) / Math.log(Math.max(highest, 2))) ** 1.6).toFixed(3);
+    // A bin's range in words: the end bins also hold every value beyond them.
+    const edge = (start, index) => statsPowerOfTen(+(start + index * width).toFixed(2));
+    const range = (start, index, bins, unit) => (index === 0 ? `below ${edge(start, 1)} ${unit}`
+      : index === bins - 1 ? `${edge(start, index)} ${unit} and above` : `${edge(start, index)}–${edge(start, index + 1)} ${unit}`);
+    const cells = [];
+    counts.forEach((row, r) => row.forEach((count, c) => {
+      if (count) cells.push(`<rect x="${c}" y="${rows - 1 - r}" width="1" height="1" style="fill-opacity:${shade(count)}" data-tip="${escapeHtml(`kcat ${range(kcatStart, r, rows, "s⁻¹")}, Km ${range(kmStart, c, columns, "mM")}: ${formatInteger(count)} ${count === 1 ? "record" : "records"}`)}"/>`);
+    }));
+    // Places in the plot: x from Km, y (from the top, in bins) from kcat, both log10.
+    const x = (logKm) => +((logKm - kmStart) / width).toFixed(3);
+    const y = (logKcat) => +(rows - (logKcat - kcatStart) / width).toFixed(3);
+    const line = (k) => `M${x(kmStart)} ${y(kmStart + k)}L${x(kmEnd)} ${y(kmEnd + k)}`;
+    const [limitLow, limitHigh] = STATS_DIFFUSION_LIMIT;
+    const band = `M${x(kmStart)} ${y(kmStart + limitLow)}L${x(kmEnd)} ${y(kmEnd + limitLow)}L${x(kmEnd)} ${y(kmEnd + limitHigh)}L${x(kmStart)} ${y(kmStart + limitHigh)}Z`;
+    // Lines of equal kcat/Km every hundredfold that cross the plot (those at the band's edges are its edges), each
+    // labelled where it leaves the plot (across the top, else down the right side) in M⁻¹ s⁻¹, the unit the diffusion
+    // limit is known in (10⁸–10⁹ M⁻¹ s⁻¹), so no label reads as the limit in another unit: at 10², 10⁴, 10⁶ M⁻¹ s⁻¹ ...
+    const exits = [];
+    const exitOf = (k) => {
+      const top = kcatEnd - k;
+      if (top >= kmStart && top <= kmEnd) return { side: "top", at: (top - kmStart) / spanX * 100 };
+      const right = kmEnd + k;
+      return right >= kcatStart && right <= kcatEnd ? { side: "right", at: (right - kcatStart) / spanY * 100 } : null;
+    };
+    const isoLines = [];
+    const first = Math.ceil((kcatStart - kmEnd + STATS_MOLAR) / STATS_MAP_ISO_STEP) * STATS_MAP_ISO_STEP - STATS_MOLAR;
+    for (let k = first; k < kcatEnd - kmStart; k += STATS_MAP_ISO_STEP) {
+      if (k >= limitLow && k <= limitHigh) continue;
+      isoLines.push(`<path class="stats-map-iso" d="${line(k)}"/>`);
+      const exit = exitOf(k);
+      if (exit && exit.at > 0.5) exits.push({ ...exit, text: statsPowerOfTen(k + STATS_MOLAR) });
+    }
+    const label = (exit) => `<span class="stats-map-iso-label is-${exit.side}" style="${exit.side === "top" ? "left" : "bottom"}:${+exit.at.toFixed(3)}%">${escapeHtml(exit.text)}</span>`;
+    // "diffusion limit" runs along the band, a decade in from where its middle line leaves the plot (the decades are one
+    // size, so the band runs at 45°), where the band crosses at least two decades of the plot.
+    const middle = (limitLow + limitHigh) / 2;
+    const bandFrom = Math.max(kmStart, kcatStart - middle);
+    const bandTo = Math.min(kmEnd, kcatEnd - middle);
+    const limitLabel = bandTo - bandFrom >= 2
+      ? `<span class="stats-map-limit-label" style="left:${+((bandTo - 1 - kmStart) / spanX * 100).toFixed(3)}%;bottom:${+((bandTo - 1 + middle - kcatStart) / spanY * 100).toFixed(3)}%" aria-hidden="true">diffusion limit</span>` : "";
+    const labels = exits.map(label).join("") + limitLabel;
+    // The class medians: a dot per class (the end bins' values count, so a median stays inside the plot).
+    const place = (value, start, span) => Math.max(0, Math.min(100, (Math.log10(value) - start) / span * 100));
+    const classes = (Array.isArray(map.classes) ? map.classes : []).filter((item) => statsClassColour(item?.class)
+      && statsCount(item.n, records) && item.kcat_median > 0 && item.km_median > 0);
+    const className = (item) => `EC ${item.class}${classNames[item.class] ? ` ${classNames[item.class]}` : ""}`;
+    const medianText = (item) => `${className(item)}: median kcat ${statsRangeNumber(item.kcat_median, { figures: 2 })} s⁻¹, median Km ${statsRangeNumber(item.km_median, { figures: 2 })} mM; ${formatInteger(item.n)} ${item.n === 1 ? "record" : "records"}.`;
+    const dots = classes.map((item) => `<i class="stats-map-dot${statsClassColour(item.class)}" data-hl="ec_${item.class}" data-tip="${escapeHtml(medianText(item))}" style="left:${+place(item.km_median, kmStart, spanX).toFixed(3)}%;bottom:${+place(item.kcat_median, kcatStart, spanY).toFixed(3)}%"></i>`).join("");
+    // Facts beside the map.
+    const linked = statsCount(map.linked) === records;
+    const recordsHtml = linked ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", metric: "kcat,km" }))}">${formatInteger(records)}</a>` : formatInteger(records);
+    const ratio = Number.isFinite(map.ratio_median) && map.ratio_median > 0 ? map.ratio_median : null;
+    const limits = Array.isArray(map.at_diffusion_limit) && map.at_diffusion_limit.length === 2
+      && map.at_diffusion_limit.every((count) => statsCount(count, records) !== null) && map.at_diffusion_limit[1] <= map.at_diffusion_limit[0]
+      ? map.at_diffusion_limit : null;
+    const molar = (exponent) => statsPowerOfTen(exponent + STATS_MOLAR);
+    const facts = [
+      `<div><dt>Records</dt><dd>${recordsHtml}</dd></div>`,
+      ratio ? `<div><dt>Median <i>k</i><sub>cat</sub> ÷ <i>K</i><sub>m</sub></dt><dd>${statsRangeNumber(ratio, { html: true, figures: 2 })} mM⁻¹ s⁻¹<small>${statsRangeNumber(ratio * 1000, { html: true, figures: 2 })} M⁻¹ s⁻¹</small></dd></div>` : "",
+      limits ? `<div><dt>At the diffusion limit or above</dt><dd>${formatInteger(limits[0])} <span class="stats-muted">(${escapeHtml(statsShare(limits[0], records))})</span><small>${molar(limitLow)} M⁻¹ s⁻¹ or more; ${formatInteger(limits[1])} at ${molar(limitHigh)} or more</small></dd></div>` : "",
+    ].join("");
+    const classRows = classes.map((item) => `<tr data-hl="ec_${item.class}" data-tip="${escapeHtml(medianText(item))}">
+        <th scope="row"><span class="stats-name">${statsClassKey(item.class)}<span><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, source: "paper", metric: "kcat,km" }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(classNames[item.class] || "")}</span></span></span></th>
+        <td class="stats-num">${statsRangeNumber(item.kcat_median, { html: true, figures: 2 })}</td><td class="stats-num">${statsRangeNumber(item.km_median, { html: true, figures: 2 })}</td><td class="stats-num stats-muted">${formatInteger(item.n)}</td></tr>`).join("");
+    const classTable = classes.length ? `<table class="stats-table stats-map-classes">
+        <thead><tr><th scope="col">Enzyme class</th><th scope="col" class="stats-num"><i>k</i><sub>cat</sub> (s⁻¹)</th><th scope="col" class="stats-num"><i>K</i><sub>m</sub> (mM)</th><th scope="col" class="stats-num">Records</th></tr></thead>
+        <tbody>${classRows}</tbody></table>` : "";
+    const description = `kcat against Km of ${formatInteger(records)} records read from the paper, on log scales${ratio ? `; median kcat ÷ Km ${statsRangeNumber(ratio, { figures: 2 })} mM⁻¹ s⁻¹` : ""}${limits ? `; ${formatInteger(limits[0])} at the diffusion limit or above` : ""}.${classes.length ? ` Class medians: ${classes.map((item) => `EC ${item.class} kcat ${statsRangeNumber(item.kcat_median, { figures: 2 })} s⁻¹, Km ${statsRangeNumber(item.km_median, { figures: 2 })} mM`).join("; ")}.` : ""}`;
+    const legend = `<ul class="stats-legend stats-map-legend">
+        <li><i class="stats-map-key-cells" aria-hidden="true"></i><span>Records per cell, 1 to ${formatInteger(highest)}</span></li>
+        <li><i class="stats-map-key-iso" aria-hidden="true"></i><span>Equal <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> (M⁻¹ s⁻¹), every 100-fold</span></li>
+        <li><i class="stats-map-key-limit" aria-hidden="true"></i><span>Diffusion limit, ${molar(limitLow)}–${molar(limitHigh)} M⁻¹ s⁻¹</span></li>
+        ${classes.length ? `<li><i class="stats-map-key-dot" aria-hidden="true"></i><span>Median of an enzyme class</span></li>` : ""}</ul>`;
+    const yTicks = statsDecadeTicks(kcatStart, kcatEnd).replace(/style="left:/g, 'style="bottom:');
+    return {
+      id: "statsKcatKmTitle", key: "kcat-km", title: "<i>k</i><sub>cat</sub> against <i>K</i><sub>m</sub>", wide: true,
+      body: `${legend}<div class="stats-map">
+        <div class="stats-map-frame">
+          <p class="stats-map-y-title" aria-hidden="true"><i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹)</span></p>
+          <div class="stats-map-y" aria-hidden="true">${yTicks}</div>
+          <div class="stats-map-plot" style="aspect-ratio:${columns} / ${rows}" role="img" aria-label="${escapeHtml(description)}">
+            <svg class="stats-map-svg" viewBox="0 0 ${columns} ${rows}" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <path class="stats-map-limit" d="${band}"/><g class="stats-map-cells">${cells.join("")}</g>${isoLines.join("")}
+              <path class="stats-map-limit-edge" d="${line(limitLow)}"/><path class="stats-map-limit-edge" d="${line(limitHigh)}"/>
+            </svg>${labels}${dots}
+          </div>
+          <div class="stats-map-x" aria-hidden="true">${statsDecadeTicks(kmStart, kmEnd)}</div>
+          <p class="stats-map-x-title" aria-hidden="true"><i>K</i><sub>m</sub> <span class="stats-range-unit">(mM)</span></p>
+        </div>
+        <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classTable}</div>
+      </div>`,
+      caption: "Records read from the paper that give both a kcat and a Km, with each enzyme class's median as a dot.",
+      rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns also hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each class's medians. Values without a recorded unit, or in another unit, are left out.",
+    };
+  }
+
+  // Mutations against the wild type (from_paper_insights.mutations): per parameter, the variants read from the paper by
+  // their value over their paper's one wild type for the same enzyme, organism, substrate, pH and temperature, as a
+  // histogram of quarter-decade bins centred on whole quarters (the bin at 1 holds changes under 1.33-fold either way;
+  // the end bins every change beyond them), with a dashed line at the wild type and the shares lower and higher.
+  function statsFoldWords(log10) {
+    return statsRangeNumber(10 ** log10, { figures: 2 });
+  }
+
+  function statsFoldPanel(metric, summary, start, width) {
+    const counts = summary?.counts;
+    const n = statsCount(summary?.n);
+    if (!n || !statsWholeList(counts) || counts.length < 4 || statsListSum(counts) !== n || !(summary.median > 0)
+      || ![summary.lower, summary.higher, summary.tenfold_lower, summary.tenfold_higher].every((count) => statsCount(count, n) !== null)
+      || summary.lower + summary.higher > n || summary.tenfold_lower > summary.lower || summary.tenfold_higher > summary.higher) return "";
+    const bins = counts.length;
+    const from = start - width / 2;
+    const span = bins * width;
+    const highest = Math.max(...counts);
+    const zero = Math.max(0, Math.min(100, -from / span * 100));
+    const label = metric.key === "kcat_over_km" ? "kcat/Km" : metric.key === "km" ? "Km" : "kcat";
+    const binText = (index) => {
+      const centre = start + index * width;
+      const low = statsFoldWords(centre - width / 2);
+      const high = statsFoldWords(centre + width / 2);
+      return index === 0 ? `${high} times the wild type or less` : index === bins - 1 ? `${low} times the wild type or more` : `${low} to ${high} times the wild type`;
+    };
+    const bars = counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? +(count / highest * 100).toFixed(3) : 0}%" data-tip="${escapeHtml(`${label} ${binText(index)}: ${formatInteger(count)} ${count === 1 ? "variant" : "variants"} (${statsShare(count, n)})`)}"></span>`).join("");
+    const median = statsRangeNumber(summary.median, { figures: 2 });
+    const text = `${label}, variant over wild type: ${formatInteger(n)} variants; median ${median} times the wild type; ${statsShare(summary.lower, n)} lower and ${statsShare(summary.higher, n)} higher; ${statsShare(summary.tenfold_lower, n)} at a tenth of the wild type or less, ${statsShare(summary.tenfold_higher, n)} at ten times or more.`;
+    return `<figure class="stats-range stats-fold" data-metric="${metric.key}" data-count="${n}">
+      <figcaption>${metric.html} <span class="stats-range-unit">(variant ÷ wild type)</span></figcaption>
+      <dl class="stats-range-numbers">
+        <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true, figures: 2 })}×</dd></div>
+        <div><dt>Lower</dt><dd>${escapeHtml(statsShare(summary.lower, n))}</dd></div>
+        <div><dt>Higher</dt><dd>${escapeHtml(statsShare(summary.higher, n))}</dd></div>
+      </dl>
+      <div class="stats-histogram stats-fold-plot" role="img" aria-label="${escapeHtml(text)}">
+        <div class="stats-histogram-bars">${bars}</div>
+        <i class="stats-fold-zero" style="left:${+zero.toFixed(3)}%" aria-hidden="true"><span>wild type</span></i>
+        <div class="stats-histogram-axis" aria-hidden="true">${statsDecadeTicks(from, from + span)}</div>
+      </div>
+      <p class="stats-range-count">${formatInteger(n)} ${n === 1 ? "variant" : "variants"}; ${escapeHtml(statsShare(summary.tenfold_lower, n))} at a tenth or less, ${escapeHtml(statsShare(summary.tenfold_higher, n))} at ten times or more</p>
+    </figure>`;
+  }
+
+  function statsMutationsFigure(mutations) {
+    const start = mutations?.log10_start;
+    const width = mutations?.bin_width;
+    const variants = statsCount(mutations?.variants);
+    if (!variants || !Number.isFinite(start) || !(width > 0)) return null;
+    const panels = STATS_METRICS.map((metric) => statsFoldPanel(metric, mutations.metrics?.[metric.key], start, width)).filter(Boolean);
+    if (!panels.length) return null;
+    const papers = statsCount(mutations.papers);
+    const ambiguous = statsCount(mutations.ambiguous);
+    const alone = statsCount(mutations.no_wild_type);
+    const left = [ambiguous ? `${formatInteger(ambiguous)} ${ambiguous === 1 ? "variant" : "variants"} whose paper gives several such wild-type records` : "",
+      alone ? `${formatInteger(alone)} with none` : ""].filter(Boolean);
+    return {
+      id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
+      body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
+      caption: "Each variant read from the paper against the wild type its paper gives for the same enzyme, organism, substrate, pH and temperature; left of the dashed line is lower than the wild type.",
+      rules: `${formatInteger(variants)} ${variants === 1 ? "variant" : "variants"}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the two end bars also hold every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
+      after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
+    };
+  }
+
+  // Assay temperature and pH (from_paper_insights.conditions): the records read from the paper by the temperature and pH
+  // their paper gives, a bar per 1 °C (0 to 100) and per 0.1 (pH 2 to 12), the first bar also holding every value below
+  // it, the last every value at its edge and above. Each bar with records opens them in Browse when clicked (its range
+  // as tmin/tmax or phmin/phmax, exact to the most decimals any value has: no other value lies between two bars), and
+  // the three most common bars are links above the plot, for the keyboard.
+  const STATS_CONDITIONS = [
+    { key: "temperature", label: "Temperature", unit: "°C", min: "tmin", max: "tmax", tick: 10, every: 2, steps: 100,
+      name: (value) => `${formatNumber(value, { maximumFractionDigits: 1 })} °C` },
+    { key: "ph", label: "pH", unit: "", min: "phmin", max: "phmax", tick: 1, every: 2, steps: 100,
+      name: (value) => `pH ${formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}` },
+  ];
+
+  function statsConditionPanel(condition, summary, records) {
+    const counts = summary?.counts;
+    const n = statsCount(summary?.n, records || Infinity);
+    const { start, width } = summary || {};
+    if (!n || !Number.isFinite(start) || !(width > 0) || !statsWholeList(counts, condition.steps + 1) || statsListSum(counts) !== n) return null;
+    const bins = counts.length;
+    const widthPlaces = (String(width).split(".")[1] || "").length;
+    const decimals = Number.isInteger(summary.decimals) && summary.decimals >= 0 && summary.decimals <= 3 ? Math.max(summary.decimals, widthPlaces) : null;
+    const lower = (index) => +(start + index * width).toFixed(widthPlaces);
+    const step = decimals === null ? 0 : 10 ** -decimals;
+    const fixed = (value) => value.toFixed(decimals);
+    const params = (index) => {
+      if (decimals === null) return null;
+      const range = index === 0 ? { [condition.max]: fixed(lower(1) - step) }
+        : index === bins - 1 ? { [condition.min]: fixed(lower(index)) }
+        : { [condition.min]: fixed(lower(index)), [condition.max]: fixed(lower(index + 1) - step) };
+      return { source: "paper", ...range };
+    };
+    const name = (index) => (index === 0 ? `below ${condition.name(lower(1))}` : index === bins - 1 ? `${condition.name(lower(index))} and above` : condition.name(lower(index)));
+    const span = (index) => (index > 0 && index < bins - 1 && decimals !== null && decimals > widthPlaces
+      ? ` (${condition.name(lower(index))}–${fixed(lower(index + 1) - step)}${condition.unit ? ` ${condition.unit}` : ""})` : "");
+    const highest = Math.max(...counts);
+    const bars = counts.map((count, index) => {
+      const href = count && params(index) ? statsBrowseHref(params(index)) : "";
+      return `<span${count ? ' class="has-values"' : ""} style="height:${highest ? +(count / highest * 100).toFixed(3) : 0}%"${count ? ` data-tip="${escapeHtml(`${name(index)}${span(index)}: ${formatInteger(count)} ${count === 1 ? "record" : "records"} (${statsShare(count, n)})`)}"` : ""}${href ? ` data-href="${escapeHtml(href)}"` : ""}></span>`;
+    }).join("");
+    const top = counts.map((count, index) => ({ count, index })).filter((item) => item.count > 0)
+      .sort((a, b) => b.count - a.count || a.index - b.index).slice(0, 3);
+    const topHtml = top.map((item) => {
+      const href = params(item.index) ? statsBrowseHref(params(item.index)) : "";
+      const words = escapeHtml(name(item.index));
+      return `<span class="stats-condition-value">${href ? `<a class="stats-link" href="${escapeHtml(href)}" title="${escapeHtml(`${formatInteger(item.count)} records${span(item.index)}`)}">${words}</a>` : words} <span class="stats-muted">${escapeHtml(statsShare(item.count, n))}</span></span>`;
+    }).join("");
+    const text = `${condition.label} of ${formatInteger(n)} records read from the paper; most common ${top.map((item) => `${name(item.index)} (${statsShare(item.count, n)})`).join(", ")}.`;
+    return `<figure class="stats-range stats-condition" data-condition="${condition.key}" data-count="${n}">
+      <figcaption>${escapeHtml(condition.label)}${condition.unit ? ` <span class="stats-range-unit">(${escapeHtml(condition.unit)})</span>` : ""}</figcaption>
+      <dl class="stats-range-numbers stats-condition-top"><div><dt>Most common</dt><dd>${topHtml}</dd></div></dl>
+      <div class="stats-histogram stats-condition-plot" role="img" aria-label="${escapeHtml(text)}">
+        <div class="stats-condition-bars">${bars}</div>
+        <div class="stats-histogram-axis" aria-hidden="true">${statsLinearTicks(start, bins * width, condition.tick, condition.every)}</div>
+      </div>
+      <p class="stats-range-count">${formatInteger(n)} records${records ? ` of ${formatInteger(records)}` : ""}</p>
+    </figure>`;
+  }
+
+  function statsConditionsFigure(conditions, records) {
+    const panels = STATS_CONDITIONS.map((condition) => statsConditionPanel(condition, conditions?.[condition.key], records)).filter(Boolean);
+    if (!panels.length) return null;
+    return {
+      id: "statsConditionsTitle", key: "conditions", title: "Assay temperature and pH", wide: true,
+      body: `<div class="stats-conditions">${panels.join("")}</div>`,
+      caption: "Records read from the paper by the assay temperature and pH their paper gives, a bar per 1 °C and per 0.1 pH unit.",
+      rules: "The first bar also holds every value below it, the last every value at its edge and above. A bar opens its records in Browse when clicked; the most common values above each plot are links.",
+    };
+  }
+
+  // Values against the databases by enzyme class (from_paper_insights.database_by_class): a 100% bar per class of the
+  // values read from the paper, by each value's own result, counted as Figure 8 counts them; the class links to its
+  // records read from the paper. The class colour stays off this figure: its segments are the results' colours.
+  const STATS_CLASS_RESULT_KEYS = { same: "same", "other-label": "other_label", corrects: "corrects", differs: "differs", "not-listed": "not_listed" };
+
+  function statsDatabaseClassFigure(list, classNames) {
+    const items = (Array.isArray(list) ? list : []).filter((item) => Number.isInteger(item?.class) && item.class >= 1 && item.class <= 7
+      && STATS_DATABASE_RESULTS.every((result) => statsCount(item[STATS_CLASS_RESULT_KEYS[result.part]]) !== null));
+    const rows = items.map((item) => {
+      const parts = STATS_DATABASE_RESULTS.map((result) => ({ ...result, count: item[STATS_CLASS_RESULT_KEYS[result.part]] }));
+      const name = classNames[item.class] || "";
+      const labelHtml = `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, source: "paper" }))}">EC ${item.class}</a>${name ? `<span class="stats-ec-name"> ${escapeHtml(name)}</span>` : ""}`;
+      const row = statsDatabaseRow(`ec_${item.class}`, labelHtml, `EC ${item.class}${name ? ` ${name}` : ""}`, parts);
+      return { ...row, parts: [{ text: formatInteger(row.count) }] };
+    }).filter((row) => row.count > 0);
+    if (!rows.length) return null;
+    return {
+      id: "statsDbClassesTitle", key: "db-classes", title: "Against the databases by enzyme class", wide: true,
+      body: statsBarChart({ key: "db-classes", rows, legend: STATS_DATABASE_RESULTS.map((result) => ({ part: result.part, label: escapeHtml(result.label) })),
+        percent: true, axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"] }),
+      caption: "Values read from the paper by the enzyme class of their record, each by its result against the databases.",
+      rules: `A record in several classes counts in each. Each bar is its class's compared values as 100%; the tooltip line gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
+    };
+  }
+
   // Records per source, counted as the Browse source filter finds them (rowSourceBits): a record merged from several
   // databases counts under each; a record that names none of them is Other. Papers holds the records read from the paper
   // by CatLog and the few earlier paper extractions.
@@ -5871,7 +6188,7 @@
     view.addEventListener("click", (event) => {
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);
-      const segment = event.target?.closest?.(".stats-seg[data-href]");
+      const segment = event.target?.closest?.(".stats-seg[data-href], .stats-condition-bars > [data-href]");
       if (segment && view.contains(segment)) window.location.href = segment.dataset.href;
     });
   }
@@ -6300,6 +6617,13 @@
     }
     const ridges = statsRidgeFigure(overview);
     if (ridges) values.push(ridges);
+    // What the values read from the paper show: kcat against Km with the diffusion limit, variants against their wild
+    // type, and the assay temperature and pH (each only when the overview counts it).
+    const insights = statsInsights(overview);
+    const classNames = Object.fromEntries((Array.isArray(overview?.ec_classes) ? overview.ec_classes : [])
+      .filter((item) => Number.isInteger(item?.class)).map((item) => [item.class, String(item.name || "")]));
+    values.push(...[statsKcatKmFigure(insights.kcat_km, classNames), statsMutationsFigure(insights.mutations),
+      statsConditionsFigure(insights.conditions, fromPaper)].filter(Boolean));
     if (values.length) parts.push({ key: "values", title: "Values", items: values });
 
     // 6. Cautions, with the same names as the Cautions filter.
@@ -6323,6 +6647,7 @@
     const databases = [];
     for (const pair of [
       [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null],
+      [comparison ? statsDatabaseClassFigure(insights.database_by_class, classNames) : null],
       [statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues)],
       [statsCorrectionsFoundFigure(comparison), statsCauseDatabaseTable(comparison, comparedSources)],
       [statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections), statsReplacedFigure(overview?.quality)],
