@@ -1991,6 +1991,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody :is(tr.empty-row,tr.loading-row) td { padding:24px 16px }
   .load-notice.empty-notice { position:static; max-width:none }
 }
+/* The narrowest phones (an iPhone SE's 320px): side by side, organism and substrate each get too little width for two
+   lines, so the substrate takes its own line under the organism, without the dot. */
+@media (max-width: 360px) {
+  #recordsBody td.c-organism { flex:1 1 100%; max-width:none; margin-right:0 }
+  #recordsBody td.c-substrate, #recordsBody td.c-substrate.has-note > .clamp-2 { flex:1 1 100% }
+  #recordsBody td.c-substrate .clamp-2::before { content:none }
+}
 
 /* Phones and touch screens: the record's ‹, › and × are 44px targets with 8px more before ×, so a near miss on › never
    closes the record; the name keeps their 148px clear (the buttons' 140px and 4px on each side) and its line their
