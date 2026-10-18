@@ -453,10 +453,10 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual((ph["n"], ph["counts"][55], ph["counts"][52], ph["counts"][0], ph["decimals"]), (6, 2, 3, 1, 2))
         self.assertEqual(sum(temperature["counts"]), temperature["n"])
         self.assertEqual(followup.condition_summary([7.3], "ph")["counts"][53], 1, "7.3 is in its own bin")
-        # Against the databases by class: each value's own result; a correction found only by an exact factor is a
-        # different number; a record in two classes counts in each; text lines and other records are left out.
+        # Against the databases by class: each value's own result, as part 7's figures count it (a correction found by
+        # an exact factor alone too); a record in two classes counts in each; text lines and other records are left out.
         self.assertEqual(insights["database_by_class"], [
-            {"class": 3, "same": 1, "other_label": 1, "corrects": 1, "differs": 2, "not_listed": 1},
+            {"class": 3, "same": 1, "other_label": 1, "corrects": 2, "differs": 1, "not_listed": 1},
             {"class": 4, "same": 0, "other_label": 0, "corrects": 0, "differs": 1, "not_listed": 0}])
 
     def test_overview_without_marks_and_hash_binding(self):

@@ -695,9 +695,8 @@ def condition_summary(values, key):
 
 
 # The values read from the paper against the databases, by enzyme class: each value's own result (its proof line's
-# database_status), as Stats part 7 and Browse name them: the same number, the same number under another label, corrects
-# a database's number, a different number (with a correction found only by an exact factor, not yet checked) or in none of
-# the databases. A record in several classes counts in each.
+# database_status), as Stats part 7's figures count them: the same number, the same number under another label, corrects
+# a database's number, a different number or in none of the databases. A record in several classes counts in each.
 DATABASE_CLASS_RESULTS = {"confirmed": "same", "same_number_other_label": "other_label", "corrected": "corrects",
                           "differs": "differs", "new": "not_listed"}
 
@@ -708,8 +707,6 @@ def database_results(row):
         if not isinstance(line, dict):
             continue
         result = DATABASE_CLASS_RESULTS.get(str(line.get("database_status") or ""))
-        if result == "corrects" and line.get("database_found_by") == "factor_only":
-            result = "differs"
         if result:
             results.append(result)
     return results
