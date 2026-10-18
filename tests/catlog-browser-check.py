@@ -1078,7 +1078,9 @@ def check_review_headline(driver, browser, url):
             assert "99.9%" in band and REVIEW_HEADLINE_NOTE in " ".join(band.split()) and "values correct" not in band, band
             assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
             figure = " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").get_attribute("innerText").split())
-            assert figure == f"99.9% {REVIEW_HEADLINE_NOTE}", figure
+            # The share never stands alone: the entries whose value the reviewer could not find are said beside it.
+            assert figure == f"99.9% {REVIEW_HEADLINE_NOTE}; 153 (5.7%) with the value not found in the paper", figure
+            assert "153 (5.7%) with the value not found in the paper" in " ".join(band.split()), band
             # The base's parenthesis never breaks inside: "(408" ending one line and "papers)" starting the next.
             parens = driver.execute_script(REVIEW_BASE_PARENS, ".stats-total[data-total='review'], #statsCharts .stats-lead-figure")
             assert len(parens) == 2 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens

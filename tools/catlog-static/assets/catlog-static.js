@@ -11191,8 +11191,13 @@
   // A line quoted from the paper's text, as extraction left it, made readable: table markers ([rowspan]) go, _{...} and
   // ^{...} become sub- and superscripts, K_M and k_cat read as K<sub>m</sub> and k<sub>cat</sub>, and LaTeX symbols
   // their characters. The characters themselves are not changed.
+  // The code points the JBC/ASBMB fonts' text layer gives ±, ×, − and µ (most fonts draw them as boxes), as the paper
+  // prints them; a snapshot exported after the CatLog side repairs them (2026-10-18) has none left.
+  const PDF_GLYPH_SYMBOLS = { "\u2AFE": "±", "\u2AFB": "×", "\u2AFA": "−", "\u242E": "µ" };
+
   function printedLineHtml(value) {
     const text = String(value ?? "")
+      .replace(/[\u2AFE\u2AFB\u2AFA\u242E]/g, (symbol) => PDF_GLYPH_SYMBOLS[symbol])
       .replace(/\s*\[(?:rowspan|colspan)[^\]]*\]/gi, "")
       .replace(/\\pm\b\s*/g, "± ")
       .replace(/\\times\b\s*/g, "× ")
@@ -13837,6 +13842,7 @@
       conditionsSection,
       lookAlikeRowKeys,
       substrateNoteHtml,
+      printedLineNoteHtml,
       proteinSection,
       organismHtml,
       databasesSection,

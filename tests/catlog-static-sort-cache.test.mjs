@@ -3364,6 +3364,13 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   const zeroCelsius = row({ temperature_display: "", condition_flags: ["temperature_zero_celsius_needs_check"] });
   assert.equal(api.rowCautionBits(zeroCelsius), 8);
   const noLookAlikes = api.lookAlikeRowKeys([]);
+  // A quote shows the JBC fonts' code points for ± and − as printed, and says under it when the text layer lost symbols
+  // (the snapshot's printed_line_note, or a character the text layer could not name).
+  assert.match(api.printedLineNoteHtml("Km values of 8.4 \u2AFE 0.15 mM and 63.2 s\u2AFA1"), /8\.4 ± 0\.15 mM and 63\.2 s−1/);
+  assert.doesNotMatch(api.printedLineNoteHtml("Km 8.4 mM"), /printed-line-note/);
+  assert.match(api.printedLineNoteHtml("kcat (min)1) 425", { note: "Text extraction dropped some symbols from this line." }),
+    /<\/p><p class="printed-line-note">Text extraction dropped some symbols from this line\.<\/p>$/);
+  assert.match(api.printedLineNoteHtml("Km 8.4 \uFFFD 0.15 mM"), /<p class="printed-line-note">Text extraction dropped some symbols from this line\.<\/p>/);
   assert.equal(api.substrateNoteHtml(zeroCelsius, noLookAlikes),
     '<small class="condition-note"><span class="value-flag" role="img" title="Temperature recorded as exactly 0 °C; may stand for a missing value" '
     + 'aria-label="Temperature recorded as exactly 0 °C; may stand for a missing value"><span class="visually-hidden">T questionable</span></span></small>');
