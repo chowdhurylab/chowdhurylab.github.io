@@ -1084,8 +1084,8 @@ so their colours follow the tokens; one plain sentence per idea; prose only wher
 detail in native disclosures. One column up to 1000px: the pictures use its width, prose keeps to 72ch (16px body).
 
 The introduction (h1 "Using CatLog") is the framing in two lines: "CatLog re-verifies published enzyme kinetics: kcat,
-Km and kcat/Km. Its agents find the paper each database value cites, read the values in it and check them against the
-paper; people review samples." and, in small type, the Chowdhury Lab and CatLog-27k of the CatRange paper (PNAS Nexus).
+Km and kcat/Km. AI agents find the papers that enzyme databases cite, read the values in them and check each against
+the paper; people review samples. So far 61,919 of 178,676 records are re-read." (the counts from the manifest) and, in small type, the Chowdhury Lab and CatLog-27k of the CatRange paper (PNAS Nexus).
 Never a "download" agent or papers collected in bulk. Then "On this page": the sections as a row of small buttons that
 wrap, in this order and with these addresses (other pages link to every one; keep them):
 
@@ -1094,10 +1094,12 @@ wrap, in this order and with these addresses (other pages link to every one; kee
   method boilerplate here as "How CatLog reads a value →"): four steps as numbered cards with an icon, in a row with
   arrows (one under another below 900px): Find the paper (the paper a database value cites, by its PMID or DOI), Read
   (an AI model, Claude, Anthropic, named once in the Guide, reads each value with its unit, conditions and the line it is
-  printed in), Check ("A second, separate AI check compares every value with the paper." and code confirms the line is
-  in the paper's text), Compare (code compares each value with the numbers the enzyme databases list for the same
-  paper); then what the record keeps, four short items: As printed, Units by code (a model never types a converted
-  number), Accepted (added only after the second check and the code checks; tagged from paper), Human-checked. Then the
+  printed in), Check ("A second, separate AI check compares every value with the paper." and automated checks confirm the
+  line is in the paper's text), Compare (each value is compared automatically with the numbers the enzyme databases
+  list for the same paper); then what the record keeps, four short items: As printed, Units (converted automatically;
+  no model types a converted number), Accepted (added only after the second check and the automated checks; tagged
+  from paper), Human-checked. The site says "automated checks" and "found automatically", never "code", as the README
+  does. Then the
   loop in a dashed accent box ("Then checked again": AI audits and people review samples; what they find improves the
   next reading; link to Team). Then What the checks found (#guideMethodLead, from the manifest only, left out without
   numbers): tiles of one figure, one phrase and one note each, in this order when present: Human review (the share, the

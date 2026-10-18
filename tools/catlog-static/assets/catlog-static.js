@@ -137,7 +137,7 @@
 
   // Tag definitions, said the same way in the filter, the badges and the Guide.
   const CORRECTED_DEFINITION = "Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them.";
-  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by CatLog's earlier version, an automated pipeline of AI models and code checks.";
+  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by CatLog's earlier version, a pipeline of AI models and automated checks.";
 
   const stateDescriptions = {
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
@@ -2152,7 +2152,7 @@
   function v2MethodSentence(facts = null, { unitChanged = false } = {}) {
     const base = v2Sentence.replace(/\.$/, "");
     if (!facts?.length) return `${base}.`;
-    if (facts.some((fact) => /converted by code/.test(fact.conversion || ""))) return `${base}; units converted by code.`;
+    if (facts.some((fact) => /converted by code/.test(fact.conversion || ""))) return `${base}; units converted automatically.`;
     return unitChanged
       ? `${base}; not every value is stored in the unit the paper prints (see the notes).`
       : `${base}; values stored as printed.`;
@@ -5296,7 +5296,19 @@
     return keepReRead(keepReviewBase(keepReviewBase(html, reviewFacts(quality.review?.v1)), reviewFacts(quality.review?.v2), { fromPaper: true }));
   }
 
+  // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
+  // " So far 61,919 of 178,676 records are re-read.", from the manifest; hidden without the counts.
+  function renderRereadLines() {
+    const total = Number(manifest.total_rows || 0);
+    const read = statsCount(statsOverview(total)?.from_paper?.records, total || Infinity);
+    document.querySelectorAll?.("[data-reread-line]").forEach((line) => {
+      line.innerHTML = read !== null && total ? ` So far ${formatInteger(read)} of ${formatInteger(total)} records are <span class="nowrap">re-read</span>.` : "";
+      line.hidden = !(read !== null && total);
+    });
+  }
+
   function renderGuideMethod() {
+    renderRereadLines();
     // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
     if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
@@ -5358,7 +5370,7 @@
   const GUIDE_DB_FOUND_BY = [
     { key: "paper_check", label: "Checked against the paper", text: "A separate AI check read the paper and named the cause." },
     { key: "factor_cross_checked", label: "Exact factor; the paper's kcat ÷ Km agrees",
-      text: "Code found the database's number is the paper's times an exact factor, and the paper's own kcat ÷ Km matches CatLog's value, not the database's." },
+      text: "An automated check found the database's number is the paper's times an exact factor, and the paper's own kcat ÷ Km agrees with CatLog's value, not the database's." },
   ];
   const GUIDE_DB_NOT_LISTED = [
     { key: "ratio_only", label: "kcat and Km listed",
@@ -5575,7 +5587,7 @@
       </dl>`)}
       ${more("guide-databases-causes", "Cause of a correction", guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount))}
       ${more("guide-databases-found", "How a correction is found", `${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}${found.code !== null
-        ? `<p class="guide-db-note">${escapeHtml(`Found by code (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}`)}
+        ? `<p class="guide-db-note">${escapeHtml(`Found automatically (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}`)}
       ${more("guide-databases-not-listed", "Why no database lists a value", guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount))}
       <p class="guide-db-note">All comparisons are within one paper. Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
       // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
@@ -5669,7 +5681,7 @@
   const STATS_CODE_CAUSES = ["power_of_ten", "time_factor", "printed_number_unit_not_applied"];
   const STATS_FOUND_BY = [
     { key: "paper_check", part: "corrects", label: "Checked against the paper", title: "A separate AI check read the paper and named the cause" },
-    { key: "code", part: "corrects-2", label: "Exact factor found by code", title: "Code found the database's number is the paper's times an exact factor" },
+    { key: "code", part: "corrects-2", label: "Exact factor found automatically", title: "An automated check found the database's number is the paper's times an exact factor" },
   ];
 
   function statsDatabaseComparison() {
@@ -6081,7 +6093,7 @@
       };
     });
     const notes = [
-      !split && byValid ? `${formatInteger(paperCheck)} checked against the paper; for ${formatInteger(code)} code found an exact factor.` : "",
+      !split && byValid ? `${formatInteger(paperCheck)} checked against the paper; for ${formatInteger(code)} an automated check found an exact factor.` : "",
       found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here.` : "",
     ].filter(Boolean).join(" ");
     return {

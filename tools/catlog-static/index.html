@@ -325,12 +325,12 @@
         <div class="team-shell">
           <header class="team-heading">
             <h1 id="teamHeading" tabindex="-1">People behind CatLog</h1>
-            <p>CatLog re-verifies published enzyme kinetics. AI agents find the paper each database value cites, read the values in it and check each one against the paper. People review samples, and what they find improves the rules for the next papers.</p>
+            <p>CatLog re-verifies published enzyme kinetics. AI agents find the papers that enzyme databases cite, read the values in them and check each against the paper; people review samples, and what they find improves the rules for the next papers.<span class="reread-line" data-reread-line hidden></span></p>
           </header>
           <div class="team-body">
             <figure class="team-figure">
               <div id="teamFigure" class="team-figure-art"></div>
-              <figcaption>Clockwise, the loop re-verifies published values against their papers. <span class="team-caption-wide">Point at or tab to a person or an agent to see where they work.</span><span class="team-caption-narrow">The list of people and AI agents says where on the loop each one works.</span></figcaption>
+              <figcaption>Clockwise from cited papers to the website, the loop re-verifies published values against their papers. <span class="team-caption-wide">Point at or tab to a person or an agent to see where they work.</span><span class="team-caption-narrow">The list of people and AI agents says where on the loop each one works.</span></figcaption>
             </figure>
             <div id="teamLegend" class="team-legend"></div>
           </div>
@@ -341,7 +341,7 @@
         <div class="guide-shell">
           <header class="guide-heading">
             <h1 id="guideHeading">Using CatLog</h1>
-            <p class="guide-lead">CatLog re-verifies published enzyme kinetics: <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>. Its agents find the paper each database value cites, read the values in it and check them against the paper; people review samples.</p>
+            <p class="guide-lead">CatLog re-verifies published enzyme kinetics: <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>. AI agents find the papers that enzyme databases cite, read the values in them and check each against the paper; people review samples.<span class="reread-line" data-reread-line hidden></span></p>
             <p class="guide-byline">By the Chowdhury Lab, Iowa State University. CatLog grew out of CatLog-27k, the 27,176 BRENDA and SABIO-RK records the CatRange paper (PNAS Nexus, 2026) trained its models on.</p>
           </header>
 
@@ -380,18 +380,18 @@
                 <li class="guide-flow-step" data-step="check">
                   <span class="guide-flow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3 5 6v5.5c0 4.3 2.9 7.7 7 9.5 4.1-1.8 7-5.2 7-9.5V6z"/><path d="m8.8 12.2 2.3 2.3 4.3-4.7"/></svg></span>
                   <strong class="guide-flow-name">Check</strong>
-                  <span class="guide-flow-text">A second, separate AI check compares every value with the paper. Code confirms the line is in the paper&rsquo;s text.</span>
+                  <span class="guide-flow-text">A second, separate AI check compares every value with the paper. Automated checks confirm the line is in the paper&rsquo;s text.</span>
                 </li>
                 <li class="guide-flow-step" data-step="compare">
                   <span class="guide-flow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 4v16M8 20h8M4 7.5h16"/><path d="m6.5 7.5-3 6.5a3 3 0 0 0 6 0zM17.5 7.5l-3 6.5a3 3 0 0 0 6 0z"/></svg></span>
                   <strong class="guide-flow-name">Compare</strong>
-                  <span class="guide-flow-text">Code compares each value with the numbers the enzyme databases list for the same paper.</span>
+                  <span class="guide-flow-text">Each value is compared automatically with the numbers the enzyme databases list for the same paper.</span>
                 </li>
               </ol>
               <ul class="guide-keeps">
                 <li><strong>As printed</strong> The record keeps the number, its &plusmn; and unit as the paper prints them, and where (Table 1).</li>
-                <li><strong>Units by code</strong> Code converts the printed unit to the catalog&rsquo;s (9.2 &micro;M becomes 0.0092 mM); a model never types a converted number.</li>
-                <li><strong>Accepted</strong> A value is added only after the second check and the code checks; its record is Accepted and tagged <em>from paper</em>.</li>
+                <li><strong>Units</strong> The printed unit is converted automatically to the catalog&rsquo;s (9.2 &micro;M becomes 0.0092 mM); no model types a converted number.</li>
+                <li><strong>Accepted</strong> A value is added only after the second check and the automated checks; its record is Accepted and tagged <em>from paper</em>.</li>
                 <li><strong>Human-checked</strong> Only a record marked <em>human-checked</em> has been approved by a person.</li>
               </ul>
             </div>
@@ -523,7 +523,7 @@
                   </div>
                   <div>
                     <dt><span class="state-tag">earlier extraction</span></dt>
-                    <dd>Read from a paper by CatLog&rsquo;s earlier version (AI models and code checks).</dd>
+                    <dd>Read from a paper by CatLog&rsquo;s earlier version (AI models and automated checks).</dd>
                   </div>
                   <div>
                     <dt><span class="state-tag">corrected</span></dt>
@@ -629,7 +629,7 @@
               <li><span class="guide-unit-name"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><span class="guide-unit-value">mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span><span class="guide-unit-what">Catalytic efficiency (&times;&nbsp;1,000 for M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup>)</span></li>
             </ul>
             <dl class="guide-term-list">
-              <div><dt>Conversion</dt><dd>Code converts each printed value to these units (&micro;M to mM, <span class="nowrap">min<sup>&minus;1</sup></span> to <span class="nowrap">s<sup>&minus;1</sup></span>).</dd></div>
+              <div><dt>Conversion</dt><dd>Each printed value is converted automatically to these units (&micro;M to mM, <span class="nowrap">min<sup>&minus;1</sup></span> to <span class="nowrap">s<sup>&minus;1</sup></span>).</dd></div>
               <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> CatLog worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, to the precision of the less precise of the two; on a record read from the paper only where CatLog read no printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</dd></div>
               <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> (<a href="#guide-cautions">mismatch</a>).</dd></div>
               <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>Numbers of 100,000 or more and below 0.001: 8.2 &times; 10<sup>&minus;4</sup>.</dd></div>

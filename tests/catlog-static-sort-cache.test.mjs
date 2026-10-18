@@ -1393,7 +1393,7 @@ assert.match(guideMethod, /An AI model \(Claude, Anthropic\) reads each/);
 const howRead = guideMethod.match(/<div class="guide-how-read" id="guide-how-read" aria-labelledby="guide-how-read-title">([\s\S]*?)<\/div>\s*<div class="guide-loop">/)[1];
 assert.match(howRead, /<h3 id="guide-how-read-title">How CatLog reads a value<\/h3>/);
 assert.deepEqual([...howRead.matchAll(/<strong class="guide-flow-name">([^<]*)<\/strong>/g)].map((match) => match[1]), ["Find the paper", "Read", "Check", "Compare"]);
-assert.match(howRead, /a model never types a converted number/);
+assert.match(howRead, /no model types a converted number/);
 assert.match(howRead, /tagged <em>from paper<\/em>/);
 // The Guide's record picture follows the record panel's order (round 13): its quote reads "In the paper:" as the record's
 // does, a Checks part (the panel's Checks section) follows Against the databases, its key links How CatLog reads a value,
@@ -1432,7 +1432,7 @@ assert.equal(api.keepReRead('Not yet re-read <a title="not yet re-read">pre-read
   'Not yet <span class="nowrap">re-read</span> <a title="not yet re-read">pre-reading <span class="nowrap">re-read</span></a>');
 // The tag a record not yet re-read carries where one read from the paper says "from paper".
 assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>From CatLog&rsquo;s earlier version; its source follows /);
-assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version \(AI models and code checks\)\.<\/dd>/);
+assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version \(AI models and automated checks\)\.<\/dd>/);
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
   const method = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -2316,8 +2316,8 @@ function row(overrides = {}) {
   const found = figureHtml("db-found");
   assert.deepEqual([...found.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1320], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
-  assert.match(found, /data-tip="Unit or scale, Checked against the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found by code: 892"/);
-  assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); checked against the paper 428, exact factor found by code 892\.<\/span>/);
+  assert.match(found, /data-tip="Unit or scale, Checked against the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found automatically: 892"/);
+  assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); checked against the paper 428, exact factor found automatically 892\.<\/span>/);
   // A bar found both ways prints its two counts under its name, each after its colour; a bar found one way does not.
   assert.match(found, /data-row="unit"[^>]*>\s*<span class="stats-chart-label"><span title="[^"]*">Unit or scale<\/span><small><span class="stats-db-thin" aria-hidden="true"><span><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>428<\/span><span><i class="stats-swatch stats-part-corrects-2" aria-hidden="true"><\/i>892<\/span><\/span><\/small><\/span>/);
   assert.equal((found.match(/<small><span class="stats-db-thin"/g) || []).length, 1);
@@ -2447,9 +2447,9 @@ function row(overrides = {}) {
   // Without corrections.by, or when the causes code finds do not add up to its code count, the bars are not split and
   // How these numbers are counted gives the two counts; a cause with no family is counted apart.
   withOut((data) => { delete data.corrections.by; });
-  assert.doesNotMatch(figureHtml("db-found"), /Exact factor found by code|checked against the paper/);
+  assert.doesNotMatch(figureHtml("db-found"), /Exact factor found automatically|checked against the paper/);
   withOut((data) => { data.corrections.by = { code: 900, paper_check: 648 }; });
-  assert.match(methodHtml(), /648 checked against the paper; for 900 code found an exact factor\./);
+  assert.match(methodHtml(), /648 checked against the paper; for 900 an automated check found an exact factor\./);
   assert.doesNotMatch(figureHtml("db-found"), /<ul class="stats-legend">/);
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause\.<\/span> [^<]*2 corrections have causes not named here\.<\/dd>/);
@@ -2464,7 +2464,7 @@ function row(overrides = {}) {
     /^In this snapshot's figures and tables, 257 values a database lists at an exact factor from the paper's number, not yet checked against the paper, still stand under Corrects; the lead and the Guide count them under Different number \(exact factor, not yet checked\)\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1063], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
-  assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found by code: 635"/);
+  assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found automatically: 635"/);
   assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database's number, each counted once\./);
   assert.match(methodHtml(), /Corrections by cause and database\.<\/span> 257 values a database lists at an exact factor, not yet checked against the paper, are Different number, left out of All; the columns per database still hold them\.<\/dd>/);
   // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
@@ -4831,7 +4831,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(Object.keys(found), ["Checked against the paper", "Exact factor; the paper’s kcat ÷ Km agrees"]);
   assert.ok(found["Checked against the paper"].endsWith("named the cause. 656 values"));
   assert.doesNotMatch(text, /Exact factor only|nothing else was checked/);
-  assert.match(text, /Found by code \(an exact factor the paper’s own kcat ÷ Km agrees with\): 892 values\./);
+  assert.match(text, /Found automatically \(an exact factor the paper’s own kcat ÷ Km agrees with\): 892 values\./);
   assert.doesNotMatch(text, /Among them, exact factor/, "no factor-only count in this comparison: no line for it");
   // Why not listed: the two kinds values.all counts apart, the paper count from the papers no database lists.
   const why = items(html, "Why no database lists a value");
@@ -4879,7 +4879,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     Km: { condition_absent: 1607, metric_absent: 3, variant_absent: 4 }, "kcat/Km": { condition_absent: 1130, ratio_only: 4873, paper_not_in_databases: 336 } };
   html = api.guideDatabasesHtml(counted);
   assert.deepEqual(Object.values(items(html, "How a correction is found")).map((value) => value.match(/([\d,]+) values$/)?.[1]), ["126", "300"]);
-  assert.doesNotMatch(plain(html), /Found by code/);
+  assert.doesNotMatch(plain(html), /Found automatically/);
   // An older comparison counts its factor-only values among the corrections: the Guide moves them under Different
   // number (1,548 - 257 correct; 1,051 + 257 differ), with their own line and count there.
   assert.match(items(html, "Results")["Corrects a value"], /1,291 values in 1,443 records$/);
@@ -4903,7 +4903,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // Without counts: the words alone, never an empty count, a guessed number or a heading without its list.
   html = api.guideDatabasesHtml({});
   text = plain(html);
-  assert.doesNotMatch(html, /guide-db-count|guide-db-note">Found by code|<li>/);
+  assert.doesNotMatch(html, /guide-db-count|guide-db-note">Found automatically|<li>/);
   assert.doesNotMatch(text, /undefined|NaN|null|This snapshot compares|Where a database lists a number for the same measurement|in this snapshot/);
   assert.match(text, /with the values BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
   assert.equal([...html.matchAll(/<h3 /g)].length, 5);
@@ -6981,7 +6981,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(source, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
   // Earlier extractions are CatLog's too, from its earlier version (one CatLog, round 8): never "not by CatLog".
-  assert.match(source, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, an automated pipeline of AI models and code checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
+  assert.match(source, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, a pipeline of AI models and automated checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
   assert.doesNotMatch(source, /not by CatLog/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
