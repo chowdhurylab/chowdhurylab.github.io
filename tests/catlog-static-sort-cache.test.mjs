@@ -2779,10 +2779,18 @@ function row(overrides = {}) {
     assert.match(folds.body, /<i class="stats-fold-zero" style="left:75%" aria-hidden="true"><span>wild type<\/span><\/i>/);
     assert.match(folds.body, /<dt>Lower<\/dt><dd>75\.0%<\/dd>/);
     // Each bar's range in its tooltip line, the end bars open-ended.
-    assert.match(folds.body, /data-tip="kcat 0\.13 times the wild type or less: 1 variant \(25\.0%\)"/);
-    assert.match(folds.body, /data-tip="kcat 0\.75 to 1\.3 times the wild type: 2 variants \(50\.0%\)"/);
-    assert.match(folds.body, /data-tip="kcat 1\.3 times the wild type or more: 1 variant \(25\.0%\)"/);
-    assert.match(folds.rules, /^5 variants from 2 papers\. A variant is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature: 3 variants whose paper gives several such wild-type records and 4 with none are left out\./);
+    // The counts are of variant records (a variant has one per substrate and condition).
+    assert.match(folds.body, /data-tip="kcat 0\.13 times the wild type or less: 1 variant record \(25\.0%\)"/);
+    assert.match(folds.body, /data-tip="kcat 0\.75 to 1\.3 times the wild type: 2 variant records \(50\.0%\)"/);
+    assert.match(folds.body, /data-tip="kcat 1\.3 times the wild type or more: 1 variant record \(25\.0%\)"/);
+    assert.match(folds.body, /<p class="stats-range-count">4 variant records; /);
+    assert.match(folds.rules, /^5 variant records from 2 papers\. A variant record is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature: 3 variant records whose paper gives several such wild-type records and 4 with none are left out\./);
+    assert.match(folds.caption, /Variants are those the papers chose to make, often at catalytic residues, so the spread describes studied mutations, not mutations in general\.$/);
+    assert.doesNotMatch(folds.body + folds.rules, /\d variants?\b(?! record)/, "never a variant record counted as a variant");
+    // An overview that counts the variants among the records (variant_count) pairs by the cosubstrate too, and says both.
+    const counted = api.statsMutationsFigure({ ...mutations, variant_count: 2 });
+    assert.match(counted.rules, /^5 variant records \(2 variants\) from 2 papers\. A variant record is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, cosubstrate, pH and temperature: /);
+    assert.match(counted.caption, /^Each variant read from the paper against the wild type its paper gives for the same enzyme, organism, substrate, cosubstrate, pH and temperature\./);
     assert.match(folds.after, /#browse\?source=paper&amp;variant=variant">Variants read from the paper<\/a> in Browse/);
     assert.equal(api.statsMutationsFigure({ ...mutations, metrics: { kcat: { ...fold(4, 3, 1), n: 5 } } }), null);
 

@@ -328,13 +328,18 @@ its accessible description; no figure or table has a data line. The parts' figur
     each class linked to ec=N.&source=paper&metric=kcat,km): a row lights its dot and the dot its row, the other dots
     dimmed; on phones the table gives the class number alone (the names are in Biology and the dots' tooltip lines),
     so its numbers keep their columns at 320px in DejaVu Sans. The plot is an image with its summary in aria-label.
-  - Variants against their wild type (`mutations`): each variant read from the paper paired with the one wild-type
-    record its paper gives for the same enzyme, organism, substrate, pH and temperature (a paper with several such
-    wild-type records, or none, leaves its variant unpaired: an ambiguous pairing is never made; the counts left out
-    are said in the figure's rules), per parameter (kcat, Km, kcat/Km) a histogram of log10(variant ÷ wild type) in
+  - Variants against their wild type (`mutations`): each variant record read from the paper (a variant has one per
+    substrate and condition) paired with the one wild-type record its paper gives for the same enzyme, organism,
+    substrate, cosubstrate (a "cosubstrate <name>" part of the record's conditions; a cofactor-switch paper's NADP+
+    variant never pairs with its NAD+ wild type), pH and temperature (a paper with several such wild-type records, or
+    none, leaves its variant record unpaired: an ambiguous pairing is never made; the counts left out are said in the
+    figure's rules). Every count says "variant records"; the rules add the variants among them (`variant_count`:
+    paper, enzyme, organism and mutation), "17,115 variant records (7,496 variants) from 1,236 papers", and the
+    caption that the variants are those the papers chose to make, often at catalytic residues, so the spread describes
+    studied mutations, not mutations in general; per parameter (kcat, Km, kcat/Km) a histogram of log10(variant ÷ wild type) in
     quarter-decade bars centred on whole quarters from 10⁻⁴ to 10³ (the bar at 1 holds changes under 1.33-fold either
     way; the end bars hold every change beyond), drawn like Value ranges (--bar-neutral) with a dashed line on the wild
-    type's own bar and "wild type" above the bars; Median (×), Lower and Higher above each, the variants and the
+    type's own bar and "wild type" above the bars; Median (×), Lower and Higher above each, the variant records and the
     shares at a tenth or less and at ten times or more under it. A link to the variants read from the paper in Browse
     (source=paper&variant=variant) under the figure.
   - Assay temperature and pH (`conditions`): the records read from the paper by the temperature and pH their paper

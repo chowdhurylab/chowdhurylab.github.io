@@ -612,17 +612,31 @@ def kcat_km_map(pairs, linked):
 
 
 # Mutations against the wild type: each variant record paired with the one wild-type record of its paper with the same
-# enzyme, organism, substrate, pH and temperature (a variant whose paper gives several such wild-type records, or none,
-# is left unpaired: an ambiguous pairing is never made), and per parameter the log10 of the variant's value over the
+# enzyme, organism, substrate, cosubstrate, pH and temperature (a variant record whose paper gives several such
+# wild-type records, or none, is left unpaired: an ambiguous pairing is never made; a cofactor-switch paper's NADP+
+# variant is never paired with its NAD+ wild type), and per parameter the log10 of the variant's value over the
 # wild type's, in quarter-decade bins centred on whole quarters from 10^-4 to 10^3 (the bin at 0 holds a change under
 # 1.33x either way; the end bins hold every change beyond them).
 MUTATION_BIN_WIDTH = 0.25
 MUTATION_RANGE = (-4, 3)
 
 
+def cosubstrate_key(row):
+    """The cosubstrates the record's conditions name, each as its own "cosubstrate <name>" part of
+    assay_conditions_summary (a part that only mentions one, "fixed cosubstrate 1.5 mM", is not one)."""
+    parts = (part.strip() for part in str(row.get("assay_conditions_summary") or "").split(";"))
+    return tuple(sorted(name_key(part[len("cosubstrate "):]) for part in parts if part.lower().startswith("cosubstrate ")))
+
+
 def mutation_key(row):
     return (tuple(sorted(paper_keys(row))), name_key(row.get("enzyme_display_name")), name_key(row.get("organism")),
-            name_key(row.get("substrate_name")), ph_value(row), temperature_c(row))
+            name_key(row.get("substrate_name")), cosubstrate_key(row), ph_value(row), temperature_c(row))
+
+
+def variant_key(row):
+    """One variant: its paper, enzyme, organism and mutation (a variant has a record per substrate and condition)."""
+    return (tuple(sorted(paper_keys(row))), name_key(row.get("enzyme_display_name")), name_key(row.get("organism")),
+            str(row.get("mutation_signature") or "").strip().casefold())
 
 
 def fold_summary(changes):
@@ -640,10 +654,12 @@ def fold_summary(changes):
 
 
 def mutation_effects(groups):
-    """groups: mutation_key -> {"wild": [values], "variant": [(values, papers)]}, values a dict of catalog values."""
+    """groups: mutation_key -> {"wild": [values], "variant": [(values, papers, variant_key)]}, values a dict of catalog
+    values. variants counts the paired variant records, variant_count the variants among them (variant_key)."""
     changes = {metric: [] for metric in METRIC_UNITS}
     paired = ambiguous = no_wild_type = 0
     papers = set()
+    distinct = set()
     for group in groups.values():
         variants = group["variant"]
         if not variants:
@@ -653,7 +669,7 @@ def mutation_effects(groups):
             no_wild_type += 0 if group["wild"] else len(variants)
             continue
         wild = group["wild"][0]
-        for values, keys in variants:
+        for values, keys, identity in variants:
             found = False
             for metric in changes:
                 if values.get(metric) and wild.get(metric):
@@ -662,10 +678,11 @@ def mutation_effects(groups):
             paired += found
             if found:
                 papers |= keys
+                distinct.add(identity)
     metrics = {metric: summary for metric, summary in ((metric, fold_summary(found)) for metric, found in changes.items()) if summary}
     if not metrics:
         return None
-    return {"variants": paired, "papers": len(papers), "ambiguous": ambiguous, "no_wild_type": no_wild_type,
+    return {"variants": paired, "variant_count": len(distinct), "papers": len(papers), "ambiguous": ambiguous, "no_wild_type": no_wild_type,
             "bin_width": MUTATION_BIN_WIDTH, "log10_start": MUTATION_RANGE[0], "metrics": metrics}
 
 
@@ -813,7 +830,7 @@ def summarize_overview(rows, marks=None):
             if form == "wild":
                 v2_groups[mutation_key(row)]["wild"].append(own)
             elif form == "variant":
-                v2_groups[mutation_key(row)]["variant"].append((own, keys))
+                v2_groups[mutation_key(row)]["variant"].append((own, keys, variant_key(row)))
             if has_temperature:
                 v2_conditions["temperature"].append(temperature_c(row))
             if has_ph:

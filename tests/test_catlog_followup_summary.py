@@ -397,6 +397,33 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(result["agreement"], fresh)
         self.assertEqual((result["v2_found"], result["v2_found_after_fixes"]), (3332, 3412))
 
+    def test_variants_pair_by_cosubstrate_and_count_as_records_and_variants(self):
+        def read(key, **fields):
+            row = {"record_key": key, "verification_status": "verified", "verification_method": "catlog_v2_read_and_independent_verify",
+                   "source_db": "primary_paper_direct", "supporting_pmids": ["15623532"], "pubmed_id": "15623532", "ec_number": "1.1.1.9",
+                   "enzyme_display_name": "xylitol dehydrogenase", "organism": "Pichia stipitis", "substrate_name": "xylitol",
+                   "kcat_unit": "s^(-1)", "km_unit": "mM", "temperature_display": "25", "ph_display": 9.0}
+            row.update(fields)
+            return row
+        rows = [
+            # A cofactor-switch paper: the wild type with NAD+ and with NADP+; the variant with NADP+ is paired with the
+            # NADP+ wild type only (never with NAD+), the variant with NAD+ with the NAD+ one: one variant, two records.
+            read("wt-nad", wild_type=True, kcat=10.0, km=1.0, assay_conditions_summary="50 mM glycine; cosubstrate NAD+"),
+            read("wt-nadp", wild_type=True, kcat=1.0, km=1.0, assay_conditions_summary="50 mM glycine; cosubstrate NADP+"),
+            read("v-nadp", wild_type=False, mutation_signature="D207A", kcat=10.0, km=1.0, assay_conditions_summary="50 mM glycine; cosubstrate NADP+"),
+            read("v-nad", wild_type=False, mutation_signature="D207A", kcat=1.0, km=1.0, assay_conditions_summary="50 mM glycine; cosubstrate NAD+"),
+            # A part that only mentions a cosubstrate is not one: this variant has no NAD+ or NADP+ wild type to pair with.
+            read("v-none", wild_type=False, mutation_signature="D207A", kcat=1.0, km=1.0, assay_conditions_summary="fixed cosubstrate 1.5 mM"),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, _marks = self.write_fixture(directory, rows, {})
+            mutations = followup.build_overview(manifest, path)["from_paper_insights"]["mutations"]
+        self.assertEqual((mutations["variants"], mutations["variant_count"], mutations["papers"], mutations["ambiguous"], mutations["no_wild_type"]),
+                         (2, 1, 1, 0, 1))
+        kcat = mutations["metrics"]["kcat"]
+        self.assertEqual((kcat["n"], kcat["lower"], kcat["higher"], kcat["tenfold_lower"], kcat["tenfold_higher"]), (2, 1, 1, 1, 1),
+                         "NADP+ variant 10x its NADP+ wild type, NAD+ variant a tenth of its NAD+ wild type")
+
     def test_what_the_values_show_counts_records_read_from_the_paper(self):
         def read(key, **fields):
             row = {"record_key": key, "verification_status": "verified", "verification_method": "catlog_v2_read_and_independent_verify",

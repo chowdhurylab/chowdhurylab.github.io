@@ -4656,9 +4656,11 @@
       const high = statsFoldWords(centre + width / 2);
       return index === 0 ? `${high} times the wild type or less` : index === bins - 1 ? `${low} times the wild type or more` : `${low} to ${high} times the wild type`;
     };
-    const bars = counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? +(count / highest * 100).toFixed(3) : 0}%" data-tip="${escapeHtml(`${label} ${binText(index)}: ${formatInteger(count)} ${count === 1 ? "variant" : "variants"} (${statsShare(count, n)})`)}"></span>`).join("");
+    // (a variant has a record per substrate and condition: the counts are of variant records)
+    const records = (count) => `${formatInteger(count)} ${count === 1 ? "variant record" : "variant records"}`;
+    const bars = counts.map((count, index) => `<span${count ? ' class="has-values"' : ""} style="height:${highest ? +(count / highest * 100).toFixed(3) : 0}%" data-tip="${escapeHtml(`${label} ${binText(index)}: ${records(count)} (${statsShare(count, n)})`)}"></span>`).join("");
     const median = statsRangeNumber(summary.median, { figures: 2 });
-    const text = `${label}, variant over wild type: ${formatInteger(n)} variants; median ${median} times the wild type; ${statsShare(summary.lower, n)} lower and ${statsShare(summary.higher, n)} higher; ${statsShare(summary.tenfold_lower, n)} at a tenth of the wild type or less, ${statsShare(summary.tenfold_higher, n)} at ten times or more.`;
+    const text = `${label}, variant over wild type: ${records(n)}; median ${median} times the wild type; ${statsShare(summary.lower, n)} lower and ${statsShare(summary.higher, n)} higher; ${statsShare(summary.tenfold_lower, n)} at a tenth of the wild type or less, ${statsShare(summary.tenfold_higher, n)} at ten times or more.`;
     return `<figure class="stats-range stats-fold" data-metric="${metric.key}" data-count="${n}">
       <figcaption>${metric.html} <span class="stats-range-unit">(variant ÷ wild type)</span></figcaption>
       <dl class="stats-range-numbers">
@@ -4671,7 +4673,7 @@
         <i class="stats-fold-zero" style="left:${+zero.toFixed(3)}%" aria-hidden="true"><span>wild type</span></i>
         <div class="stats-histogram-axis" aria-hidden="true">${statsDecadeTicks(from, from + span)}</div>
       </div>
-      <p class="stats-range-count">${formatInteger(n)} ${n === 1 ? "variant" : "variants"}; ${escapeHtml(statsShare(summary.tenfold_lower, n))} at a tenth or less, ${escapeHtml(statsShare(summary.tenfold_higher, n))} at ten times or more</p>
+      <p class="stats-range-count">${records(n)}; ${escapeHtml(statsShare(summary.tenfold_lower, n))} at a tenth or less, ${escapeHtml(statsShare(summary.tenfold_higher, n))} at ten times or more</p>
     </figure>`;
   }
 
@@ -4685,13 +4687,18 @@
     const papers = statsCount(mutations.papers);
     const ambiguous = statsCount(mutations.ambiguous);
     const alone = statsCount(mutations.no_wild_type);
-    const left = [ambiguous ? `${formatInteger(ambiguous)} ${ambiguous === 1 ? "variant" : "variants"} whose paper gives several such wild-type records` : "",
+    // The counts are of variant records (a variant has one per substrate and condition); the overview's variant_count
+    // is the variants among them (paper, enzyme, organism and mutation). An overview that gives it pairs by the
+    // cosubstrate too (scripts/build-catlog-followup-summary.py mutation_key).
+    const distinct = statsCount(mutations.variant_count, variants);
+    const same = `the same enzyme, organism, substrate, ${distinct ? "cosubstrate, " : ""}pH and temperature`;
+    const left = [ambiguous ? `${formatInteger(ambiguous)} ${ambiguous === 1 ? "variant record" : "variant records"} whose paper gives several such wild-type records` : "",
       alone ? `${formatInteger(alone)} with none` : ""].filter(Boolean);
     return {
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
-      caption: "Each variant read from the paper against the wild type its paper gives for the same enzyme, organism, substrate, pH and temperature.",
-      rules: `${formatInteger(variants)} ${variants === 1 ? "variant" : "variants"}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the two end bars also hold every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
+      caption: `Each variant read from the paper against the wild type its paper gives for ${same}. Variants are those the papers chose to make, often at catalytic residues, so the spread describes studied mutations, not mutations in general.`,
+      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the two end bars also hold every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
   }
