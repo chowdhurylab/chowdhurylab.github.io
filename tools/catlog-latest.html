@@ -348,24 +348,24 @@
           <nav class="guide-contents" aria-labelledby="guideContentsTitle">
             <h2 id="guideContentsTitle">On this page</h2>
             <ul>
-              <li><a href="#guide-method">How CatLog reads and checks values</a></li>
+              <li><a href="#guide-method">How CatLog works</a></li>
               <li><a href="#guide-record">Read a record</a></li>
               <li><a href="#guide-status">Labels and colours</a></li>
               <li data-guide-database-section hidden><a href="#guide-databases">Against the databases</a></li>
-              <li><a href="#guide-find">Find records</a></li>
-              <li><a href="#guide-units">Units</a></li>
-              <li><a href="#guide-downloads">Downloads</a></li>
               <li><a href="#guide-caveats">Before you use the values</a></li>
-              <li><a href="#guide-cite">Cite</a></li>
-              <li><a href="#guide-sources">Sources and licenses</a></li>
+              <li class="guide-contents-ref"><a href="#guide-find">Find records</a></li>
+              <li class="guide-contents-ref"><a href="#guide-units">Units</a></li>
+              <li class="guide-contents-ref"><a href="#guide-downloads">Downloads</a></li>
+              <li class="guide-contents-ref"><a href="#guide-cite">Cite</a></li>
+              <li class="guide-contents-ref"><a href="#guide-sources">Sources and licenses</a></li>
               <li><a href="#guide-questions">Questions</a></li>
             </ul>
           </nav>
 
           <section class="guide-section guide-method" id="guide-method" aria-labelledby="guide-method-title">
-            <h2 id="guide-method-title">How CatLog reads and checks values</h2>
+            <h2 id="guide-method-title">How CatLog works</h2>
             <div class="guide-how-read" id="guide-how-read" aria-labelledby="guide-how-read-title">
-              <h3 id="guide-how-read-title">How CatLog reads a value</h3>
+              <h3 id="guide-how-read-title" class="guide-flow-title">How CatLog reads a value</h3>
               <ol class="guide-flow">
                 <li class="guide-flow-step" data-step="paper">
                   <span class="guide-flow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h6M9.5 15h6M9.5 18h4"/></svg></span>
@@ -390,38 +390,18 @@
               </ol>
               <ul class="guide-keeps">
                 <li><strong>As printed</strong> The record keeps the number, its &plusmn; and unit as the paper prints them, and where (Table 1).</li>
-                <li><strong>Units</strong> The printed unit is converted automatically to the catalog&rsquo;s (9.2 &micro;M becomes 0.0092 mM); no model types a converted number.</li>
-                <li><strong>Accepted</strong> A value is added only after the second check and the automated checks; its record is Accepted and tagged <em>from paper</em>.</li>
-                <li><strong>Human-checked</strong> Only a record marked <em>human-checked</em> has been approved by a person.</li>
+                <li><strong>Units</strong> The printed unit is converted automatically (9.2 &micro;M becomes 0.0092 mM); no model types a converted number.</li>
               </ul>
             </div>
             <div class="guide-loop">
               <span class="guide-flow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M17.8 3v4h-4M6.2 21v-4h4"/></svg></span>
-              <p><strong>Then checked again.</strong> AI audits re-check samples against the papers and people review samples; what they find improves how the next papers are read. <a href="catlog-latest.html#team">People behind CatLog</a></p>
-            </div>
-            <div class="guide-checks" id="guideMethodLead" hidden></div>
-            <details class="guide-details guide-method-more" id="guideMethodMore" hidden>
-              <summary>What the human review found</summary>
-              <p id="guideMethodHuman"></p>
-            </details>
-            <h3 id="guide-kinds">Two kinds of record</h3>
-            <div class="guide-kinds">
-              <div class="guide-kind">
-                <span class="guide-kind-tag">from paper</span>
-                <strong>Read from the paper</strong>
-                <p>Read and checked against its paper by the current, second version of CatLog, as above.</p>
-              </div>
-              <div class="guide-kind">
-                <span class="guide-kind-tag">not <span class="nowrap">re-read</span></span>
-                <strong>Not yet <span class="nowrap">re-read</span></strong>
-                <p>From CatLog&rsquo;s earlier version, which started from database entries (BRENDA, SABIO-RK, the Open Enzyme Database, UniProt, SKiD and STRENDA DB) and checked part of them; its review result says how far. When CatLog reads the paper, its records replace these.</p>
-              </div>
+              <p><strong>Then checked again.</strong> AI audits re-check samples against the papers and people review samples; what they find improves how the next papers are read. <span class="guide-loop-links"><a href="#stats-quality">Checks so far on Stats</a> <a href="catlog-latest.html#team">People behind CatLog</a></span></p>
             </div>
           </section>
 
           <section class="guide-section guide-record" id="guide-record" aria-labelledby="guide-record-title">
             <h2 id="guide-record-title">Read a record</h2>
-            <p>Click a row of the table, or press Enter on it, to open its record.</p>
+            <p>Click a row, or press Enter on it, to open its record.</p>
             <figure class="guide-anatomy" aria-label="An example record, its parts numbered as in the key beside it">
               <div class="guide-anatomy-card">
                 <div class="guide-anatomy-part guide-anatomy-head">
@@ -456,7 +436,8 @@
                   <p class="guide-anatomy-heading">Against the databases</p>
                   <ul class="guide-anatomy-db">
                     <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>k</i><sub>cat</sub>: same as BRENDA, SABIO-RK and OED</li>
-                    <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>K</i><sub>m</sub>: same as SABIO-RK</li>
+                    <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>K</i><sub>m</sub>: same as SABIO-RK; BRENDA lists 0.0082&nbsp;mM</li>
+                    <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>: same as SABIO-RK and OED</li>
                   </ul>
                 </div>
                 <div class="guide-anatomy-part guide-anatomy-checks">
@@ -472,22 +453,22 @@
               </div>
               <div class="guide-anatomy-key">
                 <ol>
-                  <li><strong>Header</strong> The enzyme; its EC number, organism and form (wild type or a variant); the substrate.</li>
-                  <li><strong>Review result</strong> The result and tags the table shows (see <a href="#guide-status">Labels and colours</a>).</li>
-                  <li><strong>Values</strong> Each value in the catalog&rsquo;s unit and as the paper prints it; a green tick means a human reviewer approved that value.</li>
-                  <li><strong>In the paper</strong> The line the values are read from, quoted; the table above names where it is printed.</li>
-                  <li data-guide-databases hidden><strong>Against the databases</strong> How each value compares with the numbers the databases list for this paper (see <a href="#guide-databases">Against the databases</a>).</li>
-                  <li><strong>Checks</strong> What the second AI check, an AI audit and a human reviewer found, and a link to <a href="#guide-how-read">How CatLog reads a value</a>.</li>
-                  <li><strong>Details</strong> Assay conditions, UniProt, sequence and SMILES, and the paper. At the foot: <em>Download record</em>, <em>Report a problem</em>, the license and Data ID. A record not yet <span class="nowrap">re-read</span> adds <em>Source</em>, its database.</li>
+                  <li><strong>Header</strong> Enzyme, EC number, organism, form (wild type or variant) and substrate.</li>
+                  <li><strong>Review result</strong> The result and tags the table shows (<a href="#guide-status">Labels and colours</a>).</li>
+                  <li><strong>Values</strong> In the catalog&rsquo;s unit and as printed; a green tick: a reviewer approved it.</li>
+                  <li><strong>In the paper</strong> The line the values are read from.</li>
+                  <li data-guide-databases hidden><strong>Against the databases</strong> Each value against the numbers the databases list for this paper; here BRENDA lists a <i>K</i><sub>m</sub> 10&times; the paper&rsquo;s (<a href="#guide-databases">results</a>).</li>
+                  <li><strong>Checks</strong> The second AI check, an AI audit and a human reviewer; <a href="#guide-how-read">How CatLog reads a value</a>.</li>
+                  <li><strong>Details</strong> Conditions, UniProt, sequence, SMILES and the paper; <em>Download record</em> and <em>Report a problem</em> at the foot. A record not yet <span class="nowrap">re-read</span> adds <em>Source</em>.</li>
                 </ol>
               </div>
             </figure>
-            <p class="guide-tip">&lsaquo; and &rsaquo; beside &times; open the previous or next record. <em>Copy link</em> copies the record&rsquo;s own address.</p>
+            <p class="guide-tip">&lsaquo; and &rsaquo; beside &times; open the previous or next record; <em>Copy link</em> copies its address.</p>
           </section>
 
           <section class="guide-section guide-legend" id="guide-status" aria-labelledby="guide-status-title">
             <h2 id="guide-status-title">Labels and colours</h2>
-            <p>In Browse, a record and the filters, each colour below means one thing, and its word always stands beside it.</p>
+            <p>Each colour means one thing, and its word always stands beside it.</p>
             <div class="guide-legend-grid">
               <section class="guide-legend-group" aria-labelledby="guide-results-title">
                 <h3 id="guide-results-title">Review result</h3>
@@ -498,7 +479,7 @@
                   </div>
                   <div>
                     <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Not confirmed</span><span class="state-tags"></span></span></dt>
-                    <dd>The earlier automated review left a question open; replaced when CatLog reads the paper.</dd>
+                    <dd>The earlier review left a question open; replaced when CatLog reads the paper.</dd>
                   </div>
                   <div>
                     <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Not checked</span><span class="state-tags"></span></span></dt>
@@ -515,11 +496,11 @@
                 <dl class="guide-status-list guide-tag-list">
                   <div>
                     <dt><span class="state-tag">from paper</span></dt>
-                    <dd>Read from the paper by CatLog (<a href="#guide-method">how</a>).</dd>
+                    <dd>Read from the paper by CatLog&rsquo;s current, second version (<a href="#guide-method">how</a>).</dd>
                   </div>
                   <div>
                     <dt><span class="state-tag">not <span class="nowrap">re-read</span></span></dt>
-                    <dd>From CatLog&rsquo;s earlier version; its source follows (a database, <em>earlier extraction</em> or <em>source not recorded</em>).</dd>
+                    <dd>From CatLog&rsquo;s earlier version, which started from database entries; its source follows. When CatLog reads the paper, its records replace these.</dd>
                   </div>
                   <div>
                     <dt><span class="state-tag">earlier extraction</span></dt>
@@ -527,7 +508,7 @@
                   </div>
                   <div>
                     <dt><span class="state-tag">corrected</span></dt>
-                    <dd>Accepted after a correction in the earlier review; the record shows the change.</dd>
+                    <dd>Accepted after an earlier correction; the record shows the change.</dd>
                   </div>
                   <div>
                     <dt><span class="state-tag">no paper linked</span></dt>
@@ -535,7 +516,7 @@
                   </div>
                   <div>
                     <dt><span class="state-tag human-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span></dt>
-                    <dd>A human reviewer approved every <i>k</i><sub>cat</sub> and <i>K</i><sub>m</sub> shown; the <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> was approved too or agrees with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>. Accepted records only.</dd>
+                    <dd>A reviewer approved every <i>k</i><sub>cat</sub> and <i>K</i><sub>m</sub> shown; the <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> too, or it agrees with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>. Accepted records only.</dd>
                   </div>
                 </dl>
               </section>
@@ -544,7 +525,7 @@
                 <dl class="guide-status-list guide-mark-list">
                   <div><dt><span class="guide-mark-sample guide-mark-tick"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="visually-hidden">Green tick</span></span></dt><dd>A human reviewer approved this value.</dd></div>
                   <div><dt><span class="guide-mark-sample"><span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">Amber exclamation mark</span></span></dt><dd>A caution: open the record to read it (<a href="#guide-cautions">Cautions</a>).</dd></div>
-                  <div><dt><span class="guide-mark-sample"><em>calc.</em></span></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> CatLog worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>.</dd></div>
+                  <div><dt><span class="guide-mark-sample"><em>calc.</em></span></dt><dd><i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, worked out by CatLog.</dd></div>
                   <div><dt><span class="guide-mark-sample">&mdash;</span></dt><dd>No value (table cells only).</dd></div>
                 </dl>
               </section>
@@ -560,7 +541,6 @@
               </section>
               <section class="guide-legend-group guide-legend-wide" aria-labelledby="guide-chips-title">
                 <h3 id="guide-chips-title">Filters in use</h3>
-                <p>Above the table, each filter in use is a chip in its group&rsquo;s colour; &times; removes it, <em>Undo</em> brings back the last change and <em>Clear all</em> removes them all.</p>
                 <ul class="guide-chip-row">
                   <li><span class="filter-chip tone-paper"><span>Source: Read from the paper</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
                   <li><span class="filter-chip tone-identity"><span>Enzyme: laccase</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
@@ -570,23 +550,25 @@
                   <li><span class="filter-chip tone-caution"><span>Caution: <span class="chip-flag" aria-hidden="true"></span>No unit given</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
                   <li data-guide-databases hidden><span class="filter-chip tone-cmp-corrects"><span><span class="db-mark db-mark-corrects" aria-hidden="true"></span>Corrects a value</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
                 </ul>
-                <p class="guide-chip-key">Purple: source. Raspberry: enzyme, organism, substrate, EC number or search. Olive: measurement, form, temperature and pH. A review result, caution, human-checked or database result keeps its own colour.</p>
+                <p class="guide-chip-key">Each filter in use is a chip above the table: &times; removes it, <em>Undo</em> brings back the last change, <em>Clear all</em> removes them all.</p>
               </section>
             </div>
 
             <h3 id="guide-cautions">Cautions</h3>
-            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; open the record to read what it is. On narrow screens its short name stands beside it.</p>
-            <dl class="guide-caution-list">
-              <div><dt><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</dt><dd>The printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ; the record gives both and the factor (near 60: minutes against seconds; near 1000: a concentration unit). All three are kept.</dd></div>
-              <div><dt><i>K</i><sub>m</sub> &gt;&nbsp;10&nbsp;M, <i>K</i><sub>m</sub> &lt;&nbsp;1&nbsp;nM</dt><dd><i>K</i><sub>m</sub> outside 1&nbsp;nM to 10&nbsp;M; the unit or the value may be wrong.</dd></div>
-              <div><dt><i>k</i><sub>cat</sub> &gt;&nbsp;10<sup>8</sup>&nbsp;s<sup>&minus;1</sup></dt><dd>Faster than the fastest enzymes measured (<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>); the unit or the value may be wrong.</dd></div>
-              <div><dt>possible 1000&times; unit error</dt><dd>The stored <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may be 1000-fold off through a concentration unit.</dd></div>
-              <div><dt>above diffusion limit</dt><dd><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> above <span class="nowrap">10<sup>10</sup>&nbsp;M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span> (<span class="nowrap">10<sup>7</sup>&nbsp;mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span>), faster than diffusion allows; the unit or the value may be wrong.</dd></div>
-              <div><dt>no unit</dt><dd>The source gives no unit, so the column unit does not apply.</dd></div>
-              <div><dt>printed unit differs</dt><dd>The paper prints another concentration unit than the one CatLog read the value in; the record says what <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> and any audit found.</dd></div>
-              <div><dt>T questionable</dt><dd>The stored temperature or its unit is questionable (exactly 0&nbsp;&deg;C may stand for a missing value).</dd></div>
-            </dl>
-            <p class="guide-small">The Cautions filter groups them as <em><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</em>, <em>Possible unit or magnitude error</em> (<i>K</i><sub>m</sub> &gt;&nbsp;10&nbsp;M or &lt;&nbsp;1&nbsp;nM, <i>k</i><sub>cat</sub> &gt;&nbsp;10<sup>8</sup>&nbsp;s<sup>&minus;1</sup>, possible 1000&times; unit error, above diffusion limit, printed unit differs), <em>No unit given</em> and <em>Temperature questionable</em>; <em>No cautions</em> finds records with none.</p>
+            <p>An amber <span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">exclamation mark</span> beside a value flags a possible problem; the record says what it is. For the unit and magnitude cautions, the unit or the value may be wrong. The Cautions filter finds them by group; <em>No cautions</em> finds records with none.</p>
+            <table class="guide-caution-table">
+              <thead><tr><th scope="col">Caution</th><th scope="col">Filter group</th><th scope="col">Means</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</th><td><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</td><td>The printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> differ; the record gives both and the factor (near 60: minutes for seconds; near 1,000: a concentration unit). All three are kept.</td></tr>
+                <tr><th scope="row"><span class="nowrap"><i>K</i><sub>m</sub> &gt;&nbsp;10&nbsp;M</span>, <span class="nowrap"><i>K</i><sub>m</sub> &lt;&nbsp;1&nbsp;nM</span></th><td>Unit or magnitude error</td><td><i>K</i><sub>m</sub> outside 1&nbsp;nM to 10&nbsp;M.</td></tr>
+                <tr><th scope="row"><span class="nowrap"><i>k</i><sub>cat</sub> &gt;&nbsp;10<sup>8</sup>&nbsp;s<sup>&minus;1</sup></span></th><td>Unit or magnitude error</td><td>Faster than the fastest enzymes measured (<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>).</td></tr>
+                <tr><th scope="row">possible 1000&times; unit error</th><td>Unit or magnitude error</td><td>The <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may be 1,000-fold off through a concentration unit.</td></tr>
+                <tr><th scope="row">above diffusion limit</th><td>Unit or magnitude error</td><td><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> above <span class="nowrap">10<sup>10</sup>&nbsp;M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span> (<span class="nowrap">10<sup>7</sup>&nbsp;mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span>), faster than diffusion allows.</td></tr>
+                <tr><th scope="row">printed unit differs</th><td>Unit or magnitude error</td><td>The paper prints another concentration unit than CatLog read the value in; the record says what <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> found.</td></tr>
+                <tr><th scope="row">no unit</th><td>No unit given</td><td>The source gives no unit, so the column unit does not apply.</td></tr>
+                <tr><th scope="row">T questionable</th><td>Temperature questionable</td><td>The temperature or its unit may be wrong (exactly 0&nbsp;&deg;C may stand for a missing value).</td></tr>
+              </tbody>
+            </table>
             <details class="guide-details">
               <summary>Evidence labels on records not yet <span class="nowrap">re-read</span></summary>
               <dl>
@@ -605,48 +587,54 @@
             <div id="guideDatabasesBody"></div>
           </section>
 
-          <section class="guide-section guide-find" id="guide-find" aria-labelledby="guide-find-title">
-            <h2 id="guide-find-title">Find records</h2>
-            <dl class="guide-term-list">
-              <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. More words narrow it (<strong>Trametes laccase</strong>); common names such as human or E. coli find the species; gene names are not indexed.</dd></div>
-              <div><dt>Filters</dt><dd>Source, review result (with human-checked), enzyme, organism, substrate, EC number (1.1.1 lists the subclass), measurement type, wild type or variant, temperature, pH and cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare with the databases.</span></dd></div>
-              <div><dt>Sort</dt><dd>By review result (the default: accepted first, a paper&rsquo;s records together), EC number, name or value; click a value&rsquo;s header for high to low, again for low to high.</dd></div>
-              <div><dt>Share</dt><dd>Every view and open record has its own address: copy it from the address bar.</dd></div>
-            </dl>
-            <p class="guide-list-title" id="guideExamplesTitle">Try</p>
-            <ul class="guide-link-list" aria-labelledby="guideExamplesTitle">
-              <li><a href="#browse?checked=1">Human-checked records</a></li>
-              <li><a href="#browse?ec=1.1.1&amp;variant=wild&amp;tmin=25&amp;tmax=37">EC 1.1.1, wild type, 25&ndash;37&nbsp;&deg;C</a></li>
-              <li><a href="#browse?status=accepted&amp;metric=kcat_over_km&amp;caution=none&amp;sort=kcat_over_km">Accepted <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> without a caution, highest first</a></li>
+          <section class="guide-section guide-caveats" id="guide-caveats" aria-labelledby="guide-caveats-title">
+            <h2 id="guide-caveats-title">Before you use the values</h2>
+            <ul class="guide-checklist">
+              <li><strong>Review result.</strong> Only Accepted records passed review; most records have not been checked by a person.</li>
+              <li><strong>Units.</strong> Read the unit beside each value (<a href="#guide-units">Units</a>).</li>
+              <li><strong><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</strong> Mind the caution <a href="#guide-cautions"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</a>.</li>
+              <li><strong>Merged records.</strong> Some records not yet <span class="nowrap">re-read</span> merge several database records; the record lists their papers.</li>
+              <li><strong>Training sets.</strong> A paper&rsquo;s records share its PMID: split by paper or by UniProt accession.</li>
             </ul>
           </section>
 
-          <section class="guide-section guide-units" id="guide-units" aria-labelledby="guide-units-title">
-            <h2 id="guide-units-title">Units</h2>
-            <ul class="guide-unit-cards">
-              <li><span class="guide-unit-name"><i>k</i><sub>cat</sub></span><span class="guide-unit-value">s<sup>&minus;1</sup></span><span class="guide-unit-what">Turnover number</span></li>
-              <li><span class="guide-unit-name"><i>K</i><sub>m</sub></span><span class="guide-unit-value">mM</span><span class="guide-unit-what">Michaelis constant</span></li>
-              <li><span class="guide-unit-name"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><span class="guide-unit-value">mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span><span class="guide-unit-what">Catalytic efficiency (&times;&nbsp;1,000 for M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup>)</span></li>
-            </ul>
-            <dl class="guide-term-list">
-              <div><dt>Conversion</dt><dd>Each printed value is converted automatically to these units (&micro;M to mM, <span class="nowrap">min<sup>&minus;1</sup></span> to <span class="nowrap">s<sup>&minus;1</sup></span>).</dd></div>
-              <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> CatLog worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, to the precision of the less precise of the two; on a record read from the paper only where CatLog read no printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</dd></div>
-              <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> (<a href="#guide-cautions">mismatch</a>).</dd></div>
-              <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>Numbers of 100,000 or more and below 0.001: 8.2 &times; 10<sup>&minus;4</sup>.</dd></div>
-            </dl>
-            <details class="guide-details guide-units-more">
-              <summary>Digits, other fields and missing values</summary>
+          <section class="guide-section guide-reference" aria-labelledby="guide-reference-title">
+            <h2 id="guide-reference-title">Reference</h2>
+            <details class="guide-ref" id="guide-find">
+              <summary><h3 id="guide-find-title">Find records</h3><span class="guide-ref-gist">Search, filters and shareable addresses</span></summary>
               <dl class="guide-term-list">
+                <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. More words narrow it; human or E. coli finds the species; gene names are not indexed.</dd></div>
+                <div><dt>Filters</dt><dd>Source, review result (with human-checked), enzyme, organism, substrate, EC number (1.1.1 lists the subclass), parameter, wild type or variant, temperature, pH and cautions.<span data-guide-databases hidden> <em>Against the databases</em> finds records by how their values compare.</span></dd></div>
+                <div><dt>Sort</dt><dd>By review result (accepted first), EC number, name or value; click a value&rsquo;s header for high to low.</dd></div>
+                <div><dt>Share</dt><dd>Every view and open record has its own address: copy it from the address bar.</dd></div>
+              </dl>
+              <p class="guide-list-title" id="guideExamplesTitle">Try</p>
+              <ul class="guide-link-list" aria-labelledby="guideExamplesTitle">
+                <li><a href="#browse?checked=1">Human-checked records</a></li>
+                <li><a href="#browse?ec=1.1.1&amp;variant=wild&amp;tmin=25&amp;tmax=37">EC 1.1.1, wild type, 25&ndash;37&nbsp;&deg;C</a></li>
+                <li><a href="#browse?status=accepted&amp;metric=kcat_over_km&amp;caution=none&amp;sort=kcat_over_km">Accepted <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> without a caution, highest first</a></li>
+              </ul>
+            </details>
+            <details class="guide-ref" id="guide-units">
+              <summary><h3 id="guide-units-title">Units</h3><span class="guide-ref-gist"><i>k</i><sub>cat</sub> s<sup>&minus;1</sup> &middot; <i>K</i><sub>m</sub> mM &middot; <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span></summary>
+              <ul class="guide-unit-cards">
+                <li><span class="guide-unit-name"><i>k</i><sub>cat</sub></span><span class="guide-unit-value">s<sup>&minus;1</sup></span><span class="guide-unit-what">Turnover number</span></li>
+                <li><span class="guide-unit-name"><i>K</i><sub>m</sub></span><span class="guide-unit-value">mM</span><span class="guide-unit-what">Michaelis constant</span></li>
+                <li><span class="guide-unit-name"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><span class="guide-unit-value">mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span><span class="guide-unit-what">Catalytic efficiency (&times;&nbsp;1,000 for M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup>)</span></li>
+              </ul>
+              <dl class="guide-term-list">
+                <div><dt>Conversion</dt><dd>Each printed value is converted automatically to these units (&micro;M to mM, <span class="nowrap">min<sup>&minus;1</sup></span> to <span class="nowrap">s<sup>&minus;1</sup></span>).</dd></div>
+                <div><dt><em>calc.</em></dt><dd>A <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> CatLog worked out as <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, to the precision of the less precise of the two; on a record read from the paper only where CatLog read no printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</dd></div>
+                <div><dt>Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></dt><dd>Kept as printed, also when it differs from <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub> (<a href="#guide-cautions">mismatch</a>).</dd></div>
+                <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>Numbers of 100,000 or more and below 0.001: 8.2 &times; 10<sup>&minus;4</sup>.</dd></div>
                 <div><dt>Digits</dt><dd>A value read from the paper keeps the paper&rsquo;s significant figures, at least 2 (135.0 stays 135.0); a unit conversion keeps one more where rounding would shift the printed last digit (87.3&nbsp;min<sup>&minus;1</sup> is 1.455&nbsp;s<sup>&minus;1</sup>). Records not yet <span class="nowrap">re-read</span>: at most 4 (3 after a per-minute conversion). The downloads keep the stored digits.</dd></div>
                 <div><dt><i>K</i><sub>i</sub>, T, pH</dt><dd><i>K</i><sub>i</sub> in mM, on the few records whose source lists one; temperature (&deg;C) and pH with the record&rsquo;s conditions, in the filters and in the downloads (the table has no column for them and shows them only to tell apart records of one paper).</dd></div>
                 <div><dt>Missing</dt><dd>A dash, used only in table cells, means no value. In a record, a <i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> or <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> that is not stored has no row, and the Values section says when none is stored; another missing detail reads <em>Not stated in the paper</em> (read by CatLog) or <em>Not recorded</em> (database records), and a missing PMID or DOI, sequence or SMILES reads <em>None</em>.</dd></div>
                 <div><dt>Other units</dt><dd>A few records not yet <span class="nowrap">re-read</span> keep another unit (min<sup>&minus;1</sup>, mg/mL) or <em>no unit</em>; those numbers are not in the column unit.</dd></div>
               </dl>
             </details>
-          </section>
-
-          <section class="guide-section guide-downloads" id="guide-downloads" aria-labelledby="guide-downloads-title">
-            <h2 id="guide-downloads-title">Downloads</h2>
+            <details class="guide-ref" id="guide-downloads">
+              <summary><h3 id="guide-downloads-title">Downloads</h3><span class="guide-ref-gist">Full data, the table, the comparison and single records</span></summary>
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, with sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>The table&rsquo;s columns, pH and temperature; join it to Full data on record_key.</dd></div>
@@ -655,47 +643,31 @@
               <div><dt>Format</dt><dd>gzip-compressed JSON Lines: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (under <a href="#guide-cite">Cite</a>) list every field and unit.</dd></div>
               <div><dt>Review files</dt><dd>Source records and review notes behind records not yet <span class="nowrap">re-read</span>: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
             </dl>
-            <a
-              id="guideFullDataLink"
-              class="button secondary guide-choice-link"
-              href="catlog-static/data/catlog-enriched.89414728c519.jsonl.gz"
-              download="catlog-enriched.jsonl.gz"
-            >Download full data</a>
-          </section>
-
-          <section class="guide-section guide-caveats" id="guide-caveats" aria-labelledby="guide-caveats-title">
-            <h2 id="guide-caveats-title">Before you use the values</h2>
-            <ul class="guide-checklist">
-              <li><strong>Review result.</strong> Only Accepted records passed review; most records have not been checked by a person.</li>
-              <li><strong>Units.</strong> Read the unit beside each value (<a href="#guide-units">Units</a>).</li>
-              <li><strong><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</strong> Mind the caution <a href="#guide-cautions"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch</a>.</li>
-              <li><strong>Merged records.</strong> Some records not yet <span class="nowrap">re-read</span> merge several database records; the record lists their papers.</li>
-              <li><strong>Training sets.</strong> A paper&rsquo;s records share its PMID: split training and test sets by paper or by UniProt accession.</li>
-            </ul>
-          </section>
-
-          <section class="guide-citation" id="guide-cite" aria-labelledby="guide-citation-title">
-            <div>
-              <h2 id="guide-citation-title">Cite this snapshot</h2>
+              <a
+                id="guideFullDataLink"
+                class="button secondary guide-choice-link"
+                href="catlog-static/data/catlog-enriched.89414728c519.jsonl.gz"
+                download="catlog-enriched.jsonl.gz"
+              >Download full data</a>
+            </details>
+            <details class="guide-ref guide-citation" id="guide-cite">
+              <summary><h3 id="guide-citation-title">Cite</h3><span class="guide-ref-gist">The CatRange paper and this snapshot</span></summary>
               <p>Cite the paper and the snapshot you used:</p>
               <p id="guidePaperCitation">Sajeevan, K. A., et al. (2026). <cite>CatRange enables robust prediction of enzyme variant kinetic regimes.</cite> PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309.</p>
               <p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the catalog loads)</code></p>
-              <p>For one value, add its record ID (at the top of the record; search finds it); IDs of records read by CatLog can change in later snapshots. Keep the file you used: older snapshots leave this site over time.</p>
-              <p>Using database records? Cite that database as it asks: BRENDA, SABIO-RK, SKiD (Zenodo 15355031), the Open Enzyme Database or UniProt (<a href="#guide-sources">Sources and licenses</a>).</p>
-            </div>
-            <dl class="guide-citation-meta">
-              <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
-              <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code><span class="guide-data-id-note">The first 10 characters of the SHA-256 of the decompressed Full data file: <code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code></span></dd></div>
-            </dl>
-            <div class="guide-citation-links">
-              <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>
-              <a id="guideDatasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
-            </div>
-          </section>
-
-          <section class="guide-sources" id="guide-sources" aria-labelledby="guide-sources-title">
-            <h2 id="guide-sources-title">Sources and licenses</h2>
-            <p class="guide-note">Records from the databases keep their own license (the source_license field in the downloads). SKiD records are for non-commercial use only, without derivatives.</p>
+              <dl class="guide-citation-meta">
+                <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
+                <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code><span class="guide-data-id-note">The first 10 characters of the SHA-256 of the decompressed Full data file: <code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code></span></dd></div>
+              </dl>
+              <p>For one value, add its record ID (top of the record; search finds it); IDs of records read by CatLog can change in later snapshots. Keep the file you used: older snapshots leave this site over time. Using database records? Cite that database as it asks (<a href="#guide-sources">Sources and licenses</a>).</p>
+              <div class="guide-citation-links">
+                <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>
+                <a id="guideDatasetNotesLink" href="catlog-static/README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
+              </div>
+            </details>
+            <details class="guide-ref guide-sources" id="guide-sources">
+              <summary><h3 id="guide-sources-title">Sources and licenses</h3><span class="guide-ref-gist">Read from the paper: CC BY 4.0; database records keep their own</span></summary>
+              <p class="guide-note">Records from the databases keep their own license (the source_license field in the downloads). SKiD records are for non-commercial use only, without derivatives.</p>
             <dl id="guideSourceList" class="guide-download-list guide-source-list">
               <div><dt>Read from the paper</dt><dd>CatLog compilation CC BY 4.0; quoted paper text remains the publisher&rsquo;s</dd></div>
               <div><dt>Earlier paper extractions</dt><dd>License: as published (see paper)</dd></div>
@@ -706,6 +678,7 @@
               <div><dt><a href="https://www.uniprot.org/" target="_blank" rel="noreferrer">UniProt</a></dt><dd>License: CC BY 4.0</dd></div>
             </dl>
             <p id="guideCurationLicense" class="guide-note guide-curation-license">For reuse of CatLog review notes and corrections, contact the Chowdhury Lab.</p>
+            </details>
           </section>
 
           <section class="guide-section guide-questions" id="guide-questions" aria-labelledby="guide-questions-title">

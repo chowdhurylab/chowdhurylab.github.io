@@ -767,11 +767,19 @@
   const STATS_SECTION_HASH = /^#stats-[a-z-]+$/;
 
   // A Guide section's heading: the one the section is labelled by, or the target itself when it is a heading
-  // (#guide-cautions).
+  // (#guide-cautions). A Reference part folded in a <details> (#guide-units, #guide-cite ...) opens first, so the
+  // address or link shows what it names; its heading is the h3 in its summary.
   function guideSectionHeading(section) {
+    openGuidePart(section);
     if (/^H[1-6]$/.test(section?.tagName || "")) return section;
     const id = section?.getAttribute("aria-labelledby");
     return (id && document.getElementById(id)) || section?.querySelector("h2, h3") || null;
+  }
+
+  function openGuidePart(section) {
+    for (let node = section; node && node.id !== "guideView"; node = node.parentElement) {
+      if (node.tagName === "DETAILS" && "open" in node) node.open = true;
+    }
   }
 
   function viewFromLocation() {
@@ -840,7 +848,10 @@
     const guideSection = guideOpen && GUIDE_SECTION_HASH.test(window.location.hash)
       ? document.getElementById(window.location.hash.slice(1))
       : null;
-    if (guideSection) window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
+    if (guideSection) {
+      openGuidePart(guideSection);
+      window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
+    }
     // A part's address (#stats-quality) shows that part of Stats, also when the page opens at it.
     const statsSection = statsOpen && STATS_SECTION_HASH.test(window.location.hash)
       ? document.getElementById(window.location.hash.slice(1))
@@ -5233,68 +5244,9 @@
     ].filter(Boolean).join(" ");
   }
 
-  // The Guide's method section: under the reading steps, what the checks found as tiles (#guideMethodLead, the user,
-  // 2026-10-18: "visuals help more ... a better to-the-point guide"): the human review's headline (no value disputed on
-  // 2,767 of 2,770 entries, the disputed values as printed), the match where CatLog has re-read the paper, the AI audits
-  // and the human-checked records, each one figure, one phrase and one note; then what the human review found, in full,
-  // in a disclosure (#guideMethodMore). Each tile is left out without its numbers, and both without any. The Guide reads
-  // only the manifest, never the record index.
-  function guideChecksHtml(overview) {
-    const quality = overview?.quality || {};
-    const review = reviewFacts(quality.review?.v1);
-    const match = v2MatchFacts(quality);
-    const audit = auditFacts(overview);
-    const counts = manifestDistribution("verification_status");
-    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
-    const sentence = (text) => (text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : "");
-    const tile = (key, title, figure, text, note = "") => `<li class="guide-check" data-guide-check="${key}">`
-      + `<span class="guide-check-title">${escapeHtml(title)}</span><span class="guide-check-figure">${figure}</span>`
-      + `<span class="guide-check-text">${text}</span>${note ? `<span class="guide-check-note">${note}</span>` : ""}</li>`;
-    const tiles = [];
-    if (review) {
-      tiles.push(tile("review", "Human review", escapeHtml(review.share), reviewHeadlineHtml(review),
-        review.disputed ? escapeHtml(reviewDisputedText(review)) : ""));
-    }
-    if (match) {
-      const others = v2DifferShortText(match);
-      tiles.push(tile("reread", "Reviewers’ values", escapeHtml(qualityShare(match.same, match.approved)),
-        escapeHtml(`of approved values the same where CatLog has re-read the paper (${formatInteger(match.same)} of ${formatInteger(match.approved)})`),
-        escapeHtml(others)));
-    }
-    if (audit) {
-      tiles.push(tile("audit", "AI audits", escapeHtml(formatInteger(audit.values)),
-        "values re-checked against their papers by a separate AI auditor",
-        escapeHtml(`${sentence(auditOutcomeText(audit))}.${audit.date ? ` As of ${audit.date}.` : ""}`)));
-    }
-    if (humanChecked !== null) {
-      tiles.push(tile("checked", "Human-checked", `${CHECK_ICON_HTML}${escapeHtml(formatInteger(humanChecked))}`,
-        metricWordsHtml(escapeHtml(`accepted records: ${HUMAN_CHECKED_RULE} they show`)),
-        `<a href="#browse?checked=1">Show them</a>`));
-    }
-    if (!tiles.length) return "";
-    return keepReRead(`<h3 id="guide-checks">What the checks found</h3><ul class="guide-check-grid">${tiles.join("")}</ul>`
-      + `<p class="guide-checks-links"><a href="${escapeHtml(viewUrl("stats").href)}">More on Stats</a></p>`);
-  }
-
-  // What the human review found, in full (the disclosure under the tiles): the entries whose value the reviewer could not
-  // find, values missing and other disagreements (the tiles already say the headline and the disputed values), the match
-  // where CatLog has re-read the paper with what the other values are, and the human-checked records with their rule;
-  // kcat, Km and kcat/Km in the Guide's italic markup. "" without any of it.
-  function guideHumanReviewHtml(overview) {
-    const quality = overview?.quality || {};
-    const match = v2MatchFacts(quality);
-    const counts = manifestDistribution("verification_status");
-    const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
-    const comparison = humanComparisonText(overview, { afterLead: Boolean(reviewFacts(quality.review?.v1)) });
-    const parts = [
-      comparison,
-      match ? v2MatchSentence(match) : "",
-      humanChecked !== null ? `${formatInteger(humanChecked)} accepted records are human-checked: ${HUMAN_CHECKED_RULE} they show; ${HUMAN_CHECKED_RATIO}.` : "",
-    ].filter(Boolean);
-    if (!comparison && !match) return "";
-    const html = metricWordsHtml(escapeHtml(parts.join(" ")));
-    return keepReRead(keepReviewBase(keepReviewBase(html, reviewFacts(quality.review?.v1)), reviewFacts(quality.review?.v2), { fromPaper: true }));
-  }
+  // The Guide no longer repeats what the checks found (round 13, the user: "a better to-the-point guide"): its method
+  // section links Stats' Quality part ("Checks so far on Stats"), where the human review, the AI audits and the
+  // human-checked records are counted.
 
   // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
   // " So far 61,919 of 178,676 records are re-read.", from the manifest; hidden without the counts.
@@ -5313,19 +5265,6 @@
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
     if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
     if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
-    const overview = statsOverview(Number(manifest.total_rows || 0));
-    const lead = $("guideMethodLead");
-    if (lead) {
-      const html = guideChecksHtml(overview);
-      lead.innerHTML = html;
-      lead.hidden = !html;
-    }
-    const more = $("guideMethodMore");
-    if (more && $("guideMethodHuman")) {
-      const html = guideHumanReviewHtml(overview);
-      $("guideMethodHuman").innerHTML = html;
-      more.hidden = !html;
-    }
   }
 
   // ---- Guide: Against the databases (#guide-databases) ----
@@ -5546,7 +5485,7 @@
     const counts = guideDatabaseCounts(data, overview);
     // Under Different number: the values a database lists at an exact factor nothing has yet checked (counted there).
     const factorOnlyHtml = counts.differs.factorOnly
-      ? ` <span class="guide-db-nested">Among them, <em>exact factor, not yet checked</em>: the database&rsquo;s number is the paper&rsquo;s times a power of ten, 60 or 3,600, not yet checked against the paper; the record says <em>${escapeHtml(DATABASE_RESULT_NAMES.differs_factor_only)}</em> and names the factor (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}).</span>`
+      ? ` <span class="guide-db-nested"><em>Exact factor, not yet checked</em> (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}): the database&rsquo;s number is the paper&rsquo;s &times;&nbsp;10<sup>n</sup>, 60 or 3,600; the record names the factor.</span>`
       : "";
     // Each result a card: its square and name, one sentence (Browse's definition; Different number's first sentence and
     // the caveat, said once here, since its exact-factor case has a line of its own), its count, then its nested line.
@@ -5579,7 +5518,7 @@
     const more = (id, title, body) => `<details class="guide-details guide-db-more"><summary><h3 id="${id}">${escapeHtml(title)}</h3></summary>${body}</details>`;
     return keepReRead(`<p class="guide-db-lead">${leadHtml}</p>
       <h3 id="guide-databases-results">Results</h3>
-      <p class="guide-small">A record has a result when one of its values has it; <em>All values the same</em>, <em>every value</em> and <em>Corrected earlier</em> describe the whole record. Browse&rsquo;s <em>Against the databases</em> filter finds them.</p>
+      <p class="guide-small">Each value has one result; a record shows each result its values have. <em>All values the same</em>, <em>Not in the databases: every value</em> and <em>Corrected earlier</em> describe the whole record.</p>
       <dl class="guide-status-list guide-db-results guide-db-cards">${results}</dl>
       ${more("guide-databases-compared", "What is compared", `<dl class="guide-term-list guide-db-list">
         <div><dt>Values</dt><dd>${whatHtml}</dd></div>

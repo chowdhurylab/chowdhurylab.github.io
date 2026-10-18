@@ -118,9 +118,11 @@ def set_browse_viewport(driver, browser, width, height):
     assert driver.execute_script("return [innerWidth, innerHeight]") == [width, height], "Requested viewport is not the actual viewport"
 
 
-# (round 13: how a value is read and checked, a record's parts and the labels and colours first; the reference after)
-GUIDE_SECTIONS = ("guide-method", "guide-record", "guide-status", "guide-find", "guide-units", "guide-downloads", "guide-caveats",
+# (round 13: how CatLog works, a record's parts, the labels and colours and what to mind first; the Reference's folded
+# parts after)
+GUIDE_SECTIONS = ("guide-method", "guide-record", "guide-status", "guide-caveats", "guide-find", "guide-units", "guide-downloads",
                   "guide-cite", "guide-sources", "guide-questions")
+GUIDE_REFERENCE = ("guide-find", "guide-units", "guide-downloads", "guide-cite", "guide-sources")
 
 
 # The Guide's pictures (round 13, the user: "visuals help more"): the four reading steps side by side on a desktop and one
@@ -205,6 +207,10 @@ def check_guide(driver, wait):
     day = driver.execute_script("return new Date(window.CATLOG_STATIC_MANIFEST.generated_at).toISOString().slice(0, 10)")
     for identifier, part in (("guideFullDataLink", "full"), ("enrichedDataButton", "full"), ("exportSnapshotButton", "table")):
         assert driver.find_element(By.ID, identifier).get_attribute("download") == f"catlog-{day}-{part}.jsonl.gz", identifier
+    # The Reference's parts fold, closed at first (round 13: a short Guide); the checks below read them open.
+    assert driver.execute_script("return arguments[0].map(id => document.getElementById(id)).every(e => e.tagName === 'DETAILS' && !e.open)",
+                                 list(GUIDE_REFERENCE)), "The Reference's parts start closed"
+    driver.execute_script("arguments[0].forEach(id => { document.getElementById(id).open = true; })", list(GUIDE_REFERENCE))
     # The comparison with the databases as a file: the Guide's Downloads item and link show only with the manifest's
     # database_comparison_download, named after the snapshot's date like the other downloads.
     comparison_download = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.database_comparison_download?.path || null")
@@ -239,8 +245,11 @@ def check_guide(driver, wait):
         return [...document.querySelectorAll('#guide-status .state-tag:not(.human-checked)')]
             .every(other => getComputedStyle(other).color !== checked);
     """, tag), "human-checked needs its own colour"
+    driver.execute_script("arguments[0].forEach(id => { document.getElementById(id).open = false; })", list(GUIDE_REFERENCE))
     links[sections.index("guide-units")].click()
     wait.until(lambda d: urlsplit(d.current_url).fragment == "guide-units")
+    # A link to a folded part opens it.
+    assert driver.execute_script("return document.getElementById('guide-units').open"), "The contents' link opens Units"
     # The section's heading takes focus, so the next Tab goes on from the section.
     wait.until(lambda d: d.execute_script("return document.activeElement?.id") == "guide-units-title")
     assert driver.find_element(By.ID, "guideView").is_displayed()
@@ -367,8 +376,9 @@ def check_guide_databases(driver, browser, url):
         assert nested == f"Under it, every value: no compared database lists any value of the record ({words(records['every_value_new'], 'record', 'records')}).", nested
         if factor_only or differs_extra:
             differs_nested = next(row["nested"] for row in rows if row["label"] == "Different number")
-            assert differs_nested.startswith("Among them, exact factor, not yet checked:") and differs_nested.endswith(
-                f"the record says Different number (exact factor, not yet checked) and names the factor ({words(factor_only or differs_extra, 'value', 'values')})."), differs_nested
+            # (round 13: one short line, its count first)
+            assert differs_nested == (f"Exact factor, not yet checked ({words(factor_only or differs_extra, 'value', 'values')}): the database’s number is "
+                                      "the paper’s ×\u00a010n, 60 or 3,600; the record names the factor."), differs_nested
         assert "Exact factor only" not in text and "nothing else was checked" not in text, "an exact factor alone is no correction"
         # The databases named in the lead come from the manifest; no hard-coded number of them.
         for name in (comparison.get("values_by_database") or {}):
@@ -836,15 +846,13 @@ LEAD_FIRST_JS = """
 """
 
 
-# The Guide's tiles of what the checks found, when shown: their text, the first tile's figure (the human review's share,
-# or the match where CatLog has re-read the paper without the review's counts), its Stats link.
+# The Guide's method section repeats none of the checks' numbers (round 13: a to-the-point Guide): one link to Stats'
+# Quality part, "Checks so far on Stats", which opens Stats there.
 GUIDE_LEAD_JS = """
-    const lead = document.getElementById('guideMethodLead');
-    if (!lead || lead.hidden || !lead.getClientRects().length) return null;
-    const first = lead.querySelector('.guide-check:not([data-guide-check="audit"]):not([data-guide-check="checked"]) .guide-check-figure');
-    return {text: lead.innerText, first: first ? first.textContent.trim() : null,
-            tiles: [...lead.querySelectorAll('.guide-check')].map(tile => tile.dataset.guideCheck),
-            stats: Boolean(lead.querySelector('a[href$="catlog-stats.html"], a[href$="#stats"]'))};
+    const method = document.getElementById('guide-method');
+    const link = method.querySelector('a[href="#stats-quality"]');
+    return {tiles: method.querySelectorAll('.guide-check, #guideMethodLead, #guideMethodMore').length, link: link ? link.textContent.trim() : null,
+            numbers: /\\d+(?:\\.\\d+)?%/.test(method.innerText)};
 """
 
 # The strict wording the user dropped on 2026-10-13 (first comparison, read blind, the 95% range) and the catalog names
@@ -946,16 +954,14 @@ def check_quality(driver, browser, url, quality=None):
         driver.get("about:blank")
         driver.get(url + "#guide-method")
         wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
-        # The method section's tiles (round 13) give the human review's share first, as Stats does (the user's headline),
-        # linked to Stats; the AI audits' tile its values re-checked; the disclosure under them the review in full.
+        # The method section links Stats' Quality part for what the checks found, and says no share of its own.
         lead = driver.execute_script(GUIDE_LEAD_JS)
-        if headline:
-            assert lead and lead["first"] == headline and lead["stats"], (lead, headline)
-        if audited:
-            guide = driver.find_element(By.CSS_SELECTOR, "#guideMethodLead [data-guide-check='audit']").get_attribute("innerText")
-            assert " ".join(guide.split()).startswith(f"AI audits {quality['audit_values']:,} values re-checked against their papers by a separate AI auditor"), guide
-        if compared:
-            assert correct in driver.find_element(By.ID, "guideMethodHuman").get_attribute("textContent")
+        assert lead == {"tiles": 0, "link": "Checks so far on Stats", "numbers": False}, lead
+        link = driver.find_element(By.CSS_SELECTOR, '#guide-method a[href="#stats-quality"]')
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
+        link.click()
+        wait.until(lambda d: d.execute_script("""const part = document.getElementById('stats-quality');
+            return document.body.classList.contains('stats-open') && Boolean(part) && part.getBoundingClientRect().height > 0"""))
         method = driver.find_element(By.ID, "guide-method").get_attribute("innerText")
         for word in DROPPED_WORDING:
             assert word not in method, f"The Guide's method says {word}"
@@ -982,12 +988,6 @@ REVIEW_FIXTURE = {
 # value the reviewer could not find, never the base again.
 REVIEW_HEADLINE_NOTE = "no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers)"
 REVIEW_SENTENCE = "A check of the paper found all 3 disputed values printed as the entry gives them. In 153 entries (5.7%) the reviewer could not find the value in the paper."
-# The Guide's tiles (round 13): the headline's share and words, the disputed values as printed; the match in short.
-REVIEW_GUIDE_TILE = "Human review 99.9% no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers) A check of the paper found all 3 disputed values printed as the entry gives them."
-REVIEW_GUIDE_MATCH = "89.0% of approved values the same where CatLog has re-read the paper (3,625 of 4,074) Of the other 449, none has been found to be a CatLog error."
-# The Guide's Human review item, under the Guide's lead that already says the headline and the disputed values, starts
-# with what the lead does not say (never the same sentence twice).
-REVIEW_ITEM_START = "In 153 entries (5.7%) the reviewer could not find the value in the paper."
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
     return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
@@ -1098,21 +1098,9 @@ def check_review_headline(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#guide-method")
             wait.until(lambda d: d.find_element(By.ID, "guideView").is_displayed())
+            # The Guide leaves the review's numbers to Stats (round 13): no tile, no share, one link.
             guide = driver.execute_script(GUIDE_LEAD_JS)
-            guide_text = " ".join(guide["text"].split()) if guide else ""
-            assert guide and guide["first"] == "99.9%" and guide["tiles"] == ["review", "reread", "audit", "checked"], guide
-            assert REVIEW_GUIDE_TILE in guide_text and REVIEW_GUIDE_MATCH in guide_text and "values correct" not in guide_text, guide
-            # (the tiles keep "(408 papers)" and "re-read" each on one line)
-            parens = driver.execute_script(REVIEW_BASE_PARENS, "#guideMethodLead")
-            assert [text for text, _lines in parens] == ["(408 papers)", "re-read"] and all(lines == 1 for _text, lines in parens), parens
-            # The disclosure under the tiles: what they do not say, then the match in full and the human-checked records.
-            driver.execute_script("document.getElementById('guideMethodMore').open = true")
-            human = driver.find_element(By.ID, "guideMethodHuman").get_attribute("innerText")
-            assert human.startswith(REVIEW_ITEM_START) and REVIEW_SIDE_LINE in " ".join(human.split()) and "approved every kcat and Km they show; the kcat/Km was approved too or agrees with kcat ÷ Km" in human, human
-            assert "Human reviewers checked 2,674" not in human and "disputed" not in human, "The disclosure repeats the tiles' headline"
-            # kcat, Km and kcat/Km in the site's italic markup in the Human review item, as Stats' lead
-            assert driver.execute_script("""return document.getElementById('guideMethodHuman').querySelectorAll('i + sub').length >= 3"""), \
-                "kcat, Km and kcat/Km are in italics"
+            assert guide == {"tiles": 0, "link": "Checks so far on Stats", "numbers": False}, guide
             assert_document_stays(driver, "Guide with the human review")
             # Team's Human check says no value disputed, on the wide and the upright loop, and its lines touch no other
             # station's.

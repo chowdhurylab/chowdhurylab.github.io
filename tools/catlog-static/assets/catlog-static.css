@@ -2115,7 +2115,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 
 /* How CatLog reads a value: four steps in a row, each a card with its icon and number, an arrow between them; then what
    the record keeps, and the loop of audits and human review under them. Upright below 900px. */
-.guide-view .guide-shell .guide-how-read > h3 { margin:0 0 12px }
+/* "How CatLog reads a value" heads the four steps as a small label under the section's one heading (its anchor,
+   #guide-how-read-title, takes the focus a record's link gives it). */
+.guide-view .guide-shell .guide-how-read > h3.guide-flow-title { margin:0 0 10px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14) }
 .guide-view .guide-flow { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:20px; margin:0; padding:0; list-style:none; counter-reset:flow }
 .guide-view .guide-shell .guide-flow-step { position:relative; display:grid; grid-template-columns:minmax(0, 1fr); align-content:start; gap:8px; border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:var(--radius); background:var(--bg); padding:14px 16px 16px; counter-increment:flow }
 .guide-view .guide-flow-step::after { content:counter(flow); position:absolute; top:12px; right:14px; color:var(--muted); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
@@ -2129,25 +2131,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-keeps strong { display:block; margin-bottom:2px; color:var(--text) }
 .guide-view .guide-loop { display:flex; align-items:center; gap:12px; margin:20px 0 0; border:1px dashed var(--accent-line); border-radius:var(--radius); background:var(--accent-wash); padding:12px 16px }
 .guide-view .guide-shell .guide-loop p { margin:0; font-size:var(--fs-14); line-height:var(--lh-14) }
-/* What the checks found: the snapshot's numbers as tiles (one figure, one phrase, one note each), filled from the
-   manifest; left out without them. */
-.guide-view .guide-checks { margin:24px 0 0 }
-.guide-view .guide-shell .guide-checks > h3 { margin:0 0 10px }
-.guide-view .guide-check-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin:0; padding:0; list-style:none }
-.guide-view .guide-shell .guide-check { display:grid; align-content:start; gap:4px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:14px 16px }
-.guide-view .guide-check-title { color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
-.guide-view .guide-check-figure { color:var(--text); font-size:var(--fs-28); font-weight:600; line-height:var(--lh-28) }
-.guide-view .guide-check[data-check="checked"] .guide-check-figure { display:inline-flex; align-items:center; gap:6px; color:var(--checked) }
-.guide-view .guide-check-figure .check-icon { width:20px; height:20px }
-.guide-view .guide-check-text { color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
-.guide-view .guide-check-note { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
-.guide-view .guide-shell .guide-checks-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:10px 0 0; font-size:var(--fs-14); line-height:var(--lh-14) }
-.guide-view .guide-method-more > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
-/* Two kinds of record, side by side. */
-.guide-view .guide-kinds { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; align-items:start }
-.guide-view .guide-shell .guide-kind { display:grid; align-content:start; gap:4px; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px }
-.guide-view .guide-kind-tag { justify-self:start; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
-.guide-view .guide-shell .guide-kind p { margin:0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-loop-links { display:inline-flex; flex-wrap:wrap; gap:4px 20px; margin-left:4px }
+.guide-view .guide-loop-links a { white-space:nowrap }
+.guide-view .guide-loop-links a::after { content:"\00a0\2192"; content:"\00a0\2192" / "" }
 
 /* Read a record: a record drawn with the panel's own parts, each numbered, beside the key to the numbers. The numbers
    are CSS counters, so a part the snapshot does not have (Against the databases) leaves no gap. */
@@ -2205,12 +2191,36 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-shell .guide-list-title { margin:20px 0 6px; color:var(--muted); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14) }
 .guide-view .guide-shell code.guide-try { border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:0 6px; white-space:nowrap }
 .guide-view .guide-flag { vertical-align:-2px; cursor:default }
-/* Cautions: the short names and their meaning in two columns, each name over its line. */
-.guide-view .guide-caution-list { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 28px; max-width:none; margin:12px 0 0 }
-.guide-view .guide-caution-list > div { border-top:1px solid var(--line-soft); padding:10px 0 }
-.guide-view .guide-shell .guide-caution-list dt { font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
-.guide-view .guide-shell .guide-caution-list dd { margin:2px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* Cautions: one table, the short name (as beside a value on a phone), the Cautions filter's group, what it means;
+   14px, the name in 600, rules between rows. On phones each row stacks: the name, then its group and meaning. */
+.guide-view .guide-caution-table { width:100%; margin:12px 0 0; border-collapse:collapse; table-layout:fixed }
+.guide-view .guide-caution-table :is(th, td) { position:static; height:auto; border:0; border-top:1px solid var(--line-soft); background:transparent; padding:8px 16px 8px 0; color:var(--text-2); font-size:var(--fs-14); font-weight:400; line-height:var(--lh-14); text-align:left; vertical-align:top; white-space:normal }
+/* (not the records table's rows: no fixed height, pointer or hover tint, no 900px minimum on narrow screens) */
+.guide-view .guide-caution-table { min-width:0 }
+.guide-view .guide-caution-table tbody tr, .guide-view .guide-caution-table tbody tr:is(:nth-child(even), :hover) { height:auto; background:transparent; cursor:default; transition:none }
+.guide-view .guide-caution-table thead th { border-top:0; padding-top:0; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
+.guide-view .guide-caution-table thead th:nth-child(1) { width:28% }
+.guide-view .guide-caution-table thead th:nth-child(2) { width:24% }
+.guide-view .guide-caution-table tbody th { color:var(--text); font-weight:600 }
+.guide-view .guide-caution-table :is(th, td):last-child { padding-right:0 }
 .guide-view .guide-questions .guide-details > p { margin:8px 0 0; border-left:2px solid var(--line-soft); padding-left:16px }
+/* Reference: Find records, Units, Downloads, Cite and Sources and licenses, each one row that folds open (closed at
+   first; an address or link to one opens it): its name (16px/600) and a 14px gist of what it holds, a + or − before
+   them; open, its content under the row. */
+.guide-view .guide-ref { max-width:none; margin:0; border-top:1px solid var(--line-soft); padding:0 }
+.guide-view .guide-ref:last-child { border-bottom:1px solid var(--line-soft) }
+.guide-view .guide-ref > summary { position:relative; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 16px; min-height:44px; cursor:pointer; list-style:none; padding:10px 0 10px 24px }
+.guide-view .guide-ref > summary::-webkit-details-marker { display:none }
+.guide-view .guide-ref > summary::before { content:"+"; content:"+" / ""; position:absolute; left:2px; top:10px; color:var(--accent); font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.guide-view .guide-ref[open] > summary::before { content:"\2212"; content:"\2212" / "" }
+.guide-view .guide-shell .guide-ref > summary h3 { margin:0; color:var(--text); font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.guide-view .guide-shell .guide-ref-gist { color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-ref > summary:hover h3 { color:var(--accent) }
+.guide-view .guide-ref > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+.guide-view .guide-ref > :not(summary) { max-width:72ch; margin-left:24px }
+.guide-view .guide-ref > :last-child { margin-bottom:16px }
+.guide-view .guide-ref > .guide-unit-cards { max-width:none }
+.guide-view .guide-shell .guide-reference > h2 { margin-bottom:8px }
 /* Units: the three catalog units as cards, then the rules in a list. */
 .guide-view .guide-unit-cards { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; max-width:none; margin:0 0 16px; padding:0; list-style:none }
 .guide-view .guide-shell .guide-unit-cards li { display:grid; align-content:start; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:12px 16px }
@@ -2281,7 +2291,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-db-more > :is(dl, p) { margin:8px 0 0 }
 .guide-view .guide-shell .guide-db-note { margin:16px 0 0; color:var(--muted) }
 @media (max-width: 899px) {
-  .guide-view .guide-check-grid { grid-template-columns:repeat(2, minmax(0, 1fr)) }
   .guide-view .guide-flow { grid-template-columns:minmax(0, 1fr); gap:16px }
   .guide-view .guide-shell .guide-flow-step { grid-template-columns:36px minmax(0, 1fr); column-gap:12px; row-gap:2px; border-top-width:1px; border-left:3px solid var(--accent) }
   .guide-view .guide-flow-icon { grid-row:span 2 }
@@ -2290,12 +2299,19 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .guide-view .guide-anatomy-card { max-width:480px }
 }
 @media (max-width: 760px) {
-  .guide-view :is(.guide-legend-grid, .guide-db-cards, .guide-kinds, .guide-keeps) { grid-template-columns:minmax(0, 1fr) }
+  .guide-view :is(.guide-legend-grid, .guide-db-cards, .guide-keeps) { grid-template-columns:minmax(0, 1fr) }
 }
 @media (max-width: 640px) {
   .guide-view .guide-shell .guide-lead { font-size:var(--fs-16); line-height:var(--lh-16) }
-  .guide-view .guide-check-grid { grid-template-columns:minmax(0, 1fr) }
-  .guide-view .guide-caution-list { grid-template-columns:minmax(0, 1fr) }
+  /* Cautions: each row stacks, the name over its group and meaning. */
+  .guide-view .guide-caution-table thead { display:none }
+  .guide-view .guide-caution-table, .guide-view .guide-caution-table tbody, .guide-view .guide-caution-table tr { display:block }
+  .guide-view .guide-caution-table tr { border-top:1px solid var(--line-soft); padding:8px 0 }
+  .guide-view .guide-caution-table :is(th, td) { display:block; width:auto; border:0; padding:0 }
+  .guide-view .guide-caution-table tbody th, .guide-view .guide-caution-table tbody td:nth-child(2) { width:auto }
+  .guide-view .guide-caution-table tbody td:nth-child(2) { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
+  .guide-view .guide-caution-table tbody td:nth-child(2)::before { content:"Filter: "; content:"Filter: " / "" }
+  .guide-view .guide-ref > :not(summary) { margin-left:0 }
   /* The units as three short rows: name, unit, meaning. */
   .guide-view .guide-unit-cards { grid-template-columns:minmax(0, 1fr); gap:8px }
   .guide-view .guide-shell .guide-unit-cards li { grid-template-columns:4.5em max-content minmax(0, 1fr); align-items:baseline; column-gap:12px; padding:8px 12px }
