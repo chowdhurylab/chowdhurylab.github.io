@@ -189,8 +189,9 @@ count at the right; a label a wide font wraps takes a second line, box and count
 on its first, and never runs into the next row) and 32px fields, their labels in
 a column as wide as the longest. The sidebar is compact (the user, 2026-10-13):
 one short line per option and no help paragraphs; a group with explanations has a
-24px round "?" beside its chevron (on phones and touch screens a 44px target: its hit area reaches 10px round the
-circle, inside the 44px title row and clear of the chevron) that shows them in a quiet --surface-2 box under
+24px round "?" beside its chevron, 46px from the group's right edge (on phones and touch screens a 44px target: its hit
+area reaches 10px round the circle, inside the 44px title row and 7px clear of the chevron); the title stops 4px before
+it, so a long title in a wide font wraps instead of running under it (until round 13 it could run 6px under it) that shows them in a quiet --surface-2 box under
 its title (and hides them again); opened near the foot of the sidebar or the phone sheet, the sidebar scrolls just
 enough to keep the group's options in view, never taking its title under the sticky heading. The panel order (round 13; the user, 2026-10-18: "too many options and a bit confusing instead of easy to use, to the
 point and what the user might want"): in view, the filters most visitors use, each with a short label and its count:

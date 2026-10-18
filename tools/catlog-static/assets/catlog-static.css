@@ -347,12 +347,15 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-section-title:focus-visible { outline-offset:-2px }
 .filter-section > :not(summary) { margin:0 var(--sp-4) var(--sp-3) }
 /* A group's "?" (beside its chevron) shows its explanations in a quiet box under the title: the options keep one short
-   line each. Its 24px circle is centred on the title's first line (top 10px + 12px = 13px + 9px), as the chevron is. */
-.filter-section.has-about > .filter-section-title > span { margin-right:36px }
+   line each. Its 24px circle is centred on the title's first line (top 10px + 12px = 13px + 9px), as the chevron is,
+   46px from the group's right edge (right 30px + the 16px margin every part of a group has), its 44px touch area 7px
+   clear of the chevron; the title stops 4px before it (30px more than the chevron's 36px), so a long title in a wide
+   font wraps instead of running under it. */
+.filter-section.has-about > .filter-section-title > span { margin-right:30px }
 .section-about { display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
 .section-about:hover { border-color:var(--accent); color:var(--accent) }
 .section-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }
-.filter-section > .section-about { position:absolute; top:10px; right:38px }
+.filter-section > .section-about { position:absolute; top:10px; right:30px }
 .filter-about { display:grid; gap:6px; border-radius:var(--radius); background:var(--surface-2); padding:var(--sp-2) 10px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-about p { margin:0 }
 .filter-about strong { color:var(--text); font-weight:600 }

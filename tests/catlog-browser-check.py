@@ -3691,11 +3691,24 @@ def check_layout(driver, browser, url, route_label):
               const gap = count.getBoundingClientRect().left - right;
               if (gap < 4) out.push([label.textContent.trim(), Math.round(gap * 10) / 10]);
             }
+            // A group's title stops before its "?" and chevron (it wraps rather than run under them).
+            const covered = [];
+            document.querySelectorAll('#catalogFilters :is(.filter-section, .filter-more) > summary').forEach(summary => {
+              if (!summary.getClientRects().length) return;
+              const marks = [summary.querySelector('.chevron'), summary.parentElement.querySelector(':scope > .section-about')]
+                .filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect());
+              const range = document.createRange();
+              range.selectNodeContents(summary.querySelector(':scope > span'));
+              const runs = [...range.getClientRects()].filter(r => r.width > 0.5);
+              if (runs.some(r => marks.some(m => r.right > m.left - 0.5 && r.left < m.right && r.top < m.bottom && m.top < r.bottom)))
+                covered.push(summary.textContent.replace(/\\s+/g, ' ').trim());
+            });
             const word = document.querySelector('#statusChecklist .human-checked-word').getBoundingClientRect();
             style.remove();
             groups.forEach((group, index) => { group.open = was[index]; });
-            return {rows, tight: out, humanChecked: word.width > 20};
+            return {rows, tight: out, covered, humanChecked: word.width > 20};
         """)
+        assert not tight["covered"], f"At 1280px in a wide font a group's title runs under its '?' or chevron: {tight['covered']}"
         assert tight["rows"] >= 8 and tight["humanChecked"] and not tight["tight"], (
             f"At 1280px in a wide font every sidebar label stays clear of its count: {tight}")
         results["sidebar-labels-wide-font-1280"] = True
