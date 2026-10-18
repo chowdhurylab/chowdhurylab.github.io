@@ -2150,6 +2150,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-shell .guide-anatomy-card .guide-anatomy-quote { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2) }
 .guide-view .guide-anatomy-quote > span { color:var(--text); font-weight:600 }
 .guide-view .guide-anatomy-db { display:grid; gap:4px; padding:0; list-style:none }
+.guide-view .guide-shell .guide-anatomy-checks .guide-anatomy-meta > span { margin-right:6px; color:var(--muted) }
 .guide-view .guide-anatomy-db .db-mark { margin-right:6px }
 .guide-view .guide-shell .guide-anatomy-more p { display:flex; flex-wrap:wrap; gap:6px }
 .guide-view .guide-anatomy-more p > span { border:1px solid var(--line-soft); border-radius:var(--radius); background:var(--surface-2); padding:2px 8px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
@@ -2285,6 +2286,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The example record's values: each printed form on its own line under its value, as a phone has room for. */
   .guide-view .guide-values-table, .guide-view .guide-values-table tbody { display:block; width:100% }
   .guide-view .guide-values-table thead { display:none }
+  .guide-view .guide-values-table caption { display:block }
   .guide-view .guide-values-table tbody tr { display:grid; grid-template-columns:4em minmax(0, 1fr) 5em; align-items:baseline; column-gap:8px; border-bottom:1px solid var(--line-soft) }
   .guide-view .guide-values-table tbody :is(th, td) { width:auto; border-bottom:0; padding:6px 0 0 }
   .guide-view .guide-values-table td.vt-printed { grid-column:1 / -1; padding:2px 0 6px; color:var(--text-2) }

@@ -1395,6 +1395,20 @@ assert.match(howRead, /<h3 id="guide-how-read-title">How CatLog reads a value<\/
 assert.deepEqual([...howRead.matchAll(/<strong class="guide-flow-name">([^<]*)<\/strong>/g)].map((match) => match[1]), ["Find the paper", "Read", "Check", "Compare"]);
 assert.match(howRead, /a model never types a converted number/);
 assert.match(howRead, /tagged <em>from paper<\/em>/);
+// The Guide's record picture follows the record panel's order (round 13): its quote reads "In the paper:" as the record's
+// does, a Checks part (the panel's Checks section) follows Against the databases, its key links How CatLog reads a value,
+// no part names a section the record no longer has, and every numbered part has its key line.
+{
+  const anatomy = guideHtml.match(/<figure class="guide-anatomy"[\s\S]*?<\/figure>/)[0];
+  assert.match(anatomy, /<span>In the paper:<\/span> &ldquo;/);
+  assert.match(sourceCode, /const label = `In the paper\$\{/);
+  assert.match(anatomy, /<div class="guide-anatomy-part" data-guide-databases hidden>[\s\S]*?<div class="guide-anatomy-part guide-anatomy-checks">\s*<span class="guide-pin" aria-hidden="true"><\/span>\s*<p class="guide-anatomy-heading">Checks<\/p>/);
+  assert.match(sourceCode, /detailSection\("checks", "Checks"/);
+  assert.match(anatomy, /<strong>Checks<\/strong>[^<]*<a href="#guide-how-read">How CatLog reads a value<\/a>/);
+  assert.doesNotMatch(anatomy, /Review and audit|In the paper, Table/);
+  const key = anatomy.match(/<div class="guide-anatomy-key">([\s\S]*?)<\/div>/)[1];
+  assert.equal((anatomy.match(/<div class="guide-anatomy-part[ "]/g) || []).length, (key.match(/<li[ >]/g) || []).length);
+}
 // The framing (round 13): CatLog re-verifies published values; never a download agent or papers in bulk.
 assert.match(guideHtml, /CatLog re-verifies published enzyme kinetics/);
 assert.doesNotMatch(guideHtml, /download agent|in bulk|mass download/i);

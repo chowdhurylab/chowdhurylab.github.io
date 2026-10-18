@@ -1100,12 +1100,15 @@ wrap, in this order and with these addresses (other pages link to every one; kee
   the tiles do not say, the match with what the other values are, the human-checked rule; never the tiles' headline
   again). Last, Two kinds of record side by side: Read from the paper (by the current, second version: said once) and
   Not yet re-read (CatLog's earlier version, which started from database entries; replaced when CatLog reads the paper).
-- Read a record (#guide-record): a record drawn as the panel draws it (title, EC · organism · form, substrate; the status
-  line with tags; the values table with ticks and As printed; the quoted line "In the paper, Table 1:"; Against the
-  databases; the further sections as small labels), each part numbered by a CSS counter, beside a numbered key (under it
-  below 900px); a part the snapshot lacks (Against the databases) is hidden with its key line, so the numbers stay in
-  sequence. On phones the example's values table puts each As printed under its value. A tip line names ‹ ›, Copy link,
-  Download record and Report a problem.
+- Read a record (#guide-record): a record drawn as the panel draws it, in the panel's order (title, EC · organism · form,
+  substrate; the status line with tags; the values table with ticks, As printed and its caption "Printed in Table 1";
+  the quoted line "In the paper: …"; Against the databases; Checks with Second check and Human review; Conditions,
+  Protein and substrate and Paper as small labels), each part numbered by a CSS counter, beside a numbered key (under it
+  below 900px); the Checks key line links How CatLog reads a value, the Details line names the footer (Download record,
+  Report a problem, the license and Data ID) and Source (records not yet re-read only). A part the snapshot lacks
+  (Against the databases) is hidden with its key line, so the numbers stay in sequence. On phones the example's values
+  table puts each As printed under its value. A tip line names ‹ › and Copy link. When the record's sections change,
+  this example changes with them.
 - Labels and colours (#guide-status): "Each colour means one thing everywhere on the site". A grid of legends (two
   columns, one below 760px): Review result (the table's badges: Accepted, Not confirmed, Not checked, Disputed; the
   Accepted, Not checked and no paper linked definitions are set by the review rules the snapshot follows), Tags (from
