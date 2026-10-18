@@ -359,6 +359,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    clear of the chevron; the title stops 4px before it (30px more than the chevron's 36px), so a long title in a wide
    font wraps instead of running under it. */
 .filter-section.has-about > .filter-section-title > span { margin-right:30px }
+/* Inside More filters a group's "?" sits further in, so its title stops sooner (it wraps, in a wide font, rather than run under it). */
+.filter-more .filter-section.has-about > .filter-section-title > span { margin-right:58px }
 .section-about { display:inline-grid; width:24px; height:24px; margin:0; place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font-size:var(--fs-12); font-weight:600; line-height:1 }
 .section-about:hover { border-color:var(--accent); color:var(--accent) }
 .section-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }

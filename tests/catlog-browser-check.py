@@ -5416,7 +5416,8 @@ def check(driver, browser, url):
             for word in DROPPED_WORDING:
                 assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
-        ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range")
+        # (the value-range figures only: the variant-effect and assay-condition figures reuse .stats-range)
+        ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range:not(.stats-fold):not(.stats-condition)")
         assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))
         for figure in ranges:
             summary = overview["metrics"][figure.get_attribute("data-metric")]
@@ -5465,7 +5466,9 @@ def check(driver, browser, url):
     assert "Not saved" not in stats_text and "tokens" not in stats_text.lower()
     for removed in ("not split by field", "How these groups differ", "Example checks", "Fields in these records"):
         assert removed not in stats_text, f"Removed Stats text is back: {removed}"
-    assert not driver.find_elements(By.CSS_SELECTOR, ".stats-nested-ring, .stats-review-ring, .stats-material-section, #statsCharts svg circle")
+    # (no ring charts; the kcat against Km figure marks its class medians with small circles)
+    assert not driver.execute_script("""return [...document.querySelectorAll('.stats-nested-ring, .stats-review-ring, .stats-material-section, #statsCharts svg circle')]
+        .filter(e => !e.closest("[data-figure='kcat-km']")).length""")
     details = manifest["summary"].get("review_details")
     if details and details.get("download_sha256") == manifest.get("enriched_download", {}).get("sha256") \
             and details.get("source_sha256") == manifest.get("source_sha256"):
