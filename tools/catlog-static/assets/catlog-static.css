@@ -230,6 +230,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    (kcat, Km, kcat/Km), smaller, and the snapshot date at the card's top right. One layout from 1024px up (nothing
    wraps or moves as the window widens), two rows on tablets, a 2 x 2 grid on phones. */
 .snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:6px var(--gutter) }
+/* One plain line on what CatLog is, over the counts, for a first-time visitor. */
+.snapshot-lead { margin:0 0 6px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.snapshot-lead a { white-space:nowrap }
 .snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--band-card-line); border-radius:8px; background:radial-gradient(70% 160% at 0% 0%, var(--accent-wash), transparent 64%), linear-gradient(180deg, var(--accent-wash-soft), transparent 80%), var(--bg); box-shadow:var(--band-card-glow); padding:6px var(--sp-5) 6px var(--sp-4) }
 /* Records and Accepted sit in the band's row like the other key numbers. */
 .summary-grid { display:contents }
