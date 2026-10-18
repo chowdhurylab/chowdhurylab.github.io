@@ -2495,8 +2495,10 @@ def check_filters(driver, browser, url, route_label):
                 (address, database_ticked(), fragment(), chip_keys())
             if key in expected:
                 assert summary() == f"{expected[key]:,} records", (address, summary(), expected[key])
-        chip = driver.execute_script("return document.querySelector('#activeFilters [data-filter-key=\"db:all_same\"]').innerText.trim()")
-        assert chip == "All values the same", chip
+            # (on the db=same page only: in Safari the loop is skipped and no page has the chip)
+            if key == "all_same":
+                chip = driver.execute_script("return document.querySelector('#activeFilters [data-filter-key=\"db:all_same\"]').innerText.trim()")
+                assert chip == "All values the same", chip
         # Ticking "every value" ticks Not in the databases; the pair is one chip that removes both; unticking Not in the
         # databases unticks "every value".
         open_page(base + "#browse")
@@ -4852,7 +4854,8 @@ def check_record_databases(driver, browser, base, wait):
             # One line under the Values table for each of them, in words.
             assert state["pointers"] == [note["field"] for note in changed], (state["pointers"], state["notes"])
             # ("kcat/Km: corrects SABIO-RK and OED ↓": the note names the numbers, once)
-            assert all(re.fullmatch(r"\S+: (?:corrects|differs from) \S[\s\S]* ↓", line) and "another number" not in line
+            # (spaces made plain first: a browser may break the line round the button's visually hidden words)
+            assert all(re.fullmatch(r"\S+: (?:corrects|differs from) \S.* ↓", re.sub(r"\s+", " ", line).strip()) and "another number" not in line
                        for line in state["pointerLines"]), state["pointerLines"]
             # Each fact once: the summary says the parameter and the result (no databases), no note repeats its line's
             # cause, and the checker's notes are folded under "How it was checked", never labelled "In the paper".
