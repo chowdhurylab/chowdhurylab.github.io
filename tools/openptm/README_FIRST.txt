@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-18
+Release: 2026-10-19
 
 Browse measurements, PTM families, sites, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 19. The original Excel is unchanged.
+- This interface is retained in reading round 22. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,395 function/regulation records.
+- 27,165 site records and 14,397 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 220 selected paper comparisons, containing 268 measurement entries from
-  80 primary papers across 78 families with numeric measurements.
+- 222 selected paper comparisons, containing 270 measurement entries from
+  81 primary papers across 79 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,25 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 22
+- Two comparisons with two measurement entries from one additional paper,
+  adding numerical coverage for lipoylation (PMID10209517).
+- Lipoylated and unlipoylated human PDC-E2 domain and peptide preparations
+  were compared using patient PBMC T-cell stimulation indices. Both comparisons
+  were reported as not statistically significant. This is an antigen-response
+  assay, not enzyme activity, and it does not establish equivalence.
+- Printed means and accompanying uncertainty values are retained. The source
+  does not define the uncertainty type beside these means; exact pair-specific
+  patient counts are left unassigned. Subgroup wording limits remain visible.
+- Two readers independently checked the original HTML. A manual source excerpt
+  is retained locally and labeled as such; its checksum is not a raw article hash.
+- Nine new primary papers were read in selected relevant sections across six
+  families not covered in the preceding pass. Two supporting documents and one
+  linked correction were read separately. Other leads remain documented holds.
+- 32 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 19
 - Two comparisons with 22 measurement entries from two additional papers,
@@ -49,8 +68,8 @@ New paper measurements, reading round 19
   no replicate pairing or means were inferred, and no half-life was fitted.
 - Original values, state assignments and notice metadata were independently
   reviewed. Source workbook cell locations and checksums remain in provenance.
-- 33 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 33 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 18
@@ -189,7 +208,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-25a1ae855b66c0d6dcefa553d1f7628beced7cc6698185cdf5310b21b646941a
+adee8f9042c6e02dddca70c6f1219cf85baf891339d17bb430521b5b9832c33c
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
