@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 23. The original Excel is unchanged.
+- This interface is retained in reading round 24. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,398 function/regulation records.
+- 27,165 site records and 14,399 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 223 selected paper comparisons, containing 271 measurement entries from
-  82 primary papers across 80 families with numeric measurements.
+- 224 selected paper comparisons, containing 272 measurement entries from
+  83 primary papers across 81 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,28 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 24
+- One comparison and one measurement entry from one additional paper,
+  adding numerical coverage for protein splicing (PMID34235541).
+- Concanavalin A: printed methyl-alpha-D-mannose binding association constants
+  of 8240 +/- 74.0 M^-1 for mature conA and 8270 +/- 74.0 M^-1 for pro-conA.
+  The source reports similar binding; this does not establish equivalence.
+- Native circular-permutation maturation includes segment excision and peptide
+  ligation. The recombinant precursor and commercial plant-purified mature
+  material differ in origin; mature material includes a small unquantified
+  two-chain fraction. These limits remain attached to the comparison.
+- Uncertainty kind and replicate count are unspecified. No thermal-stability
+  number, calculated ratio, inferred zero or canonical site was added.
+- Two readers independently checked the original PDF. The linked commentary
+  was separately classified through the existing publication-notice gate.
+- Eight new primary papers were read in selected relevant sections across
+  seven families outside the previous pass. One prior-citation revisit, one
+  access-only lead and one metadata-only lead are counted separately. No SI
+  was read. Other reviewed papers remain documented holds.
+- 30 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 23
 - One comparison and one measurement entry from one additional paper,
@@ -52,8 +74,8 @@ New paper measurements, reading round 23
   families outside the previous pass. A secondary self-summary, two access-only
   leads and one metadata-only lead are counted separately; no SI was read.
 - Other reviewed papers remain documented holds.
-- 31 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 31 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 22
@@ -229,7 +251,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-cacc111b5f8411c4b619baf69030f85da861ec0df8175b8cf2768d54ba143ea4
+287f68a43746fc56c8f1d9cc96b5687485720431e2edad283dd3a8957592a7ac
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
