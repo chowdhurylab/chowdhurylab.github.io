@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 18. The original Excel is unchanged.
+- This interface is retained in reading round 19. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,393 function/regulation records.
+- 27,165 site records and 14,395 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 218 selected paper comparisons, containing 246 measurement entries from
-  78 primary papers across 76 families with numeric measurements.
+- 220 selected paper comparisons, containing 268 measurement entries from
+  80 primary papers across 78 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,24 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 19
+- Two comparisons with 22 measurement entries from two additional papers,
+  adding numerical coverage for FAT10ylation and covalent porphyrin attachment.
+- Whole horse-heart cytochrome c: two Table I endpoints from PMID2557914,
+  comparing covalently heme-bearing and chemically heme-depleted preparations.
+  Lipid/protein stoichiometry is not affinity. The printed spectral zero,
+  chemical preparation, folding and surface-adsorption limits remain explicit.
+- JunB FAT10ylation: 20 author-supplied residual-protein observations at two
+  chase time points from PMID31575873, grouped as one comparison. The source
+  states five experiments but supplies four values per target state at 2.5 h
+  and six at 5 h. This discrepancy remains visible; no observation was discarded,
+  no replicate pairing or means were inferred, and no half-life was fitted.
+- Original values, state assignments and notice metadata were independently
+  reviewed. Source workbook cell locations and checksums remain in provenance.
+- 33 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 18
 - Three comparisons with eight measurement entries from three additional papers,
@@ -51,8 +69,8 @@ New paper measurements, reading round 18
 - Original sources and numerical transcription were independently checked.
   Thirteen newly obtained main originals were read in selected relevant sections;
   three were recovered prior access-held leads. Other papers remain documented holds.
-- 35 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 35 of 111 audit families without a numerical comparison
+  in its selection.
 - Existing records, the clean interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 17
@@ -171,7 +189,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-0af0ee91ea8fccd115944a31f84de1aa3cb4aaec8cd197aca74b02e1279daa9b
+25a1ae855b66c0d6dcefa553d1f7628beced7cc6698185cdf5310b21b646941a
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
