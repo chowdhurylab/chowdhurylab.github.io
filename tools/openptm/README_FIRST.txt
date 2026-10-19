@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 24. The original Excel is unchanged.
+- This interface is retained in reading round 28. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,399 function/regulation records.
+- 27,165 site records and 14,400 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 224 selected paper comparisons, containing 272 measurement entries from
-  83 primary papers across 81 families with numeric measurements.
+- 225 selected paper comparisons, containing 273 measurement entries from
+  84 primary papers across 82 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,28 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 28
+- One comparison and one measurement entry from one additional paper,
+  adding numerical coverage for the pyruvoyl cofactor family (PMID14718534).
+- Endogenous COS-7 S-adenosylmethionine decarboxylase antigen half-life:
+  1.5 h after AbeAdo pretreatment versus 2.7 h in control cells; source p=0.03.
+- The source assigns the treated preparation to pyruvoyl loss by transamination,
+  citing prior chemical evidence. This is a cellular preparation comparison,
+  not a pure-state pair or an isolated causal effect of pyruvoyl formation.
+- Chemical-state occupancy, accompanying chemistry and chase-related effects
+  remain unresolved. The earlier chemical study is supporting abstract-level
+  evidence; its full original was inaccessible. No half-life uncertainty,
+  calculated ratio or canonical sequence mapping is assigned.
+- Independent readers checked the original result, state attribution and
+  preparation limits. All numerical endpoints come from the 2004 original.
+- Ten new primary papers were read in selected relevant sections across nine
+  families outside round 27. One prior metadata-only paper was recovered and
+  read; three access-only and two metadata-only leads are counted separately.
+  No SI was read. Other reviewed papers remain documented holds.
+- 29 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 24
 - One comparison and one measurement entry from one additional paper,
@@ -53,8 +75,8 @@ New paper measurements, reading round 24
   seven families outside the previous pass. One prior-citation revisit, one
   access-only lead and one metadata-only lead are counted separately. No SI
   was read. Other reviewed papers remain documented holds.
-- 30 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 30 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 23
@@ -251,7 +273,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-287f68a43746fc56c8f1d9cc96b5687485720431e2edad283dd3a8957592a7ac
+1a0411c6b3a42c54754f5ddd409e1527c5cf108b7c5b5a0ed7cbbef5478ee1a4
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
