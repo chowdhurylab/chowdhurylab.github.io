@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 22. The original Excel is unchanged.
+- This interface is retained in reading round 23. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,397 function/regulation records.
+- 27,165 site records and 14,398 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 222 selected paper comparisons, containing 270 measurement entries from
-  81 primary papers across 79 families with numeric measurements.
+- 223 selected paper comparisons, containing 271 measurement entries from
+  82 primary papers across 80 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,27 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 23
+- One comparison and one measurement entry from one additional paper,
+  adding numerical coverage for phosphopantetheinylation (PMID18770515).
+- Actinorhodin acyl carrier protein: printed binding Kd values of
+  1.1 +/- 0.1 micromolar for apo and 2.1 +/- 0.1 micromolar for holo.
+  This is binding to S. coelicolor ACPS, the installing enzyme, not a
+  measurement of catalytic activity or phosphopantetheine-transfer rate.
+- Both preparations share the C17S engineered background. Source uncertainty
+  type and replicate count are unspecified. Preparation and occupancy limits
+  remain explicit, with no canonical site assignment or calculated fold change.
+- Two readers independently checked the original publisher PDF, including
+  Table 2 and the relevant methods. A labeled manual source excerpt is retained
+  locally; its checksum is not a raw-PDF checksum.
+- Seven new primary papers were read in selected relevant sections across six
+  families outside the previous pass. A secondary self-summary, two access-only
+  leads and one metadata-only lead are counted separately; no SI was read.
+- Other reviewed papers remain documented holds.
+- 31 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 22
 - Two comparisons with two measurement entries from one additional paper,
@@ -50,8 +71,8 @@ New paper measurements, reading round 22
 - Nine new primary papers were read in selected relevant sections across six
   families not covered in the preceding pass. Two supporting documents and one
   linked correction were read separately. Other leads remain documented holds.
-- 32 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 32 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 19
@@ -208,7 +229,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-adee8f9042c6e02dddca70c6f1219cf85baf891339d17bb430521b5b9832c33c
+cacc111b5f8411c4b619baf69030f85da861ec0df8175b8cf2768d54ba143ea4
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
