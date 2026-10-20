@@ -3,29 +3,30 @@ openPTM
 Website: https://chowdhurylab.github.io/tools/openptm/
 Release: 2026-10-20
 
-Browse measurements, PTM families, sites, disease studies and methods. The page contains its data,
+Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
 
-Design update, 18 October
-- Measurements opens first, with compact protein, measurement, state-value and
-  source columns. Exact state labels remain beside their values.
-- Measured comparisons and All findings have separate tabs. Filters and counts
-  stay within the chosen collection; clearing filters keeps that collection.
-- PTM directory counts link directly to records. Family pages show measurement
-  previews before database coverage and audit details.
-- Record details show all values first, with study limits visible below them.
-  Assay preparation and original source fields remain available in disclosures.
-- System typography, shorter headings, quieter spacing and phone controls
-  replace the longer, more repetitive presentation.
-- This interface is retained in reading round 29. The original Excel is unchanged.
+Design update, 20 October
+- Browse opens with measurements and their two state values. Stats adds linked
+  summaries of family coverage, papers, endpoints, function records and sites.
+- Every statistics chart links to its underlying records. Counts distinguish
+  comparisons, measurement entries, papers, families and source records.
+- Short study summaries and essential limits make comparisons easier to read.
+  Complete study notes, assay conditions and original fields remain available.
+- Phone comparisons show both state labels and values together. Record details
+  fill the screen and support previous/next navigation within the selection.
+- Paper links gather related comparisons. Browsing filters are preserved when
+  returning from Stats; the 26 remaining numerical-gap families are reachable.
+- The insulin workbook's long cached numbers have an explicitly rounded display
+  and a full-precision disclosure. The stored numerical values are unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,402 function/regulation records.
+- 27,165 site records and 14,426 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 227 selected paper comparisons, containing 275 measurement entries from
-  86 primary papers across 84 families with numeric measurements.
+- 251 selected paper comparisons, containing 303 measurement entries from
+  90 primary papers across 85 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +35,33 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 30
+- 24 comparisons and 28 measurement entries from four additional numerical
+  papers: three newly read originals and one previously held source reassessed.
+- BRPF1 histone-reader binding: eight comparisons from Table 1 (PMID33554132).
+  Two additional contrasts remain held because printed values conflict with
+  Results prose. The source's inconsistent uncertainty terminology is retained.
+- ING3 histone-reader binding: three comparisons, each with ITC and fluorescence
+  measurements (PMID27281824). Table and figure state assignments agree; a
+  Results-label discrepancy is explicitly documented.
+- Plant mitochondrial malate dehydrogenase acetylation: 12 kinetic comparisons
+  from the printed Figure 4b table (PMID34713507), covering both reaction
+  directions. Construct and low-level off-target acetylation limits remain.
+- Collagen IV sulfilimine: one tissue-preparation comparison with two stiffness
+  endpoints (PMID28424209), extending numerical coverage to this family. Both
+  preparations retain crosslinks; genetic and tissue covariation remain. The
+  source's printed low-strain knockout uncertainty conflicts with the apparent
+  plot width; the printed number is retained and the discrepancy is visible.
+- Independent readers checked all admitted numerical values and preparation
+  assignments against retained originals. No graph values, calculated ratios,
+  replicate pairing or missing comparator measurements were inferred.
+- Five new primary papers were read in selected relevant scopes and one prior
+  held original was reassessed. Two other newly read originals remain held.
+  This is a selected reading pass, not an exhaustive literature search.
+- 26 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- All earlier scientific records and the original audit workbook are unchanged.
 
 New paper measurements, reading round 29
 - Two comparisons and two measurement entries from two additional numerical
@@ -56,8 +84,8 @@ New paper measurements, reading round 29
   scope. One prior original was rechecked; two supplemental files from the
   insulin paper were inspected. Three access-only and one metadata-only lead
   are recorded separately. Other reviewed papers remain documented holds.
-- 27 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 27 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 28
@@ -298,10 +326,10 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-182ddb4bbc424c637cd633509328b35dc522a67e6fb39ac9edaf291538e330b5
+b08af20228ba2fb8c05317a2fe45987ab2e82c993d68314fb2348128dd4b1eb5
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
 Source rights, excluded resources, audit dates and individual study limits
-are described under Methods and in each record. A model experiment or an
+are described under Guide and in each record. A model experiment or an
 association is not clinical validation or evidence of treatment benefit.
