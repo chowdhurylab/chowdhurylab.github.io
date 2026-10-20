@@ -7,6 +7,13 @@ Browse measurements, statistics, PTM families, sites, disease studies and the gu
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
 
+CatLog visual alignment, 20 October
+- Teal links and selection, green-gray text and surfaces, softer separators,
+  and a single pale summary band in Browse and Stats follow the CatLog palette.
+- Smaller headings and a compact phone toolbar bring the records forward.
+- Scientific data, source notes, application behavior and the audit workbook
+  are unchanged. All embedded data and scripts match the round31 release.
+
 Design update, 20 October
 - Browse opens with measurements and their two state values. Stats adds linked
   summaries of family coverage, papers, endpoints, function records and sites.
@@ -353,7 +360,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-89309b2dae1998ca2b1579591d26a4a0e909f1b16d8b0f1c0b1ee0382b65f67f
+fb4efbff054a32722c0d9a340afff87eaf0861adfc266d4757ce749a33fda442
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
