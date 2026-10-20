@@ -17,16 +17,21 @@ Design update, 20 October
 - Phone comparisons show both state labels and values together. Record details
   fill the screen and support previous/next navigation within the selection.
 - Paper links gather related comparisons. Browsing filters are preserved when
-  returning from Stats; the 26 remaining numerical-gap families are reachable.
+  returning from Stats; the 25 remaining numerical-gap families are reachable.
 - The insulin workbook's long cached numbers have an explicitly rounded display
   and a full-precision disclosure. The stored numerical values are unchanged.
 
+- Filter counts follow the current query and other selections. Long lists of
+  options are searchable, and selected options stay visible for removal.
+- Filtered measurement results show their own entry, paper and family totals,
+  alongside the comparison count. These totals describe the full selection.
+
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,426 function/regulation records.
+- 27,165 site records and 14,427 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 251 selected paper comparisons, containing 303 measurement entries from
-  90 primary papers across 85 families with numeric measurements.
+- 252 selected paper comparisons, containing 306 measurement entries from
+  91 primary papers across 86 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -35,6 +40,28 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 31
+- One comparison with three kinetic entries from one additional numerical
+  paper, adding coverage for quinone and protein-derived cofactors (ADJ101).
+- LOXL2 preparations with approximately 95% versus 27% LTQ cofactor content:
+  kcat, Km and the source-printed kcat/Km values in Table 2 (PMID35682561).
+  LTQ percentages characterize the preparations; they are not extra entries.
+- Full-length human-cell protein and truncated insect-cell protein differ in
+  construct, expression system and processing. Both contain LTQ. This is a
+  preparation-level association and does not isolate a causal LTQ effect.
+  Turnover and efficiency use total enzyme concentration. The fitted-parameter
+  uncertainty convention is unspecified; no replicate count is inferred.
+- An independent reader checked the original XML table, state assignments,
+  normalization and limits. No graph values or calculated ratios were added.
+- Ten new primary papers were read in selected relevant scopes across six
+  gap families outside round 30: nine retained originals
+  and one publisher web-reader extraction. One associated supplemental file,
+  three access-only leads and two metadata-only leads are counted separately.
+  The other nine newly read originals remain documented holds.
+- 25 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- All earlier scientific records and the original audit workbook are unchanged.
 
 New paper measurements, reading round 30
 - 24 comparisons and 28 measurement entries from four additional numerical
@@ -59,8 +86,8 @@ New paper measurements, reading round 30
 - Five new primary papers were read in selected relevant scopes and one prior
   held original was reassessed. Two other newly read originals remain held.
   This is a selected reading pass, not an exhaustive literature search.
-- 26 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 26 of 111 audit families without a numerical
+  comparison in its selection.
 - All earlier scientific records and the original audit workbook are unchanged.
 
 New paper measurements, reading round 29
@@ -326,7 +353,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-b08af20228ba2fb8c05317a2fe45987ab2e82c993d68314fb2348128dd4b1eb5
+89309b2dae1998ca2b1579591d26a4a0e909f1b16d8b0f1c0b1ee0382b65f67f
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
