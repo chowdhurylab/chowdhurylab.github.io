@@ -48,6 +48,32 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 32
+- Four genuinely new primary papers were read in selected relevant scopes
+  across four numerical-gap families outside round31: PE amidation
+  (PMID31960529), ethanolamine phosphoglycerol addition (PMID22860115),
+  methylthiolation (PMID36902159) and diphthamide formation (PMID30335802).
+- All four remain held. His/NTA membrane anchoring does not establish native
+  protein PE amidation; yeast ortholog/domain complementation does not define
+  an EPG-state pair; whole-cell genetic growth and competition outcomes are
+  not assigned target-protein functional comparisons. No zeros or numerical
+  comparator arms were reconstructed from qualitative results.
+- One earlier isonicotinylation original (PMID42344274) was rechecked. Its
+  gene-expression, diagnostic-model and docking results remain held; this is
+  not credited as a new paper. The current text was read through a labeled
+  NCBI BioC extraction; its prior original read was recorded in round12.
+- One editorial scope, one doctoral-summary scope, one metadata/heading-only
+  lead and one prior access-held PrsA lead recheck are separate from the four
+  new original-paper reads. No separate supplement or figure pixels were read.
+  PrsA thesis values were not promoted while its journal original remained
+  unavailable. No same-sequence-only exclusion was imposed.
+- Independent source readers supported the HOLD decisions. This is a selected
+  reading pass, not exhaustive literature coverage or experimental replication.
+- Zero comparisons or measurement entries were admitted. The numerical data
+  remain 252 comparisons, 306 entries and 91 papers across 86/111 families;
+  25 families still have no selected numerical comparison. The website data,
+  behavior, CatLog palette and original audit workbook are unchanged.
+
 New paper measurements, reading round 31
 - One comparison with three kinetic entries from one additional numerical
   paper, adding coverage for quinone and protein-derived cofactors (ADJ101).
