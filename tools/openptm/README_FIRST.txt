@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-19
+Release: 2026-10-20
 
 Browse measurements, PTM families, sites, disease studies and methods. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -18,14 +18,14 @@ Design update, 18 October
   Assay preparation and original source fields remain available in disclosures.
 - System typography, shorter headings, quieter spacing and phone controls
   replace the longer, more repetitive presentation.
-- This interface is retained in reading round 28. The original Excel is unchanged.
+- This interface is retained in reading round 29. The original Excel is unchanged.
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,400 function/regulation records.
+- 27,165 site records and 14,402 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 225 selected paper comparisons, containing 273 measurement entries from
-  84 primary papers across 82 families with numeric measurements.
+- 227 selected paper comparisons, containing 275 measurement entries from
+  86 primary papers across 84 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -34,6 +34,31 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 29
+- Two comparisons and two measurement entries from two additional numerical
+  papers, covering lysine phenylacetylation and ISGylation.
+- Phenylacetylated B29 insulin versus native insulin: author-saved normalized
+  ThT fluorescence means and SD after 48 hours in the same assay (PMID39043846).
+  This is a fibrillation proxy, not an activity, melting temperature or fraction
+  fibrillated. Normalization and synthetic-preparation limits remain explicit.
+  Cached workbook precision is retained without claiming experimental precision;
+  the normalized control's zero SD does not establish biological certainty.
+- GAPDH: the source reports activity reduced by up to 50% in the ISGylation-
+  containing recovered preparation (PMID41814427). The qualified wording is
+  retained; no numerical comparator or error magnitude is invented. This is
+  a mixed-preparation endpoint with unresolved occupancy and cellular effects.
+- Independent readers checked both original sources and the stored values.
+  The GAPDH paper was previously read and is reassessed under the existing
+  source-relative endpoint policy; no new raw activity data were recovered.
+- Eleven new papers were read in selected relevant sections across nine
+  families outside round 28: ten retained originals and one cached-text-only
+  scope. One prior original was rechecked; two supplemental files from the
+  insulin paper were inspected. Three access-only and one metadata-only lead
+  are recorded separately. Other reviewed papers remain documented holds.
+- 27 of 111 audit families remain without a numerical comparison in this
+  selection; this is not evidence of absence from the literature.
+- Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 28
 - One comparison and one measurement entry from one additional paper,
@@ -53,8 +78,8 @@ New paper measurements, reading round 28
   families outside round 27. One prior metadata-only paper was recovered and
   read; three access-only and two metadata-only leads are counted separately.
   No SI was read. Other reviewed papers remain documented holds.
-- 29 of 111 audit families remain without a numerical comparison in this
-  selection; this is not evidence of absence from the literature.
+- That publication left 29 of 111 audit families without a numerical
+  comparison in its selection.
 - Existing records, the interface and the original audit workbook are preserved.
 
 New paper measurements, reading round 24
@@ -273,7 +298,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-1a0411c6b3a42c54754f5ddd409e1527c5cf108b7c5b5a0ed7cbbef5478ee1a4
+182ddb4bbc424c637cd633509328b35dc522a67e6fb39ac9edaf291538e330b5
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
