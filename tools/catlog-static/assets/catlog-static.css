@@ -1096,6 +1096,35 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-muted { color:var(--muted) }
 .stats-num { text-align:right; white-space:nowrap }
 .stats-note { margin:12px 0 0; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+/* Supplementary figures and tables (round 14): groups named as the main parts, each a hairline list with one closed line
+   per item ("+", its number in a muted column, its title in accent); an opened item shows its figure under its line,
+   a figure drawn half-width in the main parts kept to 760px. */
+.stats-supp-group + .stats-supp-group { margin-top:var(--sp-6) }
+.stats-supp-group-title { margin:0 0 var(--sp-2); color:var(--text-2); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-supp-group > .stats-part-lead { margin:0 0 var(--sp-3) }
+.stats-supp-list { border-top:1px solid var(--line) }
+.stats-supp-item { border-bottom:1px solid var(--line-soft) }
+.stats-supp-item > summary { display:flex; align-items:baseline; gap:8px; min-height:40px; padding:10px 0; cursor:pointer; list-style:none }
+.stats-supp-item > summary::-webkit-details-marker { display:none }
+.stats-supp-item > summary::before { content:"+"; content:"+" / ""; flex:0 0 12px; color:var(--muted); font-weight:600 }
+.stats-supp-item[open] > summary::before { content:"\2212"; content:"\2212" / "" }
+.stats-supp-item > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px }
+.stats-supp-title { display:flex; flex:1; min-width:0; gap:8px; margin:0; font-size:var(--fs-14); font-weight:400; line-height:var(--lh-14) }
+.stats-supp-number { flex:0 0 6.5em; color:var(--muted); white-space:nowrap }
+.stats-supp-name { min-width:0; color:var(--accent) }
+.stats-supp-item > summary:hover .stats-supp-name { text-decoration:underline; text-underline-offset:3px }
+.stats-supp-item[open] > summary .stats-supp-name { color:var(--text); font-weight:600 }
+.stats-supp-body { padding:var(--sp-2) 0 var(--sp-6) 20px }
+.stats-supp-body > .stats-section:not(.stats-wide) { max-width:760px }
+/* Single substitutions: a 20 x 20 grid of grey cells, shaded as the kcat against Km map, one-letter residues along the
+   top (new) and left (wild type); beside it the facts and the commonest substitutions (under it below 1024px). */
+.stats-subs { display:grid; grid-template-columns:minmax(0,440px) minmax(240px,1fr); gap:24px 48px; align-items:start }
+.stats-subs-frame { display:grid; grid-template-columns:auto 16px minmax(0,1fr); color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-subs-x-title { grid-column:3; grid-row:1; margin:0 0 4px; color:var(--text); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); text-align:center }
+.stats-subs-x { grid-column:3; grid-row:2; display:grid; grid-template-columns:repeat(20,minmax(0,1fr)); padding-bottom:4px; text-align:center }
+.stats-subs-y-title { grid-column:1; grid-row:3; margin:0 6px 0 0; color:var(--text); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); text-align:center; writing-mode:vertical-rl; transform:rotate(180deg) }
+.stats-subs-y { grid-column:2; grid-row:3; display:grid; grid-template-rows:repeat(20,minmax(0,1fr)); align-items:center; text-align:center }
+.stats-subs-plot { position:relative; grid-column:3; grid-row:3; aspect-ratio:1 / 1; box-shadow:0 0 0 1px var(--line) }
 
 /* A figure: plot, then "Figure N." and one sentence, then a 12px data line. */
 .stats-fig { margin:0 }
@@ -1635,6 +1664,7 @@ a.stats-total-value:focus-visible { outline:0 }
 @media (max-width: 1023px) {
   .stats-part-grid > * { grid-column:1 / -1 }
   .stats-map { grid-template-columns:minmax(0,560px) }
+  .stats-subs { grid-template-columns:minmax(0,440px) }
   .stats-conditions { grid-template-columns:1fr; max-width:560px }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:560px }
@@ -1695,6 +1725,8 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-total { padding:var(--sp-2) }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
+  .stats-supp-body { padding-left:0 }
+  .stats-supp-number { flex-basis:5.75em }
   .stats-checks { grid-template-columns:1fr }
   /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
@@ -1738,6 +1770,8 @@ a.stats-total-value:focus-visible { outline:0 }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
      this where a browser prints without telling the page. */
   .stats-method::details-content { content-visibility:visible; display:block }
+  .stats-supp-item::details-content { content-visibility:visible; display:block }
+  .stats-supp-item > summary::before { content:none }
   .stats-part-title { break-after:avoid }
   .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-ridges, .stats-range { --ridge-label:44px }

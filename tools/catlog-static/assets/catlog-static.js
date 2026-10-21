@@ -763,8 +763,9 @@
 
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
-  // A Stats part's address (#stats-quality, from the page's On this page line): Stats, opened at that part.
-  const STATS_SECTION_HASH = /^#stats-[a-z-]+$/;
+  // A Stats part's address (#stats-quality, from the page's On this page line), or a supplement item's (#stats-s3,
+  // #stats-table-s2): Stats, opened at that part or item.
+  const STATS_SECTION_HASH = /^#stats-[a-z0-9-]+$/;
 
   // A Guide section's heading: the one the section is labelled by, or the target itself when it is a heading
   // (#guide-cautions). A Reference part folded in a <details> (#guide-units, #guide-cite ...) opens first, so the
@@ -852,9 +853,10 @@
       openGuidePart(guideSection);
       window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
     }
-    // A part's address (#stats-quality) shows that part of Stats, also when the page opens at it.
+    // A part's address (#stats-quality) shows that part of Stats, also when the page opens at it; a supplement item's
+    // (#stats-s3) opens the item.
     const statsSection = statsOpen && STATS_SECTION_HASH.test(window.location.hash)
-      ? document.getElementById(window.location.hash.slice(1))
+      ? statsAddressTarget(window.location.hash)
       : null;
     if (statsSection) window.requestAnimationFrame?.(() => statsSection.scrollIntoView?.({ block: "start" }));
     if (scroll) {
@@ -3855,13 +3857,69 @@
   // Data ID and the counting rules are said once, in How these numbers are counted, the figure's own rules (`rules`,
   // plain text) under its number there. Figures sit inside the numbered parts of the page (statsPartHtml), so their
   // headings are one level down.
-  function statsFigureHtml({ id, key, title, body, caption, wide = false, kind = "Figure", number = 0, after = "", className = "" }) {
+  // A supplement item (statsSupplementItemHtml) names itself in its summary: its figure has no heading of its own
+  // (`heading: false`; the summary's heading has the figure's id) and is numbered "Figure S1" (`label`).
+  function statsFigureHtml({ id, key, title, body, caption, wide = false, kind = "Figure", number = 0, label = "", heading = true, after = "", className = "" }) {
     return `<section class="stats-section stats-figure-section${wide ? " stats-wide" : ""}${className ? ` ${className}` : ""}" aria-labelledby="${id}" data-figure="${key}">
-      <h3 id="${id}" class="stats-fig-title">${title}</h3>
+      ${heading ? `<h3 id="${id}" class="stats-fig-title">${title}</h3>` : ""}
       <figure class="stats-fig" aria-labelledby="${id}" aria-describedby="${id}Caption">
         ${body}
-        <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${kind} ${number}.</strong> ${caption}</span></figcaption>
+        <figcaption id="${id}Caption"><span class="stats-fig-caption"><strong>${label || `${kind} ${number}`}.</strong> ${caption}</span></figcaption>
       </figure>${after}</section>`;
+  }
+
+  // Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
+  // right?)"): the figures and tables that do not tell the main story, at the end of the page, numbered S1, S2 ... apart
+  // for figures and tables ("Figure S3", "Table S2"), one closed line each (its number and title, a heading in its
+  // summary) that opens the figure under it. Each has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for
+  // Table S2, which opens it (statsAddressTarget).
+  function statsSupplementAddress(kind, number) {
+    return kind === "Table" ? `stats-table-s${number}` : `stats-s${number}`;
+  }
+
+  function statsSupplementItemHtml(item, kind, number) {
+    const label = `${kind} S${number}`;
+    return `<details class="stats-supp-item" id="${statsSupplementAddress(kind, number)}" data-supp="${escapeHtml(item.key)}">
+      <summary><h4 id="${item.id}" class="stats-supp-title"><span class="stats-supp-number">${label}</span> <span class="stats-supp-name">${item.title}</span></h4></summary>
+      <div class="stats-supp-body">${statsFigureHtml({ ...item, label, heading: false })}</div></details>`;
+  }
+
+  const STATS_SUPPLEMENT_TITLE = "Supplementary figures and tables";
+  // The groups the supplement lists its items under, in the main parts' words and order.
+  const STATS_SUPPLEMENT_GROUPS = [["catalog", "What is in the catalog"], ["biology", "Biology"], ["values", "Values"], ["databases", "Against the databases"]];
+  // Addresses of parts the supplement took over (round 14): #stats-biology opens What is in the catalog (its enzyme
+  // classes), #stats-cautions the Cautions table.
+  const STATS_ADDRESS_ALIASES = { biology: "catalog", cautions: "cautions" };
+
+  // The element an address on Stats names (#stats-quality, #stats-s3), or null: a part, a supplement item, or the part or
+  // item an older address names (STATS_ADDRESS_ALIASES). A supplement item, or anything inside one, opens.
+  function statsAddressTarget(hash) {
+    const id = String(hash || "").replace(/^#/, "");
+    if (!/^stats-[a-z0-9-]+$/.test(id)) return null;
+    let target = document.getElementById(id);
+    if (!target) {
+      const alias = STATS_ADDRESS_ALIASES[id.slice("stats-".length)];
+      target = alias ? document.getElementById(`stats-${alias}`) || document.querySelector?.(`.stats-supp-item[data-supp="${alias}"]`) || null : null;
+    }
+    for (let node = target; node && node.id !== "statsView"; node = node.parentElement) {
+      if (node.tagName === "DETAILS" && "open" in node && node.classList?.contains("stats-supp-item")) node.open = true;
+    }
+    return target;
+  }
+
+  // The heading a followed Stats address focuses: a part's title, or a supplement item's summary (which opens it again
+  // with Enter or Space).
+  function statsAddressHeading(target) {
+    if (target?.classList?.contains("stats-supp-item")) return target.querySelector?.("summary") || null;
+    return target?.querySelector?.(".stats-part-title") || null;
+  }
+
+  // A supplement item drawn closed has no layout: its widths are fitted once it opens.
+  function statsFitOpened(item) {
+    if (!item?.open) return;
+    statsFitDonutTotals(item);
+    statsFitValueColumns(item);
+    statsFitDatabaseTables(item);
   }
 
   // A numbered part of the page (the user, 2026-10-13: At a glance, Quality, What is in the catalog, Biology, Values,
@@ -4095,17 +4153,18 @@
     }
   }
 
-  // How these numbers are counted (the one place the Data ID and the counting rules are said) prints open: opened for
-  // printing when closed, then closed again.
+  // How these numbers are counted (the one place the Data ID and the counting rules are said) and the supplement's items
+  // print open: opened for printing when closed, then closed again.
   function statsOpenMethodForPrint() {
-    for (const method of document.querySelectorAll?.(".stats-method:not([open])") || []) {
+    for (const method of document.querySelectorAll?.(".stats-method:not([open]), .stats-supp-item:not([open])") || []) {
       method.dataset.printOpened = "1";
       method.open = true;
+      if (method.classList?.contains("stats-supp-item")) statsFitOpened(method);
     }
   }
 
   function statsCloseMethodAfterPrint() {
-    for (const method of document.querySelectorAll?.(".stats-method[data-print-opened]") || []) {
+    for (const method of document.querySelectorAll?.(".stats-method[data-print-opened], .stats-supp-item[data-print-opened]") || []) {
       delete method.dataset.printOpened;
       method.open = false;
     }
@@ -4469,13 +4528,13 @@
     // The figure's marks are said under it, in its second sentence: the hatched stubs (where an end bin holds values)
     // and the dashed curves (where a class has few values).
     const stubs = panels.some((panel) => panel.includes('class="stats-ridge-end"'));
-    const marks = [stubs ? "a hatched stub at either end marks the values beyond the curve" : "",
-      few ? `a lighter, dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values` : ""].filter(Boolean).join("; ");
+    const marks = [stubs ? "hatched stubs mark values beyond the curve" : "",
+      few ? `a dashed curve has fewer than ${formatInteger(STATS_RIDGE_FEW)} values` : ""].filter(Boolean).join(" and ");
     return {
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
-      caption: `One curve per enzyme class, each scaled to its own peak, with the median (dot) and the middle 80% of values (line).${marks ? ` ${marks.charAt(0).toUpperCase()}${marks.slice(1)}.` : ""}`,
-      rules: `Each curve runs through ${binWord} bins on a log scale, and n is the class's number of values. A record in several classes counts in each. The two end bins also hold every value beyond them, so the curve leaves them out; the tooltip line gives their counts. Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.`,
+      caption: `One curve per enzyme class, scaled to its own peak, with the median (dot) and middle 80% (line)${marks ? `; ${marks}` : ""}.`,
+      rules: `Curves run through ${binWord} bins; n is the class's number of values. A record in several classes counts in each. The end bins hold every value beyond them, so the curve leaves them out (their counts are in the tooltip). Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
@@ -4640,8 +4699,8 @@
         </div>
         <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classTable}</div>
       </div>`,
-      caption: "Records read from the paper that give both a kcat and a Km, with each enzyme class's median as a dot numbered by its class.",
-      rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns also hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each class's medians. Values without a recorded unit, or in another unit, are left out.",
+      caption: "Records read from the paper with both a kcat and a Km; numbered dots are the enzyme classes' medians.",
+      rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each. Values without a recorded unit, or in another unit, are left out.",
     };
   }
 
@@ -4712,8 +4771,8 @@
     return {
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
-      caption: `Each variant read from the paper against the wild type its paper gives for ${same}. Variants are those the papers chose to make, often at catalytic residues, so the spread describes studied mutations, not mutations in general.`,
-      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the two end bars also hold every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
+      caption: "Each variant read from the paper against its paper's wild type; these are mutations the papers chose to make, often at catalytic residues, not mutations in general.",
+      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the end bars every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
   }
@@ -4784,7 +4843,146 @@
       id: "statsConditionsTitle", key: "conditions", title: "Assay temperature and pH", wide: true,
       body: `<div class="stats-conditions">${panels.join("")}</div>`,
       caption: "Records read from the paper by the assay temperature and pH their paper gives, a bar per 1 °C and per 0.1 pH unit.",
-      rules: "The first bar also holds every value below it, the last every value at its edge and above. A bar opens its records in Browse when clicked; the most common values above each plot are links.",
+      rules: "The first bar holds every value below it, the last every value at its edge and above. A bar opens its records in Browse when clicked.",
+    };
+  }
+
+  // Papers by parameter (overview.from_paper_parameters, round 14): the papers CatLog has read that give each parameter
+  // (a kcat/Km calculated from kcat and Km is not given), kcat and Km together and all three; drawn only for the papers
+  // read (`papers`, the band's count) and counts that hold together. Bars in Read from the paper's colour, as Values per
+  // paper; no links (Browse lists records, not papers).
+  function statsPapersByParameterFigure(given, papersRead) {
+    const papers = statsCount(given?.papers);
+    if (!papers || papers !== papersRead) return null;
+    const count = (key) => statsCount(given[key], papers);
+    const [kcat, km, both, efficiency, all] = ["kcat", "km", "kcat_km", "kcat_over_km", "all"].map(count);
+    if ([kcat, km, both, efficiency, all].includes(null) || both > Math.min(kcat, km) || all > Math.min(both, efficiency)) return null;
+    const rows = [
+      ["kcat", "<i>k</i><sub>cat</sub>", "kcat", kcat], ["km", "<i>K</i><sub>m</sub>", "Km", km],
+      ["kcat_km", "<i>k</i><sub>cat</sub> and <i>K</i><sub>m</sub>", "kcat and Km", both],
+      ["kcat_over_km", "Printed <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", "Printed kcat/Km", efficiency],
+      ["all", "All three", "All three", all],
+    ].map(([key, html, label, value]) => ({ key, count: value, label: html,
+      segments: [{ part: "catlog", count: value, title: `${label}: ${formatInteger(value)} ${value === 1 ? "paper" : "papers"} (${statsShare(value, papers)})` }],
+      parts: [{ text: formatInteger(value) }, { text: statsShare(value, papers), className: "stats-muted" }],
+      text: `${label}: ${formatInteger(value)} ${value === 1 ? "paper" : "papers"}.` }));
+    const { max, step } = statsNiceScale(papers);
+    return {
+      id: "statsParametersTitle", key: "papers-per-parameter", title: "Papers by parameter",
+      body: statsBarChart({ key: "papers-per-parameter", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Papers", "% of papers"] }),
+      caption: `The ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"} CatLog has read, by the parameters each gives.`,
+      rules: "A kcat/Km calculated from kcat and Km does not count as given.",
+    };
+  }
+
+  // Single substitutions (from_paper_insights.substitutions, round 14): each variant read from the paper with one
+  // substitution (H57A: one paper's mutation of one enzyme, counted once whatever its substrates), by its wild-type residue
+  // (rows) and new residue (columns) in the BLOSUM order, as grey cells darker for more variants (the density map's
+  // shading); beside the grid, the variants, the commonest new residue and the five commonest substitutions.
+  const STATS_RESIDUE_NAMES = { A: "Ala", R: "Arg", N: "Asn", D: "Asp", C: "Cys", Q: "Gln", E: "Glu", G: "Gly", H: "His", I: "Ile",
+    L: "Leu", K: "Lys", M: "Met", F: "Phe", P: "Pro", S: "Ser", T: "Thr", W: "Trp", Y: "Tyr", V: "Val" };
+
+  function statsSubstitutionsFigure(substitutions) {
+    const residues = String(substitutions?.residues || "");
+    const size = residues.length;
+    const counts = substitutions?.counts;
+    const variants = statsCount(substitutions?.variants);
+    if (size !== 20 || new Set(residues).size !== 20 || ![...residues].every((residue) => STATS_RESIDUE_NAMES[residue]) || !variants
+      || !Array.isArray(counts) || counts.length !== size || !counts.every((row) => statsWholeList(row, size))
+      || statsListSum(counts.map(statsListSum)) !== variants) return null;
+    const papers = statsCount(substitutions.papers);
+    const highest = Math.max(...counts.map((row) => Math.max(...row)));
+    const shade = (count) => +(0.08 + 0.84 * (Math.log(count) / Math.log(Math.max(highest, 2))) ** 1.6).toFixed(3);
+    const pair = (from, to) => `${STATS_RESIDUE_NAMES[from]} → ${STATS_RESIDUE_NAMES[to]} (${from}→${to})`;
+    const variantWord = (count) => `${formatInteger(count)} ${count === 1 ? "variant" : "variants"}`;
+    const cells = [];
+    const all = [];
+    counts.forEach((row, r) => row.forEach((count, c) => {
+      if (!count) return;
+      all.push({ from: residues[r], to: residues[c], count });
+      cells.push(`<rect x="${c}" y="${r}" width="1" height="1" style="fill-opacity:${shade(count)}" data-tip="${escapeHtml(`${pair(residues[r], residues[c])}: ${variantWord(count)}`)}"/>`);
+    }));
+    const toTotals = [...residues].map((residue, c) => ({ residue, count: counts.reduce((sum, row) => sum + row[c], 0) }));
+    const commonest = [...toTotals].sort((a, b) => b.count - a.count)[0];
+    const top = all.sort((a, b) => b.count - a.count || residues.indexOf(a.from) - residues.indexOf(b.from)).slice(0, 5);
+    const labels = () => [...residues].map((residue) => `<span title="${STATS_RESIDUE_NAMES[residue]}">${residue}</span>`).join("");
+    const facts = [
+      `<div><dt>Variants</dt><dd>${formatInteger(variants)}${papers ? `<small>from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}</small>` : ""}</dd></div>`,
+      `<div><dt>Most often to</dt><dd>${STATS_RESIDUE_NAMES[commonest.residue]} <span class="stats-muted">(${escapeHtml(statsShare(commonest.count, variants))})</span><small>${variantWord(commonest.count)}</small></dd></div>`,
+    ].join("");
+    const topRows = top.map((item) => `<tr><th scope="row">${escapeHtml(`${STATS_RESIDUE_NAMES[item.from]} → ${STATS_RESIDUE_NAMES[item.to]}`)}</th><td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, variants))}</td></tr>`).join("");
+    const description = `Single substitutions of ${variantWord(variants)} read from the paper, by wild-type and new residue; most often to ${STATS_RESIDUE_NAMES[commonest.residue]} (${statsShare(commonest.count, variants)}). Commonest: ${top.map((item) => `${pair(item.from, item.to)} ${formatInteger(item.count)}`).join("; ")}.`;
+    return {
+      id: "statsSubstitutionsTitle", key: "substitutions", title: "Single substitutions",
+      body: `<ul class="stats-legend stats-map-legend"><li><i class="stats-map-key-cells" aria-hidden="true"></i><span>Variants per cell, 1 to ${formatInteger(highest)}</span></li></ul>
+        <div class="stats-subs">
+          <div class="stats-subs-frame">
+            <p class="stats-subs-x-title" aria-hidden="true">New residue</p>
+            <div class="stats-subs-x" aria-hidden="true">${labels()}</div>
+            <p class="stats-subs-y-title" aria-hidden="true">Wild-type residue</p>
+            <div class="stats-subs-y" aria-hidden="true">${labels()}</div>
+            <div class="stats-subs-plot" role="img" aria-label="${escapeHtml(description)}">
+              <svg class="stats-map-svg" viewBox="0 0 ${size} ${size}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g class="stats-map-cells">${cells.join("")}</g></svg>
+            </div>
+          </div>
+          <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>
+            <table class="stats-table stats-subs-top"><thead><tr><th scope="col">Commonest</th><th scope="col" class="stats-num">Variants</th><th scope="col" class="stats-num">Share</th></tr></thead><tbody>${topRows}</tbody></table></div>
+        </div>`,
+      caption: "Variants read from the paper with one substitution, by wild-type residue (rows) and new residue (columns).",
+      rules: "A variant is one paper's mutation of one enzyme and counts once, whatever its substrates. Only substitutions written as a residue, its position and another residue (H57A) are counted.",
+    };
+  }
+
+  // Kinds of variant (from_paper_insights.variant_kinds, round 14): the variant records read from the paper by their kind
+  // of change; only when the kinds add up to the records.
+  const STATS_VARIANT_KINDS = [["substitution", "One substitution"], ["multi_substitution", "Several substitutions"], ["deletion", "Deletion"],
+    ["insertion", "Insertion"], ["truncation", "Truncation"], ["other", "Other or not specified"]];
+
+  function statsVariantKindsTable(kinds) {
+    const records = statsCount(kinds?.records);
+    if (!records || !kinds.kinds || typeof kinds.kinds !== "object") return null;
+    const items = STATS_VARIANT_KINDS.map(([key, label]) => ({ value: `variant_${key}`, label, count: statsCount(kinds.kinds[key], records) }));
+    if (items.some((item) => item.count === null) || items.reduce((sum, item) => sum + item.count, 0) !== records) return null;
+    const recordsLink = `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">${formatInteger(records)} variant ${records === 1 ? "record" : "records"}</a>`;
+    return {
+      id: "statsVariantKindsTitle", key: "variant-kinds", title: "Kinds of variant", kind: "Table",
+      body: statsTable(items.filter((item) => item.count), records, { head: "Change" }),
+      caption: `The ${recordsLink} read from the paper, by the kind of change.`,
+    };
+  }
+
+  // Units as printed (from_paper_insights.printed_units, round 14): the kcat, Km and printed kcat/Km values read from the
+  // paper by the unit printed with them, a power of ten set aside (scripts/build-catlog-followup-summary.py
+  // printed_unit), the commonest first and Other last; code converts each to the catalog's unit. A unit is written as the
+  // page writes units (µM, s⁻¹, concentration first).
+  function statsUnitWords(unit) {
+    return String(unit).replace(/(^| )u/g, "$1µ").replace(/-1/g, "⁻¹");
+  }
+
+  function statsPrintedUnitsTable(units) {
+    const groups = [];
+    for (const metric of STATS_METRICS) {
+      const entry = units?.[metric.key];
+      if (!entry) continue;
+      const values = statsCount(entry.values);
+      const other = statsCount(entry.other, values ?? 0);
+      const list = Array.isArray(entry.units) ? entry.units : null;
+      if (!values || other === null || !list || !list.every((item) => Array.isArray(item) && item.length === 2
+        && /^(?:[munp]?M(?:-1 (?:s|min|h)-1)?|(?:s|min|h)-1)$/.test(String(item[0])) && statsCount(item[1], values) !== null)
+        || list.reduce((sum, item) => sum + item[1], 0) + other !== values) return null;
+      groups.push({ metric, values, rows: [...list.map(([unit, count]) => ({ unit: statsUnitWords(unit), count })), ...(other ? [{ unit: "Other", count: other }] : [])] });
+    }
+    if (!groups.length) return null;
+    const body = `<table class="stats-table stats-units-table">
+      <thead><tr><th scope="col">Unit as printed</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Share</th></tr></thead>
+      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-col-bar" aria-hidden="true"></td><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
+        ${group.rows.map((row) => `<tr class="stats-row-sub" data-stat-key="units_${group.metric.key}_${escapeHtml(row.unit)}" data-count="${row.count}"><th scope="row"><span class="stats-name"><span>${escapeHtml(row.unit)}</span></span></th>
+          <td class="stats-col-bar" aria-hidden="true"><span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(row.count / group.values * 100).toFixed(4)}%"></span></span></td>
+          <td class="stats-num">${formatInteger(row.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(row.count, group.values))}</td></tr>`).join("")}</tbody>`).join("")}</table>`;
+    return {
+      id: "statsUnitsTitle", key: "printed-units", title: "Units as printed", kind: "Table", body,
+      caption: "Values read from the paper by the unit printed with them; code converts each to the unit stored.",
+      rules: "A power of ten in the unit (× 10³ s⁻¹) is set aside, and a lower-case m printed alone is read as molar. Other is a unit not read as one of these. Shares are of each parameter's values.",
     };
   }
 
@@ -4808,8 +5006,8 @@
       id: "statsDbClassesTitle", key: "db-classes", title: "Against the databases by enzyme class", wide: true,
       body: statsBarChart({ key: "db-classes", rows, legend: STATS_DATABASE_RESULTS.map((result) => ({ part: result.part, label: escapeHtml(result.label) })),
         percent: true, axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"] }),
-      caption: "Values read from the paper by the enzyme class of their record, each by its result against the databases.",
-      rules: `A record in several classes counts in each. Each bar is its class's compared values as 100%; the tooltip line gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
+      caption: "Values read from the paper by enzyme class and result against the databases.",
+      rules: `A record in several classes counts in each. Each bar is its class's compared values; the tooltip gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
     };
   }
 
@@ -5715,15 +5913,19 @@
   const STATS_SHARES_OF_ALL = new Set(["status", "contents", "forms", "organisms", "ec-numbers", "cautions"]);
   const STATS_HEAD_ACCEPTED = "%\u00a0accepted";
 
-  // "Tables 1–4 and 7": numbers in order, a run of three or more as a range.
+  // "Tables 1–4 and 7", "Tables S1–S4 and S9": numbers in order (a supplement's as "S3"), a run of three or more of one
+  // series as a range.
   function statsNumbersText(kind, list) {
     const runs = [];
-    for (const number of list) {
+    for (const item of list) {
+      const prefix = String(item).replace(/\d+$/, "");
+      const number = Number(String(item).slice(prefix.length));
       const run = runs[runs.length - 1];
-      if (run && number === run[1] + 1) run[1] = number;
-      else runs.push([number, number]);
+      if (run && run[0] === prefix && number === run[2] + 1) run[2] = number;
+      else runs.push([prefix, number, number]);
     }
-    const names = runs.flatMap(([from, to]) => (to - from >= 2 ? [`${from}–${to}`] : to > from ? [String(from), String(to)] : [String(from)]));
+    const names = runs.flatMap(([prefix, from, to]) => (to - from >= 2 ? [`${prefix}${from}–${prefix}${to}`]
+      : to > from ? [`${prefix}${from}`, `${prefix}${to}`] : [`${prefix}${from}`]));
     return `${kind}${list.length > 1 ? "s" : ""} ${statsListText(names)}`;
   }
 
@@ -5731,7 +5933,7 @@
   // kind) and what every other share is out of.
   function statsSharesRule(ofAll) {
     const named = ["Figure", "Table"].filter((kind) => ofAll[kind]?.length).map((kind) => statsNumbersText(kind, ofAll[kind]));
-    return `${named.length ? `In ${named.join(" and ")} a share is out of all records; elsewhere it is` : "A share is"} out of its own bar's, row's or card's total, or the total its caption names. Shares are given to one decimal place; a share above 0 but below 0.1% is written <0.1%.`;
+    return `${named.length ? `In ${named.join(" and ")} a share is of all records; elsewhere it is` : "A share is"} of its own bar, row or card, or of the total its caption names. One decimal place; a share above 0 but below 0.1% is written <0.1%.`;
   }
 
   // The compared databases in order (comparedDatabases): { key (Browse's dbsrc), name (the comparison's own key for it),
@@ -5974,7 +6176,7 @@
       body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"],
         valueWidth: `calc(${Math.max(6, ...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
-      caption: "Each bar covers only the values from papers that database lists. A value counts for every database that lists its paper.",
+      caption: "Each bar covers the values from papers that database lists; a value counts for every database that lists its paper.",
       // Why a database has no bar is said under the figure.
       after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
@@ -6016,7 +6218,7 @@
         <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num stats-db-paired-col">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
         <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, statsDatabaseNameHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
         ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
-      caption: `A value is paired when a database lists a number for the same measurement. A number copied into several databases counts for each${derived}${all.paired ? ", but once in the All row" : ""}.`,
+      caption: `Paired: a database lists a number for the same measurement; a number copied into several databases counts for each${derived}${all.paired ? ", but once in the All row" : ""}.`,
     };
   }
 
@@ -6211,8 +6413,8 @@
       id: "statsReplacedTitle", key: "replaced", title: "Entries replaced by reading the paper",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       // papers: the papers CatLog has read that the earlier version also had (fewer than the papers CatLog has read).
-      caption: `The ${formatInteger(records)} ${records === 1 ? "entry" : "entries"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""} on ${papers !== null ? `the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : "the papers"} CatLog has since read, by whether CatLog found the same number for that paper and parameter.`,
-      rules: "When CatLog reads a paper, its records replace these entries. A kcat/Km calculated from kcat and Km is left out.",
+      caption: `The ${formatInteger(records)} ${records === 1 ? "entry" : "entries"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""} on ${papers !== null ? `the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : "the papers"} CatLog has since read, by whether CatLog found the same number.`,
+      rules: "When CatLog reads a paper, its records replace these entries. Numbers are compared for the same paper and parameter; a calculated kcat/Km is left out.",
     };
   }
 
@@ -6340,6 +6542,10 @@
     view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
     view.addEventListener("focusout", leave);
     view.addEventListener("scroll", scrolled, { passive: true });
+    // A supplement item fits its widths when it opens (toggle does not bubble: caught on its way down).
+    view.addEventListener("toggle", (event) => {
+      if (event.target?.classList?.contains("stats-supp-item")) statsFitOpened(event.target);
+    }, true);
     view.addEventListener("click", (event) => {
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);
@@ -6452,7 +6658,12 @@
     }
     if (quality_.length) parts.push({ key: "quality", title: "Quality", items: quality_ });
 
-    // 3. What is in the catalog.
+    // The supplement (round 14): figures and tables that do not tell the main story, by group (STATS_SUPPLEMENT_GROUPS),
+    // in reading order; drawn at the end of the page, after the main parts.
+    const supplement = [];
+    const toSupplement = (group, ...items) => supplement.push(...items.filter(Boolean).map((item) => ({ ...item, group })));
+
+    // 3. What is in the catalog: the review result, the main sources and the enzyme classes.
     const content = [];
     // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
     // Browse uses; a donut (the one partition that is a true whole) and its legend table.
@@ -6576,8 +6787,8 @@
           legend: byStatus ? statusParts.map(([part, label]) => ({ part, label })) : [], switchable: byStatus,
           valueHeads: byStatus ? ["Records", STATS_HEAD_ACCEPTED] : [],
         }),
-        caption: `Each record counts once, under the source it came from${byStatus ? ", coloured by review result" : ""}.`,
-        rules: `A record merged from several databases counts once here, under Several databases. The list under the bars counts it under each, as Browse does.${byStatus ? " In the Share view each bar is scaled to 100%." : ""}`,
+        caption: "Each record counts once, under the source it came from.",
+        rules: `A merged record counts once here, under Several databases; the list under the bars counts it under each, as Browse does.${byStatus ? " Share draws each bar as 100%." : ""}`,
         after: byDatabase,
       });
     } else {
@@ -6609,7 +6820,7 @@
           id: "statsVersionsTitle", key: "versions", title: "Read from the paper and not yet re-read",
           body: statsBarChart({ key: "versions", rows, scale: max, step, axis: statsAxis(max, step),
             legend: statusParts.map(([part, label]) => ({ part, label })), valueHeads: ["Records", STATS_HEAD_ACCEPTED] }),
-          caption: "Together the two bars hold every record, coloured by review result.",
+          caption: "Together the two bars hold every record.",
         };
       }
     }
@@ -6640,7 +6851,7 @@
         id: "statsPerPaperTitle", key: "values-per-paper", title: "Values per paper",
         body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Papers", "%\u00a0of\u00a0papers"] }),
         caption: `The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by the number of kcat, Km and kcat/Km values read from each.`,
-        rules: `${formatInteger(perPaper.values)} kcat, Km and kcat/Km values from ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"}. A kcat/Km calculated from kcat and Km is not counted.`,
+        rules: `${formatInteger(perPaper.values)} kcat, Km and kcat/Km values. A calculated kcat/Km is not counted.`,
       };
     }
 
@@ -6686,15 +6897,12 @@
     const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
       body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Each record's enzyme form, as Browse tags it." } : null;
-    // Two to a row: the review result beside the main sources; the two figures of records read from the paper; the
-    // fields beside the forms.
-    content.push(...[versions, valuesPerPaper].filter(Boolean));
-    if (contentsTable && formsTable && content.length % 2 === 1) content.push({ stack: [contentsTable, formsTable] });
-    else content.push(...[contentsTable, formsTable].filter(Boolean));
-    parts.push({ key: "catalog", title: "What is in the catalog", items: content });
+    // In the supplement: the two figures of records read from the paper, the papers by parameter, the fields and forms.
+    toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsTable, formsTable);
 
-    // 4. Biology: enzyme classes (records, accepted over them, the records read from the paper marked), the most common
-    // organisms and EC numbers, and the same among records read from the paper.
+    // Enzyme classes (records, accepted over them, the records read from the paper marked) close What is in the catalog;
+    // the most common organisms and EC numbers, overall and among records read from the paper, are the supplement's
+    // Biology.
     const biology = [];
     const classes = Array.isArray(overview?.ec_classes) ? overview.ec_classes.filter((item) => Number.isInteger(item?.class)
       && statsCount(item.count, total) !== null && statsCount(item.accepted, item.count) !== null) : [];
@@ -6720,13 +6928,13 @@
         multiple ? `${formatInteger(multiple)} records name EC numbers in more than one class and count in each.` : "",
         none ? `${formatInteger(none)} records have no EC class.` : "",
       ].filter(Boolean).join(" ");
-      biology.push({
+      content.push({
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
         body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
           legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: SOURCE_CATLOG_LABEL }] : [])],
           valueHeads: ["Records", "Accepted", ...(withV2 ? ["From paper"] : [])] }),
-        caption: withV2 ? "Accepted records are drawn over all records, with those read from the paper as a stripe inside them."
-          : "Accepted records are drawn over all records.",
+        caption: withV2 ? "Accepted records drawn over all records, with those read from the paper as a stripe inside them."
+          : "Accepted records drawn over all records.",
         rules: notes,
       });
     }
@@ -6749,7 +6957,7 @@
     if (ecNumbers.length) {
       biology.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
         body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
-        caption: "Each EC number is shown with the enzyme name its records use most.", rules: "Bars are drawn against the most common EC number." });
+        caption: "Each EC number with the enzyme name its records use most.", rules: "Bars are drawn against the most common EC number." });
     }
     if (v2Organisms.length) {
       biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Most common organisms among records read from the paper", kind: "Table",
@@ -6759,11 +6967,15 @@
     if (v2EcNumbers.length) {
       biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "Most common EC numbers among records read from the paper", kind: "Table",
         body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", part: "catlog" }),
-        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Each EC number is shown with the enzyme name its records use most. Bars are drawn against the most common EC number." });
+        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Each EC number with the enzyme name its records use most. Bars are drawn against the most common EC number." });
     }
-    if (biology.length) parts.push({ key: "biology", title: "Biology", items: biology });
+    parts.push({ key: "catalog", title: "What is in the catalog", items: content });
+    // Biology in the supplement: the tables, then the single substitutions and the kinds of variant read from the paper.
+    const insights = statsInsights(overview);
+    toSupplement("biology", ...biology, statsSubstitutionsFigure(insights.substitutions), statsVariantKindsTable(insights.variant_kinds));
 
-    // 5. Values: the overall ranges, then the same per enzyme class as small multiples.
+    // 4. Values: the overall ranges, kcat against Km and the variants against their wild type; the ranges per enzyme
+    // class, the assay temperature and pH, the units as printed and the cautions in the supplement.
     const values = [];
     // Value ranges and Values by enzyme class share one log axis per parameter (statsValueAxis), drawn in the same columns.
     const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key], statsValueAxis(overview?.metrics?.[metric.key])))
@@ -6772,62 +6984,55 @@
       values.push({
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
         body: `<div class="stats-ranges">${ranges.join("")}</div>`,
-        caption: "Values per power of ten on a log scale, with the median (dot) and the middle 80% of values (line). The two end bars also hold every value beyond them.",
-        rules: "Values without a recorded unit, or in a unit other than the one shown, are left out. Medians are given to two significant figures.",
+        caption: "Values per power of ten, with the median (dot) and the middle 80% (line); the end bars hold every value beyond them.",
+        rules: "Values without a recorded unit, or in another unit, are left out. Medians have two significant figures.",
       });
     }
-    const ridges = statsRidgeFigure(overview);
-    if (ridges) values.push(ridges);
-    // What the values read from the paper show: kcat against Km with the diffusion limit, variants against their wild
-    // type, and the assay temperature and pH (each only when the overview counts it).
-    const insights = statsInsights(overview);
+    // What the values read from the paper show: kcat against Km with the diffusion limit and the variants against their
+    // wild type (each only when the overview counts it).
     const classNames = Object.fromEntries((Array.isArray(overview?.ec_classes) ? overview.ec_classes : [])
       .filter((item) => Number.isInteger(item?.class)).map((item) => [item.class, String(item.name || "")]));
-    values.push(...[statsKcatKmFigure(insights.kcat_km, classNames), statsMutationsFigure(insights.mutations),
-      statsConditionsFigure(insights.conditions, fromPaper)].filter(Boolean));
+    values.push(...[statsKcatKmFigure(insights.kcat_km, classNames), statsMutationsFigure(insights.mutations)].filter(Boolean));
     if (values.length) parts.push({ key: "values", title: "Values", items: values });
 
-    // 6. Cautions, with the same names as the Cautions filter.
+    // Cautions, with the same names as the Cautions filter (the supplement's last Values table).
     const caution = overview?.cautions || {};
     const cautions = cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
       count: statsCount(caution[item.value], total), params: { caution: item.value }, part: item.value === "none" ? "neutral" : "caution" }));
-    if (cautions.every((item) => item.count !== null)) {
-      parts.push({ key: "cautions", title: "Cautions", items: [{ id: "statsCautionsTitle", key: "cautions", title: "Cautions on values", kind: "Table", wide: true,
-        className: "stats-narrow", body: statsTable(cautions, total, { head: "Caution" }),
-        caption: "A caution marks a value that may be wrong. One record can carry several." }] });
-    }
+    const cautionsTable = cautions.every((item) => item.count !== null) ? { id: "statsCautionsTitle", key: "cautions", title: "Cautions on values",
+      kind: "Table", body: statsTable(cautions, total, { head: "Caution" }),
+      caption: "A caution marks a value that may be wrong; one record can carry several." } : null;
+    toSupplement("values", statsRidgeFigure(overview), statsConditionsFigure(insights.conditions, fromPaper),
+      statsPrintedUnitsTable(insights.printed_units), cautionsTable);
 
-    // 7. Against the databases (summary.database_comparison): a one-sentence lead, each value against the databases, each
-    // database against the values read from its papers beside the values it pairs, how each correction was found beside
-    // the corrections by cause and database; then the earlier version's corrections and its entries that reading the
-    // paper replaced. Each only when the snapshot has its counts; figures pair up two to a row (a pair with one figure
-    // gives it the row).
+    // 5. Against the databases (summary.database_comparison): a short lead, each value against the databases and the
+    // corrections by cause and how found; in the supplement the same by enzyme class, each database against the values
+    // read from its papers, the values it pairs, the corrections by cause and database, then the earlier version's
+    // corrections and its entries that reading the paper replaced. Each only when the snapshot has its counts.
     const comparison = statsDatabaseComparison();
     const comparedSources = statsDatabaseSources(comparison);
     const comparedValues = statsDatabaseValues(comparison);
-    const databases = [];
-    for (const pair of [
-      [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null],
-      [comparison ? statsDatabaseClassFigure(insights.database_by_class, classNames) : null],
-      [statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues)],
-      [statsCorrectionsFoundFigure(comparison), statsCauseDatabaseTable(comparison, comparedSources)],
-      [statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections), statsReplacedFigure(overview?.quality)],
-    ]) {
-      const shown = pair.filter(Boolean);
-      if (shown.length === 1) shown[0].wide = true;
-      databases.push(...shown);
-    }
+    const databases = [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null, statsCorrectionsFoundFigure(comparison)]
+      .filter(Boolean).map((item) => ({ ...item, wide: true }));
+    const databasesMore = [comparison ? statsDatabaseClassFigure(insights.database_by_class, classNames) : null,
+      statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues),
+      statsCauseDatabaseTable(comparison, comparedSources),
+      statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections), statsReplacedFigure(overview?.quality)].filter(Boolean);
+    toSupplement("databases", ...databasesMore);
+    // Without the counts for a lead, a figure that compares values with the databases still gets the caveat once: at the
+    // head of the part, else of the supplement's group.
+    const compares = [...databases, ...databasesMore].some((item) => item.key !== "earlier-corrections" && item.key !== "replaced");
+    const caveat = `<p class="stats-part-lead" data-lead="databases">${escapeHtml(STATS_DATABASE_CAVEAT)}</p>`;
     if (databases.length) {
-      // Without the counts for a lead, a figure that compares values with the databases still gets the caveat once.
-      const compares = databases.some((item) => item.key !== "earlier-corrections" && item.key !== "replaced");
       parts.push({ key: "databases", title: "Against the databases", items: databases,
-        intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) + statsFactorOnlyNoteHtml(comparison)
-          : compares ? `<p class="stats-part-lead" data-lead="databases">${escapeHtml(STATS_DATABASE_CAVEAT)}</p>` : "" });
+        intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) + statsFactorOnlyNoteHtml(comparison) : compares ? caveat : "" });
     }
+    const supplementIntro = { databases: !databases.length && compares ? caveat : "" };
 
-    // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart); half-width items
-    // stand two to a row and an odd one out takes the row.
+    // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart), then the
+    // supplement's apart (Figure S1, Table S1 ...); half-width items stand two to a row and an odd one out takes the row.
     const numbers = { Figure: 0, Table: 0 };
+    const supplementNumbers = { Figure: 0, Table: 0 };
     const figureRules = [];
     const ofAll = { Figure: [], Table: [] };
     const html = (item) => {
@@ -6837,6 +7042,13 @@
       if (item.rules) figureRules.push([`${kind} ${number}`, item.title, item.rules]);
       if (STATS_SHARES_OF_ALL.has(item.key)) ofAll[kind].push(number);
       return statsFigureHtml({ ...item, number });
+    };
+    const supplementItem = (item) => {
+      const kind = item.kind || "Figure";
+      const number = ++supplementNumbers[kind];
+      if (item.rules) figureRules.push([`${kind} S${number}`, item.title, item.rules]);
+      if (STATS_SHARES_OF_ALL.has(item.key)) ofAll[kind].push(`S${number}`);
+      return statsSupplementItemHtml(item, kind, number);
     };
     const sections = parts.filter((part) => part.items.length).map((part, index) => {
       const halves = part.items.filter((item) => !item.wide && item.html === undefined);
@@ -6849,6 +7061,17 @@
         ? `<div class="stats-stack${item.wide ? " stats-wide" : ""}">${item.stack.map(html).join("")}</div>` : html(item)));
       return statsPartHtml(index + 2, part.key, part.title, blocks, { intro: part.intro || "" });
     });
+    // Supplementary figures and tables: its groups, each a list of closed items.
+    const supplementGroups = STATS_SUPPLEMENT_GROUPS.map(([key, title]) => ({ key, title, items: supplement.filter((item) => item.group === key) }))
+      .filter((group) => group.items.length);
+    if (supplementGroups.length) {
+      const groupId = (key) => `statsSupplement${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;
+      sections.push(`<section class="stats-part stats-supp" id="stats-supplement" data-part="supplement" aria-labelledby="statsPartSupplementTitle">
+      <h2 id="statsPartSupplementTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">S</span><span>${escapeHtml(STATS_SUPPLEMENT_TITLE)}</span></h2>
+      ${supplementGroups.map((group) => `<section class="stats-supp-group" aria-labelledby="${groupId(group.key)}">
+        <h3 id="${groupId(group.key)}" class="stats-supp-group-title">${escapeHtml(group.title)}</h3>${supplementIntro[group.key] || ""}
+        <div class="stats-supp-list">${group.items.map(supplementItem).join("")}</div></section>`).join("")}</section>`);
+    }
     // The human review stands in Quality now; an older page with a slot above the counts leaves it empty.
     if ($("statsLead")) {
       $("statsLead").innerHTML = "";
@@ -6861,16 +7084,16 @@
     const reviewRules = reviewRulesText(overview);
     const ruleRow = (term, html) => `<div><dt>${term}</dt><dd>${html}</dd></div>`;
     sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
-        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Every number on this page is counted from ${statsListText(["this snapshot's Full data download", overview ? "the human-review results" : "", audit ? "the AI audit records" : ""].filter(Boolean))}.`))}
+        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Counted from ${statsListText(["this snapshot's Full data download", overview ? "the human-review results" : "", audit ? "the AI audit records" : ""].filter(Boolean))}.`))}
         ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
-        ${ruleRow("Names", "Enzymes, organisms and substrates are distinct names, ignoring capitals; \"Unknown\" is not a name. EC numbers are complete four-part numbers.")}
+        ${ruleRow("Names", "Enzymes, organisms and substrates count distinct names, ignoring capitals and \"Unknown\". EC numbers are complete four-part numbers.")}
         ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).`)}
-        ${ruleRow("Main source", "The source a record came from: CatLog's own reading of the paper, one database or several databases merged into one record.")}
+        ${ruleRow("Main source", "Where a record came from: CatLog's reading of the paper, one database or several merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
-        ${databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared for the same paper and parameter. Its papers are those with at least one compared value: fewer than the papers read when none of a paper's values could be compared. Shares are given only on ${formatInteger(STATS_RATE_BASE)} values or more; below that, counts.`)) : ""}
+        ${compares || databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared within the same paper and parameter. Its papers are those with a compared value. Shares only on ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
     // On this page: the parts in one line under the title, each a link to its part (#stats-<key>, the part's own
@@ -6879,7 +7102,8 @@
     const contentsLine = $("statsContents");
     if (contentsLine) {
       const entries = [{ number: 1, key: "glance", title: "At a glance" },
-        ...parts.filter((part) => part.items.length).map((part, index) => ({ number: index + 2, key: part.key, title: part.title }))];
+        ...parts.filter((part) => part.items.length).map((part, index) => ({ number: index + 2, key: part.key, title: part.title })),
+        ...(supplementGroups.length ? [{ number: "S", key: "supplement", title: STATS_SUPPLEMENT_TITLE }] : [])];
       contentsLine.innerHTML = `<span class="stats-contents-title">On this page</span><ul>${entries.map((entry) =>
         `<li><a href="#stats-${escapeHtml(entry.key)}"><span class="stats-contents-number" aria-hidden="true">${entry.number}</span> ${escapeHtml(entry.title)}</a></li>`).join("")}</ul>`;
       contentsLine.hidden = false;
@@ -13486,8 +13710,9 @@
       }
       // A link to a Guide section (#guide-method from Stats, a record or the filters; the Guide's own contents) opens it
       // in this page with focus on the section's heading, so the next Tab goes on from there, not from the link left behind.
-      // The same for a Stats part (#stats-quality, from Stats' own On this page line): its heading takes the focus.
-      const statsSection = STATS_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : null;
+      // The same for a Stats part (#stats-quality, from Stats' own On this page line): its heading takes the focus; a
+      // supplement item (#stats-s3) opens, with the focus on its summary.
+      const statsSection = STATS_SECTION_HASH.test(target.hash) ? statsAddressTarget(target.hash) : null;
       const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : statsSection;
       if (section) {
         event.preventDefault();
@@ -13499,9 +13724,10 @@
             window.history.pushState({ catlogView: statsSection ? "stats" : "guide" }, "", url);
           }
           showLocationView();
-          const heading = statsSection ? section.querySelector?.(".stats-part-title") : guideSectionHeading(section);
+          const heading = statsSection ? statsAddressHeading(section) : guideSectionHeading(section);
           // focusable only from here on, so a page opened at a section's address shows no focus ring on its heading
-          if (heading && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+          // (a supplement item's summary is focusable already: a tabindex would take it out of the Tab order)
+          if (heading && heading.tagName !== "SUMMARY" && !heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
           heading?.focus({ preventScroll: true });
         });
         return;
@@ -13955,6 +14181,16 @@
       statsMutationsFigure,
       statsConditionsFigure,
       statsDatabaseClassFigure,
+      statsPapersByParameterFigure,
+      statsSubstitutionsFigure,
+      statsVariantKindsTable,
+      statsPrintedUnitsTable,
+      statsUnitWords,
+      statsSupplementItemHtml,
+      statsAddressTarget,
+      statsAddressHeading,
+      statsFitOpened,
+      STATS_SECTION_HASH,
       statsLinearTicks,
       statsSmoothPath,
       statsSwitchMode,
