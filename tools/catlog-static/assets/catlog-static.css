@@ -1147,7 +1147,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-differs { --part:var(--cmp-differs) }
 .stats-part-new { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
 .stats-part-rounding { --part:var(--chg-precision); --part-line:var(--cmp-other-ring) }
-.stats-part-magnitude { --part:var(--chg-magnitude) }
+.stats-part-magnitude { --part:var(--chg-magnitude); --part-line:color-mix(in srgb, var(--chg-magnitude) 65%, var(--text)) }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution-mark); --part-line:var(--caution-ring) }
 .stats-part-records { --part:var(--line-strong) }
@@ -1164,11 +1164,13 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Against the databases (part 7), as Browse colours them: same green, same number under another label mint,
    corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds are cyan at
    three strengths (other values listed, parameter not listed, value not listed: the fill at about 60%, 40% and 20%),
-   and how a correction was found red at two (checked against the paper, an exact factor found by code), each with
-   the full colour as its outline, so they part by lightness in grey print too. */
+   each with the full colour as its outline, so they part by lightness in grey print too. A correction (Corrects a
+   value; an earlier unit or magnitude change) is red drawn opaque, the sidebar square's own red: red at 60% (#F09386)
+   is Not confirmed's salmon (#F39B7F) to the eye, and a correction must never look like a record waiting for review.
+   The second way a correction is found (an exact factor found by code) is red hatching on white, never a lighter red. */
 .stats-part-other-label { --part:var(--cmp-other); --part-line:var(--cmp-other-ring) }
-.stats-part-corrects { --part:var(--chg-magnitude) }
-.stats-part-corrects-2 { --part:color-mix(in srgb, var(--chg-magnitude) 55%, var(--bg)); --part-line:var(--chg-magnitude) }
+.stats-part-corrects { --part:var(--chg-magnitude); --part-line:color-mix(in srgb, var(--chg-magnitude) 65%, var(--text)) }
+.stats-part-corrects-2 { --part:var(--chg-magnitude); --part-line:var(--chg-magnitude) }
 .stats-part-not-listed { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
 .stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new-ring) }
 .stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new-ring) }
@@ -1179,6 +1181,10 @@ a.stats-total-value:focus-visible { outline:0 }
 /* One flat fill: the colour at 60% (#RRGGBB99 on white) with a 1px opaque outline (a darker ring where the colour is
    light); a bar's outer ends are rounded 2px. */
 .stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
+/* The exceptions to the flat 60% fill, each kept apart from a colour it would otherwise meet: a correction opaque red;
+   the exact-factor kind red hatching on white. */
+:is(.stats-seg, .stats-swatch):is(.stats-part-corrects, .stats-part-magnitude) { background:var(--part) }
+:is(.stats-seg, .stats-swatch).stats-part-corrects-2 { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }

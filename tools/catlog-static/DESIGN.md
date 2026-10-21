@@ -500,7 +500,9 @@ Colour meanings (round 14, the user: "you keep using the same colours of the Nat
 right?"). The palette is Supantha's saved Nature BPG (ggsci npg "nrc"). One meaning per colour, the same meaning on
 Browse, the record, the chips, the sidebar's dots, Stats, the Guide's legend and Team, and colour never alone (a dot, a
 square, a tick, a "!" disc or the words go with it). Marks (dots, squares, the "!" disc, ticks) are opaque; figures fill
-at 60% (#RRGGBB99 on white) with a 1px opaque outline; tints (the colour at 9-12% on white) only behind words. Text
+at 60% (#RRGGBB99 on white) with a 1px opaque outline, with two exceptions where a 60% fill would look like another
+meaning's: a correction is opaque red, and the exact-factor corrections are red hatching; tints
+(the colour at 9-12% on white) only behind words. Text
 passes WCAG AA (4.5:1; 3:1 for large numbers and for marks): where a colour is too light for text or for a mark on white
 (cyan, mint, salmon, tan), the text takes a darker shade of the same hue and the mark a 1px ring of it, and the palette
 colour itself goes on the mark beside the words.
@@ -515,7 +517,7 @@ colour itself goes on the mark beside the words.
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
 | brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
-| red #E64B35 | A correction: Corrects a value (CatLog's number corrects a database's); Unit or magnitude (an earlier correction by × or ÷ 10ⁿ) | square, chip, bars (how found: checked against the paper 60%, an exact factor found by code 33%) | itself 3.9:1 as a mark; text #C62E19, 5.5:1 |
+| red #E64B35 | A correction: Corrects a value (CatLog's number corrects a database's); Unit or magnitude (an earlier correction by × or ÷ 10ⁿ) | square, chip, bars: drawn opaque in figures too, the square's own red (red at 60%, #F09386, is salmon to the eye); how found: checked against the paper opaque, an exact factor found by code red hatching on white (never a lighter red: red at 55% then 60%, #F7C4BC, was Not confirmed's salmon fill, #F8C3B2, CIE ΔE 4.9) | itself 3.9:1 as a mark; text #C62E19, 5.5:1 |
 | tan #B09C85 | Caution (a value that may be wrong) | the "!" disc (tan, ring #8c7a64, ink "!" 6.2:1), the chip, Cautions' dot, caution notes (tan tint #f8f6f4, line #dbd2c8, ink #4a3b2a), Stats' Cautions bars, the diffusion-limit band of kcat against Km | caution words and lines #79654F, 5.5:1 |
 
 Not BPG, and carrying no data meaning: the ink and greys (--text, --text-2, --muted, --line; --bar-neutral #7d8885 for a

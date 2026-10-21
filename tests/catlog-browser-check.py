@@ -2106,12 +2106,33 @@ def check_stats_new_figures(driver, browser, url):
             assert labels and all(axis and all(label.startswith("10") and len(label) > 2 for label in axis) for axis in labels), (
                 f"At {narrow}px a ridge axis label is not a whole power of ten: {labels}")
         # The key numbers never glow (no halo, no text-shadow), on screen or on paper, and no figure mark has a glow or
-        # a gradient fill; with less motion asked for, nothing moves.
-        glow = """return [...document.querySelectorAll('.stats-totals-main .stats-total-value')].map(e => getComputedStyle(e))
+        # a gradient fill (the hatched kinds are a pattern of 135° lines, never a wash); with less motion asked for,
+        # nothing moves.
+        glow = """const hatched = '.stats-part-corrects-2, .stats-part-unverified, .stats-part-not-reviewed, .stats-part-not-checked, .stats-part-not-listed-hatch';
+            return [...document.querySelectorAll('.stats-totals-main .stats-total-value')].map(e => getComputedStyle(e))
             .some(c => c.boxShadow !== 'none' || c.textShadow !== 'none' || c.backgroundImage !== 'none')
             || [...document.querySelectorAll('.stats-seg, .stats-swatch:not(.stats-part-catlog-mark), .stats-histogram-bars > span, .stats-meter > span')]
-                .some(e => getComputedStyle(e).backgroundImage !== 'none' || getComputedStyle(e).filter !== 'none')"""
+                .some(e => (e.matches(hatched) ? !/^repeating-linear-gradient\\(135deg/.test(getComputedStyle(e).backgroundImage)
+                    : getComputedStyle(e).backgroundImage !== 'none') || getComputedStyle(e).filter !== 'none')"""
         assert driver.execute_script(glow) is False
+        # One meaning per colour on one page (round 14): a correction never looks like Not confirmed's salmon. Corrects a value is the sidebar square's opaque red, far
+        # (CIE76 > 20) from salmon at 60%; the exact-factor kind is hatched, not a lighter fill.
+        fills = driver.execute_script("""
+            const rgb = text => { const v = (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number); return text.startsWith('color(') ? v.map(x => x * 255) : v; };
+            const lab = c => { const [r, g, b] = rgb(c).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+              const f = t => t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116;
+              const [x, y, z] = [(0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047, 0.2126 * r + 0.7152 * g + 0.0722 * b, (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883].map(f);
+              return [116 * y - 16, 500 * (x - y), 200 * (y - z)]; };
+            const de = (a, b) => Math.hypot(...lab(a).map((v, i) => v - lab(b)[i]));
+            const fill = sel => { const e = document.querySelector(sel); return e ? getComputedStyle(e) : null; };
+            const pending = fill('.stats-seg.stats-part-pending'), corrects = fill('.stats-seg.stats-part-corrects');
+            const second = fill('.stats-swatch.stats-part-corrects-2'), unchecked = fill('.stats-seg.stats-part-not-checked, .stats-seg.stats-part-unverified');
+            return {de: pending && corrects ? de(pending.backgroundColor, corrects.backgroundColor) : null,
+                    second: second && second.backgroundImage, unchecked: unchecked && unchecked.backgroundImage,
+                    donut: [...document.querySelectorAll('.stats-donut path.stats-part-unverified, .stats-donut path.stats-part-not-reviewed')].map(e => getComputedStyle(e).fill)};
+        """)
+        assert fills["de"] is None or fills["de"] > 20, fills
+        assert fills["second"] is None or fills["second"].startswith("repeating-linear-gradient"), fills
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
         assert driver.execute_script(glow) is False
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
