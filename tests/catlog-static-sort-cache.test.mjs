@@ -1938,7 +1938,8 @@ function row(overrides = {}) {
     runtimeManifest.summary.distributions = { ...saved, accepted_basis: [{ label: "human review", count: 1 }] };
     api.renderStats();
     const ruled = element("statsCharts").innerHTML;
-    assert.match(ruled, /1 records have no PMID or DOI linked, so their values cannot be traced to a paper\. They count as Not checked, not Accepted\./);
+    assert.match(ruled, /It also holds 1 records the earlier review accepted that have no PMID or DOI linked\./);
+    assert.doesNotMatch(ruled, /records have no PMID or DOI linked, so their values cannot be traced/, "the Not reviewed row says it once");
     assert.doesNotMatch(ruled, /accepted records have no PMID/);
     assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer&#39;s approval\./);
     assert.match(ruled, /data-part="accepted_human" data-count="1"/);

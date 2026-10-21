@@ -6703,7 +6703,8 @@
       id: "statsStatusTitle", key: "status", className: "stats-status-section", title: "Review result",
       body: `<div class="stats-donut-layout">${statsDonut(donutParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
       caption: "Each record has exactly one review result.",
-      after: `${identityOnly ? `<p class="stats-note">${formatInteger(identityOnly)} ${noPaperRule ? "records have no PMID or DOI linked, so their values cannot be traced to a paper. They count as Not checked, not Accepted." : "accepted records have no PMID or DOI linked, so their values cannot be traced to a paper."}</p>` : ""}
+      // Under the review rules the Not reviewed row already names the records without a paper (round 14: say it once).
+      after: `${identityOnly && !noPaperRule ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be traced to a paper.</p>` : ""}
         ${statsUnacceptedFields(counts)}`,
     });
 
