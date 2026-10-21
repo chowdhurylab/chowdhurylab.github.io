@@ -2196,6 +2196,37 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .values-table td.vt-value .metric-origin + .value-flag { margin-left:auto }
 }
 
+/* Round 15 polish: on a phone a record's values read as the Guide's phone mock: parameter, value and unit on one line and
+   "As printed: ..." on its own line under them, so Unit and As printed never run together ("mM⁻¹ s⁻¹ 0.01 mM⁻¹ s⁻¹") and
+   calc. and the "!" stay beside their number. Label and Unit have fixed widths and every row keeps unseen copies of the
+   others' marks, so the numbers end at one place. The column heads stay for screen readers. A record without As printed
+   keeps its three columns. */
+@media (max-width: 640px) {
+  .values-table:not(.vt-no-printed), .values-table:not(.vt-no-printed) tbody { display:block; width:100% }
+  .values-table:not(.vt-no-printed) thead { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .values-table:not(.vt-no-printed) caption { display:block }
+  .values-table:not(.vt-no-printed) tbody tr { display:grid; grid-template-columns:4.5em minmax(0, 1fr) 5.5em; align-items:baseline; column-gap:8px; border-bottom:1px solid var(--line-soft) }
+  .values-table:not(.vt-no-printed) tbody :is(th, td) { width:auto; border-bottom:0; padding:6px 0 0 }
+  .values-table:not(.vt-no-printed) tbody th { white-space:normal }
+  .values-table:not(.vt-no-printed) td.vt-unit { padding:6px 0 0; white-space:normal }
+  .values-table:not(.vt-no-printed) td.vt-printed { grid-column:1 / -1; padding:2px 0 6px; color:var(--text-2) }
+  .values-table:not(.vt-no-printed) td.vt-printed::before { content:"As printed: "; color:var(--muted) }
+  .values-table:not(.vt-no-printed) td.vt-value .vt-number { display:inline }
+  .values-table:not(.vt-no-printed) td.vt-value .vt-ghost { display:inline }
+  .values-table:not(.vt-no-printed) td.vt-value .value-flag { display:inline-grid; margin-left:6px }
+  .values-table:not(.vt-no-printed) td.vt-value .metric-origin { display:inline; margin-left:4px }
+  .values-table:not(.vt-no-printed) td.vt-value .metric-origin + .value-flag { margin-left:6px }
+}
+/* Below 340px Value has under 150px, too little for a long number with its check, calc. and "!" in a wide font: they go
+   under their number at the right, as before, so a long number never pushes them onto a line of their own. */
+@media (max-width: 339px) {
+  .values-table:not(.vt-no-printed) td.vt-value .vt-number { display:block }
+  .values-table:not(.vt-no-printed) td.vt-value .vt-ghost:not(.value-approved) { display:none }
+  .values-table:not(.vt-no-printed) td.vt-value .metric-origin { display:block; margin-left:0 }
+  .values-table:not(.vt-no-printed) td.vt-value .value-flag,
+  .values-table:not(.vt-no-printed) td.vt-value .metric-origin + .value-flag { display:grid; margin-left:auto }
+}
+
 @media (max-width: 520px) {
   .guide-choice-link { width:100%; white-space:normal }
 }

@@ -785,11 +785,14 @@ come first, the context after.
   Where (a column of dashes would read as "nothing printed"; Unit takes the
   rest); where the paper prints its values is said once, under Paper (the earlier review's notes) or as Corrected
   earlier's "In the paper" (then the notes leave their Where out), with no pointer line under the table (round 14). A calculated
-  kcat/Km carries "calc." (on phones calc. and a "!" go under the number, so
-  As printed keeps about 100px at 375px (Unit's cells take 3px a side on phones, since a unit's U+2212 minus signs
-  are wider than hyphens, most in DejaVu Sans: 92px for As printed at 390px there); at 320px a two-part unit may take two
-  lines and the table still fits; an older record, with no As printed, keeps
-  them beside the number from 361 to 640px, so every row stays one line, and its
+  kcat/Km carries "calc.". On phones (up to 640px; round 15 polish: "mM⁻¹ s⁻¹ 0.01 mM⁻¹ s⁻¹" had read as one string and
+  the "!" had dropped under its number) a record with As printed reads as the Guide's phone mock: each row a grid of
+  parameter (4.5em), value and unit (5.5em, which may wrap), "As printed: ..." (13px --text-2 after a --muted label) on
+  its own line under them across the row, the column heads kept for screen readers only; calc., the check and the "!"
+  stay beside their number, every row keeping unseen copies of the others' marks so the numbers end at one place, and
+  below 340px (Value under 150px) calc. and the "!" go under the number at the right; an older record, with no As
+  printed, keeps its three columns and its calc. and "!"
+  beside the number from 361 to 640px, so every row stays one line, and its
   unit wraps before the table outgrows the section; a record with checks keeps
   each number of As printed (and each unit with its power, min-1) whole from
   361px up, and from 361 to 420px its

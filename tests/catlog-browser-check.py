@@ -4733,8 +4733,10 @@ def check_record_panel(driver, browser, url, route_label):
                     assert len(edges) > 1 and max(edges) - min(edges) <= 1, f"The Value column's numbers do not line up at {width}px: {edges}"
                     results[f"values-aligned-{label}"] = True
             if label == "mobile":
-                # On phones calc. and "!" go under the number, so the Values table stays inside its section and As printed
-                # keeps room (at 390 and at 320px; skipped when this snapshot does not have that record).
+                # On phones the values read as the Guide's phone mock (round 15 polish): parameter, value and unit on one
+                # line, "As printed: ..." on its own line under them across the row, calc. and "!" beside their number
+                # (under it below 340px, where Value is too narrow), every number ending at one place; the table stays
+                # inside its section (at 390 and at 320px; skipped when this snapshot does not have that record).
                 for phone_width in (390, 320):
                     set_browse_viewport(driver, browser, phone_width, height)
                     driver.get("about:blank")
@@ -4752,18 +4754,27 @@ def check_record_panel(driver, browser, url, route_label):
                         const panel = document.getElementById('detailPanel');
                         const flag = cell.querySelector('.value-flag:not(.vt-ghost)');
                         const cellRight = cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight);
+                        const rows = [...table.querySelectorAll('tbody tr')];
+                        const box = (row, sel) => row.querySelector(sel).getBoundingClientRect();
                         return {over: table.getBoundingClientRect().right - contentRight,
                                 flagGap: flag ? cellRight - flag.getBoundingClientRect().right : null,
-                                printed: (heads.find(([name]) => name === 'As printed') || [, 0])[1],
                                 below: cell.querySelector('.metric-origin:not(.vt-ghost)').getBoundingClientRect().top
                                     >= cell.querySelector('.vt-number').getBoundingClientRect().bottom - 1,
+                                // As printed: its own line under value and unit, across the row, named by its label
+                                printedRows: rows.map(row => ({own: box(row, 'td.vt-printed').top >= Math.max(box(row, 'td.vt-value').bottom, box(row, 'td.vt-unit').bottom) - 1,
+                                    wide: box(row, 'td.vt-printed').width >= table.getBoundingClientRect().width - 1,
+                                    label: getComputedStyle(row.querySelector('td.vt-printed'), '::before').content})),
+                                unitAfter: rows.every(row => box(row, 'td.vt-unit').left >= box(row, 'td.vt-value').right),
+                                spread: Math.max(...rows.map(row => box(row, '.vt-number').right)) - Math.min(...rows.map(row => box(row, '.vt-number').right)),
+                                headsHidden: table.querySelector('thead').getBoundingClientRect().width <= 1 && heads.length === 4,
                                 sideways: panel.scrollWidth - panel.clientWidth};
                     """)
                     assert fit["over"] <= 1 and fit["sideways"] <= 1, f"The Values table runs past its section at {phone_width}px: {fit}"
-                    assert fit["below"], f"calc. stays beside the number at {phone_width}px: {fit}"
-                    assert fit["printed"] >= (90 if phone_width == 390 else 48), f"As printed is squeezed at {phone_width}px: {fit}"
-                    # The "!" under the number sits at the right like calc., not at the cell's left edge.
-                    assert fit["flagGap"] is None or abs(fit["flagGap"]) <= 1, f"The '!' is not under its number at {phone_width}px: {fit}"
+                    assert fit["below"] == (phone_width < 340), f"calc. is {'beside' if not fit['below'] else 'under'} the number at {phone_width}px: {fit}"
+                    assert all(r["own"] and r["wide"] and "As printed" in r["label"] for r in fit["printedRows"]), f"As printed is not a line of its own at {phone_width}px: {fit}"
+                    assert fit["unitAfter"] and fit["headsHidden"] and fit["spread"] <= 1, f"The phone Values rows do not line up at {phone_width}px: {fit}"
+                    # The "!" ends at the right of Value, beside or under its number, never at the cell's left edge.
+                    assert fit["flagGap"] is None or abs(fit["flagGap"]) <= 1, f"The '!' is not at its number at {phone_width}px: {fit}"
                     results[f"values-table-{phone_width}"] = True
                     if phone_width == 390:
                         # Only the name and × stay in view when the record scrolls; the status line scrolls away.
@@ -4879,7 +4890,8 @@ def check_record_panel(driver, browser, url, route_label):
                                     checkInside: checkRect ? checkRect.right <= row.querySelector('td.vt-value').getBoundingClientRect().right + 1 : null,
                                 };
                             });
-                            return {rows, headRight: Math.max(...head.map(r => r.right))};
+                            const headCell = document.querySelector('#detailContent .values-table thead th.vt-value');
+                            return {rows, headRight: Math.max(...head.map(r => r.right)), headShown: headCell.closest('thead').getBoundingClientRect().width > 1};
                         """)
                         driver.execute_script("document.getElementById('wideFontCheck')?.remove()")
                         rows = measured["rows"]
@@ -4888,8 +4900,9 @@ def check_record_panel(driver, browser, url, route_label):
                             assert row["checkBeside"] is not False and row["checkInside"] is not False, f"{row['name']}'s check leaves its number at 320px: {row}"
                         ends = [row["numberRight"] for row in rows]
                         assert max(ends) - min(ends) <= 1, f"The Value column's numbers do not line up at 320px: {rows}"
-                        # The heading keeps the checks' space too, so it ends where the numbers end.
-                        assert abs(measured["headRight"] - max(ends)) <= 1, f"Value does not end over the numbers at 320px: {measured}"
+                        # The heading keeps the checks' space too, so it ends where the numbers end (when it shows: a record
+                        # with As printed keeps its column heads for screen readers only on a phone, round 15 polish).
+                        assert not measured["headShown"] or abs(measured["headRight"] - max(ends)) <= 1, f"Value does not end over the numbers at 320px: {measured}"
                         results["values-approved-scientific-320"] = True
                     # At 375 and 390px in a wide font the check's 16px once broke its As printed "0.00048 min⁻¹" into
                     # "0.0004" over "8": each printed number stays whole and the table inside its section.
