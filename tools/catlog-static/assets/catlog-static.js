@@ -5473,25 +5473,24 @@
   }
 
   // ---- Guide: Against the databases (#guide-databases) ----
-  // The Guide's own section on the comparison (round 9 brief, piece 8; the words of its section 2 are binding): what is
-  // compared, the six results Browse's group offers, the cause of a correction, how one is found and why no database
-  // lists a value, each with this snapshot's counts where the manifest's summary.database_comparison gives them (a
-  // missing count leaves its line out, never a guessed number). The databases are comparedDatabases': the manifest's
+  // The Guide's own section on the comparison (round 9 brief, piece 8; round 14, the user: a short Guide): the lead, the
+  // six results Browse's group offers with this snapshot's values and records, then the cause of a correction, how one is
+  // found and why no database lists a value, each counted where the manifest's summary.database_comparison gives it (a
+  // missing count leaves its cell empty, never a guessed number). The databases are comparedDatabases': the manifest's
   // sources list with versions ([{key, name, display, version, retrieved, rows}]), else the databases it counts values
   // for, else six. Like the rest of the Guide it reads the manifest only, never the record index.
-  // A result's definition as Browse's option gives it (databaseFilters' title): Browse, Stats and the Guide say it in
-  // these words only.
+  // A result's definition as Browse's option gives it (databaseFilters' title): Browse and Stats say it in these words
+  // only; the Guide's legend (Labels and colours) says it in a few.
   function databaseResultTitle(key) {
     return databaseFilters.find((item) => item.value === key)?.title || "";
   }
   // Browse's options in its order (key = the address's db= value), with Browse's names and definitions; mark: the
-  // result's colour, as in Browse. The nested option's definition is said inside the sentence of its parent.
+  // result's colour, as in Browse. The nested option is a row under its parent.
   const GUIDE_DB_RESULTS = [
     { key: "corrects", mark: "corrects" },
     { key: "differs", mark: "differs" },
     { key: "other_label", mark: "other_label" },
-    { key: "not_listed", mark: "not_listed", nested: { key: "all_not_listed", label: DATABASE_RESULT_NAMES.all_not_listed,
-      text: databaseResultTitle("all_not_listed").replace(/^./, (first) => first.toLowerCase()).replace(/\.$/, "") } },
+    { key: "not_listed", mark: "not_listed", nested: { key: "all_not_listed", label: DATABASE_RESULT_NAMES.all_not_listed } },
     { key: "all_same", mark: "same" },
     { key: "earlier", mark: "" },
   ].map((item) => ({ ...item, label: DATABASE_RESULT_NAMES[item.key], text: databaseResultTitle(item.key) }));

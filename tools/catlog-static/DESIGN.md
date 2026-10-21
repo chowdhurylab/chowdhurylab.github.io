@@ -1148,8 +1148,8 @@ minute what CatLog is, how to read a record and what each label means. Rules for
 
 Word counts (Chrome at 1440px, the live round-13 data; prose = the words outside figure labels, legend items, tables,
 reference data such as citations and database versions, and headings): round 13 had 1,524 words in view (374 of them
-prose) and 3,043 with every disclosure open (1,443 prose); round 14 has about 960 in view (about 140 prose) and about
-1,730 open (about 485 prose), and the page is about 4,200px tall at 1440px instead of 5,400px.
+prose) and 3,043 with every disclosure open (1,443 prose); round 14 has 972 in view (143 prose) and 1,748 open (488
+prose), and the page is 4,213px tall at 1440px instead of 5,418px.
 
 The introduction (h1 "Using CatLog"): "CatLog re-verifies published enzyme kinetics (kcat, Km and kcat/Km) against their
 papers. AI agents read each value; people review samples. So far 75,000 of 185,804 records are re-read." (the counts from

@@ -155,6 +155,17 @@ GUIDE_PICTURES_JS = """
 """
 
 
+# A Guide section a link opened: its top just under the view's top, or, where the page ends too soon for that, the view
+# scrolled to its end with the section's top in sight.
+GUIDE_AT_SECTION_JS = """
+    const view = document.querySelector('#guideView');
+    const box = view.getBoundingClientRect();
+    const top = document.getElementById(arguments[0]).getBoundingClientRect().top;
+    const atEnd = view.scrollTop + view.clientHeight >= view.scrollHeight - 2;
+    return top >= box.top - 1 && (top <= box.top + 48 || (atEnd && top < box.bottom - 48));
+"""
+
+
 def assert_document_stays(driver, view):
     """Stats, the Guide and Team scroll inside their own view under a header that stays put: the document itself never
     scrolls (hidden screen-reader text placed against the page once made it ~4,000px tall and scrolled the header away)."""
@@ -255,11 +266,9 @@ def check_guide(driver, wait):
     wait.until(lambda d: d.execute_script("return document.activeElement?.id") == "guide-units-title")
     assert driver.find_element(By.ID, "guideView").is_displayed()
     assert not driver.find_element(By.ID, "catalogView").is_displayed()
-    wait.until(lambda d: d.execute_script("""
-        const view = document.querySelector('#guideView').getBoundingClientRect();
-        const top = document.querySelector('#guide-units').getBoundingClientRect().top;
-        return top >= view.top - 1 && top <= view.top + 48;
-    """))
+    # (round 14: a short Guide can end before Units reaches the top of a tall window; then the view is scrolled to its end
+    # with Units in sight)
+    wait.until(lambda d: d.execute_script(GUIDE_AT_SECTION_JS, "guide-units"))
     assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), "Guide overflows sideways"
     assert_document_stays(driver, "Guide")
     # How CatLog reads a value (#guide-how-read, which a record links to): a link to it opens the Guide there with focus
