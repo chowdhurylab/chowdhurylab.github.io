@@ -1304,8 +1304,11 @@ assert.equal(document.title, "Team | CatLog");
   assert.doesNotMatch(team, /Claude|Codex|Anthropic|OpenAI|GPT|Dr\.|Prof|PhD|independent/);
   // CatLog re-verifies what is published: no agent downloads or fetches papers (round 13).
   assert.doesNotMatch(team + element("teamView").innerHTML, /[Dd]ownload|[Ff]etch|>Papers</);
-  assert.match(team, /<strong>Source agents<\/strong> \(AI\) find the paper each database value cites/);
-  assert.match(team, /<strong>Verification agents<\/strong> \(AI\) check each value against the paper, separately/);
+  // Under the heading "AI agents" the lines need no "(AI)" (round 14); the agents' chips on the figure say it.
+  assert.match(team, /<strong>Source agents<\/strong> find the paper each database value cites/);
+  assert.match(team, /<strong>Verification agents<\/strong> check each value against the paper, separately/);
+  assert.doesNotMatch(element("teamLegend").innerHTML, /\(AI\)/);
+  assert.match(element("teamFigure").innerHTML, /aria-label="Source agents \(AI\): find the paper each database value cites\. At Cited papers\."/);
   assert.match(team, /<strong>Supantha<\/strong> builds CatLog and its website, and turns findings into better rules/);
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
   // AI critique (round 14, the user 2026-10-20): Vaishnavey examines the AI agents' readings for systematic errors and

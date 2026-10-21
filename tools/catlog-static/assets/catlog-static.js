@@ -6964,16 +6964,17 @@
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "mohammad", name: "Mohammad", kind: "person", stations: ["paper"], phrase: "writes the paper and documentation" },
   ];
-  // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
+  // The legend: one line per person or agent (Aarna and Erin share theirs), people first. The agents' lines stand under
+  // the heading "AI agents", so they need no "(AI)" (round 14, fewer words); their chips on the figure keep it.
   const TEAM_LEGEND = [
     { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and its website, and turns findings into better rules" },
     { actors: ["vaishnavey"], text: `<strong>Vaishnavey</strong> ${escapeHtml(VAISHNAVEY_PHRASE)}` },
     { actors: ["aarna", "erin"], text: "<strong>Aarna</strong> and <strong>Erin</strong> check values against the papers" },
     { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and documentation" },
-    { actors: ["source"], text: "<strong>Source agents</strong> (AI) find the paper each database value cites" },
-    { actors: ["reading"], text: "<strong>Reading agents</strong> (AI) read each value in the paper" },
-    { actors: ["checking"], text: "<strong>Verification agents</strong> (AI) check each value against the paper, separately" },
-    { actors: ["audit"], text: "<strong>Audit agents</strong> (AI) re-check samples" },
+    { actors: ["source"], text: "<strong>Source agents</strong> find the paper each database value cites" },
+    { actors: ["reading"], text: "<strong>Reading agents</strong> read each value in the paper" },
+    { actors: ["checking"], text: "<strong>Verification agents</strong> check each value against the paper, separately" },
+    { actors: ["audit"], text: "<strong>Audit agents</strong> re-check samples" },
   ];
 
   // Two drawings of one loop: wide (stations along a racetrack, AI agents above, people below) and narrow (an upright
