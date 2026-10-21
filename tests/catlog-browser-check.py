@@ -3363,8 +3363,16 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             assert heading["label"].startswith("Undo the last filter change, back to "), heading
             # Each group's "?" in the sheet keeps its 24px circle and is a 44px target (every group opened, More filters too).
             driver.execute_script("document.querySelectorAll('#catalogFilters details').forEach(group => { group.open = true; })")
+            # (each group opened scrolls the sheet smoothly to show it, revealFilterSection: a "?" is measured once that
+            # scrolling has stopped, else a probe can land on the sticky heading or the Show records bar)
+            settled = "const r = arguments[0].getBoundingClientRect(); return [Math.round(r.top * 2), document.getElementById('catalogFilters').scrollTop]"
             for about in [e for e in driver.find_elements(By.CSS_SELECTOR, "#catalogFilters .filter-section > .section-about") if e.is_displayed()]:
-                driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
+                for _ in range(20):
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'instant'})", about)
+                    before = driver.execute_script(settled, about)
+                    time.sleep(0.15)
+                    if driver.execute_script(settled, about) == before:
+                        break
                 size = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.width, r.height]", about)
                 assert size == [24, 24] and driver.execute_script(ABOUT_TARGET_JS, about) == 44, (width, about.get_attribute("aria-controls"), size)
             sheet_at = driver.execute_script("const r = document.getElementById('undoFiltersButton').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]")
