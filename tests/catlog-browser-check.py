@@ -2527,7 +2527,7 @@ def check_filters(driver, browser, url, route_label):
                 const label = row.querySelector(':scope > span');
                 const shown = [...label.childNodes].filter(node => !(node.nodeType === 1 && node.matches('.visually-hidden, .db-mark')))
                     .map(node => node.textContent).join('').trim();
-                const mark = label.querySelector('.db-mark');
+                const mark = label.querySelector('.db-mark:not(.db-mark-none)');
                 return {value: row.querySelector('input').value, shown, nested: row.classList.contains('nested'),
                         divided: row.classList.contains('after-divider'), title: row.title,
                         name: label.textContent.replace(/\\s+/g, ' ').trim(),
@@ -2551,6 +2551,25 @@ def check_filters(driver, browser, url, route_label):
         """)
         assert [row["mark"]["colour"] for row in rows[:6]] == colours and rows[6]["mark"] is None, rows
         assert all(row["mark"]["hidden"] == "true" and row["mark"]["size"] == [10, 10] for row in rows[:6]), rows
+        # Round 15 polish: one pattern in the sidebar. Every box is neutral (the accent), each option with a meaning colour
+        # shows its own mark between box and words (a review result its dot, a caution its "!", a database result its
+        # square), and the words of those groups' top-level options start at one edge (No cautions and Corrected earlier
+        # keep the mark's room); the Cautions title carries no dot.
+        open_more("cautionFilterSection")
+        pattern = driver.execute_script("""
+            const probe = document.createElement('span'); document.body.appendChild(probe);
+            probe.style.color = 'var(--accent)'; const accent = getComputedStyle(probe).color; probe.remove();
+            const words = row => { const walker = document.createTreeWalker(row.querySelector(':scope > span'), NodeFilter.SHOW_TEXT);
+                while (walker.nextNode()) { const node = walker.currentNode;
+                    if (node.data.trim() && !node.parentElement.closest('.visually-hidden')) { const range = document.createRange();
+                        const at = node.data.search(/\\S/); range.setStart(node, at); range.setEnd(node, at + 1); return range.getBoundingClientRect().left; } } return null; };
+            const rows = [...document.querySelectorAll('#statusChecklist .check-row:not(.nested), #databaseChecklist .check-row:not(.nested), #cautionChecklist .check-row')];
+            return {edges: rows.map(words), marks: rows.map(row => Boolean(row.querySelector(':scope > span > :is(.option-mark, .db-mark)'))),
+                    boxes: [...document.querySelectorAll('#catalogFilters .check-row input')].map(input => getComputedStyle(input).accentColor),
+                    accent, titleDots: [...document.querySelectorAll('#cautionFilterSection > summary .group-dot')].length};
+        """)
+        assert all(pattern["marks"]) and max(pattern["edges"]) - min(pattern["edges"]) <= 1, pattern
+        assert set(pattern["boxes"]) == {pattern["accent"]} and pattern["titleDots"] == 0, pattern
         definitions = ("Every compared value is the number a database lists for it.",
                        "A database lists this number for the paper under another substrate, variant or organism.",
                        "A database lists another number; CatLog's is the paper's",
@@ -3183,15 +3202,16 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     source_chip = driver.execute_script(CHIP_COLOURS_JS)["chips"][0]
     assert source_chip["tone"] == "tone-source" and plain_chip(source_chip, tokens) and source_chip["mark"] is None, source_chip
     assert not any(dot["shown"] for dot in source_chip["dots"]), source_chip
-    # A Review result chip names each result after its status dot; a caution its tan "!" (and Cautions keeps its tan
-    # dot); Not in the databases its square's cyan, Same, other label its square's mint.
+    # A Review result chip names each result after its status dot; a caution its tan "!" (Cautions' title has no dot:
+    # each caution option shows its "!", round 15 polish); Not in the databases its square's cyan, Same, other label its
+    # square's mint.
     open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed,other_label")
     wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 4)
     page = driver.execute_script(CHIP_COLOURS_JS)
     by_key = {chip["key"]: chip for chip in page["chips"]}
     assert all(plain_chip(chip, tokens) for chip in page["chips"]), page["chips"]
     assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
-    assert by_key["caution:units"]["dots"] and all(dot["shown"] and dot["colour"] == tokens["--caution-mark"] for dot in by_key["caution:units"]["dots"]), by_key["caution:units"]
+    assert not by_key["caution:units"]["dots"], by_key["caution:units"]
     assert page["squares"]["notListed"] == tokens["--cmp-new"] and page["squares"]["otherLabel"] == tokens["--cmp-other"], page["squares"]
     assert {key: (chip["mark"], chip["markColour"]) for key, chip in by_key.items()} == {
         "status": ("dot", None), "caution:units": ("flag", tokens["--caution-mark"]), "db:not_listed": ("square", tokens["--cmp-new"]),

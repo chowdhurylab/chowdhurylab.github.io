@@ -6264,7 +6264,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.databaseFilterBits(["not_listed", "all_not_listed", "corrects"]), bit.corrects | bit.all_not_listed);
   assert.equal(api.databaseFilterBits(["not_listed", "differs"]), bit.not_listed | bit.differs);
   // One name per result: the sidebar's options say what their chips, a record's result words and its links say; each
-  // result has its square in the result's colour (none on Corrected earlier, which sits under a rule), "every value" is
+  // result has its square in the result's colour (Corrected earlier, under a rule, only its unseen room), "every value" is
   // nested under Not in the databases and read with it.
   {
     const rows = [...element("databaseChecklist").innerHTML.matchAll(/<label class="check-row([^"]*)" title="([^"]*)">([\s\S]*?)<\/label>/g)];
@@ -6274,7 +6274,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(shown.map((html) => html.replace(/<[^>]*aria-hidden[^>]*><\/span>/g, "").replace(/<[^>]*>/g, "")).slice(5, 6),
       ["Not in the databases: every value"]);
     assert.deepEqual(shown.map((html) => (html.match(/class="db-mark db-mark-([a-z-]+)" aria-hidden="true"/) || [])[1] || ""),
-      ["same", "other-label", "corrects", "differs", "not-listed", "not-listed", ""]);
+      ["same", "other-label", "corrects", "differs", "not-listed", "not-listed", "none"], "Corrected earlier keeps the square's room, unseen");
     assert.deepEqual(rows.map((match) => match[1].trim()), ["", "", "", "", "", "nested", "after-divider"]);
     assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
   }
@@ -7397,7 +7397,11 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(element("aboutSourceDatabases").innerHTML, /Ticking one selects Not yet <span class="nowrap">re-read<\/span>\.<\/p>/);
   assert.match(element("aboutSourceDatabases").innerHTML, /; a merged record counts under each\. /);
   assert.doesNotMatch(element("aboutSource").innerHTML, /merged record/);
-  assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
+  // Each caution after its "!" (round 15 polish: the option's own mark, as the table and its chip show it); No cautions
+  // keeps the mark's room only.
+  assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span><span class="option-mark caution-option-mark" aria-hidden="true"><\/span>Unit or magnitude error<\/span>/);
+  assert.match(element("cautionChecklist").innerHTML, /value="none" \/>\s*<span><span class="option-mark option-mark-none" aria-hidden="true"><\/span>No cautions<\/span>/);
+  assert.match(element("statusChecklist").innerHTML, /value="curation_pending" checked \/>\s*<span><span class="option-mark state-mark review" aria-hidden="true"><\/span>Not confirmed<\/span>/);
   // No help text in view (the user, 2026-10-18): the notes of Measurement type and Wild type or variant are behind their
   // "?", the cautions' definitions behind Cautions' "?" (Km and kcat keep their capitals after the dash).
   assert.doesNotMatch(element("measurementChecklist").innerHTML + element("variantChecklist").innerHTML, /filter-note|<p/);

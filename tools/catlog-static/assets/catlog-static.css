@@ -73,7 +73,6 @@
   --st-not-reviewed-ring:var(--bpg-slate);
   --st-disputed:var(--bpg-deep-red);
   /* Filter ticks: the status colour, or a darker form where it is light (3:1 or more on white). */
-  --tick-unverified:#6a7499;  /* 4.6:1 */
   /* Agreement with a second source (BPG green): human-checked's tick and word in the darker green (a human reviewer
      approved the values), a database result's Same number at the colour itself. */
   --checked:#007664;          /* 5.6:1; on its 12% tint 4.7:1, on the selected row 4.9:1 */
@@ -466,12 +465,20 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:start; gap:var(--sp-2); padding:5px 0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
 .check-row input { width:14px; height:14px; margin:2px 0 0; accent-color:var(--accent) }
 .check-row > strong { padding-top:1px; white-space:nowrap }
-/* Review result ticks in the status colours; green only for human-checked. */
-.check-row.accepted input { accent-color:var(--st-accepted) }
-.check-row.review input { accent-color:var(--st-pending-ring) }
-.check-row.unresolved input { accent-color:var(--tick-unverified) }
-.check-row.disputed input { accent-color:var(--st-disputed) }
-.check-row.human-checked input { accent-color:var(--checked) }
+/* Every box is neutral (the accent); an option with a meaning colour shows its own mark between the box and its words
+   (round 15 polish: Review result's ticks had worn the status colours, shown only once ticked, Against the databases a
+   square, Cautions nothing): a review result its status dot, human-checked its green tick, a caution its "!", a database
+   result its square. Each mark takes the square's 10px slot, 6px after the box and 4px before the words, so the words of
+   every group with marks start at one edge; an option without one (No cautions, Corrected earlier) keeps the slot. */
+.option-mark { display:inline-block; flex:none; width:10px; height:10px; margin:0 4px 0 -2px; vertical-align:-1px }
+.state-mark::before { content:""; display:block; width:8px; height:8px; margin:1px; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent) }
+.state-mark.accepted { --status-color:var(--st-accepted) }
+.state-mark.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
+.state-mark.unresolved { --status-color:var(--st-unverified) }
+.state-mark.disputed { --status-color:var(--st-disputed) }
+/* the "!" disc at its legible 12px, centred where the dots and squares are */
+.caution-option-mark { display:inline-grid; width:12px; height:12px; margin:0 3px 0 -3px; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:-2px }
+.caution-option-mark::before { content:"!" }
 .check-row.nested { margin-left:22px }
 /* "✓ human-checked" keeps one line beside its count; in the 256px sidebar a wider font breaks it after the hyphen rather
    than run it into the count. */
@@ -518,6 +525,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    and 0.01em between letters. In the phone sheet the rows are 44px targets. */
 .db-mark { display:inline-block; width:10px; height:10px; background:var(--db-mark, var(--bar-neutral)); box-shadow:inset 0 0 0 1px var(--db-mark-ring, var(--db-mark, var(--bar-neutral))); vertical-align:-1px }
 #databaseChecklist .db-mark { margin:0 4px 0 -2px }
+.db-mark.db-mark-none { visibility:hidden }
 #databaseChecklist .check-row > span { letter-spacing:-0.01em; word-spacing:-1px }
 #databaseChecklist .check-row > strong { margin-left:-6px }
 .db-mark-corrects { --db-mark:var(--chg-magnitude) }

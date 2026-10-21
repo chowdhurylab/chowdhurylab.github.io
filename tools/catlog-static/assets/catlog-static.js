@@ -8135,8 +8135,12 @@
       // Review result: the four results, "Only human-checked" nested under Accepted. A short line for each is behind the
       // group's "?" (the box stays small, so the options stay in view); each option's full definition is its title, and
       // the Guide has them with the tags, a link away.
+      // Every option with a meaning colour shows its own mark between a neutral box and its words (round 15 polish: the
+      // ticks had worn the status colours, so a result's colour showed only once ticked): a result its status dot, as the
+      // table and its chip do; human-checked its tick; a caution its "!"; a database result its square.
       $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
+        labelHtml: `<span class="option-mark state-mark ${item.className}" aria-hidden="true"></span>${escapeHtml(item.label)}`,
         checked: true, count: `state:${item.value}`, className: item.className,
       }) + (item.value === "accepted" ? checkRowHtml({
         name: "humanChecked", value: "1", id: "humanCheckedFilter",
@@ -8173,7 +8177,8 @@
       if ($("databaseChecklist")) {
         $("databaseChecklist").innerHTML = databaseFilters.map((item) => checkRowHtml({
           name: "database", value: item.value, label: item.chip, title: databaseOptionTitle(item), count: `database:${item.value}`,
-          labelHtml: `${item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>` : ""}${item.spoken
+          // (Corrected earlier, which has no colour, keeps the square's room, so its name lines up with the others')
+          labelHtml: `${item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>` : '<span class="db-mark db-mark-none" aria-hidden="true"></span>'}${item.spoken
             ? `<span class="visually-hidden">${escapeHtml(item.spoken)}</span>` : ""}${escapeHtml(item.label)}`,
           className: [item.parent ? "nested" : "", item.divided ? "after-divider" : ""].filter(Boolean).join(" "),
         })).join("");
@@ -8189,9 +8194,10 @@
             escapeHtml(aboutDefinition(item.title)).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
       }
       if ($("cautionChecklist")) {
+        // Each caution its "!", as the table, the record and its chip show it; No cautions none, its words in line.
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
-          name: "caution", value: item.value, label: item.label, labelHtml: item.labelHtml, title: item.title,
-          count: `caution:${item.value}`,
+          name: "caution", value: item.value, label: item.label, title: item.title, count: `caution:${item.value}`,
+          labelHtml: `<span class="option-mark ${item.value === "none" ? "option-mark-none" : "caution-option-mark"}" aria-hidden="true"></span>${item.labelHtml || escapeHtml(item.label)}`,
         })).join("");
       }
       if ($("aboutCautions")) {

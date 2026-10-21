@@ -15,7 +15,7 @@ colors:
   accent-line: "#aebdb7 (link underlines, control outlines)"
   bpg-navy: "#3C5488 (Accepted)"
   bpg-salmon: "#F39B7F (Not confirmed; ring #c4664a)"
-  bpg-slate: "#8491B4 (Not checked; tick #6a7499)"
+  bpg-slate: "#8491B4 (Not checked)"
   bpg-deep-red: "#DC0000 (Disputed)"
   bpg-cyan: "#4DBBD5 (CatLog's reading of the paper; ring #2DA1BD, text #207286)"
   bpg-green: "#00A087 (agreement: Same number; human-checked text #007664)"
@@ -249,10 +249,12 @@ point and what the user might want"): in view, the filters most visitors use, ea
 Enzyme, organism, substrate (labelled fields, Enzyme first, then EC number, Organism and Substrate; the EC field's
 example "e.g. 3 or 1.1.1" and its title say that a class, a subclass or a full number lists every enzyme under it; the
 only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Measurement type (Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
-confirmed, Not checked and Disputed, each tick in its status colour; "Only
+confirmed, Not checked and Disputed, each after its status dot, the boxes neutral as everywhere in the sidebar (round 15
+polish: one pattern, the option's own mark between box and words, the dot, square or "!" in the square's 10px slot, so
+the words of Review result, Against the databases and Cautions start at one edge); "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
-hyphen, never into its count), its tick green, and ticking it ticks Accepted;
+hyphen, never into its count), and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
 the four results and human-checked in one short sentence each, "Accepted — read
 from the paper by CatLog, ...", a dash after the result and the sentence in lower case after it, never
@@ -291,7 +293,7 @@ lists any value of the record), then under a --line-soft rule Corrected earlier 
 whose earlier version changed values; shown only when a record has it). A 10px square in the result's colour
 (--cmp-same, --cmp-other, --chg-magnitude, --cmp-differs, --cmp-new; the light mint and cyan with a 1px darker ring;
 aria-hidden) stands before each name but
-Corrected earlier's. The counts at rest equal the manifest's summary.database_comparison: records_with_kind
+Corrected earlier's, which keeps its room (its words in line). The counts at rest equal the manifest's summary.database_comparison: records_with_kind
 (corrected, differs, other_label, new), records.every_value_new and records.every_value_confirmed; each option's
 title is its definition, plus "N values in M records." where the manifest counts both. Each result has one name
 (DATABASE_RESULT_NAMES), the same in the option, its chip, a record's result word and its links to records like
@@ -304,7 +306,9 @@ databases: every value", that removes both. The "?" names the databases compared
 sources list, else the databases values_by_database counts, else BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt; each
 name kept whole on one line) and gives each option's definition. In the phone sheet the group's rows are 44px. Address key
 db=corrects,differs,other_label,not_listed,all_not_listed,all_same,earlier; earlier addresses keep their records:
-adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Cautions (grouped as the "!" notes; its "?" gives each caution's definition, the option's title, "label — definition"
+adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Cautions (grouped as the "!" notes, each caution after the
+table's tan "!" disc (No cautions none, its words in line), the title with no dot (round 15 polish: a lone tan dot had
+hung off it in the gutter, read as an "active" sign, whatever was chosen); its "?" gives each caution's definition, the option's title, "label — definition"
 as Review result's does, and links to the Guide's #guide-cautions) and Source database (the databases of Not yet re-read: BRENDA, SABIO-RK, the Open Enzyme Database as "OED", the table's
 tag, read out and on hover in full, UniProt, SKiD, STRENDA DB, earlier paper extractions, shown as "Earlier extractions",
 the table's tag, and read out in full, so a wide font keeps it on one line at 256px, and Source not recorded; ticking one
@@ -546,10 +550,10 @@ colour itself goes on the mark beside the words.
 
 | BPG colour | Meaning (one per colour) | Where it shows | Text / ring (AA on white) |
 |---|---|---|---|
-| navy #3C5488 | Accepted | status dot, Accepted's count (counts band, Stats band), ticks, chips, Stats bars and donut | itself, 7.5:1 |
-| salmon #F39B7F | Not confirmed | status dot (ringed), ticks, chips, Stats bars and donut | ring and tick #c4664a, 3.9:1 (the words are ink) |
-| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | tick #6a7499, 4.6:1 |
-| deep red #DC0000 | Disputed | status dot, ticks, chips, Stats bars | itself, 5.2:1 |
+| navy #3C5488 | Accepted | status dot, Accepted's count (counts band, Stats band), chips, Stats bars and donut | itself, 7.5:1 |
+| salmon #F39B7F | Not confirmed | status dot (ringed), chips, Stats bars and donut | ring #c4664a, 3.9:1 (the words are ink) |
+| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | the words are ink |
+| deep red #DC0000 | Disputed | status dot, chips, Stats bars | itself, 5.2:1 |
 | cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
@@ -705,9 +709,9 @@ coloured dot from the Nature BPG palette (ggsci NPG "nrc") and ink words:
 accepted navy, not confirmed salmon, not checked slate (one colour for Unverified and
 Not reviewed: the word says Not checked for both; its title names which),
 disputed deep red; the light salmon dot carries a 1px darker ring. The
-filter's ticks use the status colour, or a darker form where it is light
-(salmon's ring colour, a darker slate), so a ticked box stands out on white and
-does not look disabled. The filter chips carry the meaning colours only on the marks of the options they name
+sidebar's boxes are all neutral (the accent); each option with a meaning colour shows its own mark between its box and its
+words, a review result its status dot, human-checked its green tick, a caution its "!", a database result its square
+(round 15 polish: the ticks had worn the status colours, so a result's colour showed only once it was ticked). The filter chips carry the meaning colours only on the marks of the options they name
 (Filters, above); the other filters have no mark (the site has one light theme, so there are no dark-mode forms). Tan (--caution-mark, its text --caution) marks cautions. Green (human-checked,
 #007664, 5.6:1 on white and 4.7:1 on its tint, the darker shade of BPG green) is for "human-checked" and, at the colour itself, for a
 database's Same number (one meaning: agreement with a second source):
