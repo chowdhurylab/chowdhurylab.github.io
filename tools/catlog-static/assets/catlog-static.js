@@ -4766,13 +4766,12 @@
     // cosubstrate too (scripts/build-catlog-followup-summary.py mutation_key).
     const distinct = statsCount(mutations.variant_count, variants);
     const same = `the same enzyme, organism, substrate, ${distinct ? "cosubstrate, " : ""}pH and temperature`;
-    const left = [ambiguous ? `${formatInteger(ambiguous)} ${ambiguous === 1 ? "variant record" : "variant records"} whose paper gives several such wild-type records` : "",
-      alone ? `${formatInteger(alone)} with none` : ""].filter(Boolean);
+    const left = [ambiguous ? `${formatInteger(ambiguous)} with several` : "", alone ? `${formatInteger(alone)} with none` : ""].filter(Boolean);
     return {
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
       caption: "Each variant read from the paper against its paper's wild type; these are mutations the papers chose to make, often at catalytic residues, not mutations in general.",
-      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? `: ${statsListText(left)} are left out` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way, and the end bars every change beyond them. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? ` (${statsListText(left)} are left out)` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way and the end bars hold the rest. Values without a recorded unit, or in another unit, are left out.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
   }
@@ -6952,22 +6951,22 @@
     if (organisms.length) {
       biology.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
         body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
-        caption: "Strains count with their species.", rules: "Bars are drawn against the most common organism." });
+        caption: "Strains count with their species." });
     }
     if (ecNumbers.length) {
       biology.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
         body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
-        caption: "Each EC number with the enzyme name its records use most.", rules: "Bars are drawn against the most common EC number." });
+        caption: "Each EC number with the enzyme name its records use most." });
     }
     if (v2Organisms.length) {
       biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Most common organisms among records read from the paper", kind: "Table",
         body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", part: "catlog" }),
-        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Strains count with their species. Bars are drawn against the most common organism." });
+        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Strains count with their species." });
     }
     if (v2EcNumbers.length) {
       biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "Most common EC numbers among records read from the paper", kind: "Table",
         body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", part: "catlog" }),
-        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Each EC number with the enzyme name its records use most. Bars are drawn against the most common EC number." });
+        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Each EC number with the enzyme name its records use most." });
     }
     parts.push({ key: "catalog", title: "What is in the catalog", items: content });
     // Biology in the supplement: the tables, then the single substitutions and the kinds of variant read from the paper.
