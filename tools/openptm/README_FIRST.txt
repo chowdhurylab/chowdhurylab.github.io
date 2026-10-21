@@ -65,6 +65,35 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 35
+- Three new primary originals received selected relevant reads: human
+  selenocysteine lyase, pear PAL enzymes and URM1 in liver cancer cells.
+  A previously inaccessible mitochondrial S-guanylation original was recovered
+  and read for the first time. These four original reads address four search
+  families outside round 34; the recovered source is counted separately.
+- The lyase paper compares protein substitutions and substrates, not measured
+  selenium-modified states. The PAL kinetics compare isoenzymes without a
+  characterized difference in MIO formation. The URM1 cellular values compare
+  expression backgrounds, not covalently urmylated target states.
+- The recovered paper separates modification-band statistics from cellular
+  pore-opening responses. Its HSP mechanism remains proposed; no eligible
+  printed target-state functional pair was established in the inspected scope.
+- Three earlier originals were rechecked and retain their holds. They are not
+  new-paper credit. Seven access-only leads and one metadata-only lead are
+  also separate from original-body reads. Independent review corrected the
+  initial paper accounting before publication.
+- Zero numerical comparisons or entries qualified. No graph values, missing
+  arms, zeros, uncertainty or sample sizes were reconstructed. These selected
+  scopes are not an exhaustive review; no supplement or figure pixels were read.
+- Data remain 253 comparisons, 307 entries and 92 papers across 87/111
+  numerical families, with 24 gaps. The current interface, embedded scientific
+  data and original audit workbook are unchanged.
+- New originals:
+  https://doi.org/10.1371/journal.pone.0030581
+  https://doi.org/10.1186/s12870-023-04586-0
+  https://doi.org/10.2147/OTT.S258843
+  Recovered original: https://doi.org/10.1089/ars.2012.4606
+
 Paper reading, round 34
 - Four genuinely new primary papers received selected relevant reads in
   families outside round 33: peptidoglycan anchoring (PMIDs 10103227,
