@@ -87,20 +87,24 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
 S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
    right?)"): the figures and tables that do not tell the main story, last before How these numbers are counted, in
-   five groups (Quality: Human review by kind, Approved values read from the paper again; What is in the catalog: Read
+   five groups, each listing its figures first, then its tables (fix pass: Figure S7 had stood after two tables)
+   (Quality: Human review by kind, Approved values read from the paper again; What is in the catalog: Read
    from the paper and not yet re-read, Values per paper,
-   Papers by parameter, What the records contain, Wild type and variants; Organisms, enzymes and variants (Biology
-   until round 14's polish): the four top-ten tables, Single
-   substitutions, Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as printed,
-   Cautions on values; Against the databases: the same by enzyme class, Results by database, Paired values by
-   database, Corrections by cause and database, Corrections on records not yet re-read, Entries replaced by reading
-   the paper). Figures and tables are numbered apart from the main ones and from each other, in this reading order
-   ("Figure S1", "Table S1"); a figure the snapshot cannot draw takes no number. Each item is one closed line on a
+   Papers by parameter, What the records contain; Organisms, enzymes and variants (Biology
+   until round 14's polish): Single substitutions, the four top-ten tables, Wild type and variants (with the
+   variants since the fix pass), Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as
+   printed, Cautions on values; Against the databases: the same by enzyme class, Results by database, Corrections on
+   records not yet re-read, Entries replaced by reading the paper, Paired values by database, Corrections by cause and
+   database). Figures and tables are numbered apart from the main ones and from each other, in the order the list
+   shows them ("Figure S1", "Table S1"); a figure the snapshot cannot draw takes no number. Each item is one closed line on a
    hairline list (a muted "+", its number in a muted column, its title in accent; open, "−" and the title in ink 600):
    a `<details>` whose summary holds the item's heading (h4, under the group's h3), the figure under it with its
    caption "Figure S1. ..." and no heading of its own. A figure drawn half-width in the main parts keeps to 760px; a
    wide one takes the column, with no indent, so Values by enzyme class keeps the x of Value ranges' shared log axis.
-   Every item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2 (statsAddressTarget): it
+   Every item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2 (statsAddressTarget), and
+   an item a visitor opens (a click on, or Enter or Space in, its summary) puts it in the address bar in place
+   (replaceState; closing it goes back to #stats-supplement; printing or a script opening items leaves the address
+   alone), so an open item can be copied and sent: the address
    opens the item and scrolls to it, also when the page opens there, and a link to it focuses its summary (Enter or
    Space closes it again). The older #stats-biology opens What is in the catalog (its enzyme classes) and
    #stats-cautions the Cautions table. "On this page" ends with "S Supplementary figures and tables"
@@ -274,9 +278,11 @@ its accessible description; no figure or table has a data line. The parts' figur
     database, CSV; rows and size from the manifest, saved as catlog-<date>-database-comparison.csv.gz), hidden
     without it.
   - Results by database (`values_by_database`): a 100% bar per database, the
-    values from papers it lists beside it under the heading Values, "+ N values from papers X does not list" under it, never in it. Its own
-    not-listed kinds in the database's words (Lists other values only, Lists none of this parameter, Value in no
-    database), never the Why not listed labels, which say what all the databases list. A database that lists none of
+    values from papers it lists beside it under the heading Values, "N values from papers X does not list" under it
+    (no leading "+", the glyph that opens every closed item), never in it. Its own
+    not-listed kinds in the database's words (Lists other values only in cyan hatching, Lists none of this parameter a
+    light cyan, Value in no database Not in the databases' own cyan fill: never three cyan tints), never the Why not
+    listed labels, which say what all the databases list. A database that lists none of
     the papers read is named in a note under the figure and under Corrections by cause and database ("UniProt lists
     none of these papers."), so a missing bar or column is explained where it is missing, with no
     empty bar and no column in
