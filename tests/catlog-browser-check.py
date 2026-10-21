@@ -210,7 +210,7 @@ def check_guide(driver, wait):
     # review), their numbers drawn by CSS.
     steps = driver.execute_script("return [...document.querySelectorAll('#guide-how-read .guide-flow-name')].map(e => e.textContent)")
     assert steps == ["Read", "Check", "Compare", "Review"], steps
-    assert "CatLog re-verifies published enzyme kinetics" in guide_heading_text(driver)
+    assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "back from the papers the enzyme databases cite" in guide_heading_text(driver)
     assert driver.execute_script(GUIDE_PICTURES_JS) == [], driver.execute_script(GUIDE_PICTURES_JS)
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("independent", "AI run", "Checks pending", "Exporter", "exporter", *DROPPED_WORDING):
@@ -2298,7 +2298,7 @@ def check_team(driver, browser, url):
     for word in ("Claude", "Codex", "Anthropic", "OpenAI", "independent", "Dr.", "Professor"):
         assert word not in text, f"Team says {word}"
     # CatLog re-verifies published values: no agent downloads, fetches or collects papers (round 13).
-    assert "re-verifies published enzyme kinetics" in text and not re.search(r"(?i)download|fetch|collect", text), text[:600]
+    assert "reads enzyme kinetics back from the papers the enzyme databases cite" in text and not re.search(r"(?i)download|fetch|collect", text), text[:600]
     wide = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide")
     assert wide.is_displayed()
     # Supantha also stands at Website (he builds the website): a second chip with its own line to that station, lit with
@@ -3500,7 +3500,7 @@ def check_layout(driver, browser, url, route_label):
         band = box(".snapshot-band")
         # One line on what CatLog is opens the band (round 13: the visitors' "what is this?"), then the card.
         lead = box(".snapshot-lead")
-        assert lead["height"] == 18 and "re-checked against their papers" in driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").text, lead
+        assert lead["height"] == 18 and re.search(r"; [\d,]+ of [\d,]+ read again from their papers so far\.", driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").text), lead
         assert 72 <= band["height"] - lead["height"] - 6 <= 78, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)

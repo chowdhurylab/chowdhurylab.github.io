@@ -550,12 +550,12 @@ washes, reference in disclosures (tools/catlog-static/DESIGN.md, Guide).
 Team (#team, in catlog-latest.html like the Guide; its own view, never the
 record index) is "People behind CatLog": one plain line, then the loop the
 user approved. The words say what CatLog is (the user, 2026-10-18: "we are in the verification scientific progress,
-not sending AI to get paper business"): CatLog re-verifies published enzyme kinetics; its agents find the paper each
-database value cites, read the values in it and check each one against the paper; people review samples. The line
-(round 14, shorter): "CatLog re-verifies published enzyme kinetics. AI agents read the papers that enzyme databases
-cite and check each value against the paper. People review samples; what they find improves the rules. So far 61,919
-of 178,676 records are re-read." (the last sentence from the manifest, renderRereadLines: never "each database value"
-as if every one were done). The caption starts "The loop runs clockwise from cited papers." The method says "automated checks" and "found
+not sending AI to get paper business"): CatLog reads published enzyme kinetics back from their papers; its agents find
+the paper each database value cites, read the values in it and check each one against the paper; people review
+samples. The line (round 14, shorter, one verb as the labels say: read from the paper): "CatLog reads enzyme kinetics
+back from the papers the enzyme databases cite. AI agents read and check each value; people review samples, and what
+they find improves the rules. 75,000 of 185,804 records are read from the paper so far." (the last sentence from the
+manifest, renderRereadLines: never "each database value" as if every one were done). The caption starts "The loop runs clockwise from cited papers." The method says "automated checks" and "found
 automatically", never "code", as the README does. No agent is a
 "download" agent and nothing says papers are fetched or collected (the Guide alone says, where needed, that papers come
 through the library's licensed and open-access routes). The loop: a racetrack of stations Cited papers (key papers), AI

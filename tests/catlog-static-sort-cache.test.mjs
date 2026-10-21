@@ -1452,8 +1452,10 @@ assert.doesNotMatch(guideHtml, /guideMethodLead|guideMethodMore|guide-check-grid
   const key = anatomy.match(/<div class="guide-anatomy-key">([\s\S]*?)<\/div>/)[1];
   assert.equal((anatomy.match(/<div class="guide-anatomy-part[ "]/g) || []).length, (key.match(/<li[ >]/g) || []).length);
 }
-// The framing (round 13): CatLog re-verifies published values; never a download agent or papers in bulk.
-assert.match(guideHtml, /CatLog re-verifies published enzyme kinetics/);
+// The framing (round 13; round 14's one verb, read from the paper): CatLog reads published values back from their papers;
+// never a download agent or papers in bulk.
+assert.match(guideHtml, /CatLog reads enzyme kinetics \(<i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub>, <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\) back from the papers the enzyme databases cite\./);
+assert.doesNotMatch(indexHtml, /re-verifies|re-checked against their papers/);
 assert.doesNotMatch(guideHtml, /download agent|in bulk|mass download/i);
 assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);
 // Cautions (round 14: one row per Cautions filter group, as the sidebar names it, holding its cautions by the names shown

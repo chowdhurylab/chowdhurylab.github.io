@@ -110,8 +110,10 @@ so the search box keeps room for its placeholder. Tabs are 14px/500, the current
 one 600 with a 2px accent rule under it.
 
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
-quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is ("Enzyme kcat, Km and kcat/Km
-values, re-checked against their papers.") and links the Guide ("How it works →"); one line from 641px, two on
+quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is and how far it has come ("Enzyme kcat, Km
+and kcat/Km values; 75,000 of 185,804 read again from their papers so far.", the counts from the manifest,
+renderRereadLines; ", read again from their papers" before they arrive or without them; round 14: never "re-checked
+against their papers", which 60% of the records are not yet) and links the Guide ("How it works →"); one line from 641px, two on
 phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a white card with a 1px --line hairline and a 4px radius (no glow, wash or shadow) holds the four
 key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted, every label alike)
 over its number (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number
@@ -1138,7 +1140,8 @@ DESIGN.md, "Stats".
 
 ## Team
 
-"People behind CatLog" (#team): one line (CatLog re-verifies published enzyme kinetics), then the loop of stations
+"People behind CatLog" (#team): one line (CatLog reads enzyme kinetics back from the papers the enzyme databases cite),
+then the loop of stations
 (Cited papers, AI reading, AI check, AI audit, Human check, Rules updated) with AI agents above
 and people below by first name (Supantha also above Website; Vaishnavey at AI critique, which feeds Rules updated from
 the lower-left corner, round 14; Mohammad on the people's row), live numbers from the manifest, nothing moving round
@@ -1171,8 +1174,9 @@ reference data such as citations and database versions, and headings): round 13 
 prose) and 3,043 with every disclosure open (1,443 prose); round 14 has 972 in view (143 prose) and 1,748 open (488
 prose), and the page is 4,213px tall at 1440px instead of 5,418px.
 
-The introduction (h1 "Using CatLog"): "CatLog re-verifies published enzyme kinetics (kcat, Km and kcat/Km) against their
-papers. AI agents read each value; people review samples. So far 75,000 of 185,804 records are re-read." (the counts from
+The introduction (h1 "Using CatLog"): "CatLog reads enzyme kinetics (kcat, Km, kcat/Km) back from the papers the enzyme
+databases cite. AI agents read and check each value; people review samples. 75,000 of 185,804 records are read from the
+paper so far." (one verb, read from the paper, as the labels say; round 14; the counts from
 the manifest, renderRereadLines, shared with Team) and, in small type, "By the Chowdhury Lab, Iowa State University."
 (CatLog-27k, the CatRange paper's training set, is named in Cite). Never a "download" agent or papers collected in bulk.
 Then "On this page": the sections as a wrapped row of plain links, in this order and with these addresses (other pages

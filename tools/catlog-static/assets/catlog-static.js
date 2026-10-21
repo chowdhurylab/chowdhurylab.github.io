@@ -5524,13 +5524,18 @@
   // human-checked records are counted.
 
   // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
-  // " So far 61,919 of 178,676 records are re-read.", from the manifest; hidden without the counts.
+  // " 75,000 of 185,804 records are read from the paper so far.", from the manifest; hidden without the counts. One verb
+  // everywhere (round 14): read from the paper, as the labels say; Browse's lede says how far too ("Enzyme kcat, Km and
+  // kcat/Km values; 75,000 of 185,804 read again from their papers so far."), never that every value was re-checked.
   function renderRereadLines() {
     const total = Number(manifest.total_rows || 0);
     const read = statsCount(statsOverview(total)?.from_paper?.records, total || Infinity);
     document.querySelectorAll?.("[data-reread-line]").forEach((line) => {
-      line.innerHTML = read !== null && total ? ` So far ${formatInteger(read)} of ${formatInteger(total)} records are <span class="nowrap">re-read</span>.` : "";
+      line.innerHTML = read !== null && total ? ` ${formatInteger(read)} of ${formatInteger(total)} records are read from the paper so far.` : "";
       line.hidden = !(read !== null && total);
+    });
+    document.querySelectorAll?.("[data-reread-lede]").forEach((lede) => {
+      if (read !== null && total) lede.textContent = `; ${formatInteger(read)} of ${formatInteger(total)} read again from their papers so far`;
     });
   }
 
@@ -7198,7 +7203,7 @@
   // it is shown, like Stats; never loads the record index. No model or vendor names, first names only, no titles.
   // The station where audit agents re-check samples of the catalog is "AI audit" (2026-10-15: "CatLog" named the
   // whole site as a step of its own loop); its key stays catlog (the layouts, actors and the stylesheet use it).
-  // CatLog re-verifies published values (round 13): the loop starts at the paper a database value cites ("Cited papers",
+  // CatLog reads published values back from their papers (round 13): the loop starts at the paper a database value cites ("Cited papers",
   // key papers), never at collecting papers. AI critique (round 14, the user 2026-10-20) is where a person examines the
   // AI agents' readings for systematic errors; it stands off the loop and feeds Rules updated.
   const TEAM_STATIONS = {
