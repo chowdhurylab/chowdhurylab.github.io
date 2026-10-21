@@ -183,7 +183,8 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // A number stays with its unit, and a range with its power of ten, on one line.
   const cautionsHtml = pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0];
   assert.ok(cautionsHtml.includes("exactly 0&nbsp;&deg;C"));
-  assert.ok(cautionsHtml.includes('<span class="nowrap">1&ndash;3&nbsp;&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>'));
+  // (catalase's kcat is about 4 × 10⁷ s⁻¹: "a few × 10⁷", never a range below it; round 14's fix pass)
+assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, reach a few <span class="nowrap">&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>'));
   assert.doesNotMatch(cautionsHtml, /\d (?:&deg;C|M\b|nM\b|s<sup>)/);
   // The release tool writes both descriptions: its earlier wording, or the site's words (records, review results, no
   // serial comma) once it uses them.
