@@ -65,6 +65,26 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 37
+- Three papers new to this reading record received selected relevant reads
+  on diphthamide, outside round 36's families: eEF2-p53 binding (2024),
+  chaperone-network links (2025), and eEF2 folding (2024).
+- The p53 paper reports increased eEF2 association after DPH1 depletion.
+  Its linked source-data workbook could not be verified through the available
+  routes, so no plotted value or normalized reference was reconstructed.
+- The other selected sections give network connections, protein abundance
+  or sequence-variant effects, without a verified numerical PTM-state effect.
+  One plant study remains access-only. Prior papers and discovery searches
+  are separate from the three new original reads.
+- No numerical additions qualified. Data remain 253 comparisons, 307 entries,
+  92 papers and 87/111 numerical families; 24 gaps remain in this selection.
+  Sources and file custody were independently checked. The interface and
+  verified data are unchanged; this was a selected reading, not a full review.
+  Sources: https://doi.org/10.1038/s41467-024-47670-1
+           https://doi.org/10.1002/1873-3468.15095
+           https://doi.org/10.1371/journal.pgen.1011508
+  Access-only: https://doi.org/10.1093/plphys/kiaf128
+
 Paper reading, round 36
 - Four new primary originals received selected relevant reads outside round 35:
   three on LC3 interactions and membrane organization, and one on epidermal
