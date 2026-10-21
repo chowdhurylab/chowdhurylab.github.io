@@ -1782,6 +1782,9 @@ def check_stats_insights(driver, browser, overview):
         assert drawn["classes"] == [[f"ec_{item['class']}", sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))]
                                     for item in by_class if sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))], drawn["classes"]
     if browser == "chrome" and grid and drawn["map"]["dots"]:
+        # (a headless window without the system's focus gets no focus events from a scripted focus in some Chrome builds,
+        # Chrome for Testing 143 among them: the page is told it has the focus, as a visitor's window has)
+        driver.execute_cdp_cmd("Emulation.setFocusEmulationEnabled", {"enabled": True})
         link = driver.find_element(By.CSS_SELECTOR, "[data-figure='kcat-km'] .stats-map-classes tbody tr a.stats-link")
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].focus()", link)
         lit = driver.execute_script("""const figure = document.querySelector('[data-figure="kcat-km"]');
