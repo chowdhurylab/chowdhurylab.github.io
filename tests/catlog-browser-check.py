@@ -2992,7 +2992,7 @@ def check_filters(driver, browser, url, route_label):
                 assert len(digits) <= 4 or "." not in text, (text, title)
                 assert title, text
         # 9. Each chip wears a colour (a 3px bar and a quiet tint keeping its words at 4.5:1 or more): a review result's or
-        # database result's own colour, a caution's amber, else the colour of the dot beside its group in the sidebar;
+        # database result's own colour, a caution's tan, else the colour of the dot beside its group in the sidebar;
         # Undo, first in the bar, restores the filter set before the last change (Clear all too), by mouse and by
         # keyboard, keeps its place and is dimmed when there is nothing left to undo.
         undo_results = check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment)

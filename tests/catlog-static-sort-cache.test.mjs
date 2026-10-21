@@ -3938,7 +3938,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify", proof_lines: [line("kcat"), line("Km")] });
   assert.doesNotMatch(element("detailContent").innerHTML, /AI audit/, "no audit, no line");
 }
-// A printed unit 1000-fold from the unit CatLog used: an amber caution on that value, in place of the grey hint. kcat ÷ Km
+// A printed unit 1000-fold from the unit CatLog used: a tan caution on that value, in place of the grey hint. kcat ÷ Km
 // confirms the unit when only one value was read that way; otherwise the note says it cannot.
 {
   const v2 = (overrides) => row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name", ...overrides });
@@ -3952,7 +3952,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       proofLine("kcat/Km", "55.06", "µM^-1 min^-1", "converted by code, printed unit read as mM^-1 min^-1")] });
   assert.match(confirmedHtml, /The paper prints µM⁻¹ min⁻¹; CatLog uses mM⁻¹ min⁻¹, the unit in which the printed kcat\/Km \(55\.06\) agrees with kcat ÷ Km \(54\.41\)\./);
   assert.match(confirmedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"[^>]*aria-label="kcat\/Km: printed unit differs\. Show the note\."/);
-  // The value carries the "!" (its amber note says which unit and why); the grey note says only that code converted it.
+  // The value carries the "!" (its tan note says which unit and why); the grey note says only that code converted it.
   assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
   assert.match(confirmedHtml, /<td class="vt-printed">55\.06 µM<sup>−1<\/sup> min<sup>−1<\/sup>/);
   assert.doesNotMatch(confirmedHtml, /converted by code/, "As printed shows each printed cell; no line repeats the method");
@@ -3965,7 +3965,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
   assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores mM⁻¹ s⁻¹, 1000-fold apart/);
   assert.doesNotMatch(bothHtml, /AI audit/, "no audit, no audit sentence");
-  // An AI audit of the value ends its note with what it found (0f2107bac841d82f); the note stays amber.
+  // An AI audit of the value ends its note with what it found (0f2107bac841d82f); the note stays tan.
   const auditedHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""),
       { ...proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"), audit_date: "2026-10-12", audit_result: "kept" },
@@ -3988,7 +3988,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
   const methodHtml = element("detailContent").innerHTML;
   assert.doesNotMatch(methodHtml, /values stored as printed|<dt>Method<\/dt>/);
-  assert.match(methodHtml, /The paper prints μM; CatLog stores mM/, "the amber notes say which values are stored in another unit");
+  assert.match(methodHtml, /The paper prints μM; CatLog stores mM/, "the tan notes say which values are stored in another unit");
   // The same prefix read differently (M^-1 s^-1 for m^-1 s^-1) keeps the plain grey hint.
   const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
@@ -3996,7 +3996,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(plainMetricNames(sameHtml), /<li>kcat\/Km: printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
-// when every one is more than 2-fold from kcat ÷ Km, an amber note says so.
+// when every one is more than 2-fold from kcat ÷ Km, a tan note says so.
 {
   const merged = row({ record_key: "listed", kcat: 7.333, km: 0.5, kcat_over_km: 14.666, kcat_display: "7.333", km_display: "0.5",
     kcat_over_km_display: "14.666", kcat_over_km_origin: "calculated", kcat_unit: "s^(-1)", km_unit: "mM",
@@ -5678,7 +5678,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.browseHash(), "", "every review result ticked");
 
   // Each active filter's chip wears a colour (tone-<tone>); its words stay. An option that has a colour on the page wears
-  // it (a review result its status colour, human-checked green, a database result its square's, a caution amber); the
+  // it (a review result its status colour, human-checked green, a database result its square's, a caution tan); the
   // other groups wear the colour of the dot beside their group in the sidebar. Undo (before Clear all) restores the
   // filter set before the last change, Clear all too; its name says what it gives back; the sort comes back only with the
   // Clear all that reset it (the user, 2026-10-15: "can the filters be different color or sth so that its user friendly

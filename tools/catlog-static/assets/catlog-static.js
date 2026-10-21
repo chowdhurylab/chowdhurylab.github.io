@@ -110,9 +110,6 @@
   let statsRefitOnNarrow = false;
   let statsRefitOnResize = false;
   let statsPrintMethod = false;
-  // The headline band's numbers fade and rise once, the first time Stats is drawn (is-entering; never under reduced
-  // motion, which the stylesheet decides).
-  let statsBandEntered = false;
   // A viewer's choice on a desktop screen that differs from the default for its width: "1" collapsed, "0" open (a
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
@@ -472,11 +469,7 @@
   function followsReviewRules() {
     return Array.isArray(manifest?.summary?.distributions?.accepted_basis);
   }
-  const NO_PAPER_NOT_ACCEPTED = "No PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
   const NO_PAPER_RECORD_NOTE = "The earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
-  function noPaperDefinition() {
-    return followsReviewRules() ? NO_PAPER_NOT_ACCEPTED : identityOnlyTrustNote;
-  }
   // The Guide's legend says Accepted in a few words (round 14, the user: a short Guide); Browse's "?" and the badges keep
   // stateDescriptions. The review rules the snapshot follows decide it.
   function guideAcceptedDefinition() {
@@ -664,7 +657,7 @@
     return `The printed numbers agree (${kcat} ÷ ${km} = ${numberText(quotient, { figures })}) only if ${units}.`;
   }
 
-  // A small amber "!" beside the value; its words are in the tooltip, the accessible name and hidden text.
+  // A small tan "!" beside the value; its words are in the tooltip, the accessible name and hidden text.
   function valueFlagBadgeHtml(flags, field, row) {
     const matched = [...flags].filter((flag) => valueIntegrityFlags[flag]?.field === field);
     if (!matched.length) return "";
@@ -4077,7 +4070,7 @@
   // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre. Each slice
   // has one fill, its colour at 60% with a 1px opaque outline (design spec section 2), so every point of a slice reads as
   // its colour (a fade to the tint made navy and slate alike near the hole); pointing at a slice (or its row in the
-  // legend table, data-hl) lights it with a soft glow and gives its exact count.
+  // legend table, data-hl) outlines it in its own colour, dims the others and gives its exact count.
   function statsDonut(parts, total, { title, unit = "records" } = {}) {
     const cx = 100, cy = 100, outer = 88, inner = 56, full = 2 * Math.PI;
     const point = (radius, angle) => `${+(cx + radius * Math.sin(angle)).toFixed(3)} ${+(cy - radius * Math.cos(angle)).toFixed(3)}`;
@@ -4572,7 +4565,7 @@
   // of quarter decades and drawn as a density map on log axes whose decades are one size, so a line of equal kcat/Km
   // runs at 45°. Grey cells (darker = more records, on a log scale; each cell's count in its tooltip line), thin lines
   // of equal kcat/Km every hundredfold (labelled in M⁻¹ s⁻¹ where they leave the plot), the diffusion limit (10⁵–10⁶
-  // mM⁻¹ s⁻¹, i.e. 10⁸–10⁹ M⁻¹ s⁻¹) as a light amber band (the caution's colour: a value far beyond it, above 10¹⁰
+  // mM⁻¹ s⁻¹, i.e. 10⁸–10⁹ M⁻¹ s⁻¹) as a light tan band (the caution's colour: a value far beyond it, above 10¹⁰
   // M⁻¹ s⁻¹, carries the above-diffusion-limit caution; the facts beside the map say so), and each enzyme
   // class's median kcat and median Km as a dot in its class colour. Beside the map: the records (a link to them when
   // Browse finds the same number), the median kcat ÷ Km, the records at the limit or above, and the class medians (a row
@@ -6573,7 +6566,7 @@
     const review = reviewFacts(quality.review?.v1);
     const match = v2MatchFacts(quality);
 
-    // 1. At a glance: the headline band. Line 1 (32px, the key numbers in accent ink with a soft glow): records, accepted,
+    // 1. At a glance: the headline band. Line 1 (32px, the key numbers in their meaning colours, no glow): records, accepted,
     // read from the paper and the human review's headline (99.9%, no value disputed on 2,767 of 2,770 entries from the
     // earlier version (431 papers)); line 2 (20px): the catalog's scope. A number Browse can filter links there.
     const reviewHeadline = review ? { value: review.share, note: reviewHeadlineText(review) + reviewHeadlineTail(review),
@@ -6600,14 +6593,9 @@
       ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
       : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${item.noteHtml || escapeHtml(item.note)}</small>` : ""}</dd></div>`;
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
-    const entering = !statsBandEntered;
-    statsBandEntered = true;
-    $("statsTotals").innerHTML = `<section class="stats-band${entering ? " is-entering" : ""}" id="stats-glance" aria-labelledby="statsPartGlanceTitle">
+    $("statsTotals").innerHTML = `<section class="stats-band" id="stats-glance" aria-labelledby="statsPartGlanceTitle">
       <h2 id="statsPartGlanceTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">1</span><span>At a glance</span></h2>
       ${totalsHtml(main, "stats-totals-main")}${scope.length ? totalsHtml(scope, "stats-totals-scope") : ""}</section>`;
-    // Once the numbers have risen (the last starts at 270ms and takes 900ms), the band drops is-entering, so Stats shown
-    // again later does not replay it.
-    if (entering) window.setTimeout?.(() => $("statsTotals")?.querySelector?.(".stats-band")?.classList?.remove("is-entering"), 1500);
 
     // The parts after the band, each a list of figures (half width, two to a row from 1280px; `wide` ones take the row;
     // `stack` puts two in one column) or ready blocks (`html`).
@@ -11137,9 +11125,9 @@
     return ` An AI audit${date ? ` on ${date}` : ""} re-checked it against the paper${verdict}.`;
   }
 
-  // Values whose printed concentration unit (µM) is not the unit CatLog read the number in (mM): an amber note each. When
+  // Values whose printed concentration unit (µM) is not the unit CatLog read the number in (mM): a tan note each. When
   // only one value was read that way and the record has a printed kcat, Km and kcat/Km, kcat ÷ Km shows which unit is
-  // right; otherwise the note says it cannot. An AI audit of the value adds what it found; the note stays amber.
+  // right; otherwise the note says it cannot. An AI audit of the value adds what it found; the note stays tan.
   function unitPrefixCautions(summary, proof) {
     if (!proof) return [];
     const metricOf = (line) => (v2MetricLabels[line.metric] || [""])[0];
@@ -11218,7 +11206,7 @@
   // has no As printed column (a column of dashes would read as "nothing printed"), and a line under the table points to
   // its earlier review's notes under Paper when it has them. Under the table: a line for each value a database lists
   // another number for (pointing to its note under Against the databases), the kcat/Km its sources list, each caution
-  // once (amber, with the "!" the value carries), the grey notes (how code converted a unit, calc.), then each line
+  // once (tan, with the "!" the value carries), the grey notes (how code converted a unit, calc.), then each line
   // quoted from the paper once. Facts only (where, what was printed, how it was converted), never reasoning.
   const VALUE_FIELDS = [
     ["kcat", "<i>k</i><sub>cat</sub>"],
@@ -11248,7 +11236,7 @@
   // unit read as 10³ M⁻¹ s⁻¹." That code converts every printed number into the catalog's units is the method, said by
   // the Guide's "How CatLog reads a value": the As printed column shows each printed cell beside the stored value, so a
   // changed unit shows there, and no line repeats "converted by code" on every record. A value with a printed-unit caution
-  // says the rest in its amber note.
+  // says the rest in its tan note.
   function conversionNotesHtml(proof, unitCautions) {
     if (!proof) return [];
     const own = [];

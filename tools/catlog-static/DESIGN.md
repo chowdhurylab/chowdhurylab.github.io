@@ -1186,7 +1186,7 @@ link to them; keep every one):
   green), Marks beside a value (tick, "!", calc., dash; side by side on phones too), Against the databases (the five
   squares in Browse's colours, shown with the comparison) and Filters in use (the chips as Browse draws them, each in
   its group's colour, across both columns, and one line: "× removes a filter; Undo brings back the last change."). Then
-  Cautions (#guide-cautions, an h3): one line ("An amber ! beside a value flags a possible problem, which the record
+  Cautions (#guide-cautions, an h3): one line ("An ! beside a value flags a possible problem, which the record
   explains."), then one table, a row per Cautions filter group as the sidebar names it (kcat/Km mismatch, Unit or
   magnitude error, No unit given, Temperature questionable), holding its cautions by the names shown beside a value, each
   with what it means in brackets; Unit or magnitude error says once "The unit or the value may be wrong." (above

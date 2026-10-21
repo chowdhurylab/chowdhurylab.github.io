@@ -516,7 +516,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* Active filters: Undo first (dimmed with nothing to undo: it keeps its place however many chips there are, so pressing
    it again never lands on a chip or Clear all), then one removable chip each and Clear all. Each chip has a
    3px bar at its left, a quiet tint and a lighter line in its colour: a review result's or database result's own colour,
-   a caution's amber, else the colour of the dot beside its group in the sidebar; its words still say what it is
+   a caution's tan, else the colour of the dot beside its group in the sidebar; its words still say what it is
    ("Source: Read from the paper"). */
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
 /* A chip's colour (and the sidebar dot's): --group, with a 12% tint behind the words (text 13:1 or more, the × 4.5:1)
@@ -617,7 +617,7 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 /* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
 .c-substrate.has-note .clamp-2 { max-height:17px; -webkit-line-clamp:1 }
 .condition-note { display:block; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
-/* A temperature caution (the table has no temperature column): the amber "!" with its short words, T questionable, opens
+/* A temperature caution (the table has no temperature column): the tan "!" with its short words, T questionable, opens
    the line under the substrate, before any other note; in a Substrate column at its narrowest the words end in "…". */
 .condition-note .value-flag { display:inline-flex; max-width:100%; align-items:center; gap:3px; width:auto; height:auto; background:none; box-shadow:none; color:var(--caution); vertical-align:top }
 .condition-note .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text) }
@@ -1461,7 +1461,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-range-count { margin:6px 0 0; font-size:var(--fs-12); color:var(--muted) }
 /* kcat against Km: a density map on log axes whose decades are one size (so a line of equal kcat/Km runs at 45°): grey
    cells, darker for more records; thin lines of equal kcat/Km every hundredfold, labelled where they leave the plot;
-   the diffusion limit as a light amber band with dashed amber edges (amber: a value beyond it carries a caution); each
+   the diffusion limit as a light tan band with dashed tan edges (tan: a value beyond it carries a caution); each
    enzyme class's median as a dot in its class colour, ringed white. Beside it the facts and the class medians, a row
    lighting its dot; below 1024px the facts go under the map. */
 .stats-map { display:grid; grid-template-columns:minmax(0,560px) minmax(260px,1fr); gap:24px 48px; align-items:start }
