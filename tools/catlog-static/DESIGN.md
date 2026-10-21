@@ -9,9 +9,10 @@ colors:
   muted: "#5c6865"
   line: "#d3dcd7"
   line-soft: "#e7ece9"
-  accent: "#245f58"
-  accent-hover: "#1b4a44"
-  accent-tint: "#e8f2ef"
+  accent: "#172120 (ink: links with a quiet underline, buttons, the focus ring, selection; no data meaning)"
+  accent-hover: "#3d4845"
+  accent-tint: "#eef1f0"
+  accent-line: "#aebdb7 (link underlines, control outlines)"
   bpg-navy: "#3C5488 (Accepted)"
   bpg-salmon: "#F39B7F (Not confirmed; ring #c4664a)"
   bpg-slate: "#8491B4 (Not checked; tick #6a7499)"
@@ -41,7 +42,7 @@ colors:
   change-magnitude: "#E64B35"
   change-precision: "#91D1C2"
   bar-neutral: "#7d8885"
-  filter-groups: "the accent (#245f58): the filters with no meaning colour"
+  filter-groups: "the accent (ink #172120): the filters with no meaning colour"
   enzyme-class-1: "#E64B35"
   enzyme-class-2: "#4DBBD5"
   enzyme-class-3: "#00A087"
@@ -112,12 +113,15 @@ The counts band (round 13) is the first thing a visitor sees: a focal point like
 quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is ("Enzyme kcat, Km and kcat/Km
 values, re-checked against their papers.") and links the Guide ("How it works →"); one line from 641px, two on
 phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a white card with a 1px --line hairline and a 4px radius (no glow, wash or shadow) holds the four
-key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted) over its number
-(600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number wears the colour
-its meaning has across the site (Type And Color, "Colour meanings"): Records the page's ink (--text), Accepted the
-status navy (--st-accepted) with the status dot before its label, Read from the paper the darker BPG cyan
-(--src-paper-ink; its label too, as a link), Human-checked the darker BPG green (--checked) with the tick and a green
-label; no text-shadow. Beside them, behind a 1px --line-soft rule,
+key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted, every label alike)
+over its number (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number
+wears the colour its meaning has across the site (Type And Color, "Colour meanings") and the colour is otherwise only on
+the mark before its label (round 14: the teal accent, a cyan label and a green label had read as one teal family):
+Records the page's ink (--text), Accepted the status navy (--st-accepted) with the status dot, Read from the paper the
+darker BPG cyan (--src-paper-ink) with Read from the paper's mark, a BPG cyan square ringed #2DA1BD (the same mark goes
+before the table's "from paper" tag, the record's, its chip, its Source option and the Guide's legend), Human-checked
+the darker BPG green (--checked) with the green tick; no text-shadow. Stats' band does the same for Accepted and Read
+from the paper. Beside them, behind a 1px --line-soft rule,
 the With counts: three 12/16px lines (kcat, Km, kcat/Km, each count right-aligned under the other; "With" heads the
 first line), 500 in --text-2, as tall as a label and its number, so the key numbers lead; the snapshot date (12px, its
 title the Data ID) at the card's top right. From 1024px up this is one row that never wraps or moves as the window
@@ -522,9 +526,13 @@ colour itself goes on the mark beside the words.
 
 Not BPG, and carrying no data meaning: the ink and greys (--text, --text-2, --muted, --line; --bar-neutral #7d8885 for a
 count with no meaning colour: the value ranges of all records, the tables of all records, No cautions, Other status,
-Corrected earlier, a chip naming several results), and the accent #245f58 for what a visitor picks or can act on (links,
+Corrected earlier, a chip naming several results), and the accent for what a visitor picks or can act on (links,
 buttons, the focus ring, the selected row, the current tab) and for the filters with no meaning colour (Not yet re-read,
-a source database, the enzyme fields, the measurement: their chips and their groups' dots). The round 13 purple,
+a source database, the enzyme fields, the measurement). Round 14 moved the accent from teal #245f58 to ink #172120: the
+teal, Human-checked's green and Read from the paper's dark cyan sat side by side in the counts band as one teal family,
+so green now means agreement alone. A link is ink with a quiet 1px --accent-line underline (darkening under the
+pointer), text buttons the same; tabs, menu items, buttons, contents lists and the counts band's numbers have none; the
+browser's theme-color is the page's white. The round 13 purple,
 raspberry, olive and amber are gone. Not yet re-read has no colour of its own: where a figure splits the two sources
 it is neutral, and its records wear their review result's colour.
 

@@ -284,6 +284,9 @@
   const SOURCE_DATABASES_LABEL = "Not yet re-read";
   // Their short tags, first on the table's tag line and the phone card's (a screen reader hears the labels).
   const SOURCE_CATLOG_TAG = "from paper";
+  // Read from the paper's mark (round 14): a small BPG cyan square before the words wherever the source is named, so the
+  // palette's cyan shows on Browse beside its count, its tag, its chip and its option (aria-hidden: the words say it).
+  const SOURCE_MARK_HTML = '<span class="src-mark" aria-hidden="true"></span>';
   const SOURCE_DATABASES_TAG = "not re-read";
   // The source both downloads give a record read from the paper (the field names stay).
   const SOURCE_CATLOG_EXPORT = "CatLog (read from the paper)";
@@ -2236,7 +2239,7 @@
       ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version's entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
-    const tagsHtml = tags.map((tag) => `<span class="state-tag">${escapeHtml(tag)}</span>`).join("")
+    const tagsHtml = tags.map((tag) => `<span class="state-tag">${tag === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(tag)}</span>`).join("")
       + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
     // A table short of room, or beside an open record, shows human-checked as a green check right after the review result
     // instead (the stylesheet shows one or the other), so the mark is never cut or hidden with the tags.
@@ -8001,7 +8004,7 @@
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
-            <span>${escapeHtml(item.label)}</span>
+            <span>${item.value === "paper" ? SOURCE_MARK_HTML : ""}${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
         </div>`;
@@ -8488,7 +8491,7 @@
     }
     if (controls.sourceMode !== "all" && !controls.sources.length) {
       add(`source:${controls.sourceMode}`, `Source: ${(controls.sourceMode === "paper" ? SOURCE_CATLOG_LABEL : SOURCE_DATABASES_LABEL).replace(": ", ", ")}`,
-        () => setSourceControls("all"));
+        () => setSourceControls("all"), controls.sourceMode === "paper" ? `Source: ${SOURCE_MARK_HTML}${escapeHtml(SOURCE_CATLOG_LABEL)}` : "");
     }
     // A chip whose option has a mark on this page shows it before the option's name (a review result its dot, as above;
     // human-checked its tick; a caution its "!"; a database result its square), so colour is not all that tells its
@@ -12073,7 +12076,7 @@
     const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
     // The light salmon and tan dots get their darker rings (design spec 2).
     const ring = colour === "pending" || colour === "not-reviewed" ? `;--status-ring:var(--st-${colour}-ring)` : "";
-    return `<p class="detail-status" style="--status-color:var(--st-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
+    return `<p class="detail-status" style="--status-color:var(--st-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${word === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
   }
 
   // The record's name; a long one (several names in brackets) is set smaller, so the header that stays in view while the

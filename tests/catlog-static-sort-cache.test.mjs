@@ -1491,7 +1491,7 @@ assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from C
 {
   // The two kinds of record are the legend's tags (from paper, not re-read), said once there: no section repeats them.
   assert.doesNotMatch(guideHtml, /Two kinds of record|guide-kinds/);
-  assert.match(guideHtml, /<dt><span class="state-tag">from paper<\/span><\/dt>\s*<dd>Read from the paper by CatLog&rsquo;s current, second version \(<a href="#guide-method">how<\/a>\)\.<\/dd>/);
+  assert.match(guideHtml, /<dt><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><\/dt>\s*<dd>Read from the paper by CatLog&rsquo;s current, second version \(<a href="#guide-method">how<\/a>\)\.<\/dd>/);
   assert.equal((guideHtml.match(/second version/g) || []).length, 1, "The Guide says once that the current version is the second");
 }
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
@@ -3181,7 +3181,7 @@ function row(overrides = {}) {
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
   assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
-  assert.match(paperBadge, /<span class="state-tags"><span class="state-tag">from paper<\/span><\/span>/);
+  assert.match(paperBadge, /<span class="state-tags"><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><\/span>/);
   assert.doesNotMatch(paperBadge, /not re-read|Not yet re-read/);
   assert.doesNotMatch(paperBadge, /independent|run\b|code converted/);
   assert.equal(api.reviewOutcome(prepared), "Not checked: taken from the source database as listed.");
@@ -3840,7 +3840,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const html = element("detailContent").innerHTML;
   assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><\/span><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
-  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
   const order = ['class="detail-top"', ">Values</h3>", ">Checks</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
     'id="downloadSelectedJson"', 'class="detail-footnote"'];
@@ -4352,7 +4352,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A record read by CatLog has no Source section: its header says "from paper", the Guide how it was read, and its
   // footnote gives the license and the snapshot.
   assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>Method<\/dt>|<dt>Name from<\/dt>/);
-  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span>from paper<\/span>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).
   assert.doesNotMatch(html, /Source details|<details class="detail-disclosure"/);
@@ -5637,7 +5637,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     ["from paper", "earlier extraction", "BRENDA, SABIO-RK", "source not recorded", "OED"]);
   assert.match(api.statusBadge(oed), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">OED<\/span><span class="state-tag">corrected<\/span><\/span>/);
   assert.match(api.statusBadge(earlier), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">earlier extraction<\/span><\/span>/);
-  assert.match(api.statusBadge(fromPaper), /<span class="state-tag">from paper<\/span>/);
+  assert.match(api.statusBadge(fromPaper), /<span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
   const keysFor = async (address) => {
     api.applyBrowseParams(new Map(new URLSearchParams(address)));
     await api.ensureCurrentFilters();
@@ -7215,7 +7215,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const source = element("sourceChecklist").innerHTML;
   // Each record by what happened to it (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read, one line
   // each beside its count; CatLog is the one name, never v1 or v2.
-  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
+  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span><span class="src-mark" aria-hidden="true"><\/span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
   assert.match(source, /value="databases" \/>\s*<span>Not yet re-read<\/span>\s*<strong data-count="source:databases">/);
   assert.doesNotMatch(source + element("aboutSource").innerHTML, /\bv[12]\b|source-mode-what/);
   assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);

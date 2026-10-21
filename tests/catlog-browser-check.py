@@ -3537,6 +3537,20 @@ def check_layout(driver, browser, url, route_label):
         """)
         for key in ("records", "accepted", "paper", "checked"):
             assert colours[key][0] == colours[key][1], (key, colours)
+        # Every label is muted (round 14: three dark teals had read as one family); the colour is on the mark before it,
+        # Accepted's navy dot, Read from the paper's BPG cyan square and Human-checked's green tick, and on the number.
+        marks = driver.execute_script("""
+            const probe = document.createElement('i'); document.body.appendChild(probe);
+            const resolve = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
+            const result = {labels: [...document.querySelectorAll('.summary-card > span, .snapshot-paper > span, .snapshot-checked > span')].map(e => getComputedStyle(e).color),
+                muted: resolve('--muted'), dot: getComputedStyle(document.querySelector('.summary-accepted > span'), '::before').backgroundColor,
+                square: getComputedStyle(document.querySelector('.snapshot-paper > span'), '::before').backgroundColor,
+                tick: getComputedStyle(document.querySelector('.snapshot-checked .check-icon')).color,
+                want: [resolve('--st-accepted'), resolve('--src-paper'), resolve('--checked')]};
+            probe.remove();
+            return result;
+        """)
+        assert set(marks["labels"]) == {marks["muted"]} and [marks["dot"], marks["square"], marks["tick"]] == marks["want"], marks
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
         assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
@@ -3694,12 +3708,12 @@ def check_layout(driver, browser, url, route_label):
         assert driver.execute_script(reveal)["scrolled"] == min(shown["scrolled"], end), "Closing a '?' moved the sidebar"
         driver.execute_script("document.getElementById('catalogFilters').scrollTop = 0")
         set_browse_viewport(driver, browser, 1440, 1000)
-        # The browser's own colour (theme-color) is the accent token.
+        # The browser's own colour (theme-color) is the page's white (round 14: no teal; the accent is ink).
         theme = driver.execute_script("""
             return {meta: document.querySelector('meta[name="theme-color"]').content.toLowerCase(),
-                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase()};
+                    bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase()};
         """)
-        assert theme["meta"] == theme["accent"] == "#245f58", theme
+        assert theme["meta"] == theme["bg"] == "#ffffff", theme
         # Every row is 44px: a variant's tag under the name and a condition note under the substrate add no height.
         for width in (1440, 1024):
             set_browse_viewport(driver, browser, width, 1000)

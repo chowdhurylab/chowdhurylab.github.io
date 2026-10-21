@@ -42,11 +42,13 @@
   --surface-2:#f6f8f7;
   --surface-3:#fafbfa;        /* every other table row */
   --hover:#f1f6f4;
-  /* One accent: links, selection, buttons, focus (7.4:1; white on it 7.4:1). */
-  --accent:#245f58;
-  --accent-hover:#1b4a44;
-  --accent-tint:#e8f2ef;      /* accent on tint 6.4:1, text on tint 14.4:1 */
-  --accent-line:#b5d3cc;
+  /* What a visitor picks or acts on (links, buttons, the focus ring, selection) is ink, a neutral that carries no data
+     meaning (round 14: the teal accent, Human-checked's green and Read from the paper's dark cyan read as one teal family,
+     so green now means agreement alone). Links are told from text by a quiet underline, never by a hue. */
+  --accent:#172120;           /* 16.5:1; white on it 16.5:1 */
+  --accent-hover:#3d4845;
+  --accent-tint:#eef1f0;      /* text on tint 15.0:1 */
+  --accent-line:#aebdb7;      /* underlines and control outlines */
   /* The Nature BPG palette (ggsci npg "nrc"), each colour written once, with the darker shade of the same hue that its
      text, tick or ring takes where the colour itself is too light on white (WCAG 2.x: text 4.5:1, marks and rings 3:1).
      Marks (dots, squares, the "!" disc) are opaque; figures fill at 60% (#RRGGBB99) with a 1px opaque outline. One
@@ -143,8 +145,11 @@ body { margin:0; color:var(--text); font-family:var(--font); font-size:var(--fs-
 button, input, select { font:inherit }
 strong, b { font-weight:600 }
 sub, sup { font-size:max(var(--fs-12),0.75em); line-height:0 }
-a { color:var(--accent); text-decoration:none }
-a:hover { text-decoration:underline }
+/* A link is ink with a quiet underline that darkens under the pointer; controls that are plainly controls (tabs, menu
+   items, buttons, contents lists, the counts band's numbers) keep none. */
+a { color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-line); text-decoration-thickness:1px; text-underline-offset:2px }
+a:hover { text-decoration-color:currentColor }
+:is(.nav-tab, .nav-external, .brand-lockup, .skip-link, .button, .download-options a, .stats-contents a, .guide-contents a, .snapshot-paper, .snapshot-checked, .stats-total-value) { text-decoration:none }
 :where(a,button,input,select,summary):focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 [hidden], .hidden { display:none !important }
 .muted { color:var(--muted) }
@@ -228,8 +233,8 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
 .button { display:inline-flex; min-height:32px; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line-strong); background:var(--bg); color:var(--text); padding:6px 12px; font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13); text-decoration:none }
 .button.secondary:hover:not(:disabled) { border-color:var(--accent-line); background:var(--accent-tint); text-decoration:none }
 .text-button, .icon-button { border:0; background:transparent; font-size:var(--fs-13) }
-.text-button { color:var(--accent); padding:0; font-weight:500 }
-.text-button:hover:not(:disabled) { color:var(--accent-hover); text-decoration:underline }
+.text-button { color:var(--accent); padding:0; font-weight:500; text-decoration:underline; text-decoration-color:var(--accent-line); text-decoration-thickness:1px; text-underline-offset:2px }
+.text-button:hover:not(:disabled) { text-decoration-color:currentColor }
 .icon-button { display:inline-grid; width:32px; height:32px; place-items:center; color:var(--text-2); font-size:var(--fs-20) }
 .icon-button:hover:not(:disabled) { background:var(--accent-tint) }
 button:disabled { cursor:not-allowed; opacity:0.5 }
@@ -265,10 +270,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .summary-accepted > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted) }
 .snapshot-paper { --key:var(--src-paper-ink) }
 .snapshot-checked { --key:var(--checked) }
-.snapshot-checked > span { color:var(--checked); font-weight:500 }
-.snapshot-checked .check-icon { margin-right:3px }
-/* Its label keeps its meaning colour at 0 too (no link then), as Human-checked's does. */
-.snapshot-paper > span { color:var(--src-paper-ink) }
+/* Every label is muted; the colour is on the mark before it (Accepted's dot, Read from the paper's cyan square,
+   Human-checked's green tick) and on the number, at 0 too (no link then). */
+.snapshot-checked .check-icon { margin-right:3px; color:var(--checked) }
+.snapshot-paper > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 /* A linked count tints in its own colour around itself under the pointer (::before), so nothing moves. */
 .snapshot-paper[href], .snapshot-checked[href] { isolation:isolate }
 .snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:var(--radius); background:transparent; pointer-events:none }
@@ -715,6 +720,10 @@ td.c-status { text-align:left }
 /* human-checked: a small check and the tag in green; the separator before it stays grey. */
 .check-icon { display:inline-block; width:1em; height:1em; vertical-align:-0.14em }
 .state-tag.human-checked { color:var(--checked); font-weight:500 }
+/* Read from the paper's mark: a small BPG cyan square with its darker ring, before the words wherever the source is
+   named (the counts band, the table's "from paper" tag, its chip and its option in Source). */
+.src-mark { display:inline-block; flex:0 0 7px; width:7px; height:7px; margin-right:3px; border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring); vertical-align:0 }
+.check-row .src-mark, .filter-chip .src-mark { width:8px; height:8px; flex-basis:8px; margin-right:5px }
 .state-tag.human-checked::before { color:var(--muted); font-weight:400 }
 .state-tag.human-checked .check-icon { margin-right:2px }
 /* A table short of room (the script sets .status-compact) or beside an open record: human-checked moves up as a 12px green
@@ -1069,6 +1078,10 @@ p.cmp-note { padding-left:16px }
 .stats-totals-main .stats-total[data-total="catlog"] { --key:var(--src-paper-ink) }
 .stats-totals-main .stats-total[data-total="review"] { --key:var(--checked) }
 .stats-totals-main .stats-total-value { display:inline-block; color:var(--key) }
+/* As on Browse's counts band: the labels muted, the meaning colour on a mark before the label (Accepted's dot, Read
+   from the paper's cyan square) and on the number. */
+.stats-totals-main .stats-total:is([data-total="accepted"], [data-total="catlog"]) dt::before { content:""; display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted); vertical-align:0 }
+.stats-totals-main .stats-total[data-total="catlog"] dt::before { border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 /* A linked number: the whole item is its target. */
 a.stats-total-value { text-decoration:none }
 a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:var(--radius) }

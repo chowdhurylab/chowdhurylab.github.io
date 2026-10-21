@@ -12,7 +12,8 @@ option, address or chip changed (the user, 2026-10-18). Browse's active-filter c
 wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
 meaning colour where it has one (a review result's status colour, human-checked's
 green, Read from the paper's cyan, a database result's square, a caution's tan),
-else the accent, the colour of what a visitor picks, as the dot beside its group
+else the accent (ink since round 14: the teal accent beside Human-checked's green and Read from the paper's cyan
+read as one teal family), the colour of what a visitor picks, as the dot beside its group
 in the sidebar (round 14: one meaning per Nature BPG colour, so no hue outside the
 palette and no palette hue with a second meaning); an option's own mark shows before its name too
 (the status dot, human-checked's tick, a caution's "!", a database result's
