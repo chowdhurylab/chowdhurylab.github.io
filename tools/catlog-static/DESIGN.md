@@ -1094,16 +1094,19 @@ One page from the snapshot manifest (never the record index) in numbered parts, 
 2 Quality (the lead, the user's headline: "Human review", 99.9%, no value disputed on 2,767 of 2,770 entries from the
 earlier version (431 papers), the disputed values as printed and the entries whose value the reviewer could not find,
 with "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ..." and what
-the other values are as a side line; then the checks), 3 What is in the catalog (the review-result donut and its legend table, records by main source with a
-Records | Share switch, Read from the paper and not yet re-read, values per paper, what the records
-contain, wild type and variants), 4 Biology (enzyme classes with accepted and read-from-the-paper records, the top
-organisms and EC numbers overall and among records read from the paper), 5 Values (value ranges, then values by enzyme class
-as ridgeline small multiples in the classes' colours, both on one log axis per parameter so 10⁰ stands at one x; then,
-from the records read from the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion
-limit and each class's median, variants against their wild type of the same paper, enzyme, substrate, pH and
-temperature, and the assay temperature and pH, each bar a link into Browse), 6 Cautions, 7 Against the databases (from the manifest's database comparison: a short lead that says once that a different number can mean a different measurement, values against the databases, the same by enzyme class, results by database beside paired values by database, corrections by cause beside corrections by cause and database, then the earlier version's corrections and replaced entries; each only when the snapshot has its counts).
+the other values are as a side line; then the checks), 3 What is in the catalog (the review-result donut and its legend
+table, records by main source with a Records | Share switch, then the enzyme classes with accepted and
+read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
+the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion limit and each class's median,
+and variants against their wild type of the same paper, enzyme, substrate, pH and temperature), 5 Against the databases
+(from the manifest's database comparison: a short lead that says once that a different number can mean a different
+measurement, values against the databases, corrections by cause), then S Supplementary figures and tables (round 14):
+every other figure and table, numbered apart (Figure S1, Table S1), in four groups named as the parts, each item one
+closed line (a details whose summary holds its number and title) that opens its figure, with its own address
+(#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
+variant and units as printed, counted by build_overview from the records read from the paper.
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
-(one or two sentences, no filler: a chart names its number columns above them instead) and no data
+(one sentence, no filler: a chart names its number columns above them instead) and no data
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
 the closed How these numbers are counted that ends the page; flat fills, the colour at 60% with 1px opaque outlines, in the
 review-result and comparison tokens, --bar-neutral for the single-series value figures and the enzyme classes' own

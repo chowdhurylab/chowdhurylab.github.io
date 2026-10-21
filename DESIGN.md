@@ -72,26 +72,59 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    One row from 1024px up, two rows on tablets, two by two on phones (tools/catlog-static/DESIGN.md, Layout). Nothing
    moves.
 2. Quality: the lead, then Checks on the values.
-3. What is in the catalog: Review result (the donut), Records by main source, Read from the paper and not yet re-read,
-   Values per paper, then What the records contain beside Wild type and variants.
-4. Biology: Enzyme classes, the 10 most common organisms and EC numbers, then the same among records read from the
-   paper.
-5. Values: Value ranges, then Values by enzyme class, then what the values read from the paper show (the user,
-   2026-10-18: "more figures or more scientific insights"): kcat against Km, Variants against their wild type and
-   Assay temperature and pH, each full width.
-6. Cautions.
-7. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
-   against the databases (alone in its row until Why no database lists a value joins it), Against the databases by
-   enzyme class (its own row), Results by database beside
-   Paired values by database, Corrections by cause and how found beside Corrections by cause and database, then Corrections on records not yet re-read beside Entries
-   replaced by reading the paper. Each only when the snapshot has its counts; a pair with one figure gives it the row.
+3. What is in the catalog: Review result (the donut) beside Records by main source, then Enzyme classes across the row.
+4. Values: Value ranges, kcat against Km and Variants against their wild type, each full width.
+5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
+   against the databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
+   760px, stats-narrow). Each only when the snapshot has its counts; without a figure here the part has no heading,
+   and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
+S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
+   right?)"): the figures and tables that do not tell the main story, last before How these numbers are counted, in
+   four groups named as the parts (What is in the catalog: Read from the paper and not yet re-read, Values per paper,
+   Papers by parameter, What the records contain, Wild type and variants; Biology: the four top-ten tables, Single
+   substitutions, Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as printed,
+   Cautions on values; Against the databases: the same by enzyme class, Results by database, Paired values by
+   database, Corrections by cause and database, Corrections on records not yet re-read, Entries replaced by reading
+   the paper). Figures and tables are numbered apart from the main ones and from each other, in this reading order
+   ("Figure S1", "Table S1"); a figure the snapshot cannot draw takes no number. Each item is one closed line on a
+   hairline list (a muted "+", its number in a muted column, its title in accent; open, "−" and the title in ink 600):
+   a `<details>` whose summary holds the item's heading (h4, under the group's h3), the figure under it with its
+   caption "Figure S1. ..." and no heading of its own. A figure drawn half-width in the main parts keeps to 760px; a
+   wide one takes the column, with no indent, so Values by enzyme class keeps the x of Value ranges' shared log axis.
+   Every item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2 (statsAddressTarget): it
+   opens the item and scrolls to it, also when the page opens there, and a link to it focuses its summary (Enter or
+   Space closes it again). The older #stats-biology opens What is in the catalog (its enzyme classes) and
+   #stats-cautions the Cautions table. "On this page" ends with "S Supplementary figures and tables"
+   (#stats-supplement). An item that opens fits its value columns and tables then (statsFitOpened, on its toggle); on
+   paper every item prints open (beforeprint and the print stylesheet), and no Stats address loads the record index
+   (the preload hint skips #stats-*, as #guide-*). The supplement's rules stand under their own numbers in How these
+   numbers are counted, after the main figures'; Shares names "Tables S1-S4 and S9" as statsNumbersText writes them.
+   New in round 14, counted by `build_overview` from the records read from the paper only (about 2 KB):
+   - Papers by parameter (`from_paper_parameters`: papers, kcat, km, kcat_km, kcat_over_km, all; a calculated kcat/Km is
+     not given): bars in Read from the paper's colour, Papers and % of papers, drawn only for the papers the band
+     counts and counts that nest (kcat and Km within each, all three within both); no links (Browse lists records).
+   - Single substitutions (`from_paper_insights.substitutions`: variants, papers, residues in the BLOSUM order
+     ARNDCQEGHILKMFPSTWYV, a 20 x 20 count matrix): each variant with one substitution written as a residue, its
+     position and another (H57A), once per paper, enzyme, organism and mutation, by wild-type residue (rows) and new
+     residue (columns), as grey cells shaded as the kcat against Km map (a cell's count and both residues' names in
+     its tooltip line); beside it the variants, the commonest new residue and the five commonest substitutions.
+   - Kinds of variant (`from_paper_insights.variant_kinds`: the variant records by mutation_type: one substitution,
+     several, deletion, insertion, truncation, other or not specified; drawn when they add up to the records): a table,
+     its records linked to source=paper&variant=variant.
+   - Units as printed (`from_paper_insights.printed_units`: per parameter the values, up to eight printed units by
+     count and Other): the unit printed with each value (its proof line's raw_unit) with a power of ten set aside, read
+     by `printed_unit` (per s, min or h; M, mM, µM, nM or pM, mol/L spelled out too; a lower-case m standing alone is
+     the molar sign, as small capitals come out of a text layer), in a table grouped by parameter with its stored unit,
+     shares of that parameter's values.
+   No publication year or journal: the Full data has neither, so no figure by year (the brief's example); no organism
+   kingdom or substrate kind either (no field gives them).
 
 A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
 rules are said (the user, 2026-10-15, of the line that stood under every figure, "Snapshot Oct 15, 2026 · Data ID ... ·
 143,184 values in all; ...": "Do we need this???"). It gives Snapshot (the date and Data ID, counted from this
 snapshot's Full data download, the human-review results and, when the audits are shown, the AI audit records),
 Shares (what a share is out of: all records in the
-figures and tables that count all records, named by number (Figure 1 and Tables 1-4 and 7 today; `STATS_SHARES_OF_ALL`),
+figures and tables that count all records, named by number (Figure 1 and Tables S1-S4 and S9 today; `STATS_SHARES_OF_ALL`),
 elsewhere its own bar's, row's or card's total or the total its caption names; one decimal, a nonzero share under 0.1%
 written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
 and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Against the databases
@@ -155,7 +188,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   earlier paper extractions and no source recorded, named in its note),
   stacked by review result (Accepted, Not confirmed, Not checked, Disputed);
   its two number columns are named above them, Records and % accepted (of the bar's own records; a no-break space
-  keeps the heading on one line), so Accepted heads only Figure 5's count. Only CatLog's
+  keeps the heading on one line), so Accepted heads only Figure 3's count. Only CatLog's
   own records are linked (no single filter opens a main source). Under it, the
   per-database counts Browse's source filter finds (a merged record counts
   under each, as the Guide's source list), each linked. A snapshot without
@@ -194,7 +227,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   - Lead (14px), one idea per sentence (its papers are `papers_compared`, the papers with a compared value, so never
     more than CatLog has read; `papers` only for an older comparison without it; the Guide's lead names the same
     count, and How these numbers are counted says why it can be one fewer than the papers read: one paper count per
-    set, each from one manifest key, the band's and Team's papers read from `from_paper.papers`, Figure 4's values
+    set, each from one manifest key, the band's and Team's papers read from `from_paper.papers`, Figure S2's values
     from `from_paper_values.values`, never typed): "CatLog compared 126,951 values read from 2,598 papers with what the
     databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same
     number under another label. Another 1,353 correct a database's number (656 checked against the paper, 697 by an
@@ -211,7 +244,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     option) or as a count under differs (differs.by_found_by.factor_only, else differs.factor_only); an older
     comparison that counts them among its corrections (corrections.by_cause_found_by[cause].factor_only, else
     corrections.by.factor_only) has them moved in the words (the lead, the Guide's results, the option titles), taken
-    out of Figure 10's causes and the All column of Table 9 (its rule says the per-database columns keep them), and a
+    out of Figure 8's causes and the All column of Table S11 (its rule says the per-database columns keep them), and a
     note right after the lead says the figures still hold them under Corrects; nothing per parameter or per database
     is guessed. The record says it in the result word, "Different number (exact factor, not yet checked)"; its line gives
     the factor (database_by_source's x under Cause when the line does not).
@@ -220,8 +253,8 @@ its accessible description; no figure or table has a data line. The parts' figur
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
   - Values against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above), each
-    after its swatch in a right-aligned column under its heading, Corrects and Differs (Table 8's names; each column as
-    wide as its widest count or heading plus the swatch, a sizer as in Figure 5, fitted to the heading line once drawn);
+    after its swatch in a right-aligned column under its heading, Corrects and Differs (Table S10's names; each column as
+    wide as its widest count or heading plus the swatch, a sizer as in Figure 3, fitted to the heading line once drawn);
     shares under the bars; a segment with a filter opens Browse when clicked; its rule (How these numbers are
     counted): calculated kcat/Km not compared; a note under the figure (a result, so beside it): the numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
@@ -243,7 +276,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     value whose own result is Same or Corrects, and its Same, other label a value whose own result is Same, so Browse,
     which matches a value by its own result, would show fewer; the All row's Differs links (one result).
   - Corrections by cause and how found ("Corrections by cause" without the split; its caption: "The 1,353 values
-    that correct a database's number, each counted once.", as Table 9 counts one per database): a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
+    that correct a database's number, each counted once.", as Table S11 counts one per database): a bar per cause family (Unit or scale, Decimal slip, Another number, Unit
     misprinted; DATABASE_CAUSE_FAMILIES, the Guide's list too, maps every cause code), split checked against the paper / an exact factor found by
     code (the paper's own kcat ÷ Km agreeing) from `corrections.by` when the causes code finds (power of ten, 60 or 3,600, printed number in another unit)
     add up to its code count, an older comparison's factor-only values taken out of both; a bar split two ways prints its two counts under its name, each after its colour. Beside
@@ -363,7 +396,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   stands under Corrects where this snapshot's figures keep it there), in part 7's colours and legend; the class
   (EC N and its name) links to ec=N.&source=paper; its Values column names the compared values; shares in the tooltip
   lines on 1,000 values or more. The class colour stays off this figure: its segments carry the results' colours.
-- Tables: Most common organisms and Most common EC numbers (top 10, the EC
+- Tables (all in the supplement since round 14): Most common organisms and Most common EC numbers (top 10, the EC
   with the enzyme name its records use most, no class colour; bars against
   the largest), then Most common organisms and Most common
   EC numbers among records read from the paper (counts "Records", shares of the records read from the paper, bars in
@@ -371,9 +404,9 @@ its accessible description; no figure or table has a data line. The parts' figur
   What the records contain, Wild type and variants, Cautions.
 
 Wording (the user, 2026-10-15: "the figures have some weird ai ish wording right?"): titles are short noun phrases;
-a caption is one or two short plain sentences that say what the title does not (how the figure is drawn, what a share
+a caption is one short plain sentence (round 14: "so verbose"; a semicolon may join the marks it names) that says what the title does not (how the figure is drawn, what a share
 is of), one idea per sentence, no stacked semicolons, never "in all", and no filler about where the numbers stand: a
-chart whose numbers need naming names its columns above them (Records / % accepted, Papers / % of papers, Figure 5's
+chart whose numbers need naming names its columns above them (Records / % accepted, Papers / % of papers, Figure 3's
 Records / Accepted / From paper): a share column says what it is out of. Before -> after: "Records by main source, coloured by review result; each label gives
 the records, then the share accepted." -> "Each record counts once, under the source it came from, coloured by review
 result."; "The 3,104 papers CatLog has read, by how many kcat, Km and kcat/Km values CatLog read from each; each label
@@ -399,7 +432,7 @@ the labels' own font, so labels never touch, also in a wider font; on phones, wh
 thin sooner: six ticks under 56ch, five under 45ch, four under 34ch); light 1px gridlines at the
 ticks shown, a gridline giving way with its label, so none is unlabelled. Category labels 13px, value labels and ticks
 12px, tabular numbers; a chart's value column fits its longest label (sized in ch, so a wider font widens it). A
-label of several numbers (the count, then the share; Figure 5's records, accepted and read from the paper) sets each
+label of several numbers (the count, then the share; Figure 3's records, accepted and read from the paper) sets each
 number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
 chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font at 600,
 the boldest weight in a value column), so the counts line up whatever the shares.
