@@ -5351,8 +5351,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   });
   api.renderDetail(row({ record_key: "hc-follows", measurement_key: "hc-follows", verification_status: "verified" }), {});
   html = element("detailContent").innerHTML;
-  assert.deepEqual(approvedValues(html), ["kcat", "Km"], "a kcat/Km that only agrees with kcat ÷ Km carries no check");
-  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The kcat\/Km carries no check: it agrees with the approved kcat ÷ Km\.<\/li>/);
+  assert.deepEqual(approvedValues(html), ["kcat", "Km"], "a kcat/Km that only agrees with kcat ÷ Km has no tick");
+  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The kcat\/Km has no tick: no reviewer approved it, but it agrees with the approved kcat ÷ Km\.<\/li>/);
   assert.deepEqual((await recordDownloadPayload(row({ record_key: "hc-follows", measurement_key: "hc-follows" }), {})).human_approved_values, ["kcat", "Km"]);
   api.renderDetail(row({ record_key: "hc-named", measurement_key: "hc-named", verification_status: "verified" }), {});
   html = element("detailContent").innerHTML;
@@ -5372,10 +5372,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The heading keeps the calc. space as well (the stylesheet draws its unseen "calc.").
   assert.match(element("detailContent").innerHTML, /<span class="vt-head">Value<span class="value-approved vt-ghost" aria-hidden="true"><svg[^>]*>.*?<\/svg><\/span><small class="metric-origin vt-ghost" aria-hidden="true"><\/small><\/span><\/th>/);
   // The line under the table says why the calc. kcat/Km beside checked values has none.
-  assert.match(plainMetricNames(element("detailContent").innerHTML), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The calc\. kcat\/Km carries no check: CatLog calculated it\.<\/li>/);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. The calc\. kcat\/Km has no tick: CatLog calculated it\.<\/li>/);
   api.renderDetail(row({ record_key: "hc-strict", measurement_key: "hc-strict" }), {});
   assert.doesNotMatch(element("detailContent").innerHTML, /value-approved/, "a sentence naming another quantity marks nothing");
-  // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") carries no check, also in
+  // A value under a magnitude caution ("Km is above 10 M; the unit or the value may be wrong.") has no tick, also in
   // the record download, and the note under the table says why; Km below 1 nM counts too.
   const bigKm = row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 37500, km_display: "37500", kcat_over_km: 0.0032,
     kcat_over_km_display: "0.0032", condition_flags: ["km_magnitude_needs_check"] });
@@ -5383,7 +5383,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = element("detailContent").innerHTML;
   assert.match(html, /Km is above 10 M; the unit or the value may be wrong\./);
   assert.deepEqual(approvedValues(html), ["kcat", "kcat/Km"]);
-  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km has no tick: the note above questions its unit or value\.<\/li>/);
   assert.deepEqual((await recordDownloadPayload(bigKm, {})).human_approved_values, ["kcat", "kcat/Km"]);
   api.renderDetail(row({ record_key: "hc-big-km", measurement_key: "hc-big-km", km: 9e-7, km_display: "9e-7" }), {});
   assert.deepEqual(approvedValues(element("detailContent").innerHTML), ["kcat", "kcat/Km"], "Km below 1 nM: no check");
@@ -5395,10 +5395,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /value-approved/);
   // A human-checked record whose only approved value has its check withheld still says it is human-checked under the
   // table, so its badge and the unmarked table agree; a record that is not accepted says only what the reviewer approved.
-  assert.match(html, /<li>Human-checked: a human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(html, /<li>Human-checked: a human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it has no tick: the note above questions its unit or value\.<\/li>/);
   assert.ok(!("human_approved_values" in await recordDownloadPayload(onlyKm, {})), "no check shown, none listed");
   api.renderDetail({ ...onlyKm, verification_status: "manual_review_required" }, {});
-  assert.match(element("detailContent").innerHTML, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it carries no check: the note above questions its unit or value\.<\/li>/);
+  assert.match(element("detailContent").innerHTML, /<li>A human reviewer approved <i>K<\/i><sub>m<\/sub> \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\), but it has no tick: the note above questions its unit or value\.<\/li>/);
   // A human-checked record without a note names only the values it shows: a Km-only record says nothing of a kcat or a
   // kcat/Km it does not have; with the mark's list, a kcat/Km that was not approved itself agrees with kcat ÷ Km.
   const humanLine = (record) => {

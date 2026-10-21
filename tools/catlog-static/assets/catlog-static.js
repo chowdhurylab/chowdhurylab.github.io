@@ -11411,17 +11411,18 @@
     const calcListed = calcNote && !v2Record && listed && listers.length
       ? ` ${sentenceList(listers)} ${listers.length > 1 ? "list their own kcat/Km values" : "lists its own kcat/Km"} (above).`
       : "";
-    // "Km carries no check: the note above questions its unit or value." (the caution is the note above the grey notes)
+    // "Km has no tick: the note above questions its unit or value." (the caution is the note above the grey notes). The
+    // mark is a tick, never "check" (round 14): "check" means verification everywhere else in the record.
     const withheldNote = withheldNames
-      ? `${withheldNames} ${approval.withheld.length > 1 ? "carry" : "carries"} no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`
+      ? `${withheldNames} ${approval.withheld.length > 1 ? "have" : "has"} no tick: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.`
       : "";
     // A kcat/Km CatLog calculated beside checked values: why it has none (no reviewer approved a number the paper does not
     // print), so checks on kcat and Km alone never read as a value left out of the review.
-    const calcNoCheck = cells.some((cell) => cell.calc && !cell.check) ? " The calc. kcat/Km carries no check: CatLog calculated it." : "";
+    const calcNoCheck = cells.some((cell) => cell.calc && !cell.check) ? " The calc. kcat/Km has no tick: CatLog calculated it." : "";
     // A printed kcat/Km of a checked record that no reviewer approved as such: it agrees with the approved kcat ÷ Km.
     const followsNoCheck = fields.some(([field]) => field === "kcat_over_km")
       && efficiencyFollowsApproval(summary, humanApprovedFields(summary))
-      ? " The kcat/Km carries no check: it agrees with the approved kcat ÷ Km."
+      ? " The kcat/Km has no tick: no reviewer approved it, but it agrees with the approved kcat ÷ Km."
       : "";
     const greyNotes = [
       // What the check after a value means, once; an approved value whose check is withheld, and why.
@@ -11429,11 +11430,11 @@
         ? `<span class="value-approved-key">${CHECK_ICON_HTML}</span>Approved by a human reviewer${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}.${metricWordsHtml(escapeHtml(calcNoCheck + followsNoCheck))}${withheldNote ? ` ${metricWordsHtml(escapeHtml(withheldNote))}` : ""}`
         // No value carries a check, every approved one withheld: a human-checked record still says so here, so its
         // badge and an unmarked table agree ("Human-checked: a human reviewer approved Km (see Human review below), but
-        // it carries no check: ...").
+        // it has no tick: ...").
         : (withheldNote
             ? `${isHumanChecked(summary) ? "Human-checked: a" : "A"} human reviewer approved ${metricWordsHtml(escapeHtml(withheldNames))}`
-              + `${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}, but ${approval.withheld.length > 1 ? "they carry" : "it carries"}`
-              + ` no check: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.${metricWordsHtml(escapeHtml(followsNoCheck))}`
+              + `${humanReviewNote(summary) ? ` (see ${HUMAN_REVIEW_LINK_HTML} below)` : ""}, but ${approval.withheld.length > 1 ? "they have" : "it has"}`
+              + ` no tick: the note above questions ${approval.withheld.length > 1 ? "their" : "its"} unit or value.${metricWordsHtml(escapeHtml(followsNoCheck))}`
             : ""),
       ...conversionNotesHtml(proof, unitCautions),
       calcNote && fields.some(([field]) => field === "kcat_over_km")

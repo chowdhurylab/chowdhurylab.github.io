@@ -771,23 +771,24 @@ come first, the context after.
   any other note marks nothing, and a calc. kcat/Km never has one (it is not
   printed). Being checked never puts a check on a kcat/Km: a checked record's
   printed kcat/Km that the list leaves out agrees with the approved kcat ÷ Km,
-  and the grey note says so ("The kcat/Km carries no check: it agrees with the
-  approved kcat ÷ Km."). A value whose
+  and the grey note says so ("The kcat/Km has no tick: no reviewer approved it, but it agrees with the approved
+  kcat ÷ Km."; the mark is a tick in these notes, never "check", which means verification elsewhere in the record;
+  round 14). A value whose
   magnitude caution the record shows (Km above 10 M or below 1 nM, kcat above
   10⁸ s⁻¹, kcat/Km above the diffusion limit: "the unit or the value may be
   wrong") has its check withheld, in the record and in Download record's
-  human_approved_values alike, and the grey note says so: "Km carries no check:
-  the note above questions its unit or value." (or, with no check shown, "A
-  human reviewer approved Km, but it carries no check: ..."; on a human-checked
+  human_approved_values alike, and the grey note says so: "Km has no tick:
+  the note above questions its unit or value." (or, with no tick shown, "A
+  human reviewer approved Km, but it has no tick: ..."; on a human-checked
   record "Human-checked: a human reviewer approved Km (see Human review below),
-  but it carries no check: ...", so its badge and the unmarked table agree). The check
+  but it has no tick: ...", so its badge and the unmarked table agree). The check
   stays beside its number (or the number's last line) at every width: a word
   joiner ties the two, and up to 360px the check hangs in a 16px margin of its
   own, so every line of every number ends at the same place. The first grey note under the table says what the check
   means: "✓ Approved by a human reviewer (see Human review below)." ("Human review"
   is a link-styled button that scrolls the panel to that row of Checks,
   focuses it and outlines it a moment); beside a
-  calc. kcat/Km it adds "The calc. kcat/Km carries no check: CatLog calculated
+  calc. kcat/Km it adds "The calc. kcat/Km has no tick: CatLog calculated
   it.", so checks on kcat and Km alone never read as a value the review left
   out. A row without
   the check, calc. or "!" keeps their space unseen (aria-hidden), so every number in the
