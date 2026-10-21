@@ -1939,7 +1939,7 @@ function row(overrides = {}) {
     runtimeManifest.summary.distributions = { ...saved, accepted_basis: [{ label: "human review", count: 1 }] };
     api.renderStats();
     const ruled = element("statsCharts").innerHTML;
-    assert.match(ruled, /It also holds 1 record the earlier review accepted, with no PMID or DOI linked\./);
+    assert.match(ruled, /title="A database record with no PMID or DOI, so it cannot be checked against a paper \(1 of them the earlier review had accepted\)\."/);
     assert.doesNotMatch(ruled, /records have no PMID or DOI linked, so their values cannot be traced/, "the Not reviewed row says it once");
     assert.doesNotMatch(ruled, /accepted records have no PMID/);
     assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer&#39;s approval\./);
@@ -3199,7 +3199,7 @@ function row(overrides = {}) {
   assert.match(badge, /aria-label="Accepted, Not yet re-read, BRENDA, corrected"/);
   assert.match(badge, /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">BRENDA<\/span><span class="state-tag">corrected<\/span><\/span>/);
   assert.match(badge, /title="Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them\."/);
-  assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record without a PMID or DOI that was never reviewed\."[^>]*aria-label="Not checked, Not yet re-read, BRENDA"/);
+  assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record with no PMID or DOI, so it cannot be checked against a paper\."[^>]*aria-label="Not checked, Not yet re-read, BRENDA"/);
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
   assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
@@ -3229,10 +3229,12 @@ function row(overrides = {}) {
     const noPaper = row({ record_key: "no-paper", measurement_key: "no-paper", verification_status: "mathematically_inferred", public_trust_basis: "identity_only", source_db: "skid" });
     const badge = api.statusBadge(noPaper);
     assert.match(badge, /aria-label="Not checked, Not yet re-read, SKiD, no paper linked"/);
-    assert.match(badge, /title="Not checked: the earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted\."/);
+    assert.match(badge, /title="Not checked: no PMID or DOI, so the value cannot be traced to a paper \(the earlier review had accepted it\); not counted as Accepted\."/);
     assert.doesNotMatch(badge, /never reviewed/);
     assert.equal(api.rowStatusLabel(noPaper, { exact: true }), "Not checked", "the tag says why, not 'Not reviewed'");
-    assert.equal(api.reviewOutcome(noPaper), "Not checked: the earlier automated review accepted it, but no paper is cited, so the value cannot be traced to a paper.");
+    assert.equal(api.reviewOutcome(noPaper), "Not checked: no PMID or DOI, so the value cannot be traced to a paper (the earlier review had accepted it).");
+    // One definition everywhere (round 14): never "never reviewed" beside "accepted".
+    assert.doesNotMatch(sourceCode, /never reviewed|accepted ones are tagged/);
     // The Guide's short Accepted definition (round 14) names the human reviewer's approval under the review rules; its Not
     // checked and no paper linked ones ("no PMID or DOI") hold under either rules and stay as the page writes them.
     api.renderGuideMethod();

@@ -145,10 +145,9 @@
     },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate; replaced when CatLog reads the paper.",
     // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
-    // (Stats counts them there; the record reads "Not checked" with the tag "no paper linked").
-    get not_verified() {
-      return `No review result: Unverified (the earlier review recorded no final check) or Not reviewed (a SKiD or BRENDA record with no PMID or DOI${followsReviewRules() ? "; accepted ones are tagged no paper linked" : ", never reviewed"}).`;
-    },
+    // (Stats counts them there; the record reads "Not checked" with the tag "no paper linked"). One definition for both
+    // (round 14): no PMID or DOI to check against, never a record "not reviewed" yet accepted.
+    not_verified: "No review result: Unverified (the earlier review recorded no final check) or Not reviewed (no PMID or DOI to check against).",
     disputed: "A check found a problem; not accepted.",
   };
   // The same results in one short sentence each, for the Review result group's "?" (the Guide and each option's title
@@ -177,7 +176,7 @@
     { value: "corrected", label: "Corrected", description: CORRECTED_DEFINITION },
     { value: "manual_review_required", label: "Not confirmed", description: stateDescriptions.curation_pending },
     { value: "unverified", label: "Unverified", description: "The earlier review recorded no final check." },
-    { value: "mathematically_inferred", label: "Not reviewed", description: "A database record without a PMID or DOI that was never reviewed." },
+    { value: "mathematically_inferred", label: "Not reviewed", description: "A database record with no PMID or DOI, so it cannot be checked against a paper." },
     { value: "disputed", label: "Disputed", description: stateDescriptions.disputed },
   ];
 
@@ -472,7 +471,7 @@
   function followsReviewRules() {
     return Array.isArray(manifest?.summary?.distributions?.accepted_basis);
   }
-  const NO_PAPER_RECORD_NOTE = "The earlier automated review accepted it, but no PMID or DOI is linked, so the value cannot be traced to a paper; not counted as Accepted.";
+  const NO_PAPER_RECORD_NOTE = "No PMID or DOI, so the value cannot be traced to a paper (the earlier review had accepted it); not counted as Accepted.";
   // The Guide's legend says Accepted in a few words (round 14, the user: a short Guide); Browse's "?" and the badges keep
   // stateDescriptions. The review rules the snapshot follows decide it.
   function guideAcceptedDefinition() {
@@ -2179,7 +2178,7 @@
       return "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.";
     }
     return hasNoPaperLinked(summary)
-      ? "Not checked: the earlier automated review accepted it, but no paper is cited, so the value cannot be traced to a paper."
+      ? "Not checked: no PMID or DOI, so the value cannot be traced to a paper (the earlier review had accepted it)."
       : reviewOutcomeBase(summary);
   }
 
@@ -6725,7 +6724,7 @@
       { value: "mathematically_inferred", label: "Not reviewed", part: "not-reviewed", sub: true, count: counts.mathematically_inferred || 0,
         // Under the review rules, Not reviewed also holds the records accepted earlier that have no linked paper.
         note: noPaperRule && identityOnly
-          ? `${notReviewed.description} It also holds ${formatInteger(identityOnly)} ${identityOnly === 1 ? "record" : "records"} the earlier review accepted, with no PMID or DOI linked.`
+          ? `${notReviewed.description.replace(/\.$/, "")} (${formatInteger(identityOnly)} of them the earlier review had accepted).`
           : notReviewed.description },
       { value: "disputed", label: "Disputed", part: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
         note: stateDescriptions.disputed },

@@ -5491,10 +5491,10 @@ def check(driver, browser, url):
         # note under the figure
         status_text = " ".join((driver.find_element(By.CLASS_NAME, "stats-status-section").text + " " + " ".join(
             row.get_attribute("title") or "" for row in driver.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[title]"))).split())
-        assert (f"It also holds {identity_only:,} {'record' if identity_only == 1 else 'records'} the earlier review accepted, with no PMID or DOI linked" in status_text
-                or f"It also holds {identity_only:,} records the earlier review accepted that have no PMID or DOI linked" in status_text
+        assert (f"({identity_only:,} of them the earlier review had accepted)" in status_text
                 or f"{identity_only:,} accepted records have no PMID or DOI linked" in status_text), status_text
-        assert status_text.count("no PMID or DOI linked") == 1, "Stats names the records without a paper once"
+        assert status_text.count("the earlier review had accepted") + status_text.count("accepted records have no PMID") == 1, \
+            "Stats names the records without a paper once"
 
     # Every Stats link opens Browse with the shared #browse? filters.
     links = driver.find_elements(By.CSS_SELECTOR, "#statsCharts a.stats-link")
