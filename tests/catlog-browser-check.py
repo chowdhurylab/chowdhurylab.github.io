@@ -1450,10 +1450,13 @@ def check_stats_figures(driver, browser, url):
                 const table = document.querySelector("[data-figure='db-values'] .stats-share-table:not([style*=none])");
                 const shown = [...document.querySelectorAll("[data-figure='db-values'] .stats-share-table")].filter(t => t.getClientRects().length);
                 return shown.map(t => ({heads: [...t.querySelectorAll('thead th')].map(th => th.textContent.trim()),
+                                        rows: [...t.querySelectorAll('tbody th')].map(th => th.textContent.trim()),
                                         cells: t.querySelectorAll('tbody td').length, swatchesInCells: t.querySelectorAll('tbody td .stats-swatch').length}));
             """)
-            # Shares under the bars: one table in view, headed by the legend's names (colour never the only key).
-            assert len(shares) == 1 and shares[0]["heads"][:2] == ["Same number", "Same, other label"] and shares[0]["cells"] and not shares[0]["swatchesInCells"], shares
+            # Shares under the bars: one table in view, its results named by the legend's words (colour never the only
+            # key): the column heads, or on a phone (the table turned round) the row heads.
+            names = ["Same number", "Same, other label"]
+            assert len(shares) == 1 and names in (shares[0]["heads"][:2], shares[0]["rows"][:2]) and shares[0]["cells"] and not shares[0]["swatchesInCells"], shares
             # The numbers beside the bars are named: Figure 8's two counts stand right-aligned under Corrects a value and Different number
             # (each count's swatch and number inside its column), Figure 9's under Values.
             columns = driver.execute_script("""
@@ -1833,9 +1836,10 @@ def check_stats_more(driver, browser, overview, total):
     if classes:
         # Figure 5 names its value columns in the legend's order, each heading over its numbers (STATS_VALUE_COLUMNS_JS
         # below checks they end at one x), and no class name runs into them.
-        heads = [part.get_attribute("innerText").strip() for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
+        heads = [part.get_attribute("innerText").replace("\n", " ").strip() for part in driver.find_elements(By.CSS_SELECTOR, "[data-figure='ec-classes'] .stats-chart-head .stats-value-part")]
         with_v2 = all(isinstance(item.get("from_paper"), int) for item in classes.values())
-        assert heads == ["Records", "Accepted"] + (["From paper"] if with_v2 else []), heads
+        # (the legend's words, Read from the paper, in two lines: round 15 polish)
+        assert heads == ["Records", "Accepted"] + (["Read from the paper"] if with_v2 else []), heads
         crowded = driver.execute_script("""return [...document.querySelectorAll('[data-figure="ec-classes"] .stats-chart-row')].filter((row) => {
             const name = document.createRange(); name.selectNodeContents(row.querySelector('.stats-chart-label'));
             return Math.max(...[...name.getClientRects()].map((box) => box.right)) > row.querySelector('.stats-value-part').getBoundingClientRect().left - 4;
@@ -1868,13 +1872,14 @@ def check_stats_more(driver, browser, overview, total):
         # the open-ended end bins are not in the curves: a hatched stub marks each end bin with values
         stubs = len(panel.find_elements(By.CSS_SELECTOR, ".stats-ridge-end"))
         assert stubs == sum((item["counts"][0] > 0) + (item["counts"][-1] > 0) for item in grid["classes"]), stubs
-    # Value ranges and Values by enzyme class share one log axis per parameter: the same ticks at the same x, so 10⁰
-    # stands at one x in both; each histogram then has a bar per decade of that axis, still holding every value.
+    # Value ranges and Values by enzyme class share one log axis per parameter: the same decades and ticks (round 15
+    # polish: Value ranges' histograms fill their column, as Figure 6's do, so the x of a tick is each figure's own);
+    # each histogram then has a bar per decade of that axis, still holding every value.
     for metric, range_ticks, ridge_ticks in driver.execute_script(STATS_SHARED_AXIS_JS):
         summary = overview["metrics"][metric]
         if stats_value_axis(summary):
             start, end = stats_value_axis(summary)
-            assert range_ticks == ridge_ticks, (metric, range_ticks, ridge_ticks)
+            assert [text for text, _x in range_ticks] == [text for text, _x in ridge_ticks], (metric, range_ticks, ridge_ticks)
             # 10⁰ (text "100": 10 and its exponent) is labelled whenever it is on the axis
             assert not start <= 0 <= end or "100" in [text for text, _x in range_ticks], range_ticks
             figure = driver.find_element(By.CSS_SELECTOR, f".stats-range[data-metric='{metric}']")
@@ -2034,7 +2039,7 @@ RIDGE_TICKS_JS = """
 
 
 # Per parameter drawn in both Value ranges and Values by enzyme class: each axis's ticks as drawn (label, centre x), so
-# the two can be compared: one shared log axis puts every power of ten at one x in both figures.
+# the two can be compared: one shared log axis gives both figures the same powers of ten.
 STATS_SHARED_AXIS_JS = """
     const ticks = (axis) => [...axis.children].map((tick) => { const box = tick.getBoundingClientRect();
       return [tick.textContent, Math.round((box.left + box.right) / 2 * 2) / 2]; });
@@ -2245,7 +2250,7 @@ const label = sec.querySelector('.stats-chart-row .stats-chart-label').getBoundi
 const line = sec.querySelector('.stats-chart-head .stats-chart-value');
 const parts = [...line.children];
 const gap = parseFloat(getComputedStyle(line).columnGap) || 0;
-const heads = parts.map((part) => { const r = document.createRange(); r.selectNodeContents(part.querySelector('span')); return { text: part.textContent, lines: lines(r) }; });
+const heads = parts.map((part) => { const r = document.createRange(); r.selectNodeContents(part.querySelector('span')); return { text: part.innerText.replace(/\\s+/g, ' ').trim(), lines: lines(r) }; });
 const names = [...sec.querySelectorAll('.stats-ec-name')].map((el) => {
   const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim());
   const word = node.nodeValue.trim(), start = node.nodeValue.indexOf(word), r = document.createRange();
@@ -2258,14 +2263,16 @@ return { label, heads, names, column: line.getBoundingClientRect().width,
 
 
 def assert_fig5_fits(fig5, width):
-    """Below 360px a value heading of two words (From paper) takes two lines, so its column is no wider than its longest
-    word or count and the class names keep their room; from 360px each heading keeps one line. The headings fit their
+    """Below 360px a value heading of two words (From paper, Read from the paper's short tag) takes two lines, so its
+    column is no wider than its longest word or count and the class names keep their room; from 360px Read from the paper
+    takes two lines (Read from / the paper) and the other headings one. The headings fit their
     column, and a class name that fits its label column is never cut inside the word (only one wider than the whole
     column may break, as Oxidoreductases does at 320px in DejaVu Sans)."""
     if not fig5:
         return
     for head in fig5["heads"]:
-        assert head["lines"] == (2 if width < 360 and " " in head["text"] else 1), (width, fig5["heads"])
+        # (Read from the paper takes two lines from 360px, and its short tag, From paper, two below: round 15 polish)
+        assert head["lines"] == (2 if " " in head["text"] else 1), (width, fig5["heads"])
     assert fig5["used"] <= fig5["column"] + 1, f"Figure 5's value headings overflow their column at {width}px: {fig5}"
     cut = [name for name in fig5["names"] if name["lines"] > 1 and name["width"] <= fig5["label"] - 1]
     assert not cut, f"Figure 5 cuts class names that fit their {fig5['label']:.0f}px column at {width}px: {cut}"
@@ -2301,7 +2308,7 @@ def check_word_breaks(driver, browser, url):
             split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "guideView"), "re-read", True)
             assert split == [], f"re-read splits at its hyphen in the Guide at {width}px: {split}"
             checked.append(width)
-        # A phone turned from 320 to 375px: From paper goes back to one line and the value columns are fitted again.
+        # A phone turned from 320 to 375px: From paper gives way to Read from / the paper and the value columns are fitted again.
         driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 320, "height": 900, "deviceScaleFactor": 1, "mobile": True})
         driver.get("about:blank")
         driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))

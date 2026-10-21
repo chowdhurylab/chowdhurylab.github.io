@@ -4141,11 +4141,14 @@
   // counts line up whatever the shares. A hidden sizer (data-sizer) holds that column's entry shapes in the viewer's own
   // font, one per line: each entry with its digits as 0 (tabular digits are equally wide), leaving out a shape that ends
   // another one ("0.0%" in "00.0%"); "<0.0%" stays beside "00.0%", since "<" may be wider than a digit.
-  // `valueHeads` (one per column; Figure 5's Records, Accepted, From paper) names the columns in a heading line above the
+  // `valueHeads` (one per column; Figure 3's Records, Accepted, Read from the paper) names the columns in a heading line above the
   // first row: then every column, the first too, is also as wide as its heading, which stands right-aligned over it.
   // `valueHead` is that line as HTML, for a chart whose value labels are not plain text (Figure 8's linked counts).
-  // Below 360px a heading of several words takes one word per line (From / paper): its column then needs only its longest
-  // word or entry (a second sizer, data-sizer-narrow), so the class names beside it keep their room and stay whole.
+  // A heading may mark where it breaks with "\n" and give a short form for the narrowest phones ({ long: "Read from\nthe
+  // paper", short: "From paper" }: the legend's words in two lines, round 15 polish, and below 360px the short tag, as
+  // the counts band does). Below 360px a heading of several words takes one word per line: its column then needs only
+  // its longest word or entry (a second sizer, data-sizer-narrow), so the class names beside it keep their room and stay
+  // whole.
   function statsValueSizer(texts) {
     const shapes = [...new Set(texts.map((text) => String(text).replace(/[0-9]/g, "0")).filter(Boolean))];
     return shapes.filter((shape) => !shapes.some((other) => other !== shape && other.endsWith(shape))).sort().join("\n");
@@ -4153,18 +4156,25 @@
 
   function statsBarChart({ key, rows, scale = 0, step = 0, legend = [], axis = "", percent = false, overlay = false, switchable = false, valueWidth = "", valueHeads = [], valueHead = "" }) {
     const columns = Math.max(0, ...rows.map((row) => (Array.isArray(row.parts) ? row.parts.length : 0)));
-    const heads = columns && valueHeads.length === columns ? valueHeads.map(String) : [];
+    const heads = columns && valueHeads.length === columns
+      ? valueHeads.map((head) => (typeof head === "object" && head ? { long: String(head.long), short: String(head.short || head.long) } : { long: String(head), short: String(head) }))
+      : [];
     const sizerOf = (index, narrow) => [statsValueSizer(rows.map((row) => row.parts?.[index]?.text ?? "")),
-      ...(narrow ? String(heads[index] || "").split(" ") : [heads[index] || ""])].filter(Boolean).join("\n");
+      ...(heads[index] ? (narrow ? heads[index].short.split(/[ \n]+/) : heads[index].long.split("\n")) : [])].filter(Boolean).join("\n");
+    const headPartHtml = (head) => {
+      const long = head.long.split("\n").map(escapeHtml).join("<br>");
+      return head.short === head.long ? long
+        : `<span class="stats-head-long">${long}</span><span class="stats-head-short">${escapeHtml(head.short)}</span>`;
+    };
     const sizers = Array.from({ length: columns }, (_column, index) => sizerOf(index, false));
     const narrowSizers = Array.from({ length: columns }, (_column, index) => sizerOf(index, true));
     const sizerAttr = (name, text) => ` ${name}="${escapeHtml(text).replace(/\n/g, "&#10;")}"`;
     const partHtml = (part, index) => `<span class="stats-value-part${part.className ? ` ${part.className}` : ""}"${index || heads.length
-      ? `${sizerAttr("data-sizer", sizers[index])}${narrowSizers[index] !== sizers[index] ? sizerAttr("data-sizer-narrow", narrowSizers[index]) : ""}><span>${escapeHtml(part.text)}</span>`
+      ? `${sizerAttr("data-sizer", sizers[index])}${narrowSizers[index] !== sizers[index] ? sizerAttr("data-sizer-narrow", narrowSizers[index]) : ""}><span>${part.html || escapeHtml(part.text)}</span>`
       : `>${escapeHtml(part.text)}`}</span>`;
     const valueHtml = (row) => (Array.isArray(row.parts) ? row.parts.map(partHtml).join("") : row.value);
     const headHtml = heads.length
-      ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts">${heads.map((text, index) => partHtml({ text }, index)).join("")}</span></div>`
+      ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts">${heads.map((head, index) => partHtml({ text: head.long, html: headPartHtml(head) }, index)).join("")}</span></div>`
       : valueHead ? `<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value">${valueHead}</span></div>` : "";
     // The value column fits the longest value label (its characters in ch, so a wider font widens it), at least 96px; a
     // label in columns needs each column's longest entry and a 6px gap between them.
@@ -4497,13 +4507,16 @@
         <div class="stats-histogram-range" aria-hidden="true"><span style="left:${low}%;width:${Math.max(high - low, 0.5)}%"></span><i style="left:${median}%"></i></div>
         <div class="stats-histogram-axis" aria-hidden="true">${statsDecadeTicks(first, first + bins)}</div>
       </div>`;
-    return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}"${aligned ? ` style="--ridge-n:${axis.n}"` : ""}>
+    // The histogram fills its column, as Figure 6's do (round 15 polish: it had stood in the class panels' plot column,
+    // about 195px wide and centred under the numbers, since Values by enzyme class moved to the supplement); it keeps
+    // their decades and ticks.
+    return `<figure class="stats-range" data-metric="${metric.key}" data-count="${n}">
       <figcaption>${metric.html} <span class="stats-range-unit">(${unit})</span></figcaption>
       <dl class="stats-range-numbers">
         <div><dt>Median</dt><dd>${statsRangeNumber(summary.median, { html: true, figures: 2 })}</dd></div>
         <div><dt>10–90%</dt><dd>${statsRangeNumber(summary.p10, { html: true })} – ${statsRangeNumber(summary.p90, { html: true })}</dd></div>
       </dl>
-      ${aligned ? `<div class="stats-range-plot">${histogram}</div>` : histogram}
+      ${histogram}
       <p class="stats-range-count">${formatInteger(n)} values</p>
     </figure>`;
   }
@@ -7119,7 +7132,9 @@
         segments: [{ part: "records", count: item.count, title: `EC ${item.class}: ${formatInteger(item.count)} records` },
           { part: "accepted", count: item.accepted, title: `EC ${item.class}: ${formatInteger(item.accepted)} accepted (${statsShare(item.accepted, item.count)})` },
           ...(withV2 ? [{ part: "catlog-mark", count: item.from_paper, title: `EC ${item.class}: ${formatInteger(item.from_paper)} read from the paper (${statsShare(item.from_paper, item.count)})` }] : [])],
-        parts: [{ text: formatInteger(item.count) }, { text: formatInteger(item.accepted), className: "stats-muted" },
+        // (each count in its legend colour, Accepted navy and Read from the paper's dark cyan, as the counts band sets them;
+        // round 15 polish: only the second had been coloured)
+        parts: [{ text: formatInteger(item.count) }, { text: formatInteger(item.accepted), className: "stats-accepted-count" },
           ...(withV2 ? [{ text: formatInteger(item.from_paper), className: "stats-v2-count" }] : [])],
         text: `EC ${item.class} ${item.name || ""}: ${formatInteger(item.count)} records, ${formatInteger(item.accepted)} accepted${withV2 ? `, ${formatInteger(item.from_paper)} read from the paper` : ""}.`,
       }));
@@ -7131,7 +7146,7 @@
         id: "statsClassesTitle", key: "ec-classes", title: "Enzyme classes", wide: true,
         body: statsBarChart({ key: "ec-classes", rows, scale: max, step, overlay: true, axis: statsAxis(max, step),
           legend: [{ part: "records", label: "Records" }, { part: "accepted", label: "Accepted" }, ...(withV2 ? [{ part: "catlog-mark", label: SOURCE_CATLOG_LABEL }] : [])],
-          valueHeads: ["Records", "Accepted", ...(withV2 ? ["From paper"] : [])] }),
+          valueHeads: ["Records", "Accepted", ...(withV2 ? [{ long: "Read from\nthe paper", short: "From paper" }] : [])] }),
         caption: withV2 ? "Accepted records over all records; the stripe marks those read from the paper."
           : "Accepted records drawn over all records.",
         rules: notes,

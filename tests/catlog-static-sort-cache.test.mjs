@@ -2707,7 +2707,7 @@ function row(overrides = {}) {
   // its heading and its entries, so the heading stands right-aligned over its numbers.
   assert.match(chart, /<div class="stats-chart has-value-heads" data-chart="ec-classes"/);
   assert.match(chart, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><\/span><\/div>/);
-  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><\/span>/);
+  assert.match(chart, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-accepted-count" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><\/span>/);
   assert.equal((chart.match(/<figure class="stats-range"/g) || []).length, 1, "Only metrics with a usable summary get a histogram");
   assert.match(chart, /aria-label="kcat: median 4\.5 s⁻¹; 10% of values are below 0\.036 and 10% above 240; 5 values\."/);
   assert.equal((chart.match(/class="stats-histogram-bars">/g) || []).length, 1);
@@ -2728,12 +2728,14 @@ function row(overrides = {}) {
       metrics: { kcat: { ...overview.metrics.kcat, by_class: kcatClasses } } };
     api.renderStats();
     const more = element("statsCharts").innerHTML;
-    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;From paper" data-sizer-narrow="0&#10;From&#10;paper"><span>From paper<\/span><\/span><\/span><\/div>/);
-    // Below 360px From paper takes one word per line (data-sizer-narrow), so its column needs only its longest word or
-    // count and the class names keep their room; one-word headings need no second sizer.
+    assert.match(more, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>Records<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Accepted"><span>Accepted<\/span><\/span><span class="stats-value-part" data-sizer="0&#10;Read from&#10;the paper" data-sizer-narrow="0&#10;From&#10;paper"><span><span class="stats-head-long">Read from<br>the paper<\/span><span class="stats-head-short">From paper<\/span><\/span><\/span><\/span><\/div>/);
+    // Read from the paper, the legend's words, in two lines (round 15 polish: the column had said From paper); below
+    // 360px its short tag, From paper, one word per line (data-sizer-narrow), so its column needs only its longest word
+    // or count and the class names keep their room; one-word headings need no second sizer. Accepted's count wears its legend's navy, as Read
+    // from the paper's wears its dark cyan.
     assert.doesNotMatch(more, /data-sizer-narrow="0&#10;(?:Records|Accepted)"/);
     assert.match(styleSource, /@media \(max-width: 359px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.stats-value-part\[data-sizer-narrow\]::before \{ content:attr\(data-sizer-narrow\) \}/);
-    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;From paper" data-sizer-narrow="0&#10;From&#10;paper"><span>2<\/span><\/span><\/span>/);
+    assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-accepted-count" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;Read from&#10;the paper" data-sizer-narrow="0&#10;From&#10;paper"><span>2<\/span><\/span><\/span>/);
     assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 read from the paper \(50\.0%\)"/);
     assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
     assert.match(more, /<h4 id="statsV2OrganismsTitle" class="stats-supp-title"><span class="stats-supp-number">Table S4<\/span> <span class="stats-supp-name">Most common organisms among records read from the paper<\/span><\/h4>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
@@ -2784,7 +2786,9 @@ function row(overrides = {}) {
     // Value ranges and Values by enzyme class share one axis per parameter: the whole decades around the class grid
     // (10⁻¹ to 10⁶ here), with the same ticks, and the histogram in the class panels' columns (the same n column width).
     // Its bars beyond that axis join its end bars: 1 below 10⁻¹ and 0 in 10⁻¹-10⁰ make the first bar (below 10⁰).
-    assert.match(more, /<figure class="stats-range" data-metric="kcat" data-count="5" style="--ridge-n:calc\(1ch \+ 4px\)">[\s\S]*?<div class="stats-range-plot"><div class="stats-histogram"/);
+    // (the histogram fills its column, as Figure 6's do: round 15 polish)
+    assert.match(more, /<figure class="stats-range" data-metric="kcat" data-count="5">[\s\S]*?<\/dl>\s*<div class="stats-histogram"/);
+    assert.doesNotMatch(more, /stats-range-plot/);
     const bars = more.match(/<div class="stats-histogram-bars">([\s\S]*?)<\/div>/)[1];
     assert.deepEqual([...bars.matchAll(/height:([\d.]+)%/g)].map((match) => Number(match[1])), [50, 100, 50, 50, 0, 0, 0]);
     assert.match(bars, /data-tip="below 10⁰ s⁻¹: 1 values"/);
@@ -2829,8 +2833,9 @@ function row(overrides = {}) {
       assert.doesNotMatch(full.rules + full.caption, /dashed|hatched/, "No end-bin values and no small class: the caption names no marks");
     }
     // A count chart's value column fits its longest entry per number column, here each column's heading (Records,
-    // Accepted, From paper), in ch (a wider font widens it), with 6px between the columns, at least 96px.
-    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(25ch \+ 18px\)\)"/);
+    // Accepted, and the longer line of Read from / the paper), in ch (a wider font widens it), with 6px between the
+    // columns, at least 96px.
+    assert.match(more, /data-chart="ec-classes" style="--value-w:max\(96px, calc\(24ch \+ 18px\)\)"/);
     // Figures stay numbered in reading order with the new ones, and captions stay plain.
     assert.deepEqual(headings(), ["Checks on the values", "Review result", "Records by main source", "Enzyme classes", "Value ranges"]);
     assert.deepEqual(supplementTitles(), ["Figure S1 Read from the paper and not yet re-read", "Figure S2 Values per paper",

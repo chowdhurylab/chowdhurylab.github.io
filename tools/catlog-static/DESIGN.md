@@ -1399,3 +1399,10 @@ Generated mockups guide layout only; their text is not a scientific source.
 - "On this page" is one component on Stats and the Guide: a 13px --muted label on its own line, then the parts as a
   wrapped row of 14px/500 links 20px apart (28px targets), no separators; Stats' links keep their parts' numbers, muted.
   Stats' had been one inline line whose "·" separators ended every wrapped line on a phone.
+- Stats' smaller slips: Value ranges' histograms fill their column with Figure 6's 16px insets, so the two figures share
+  one width and left edge (they keep Values by enzyme class's decades and ticks, no longer its x, since that figure moved
+  to the supplement); Figure 3 sets Accepted's counts in navy as it does Read from the paper's in dark cyan, both 600,
+  under the legend's words ("Read from / the paper", its short tag From paper below 360px); Checks on the values draws
+  a hairline 100% track behind each bar. Legend names link wherever Browse's filter shows exactly what they count: in
+  Figure S6 a database's Different number and Same, other label also count values whose own result is another, so they
+  stay plain text.

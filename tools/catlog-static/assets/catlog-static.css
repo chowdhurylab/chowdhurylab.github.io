@@ -1284,6 +1284,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
 .stats-legend .stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, var(--src-paper) 3px 7px, var(--bg) 7px 8px, transparent 8px), color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--st-accepted) }
 .stats-v2-count { color:var(--src-paper-ink); font-weight:600 }
+.stats-accepted-count { color:var(--st-accepted); font-weight:600 }
 /* No glow anywhere. Pointing at a mark (or focusing the link in its row) dims the other marks of its figure (data-hl:
    bars, slices, ridges with their range, median and end stubs) and gives the mark a 2px outline in its own colour; its
    exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
@@ -1342,6 +1343,14 @@ a.stats-total-value:focus-visible { outline:0 }
    as wide as its widest entry in the chart (a hidden sizer, data-sizer, one entry shape per line, measured in the
    viewer's font; it takes no height), so counts line up. */
 .stats-chart-value.has-parts { display:flex; justify-content:flex-end; align-items:flex-start; gap:6px }
+/* a heading of two lines (Read from / the paper) stands its neighbours on its last line; below 360px it gives its short
+   form (From paper), as the counts band does */
+.stats-chart-head > .stats-chart-value.has-parts { align-items:flex-end }
+.stats-head-short { display:none }
+@media (max-width: 359px) {
+  .stats-head-long { display:none }
+  .stats-head-short { display:inline }
+}
 .stats-value-part[data-sizer] { display:inline-grid; justify-items:end }
 /* The sizer is measured at 600, the boldest weight in a value column (Figure 5's From paper count), so a column of bold
    numbers and its regular heading come out equally wide. */
@@ -1520,15 +1529,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-checks-table .stats-check-covered { white-space:nowrap }
 .stats-checks-table .stats-check-result { color:var(--text-2) }
 .stats-checks-table td.stats-col-bar { width:96px }
+/* A check's bar is a share of all it covered: a hairline track gives its 100% (round 15 polish: the bars had no reference). */
+.stats-checks-table .stats-minibar { box-shadow:inset 0 0 0 1px var(--line) }
 
 /* Value ranges: three small log-scale histograms. */
 .stats-ranges { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
 .stats-range { min-width:0; margin:0 }
-/* On the axis it shares with Values by enzyme class (statsValueAxis), the histogram stands in the class panels' plot
-   column, with their label, median and n columns either side left blank, so a power of ten stands at one x in both
-   figures (the panels are as wide, --ridge-n is the class panel's for that parameter, and ch is taken at 12px). */
-.stats-range-plot { display:grid; grid-template-columns:var(--ridge-label) minmax(0,1fr) 52px var(--ridge-n); column-gap:8px; font-size:var(--fs-12) }
-.stats-range-plot > .stats-histogram { grid-column:2 }
 .stats-range figcaption { font-size:var(--fs-14); font-weight:600 }
 .stats-range-unit { color:var(--muted); font-weight:400 }
 .stats-range-numbers { display:flex; flex-wrap:wrap; gap:4px 24px; margin:6px 0 12px; font-size:var(--fs-12) }
@@ -1610,7 +1616,8 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Variants against their wild type: three histograms like Value ranges, a dashed line at the wild type (its name above
    the bars, clear of the peak beside it). */
 /* Their axes' end labels stand centred on the end ticks: the plots keep 16px either side for them. */
-.stats-fold-plot, .stats-condition-plot { margin-inline:16px }
+/* (Value ranges' histograms too, round 15 polish: one width and left edge for Figures 4 and 6, the end labels inside) */
+.stats-fold-plot, .stats-condition-plot, .stats-range > .stats-histogram { margin-inline:16px }
 .stats-fold-plot { padding-top:18px }
 .stats-fold-zero { position:absolute; top:0; bottom:24px; z-index:1; border-left:1px dashed var(--text-2); pointer-events:none }
 .stats-fold-zero > span { position:absolute; top:0; left:4px; color:var(--text-2); font-size:var(--fs-12); font-style:normal; line-height:var(--lh-12); white-space:nowrap }
@@ -1628,7 +1635,7 @@ a.stats-total-value:focus-visible { outline:0 }
    pointer takes a thicker line and the others dim. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
 .stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
-.stats-ridges, .stats-range { --ridge-label:44px; --ridge-n:5ch }
+.stats-ridges { --ridge-label:44px; --ridge-n:5ch }
 .stats-ridges { min-width:0 }
 .stats-ridge-defs { position:absolute; width:0; height:0; overflow:hidden }
 /* Label, plot, median, n: the title, the rows and the axis share these columns at 12px (the n column is in ch). */
@@ -1773,7 +1780,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ranges { grid-template-columns:1fr; max-width:560px }
   /* One panel per row, each class named. */
   .stats-ridge-panels { grid-template-columns:1fr; gap:32px; max-width:560px }
-  .stats-ridges, .stats-range { --ridge-label:minmax(0,150px) }
+  .stats-ridges { --ridge-label:minmax(0,150px) }
   .stats-ridge-name { display:inline }
 }
 
@@ -1832,7 +1839,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-checks-table .stats-col-bar { display:none }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
-  .stats-ridges, .stats-range { --ridge-label:44px }
+  .stats-ridges { --ridge-label:44px }
   .stats-ridge-name, .stats-map-classes .stats-ec-name { display:none }
   .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
@@ -1876,7 +1883,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-supp-item > summary::before { content:none }
   .stats-part-title { break-after:avoid }
   .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
-  .stats-ridges, .stats-range { --ridge-label:44px }
+  .stats-ridges { --ridge-label:44px }
   .stats-ridge-name { display:none }
   .stats-totals { break-inside:avoid }
   /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column); the
