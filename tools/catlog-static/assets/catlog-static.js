@@ -1163,19 +1163,14 @@
     const total = formatCount(manifest.total_rows || 0);
     const enrichedSize = formatFileSize(manifest.enriched_download?.size_bytes);
     const tableSize = formatFileSize(manifest.table_download?.size_bytes);
+    // What a file holds, then its rows and size on a line of their own (the menu's spans keep the line break), so a
+    // separator never starts a line.
+    const describe = (text, ...facts) => [text, facts.filter(Boolean).join(" · ")].filter(Boolean).join("\n");
     if ($("enrichedDataDescription")) {
-      $("enrichedDataDescription").textContent = [
-        "Every field, with sequences, SMILES and paper links",
-        `${total} rows`,
-        enrichedSize,
-      ].filter(Boolean).join(" · ");
+      $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} rows`, enrichedSize);
     }
     if ($("tableIndexDescription")) {
-      $("tableIndexDescription").textContent = [
-        "The table's columns; no sequences, SMILES or paper links",
-        `${total} rows`,
-        tableSize,
-      ].filter(Boolean).join(" · ");
+      $("tableIndexDescription").textContent = describe("The table's columns; no sequences, SMILES or paper links", `${total} rows`, tableSize);
     }
     if ($("datasetNotesLink")) {
       $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
@@ -1193,11 +1188,8 @@
     }
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
-      $("comparisonDataDescription").textContent = [
-        "Values read from the paper, one row per database listing the paper (CSV)",
-        rows ? `${formatInteger(rows)} rows` : "",
-        comparisonPath ? formatFileSize(comparison.size_bytes) : "",
-      ].filter(Boolean).join(" · ");
+      $("comparisonDataDescription").textContent = describe("Values read from the paper, one row per database listing the paper (CSV)",
+        rows ? `${formatInteger(rows)} rows` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "");
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
     const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);

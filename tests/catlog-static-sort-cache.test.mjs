@@ -3284,7 +3284,7 @@ function row(overrides = {}) {
   assert.equal(element("guideComparisonLink").href, element("comparisonDataButton").href);
   assert.equal(element("comparisonDataButton").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
   assert.equal(element("guideComparisonLink").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
-  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV) · 295,792 rows · 5.2 MB");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV)\n295,792 rows · 5.2 MB");
   delete runtimeManifest.database_comparison_download;
   api.renderDownloadMetadata();
   assert.equal(element("comparisonDataButton").hidden, true);
