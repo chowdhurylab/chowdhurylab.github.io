@@ -48,6 +48,33 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 34
+- Four genuinely new primary papers received selected relevant reads in
+  families outside round 33: peptidoglycan anchoring (PMIDs 10103227,
+  10877779 and 10788376) and protein PE amidation (PMID 39344512).
+- The Lactococcus proteinase papers report calcium-dependent activity,
+  release-associated changes and domain-truncation effects. Covalent
+  peptidoglycan-linked states are not established for the assayed arms.
+  Cell association alone was not relabeled as peptidoglycan anchoring.
+- The GABARAP paper measures binding by explicitly unlipidated protein.
+  Its printed binding percentages are separate experiments of that material,
+  not covalent modification states. The proposed lipidated state is a model,
+  not a measured comparison arm. These results remain held.
+- A previous PrsA access-held lead was checked through the publisher and
+  an official API; no journal original was recovered. Indexed excerpts and
+  a dissertation were not promoted. Prior identities and metadata-only
+  leads are separated from the four new original-paper reads.
+- Independent readers checked the original scopes, chemical-state limits,
+  numerical interpretation and source custody. No graph values, zeros,
+  missing comparator arms, means or error estimates were reconstructed.
+  No separate supplement or figure pixels were read.
+- Zero comparisons or measurement entries were admitted. Numerical data
+  remain 253 comparisons, 307 entries and 92 papers across 87/111 families;
+  24 families still have no selected numerical comparison. This selected
+  reading pass is not exhaustive literature coverage or experimental
+  replication. Website data, behavior, CatLog palette and audit workbook
+  are unchanged.
+
 New paper measurements, reading round 33
 - One comparison and one specific-activity entry add pupylation coverage
   (ADJ061). Yun et al., 2012, PMID23047115, compares a pupylated PPase
