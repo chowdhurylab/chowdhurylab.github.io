@@ -5331,9 +5331,13 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     wait.until(lambda d: d.find_element(By.ID, "nextRecordButton").is_enabled())
     header = driver.execute_script("""
         const title = document.querySelector('#detailContent .detail-title').getBoundingClientRect();
-        const heading = document.getElementById('detailHeading').getBoundingClientRect();
         const buttons = [...document.querySelectorAll('#detailContent .detail-title-buttons button')].map(b => b.getBoundingClientRect());
-        return {apart: buttons.every(b => b.left >= heading.right - 1), inside: buttons.every(b => b.right <= innerWidth && b.top >= title.top - 1),
+        // (on a phone the name runs under the buttons after its first lines: its text, not its box, keeps clear of them)
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById('detailHeading'));
+        const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+        const clear = (l, b) => l.right <= b.left + 1 || l.left >= b.right - 1 || l.bottom <= b.top + 1 || l.top >= b.bottom - 1;
+        return {apart: lines.length > 0 && buttons.every(b => lines.every(l => clear(l, b))), inside: buttons.every(b => b.right <= innerWidth && b.top >= title.top - 1),
                 sideways: document.getElementById('detailPanel').scrollWidth - document.getElementById('detailPanel').clientWidth,
                 targets: buttons.map(b => [Math.round(b.width), Math.round(b.height)]), closeGap: Math.round(buttons[2].left - buttons[1].right)};
     """)

@@ -2000,7 +2000,7 @@ function row(overrides = {}) {
   // Its groups are named as the main parts; each item has its own address (#stats-s1, #stats-table-s2) and the
   // supplement its own entry in On this page.
   assert.deepEqual([...chart.matchAll(/<h3 id="statsSupplement\w+Title" class="stats-supp-group-title">([^<]+)<\/h3>/g)].map((match) => match[1]),
-    ["What is in the catalog", "Biology", "Values"]);
+    ["What is in the catalog", "Organisms, enzymes and variants", "Values"]);
   assert.match(chart, /<details class="stats-supp-item" id="stats-s1" data-supp="versions">/);
   assert.match(chart, /<details class="stats-supp-item" id="stats-table-s5" data-supp="cautions">/);
   assert.match(element("statsContents").innerHTML, /<li><a href="#stats-supplement"><span class="stats-contents-number" aria-hidden="true">S<\/span> Supplementary figures and tables<\/a><\/li><\/ul>$/);

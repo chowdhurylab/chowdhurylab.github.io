@@ -3880,7 +3880,7 @@
 
   const STATS_SUPPLEMENT_TITLE = "Supplementary figures and tables";
   // The groups the supplement lists its items under, in the main parts' words and order.
-  const STATS_SUPPLEMENT_GROUPS = [["catalog", "What is in the catalog"], ["biology", "Biology"], ["values", "Values"], ["databases", "Against the databases"]];
+  const STATS_SUPPLEMENT_GROUPS = [["catalog", "What is in the catalog"], ["biology", "Organisms, enzymes and variants"], ["values", "Values"], ["databases", "Against the databases"]];
   // Addresses of parts the supplement took over (round 14): #stats-biology opens What is in the catalog (its enzyme
   // classes), #stats-cautions the Cautions table.
   const STATS_ADDRESS_ALIASES = { biology: "catalog", cautions: "cautions" };
@@ -9800,7 +9800,7 @@
       ? `Record ${query} is not in this snapshot`
       : searchOnly ? `No records match "${query}"` : "No records match these filters";
     const hint = missingRecord
-      ? "Records change between snapshots. Search for the enzyme, organism, substrate or PMID to find the current ones."
+      ? "Records change between snapshots; search by enzyme, organism, substrate or PMID."
       : items.length > 1
         ? `Filters on: ${items.map((item) => item.label).join(" · ")}.`
         : searchOnly || !items.length
@@ -12080,7 +12080,30 @@
     const name = String(row.enzyme_display_name || "").trim() || "Enzyme name not recorded";
     // (Its focus ring shows after a key press only: focusDetailHeading.)
     const classes = [name.length > LONG_DETAIL_NAME ? "long-name" : "", keyboardInput ? "" : "quiet-focus"].filter(Boolean).join(" ");
-    return `<h2 id="detailHeading" tabindex="-1"${classes ? ` class="${classes}"` : ""}>${escapePublic(name)}</h2>`;
+    return `<h2 id="detailHeading" tabindex="-1"${classes ? ` class="${classes}"` : ""}>${detailNameHtml(publicText(name))}</h2>`;
+  }
+
+  // The record's name wraps only between its parts: at a space, or after a hyphen or slash ("1,2-beta-" | "oligoglucan"),
+  // never inside a part (each is an inline block; a part wider than the panel wraps inside it) and never right after a
+  // short locant ("4-", "1,2-", "3α-", "5'-", "N-", "D-2-"), which stays with the part after it ("4-hydroxyacetophenone").
+  // On a phone a part too wide for the line beside ‹ › × goes under them, whole. The text, and what a copy gives, are the
+  // name as it is.
+  const NAME_LOCANTS = /^[([]?(?:(?:\d[\d,'′″α-ωA-Za-z]{0,7}|[A-Za-zα-ω])-+)+$/;
+  function detailNameHtml(name) {
+    return String(name).split(/(\s+)/).map((word) => {
+      if (!word.trim()) return escapeHtml(word);
+      const pieces = [];
+      (word.match(/[^-/]*[-/]+|[^-/]+$/g) || [word]).forEach((part) => {
+        if (pieces.length && NAME_LOCANTS.test(pieces[pieces.length - 1])) pieces[pieces.length - 1] += part;
+        else pieces.push(part);
+      });
+      // A short last part ("TEM-1", "Cu,Zn-SOD") stays with the part before it too.
+      if (pieces.length > 1 && pieces[pieces.length - 1].length <= 3) {
+        const tail = pieces.pop();
+        pieces[pieces.length - 1] += tail;
+      }
+      return pieces.map((piece) => `<span class="name-part">${escapeHtml(piece)}</span>`).join("");
+    }).join("");
   }
 
   // The organism with its binomial in italics ("<i>Escherichia coli</i> K-12", "<i>Bacillus</i> sp. A1"); a name that is

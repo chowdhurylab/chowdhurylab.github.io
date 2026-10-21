@@ -756,6 +756,8 @@ body.detail-open .detail-panel { display:block }
 .detail-top { position:sticky; top:0; z-index:2; display:grid; gap:4px; border-bottom:1px solid var(--line); background:var(--bg); padding:16px 56px 12px 20px }
 .detail-top h2 { margin:0 0 2px; color:var(--text); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20); min-width:0; overflow-wrap:break-word }
 .detail-top h2.long-name { font-size:var(--fs-16); line-height:var(--lh-16) }
+/* The name wraps between its parts only, a short locant kept with the part after it (detailNameHtml). */
+.detail-top h2 .name-part { display:inline-block; max-width:100% }
 .detail-top h2:focus { outline:none }
 .detail-top h2:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
 /* Focused after a click or by a link that opens the record (for screen readers), the heading shows no ring. */
@@ -1581,6 +1583,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-explanation { font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-explanation summary { width:fit-content; min-height:36px; padding-block:9px; cursor:pointer; color:var(--accent) }
 .stats-explanation summary:hover { text-decoration:underline; text-underline-offset:3px }
+/* Every disclosure opens with the same + and −, as the supplement, the record and the Guide's Reference do (no
+   triangles). */
+.stats-explanation > summary, .guide-view .guide-details > summary { list-style:none }
+.stats-explanation > summary::-webkit-details-marker, .guide-view .guide-details > summary::-webkit-details-marker { display:none }
+.stats-explanation > summary::before, .guide-view .guide-details > summary::before { content:"+"; content:"+" / ""; display:inline-block; width:16px; color:var(--muted); font-weight:600 }
+.stats-explanation[open] > summary::before, .guide-view .guide-details[open] > summary::before { content:"\2212"; content:"\2212" / "" }
 .stats-explanation p { margin:8px 0 0; max-width:80ch; color:var(--muted) }
 .stats-explanation dl { margin:8px 0 0 }
 .stats-explanation dl > div { display:grid; grid-template-columns:130px 1fr; gap:12px; margin-top:6px }
@@ -1728,7 +1736,9 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-grid { gap:40px 0 }
   .stats-supp-number { flex-basis:5.75em }
   .stats-checks { grid-template-columns:1fr }
-  /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line); the
+  /* One card per row: no blank meter to line the cards up, so no gap above the Second AI check's result. */
+  .stats-meter.is-blank { display:none }
+  /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges, .stats-range { --ridge-label:44px }
   .stats-ridge-name, .stats-map-classes .stats-ec-name { display:none }
@@ -2064,6 +2074,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 }
 @media (max-width: 640px), (max-height: 900px) and (pointer: coarse) {
   .detail-title { padding-right:148px }
+}
+/* Phones: the name keeps ‹ › × clear only beside them (a float their width and height: 128px from the 20px padding,
+   32px from the 16px one), and takes the panel's width below them, so a long name is not a narrow column of short
+   lines. */
+@media (max-width: 640px) {
+  .detail-title { padding-right:20px }
+  .detail-title::before { content:""; float:right; width:128px; height:32px }
 }
 /* Phones and touch screens: a "?" (a filter group's, the record's Against the databases) keeps its 24px circle and
    is a 44px target, its hit area 10px round the circle (inside the group's 44px title row, clear of the chevron; above
