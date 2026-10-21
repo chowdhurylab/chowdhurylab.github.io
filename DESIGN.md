@@ -52,7 +52,7 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    the paper the darker BPG cyan --src-paper-ink, Human review the human-checked green: one meaning per colour), leading
    by size, weight and whitespace alone; under the pointer a linked item takes a flat 9% tint of its colour and its
    label and note step up to --text-2 (muted on the tint fell to 4.46:1; --text-2 is 7.3:1). The numbers stand still
-   (the band's is-entering class no longer animates anything). Line 2 (20px): Papers,
+   (no entrance motion; the page no longer sets an is-entering class). Line 2 (20px): Papers,
    Enzymes, EC numbers, Organisms, Substrates. Accepted and Read from the paper link into Browse: the whole item is the
    link and tints calmly under the pointer. From 721 to 1199px line 1 grows with the window from the phones' 28px to
    40px, never smaller on a wider window and with no jump at 721, 1024 or 1200px: to 30px at 1023px (the page keeps a
