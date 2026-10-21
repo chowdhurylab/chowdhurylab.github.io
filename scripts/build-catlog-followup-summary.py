@@ -711,6 +711,108 @@ def condition_summary(values, key):
     return {"n": len(values), "start": start, "width": width, "counts": counts, "decimals": places if places <= 3 else None}
 
 
+# Stats supplement (round 14), from the records read from the paper only.
+# Papers by parameter: the papers that give each parameter (a calculated kcat/Km is not given), kcat and Km together,
+# and all three.
+def paper_parameters(params_by_paper):
+    counts = {"papers": len(params_by_paper), "kcat": 0, "km": 0, "kcat_km": 0, "kcat_over_km": 0, "all": 0}
+    for params in params_by_paper.values():
+        for key in ("kcat", "km", "kcat_over_km"):
+            counts[key] += key in params
+        counts["kcat_km"] += {"kcat", "km"} <= params
+        counts["all"] += {"kcat", "km", "kcat_over_km"} <= params
+    return counts if counts["papers"] else None
+
+
+def given_parameters(row):
+    params = {key for key in ("kcat", "km") if row.get(key) is not None}
+    if row.get("kcat_over_km") is not None and str(row.get("kcat_over_km_origin") or "") != "calculated":
+        params.add("kcat_over_km")
+    return params
+
+
+# Kinds of variant: the variant records (enzyme_form) by their mutation_type; any other type is "other".
+VARIANT_KINDS = ("substitution", "multi_substitution", "deletion", "insertion", "truncation", "other")
+
+
+def variant_kinds(counts):
+    records = sum(counts.values())
+    return {"records": records, "kinds": {kind: counts.get(kind, 0) for kind in VARIANT_KINDS}} if records else None
+
+
+# Single substitutions: each variant (variant_key: paper, enzyme, organism, mutation) of mutation_type substitution whose
+# signature is one standard residue, a position and another (H57A), once, by wild-type residue (rows) and new residue
+# (columns), in the residue order of the BLOSUM matrices.
+SUBSTITUTION_RESIDUES = "ARNDCQEGHILKMFPSTWYV"
+SUBSTITUTION = re.compile(r"^([ARNDCQEGHILKMFPSTWYV])\d+([ARNDCQEGHILKMFPSTWYV])$")
+
+
+def substitution_of(row):
+    if row.get("mutation_type") != "substitution":
+        return None
+    match = SUBSTITUTION.match(str(row.get("mutation_signature") or "").strip())
+    return (match.group(1), match.group(2)) if match and match.group(1) != match.group(2) else None
+
+
+def substitution_matrix(variants):
+    """variants: variant_key -> (wild-type residue, new residue, paper keys)."""
+    if not variants:
+        return None
+    index = {residue: number for number, residue in enumerate(SUBSTITUTION_RESIDUES)}
+    counts = [[0] * len(SUBSTITUTION_RESIDUES) for _ in SUBSTITUTION_RESIDUES]
+    papers = set()
+    for wild, new, keys in variants.values():
+        counts[index[wild]][index[new]] += 1
+        papers |= keys
+    return {"variants": len(variants), "papers": len(papers), "residues": SUBSTITUTION_RESIDUES, "counts": counts}
+
+
+# Units as printed: each kcat, Km and printed kcat/Km value read from the paper (its proof line) by the unit printed with it
+# (raw_unit), a power of ten in it set aside: kcat per s, min or h; Km in M, mM, µM, nM or pM (mol/L spelled out too; a
+# lower-case m standing alone is the molar sign, as small capitals come out of a text layer); kcat/Km per concentration and
+# time. Code converts each value to s^-1, mM or mM^-1 s^-1; a unit this does not read counts as other.
+PRINTED_METRICS = {"kcat": "kcat", "Km": "km", "kcat/Km": "kcat_over_km"}
+PRINTED_UNITS_TOP = 8
+UNIT_POWER = re.compile(r"(?:[x×]\s*)?10\s*\^?\s*\{?\s*[-+]?\s*\d+\s*\}?")
+UNIT_MOLAR = re.compile(r"(?<![A-Za-z])([munp]?)mol\s*(?:/|·|\s)?\s*(?:l|L|liter|litre)(?:\s*-\s*1)?(?![A-Za-z])")
+UNIT_TIME = re.compile(r"(?<![A-Za-z])(sec|s|min|hr|h)(?![A-Za-z])", re.I)
+UNIT_CONCENTRATION = re.compile(r"(?<![A-Za-z])([munp]?)[Mm](?![A-Za-z])")
+
+
+def printed_unit(metric, raw_unit):
+    text = unicodedata.normalize("NFKC", str(raw_unit or "")).replace("μ", "u").replace("µ", "u").replace("␮", "u")
+    text = re.sub(r"[‐-―−]", "-", text)
+    text = UNIT_POWER.sub(" ", text)
+    text = re.sub(r"[\^{}()\[\]]", "", text)
+    text = re.sub(r"(?<![A-Za-z])([munp])\s+(?=[Mm](?![A-Za-z]))", r"\1", text)
+    text = UNIT_MOLAR.sub(lambda match: f"{match.group(1)}M", text)
+    times = {"s" if unit in ("s", "sec") else "h" if unit in ("h", "hr") else unit
+             for unit in (found.lower() for found in UNIT_TIME.findall(text))}
+    concentrations = set(UNIT_CONCENTRATION.findall(text))
+    if len(times) > 1 or len(concentrations) > 1:
+        return None
+    time, concentration = next(iter(times), None), next(iter(concentrations), None)
+    if metric == "kcat":
+        return f"{time}-1" if time and concentration is None else None
+    if metric == "km":
+        return f"{concentration}M" if concentration is not None and not time else None
+    return f"{concentration}M-1 {time}-1" if concentration is not None and time else None
+
+
+def printed_units(counts):
+    """counts: metric -> Counter of printed_unit (None: other)."""
+    result = {}
+    for metric in ("kcat", "km", "kcat_over_km"):
+        found = counts.get(metric) or Counter()
+        values = sum(found.values())
+        if not values:
+            continue
+        named = sorted(((unit, count) for unit, count in found.items() if unit), key=lambda item: (-item[1], item[0]))
+        shown = named[:PRINTED_UNITS_TOP]
+        result[metric] = {"values": values, "units": [list(item) for item in shown], "other": values - sum(count for _, count in shown)}
+    return result or None
+
+
 # The values read from the paper against the databases, by enzyme class: each value's own result (its proof line's
 # database_status), as Stats part 7's figures count them: the same number, the same number under another label, corrects
 # a database's number, a different number or in none of the databases. A record in several classes counts in each.
@@ -771,6 +873,7 @@ def summarize_overview(rows, marks=None):
     v2_groups = defaultdict(lambda: {"wild": [], "variant": []})
     v2_conditions = {"temperature": [], "ph": []}
     v2_database = defaultdict(Counter)
+    v2_parameters, v2_kinds, v2_substitutions, v2_units = defaultdict(set), Counter(), {}, defaultdict(Counter)
     factor_only = {"values": 0, "by_parameter": Counter(), "by_database": Counter()}
     for row in rows:
         add_factor_only(factor_only, row)
@@ -856,6 +959,18 @@ def summarize_overview(rows, marks=None):
             for result in database_results(row):
                 for number in classes:
                     v2_database[number][result] += 1
+            for key in keys:
+                v2_parameters[key] |= given_parameters(row)
+            if form == "variant":
+                kind = str(row.get("mutation_type") or "")
+                v2_kinds[kind if kind in VARIANT_KINDS[:-1] else "other"] += 1
+            substitution = substitution_of(row) if form == "variant" else None
+            if substitution:
+                v2_substitutions.setdefault(variant_key(row), (*substitution, set()))[2].update(keys)
+            for line in row.get("proof_lines") or []:
+                metric = PRINTED_METRICS.get(str(line.get("metric") or "")) if isinstance(line, dict) else None
+                if metric:
+                    v2_units[metric][printed_unit(metric, line.get("raw_unit"))] += 1
     total = sum(statuses.values())
     overview = {
         "records": total,
@@ -887,9 +1002,12 @@ def summarize_overview(rows, marks=None):
         "top_ec_from_paper": [{"ec": number, "name": most_common(ec_names[number]), "count": count}
                               for number, count in top(+v2_ec_counts)],
         "from_paper_values": values_per_paper(v2_paper_values),
+        "from_paper_parameters": paper_parameters(v2_parameters),
         "sources": dict(sources),
         "main_sources": {key: dict(sorted(main_sources[key].items())) for key in MAIN_SOURCE_KEYS if main_sources[key]},
     })
+    if overview["from_paper_parameters"] is None:
+        del overview["from_paper_parameters"]
     for metric, summary in overview["metrics"].items():
         grid = by_class(values[metric], class_values[metric])
         if grid and summary.get("n"):
@@ -907,6 +1025,9 @@ def summarize_overview(rows, marks=None):
         "conditions": {key: summary for key, summary in ((key, condition_summary(found, key)) for key, found in v2_conditions.items()) if summary},
         "database_by_class": [{"class": number, **{result: counts[result] for result in DATABASE_CLASS_RESULTS.values()}}
                               for number, counts in sorted(v2_database.items()) if sum(counts.values())],
+        "variant_kinds": variant_kinds(v2_kinds),
+        "substitutions": substitution_matrix(v2_substitutions),
+        "printed_units": printed_units(v2_units),
     }
     insights = {key: value for key, value in insights.items() if value}
     if insights:

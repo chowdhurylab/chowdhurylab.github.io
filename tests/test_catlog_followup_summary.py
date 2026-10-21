@@ -486,6 +486,60 @@ class OverviewTests(unittest.TestCase):
             {"class": 3, "same": 1, "other_label": 1, "corrects": 2, "differs": 1, "not_listed": 1},
             {"class": 4, "same": 0, "other_label": 0, "corrects": 0, "differs": 1, "not_listed": 0}])
 
+    def test_supplement_counts_papers_variants_substitutions_and_printed_units(self):
+        def read(key, pmid, **fields):
+            row = {"record_key": key, "verification_status": "verified", "verification_method": "catlog_v2_read_and_independent_verify",
+                   "source_db": "primary_paper_direct", "supporting_pmids": [pmid], "pubmed_id": pmid, "ec_number": "3.1.1.1",
+                   "enzyme_display_name": "esterase", "organism": "Bacillus subtilis", "substrate_name": "pNPA", "wild_type": True}
+            row.update(fields)
+            return row
+        line = lambda metric, unit: {"metric": metric, "raw_unit": unit}
+        rows = [
+            # Paper 1 gives all three; paper 2 Km and a calculated kcat/Km only; paper 3 kcat and Km.
+            read("a", "1", kcat=1.0, km=2.0, kcat_over_km=0.5, kcat_over_km_origin="paper_reported",
+                 proof_lines=[line("kcat", "min^-1"), line("Km", "μM"), line("kcat/Km", "M^{−1} s^{−1}"), "a line of text"]),
+            read("b", "2", km=2.0, kcat_over_km=0.5, kcat_over_km_origin="calculated", proof_lines=[line("Km", "mm")]),
+            read("c", "3", kcat=3.0, km=1.0, proof_lines=[line("kcat", "s−1"), line("Km", "mmol/L")]),
+            # Variants of paper 3: H57A on two substrates is one substitution; R10K/E12Q is two; a deletion; one not specified.
+            read("v1", "3", wild_type=False, mutation_type="substitution", mutation_signature="H57A", kcat=1.0,
+                 proof_lines=[line("kcat", "×10^3 s^-1")]),
+            read("v2", "3", wild_type=False, mutation_type="substitution", mutation_signature="H57A", substrate_name="pNPB", km=1.0,
+                 proof_lines=[line("Km", "10^-6 M")]),
+            read("v3", "3", wild_type=False, mutation_type="multi_substitution", mutation_signature="R10K/E12Q", km=1.0,
+                 proof_lines=[line("Km", "mg/ml")]),
+            read("v4", "3", wild_type=False, mutation_type="deletion", mutation_signature="ΔN10", km=1.0),
+            read("v5", "3", wild_type=False, mutation_type="variant_unspecified", km=1.0),
+            read("v6", "3", wild_type=False, mutation_type="substitution", mutation_signature="Tyr5Phe", km=1.0),
+            # A record not read from the paper never counts.
+            {"record_key": "old", "verification_status": "unverified", "source_db": "brenda", "supporting_pmids": ["9"],
+             "wild_type": False, "mutation_type": "substitution", "mutation_signature": "D5N", "kcat": 1.0,
+             "proof_lines": [line("kcat", "s^-1")]},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, _marks = self.write_fixture(directory, rows, {})
+            overview = followup.build_overview(manifest, path)
+        self.assertEqual(overview["from_paper_parameters"],
+                         {"papers": 3, "kcat": 2, "km": 3, "kcat_km": 2, "kcat_over_km": 1, "all": 1})
+        self.assertEqual(overview["from_paper_parameters"]["papers"], overview["from_paper"]["papers"])
+        insights = overview["from_paper_insights"]
+        self.assertEqual(insights["variant_kinds"], {"records": 6, "kinds": {
+            "substitution": 3, "multi_substitution": 1, "deletion": 1, "insertion": 0, "truncation": 0, "other": 1}})
+        # H57A counts once (one variant on two substrates); Tyr5Phe is not a one-letter signature.
+        substitutions = insights["substitutions"]
+        self.assertEqual((substitutions["variants"], substitutions["papers"]), (1, 1))
+        residues = substitutions["residues"]
+        self.assertEqual(substitutions["counts"][residues.index("H")][residues.index("A")], 1)
+        self.assertEqual(sum(map(sum, substitutions["counts"])), 1)
+        # Units as printed: the power of ten set aside, small-capital molar signs and mol/L read, mg/ml other.
+        self.assertEqual(insights["printed_units"], {
+            "kcat": {"values": 3, "units": [["s-1", 2], ["min-1", 1]], "other": 0},
+            "km": {"values": 5, "units": [["mM", 2], ["M", 1], ["uM", 1]], "other": 1},
+            "kcat_over_km": {"values": 1, "units": [["M-1 s-1", 1]], "other": 0}})
+        for metric, raw, unit in [("km", "μ m", "uM"), ("km", "nm", "nM"), ("kcat", "ms^-1", None), ("kcat", "M prod/s M E", None),
+                                  ("kcat_over_km", "s^-1 mM^-1", "mM-1 s-1"), ("kcat_over_km", "µM⁻¹ min⁻¹", "uM-1 min-1"),
+                                  ("kcat_over_km", "L/µmol/s", None), ("km", "mmol", None), ("kcat", "seconds^-1", None)]:
+            self.assertEqual(followup.printed_unit(metric, raw), unit, raw)
+
     def test_overview_counts_factor_only_corrections_by_parameter_and_database(self):
         line = lambda metric, found, sources: {"metric": metric, "database_status": "corrected", "database_found_by": found,
                                                "database_by_source": [{"db": db, "kind": kind} for db, kind in sources]}
