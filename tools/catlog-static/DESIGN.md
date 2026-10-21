@@ -693,7 +693,9 @@ foot of the window, a new page opens at the table's top (showTableTop scrolls th
 scroll), and the page keeps its place behind the filter sheet and an open record (body overflow hidden); from 641px the
 table scrolls inside its box as before. Each record is a card: name and EC;
 the variant's mutation (under the name, as in the table); organism · substrate, with any note under the substrate on
-its own grey line; kcat, Km and kcat/Km with their units as labels, written as the table's headings and the counts
+its own grey line (an organism that takes two lines beside its substrate puts the substrate on a line of its own,
+without the "·": fitCardOrganisms, round 15 polish); kcat, Km and kcat/Km, the card's lead (16/20px, 500, tabular; round
+15 polish: at 13px/400 they had been its quietest text) with their units as labels, written as the table's headings and the counts
 band write them (italic k and K, subscript cat and m: real elements in each value cell, hidden in the table, as a CSS
 attr() label cannot draw them); the
 two-line status badge. Below 390px kcat/Km (mM⁻¹ s⁻¹) does not fit a third of the card, so every value label puts
@@ -1332,7 +1334,7 @@ Generated mockups guide layout only; their text is not a scientific source.
 - The filter sidebar is position:relative, so what it holds (the visually hidden More filters label) is clipped by its
   scroll box and never lengthens the page: the Browse page does not scroll as a whole on a desktop.
 - Phone cards: organism and substrate each wrap to two lines before they are cut; at 360px and below the substrate takes
-  its own line under the organism, without the dot.
+  its own line under the organism, without the dot (round 15 polish: on any phone too when the organism takes two lines).
 - A record's In the paper quote shows the JBC fonts' code points for ±, ×, − and µ as printed, and a 12px --muted line
   under it when the text layer lost symbols (the snapshot's printed_line_note, or a replacement or private-use
   character).

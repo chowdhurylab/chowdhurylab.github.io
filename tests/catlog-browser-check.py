@@ -4439,6 +4439,27 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert all(label["shown"] and label["italic"] and label["sub"] and label["unit"].startswith("(") and label["above"]
                        for label in labels), f"At 320px each card value is labelled with italic k and its subscript: {labels}"
+            # Round 15 polish: the values lead the card (16px, 500, larger than the organism line), and an organism that
+            # takes two lines beside its substrate puts the substrate on its own line without the "·": no card's substrate
+            # opens a line with the dot (long bacterial names at 375px).
+            set_browse_viewport(driver, browser, 375, 800)
+            open_page("#browse?organism=bacterium&rows=100")
+            cards = driver.execute_script("""
+                const rows = [...document.querySelectorAll('#recordsBody tr[data-key]')];
+                const lines = e => Math.round(e.getBoundingClientRect().height / (parseFloat(getComputedStyle(e).lineHeight) || 17));
+                return {count: rows.length, wrapped: rows.filter(row => row.classList.contains('organism-wraps')).length,
+                        dangling: rows.filter(row => {
+                            const name = row.querySelector('td.c-organism .clamp-2'), substrate = row.querySelector('td.c-substrate .clamp-2');
+                            const dot = getComputedStyle(substrate, '::before').content !== 'none';
+                            const ownLine = substrate.getBoundingClientRect().top >= name.getBoundingClientRect().bottom - 1;
+                            return dot && (ownLine || lines(name) > 1);
+                        }).map(row => row.dataset.key),
+                        value: (e => [getComputedStyle(e).fontSize, getComputedStyle(e).fontWeight])(rows[0].querySelector('td.c-kcat .metric-with-note')),
+                        organism: getComputedStyle(rows[0].querySelector('td.c-organism')).fontSize};
+            """)
+            assert cards["count"] and cards["wrapped"] and not cards["dangling"], f"At 375px a card's substrate opens a line with '·': {cards}"
+            assert cards["value"] == ["16px", "500"] and float(cards["organism"][:-2]) < 16, f"The card's values do not lead it: {cards}"
+            set_browse_viewport(driver, browser, 320, 800)
             # A caution's short words beside its "!" ("above diffusion limit · kcat/Km mismatch") wrap inside the value's
             # third of the card, never past it, in the system font at 320px and in a wide font (Verdana) at 375px. (Records
             # not yet re-read: a record read from the paper is also in this group when the paper prints another unit,

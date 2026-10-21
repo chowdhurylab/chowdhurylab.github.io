@@ -9788,7 +9788,27 @@
   function fitTableColumns() {
     fitColumnWidths();
     fitCardTags();
+    fitCardOrganisms();
     updateTableScrollControls();
+  }
+
+  // Phone cards: an organism that takes two lines beside its substrate ("Arcticibacterium" / "luteifluviistationis") puts
+  // the substrate on a line of its own under it, without the "·" (round 15 polish: the substrate's column had opened with
+  // a dangling "· 1,2,3,4-tetra-O-"), as every card does at 360px and below. Every card is measured side by side first,
+  // then the classes are set (one layout pass).
+  function fitCardOrganisms() {
+    const table = $("recordTableWrap")?.querySelector?.("table");
+    const colgroup = table?.querySelector?.("colgroup");
+    if (!table || !colgroup || typeof window.getComputedStyle !== "function") return;
+    const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
+    rows.forEach((row) => row.classList.remove("organism-wraps"));
+    if (window.getComputedStyle(colgroup).display !== "none") return;
+    rows.filter((row) => {
+      const name = row.querySelector("td.c-organism .clamp-2");
+      if (!name) return false;
+      const line = parseFloat(window.getComputedStyle(name).lineHeight) || 18;
+      return name.getBoundingClientRect().height > line * 1.5;
+    }).forEach((row) => row.classList.add("organism-wraps"));
   }
 
   // Phone cards: a tag line too long for its card ("not re-read · BRENDA, SABIO-RK · corrected · human-checked" at

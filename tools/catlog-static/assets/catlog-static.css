@@ -2099,6 +2099,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody td.c-substrate.has-note > .clamp-2 { order:2; flex:1 1 0; min-width:0; color:var(--text-2) }
   #recordsBody td.c-substrate .condition-note { order:2; flex:0 0 100%; font-size:var(--fs-12) }
   #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) { order:4; flex:1 1 0; text-align:left; white-space:normal }
+  /* The values lead the card (round 15 polish: at 13px/400 they had been its quietest text, under their 12px labels and
+     beside a 13px/500 Accepted): 16/20px, 500, tabular; calc. and a caution's words keep their 12px. */
+  #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) .metric-with-note { font-size:var(--fs-16); font-weight:500; line-height:20px; font-variant-numeric:tabular-nums lining-nums }
+  #recordsBody :is(td.c-kcat,td.c-km,td.c-eff) .metric-with-note :is(.metric-origin, .metric-inline-unit, .value-flag) { font-weight:400 }
   /* Each label is its name and unit as the table's headings write them, "kcat (s⁻¹)" with italic k and subscript cat; a
      label too wide breaks only before its unit. A value too wide for its cell (a wide font at 320px) breaks before its
      "× 10". */
@@ -2124,11 +2128,17 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .load-notice.empty-notice { position:static; max-width:none }
 }
 /* The narrowest phones (an iPhone SE's 320px): side by side, organism and substrate each get too little width for two
-   lines, so the substrate takes its own line under the organism, without the dot. */
+   lines, so the substrate takes its own line under the organism, without the dot; on any phone a card whose organism
+   takes two lines beside its substrate does the same (fitCardOrganisms). */
 @media (max-width: 360px) {
   #recordsBody td.c-organism { flex:1 1 100%; max-width:none; margin-right:0 }
   #recordsBody td.c-substrate, #recordsBody td.c-substrate.has-note > .clamp-2 { flex:1 1 100% }
   #recordsBody td.c-substrate .clamp-2::before { content:none }
+}
+@media (max-width: 640px) {
+  #recordsBody tr.organism-wraps td.c-organism { flex:1 1 100%; max-width:none; margin-right:0 }
+  #recordsBody tr.organism-wraps :is(td.c-substrate, td.c-substrate.has-note > .clamp-2) { flex:1 1 100% }
+  #recordsBody tr.organism-wraps td.c-substrate .clamp-2::before { content:none }
 }
 
 /* Phones and touch screens: the record's ‹, › and × are 44px targets with 8px more before ×, so a near miss on › never
