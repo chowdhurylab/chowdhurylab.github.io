@@ -111,7 +111,7 @@ one 600 with a 2px accent rule under it.
 
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
 quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is and how far it has come ("Enzyme kcat, Km
-and kcat/Km values; 75,000 of 185,804 read again from their papers so far.", the counts from the manifest,
+and kcat/Km values; 75,000 of 185,804 read from their papers so far.", the counts from the manifest,
 renderRereadLines, from 1024px; ", being read from their papers" below 1024px, so the line keeps one line from 641px,
 and before the counts arrive or without them; round 14: never "re-checked against their papers", which 60% of the
 records are not yet) and links the Guide ("How it works →"); one line from 641px, two on

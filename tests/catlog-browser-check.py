@@ -3511,7 +3511,7 @@ def check_layout(driver, browser, url, route_label):
         band = box(".snapshot-band")
         # One line on what CatLog is opens the band (round 13: the visitors' "what is this?"), then the card.
         lead = box(".snapshot-lead")
-        assert lead["height"] == 18 and re.search(r"; [\d,]+ of [\d,]+ read again from their papers so far\.", driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").get_attribute("innerText")), lead
+        assert lead["height"] == 18 and re.search(r"; [\d,]+ of [\d,]+ read from their papers so far\.", driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").get_attribute("innerText")), lead
         assert 72 <= band["height"] - lead["height"] - 6 <= 78, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)

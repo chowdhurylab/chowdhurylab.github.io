@@ -5559,7 +5559,7 @@
   // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
   // " 75,000 of 185,804 records are read from the paper so far.", from the manifest; hidden without the counts. One verb
   // everywhere (round 14): read from the paper, as the labels say; Browse's lede says how far too ("Enzyme kcat, Km and
-  // kcat/Km values; 75,000 of 185,804 read again from their papers so far.", "..., being read from their papers."
+  // kcat/Km values; 75,000 of 185,804 read from their papers so far.", "..., being read from their papers."
   // below 1024px), never that every value was re-checked.
   function renderRereadLines() {
     const total = Number(manifest.total_rows || 0);
@@ -5572,7 +5572,7 @@
     // counts band under it gives them)
     document.querySelectorAll?.("[data-reread-lede]").forEach((lede) => {
       if (read !== null && total) {
-        lede.innerHTML = `<span class="lede-wide">; ${formatInteger(read)} of ${formatInteger(total)} read again from their papers so far</span>`
+        lede.innerHTML = `<span class="lede-wide">; ${formatInteger(read)} of ${formatInteger(total)} read from their papers so far</span>`
           + '<span class="lede-narrow">, being read from their papers</span>';
       }
     });
