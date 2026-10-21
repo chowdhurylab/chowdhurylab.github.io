@@ -5106,9 +5106,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(rows["Different number"], ["1,051", "955"]);
   assert.deepEqual(rows["Same, other label"], ["5,574", "3,466"]);
   assert.deepEqual(rows["Not in the databases"], ["20,987", "14,002"]);
-  assert.deepEqual(rows["every value of the record"], ["", "6,283"]);
-  assert.deepEqual(rows["All values the same"], ["", "36,121"]);
-  assert.deepEqual(rows["Corrected earlier records not yet re-read"], ["", "2,881"]);
+  assert.deepEqual(rows["every value of the record"], ["—", "6,283"], "a cell with no count shows the dash (round 15 polish)");
+  assert.deepEqual(rows["All values the same"], ["—", "36,121"]);
+  assert.deepEqual(rows["Corrected earlier records not yet re-read"], ["—", "2,881"]);
   // The caveat once in the section; the results' meanings are the legend's, never repeated here.
   assert.equal((text.match(/does not by itself mean a database is wrong/g) || []).length, 1);
   for (const item of api.GUIDE_DB_RESULTS) assert.ok(!text.includes(item.text), item.key);
@@ -5182,26 +5182,26 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // number (1,548 - 257 correct; 1,051 + 257 differ), with their own row and count there.
   assert.deepEqual(results(html)["Corrects a value"], ["1,291", "1,443"]);
   assert.deepEqual(results(html)["Different number"], ["1,308", "955"]);
-  assert.deepEqual(results(html)["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["257", ""]);
+  assert.deepEqual(results(html)["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["257", "—"]);
   assert.deepEqual(Object.values(tableRows(html, ' id="guide-databases-not-listed"')).map((value) => value[0]),
     ["4,873", "4,529", "10", "3", "4", "336"]);
   counted.corrections.by_cause_found_by = { paper_check: { unit_not_converted: 5 }, factor_only: { power_of_ten: 2 } };
   assert.deepEqual(Object.values(tableRows(api.guideDatabasesHtml(counted), ' id="guide-databases-found"')).map((value) => value[0]), ["5", "0"]);
-  assert.deepEqual(results(api.guideDatabasesHtml(counted))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["2", ""]);
+  assert.deepEqual(results(api.guideDatabasesHtml(counted))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["2", "—"]);
   // A comparison that counts them under Different number itself: as a status of their own (counted into Different
   // number, no move), or as a count under differs.
   const ownStatus = bundleComparison();
   ownStatus.values.all.differs_factor_only = 40;
   assert.deepEqual(results(api.guideDatabasesHtml(ownStatus))["Different number"], ["1,091", "955"]);
-  assert.deepEqual(results(api.guideDatabasesHtml(ownStatus))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["40", ""]);
+  assert.deepEqual(results(api.guideDatabasesHtml(ownStatus))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["40", "—"]);
   assert.deepEqual(results(api.guideDatabasesHtml(ownStatus))["Corrects a value"], ["1,548", "1,443"]);
   const underDiffers = bundleComparison();
   underDiffers.differs = { by_found_by: { factor_only: 12 } };
-  assert.deepEqual(results(api.guideDatabasesHtml(underDiffers))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["12", ""]);
-  // Without counts: the words alone, never a guessed number.
+  assert.deepEqual(results(api.guideDatabasesHtml(underDiffers))["exact factor, not yet checked the paper’s × 10n, 60 or 3,600"], ["12", "—"]);
+  // Without counts: the words alone, never a guessed number (a cell without one shows the dash).
   html = api.guideDatabasesHtml({});
   text = plain(html);
-  assert.doesNotMatch(html, /<td>[^<]+<\/td>|guide-db-sources/);
+  assert.doesNotMatch(html, /<td>[^<]*\d[^<]*<\/td>|guide-db-sources/);
   assert.doesNotMatch(text, /undefined|NaN|null|This snapshot compares|in this snapshot/);
   assert.match(text, /with what BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list for the same paper\./);
   // The section at a glance: the lead, the Results table and one disclosure headed by its h3.

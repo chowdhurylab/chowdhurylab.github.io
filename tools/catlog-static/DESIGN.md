@@ -1406,3 +1406,7 @@ Generated mockups guide layout only; their text is not a scientific source.
   a hairline 100% track behind each bar. Legend names link wherever Browse's filter shows exactly what they count: in
   Figure S6 a database's Different number and Same, other label also count values whose own result is another, so they
   stay plain text.
+- The Guide's small slips: every group of Labels and colours keeps one 11.5em term column, so the definitions in one
+  column start at one x (Tags' had started 32px left of Against the databases'); the Reference's disclosures open with
+  the muted + every other disclosure has; a Results cell with no count shows the dash the Units section says marks no
+  value.

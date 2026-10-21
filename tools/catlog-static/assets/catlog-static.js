@@ -5893,7 +5893,8 @@
     const squareHtml = (mark) => (mark
       ? `<span class="db-mark db-mark-${mark.replace(/_/g, "-")} guide-db-mark" data-result="${mark}" aria-hidden="true"></span>`
       : `<span class="guide-db-mark" aria-hidden="true"></span>`);
-    const row = (key, nameCell, values, records, className = "") => `<tr${className ? ` class="${className}"` : ""} data-key="${key}"><th scope="row">${nameCell}</th><td>${values}</td><td>${records}</td></tr>`;
+    // (a cell with no count shows the dash the Guide's Units says marks no value: round 15 polish)
+    const row = (key, nameCell, values, records, className = "") => `<tr${className ? ` class="${className}"` : ""} data-key="${key}"><th scope="row">${nameCell}</th><td>${values || EMPTY_VALUE}</td><td>${records || EMPTY_VALUE}</td></tr>`;
     // Each result after its square (none on Corrected earlier), Browse's name; a row under it narrows it.
     const rows = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
       const gloss = item.key === "earlier" ? ` <span class="guide-db-gloss">records not yet re-read</span>` : "";

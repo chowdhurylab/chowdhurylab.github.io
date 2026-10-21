@@ -230,6 +230,18 @@ def check_guide(driver, wait):
                 desktop: innerWidth >= 1024};
     """)
     assert (not measure["desktop"] or measure["guide"] == measure["stats"] == measure["team"]) and not measure["wide"], measure
+    # Labels and colours: one term width, so the definitions of the groups in one column start at one x; every
+    # disclosure opens with the same muted + (Reference's too).
+    slips = driver.execute_script("""
+        const lefts = [...document.querySelectorAll('#guideView .guide-legend-group dd')].filter(dd => dd.getClientRects().length)
+            .map(dd => [Math.round(dd.closest('.guide-legend-group').getBoundingClientRect().left), Math.round(dd.getBoundingClientRect().left)]);
+        const columns = {};
+        lefts.forEach(([group, dd]) => { (columns[group] = columns[group] || new Set()).add(dd); });
+        const plus = [...document.querySelectorAll('#guideView :is(.guide-ref, .guide-details) > summary')]
+            .filter(s => s.getClientRects().length).map(s => getComputedStyle(s, '::before').color);
+        return {columns: Object.values(columns).map(set => [...set]), plus: [...new Set(plus)]};
+    """)
+    assert all(len(column) == 1 for column in slips["columns"]) and len(slips["plus"]) == 1, slips
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("independent", "AI run", "Checks pending", "Exporter", "exporter", *DROPPED_WORDING):
         assert word not in guide_text, f"The Guide still says {word}"
@@ -405,13 +417,14 @@ def check_guide_databases(driver, browser, url):
             "Different number": [f"{values['differs'] + factor_only + differs_extra:,}", f"{kinds['differs']:,}"],
             "Same, other label": [f"{values['same_number_other_label']:,}", f"{kinds['other_label']:,}"],
             "Not in the databases": [f"{values['new'] + values.get('new_ratio_only', 0) + values.get('new_paper_not_in_databases', 0):,}", f"{kinds['new']:,}"],
-            "All values the same": ["", f"{records['every_value_confirmed']:,}"],
+            # (a cell with no count shows the dash: round 15 polish)
+            "All values the same": ["—", f"{records['every_value_confirmed']:,}"],
         }
         assert {key: counts[key] for key in expected} == expected, counts
         nested = {row["key"]: row["cells"] for row in all_rows if row["nested"]}
-        assert nested.get("all_not_listed") == ["", f"{records['every_value_new']:,}"], nested
+        assert nested.get("all_not_listed") == ["—", f"{records['every_value_new']:,}"], nested
         if factor_only or differs_extra:
-            assert nested.get("differs_factor_only") == [f"{factor_only or differs_extra:,}", ""], nested
+            assert nested.get("differs_factor_only") == [f"{factor_only or differs_extra:,}", "—"], nested
         assert "Exact factor only" not in text and "nothing else was checked" not in text, "an exact factor alone is no correction"
         # The databases named in the lead come from the manifest; no hard-coded number of them.
         for name in (comparison.get("values_by_database") or {}):

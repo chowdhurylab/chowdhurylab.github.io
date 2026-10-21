@@ -2406,13 +2406,14 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-legend-group { min-width:0; border-top:1px solid var(--line); padding:10px 0 0 }
 .guide-view .guide-shell .guide-legend-group > h3 { margin:0 0 2px; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
 .guide-view .guide-legend-group .guide-status-list { margin:0; border-top:0 }
-.guide-view .guide-legend-group .guide-status-list > div { grid-template-columns:9.5em minmax(0, 1fr); gap:2px 12px; padding:7px 0 }
+/* One term width for every group of Labels and colours (round 15 polish: Tags' definitions had started 32px left of
+   Against the databases' in the same column), as wide as the databases' longest name with its square. */
+.guide-view .guide-legend-group .guide-status-list > div { grid-template-columns:11.5em minmax(0, 1fr); gap:2px 12px; padding:7px 0 }
 .guide-view .guide-shell .guide-legend-group :is(dt, dd) { font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-legend-group .guide-status-list .state-badge, .guide-view .guide-legend-group .guide-tag-list .state-tag { font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-legend-wide { grid-column:1 / -1 }
 .guide-view .guide-legend-group .guide-db-legend dt { display:flex; align-items:baseline; gap:8px; font-weight:500 }
 .guide-view .guide-legend-group .guide-db-legend .db-mark { flex:0 0 10px; align-self:flex-start; margin-top:5px }
-.guide-view .guide-legend-group .guide-db-legend > div { grid-template-columns:11.5em minmax(0, 1fr) }
 .guide-view .guide-mark-sample { display:inline-flex; min-width:24px; align-items:center; color:var(--text-2) }
 .guide-view .guide-mark-tick { color:var(--checked) }
 .guide-view .guide-mark-tick .check-icon { width:14px; height:14px }
@@ -2452,7 +2453,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-ref:last-child { border-bottom:1px solid var(--line-soft) }
 .guide-view .guide-ref > summary { position:relative; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 16px; min-height:44px; cursor:pointer; list-style:none; padding:10px 0 10px 24px }
 .guide-view .guide-ref > summary::-webkit-details-marker { display:none }
-.guide-view .guide-ref > summary::before { content:"+"; content:"+" / ""; position:absolute; left:2px; top:10px; color:var(--accent); font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.guide-view .guide-ref > summary::before { content:"+"; content:"+" / ""; position:absolute; left:2px; top:10px; color:var(--muted); font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
 .guide-view .guide-ref[open] > summary::before { content:"\2212"; content:"\2212" / "" }
 .guide-view .guide-shell .guide-ref > summary h3 { margin:0; color:var(--text); font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
 .guide-view .guide-shell .guide-ref-gist { color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
