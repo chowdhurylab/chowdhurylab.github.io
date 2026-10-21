@@ -5453,8 +5453,12 @@ def check(driver, browser, url):
         assert f"{expected.get('verified', 0):,}" in accepted_split
     identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
     if identity_only:
-        # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them
-        assert f"{identity_only:,} records have no PMID or DOI linked" in driver.find_element(By.CLASS_NAME, "stats-status-section").text
+        # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them, once (round 14): in
+        # the Not reviewed row under the review rules, else in the note under the figure
+        status_text = " ".join(driver.find_element(By.CLASS_NAME, "stats-status-section").text.split())
+        assert (f"It also holds {identity_only:,} records the earlier review accepted that have no PMID or DOI linked" in status_text
+                or f"{identity_only:,} accepted records have no PMID or DOI linked" in status_text), status_text
+        assert status_text.count("no PMID or DOI linked") == 1, "Stats names the records without a paper once"
 
     # Every Stats link opens Browse with the shared #browse? filters.
     links = driver.find_elements(By.CSS_SELECTOR, "#statsCharts a.stats-link")
