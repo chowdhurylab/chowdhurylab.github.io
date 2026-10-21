@@ -4693,7 +4693,7 @@
         </div>
         <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classTable}</div>
       </div>`,
-      caption: "Records read from the paper with both a kcat and a Km; numbered dots are the enzyme classes' medians.",
+      caption: metricWordsHtml(escapeHtml("Records read from the paper with both a kcat and a Km; numbered dots are the enzyme classes' medians.")),
       rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each. Values without a recorded unit, or in another unit, are left out.",
     };
   }
@@ -6835,7 +6835,7 @@
       valuesPerPaper = {
         id: "statsPerPaperTitle", key: "values-per-paper", title: "Values per paper",
         body: statsBarChart({ key: "values-per-paper", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Papers", "%\u00a0of\u00a0papers"] }),
-        caption: `The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by the number of kcat, Km and kcat/Km values read from each.`,
+        caption: metricWordsHtml(`The ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"} CatLog has read, by the number of kcat, Km and kcat/Km values read from each.`),
         rules: `${formatInteger(perPaper.values)} kcat, Km and kcat/Km values. A calculated kcat/Km is not counted.`,
       };
     }

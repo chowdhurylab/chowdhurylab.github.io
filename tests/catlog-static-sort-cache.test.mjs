@@ -2697,7 +2697,7 @@ function row(overrides = {}) {
     assert.match(more, /<span class="stats-name"><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
     // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
     assert.match(more, /<h4 id="statsPerPaperTitle" class="stats-supp-title"><span class="stats-supp-number">Figure S2<\/span> <span class="stats-supp-name">Values per paper<\/span><\/h4>/);
-    assert.match(more, /<strong>Figure S2\.<\/strong> The 1 paper CatLog has read, by the number of kcat, Km and kcat\/Km values read from each\./);
+    assert.match(more, /<strong>Figure S2\.<\/strong> The 1 paper CatLog has read, by the number of <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> values read from each\./);
     assert.doesNotMatch(more.replace(/<[^>]*>/g, " "), /\bv[12]\b|Entries/, "CatLog is the one name");
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
     assert.match(more, /<span class="stats-chart-label">2–4<\/span>/);
