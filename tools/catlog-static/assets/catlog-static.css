@@ -520,13 +520,13 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 #openFiltersButton { display:none }
 .table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
 /* Active filters: Undo first (dimmed with nothing to undo: it keeps its place however many chips there are, so pressing
-   it again never lands on a chip or Clear all), then one removable chip each and Clear all. Each chip has a
-   3px bar at its left, a quiet tint and a lighter line in its colour: a review result's or database result's own colour,
-   a caution's tan, else the colour of the dot beside its group in the sidebar; its words still say what it is
-   ("Source: Read from the paper"). */
+   it again never lands on a chip or Clear all), then one removable chip each and Clear all. A chip is plain (round 14:
+   a tint, a tinted line and a 3px coloured stripe showed one colour three times, a template look): a 1px hairline on
+   white, its words ("Source: Read from the paper") and, where its option has one, the option's own mark in its meaning
+   colour (a status dot, human-checked's tick, Read from the paper's cyan square, a database result's square, a
+   caution's "!"). The tone-* classes below colour the sidebar's group dots only. */
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
-/* A chip's colour (and the sidebar dot's): --group, with a 12% tint behind the words (text 13:1 or more, the × 4.5:1)
-   and a 45% line round it, the darker colours giving the deeper tints. */
+/* A group's colour (--group), for the dot beside its title in the sidebar. */
 .tone-source { --group:var(--fg-source) }
 /* Read from the paper: BPG cyan, as on the counts band and Stats; the Source group's dot wears it while that option is
    chosen, so the dot and the chip agree. */
@@ -547,7 +547,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .tone-cmp-same { --group:var(--cmp-same) }
 /* Corrected earlier (no square) and a Review result chip naming several results (each result's dot is in its words). */
 .tone-neutral { --group:var(--bar-neutral) }
-.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--group-line, color-mix(in srgb, var(--group, var(--accent)) 45%, var(--bg))); border-left:3px solid var(--group, var(--accent)); border-radius:var(--radius); background:var(--group-tint, color-mix(in srgb, var(--group, var(--accent)) 12%, var(--bg))); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
+.filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--muted) }
 /* The Review result chip names each result after its dot, as the table's status cells do. */
@@ -564,7 +564,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
 .chip-flag::before { content:"!" }
 .filter-chip .db-mark { width:8px; height:8px; margin:0 4px 1px 0; vertical-align:middle }
-.filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
+.filter-chip:hover { border-color:var(--accent) }
 .filter-chip:hover .chip-x { color:var(--accent) }
 /* Undo and Clear all stand 4px further from the chips than the chips from each other. Clear all's room is the last
    chip's right margin, so a Clear all that wraps starts its line where the chips do, never 4px in. */
@@ -575,10 +575,14 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    tall. */
 :is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }
 .active-filters.results-empty .filter-chips-clear { display:none }
-/* The dot beside a sidebar group's title, in the colour its chips wear (Review result and Against the databases have
-   none: each option has its own colour). It hangs in the 16px gutter (4px from the edge, 4px before the words), so the
-   titles keep their width and wrap where they did. */
+/* The mark beside a sidebar group's title, only where the group's filter has a meaning colour: Cautions' tan dot, and
+   Source's cyan square while Read from the paper is chosen (Read from the paper's mark). The groups with no meaning
+   colour (the enzyme fields, the measurement, Source database) have none: an ink dot there was decoration. Review
+   result and Against the databases have none either: each option has its own mark. It hangs in the 16px gutter (4px
+   from the edge, 4px before the words), so the titles keep their width and wrap where they did. */
 .group-dot { display:inline-block; width:8px; height:8px; margin:0 4px 1px -12px; border-radius:50%; background:var(--group); box-shadow:inset 0 0 0 1px var(--fg-dot-ring); vertical-align:middle }
+.group-dot:is(.tone-identity, .tone-measurement, .tone-source) { display:none }
+.filter-section:has(input[name="sourceMode"][value="paper"]:checked) > .filter-section-title .group-dot { display:inline-block; border-radius:1px; box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
 .table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
@@ -2300,7 +2304,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-chip-row { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; padding:0; list-style:none }
 .guide-view .guide-shell .guide-chip-row li { display:flex; max-width:100% }
 .guide-view .guide-chip-row .filter-chip { cursor:default }
-.guide-view .guide-chip-row .filter-chip:hover { border-color:var(--group-line, color-mix(in srgb, var(--group, var(--accent)) 45%, var(--bg))); border-left-color:var(--group, var(--accent)) }
+.guide-view .guide-chip-row .filter-chip:hover { border-color:var(--line-strong) }
 .guide-view .guide-chip-row .filter-chip:hover .chip-x { color:var(--muted) }
 .guide-view .guide-shell .guide-legend-group .guide-chip-key { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 

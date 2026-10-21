@@ -276,7 +276,7 @@ as Review result's does, and links to the Guide's #guide-cautions) and Source da
 tag, read out and on hover in full, UniProt, SKiD, STRENDA DB, earlier paper extractions, shown as "Earlier extractions",
 the table's tag, and read out in full, so a wide font keeps it on one line at 256px, and Source not recorded; ticking one
 selects Not yet re-read in Source, a merged record counts under each database it names, and All records or Read from the
-paper clears them; its "?" says so; its dot and its chips wear the accent, as the other filters without a meaning colour do), these three closed. More filters
+paper clears them; its "?" says so; like the other filters without a meaning colour it has no group mark and its chips no mark), these three closed. More filters
 opens by itself when one of its filters is set (an address, Back, a link from Stats or a record, Undo), each group with
 one set opens too, and nothing in it is ever set unseen: its title (a group title in the accent colour, its chevron too,
 with a --line-soft rule under it when open) carries the count of those filters' chips in the Filters badge's look (the
@@ -307,27 +307,22 @@ extractions", read out in full as the sidebar reads them; an EC class "EC 1", as
 trailing dot), after Undo and followed by Clear all (with no matching
 records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
 button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
-least); the count beside Filters is the number of chips. Each chip wears a colour (the user,
-2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to undo"): a 3px bar
-at its left, a quiet tint of it behind the words (12%) and a lighter line round it (45%). A chip whose option already
-has a meaning colour wears that colour, so a colour means one thing everywhere (Type And Color, the colour table): a
-review result its status colour (Accepted navy, Not confirmed salmon, Not checked slate, Disputed deep red; a chip naming
-several results is neutral grey and names each result after its status dot, as the table does), Only human-checked the
-agreement green, Read from the paper cyan, a database result the colour of its square in the sidebar (Corrects a value
-red, Different number brown, Same, other label mint, Not in the databases cyan, All values the same green; Corrected
-earlier neutral grey), a caution tan. Review result and Against the databases therefore have no dot beside their title.
-Round 14 (one meaning per Nature BPG colour; the purple, raspberry, olive and amber of round 13 were not BPG): the other
-filters (Not yet re-read and a source database; the enzyme, organism, substrate, EC number and search; the measurement:
-Measurement type, Wild type or variant, Assay conditions) are choices with no meaning colour, so they wear the accent,
-the colour of what a visitor picks (links, buttons, the selected row), never a BPG colour that means something else.
-The 8px dot beside a group's title (aria-hidden, a faint 1px ring) is hung in the 16px gutter, so the titles keep
-their width and wrap where they did: the accent for those groups, Source's turning cyan while Read from the paper is
-chosen, Cautions' tan. Colour is never the only carrier: the chip keeps its words, and an option with a mark on the page
-shows it before its name, in its colour (a review result its status dot, Only human-checked its tick, a caution the
-table's tan "!" disc at 12px, a database result the sidebar's square at 8px; No cautions and Corrected earlier have
-none, as in the sidebar; Source, the enzyme fields and the measurement have none), so a group is told from another by
-more than its colour, also by a colour-blind reader. The darker colours give the deeper tints; on every tint the words
-read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
+least); the count beside Filters is the number of chips. Chips are plain (round 14: a 3px bar, a 12% tint and a 45%
+line showed one colour three times, the rounded-box-with-a-stripe template look): a 1px --line-strong hairline on
+white, the words, and the option's own mark before its name in its meaning colour, which is where the colour coding the
+user asked for lives (2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to
+undo"): a review result its status dot (Accepted navy, Not confirmed salmon, Not checked slate, Disputed deep red; a
+chip naming several results names each after its dot, as the table does), Only human-checked its green tick, Read from
+the paper its cyan square (Read from the paper's mark), a database result the sidebar's square (Corrects a value red,
+Different number brown, Same, other label mint, Not in the databases cyan, All values the same green), a caution the
+table's tan "!" disc at 12px. The filters with no meaning colour (Not yet re-read and a source database; the enzyme,
+organism, substrate, EC number and search; the measurement: Measurement type, Wild type or variant, Assay conditions;
+No cautions; Corrected earlier) have no mark: their words are enough. A group's title in the sidebar has a mark (8px,
+aria-hidden, hung in the 16px gutter so the titles keep their width) only where its filter has a meaning colour:
+Cautions' tan dot, and Source's cyan square while Read from the paper is chosen; none beside the enzyme fields, the
+measurement and Source database (round 13's dot there wore the accent: decoration once the chips lost their colour), nor
+beside Review result and Against the databases, whose options each have their own mark. The words read 15:1 or more on
+the white chip and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
 that change; the page keeps the last 30 sets, in this page only. Back or Forward that lands on the set Undo would bring
@@ -660,20 +655,19 @@ two-line status badge. Below 390px kcat/Km (mM⁻¹ s⁻¹) does not fit a third
 its unit on a second line (2px below the name, clear of its subscript), as the table's headings do, and the three
 values stay on one line; a wider label breaks
 only before its unit, and a value too wide for its third breaks before its "× 10".
-The phone filter sheet ends with a "Show N records" button. Filter chips use
-their colour's tint, line and 3px bar (Filters, above), 12px text, and wrap within the toolbar.
+The phone filter sheet ends with a "Show N records" button. Filter chips are plain,
+a hairline on white with the option's own mark (Filters, above), 12px text, and wrap within the toolbar.
 
-White and neutral surfaces carry the data. One accent (--accent, 7.4:1) marks
-links, selection, buttons and the focus ring (2px, 2px offset). Status uses a
+White and neutral surfaces carry the data. One accent (--accent, ink, 16.5:1) marks
+links (with a quiet underline), selection, buttons and the focus ring (2px, 2px offset). Status uses a
 coloured dot from the Nature BPG palette (ggsci NPG "nrc") and ink words:
 accepted navy, not confirmed salmon, not checked slate (one colour for Unverified and
 Not reviewed: the word says Not checked for both; its title names which),
 disputed deep red; the light salmon dot carries a 1px darker ring. The
 filter's ticks use the status colour, or a darker form where it is light
 (salmon's ring colour, a darker slate), so a ticked box stands out on white and
-does not look disabled. The filter chips reuse the meaning colours only for the options they name (Filters, above);
-the other filters wear the accent (--fg-* point at it; chips and the sidebar's group dots only; the site has one light
-theme, so there are no dark-mode forms). Tan (--caution-mark, its text --caution) marks cautions. Green (human-checked,
+does not look disabled. The filter chips carry the meaning colours only on the marks of the options they name
+(Filters, above); the other filters have no mark (the site has one light theme, so there are no dark-mode forms). Tan (--caution-mark, its text --caution) marks cautions. Green (human-checked,
 #007664, 5.6:1 on white and 4.7:1 on its tint, the darker shade of BPG green) is for "human-checked" and, at the colour itself, for a
 database's Same number (one meaning: agreement with a second source):
 a small check drawn before the tag, weight 500, no pill or

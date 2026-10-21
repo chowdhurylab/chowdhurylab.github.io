@@ -9,15 +9,9 @@ specialist groups (Source, first since round 14; Wild type or variant, Assay con
 Cautions, Source database) under one "More filters", which opens by itself when one of them is set
 and counts them on its title; help text sits behind each group's "?", never in view; no
 option, address or chip changed (the user, 2026-10-18). Browse's active-filter chips
-wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
-meaning colour where it has one (a review result's status colour, human-checked's
-green, Read from the paper's cyan, a database result's square, a caution's tan),
-else the accent (ink since round 14: the teal accent beside Human-checked's green and Read from the paper's cyan
-read as one teal family), the colour of what a visitor picks, as the dot beside its group
-in the sidebar (round 14: one meaning per Nature BPG colour, so no hue outside the
-palette and no palette hue with a second meaning); an option's own mark shows before its name too
-(the status dot, human-checked's tick, a caution's "!", a database result's
-square), so colour is not all that tells the groups apart; and Undo,
+are plain since round 14 (a 1px hairline on white, no stripe or tint): the colour is on the option's own mark before
+its name, in its meaning colour (a review result's status dot, human-checked's tick, Read from the paper's cyan square,
+a database result's square, a caution's "!"), and the filters with no meaning colour have no mark; and Undo,
 first in the bar (it keeps its place, dimmed with nothing to undo), restores the filter set before the last change,
 Clear all too
 (tools/catlog-static/DESIGN.md, Filters).

@@ -3073,6 +3073,8 @@ CHIP_COLOURS_JS = """
         const dots = tone === 'tone-paper' ? [...document.querySelectorAll('#catalogFilters .filter-section:has(input[name="sourceMode"]) > .filter-section-title .group-dot')]
             : tone ? [...document.querySelectorAll(`#catalogFilters .group-dot.${tone}`)] : [];
         return {key: chip.dataset.filterKey, tone, bar: style.borderLeftColor, barWidth: style.borderLeftWidth, tint: style.backgroundColor,
+                edges: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],
+                lines: new Set([style.borderTopColor, style.borderRightColor, style.borderBottomColor, style.borderLeftColor]).size,
                 text: Math.round(contrast(style.color, style.backgroundColor) * 10) / 10,
                 cross: Math.round(contrast(getComputedStyle(chip.querySelector('.chip-x')).color, style.backgroundColor) * 10) / 10,
                 dots: dots.map(dot => ({colour: getComputedStyle(dot).backgroundColor, hidden: dot.getAttribute('aria-hidden'),
@@ -3081,11 +3083,13 @@ CHIP_COLOURS_JS = """
                 // the option's own mark before its name: the status dot, human-checked's tick, a caution's "!", a database
                 // result's square, each in its colour (none for Source, the enzyme fields and the measurement)
                 mark: chip.querySelector('.chip-state') ? 'dot' : chip.querySelector('.chip-check') ? 'tick'
-                    : chip.querySelector('.chip-flag') ? 'flag' : chip.querySelector('.db-mark') ? 'square' : null,
+                    : chip.querySelector('.chip-flag') ? 'flag' : chip.querySelector('.db-mark') ? 'square' : chip.querySelector('.src-mark') ? 'source' : null,
                 markColour: (e => e ? (e.matches('.chip-check') ? getComputedStyle(e).color : getComputedStyle(e).backgroundColor) : null)(
-                    chip.querySelector('.chip-check, .chip-flag, .db-mark')),
+                    chip.querySelector('.chip-check, .chip-flag, .db-mark, .src-mark')),
                 words: chip.textContent.trim()};
     });
+    probe.style.color = 'var(--line-strong)'; document.body.appendChild(probe); tokens['--line-strong'] = getComputedStyle(probe).color;
+    probe.style.color = 'var(--bg)'; tokens['--bg'] = getComputedStyle(probe).color; probe.remove();
     return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed'), otherLabel: square('other-label')},
             plainDots: [...document.querySelectorAll('#catalogFilters .filter-section-title')].filter(title => /^(Review result|Against the databases)/.test(title.textContent.trim()))
                 .map(title => title.querySelectorAll('.group-dot').length)};
@@ -3108,16 +3112,16 @@ UNDO_STATE_JS = """
 
 
 def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment):
-    """The active-filter chips are colour-coded (the user, 2026-10-15: "can the filters be different color or sth so that
-    its user friendly to keep track to undo"): a chip whose option has a meaning colour wears it (a review result its
-    status colour, human-checked green, Read from the paper cyan, a database result its square's colour, a caution tan),
-    the other filters (round 14: one meaning per Nature BPG colour) the accent, the colour of what a visitor picks, as the
-    dot beside their group in the sidebar does; the chip's words read 4.5:1 or more on its tint. Undo, first in the bar, works once a change is made, says what it gives back, restores
-    the filter set before the last change (a removed chip, Clear all; Enter on it too) and is dimmed when there is nothing
-    more to undo. It keeps its place, so clicking it again at the same point undoes one more change, never a chip or Clear
-    all. On a phone the filter
-    sheet's heading has it too, right before × ("Filters · Clear all · Undo · ×"), nothing overlapping. Clicks are centred
-    first (Safari)."""
+    """The active-filter chips are plain (round 14: a tint, a tinted line and a 3px stripe showed one colour three times,
+    a template look): a 1px hairline on white, the words, and the option's own mark in its meaning colour where it has
+    one, so the colour coding the user asked for (2026-10-15: "can the filters be different color or sth so that its
+    user friendly to keep track to undo") lives on the mark: a review result its status dot, human-checked its green
+    tick, Read from the paper its cyan square, a database result its square, a caution its tan "!". The filters with no
+    meaning colour have no mark and no group dot. Undo, first in the bar, works once a change is made, says what it gives
+    back, restores the filter set before the last change (a removed chip, Clear all; Enter on it too) and is dimmed when
+    there is nothing more to undo. It keeps its place, so clicking it again at the same point undoes one more change,
+    never a chip or Clear all. On a phone the filter sheet's heading has it too, right before × ("Filters · Clear all ·
+    Undo · ×"), nothing overlapping. Clicks are centred first (Safari)."""
     results = {}
 
     def state():
@@ -3128,6 +3132,10 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
         element.click()
 
+    def plain_chip(chip, tokens):
+        return (chip["edges"] == ["1px"] * 4 and chip["lines"] == 1 and chip["bar"] == tokens["--line-strong"]
+                and chip["tint"] == tokens["--bg"] and chip["text"] >= 4.5 and chip["cross"] >= 3)
+
     # Every group at once (no record has them all: the bar then has no Clear all, "Clear search and filters" stands in).
     open_page(base + "#browse?source=paper&checked=1&db=differs&ec=1.1&organism=coli&metric=kcat&tmin=20")
     keys = chip_keys()
@@ -3137,55 +3145,39 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     tones = {chip["key"]: chip["tone"] for chip in chips}
     assert tones == {"source:paper": "tone-paper", "checked": "tone-checked", "db:differs": "tone-cmp-differs", "ec": "tone-identity",
                      "organism": "tone-identity", "metric:kcat": "tone-measurement", "temperature": "tone-measurement"}, tones
-    plain = {}
-    for chip in chips:
-        assert chip["barWidth"] == "3px" and chip["text"] >= 4.5 and chip["cross"] >= 3, chip
-        if chip["tone"] in ("tone-source", "tone-paper", "tone-identity", "tone-measurement"):
-            assert chip["dots"] and all(dot["colour"] == chip["bar"] and dot["hidden"] == "true" and dot["shown"] for dot in chip["dots"]), chip
-            plain[chip["tone"]] = chip["bar"]
-        else:
-            assert not chip["dots"], chip
-    # Colour is not all that tells a chip's group from another (the reviewer: some colours look alike to colour-blind
-    # readers): an option with a mark on the page shows it, in its colour; the three plain groups have none.
-    marks = {chip["key"]: chip["mark"] for chip in chips}
-    assert marks == {"source:paper": None, "checked": "tick", "db:differs": "square", "ec": None, "organism": None, "metric:kcat": None,
-                     "temperature": None}, marks
-    assert all(chip["markColour"] in (None, chip["bar"]) for chip in chips), chips
-    by_key = {chip["key"]: chip["bar"] for chip in chips}
-    assert by_key["db:differs"] == page["squares"]["differs"] == tokens["--cmp-differs"], (by_key, page["squares"])
-    assert by_key["checked"] == tokens["--checked"], by_key
-    # Read from the paper wears its own colour (BPG cyan, the counts band's and Stats'), and so does the Source group's
-    # dot while it is chosen; a database source chip and the dot then wear the accent.
-    assert by_key["source:paper"] == tokens["--src-paper"], (by_key, tokens)
-    paper_colour = plain.pop("tone-paper")
+    assert all(plain_chip(chip, tokens) for chip in chips), chips
+    # Colour sits on the option's own mark only: Read from the paper's cyan square, human-checked's tick, a database
+    # result's square (the sidebar's); the enzyme fields and the measurement have none.
+    marks = {chip["key"]: (chip["mark"], chip["markColour"]) for chip in chips}
+    assert marks == {"source:paper": ("source", tokens["--src-paper"]), "checked": ("tick", tokens["--checked"]),
+                     "db:differs": ("square", tokens["--cmp-differs"]), "ec": (None, None), "organism": (None, None),
+                     "metric:kcat": (None, None), "temperature": (None, None)}, marks
+    assert page["squares"]["differs"] == tokens["--cmp-differs"], page["squares"]
+    # The sidebar's group marks: Source's cyan square while Read from the paper is chosen; no mark beside the groups with
+    # no meaning colour (an ink dot there was decoration), nor beside Review result and Against the databases.
+    by_key = {chip["key"]: chip for chip in chips}
+    assert by_key["source:paper"]["dots"] and all(dot["shown"] and dot["colour"] == tokens["--src-paper"] for dot in by_key["source:paper"]["dots"]), by_key["source:paper"]
+    assert all(not any(dot["shown"] for dot in by_key[key]["dots"]) for key in ("ec", "organism", "metric:kcat", "temperature")), by_key
+    assert page["plainDots"] == [0, 0], page["plainDots"]
     open_page(base + "#browse?source=brenda")
     wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 1)
     source_chip = driver.execute_script(CHIP_COLOURS_JS)["chips"][0]
-    assert source_chip["tone"] == "tone-source" and source_chip["dots"] and all(dot["colour"] == source_chip["bar"] for dot in source_chip["dots"]), source_chip
-    assert source_chip["bar"] != paper_colour, source_chip
-    plain["tone-source"] = source_chip["bar"]
-    # The groups without a meaning colour (Source's databases, the enzyme fields, the measurement) all wear the accent,
-    # which is none of the meaning colours.
-    meaning = {value for name, value in tokens.items() if name != "--accent"}
-    assert set(plain.values()) == {tokens["--accent"]} and tokens["--accent"] not in meaning, (plain, tokens)
-    # Review result and Against the databases have no group dot: each of their options has its own colour.
-    assert page["plainDots"] == [0, 0], page["plainDots"]
-    # A Review result chip names each result after its status dot (several: a neutral bar); a caution is tan (its "!"
-    # disc's colour); Not in the databases wears its square's cyan, Same, other label its square's mint.
+    assert source_chip["tone"] == "tone-source" and plain_chip(source_chip, tokens) and source_chip["mark"] is None, source_chip
+    assert not any(dot["shown"] for dot in source_chip["dots"]), source_chip
+    # A Review result chip names each result after its status dot; a caution its tan "!" (and Cautions keeps its tan
+    # dot); Not in the databases its square's cyan, Same, other label its square's mint.
     open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed,other_label")
     wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 4)
     page = driver.execute_script(CHIP_COLOURS_JS)
     by_key = {chip["key"]: chip for chip in page["chips"]}
-    assert by_key["status"]["tone"] == "tone-neutral" and by_key["status"]["bar"] == tokens["--bar-neutral"], by_key["status"]
+    assert all(plain_chip(chip, tokens) for chip in page["chips"]), page["chips"]
     assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
-    assert by_key["caution:units"]["bar"] == tokens["--caution-mark"] and by_key["caution:units"]["dots"], by_key["caution:units"]
-    assert by_key["db:not_listed"]["bar"] == page["squares"]["notListed"] == tokens["--cmp-new"], (by_key["db:not_listed"], page["squares"])
-    assert by_key["db:other_label"]["bar"] == page["squares"]["otherLabel"] == tokens["--cmp-other"], (by_key["db:other_label"], page["squares"])
+    assert by_key["caution:units"]["dots"] and all(dot["shown"] and dot["colour"] == tokens["--caution-mark"] for dot in by_key["caution:units"]["dots"]), by_key["caution:units"]
+    assert page["squares"]["notListed"] == tokens["--cmp-new"] and page["squares"]["otherLabel"] == tokens["--cmp-other"], page["squares"]
     assert {key: (chip["mark"], chip["markColour"]) for key, chip in by_key.items()} == {
         "status": ("dot", None), "caution:units": ("flag", tokens["--caution-mark"]), "db:not_listed": ("square", tokens["--cmp-new"]),
         "db:other_label": ("square", tokens["--cmp-other"])}, by_key
-    assert all(chip["text"] >= 4.5 and chip["cross"] >= 3 for chip in page["chips"]), page["chips"]
-    results["colours"] = {**plain, **{chip["key"]: chip["bar"] for chip in page["chips"]}}
+    results["colours"] = {chip["key"]: chip["markColour"] for chip in page["chips"]}
     # Nothing to undo on a fresh page: the address's filters are the start; Undo is in its place, first, dimmed. (A set
     # with records, so Clear all shows.)
     start = "browse?source=paper&ec=1.1&organism=coli&metric=kcat&tmin=20"
