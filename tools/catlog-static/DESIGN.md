@@ -112,8 +112,9 @@ one 600 with a 2px accent rule under it.
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
 quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is and how far it has come ("Enzyme kcat, Km
 and kcat/Km values; 75,000 of 185,804 read again from their papers so far.", the counts from the manifest,
-renderRereadLines; ", read again from their papers" before they arrive or without them; round 14: never "re-checked
-against their papers", which 60% of the records are not yet) and links the Guide ("How it works →"); one line from 641px, two on
+renderRereadLines, from 1024px; ", being read from their papers" below 1024px, so the line keeps one line from 641px,
+and before the counts arrive or without them; round 14: never "re-checked against their papers", which 60% of the
+records are not yet) and links the Guide ("How it works →"); one line from 641px, two on
 phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a white card with a 1px --line hairline and a 4px radius (no glow, wash or shadow) holds the four
 key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted, every label alike)
 over its number (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number
@@ -121,7 +122,7 @@ wears the colour its meaning has across the site (Type And Color, "Colour meanin
 the mark before its label (round 14: the teal accent, a cyan label and a green label had read as one teal family):
 Records the page's ink (--text), Accepted the status navy (--st-accepted) with the status dot, Read from the paper the
 darker BPG cyan (--src-paper-ink) with Read from the paper's mark, a BPG cyan square ringed #2DA1BD (the same mark goes
-before the table's "from paper" tag, the record's, its chip, its Source option and the Guide's legend), Human-checked
+before the table's "from paper" tag, the record's, its chip and the Guide's legend; Source's title wears it while it is chosen, its option none, so the label keeps one line), Human-checked
 the darker BPG green (--checked) with the green tick; no text-shadow. Stats' band does the same for Accepted and Read
 from the paper. Beside them, behind a 1px --line-soft rule,
 the With counts: three 12/16px lines (kcat, Km, kcat/Km, each count right-aligned under the other; "With" heads the

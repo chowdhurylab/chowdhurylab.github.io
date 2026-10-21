@@ -284,8 +284,10 @@
   const SOURCE_DATABASES_LABEL = "Not yet re-read";
   // Their short tags, first on the table's tag line and the phone card's (a screen reader hears the labels).
   const SOURCE_CATLOG_TAG = "from paper";
-  // Read from the paper's mark (round 14): a small BPG cyan square before the words wherever the source is named, so the
-  // palette's cyan shows on Browse beside its count, its tag, its chip and its option (aria-hidden: the words say it).
+  // Read from the paper's mark (round 14): a small BPG cyan square before the words where the source is named, so the
+  // palette's cyan shows on Browse beside its count, its tag and its chip (aria-hidden: the words say it). Its Source
+  // option has none (the label keeps one line beside a six-figure count at 256px); the group's title wears it instead
+  // while it is chosen.
   const SOURCE_MARK_HTML = '<span class="src-mark" aria-hidden="true"></span>';
   const SOURCE_DATABASES_TAG = "not re-read";
   // The source both downloads give a record read from the paper (the field names stay).
@@ -3915,18 +3917,27 @@
   }
 
   // The address of a supplement item a visitor opens is its own (#stats-table-s4), set in place (replaceState: no history
-  // entry, no scroll); closing the item the address names goes back to #stats-supplement. Only a visitor's own toggle
-  // (a click on, or Enter or Space in, its summary: data-user-toggle) moves the address: printing, an address that opens
-  // an item and a script that opens them all leave it alone.
+  // entry, no scroll); closing the item the address names gives back the address it replaced (the page's own, or the
+  // item opened before it while that one is still open; else #stats-supplement). Only a visitor's own toggle (a click
+  // on, or Enter or Space in, its summary: data-user-toggle) moves the address: printing, an address that opens an item
+  // and a script that opens them all leave it alone.
   function statsSupplementAddressFollows(item) {
     if (!item?.dataset?.userToggle) return;
     delete item.dataset.userToggle;
     if (!item.id || item.dataset.printOpened || typeof history === "undefined" || !history.replaceState) return;
     const url = new URL(window.location.href);
     const own = `#${item.id}`;
-    if (item.open && url.hash !== own) url.hash = own;
-    else if (!item.open && url.hash === own) url.hash = "#stats-supplement";
-    else return;
+    if (item.open) {
+      if (url.hash === own) return;
+      item.dataset.addressBefore = url.hash;
+      url.hash = own;
+    } else {
+      if (url.hash !== own) return;
+      const back = item.dataset.addressBefore ?? "#stats-supplement";
+      delete item.dataset.addressBefore;
+      const backItem = /^#stats-(?:table-)?s\d+$/.test(back) ? document.getElementById?.(back.slice(1)) : null;
+      url.hash = backItem && !backItem.open ? "#stats-supplement" : back;
+    }
     try {
       history.replaceState(history.state, "", url.href);
     } catch (error) {
@@ -5548,7 +5559,8 @@
   // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
   // " 75,000 of 185,804 records are read from the paper so far.", from the manifest; hidden without the counts. One verb
   // everywhere (round 14): read from the paper, as the labels say; Browse's lede says how far too ("Enzyme kcat, Km and
-  // kcat/Km values; 75,000 of 185,804 read again from their papers so far."), never that every value was re-checked.
+  // kcat/Km values; 75,000 of 185,804 read again from their papers so far.", "..., being read from their papers."
+  // below 1024px), never that every value was re-checked.
   function renderRereadLines() {
     const total = Number(manifest.total_rows || 0);
     const read = statsCount(statsOverview(total)?.from_paper?.records, total || Infinity);
@@ -5556,8 +5568,13 @@
       line.innerHTML = read !== null && total ? ` ${formatInteger(read)} of ${formatInteger(total)} records are read from the paper so far.` : "";
       line.hidden = !(read !== null && total);
     });
+    // (the counts from 1024px, where the line has room; below that the line stays one line from 641px without them: the
+    // counts band under it gives them)
     document.querySelectorAll?.("[data-reread-lede]").forEach((lede) => {
-      if (read !== null && total) lede.textContent = `; ${formatInteger(read)} of ${formatInteger(total)} read again from their papers so far`;
+      if (read !== null && total) {
+        lede.innerHTML = `<span class="lede-wide">; ${formatInteger(read)} of ${formatInteger(total)} read again from their papers so far</span>`
+          + '<span class="lede-narrow">, being read from their papers</span>';
+      }
     });
   }
 
@@ -8098,7 +8115,7 @@
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
-            <span>${item.value === "paper" ? SOURCE_MARK_HTML : ""}${escapeHtml(item.label)}</span>
+            <span>${escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
         </div>`;

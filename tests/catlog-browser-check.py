@@ -1241,8 +1241,9 @@ DATABASE_COMPARISON_FIXTURE = {
 # Against the databases (round 14): the part keeps the values against the databases and the corrections by cause; the
 # rest stands in the supplement's group of the same name (SUPPLEMENT_DATABASES), each item's title in its summary.
 DATABASE_TITLES = ("Values against the databases", "Corrections by cause and how found")
-DATABASE_MORE_TITLES = ("Results by database", "Paired values by database", "Corrections by cause and database")
-FIGURE_MORE_TITLES = (*DATABASE_MORE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
+# (the supplement's group lists its figures first, then its tables: round 14's fix pass)
+FIGURE_MORE_TITLES = ("Results by database", "Corrections on records not yet re-read", "Entries replaced by reading the paper",
+                      "Paired values by database", "Corrections by cause and database")
 # The database results by enzyme class open the supplement's group when the overview counts them.
 DATABASE_CLASS_TITLE = "Against the databases by enzyme class"
 SUPPLEMENT_DATABASES = "#statsCharts .stats-supp-group[aria-labelledby='statsSupplementDatabasesTitle']"
@@ -1394,13 +1395,14 @@ def check_stats_figures(driver, browser, url):
             lead_papers = comparison.get("papers_compared", comparison.get("papers"))
             if isinstance(lead_papers, int):
                 assert f"values read from {lead_papers:,} paper" in lead_text, (lead_papers, lead_text)
-            # The caveat is said once in part 7, at the end of its lead, never under each figure.
-            assert "it does not by itself mean a database is wrong." in lead_text and part.get_attribute("innerText").count("by itself mean a database") == 1
-            # Its result phrases link into Browse in Figure 8's order (a result with no values has none), each titled
-            # with the records it opens where the comparison counts them.
+            # The caveat is said once in part 7, at the end of its two-sentence lead (round 14), never under each figure.
+            caveats = ("which can mean a different measurement rather than a database error.", "it does not by itself mean a database is wrong.")
+            assert any(text in lead_text for text in caveats) and sum(part.get_attribute("innerText").count(text) for text in caveats) == 1, lead_text
+            assert len(re.findall(r"[.!?](?:\s|$)", lead_text)) <= 2, f"The lead runs to two sentences: {lead_text}"
+            # Its corrections and different numbers link into Browse (a result with no values has none), each titled with
+            # the records it opens where the comparison counts them; the other results are Figure 7's legend links.
             links = [urlsplit(a.get_attribute("href")).fragment for a in lead.find_elements(By.CSS_SELECTOR, "a")]
-            results = (("other_label", ("same_number_other_label",)), ("corrects", ("corrected",)), ("differs", ("differs",)),
-                       ("not_listed", ("new", "new_ratio_only", "new_paper_not_in_databases")))
+            results = (("corrects", ("corrected",)), ("differs", ("differs",)))
             assert links == [f"browse?db={db}" for db, statuses in results
                              if sum(comparison["values"]["all"].get(status, 0) for status in statuses)], links
             if comparison.get("records_with_kind"):
@@ -1444,10 +1446,10 @@ def check_stats_figures(driver, browser, url):
             # The caveat is the lead's last sentence, said once, not repeated under the figures.
             for key in ("db-values", "db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
-                assert "by itself mean a database is wrong" not in caption, caption
+                assert "by itself mean a database is wrong" not in caption and "rather than a database error" not in caption, caption
             # ...and stands right after the different numbers (under Different number only).
             lead_sentences = lead.get_attribute("innerText").strip()
-            assert re.search(r"differ, cause not yet known[^.]*\. A different number can mean a different measurement; it does not by itself mean a database is wrong\.", lead_sentences), lead_sentences
+            assert re.search(r"differs?, cause not yet known[^.]*, which can mean a different measurement rather than a database error\.$", lead_sentences), lead_sentences
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):
@@ -3509,7 +3511,7 @@ def check_layout(driver, browser, url, route_label):
         band = box(".snapshot-band")
         # One line on what CatLog is opens the band (round 13: the visitors' "what is this?"), then the card.
         lead = box(".snapshot-lead")
-        assert lead["height"] == 18 and re.search(r"; [\d,]+ of [\d,]+ read again from their papers so far\.", driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").text), lead
+        assert lead["height"] == 18 and re.search(r"; [\d,]+ of [\d,]+ read again from their papers so far\.", driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").get_attribute("innerText")), lead
         assert 72 <= band["height"] - lead["height"] - 6 <= 78, f"The counts band is one row of key numbers in its card: {band}"
         sizes = driver.execute_script("""
             const px = (selector, prop) => [...document.querySelectorAll(selector)].filter(e => e.getClientRects().length)
@@ -5634,7 +5636,8 @@ def check(driver, browser, url):
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-range")
     for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2, #statsCharts h3"):
         section = heading.find_element(By.XPATH, "..")
-        assert section.find_elements(By.CSS_SELECTOR, "li, figure, p"), f"Empty Stats section: {heading.text}"
+        # (a table counts: Quality's checks are a table since round 14)
+        assert section.find_elements(By.CSS_SELECTOR, "li, figure, p, table tbody tr"), f"Empty Stats section: {heading.text}"
     # Figures and tables are numbered in reading order, each with one caption and no data line: the snapshot, its Data ID
     # and the counting rules are said once, in How these numbers are counted, which closes the page.
     assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-data")
@@ -5669,9 +5672,10 @@ def check(driver, browser, url):
         kind, _space, label = number.partition(" ")
         assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower(), (identifier, number, caption_number)
     # An item a visitor opens puts its own address in the address bar (round 14: an open item can be copied and sent);
-    # closing it goes back to #stats-supplement. (Its summary is centred before the click, for Safari.)
+    # closing it gives back the address from before. (Its summary is centred before the click, for Safari.)
     if items:
         address = driver.execute_script("return location.href")
+        before = driver.execute_script("return location.hash")
         summary = driver.find_element(By.CSS_SELECTOR, f"#{items[-1][0]} > summary")
         was_open = driver.execute_script("return arguments[0].parentElement.open", summary)
         if was_open:
@@ -5680,7 +5684,7 @@ def check(driver, browser, url):
         summary.click()
         WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == f"#{items[-1][0]}")
         summary.click()
-        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == "#stats-supplement")
+        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == before)
         if was_open:
             driver.execute_script("arguments[0].parentElement.open = true", summary)
         driver.execute_script("history.replaceState(history.state, '', arguments[0])", address)
@@ -5999,11 +6003,14 @@ def check(driver, browser, url):
             if driver.find_elements(By.CSS_SELECTOR, selector):
                 driver.execute_script("document.querySelector(arguments[0]).scrollIntoView()", selector)
                 capture(label)
+        # (a supplement item opened by a click puts its own address in the bar: the clean address is put back after)
+        address = driver.execute_script("return location.href")
         for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
             element.click()
             check_panel_width()
             element.click()
+        driver.execute_script("history.replaceState(history.state, '', arguments[0])", address)
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     # A clean Stats address must also survive a fresh page load, not just history navigation.
     driver.refresh()

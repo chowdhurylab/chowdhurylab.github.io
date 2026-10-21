@@ -7258,7 +7258,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const source = element("sourceChecklist").innerHTML;
   // Each record by what happened to it (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read, one line
   // each beside its count; CatLog is the one name, never v1 or v2.
-  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span><span class="src-mark" aria-hidden="true"><\/span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
+  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
   assert.match(source, /value="databases" \/>\s*<span>Not yet re-read<\/span>\s*<strong data-count="source:databases">/);
   assert.doesNotMatch(source + element("aboutSource").innerHTML, /\bv[12]\b|source-mode-what/);
   assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);

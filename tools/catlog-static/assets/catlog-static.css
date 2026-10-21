@@ -259,6 +259,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* One plain line on what CatLog is, over the counts, for a first-time visitor. */
 .snapshot-lead { margin:0 0 6px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .snapshot-lead a { white-space:nowrap }
+/* How far the reading has come, with its counts from 1024px; shorter below, so the line keeps one line from 641px. */
+.snapshot-lead .lede-narrow { display:none }
+@media (max-width: 1023px) {
+  .snapshot-lead .lede-wide { display:none }
+  .snapshot-lead .lede-narrow { display:inline }
+}
 /* A short window wider than a phone (800 x 600) keeps the table's 340px: the line gives way, the Guide tab stays. */
 @media (min-width: 641px) and (max-height: 640px) { .snapshot-lead { display:none } }
 .snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:6px var(--sp-5) 6px var(--sp-4) }
@@ -730,10 +736,11 @@ td.c-status { text-align:left }
 /* human-checked: a small check and the tag in green; the separator before it stays grey. */
 .check-icon { display:inline-block; width:1em; height:1em; vertical-align:-0.14em }
 .state-tag.human-checked { color:var(--checked); font-weight:500 }
-/* Read from the paper's mark: a small BPG cyan square with its darker ring, before the words wherever the source is
-   named (the counts band, the table's "from paper" tag, its chip and its option in Source). */
+/* Read from the paper's mark: a small BPG cyan square with its darker ring, before the words where the source is named
+   (the counts band, the table's "from paper" tag, the record's, its chip, the Guide's legend; Source's group title while
+   it is chosen). */
 .src-mark { display:inline-block; flex:0 0 7px; width:7px; height:7px; margin-right:3px; border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring); vertical-align:0 }
-.check-row .src-mark, .filter-chip .src-mark { width:8px; height:8px; flex-basis:8px; margin-right:5px }
+.filter-chip .src-mark { width:8px; height:8px; flex-basis:8px; margin-right:5px }
 .state-tag.human-checked::before { color:var(--muted); font-weight:400 }
 .state-tag.human-checked .check-icon { margin-right:2px }
 /* A table short of room (the script sets .status-compact) or beside an open record: human-checked moves up as a 12px green
@@ -1435,7 +1442,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-lead .stats-lead-links { margin:0 }
 .stats-table:is(.stats-review-table, .stats-checks-table) { width:auto; max-width:100%; justify-self:start }
 .stats-table.stats-review-table { min-width:min(100%, 440px) }
-.stats-review-table .stats-row-group th { padding-top:12px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+.stats-review-table .stats-row-group th { padding-top:12px; color:var(--muted); font-size:var(--fs-13); font-weight:400; line-height:var(--lh-13) }
 .stats-review-table .stats-row-sub th { padding-left:12px; font-weight:400 }
 .stats-review-table .stats-row-sub2 th { padding-left:24px; color:var(--text-2) }
 .stats-review-table td.stats-num { padding-left:24px }
@@ -1750,9 +1757,10 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-supp-number { flex-basis:5.75em }
-  /* Checks on the values: the result wraps under its words; the bar column narrows. */
-  .stats-checks-table .stats-check-covered { white-space:normal }
-  .stats-checks-table td.stats-col-bar { width:48px }
+  /* Checks on the values: every cell wraps, the gaps narrow, and the small bars (their shares are in the words) give way,
+     so the table fits a 320px phone. */
+  .stats-checks-table :is(th, td), .stats-checks-table th[scope="row"], .stats-checks-table .stats-check-covered { padding-right:8px; white-space:normal }
+  .stats-checks-table .stats-col-bar { display:none }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges, .stats-range { --ridge-label:44px }
