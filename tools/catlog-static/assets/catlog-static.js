@@ -8680,6 +8680,9 @@
 
   // Every active filter and the search, in panel order, each with a way to remove it (the chips above the table, the
   // count beside Filters and the empty-results note).
+  // Every chip says its group, in the sidebar's words: the group's name first ("Review result:", "Source:", "Caution:",
+  // "Databases:", "Enzyme:", "Search:") unless the option's own words say it ("Has kcat", "Variant", "Wild type",
+  // "Only human-checked", "EC 1", "Temperature 20–30 °C", "pH ≥ 7", "Not in the databases"; round 15 polish).
   function activeFilterItems(controls = filterControlState()) {
     const items = [];
     const add = (key, label, clear, labelHtml = "") => items.push({ key, label, labelHtml: labelHtml || escapeHtml(label), clear });
@@ -8711,7 +8714,7 @@
       add(`variant:${item.value}`, item.label, () => uncheck("variant", item.value));
     });
     const temperature = numberRange(controls.tmin, controls.tmax);
-    if (temperature) add("temperature", rangeLabel("T", temperature, " °C"), () => clearInputs("temperatureMinInput", "temperatureMaxInput"));
+    if (temperature) add("temperature", rangeLabel("Temperature", temperature, " °C"), () => clearInputs("temperatureMinInput", "temperatureMaxInput"));
     const ph = numberRange(controls.phmin, controls.phmax);
     if (ph) add("ph", rangeLabel("pH", ph), () => clearInputs("phMinInput", "phMaxInput"));
     cautionFilters.filter((item) => controls.cautions.includes(item.value)).forEach((item) => {
@@ -8720,14 +8723,16 @@
       add(`caution:${item.value}`, label, () => uncheck("caution", item.value), labelHtml);
     });
     // "every value" ticked with Not in the databases is one filter: one chip, "Not in the databases: every value", that
-    // removes both.
+    // removes both. A result whose name does not say "databases" takes the group's name first, as Review result, Caution
+    // and Source do (round 15 polish): "Databases: Corrects a value", "Databases: Corrected earlier".
     const databases = controls.databases || [];
     databaseFilters.filter((item) => databases.includes(item.value)).forEach((item) => {
       if (databaseFilters.some((child) => child.parent === item.value && databases.includes(child.value))) return;
-      add(`db:${item.value}`, item.chip, () => {
+      const group = /databases/i.test(item.chip) ? "" : "Databases: ";
+      add(`db:${item.value}`, `${group}${item.chip}`, () => {
         uncheck("database", item.value);
         if (item.parent) uncheck("database", item.parent);
-      }, item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>${escapeHtml(item.chip)}` : "");
+      }, `${group}${item.mark ? `<span class="db-mark db-mark-${item.mark}" aria-hidden="true"></span>` : ""}${escapeHtml(item.chip)}`);
     });
     sourceFilters.filter((item) => controls.sources.includes(item.value)).forEach((item) => {
       const others = controls.sources.filter((value) => value !== item.value);

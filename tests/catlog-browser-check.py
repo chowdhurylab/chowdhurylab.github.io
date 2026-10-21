@@ -2639,7 +2639,7 @@ def check_filters(driver, browser, url, route_label):
             # (on the db=same page only: in Safari the loop is skipped and no page has the chip)
             if key == "all_same":
                 chip = driver.execute_script("return document.querySelector('#activeFilters [data-filter-key=\"db:all_same\"]').innerText.trim()")
-                assert chip == "All values the same", chip
+                assert chip == "Databases: All values the same", chip
         # Ticking "every value" ticks Not in the databases; the pair is one chip that removes both; unticking Not in the
         # databases unticks "every value".
         open_page(base + "#browse")

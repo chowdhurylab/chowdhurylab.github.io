@@ -337,7 +337,10 @@ count never overwrites a newer one); meanwhile the panel is marked busy
 (data-counts="pending", aria-busy) and the numbers fade if that takes a moment. Each active filter and the search is a chip
 above the table that removes it, in the sidebar's words ("Source: Read from the paper", "Source: OED", "Source: Earlier
 extractions", read out in full as the sidebar reads them; an EC class "EC 1", as Stats names it, without the address's
-trailing dot), after Undo and followed by Clear all (with no matching
+trailing dot). Every chip says its group (round 15 polish: "Variant", "Corrects a value" and "T 20–30 °C" had stood
+bare beside "Review result: Disputed"): the group's name first (Review result, Source, Caution, Databases, Enzyme,
+Organism, Substrate, Search) unless the option's own words say it (Has kcat, Wild type, Variant, Only human-checked, EC 1,
+Temperature 20–30 °C, pH ≥ 7, Not in the databases), the Guide's Filters in use sample too; after Undo and followed by Clear all (with no matching
 records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
 button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
 least); the count beside Filters is the number of chips. Chips are plain (round 14: a 3px bar, a 12% tint and a 45%

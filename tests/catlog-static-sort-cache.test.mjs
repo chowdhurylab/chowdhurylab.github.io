@@ -5867,6 +5867,15 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     const marks = Object.fromEntries([...api.activeFilterItems()].map((item) => [item.key, item.labelHtml]));
     assert.match(marks.checked, /^<span class="chip-check"><svg class="check-icon" [^>]*aria-hidden="true"[\s\S]*<\/svg><\/span>Only human-checked$/);
     assert.deepEqual([marks["source:paper"], marks.ec, marks["metric:kcat"]].map((html) => /class="(?:chip-|db-mark)/.test(html)), [false, false, false]);
+    // Every chip says its group (round 15 polish): the group's name first unless the option's own words say it.
+    api.applyBrowseParams(new Map(new URLSearchParams("metric=kcat&tmin=20&tmax=30&phmin=7&enzyme=laccase")));
+    const chipItems = [...api.activeFilterItems({ ...api.filterControlState(), variants: ["variant"], cautions: ["differs"],
+      databases: ["corrects", "not_listed", "all_not_listed", "earlier"] })];
+    assert.deepEqual(chipItems.map((item) => item.label),
+      ["Enzyme: laccase", "Has kcat", "Variant", "Temperature 20–30 °C", "pH ≥ 7", "Caution: kcat/Km mismatch",
+        "Databases: Corrects a value", "Not in the databases: every value", "Databases: Corrected earlier"]);
+    assert.equal(chipItems.find((item) => item.key === "db:corrects").labelHtml,
+      'Databases: <span class="db-mark db-mark-corrects" aria-hidden="true"></span>Corrects a value', "the group's name, then the option's mark");
     await keysFor("status=accepted,curation_pending");
     assert.match(element("activeFilters").innerHTML, /<\/button><button class="filter-chip tone-neutral" type="button" data-filter-key="status" title="Remove filter: Review result: Accepted, Not confirmed" aria-label="Remove filter: Review result: Accepted, Not confirmed"><span>Review result: <span class="chip-state accepted">Accepted<\/span>, <span class="chip-state review">Not confirmed<\/span><\/span>/);
     const bar = () => element("activeFilters").innerHTML;
@@ -6234,7 +6243,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.browseHash(), "#browse?db=corrects,not_listed,all_not_listed");
   assert.deepEqual(api.state.filtered.map((item) => item.record_key).sort(), ["db-fixed", "db-new"]);
   assert.deepEqual(JSON.parse(JSON.stringify(api.activeFilterItems().map((item) => [item.key, item.label]))),
-    [["db:corrects", "Corrects a value"], ["db:all_not_listed", "Not in the databases: every value"]]);
+    [["db:corrects", "Databases: Corrects a value"], ["db:all_not_listed", "Not in the databases: every value"]]);
   // Its chip removes both.
   api.activeFilterItems().find((item) => item.key === "db:all_not_listed").clear();
   assert.deepEqual(databaseInputs.filter((input) => input.checked).map((input) => input.value), ["corrects"]);
