@@ -73,7 +73,7 @@ spacing: 4, 8, 12, 16, 24, 32, 48px
 radius: 4px (controls and cards), 2px (Stats bars' outer ends), 0 (table bars)
 layout:
   header: 56px
-  counts-band: 75px (a hairline card; 95px on tablets, 127px on phones)
+  counts-band: 109px (an 18px line over a 74px hairline card; 129px on tablets, a 94px card; 163px on phones, a 106px card)
   gutter: 24px (16px below 1024px)
   sidebar: 256px (to 1439px), 288px (1440px and up); rail 48px
   record: 440px (1024-1439px), 480px (1440px and up)
@@ -114,40 +114,56 @@ quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is ("En
 read from their papers.") and links the Guide ("How it works →"); round 15: it no longer repeats the band's numbers (it
 had said "75,000 of 185,804 read from their papers so far" right over the same two numbers), and never "re-checked
 against their papers", which 60% of the records are not yet. The snapshot date (12px --muted, its title the Data ID)
-ends that line at the right, its right edge on the card's (a float after the words, inside the line's own box, so on a
-phone it takes the end of the last line, or a line of its own in a wide font). One line from 641px, two on phones, left
-out on a short window wider than a phone (max-height 640px) so the table keeps its 340px (the date with it: Stats and the
-Guide's Cite give it there). Inside the band (6px above and below, the page's gutter at the sides) a white card with a
-1px --line hairline and a 4px radius (no glow, wash or shadow) holds one even row (round 15, the user: "the screenshot
-segment could still be improved": half of round 14's card was an empty gap before the date, the band looked left-heavy,
-the three stacked With counts read as a cramped mini-table and the key numbers carried no context). Five cells, columns
-as wide as each other (never narrower than their words, so at 1024px the parameters' cell takes a little more), each
-behind a 1px --line-soft hairline: the four key numbers, Records, Accepted, Read from the paper and Human-checked, then
-the parameters. Every cell has the same three lines, a subgrid of the card's rows, so the labels, the numbers'
-baselines and the lines of context each run straight across the band: a label (13/16px, --muted, every label alike),
-the number (600, tabular): 28px on a 28px line from 1024px (digits have no descenders; the card stays 74px, 12px taller
-than round 14's for the added line), 24/24px on tablets (641-1023px), 20/24px on phones, and one 12/16px --muted line of
-context from the manifest: Records "41,218 papers" (summary.overview.papers; the papers among the matching records on a
-filtered view, counted from the index as the overview counts them: a record's PMIDs, else its DOIs), Accepted "43.5% of
-records" (its share of the current results), Read from the paper "40.4% · 4,324 papers" (its share and its papers,
-summary.overview.from_paper.papers unfiltered; nothing for 0 or a dash), Human-checked "approved by reviewers". The
-parameters' cell gives kcat, Km and kcat/Km each as a label over its count (18px, 500, --text-2, on a 20px line so on
-the key numbers' baseline it keeps their 28px row) and "records with each parameter" under them. Each key number wears
+ends that line at the right, its right edge on the card's (a float after the words, inside the line's own box; on a
+phone it takes the end of the second line). One line from 641px, two on phones, left out on a short window wider than a
+phone (max-height 640px) so the table keeps its 340px. Where that line has no room for the date, the card's copy of it
+(#snapshotDateCard, the same text and Data ID title; only one of the two is ever shown) ends the parameters' line:
+on tablets, in a short window (from 1100px after "records with each parameter ·", below that alone: in DejaVu Sans the
+whole line needs a 1048px window) and, under More, on a phone narrower than 360px (on its own line). Inside the band (6px
+above and below, the page's gutter at the sides) a white card with a 1px --line hairline and a 4px radius (no glow,
+wash or shadow) holds one even row (round 15, the user: "the screenshot segment could still be improved": half of
+round 14's card was an empty gap before the date, the band looked left-heavy, the three stacked With counts read as a
+cramped mini-table and the key numbers carried no context). The four key numbers, Records, Accepted, Read from the
+paper and Human-checked, then the parameters, in five columns as wide as each other (minmax(max-content, 1fr): never
+narrower than their words, so at 1024px the parameters take more); type set in columns, not tiles: one 1px --line-soft
+rule, before the parameters, none between the key numbers (round 15's judges: five hairline-boxed tiles each with a
+label, a big number and a caption are the stock KPI strip). Each count keeps the room of a seven-character number
+(min-width 7ch from 641px), so a filter that changes its digits never moves the columns: the rule stays put within 1px
+between an unfiltered view and #browse?source=paper. Every cell has the same three lines, a subgrid of the card's rows,
+so the labels, the numbers' baselines and the lines of context each run straight across the band: a label (13/16px,
+--muted, every label alike), the number (600, tabular): 28px on a 28px line from 1024px (digits have no descenders; the
+card is 74px, 12px taller than round 14's for the added line), 24/24px on tablets (641-1023px), 20/24px on phones, and
+one 12/16px --muted line of context, a fact from the snapshot or the results (bandNotes): Records "41,218 papers" (the
+papers these records come from), Accepted "43.5% of records", Read from the paper "40.4% of records · 4,324 papers"
+("40.4% · 4,324 papers" below 1280px, where "of records" is left to screen readers; only "4,324 papers" when all the
+results are read from the paper; its title "40.4% of the records, from 4,324 papers"), Human-checked "2.1% of
+accepted" (Stats' wording; human-checked records are accepted ones; the definition stays in the link's title). Shares
+(bandShare) have one decimal, "100%" and "0%" only when exact, "<0.1%" and ">99.9%" at the ends, never a rounded 0.0% or
+100.0%; a count of 0 or a dash has no line, and while a filtered view's records load no line shows at all (the counts
+are the snapshot's then, the filter's not known yet). Papers: the snapshot's summary.overview.papers and
+from_paper.papers unfiltered; on a filtered view counted in the page from the index as the builder counts them
+(scripts/build-catlog-followup-summary.py paper_keys: a record's PMIDs, else its DOIs), once per results list, and only
+when the same count over every record gives the snapshot's own two numbers (an index without paper fields, or a record
+the builder counts by a stand-in NP id the index does not carry, leaves a filtered view with the share alone: never a
+false "0 papers"; on 2026-10-18's snapshot, which has no stand-in NP ids, the page's counts equal paper_keys' for every
+record, and in the page for alcohol dehydrogenase, EC 3, BRENDA, UniProt, Homo sapiens and Read from the paper in EC 1). The lines of context are aria-live="off", so a filter change announces the counts, not every
+line. The parameters' cell gives kcat, Km and kcat/Km each as a label over its count (16px, 500, --text-2, on a 20px line
+so on the key numbers' baseline it keeps their 28px row) and "records with each parameter" under them. Each key number wears
 the colour its meaning has across the site (Type And Color, "Colour meanings") and the colour is otherwise only on
 the mark before its label (round 14: the teal accent, a cyan label and a green label had read as one teal family):
 Records the page's ink (--text), Accepted the status navy (--st-accepted) with the status dot, Read from the paper the
 darker BPG cyan (--src-paper-ink) with Read from the paper's mark, a BPG cyan square ringed #2DA1BD (the same mark goes
 before the table's "from paper" tag, the record's, its chip and the Guide's legend; Source's title wears it while it is chosen, its option none, so the label keeps one line), Human-checked
 the darker BPG green (--checked) with the green tick; no text-shadow. Stats' band does the same for Accepted and Read
-from the paper. From 1024px up this is one row that never wraps or moves as the window widens (in Linux's DejaVu Sans
-the parameters' cell ends on the card's padding at 1024px; at 1700px about 40px of the last column is left over).
-Tablets (641-1023px): two rows, the key numbers with their lines of context (no hairlines), then the parameters on one
-line ("With kcat 104,525 Km 166,603 kcat/Km 71,218", 12/16px) and the snapshot date at its end, in the card (the line
-over the card has no room beside its words at 641px), one height (a 94px card) across the range. Phones: the four key
-numbers two by two (Records and Accepted, then Read from the paper and Human-checked), More at the first row's right;
-More shows their lines of context and the parameters (each label over its 14px count, under a thin rule across the
-card), rows that exist only while shown. Read from the paper keeps its whole label down to 360px and takes its short
-tag, From paper, below it (a screen reader still reads Read from the paper). A filtered view says "Matching records". Read from the paper N (the name Stats and the Source filter give that count; its title
+from the paper. From 1024px up this is one row that never wraps or moves as the window widens or the filters change.
+Tablets (641-1023px): two rows, the key numbers with their lines of context, then the parameters on one line ("With
+kcat 104,525 Km 166,603 kcat/Km 71,218", 12/16px) and the snapshot date at its end (the line's last item, pushed right),
+one height (a 94px card) across the range. Phones: the four key numbers two by two (Records and Accepted, then Read
+from the paper and Human-checked), More at the first row's right; More shows their lines of context and the parameters
+(each label over its 14px count, under a thin rule across the card), rows that exist only while shown; an 8px card
+padding (the band is 163px at 375px, 6px shorter than round 14's). Read from the paper keeps its whole label down to
+360px and takes its short tag, From paper, below it (a screen reader still reads Read from the paper). Printing keeps
+the line over the card, the snapshot date with it. A filtered view says "Matching records". Read from the paper N (the name Stats and the Source filter give that count; its title
 says "Show the records read from the paper by CatLog") links to those records (#browse?source=paper plus
 the filters set now, from page 1); N is the snapshot's
 summary.overview.from_paper.records on an unfiltered view until the records
@@ -501,7 +517,7 @@ options; 13/18 table cells, chips, labels and captions; 14/20 UI text and record
 values; 16/24 Guide body and Stats figure headings; 18/24 Stats part headings on phones; 20/24 the counts band's key
 numbers on phones, record title and Stats part headings; 24/28 Stats and Guide titles; 24/24 the counts band's key
 numbers on tablets and 28/28 from 1024px (digits only, so no line gap); 32/36 Stats headline; the counts band's parameter
-counts 18/20, 500 from 1024px, 12/16 on tablets and 14/20 on phones, and its lines of context 12/16),
+counts 16/20, 500 from 1024px, 12/16 on tablets and 14/20 on phones, and its lines of context 12/16),
 each a --fs-N / --lh-N token in the stylesheet. Table
 names break between words and hyphenate a word longer than its column (a break
 inside a word only as a last resort; the Organism column is at least about 13
@@ -1336,8 +1352,16 @@ Generated mockups guide layout only; their text is not a scientific source.
 ## Round 15 counts band
 
 - One even row (the user, with round 14's band: "Any more polish? The screenshot segment could still be improved,
-  right?"): the four key numbers and the parameters in five cells as wide as each other, hairlines between them, a
-  label, a number and a line of context in each, lined up across the band (Layout, "The counts band"); no empty stretch
-  before the date, which ends the line above.
+  right?"): the four key numbers and the parameters in five columns as wide as each other, a label, a number and a line
+  of context in each, lined up across the band (Layout, "The counts band"); no empty stretch before the date, which ends
+  the line above. One thin rule, before the parameters; none between the key numbers (type in columns, not KPI tiles).
 - The line above says what CatLog is and no longer repeats the band's two numbers; Browse's [data-reread-lede] is gone
-  (the Guide's and Team's [data-reread-line] keep their counts).
+  (only the page script and the tests had read it; the Guide's and Team's [data-reread-line] keep their counts).
+- Every line of context is a checkable fact: the papers, Accepted's share of the records, Read from the paper's share
+  and papers, Human-checked's share of the accepted records ("approved by reviewers", a definition a scientist could
+  read as journal peer review, was dropped). Shares never print a rounded 100.0% or 0.0%; a filtered view names its
+  papers only when the page counts them as the snapshot does.
+- The snapshot date never disappears: in the line above, else at the end of the parameters' line in the card (tablets,
+  short windows, small phones under More). Round 14 had it in the card's top right, and on phones only under More.
+- Heights (Chrome, the system font, 2026-10-21): 109px from 1024px (round 14: 99), 129px on tablets (119), 163px at
+  375px (169); in a short window 87px (75), the table's 340px kept (453px at 1024 x 600, 348px at 800 x 600).

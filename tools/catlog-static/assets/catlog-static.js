@@ -3837,7 +3837,7 @@
     const dateTitle = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
     // The parameters: each name over its count, one line under them; "With" leads them where they make one line
     // (tablets, phones), so no spaces between the boxes. The line under them carries the card's copy of the snapshot
-    // date, shown only where the line above is not (tablets, a short window).
+    // date, shown only where the line above has no room for it (tablets, a short window, under More below 360px).
     $("snapshotMeta").innerHTML = [
       '<span class="snapshot-title">With</span>',
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>`,

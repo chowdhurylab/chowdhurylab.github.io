@@ -63,10 +63,15 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    glow): a plain white hairline card with the four key numbers at 28px (24px on tablets, 20px on phones),
    each label over its number and each number in its meaning's colour (Records ink, Accepted navy with its status dot,
    Read from the paper the darker BPG cyan, Human-checked the darker BPG green with its tick), no text-shadow; a linked
-   count tints in its colour around itself without moving anything. Its With counts (kcat, Km,
-   kcat/Km) are secondary: three 12px lines beside the key numbers, 500 in --text-2, as tall as a label and its number.
-   One row from 1024px up, two rows on tablets, two by two on phones (tools/catlog-static/DESIGN.md, Layout). Nothing
-   moves.
+   count tints in its colour around itself without moving anything. Round 15: one even row across the card, type set in
+   columns (one thin rule, before the parameters; none between the key numbers), each number over one 12px muted line
+   of context, a fact from the snapshot or the results: Records "41,218 papers", Accepted "43.5% of records", Read from
+   the paper "40.4% of records · 4,324 papers", Human-checked "2.1% of accepted" (shares never a rounded 100.0% or 0.0%;
+   a filtered view names its papers only when the page counts them as the snapshot does). The parameters (kcat, Km,
+   kcat/Km) are secondary: each label over a 16px count, 500 in --text-2, "records with each parameter" under them. The
+   line over the card says what CatLog is, without the band's numbers, and ends with the snapshot date (in the card
+   where that line has no room). One row from 1024px up, two rows on tablets, two by two on phones
+   (tools/catlog-static/DESIGN.md, Layout). Nothing moves, as the window widens or the filters change.
 2. Quality (round 14: no second big number and no dashboard cards; one answer and two small tables): Human review,
    one sentence ("People checked 2,770 entries from the earlier version (431 papers); a check of the paper found all 3
    disputed values printed as the entry gives them.") over a table of its verdicts (No value disputed, A value disputed,

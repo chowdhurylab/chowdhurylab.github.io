@@ -325,9 +325,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .snapshot-meta > .snapshot-note { grid-row:3; grid-column:1 / -1 }
 .snapshot-card-date { display:none }
 @media (min-width: 1024px) and (max-height: 640px) { .snapshot-card-date { display:inline } }
-/* (below 1200px the line has room for the date alone, as on tablets: in a wide font such as DejaVu Sans the whole line
-   is 40px wider than the card at 1024px) */
-@media (min-width: 1024px) and (max-width: 1199px) and (max-height: 640px) { .snapshot-meta .snapshot-note-text { display:none } }
+/* (below 1100px the line has room for the date alone, as on tablets: in a wide font such as DejaVu Sans the whole line
+   needs a 1048px window) */
+@media (min-width: 1024px) and (max-width: 1099px) and (max-height: 640px) { .snapshot-meta .snapshot-note-text { display:none } }
 .snapshot-more { display:none }
 .snapshot-paper-short { display:none }
 /* Tablets: the key numbers 24px, their lines of context under them, on the first row; the parameters on one line under

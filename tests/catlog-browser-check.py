@@ -3449,8 +3449,51 @@ def check_phone_scroll(driver, browser, url):
     return {"route": "phone-scroll", "passed": True, "checked": results}
 
 
+# The counts band's lines of context (round 15) as shown, and as the page should write them from the counts the band
+# shows (read in the same call): the share rounded as the page rounds it (bandShare: one decimal; 100% and 0% only when
+# exact; <0.1% and >99.9% at the ends), the papers from the snapshot (an unfiltered view). textContent, whitespace
+# collapsed: a screen reader's text, the share's "of records" included where the cell is narrow.
+BAND_NOTES_JS = """
+const [papers, fromPaperPapers] = arguments;
+const share = (count, total) => {
+  if (!(total > 0) || !(count >= 0) || count > total) return '';
+  if (count === 0) return '0%';
+  if (count === total) return '100%';
+  const percent = count / total * 100;
+  return percent < 0.1 ? '<0.1%' : percent > 99.9 ? '>99.9%' : `${percent.toFixed(1)}%`;
+};
+const text = selector => (document.querySelector(selector)?.textContent || '').replace(/\\s+/g, ' ').trim();
+const number = selector => Number(text(selector).replace(/,/g, '')) || 0;
+const words = count => `${count.toLocaleString('en-US')} ${count === 1 ? 'paper' : 'papers'}`;
+const records = number('.summary-records > strong'), accepted = number('.summary-accepted > strong');
+const fromPaper = number('#fromPaperCount'), checked = number('#humanCheckedCount');
+const paperShare = fromPaper > 0 ? share(fromPaper, records) : '';
+return {
+  shown: {records: text('.summary-records > .snapshot-note'), accepted: text('.summary-accepted > .snapshot-note'),
+          paper: text('#fromPaperNote'), checked: text('#humanCheckedNote')},
+  expected: {records: papers > 0 ? words(papers) : '', accepted: accepted > 0 ? `${share(accepted, records)} of records` : '',
+             paper: !paperShare ? '' : paperShare === '100%' ? words(fromPaperPapers) : `${paperShare} of records · ${words(fromPaperPapers)}`,
+             checked: checked > 0 && accepted > 0 ? `${share(checked, accepted)} of accepted` : ''},
+};
+"""
+
+# Where the counts band's rule before the parameters sits, whether every key number and parameter count has a width
+# inside its own cell, and two lines of context (round 15: a filter never moves the columns).
+BAND_SPOTS_JS = """
+const meta = document.getElementById('snapshotMeta');
+const cells = [...document.querySelectorAll('.summary-records, .summary-accepted, #fromPaperLink, #humanCheckedLink, #snapshotMeta')];
+const numbers = cells.every(cell => [...cell.querySelectorAll('strong')].filter(e => e.getClientRects().length).every(strong => {
+  const r = strong.getBoundingClientRect(), c = cell.getBoundingClientRect();
+  return r.width > 0 && r.left >= c.left - 0.5 && r.right <= c.right + 0.5;
+}));
+return {rule: meta.getBoundingClientRect().left, numbers,
+        paperNote: (document.getElementById('fromPaperNote')?.textContent || '').replace(/\\s+/g, ' ').trim(),
+        acceptedNote: (document.querySelector('.summary-accepted > .snapshot-note')?.textContent || '').replace(/\\s+/g, ' ').trim()};
+"""
+
+
 def check_layout(driver, browser, url, route_label):
-    """The page grid: a 56px header, a 64px counts band (20px numbers, 13px labels), the filter sidebar beside the table
+    """The page grid: a 56px header, the counts band (28px numbers, 13px labels, a 12px line of context), the filter sidebar beside the table
     (open from 1200px and the rail from 1024 to 1199px, a viewer's other choice remembered; the rail while a record is
     open below 1600px; side by side from 1600px; the rail on tablets) and the record as a column from 1024px, a dialog
     below."""
@@ -3512,9 +3555,9 @@ def check_layout(driver, browser, url, route_label):
         # One line on what CatLog is opens the band (round 13: the visitors' "what is this?"), then the card. Round 15: the
         # line no longer repeats the band's numbers, and the snapshot date ends it at the right.
         lead = box(".snapshot-lead")
-        lead_text = driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").get_attribute("innerText")
-        date_text = driver.find_element(By.ID, "snapshotDate").get_attribute("innerText")
-        assert (lead["height"] == 18 and "being read from their papers." in lead_text and date_text.startswith("Snapshot ")
+        lead_text = driver.find_element(By.CSS_SELECTOR, ".snapshot-lead").get_attribute("innerText").strip()
+        date_text = driver.find_element(By.ID, "snapshotDate").get_attribute("innerText").strip()
+        assert (abs(lead["height"] - 18) <= 1 and "being read from their papers." in lead_text and date_text.startswith("Snapshot ")
                 and not re.search(r"\d", lead_text.replace(date_text, ""))), (lead, lead_text)
         # one row: a label, a number and a line of context in each cell, about as tall as the round 14 band (72-78px then)
         assert 82 <= band["height"] - lead["height"] - 4 <= 90, f"The counts band is one row of key numbers in its card: {band}"
@@ -3527,22 +3570,18 @@ def check_layout(driver, browser, url, route_label):
                     th: px('#recordTableWrap thead th', 'fontSize'), thWeight: px('#recordTableWrap thead th', 'fontWeight'),
                     td: px('#recordsBody td.c-organism', 'fontSize')};
         """)
-        # the key numbers 28px (round 13: a focal point); the parameters' counts (kcat, Km, kcat/Km) are secondary at 18px
+        # the key numbers 28px (round 13: a focal point); the parameters' counts (kcat, Km, kcat/Km) are secondary at 16px
         # under labels like the others; a 12px line of context under each (round 15: no bare numbers)
-        assert (set(sizes["numbers"]) == {"28px"} and set(sizes["with"]) == {"18px"} and set(sizes["labels"]) == {"13px"}
+        assert (set(sizes["numbers"]) == {"28px"} and set(sizes["with"]) == {"16px"} and set(sizes["labels"]) == {"13px"}
                 and set(sizes["withLabels"]) == {"13px"} and set(sizes["notes"]) == {"12px"} and len(sizes["notes"]) >= 4), sizes
-        # Each line of context is the manifest's: the papers behind the records, Accepted's share of them, Read from the
-        # paper's share and papers, and what Human-checked means.
+        # Each line of context is a fact from the snapshot and the counts beside it: the papers behind the records,
+        # Accepted's share of the records, Read from the paper's share and papers, Human-checked's share of the accepted
+        # records. The shares are worked out here as the page does (one decimal, 100% and 0% only when exact, <0.1% and
+        # >99.9% at the ends), from the numbers the band shows, in one read.
         overview_now = stats_overview(driver.execute_script("return window.CATLOG_STATIC_MANIFEST")) or {}
-        notes = driver.execute_script("""return Object.fromEntries([['records', '.summary-records'], ['accepted', '.summary-accepted'],
-            ['paper', '#fromPaperLink'], ['checked', '#humanCheckedLink'], ['meta', '#snapshotMeta']].map(([key, selector]) =>
-            [key, (document.querySelector(selector + ' > .snapshot-note')?.innerText || '').trim()]))""")
         if overview_now:
-            share = lambda part: f"{part / overview_now['records'] * 100:.1f}%"
-            assert notes == {"records": f"{overview_now['papers']:,} papers", "accepted": f"{share(overview_now['accepted'])} of records",
-                             "paper": f"{share(overview_now['from_paper']['records'])} · {overview_now['from_paper']['papers']:,} papers",
-                             "checked": "approved by reviewers" if isinstance(overview_now.get("human_checked_accepted"), int) else "",
-                             "meta": "records with each parameter"}, notes
+            notes = driver.execute_script(BAND_NOTES_JS, overview_now.get("papers"), (overview_now.get("from_paper") or {}).get("papers"))
+            assert notes["shown"] == notes["expected"] and notes["shown"]["records"], notes
         # Each key number in its meaning's colour (Records the page's ink, Accepted the status navy, Read from the paper
         # the darker BPG cyan, Human-checked the darker BPG green), on a plain white card with a 1px hairline: no glow,
         # wash or gradient (round 14).
@@ -3576,10 +3615,14 @@ def check_layout(driver, browser, url, route_label):
         assert set(marks["labels"]) == {marks["muted"]} and [marks["dot"], marks["square"], marks["tick"]] == marks["want"], marks
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
         assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
+        # Type set in columns, not tiles (round 15): one thin rule, before the parameters; none between the key numbers.
+        rules = driver.execute_script("""return [...document.querySelectorAll('.snapshot-overview *')].filter(e => e.getClientRects().length
+            && parseFloat(getComputedStyle(e).borderLeftWidth) > 0).map(e => e.id || e.className)""")
+        assert rules == ["snapshotMeta"], rules
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
         date, card = box("#snapshotDate"), box(".snapshot-overview")
         # at the right end of the line over the card, its right edge on the card's (round 15)
-        assert (date["top"] == lead["top"] and abs(date["left"] + date["width"] - card["left"] - card["width"]) <= 1
+        assert (abs(date["top"] - lead["top"]) <= 1 and abs(date["left"] + date["width"] - card["left"] - card["width"]) <= 1
                 and band["top"] - 1 <= date["top"] and date["bottom"] <= band["top"] + band["height"] + 1), (
             f"At 1440px the snapshot date ends the line over the counts band: {date} {card}")
         # The sidebar: open beside the table, never over it.
@@ -4157,11 +4200,12 @@ def check_layout(driver, browser, url, route_label):
             wait.until(lambda d: not is_open())
             assert stored() is None, "Collapsing it again below 1200px goes back to the default"
         results["laptop-1100"] = True
-        # From 1024px up the counts band is one even row that never wraps or moves as the window widens: the key numbers
-        # and the parameters, each cell behind a thin rule, their labels, numbers and lines of context each on one line
-        # across the card, no wide empty stretch at its end, and the date at the right end of the line above, all inside
-        # the card; on tablets (641-1023px) two rows, the parameters and the date under the key numbers, with no divider.
-        # Each range keeps one height; Read from the paper keeps its whole label (a phone under 360px takes From paper).
+        # From 1024px up the counts band is one even row that never wraps or moves as the window widens: the key numbers,
+        # then the parameters behind one thin rule, their labels, numbers and lines of context each on one line across the
+        # card (within 1px), no wide empty stretch at its end, and the date at the right end of the line above, all inside
+        # the card; on tablets (641-1023px) two rows, the parameters and the date (the card's copy) under the key numbers,
+        # with no rule. Each range keeps one height; Read from the paper keeps its whole label (a phone under 360px takes
+        # From paper).
         band_heights = {"row": set(), "tablet": set()}
         for width in (1700, 1280, 1180, 1024, 1023, 800, 744, 641):
             set_browse_viewport(driver, browser, width, 900)
@@ -4173,26 +4217,32 @@ def check_layout(driver, browser, url, route_label):
                     .every(e => { const r = e.getBoundingClientRect(); return r.left >= card.left - 0.5 && r.right <= card.right + 0.5 && r.bottom <= card.bottom + 0.5; });
                 const cells = ['.summary-records', '.summary-accepted', '#fromPaperLink', '#humanCheckedLink', '#snapshotMeta']
                     .map(selector => document.querySelector(selector)).filter(e => e.getClientRects().length);
-                const lines = part => new Set(cells.map(e => [...e.querySelectorAll(part)].filter(c => c.getClientRects().length)
-                    .map(c => Math.round(c.getBoundingClientRect().top))).flat()).size;
+                const lines = part => { const tops = cells.map(e => [...e.querySelectorAll(part)].filter(c => c.getClientRects().length)
+                    .map(c => c.getBoundingClientRect().top)).flat(); return tops.length ? Math.max(...tops) - Math.min(...tops) : -1; };
+                const date = [...document.querySelectorAll('#snapshotDate, #snapshotDateCard')].find(e => e.getClientRects().length);
+                const dateBox = date ? date.getBoundingClientRect() : {top: -999, right: -999, bottom: -999};
                 return {height: Math.round(rect('.snapshot-band').height),
                         records: top('.summary-card'), checked: top('#humanCheckedLink'), meta: top('#snapshotMeta'), metaRight: Math.round(rect('#snapshotMeta').right),
-                        date: top('#snapshotDate'), lead: top('.snapshot-lead'), dateRight: Math.round(rect('#snapshotDate').right), inside,
+                        date: Math.round(dateBox.top), dateId: date ? date.id : null, lead: top('.snapshot-lead'), dateRight: Math.round(dateBox.right),
+                        dateBottom: Math.round(dateBox.bottom), cardTop: Math.round(card.top), cardBottom: Math.round(card.bottom), inside,
                         cardRight: Math.round(card.right), cardWidth: Math.round(card.width),
                         labels: lines(':scope > span, .snapshot-line > span'), notes: lines(':scope > .snapshot-note'),
                         divider: getComputedStyle(document.getElementById('snapshotMeta')).borderLeftWidth};
             """)
             assert band["inside"], f"At {width}px everything in the counts band stays inside its card: {band}"
             if width >= 1024:
-                assert (band["checked"] == band["records"] == band["meta"] and band["date"] == band["lead"]
-                        and abs(band["dateRight"] - band["cardRight"]) <= 1 and band["labels"] == 1 and band["notes"] == 1
+                assert (abs(band["checked"] - band["records"]) <= 1 and abs(band["meta"] - band["records"]) <= 1
+                        and band["dateId"] == "snapshotDate" and abs(band["date"] - band["lead"]) <= 1
+                        and abs(band["dateRight"] - band["cardRight"]) <= 1 and 0 <= band["labels"] <= 1 and 0 <= band["notes"] <= 1
                         and band["cardRight"] - band["metaRight"] <= band["cardWidth"] * 0.1 and band["divider"] == "1px"), (
                     f"At {width}px the counts band is one row: {band}")
                 band_heights["row"].add(band["height"])
             else:
-                assert (band["checked"] == band["records"] and band["meta"] > band["records"] + 24
-                        and abs(band["date"] - band["meta"]) < 6 and band["divider"] == "0px"), (
-                    f"At {width}px the counts band takes two rows: {band}")
+                assert (abs(band["checked"] - band["records"]) <= 1 and band["meta"] > band["records"] + 24
+                        and band["dateId"] == "snapshotDateCard" and abs(band["date"] - band["meta"]) < 6
+                        and band["dateRight"] <= band["cardRight"] and band["dateBottom"] <= band["cardBottom"]
+                        and band["divider"] == "0px"), (
+                    f"At {width}px the counts band takes two rows, the date in the card: {band}")
                 band_heights["tablet"].add(band["height"])
             shown = driver.execute_script("""const link = document.getElementById('fromPaperLink');
                 return [...link.querySelectorAll('.snapshot-paper-long, .snapshot-paper-short')]
@@ -4200,6 +4250,43 @@ def check_layout(driver, browser, url, route_label):
             if driver.find_element(By.ID, "fromPaperLink").is_displayed():
                 assert shown == ["Read from the paper"], (width, shown)
         assert all(len(heights) == 1 for heights in band_heights.values()), f"Each layout of the counts band keeps one height: {band_heights}"
+        # A filter never moves the band's columns (round 15): each count keeps a seven-character room, so the rule before
+        # the parameters stays put within 1px, every number keeps a width inside its own cell, and the lines of context
+        # follow the results (#browse?source=paper: all of them read from the paper, so its line gives only the papers).
+        for width in (1440, 1024):
+            set_browse_viewport(driver, browser, width, 900)
+            spots = {}
+            for address in ("", "#browse?source=paper"):
+                open_page(address)
+                if address:
+                    wait.until(lambda d: d.execute_script(
+                        "return document.querySelector('.summary-records > span')?.textContent.trim() === 'Matching records'"
+                        " && /\\d/.test(document.getElementById('fromPaperNote')?.textContent || '')"))
+                spots[address] = driver.execute_script(BAND_SPOTS_JS)
+            plain, filtered = spots[""], spots["#browse?source=paper"]
+            assert (abs(plain["rule"] - filtered["rule"]) <= 1 and all(spot["numbers"] for spot in spots.values())
+                    and re.fullmatch(r"[\d,]+ papers?", filtered["paperNote"]) and filtered["acceptedNote"].endswith("of records")), (
+                f"At {width}px a filter leaves the band's columns in place: {spots}")
+        # A short window wider than a phone keeps the table's 340px: the line over the card gives way, and the snapshot
+        # date (the card's copy, its title the Data ID) ends the parameters' line inside the card; from 1100px after
+        # "records with each parameter", below that alone (a wide font has no room for both at 1024px).
+        for width, height in ((1280, 600), (1024, 600), (800, 600)):
+            set_browse_viewport(driver, browser, width, height)
+            open_page()
+            short = driver.execute_script("""
+                const shown = e => Boolean(e && e.getClientRects().length);
+                const card = document.querySelector('.snapshot-overview').getBoundingClientRect();
+                const date = document.getElementById('snapshotDateCard'), r = date ? date.getBoundingClientRect() : null;
+                return {lead: shown(document.querySelector('.snapshot-lead')), date: shown(date), title: date ? date.title : '',
+                        inside: Boolean(r) && r.left >= card.left - 0.5 && r.right <= card.right + 0.5 && r.top >= card.top && r.bottom <= card.bottom + 0.5,
+                        caption: (document.querySelector('#snapshotMeta > .snapshot-note')?.innerText || '').trim(),
+                        workbench: Math.round(document.querySelector('.workbench').getBoundingClientRect().height),
+                        scroll: document.documentElement.scrollWidth > innerWidth + 1};
+            """)
+            assert (not short["lead"] and short["date"] and short["inside"] and re.fullmatch(r"Data ID [0-9a-f]{10}", short["title"] or "")
+                    and short["workbench"] >= 340 and not short["scroll"]
+                    and (short["caption"].startswith("records with each parameter") if width >= 1100 else short["caption"].startswith("Snapshot "))), (
+                f"At {width}x{height} the snapshot date stays in view in the card: {short}")
         # The band's key numbers have no glow (no text-shadow), each in its own colour; a linked count's hover tint is drawn
         # around it, so it never moves the line.
         glow = driver.execute_script("""
@@ -4248,9 +4335,10 @@ def check_layout(driver, browser, url, route_label):
             brand, links = box(".brand-lockup strong"), box(".external-nav")
             assert brand["left"] + brand["width"] <= links["left"] + 1, f"At 320px the links out overlap the brand: {brand} {links}"
             # Phones: the counts band's four key numbers (20px) stand two by two in their card, More at the first row's
-            # right; More shows their lines of context and the parameters under them, and closes them again; the snapshot
-            # date ends the line over the card (round 15), shown either way. At 320px with a filter ("Matching records")
-            # and at 375px nothing leaves the card or the window.
+            # right; More shows their lines of context and the parameters under them, and closes them again. The snapshot
+            # date ends the line over the card from 360px (round 15), shown either way; below 360px that line has no room
+            # for it, so it ends the parameters under More. At 320px with a filter ("Matching records") and at 375px
+            # nothing leaves the card or the window.
             band_js = """
                 const rect = selector => document.querySelector(selector).getBoundingClientRect();
                 const card = rect('.snapshot-overview');
@@ -4261,6 +4349,8 @@ def check_layout(driver, browser, url, route_label):
                         size: getComputedStyle(document.querySelector('.summary-records strong')).fontSize,
                         meta: shown('#snapshotMeta'), notes: shown('.summary-records .snapshot-note') && shown('#fromPaperNote'),
                         date: shown('#snapshotDate') && rect('#snapshotDate').right <= card.right + 0.5 && rect('#snapshotDate').bottom <= card.top,
+                        cardDate: Boolean(document.getElementById('snapshotDateCard')) && shown('#snapshotDateCard')
+                            && rect('#snapshotDateCard').right <= card.right + 0.5 && rect('#snapshotDateCard').bottom <= card.bottom + 0.5,
                         scroll: document.documentElement.scrollWidth > innerWidth + 1};
             """
             for width, address in ((320, "#browse?metric=kcat"), (375, "")):
@@ -4271,13 +4361,15 @@ def check_layout(driver, browser, url, route_label):
                 tops, lefts = phone_band["tops"], phone_band["lefts"]
                 assert (tops[0] == tops[1] and tops[2] == tops[3] and tops[2] > tops[0] + 24 and lefts[0] == lefts[2]
                         and lefts[1] == lefts[3] and lefts[4] > lefts[1] and tops[4] < tops[2] and phone_band["inside"]
-                        and phone_band["size"] == "20px" and not phone_band["meta"] and not phone_band["notes"] and phone_band["date"]
+                        and phone_band["size"] == "20px" and not phone_band["meta"] and not phone_band["notes"]
+                        and phone_band["date"] == (width >= 360) and not phone_band["cardDate"]
                         and not phone_band["scroll"]), f"At {width}px the counts band is two by two: {phone_band}"
                 more = driver.find_element(By.ID, "snapshotMoreButton")
                 more.click()
                 wait.until(lambda d: d.execute_script(band_js)["meta"])
                 expanded = driver.execute_script(band_js)
-                assert expanded["date"] and expanded["notes"] and expanded["inside"] and more.get_attribute("aria-expanded") == "true", expanded
+                assert (expanded["date"] == (width >= 360) and expanded["cardDate"] == (width < 360) and expanded["notes"]
+                        and expanded["inside"] and more.get_attribute("aria-expanded") == "true"), expanded
                 assert not driver.execute_script(band_js)["scroll"], f"At {width}px More keeps the band in the window"
                 more.click()
                 wait.until(lambda d: not d.execute_script(band_js)["meta"])
