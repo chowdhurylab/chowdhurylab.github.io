@@ -526,10 +526,13 @@ Team are real links; normal clicks retain the loaded table, while
 modified clicks and copying work normally. Strip only deployment-check query
 tags from shared navigation. Stats uses catlog-stats.html; Browse keeps
 catlog-latest.html. Old #stats bookmarks and portable export hashes still work.
-The Guide is short and visual (the user, 2026-10-18): pictures built from the
-page's own parts (how a value is read and checked, a numbered record, one legend
-of labels and colours), one plain sentence per idea, reference in disclosures
-(tools/catlog-static/DESIGN.md, Guide).
+The Guide is short and plain (the user, 2026-10-18 and 2026-10-20: "still so
+verbose, AI-ish, confusing"): a newcomer learns in about a minute what CatLog is,
+how to read a record and what each label means. Pictures only where they are
+simpler than words (four steps Read, Check, Compare, Review; a numbered record;
+one legend of labels and colours), each section opening with its answer in at most
+three short sentences, no meta sentences or AI tells, no icons, boxes or tinted
+washes, reference in disclosures (tools/catlog-static/DESIGN.md, Guide).
 
 ## Team
 

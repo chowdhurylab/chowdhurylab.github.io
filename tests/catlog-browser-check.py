@@ -125,8 +125,8 @@ GUIDE_SECTIONS = ("guide-method", "guide-record", "guide-status", "guide-caveats
 GUIDE_REFERENCE = ("guide-find", "guide-units", "guide-downloads", "guide-cite", "guide-sources")
 
 
-# The Guide's pictures (round 13, the user: "visuals help more"): the four reading steps side by side on a desktop and one
-# under another below 900px, the numbered record beside its key (under it below 900px) with as many numbers as parts and
+# The Guide's pictures (round 13, the user: "visuals help more"; round 14: no icons): the four steps side by side on a
+# desktop and one under another below 900px, the numbered record beside its key (under it below 900px) with as many numbers as parts and
 # key lines, the legend groups, all inside the view; a list of what is wrong, empty when all is right.
 GUIDE_PICTURES_JS = """
     const bad = [];
@@ -147,7 +147,7 @@ GUIDE_PICTURES_JS = """
     const card = document.querySelector('.guide-anatomy-card').getBoundingClientRect();
     const key = document.querySelector('.guide-anatomy-key').getBoundingClientRect();
     if (wide ? key.left < card.right : key.top < card.bottom) bad.push('the key overlaps the record');
-    for (const element of document.querySelectorAll('.guide-anatomy-card, .guide-anatomy-key, .guide-legend-group, .guide-check, .guide-unit-cards li')) {
+    for (const element of document.querySelectorAll('.guide-anatomy-card, .guide-anatomy-key, .guide-legend-group, .guide-unit-cards li, .guide-db-table, .guide-caution-table')) {
       const box = element.getBoundingClientRect();
       if (box.width && (box.left < view.left - 1 || box.right > view.right + 1)) bad.push(`${element.className} outside`);
     }
@@ -195,9 +195,10 @@ def check_guide(driver, wait):
     database_lines = driver.execute_script(
         "return [...document.querySelectorAll('#guideView [data-guide-databases]')].map(e => e.getClientRects().length > 0)")
     assert len(database_lines) >= 2 and all(shown == comparison for shown in database_lines), (comparison, database_lines)
-    # How CatLog reads a value (#guide-how-read, the record's link to it): the four steps, one sentence each.
+    # How CatLog reads a value (#guide-how-read, the record's link to it): the four steps (round 14: read, check, compare,
+    # review), their numbers drawn by CSS.
     steps = driver.execute_script("return [...document.querySelectorAll('#guide-how-read .guide-flow-name')].map(e => e.textContent)")
-    assert steps == ["Find the paper", "Read", "Check", "Compare"], steps
+    assert steps == ["Read", "Check", "Compare", "Review"], steps
     assert "CatLog re-verifies published enzyme kinetics" in guide_heading_text(driver)
     assert driver.execute_script(GUIDE_PICTURES_JS) == [], driver.execute_script(GUIDE_PICTURES_JS)
     guide_text = driver.find_element(By.ID, "guideView").text
@@ -278,16 +279,20 @@ def check_guide(driver, wait):
 
 GUIDE_DB_RESULTS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases", "All values the same",
                     "Corrected earlier")
-# (round 13: the results as cards; the other four in disclosures, each headed by its h3)
-GUIDE_DB_HEADINGS = ["Results", "What is compared", "Cause of a correction", "How a correction is found", "Why no database lists a value"]
-# Each row of a Guide list: its term and its meaning side by side, or (on a phone) the meaning under the term, never over it.
+# (round 14: the results as one table; what is compared and the three small tables in one disclosure, headed by its h3)
+GUIDE_DB_HEADINGS = ["Results", "How the comparison works"]
+# Each row of a Guide table: its name left of its numbers, never under or over them, all inside the view.
 GUIDE_DB_ROWS_CLEAR = """
     const bad = [];
-    for (const row of document.querySelectorAll('#guideDatabasesBody dl > div')) {
-      const dt = row.querySelector(':scope > dt').getBoundingClientRect(), dd = row.querySelector(':scope > dd').getBoundingClientRect();
-      const view = document.getElementById('guideView').getBoundingClientRect();
-      if (!(dd.top >= dt.bottom - 1 || dd.left >= dt.right - 1)) bad.push(row.querySelector('dt').innerText.trim());
-      if (dt.right > view.right + 1 || dd.right > view.right + 1) bad.push('outside: ' + row.querySelector('dt').innerText.trim());
+    const view = document.getElementById('guideView').getBoundingClientRect();
+    for (const row of document.querySelectorAll('#guideDatabasesBody .guide-db-table tbody tr')) {
+      const th = row.querySelector(':scope > th').getBoundingClientRect();
+      for (const td of row.querySelectorAll(':scope > td')) {
+        const box = td.getBoundingClientRect();
+        if (box.left < th.right - 1 || Math.abs(box.top - th.top) > th.height) bad.push(row.querySelector('th').innerText.trim());
+        if (box.right > view.right + 1) bad.push('outside: ' + row.querySelector('th').innerText.trim());
+      }
+      if (th.right > view.right + 1) bad.push('outside: ' + row.querySelector('th').innerText.trim());
     }
     return bad;
 """
@@ -295,10 +300,10 @@ GUIDE_DB_ROWS_CLEAR = """
 
 def check_guide_databases(driver, browser, url):
     """The Guide's Against the databases (#guide-databases), from the manifest only: shown with its line in the contents
-    when the snapshot carries the comparison (hidden otherwise); the six results in Browse's order, each after the square
-    of its colour (none on Corrected earlier) and with the counts Browse's options give; the causes, how a correction is
-    found and why no database lists a value; no sideways scroll at 375 and 320px; and a records count opens Browse at
-    those records."""
+    when the snapshot carries the comparison (hidden otherwise); the six results in Browse's order as one table, each
+    after the square of its colour (none on Corrected earlier) with the values and records Browse's options give; the
+    causes, how a correction is found and why no database lists a value in one disclosure; no sideways scroll at 375 and
+    320px; and a records count opens Browse at those records."""
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     set_browse_viewport(driver, browser, 1440, 1000)
     driver.get("about:blank")
@@ -328,20 +333,23 @@ def check_guide_databases(driver, browser, url):
     body = driver.find_element(By.ID, "guideDatabasesBody")
     headings = [heading.text.strip() for heading in body.find_elements(By.CSS_SELECTOR, "h3")]
     assert headings == GUIDE_DB_HEADINGS, headings
-    rows = driver.execute_script("""
-        return [...document.querySelectorAll('#guideDatabasesBody .guide-db-results > div')].map(row => ({
-          label: row.querySelector('dt').innerText.trim(),
-          count: row.querySelector(':scope > dd > .guide-db-count')?.innerText.trim() ?? null,
-          nested: row.querySelector('.guide-db-nested')?.innerText.trim() ?? null,
-          mark: (() => { const mark = row.querySelector('.guide-db-mark'); const box = mark.getBoundingClientRect();
+    # (a row under its parent, .guide-db-nested, narrows it: every value, an exact factor not yet checked)
+    all_rows = driver.execute_script("""
+        return [...document.querySelectorAll('#guideDatabasesBody .guide-db-results tbody tr')].map(row => ({
+          key: row.dataset.key,
+          nested: row.classList.contains('guide-db-nested'),
+          label: row.querySelector('.guide-db-result > span:not(.guide-db-mark), .guide-db-sub').innerText.trim(),
+          cells: [...row.querySelectorAll('td')].map(td => td.innerText.trim()),
+          mark: (() => { const mark = row.querySelector('.guide-db-mark'); if (!mark) return null; const box = mark.getBoundingClientRect();
             return [mark.dataset.result || '', getComputedStyle(mark).backgroundColor, Math.round(box.width), Math.round(box.height)]; })(),
         }));
     """)
+    rows = [row for row in all_rows if not row["nested"]]
     labels = [row["label"] for row in rows]
     assert labels in (list(GUIDE_DB_RESULTS), list(GUIDE_DB_RESULTS[:-1])), labels
     marks = [row["mark"] for row in rows]
     assert [mark[0] for mark in marks[:5]] == ["corrects", "differs", "other_label", "not_listed", "same"], marks
-    assert all(mark[2:] == [10, 10] for mark in marks), marks
+    assert all(mark and mark[2:] == [10, 10] for mark in marks), marks
     assert len({mark[1] for mark in marks[:5]}) == 5 and all(mark[1] not in ("rgba(0, 0, 0, 0)", "transparent") for mark in marks[:5]), marks
     if len(marks) == 6:
         assert marks[5][0] == "" and marks[5][1] in ("rgba(0, 0, 0, 0)", "transparent"), marks[5]
@@ -356,7 +364,7 @@ def check_guide_databases(driver, browser, url):
         # One paper count per set: the papers with a compared value (papers_compared), as Stats' lead names them.
         lead_papers = comparison.get("papers_compared", comparison.get("papers"))
         assert f"This snapshot compares {words(compared, 'value', 'values')} from {words(lead_papers, 'paper', 'papers')}." in text, text[:400]
-        counts = {row["label"]: row["count"] for row in rows}
+        counts = {row["label"]: row["cells"] for row in rows}
         # An exact factor nothing has yet checked against the paper is Different number, never a correction: a
         # comparison that counts such values among its corrections (by_cause_found_by[cause].factor_only) has them
         # moved in the Guide's words, and the line under Different number counts them.
@@ -365,20 +373,17 @@ def check_guide_databases(driver, browser, url):
             if "factor_only" not in found_by else sum(found_by["factor_only"].values())
         differs_extra = sum(values.get(key, 0) for key in ("differs_factor_only", "differs_exact_factor"))
         expected = {
-            "Corrects a value": f"{words(values['corrected'] - factor_only, 'value', 'values')} in {words(kinds['corrected'], 'record', 'records')}",
-            "Different number": f"{words(values['differs'] + factor_only + differs_extra, 'value', 'values')} in {words(kinds['differs'], 'record', 'records')}",
-            "Same, other label": f"{words(values['same_number_other_label'], 'value', 'values')} in {words(kinds['other_label'], 'record', 'records')}",
-            "Not in the databases": f"{words(values['new'] + values.get('new_ratio_only', 0) + values.get('new_paper_not_in_databases', 0), 'value', 'values')} in {words(kinds['new'], 'record', 'records')}",
-            "All values the same": words(records["every_value_confirmed"], "record", "records"),
+            "Corrects a value": [f"{values['corrected'] - factor_only:,}", f"{kinds['corrected']:,}"],
+            "Different number": [f"{values['differs'] + factor_only + differs_extra:,}", f"{kinds['differs']:,}"],
+            "Same, other label": [f"{values['same_number_other_label']:,}", f"{kinds['other_label']:,}"],
+            "Not in the databases": [f"{values['new'] + values.get('new_ratio_only', 0) + values.get('new_paper_not_in_databases', 0):,}", f"{kinds['new']:,}"],
+            "All values the same": ["", f"{records['every_value_confirmed']:,}"],
         }
         assert {key: counts[key] for key in expected} == expected, counts
-        nested = next(row["nested"] for row in rows if row["label"] == "Not in the databases")
-        assert nested == f"Under it, every value: no compared database lists any value of the record ({words(records['every_value_new'], 'record', 'records')}).", nested
+        nested = {row["key"]: row["cells"] for row in all_rows if row["nested"]}
+        assert nested.get("all_not_listed") == ["", f"{records['every_value_new']:,}"], nested
         if factor_only or differs_extra:
-            differs_nested = next(row["nested"] for row in rows if row["label"] == "Different number")
-            # (round 13: one short line, its count first)
-            assert differs_nested == (f"Exact factor, not yet checked ({words(factor_only or differs_extra, 'value', 'values')}): the database’s number is "
-                                      "the paper’s ×\u00a010n, 60 or 3,600; the record names the factor."), differs_nested
+            assert nested.get("differs_factor_only") == [f"{factor_only or differs_extra:,}", ""], nested
         assert "Exact factor only" not in text and "nothing else was checked" not in text, "an exact factor alone is no correction"
         # The databases named in the lead come from the manifest; no hard-coded number of them.
         for name in (comparison.get("values_by_database") or {}):

@@ -606,9 +606,8 @@ which is theirs under the substrate ("pH 6.5", "37 °C", "pH not stated",
 table has no T column; only the
 part that differs in the series; the tooltip adds "this paper also measured this
 enzyme and substrate at another pH", or, for records whose values another record
-shares, "otherwise the same as another record of this paper"). The Guide says so
-where it says the table has no temperature or pH column (Cautions, Units: shown
-only to tell apart records of one paper). The table writes
+shares, "otherwise the same as another record of this paper"). The Guide's Units
+says T and pH are in the record and the downloads, not as table columns. The table writes
 numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from
 the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat or
@@ -626,7 +625,8 @@ read by CatLog shows its values exactly as CatLog gives them, to the figures the
 paper printed and never cut to 4 (value_display: 135.0 where the table shows 135,
 1285.4 where it shows 1285), never more figures than the paper prints (a printed
 47,000 M⁻¹ s⁻¹ reads 47, not 47.000); the 4-figure rule stays for older records
-and for a kcat/Km CatLog calculated. The Guide's Units section says the same.
+and for a kcat/Km CatLog calculated. The Guide's Units says it in one line (the paper's significant figures; the
+downloads keep every stored digit).
 Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
@@ -1129,90 +1129,107 @@ in the site's DESIGN.md, "Team".
 
 ## Guide
 
-Short, scannable and visual (the user, 2026-10-18: "too lengthy and too AI and hard to follow. Visuals help more ... a
-better to-the-point guide"): a reader finds what a field, label or colour means in seconds. Pictures first, each built
-from the page's own components (status dot, tags, values table, filter chips, database squares, the "!" and the tick),
-so their colours follow the tokens; one plain sentence per idea; prose only where a picture cannot say it; reference
-detail in native disclosures. One column up to 1000px: the pictures use its width, prose keeps to 72ch (16px body).
+Short and plain (round 14, the user 2026-10-20: "the guide is still so verbose, AI ish, confusing and hard to
+understand"; round 13 before it: "visuals help more ... a better to-the-point guide"). A newcomer understands in about a
+minute what CatLog is, how to read a record and what each label means. Rules for every string in it:
+- Each section opens with its answer, at most three short sentences; one idea per sentence; no paragraph or list item
+  holds more than three sentences (a unit test counts them).
+- No meta sentences ("This section explains ..."), no AI tells: no strings of em dashes, no "seamless", "robust" (the
+  CatRange paper's own title excepted), "Note that", rule-of-three padding or a definition with a colon in every
+  sentence. Facts only; a number the Guide does not need (the checks' results, the share of matching values) is Stats'.
+- Visuals only where they are simpler than words: the four steps, the numbered record, the legend of labels and colours
+  and small tables of the cautions, units and database results. They reuse the page's own components (status dot, tags,
+  values table, filter chips, Browse's .db-mark squares, the "!" and the tick), so their colours follow the tokens (the
+  palette is the look's: never a hard-coded colour here).
+- The look is calm and editorial: hairlines between parts, no boxes round prose, no icons, no tinted washes, shadows or
+  pill buttons (the contents are plain links); the example record keeps its 1px card, and its parts' numbers are small
+  accent circles (CSS counters).
+- One column up to 1000px; prose keeps to 68ch (16px body, 14px in tables and legends).
 
-The introduction (h1 "Using CatLog") is the framing in two lines: "CatLog re-verifies published enzyme kinetics: kcat,
-Km and kcat/Km. AI agents find the papers that enzyme databases cite, read the values in them and check each against
-the paper; people review samples. So far 61,919 of 178,676 records are re-read." (the counts from the manifest) and, in small type, the Chowdhury Lab and CatLog-27k of the CatRange paper (PNAS Nexus).
-Never a "download" agent or papers collected in bulk. About 1,500 words in view (2026-10-18: 1,535, 5,500px at 1440px;
-it was 2,500 words and 8,900px): no section repeats another or Stats. Then "On this page": the sections as a row of
-small buttons that wrap, in this order and with these addresses (other pages link to every one; keep them):
+Word counts (Chrome at 1440px, the live round-13 data; prose = the words outside figure labels, legend items, tables,
+reference data such as citations and database versions, and headings): round 13 had 1,524 words in view (374 of them
+prose) and 3,043 with every disclosure open (1,443 prose); round 14 has about 960 in view (about 140 prose) and about
+1,730 open (about 485 prose), and the page is about 4,200px tall at 1440px instead of 5,400px.
 
-- How CatLog works (#guide-method; heading #guide-method-title, which Stats' and a record's links focus): one heading.
-  Under it How CatLog reads a value (#guide-how-read, its h3 #guide-how-read-title set as the steps' small 14px muted
-  label, not a second heading: the record links its moved method boilerplate here as "How CatLog reads a value →"):
-  four steps as numbered cards with an icon, in a row with arrows (one under another below 900px): Find the paper (the
-  paper a database value cites, by its PMID or DOI), Read (an AI model, Claude, Anthropic, named once in the Guide,
-  reads each value with its unit, conditions and the line it is printed in), Check ("A second, separate AI check
-  compares every value with the paper." and automated checks confirm the line is in the paper's text), Compare (each
-  value is compared automatically with the numbers the enzyme databases list for the same paper); then what the record
-  keeps, two short items: As printed and Units (converted automatically; no model types a converted number); Accepted
-  and human-checked are the legend's, said once there. The site says "automated checks" and "found automatically",
-  never "code", as the README does. Then the loop in a dashed accent box ("Then checked again": AI audits and people
-  review samples; what they find improves the next reading), with two links, "Checks so far on Stats" (#stats-quality:
-  the Guide gives no check's numbers of its own, they are Stats') and "People behind CatLog" (Team). No tiles, no
-  disclosure of the review, no "Two kinds of record" (the from paper and not re-read tags say it).
-- Read a record (#guide-record): a record drawn as the panel draws it, in the panel's order (title, EC · organism · form,
-  substrate; the status line with tags; the values table with ticks, As printed and its caption "Printed in Table 1";
-  the quoted line "In the paper: …"; Against the databases, the real record's three lines, 07fd908d4f44bfe6: "kcat: same
-  as BRENDA, SABIO-RK and OED", "Km: same as SABIO-RK; BRENDA lists 0.0082 mM" (10× the paper's 0.82 µM: a real
-  disagreement the key names) and "kcat/Km: same as SABIO-RK and OED"; Checks with Second check and Human review;
-  Conditions, Protein and substrate and Paper as small labels), each part numbered by a CSS counter, beside a numbered
-  key of one short line each (under it below 900px); the Checks key line links How CatLog reads a value. A part the
-  snapshot lacks (Against the databases) is hidden with its key line, so the numbers stay in sequence. On phones the
-  example's values table puts each As printed under its value. A tip line names ‹ › and Copy link. When the record's
-  sections change, this example changes with them.
-- Labels and colours (#guide-status): "Each colour means one thing, and its word always stands beside it." A grid of
-  legends (two columns, one below 760px): Review result (the table's badges: Accepted, Not confirmed, Not checked,
-  Disputed; the Accepted, Not checked and no paper linked definitions are set by the review rules the snapshot
-  follows), Tags (from paper, by CatLog's current, second version, said once, linked to the method; not re-read, which
-  says that CatLog's records replace these when it reads the paper; earlier extraction; corrected; no paper linked;
-  human-checked with its tick and green), Marks beside a value (tick, "!", calc., dash), Against the databases (the five
-  squares in Browse's colours, shown with the comparison), Filters in use (the chips as Browse draws them, each in its
-  group's colour, across both columns, and one line on ×, Undo and Clear all; no sentence naming the colours, the
-  chips' words name their group). Then Cautions (#guide-cautions, an h3): one line (the "!", that for the unit and
-  magnitude cautions the unit or the value may be wrong, said once, and the filter), then one table, Caution | Filter
-  group (the sidebar's short group names: kcat/Km mismatch, Unit or magnitude error, No unit given, Temperature
-  questionable) | Means, one short line each (above diffusion limit: above 10¹⁰ M⁻¹ s⁻¹, the limit the caution uses);
-  on phones each row stacks, its group as "Filter: ..." in 13px muted. The evidence labels of records not yet re-read
-  in a disclosure.
+The introduction (h1 "Using CatLog"): "CatLog re-verifies published enzyme kinetics (kcat, Km and kcat/Km) against their
+papers. AI agents read each value; people review samples. So far 75,000 of 185,804 records are re-read." (the counts from
+the manifest, renderRereadLines, shared with Team) and, in small type, "By the Chowdhury Lab, Iowa State University."
+(CatLog-27k, the CatRange paper's training set, is named in Cite). Never a "download" agent or papers collected in bulk.
+Then "On this page": the sections as a wrapped row of plain links, in this order and with these addresses (other pages
+link to them; keep every one):
+
+- How CatLog works (#guide-method; heading #guide-method-title, which Stats' and a record's links focus). Under it How
+  CatLog reads a value (#guide-how-read, its h3 #guide-how-read-title set as a small 13px muted label, not a second
+  heading: a record links its moved method boilerplate here as "How CatLog reads a value →"): four steps in a row
+  (one under another below 900px), each under a 2px accent rule with its number (a CSS counter) and a small arrow on the
+  rule between two steps: Read ("An AI model (Claude, Anthropic) reads each value, its unit and conditions, and the line
+  it is printed in."; the model and vendor named once in the Guide), Check ("A second, separate AI check compares every
+  value with the paper. Automated checks confirm the line is in the paper."), Compare (automatically, with what the
+  enzyme databases list for that paper) and Review (AI audits and people re-check samples; what they find improves the
+  next readings). Then one line, "Units are converted automatically; no model types a converted number.", and two links,
+  "Checks so far on Stats" (#stats-quality) and "People behind CatLog" (Team). The site says "automated checks" and
+  "found automatically", never "code", as the README does.
+- Read a record (#guide-record): "Click a row to open its record." then a record drawn as the panel draws it, in the
+  panel's order (title, EC · organism · form, substrate; the status line with tags; the values table with ticks, As
+  printed and its caption "Printed in Table 1"; the quoted line "In the paper: …"; Against the databases, the real
+  record's three lines, 07fd908d4f44bfe6, BRENDA's Km 10× the paper's 0.82 µM; Checks with Second check and Human
+  review; Conditions, Protein and substrate and Paper as plain labels), each part numbered, beside a numbered key of one
+  short line each (under it below 900px); the Checks key line links How CatLog reads a value. A part the snapshot lacks
+  (Against the databases) is hidden with its key line, so the numbers stay in sequence. On phones the example's values
+  table puts each As printed under its value. When the record's sections change, this example changes with them.
+- Labels and colours (#guide-status): a grid of legends under hairlines (two columns, one below 760px), no intro line:
+  Review result (the table's badges, a few words each; Accepted's words follow the review rules the snapshot follows,
+  guideAcceptedDefinition: "… or approved by a human reviewer" under them; Not checked "Unverified (no final check) or
+  Not reviewed (no PMID or DOI)" and no paper linked "No PMID or DOI, so the value cannot be traced to a paper." hold
+  under both and stay as the page writes them), Tags (from paper, by CatLog's current, second version, said once,
+  linked to the method; not re-read; earlier extraction; corrected; no paper linked; human-checked with its tick and
+  green), Marks beside a value (tick, "!", calc., dash; side by side on phones too), Against the databases (the five
+  squares in Browse's colours, shown with the comparison) and Filters in use (the chips as Browse draws them, each in
+  its group's colour, across both columns, and one line: "× removes a filter; Undo brings back the last change."). Then
+  Cautions (#guide-cautions, an h3): one line ("An amber ! beside a value flags a possible problem, which the record
+  explains."), then one table, a row per Cautions filter group as the sidebar names it (kcat/Km mismatch, Unit or
+  magnitude error, No unit given, Temperature questionable), holding its cautions by the names shown beside a value, each
+  with what it means in brackets; Unit or magnitude error says once "The unit or the value may be wrong." (above
+  diffusion limit: above 10¹⁰ M⁻¹ s⁻¹, the limit the caution uses). On phones each row stacks, its group as a 13px
+  muted label. The evidence labels of records not yet re-read in a disclosure, a few words each.
 - Against the databases (#guide-databases, marked data-guide-database-section with its line in the contents and under
   Questions; shown when the manifest's summary.database_comparison is there, or the record index lists database_summary;
-  written from the manifest only): the lead (the compared databases from the manifest's sources list, else the databases
-  its counts name, else the six in the code, never a typed "five"; the values compared and the papers with a compared
-  value; the share where a database lists a number for the same measurement, from 1,000 values); Results (h3) with one
-  line, "Each value has one result; a record shows each result its values have. All values the same, Not in the
-  databases: every value and Corrected earlier describe the whole record.", then cards, two columns (one below 760px):
-  each result after a 10px square in its colour (none on Corrected earlier), Browse's option definition (Different
-  number its first sentence and the caveat "A different number can mean a different measurement; it does not by itself
-  mean a database is wrong.", said once), "N values in M records" (records linked to #browse?db=<key> only where Browse
-  has that option), the nested lines (every value under Not in the databases; under Different number, when counted,
-  "Exact factor, not yet checked (246 values): the database's number is the paper's × 10ⁿ, 60 or 3,600; the record
-  names the factor."); Corrected earlier left out when the snapshot counts 0. Then four disclosures, each summary one
-  h3: What is compared (values and databases with versions, dates and values), Cause of a correction (the four
-  families), How a correction is found (the two ways; an exact factor alone is no correction), Why no database lists a
-  value (the six reasons); then the caption and a link to Stats. A count the manifest lacks leaves its line out.
-- Before you use the values (#guide-caveats): a short checklist.
+  written from the manifest only): the lead in two sentences (the compared databases from the manifest's sources list,
+  else the databases its counts name, else the six in the code, never a typed "five"; then "This snapshot compares N
+  values from M papers."; the share of matching values is Stats'). Results (h3): one table, Result | Values | Records,
+  in Browse's order, each name after Browse's own square (.db-mark db-mark-<result>, so the look's palette applies;
+  none on Corrected earlier, glossed "records not yet re-read"); the numbers right-aligned in tabular figures, the
+  records linked to #browse?db=<key> where Browse has that option; "every value of the record" under Not in the
+  databases, and "exact factor, not yet checked" (the paper's × 10ⁿ, 60 or 3,600) under Different number when counted,
+  as indented rows; a count the manifest lacks leaves its cell empty, Corrected earlier left out when the snapshot counts
+  0. The results' meanings are the legend's, never repeated here. Under the table the caveat, once: "A different number
+  can mean a different measurement; it does not by itself mean a database is wrong." Then one disclosure, "How the
+  comparison works" (its summary the h3 #guide-databases-compared): how values are paired and what is not compared (calc.
+  with its count, values per mg/mL, records not yet re-read), the databases with versions, dates and values, and three
+  small tables side by side (one under another below 900px), a label and its count of values each: Cause of a
+  correction (#guide-databases-causes, the four families of DATABASE_CAUSE_FAMILIES, Stats' list), Found by
+  (#guide-databases-found: a separate AI check of the paper; an exact factor the paper's kcat ÷ Km agrees with; an older
+  comparison's code count goes on the second) and Why no database lists a value (#guide-databases-not-listed, the six
+  reasons, the papers no compared database lists beside the last); then "Counts by parameter and database are on
+  Stats."
+- Before you use the values (#guide-caveats): four short checklist lines (only Accepted passed review; read each value's
+  unit; a printed kcat/Km can differ from kcat ÷ Km; split training sets by paper or UniProt accession).
 - Reference (an h2 with no address of its own): Find records (#guide-find), Units (#guide-units), Downloads
   (#guide-downloads), Cite (#guide-cite) and Sources and licenses (#guide-sources), each a `<details class="guide-ref">`
   closed at first, its summary one row (44px or more): a + or − in the accent, the name as an h3 (16px/600, its id the
-  one a link focuses) and a 14px gist of what it holds ("kcat s⁻¹ · Km mM · kcat/Km mM⁻¹ s⁻¹" for Units). An address or
-  a link to one (the contents, "Units" in the checklist, "Sources and licenses" in Cite) opens it (openGuidePart, from
-  renderView and guideSectionHeading). Inside: Find records (Search with example chips, Filters (the groups in view, in the
-  sidebar's order), More filters (the groups under it; Against the databases only when the Guide shows its database
-  section), Sort, Share; "Try": example views in the #browse? format); Units (the three catalog units as cards, rows on phones, then Conversion,
-  calc., Printed kcat/Km, × 10ⁿ, Digits (a value read from the paper keeps the paper's significant figures, at least
-  2, and one more where a unit conversion would shift the printed last digit, 87.3 min⁻¹ is 1.455 s⁻¹, as catlog-v2
-  site_release._printed rounds; records not yet re-read at most 4, 3 after a per-minute conversion), Ki, T and pH,
-  missing values and other units); Downloads (Full data, Table, Against the databases when the manifest has its
-  comparison download, Results and record, Format, Review files, the Download full data button); Cite (the paper, the
-  citation line, Snapshot and Data ID, one note, the paper and README links); Sources and licenses (the list the
-  manifest fills, the curation license).
-- Questions (#guide-questions, native disclosures).
+  one a link focuses) and a 14px gist ("kcat s⁻¹ · Km mM · kcat/Km mM⁻¹ s⁻¹" for Units). An address or a link to one
+  (the contents, "Units" in the checklist, "Sources and licenses" in Cite) opens it (openGuidePart, from renderView and
+  guideSectionHeading). Inside: Find records (Search with example chips and "Gene names are not indexed.", Filters (the
+  groups in view: enzyme, EC number, organism, substrate; measurement type; review result), More filters (source, wild
+  type or variant, assay conditions, against the databases only when the Guide shows its database section, cautions
+  and source database; it opens by itself when one is set), Share; "Try": example views in the #browse? format); Units
+  (the three catalog units as hairline rows: name, unit, meaning; then calc., × 10ⁿ, Digits, T and pH, Missing and
+  Other units, one short line each); Downloads (Full data, Table, Against the databases when the manifest has its
+  comparison download, Format, Review files, the Download full data button); Cite (the paper, CatLog-27k, the citation
+  line, Snapshot and Data ID, one note, the paper and README links); Sources and licenses (the list the manifest fills,
+  the curation license).
+- Questions (#guide-questions, native disclosures): why a value differs from BRENDA, why a sequence or SMILES is
+  missing, how to report an error; one or two sentences each.
 
 A section's address opens the Guide at that section, and a link to one (from Stats, a record, the filters or the
 contents) opens it in the page with focus on its heading (made focusable then, so a page opened at a section shows no

@@ -477,11 +477,12 @@
   function noPaperDefinition() {
     return followsReviewRules() ? NO_PAPER_NOT_ACCEPTED : identityOnlyTrustNote;
   }
-  // The Guide's Not checked definition, with its words in italics as the static page has them.
-  function guideNotCheckedHtml() {
+  // The Guide's legend says Accepted in a few words (round 14, the user: a short Guide); Browse's "?" and the badges keep
+  // stateDescriptions. The review rules the snapshot follows decide it.
+  function guideAcceptedDefinition() {
     return followsReviewRules()
-      ? "No review result. The record names which kind: <em>Unverified</em> (the earlier review recorded no final check) or <em>Not reviewed</em> (a SKiD or BRENDA record with no PMID or DOI, including records the earlier review accepted, tagged <em>no paper linked</em>)."
-      : "No review result. The record names which kind: <em>Unverified</em> (the earlier review recorded no final check) or <em>Not reviewed</em> (a SKiD or BRENDA record with no PMID or DOI that was never reviewed).";
+      ? "Read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
+      : "Read from the paper by CatLog, or accepted by the earlier automated review.";
   }
   // Records accepted on a human reviewer's approval (accepted_basis "human review", human-checked's rule).
   function humanAcceptedCount() {
@@ -5466,10 +5467,9 @@
 
   function renderGuideMethod() {
     renderRereadLines();
-    // The review rules this snapshot follows decide two definitions (Accepted, no paper linked).
-    if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = stateDescriptions.accepted;
-    if ($("guideNoPaperDefinition")) $("guideNoPaperDefinition").textContent = noPaperDefinition();
-    if ($("guideNotCheckedDefinition")) $("guideNotCheckedDefinition").innerHTML = guideNotCheckedHtml();
+    // The review rules this snapshot follows decide the Accepted definition (the static Not checked and no paper linked
+    // ones, "no PMID or DOI", hold under both).
+    if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = guideAcceptedDefinition();
   }
 
   // ---- Guide: Against the databases (#guide-databases) ----
@@ -5511,21 +5511,18 @@
   ];
   // The two ways a correction is found. An exact factor alone, with nothing else checked, is no correction: that value
   // is Different number (exact factor, not yet checked), under Different number (comparisonFactorOnly).
+  // (round 14, the user: a short Guide: each way and reason is a table row, its label saying it, beside its count)
   const GUIDE_DB_FOUND_BY = [
-    { key: "paper_check", label: "Checked against the paper", text: "A separate AI check read the paper and named the cause." },
-    { key: "factor_cross_checked", label: "Exact factor; the paper's kcat ÷ Km agrees",
-      text: "An automated check found the database's number is the paper's times an exact factor, and the paper's own kcat ÷ Km agrees with CatLog's value, not the database's." },
+    { key: "paper_check", label: "A separate AI check of the paper" },
+    { key: "factor_cross_checked", label: "An exact factor the paper's kcat ÷ Km agrees with" },
   ];
   const GUIDE_DB_NOT_LISTED = [
-    { key: "ratio_only", label: "kcat and Km listed",
-      text: "A printed kcat/Km whose kcat and Km the databases list; they did not store the ratio." },
-    { key: "condition_absent", label: "Other values listed",
-      text: "The databases list other numbers for this substrate and variant, not this one; some may be values the pairing could not match." },
-    { key: "substrate_absent", label: "Substrate not listed", text: "The databases list this parameter for the paper, but not for this substrate." },
-    { key: "metric_absent", label: "Parameter not listed", text: "The databases list values from the paper, but none of this parameter." },
-    { key: "variant_absent", label: "Variant not listed",
-      text: "The databases list this parameter for this substrate, but not with this variant or organism." },
-    { key: "paper_not_in_databases", label: "Paper not listed", text: "The paper is in none of the compared databases." },
+    { key: "ratio_only", label: "Only its kcat and Km are listed" },
+    { key: "condition_absent", label: "Other values for this substrate and variant" },
+    { key: "substrate_absent", label: "Substrate not listed" },
+    { key: "metric_absent", label: "Parameter not listed" },
+    { key: "variant_absent", label: "Variant or organism not listed" },
+    { key: "paper_not_in_databases", label: "Paper in none of the databases" },
   ];
 
   // The snapshot's comparison (manifest summary.database_comparison), or null.
@@ -5587,24 +5584,20 @@
     return statsBrowseHref({ [DATABASE_FILTER_PARAM]: key });
   }
 
-  // "1,548 values in 1,443 records", the records linked into Browse where it can show them; "" without counts.
-  function guideDatabaseCountHtml(key, count) {
-    if (!count) return "";
-    const href = count.records ? guideDatabaseBrowseHref(key) : "";
-    const records = count.records === null ? "" : guideCountWords(count.records, "record", "records");
-    const recordsHtml = records && href ? `<a href="${escapeHtml(href)}">${escapeHtml(records)}</a>` : escapeHtml(records);
-    const values = count.values === null ? "" : guideCountWords(count.values, "value", "values");
-    if (values && records) return `${escapeHtml(values)} in ${recordsHtml}`;
-    return values ? escapeHtml(values) : recordsHtml;
+  // A result's records as a number, linked into Browse where it can show them; "" without a count.
+  function guideDatabaseRecordsHtml(key, count) {
+    if (!count || count.records === null || count.records === undefined) return "";
+    const href = guideDatabaseBrowseHref(key);
+    const number = escapeHtml(formatInteger(count.records));
+    return href ? `<a href="${escapeHtml(href)}" title="${escapeHtml(guideCountWords(count.records, "record", "records"))}">${number}</a>` : number;
   }
 
-  // A definition list of one group of words (label, its meaning, then its count on a line of its own).
-  function guideDatabaseListHtml(items, countOf, className = "") {
-    return `<dl class="guide-term-list guide-db-list${className ? ` ${className}` : ""}">${items.map((item) => {
+  // A small table of one group of words (label, then its count of values where the manifest gives it).
+  function guideDatabaseTableHtml(id, caption, items, countOf) {
+    return `<table class="guide-db-table" id="${id}"><caption>${escapeHtml(caption)}</caption><tbody>${items.map((item) => {
       const count = countOf(item);
-      return `<div><dt>${metricWordsHtml(escapeHtml(item.label))}</dt><dd>${metricWordsHtml(escapeHtml(item.text ?? item.title))}${count
-        ? ` <span class="guide-db-count">${count}</span>` : ""}</dd></div>`;
-    }).join("")}</dl>`;
+      return `<tr><th scope="row">${metricWordsHtml(escapeHtml(item.label))}</th><td>${count === null || count === undefined ? "" : escapeHtml(formatInteger(count))}</td></tr>`;
+    }).join("")}</tbody></table>`;
   }
 
   // How many corrections each way of finding them found: the two ways where the manifest counts them
@@ -5657,7 +5650,11 @@
     return { totals, papers };
   }
 
-  // The section's body, or "" when the snapshot carries no comparison.
+  // The section's body, or "" when the snapshot carries no comparison (round 14, the user: a short Guide). The lead in
+  // three sentences; the results as one table (the colour square and name, values, records linked into Browse), the
+  // exact-factor values and "every value" as rows under their parent; the caveat once; then one disclosure: what is
+  // compared, the databases with their versions, and three small tables (cause, how found, why not listed). The
+  // results' meanings are the legend's (Labels and colours), never repeated here.
   function guideDatabasesHtml(data, overview) {
     if (!data) return "";
     const sources = guideDatabaseSources(data);
@@ -5670,70 +5667,71 @@
     // The papers with a compared value (papers_compared), as Stats' lead counts them (one count per set: the papers
     // read are the band's); an older comparison without it gives its papers.
     const papers = statsCount(data.papers_compared) ?? statsCount(data.papers);
-    const paired = ["confirmed", "corrected", "differs"].map((key) => statsCount(all[key]));
-    const pairedTotal = paired.includes(null) ? null : paired[0] + paired[1] + paired[2];
+    // (the share where a database lists the same measurement is Stats' headline, not repeated here)
     const leadHtml = [
-      `${words("CatLog compares the values it reads from a paper with the values")} ${names} ${words("list for the same paper.")}`,
+      `${words("CatLog compares each value it reads with what")} ${names} ${words("list for the same paper.")}`,
       compared && papers ? words(`This snapshot compares ${guideCountWords(compared, "value", "values")} from ${guideCountWords(papers, "paper", "papers")}.`) : "",
-      pairedTotal >= 1000 ? words(`Where a database lists a number for the same measurement (${formatInteger(pairedTotal)} values), it is the paper's number for ${qualityShare(paired[0], pairedTotal)}.`) : "",
     ].filter(Boolean).join(" ");
+    const counts = guideDatabaseCounts(data, overview);
+    const number = (value) => (value === null || value === undefined ? "" : escapeHtml(formatInteger(value)));
+    const squareHtml = (mark) => (mark
+      ? `<span class="db-mark db-mark-${mark.replace(/_/g, "-")} guide-db-mark" data-result="${mark}" aria-hidden="true"></span>`
+      : `<span class="guide-db-mark" aria-hidden="true"></span>`);
+    const row = (key, nameCell, values, records, className = "") => `<tr${className ? ` class="${className}"` : ""} data-key="${key}"><th scope="row">${nameCell}</th><td>${values}</td><td>${records}</td></tr>`;
+    // Each result after its square (none on Corrected earlier), Browse's name; a row under it narrows it.
+    const rows = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
+      const gloss = item.key === "earlier" ? ` <span class="guide-db-gloss">records not yet re-read</span>` : "";
+      const name = `<span class="guide-db-result">${squareHtml(item.mark)}<span>${escapeHtml(item.label)}</span>${gloss}</span>`;
+      const main = row(item.key, name, number(counts[item.key].values), guideDatabaseRecordsHtml(item.key, counts[item.key]));
+      if (item.nested) {
+        return main + row(item.nested.key, `<span class="guide-db-sub">${escapeHtml(item.nested.label)}</span> <span class="guide-db-gloss">of the record</span>`, "",
+          guideDatabaseRecordsHtml(item.nested.key, counts[item.nested.key]), "guide-db-nested");
+      }
+      // Under Different number: the values a database lists at an exact factor nothing has yet checked (counted there).
+      if (item.key === "differs" && counts.differs.factorOnly) {
+        return main + row("differs_factor_only", `<span class="guide-db-sub">exact factor, not yet checked</span> <span class="guide-db-gloss">the paper&rsquo;s &times;&nbsp;10<sup>n</sup>, 60 or 3,600</span>`,
+          number(counts.differs.factorOnly), "", "guide-db-nested");
+      }
+      return main;
+    }).join("");
+    const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
+    const familyCount = (family) => {
+      if (!byCause) return null;
+      const counted = family.causes.map((cause) => statsCount(byCause[cause])).filter((value) => value !== null);
+      return counted.length ? counted.reduce((sum, value) => sum + value, 0) : null;
+    };
+    const found = guideDatabaseFoundBy(data.corrections);
+    // (an older comparison counts the automated way as code: it is the exact factor the paper's kcat ÷ Km agrees with)
+    const foundCount = (item) => found.totals[item.key] ?? (item.key === "factor_cross_checked" ? found.code : null);
+    const notListed = guideDatabaseNotListed(data);
     const calculated = statsCount(all.not_compared);
-    const whatHtml = `${words("Each kcat, Km and kcat/Km CatLog reads from a paper, in the catalog's units, against the numbers each database lists for that paper: for the same substrate, variant and organism, with pH and temperature used to pair the values. Not compared: a kcat/Km CatLog calculated (")}<em>calc.</em>${
-      calculated ? escapeHtml(`; ${formatInteger(calculated)} in this snapshot`) : ""}${words(") and a value printed over a mass concentration (mg/mL). Records not yet re-read are not compared; those corrected earlier list what changed (")}<em>Corrected earlier</em>).`;
+    const whatHtml = `${words("Values are paired by substrate, variant, organism, pH and temperature. Not compared: a kcat/Km CatLog calculated (")}<em>calc.</em>${
+      calculated ? escapeHtml(`, ${formatInteger(calculated)}`) : ""}${words("), a value per mg/mL and records not yet re-read.")}`;
     const versions = sources.some((item) => item.version || item.retrieved || item.rows !== null && item.rows !== undefined);
     const databasesHtml = versions
       ? `<ul class="guide-db-sources">${sources.map((item) => `<li>${nameHtml(item.name)}${escapeHtml([
         item.version ? ` ${item.version}` : "",
         item.retrieved ? `, retrieved ${/^\d{4}-\d{2}-\d{2}/.test(item.retrieved) ? formatDate(item.retrieved.slice(0, 10)) : item.retrieved}` : "",
       ].join(""))}${item.rows !== null && item.rows !== undefined ? ` <span class="guide-db-count-inline">(${escapeHtml(guideCountWords(item.rows, "value", "values"))})</span>` : ""}</li>`).join("")}</ul>`
-      : `${names}.`;
-    const counts = guideDatabaseCounts(data, overview);
-    // Under Different number: the values a database lists at an exact factor nothing has yet checked (counted there).
-    const factorOnlyHtml = counts.differs.factorOnly
-      ? ` <span class="guide-db-nested"><em>Exact factor, not yet checked</em> (${escapeHtml(guideCountWords(counts.differs.factorOnly, "value", "values"))}): the database&rsquo;s number is the paper&rsquo;s &times;&nbsp;10<sup>n</sup>, 60 or 3,600; the record names the factor.</span>`
       : "";
-    // Each result a card: its square and name, one sentence (Browse's definition; Different number's first sentence and
-    // the caveat, said once here, since its exact-factor case has a line of its own), its count, then its nested line.
-    const results = GUIDE_DB_RESULTS.filter((item) => !(item.key === "earlier" && counts.earlier.records === 0)).map((item) => {
-      const count = guideDatabaseCountHtml(item.key, counts[item.key]);
-      const nested = item.nested
-        ? ` <span class="guide-db-nested">Under it, <em>${escapeHtml(item.nested.label)}</em>: ${escapeHtml(item.nested.text)}${counts[item.nested.key].records !== null
-          ? ` (${guideDatabaseCountHtml(item.nested.key, counts[item.nested.key])})` : ""}.</span>` : (item.key === "differs" ? factorOnlyHtml : "");
-      const text = item.key === "differs" ? `${item.text.replace(/^(.*?\.)\s.*$/s, "$1")} ${DATABASE_COMPARED_CAPTION}` : item.text;
-      return `<div${item.mark ? ` data-result="${item.mark}"` : ""}><dt><span class="guide-db-result"><span class="guide-db-mark"${item.mark ? ` data-result="${item.mark}"` : ""} aria-hidden="true"></span><span>${escapeHtml(item.label)}</span></span></dt><dd>${escapeHtml(text)}${count ? ` <span class="guide-db-count">${count}</span>` : ""}${nested}</dd></div>`;
-    }).join("");
-    const byCause = data.corrections?.by_cause && typeof data.corrections.by_cause === "object" ? data.corrections.by_cause : null;
-    const familyCount = (family) => {
-      if (!byCause) return "";
-      const counted = family.causes.map((cause) => statsCount(byCause[cause])).filter((value) => value !== null);
-      return counted.length ? escapeHtml(guideCountWords(counted.reduce((sum, value) => sum + value, 0), "value", "values")) : "";
-    };
-    const found = guideDatabaseFoundBy(data.corrections);
-    const foundCount = (item) => (found.totals[item.key] === null ? "" : escapeHtml(guideCountWords(found.totals[item.key], "value", "values")));
-    const notListed = guideDatabaseNotListed(data);
-    const notListedCount = (item) => {
-      const total = notListed.totals[item.key];
-      if (total === null) return "";
-      const papersText = item.key === "paper_not_in_databases" && notListed.papers ? ` from ${guideCountWords(notListed.papers, "paper", "papers")}` : "";
-      return escapeHtml(`${guideCountWords(total, "value", "values")}${papersText}`);
-    };
+    // (the papers no compared database lists, counted beside their reason)
+    const notListedItems = GUIDE_DB_NOT_LISTED.map((item) => (item.key === "paper_not_in_databases" && notListed.papers
+      ? { ...item, label: `${item.label} (${guideCountWords(notListed.papers, "paper", "papers")})` } : item));
     const stats = viewUrl("stats").href;
-    // The reference parts in disclosures, each headed by its h3 (the summary's one heading), so the section reads as the
-    // lead and the results at a glance.
-    const more = (id, title, body) => `<details class="guide-details guide-db-more"><summary><h3 id="${id}">${escapeHtml(title)}</h3></summary>${body}</details>`;
     return keepReRead(`<p class="guide-db-lead">${leadHtml}</p>
       <h3 id="guide-databases-results">Results</h3>
-      <p class="guide-small">Each value has one result; a record shows each result its values have. <em>All values the same</em>, <em>Not in the databases: every value</em> and <em>Corrected earlier</em> describe the whole record.</p>
-      <dl class="guide-status-list guide-db-results guide-db-cards">${results}</dl>
-      ${more("guide-databases-compared", "What is compared", `<dl class="guide-term-list guide-db-list">
-        <div><dt>Values</dt><dd>${whatHtml}</dd></div>
-        <div><dt>Databases</dt><dd>${databasesHtml}</dd></div>
-      </dl>`)}
-      ${more("guide-databases-causes", "Cause of a correction", guideDatabaseListHtml(DATABASE_CAUSE_FAMILIES, familyCount))}
-      ${more("guide-databases-found", "How a correction is found", `${guideDatabaseListHtml(GUIDE_DB_FOUND_BY, foundCount)}${found.code !== null
-        ? `<p class="guide-db-note">${escapeHtml(`Found automatically (an exact factor the paper's own kcat ÷ Km agrees with): ${guideCountWords(found.code, "value", "values")}.`)}</p>` : ""}`)}
-      ${more("guide-databases-not-listed", "Why no database lists a value", guideDatabaseListHtml(GUIDE_DB_NOT_LISTED, notListedCount))}
-      <p class="guide-db-note">All comparisons are within one paper. Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>`)
+      <table class="guide-db-table guide-db-results"><thead><tr><th scope="col">Result</th><th scope="col">Values</th><th scope="col">Records</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="guide-db-note">${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>
+      <details class="guide-details guide-db-more"><summary><h3 id="guide-databases-compared">How the comparison works</h3></summary>
+        <p>${whatHtml}</p>
+        ${databasesHtml}
+        <div class="guide-db-tables">
+          ${guideDatabaseTableHtml("guide-databases-causes", "Cause of a correction", DATABASE_CAUSE_FAMILIES, familyCount)}
+          ${guideDatabaseTableHtml("guide-databases-found", "Found by", GUIDE_DB_FOUND_BY, foundCount)}
+          ${guideDatabaseTableHtml("guide-databases-not-listed", "Why no database lists a value", notListedItems, (item) => notListed.totals[item.key])}
+        </div>
+        <p class="guide-db-note">Counts by parameter and database are on <a href="${escapeHtml(stats)}">Stats</a>.</p>
+      </details>`)
       // The Guide's own apostrophe (its text is typeset; no attribute here holds one).
       .replace(/&#39;/g, "&rsquo;");
   }
