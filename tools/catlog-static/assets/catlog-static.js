@@ -263,7 +263,7 @@
     { value: "all_same", bit: 32, mark: "same", records: ["records", "every_value_confirmed"],
       title: "Every compared value is the number a database lists for it." },
     { value: "earlier", bit: 64, optional: true, divided: true,
-      title: "On records not yet re-read, CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
+      title: "Records not yet re-read whose values CatLog's earlier version changed; the record lists before and after." },
   ].map((item) => {
     const label = DATABASE_RESULT_NAMES[item.value];
     // The nested option's chip and spoken name say what it narrows: "Not in the databases: every value".
@@ -1532,7 +1532,14 @@
     return /e/i.test(rounded) ? match : rounded.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
 
-  function evidenceNoteHtml(value) {
+  // A location as text to compare: "Table 2 · row 1" and "Table 2; row 1" are one place.
+  function locationKey(text) {
+    return String(text || "").replace(/\s*[·;]\s*/g, "; ").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  // skipWhere: the locations the record already gives (its Corrected earlier section's "In the paper"), so a note
+  // never says the same place again (round 14: the location once).
+  function evidenceNoteHtml(value, { skipWhere = null } = {}) {
     if (value === null || value === undefined || value === "") return "";
     if (typeof value !== "object") {
       const text = databaseNoteText(value);
@@ -1544,7 +1551,7 @@
       || (!value.normalized_value_unit_evidence ? value.column_label : ""));
     const normalized = publicEvidenceString(value.normalized_value_unit_evidence);
     const rows = [
-      location ? ["Where", location] : null,
+      location && !skipWhere?.has(locationKey(location)) ? ["Where", location] : null,
       reported ? ["As printed", cleanEvidenceValue(reported)] : null,
       // The earlier pipeline's own word for it ("Normalized paper Km: ...") is the label's.
       normalized ? ["Conversion", cleanEvidenceValue(conversionFacts(normalized)).replace(/^normali[sz]ed:?\s+/i, "")] : null,
@@ -1557,9 +1564,9 @@
     return kvList(rows.map(([label, text]) => linkedKv(label, evidenceTextHtml(text))), "evidence-note-item");
   }
 
-  function evidenceNotesHtml(values, limit = 3) {
+  function evidenceNotesHtml(values, limit = 3, options = {}) {
     const items = Array.isArray(values) ? values.filter(Boolean) : [];
-    return items.map(evidenceNoteHtml).filter(Boolean).slice(0, limit).join("");
+    return items.map((value) => evidenceNoteHtml(value, options)).filter(Boolean).slice(0, limit).join("");
   }
 
   function formatDate(value) {
@@ -6404,7 +6411,7 @@
     return /^\d{4}-\d{2}-\d{2}/.test(String(quality?.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
   }
 
-  // Corrections on records not yet re-read: the values CatLog's earlier version changed to what the paper prints, per
+  // Corrections on records not yet re-read: the changes CatLog's earlier version made to values, per
   // parameter by kind of change. `earlier` is this snapshot's own count from its Full data (overview.earlier_corrections:
   // the records whose corrections list Browse's Corrected earlier finds). Without it, the CatLog side's count
   // (quality.earlier_corrections) is used, which may be another snapshot's: snapshot.corrected is this snapshot's records
@@ -6438,10 +6445,11 @@
       id: "statsCorrectionsTitle", key: "earlier-corrections", title: "Corrections on records not yet re-read",
       body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       caption: own
-        ? `Values CatLog's earlier version changed to the paper's number, on the ${recordsLink} that ${records === 1 ? "lists its" : "list their"} changes.`
+        // (what was changed, by kind, never "to the paper's number": a changed kcat/Km is often kcat ÷ Km, round 14)
+        ? `Changes CatLog's earlier version made to values on the ${recordsLink} that ${records === 1 ? "lists them" : "list them"}, by kind.`
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
-          ? `Values the earlier review changed to the paper's number, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
-          : `Values the earlier review changed to the paper's number, on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction.`,
+          ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
+          : `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
       rules: [listedText, othersText].filter(Boolean).join(" "),
     };
   }
@@ -11315,9 +11323,8 @@
       : part.replace(/\d[\d.,]*\d|[A-Za-zµμ]+[-−–]\d+/g, (piece) => `<span class="vt-whole">${piece}</span>`))).join("");
   }
 
-  const PRINTED_UNDER_PAPER_NOTE = "The earlier review's notes under Paper say where the paper prints these values.";
 
-  function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail), printedUnderPaper = false } = {}) {
+  function valuesSection(summary, detail, { proof = v2ProofFacts(summary, detail) } = {}) {
     const metricSummary = metricSummaryFor(summary, detail);
     const flags = conditionFlags(summary, detail);
     const { notes, unitCautions, consistent } = measurementNotes(summary, detail, { proof });
@@ -11432,7 +11439,6 @@
       calcNote && fields.some(([field]) => field === "kcat_over_km")
         ? `<span class="metric-origin">calc.</span> ${metricWordsHtml(escapeHtml(calcNote))}${metricWordsHtml(escapeHtml(calcListed))}`
         : "",
-      !printedColumn && printedUnderPaper && rows.length ? escapeHtml(PRINTED_UNDER_PAPER_NOTE) : "",
     ].filter(Boolean);
     // Each printed line once; a "line" that is only the printed number itself adds nothing, and a line another value's
     // line continues (one excerpt cut at two lengths, a trailing "…" aside) is quoted once, the longer, for both values.
@@ -12351,7 +12357,9 @@
   // Different number says it under its notes too).
   const DATABASE_COMPARED_CAPTION = "A different number can mean a different measurement; it does not by itself mean a database is wrong.";
   // (The header's "not re-read" says that CatLog has not read the paper again yet.)
-  const EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints.";
+  // A label that claims nothing about the new values (round 14: a kcat/Km "changed to what the paper prints" was often
+  // kcat ÷ Km, not the printed cell).
+  const EARLIER_CORRECTIONS_INTRO = "Changed by CatLog's earlier version:";
   const EARLIER_ADDITIONS_INTRO = "CatLog's earlier version added these values from the paper; the source had none.";
   const DATABASE_VALUES_NOTE = "Not yet checked; the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
@@ -13351,8 +13359,8 @@
     const evidence = v2Record ? "" : evidenceLabel(summary, proofLines);
     // An older record's notes expand on request: a database's own note under Source, the earlier review's notes on where
     // the paper prints the values under Paper.
-    const notesDisclosure = (heading, notes) => `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(heading)}</summary>`
-      + `<div class="evidence-note-list">${evidenceNotesHtml(notes, 3)}</div></details>`;
+    const notesDisclosure = (heading, notes, options = {}) => `<details class="sequence-disclosure detail-notes"><summary>${escapeHtml(heading)}</summary>`
+      + `<div class="evidence-note-list">${evidenceNotesHtml(notes, 3, options)}</div></details>`;
     const showNotes = proofLines.length && !v2Proof;
     // A database note is headed by its database when the record has one ("Note from BRENDA"); a merged record's notes
     // do not say which database wrote them. The earlier review's own notes among them are not the database's: those
@@ -13368,9 +13376,13 @@
     const sourceNoteHtml = showNotes && databaseNotes.length
       ? notesDisclosure(oneDatabase ? `${several ? "Notes" : "Note"} from ${noteSource}` : `Database ${several ? "notes" : "note"}`, databaseNotes)
       : "";
-    const paperNotesHtml = showNotes && paperNotes.length ? notesDisclosure("Earlier automated review: where the values are printed", paperNotes) : "";
     const check = recordCheck(summary);
-    const hasCorrections = correctionItems(detail, check).length > 0;
+    const corrections = correctionItems(detail, check);
+    const hasCorrections = corrections.length > 0;
+    // The location is said once: Corrected earlier's "In the paper" leaves the notes' Where out.
+    const shownWheres = new Set(corrections.map((item) => locationKey(item.where)).filter(Boolean));
+    const paperNotesHtml = showNotes && paperNotes.length
+      ? notesDisclosure("Earlier automated review: where the values are printed", paperNotes, { skipWhere: shownWheres }) : "";
     // The values the record shows where they differ from the stored ones (the source's own kcat/Km), for the report email.
     const consistentShown = measurementNotes(summary, detail, { proof: v2Proof }).consistent;
     const shownValues = consistentShown ? { kcat_over_km: consistentShown.value } : {};
@@ -13381,7 +13393,7 @@
     // the paper, then the record's actions with its license and snapshot.
     $("detailContent").innerHTML = `
       ${detailTopHtml(summary, detail, { v2Record })}
-      ${valuesSection(summary, detail, { proof: v2Proof, printedUnderPaper: Boolean(paperNotesHtml) })}
+      ${valuesSection(summary, detail, { proof: v2Proof })}
       ${databasesSection(summary, detail, { proof: v2Proof, check, v2Record, paper: { pmids, dois } })}
       ${checksSection(summary, detail, { v2Record, proof: v2Proof, check, hasCorrections, hasPaper: paperIds.length + dois.length > 0 })}
       ${sourceSection(summary, detail, { v2Record, mergedRows, paperCount: paperIds.length, evidence, sourceNoteHtml })}
@@ -14190,6 +14202,7 @@
       catlogUnitText,
       conversionFacts,
       evidenceNoteHtml,
+      locationKey,
       conditionLines,
       formatPh,
       copyDetailValue,

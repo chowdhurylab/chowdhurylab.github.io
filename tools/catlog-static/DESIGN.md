@@ -745,8 +745,8 @@ come first, the context after.
   Table 2") when every value shares it, in a Where column when they differ
   (under As printed on phones). An older record has neither As printed nor
   Where (a column of dashes would read as "nothing printed"; Unit takes the
-  rest), and when its earlier review noted where the paper prints the values,
-  a grey line under the table points to those notes under Paper. A calculated
+  rest); where the paper prints its values is said once, under Paper (the earlier review's notes) or as Corrected
+  earlier's "In the paper" (then the notes leave their Where out), with no pointer line under the table (round 14). A calculated
   kcat/Km carries "calc." (on phones calc. and a "!" go under the number, so
   As printed keeps about 100px at 375px (Unit's cells take 3px a side on phones, since a unit's U+2212 minus signs
   are wider than hyphens, most in DejaVu Sans: 92px for As printed at 390px there); at 320px a two-part unit may take two
@@ -997,8 +997,8 @@ come first, the context after.
   An earlier corrected record (not yet re-read) with its correction trail, headed
   "Corrected earlier" (Browse's name for it; no database is compared there, the
   user 2026-10-15): the
-  intro "CatLog's earlier version changed these values to what the paper
-  prints." (the header's "not re-read" says it has not read the paper again; when every item was added, the source
+  label "Changed by CatLog's earlier version:" (round 14: a label that claims nothing about the new values; "changed
+  to what the paper prints" was not true of a calculated kcat/Km, 138 of the 1,780 kcat/Km changes) (the header's "not re-read" says it has not read the paper again; when every item was added, the source
   having none, "CatLog's earlier version added these values from the paper; the source had none." and no item repeats
   "added: the source had none"), then one item per changed
   field, "66 mM → **0.066 mM**" with the kind of change ("unit or magnitude",

@@ -247,7 +247,7 @@ assert.match(
   indexHtml,
   /<main id="statsView"[^>]*hidden/,
 );
-assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed", paperNotes\)/);
+assert.match(sourceCode, /notesDisclosure\("Earlier automated review: where the values are printed", paperNotes, \{ skipWhere: shownWheres \}\)/);
 assert.match(sourceCode, /\$\{printedColumn \? '<th scope="col">As printed<\/th>' : ""\}\$\{whereColumn \? '<th scope="col" class="vt-where">Where<\/th>' : ""\}/);
 
 function makeClassList() {
@@ -2434,7 +2434,8 @@ function row(overrides = {}) {
   assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
   // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
   const earlier = figureHtml("earlier-corrections");
-  assert.match(plain(earlier), /Values CatLog's earlier version changed to the paper's number, on the 2,881 records not yet re-read that list their changes\./);
+  assert.match(plain(earlier), /Changes CatLog's earlier version made to values on the 2,881 records not yet re-read that list them, by kind\./);
+  assert.doesNotMatch(plain(earlier), /to the paper's number|what the paper prints/);
   // Every part-7 caption is plain, and none repeats the caveat the lead says once.
   for (const caption of databaseSection().match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g)) assertPlainCaption(caption);
   assert.match(earlier, /<a class="stats-link" href="[^"]*#browse\?db=earlier">2,881 records not yet <span class="nowrap">re-read<\/span><\/a>/);
@@ -2610,7 +2611,7 @@ function row(overrides = {}) {
   assert.deepEqual(supplementTitles().slice(-2), ["Figure S2 Corrections on records not yet re-read", "Figure S3 Entries replaced by reading the paper"]);
   assert.deepEqual(partTitles().slice(-2), ["4 Values", "S Supplementary figures and tables"], "No part without its main figures");
   assert.doesNotMatch(figures, /stats-part-lead/);
-  assert.match(figures, /<strong>Figure S2\.<\/strong> Values the earlier review changed/);
+  assert.match(figures, /<strong>Figure S2\.<\/strong> Changes the earlier review made to values/);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
   assert.match(figures, /The 7 entries from the earlier version \(2 accepted\) on the 1 paper CatLog has since read, by whether CatLog found the same number\./);
   assert.match(figures, /When CatLog reads a paper, its records replace these entries\./);
@@ -2619,16 +2620,16 @@ function row(overrides = {}) {
   // snapshot's own); with the same count it names one.
   const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
   assert.ok(Number.isInteger(correctedNow) && correctedNow !== 5);
-  assert.match(figures, new RegExp(`changed to the paper's number, on the 5 records accepted after a correction when counted; Figure 1 counts ${correctedNow} in this snapshot\\.`));
+  assert.match(figures, new RegExp(`Changes the earlier review made to values on the 5 records accepted after a correction when counted, by kind; Figure 1 counts ${correctedNow} in this snapshot\\.`));
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
-  assert.match(element("statsCharts").innerHTML, new RegExp(`on the ${correctedNow} records? accepted after a correction\\.`));
+  assert.match(element("statsCharts").innerHTML, new RegExp(`on the ${correctedNow} records? accepted after a correction, by kind\\.`));
   assert.match(element("statsCharts").innerHTML, /<details class="stats-supp-item" id="stats-s2" data-supp="earlier-corrections">/, "In the supplement, on its own line");
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow + 1,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
-  assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\); Figure 1 counts \d+ in this snapshot\./);
+  assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\), by kind; Figure 1 counts \d+ in this snapshot\./);
   // A figure whose counts are not whole numbers is not drawn, and part 7 without figures has no heading.
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
@@ -3338,10 +3339,12 @@ assert.match(kiMeasurementHtml, /<tr><th scope="row"><i>K<\/i><sub>i<\/sub><\/th
 assert.match(kiMeasurementHtml, /<table class="values-table vt-no-printed"><thead><tr><th scope="col">Parameter<\/th><th scope="col" class="vt-value">Value<\/th><th scope="col">Unit<\/th><\/tr>/);
 assert.doesNotMatch(kiMeasurementHtml, /vt-printed|As printed/);
 assert.match(kiMeasurementHtml, /<td class="vt-unit">µM<\/td><\/tr>/);
-// No pointer to the earlier review's notes unless the record has them under Paper; with them, one grey line.
+// No pointer to the earlier review's notes (round 14: the location is said once, under Paper or Corrected earlier).
 assert.doesNotMatch(kiMeasurementHtml, /earlier review's notes under Paper/);
-assert.match(api.valuesSection(row(), {}, { printedUnderPaper: true }),
-  /<ul class="value-notes">(?:<li>[^]*?<\/li>)*<li>The earlier review&#39;s notes under Paper say where the paper prints these values\.<\/li><\/ul>/);
+assert.doesNotMatch(sourceCode, /notes under Paper say where/);
+// A note leaves out a Where the record already gives ("A · B" and "A; B" are one place).
+assert.doesNotMatch(api.evidenceNoteHtml({ table_label: "Table 2", row_label: "row 1", raw_value_unit_evidence: "Km 66 µM" }, { skipWhere: new Set([api.locationKey("Table 2; row 1")]) }), /<dt>Where<\/dt>/);
+assert.match(api.evidenceNoteHtml({ table_label: "Table 2", row_label: "row 1", raw_value_unit_evidence: "Km 66 µM" }), /<dt>Where<\/dt>/);
 assert.ok(kiMeasurementHtml.indexOf("<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></th>") < kiMeasurementHtml.indexOf("<i>K</i><sub>i</sub></th>"), "Ki comes last");
 
 const noKiMeasurementHtml = measurementSection(row({ has_ki: false }), {});
@@ -4890,7 +4893,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const trail = sectionOf(html);
   // Headed as Browse's option names it: no database is compared on an earlier record.
   // (The header's "not re-read" says CatLog has not read the paper again yet.)
-  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">CatLog&#39;s earlier version changed these values to what the paper prints\.<\/p><dl class="detail-kv cmp-list">/);
+  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">Changed by CatLog&#39;s earlier version:<\/p><dl class="detail-kv cmp-list">/);
   assert.doesNotMatch(trail, /<table|Changed in the earlier automated review|cmp-footer|Compared with the values|section-about|detail-about|cmp-caution-line/, "an earlier correction trail compares nothing: no \"?\" box");
   // "Before: as STRENDA DB lists it for this paper" with the factor between the two numbers (the database's 1,000× higher).
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude<\/span><\/span><small class="cmp-before">Before: as STRENDA DB lists it for this paper \(1,000× higher\)<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
@@ -6153,9 +6156,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal((element("aboutDatabases").innerHTML.match(/does not by itself mean a database is wrong/g) || []).length, 1);
   assert.match(element("aboutDatabases").innerHTML, /<strong>Different number<\/strong> — a database lists another number [^<]*it does not by itself mean a database is wrong\.<\/p>/);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\(same substrate/);
-  // "re-read" never breaks at its hyphen in the box (Corrected earlier's "On records not yet re-read, ..."), and no
+  // "re-read" never breaks at its hyphen in the box (Corrected earlier's "Records not yet re-read whose ..."), and no
   // definition repeats a colon after its name's.
-  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong> — on records not yet <span class="nowrap">re-read<\/span>, /);
+  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong> — records not yet <span class="nowrap">re-read<\/span> whose values /);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /<\/strong>[^<]*: [^<]*: /);
   assert.doesNotMatch(element("aboutDatabases").innerHTML.replace(/<span class="nowrap">re-read<\/span>/g, ""), /re-read/);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
@@ -6192,7 +6195,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
       assert.ok(titles.not_listed.endsWith(" 20,987 values in 14,002 records."), titles.not_listed);
       assert.equal(titles.all_not_listed, "No compared database lists any value of the record.");
       assert.equal(titles.all_same, "Every compared value is the number a database lists for it.");
-      assert.ok(titles.earlier.startsWith("On records not yet re-read, ") && titles.earlier.endsWith("before and after."), titles.earlier);
+      assert.ok(titles.earlier.startsWith("Records not yet re-read whose values ") && titles.earlier.endsWith("before and after."), titles.earlier);
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 1 }, values: { all: { corrected: 1 } } };
       assert.ok(api.databaseOptionTitle(api.databaseFilters[0]).endsWith(" 1 value in 1 record."));
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 2 }, values: { all: { corrected: "2" } } };

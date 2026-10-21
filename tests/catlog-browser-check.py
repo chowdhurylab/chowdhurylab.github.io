@@ -2549,7 +2549,7 @@ def check_filters(driver, browser, url, route_label):
                        "No compared database lists this value for this paper;",
                        "No compared database lists any value of the record.",
                        "Every compared value is the number a database lists for it.",
-                       "On records not yet re-read, CatLog's earlier version changed these values")
+                       "Records not yet re-read whose values CatLog's earlier version changed")
         assert all(row["title"].startswith(text) for row, text in zip(rows, definitions)), rows
         # The counts at rest are the manifest's keys; the titles add its values and records.
         kinds, records = comparison.get("records_with_kind") or {}, comparison.get("records") or {}
@@ -4854,7 +4854,7 @@ DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different numb
                          "Not in the databases")
 DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
 # (A record whose every value the earlier version added says so instead: "... added these values from the paper; ...".)
-EARLIER_CORRECTIONS_INTRO = ("CatLog's earlier version changed these values to what the paper prints.",
+EARLIER_CORRECTIONS_INTRO = ("Changed by CatLog's earlier version:",
                              "CatLog's earlier version added these values from the paper; the source had none.")
 DATABASE_SECTION_STATE = """
     const strip = (text) => (text || '').trim();
