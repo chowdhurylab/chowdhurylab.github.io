@@ -5960,10 +5960,24 @@
     });
   }
 
-  // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text). With
-  // `rateBase`, a row of fewer values than that gives its counts instead of shares.
+  // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text): a
+  // table whose column heads are the legend's names, each after its swatch (round 15 polish: a grid of percentages each
+  // behind a colour square, with no heads, had left colour the only key). With `rateBase`, a row of fewer values than that
+  // gives its counts instead of shares.
+  // On a phone the same numbers turn round (one table shows at a time, the other is display:none): the results as rows,
+  // their names whole beside their swatches, the chart's rows as four short column heads.
   function statsShareLines(rows, { rateBase = 0 } = {}) {
-    return `<dl class="stats-share-lines">${rows.map((row) => `<div><dt>${row.label}</dt><dd>${row.shares.map((item) => `<span><i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(row.count < rateBase ? formatInteger(item.count) : statsShare(item.count, row.count))}</span>`).join("")}</dd></div>`).join("")}</dl>`;
+    const heads = rows[0]?.shares || [];
+    const share = (row, index) => escapeHtml(row.count < rateBase ? formatInteger(row.shares[index].count) : statsShare(row.shares[index].count, row.count));
+    const name = (item) => `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(item.label)}`;
+    const caption = '<caption class="visually-hidden">Share of each row\'s values</caption>';
+    const wide = `<table class="stats-share-table stats-share-wide">${caption}`
+      + `<thead><tr><td></td>${heads.map((item) => `<th scope="col">${name(item)}</th>`).join("")}</tr></thead>`
+      + `<tbody>${rows.map((row) => `<tr><th scope="row">${row.label}</th>${heads.map((_item, index) => `<td>${share(row, index)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    const tall = `<table class="stats-share-table stats-share-tall">${caption}`
+      + `<thead><tr><td></td>${rows.map((row) => `<th scope="col">${row.label}</th>`).join("")}</tr></thead>`
+      + `<tbody>${heads.map((item, index) => `<tr><th scope="row">${name(item)}</th>${rows.map((row) => `<td>${share(row, index)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    return wide + tall;
   }
 
   // Part 7, Against the databases: read only from the manifest's summary.database_comparison, which the CatLog side
@@ -5984,8 +5998,9 @@
       title: "A database lists this number for this value." },
     { part: "other-label", db: "other_label", statuses: ["same_number_other_label"] },
     // thin: too thin to read in the bar, so its count stands beside it, under its heading (Table 8's column names).
-    { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true, head: "Corrects" },
-    { part: "differs", db: "differs", statuses: ["differs", ...FACTOR_ONLY_STATUSES], thin: true, head: "Differs" },
+    // (its head is the legend's name in two lines: round 15 polish, "Corrects" and "Differs" had named them otherwise)
+    { part: "corrects", db: "corrects", statuses: ["corrected"], thin: true, head: ["Corrects", "a value"] },
+    { part: "differs", db: "differs", statuses: ["differs", ...FACTOR_ONLY_STATUSES], thin: true, head: ["Different", "number"] },
     { part: "not-listed", db: "not_listed", statuses: ["new", "new_ratio_only", "new_paper_not_in_databases"] },
   ].map((item) => (item.db ? { ...item, label: DATABASE_RESULT_NAMES[item.db], title: databaseResultTitle(item.db) } : item));
   // How one database lists the values read from the papers it lists (values_by_database kinds), in segment order; a
@@ -6289,7 +6304,7 @@
     // Each count's column is as wide as its widest count or its heading (a sizer, as in statsBarChart), so the headings
     // stand right-aligned over the counts.
     const allCounts = [...values.rows.map((row) => row.parts), values.all];
-    const sizers = thin.map((result) => [statsValueSizer(allCounts.map((counts) => formatInteger(counts[STATS_DATABASE_RESULTS.indexOf(result)]))), result.head]
+    const sizers = thin.map((result) => [statsValueSizer(allCounts.map((counts) => formatInteger(counts[STATS_DATABASE_RESULTS.indexOf(result)]))), ...result.head]
       .filter(Boolean).join("\n"));
     const column = (index, html) => `<span class="stats-value-part" data-sizer="${escapeHtml(sizers[index]).replace(/\n/g, "&#10;")}"><span>${html}</span></span>`;
     const rowOf = (key, labelHtml, label, counts, { note = "", dbpar = "" } = {}) => {
@@ -6312,7 +6327,7 @@
     ];
     // The thin counts' column: both counts or their headings, their swatches and gaps (the value labels are 12px); fitted
     // to the heading line once drawn (statsFitValueColumns).
-    const chars = thin.reduce((total, result, index) => total + Math.max(String(result.head || "").length,
+    const chars = thin.reduce((total, result, index) => total + Math.max(...result.head.map((line) => line.length),
       ...rows.map((row) => formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length)), 0);
     const notes = values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "";
     // A result, not a rule: said under the figure.
@@ -6322,7 +6337,7 @@
       id: "statsDbValuesTitle", key: "db-values", title: "Values against the databases",
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)`,
-        valueHead: `<span class="stats-db-thin">${thin.map((result, index) => column(index, escapeHtml(result.head || ""))).join("")}</span>` })
+        valueHead: `<span class="stats-db-thin">${thin.map((result, index) => column(index, `<span class="stats-db-head">${result.head.map((line) => `<span class="nowrap">${escapeHtml(line)}</span>`).join("<br>")}</span>`)).join("")}</span>` })
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
       caption: `Values read from the paper, compared with ${names || "the databases"}.`,
       rules: notes,

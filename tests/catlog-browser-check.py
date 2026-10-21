@@ -1424,8 +1424,15 @@ def check_stats_figures(driver, browser, url):
                     assert abs(row["width"] - 100) < 0.01, f"{figure['key']} {row['key']} fills {row['width']}%"
             rows = {row["key"]: row["count"] for row in figures[0]["rows"]}
             assert rows["all"] == compared, rows
-            assert driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-values'] .stats-share-lines dd span"), "Shares under the bars"
-            # The numbers beside the bars are named: Figure 8's two counts stand right-aligned under Corrects and Differs
+            shares = driver.execute_script("""
+                const table = document.querySelector("[data-figure='db-values'] .stats-share-table:not([style*=none])");
+                const shown = [...document.querySelectorAll("[data-figure='db-values'] .stats-share-table")].filter(t => t.getClientRects().length);
+                return shown.map(t => ({heads: [...t.querySelectorAll('thead th')].map(th => th.textContent.trim()),
+                                        cells: t.querySelectorAll('tbody td').length, swatchesInCells: t.querySelectorAll('tbody td .stats-swatch').length}));
+            """)
+            # Shares under the bars: one table in view, headed by the legend's names (colour never the only key).
+            assert len(shares) == 1 and shares[0]["heads"][:2] == ["Same number", "Same, other label"] and shares[0]["cells"] and not shares[0]["swatchesInCells"], shares
+            # The numbers beside the bars are named: Figure 8's two counts stand right-aligned under Corrects a value and Different number
             # (each count's swatch and number inside its column), Figure 9's under Values.
             columns = driver.execute_script("""
                 return ['db-values', 'db-sources'].map((key) => {
@@ -1438,7 +1445,7 @@ def check_stats_figures(driver, browser, url):
                              lines: [chart.querySelector('.stats-chart-head'), ...chart.querySelectorAll('.stats-chart-row')].map(rights) };
                 });
             """)
-            assert [column["head"] for column in columns] == ["Corrects Differs", "Values"], columns
+            assert [column["head"] for column in columns] == ["Corrects a value Different number", "Values"], columns
             for column in columns:
                 for line in column["lines"]:
                     assert len(line) == len(column["lines"][0]) and all(part["inside"] for part in line), column

@@ -1384,3 +1384,12 @@ Generated mockups guide layout only; their text is not a scientific source.
   short windows, small phones under More). Round 14 had it in the card's top right, and on phones only under More.
 - Heights (Chrome, the system font, 2026-10-21): 109px from 1024px (round 14: 99), 129px on tablets (119), 163px at
   375px (169); in a short window 87px (75), the table's 340px kept (453px at 1024 x 600, 348px at 800 x 600).
+
+## Round 15 polish
+
+- Stats' percent charts (Values against the databases and the two supplement figures of earlier changes) give their
+  shares in a table under the bars whose column heads are the legend's names, each after its swatch (a grid of
+  percentages each behind a colour square, with no heads, had left colour the only key); on a phone the same numbers
+  turn round (the results as rows, the chart's rows as four short heads), one table shown at a time. The two counts
+  beside Values against the databases' bars stand under the legend's own names in two lines, "Corrects / a value" and
+  "Different / number" (they had read "Corrects" and "Differs").

@@ -2348,10 +2348,10 @@ function row(overrides = {}) {
   // Until Browse matches a compared parameter (dbpar), a parameter's counts are plain numbers: a link would open every
   // record with that result. All values links by result alone.
   assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span><\/span><span class="stats-value-part" data-sizer="[^"]*"><span><i class="stats-swatch stats-part-differs" aria-hidden="true"><\/i>269<\/span><\/span>/);
-  // The two counts beside each bar stand under their headings, Corrects and Differs (Table 8's names), each column as
-  // wide as its widest count or its heading.
+  // The two counts beside each bar stand under their headings, the legend's names in two lines ("Corrects" / "a value",
+  // "Different" / "number"; round 15 polish), each column as wide as its widest count or heading line.
   assert.match(values, /<div class="stats-chart stats-chart-percent has-value-heads" data-chart="db-values"/);
-  assert.match(values, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value"><span class="stats-db-thin"><span class="stats-value-part" data-sizer="0,000&#10;Corrects"><span>Corrects<\/span><\/span><span class="stats-value-part" data-sizer="0,000&#10;Differs"><span>Differs<\/span><\/span><\/span><\/span><\/div>/);
+  assert.match(values, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value"><span class="stats-db-thin"><span class="stats-value-part" data-sizer="0,000&#10;Corrects&#10;a value"><span><span class="stats-db-head"><span class="nowrap">Corrects<\/span><br><span class="nowrap">a value<\/span><\/span><\/span><\/span><span class="stats-value-part" data-sizer="0,000&#10;Different&#10;number"><span><span class="stats-db-head"><span class="nowrap">Different<\/span><br><span class="nowrap">number<\/span><\/span><\/span><\/span><\/span><\/span><\/div>/);
   assert.match(styleSource, /\.stats-db-thin > \.stats-value-part\[data-sizer\]::before \{ padding-left:14px \}/);
   assert.match(values, /data-row="kcatkm"[\s\S]*?<small>printed<\/small>/);
   assert.match(values, /data-row="all"[\s\S]*?href="[^"]*#browse\?db=corrects" aria-label="All values, Corrects a value: 1,548">1,548<\/a>/);
@@ -2385,7 +2385,11 @@ function row(overrides = {}) {
   }
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: {} } }), "");
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1.5 } } }), "");
-  assert.match(values, /<dl class="stats-share-lines">[\s\S]*?82\.3%/);
+  // The shares under the bars: a table headed by the legend's names, each after its swatch (round 15 polish: colour is
+  // never the only key), and on a phone the same table turned round.
+  assert.match(values, /<table class="stats-share-table stats-share-wide">[\s\S]*?<th scope="col"><i class="stats-swatch stats-part-same" aria-hidden="true"><\/i>Same number<\/th>[\s\S]*?82\.3%/);
+  assert.match(values, /<table class="stats-share-table stats-share-tall">[\s\S]*?<th scope="row"><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>Corrects a value<\/th>/);
+  assert.doesNotMatch(values, /stats-share-lines|<td><i class="stats-swatch/);
   // Each database against the values read from its papers: a bar per database in order, its papers' values right of
   // it, the others under it; STRENDA DB by the Source filter's name.
   const bySource = figureHtml("db-sources");
@@ -2616,7 +2620,7 @@ function row(overrides = {}) {
   api.renderStats();
   assert.match(databaseSection(), /#browse\?db=corrects" title="1 value in 1 record">1 corrects/);
   assert.match(databaseSection(), /#browse\?db=differs">1 differs/, "A damaged record count gives no title");
-  assert.match(figureHtml("db-values"), /<dt>All values<\/dt><dd><span><i class="stats-swatch stats-part-same" aria-hidden="true"><\/i>4<\/span>/);
+  assert.match(figureHtml("db-values"), /<tr><th scope="row">All values<\/th><td>4<\/td>/, "a row below the rate base gives counts");
   assert.doesNotMatch(figureHtml("db-values"), /\(\d+\.\d%\)/);
   // Without overview.earlier_corrections, quality's count (another snapshot's) is used, with its own caption.
   delete runtimeManifest.summary.database_comparison;

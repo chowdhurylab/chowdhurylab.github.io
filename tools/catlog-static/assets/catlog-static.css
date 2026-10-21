@@ -1412,6 +1412,8 @@ a.stats-total-value:focus-visible { outline:0 }
    line tall and stands on the name's line (Figure 8's printed kcat/Km, a name with a note under it). */
 .stats-chart-value > .stats-db-thin { vertical-align:top }
 .stats-db-thin > .stats-value-part > span { display:inline-flex; align-items:center; gap:4px }
+/* a thin result's head, the legend's name in two lines ("Corrects" / "a value") */
+.stats-db-head { display:inline-block; text-align:right }
 /* Part 7's tables: a count with its share under it. */
 .stats-db-table td small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-db-table tfoot :is(th,td) { border-top:1px solid var(--line); border-bottom:0; font-weight:600 }
@@ -1435,11 +1437,28 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-db-table .stats-db-paired-col { display:none }
   .stats-db-table .stats-db-paired-note { display:block; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 }
-.stats-share-lines { display:grid; gap:2px; margin:12px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-share-lines > div { display:flex; flex-wrap:wrap; gap:4px 12px }
-.stats-share-lines dt { min-width:72px; color:var(--text) }
-.stats-share-lines dd { display:flex; flex-wrap:wrap; gap:4px 12px; margin:0 }
-.stats-share-lines span { display:inline-flex; align-items:center; gap:4px }
+/* Under a percent chart, the shares as a small table: the legend's names as column heads, each after its swatch, so colour
+   is never the only key (round 15 polish); the numbers right-aligned under them. On phones the columns share the width
+   (fixed layout) and the heads wrap. */
+.stats-share-table { width:auto; min-width:0; margin:12px 0 0; border-collapse:collapse; table-layout:auto; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); font-variant-numeric:tabular-nums lining-nums }
+.stats-share-table tr, .stats-share-table tbody tr:nth-child(n), .stats-share-table tbody tr:hover { height:auto; background:transparent; cursor:auto; transition:none }
+.stats-share-table :is(th, td) { position:static; z-index:auto; height:auto; padding:2px 0 2px 16px; border:0; background:transparent; color:inherit; font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); text-align:right; vertical-align:bottom; white-space:nowrap }
+.stats-share-table tr > :first-child { padding-left:0; text-align:left }
+.stats-share-table thead th { max-width:9em; padding-bottom:4px; border-bottom:1px solid var(--line-soft); color:var(--text-2); font-weight:500; white-space:normal }
+.stats-share-table thead td { border-bottom:1px solid var(--line-soft) }
+.stats-share-table thead .stats-swatch { margin-right:4px; vertical-align:-1px }
+.stats-share-table tbody th { min-width:72px; color:var(--text) }
+.stats-share-table.stats-share-tall { display:none }
+.stats-share-tall tbody th { white-space:normal }
+.stats-share-tall tbody :is(th, td) { vertical-align:baseline }
+.stats-share-tall tbody .stats-swatch { margin-right:4px; vertical-align:-1px }
+@media (max-width: 640px) {
+  .stats-share-table.stats-share-wide { display:none }
+  .stats-share-table.stats-share-tall { display:table; width:100% }
+  .stats-share-tall :is(th, td) { padding-left:8px }
+  .stats-share-tall thead th { max-width:none; white-space:nowrap }
+  .stats-share-tall tbody th { min-width:0 }
+}
 .stats-by-database { margin-top:16px; border-top:1px solid var(--line-soft); padding-top:12px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-by-database p { margin:0 0 6px }
 .stats-by-database ul { display:flex; flex-wrap:wrap; gap:4px 16px; margin:0; padding:0; list-style:none }
