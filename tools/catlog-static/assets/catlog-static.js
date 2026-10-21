@@ -7757,8 +7757,8 @@
           escapeHtml(definition(item.title))}.</p>`).join("")
           + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
-      // Source: the three choices in view; the databases of Not yet re-read are their own group under More filters
-      // (Source database), and ticking one selects Not yet re-read.
+      // Source: the three choices, the first group under More filters; the databases of Not yet re-read are their own
+      // group there too (Source database), and ticking one selects Not yet re-read.
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
@@ -8576,15 +8576,15 @@
     }
   }
 
-  // More filters holds the specialist groups (the user, 2026-10-18): Wild type or variant, Assay conditions, Against the
-  // databases, Cautions and Source database (a database of Not yet re-read). Its title counts the chips of those
-  // filters, as Filters counts all of them, so a filter set there is never out of sight unannounced while it is closed
-  // ("More filters, 2 active"). The keys follow the markup's groups.
-  const MORE_FILTER_PREFIXES = new Set(["variant", "temperature", "ph", "db", "caution"]);
+  // More filters holds the specialist groups (the user, 2026-10-18): Source (first since round 14, the user 2026-10-20:
+  // "source can go to the extra filters"), Wild type or variant, Assay conditions, Against the databases, Cautions and
+  // Source database (a database of Not yet re-read). Its title counts the chips of those filters, as Filters counts all
+  // of them, so a filter set there is never out of sight unannounced while it is closed ("More filters, 2 active"). The
+  // keys follow the markup's groups.
+  const MORE_FILTER_PREFIXES = new Set(["source", "variant", "temperature", "ph", "db", "caution"]);
 
   function isMoreFilterKey(key) {
-    const [prefix, value] = String(key).split(":");
-    return MORE_FILTER_PREFIXES.has(prefix) || (prefix === "source" && sourceFilters.some((item) => item.value === value));
+    return MORE_FILTER_PREFIXES.has(String(key).split(":")[0]);
   }
 
   function syncMoreFiltersCount(items) {

@@ -431,16 +431,16 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
 .check-row.is-zero .human-checked-word { color:inherit }
 
-/* Source: three choices, one line each (the help is behind the group's "?"); the databases of Not yet re-read are
-   their own group, Source database, under More filters.
+/* Source: three choices, one line each (the help is behind the group's "?"), the first group under More filters; the
+   databases of Not yet re-read are their own group there, Source database.
    Read from the paper keeps one line beside a six-figure count in the 256px sidebar, also in a wide font (DejaVu Sans):
    a count may come 4px closer to its label than elsewhere. */
 .source-modes { display:grid; gap:0 }
 .check-row.radio-row input { accent-color:var(--accent) }
 .radio-row > strong { margin-left:-4px }
 
-/* More filters: one disclosure after the four groups in view, holding the specialist groups (Wild type or variant and
-   Assay conditions open inside it; Against the databases, Cautions and Source database closed). Its title is a group
+/* More filters: one disclosure after the three groups in view, holding the specialist groups (Source, Wild type or
+   variant and Assay conditions open inside it; Against the databases, Cautions and Source database closed). Its title is a group
    title in the accent colour with the count of its filters set (the Filters badge's look, 6px after the words); it
    opens by itself when one of them is set. Inside, the groups keep their look; a soft rule closes the last one. */
 .filter-more { border-bottom:1px solid var(--line-soft) }

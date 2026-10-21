@@ -221,7 +221,9 @@ the four results and human-checked in one short sentence each, "Accepted — pas
 review: ...", a dash after the result and the sentence in lower case after it, never
 "Accepted: Passed review:" (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
-the tags are defined, so the box stays small and the options stay in view) and Source (three
+the tags are defined, so the box stays small and the options stay in view); then one "More filters" disclosure, closed
+at rest, holding the specialist groups, first Source (round 14, the user 2026-10-20: "the filter section source can go
+to the extra filter instead of one of the main points"; three
 radio buttons: All records, Read from the paper and Not yet re-read: each record labelled by what happened to it, with
 CatLog the one name (the user, 2026-10-13, round 8; never v1 or v2; "re-read" never breaks at its hyphen: Stats'
 figure titles, captions and tables, the Guide and the sidebar's "?" boxes keep it in a nowrap span); each label on one line beside its count in the
@@ -231,10 +233,10 @@ AI model; a second, separate AI check compared each value with the paper." and "
 version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads
 a paper, its records replace these.", never that every such record was checked; each radio's title says the same,
 Read from the paper's as the method's short form) and links to the Guide's #guide-method; the databases of Not yet
-re-read are their own group, Source database, under More filters); then one "More filters" disclosure, closed at rest, holding the specialist groups:
-Wild type or variant (its "?" says what the form is and how many records state neither, "1 record does not ...",
+re-read are their own group, Source database, last under More filters; Source keeps its group dot (its chips' colour) and is
+open inside More filters), then Wild type or variant (its "?" says what the form is and how many records state neither, "1 record does not ...",
 the line hidden when none) and Assay conditions (temperature °C and pH, from and to, either may be empty; a bound that is not a number is outlined and
-ignored; the count beside each is the records that give one, as its "?" says), both open inside it, then Against the databases (shown only when the snapshot carries the comparison:
+ignored; the count beside each is the records that give one, as its "?" says), open inside it like Source, then Against the databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
 scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
@@ -271,15 +273,18 @@ paper clears them; its "?" says so; its dot and its chips wear the accent, as th
 opens by itself when one of its filters is set (an address, Back, a link from Stats or a record, Undo), each group with
 one set opens too, and nothing in it is ever set unseen: its title (a group title in the accent colour, its chevron too,
 with a --line-soft rule under it when open) carries the count of those filters' chips in the Filters badge's look (the
-chips of variant, temperature, pH, db, caution and a database of Source; MORE_FILTER_PREFIXES), read out "More filters,
-2 active", shown open or closed; its title's tooltip names the groups. A group or More filters opened by its title near
+chips of source (Read from the paper, Not yet re-read or a database), variant, temperature, pH, db and caution;
+MORE_FILTER_PREFIXES), read out "More filters, 2 active", shown open or closed; its title's tooltip names the groups. A group or More filters opened by its title near
 the sidebar's foot (or the phone sheet's) scrolls just enough to show its options, as a "?" does, never taking its title
 under the sticky heading; one opened by an address leaves the sidebar where it is. No help text is in view: every
 group but the enzyme fields has a "?", and each note (Measurement type's, the records stating no form) is behind it.
-At 1440 x 1000 the four groups and More filters' title show without scrolling the sidebar (measured on the Oct 15
-snapshot: before round 13 eight groups, "By database" and 28 controls took 1,445px, 19 controls in view; now four groups
-and More filters' title, 15 controls, take 792px, all in view; in the 375 x 812 phone sheet 1,513px became 792px,
-More filters' title just under the Show records bar). All 41 controls are kept; every address and chip is as before. Every option shows how many of the current
+At 1440 x 1000 the three groups and More filters' title show without scrolling the sidebar (measured on the Oct 15
+snapshot: before round 13 eight groups, "By database" and 28 controls took 1,445px, 19 controls in view; round 13's four
+groups and More filters' title, 15 controls, took 792px, all in view; in the 375 x 812 phone sheet 1,513px became 792px,
+More filters' title just under the Show records bar; round 14 moved Source's three radios under More filters too). The
+phone sheet is the same panel, so Source is under More filters there as well. All 41 controls are kept; every address,
+chip, sidebar dot and Undo is as before: an address or link with source= (the counts band's Read from the paper,
+Stats, a record) opens More filters with Source in it. Every option shows how many of the current
 results it covers, counted with its own group set aside (so ticking it shows, or
 adds, that many); an option at 0 is grey and stays clickable. Before the record
 index arrives, Review result, Measurement type and the three Source choices show

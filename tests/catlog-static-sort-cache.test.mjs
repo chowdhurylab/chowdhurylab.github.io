@@ -5461,11 +5461,11 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(api.browseHash(), "#browse?source=sabio_rk,unrecorded");
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.key), ["source:sabio_rk", "source:unrecorded"]);
   assert.deepEqual([...api.activeFilterItems()].map((item) => item.label), ["Source: SABIO-RK", "Source: not recorded"]);
-  // A database of Not yet re-read is set under More filters: More filters counts it (Source: Read from the paper, in view,
-  // it does not).
+  // Source and a database of Not yet re-read are set under More filters (round 14: Source is its first group), so More
+  // filters counts them; the groups in view (measurement type, review result, the enzyme fields, search) it does not.
   assert.deepEqual(["source:sabio_rk", "source:unrecorded", "source:paper", "source:databases", "db:differs", "variant:wild",
     "temperature", "ph", "caution:none", "metric:kcat", "status", "checked", "ec", "q"].map(api.isMoreFilterKey),
-  [true, true, false, false, true, true, true, true, true, false, false, false, false, false]);
+  [true, true, true, true, true, true, true, true, true, false, false, false, false, false]);
   assert.deepEqual(await keysFor("source=earlier"), ["src-earlier"]);
   // A chip says what the sidebar says ("Earlier extractions", "OED"); its button and the no-results note read the name in
   // full, as the sidebar does.
@@ -5537,8 +5537,8 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.equal(element("undoFiltersButton").disabled, true, "the phone sheet's Undo is dimmed too");
     assert.equal(element("undoFiltersButton").title, "Nothing to undo");
     await keysFor("source=paper&ec=1.1.1&tmin=20");
-    // More filters counts the chips of its own groups (here the temperature), as Filters counts them all.
-    assert.deepEqual([element("moreFiltersCount").textContent, element("moreFiltersWords").textContent], ["1", ", 1 active"]);
+    // More filters counts the chips of its own groups (here Source and the temperature), as Filters counts them all.
+    assert.deepEqual([element("moreFiltersCount").textContent, element("moreFiltersWords").textContent], ["2", ", 2 active"]);
     assert.equal(element("moreFiltersCount").classList.contains("hidden"), false);
     assert.equal(api.state.filterHistory.length, 1);
     assert.deepEqual([...bar().matchAll(/class="filter-chip (tone-[\w-]+)"/g)].map((match) => match[1]), ["tone-paper", "tone-identity", "tone-measurement"]);
@@ -6999,6 +6999,19 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.deepEqual(api.sourceAttributionRows([paperSource]).map((item) => item.name), ["Read from the paper (by CatLog, or earlier extractions)"],
     "without the snapshot's count, one row names both groups");
   Object.assign(runtimeManifest, { total_rows: saved.total, summary: saved.summary, enriched_download: saved.enriched, source_sha256: saved.source });
+}
+
+// Round 14 (the user, 2026-10-20: "source can go to the extra filters"): the groups in view are the enzyme fields,
+// Measurement type and Review result; Source is the first group under More filters, Source database still its last.
+{
+  const rail = indexHtml.match(/<aside id="catalogFilters"[\s\S]*?<\/aside>/)[0];
+  const at = rail.indexOf('<details class="filter-more" id="moreFilters">');
+  const titles = (html) => [...html.matchAll(/<summary class="filter-section-title"><span>(?:<span class="group-dot [\w-]+" aria-hidden="true"><\/span>)?([^<]+)<\/span>/g)]
+    .map((match) => match[1]);
+  assert.deepEqual(titles(rail.slice(0, at)), ["Enzyme, organism, substrate", "Measurement type", "Review result"]);
+  assert.deepEqual(titles(rail.slice(at)), ["Source", "Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"]);
+  // Source keeps its dot (Source's colour, as its chips) and opens inside More filters, as the first two groups did.
+  assert.match(rail.slice(at), /^<details class="filter-more" id="moreFilters">\s*<summary[\s\S]*?<\/summary>\s*<details class="filter-section has-about" open>\s*<summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"><\/span>Source<\/span>/);
 }
 
 // The sidebar keeps one short line per option; the explanations are behind each group's "?" (aboutSource, aboutStatus).

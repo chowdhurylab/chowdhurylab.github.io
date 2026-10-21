@@ -2383,14 +2383,14 @@ def check_filters(driver, browser, url, route_label):
         found = {}
         comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST?.summary?.database_comparison || null") or {}
         open_page(base + "#browse")
-        # Round 13: the group is the third under More filters (after Wild type or variant and Assay conditions), closed
-        # at rest with More filters; a visitor opens both by their titles.
+        # Round 13: the group is under More filters (round 14: the fourth, after Source, Wild type or variant and Assay
+        # conditions), closed at rest with More filters; a visitor opens both by their titles.
         place = driver.execute_script("""
             const more = document.getElementById('moreFilters'), section = document.getElementById('databaseFilterSection');
             return {inMore: section.parentElement === more, index: [...more.querySelectorAll(':scope > .filter-section')].indexOf(section),
                     moreOpen: more.open, open: section.open};
         """)
-        assert place == {"inMore": True, "index": 2, "moreOpen": False, "open": False}, place
+        assert place == {"inMore": True, "index": 3, "moreOpen": False, "open": False}, place
         open_more("databaseFilterSection")
         rows = driver.execute_script("""
             return [...document.querySelectorAll('#databaseChecklist .check-row')].map(row => {
@@ -2587,13 +2587,14 @@ def check_filters(driver, browser, url, route_label):
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         # 0. Round 13 (the user, 2026-10-18: "too many options and a bit confusing"): in view, the filters most visitors use
-        # (Enzyme, organism, substrate; Measurement type; Review result; Source), then one closed More filters holding the
-        # specialist groups; no help text in view (each group's "?" holds it); no option removed.
+        # (Enzyme, organism, substrate; Measurement type; Review result), then one closed More filters holding the
+        # specialist groups, Source first (round 14, the user 2026-10-20: "source can go to the extra filters"); no help
+        # text in view (each group's "?" holds it); no option removed.
         open_page(base + "#browse")
         rest = driver.execute_script(SIDEBAR_GROUPS_JS)
-        assert rest["top"] == ["Enzyme, organism, substrate", "Measurement type", "Review result", "Source", "More filters"], rest
-        assert rest["more"] == ["Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"], rest
-        assert rest["moreOpen"] is False and rest["moreOpenInside"] == [True, True, False, False, False], rest
+        assert rest["top"] == ["Enzyme, organism, substrate", "Measurement type", "Review result", "More filters"], rest
+        assert rest["more"] == ["Source", "Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"], rest
+        assert rest["moreOpen"] is False and rest["moreOpenInside"] == [True, True, True, False, False, False], rest
         assert rest["countHidden"] and rest["words"] == "", rest
         assert rest["notes"] == [], f"Help text in view: {rest['notes']}"
         assert rest["inputs"] == {"checkbox": 30, "radio": 3, "search": 4, "text": 4}, rest["inputs"]
@@ -2605,7 +2606,7 @@ def check_filters(driver, browser, url, route_label):
         # closed); closed again, its title counts them: "More filters, 3 active" (the badge 3, then hidden words).
         open_page(base + "#browse?caution=units&variant=wild&source=brenda")
         opened = driver.execute_script(SIDEBAR_GROUPS_JS)
-        assert opened["moreOpen"] and opened["moreOpenInside"] == [True, True, False, True, True], opened
+        assert opened["moreOpen"] and opened["moreOpenInside"] == [True, True, True, False, True, True], opened
         assert not opened["countHidden"] and opened["count"] == "3" and opened["words"] == ", 3 active", opened
         driver.execute_script("document.getElementById('moreFilters').open = false")
         closed = driver.execute_script(SIDEBAR_GROUPS_JS)
@@ -2614,6 +2615,16 @@ def check_filters(driver, browser, url, route_label):
         # A chip removed leaves the count right; Clear all empties it.
         driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="caution:units"]').click()
         wait.until(lambda d: d.execute_script(SIDEBAR_GROUPS_JS)["count"] == "2")
+        driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
+        wait.until(lambda d: not fragment() and d.execute_script(SIDEBAR_GROUPS_JS)["countHidden"])
+        # Read from the paper (the counts band's link, an address) opens More filters with Source in it, its radio set; its
+        # chip is counted on More filters' title; Undo and the chip's colour are as before.
+        open_page(base + "#browse?source=paper")
+        paper = driver.execute_script(SIDEBAR_GROUPS_JS)
+        assert paper["moreOpen"] and paper["moreOpenInside"][0] and paper["count"] == "1" and paper["words"] == ", 1 active", paper
+        assert driver.execute_script("return document.querySelector('input[name=\"sourceMode\"][value=\"paper\"]').checked")
+        assert driver.find_element(By.CSS_SELECTOR, 'input[name="sourceMode"][value="paper"]').is_displayed()
+        assert chip_keys() == ["source:paper"], chip_keys()
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment() and d.execute_script(SIDEBAR_GROUPS_JS)["countHidden"])
         if browser == "chrome":
@@ -2634,7 +2645,7 @@ def check_filters(driver, browser, url, route_label):
                 const rail = document.getElementById('catalogFilters').getBoundingClientRect();
                 const heading = document.querySelector('.rail-heading').getBoundingClientRect();
                 const title = document.querySelector('#moreFilters > summary').getBoundingClientRect();
-                const first = document.querySelector('#variantChecklist .check-row').getBoundingClientRect();
+                const first = document.querySelector('#sourceChecklist .radio-row').getBoundingClientRect();
                 return {scrolled: document.getElementById('catalogFilters').scrollTop, titleClear: title.top >= heading.bottom - 0.5,
                         firstShown: first.bottom <= rail.bottom + 0.5};
             """)
@@ -3176,6 +3187,9 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
             keys = chip_keys()
             driver.find_element(By.ID, "openFiltersButton").click()
             wait.until(lambda d: d.find_element(By.ID, "showResultsButton").is_displayed())
+            # Source is under More filters in the sheet too (round 14), opened by the address's source=paper.
+            assert driver.execute_script("return document.getElementById('moreFilters').open"
+                                         " && document.querySelector('#moreFilters input[name=\"sourceMode\"][value=\"paper\"]').checked"), width
             sheet_undo = driver.find_element(By.ID, "undoFiltersButton")
             assert sheet_undo.is_displayed() and not sheet_undo.is_enabled(), width
             click('#measurementChecklist input[value="km"]')
@@ -3475,7 +3489,9 @@ def check_layout(driver, browser, url, route_label):
         # The Source radios name what happened to each record, Read from the paper and Not yet re-read, one line each
         # beside its count, also in a wide font (Verdana here, DejaVu Sans on Linux) at the sidebar's 256px (1280px
         # window), with today's counts and with a six-figure count the catalog will reach; the help is behind the "?".
+        # (Source is under More filters since round 14: a visitor opens it by its title.)
         set_browse_viewport(driver, browser, 1280, 1000)
+        open_more()
         source_rows = driver.execute_script("""
             const style = document.createElement('style');
             style.id = 'wideSourceFont';
@@ -3501,6 +3517,7 @@ def check_layout(driver, browser, url, route_label):
         set_browse_viewport(driver, browser, 1440, 1000)
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutSource"]')
         assert not driver.find_element(By.ID, "aboutSource").is_displayed()
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
         about.click()
         assert about.get_attribute("aria-expanded") == "true" and driver.find_element(By.ID, "aboutSource").is_displayed()
         about_text = driver.execute_script("return document.getElementById('aboutSource').innerText")
@@ -3508,6 +3525,7 @@ def check_layout(driver, browser, url, route_label):
         assert "when CatLog reads a paper, its records replace these" in about_text and not re.search(r"\bv[12]\b", about_text), about_text
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
+        driver.execute_script("document.getElementById('moreFilters').open = false")
         # In a short window, opening Review result's "?" scrolls the sidebar just enough to keep its options in view, never
         # taking its title under the sticky heading; closing it again leaves the sidebar where it is. (720px: the counts
         # band's card, round 13, is 11px taller than the old 64px band, so the sidebar is as tall as it was at 700px.)
