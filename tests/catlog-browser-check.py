@@ -210,6 +210,11 @@ def check_guide(driver, wait):
     # review), their numbers drawn by CSS.
     steps = driver.execute_script("return [...document.querySelectorAll('#guide-how-read .guide-flow-name')].map(e => e.textContent)")
     assert steps == ["Read", "Check", "Compare", "Review"], steps
+    # The earlier version and its automated review, which a record not yet re-read links (#guide-earlier, round 14),
+    # under the four steps, with its own heading.
+    earlier = driver.find_element(By.ID, "guide-earlier")
+    assert earlier.is_displayed() and "earlier version, built from enzyme database entries" in earlier.text, earlier.text
+    assert driver.execute_script("return document.getElementById('guide-method').contains(document.getElementById('guide-earlier'))")
     assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "back from the papers the enzyme databases cite" in guide_heading_text(driver)
     assert driver.execute_script(GUIDE_PICTURES_JS) == [], driver.execute_script(GUIDE_PICTURES_JS)
     guide_text = driver.find_element(By.ID, "guideView").text
@@ -4549,7 +4554,8 @@ def check_record_panel(driver, browser, url, route_label):
                                                   "#guide-how-read" if panel["howReadInGuide"] else "#guide-method"], panel["guideLink"]
                 else:
                     assert panel["method"] is None and "earlier automated review" in (panel["review"] or ""), panel["review"]
-                    assert panel["guideLink"] == ["How the earlier review worked →", "#guide-method"], panel["guideLink"]
+                    # (at the Guide's lines on the earlier version, round 14; an older Guide's method otherwise)
+                    assert panel["guideLink"] == ["How the earlier review worked →", "#guide-earlier"], panel["guideLink"]
                 if label == "desktop":
                     # With a record open the table's Status cells keep their source line (innerText: what is shown).
                     status_lines = driver.execute_script("""

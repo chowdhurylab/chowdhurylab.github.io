@@ -4971,8 +4971,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.ok(unverified);
   // Right after the review result.
   assert.match(unverified, /<dt>Review result<\/dt><dd>Not checked: the earlier automated review recorded no final check\.<\/dd><\/div><div class="kv-line"><dt>Paper check<\/dt>/);
-  // One Guide link, under the rows: how the earlier review worked.
-  assert.match(unverified, /<\/dl><p class="section-link"><a class="method-link" href="#guide-method">How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/p>$/);
+  // One Guide link, under the rows: how the earlier review worked, at the Guide's lines on it (round 14: #guide-method
+  // held only the current four steps).
+  assert.match(unverified, /<\/dl><p class="section-link"><a class="method-link" href="#guide-earlier">How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/p>$/);
+  assert.match(indexHtml, /<div class="guide-earlier" id="guide-earlier" aria-labelledby="guide-earlier-title">[\s\S]*?CatLog&rsquo;s earlier version, built from enzyme database entries\. Its automated review checked part of them against their papers/);
   assert.ok(paperCheckOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk", has_proof_excerpt: false })));
   // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no line.
   assert.equal(paperCheckOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);

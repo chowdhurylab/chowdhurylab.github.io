@@ -2227,6 +2227,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-flow-name::before { content:counter(flow) "\00a0\00a0"; content:counter(flow) "\00a0\00a0" / ""; color:var(--accent); font-variant-numeric:tabular-nums }
 .guide-view .guide-flow-text { color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-shell .guide-keeps { margin:20px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* The earlier version, in two short sentences under the four steps (#guide-earlier: a record not yet re-read links it). */
+.guide-view .guide-shell .guide-earlier > h3.guide-flow-title { margin:24px 0 6px; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
+.guide-view .guide-shell .guide-earlier > p { margin:0; max-width:72ch; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-shell .guide-loop-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-loop-links a { white-space:nowrap }
 .guide-view .guide-loop-links a::after { content:"\00a0\2192"; content:"\00a0\2192" / "" }

@@ -1032,7 +1032,9 @@ come first, the context after.
   "3,600×", any other at two figures ("4.5×", "960×"), then "higher" (x > 1) or
   "lower".
 - H. Checks (right after G; on a record read from the paper: Second check, AI audit, Human review, then one Guide link
-  under the rows, "How CatLog reads a value →" (#guide-how-read; #guide-method while the Guide has no such section),
+  under the rows, "How CatLog reads a value →" (#guide-how-read; #guide-method while the Guide has no such section)
+  or, on a record not yet re-read, "How the earlier review worked →" (#guide-earlier, round 14: the Guide's two sentences
+  on the earlier version and its automated review under the four steps; #guide-method on an older Guide),
   13px, moving to the next line whole when it does not fit, so no phone scrolls the record sideways; its header already
   says Accepted · from paper, so no Review result row repeats it): Second check (one result for every value, "All
   values confirmed." or "Unit set to mM for every value.", or each value's result, "kcat: confirmed; Km: unit set to
@@ -1190,8 +1192,12 @@ link to them; keep every one):
   it is printed in."; the model and vendor named once in the Guide), Check ("A second, separate AI check compares every
   value with the paper. Automated checks confirm the line is in the paper."), Compare (automatically, with what the
   enzyme databases list for that paper) and Review (AI audits and people re-check samples; what they find improves the
-  next readings). Then one line, "Units are converted automatically; no model types a converted number.", and two links,
-  "Checks so far on Stats" (#stats-quality) and "People behind CatLog" (Team). The site says "automated checks" and
+  next readings). Then one line, "Units are converted automatically; no model types a converted number.", then Records
+  not yet re-read (#guide-earlier, a muted 13px label like How CatLog reads a value's; round 14): "These come from
+  CatLog's earlier version, built from enzyme database entries. Its automated review checked part of them against their
+  papers and accepted a value as printed or after a correction, left a question open (Not confirmed) or recorded no
+  final check (Not checked). When CatLog reads the paper, its records replace these." (every record not yet re-read
+  links it), and two links, "Checks so far on Stats" (#stats-quality) and "People behind CatLog" (Team). The site says "automated checks" and
   "found automatically", never "code", as the README does.
 - Read a record (#guide-record): "Select a row to open its record." then a record drawn as the panel draws it, in the
   panel's order (title, EC · organism · form, substrate; the status line with tags; the values table with ticks, As

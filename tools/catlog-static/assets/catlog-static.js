@@ -13261,7 +13261,9 @@
   // The Guide's "How CatLog reads a value" (#guide-how-read, round 13); a page whose Guide has no such section yet links
   // its method section instead, so the link never opens the Guide at a section it lacks.
   const HOW_READ_LINK = { href: "#guide-how-read", fallback: "#guide-method", text: "How CatLog reads a value" };
-  const HOW_EARLIER_LINK = { href: "#guide-method", text: "How the earlier review worked" };
+  // The Guide's own lines on the earlier version and its automated review (#guide-earlier, round 14: #guide-method held only
+  // the current four steps); an older Guide without them is linked at its method.
+  const HOW_EARLIER_LINK = { href: "#guide-earlier", fallback: "#guide-method", text: "How the earlier review worked" };
 
   function sideFileAuditText(check) {
     if (!Array.isArray(check?.audit) || !check.audit.length) return "";
