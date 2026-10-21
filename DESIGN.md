@@ -582,8 +582,9 @@ middle, so Human check's lines start well below CatLog's and its last line is
 far from Rules updated's name; on the upright loop AI check stands higher than
 Human check, Human check's lines end on the straight part well above CatLog's
 name, and a drawn line longer than 23 characters (16 for CatLog's, in the lower
-arc) breaks at a space. Small dots move round the track (SVG animateMotion),
-not drawn for prefers-reduced-motion. Its text is on the type scale (station names 16,
+arc) breaks at a space. Nothing moves round the track (round 14: six accent dots
+circling it endlessly were the last landing-page touch; the chevrons show which way it runs). Mohammad stands on the
+people's row (y 438), with Vaishnavey, Supantha, Aarna and Erin. Its text is on the type scale (station names 16,
 numbers 13, chips 14; upright 14 and 12) and the caption 13px like Stats'; the
 chips leave the status navy and the comparison brown to their own meanings, and
 a focused chip gets a 2px accent ring set apart from it. Pointing at a person or

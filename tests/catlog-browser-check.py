@@ -2393,7 +2393,7 @@ def check_team(driver, browser, url):
             """
             assert driver.execute_script(labels_px) >= 12 - 0.05, f"Team labels read at phone width: {driver.execute_script(labels_px)}px"
             assert driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12) == [], driver.execute_script(TEAM_LABELS_CLEAR, "narrow", 12)
-            assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
+            assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle, .team-loop animateMotion"), "Nothing moves round the loop"
             # The upright loop draws no people or agents, so its caption points to the list instead.
             caption = driver.execute_script("return arguments[0].innerText", driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption"))
             assert "The list says where each person and agent works" in caption and "Point at" not in caption, caption

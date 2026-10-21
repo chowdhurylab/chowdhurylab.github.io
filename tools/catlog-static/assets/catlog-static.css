@@ -1648,7 +1648,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .team-track { fill:none; stroke:var(--line-strong); stroke-width:3 }
 .team-arrow { fill:none; stroke:var(--muted); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round }
 .team-branch { stroke:var(--line-strong); stroke-width:2; stroke-dasharray:4 4 }
-.team-dots circle { fill:var(--accent) }
 .team-station-dot { fill:var(--bg); stroke:var(--text); stroke-width:2 }
 .team-station-branch .team-station-dot { stroke:var(--text-2) }
 /* SVG text in user units on the type scale: the wide loop prints them at about 1.1x on a desktop. */
@@ -1690,7 +1689,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .team-legend-ai .team-legend-mark { --mark:var(--src-paper); border-radius:2px; box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 .team-legend-person .team-legend-mark { --mark:var(--muted); border-radius:50% }
 @media (prefers-reduced-motion: reduce) {
-  .team-dots { display:none }
   .team-highlight .team-station, .team-highlight .team-actor { transition:none }
 }
 
@@ -1832,7 +1830,6 @@ a.stats-total-value:focus-visible { outline:0 }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }
-  .team-dots { display:none }
   /* Team on paper: the wide loop with its people and agents, then the legend in two columns, kept whole. */
   .team-view { overflow:visible; border:0 }
   .team-shell { padding:0 }

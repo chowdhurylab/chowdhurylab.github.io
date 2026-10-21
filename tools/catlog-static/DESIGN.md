@@ -1137,8 +1137,8 @@ DESIGN.md, "Stats".
 "People behind CatLog" (#team): one line (CatLog re-verifies published enzyme kinetics), then the loop of stations
 (Cited papers, AI reading, AI check, AI audit, Human check, Rules updated) with AI agents above
 and people below by first name (Supantha also above Website; Vaishnavey at AI critique, which feeds Rules updated from
-the lower-left corner, round 14), live numbers from the manifest, dots moving
-round it unless the viewer asks for less motion, and a legend whose lines (the AI agents in CatLog's reading colour,
+the lower-left corner, round 14; Mohammad on the people's row), live numbers from the manifest, nothing moving round
+it (the chevrons give its direction; round 14 removed the circling dots), and a legend whose lines (the AI agents in CatLog's reading colour,
 BPG cyan: a 12% tint, the 3:1 ring and a 60% legend square; the people neutral)
 light their stations on hover or while pressed (toggle buttons). Upright below 960px. The full rules are
 in the site's DESIGN.md, "Team".

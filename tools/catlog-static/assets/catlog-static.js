@@ -7222,10 +7222,10 @@
       },
       arrows: [[380, 140, 0], [465, 360, 180], [160, 250, 270]],
       // Audit agents stand right of AI audit, between its two branches, their line level with it; above the Website
-      // branch Supantha stands again (he builds the website), as Mohammad stands below The paper.
+      // branch Supantha stands again (he builds the website), as Mohammad stands below The paper, on the people's row.
       actors: {
         source: [302, 58], reading: [470, 58], checking: [650, 58], audit: [912, 250],
-        vaishnavey: [205, 438], supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
+        vaishnavey: [205, 438], supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 438],
       },
       // A second chip of a person at another of their stations: drawn with its own line, lit with the first, not a
       // second tab stop (the first chip names every station).
@@ -7308,7 +7308,6 @@
 
   function teamFigureSvg(layoutKey, numbers) {
     const layout = TEAM_LAYOUTS[layoutKey];
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const trackId = `teamTrack-${layoutKey}`;
     const actorsFor = (station) => TEAM_ACTORS.filter((actor) => actor.stations.includes(station)).map((actor) => actor.key).join(" ");
     // Each branch's chevron points the way it flows: halfway out to Website and The paper, and from AI critique towards
@@ -7357,12 +7356,13 @@
       ...TEAM_ACTORS.map((actor) => chip(actor, layout.actors[actor.key], layout.stations[actor.stations[0]], false)),
       ...(layout.also || []).map((item) => chip(TEAM_ACTORS.find((actor) => actor.key === item.actor), item.at, layout.stations[item.station], true)),
     ].join("") : "";
-    const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
+    // Nothing moves round the loop (round 14: endless dots in the accent were the last landing-page touch, and the
+    // accent means "you can act on this"); the chevrons show which way it runs.
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
     return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; AI critique feeds the rules, and the catalog feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
-      ${arrows}${branches}${dots}${stations}${actors}
+      ${arrows}${branches}${stations}${actors}
     </svg>`;
   }
 

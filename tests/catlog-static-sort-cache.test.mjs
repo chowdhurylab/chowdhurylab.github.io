@@ -1352,7 +1352,8 @@ assert.equal(document.title, "Team | CatLog");
     assert.ok(also && /aria-hidden="true"/.test(also[0]) && !/tabindex/.test(also[0]) && />Supantha<\/text>/.test(also[0]), "Supantha also stands at Website");
     assert.equal((element("teamFigure").innerHTML.match(/class="team-actor [^"]*" data-actor="\w+" data-stations="[^"]*" tabindex="0"/g) || []).length, 9, "one tab stop per person or agent");
   }
-  assert.match(team, /<animateMotion dur="24s"/, "Dots move round the loop unless the viewer asks for less motion");
+  assert.doesNotMatch(team, /animateMotion|team-dots/, "Nothing moves round the loop (round 14): the chevrons show its direction");
+  assert.match(team, /data-actor="mohammad"[^>]*>\s*<line class="team-link" x1="870" y1="424"/, "Mohammad stands on the people's row (y 438)");
   assert.equal((team.match(/class="team-loop team-loop-(wide|narrow)"/g) || []).length, 2);
   const numbers = api.teamNumbers();
   assert.ok(numbers.website.every((line) => /^[\d,]+ records$/.test(line)));
