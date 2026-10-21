@@ -959,7 +959,7 @@ come first, the context after.
   side: the browser check reads every note, closed ones too, and fails on a
   count in words or a name the "?" box spells otherwise), then a definition list (112px labels, 96px on phones, one column
   up to 400px) with rows that have content: Cause (database_cause in words, said only where the line does not say it:
-  not when the line has its own cause part, database_parts.cause, "Checked against the paper: ..."; not when it names
+  not when the line has its own cause part, database_parts.cause, "An AI check of the paper found the cause: ..."; not when it names
   the factor between the two numbers, "10× lower", "60× CatLog's value", "= the printed 21 × 60", "the printed number in
   mM", which is what a cause found automatically is: power_of_ten "off by an exact power of ten",
   printed_number_unit_not_applied "the printed number taken in another unit", time_factor "off by exactly 60 or
@@ -970,7 +970,7 @@ come first, the context after.
   yet checked)", brown, says it is not yet checked, only the factor from database_by_source with its cause, "1,000×
   lower (off by an exact power of ten)", when the line does not give it). Then the checker's own notes
   (database_evidence: where the paper prints the value and the arithmetic checked; a local path never) folded under
-  "How it was checked" (a 12px `--muted` `<details>`, closed; never labelled "In the paper", which names the printed
+  "What the AI check found" (a 12px `--muted` `<details>`, closed; never labelled "In the paper", which names the printed
   quote), without a last part that only gives again the number the line names first ("...; OED and SABIO-RK list 917.7
   mM⁻¹ s⁻¹": a part starting with database names whose first number is the line's first number). A note with an
   empty body is a plain line. Notes on a correction or a different number are

@@ -5040,7 +5040,7 @@ def check_record_databases(driver, browser, base, wait):
             assert all(re.fullmatch(r"\S+: (?:corrects|differs from) \S.* ↓", re.sub(r"\s+", " ", line).strip()) and "another number" not in line
                        for line in state["pointerLines"]), state["pointerLines"]
             # Each fact once: the summary says the parameter and the result (no databases), no note repeats its line's
-            # cause, and the checker's notes are folded under "How it was checked", never labelled "In the paper".
+            # cause, and the checker's notes are folded under "What the AI check found", never labelled "In the paper".
             assert "list another number" not in state["all"] and "lists another number" not in state["all"], state["all"]
             assert not re.search(r"\bIn the paper\b(?!:)", state["all"]), state["all"]
             # The compared databases and the caption are said once, in the heading's "?" box (closed at first), never as a

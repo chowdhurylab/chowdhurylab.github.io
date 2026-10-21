@@ -2422,8 +2422,8 @@ function row(overrides = {}) {
   const found = figureHtml("db-found");
   assert.deepEqual([...found.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1320], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
-  assert.match(found, /data-tip="Unit or scale, Checked against the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found automatically: 892"/);
-  assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); checked against the paper 428, exact factor found automatically 892\.<\/span>/);
+  assert.match(found, /data-tip="Unit or scale, AI check of the paper: 428"[\s\S]*?data-tip="Unit or scale, Exact factor found automatically: 892"/);
+  assert.match(found, /<span class="visually-hidden">Unit or scale: 1,320 \(85\.3%\); AI check of the paper 428, exact factor found automatically 892\.<\/span>/);
   // A bar found both ways prints its two counts under its name, each after its colour; a bar found one way does not.
   assert.match(found, /data-row="unit"[^>]*>\s*<span class="stats-chart-label"><span title="[^"]*">Unit or scale<\/span><small><span class="stats-db-thin" aria-hidden="true"><span><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>428<\/span><span><i class="stats-swatch stats-part-corrects-2" aria-hidden="true"><\/i>892<\/span><\/span><\/small><\/span>/);
   assert.equal((found.match(/<small><span class="stats-db-thin"/g) || []).length, 1);
@@ -2555,9 +2555,9 @@ function row(overrides = {}) {
   // Without corrections.by, or when the causes code finds do not add up to its code count, the bars are not split and
   // How these numbers are counted gives the two counts; a cause with no family is counted apart.
   withOut((data) => { delete data.corrections.by; });
-  assert.doesNotMatch(figureHtml("db-found"), /Exact factor found automatically|checked against the paper/);
+  assert.doesNotMatch(figureHtml("db-found"), /Exact factor found automatically|AI check of the paper|checked against the paper/);
   withOut((data) => { data.corrections.by = { code: 900, paper_check: 648 }; });
-  assert.match(methodHtml(), /648 checked against the paper; for 900 an automated check found an exact factor\./);
+  assert.match(methodHtml(), /648 found by an AI check of the paper; for 900 an automated check found an exact factor\./);
   assert.doesNotMatch(figureHtml("db-found"), /<ul class="stats-legend">/);
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause\.<\/span> [^<]*2 corrections have causes not named here\.<\/dd>/);
@@ -4514,9 +4514,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(section, /<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub>: Same as BRENDA, SABIO-RK\.<\/span><\/p>/);
   // A value that is not the same: a folding note. Its summary says the parameter and the result (the line names the
   // databases); its body CatLog's line whole, the cause only where the line does not say it (here the factor does), and
-  // the checker's notes folded under "How it was checked". On a phone only the first note on a correction or a different
+  // the checker's notes folded under "What the AI check found". On a phone only the first note on a correction or a different
   // number is open.
-  assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><details class="cmp-how"><summary>How it was checked<\/summary><p>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/p><\/details><\/div><\/details>/);
+  assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><details class="cmp-how"><summary>What the AI check found<\/summary><p>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/p><\/details><\/div><\/details>/);
   assert.doesNotMatch(section, /<dt>Cause<\/dt>|<dt>In the paper<\/dt>|list another number/);
   assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> for this paper\.<\/p><\/div><\/details>/);
   // The compared databases (the six fallback names: this snapshot neither lists nor counts them), each kept whole on one
@@ -4647,12 +4647,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(valuesOf(html), /data-show-note="km">corrects a database</, "no database named: no name made up");
   html = render(v2Summary, v2Detail([line("Km", { database_status: "corrected", database_line: "BRENDA lists 5 mM.", database_cause: "a misread header" })]));
   assert.match(html, /<dt>Cause<\/dt><dd>a misread header<\/dd>/);
-  // The checker's notes are folded and muted under "How it was checked" (never labelled "In the paper", which names the
+  // The checker's notes are folded and muted under "What the AI check found" (never labelled "In the paper", which names the
   // printed quote), without a last part that only gives again the number the line names first.
   html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK", "OED"], database_cause: "paper_unit_misprint",
     database_line: "SABIO-RK and OED list 917.7 mM⁻¹ s⁻¹: the printed value in its printed unit. The paper prints 55.06 µM⁻¹ min⁻¹ (Table I).",
     database_evidence: "Table I, wild type: kcat/Km column prints 55.06; kcat 12.45 min⁻¹ / Km 228.78 µM = 0.0544 µM⁻¹ min⁻¹ (54.4 mM⁻¹ min⁻¹). OED and SABIO-RK list 917.7 mM⁻¹ s⁻¹" })]));
-  assert.match(html, /<details class="cmp-how"><summary>How it was checked<\/summary><p>Table I, wild type: kcat\/Km column prints 55\.06; kcat 12\.45 min⁻¹ \/ Km 228\.78 µM = 0\.0544 µM⁻¹ min⁻¹ \(54\.4 mM⁻¹ min⁻¹\)\.<\/p><\/details>/);
+  assert.match(html, /<details class="cmp-how"><summary>What the AI check found<\/summary><p>Table I, wild type: kcat\/Km column prints 55\.06; kcat 12\.45 min⁻¹ \/ Km 228\.78 µM = 0\.0544 µM⁻¹ min⁻¹ \(54\.4 mM⁻¹ min⁻¹\)\.<\/p><\/details>/);
   assert.equal((html.match(/917\.7/g) || []).length, 1, "the database's number once, in the line");
   html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK"],
     database_line: "SABIO-RK lists 2.4 × 10⁻⁹ mM⁻¹ s⁻¹, 10¹²× lower.", database_evidence: "Table 5 prints 2.4; footnote b '(kcat/Km) x 10⁶ M⁻¹ s⁻¹'; SABIO-RK 2.4 × 10⁻⁹ mM⁻¹ s⁻¹ (=x10⁻⁶ M⁻¹ s⁻¹)" })]));
@@ -4663,7 +4663,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<p>Table 1 prints 105\.58 ± 12\.16; BRENDA lists kcat 0\.042 s⁻¹, Km 4\.1 mM<\/p>/);
   // A local file named as evidence is never shown.
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
-  assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>|How it was checked/);
+  assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>|What the AI check found/);
   // Values whose lines read the same share one line; a kcat/Km CatLog calculated is not compared (its own muted line
   // with no square, after the compared values and their notes; never alone).
   const calculatedSummary = { ...v2Summary, record_key: "v2-db-calc", kcat_over_km_origin: "calculated" };

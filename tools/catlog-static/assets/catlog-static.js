@@ -5936,7 +5936,7 @@
   // separate AI check that read the paper names every other cause. corrections.by counts the two (code, paper_check).
   const STATS_CODE_CAUSES = ["power_of_ten", "time_factor", "printed_number_unit_not_applied"];
   const STATS_FOUND_BY = [
-    { key: "paper_check", part: "corrects", label: "Checked against the paper", title: "A separate AI check read the paper and named the cause" },
+    { key: "paper_check", part: "corrects", label: "AI check of the paper", inline: "AI check of the paper", title: "A separate AI check read the paper and named the cause" },
     { key: "code", part: "corrects-2", label: "Exact factor found automatically", title: "An automated check found the database's number is the paper's times an exact factor" },
   ];
 
@@ -6391,11 +6391,11 @@
         label: href ? `<a class="stats-link" href="${escapeHtml(href)}" title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</a>`
           : `<span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span>`,
         parts: [{ text: formatInteger(count) }, ...(rate ? [{ text: statsShare(count, found.total), className: "stats-muted" }] : [])],
-        text: `${family.label}: ${formatInteger(count)}${rate ? ` (${statsShare(count, found.total)})` : ""}${split ? `; ${STATS_FOUND_BY.map((level, index) => `${level.label.toLowerCase()} ${formatInteger(levels[index])}`).join(", ")}` : ""}.`,
+        text: `${family.label}: ${formatInteger(count)}${rate ? ` (${statsShare(count, found.total)})` : ""}${split ? `; ${STATS_FOUND_BY.map((level, index) => `${level.inline || level.label.toLowerCase()} ${formatInteger(levels[index])}`).join(", ")}` : ""}.`,
       };
     });
     const notes = [
-      !split && byValid ? `${formatInteger(paperCheck)} checked against the paper; for ${formatInteger(code)} an automated check found an exact factor.` : "",
+      !split && byValid ? `${formatInteger(paperCheck)} found by an AI check of the paper; for ${formatInteger(code)} an automated check found an exact factor.` : "",
       found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here.` : "",
     ].filter(Boolean).join(" ");
     return {
@@ -12539,7 +12539,7 @@
         .map((entry) => databaseFactorText(entry.x)).find(Boolean) || ""
       : "";
     // The line's own parts (database_parts): a "cause" part means the line ends with the cause a check against the
-    // paper found ("Checked against the paper: ...").
+    // paper found ("An AI check of the paper found the cause: ...").
     const parts = line?.database_parts && typeof line.database_parts === "object" ? line.database_parts : {};
     return { status, sentence, cause, causeCode, sources, evidence: looksLikeLocalPath(evidence) ? "" : evidence,
       databases: [sources.join(", "), listed].filter(Boolean).join(": "), factorOnly, factor, lineHasCause: Boolean(shownText(parts.cause)) };
@@ -12554,7 +12554,7 @@
   }
 
   // The cause a note adds under its line (database_cause in words), or "" when the line already says it: word for word,
-  // as its own last part ("Checked against the paper: ...", database_parts.cause), by the factor between the two numbers
+  // as its own last part ("An AI check of the paper found the cause: ...", database_parts.cause), by the factor between the two numbers
   // ("10× lower", "60× CatLog's value", "= the printed 21 × 60", "the printed number in mM": what a cause found
   // automatically is), or as another measurement. A factor-only value's result already says "exact factor, not yet
   // checked"; its row then gives only the factor, when its line does not.
@@ -12738,7 +12738,7 @@
 
   // One value that is not the same: a folding note. Its summary: the parameter and the result (square and word); its
   // body: CatLog's line whole (it names the databases and their numbers), the cause when the line does not say it
-  // (databaseCauseShown), then the checker's own notes folded under "How it was checked" (databaseEvidenceText). Each
+  // (databaseCauseShown), then the checker's own notes folded under "What the AI check found" (databaseEvidenceText). Each
   // fact is said once. A note with nothing in its body is a plain line.
   function databaseNoteHtml({ field, metric, facts }, open) {
     const result = databaseResult(facts.status);
@@ -12751,7 +12751,7 @@
     const cause = databaseCauseShown(facts);
     const evidence = databaseEvidenceText(facts);
     const body = line + kvList([cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : ""], "cmp-facts")
-      + (evidence ? `<details class="cmp-how"><summary>How it was checked</summary><p>${caretHtml(escapePublic(evidence))}</p></details>` : "");
+      + (evidence ? `<details class="cmp-how"><summary>What the AI check found</summary><p>${caretHtml(escapePublic(evidence))}</p></details>` : "");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;
     return body
       ? `<details ${attributes}${open ? " open" : ""}><summary>${summary}</summary><div class="cmp-note-body">${body}</div></details>`
