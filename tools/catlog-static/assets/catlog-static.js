@@ -4096,8 +4096,11 @@
       return `<line class="stats-donut-gap" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     }).join("");
     const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
+    // (Not checked's slices are slate hatching, the bars' 135° lines: the stylesheet fills them with this pattern)
+    const hatch = parts.some((part) => /^(unverified|not-reviewed|not-checked)$/.test(part.part) && part.count > 0)
+      ? `<defs><pattern id="statsHatchNotChecked" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)"><rect class="stats-hatch-ground" width="4" height="4"/><rect class="stats-hatch-line" width="1.5" height="4"/></pattern></defs>` : "";
     return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
-      <g class="stats-donut-slices">${paths.join("")}</g>${gaps}
+      ${hatch}<g class="stats-donut-slices">${paths.join("")}</g>${gaps}
       <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 8}">${formatInteger(total)}</text>
       <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
     </svg>`;

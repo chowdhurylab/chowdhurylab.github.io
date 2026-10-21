@@ -2115,8 +2115,9 @@ def check_stats_new_figures(driver, browser, url):
                 .some(e => (e.matches(hatched) ? !/^repeating-linear-gradient\\(135deg/.test(getComputedStyle(e).backgroundImage)
                     : getComputedStyle(e).backgroundImage !== 'none') || getComputedStyle(e).filter !== 'none')"""
         assert driver.execute_script(glow) is False
-        # One meaning per colour on one page (round 14): a correction never looks like Not confirmed's salmon. Corrects a value is the sidebar square's opaque red, far
-        # (CIE76 > 20) from salmon at 60%; the exact-factor kind is hatched, not a lighter fill.
+        # One meaning per colour on one page (round 14): a correction never looks like Not confirmed's salmon, and Not
+        # checked never like Accepted's navy a step lighter. Corrects a value is the sidebar square's opaque red, far
+        # (CIE76 > 20) from salmon at 60%; the exact-factor kind and Not checked are hatched, not lighter fills.
         fills = driver.execute_script("""
             const rgb = text => { const v = (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number); return text.startsWith('color(') ? v.map(x => x * 255) : v; };
             const lab = c => { const [r, g, b] = rgb(c).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
@@ -2132,7 +2133,8 @@ def check_stats_new_figures(driver, browser, url):
                     donut: [...document.querySelectorAll('.stats-donut path.stats-part-unverified, .stats-donut path.stats-part-not-reviewed')].map(e => getComputedStyle(e).fill)};
         """)
         assert fills["de"] is None or fills["de"] > 20, fills
-        assert fills["second"] is None or fills["second"].startswith("repeating-linear-gradient"), fills
+        assert all(value is None or value.startswith("repeating-linear-gradient") for value in (fills["second"], fills["unchecked"])), fills
+        assert all("statsHatchNotChecked" in value for value in fills["donut"]), fills
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
         assert driver.execute_script(glow) is False
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})

@@ -500,8 +500,8 @@ Colour meanings (round 14, the user: "you keep using the same colours of the Nat
 right?"). The palette is Supantha's saved Nature BPG (ggsci npg "nrc"). One meaning per colour, the same meaning on
 Browse, the record, the chips, the sidebar's dots, Stats, the Guide's legend and Team, and colour never alone (a dot, a
 square, a tick, a "!" disc or the words go with it). Marks (dots, squares, the "!" disc, ticks) are opaque; figures fill
-at 60% (#RRGGBB99 on white) with a 1px opaque outline, with two exceptions where a 60% fill would look like another
-meaning's: a correction is opaque red, and the exact-factor corrections are red hatching; tints
+at 60% (#RRGGBB99 on white) with a 1px opaque outline, with three exceptions where a 60% fill would look like another
+meaning's: a correction is opaque red, and the exact-factor corrections and Not checked are hatched (red, slate); tints
 (the colour at 9-12% on white) only behind words. Text
 passes WCAG AA (4.5:1; 3:1 for large numbers and for marks): where a colour is too light for text or for a mark on white
 (cyan, mint, salmon, tan), the text takes a darker shade of the same hue and the mark a 1px ring of it, and the palette
@@ -511,7 +511,7 @@ colour itself goes on the mark beside the words.
 |---|---|---|---|
 | navy #3C5488 | Accepted | status dot, Accepted's count (counts band, Stats band), ticks, chips, Stats bars and donut | itself, 7.5:1 |
 | salmon #F39B7F | Not confirmed | status dot (ringed), ticks, chips, Stats bars and donut | ring and tick #c4664a, 3.9:1 (the words are ink) |
-| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips, Stats bars and donut | tick #6a7499, 4.6:1 |
+| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | tick #6a7499, 4.6:1 |
 | deep red #DC0000 | Disputed | status dot, ticks, chips, Stats bars | itself, 5.2:1 |
 | cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds at 60/40/20%), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |

@@ -1185,6 +1185,13 @@ a.stats-total-value:focus-visible { outline:0 }
    the exact-factor kind red hatching on white. */
 :is(.stats-seg, .stats-swatch):is(.stats-part-corrects, .stats-part-magnitude) { background:var(--part) }
 :is(.stats-seg, .stats-swatch).stats-part-corrects-2 { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
+/* Not checked (both its kinds, Unverified and Not reviewed) is slate hatching on white with a slate outline, never a
+   flat slate fill: slate at 60% (#B5BDD2) is Accepted's navy at 60% (#8A98B8) a step lighter in the same hue, so the
+   pattern, not lightness alone, tells the two apart (the donut draws it with an SVG pattern of the same lines). */
+:is(.stats-seg, .stats-swatch):is(.stats-part-unverified, .stats-part-not-reviewed, .stats-part-not-checked) { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
+.stats-donut path:is(.stats-part-unverified, .stats-part-not-reviewed, .stats-part-not-checked) { fill:url(#statsHatchNotChecked) }
+.stats-hatch-ground { fill:var(--bg) }
+.stats-hatch-line { fill:var(--st-unverified) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
