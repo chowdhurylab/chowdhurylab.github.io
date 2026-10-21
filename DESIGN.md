@@ -80,8 +80,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
 S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
    right?)"): the figures and tables that do not tell the main story, last before How these numbers are counted, in
-   four groups named as the parts (What is in the catalog: Read from the paper and not yet re-read, Values per paper,
-   Papers by parameter, What the records contain, Wild type and variants; Biology: the four top-ten tables, Single
+   four groups (What is in the catalog: Read from the paper and not yet re-read, Values per paper,
+   Papers by parameter, What the records contain, Wild type and variants; Organisms, enzymes and variants (Biology
+   until round 14's polish): the four top-ten tables, Single
    substitutions, Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as printed,
    Cautions on values; Against the databases: the same by enzyme class, Results by database, Paired values by
    database, Corrections by cause and database, Corrections on records not yet re-read, Entries replaced by reading
@@ -364,7 +365,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     unit, is the same number), the median kcat ÷ Km in mM⁻¹ s⁻¹ with M⁻¹ s⁻¹ under it, the records at the diffusion
     limit or above (10⁸, and how many at 10⁹), then a table of the class medians (Enzyme class, kcat, Km, Records;
     each class linked to ec=N.&source=paper&metric=kcat,km): a row lights its dot and the dot its row, the other dots
-    dimmed; on phones the table gives the class number alone (the names are in Biology and the dots' tooltip lines),
+    dimmed; on phones the table gives the class number alone (the names are in the supplement's Organisms, enzymes and variants and the dots' tooltip lines),
     so its numbers keep their columns at 320px in DejaVu Sans. The plot is an image with its summary in aria-label.
   - Variants against their wild type (`mutations`): each variant record read from the paper (a variant has one per
     substrate and condition) paired with the one wild-type record its paper gives for the same enzyme, organism,
@@ -622,4 +623,6 @@ checked (Checks: the second AI check, an AI audit, a human review), then conditi
 paper. What is the same on every record (how CatLog reads, checks and converts a value) is the Guide's, linked once
 under Checks ("How CatLog reads a value →", #guide-how-read); the license and the snapshot are one footnote under the
 record's buttons; nothing the header says (form, "from paper") is repeated in a section
-(tools/catlog-static/DESIGN.md, Record Details).
+(tools/catlog-static/DESIGN.md, Record Details). Its name wraps between its parts only (at a space or after a hyphen or
+slash), a short locant ("4-", "1,2-") kept with the part after it, and on a phone it takes the panel's width under
+‹ › × after its first lines (round 14).

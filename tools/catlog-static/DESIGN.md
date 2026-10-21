@@ -217,9 +217,11 @@ human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, 
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
 hyphen, never into its count), its tick green, and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
-the four results and human-checked in one short sentence each, "Accepted — passed
-review: ...", a dash after the result and the sentence in lower case after it, never
-"Accepted: Passed review:" (each option's
+the four results and human-checked in one short sentence each, "Accepted — read
+from the paper by CatLog, ...", a dash after the result and the sentence in lower case after it, never
+"Accepted: Read from the paper:"; every group's "?" (Source, Against the databases, Cautions too) gives a name, a dash
+and its definition this way, the definition in lower case unless it starts with a name such as Km or CatLog
+(aboutDefinition; round 14) (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
 the tags are defined, so the box stays small and the options stay in view); then one "More filters" disclosure, closed
 at rest, holding the specialist groups, first Source (round 14, the user 2026-10-20: "the filter section source can go
@@ -558,8 +560,8 @@ desktop too (before any condition or series note, "· +10 mM FBP"; the "!" has t
 record's note as its tooltip); the record says it on its Temperature line, and the
 Cautions filter finds it. A caution states the problem, never an
 order: the tooltip is the record's note ("The paper's kcat/Km (2.2 mM⁻¹ s⁻¹) is
-1.6-fold above kcat ÷ Km (1.3 mM⁻¹ s⁻¹). All three are stored as the paper gives
-them."; a familiar factor is named as a fact, and on a record read from the
+1.6-fold above kcat ÷ Km (1.3 mM⁻¹ s⁻¹). All three are stored as printed."; a
+familiar factor is named as a fact in a few words, "The factor is near 1000, as between per mM and per M.", and on a record read from the
 paper the printed numbers' own arithmetic says when they agree in one unit); the
 short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the stored
 value on older snapshots too), kcat > 10⁸ s⁻¹ (an older snapshot's flag on a kcat
@@ -706,11 +708,16 @@ come first, the context after.
   into view; disabled at either end, while a sort waits for the records and when the results do not hold the record;
   the button pressed keeps the focus, the other one takes it at an end) and × close, the name's line keeping their
   88px clear so a long name wraps before them (on phones and touch screens all three are 44px targets with 8px more
-  before ×, so a near miss on › never closes the record, and the name keeps 148px clear); "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
+  before ×, so a near miss on › never closes the record, and the name keeps 148px clear; on phones only beside them:
+  a float their size keeps the first lines clear and the name takes the panel's width below them, round 14). The name
+  wraps between its parts only, at a space or after a hyphen or slash, never inside a part and never right after a
+  short locant ("4-", "1,2-", "3α-", "D-2-"), which stays with the part after it, nor before a last part of three
+  characters or fewer ("TEM-1"): each part is an inline block (detailNameHtml), so a part too wide for the line beside
+  the buttons goes under them whole; the text and a copy of it are the name as it is. "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
   `N145A`" (the binomial in italics, a strain or "sp." roman; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
-  paper does not print reads "EC 2.3.1.183 (from enzyme databases; not printed
-  in the paper)"); "Substrate: ..." (two lines at most; in full under Protein
+  paper does not print reads "EC 2.3.1.183 (from the databases; not in the
+  paper)"); "Substrate: ..." (two lines at most; in full under Protein
   and substrate), with the record's condition note under it in grey; one status
   line in the table's colours, the dot in the exact status's colour (slate for
   Unverified, tan with its ring for Not reviewed, salmon with its ring for Not
@@ -846,7 +853,8 @@ come first, the context after.
   stated in the paper" on a record read from the paper and "Not recorded" on a
   database record, "Not recorded (source note: 25 °C)" when its source's note
   gives one temperature; a value a flag holds back says why on its own row ("Not
-  shown, the source's temperature unit is unclear (source note: 30 °C)"); a
+  shown, the source's temperature unit is unclear (source note: 30 °C)", "Not shown, recorded as exactly 0 °C, which
+  may mean none was given"); a
   cofactor that is the substrate is not repeated. A labelled row never shows a
   bare dash. An older record's "buffer ..." item that the earlier pipeline cut
   at the paper's first "." or "," ("buffer containing 0" for 0.1 M, "Tris-HCl
@@ -1025,7 +1033,7 @@ come first, the context after.
   (the earlier automated review's result; "Corrected and accepted in the earlier automated review (see Corrected
   earlier)."), and the one link "How the earlier review worked →" (#guide-method) under the rows; for a database record the earlier review did not settle
   (Not confirmed, Not checked) with a paper, a Paper check row under it, "Not
-  yet checked against the paper: the values are the database's." (not on one
+  yet checked; the values are the database's." (not on one
   whose Evidence reads "Located in the paper", nor on one that names no
   paper); an AI audit line with the audit's date and verdict only; a
   Human review line with the reviewer's facts-only note on every record that
@@ -1101,7 +1109,8 @@ the paper, kcat against Km as a density map with lines of equal kcat/Km, the dif
 and variants against their wild type of the same paper, enzyme, substrate, pH and temperature), 5 Against the databases
 (from the manifest's database comparison: a short lead that says once that a different number can mean a different
 measurement, values against the databases, corrections by cause), then S Supplementary figures and tables (round 14):
-every other figure and table, numbered apart (Figure S1, Table S1), in four groups named as the parts, each item one
+every other figure and table, numbered apart (Figure S1, Table S1), in four groups (What is in the catalog;
+Organisms, enzymes and variants, called Biology until round 14's polish; Values; Against the databases), each item one
 closed line (a details whose summary holds its number and title) that opens its figure, with its own address
 (#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
 variant and units as printed, counted by build_overview from the records read from the paper.
@@ -1262,3 +1271,24 @@ Generated mockups guide layout only; their text is not a scientific source.
 - Stats' Human review headline says beside its share how many entries had a value the reviewer could not find.
 - Stats' Against the databases figures and tables count the exact-factor values not yet checked against the paper
   under Different number, as the lead does (overview.database_factor_only splits them by parameter and database).
+
+## Round 14 words and polish
+
+- Words (the user, 2026-10-20: "do some passes on the verbose too for the overall setup"): every string the site makes
+  says its facts in as few words as it can: a group's "?" a line per option, the Download and Export menus a few words
+  per file ("Every field, with sequences, SMILES and paper links"; "The table's columns; no sequences, SMILES or paper
+  links"; "Values read from the paper, one row per database listing the paper (CSV)"; "Source records and review
+  notes, on request by email"), the review results' definitions without "Passed review:", the Not yet re-read help
+  "from CatLog's earlier version, built from database entries and partly checked against the papers; replaced when
+  CatLog reads the paper.", the empty record panel "Select a record to see its values and sources." Sentences that come
+  from the data (database lines, review notes, the README) are reworded where they are made, in catlog-v2.
+- The Download menu gives a file's rows and size on a line of their own under what it holds (the spans keep a line
+  break: white-space pre-line), so no line starts with " · ".
+- Every disclosure opens with a muted + (− when open): Stats' How these numbers are counted and Fields saved in records
+  that are not accepted, and the Guide's Questions and evidence labels, as the supplement, the record and the Guide's
+  Reference do; no triangles.
+- The counts band's Read from the paper label keeps its cyan text at 0 (no link then), as Human-checked keeps its green.
+- On a phone the Checks on the values cards stand one per row without the blank meter that lines them up side by side,
+  so the Second AI check has no gap above its result.
+- kcat, Km and kcat/Km are in italics with subscripts in the database lines and the Human review line of a record too
+  (kineticWordsHtml: never before or after a hyphen, so a name such as "Ki-67" stays as written).
