@@ -1169,11 +1169,12 @@ link to them; keep every one):
   next readings). Then one line, "Units are converted automatically; no model types a converted number.", and two links,
   "Checks so far on Stats" (#stats-quality) and "People behind CatLog" (Team). The site says "automated checks" and
   "found automatically", never "code", as the README does.
-- Read a record (#guide-record): "Click a row to open its record." then a record drawn as the panel draws it, in the
+- Read a record (#guide-record): "Select a row to open its record." then a record drawn as the panel draws it, in the
   panel's order (title, EC · organism · form, substrate; the status line with tags; the values table with ticks, As
   printed and its caption "Printed in Table 1"; the quoted line "In the paper: …"; Against the databases, the real
   record's three lines, 07fd908d4f44bfe6, BRENDA's Km 10× the paper's 0.82 µM; Checks with Second check and Human
-  review; Conditions, Protein and substrate and Paper as plain labels), each part numbered, beside a numbered key of one
+  review; Conditions, Protein and substrate and Paper as plain labels), each part numbered (plain 14px accent figures,
+  no discs, as a journal figure labels its parts), beside a numbered key of one
   short line each (under it below 900px); the Checks key line links How CatLog reads a value. A part the snapshot lacks
   (Against the databases) is hidden with its key line, so the numbers stay in sequence. On phones the example's values
   table puts each As printed under its value. When the record's sections change, this example changes with them.
