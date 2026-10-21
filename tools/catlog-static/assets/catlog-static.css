@@ -2312,7 +2312,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    steps, the numbered record, the legend) reuse the page's own components (status dot, tags, values table, filter chips,
    database squares), so their colours follow the tokens. Every rule is scoped to .guide-view, so it wins over the older
    Guide rules above. */
-.guide-view .guide-shell { box-sizing:content-box; width:auto; max-width:1000px; margin:0 auto; padding:32px 24px 56px; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
+/* Round 15 polish: the Guide sits in Stats' and Team's 1200px container with their 24px gutters, so a view's title keeps
+   its place when the tabs change (the Guide's had stood 76px further right at 1440px); its content keeps to 1000px at the
+   left, and every paragraph to one measure, 68 characters of its own size (three had run the whole 1000px, about 130
+   characters a line). Tables and figures keep their width. */
+.guide-view .guide-shell { width:auto; max-width:1200px; margin:0 auto; padding:32px 24px 56px; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
+.guide-view .guide-shell > * { max-width:1000px }
+.guide-view .guide-shell p:not(table p) { max-width:68ch }
 .guide-view .guide-shell :is(p, dd, dt, li, summary) { font-size:var(--fs-16); line-height:var(--lh-16) }
 .guide-view .guide-shell :is(h1, h2, h3) { color:var(--text); font-weight:600; letter-spacing:0 }
 .guide-view .guide-shell :where(.guide-section, .guide-citation, .guide-sources, .guide-heading) > :where(p, dl, ul, details),
@@ -2352,7 +2358,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-shell .guide-keeps { margin:20px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 /* The earlier version, in two short sentences under the four steps (#guide-earlier: a record not yet re-read links it). */
 .guide-view .guide-shell .guide-earlier > h3.guide-flow-title { margin:24px 0 6px; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
-.guide-view .guide-shell .guide-earlier > p { margin:0; max-width:72ch; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-shell .guide-earlier > p { margin:0; max-width:68ch; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-shell .guide-loop-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-loop-links a { white-space:nowrap }
 .guide-view .guide-loop-links a::after { content:"\00a0\2192"; content:"\00a0\2192" / "" }

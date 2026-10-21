@@ -217,6 +217,19 @@ def check_guide(driver, wait):
     assert driver.execute_script("return document.getElementById('guide-method').contains(document.getElementById('guide-earlier'))")
     assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "back from the papers the enzyme databases cite" in guide_heading_text(driver)
     assert driver.execute_script(GUIDE_PICTURES_JS) == [], driver.execute_script(GUIDE_PICTURES_JS)
+    # Round 15 polish: the Guide sits in Stats' and Team's container (a view's title keeps its place when the tabs change),
+    # and no paragraph outside a table runs past 68 characters of its own size.
+    measure = driver.execute_script("""
+        const shell = document.querySelector('#guideView .guide-shell');
+        const box = e => { const style = getComputedStyle(e); return [style.maxWidth, style.boxSizing, style.paddingLeft, style.marginLeft === style.marginRight]; };
+        // (68ch of the paragraph's own font: its max-width, which every paragraph outside a table has)
+        const wide = [...shell.querySelectorAll('p')].filter(p => !p.closest('table') && p.getClientRects().length
+            && (getComputedStyle(p).maxWidth === 'none' || p.getBoundingClientRect().width > 0.7 * 68 * parseFloat(getComputedStyle(p).fontSize) + 1))
+            .map(p => p.textContent.trim().slice(0, 50));
+        return {guide: box(shell), stats: box(document.querySelector('.stats-shell')), team: box(document.querySelector('.team-shell')), wide,
+                desktop: innerWidth >= 1024};
+    """)
+    assert (not measure["desktop"] or measure["guide"] == measure["stats"] == measure["team"]) and not measure["wide"], measure
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("independent", "AI run", "Checks pending", "Exporter", "exporter", *DROPPED_WORDING):
         assert word not in guide_text, f"The Guide still says {word}"

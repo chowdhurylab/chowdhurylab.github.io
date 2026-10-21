@@ -1217,7 +1217,10 @@ minute what CatLog is, how to read a record and what each label means. Rules for
 - The look is calm and editorial: hairlines between parts, no boxes round prose, no icons, no tinted washes, shadows or
   pill buttons (the contents are plain links); the example record keeps its 1px card, and its parts' numbers are small
   accent circles (CSS counters).
-- One column up to 1000px; prose keeps to 68ch (16px body, 14px in tables and legends).
+- One column up to 1000px, at the left of Stats' and Team's 1200px container (the same 24px gutters, so a view's title
+  keeps its place when the tabs change; round 15 polish: the Guide's had been centred, 76px further right at 1440px);
+  every paragraph outside a table keeps to 68ch of its own size (16px body, 14px in tables and legends; three had run
+  the whole 1000px).
 
 Word counts (Chrome at 1440px, the live round-13 data; prose = the words outside figure labels, legend items, tables,
 reference data such as citations and database versions, and headings): round 13 had 1,524 words in view (374 of them
