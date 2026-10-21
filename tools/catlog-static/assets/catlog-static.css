@@ -283,8 +283,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .summary-accepted, .snapshot-paper, .snapshot-checked, .snapshot-meta { border-left:1px solid var(--line-soft); padding-left:var(--cell-pad) }
 .summary-card > span, .snapshot-paper > span, .snapshot-checked > span { display:inline-flex; align-items:center; color:var(--muted); font-size:var(--fs-13); line-height:16px }
 .summary-card > strong, .snapshot-paper > strong, .snapshot-checked > strong { align-self:baseline; color:var(--key); font-size:var(--band-num); font-weight:600; line-height:var(--band-num-lh) }
-/* A line of context under each number (and under the parameters): muted, 12px, one line. */
+/* A line of context under each number (and under the parameters): muted, 12px, one line. Where the cells are narrow
+   (below 1280px) Read from the paper's share leaves its "of records" to screen readers ("40.4% · 4,324 papers"). */
 .snapshot-note { display:block; min-height:var(--lh-12); color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); white-space:nowrap }
+@media (max-width: 1279px) {
+  .snapshot-note-base { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+}
 /* The meaning colours: the same as everywhere else on the site (DESIGN.md "Type And Color", one meaning per colour). */
 .summary-card.summary-accepted { --key:var(--st-accepted) }
 .summary-accepted > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted) }

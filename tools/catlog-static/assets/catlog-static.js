@@ -3713,15 +3713,13 @@
 
   // The papers behind the current results, counted as the overview counts them (scripts/build-catlog-followup-summary.py
   // paper_keys: a record's PMIDs, else its DOIs): all of them and those of the records read from the paper. The
-  // unfiltered view gives the snapshot's own counts (summary.overview); a filtered one counts its rows once per results
-  // list (one pass, numbers only: PMIDs as themselves, DOIs by their negative position).
+  // unfiltered view gives the snapshot's own counts (summary.overview). A filtered view counts its rows once per results
+  // list (one pass, numbers only: PMIDs as themselves, DOIs by their negative position), and only when the same count
+  // over every record gives the snapshot's own two numbers: an index without paper fields, or a record the overview
+  // counts by an id the index does not carry (a stand-in NP id), leaves a filtered view with no paper count (facts only).
   let summaryPapersCache = { rows: null, counts: null };
-  function summaryPaperCounts(rows) {
-    const overview = statsOverview(Number(manifest.total_rows || 0));
-    const snapshot = { all: statsCount(overview?.papers), fromPaper: statsCount(overview?.from_paper?.papers) };
-    if (!state.recordsReady) return activeFilterItems().length ? { all: null, fromPaper: null } : snapshot;
-    if (rows.length === state.records.length && snapshot.all !== null && snapshot.fromPaper !== null) return snapshot;
-    if (summaryPapersCache.rows === rows) return summaryPapersCache.counts;
+  let summaryPapersCheck = { records: null, snapshot: "", agrees: false };
+  function countSummaryPapers(rows) {
     const all = new Set();
     const fromPaper = new Set();
     for (const row of rows) {
@@ -3736,7 +3734,21 @@
         if (paper) fromPaper.add(key);
       }
     }
-    summaryPapersCache = { rows, counts: { all: all.size, fromPaper: fromPaper.size } };
+    return { all: all.size, fromPaper: fromPaper.size };
+  }
+  function summaryPaperCounts(rows) {
+    const overview = statsOverview(Number(manifest.total_rows || 0));
+    const snapshot = { all: statsCount(overview?.papers), fromPaper: statsCount(overview?.from_paper?.papers) };
+    const unknown = { all: null, fromPaper: null };
+    if (!state.recordsReady) return activeFilterItems().length ? unknown : snapshot;
+    if (rows.length === state.records.length) return snapshot;
+    const snapshotKey = `${snapshot.all}/${snapshot.fromPaper}`;
+    if (summaryPapersCheck.records !== state.records || summaryPapersCheck.snapshot !== snapshotKey) {
+      const whole = snapshot.all !== null && snapshot.fromPaper !== null ? countSummaryPapers(state.records) : unknown;
+      summaryPapersCheck = { records: state.records, snapshot: snapshotKey, agrees: whole.all === snapshot.all && whole.fromPaper === snapshot.fromPaper };
+    }
+    if (!summaryPapersCheck.agrees) return unknown;
+    if (summaryPapersCache.rows !== rows) summaryPapersCache = { rows, counts: countSummaryPapers(rows) };
     return summaryPapersCache.counts;
   }
 
@@ -3744,9 +3756,56 @@
     return `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
   }
 
-  // The counts band (round 15): one even row of the four key numbers, each with one short line of context under it (the
-  // papers behind the records, Accepted's share of them, Read from the paper's share and papers, what Human-checked
-  // means), then the parameters, a label over each count and one line under them. The snapshot date ends the line above.
+  // A share on the counts band's lines of context: one decimal; "100%" and "0%" only when exact, "<0.1%" and ">99.9%"
+  // near the ends (never a rounded 0.0% or 100.0% beside a count that is not 0 or all of them); "" without a count.
+  function bandShare(count, total) {
+    if (!Number.isInteger(count) || !Number.isInteger(total) || total <= 0 || count < 0 || count > total) return "";
+    if (count === 0) return "0%";
+    if (count === total) return "100%";
+    const percent = count / total * 100;
+    if (percent < 0.1) return "<0.1%";
+    if (percent > 99.9) return ">99.9%";
+    return `${percent.toFixed(1)}%`;
+  }
+
+  // The lines of context under the key numbers (facts from the manifest or the loaded results; none for a count of 0 or
+  // a dash, and none at all while a filtered view's records load, so no line mixes the snapshot with the filter):
+  // Records the papers they come from, Accepted its share of the records, Read from the paper its share and its papers
+  // (only the papers when it is all of the records; the share's "of records" is left to screen readers where the cell
+  // is narrow, below 1280px), Human-checked its share of the accepted records (human-checked records are accepted ones).
+  function bandNotes({ totalRows, accepted, fromPaper, checked, papers, pending }) {
+    if (pending) return { records: "", accepted: "", fromPaper: { text: "", html: "", title: "" }, checked: "" };
+    const share = (count, total, base) => (count > 0 && bandShare(count, total) ? `${bandShare(count, total)} of ${base}` : "");
+    const paperShare = fromPaper > 0 ? bandShare(fromPaper, totalRows) : "";
+    let fromPaperNote = { text: "", html: "", title: "" };
+    if (paperShare && papers.fromPaper > 0) {
+      const words = paperWords(papers.fromPaper);
+      fromPaperNote = paperShare === "100%"
+        ? { text: words, html: escapeHtml(words), title: `All of the records, from ${words}` }
+        : { text: `${paperShare} of records · ${words}`, title: `${paperShare} of the records, from ${words}`,
+          html: `${escapeHtml(paperShare)}<span class="snapshot-note-base"> of records</span> · ${escapeHtml(words)}` };
+    } else if (paperShare) {
+      fromPaperNote = { text: `${paperShare} of records`, html: escapeHtml(`${paperShare} of records`), title: "" };
+    }
+    return {
+      records: papers.all > 0 ? paperWords(papers.all) : "",
+      accepted: share(accepted, totalRows, "records"),
+      fromPaper: fromPaperNote,
+      checked: share(checked, accepted, "accepted"),
+    };
+  }
+
+  function setBandNote(id, text, html = escapeHtml(text), title = "") {
+    const note = $(id);
+    if (!note) return;
+    note.innerHTML = html;
+    if (title) note.setAttribute("title", title);
+    else note.removeAttribute("title");
+  }
+
+  // The counts band (round 15): one even row of the four key numbers, each with one short line of context under it, then
+  // the parameters behind a thin rule, a label over each count and one line under them. The snapshot date ends the line
+  // above.
   function renderSummary() {
     const summary = manifest.summary || {};
     const coverage = summary.coverage || {};
@@ -3755,18 +3814,27 @@
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
     const accepted = recordStateCounts(rows).accepted || 0;
     const papers = summaryPaperCounts(rows);
-    // Each key number wears its meaning's colour (the card's records and accepted classes; the stylesheet's band).
+    const fromPaper = renderFromPaperCount(rows);
+    const checked = renderHumanCheckedCount(rows);
+    const notes = bandNotes({ totalRows, accepted, fromPaper, checked, papers, pending: !isLoaded && activeFilterItems().length > 0 });
+    // Each key number wears its meaning's colour (the card's records and accepted classes; the stylesheet's band). The
+    // lines of context stay out of the band's live announcements (aria-live off): a filter change reads the counts.
     const cards = [
-      ["records", isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows,
-        papers.all !== null ? paperWords(papers.all) : ""],
-      ["accepted", "Accepted", accepted, totalRows ? `${statsShare(accepted, totalRows)} of records` : ""],
+      ["records", isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows, notes.records,
+        notes.records ? "The papers these records come from" : ""],
+      ["accepted", "Accepted", accepted, notes.accepted, ""],
     ];
-    const countHtml = ([key, label, value, note]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span>`
-      + `<strong>${formatCount(value)}</strong><small class="snapshot-note">${escapeHtml(note)}</small></div>`;
+    const countHtml = ([key, label, value, note, title]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span>`
+      + `<strong>${formatCount(value)}</strong><small class="snapshot-note" aria-live="off"${title ? ` title="${escapeHtml(title)}"` : ""}>${escapeHtml(note)}</small></div>`;
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
+    setBandNote("fromPaperNote", notes.fromPaper.text, notes.fromPaper.html, notes.fromPaper.title);
+    setBandNote("humanCheckedNote", notes.checked);
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
+    const dateText = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
+    const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
+    const dateTitle = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
     // The parameters: each name over its count, one line under them; "With" leads them where they make one line
     // (tablets, phones), so no spaces between the boxes.
     $("snapshotMeta").innerHTML = [
@@ -3774,13 +3842,10 @@
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>`,
-      '<small class="snapshot-note">records with each parameter</small>',
+      '<small class="snapshot-note" aria-live="off">records with each parameter</small>',
     ].join("");
-    renderFromPaperCount(rows, totalRows, papers.fromPaper);
-    renderHumanCheckedCount(rows);
-    $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
-    const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
-    $("snapshotDate").title = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
+    $("snapshotDate").textContent = dateText;
+    $("snapshotDate").title = dateTitle;
   }
 
   // "Read from the paper N" in the counts band (the name Stats and the Source filter give that count): the records read
@@ -3809,24 +3874,22 @@
     }
   }
 
-  function renderFromPaperCount(rows, totalRows = 0, papers = null) {
+  // (it returns the count shown, null for a dash or a hidden item, for the line of context under it)
+  function renderFromPaperCount(rows) {
     const link = $("fromPaperLink");
-    if (!link) return;
+    if (!link) return null;
     const snapshotCount = statsCount(statsOverview(Number(manifest.total_rows || 0))?.from_paper?.records);
     let count;
     if (state.recordsReady) count = rows.reduce((total, row) => total + (isV2Row(row) ? 1 : 0), 0);
     else count = activeFilterItems().length ? null : snapshotCount;
     if (count === null && snapshotCount === null && !state.recordsReady) {
       link.hidden = true;
-      return;
+      return null;
     }
     link.hidden = false;
     setCountLink(link, count ? fromPaperHref() : "");
     if ($("fromPaperCount")) $("fromPaperCount").textContent = formatCount(count);
-    // Its share of the current results and the papers it comes from ("40.4% · 4,324 papers"); nothing for 0 or a dash.
-    const note = count && totalRows ? [`${statsShare(count, totalRows)}${papers === null ? " of records" : ""}`,
-      papers !== null ? paperWords(papers) : ""].filter(Boolean).join(" · ") : "";
-    if ($("fromPaperNote")) $("fromPaperNote").textContent = note;
+    return count;
   }
 
   // "Human-checked N" in the counts band links to the human-checked records among the current results. Before the
@@ -3841,11 +3904,11 @@
 
   function renderHumanCheckedCount(rows) {
     const link = $("humanCheckedLink");
-    if (!link) return;
+    if (!link) return null;
     const snapshotCount = statsCount(statsOverview(Number(manifest.total_rows || 0))?.human_checked_accepted);
     if (snapshotCount === null) {
       link.hidden = true;
-      return;
+      return null;
     }
     let count = snapshotCount;
     if (state.recordsReady && Object.keys(humanReviewMarks).length) {
@@ -3856,6 +3919,7 @@
     link.hidden = false;
     setCountLink(link, count ? humanCheckedHref() : "");
     if ($("humanCheckedCount")) $("humanCheckedCount").textContent = formatCount(count);
+    return count;
   }
 
   function statsShare(count, total) {
@@ -14227,6 +14291,7 @@
       filterControlState,
       humanCheckedHref,
       fromPaperHref,
+      bandShare,
       setHumanReviewMarks: (marks) => { humanReviewMarks = marks || {}; },
       reviewOutcome,
       recordIndexPath,

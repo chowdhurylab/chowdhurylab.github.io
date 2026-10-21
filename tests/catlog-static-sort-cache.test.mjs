@@ -1505,6 +1505,12 @@ assert.doesNotMatch(guideHtml, /table does not show (?:temperature|them)/);
 // The counts band names the records read from the paper by CatLog as Stats and the Source filter do: Read from the paper
 // (its short tag, From paper, where the band's first line is tight; a screen reader reads the whole label).
 assert.match(indexHtml, /id="fromPaperLink"[^>]*title="Show the records read from the paper by CatLog"[^>]*><span><span class="snapshot-paper-long">Read from the paper<\/span><span class="snapshot-paper-short" aria-hidden="true">From paper<\/span><\/span><strong id="fromPaperCount">/);
+// Round 15: a line of context under each key number, left out of the band's live announcements (aria-live off); the line
+// over the card says what CatLog is without the band's numbers and ends with the snapshot date.
+assert.match(indexHtml, /<strong id="fromPaperCount"><\/strong><small id="fromPaperNote" class="snapshot-note" aria-live="off"><\/small><\/a>/);
+assert.match(indexHtml, /<strong id="humanCheckedCount"><\/strong><small id="humanCheckedNote" class="snapshot-note" aria-live="off"><\/small><\/a>/);
+assert.match(indexHtml, /<p class="snapshot-lead">Enzyme [^\d]*? values, being read from their papers\. <a href="#guide">How it works&nbsp;&rarr;<\/a><span id="snapshotDate" class="snapshot-date">/);
+assert.doesNotMatch(indexHtml, /data-reread-lede|approved by reviewers/);
 assert.doesNotMatch(guideHtml, /e-mail|from-paper (?:record|value|row)|Merged rows|round it, or/, "The Guide uses the site's words: email, records, no serial comma");
 for (const anchor of guideAnchors) assert.match(guideHtml, new RegExp(`<(?:section|details) [^>]*id="${anchor}"`), `${anchor} has a section`);
 const guideFind = guideHtml.match(/<details [^>]*id="guide-find"[^>]*>([\s\S]*?)<\/details>/)[1];
@@ -5514,6 +5520,90 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   runtimeManifest.enriched_download = previous.download;
   if (previous.total === undefined) delete runtimeManifest.total_rows;
   if (previous.download === undefined) delete runtimeManifest.enriched_download;
+  Object.assign(api.state, { records: previous.records, filtered: previous.filtered, recordsReady: previous.recordsReady });
+  api.renderSummary();
+}
+
+// The counts band's lines of context (round 15): facts from the snapshot or the results, a share never rounded to 0.0%
+// or 100.0%, no line for a count of 0 or a dash, none while a filtered view's records load, and a filtered view's papers
+// only where the page counts them as the snapshot does (scripts/build-catlog-followup-summary.py paper_keys).
+{
+  assert.deepEqual(
+    [api.bandShare(1, 3000), api.bandShare(2999, 3000), api.bandShare(19999, 20000), api.bandShare(1999, 2000), api.bandShare(0, 5),
+      api.bandShare(5, 5), api.bandShare(1, 3), api.bandShare(2, 3), api.bandShare(null, 5), api.bandShare(1, 0), api.bandShare(6, 5)],
+    ["<0.1%", ">99.9%", ">99.9%", ">99.9%", "0%", "100%", "33.3%", "66.7%", "", "", ""],
+    "one decimal; 100% and 0% only when exact; <0.1% and >99.9% at the ends; nothing without a count",
+  );
+  const previous = { records: api.state.records, filtered: api.state.filtered, recordsReady: api.state.recordsReady,
+    summary: runtimeManifest.summary, total: runtimeManifest.total_rows, download: runtimeManifest.enriched_download };
+  const paperRow = (key, pmids, dois = null) => row({ record_key: key, measurement_key: key, source_db: "primary_paper_direct",
+    enzyme_label_source: "explicit_enzyme_name", _pmids: pmids, _dois: dois });
+  const databaseRow = (key, pmids, dois = null, extra = {}) => row({ record_key: key, measurement_key: key, _pmids: pmids, _dois: dois, ...extra });
+  // Papers: PMID 11, 12 and 13 and one DOI (index 0): 4 in all, 3 behind the records read from the paper (11, 12, the DOI).
+  const p1 = paperRow("band-p1", 11);
+  const p2 = paperRow("band-p2", [11, 12]);
+  const p3 = paperRow("band-p3", null, 0);
+  const d1 = databaseRow("band-d1", 11);
+  const d2 = databaseRow("band-d2", 13, null, { verification_status: "manual_review_required" });
+  const d3 = databaseRow("band-d3", null, null);
+  const records = [p1, p2, p3, d1, d2, d3];
+  api.state.records = records;
+  api.state.recordsReady = true;
+  runtimeManifest.total_rows = records.length;
+  runtimeManifest.enriched_download = { ...(previous.download || {}), sha256: "f".repeat(64) };
+  const overview = { download_sha256: "f".repeat(64), source_sha256: runtimeManifest.source_sha256, records: records.length,
+    papers: 4, from_paper: { records: 3, papers: 3 }, human_checked_accepted: 1 };
+  runtimeManifest.summary = { ...(previous.summary || {}), overview };
+  api.setHumanReviewMarks({ "band-p1": { checked: true } });
+  const gridNotes = () => [...element("summaryGrid").innerHTML.matchAll(/<small class="snapshot-note" aria-live="off"(?: title="([^"]*)")?>([^<]*)<\/small>/g)]
+    .map((match) => match[2]);
+  const notes = (filtered) => {
+    api.state.filtered = filtered;
+    api.renderSummary();
+    const [records_, accepted] = gridNotes();
+    return { records: records_, accepted, paper: element("fromPaperNote").innerHTML.replace(/<[^>]+>/g, ""),
+      checked: element("humanCheckedNote").innerHTML };
+  };
+  assert.deepEqual(notes(records), { records: "4 papers", accepted: "83.3% of records", paper: "50.0% of records · 3 papers",
+    checked: "20.0% of accepted" }, "unfiltered, the snapshot's own papers");
+  assert.match(element("fromPaperNote").innerHTML, /^50\.0%<span class="snapshot-note-base"> of records<\/span> · 3 papers$/,
+    "the share's base is its own span (left to screen readers where the cell is narrow)");
+  assert.equal(element("fromPaperNote").getAttribute("title"), "50.0% of the records, from 3 papers");
+  // Filtered: the papers among the results, counted in the page (PMIDs, else DOIs), once per results list.
+  assert.deepEqual(notes([p1, p2, d1]), { records: "2 papers", accepted: "100% of records", paper: "66.7% of records · 2 papers", checked: "33.3% of accepted" });
+  // All of the results read from the paper: only its papers.
+  assert.deepEqual(notes([p1, p3]), { records: "2 papers", accepted: "100% of records", paper: "2 papers", checked: "50.0% of accepted" });
+  assert.equal(element("fromPaperNote").getAttribute("title"), "All of the records, from 2 papers");
+  // No record read from the paper, no human-checked one, no paper: no line.
+  assert.deepEqual(notes([d1, d2]), { records: "2 papers", accepted: "50.0% of records", paper: "", checked: "" });
+  assert.deepEqual(notes([d2]), { records: "1 paper", accepted: "", paper: "", checked: "" });
+  assert.deepEqual(notes([d3]), { records: "", accepted: "100% of records", paper: "", checked: "" });
+  // When the page's count over every record is not the snapshot's (an id the index does not carry, such as a stand-in
+  // NP id, or an index without paper fields), a filtered view gives no papers and Read from the paper its share alone.
+  runtimeManifest.summary = { ...runtimeManifest.summary, overview: { ...overview, papers: 5 } };
+  assert.deepEqual(notes(records), { records: "5 papers", accepted: "83.3% of records", paper: "50.0% of records · 3 papers", checked: "20.0% of accepted" },
+    "unfiltered, the snapshot's own counts");
+  assert.deepEqual(notes([p1, p2, d1]), { records: "", accepted: "100% of records", paper: "66.7% of records", checked: "33.3% of accepted" });
+  assert.equal(element("fromPaperNote").innerHTML, "66.7% of records", "the share keeps its base when no papers follow");
+  runtimeManifest.summary = { ...runtimeManifest.summary, overview };
+  const noPaperFields = records.map((item) => ({ ...item, _pmids: null, _dois: null }));
+  api.state.records = noPaperFields;
+  assert.deepEqual(notes(noPaperFields.slice(0, 3)), { records: "", accepted: "100% of records", paper: "100% of records", checked: "33.3% of accepted" },
+    "an index without paper fields: never 0 papers");
+  api.state.records = records;
+  assert.deepEqual(notes([p1, p2, d1]).records, "2 papers", "the check follows the records");
+  // While a filtered view's records load, no line (the counts are the snapshot's, the filter's are not known yet).
+  api.state.recordsReady = false;
+  element("ecFilterInput").value = "1.1.1";
+  assert.deepEqual(notes([]), { records: "", accepted: "", paper: "", checked: "" });
+  element("ecFilterInput").value = "";
+  assert.deepEqual(notes([]).records, "4 papers", "unfiltered while loading: the snapshot's");
+  runtimeManifest.summary = previous.summary;
+  runtimeManifest.total_rows = previous.total;
+  runtimeManifest.enriched_download = previous.download;
+  if (previous.total === undefined) delete runtimeManifest.total_rows;
+  if (previous.download === undefined) delete runtimeManifest.enriched_download;
+  api.setHumanReviewMarks({});
   Object.assign(api.state, { records: previous.records, filtered: previous.filtered, recordsReady: previous.recordsReady });
   api.renderSummary();
 }
