@@ -3912,6 +3912,26 @@
     return target?.querySelector?.(".stats-part-title") || null;
   }
 
+  // The address of a supplement item a visitor opens is its own (#stats-table-s4), set in place (replaceState: no history
+  // entry, no scroll); closing the item the address names goes back to #stats-supplement. Only a visitor's own toggle
+  // (a click on, or Enter or Space in, its summary: data-user-toggle) moves the address: printing, an address that opens
+  // an item and a script that opens them all leave it alone.
+  function statsSupplementAddressFollows(item) {
+    if (!item?.dataset?.userToggle) return;
+    delete item.dataset.userToggle;
+    if (!item.id || item.dataset.printOpened || typeof history === "undefined" || !history.replaceState) return;
+    const url = new URL(window.location.href);
+    const own = `#${item.id}`;
+    if (item.open && url.hash !== own) url.hash = own;
+    else if (!item.open && url.hash === own) url.hash = "#stats-supplement";
+    else return;
+    try {
+      history.replaceState(history.state, "", url.href);
+    } catch (error) {
+      // (a sandboxed frame can refuse it; the item stays open)
+    }
+  }
+
   // A supplement item drawn closed has no layout: its widths are fitted once it opens.
   function statsFitOpened(item) {
     if (!item?.open) return;
@@ -6611,11 +6631,17 @@
     view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
     view.addEventListener("focusout", leave);
     view.addEventListener("scroll", scrolled, { passive: true });
-    // A supplement item fits its widths when it opens (toggle does not bubble: caught on its way down).
+    // A supplement item fits its widths when it opens (toggle does not bubble: caught on its way down), and the address
+    // follows it (round 14: an open item can be copied and sent as its own address).
     view.addEventListener("toggle", (event) => {
-      if (event.target?.classList?.contains("stats-supp-item")) statsFitOpened(event.target);
+      if (!event.target?.classList?.contains("stats-supp-item")) return;
+      statsFitOpened(event.target);
+      statsSupplementAddressFollows(event.target);
     }, true);
     view.addEventListener("click", (event) => {
+      // (a summary's click, Enter or Space included, toggles its item next: the address follows that toggle)
+      const summary = event.target?.closest?.(".stats-supp-item > summary");
+      if (summary && view.contains(summary)) summary.parentElement.dataset.userToggle = "1";
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);
       const segment = event.target?.closest?.(".stats-seg[data-href], .stats-condition-bars > [data-href]");
@@ -14284,6 +14310,7 @@
       statsAddressTarget,
       statsAddressHeading,
       statsFitOpened,
+      statsSupplementAddressFollows,
       STATS_SECTION_HASH,
       statsLinearTicks,
       statsSmoothPath,

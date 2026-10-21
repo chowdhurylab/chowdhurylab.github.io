@@ -5664,6 +5664,22 @@ def check(driver, browser, url):
     for identifier, number, caption_number in items:
         kind, _space, label = number.partition(" ")
         assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower(), (identifier, number, caption_number)
+    # An item a visitor opens puts its own address in the address bar (round 14: an open item can be copied and sent);
+    # closing it goes back to #stats-supplement. (Its summary is centred before the click, for Safari.)
+    if items:
+        address = driver.execute_script("return location.href")
+        summary = driver.find_element(By.CSS_SELECTOR, f"#{items[-1][0]} > summary")
+        was_open = driver.execute_script("return arguments[0].parentElement.open", summary)
+        if was_open:
+            driver.execute_script("arguments[0].parentElement.open = false", summary)
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", summary)
+        summary.click()
+        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == f"#{items[-1][0]}")
+        summary.click()
+        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == "#stats-supplement")
+        if was_open:
+            driver.execute_script("arguments[0].parentElement.open = true", summary)
+        driver.execute_script("history.replaceState(history.state, '', arguments[0])", address)
     # Captions in plain words: no filler about where the numbers stand, never "in all", no stacked semicolons.
     for caption in driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"):
         assert not re.search(r"\bin all\b|each label gives|beside each bar|Numbers compared for the same paper", caption) and caption.count(";") <= 1, caption
