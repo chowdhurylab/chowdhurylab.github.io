@@ -177,6 +177,10 @@ body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
 .nav-tab { display:inline-flex; align-items:center; justify-content:center; min-width:56px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--text-2); cursor:pointer; padding:2px var(--sp-2) 0; font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14); text-decoration:none }
 .nav-tab:hover { color:var(--text); text-decoration:none }
 .nav-tab.active { border-bottom-color:var(--accent); color:var(--text); font-weight:600 }
+/* The Stats tab's soft glow (the user, 2026-10-21: "the glow in the numbers isn't needed, only the Stats button"): the
+   one glow on the site, so visitors notice the Stats page. A quiet BPG-cyan halo behind the word, no animation, the same
+   when the tab is active (its underline unchanged); the word keeps the tabs' colours. Nothing else glows. */
+#statsButton { text-shadow:0 0 10px color-mix(in srgb, var(--bpg-cyan) 75%, transparent), 0 0 3px color-mix(in srgb, var(--bpg-cyan) 40%, transparent) }
 /* The CatRange paper and the lab's site: links out, after the catalog's own tabs and set apart by a rule. */
 .external-nav { display:flex; align-items:center; gap:var(--sp-4); border-left:1px solid var(--line); padding-left:var(--sp-5); white-space:nowrap }
 .nav-external { color:var(--text-2); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13); text-decoration:none }

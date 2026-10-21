@@ -5823,6 +5823,10 @@ def check(driver, browser, url):
     assert not urlsplit(driver.current_url).fragment
     check_metadata("browse")
     assert len(driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")) == 25
+    # The Stats tab is the one thing that glows (the user, 2026-10-21: "only the Stats button"); the other tabs do not.
+    tabs = driver.execute_script("return ['browseButton', 'statsButton', 'guideButton', 'teamButton']"
+                                 ".map(id => getComputedStyle(document.getElementById(id)).textShadow)")
+    assert tabs[1] != "none" and all(shadow == "none" for index, shadow in enumerate(tabs) if index != 1), tabs
     search = driver.find_element(By.ID, "globalSearchInput")
     search.send_keys("zzzz-no-match-catlog", Keys.TAB)
     # (the whole word applied, not a pass for its first keys: see check_browse)

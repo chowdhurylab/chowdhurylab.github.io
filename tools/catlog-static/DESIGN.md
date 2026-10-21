@@ -414,7 +414,8 @@ back (with how many) or to clear everything; a button too long for the table's
 width wraps onto a second line inside it (at 320px "Remove Caution: Unit or
 magnitude error (144 records)"), never past its edge. The header's tabs are the
 catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
-behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
+behind CatLog); Stats alone has a soft BPG-cyan glow behind its word (no animation; the site's one glow, so visitors
+notice the Stats page; the user, 2026-10-21); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
 every view: brand and Download, the tabs with the links out at the line's end
 (Download ends where they end), then search (Browse only); on phones brand, the links out ("Paper ↗", "Lab ↗")
