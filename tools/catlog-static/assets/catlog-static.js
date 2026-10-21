@@ -5876,11 +5876,13 @@
       title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
     // One database's own words (it lists ...), never the Why not listed labels (the Guide, Browse), which say what all
     // the databases list and count other values.
-    { part: "not-listed", label: "Lists other values only", kinds: ["other_values_only"],
+    // (round 14: no third cyan tint) other values only in cyan hatching, none of this parameter a light cyan, a value in
+    // no database Not in the databases' own fill, as in Figure 7
+    { part: "not-listed-hatch", label: "Lists other values only", kinds: ["other_values_only"],
       title: "The database lists other numbers of this parameter for the paper, not this one." },
     { part: "not-listed-2", label: "Lists none of this parameter", kinds: ["parameter_absent"],
       title: "The database lists the paper, but no value of this parameter from it." },
-    { part: "not-listed-3", label: "Value in no database", kinds: ["value_absent"],
+    { part: "not-listed", label: "Value in no database", kinds: ["value_absent"],
       title: "The database lists the paper, but not this value; no compared database lists it." },
   ];
   // Parameters as the comparison names them (values: kcat, Km, kcat/Km), with Browse's dbpar key.
@@ -6226,7 +6228,8 @@
       const parts = STATS_DATABASE_KINDS.map((kind) => ({ ...kind, count: statsSum(counts, kind.kinds) }));
       const absent = counts.paper_absent || 0;
       if (!parts.some((item) => item.count)) continue;
-      const aside = absent ? `+ ${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${statsDatabaseNameHtml(source.display)} does not list` : "";
+      // (no leading "+", the glyph that opens every closed item on the page)
+      const aside = absent ? `${formatInteger(absent)} ${absent === 1 ? "value" : "values"} from papers ${statsDatabaseNameHtml(source.display)} does not list` : "";
       rows.push(statsDatabaseRow(`db_${source.key}`, escapeHtml(source.display), source.display, parts, { aside,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, dbsrc: source.key }) : "") }));
       const row = rows[rows.length - 1];
@@ -6941,8 +6944,9 @@
     const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
       body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Each record's enzyme form, as Browse tags it." } : null;
-    // In the supplement: the two figures of records read from the paper, the papers by parameter, the fields and forms.
-    toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsTable, formsTable);
+    // In the supplement: the two figures of records read from the paper, the papers by parameter and the fields; the
+    // forms (wild type and variants) stand with the variants, under Organisms, enzymes and variants.
+    toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsTable);
 
     // Enzyme classes (records, accepted over them, the records read from the paper marked) close What is in the catalog;
     // the most common organisms and EC numbers, overall and among records read from the paper, are the supplement's
@@ -7016,7 +7020,7 @@
     parts.push({ key: "catalog", title: "What is in the catalog", items: content });
     // Biology in the supplement: the tables, then the single substitutions and the kinds of variant read from the paper.
     const insights = statsInsights(overview);
-    toSupplement("biology", ...biology, statsSubstitutionsFigure(insights.substitutions), statsVariantKindsTable(insights.variant_kinds));
+    toSupplement("biology", ...biology, statsSubstitutionsFigure(insights.substitutions), formsTable, statsVariantKindsTable(insights.variant_kinds));
 
     // 4. Values: the overall ranges, kcat against Km and the variants against their wild type; the ranges per enzyme
     // class, the assay temperature and pH, the units as printed and the cautions in the supplement.
@@ -7107,7 +7111,11 @@
       return statsPartHtml(index + 2, part.key, part.title, blocks, { intro: part.intro || "" });
     });
     // Supplementary figures and tables: its groups, each a list of closed items.
-    const supplementGroups = STATS_SUPPLEMENT_GROUPS.map(([key, title]) => ({ key, title, items: supplement.filter((item) => item.group === key) }))
+    // Within a group the figures come first, then the tables, each in reading order (round 14: Figure S7 had stood after
+    // two tables), so the numbers run in the order the list shows them.
+    const supplementGroups = STATS_SUPPLEMENT_GROUPS.map(([key, title]) => ({ key, title, items: supplement.filter((item) => item.group === key)
+      .map((item, index) => [item, index]).sort(([a, i], [b, j]) => ((a.kind || "Figure") === "Table") - ((b.kind || "Figure") === "Table") || i - j)
+      .map(([item]) => item) }))
       .filter((group) => group.items.length);
     if (supplementGroups.length) {
       const groupId = (key) => `statsSupplement${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;

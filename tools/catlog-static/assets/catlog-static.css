@@ -1179,9 +1179,10 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ec-7 { --part:var(--ec-7) }
 .stats-ec-key { display:inline-block; flex:0 0 3px; width:3px; height:12px; margin-right:5px; border-radius:2px; background:var(--part); background:color-mix(in srgb, var(--part) 85%, var(--text)); vertical-align:-1px }
 /* Against the databases (part 7), as Browse colours them: same green, same number under another label mint,
-   corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds are cyan at
-   three strengths (other values listed, parameter not listed, value not listed: the fill at about 60%, 40% and 20%),
-   each with the full colour as its outline, so they part by lightness in grey print too. A correction (Corrects a
+   corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds (Results by
+   database) are cyan three ways, never three tints: other values listed in cyan hatching, parameter not listed a light
+   cyan, value in no database Not in the databases' own fill, each with the cyan ring as its outline, so they part by
+   pattern and lightness in grey print too. A correction (Corrects a
    value; an earlier unit or magnitude change) is red drawn opaque, the sidebar square's own red: red at 60% (#F09386)
    is Not confirmed's salmon (#F39B7F) to the eye, and a correction must never look like a record waiting for review.
    The second way a correction is found (an exact factor found by code) is red hatching on white, never a lighter red. */
@@ -1189,8 +1190,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-corrects { --part:var(--chg-magnitude); --part-line:color-mix(in srgb, var(--chg-magnitude) 65%, var(--text)) }
 .stats-part-corrects-2 { --part:var(--chg-magnitude); --part-line:var(--chg-magnitude) }
 .stats-part-not-listed { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
-.stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new-ring) }
-.stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new-ring) }
+.stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 45%, var(--bg)); --part-line:var(--cmp-new-ring) }
+.stats-part-not-listed-hatch { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
 /* Records read from the paper wear Read from the paper's colour (BPG cyan, --src-paper, as on Browse's counts band and
    its chip), never Accepted's navy: Values per paper, the stripe inside Enzyme classes' accepted bars, the From paper
    counts (in the darker cyan) and the bars of the tables of records read from the paper. */
@@ -1201,7 +1202,7 @@ a.stats-total-value:focus-visible { outline:0 }
 /* The exceptions to the flat 60% fill, each kept apart from a colour it would otherwise meet: a correction opaque red;
    the exact-factor kind red hatching on white. */
 :is(.stats-seg, .stats-swatch):is(.stats-part-corrects, .stats-part-magnitude) { background:var(--part) }
-:is(.stats-seg, .stats-swatch).stats-part-corrects-2 { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
+:is(.stats-seg, .stats-swatch):is(.stats-part-corrects-2, .stats-part-not-listed-hatch) { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
 /* Not checked (both its kinds, Unverified and Not reviewed) is slate hatching on white with a slate outline, never a
    flat slate fill: slate at 60% (#B5BDD2) is Accepted's navy at 60% (#8A98B8) a step lighter in the same hue, so the
    pattern, not lightness alone, tells the two apart (the donut draws it with an SVG pattern of the same lines). */
