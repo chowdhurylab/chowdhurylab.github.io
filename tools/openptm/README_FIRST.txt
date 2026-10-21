@@ -65,6 +65,31 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 38
+- Five papers new to this reading record received selected relevant reads
+  outside round 37: LC3/Cx43 binding, Uba4 self-urmylation, a PAL/MIO study,
+  and two membrane-anchor leads checked for their attachment chemistry.
+- The PAL supplement prints conversion values for WT and the S154A variant,
+  including an explicit 0%. For one substrate it gives 3% where the main
+  figure gives less than 1%. Assay descriptions also differ. Cofactor state
+  was not directly characterized in the inspected assay preparations, and
+  the active-site substitution remains a confound. These values stay on HOLD.
+- Uba4 self-urmylation is chemically supported, but no numerical conjugated/free
+  functional pair was verified. The LC3 passage reports a qualitative binding
+  result. The other anchor leads use a transmembrane helix or electrostatic
+  association, rather than the covalent lipid modifications being sought.
+- One new access-only lead and one new metadata-only lead are separate from
+  the five original reads. A known Urm1 discovery identity was not recounted.
+- No numerical additions qualified. Data remain 253 comparisons, 307 entries,
+  92 papers and 87/111 numerical families; 24 gaps remain in this selection.
+  Independent source and custody checks passed. The interface and verified
+  data are unchanged. One supporting PDF page was rendered for verification.
+  Sources: https://doi.org/10.15252/embj.2020105087
+           https://doi.org/10.1002/anie.202511739
+           https://doi.org/10.3390/cells9040902
+           https://doi.org/10.1371/journal.pone.0033516
+           https://doi.org/10.1186/s12915-016-0274-1
+
 Paper reading, round 37
 - Three papers new to this reading record received selected relevant reads
   on diphthamide, outside round 36's families: eEF2-p53 binding (2024),
