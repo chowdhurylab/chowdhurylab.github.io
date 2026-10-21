@@ -65,6 +65,37 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 36
+- Four new primary originals received selected relevant reads outside round 35:
+  three on LC3 interactions and membrane organization, and one on epidermal
+  lipid chemistry. These address PE amidation and hydroxyceramide-ester leads.
+- The September 2026 LC3 study prints nanocluster dimensions and occupancy,
+  but compares clustering variants that retain lipidation. The ApoL9 study
+  shows preferential LC3-II binding; its printed 50% effect is a LIR mutation,
+  not a measured lipidation-state effect.
+- The oxidized LC3-PE study shows altered delipidation, but its printed binding
+  energies are computational predictions for free lipids. Chemical abundance
+  and plotted responses were not converted into measured functional values.
+- The skin paper characterizes released lipid products and proposed bound
+  precursors. Its linked correction was also read: the Figure 9 label means
+  radioactive free lipid. The notice is separate from the four original reads.
+- One new EPG access-only lead, one known ATG7 metadata recheck and prior
+  originals screened out are separate from new original-body credit.
+- Independent readers checked source interpretation, identity history,
+  correction handling and file custody. A source-defined relative effect can
+  qualify without two absolute values; no missing reference, zero, uncertainty,
+  sample size or graph value was invented. No supplement or figure pixels read.
+- Zero numerical additions qualified in these selected scopes. Data remain
+  253 comparisons, 307 entries, 92 papers and 87/111 numerical families;
+  24 gaps remain. This is not an exhaustive review. The interface, verified
+  scientific payload and original audit workbook are unchanged.
+- New originals:
+  https://doi.org/10.1038/s44319-026-00931-0
+  https://doi.org/10.1242/bio.045930
+  https://doi.org/10.1016/j.redox.2022.102421
+  https://doi.org/10.1016/j.jbc.2023.104739
+  Linked correction: https://doi.org/10.1016/j.jbc.2024.107239
+
 Paper reading, round 35
 - Three new primary originals received selected relevant reads: human
   selenocysteine lyase, pear PAL enzymes and URM1 in liver cancer cells.
