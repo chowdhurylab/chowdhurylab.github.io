@@ -504,29 +504,37 @@ Team (#team, in catlog-latest.html like the Guide; its own view, never the
 record index) is "People behind CatLog": one plain line, then the loop the
 user approved. The words say what CatLog is (the user, 2026-10-18: "we are in the verification scientific progress,
 not sending AI to get paper business"): CatLog re-verifies published enzyme kinetics; its agents find the paper each
-database value cites, read the values in it and check each one against the paper; people review samples. The line:
-"CatLog re-verifies published enzyme kinetics. AI agents find the papers that enzyme databases cite, read the values in
-them and check each against the paper; people review samples, and what they find improves the rules for the next
-papers. So far 61,919 of 178,676 records are re-read." (the last sentence from the manifest, renderRereadLines: never
-"each database value" as if every one were done). The caption starts "Clockwise from cited papers to the website,
-the loop re-verifies published values against their papers." The method says "automated checks" and "found
+database value cites, read the values in it and check each one against the paper; people review samples. The line
+(round 14, shorter): "CatLog re-verifies published enzyme kinetics. AI agents read the papers that enzyme databases
+cite and check each value against the paper. People review samples; what they find improves the rules. So far 61,919
+of 178,676 records are re-read." (the last sentence from the manifest, renderRereadLines: never "each database value"
+as if every one were done). The caption starts "The loop runs clockwise from cited papers." The method says "automated checks" and "found
 automatically", never "code", as the README does. No agent is a
 "download" agent and nothing says papers are fetched or collected (the Guide alone says, where needed, that papers come
 through the library's licensed and open-access routes). The loop: a racetrack of stations Cited papers (key papers), AI
 reading, AI check, AI audit (2026-10-15: "CatLog" named the whole site as a step of its own loop; the
 station's key stays catlog), Human check, Rules updated and back to Cited papers
-(clockwise, small arrows), with Website and The paper branching off AI audit.
+(clockwise, small arrows), with Website and The paper branching off AI audit and AI critique (key critique; round 14,
+the user 2026-10-20) feeding Rules updated. Each branch is a dashed line with a chevron the way it flows: halfway out to
+Website and The paper, two fifths of the way from AI critique towards Rules updated.
 AI agents stand above their stations (Source agents at Cited papers, "find the paper each database value cites";
 Reading agents at AI reading, "read each value in the paper"; Verification agents at AI check, "check each value
 against the paper, separately"; rectangles in CatLog's reading colour, BPG cyan: a 12% tint and the 3:1 ring #2DA1BD, round 14), Audit agents ("re-check samples") right of AI audit
 between its two branches, their line level with it; people below
-(Supantha at Rules updated, also lighting Cited papers, AI audit and Website, "builds CatLog and its website, and
-turns findings into better rules"; Aarna and Erin at Human check; Mohammad at The paper; grey pills). Supantha stands
+(Vaishnavey at AI critique, "examines the AI agents' readings for systematic errors; the findings feed the rules", the
+only thing the site says AI critique is: never a pronoun, a title or more than that sentence; Supantha at Rules updated,
+also lighting Cited papers, AI audit and Website, "builds CatLog and its website, and turns findings into better rules";
+Aarna and Erin at Human check; Mohammad at The paper; grey pills). AI critique stands in the wide loop's lower-left
+corner the user pointed at (the screenshot's empty space), outside the track: its name left of its dot, Vaishnavey's
+chip under the dot in the people's row (left of Supantha), its dashed line rising to Rules updated clear of the arc;
+the wide viewBox starts at x 90 (was 130) for it, and the wide drawing's max-width is 1004px (was 960) so its type keeps
+its size. On the upright loop, whose 288 units leave no room outside the track, AI critique stands inside it, right of
+Rules updated, whose name stands a little above its dot so the dashed line passes under it. Supantha stands
 a second time above Website (he built and maintains the website; the user, 2026-10-18: "website making should have my
 name"), as Mohammad stands below The paper: a second chip with its own line, lit with the first and with no tab stop
 or name of its own (aria-hidden: the first chip names every station). First names only: no titles, ranks, model or
 vendor names; individual review decisions stay anonymous. Live numbers at the
-stations come from the manifest (papers read and records at AI reading,
+stations come from the manifest (none at AI critique; papers read and records at AI reading,
 values re-checked at AI audit, the human review's headline and
 human-checked records at Human check, records at Website), each left out when
 its field is absent. Human check says the Stats lead's headline shortened, never
@@ -557,8 +565,8 @@ screens can light them too. The drawing is named by aria-label, not a <title>
 (a tooltip over the whole figure), and a station's label reads a number wrapped
 onto two lines as one phrase. Below 960px the loop stands upright (the people and agents are in the
 legend beside it, under it on phones; its viewBox is cut to the drawing, 320px
-wide at most) so its labels stay 12px or more down to a 320px phone; its caption then says the list tells where each one works, instead of
-asking to point at people the drawing does not show. Printed, the wide loop with its people and agents stays whole on one
+wide at most) so its labels stay 12px or more down to a 320px phone; its caption then says "The list says where each
+person and agent works.", instead of asking to point at people the drawing does not show. Printed, the wide loop with its people and agents stays whole on one
 page and the legend follows in two columns. The Guide's method section links
 to it.
 

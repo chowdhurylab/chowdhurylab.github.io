@@ -6935,10 +6935,11 @@
   // The station where audit agents re-check samples of the catalog is "AI audit" (2026-10-15: "CatLog" named the
   // whole site as a step of its own loop); its key stays catlog (the layouts, actors and the stylesheet use it).
   // CatLog re-verifies published values (round 13): the loop starts at the paper a database value cites ("Cited papers",
-  // key papers), never at collecting papers.
+  // key papers), never at collecting papers. AI critique (round 14, the user 2026-10-20) is where a person examines the
+  // AI agents' readings for systematic errors; it stands off the loop and feeds Rules updated.
   const TEAM_STATIONS = {
     papers: "Cited papers", reading: "AI reading", check: "AI check", catlog: "AI audit", human: "Human check",
-    rules: "Rules updated", website: "Website", paper: "The paper",
+    critique: "AI critique", rules: "Rules updated", website: "Website", paper: "The paper",
   };
   // Where a person or agent works, as "At Papers, CatLog, Rules updated, Website": in the loop's order (the order of
   // TEAM_STATIONS; a person's first station is the one their line meets), "the paper" in lower case mid-sentence.
@@ -6947,6 +6948,8 @@
     return [...new Set(keys)].sort((a, b) => order.indexOf(a) - order.indexOf(b))
       .map((key) => TEAM_STATIONS[key].replace(/^The /, "the ")).join(", ");
   }
+  // AI critique, in plain words (round 14): what Vaishnavey looks for and where it goes; never more than that.
+  const VAISHNAVEY_PHRASE = "examines the AI agents' readings for systematic errors; the findings feed the rules";
   // In the order the wide figure draws them, so Tab follows it: the agents above, left to right, then the people below.
   // The agents re-verify what is already published (round 13: never a "download" agent): source agents find the paper
   // a database value cites, reading agents read its values, verification agents check each one against the paper.
@@ -6955,6 +6958,7 @@
     { key: "reading", name: "Reading agents", kind: "ai", stations: ["reading"], phrase: "read each value in the paper" },
     { key: "checking", name: "Verification agents", kind: "ai", stations: ["check"], phrase: "check each value against the paper, separately" },
     { key: "audit", name: "Audit agents", kind: "ai", stations: ["catlog"], phrase: "re-check samples" },
+    { key: "vaishnavey", name: "Vaishnavey", kind: "person", stations: ["critique"], phrase: VAISHNAVEY_PHRASE },
     { key: "supantha", name: "Supantha", kind: "person", stations: ["rules", "papers", "catlog", "website"], phrase: "builds CatLog and its website, and turns findings into better rules" },
     { key: "aarna", name: "Aarna", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
     { key: "erin", name: "Erin", kind: "person", stations: ["human"], phrase: "checks values against the papers" },
@@ -6963,6 +6967,7 @@
   // The legend: one line per person or agent (Aarna and Erin share theirs), people first.
   const TEAM_LEGEND = [
     { actors: ["supantha"], text: "<strong>Supantha</strong> builds CatLog and its website, and turns findings into better rules" },
+    { actors: ["vaishnavey"], text: `<strong>Vaishnavey</strong> ${escapeHtml(VAISHNAVEY_PHRASE)}` },
     { actors: ["aarna", "erin"], text: "<strong>Aarna</strong> and <strong>Erin</strong> check values against the papers" },
     { actors: ["mohammad"], text: "<strong>Mohammad</strong> writes the paper and documentation" },
     { actors: ["source"], text: "<strong>Source agents</strong> (AI) find the paper each database value cites" },
@@ -6977,9 +6982,12 @@
   // Every station's name and numbers keep 12px or more from another station's, from the track and from the chips and
   // their lines, also in a wider font (CI's Linux Chrome): on the upright loop a drawn line longer than `wrap`
   // characters (the station's own, else the loop's) breaks at a space, so no line reaches the far side of the track.
+  // A branch station hangs off `from` (AI audit when not given) by a dashed line with a chevron in the direction of
+  // flow: out to Website and The paper; in from AI critique to Rules updated (`feeds`).
   const TEAM_LAYOUTS = {
     wide: {
-      viewBox: "130 30 870 440",
+      // (from x 90, round 14: the lower-left corner holds AI critique and Vaishnavey)
+      viewBox: "90 30 910 440",
       track: "M270 140 H670 A110 110 0 0 1 670 360 H270 A110 110 0 0 1 270 140 Z",
       stations: {
         // "Cited papers" stands a little in from the arc, so a wide font (DejaVu Sans) keeps 12px from the track.
@@ -6994,6 +7002,9 @@
         // updated's name) reads as its own.
         human: { x: 585, y: 360, label: [585, 0, "middle"], above: true },
         rules: { x: 330, y: 360, label: [330, 0, "middle"], above: true },
+        // In the lower-left corner, outside the loop: its name left of its dot, Vaishnavey under it in the people's row,
+        // its dashed line rising to Rules updated clear of the arc.
+        critique: { x: 205, y: 392, label: [189, 397, "end"], branch: true, from: "rules", feeds: true },
         website: { x: 870, y: 160, label: [886, 165, "start"], branch: true },
         paper: { x: 870, y: 340, label: [886, 345, "start"], branch: true },
       },
@@ -7002,7 +7013,7 @@
       // branch Supantha stands again (he builds the website), as Mohammad stands below The paper.
       actors: {
         source: [302, 58], reading: [470, 58], checking: [650, 58], audit: [912, 250],
-        supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
+        vaishnavey: [205, 438], supantha: [330, 438], aarna: [540, 438], erin: [630, 438], mohammad: [870, 418],
       },
       // A second chip of a person at another of their stations: drawn with its own line, lit with the first, not a
       // second tab stop (the first chip names every station).
@@ -7021,7 +7032,10 @@
         catlog: { x: 180, y: 580, label: [180, 500, "middle"], wrap: 16 },
         // up from the arc so Human check's lines end well above AI audit's name, on the straight part of the track
         human: { x: 80, y: 375, label: [96, 371, "start"] },
-        rules: { x: 80, y: 285, label: [96, 281, "start"] },
+        // Rules updated's name stands a little above its dot, so AI critique's line (inside the loop: the 288-unit width
+        // leaves no room outside it) passes under it, 12px or more clear.
+        rules: { x: 80, y: 285, label: [96, 270, "start"] },
+        critique: { x: 160, y: 296, label: [174, 301, "start"], branch: true, from: "rules", feeds: true },
         website: { x: 90, y: 650, label: [90, 678, "middle"], branch: true },
         paper: { x: 270, y: 650, label: [270, 678, "middle"], branch: true },
       },
@@ -7085,9 +7099,19 @@
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const trackId = `teamTrack-${layoutKey}`;
     const actorsFor = (station) => TEAM_ACTORS.filter((actor) => actor.stations.includes(station)).map((actor) => actor.key).join(" ");
-    const branches = Object.entries(layout.stations).filter(([, station]) => station.branch)
-      .map(([, station]) => `<line class="team-branch" x1="${layout.stations.catlog.x}" y1="${layout.stations.catlog.y}" x2="${station.x}" y2="${station.y}"/>`).join("");
-    const arrows = layout.arrows.map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
+    // Each branch's chevron points the way it flows: halfway out to Website and The paper, and from AI critique towards
+    // Rules updated (two fifths along, clear of the loop's arc).
+    const branchArrows = [];
+    const branches = Object.entries(layout.stations).filter(([, station]) => station.branch).map(([, station]) => {
+      const hub = layout.stations[station.from || "catlog"];
+      const [start, end] = station.feeds ? [station, hub] : [hub, station];
+      const along = station.feeds ? 0.4 : 0.5;
+      const round = (value) => Math.round(value * 10) / 10;
+      branchArrows.push([round(start.x + (end.x - start.x) * along), round(start.y + (end.y - start.y) * along),
+        round((Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI)]);
+      return `<line class="team-branch" x1="${hub.x}" y1="${hub.y}" x2="${station.x}" y2="${station.y}"/>`;
+    }).join("");
+    const arrows = [...layout.arrows, ...branchArrows].map(([x, y, angle]) => `<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate(${x} ${y}) rotate(${angle})"/>`).join("");
     const stations = Object.entries(layout.stations).map(([key, station]) => {
       const facts = numbers[key] || [];
       const lines = facts.flatMap((fact) => typeof fact === "string" ? fact.split("\n") : fact[layoutKey])
@@ -7124,7 +7148,7 @@
     const dots = reduced ? "" : `<g class="team-dots" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map((index) => `<circle r="4"><animateMotion dur="24s" begin="-${index * 4}s" repeatCount="indefinite"><mpath href="#${trackId}" xlink:href="#${trackId}"/></animateMotion></circle>`).join("")}</g>`;
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; the catalog also feeds the website and the paper.">
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; AI critique feeds the rules, and the catalog feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${dots}${stations}${actors}
     </svg>`;

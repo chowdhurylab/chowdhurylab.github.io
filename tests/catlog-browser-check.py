@@ -1057,6 +1057,38 @@ TEAM_LABELS_CLEAR = """
 """
 
 
+# Where Team's AI critique stands (round 14): outside the loop's track, left of and below Rules updated, Vaishnavey's chip
+# under its dot and level with the other people's chips (wide loop), its branch's chevron pointing at Rules updated, and
+# every part inside the drawing's own box.
+TEAM_CRITIQUE_JS = """
+    const svg = document.querySelector(`svg.team-loop-${arguments[0]}`);
+    const box = (e) => e.getBoundingClientRect();
+    const dot = (key) => box(svg.querySelector(`[data-station="${key}"] .team-station-dot`));
+    const centre = (r) => [(r.left + r.right) / 2, (r.top + r.bottom) / 2];
+    const [cx, cy] = centre(dot('critique')), [rx, ry] = centre(dot('rules'));
+    const track = svg.querySelector('.team-track');
+    const point = new DOMPoint(cx, cy).matrixTransform(svg.getScreenCTM().inverse());
+    const chip = svg.querySelector('.team-actor[data-actor="vaishnavey"] .team-chip');
+    const people = [...svg.querySelectorAll('.team-actor-person:not(.team-actor-also) .team-chip')].filter(e => e !== chip).map(box);
+    // the chevron nearest AI critique's dot, as drawn: its tip (4, 0) and its back (-5, 0) in screen space
+    const arrows = [...svg.querySelectorAll('.team-arrow')].map(arrow => {
+        const m = arrow.getScreenCTM();
+        const tip = new DOMPoint(4, 0).matrixTransform(m), back = new DOMPoint(-5, 0).matrixTransform(m);
+        return {tip, back, distance: Math.hypot(tip.x - cx, tip.y - cy)};
+    }).sort((a, b) => a.distance - b.distance);
+    const arrow = arrows[0];
+    const towards = arrow && Math.hypot(arrow.tip.x - rx, arrow.tip.y - ry) < Math.hypot(arrow.back.x - rx, arrow.back.y - ry);
+    const figure = box(svg);
+    const label = box(svg.querySelector('[data-station="critique"] .team-station-name'));
+    return {outside: !track.isPointInFill(point), leftOfRules: cx < rx, belowTrack: cy > ry || arguments[0] === 'narrow',
+            chipUnder: chip ? Math.abs(centre(box(chip))[0] - cx) < 2 && box(chip).top > cy : arguments[0] === 'narrow',
+            rowLevel: chip ? people.some(other => Math.abs(other.top - box(chip).top) < 1) : arguments[0] === 'narrow',
+            towardsRules: Boolean(towards),
+            inFigure: [label, chip ? box(chip) : label].every(r => r.left >= figure.left - 0.5 && r.right <= figure.right + 0.5
+                && r.top >= figure.top - 0.5 && r.bottom <= figure.bottom + 0.5)};
+"""
+
+
 def check_review_headline(driver, browser, url):
     """With the reviewers' own counts in the snapshot, Stats' lead says the human review of the earlier version's entries
     (no value disputed, the disputed values as printed, the entries whose value the reviewer could not find, values
@@ -2067,7 +2099,7 @@ def check_stats_new_figures(driver, browser, url):
     return {"route": "stats-new-figures", "passed": True}
 
 
-TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "rules", "website", "paper")
+TEAM_STATIONS = ("papers", "reading", "check", "catlog", "human", "critique", "rules", "website", "paper")
 
 
 # Words in visible text under a root that span two line boxes (a Range over the word has rects on two lines); details
@@ -2216,6 +2248,11 @@ def check_team(driver, browser, url):
     assert ", by " not in wide.find_element(By.CSS_SELECTOR, "[data-station='catlog']").get_attribute("aria-label")
     # No station's label crowds another's, the track or the chips: Human check's lines stand apart from CatLog's.
     assert driver.execute_script(TEAM_LABELS_CLEAR, "wide", 12) == [], driver.execute_script(TEAM_LABELS_CLEAR, "wide", 12)
+    # AI critique (round 14): in the lower-left corner, outside the loop, Vaishnavey's chip under it in the people's row,
+    # its dashed line rising to Rules updated with a chevron pointing there; Vaishnavey's legend line lights it.
+    critique = driver.execute_script(TEAM_CRITIQUE_JS, "wide")
+    assert critique["outside"] and critique["leftOfRules"] and critique["belowTrack"] and critique["chipUnder"] \
+        and critique["rowLevel"] and critique["towardsRules"] and critique["inFigure"], critique
     # Legend lines are toggle buttons, not bare focusable list items: pressing Aarna and Erin's keeps Human check lit,
     # pressing Supantha's moves the light to his stations, and pressing it again turns it off.
     lit_js = "return [...document.querySelectorAll('svg.team-loop-wide [data-station].is-lit')].map(e => e.dataset.station)"
@@ -2233,6 +2270,13 @@ def check_team(driver, browser, url):
     supantha.click()
     assert sorted(driver.execute_script(lit_js)) == ["catlog", "papers", "rules", "website"], driver.execute_script(lit_js)
     assert legend.get_attribute("aria-pressed") == "false" and supantha.get_attribute("aria-pressed") == "true"
+    vaishnavey = driver.find_element(By.CSS_SELECTOR, ".team-legend-item[data-actor='vaishnavey'] button")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", vaishnavey)
+    vaishnavey.click()
+    assert driver.execute_script(lit_js) == ["critique"], driver.execute_script(lit_js)
+    assert vaishnavey.get_attribute("aria-pressed") == "true" and supantha.get_attribute("aria-pressed") == "false"
+    supantha.send_keys(Keys.SPACE)
+    wait.until(lambda d: supantha.get_attribute("aria-pressed") == "true")
     supantha.send_keys(Keys.SPACE)
     wait.until(lambda d: supantha.get_attribute("aria-pressed") == "false")
     driver.execute_script("arguments[0].dispatchEvent(new PointerEvent('pointerout', {bubbles: true}))", supantha)
@@ -2276,7 +2320,9 @@ def check_team(driver, browser, url):
             assert not driver.find_elements(By.CSS_SELECTOR, ".team-dots circle"), "No moving dots for reduced motion"
             # The upright loop draws no people or agents, so its caption points to the list instead.
             caption = driver.execute_script("return arguments[0].innerText", driver.find_element(By.CSS_SELECTOR, ".team-figure figcaption"))
-            assert "The list of people and AI agents" in caption and "Point at" not in caption, caption
+            assert "The list says where each person and agent works" in caption and "Point at" not in caption, caption
+            critique = driver.execute_script(TEAM_CRITIQUE_JS, "narrow")
+            assert critique["towardsRules"] and critique["inFigure"], critique
             # The phone header as on Stats: the links out beside Download, the four tabs on their own line under it.
             assert driver.execute_script("""
                 const top = (s) => document.querySelector(s).getBoundingClientRect();

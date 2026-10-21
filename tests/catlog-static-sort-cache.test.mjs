@@ -1295,10 +1295,10 @@ assert.equal(document.body.classList.contains("team-open"), true);
 assert.equal(document.title, "Team | CatLog");
 {
   const team = element("teamFigure").innerHTML + element("teamLegend").innerHTML;
-  for (const name of ["Supantha", "Aarna", "Erin", "Mohammad", "Source agents", "Reading agents", "Verification agents", "Audit agents"]) {
+  for (const name of ["Supantha", "Vaishnavey", "Aarna", "Erin", "Mohammad", "Source agents", "Reading agents", "Verification agents", "Audit agents"]) {
     assert.match(team, new RegExp(name), name);
   }
-  for (const station of ["Cited papers", "AI reading", "AI check", "AI audit", "Human check", "Rules updated", "Website", "The paper"]) {
+  for (const station of ["Cited papers", "AI reading", "AI check", "AI audit", "Human check", "AI critique", "Rules updated", "Website", "The paper"]) {
     assert.match(team, new RegExp(`>${station}</text>`), station);
   }
   assert.doesNotMatch(team, /Claude|Codex|Anthropic|OpenAI|GPT|Dr\.|Prof|PhD|independent/);
@@ -1308,6 +1308,30 @@ assert.equal(document.title, "Team | CatLog");
   assert.match(team, /<strong>Verification agents<\/strong> \(AI\) check each value against the paper, separately/);
   assert.match(team, /<strong>Supantha<\/strong> builds CatLog and its website, and turns findings into better rules/);
   assert.match(team, /data-actor="aarna erin" data-stations="human"/);
+  // AI critique (round 14, the user 2026-10-20): Vaishnavey examines the AI agents' readings for systematic errors and
+  // the findings feed the rules, in one plain sentence (no pronoun, no title); on both loops AI critique hangs off Rules
+  // updated by a dashed line whose chevron points at Rules updated.
+  assert.match(team, /<strong>Vaishnavey<\/strong> examines the AI agents&#39; readings for systematic errors; the findings feed the rules<\/span><small [^>]*>At AI critique<\/small>/);
+  assert.match(team, /data-actor="vaishnavey" data-stations="critique"/);
+  assert.match(team, /aria-label="Vaishnavey: examines the AI agents&#39; readings for systematic errors; the findings feed the rules\. At AI critique\."/);
+  assert.doesNotMatch(team, /\b(?:she|her|hers|he|his|him)\b[^<]*(?:critique|Vaishnavey)|Vaishnavey[^<]*\b(?:she|her|hers|he|his|him)\b/i);
+  {
+    const loop = (layout) => element("teamFigure").innerHTML.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0];
+    for (const [layout, from, to] of [["wide", "330,360", "205,392"], ["narrow", "80,285", "160,296"]]) {
+      const [x1, y1] = from.split(",").map(Number);
+      const [x2, y2] = to.split(",").map(Number);
+      assert.match(loop(layout), new RegExp(`<line class="team-branch" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`), layout);
+      // the chevron two fifths from AI critique towards Rules updated, turned towards Rules updated
+      const angle = Math.round((Math.atan2(y1 - y2, x1 - x2) * 1800) / Math.PI) / 10;
+      const at = [x2 + (x1 - x2) * 0.4, y2 + (y1 - y2) * 0.4].map((value) => Math.round(value * 10) / 10);
+      assert.match(loop(layout), new RegExp(`<path class="team-arrow" d="M-5 -5 L4 0 L-5 5" transform="translate\\(${at[0]} ${at[1]}\\) rotate\\(${angle}\\)"/>`), layout);
+      // three branches (Website, The paper, AI critique), each with its chevron, beside the loop's own arrows
+      assert.equal((loop(layout).match(/class="team-branch"/g) || []).length, 3, layout);
+    }
+    assert.equal((loop("wide").match(/class="team-arrow"/g) || []).length, 6);
+    assert.equal((loop("narrow").match(/class="team-arrow"/g) || []).length, 5);
+    for (const layout of ["wide", "narrow"]) assert.match(loop(layout), /role="group" aria-label="CatLog's loop: [^"]*; AI critique feeds the rules, [^"]*"/);
+  }
   // Supantha's line meets Rules updated; pointing at him also lights Cited papers, AI audit and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
   // Where each works, in the loop's order and mid-sentence case.
@@ -1319,12 +1343,12 @@ assert.equal(document.title, "Team | CatLog");
   // Website station (he builds the website), is drawn last and is no second tab stop.
   assert.deepEqual(
     [...element("teamFigure").innerHTML.matchAll(/class="team-actor [^"]*" data-actor="(\w+)"/g)].map((match) => match[1]),
-    ["source", "reading", "checking", "audit", "supantha", "aarna", "erin", "mohammad", "supantha"],
+    ["source", "reading", "checking", "audit", "vaishnavey", "supantha", "aarna", "erin", "mohammad", "supantha"],
   );
   {
     const also = element("teamFigure").innerHTML.match(/<g class="team-actor team-actor-person team-actor-also" data-actor="supantha"[^>]*>[\s\S]*?<\/g>/);
     assert.ok(also && /aria-hidden="true"/.test(also[0]) && !/tabindex/.test(also[0]) && />Supantha<\/text>/.test(also[0]), "Supantha also stands at Website");
-    assert.equal((element("teamFigure").innerHTML.match(/class="team-actor [^"]*" data-actor="\w+" data-stations="[^"]*" tabindex="0"/g) || []).length, 8, "one tab stop per person or agent");
+    assert.equal((element("teamFigure").innerHTML.match(/class="team-actor [^"]*" data-actor="\w+" data-stations="[^"]*" tabindex="0"/g) || []).length, 9, "one tab stop per person or agent");
   }
   assert.match(team, /<animateMotion dur="24s"/, "Dots move round the loop unless the viewer asks for less motion");
   assert.equal((team.match(/class="team-loop team-loop-(wide|narrow)"/g) || []).length, 2);
@@ -1351,7 +1375,7 @@ assert.equal(document.title, "Team | CatLog");
   assert.deepEqual([...api.teamWrappedLines("44,627 records", undefined)], ["44,627 records"]);
   assert.deepEqual([...api.teamWrappedLines("a-word-longer-than-the-limit", 10)], ["a-word-longer-than-the-limit"]);
   assert.doesNotMatch(element("teamLegend").innerHTML, /tabindex/);
-  assert.equal((element("teamLegend").innerHTML.match(/<button type="button" class="team-legend-button" aria-pressed="false" aria-describedby="(teamAt-[\w-]+)">[\s\S]*?<small id="\1" aria-hidden="true">At /g) || []).length, 7);
+  assert.equal((element("teamLegend").innerHTML.match(/<button type="button" class="team-legend-button" aria-pressed="false" aria-describedby="(teamAt-[\w-]+)">[\s\S]*?<small id="\1" aria-hidden="true">At /g) || []).length, 8);
 }
 api.renderView("browse");
 assert.equal(element("teamView").hidden, true);
