@@ -47,76 +47,95 @@
   --accent-hover:#1b4a44;
   --accent-tint:#e8f2ef;      /* accent on tint 6.4:1, text on tint 14.4:1 */
   --accent-line:#b5d3cc;
-  /* Review status: a dot (opaque) beside the word; figures fill the same colour at 60% with a 1px opaque outline.
-     Salmon and tan dots get a darker 1px ring. */
-  --st-accepted:#3C5488;      /* BPG navy 7.5:1 */
-  --st-pending:#F39B7F;       /* BPG salmon 2.1:1 */
+  /* The Nature BPG palette (ggsci npg "nrc"), each colour written once, with the darker shade of the same hue that its
+     text, tick or ring takes where the colour itself is too light on white (WCAG 2.x: text 4.5:1, marks and rings 3:1).
+     Marks (dots, squares, the "!" disc) are opaque; figures fill at 60% (#RRGGBB99) with a 1px opaque outline. One
+     meaning per colour, the same everywhere (DESIGN.md "Type And Color", the colour table). */
+  --bpg-navy:#3C5488;         /* 7.5:1  Accepted */
+  --bpg-salmon:#F39B7F;       /* 2.1:1  Not confirmed (ring 3.9:1) */
+  --bpg-slate:#8491B4;        /* 3.1:1  Not checked (tick 4.6:1) */
+  --bpg-deep-red:#DC0000;     /* 5.2:1  Disputed */
+  --bpg-cyan:#4DBBD5;         /* 2.2:1  CatLog's reading of the paper (ring 3.0:1, text 5.5:1) */
+  --bpg-green:#00A087;        /* 3.3:1  agreement: Same number, human-checked (text 5.3:1) */
+  --bpg-mint:#91D1C2;         /* 1.7:1  the same number in another form (ring 3.0:1) */
+  --bpg-brown:#7E6148;        /* 5.7:1  Different number */
+  --bpg-red:#E64B35;          /* 3.9:1  a correction: Corrects a value, unit or magnitude */
+  --bpg-tan:#B09C85;          /* 2.6:1  caution (ring 4.1:1, text 5.5:1) */
+  /* Review result: the dot (opaque) beside the word; Not checked is one colour for both its kinds (Unverified, Not
+     reviewed: the record names which). Salmon's dot gets a darker 1px ring. */
+  --st-accepted:var(--bpg-navy);
+  --st-pending:var(--bpg-salmon);
   --st-pending-ring:#c4664a;  /* 3.9:1 */
-  --st-unverified:#8491B4;    /* BPG slate 3.1:1 */
-  --st-not-reviewed:#B09C85;  /* BPG tan 2.6:1 */
-  --st-not-reviewed-ring:#8c7a64; /* 4.1:1 */
-  --st-disputed:#DC0000;      /* BPG dark red 5.2:1 */
+  --st-unverified:var(--bpg-slate);
+  --st-not-reviewed:var(--bpg-slate);
+  --st-not-reviewed-ring:var(--bpg-slate);
+  --st-disputed:var(--bpg-deep-red);
   /* Filter ticks: the status colour, or a darker form where it is light (3:1 or more on white). */
   --tick-unverified:#6a7499;  /* 4.6:1 */
-  /* Human-checked: a check and the word in green (5.9:1 on white). */
-  --checked:#17733a;
-  /* Cautions: the "!" and caution notes (5.9:1; on the tint 5.5:1). */
-  --caution:#8a5a14;
-  --caution-tint:#fff6e8;
-  --caution-line:#e3c08a;
-  --caution-ink:#4f3a21;
-  /* Database comparison and kinds of change (Stats figures 3-5, the record's comparison with the databases). */
-  --cmp-same:#00A087;         /* BPG green: same number as a database */
-  --cmp-differs:#7E6148;      /* BPG brown 5.7:1: a different number / value changed */
-  --cmp-new:#4DBBD5;          /* BPG cyan: no database value / value added */
-  --chg-magnitude:#E64B35;    /* BPG red 3.9:1: unit or magnitude (x 10^n) */
-  --chg-precision:#91D1C2;    /* BPG mint: rounding / more digits only */
-  --bar-neutral:#7d8885;      /* single-series bars 3.7:1 */
-  /* Enzyme classes EC 1-7 (the user, 2026-10-18: more of the palette where colour carries meaning): each class its own
-     BPG colour where Stats draws the classes apart (Values by enzyme class, kcat against Km) and as a short bar before
-     a class's number (Enzyme classes, those figures' labels), always beside that number, so colour is never all that
-     tells two classes apart. In those figures the colour means the class. Mint is left out (too light for a line). */
-  --ec-1:#E64B35;             /* BPG red */
-  --ec-2:#4DBBD5;             /* BPG cyan */
-  --ec-3:#00A087;             /* BPG green */
-  --ec-4:#3C5488;             /* BPG navy */
-  --ec-5:#F39B7F;             /* BPG salmon */
-  --ec-6:#8491B4;             /* BPG slate */
-  --ec-7:#7E6148;             /* BPG brown */
-  /* Filter chips and the dot beside a sidebar group (tone-* below). A chip whose option already has a colour on this
-     page wears it: a review result its status colour, a database result the colour of its square, a caution amber,
-     human-checked green. The ten BPG colours all name a review result, a database result or a kind of change here, so the
-     three groups without a colour of their own take colours that mean nothing else on the page (not BPG): Source purple,
-     the enzyme, organism, substrate, EC number and search raspberry, the measurement (type, wild type or variant,
-     temperature and pH) olive. The site has one light theme. */
-  --fg-source:#6A3D9A;       /* purple 7.6:1 */
-  --fg-identity:#A20056;     /* raspberry 7.9:1 */
-  --fg-measurement:#6E7F1A;  /* olive 4.5:1 */
+  /* Agreement with a second source (BPG green): human-checked's tick and word in the darker green (a human reviewer
+     approved the values), a database result's Same number at the colour itself. */
+  --checked:#007A67;          /* 5.3:1; on its 12% tint 4.6:1 */
+  /* Cautions (BPG tan): the "!" disc in tan with its 1px ring and an ink "!" (6.2:1 on tan), the caution's words and
+     lines in the darker tan, its notes on a tan tint with ink-brown text. */
+  --caution:#79654F;          /* 5.5:1 */
+  --caution-mark:var(--bpg-tan);
+  --caution-ring:#8c7a64;     /* 4.1:1 */
+  --caution-tint:#f8f6f4;
+  --caution-line:#dbd2c8;
+  --caution-ink:#4a3b2a;      /* 9.7:1 on the tint */
+  /* Database comparison and kinds of change (the record's Against the databases, Stats part 7, the corrections on
+     records not yet re-read): agreement green, the same number in another form (another label; more digits or
+     rounding) mint, a different number brown, a correction (Corrects a value; unit or magnitude) red, and a value no
+     database has (Not in the databases; added where the source had none) cyan, CatLog's reading of the paper. */
+  --cmp-same:var(--bpg-green);
+  --cmp-other:var(--bpg-mint);
+  --cmp-other-ring:#45A48E;   /* 3.0:1 */
+  --cmp-differs:var(--bpg-brown);
+  --cmp-new:var(--bpg-cyan);
+  --cmp-new-ring:#2DA1BD;     /* 3.0:1 */
+  --chg-magnitude:var(--bpg-red);
+  --chg-precision:var(--bpg-mint);
+  --bar-neutral:#7d8885;      /* single-series bars 3.7:1: a count with no meaning colour */
+  /* Enzyme classes EC 1-7: a categorical set, used only in the Stats figures that draw the classes apart (Values by
+     enzyme class, kcat against Km), where no other meaning colour appears, and always beside the class's number. Mint,
+     tan and deep red are left out (too light for a line, or Disputed's alarm). */
+  --ec-1:var(--bpg-red);
+  --ec-2:var(--bpg-cyan);
+  --ec-3:var(--bpg-green);
+  --ec-4:var(--bpg-navy);
+  --ec-5:var(--bpg-salmon);
+  --ec-6:var(--bpg-slate);
+  --ec-7:var(--bpg-brown);
+  /* The databases: a categorical set for a figure whose only series are the databases (none yet; every view that lists
+     them now colours its marks by review result or database result, so there the names tell them apart). */
+  --db-brenda:var(--bpg-navy);
+  --db-sabio:var(--bpg-red);
+  --db-oed:var(--bpg-green);
+  --db-uniprot:var(--bpg-slate);
+  --db-skid:var(--bpg-tan);
+  --db-strenda:var(--bpg-brown);
+  /* Where a record's values come from: CatLog's reading of the paper (Read from the paper, its counts, its chip, its
+     marks on Stats, the AI agents on Team) is BPG cyan, its words and numbers in the darker cyan; Not yet re-read has
+     no colour of its own. */
+  --src-paper:var(--bpg-cyan);
+  --src-paper-ring:#2DA1BD;   /* 3.0:1 */
+  --src-paper-ink:#207286;    /* 5.5:1; on its 12% tint 5.0:1 */
+  --src-paper-tint:#eaf7fa;   /* 12% */
+  /* Filter chips and the dot beside a sidebar group (tone-* below). A chip whose option has a meaning colour wears it;
+     the other filters (search, enzyme, EC number, organism, substrate, measurement, wild type or variant, temperature,
+     pH, Not yet re-read, a source database) are choices with no meaning colour, so they wear the accent, the colour of
+     what a visitor picks (links, buttons, the selected row). */
+  --fg-source:var(--accent);
+  --fg-identity:var(--accent);
+  --fg-measurement:var(--accent);
   --fg-dot-ring:rgba(23,33,32,0.24);  /* a 1px ring round the sidebar's group dots */
-  /* Where a record's values come from (round 13 palette decision, DESIGN.md "Type And Color"): Read from the paper,
-     CatLog's own reading, wears CatLog's own colour, the accent (its numbers on Browse's counts band and Stats' headline
-     band); the databases are named, never given a colour each. */
-  --src-paper:var(--accent);
-  /* Browse's counts band card: a lighter line than Stats' band and a quieter glow (a 2px ring at 3%, a 26px shadow). */
-  --band-card-line:#c9ddd6;
-  --band-card-glow:0 0 0 2px rgba(36,95,88,0.03), 0 10px 26px -18px rgba(36,95,88,0.36);
-  /* Focus on the key numbers (Stats' headline band, Browse's counts band): a soft accent glow and wash, never neon. */
-  --accent-glow:rgba(36,95,88,0.26);
-  --accent-wash:rgba(36,95,88,0.07);
-  /* Stats' headline band is the page's focal point (the user, 2026-10-15: "more focusing ... with some glow"): a soft
-     halo behind each key number (crisp digits, no text-shadow), a calm wash down the card and a gentle accent glow
-     round it. The site has one light theme, so these are its only forms. */
-  --accent-halo-core:rgba(36,95,88,0.13);
-  --accent-halo:rgba(36,95,88,0.075);
-  --accent-halo-hover:rgba(36,95,88,0.12);
-  --accent-wash-soft:rgba(36,95,88,0.035);
-  --band-glow:0 0 0 3px rgba(36,95,88,0.045), 0 14px 36px -16px rgba(36,95,88,0.34);
-  /* Shadows only on the phone sheet, dialogs, menus, Stats' tooltip line and Stats' headline band. */
-  --tip-shadow:0 6px 20px rgba(20,34,31,0.22);
+  /* No glow, halo, wash or gradient anywhere: a crisp, short shadow only where something floats above the page (menus,
+     dialogs, the phone sheet, the record drawer, Stats' tooltip line). */
+  --tip-shadow:0 2px 8px rgba(20,34,31,0.18);
   --overlay:rgba(20,34,31,0.24);
   --scroll-edge:rgba(23,33,32,0.5);
-  --shadow:0 10px 26px rgba(20,34,31,0.09);
-  --shadow-panel:0 0 36px rgba(20,34,31,0.16);
+  --shadow:0 2px 8px rgba(20,34,31,0.10);
+  --shadow-panel:0 0 0 1px var(--line), 0 4px 16px rgba(20,34,31,0.12);
 }
 * { box-sizing:border-box }
 html, body { background:var(--bg) }
@@ -223,35 +242,35 @@ button:disabled { cursor:not-allowed; opacity:0.5 }
 body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:none }
 
 /* Counts band, the first thing a visitor sees (round 13, the user: "the numbers and overall progress ... so small and
-   colour same so it doesn't capture any attention"): a focal point like Stats' headline band, a step quieter. A soft
-   card (a light accent line, a calm wash and a gentle glow) holds the four key numbers, each label over its number and
-   each number in the colour its meaning has across the site (Records the page's ink, Accepted its status navy with the
-   status dot, Read from the paper CatLog's own colour, Human-checked its green with the tick), then the With counts
-   (kcat, Km, kcat/Km), smaller, and the snapshot date at the card's top right. One layout from 1024px up (nothing
-   wraps or moves as the window widens), two rows on tablets, a 2 x 2 grid on phones. */
+   colour same so it doesn't capture any attention"; round 14: "a bit AI-ish, with the glow"): a plain white card with
+   a 1px hairline, no glow, wash or shadow. The four key numbers lead by size, weight and tabular figures, each label over
+   its number and each number in the colour its meaning has across the site (Records the page's ink, Accepted its
+   status navy with the status dot, Read from the paper the darker BPG cyan, Human-checked the darker BPG green with the
+   tick), then the With counts (kcat, Km, kcat/Km), smaller, and the snapshot date at the card's top right. One layout
+   from 1024px up (nothing wraps or moves as the window widens), two rows on tablets, a 2 x 2 grid on phones. */
 .snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:6px var(--gutter) }
 /* One plain line on what CatLog is, over the counts, for a first-time visitor. */
 .snapshot-lead { margin:0 0 6px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .snapshot-lead a { white-space:nowrap }
 /* A short window wider than a phone (800 x 600) keeps the table's 340px: the line gives way, the Guide tab stays. */
 @media (min-width: 641px) and (max-height: 640px) { .snapshot-lead { display:none } }
-.snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--band-card-line); border-radius:8px; background:radial-gradient(70% 160% at 0% 0%, var(--accent-wash), transparent 64%), linear-gradient(180deg, var(--accent-wash-soft), transparent 80%), var(--bg); box-shadow:var(--band-card-glow); padding:6px var(--sp-5) 6px var(--sp-4) }
+.snapshot-overview { --band-num:var(--fs-28); --band-num-lh:var(--lh-28); position:relative; display:flex; min-width:0; align-items:flex-start; gap:var(--sp-5); border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:6px var(--sp-5) 6px var(--sp-4) }
 /* Records and Accepted sit in the band's row like the other key numbers. */
 .summary-grid { display:contents }
-.summary-card, .snapshot-paper, .snapshot-checked { --key:var(--text); --key-glow:var(--accent-glow); position:relative; display:inline-flex; min-width:0; flex-direction:column; align-items:flex-start; color:var(--text); white-space:nowrap }
+.summary-card, .snapshot-paper, .snapshot-checked { --key:var(--text); position:relative; display:inline-flex; min-width:0; flex-direction:column; align-items:flex-start; color:var(--text); white-space:nowrap }
 .summary-card > span, .snapshot-paper > span, .snapshot-checked > span { display:inline-flex; align-items:center; color:var(--muted); font-size:var(--fs-13); line-height:16px }
-.summary-card > strong, .snapshot-paper > strong, .snapshot-checked > strong { color:var(--key); font-size:var(--band-num); font-weight:600; line-height:var(--band-num-lh); text-shadow:0 0 14px var(--key-glow) }
+.summary-card > strong, .snapshot-paper > strong, .snapshot-checked > strong { color:var(--key); font-size:var(--band-num); font-weight:600; line-height:var(--band-num-lh) }
 /* The meaning colours: the same as everywhere else on the site (DESIGN.md "Type And Color", one meaning per colour). */
-.summary-card.summary-accepted { --key:var(--st-accepted); --key-glow:color-mix(in srgb, var(--st-accepted) 26%, transparent) }
+.summary-card.summary-accepted { --key:var(--st-accepted) }
 .summary-accepted > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted) }
-.snapshot-paper { --key:var(--src-paper); --key-glow:var(--accent-glow) }
-.snapshot-checked { --key:var(--checked); --key-glow:color-mix(in srgb, var(--checked) 26%, transparent) }
+.snapshot-paper { --key:var(--src-paper-ink) }
+.snapshot-checked { --key:var(--checked) }
 .snapshot-checked > span { color:var(--checked); font-weight:500 }
 .snapshot-checked .check-icon { margin-right:3px }
-.snapshot-paper[href] > span { color:var(--src-paper) }
+.snapshot-paper[href] > span { color:var(--src-paper-ink) }
 /* A linked count tints in its own colour around itself under the pointer (::before), so nothing moves. */
 .snapshot-paper[href], .snapshot-checked[href] { isolation:isolate }
-.snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:6px; background:transparent; pointer-events:none }
+.snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:var(--radius); background:transparent; pointer-events:none }
 .snapshot-paper[href]:hover::before, .snapshot-checked[href]:hover::before { background:color-mix(in srgb, var(--key) 9%, var(--bg)) }
 @media (prefers-reduced-motion: no-preference) {
   .snapshot-paper[href]::before, .snapshot-checked[href]::before { transition:background-color 200ms ease }
@@ -439,14 +458,14 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    Windows): the square sits 6px after the box and 4px before the name, the count comes 6px closer (2px from the
    names' column; the counts stay in line with the other groups'), and the names are set 1px tighter between words
    and 0.01em between letters. In the phone sheet the rows are 44px targets. */
-.db-mark { display:inline-block; width:10px; height:10px; background:var(--db-mark, var(--bar-neutral)); vertical-align:-1px }
+.db-mark { display:inline-block; width:10px; height:10px; background:var(--db-mark, var(--bar-neutral)); box-shadow:inset 0 0 0 1px var(--db-mark-ring, var(--db-mark, var(--bar-neutral))); vertical-align:-1px }
 #databaseChecklist .db-mark { margin:0 4px 0 -2px }
 #databaseChecklist .check-row > span { letter-spacing:-0.01em; word-spacing:-1px }
 #databaseChecklist .check-row > strong { margin-left:-6px }
 .db-mark-corrects { --db-mark:var(--chg-magnitude) }
 .db-mark-differs { --db-mark:var(--cmp-differs) }
-.db-mark-other-label { --db-mark:var(--bar-neutral) }
-.db-mark-not-listed { --db-mark:var(--cmp-new) }
+.db-mark-other-label { --db-mark:var(--cmp-other); --db-mark-ring:var(--cmp-other-ring) }
+.db-mark-not-listed { --db-mark:var(--cmp-new); --db-mark-ring:var(--cmp-new-ring) }
 .db-mark-same { --db-mark:var(--cmp-same) }
 .check-row.after-divider { margin-top:var(--sp-1); border-top:1px solid var(--line-soft); padding-top:9px }
 @media (max-width: 640px) {
@@ -503,13 +522,13 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* A chip's colour (and the sidebar dot's): --group, with a 12% tint behind the words (text 13:1 or more, the × 4.5:1)
    and a 45% line round it, the darker colours giving the deeper tints. */
 .tone-source { --group:var(--fg-source) }
-/* Read from the paper: its own colour, as on the counts band and Stats; the Source group's dot wears it while that
-   option is chosen, so the dot and the chip agree. */
+/* Read from the paper: BPG cyan, as on the counts band and Stats; the Source group's dot wears it while that option is
+   chosen, so the dot and the chip agree. */
 .tone-paper { --group:var(--src-paper) }
 .filter-section:has(input[name="sourceMode"][value="paper"]:checked) > .filter-section-title .group-dot { --group:var(--src-paper) }
 .tone-identity { --group:var(--fg-identity) }
 .tone-measurement { --group:var(--fg-measurement) }
-.tone-caution { --group:var(--caution); --group-tint:var(--caution-tint); --group-line:var(--caution-line) }
+.tone-caution { --group:var(--caution-mark); --group-tint:var(--caution-tint); --group-line:var(--caution-line) }
 .tone-checked { --group:var(--checked) }
 .tone-st-accepted { --group:var(--st-accepted) }
 .tone-st-pending { --group:var(--st-pending); --group-line:var(--st-pending-ring) }
@@ -518,9 +537,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .tone-cmp-corrects { --group:var(--chg-magnitude) }
 .tone-cmp-differs { --group:var(--cmp-differs) }
 .tone-cmp-new { --group:var(--cmp-new) }
+.tone-cmp-other { --group:var(--cmp-other); --group-line:var(--cmp-other-ring) }
 .tone-cmp-same { --group:var(--cmp-same) }
-/* Same, other label (its square is grey), Corrected earlier (no square) and a Review result chip naming several results
-   (each result's dot is in its words). */
+/* Corrected earlier (no square) and a Review result chip naming several results (each result's dot is in its words). */
 .tone-neutral { --group:var(--bar-neutral) }
 .filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--group-line, color-mix(in srgb, var(--group, var(--accent)) 45%, var(--bg))); border-left:3px solid var(--group, var(--accent)); border-radius:var(--radius); background:var(--group-tint, color-mix(in srgb, var(--group, var(--accent)) 12%, var(--bg))); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
@@ -533,10 +552,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-state.disputed { --status-color:var(--st-disputed) }
 /* The other marks a chip's option has on the page, before its name like the status dot, so a chip's group is told by
    more than its colour (two colours can look alike to a colour-blind reader): human-checked's green tick, a caution's
-   amber "!" (the table's, at 12px) and a database result's square (the sidebar's, at 8px like the dot). */
+   tan "!" (the table's, at 12px) and a database result's square (the sidebar's, at 8px like the dot). */
 .chip-check { color:var(--checked) }
 .chip-check .check-icon { width:12px; height:12px; margin-right:2px; vertical-align:-2px }
-.chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution); color:var(--bg); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
+.chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
 .chip-flag::before { content:"!" }
 .filter-chip .db-mark { width:8px; height:8px; margin:0 4px 1px 0; vertical-align:middle }
 .filter-chip:hover { border-color:var(--accent); border-left-color:var(--group, var(--accent)) }
@@ -600,8 +619,8 @@ th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
 .condition-note { display:block; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap }
 /* A temperature caution (the table has no temperature column): the amber "!" with its short words, T questionable, opens
    the line under the substrate, before any other note; in a Substrate column at its narrowest the words end in "…". */
-.condition-note .value-flag { display:inline-flex; max-width:100%; align-items:center; gap:3px; width:auto; height:auto; background:none; color:var(--caution); vertical-align:top }
-.condition-note .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg) }
+.condition-note .value-flag { display:inline-flex; max-width:100%; align-items:center; gap:3px; width:auto; height:auto; background:none; box-shadow:none; color:var(--caution); vertical-align:top }
+.condition-note .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text) }
 .condition-note .value-flag .visually-hidden { position:static; width:auto; min-width:0; height:auto; margin:0; clip:auto; clip-path:none; text-overflow:ellipsis }
 .num { text-align:right; white-space:nowrap }
 .c-ec { white-space:nowrap }
@@ -648,8 +667,9 @@ td.c-form { display:none }
 .scientific-number { display:inline-block; white-space:nowrap }
 .scientific-number sup { position:relative; top:-0.1em; margin-left:1px }
 
-/* A caution: an amber "!" beside the value; the words are in its tooltip. */
-.value-flag { position:relative; display:inline-grid; flex:0 0 14px; place-items:center; align-self:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg); cursor:help }
+/* A caution: a tan "!" disc beside the value (BPG tan with its 1px darker ring, the "!" in ink); the words are in its
+   tooltip. */
+.value-flag { position:relative; display:inline-grid; flex:0 0 14px; place-items:center; align-self:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); cursor:help }
 .value-flag::before { content:"!"; font-size:var(--fs-12); font-weight:600; line-height:1 }
 
 /* Placeholder rows while the first records load. */
@@ -979,9 +999,10 @@ p.cmp-note { padding-left:16px }
 .cmp-mark { flex:0 0 10px; width:10px; height:10px; border:1px solid var(--line-strong); background:var(--bg) }
 .cmp-mark.cmp-same { border-color:var(--cmp-same); background:var(--cmp-same) }
 .cmp-mark.cmp-differs { border-color:var(--cmp-differs); background:var(--cmp-differs) }
-.cmp-mark.cmp-new { border-color:var(--cmp-new); background:var(--cmp-new) }
+.cmp-mark.cmp-new { border-color:var(--cmp-new-ring); background:var(--cmp-new) }
 .cmp-mark.cmp-magnitude { border-color:var(--chg-magnitude); background:var(--chg-magnitude) }
-.cmp-mark.cmp-precision { border-color:var(--chg-precision); background:var(--chg-precision) }
+.cmp-mark.cmp-precision { border-color:var(--cmp-other-ring); background:var(--chg-precision) }
+.cmp-mark.cmp-other { border-color:var(--cmp-other-ring); background:var(--cmp-other) }
 .cmp-mark.cmp-neutral { border-color:var(--bar-neutral); background:var(--bar-neutral) }
 .cmp-line { display:block; margin-top:2px; color:var(--text-2) }
 .section-text { margin:0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
@@ -1021,19 +1042,16 @@ p.cmp-note { padding-left:16px }
 .stats-contents a { color:var(--accent); text-decoration:none }
 .stats-contents a:hover, .stats-contents a:focus-visible { text-decoration:underline }
 .stats-contents-number { color:var(--muted); font-variant-numeric:tabular-nums }
-/* 1. At a glance: the headline band, the page's focal point (the user, 2026-10-13: "can it glow a bit or more focus
-   driving"; 2026-10-15: "more focusing ... with some glow"). A card with a 1px accent line and a gentle accent glow
-   round it, a thin accent rule along its top and a calm wash; the four key numbers (line 1, 40px) in accent ink, each
-   over a soft radial halo (its background and a wide low-alpha box-shadow: the digits stay crisp, and the halo adds
-   nothing to the page's width); a linked number opens Browse and its whole item tints calmly under the pointer. The
-   numbers fade and rise once, the first time the band is shown, unless the viewer asks for less motion. */
+/* 1. At a glance: the headline band, the page's focal point. Round 14 (the user's colleague: "a bit AI-ish, with the
+   glow"): a plain white card with a 1px hairline, no glow, halo, wash, gradient rule or entrance motion. The four key
+   numbers (line 1, 40px, 600, tabular figures) lead by size, weight and the whitespace round them, each in its meaning
+   colour; a linked number opens Browse and its whole item takes a flat tint under the pointer. */
 .stats-totals { margin:var(--sp-5) 0 var(--sp-7) }
-.stats-band { position:relative; overflow:hidden; border:1px solid var(--accent-line); border-radius:10px; background:radial-gradient(80% 130% at 0% 0%, var(--accent-wash), transparent 62%), linear-gradient(180deg, var(--accent-wash-soft), transparent 72%), var(--bg); box-shadow:var(--band-glow); padding:var(--sp-4) var(--sp-4) var(--sp-2) }
-.stats-band::before { content:""; position:absolute; inset:0 0 auto; height:2px; background:linear-gradient(90deg, var(--accent), var(--accent-line) 50%, transparent 95%) }
+.stats-band { position:relative; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:var(--sp-4) var(--sp-4) var(--sp-2) }
 .stats-band > .stats-part-title { margin:0 0 var(--sp-1) var(--sp-2); border:0; padding:0 }
 .stats-totals dl { display:grid; grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); margin:0; padding:var(--sp-2) 0 }
 .stats-totals dl + dl { border-top:1px solid var(--line-soft) }
-.stats-total { position:relative; min-width:0; border-radius:6px; padding:var(--sp-2) var(--sp-3) }
+.stats-total { position:relative; min-width:0; border-radius:var(--radius); padding:var(--sp-2) var(--sp-3) }
 .stats-total + .stats-total::before { content:""; position:absolute; left:0; top:10px; bottom:10px; border-left:1px solid var(--line-soft) }
 .stats-totals dt { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-totals dd { margin:4px 0 0; font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
@@ -1042,37 +1060,30 @@ p.cmp-note { padding-left:16px }
 .stats-totals .stats-totals-scope dd { font-size:var(--fs-20); line-height:var(--lh-20) }
 .stats-total-value { color:var(--text) }
 /* The key numbers in the colours Browse's counts band gives them (one meaning per colour): Records ink, Accepted
-   Accepted's navy, Read from the paper its own colour, Human review the human-checked green; each halo in its colour. */
-.stats-totals-main .stats-total { --key:var(--text); --key-halo-core:var(--accent-halo-core); --key-halo:var(--accent-halo); --key-halo-hover:var(--accent-halo-hover) }
+   Accepted's navy, Read from the paper the darker BPG cyan, Human review the human-checked green. */
+.stats-totals-main .stats-total { --key:var(--text) }
 .stats-totals-main .stats-total[data-total="accepted"] { --key:var(--st-accepted) }
-.stats-totals-main .stats-total[data-total="catlog"] { --key:var(--src-paper) }
+.stats-totals-main .stats-total[data-total="catlog"] { --key:var(--src-paper-ink) }
 .stats-totals-main .stats-total[data-total="review"] { --key:var(--checked) }
-.stats-totals-main .stats-total:is([data-total="accepted"], [data-total="review"]) { --key-halo-core:color-mix(in srgb, var(--key) 13%, transparent); --key-halo:color-mix(in srgb, var(--key) 7.5%, transparent); --key-halo-hover:color-mix(in srgb, var(--key) 12%, transparent) }
-.stats-totals-main .stats-total-value { display:inline-block; border-radius:999px; background:radial-gradient(closest-side, var(--key-halo-core), var(--key-halo)); box-shadow:0 0 28px 12px var(--key-halo); color:var(--key) }
+.stats-totals-main .stats-total-value { display:inline-block; color:var(--key) }
 /* A linked number: the whole item is its target. */
 a.stats-total-value { text-decoration:none }
-a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:6px }
+a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:var(--radius) }
 a.stats-total-value:focus-visible { outline:0 }
 .stats-total:has(> dd > a.stats-total-value:focus-visible) { outline:2px solid var(--accent); outline-offset:-2px }
 .stats-total:has(> dd > a.stats-total-value:hover) { background:var(--accent-tint); background:color-mix(in srgb, var(--key, var(--accent)) 9%, var(--bg)) }
-.stats-total:has(> dd > a.stats-total-value:hover) .stats-total-value { box-shadow:0 0 32px 14px var(--key-halo-hover, var(--accent-halo-hover)) }
-/* Under the pointer the tint and the larger halo darken the item's ground: its label and note step up to --text-2, so
-   they keep AA contrast (muted there drops just under 4.5:1). */
+/* Under the pointer the tint darkens the item's ground: its label and note step up to --text-2, so they keep AA
+   contrast (muted there drops just under 4.5:1). */
 .stats-total:has(> dd > a.stats-total-value:hover) :is(dt, dd small) { color:var(--text-2) }
 @media (prefers-reduced-motion: no-preference) {
   .stats-total { transition:background-color 200ms ease }
-  .stats-totals-main .stats-total-value { transition:box-shadow 200ms ease }
-  .stats-band.is-entering .stats-totals-main dd { animation:stats-total-rise 900ms cubic-bezier(0.22, 0.7, 0.2, 1) both }
-  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(2) dd { animation-delay:90ms }
-  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(3) dd { animation-delay:180ms }
-  .stats-band.is-entering .stats-totals-main .stats-total:nth-child(4) dd { animation-delay:270ms }
 }
-@keyframes stats-total-rise { from { opacity:0; transform:translateY(8px) } }
 /* The numbered parts after the band: one plain heading each, figures on a 12-column grid (two to a row from 1280px). */
 .stats-charts { display:block }
 .stats-part + .stats-part, .stats-part + .stats-method { margin-top:var(--sp-7) }
 .stats-part-title { display:flex; align-items:center; gap:var(--sp-3); margin:0 0 var(--sp-5); border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); font-size:var(--fs-20); font-weight:600; line-height:var(--lh-20) }
-.stats-part-number { display:inline-grid; flex:0 0 26px; width:26px; height:26px; place-items:center; border-radius:50%; background:var(--accent-tint); box-shadow:inset 0 0 0 1px var(--accent-line); color:var(--accent); font-size:var(--fs-13); font-weight:600; line-height:1 }
+/* A part's number: plain muted figures before its title (no disc). */
+.stats-part-number { flex:0 0 auto; min-width:1ch; color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums lining-nums }
 .stats-part-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:48px 32px; align-items:start }
 .stats-part-grid > * { grid-column:span 6; min-width:0 }
 .stats-part-grid > .stats-wide { grid-column:1 / -1 }
@@ -1096,16 +1107,16 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-accepted { --part:var(--st-accepted) }
 .stats-part-pending { --part:var(--st-pending); --part-line:var(--st-pending-ring) }
 .stats-part-unverified { --part:var(--st-unverified) }
-.stats-part-not-reviewed { --part:var(--st-not-reviewed); --part-line:var(--st-not-reviewed-ring) }
+.stats-part-not-reviewed { --part:var(--st-not-reviewed) }
 .stats-part-not-checked { --part:var(--st-unverified) }
 .stats-part-disputed { --part:var(--st-disputed) }
 .stats-part-same { --part:var(--cmp-same) }
 .stats-part-differs { --part:var(--cmp-differs) }
-.stats-part-new { --part:var(--cmp-new) }
-.stats-part-rounding { --part:var(--chg-precision); --part-line:var(--cmp-same) }
+.stats-part-new { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
+.stats-part-rounding { --part:var(--chg-precision); --part-line:var(--cmp-other-ring) }
 .stats-part-magnitude { --part:var(--chg-magnitude) }
 .stats-part-neutral { --part:var(--bar-neutral) }
-.stats-part-caution { --part:var(--caution) }
+.stats-part-caution { --part:var(--caution-mark); --part-line:var(--caution-ring) }
 .stats-part-records { --part:var(--line-strong) }
 /* Enzyme classes: the class's colour (--ec-N), and a short bar of it before the class's number (deepened a little, so
    the light classes still show on white). */
@@ -1117,23 +1128,24 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ec-6 { --part:var(--ec-6) }
 .stats-ec-7 { --part:var(--ec-7) }
 .stats-ec-key { display:inline-block; flex:0 0 3px; width:3px; height:12px; margin-right:5px; border-radius:2px; background:var(--part); background:color-mix(in srgb, var(--part) 85%, var(--text)); vertical-align:-1px }
-/* Against the databases (part 7), as Browse colours them: same green, same number under another label neutral grey,
+/* Against the databases (part 7), as Browse colours them: same green, same number under another label mint,
    corrects red, different number brown, not in the databases cyan. A database's own "not listed" kinds are cyan at
    three strengths (other values listed, parameter not listed, value not listed: the fill at about 60%, 40% and 20%),
    and how a correction was found red at two (checked against the paper, an exact factor found by code), each with
    the full colour as its outline, so they part by lightness in grey print too. */
-.stats-part-other-label { --part:var(--bar-neutral) }
+.stats-part-other-label { --part:var(--cmp-other); --part-line:var(--cmp-other-ring) }
 .stats-part-corrects { --part:var(--chg-magnitude) }
 .stats-part-corrects-2 { --part:color-mix(in srgb, var(--chg-magnitude) 55%, var(--bg)); --part-line:var(--chg-magnitude) }
-.stats-part-not-listed { --part:var(--cmp-new) }
-.stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new) }
-.stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new) }
-/* Records read from the paper wear Read from the paper's own colour (--src-paper, as on Browse's counts band and its
-   chip), never Accepted's navy: Values per paper, the stripe inside Enzyme classes' accepted bars, the From paper
-   counts and the bars of the tables of records read from the paper. */
-.stats-part-catlog, .stats-part-catlog-mark { --part:var(--src-paper) }
-/* Fills run from the colour to its tint (top to bottom), with a 1px opaque outline; a bar's outer ends are rounded. */
-.stats-seg, .stats-swatch { background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
+.stats-part-not-listed { --part:var(--cmp-new); --part-line:var(--cmp-new-ring) }
+.stats-part-not-listed-2 { --part:color-mix(in srgb, var(--cmp-new) 66%, var(--bg)); --part-line:var(--cmp-new-ring) }
+.stats-part-not-listed-3 { --part:color-mix(in srgb, var(--cmp-new) 33%, var(--bg)); --part-line:var(--cmp-new-ring) }
+/* Records read from the paper wear Read from the paper's colour (BPG cyan, --src-paper, as on Browse's counts band and
+   its chip), never Accepted's navy: Values per paper, the stripe inside Enzyme classes' accepted bars, the From paper
+   counts (in the darker cyan) and the bars of the tables of records read from the paper. */
+.stats-part-catlog, .stats-part-catlog-mark { --part:var(--src-paper); --part-line:var(--src-paper-ring) }
+/* One flat fill: the colour at 60% (#RRGGBB99 on white) with a 1px opaque outline (a darker ring where the colour is
+   light); a bar's outer ends are rounded 2px. */
+.stats-seg, .stats-swatch { background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--part-line, var(--part)) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
@@ -1143,28 +1155,27 @@ a.stats-total-value:focus-visible { outline:0 }
    stripe stays within its accepted bar. The legend's swatch is an accepted swatch with the stripe through it. */
 .stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--src-paper); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
 .stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
-.stats-legend .stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, var(--src-paper) 3px 7px, var(--bg) 7px 8px, transparent 8px), linear-gradient(180deg, color-mix(in srgb, var(--part) 78%, var(--bg)), color-mix(in srgb, var(--part) 46%, var(--bg))); box-shadow:inset 0 0 0 1px var(--st-accepted) }
-.stats-v2-count { color:var(--src-paper); font-weight:600 }
-/* Glow is for the key numbers (the headline band, the lead of Quality) and for the mark under the pointer only: at rest
-   the marks of a figure have plain outlines. Pointing at a mark (or focusing the link in its row) lights it with a soft
-   glow in its own colour and dims the other marks of its figure (data-hl: bars, slices, ridges with their range, median
-   and end stubs); its exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
+.stats-legend .stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, var(--src-paper) 3px 7px, var(--bg) 7px 8px, transparent 8px), color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--st-accepted) }
+.stats-v2-count { color:var(--src-paper-ink); font-weight:600 }
+/* No glow anywhere. Pointing at a mark (or focusing the link in its row) dims the other marks of its figure (data-hl:
+   bars, slices, ridges with their range, median and end stubs) and gives the mark a 2px outline in its own colour; its
+   exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
 .stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end),
 .stats-fig.has-active path[data-hl]:not(.is-active) { opacity:0.42 }
-.stats-chart-row.is-active .stats-seg:not(.stats-part-records, .stats-part-catlog-mark), .stats-seg[data-tip]:not(.stats-part-catlog-mark):hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
+.stats-chart-row.is-active .stats-seg:not(.stats-part-records, .stats-part-catlog-mark), .stats-seg[data-tip]:not(.stats-part-catlog-mark):hover { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
 /* A lit row of the review-result table is tinted (more specific than the stats tables' transparent cells, which hid it). */
 .stats-status-table.stats-table tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
 @media (prefers-reduced-motion: no-preference) {
-  .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), filter 150ms ease, opacity 150ms ease }
-  .stats-donut path[data-hl], .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease, filter 150ms ease }
+  .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), opacity 150ms ease }
+  .stats-donut path[data-hl], .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease }
 }
-.stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:6px; background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
+.stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:var(--radius); background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
 .stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
 /* Each slice has one fill, its colour at 60% with a 1px opaque outline (design spec section 2): no gradient, so a slice
    reads as its colour all along and navy (Accepted) and slate (Not checked) stay apart; the bars keep theirs. */
 .stats-donut path { fill:var(--part); fill:color-mix(in srgb, var(--part) 60%, var(--bg)); stroke:var(--part-line, var(--part)); stroke-width:1 }
-.stats-donut path.is-active { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 60%, transparent)) }
+.stats-donut path.is-active { stroke-width:2 }
 .stats-swatch { display:inline-block; flex:0 0 10px; width:10px; height:10px; vertical-align:-1px }
 
 /* Legends: inline above the plot, in segment order. */
@@ -1175,8 +1186,8 @@ a.stats-total-value:focus-visible { outline:0 }
 /* A count chart's legend with its Records | Share switch at the right. */
 .stats-chart-tools { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px 16px; margin:0 0 12px }
 .stats-chart-tools .stats-legend { margin:0 }
-.stats-switch { display:inline-flex; flex:0 0 auto; gap:2px; border:1px solid var(--line); border-radius:6px; background:var(--surface-2); padding:2px }
-.stats-switch-button { min-height:28px; border:0; border-radius:4px; background:transparent; color:var(--text-2); cursor:pointer; padding:0 10px; font-size:var(--fs-12); font-weight:500; line-height:var(--lh-12) }
+.stats-switch { display:inline-flex; flex:0 0 auto; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); padding:2px }
+.stats-switch-button { min-height:28px; border:0; border-radius:2px; background:transparent; color:var(--text-2); cursor:pointer; padding:0 10px; font-size:var(--fs-12); font-weight:500; line-height:var(--lh-12) }
 .stats-switch-button:hover { color:var(--text) }
 .stats-switch-button[aria-pressed="true"] { background:var(--bg); box-shadow:0 0 0 1px var(--accent-line); color:var(--accent) }
 .stats-fig:not([data-mode="share"]) .stats-ref-share, .stats-fig[data-mode="share"] .stats-ref-records { display:none }
@@ -1345,23 +1356,30 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Checks on the values: one card per check, its number, a thin meter of what held and the result in words. */
 .stats-checks-intro { margin:0 0 16px; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-checks { display:grid; grid-template-columns:repeat(var(--stats-checks,3),minmax(0,1fr)); gap:16px; margin:0 0 12px; padding:0; list-style:none }
-.stats-check { display:grid; align-content:start; gap:4px; min-width:0; border:1px solid var(--line); border-radius:8px; background:var(--bg); padding:16px }
+.stats-check { display:grid; align-content:start; gap:4px; min-width:0; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:16px }
 .stats-check-name { color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
 .stats-check-number { color:var(--text); font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
 .stats-check-number .stats-link { text-decoration-thickness:1px }
 .stats-check-unit { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-meter { display:block; height:4px; margin:8px 0 6px; border-radius:2px; background:var(--line-soft) }
-.stats-meter > span { display:block; height:100%; border-radius:2px; background:linear-gradient(90deg, var(--accent-line), var(--accent)) }
+.stats-meter { display:block; height:4px; margin:8px 0 6px; background:var(--line-soft) }
+.stats-meter > span { display:block; height:100%; background:var(--meter, var(--bar-neutral)) }
+/* Each check's number and meter in its meaning colour: CatLog's AI checks (the second check, the audits) the darker
+   BPG cyan of its reading, Human-checked records the agreement green. */
+.stats-check[data-check="second_check"], .stats-check[data-check="audit"] { --meter:var(--src-paper) }
+.stats-check[data-check="human_checked"] { --meter:var(--bpg-green) }
+.stats-check[data-check="second_check"] .stats-check-number :is(a, .stats-link) { color:var(--src-paper-ink) }
+.stats-check[data-check="human_checked"] .stats-check-number :is(a, .stats-link) { color:var(--checked) }
 /* A check that covers every value has no share to show (no completion bar); its place is kept, so the cards align. */
 .stats-meter.is-blank { visibility:hidden }
 .stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 
-/* The lead of Quality: the human review of the earlier version's entries, its share in accent ink with a soft glow. */
-.stats-lead { border:1px solid var(--line); border-radius:8px; background:radial-gradient(70% 120% at 0% 0%, var(--accent-wash), transparent 70%), var(--surface-2); padding:24px }
+/* The lead of Quality: the human review of the earlier version's entries, its share in the human-checked green, on a
+   plain card with a 1px hairline. */
+.stats-lead { border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:24px }
 .stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
 .stats-lead-figure { display:grid; gap:4px }
 /* Human review's lead number: the human-checked green, as on Stats' band and Browse's. */
-.stats-lead-figure strong { color:var(--checked); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32); text-shadow:0 0 16px color-mix(in srgb, var(--checked) 26%, transparent) }
+.stats-lead-figure strong { color:var(--checked); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
 .stats-lead-figure span { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-lead-text { display:grid; gap:12px; min-width:0 }
 .stats-lead-text > p { margin:0 }
@@ -1394,11 +1412,14 @@ a.stats-total-value:focus-visible { outline:0 }
    parameter. The per-class small multiples draw each class's ridge in its class colour (.stats-ec-N on the row, the
    fill from that row's own gradient), its number beside it. */
 .stats-range, .stats-ridges { --part:var(--bar-neutral) }
+/* Figures of records read from the paper only (variants against their wild type, assay temperature and pH) wear Read
+   from the paper's cyan; the value ranges of all records stay neutral. */
+.stats-range:is(.stats-fold, .stats-condition) { --part:var(--src-paper) }
 /* The light fills carry no information on their own: the bars' 1px outline and the ridge line give the shapes, so they
    are drawn darker than the colour (75% of it with --text: 5.3:1 for --bar-neutral, at least 3:1 for any BPG hue but
    mint), as the 10-90% line and the median are (WCAG 1.4.11). */
-.stats-histogram-bars > span { flex:1 1 0; min-width:0; border-radius:2px 2px 0 0; background:var(--part); background:linear-gradient(180deg, color-mix(in srgb, var(--part) 82%, var(--bg)), color-mix(in srgb, var(--part) 34%, var(--bg))); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--part) 75%, var(--text)) }
-.stats-histogram-bars > span:hover { filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 65%, transparent)) }
+.stats-histogram-bars > span { flex:1 1 0; min-width:0; border-radius:2px 2px 0 0; background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--part) 75%, var(--text)) }
+.stats-histogram-bars > span:hover { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 75%, var(--text)) }
 .stats-histogram-bars > span.has-values { min-height:1px }
 .stats-histogram-range { position:relative; height:12px }
 .stats-histogram-range > span { position:absolute; top:5px; height:2px; border-radius:1px; background:color-mix(in srgb, var(--part) 60%, var(--text)) }
@@ -1435,7 +1456,7 @@ a.stats-total-value:focus-visible { outline:0 }
    dot of its colour back at its own place (.stats-map-leaders). */
 .stats-map-dot { --dot-ink:var(--text); position:absolute; z-index:var(--z, 2); display:flex; width:16px; height:16px; align-items:center; justify-content:center; border-radius:50%; background:var(--part); box-shadow:0 0 0 1.5px var(--bg), 0 0 0 2.5px color-mix(in srgb, var(--part) 55%, var(--text)); color:var(--dot-ink); font-size:10px; font-style:normal; font-weight:600; line-height:1; transform:translate(calc(-50% + var(--dx, 0px)), calc(50% + var(--dy, 0px))) }
 .stats-map-dot:is(.stats-ec-4, .stats-ec-7) { --dot-ink:#fff }
-.stats-map-dot.is-active { z-index:20; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--part) 70%, transparent)) }
+.stats-map-dot.is-active { z-index:20; box-shadow:0 0 0 1.5px var(--bg), 0 0 0 3.5px color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-fig.has-active .stats-map-dot[data-hl]:not(.is-active) { opacity:0.3 }
 .stats-map-leaders { position:absolute; inset:0; z-index:1; width:100%; height:100%; overflow:visible; pointer-events:none }
 .stats-map-leaders line { stroke:var(--text-2); stroke-width:1 }
@@ -1476,7 +1497,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-condition-top dd { display:flex; flex-wrap:wrap; gap:2px 16px }
 .stats-condition-value { white-space:nowrap }
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
-   pointer glows softly in its class's colour. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
+   pointer takes a thicker line and the others dim. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
 .stats-ridge-panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
 .stats-ridges, .stats-range { --ridge-label:44px; --ridge-n:5ch }
@@ -1495,12 +1516,11 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ridge-plot::after { content:""; position:absolute; left:0; right:0; bottom:0; border-bottom:1px solid var(--line) }
 .stats-ridge-svg { position:absolute; left:0; bottom:0; display:block; width:100%; height:40px; overflow:visible }
 .stats-ridge-area { stroke:none }
-.stats-ridge-stop-top { stop-color:var(--part); stop-opacity:0.62 }
-.stats-ridge-stop-bottom { stop-color:var(--part); stop-opacity:0.1 }
+/* One flat fill under each curve (both stops alike: no fade). */
+.stats-ridge-stop-top, .stats-ridge-stop-bottom { stop-color:var(--part); stop-opacity:0.4 }
 .stats-ridge-line { fill:none; stroke:color-mix(in srgb, var(--part) 75%, var(--text)); stroke-width:1.5; vector-effect:non-scaling-stroke; stroke-linejoin:round }
 /* The open-ended end bins: a short hatched stub of fixed height (not a share of the peak), its count in the tooltip. */
 .stats-ridge-end { position:absolute; bottom:0; z-index:1; height:6px; background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--part) 70%, var(--text)) 0 1px, transparent 1px 3px); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--part) 70%, var(--text)) }
-.stats-ridge-row.is-active .stats-ridge-end { filter:drop-shadow(0 0 4px color-mix(in srgb, var(--part) 70%, transparent)) }
 .stats-ridge-range { position:absolute; bottom:-1px; z-index:1; height:3px; border-radius:2px; background:color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-ridge-median { position:absolute; bottom:-4px; z-index:2; width:9px; height:9px; margin-left:-4.5px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
 .stats-ridge-value { padding-bottom:2px; color:var(--text); font-size:var(--fs-12); line-height:var(--lh-12); text-align:right; white-space:nowrap }
@@ -1508,8 +1528,7 @@ a.stats-total-value:focus-visible { outline:0 }
 /* A class with few values (fewer than 300): a lighter fill and a dashed outline, so it does not look as solid as a big one. */
 .stats-ridge-row.is-few .stats-ridge-area { opacity:0.45 }
 .stats-ridge-row.is-few .stats-ridge-line { stroke-dasharray:3 2 }
-.stats-ridge-row.is-active .stats-ridge-svg { filter:drop-shadow(0 0 6px color-mix(in srgb, var(--part) 70%, transparent)) }
-.stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)), 0 0 6px color-mix(in srgb, var(--part) 70%, transparent) }
+.stats-ridge-row.is-active .stats-ridge-line { stroke-width:2.5 }
 .stats-ridge-row.is-active .stats-ridge-label { font-weight:600 }
 .stats-ridge-axis { margin-top:6px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 .stats-ridge-ticks { position:relative; height:16px; container:ridge-axis / inline-size }
@@ -1571,7 +1590,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .team-chip { stroke-width:1.5 }
 .team-actor text { fill:var(--text); font-size:14px; font-weight:500 }
 /* AI agents on the accent tint, people in neutral grey: the status navy and the comparison brown keep their meanings. */
-.team-actor-ai .team-chip { fill:var(--accent-tint); stroke:var(--accent) }
+/* The AI agents wear CatLog's reading colour (BPG cyan: a 12% tint, the 3:1 ring), the people stay neutral. */
+.team-actor-ai .team-chip { fill:var(--src-paper-tint); stroke:var(--src-paper-ring) }
 .team-actor-person .team-chip { fill:var(--surface-2); stroke:var(--muted) }
 .team-link { stroke:var(--line-strong); stroke-width:1.5 }
 /* The focus ring stands apart from the chip, as the site's 2px ring with its offset does. */
@@ -1597,7 +1617,7 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Each line's mark is a filled 10px swatch in its chip's outline colour, as Stats' legends are drawn (a hollow circle or
    square read as an unticked radio button or checkbox): a grey dot for a person, an accent square for an AI agent. */
 .team-legend-mark { flex:0 0 10px; width:10px; height:10px; margin-top:5px; background:var(--mark); background:color-mix(in srgb, var(--mark) 60%, transparent); box-shadow:inset 0 0 0 1px var(--mark) }
-.team-legend-ai .team-legend-mark { --mark:var(--accent); border-radius:2px }
+.team-legend-ai .team-legend-mark { --mark:var(--src-paper); border-radius:2px; box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 .team-legend-person .team-legend-mark { --mark:var(--muted); border-radius:50% }
 @media (prefers-reduced-motion: reduce) {
   .team-dots { display:none }
@@ -1646,12 +1666,11 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-totals .stats-totals-main dd { font-size:clamp(30px, calc(30px + (100vw - 1024px) * 0.0569), var(--fs-40)) }
 }
 
-/* Phones: 28px key numbers two to a row (one under the other below 360px), their halos a little tighter. */
+/* Phones: 28px key numbers two to a row (one under the other below 360px). */
 @media (max-width: 720px) {
   .stats-totals dl { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0 }
   .stats-total:nth-child(odd)::before { display:none }
   .stats-totals .stats-totals-main dd { font-size:var(--fs-28); line-height:var(--lh-28) }
-  .stats-totals-main .stats-total-value { box-shadow:0 0 22px 8px var(--accent-halo) }
 }
 /* The narrowest phones: the four headline numbers one under the other, so Read from the paper keeps one line, also in a
    wide font (DejaVu Sans), and the human review's base reads in two lines, not five. */
@@ -1713,14 +1732,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   .stats-charts, .stats-part-grid { display:block }
   .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
-  /* Paper: no glow, halo, wash, tooltip or switch; the numbers stand still. */
-  .stats-view *, .snapshot-band * { text-shadow:none !important; filter:none !important }
-  .stats-band { box-shadow:none; border-color:var(--line) }
-  .stats-totals-main .stats-total-value { background:none; box-shadow:none !important; transition:none }
-  .stats-band.is-entering .stats-totals-main dd { animation:none }
-  .stats-ridge-row.is-active .stats-ridge-median { box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--part) 55%, var(--text)) }
-  .stats-band, .stats-lead, .snapshot-band, .snapshot-overview { background:var(--bg) }
-  .snapshot-overview { box-shadow:none; border-color:var(--line) }
+  /* Paper: no tooltip or switch. */
   .stats-tip, .stats-switch, .stats-contents { display:none !important }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
      this where a browser prints without telling the page. */
@@ -1987,8 +1999,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 
   /* A caution shows its short words beside the "!" (no tooltip on a touch screen). Words wider than the value's third of
      the card ("above diffusion limit · kcat/Km mismatch") wrap under each other beside the "!", never past the card. */
-  #recordsBody .value-flag { display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%; align-items:flex-start; gap:3px; width:auto; height:auto; background:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
-  #recordsBody .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution); color:var(--bg) }
+  #recordsBody .value-flag { display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%; align-items:flex-start; gap:3px; width:auto; height:auto; background:none; box-shadow:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
+  #recordsBody .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text) }
   #recordsBody .value-flag .visually-hidden { position:static; width:auto; min-width:0; height:auto; margin:0; clip:auto; clip-path:none; white-space:normal; overflow-wrap:anywhere }
   #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
   #recordsBody tr.skeleton-row { padding:14px 16px }
@@ -2163,7 +2175,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-keeps { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px 28px; max-width:none; margin:20px 0 0; padding:0; list-style:none }
 .guide-view .guide-shell .guide-keeps li { border-left:2px solid var(--accent-line); padding:0 0 0 12px; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-keeps strong { display:block; margin-bottom:2px; color:var(--text) }
-.guide-view .guide-loop { display:flex; align-items:center; gap:12px; margin:20px 0 0; border:1px dashed var(--accent-line); border-radius:var(--radius); background:var(--accent-wash); padding:12px 16px }
+.guide-view .guide-loop { display:flex; align-items:center; gap:12px; margin:20px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:12px 16px }
 .guide-view .guide-shell .guide-loop p { margin:0; font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-loop-links { display:inline-flex; flex-wrap:wrap; gap:4px 20px; margin-left:4px }
 .guide-view .guide-loop-links a { white-space:nowrap }
@@ -2312,8 +2324,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-db-mark { flex:0 0 10px; width:10px; height:10px; box-sizing:border-box; margin-top:7px }
 .guide-view .guide-db-mark[data-result="corrects"] { background:var(--chg-magnitude) }
 .guide-view .guide-db-mark[data-result="differs"] { background:var(--cmp-differs) }
-.guide-view .guide-db-mark[data-result="other_label"] { background:var(--bar-neutral) }
-.guide-view .guide-db-mark[data-result="not_listed"] { background:var(--cmp-new) }
+.guide-view .guide-db-mark[data-result="other_label"] { background:var(--cmp-other); box-shadow:inset 0 0 0 1px var(--cmp-other-ring) }
+.guide-view .guide-db-mark[data-result="not_listed"] { background:var(--cmp-new); box-shadow:inset 0 0 0 1px var(--cmp-new-ring) }
 .guide-view .guide-db-mark[data-result="same"] { background:var(--cmp-same) }
 .guide-view .guide-db-count { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 .guide-view .guide-db-nested { display:block; margin-top:6px; color:var(--text-2) }

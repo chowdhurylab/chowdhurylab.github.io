@@ -4350,7 +4350,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   }
   // The same number under another label: the result word (its line says which database and label); a different number
   // in brown. The record says once which databases list another number: in the note's line.
-  assert.match(html, /<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-neutral" aria-hidden="true"><\/span><strong>Same, other label<\/strong><\/span>/);
+  // Same, other label wears its own colour (BPG mint, round 14), no longer the neutral grey.
+  assert.match(html, /<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-other" aria-hidden="true"><\/span><strong>Same, other label<\/strong><\/span>/);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><strong>Different number<\/strong>/);
   assert.equal((html.match(/OED lists/g) || []).length, 1, "the databases are named once, in the line");
   assert.match(valuesOf(html), /<i>k<\/i><sub>cat<\/sub>: <button[^>]*data-show-note="kcat">differs from OED</);
@@ -5510,7 +5511,8 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(tones("status=accepted,curation_pending", ["status"]), ["neutral"], "several results: each is named after its dot");
     assert.deepEqual(tones("status=curation_pending", ["status"]), ["st-pending"]);
     assert.deepEqual(["db:corrects", "db:differs", "db:other_label", "db:not_listed", "db:all_not_listed", "db:all_same", "db:earlier"]
-      .map((key) => api.filterChipTone(key)), ["cmp-corrects", "cmp-differs", "neutral", "cmp-new", "cmp-new", "cmp-same", "neutral"]);
+      .map((key) => api.filterChipTone(key)), ["cmp-corrects", "cmp-differs", "cmp-other", "cmp-new", "cmp-new", "cmp-same", "neutral"],
+      "Same, other label wears its square's mint (round 14)");
     // A chip whose option has a mark on the page shows it before the option's name, so colour is not all that tells
     // the groups apart (the reviewer: some chip colours look alike to colour-blind readers): human-checked its tick (a
     // caution its "!" and a database result its square: the browser check); Source, the enzyme fields and the

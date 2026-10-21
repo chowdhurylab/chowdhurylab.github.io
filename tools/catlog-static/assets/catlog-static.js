@@ -8344,17 +8344,18 @@
   }
 
   // A chip's colour (CSS .tone-<tone>; colour is never the only carrier: the chip keeps its words, and an option with a
-  // mark on the page shows it, activeFilterItems). An option that has a colour on this page wears it: a review result its status colour (several results: neutral, each named after its dot),
-  // human-checked green, a database result the colour of its square in the sidebar, a caution amber. Source, the enzyme,
-  // organism, substrate, EC and search fields, and the measurement (type, variant, temperature, pH) wear the colour of the
-  // dot beside their group in the sidebar, colours that mean nothing else on the page.
+  // mark on the page shows it, activeFilterItems). An option that has a meaning colour wears it: a review result its status
+  // colour (several results: neutral, each named after its dot), human-checked green, Read from the paper cyan, a database
+  // result the colour of its square in the sidebar, a caution tan. The other filters (Not yet re-read, a source database,
+  // the enzyme, organism, substrate, EC and search fields, the measurement: type, variant, temperature, pH) have no
+  // meaning colour and wear the accent, the colour of what a visitor picks, as the dot beside their group does.
   const STATE_TONES = { accepted: "st-accepted", curation_pending: "st-pending", not_verified: "st-unverified", disputed: "st-disputed" };
-  const DATABASE_MARK_TONES = { corrects: "cmp-corrects", differs: "cmp-differs", "not-listed": "cmp-new", same: "cmp-same" };
+  const DATABASE_MARK_TONES = { corrects: "cmp-corrects", differs: "cmp-differs", "not-listed": "cmp-new", "other-label": "cmp-other", same: "cmp-same" };
 
   function filterChipTone(key, controls = filterControlState()) {
     const [prefix, value] = String(key).split(":");
-    // Read from the paper wears its own colour (--src-paper), as on the counts band and Stats; the Source group's other
-    // chips (From databases, a database) the group's purple.
+    // Read from the paper wears its own colour (--src-paper, BPG cyan), as on the counts band and Stats; the Source
+    // group's other chips (Not yet re-read, a database) the accent, as the group's dot.
     if (key === "source:paper") return "paper";
     if (prefix === "status") return controls.states.length === 1 ? STATE_TONES[controls.states[0]] || "neutral" : "neutral";
     if (prefix === "checked") return "checked";
@@ -12003,7 +12004,7 @@
   const DATABASE_RESULTS = [
     // The same number under another label (substrate, organism, form): Browse finds it under its "Same, other label"
     // option, and the line says which label the database gives.
-    { test: /other[\s_-]*label/i, word: DATABASE_RESULT_NAMES.other_label, key: "neutral", filter: "other_label" },
+    { test: /other[\s_-]*label/i, word: DATABASE_RESULT_NAMES.other_label, key: "other", filter: "other_label" },
     { test: /^(?:confirmed|same)/i, word: DATABASE_RESULT_NAMES.same, key: "same", filter: "same" },
     // "corrected": a database lists another number for the same measurement and CatLog's is the one the paper prints
     // (code or a check against the paper found why); the word names one database value, never a database as a whole.
