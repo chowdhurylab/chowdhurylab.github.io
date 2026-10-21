@@ -1218,19 +1218,41 @@ DATABASE_COMPARISON_FIXTURE = {
     "not_reproduced": {"distinct": {"paired_with_different_number": 5635, "reprinted_from_other_work": 2372}},
     "papers": 2650,
 }
-DATABASE_TITLES = ("Values against the databases", "Results by database", "Paired values by database",
-                   "Corrections by cause and how found", "Corrections by cause and database")
-FIGURE_TITLES = (*DATABASE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
-# The database results by enzyme class follow Values against the databases when the overview counts them.
+# Against the databases (round 14): the part keeps the values against the databases and the corrections by cause; the
+# rest stands in the supplement's group of the same name (SUPPLEMENT_DATABASES), each item's title in its summary.
+DATABASE_TITLES = ("Values against the databases", "Corrections by cause and how found")
+DATABASE_MORE_TITLES = ("Results by database", "Paired values by database", "Corrections by cause and database")
+FIGURE_MORE_TITLES = (*DATABASE_MORE_TITLES, "Corrections on records not yet re-read", "Entries replaced by reading the paper")
+# The database results by enzyme class open the supplement's group when the overview counts them.
 DATABASE_CLASS_TITLE = "Against the databases by enzyme class"
+SUPPLEMENT_DATABASES = "#statsCharts .stats-supp-group[aria-labelledby='statsSupplementDatabasesTitle']"
 
 
 def with_class_figure(titles, driver):
-    """Part 7's expected titles, with the class figure after the first when the page draws it."""
+    """The supplement's database titles, with the class figure first when the page draws it."""
     titles = list(titles)
     if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
-        titles.insert(1, DATABASE_CLASS_TITLE)
+        titles.insert(0, DATABASE_CLASS_TITLE)
     return titles
+
+
+# Supplementary figures and tables (round 14): each item is closed (one line) until opened, and a closed item has no
+# layout. open_stats_supplement opens every item (or closes them) and waits two frames, so the page has fitted the opened
+# figures' value columns (it does on each item's toggle).
+SUPPLEMENT_OPEN_JS = """
+    const items = [...document.querySelectorAll('#statsCharts .stats-supp-item')];
+    items.forEach((item) => { item.open = arguments[0]; });
+    return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(items.length))));
+"""
+
+
+def open_stats_supplement(driver, opened=True):
+    return driver.execute_script(SUPPLEMENT_OPEN_JS, opened)
+
+
+def stats_figure_titles(driver):
+    """Every figure and table title in reading order: the main parts' headings, then the supplement's items."""
+    return [h.get_attribute("textContent").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title, #statsCharts .stats-supp-name")]
 # Before the page starts: the snapshot's comparison with the databases, or the fixture when it has none.
 DATABASE_COMPARISON_JS = """
     Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
@@ -1334,11 +1356,15 @@ def check_stats_figures(driver, browser, url):
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsReplacedTitle"))
             check_stats_contents(driver, width)
-            # The comparison with the databases is the last numbered part, its figures in order.
-            part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part:last-of-type")
-            assert part.get_attribute("data-part") == "databases", part.get_attribute("data-part")
+            open_stats_supplement(driver)
+            # The comparison with the databases is the last numbered part before the supplement, its figures in order; the
+            # supplement's group of the same name holds the rest.
+            part = driver.find_element(By.CSS_SELECTOR, "#statsCharts > .stats-part[data-part='databases']")
+            assert driver.execute_script("return arguments[0].nextElementSibling?.dataset.part", part) == "supplement"
             headings = [h.get_attribute("innerText").strip() for h in part.find_elements(By.CSS_SELECTOR, ".stats-fig-title")]
-            assert headings == with_class_figure(FIGURE_TITLES, driver), headings
+            assert headings == list(DATABASE_TITLES), headings
+            more = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, f"{SUPPLEMENT_DATABASES} .stats-supp-name")]
+            assert more == with_class_figure(FIGURE_MORE_TITLES, driver), more
             comparison = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.summary.database_comparison")
             compared = sum(count for status, count in comparison["values"]["all"].items() if status != "not_compared")
             lead = part.find_element(By.CSS_SELECTOR, ".stats-part-lead")
@@ -1457,8 +1483,13 @@ def check_stats_figures(driver, browser, url):
 # table stays inside its column; Corrections by cause and database is either its table (when it fits) or a line per
 # database, always the lines on phones. Returns the problems found.
 STATS_DATABASES_LAYOUT_JS = """
-    const part = document.querySelector("#statsCharts [data-part='databases']");
-    if (!part) return ['no part 7'];
+    const main = document.querySelector("#statsCharts [data-part='databases']");
+    if (!main) return ['no part 7'];
+    // the part and the supplement's group of the same name, its items opened (open_stats_supplement)
+    const more = document.querySelector("#statsCharts .stats-supp-group[aria-labelledby='statsSupplementDatabasesTitle']");
+    const roots = [main, more].filter(Boolean);
+    const part = { querySelectorAll: (selector) => roots.flatMap((root) => [...root.querySelectorAll(selector)]),
+                   querySelector: (selector) => roots.map((root) => root.querySelector(selector)).find(Boolean) || null };
     const problems = [];
     const box = (element) => element && element.getClientRects().length ? element.getBoundingClientRect() : null;
     const overlap = (a, b) => a && b && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
@@ -1491,7 +1522,8 @@ STATS_DATABASES_LAYOUT_JS = """
     }
     // A database's name never breaks across lines ("SABIO-" / "RK", "STRENDA" / "DB"), a wide font included.
     const names = ['SABIO-RK', 'STRENDA DB', 'BRENDA', 'SKiD', 'UniProt'];
-    const walker = document.createTreeWalker(part, NodeFilter.SHOW_TEXT);
+    for (const root of roots) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const parent = node.parentElement;
         if (!parent.getClientRects().length || parent.closest('.visually-hidden')) continue;
@@ -1504,6 +1536,7 @@ STATS_DATABASES_LAYOUT_JS = """
                 if (lines.size > 1) problems.push(name + ' breaks across lines in ' + ((parent.closest('[data-figure]') || {dataset: {figure: 'the lead'}}).dataset.figure));
             }
         }
+    }
     }
     if (document.documentElement.scrollWidth > innerWidth + 1) problems.push('the page scrolls sideways');
     const view = document.querySelector('#statsView');
@@ -1539,14 +1572,14 @@ def check_stats_databases(driver, browser, url):
             wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title"))
             # Late fonts: measure once they are in.
             driver.execute_script("return document.fonts ? document.fonts.ready.then(() => true) : true")
+            open_stats_supplement(driver)
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title")]
-            expected = with_class_figure(DATABASE_TITLES, driver)
-            assert titles[:len(expected)] == expected, titles
+            assert titles == list(DATABASE_TITLES), titles
             problems = driver.execute_script(STATS_DATABASES_LAYOUT_JS)
-            assert not problems, f"Part 7 at {width}px: {problems}"
-            # Two to a row from 1024px: each database beside the values it pairs.
+            assert not problems, f"Against the databases at {width}px: {problems}"
+            # In the supplement each item stands on its own line: each database above the values it pairs.
             tops = driver.execute_script("""return ['db-sources', 'db-paired'].map(key => document.querySelector(`[data-figure='${key}']`).getBoundingClientRect().top)""")
-            assert (abs(tops[0] - tops[1]) < 1) == (width >= 1024), f"At {width}px Figure and Table rows: {tops}"
+            assert tops[1] > tops[0] + 1, f"At {width}px Figure and Table rows: {tops}"
             if browser == "chrome" and width == 1440:
                 # Corrections by cause and database gives a line per database wherever its table does not fit (here
                 # its figure is made 300px wide, as more databases or a wider font would make the table too wide).
@@ -1562,9 +1595,9 @@ def check_stats_databases(driver, browser, url):
         # where the snapshot's record index carries the comparison (Browse has the group).
         set_browse_viewport(driver, browser, 1440, 1000)
         addresses = driver.execute_script("""
-            return [...document.querySelectorAll("#statsCharts [data-part='databases'] a[href*='#browse'], #statsCharts [data-part='databases'] [data-href*='#browse']")]
+            return [...document.querySelectorAll(":is(#statsCharts [data-part='databases'], %s) :is(a[href*='#browse'], [data-href*='#browse'])")]
                 .map((element) => element.getAttribute('href') || element.getAttribute('data-href'));
-        """)
+        """ % SUPPLEMENT_DATABASES)
         assert addresses, "Part 7 links into Browse"
         indexed = driver.execute_script(
             "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
@@ -1710,6 +1743,8 @@ def check_stats_more(driver, browser, overview, total):
     records read from the paper and those not yet re-read make all records, values per paper make the papers CatLog read,
     each class's records read from the paper and its values by class stay within its records, the small multiples draw one ridge per class with values. In Chrome,
     pointing at a mark lights it and gives its exact count in the tooltip line."""
+    # The supplement's figures are measured opened (they stay open for the checks after this one).
+    open_stats_supplement(driver)
     read = overview["from_paper"]["records"]
     versions = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
                 for row in driver.find_elements(By.CSS_SELECTOR, "[data-figure='versions'] .stats-chart-row")}
@@ -2026,14 +2061,15 @@ def check_stats_new_figures(driver, browser, url):
             manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
-            titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-title")]
+            titles = stats_figure_titles(driver)
             for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class",
                           "kcat against Km", "Variants against their wild type", "Assay temperature and pH"):
                 assert title in titles, titles
-            assert titles.index("Value ranges") < titles.index("Values by enzyme class") < titles.index("kcat against Km") \
-                < titles.index("Variants against their wild type") < titles.index("Assay temperature and pH") < titles.index("Cautions on values"), titles
+            # The main parts' figures first, then the supplement's in its groups' order.
+            assert titles.index("Value ranges") < titles.index("kcat against Km") < titles.index("Variants against their wild type") \
+                < titles.index("Values by enzyme class") < titles.index("Assay temperature and pH") < titles.index("Cautions on values"), titles
             if driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases']"):
-                assert titles.index(DATABASE_CLASS_TITLE) == titles.index("Values against the databases") + 1, titles
+                assert titles.index("Cautions on values") < titles.index(DATABASE_CLASS_TITLE) < titles.index("Results by database"), titles
             # Each enzyme class wears its own colour in Values by enzyme class (a ridge line per class, none alike).
             strokes = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"class-values\"] .stats-ridges:first-of-type .stats-ridge-line')].map((line) => getComputedStyle(line).stroke)")
             assert len(strokes) == len(set(strokes)) >= 2, strokes
@@ -2076,6 +2112,7 @@ def check_stats_new_figures(driver, browser, url):
             driver.get("about:blank")
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsClassValuesTitle"))
+            open_stats_supplement(driver)
             fit = driver.execute_script("""const t = document.querySelector('.stats-donut-total');
                 return {family: getComputedStyle(t).fontFamily, width: t.getComputedTextLength(), room: Number(t.getAttribute('data-room')),
                         spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value, .stats-ridge-n')].filter(v =>
@@ -2178,6 +2215,8 @@ def check_word_breaks(driver, browser, url):
             wait.until(lambda d: d.find_elements(By.ID, "statsVersionsTitle"))
             driver.execute_async_script("const done = arguments[arguments.length - 1]; document.fonts.ready.then(() => setTimeout(done, 300))")
             assert driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsVersionsTitle"), "re-read", False) == [], width
+            # (the supplement's captions too, its items opened)
+            open_stats_supplement(driver)
             split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "statsCharts"), "re-read", False)
             assert split == [], f"re-read splits at its hyphen on Stats at {width}px: {split}"
             assert_fig5_fits(driver.execute_script(FIG5_JS), width)
@@ -5480,9 +5519,12 @@ def check(driver, browser, url):
             finally:
                 driver.execute_cdp_cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": 1, "y": 1})
             assert all(color != text_2 for color in driver.execute_script(label_colors)), driver.execute_script(label_colors)
-        # Numbered parts in order, from the band's 1.
+        # Numbered parts in order, from the band's 1, then the supplement (S) last.
         parts = [heading.get_attribute("innerText").strip().split("\n") for heading in driver.find_elements(By.CSS_SELECTOR, ".stats-part-title")]
-        assert [int(number) for number, *_rest in parts] == list(range(1, len(parts) + 1)), parts
+        labels = [number for number, *_rest in parts]
+        numbered = [number for number in labels if number != "S"]
+        assert [int(number) for number in numbered] == list(range(1, len(numbered) + 1)), parts
+        assert labels.count("S") <= 1 and ("S" not in labels or labels[-1] == "S"), parts
         check_stats_more(driver, browser, overview, total)
         forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] tr[data-stat-key]")
         assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
@@ -5536,7 +5578,7 @@ def check(driver, browser, url):
         return {text: row ? row.querySelector('dd').textContent : null,
                 ids: (document.getElementById('statsView').textContent.match(/Data ID/g) || []).length};
     """)
-    assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Every number on this page is counted from this snapshot's Full data download",
+    assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Counted from this snapshot's Full data download",
                                                 provenance["text"] or ""), provenance
     # Paper and PDF: the closed section prints open (its Data ID and rules), then closes again.
     printed = driver.execute_script("""
@@ -5548,10 +5590,18 @@ def check(driver, browser, url):
         return [before, during, method.open];
     """)
     assert printed == [False, True, False], printed
+    captions_text = " ".join(driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"))
     for kind in ("Figure", "Table"):
-        numbers = [int(match) for match in re.findall(kind + r" (\d+)\.", " ".join(
-            caption.text for caption in driver.find_elements(By.CSS_SELECTOR, ".stats-fig > figcaption .stats-fig-caption")))]
-        assert numbers == list(range(1, len(numbers) + 1)), f"{kind} numbers: {numbers}"
+        for series in ("", "S"):
+            numbers = [int(match) for match in re.findall(kind + " " + series + r"(\d+)\.", captions_text)]
+            assert numbers == list(range(1, len(numbers) + 1)), f"{kind} {series} numbers: {numbers}"
+    # The supplement: each item's number in its summary is its caption's, and its address names it (#stats-s3 for
+    # Figure S3, #stats-table-s2 for Table S2).
+    items = driver.execute_script("""return [...document.querySelectorAll('#statsCharts .stats-supp-item')].map((item) => [item.id,
+        item.querySelector('summary .stats-supp-number').textContent, item.querySelector('figcaption strong').textContent])""")
+    for identifier, number, caption_number in items:
+        kind, _space, label = number.partition(" ")
+        assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower(), (identifier, number, caption_number)
     # Captions in plain words: no filler about where the numbers stand, never "in all", no stacked semicolons.
     for caption in driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"):
         assert not re.search(r"\bin all\b|each label gives|beside each bar|Numbers compared for the same paper", caption) and caption.count(";") <= 1, caption
@@ -5618,6 +5668,8 @@ def check(driver, browser, url):
     capture("stats-desktop")
     driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
+        # a disclosure inside a closed supplement item (Table S1's Sequence fields) shows once its item is open
+        driver.execute_script("const item = arguments[0].parentElement.parentElement?.closest('.stats-supp-item'); if (item) item.open = true;", element)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
         parent = element.find_element(By.XPATH, "..")
         was_open = parent.get_attribute("open") is not None
@@ -5642,6 +5694,8 @@ def check(driver, browser, url):
     # A linked Stats count is the number of records its link opens: the most common organism (with its strains),
     # BRENDA (records merged from several databases count under each), the records read from the paper by CatLog and
     # the earlier paper extractions.
+    # (the tables in the supplement are opened first: a closed item's links cannot be clicked)
+    open_stats_supplement(driver)
     for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] tr[data-stat-key]",
                      ".stats-section[aria-labelledby='statsV2OrganismsTitle'] tr[data-stat-key]",
                      ".stats-section[aria-labelledby='statsV2EcTitle'] tr[data-stat-key]",

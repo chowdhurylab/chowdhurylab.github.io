@@ -4908,7 +4908,7 @@
     const labels = () => [...residues].map((residue) => `<span title="${STATS_RESIDUE_NAMES[residue]}">${residue}</span>`).join("");
     const facts = [
       `<div><dt>Variants</dt><dd>${formatInteger(variants)}${papers ? `<small>from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}</small>` : ""}</dd></div>`,
-      `<div><dt>Most often to</dt><dd>${STATS_RESIDUE_NAMES[commonest.residue]} <span class="stats-muted">(${escapeHtml(statsShare(commonest.count, variants))})</span><small>${variantWord(commonest.count)}</small></dd></div>`,
+      `<div><dt>Commonest new residue</dt><dd>${STATS_RESIDUE_NAMES[commonest.residue]} <span class="stats-muted">(${escapeHtml(statsShare(commonest.count, variants))})</span><small>${variantWord(commonest.count)}</small></dd></div>`,
     ].join("");
     const topRows = top.map((item) => `<tr><th scope="row">${escapeHtml(`${STATS_RESIDUE_NAMES[item.from]} → ${STATS_RESIDUE_NAMES[item.to]}`)}</th><td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, variants))}</td></tr>`).join("");
     const description = `Single substitutions of ${variantWord(variants)} read from the paper, by wild-type and new residue; most often to ${STATS_RESIDUE_NAMES[commonest.residue]} (${statsShare(commonest.count, variants)}). Commonest: ${top.map((item) => `${pair(item.from, item.to)} ${formatInteger(item.count)}`).join("; ")}.`;
@@ -4926,7 +4926,7 @@
             </div>
           </div>
           <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>
-            <table class="stats-table stats-subs-top"><thead><tr><th scope="col">Commonest</th><th scope="col" class="stats-num">Variants</th><th scope="col" class="stats-num">Share</th></tr></thead><tbody>${topRows}</tbody></table></div>
+            <table class="stats-table stats-subs-top"><thead><tr><th scope="col">Substitution</th><th scope="col" class="stats-num">Variants</th><th scope="col" class="stats-num">Share</th></tr></thead><tbody>${topRows}</tbody></table></div>
         </div>`,
       caption: "Variants read from the paper with one substitution, by wild-type residue (rows) and new residue (columns).",
       rules: "A variant is one paper's mutation of one enzyme and counts once, whatever its substrates. Only substitutions written as a residue, its position and another residue (H57A) are counted.",
@@ -4975,7 +4975,7 @@
     if (!groups.length) return null;
     const body = `<table class="stats-table stats-units-table">
       <thead><tr><th scope="col">Unit as printed</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Share</th></tr></thead>
-      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-col-bar" aria-hidden="true"></td><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
+      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted nowrap">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-col-bar" aria-hidden="true"></td><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
         ${group.rows.map((row) => `<tr class="stats-row-sub" data-stat-key="units_${group.metric.key}_${escapeHtml(row.unit)}" data-count="${row.count}"><th scope="row"><span class="stats-name"><span>${escapeHtml(row.unit)}</span></span></th>
           <td class="stats-col-bar" aria-hidden="true"><span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(row.count / group.values * 100).toFixed(4)}%"></span></span></td>
           <td class="stats-num">${formatInteger(row.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(row.count, group.values))}</td></tr>`).join("")}</tbody>`).join("")}</table>`;
@@ -7012,8 +7012,9 @@
     const comparison = statsDatabaseComparison();
     const comparedSources = statsDatabaseSources(comparison);
     const comparedValues = statsDatabaseValues(comparison);
+    // (each across the row; the corrections' four bars kept to the 760px a bar chart of a few rows reads best at)
     const databases = [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null, statsCorrectionsFoundFigure(comparison)]
-      .filter(Boolean).map((item) => ({ ...item, wide: true }));
+      .filter(Boolean).map((item) => ({ ...item, wide: true, className: item.key === "db-found" ? "stats-narrow" : item.className }));
     const databasesMore = [comparison ? statsDatabaseClassFigure(insights.database_by_class, classNames) : null,
       statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues),
       statsCauseDatabaseTable(comparison, comparedSources),

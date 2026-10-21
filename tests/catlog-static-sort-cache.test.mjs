@@ -2493,7 +2493,8 @@ function row(overrides = {}) {
   assert.deepEqual(withOut((data) => { data.values.all.confirmed += 1; }).slice(0, 2), ["db-found", "db-sources"], "Parameters that do not add up to all");
   assert.deepEqual(withOut((data) => { delete data.values_by_database; }), ["db-values", "db-found", "db-causes", "earlier-corrections", "replaced"]);
   assert.deepEqual(withOut((data) => { delete data.corrections.by_cause_database; }), ["db-values", "db-found", "db-sources", "db-paired", "earlier-corrections", "replaced"]);
-  assert.match(figureHtml("db-found"), /stats-wide/);
+  // Across the row, its four bars kept to 760px (stats-narrow).
+  assert.match(figureHtml("db-found"), /class="stats-section stats-figure-section stats-wide stats-narrow"/);
   assert.deepEqual(withOut((data) => { data.corrections.values = 1549; }), ["db-values", "db-sources", "db-paired", "earlier-corrections", "replaced"], "Causes that do not add up to the corrections");
   // Without corrections.by, or when the causes code finds do not add up to its code count, the bars are not split and
   // How these numbers are counted gives the two counts; a cause with no family is counted apart.
@@ -2929,7 +2930,7 @@ function row(overrides = {}) {
     const subs = api.statsSubstitutionsFigure({ variants: 12, papers: 4, residues, counts: grid });
     assert.equal((subs.body.match(/<rect /g) || []).length, 4);
     assert.match(subs.body, /<rect x="0" y="1" width="1" height="1" style="fill-opacity:0\.92" data-tip="Arg → Ala \(R→A\): 6 variants"\/>/);
-    assert.match(subs.body, /<dt>Most often to<\/dt><dd>Ala <span class="stats-muted">\(75\.0%\)<\/span><small>9 variants<\/small>/);
+    assert.match(subs.body, /<dt>Commonest new residue<\/dt><dd>Ala <span class="stats-muted">\(75\.0%\)<\/span><small>9 variants<\/small>/);
     assert.match(subs.body, /<dt>Variants<\/dt><dd>12<small>from 4 papers<\/small>/);
     assert.deepEqual([...subs.body.matchAll(/<tr><th scope="row">([^<]+)<\/th><td class="stats-num">(\d+)<\/td>/g)].map((match) => `${match[1]} ${match[2]}`),
       ["Arg → Ala 6", "Asp → Ala 3", "Tyr → Phe 2", "Asp → Asn 1"]);
@@ -2951,7 +2952,7 @@ function row(overrides = {}) {
     assert.equal(api.statsUnitWords("M-1 s-1"), "M⁻¹ s⁻¹");
     const units = api.statsPrintedUnitsTable({ kcat: { values: 10, units: [["s-1", 8], ["min-1", 1]], other: 1 },
       km: { values: 4, units: [["uM", 3], ["mM", 1]], other: 0 } });
-    assert.match(units.body, /<tr class="stats-row-group" data-stat-key="units_kcat" data-count="10"><th scope="row"><span class="stats-name"><span><i>k<\/i><sub>cat<\/sub> <span class="stats-muted">\(stored in s⁻¹\)<\/span>/);
+    assert.match(units.body, /<tr class="stats-row-group" data-stat-key="units_kcat" data-count="10"><th scope="row"><span class="stats-name"><span><i>k<\/i><sub>cat<\/sub> <span class="stats-muted nowrap">\(stored in s⁻¹\)<\/span>/);
     assert.match(units.body, /data-stat-key="units_kcat_s⁻¹" data-count="8"[\s\S]*?width:80%[\s\S]*?80\.0%/);
     assert.match(units.body, /data-stat-key="units_kcat_Other" data-count="1"/);
     assert.match(units.body, /data-stat-key="units_km_µM" data-count="3"[\s\S]*?75\.0%/);

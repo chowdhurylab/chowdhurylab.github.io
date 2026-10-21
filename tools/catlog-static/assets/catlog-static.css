@@ -1114,7 +1114,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-supp-name { min-width:0; color:var(--accent) }
 .stats-supp-item > summary:hover .stats-supp-name { text-decoration:underline; text-underline-offset:3px }
 .stats-supp-item[open] > summary .stats-supp-name { color:var(--text); font-weight:600 }
-.stats-supp-body { padding:var(--sp-2) 0 var(--sp-6) 20px }
+/* (no indent: Values by enzyme class keeps the x of Value ranges' shared log axis, so 10⁰ stands at one x in both) */
+.stats-supp-body { padding:var(--sp-2) 0 var(--sp-6) }
 .stats-supp-body > .stats-section:not(.stats-wide) { max-width:760px }
 /* Single substitutions: a 20 x 20 grid of grey cells, shaded as the kcat against Km map, one-letter residues along the
    top (new) and left (wild type); beside it the facts and the commonest substitutions (under it below 1024px). */
@@ -1725,7 +1726,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-total { padding:var(--sp-2) }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
-  .stats-supp-body { padding-left:0 }
   .stats-supp-number { flex-basis:5.75em }
   .stats-checks { grid-template-columns:1fr }
   /* Phones: the class number only, so the curves keep their width (the names are in Biology and the tooltip line); the
