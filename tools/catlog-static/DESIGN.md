@@ -1360,7 +1360,11 @@ Generated mockups guide layout only; their text is not a scientific source.
 - The counts band's labels are all muted (fix pass: the colour sits on each label's mark and on the number).
 - Checks on the values is a table (fix pass), so no card or blank meter remains to line up.
 - kcat, Km and kcat/Km are in italics with subscripts in the database lines and the Human review line of a record too
-  (kineticWordsHtml: never before or after a hyphen, so a name such as "Ki-67" stays as written).
+  (kineticWordsHtml: never before or after a hyphen, so a name such as "Ki-67" stays as written). Round 15 polish: the
+  record's caution notes too (metricWordsHtml; "The paper's kcat/Km (0.01 mM⁻¹ s⁻¹) is 3.0-fold above kcat ÷ Km" had
+  stood in roman between the table and the database lines), and the record's sentences (cautions, grey notes, database
+  lines and what the AI check found, Human review) set a unit's or a power of ten's exponent with <sup>, as the Values
+  table does (superscriptsHtml; As printed keeps the paper's text).
 
 ## Round 15 counts band
 

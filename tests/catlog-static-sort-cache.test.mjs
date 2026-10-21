@@ -3346,6 +3346,10 @@ const measurementSection = (summary, detail) => api.valuesSection(summary, detai
 // The Values section's own lines write kcat, Km, kcat/Km and Ki as its table does (italic k or K, subscript); the checks of
 // their words read them plain.
 const plainMetricNames = (html) => html.replace(/<i>([kK])<\/i><sub>(cat|m|i)<\/sub>/g, "$1$2");
+// A record's sentences set kcat/Km in italics with subscripts and a unit's power in <sup> (round 15 polish): read back as
+// plain words and Unicode superscripts, as the notes' own text has them.
+const TO_SUPERSCRIPT = { "−": "⁻", "+": "⁺", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+const plainNote = (html) => plainMetricNames(html).replace(/<sup>([−+]?\d+)<\/sup>/g, (_match, run) => [...run].map((character) => TO_SUPERSCRIPT[character]).join(""));
 const kiMeasurementHtml = measurementSection(row(), {
   has_ki: true,
   ki_display: "0.25",
@@ -3552,7 +3556,7 @@ const flaggedHtml = measurementSection(row({
   condition_flags: ["kcat_over_km_quotient_mismatch"],
 }), {});
 assert.match(flaggedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"/);
-assert.match(flaggedHtml, /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as listed\./);
+assert.match(plainNote(flaggedHtml), /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as listed\./);
 assert.match(flaggedHtml, /aria-label="kcat\/Km mismatch\. Show the note\."/);
 assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often means|check the unit/);
 // The table's "!" states the problem in its tooltip (no order to check), its short words on phones.
@@ -3574,7 +3578,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     { metric: "kcat", raw_value: "10.7 ± 0.0", raw_unit: "s−1" },
     { metric: "kcat/Km", raw_value: "28.9", raw_unit: "mM−1 · s−1" },
   ] });
-  assert.ok(html.includes("The paper&#39;s kcat/Km (28.9 mM⁻¹ s⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ mM⁻¹ s⁻¹). "
+  assert.ok(plainNote(html).includes("The paper&#39;s kcat/Km (28.9 mM⁻¹ s⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ mM⁻¹ s⁻¹). "
     + "The factor is near 1000, as between per mM and per M. "
     + "The printed numbers agree (10.7 ÷ 0.37 = 28.9) only if Km and kcat/Km share one concentration unit. "
     + "All three are stored as printed."), html);
@@ -3583,14 +3587,14 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
 // A magnitude caution names the bound the value passes.
 {
   const low = measurementSection(row({ km: 1e-14, km_display: "1e-14", condition_flags: ["km_magnitude_needs_check"] }), {});
-  assert.match(low, /Km is below 1 nM; the unit or the value may be wrong\./);
+  assert.match(plainNote(low), /Km is below 1 nM; the unit or the value may be wrong\./);
   assert.match(low, /aria-label="Km &lt; 1 nM\. Show the note\."/);
   const high = measurementSection(row({ kcat: 7e12, kcat_display: "7e+12", condition_flags: ["kcat_magnitude_needs_check"] }), {});
-  assert.match(high, /kcat is above 10⁸ s⁻¹; the unit or the value may be wrong\./);
+  assert.match(plainNote(high), /kcat is above 10⁸ s⁻¹; the unit or the value may be wrong\./);
   // Every magnitude caution ends as the Guide's does.
   const diffusion = measurementSection(row({ kcat_over_km: 5e9, kcat_over_km_display: "5e+9", condition_flags: ["efficiency_above_diffusion_limit"] }), {});
   // The caution says where it fires (10¹⁰ M⁻¹ s⁻¹), not "the diffusion limit", which Stats draws at 10⁸–10⁹.
-  assert.match(diffusion, /kcat\/Km is above 10¹⁰ M⁻¹ s⁻¹ \(10⁷ mM⁻¹ s⁻¹\), faster than diffusion allows; the unit or the value may be wrong\./);
+  assert.match(plainNote(diffusion), /kcat\/Km is above 10¹⁰ M⁻¹ s⁻¹ \(10⁷ mM⁻¹ s⁻¹\), faster than diffusion allows; the unit or the value may be wrong\./);
   // The Guide says it once, in the record's words, for its whole group (round 14: the table's Unit or magnitude error row).
   const guideCautions = indexHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/table>/)[0];
   assert.equal((guideCautions.match(/the unit or the value may be wrong\./gi) || []).length, 1, "said once");
@@ -3677,7 +3681,7 @@ const unitFlagHtml = measurementSection(row({
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
-assert.match(unitFlagHtml, /The stored kcat\/Km \(6\.4 × 10⁴ mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
+assert.match(plainNote(unitFlagHtml), /The stored kcat\/Km \(6\.4 × 10⁴ mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
 // The pH as stored, every digit kept (record 185f13136893d1b4 stores 5.37 and prints 5.37; 913 records carry two decimals),
 // a trailing zero dropped: the table note, the record and the CSV export all use formatPh.
 assert.deepEqual(["5.37", "7.25", 7.35, "7.50", 7, "7.0", 6.125].map((ph) => api.formatPh({ ph_display: ph })), ["5.37", "7.25", "7.35", "7.5", "7", "7", "6.125"]);
@@ -3973,7 +3977,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     proof_lines: [line("kcat", "converted by code, printed unit read as 10^3 s-1", "corrected: unit set to 10^3 s-1")] });
   html = element("detailContent").innerHTML;
   assert.match(html, /<dt>Second check<\/dt><dd>Unit set to 10³ s⁻¹ for every value\.<\/dd>/);
-  assert.match(html, /<li><i>k<\/i><sub>cat<\/sub>: printed unit read as 10³ s⁻¹\.<\/li>/);
+  assert.match(plainNote(html), /<li>kcat: printed unit read as 10³ s⁻¹\.<\/li>/);
   assert.equal(api.catlogUnitText("s-1 mM-1"), "mM⁻¹ s⁻¹");
   assert.equal(api.catlogUnitText("M-1s-1"), "M⁻¹s⁻¹");
   assert.equal(api.catlogUnitText("min-1 µM-1"), "min⁻¹ µM⁻¹");
@@ -4019,7 +4023,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const confirmedHtml = measurementSection(confirmedSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("Km", "228.78", "µM", "converted by code"), proofLine("kcat", "12.45", "min^-1", "converted by code"),
       proofLine("kcat/Km", "55.06", "µM^-1 min^-1", "converted by code, printed unit read as mM^-1 min^-1")] });
-  assert.match(confirmedHtml, /The paper prints µM⁻¹ min⁻¹; CatLog uses mM⁻¹ min⁻¹, the unit in which the printed kcat\/Km \(55\.06\) agrees with kcat ÷ Km \(54\.41\)\./);
+  assert.match(plainNote(confirmedHtml), /The paper prints µM⁻¹ min⁻¹; CatLog uses mM⁻¹ min⁻¹, the unit in which the printed kcat\/Km \(55\.06\) agrees with kcat ÷ Km \(54\.41\)\./);
   assert.match(confirmedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"[^>]*aria-label="kcat\/Km: printed unit differs\. Show the note\."/);
   // The value carries the "!" (its tan note says which unit and why); the grey note says only that code converted it.
   assert.match(confirmedHtml, /<span class="vt-number">0\.9177<\/span><button class="value-flag"[^>]*data-flag-note="detailFlagNote1"/);
@@ -4031,16 +4035,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const bothHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"),
       proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1")] });
-  assert.match(bothHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
-  assert.match(bothHtml, /The paper prints s⁻¹ μM⁻¹; CatLog stores mM⁻¹ s⁻¹, 1000-fold apart/);
+  assert.match(plainNote(bothHtml), /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\./);
+  assert.match(plainNote(bothHtml), /The paper prints s⁻¹ μM⁻¹; CatLog stores mM⁻¹ s⁻¹, 1000-fold apart/);
   assert.doesNotMatch(bothHtml, /AI audit/, "no audit, no audit sentence");
   // An AI audit of the value ends its note with what it found (0f2107bac841d82f); the note stays tan.
   const auditedHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""),
       { ...proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM"), audit_date: "2026-10-12", audit_result: "kept" },
       { ...proofLine("kcat/Km", "54", "s^-1 μM^-1", "printed unit read as s^-1 mM^-1"), audit_date: "2026-10-12", audit_result: "unit corrected" }] });
-  assert.match(auditedHtml, /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and kept mM\./);
-  assert.match(auditedHtml, /CatLog stores mM⁻¹ s⁻¹, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and corrected its unit\./);
+  assert.match(plainNote(auditedHtml), /The paper prints μM; CatLog stores mM, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and kept mM\./);
+  assert.match(plainNote(auditedHtml), /CatLog stores mM⁻¹ s⁻¹, 1000-fold apart, and kcat ÷ Km cannot show which is right\. An AI audit on Oct 12, 2026 re-checked it against the paper and corrected its unit\./);
   assert.match(auditedHtml, /aria-label="Km: printed unit differs\. Show the note\."/);
   // CatLog's own flag for it (printed_unit_prefix_differs) is a unit caution; the per-value notes say it, once.
   const flaggedBoth = { ...bothSummary, condition_flags: ["printed_unit_prefix_differs"] };
@@ -4048,7 +4052,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const flaggedBothHtml = api.valuesSection(flaggedBoth, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM")] });
   assert.doesNotMatch(flaggedBothHtml, /another concentration unit/);
-  assert.match(flaggedBothHtml, /Km: The paper prints μM; CatLog stores mM/);
+  assert.match(plainNote(flaggedBothHtml), /Km: The paper prints μM; CatLog stores mM/);
   assert.match(api.valuesSection(row({ record_key: "flag-only", condition_flags: ["printed_unit_prefix_differs"] }), {}),
     /<li id="detailFlagNote1"[^>]*><span class="value-flag" aria-hidden="true"><\/span><span>The paper prints another concentration unit than the one CatLog uses \(printed unit differs\)\.<\/span><\/li>/);
   // The Method line never says "values stored as printed" above such a note (0f2107bac841d82f).
@@ -4062,7 +4066,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const sameHtml = measurementSection(bothSummary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat/Km", "54", "M^-1 s^-1", "converted by code, printed unit read as 10^3 M-1 s-1")] });
   assert.doesNotMatch(sameHtml, /unit-caution|printed unit differs/);
-  assert.match(plainMetricNames(sameHtml), /<li>kcat\/Km: printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
+  assert.match(plainNote(plainMetricNames(sameHtml)), /<li>kcat\/Km: printed unit read as 10³ M⁻¹ s⁻¹\.<\/li>/);
 }
 // A merged older record: the kcat/Km its sources list sits under the values, in the source's name and the catalog unit;
 // when every one is more than 2-fold from kcat ÷ Km, a tan note says so.
@@ -4073,7 +4077,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const listed = [3.0, 5.333, 3.083, 5.152, 6.117].map((value) => ({ value, unit: "1/mM*1/s", source_db: "oed" }));
   const html = measurementSection(merged, { source_kcat_over_km_values: listed });
   assert.match(plainMetricNames(html), /<dt>kcat\/Km listed by OED<\/dt><dd><span class="source-efficiency-value"><span><span class="listed-end">3\.0<\/span>–<span class="listed-end">6\.1<\/span> mM<sup>−1<\/sup> s<sup>−1<\/sup><\/span><small>5 values<\/small><\/span><\/dd>/);
-  assert.match(html, /kcat ÷ Km \(15 mM⁻¹ s⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
+  assert.match(plainNote(html), /kcat ÷ Km \(15 mM⁻¹ s⁻¹\) is 2\.4–4\.9-fold above every kcat\/Km OED lists for this record \(3\.0–6\.1\)\./);
   assert.match(html, /aria-label="kcat\/Km mismatch\. Show the note\."/, "the Guide's caution name");
   // Every number in the Value column ends at the same place: a row without calc. or "!" keeps their space, unseen.
   assert.match(html, /<span class="vt-number">7\.33<\/span><small class="metric-origin vt-ghost" aria-hidden="true">calc\.<\/small><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/);
@@ -4094,9 +4098,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(api.rowCautionBits(flagged), 1, "counted under kcat/Km mismatch, not under No cautions");
   assert.match(api.valueFlagBadgeHtml(api.conditionFlags(flagged), "kcat_over_km", flagged), /title="Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown"/);
   const flaggedHtml = measurementSection(flagged, { source_kcat_over_km_values: listed });
-  assert.match(flaggedHtml, /is 2\.4–4\.9-fold above every kcat\/Km OED lists/);
+  assert.match(plainNote(flaggedHtml), /is 2\.4–4\.9-fold above every kcat\/Km OED lists/);
   assert.doesNotMatch(flaggedHtml, /Kcat over km|source mismatch|more than 2-fold from the kcat\/Km shown/);
-  assert.match(measurementSection(flagged, {}), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
+  assert.match(plainNote(measurementSection(flagged, {})), /Every kcat\/Km the source databases list for this record is more than 2-fold from the kcat\/Km shown\./);
   assert.equal(api.rowCautionBits(row({ record_key: "ph-only", condition_flags: ["ph_outside_0_14"] })), 16, "a flag of no group is no caution, as Stats counts it");
   const close = measurementSection(merged, { source_kcat_over_km_values: [...listed, { value: 14, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(plainMetricNames(close), /kcat\/Km listed by BRENDA/);
@@ -4107,26 +4111,26 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_source_differs: true, source_db: "brenda", condition_flags: flags });
   const both = ["kcat_over_km_quotient_mismatch", "kcat_over_km_source_mismatch"];
   const twice = measurementSection(older("twice", 4.1, 0.22, "46.067", both), { source_kcat_over_km_values: [{ value: 18.6, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(twice, /The stored kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above kcat ÷ Km \(19 mM⁻¹ s⁻¹\)\. BRENDA lists kcat\/Km 18\.6 mM⁻¹ s⁻¹ for this record, which agrees with kcat ÷ Km\./);
+  assert.match(plainNote(twice), /The stored kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above kcat ÷ Km \(19 mM⁻¹ s⁻¹\)\. BRENDA lists kcat\/Km 18\.6 mM⁻¹ s⁻¹ for this record, which agrees with kcat ÷ Km\./);
   assert.equal((twice.match(/<li id="detailFlagNote/g) || []).length, 1, "one note for one mismatch");
   assert.doesNotMatch(twice, /more than 2-fold from the kcat\/Km shown|stored as listed/);
   const some = measurementSection(older("some", 0.076, 1.26, "227.78", both), { source_kcat_over_km_values: [
     { value: 0.06027, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(some, /BRENDA lists 2 kcat\/Km values for this record \(0\.060–5\.0 mM⁻¹ s⁻¹\); one of them agrees with kcat ÷ Km\./);
+  assert.match(plainNote(some), /BRENDA lists 2 kcat\/Km values for this record \(0\.060–5\.0 mM⁻¹ s⁻¹\); one of them agrees with kcat ÷ Km\./);
   // Without listed values in the catalog unit the flags keep their own notes.
-  assert.match(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {}), /The source&#39;s kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above/);
+  assert.match(plainNote(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {})), /The source&#39;s kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above/);
   // A familiar factor between kcat ÷ Km and the listed kcat/Km is named (e375ce185827beeb, 3dc72daa0a20580c).
   const thousand = measurementSection(older("thousand", 3.5, 64, "0.05469", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [{ value: 55.5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(thousand, /is 1,015-fold below the kcat\/Km BRENDA lists for this record \(55\.5\)\. The factor is near 1000, as between per mM and per M\./);
+  assert.match(plainNote(thousand), /is 1,015-fold below the kcat\/Km BRENDA lists for this record \(55\.5\)\. The factor is near 1000, as between per mM and per M\./);
   // Folds past 10,000 are not spelled out (4a0225c90ac5a298).
   const far = measurementSection(older("far", 390000, 0.0013, "3e+8", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [328, 650, 0.0042].map((value) => ({ value, unit: "s^(-1)*mM^(-1)", source_db: "sabio_rk" })) });
-  assert.match(far, /is more than 10,000-fold above every kcat\/Km SABIO-RK lists for this record \(0\.0042–650\)\./);
+  assert.match(plainNote(far), /is more than 10,000-fold above every kcat\/Km SABIO-RK lists for this record \(0\.0042–650\)\./);
   assert.doesNotMatch(far, /461,538/);
   const wide = measurementSection(older("wide", 300, 1, "300", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [0.01, 10].map((value) => ({ value, unit: "s^(-1)*mM^(-1)", source_db: "brenda" })) });
-  assert.match(wide, /is 30- to more than 10,000-fold above every kcat\/Km BRENDA lists/);
+  assert.match(plainNote(wide), /is 30- to more than 10,000-fold above every kcat\/Km BRENDA lists/);
 }
 // Records of one paper that read alike: the export's condition note under the substrate (table and record); without
 // one, look-alikes with values on the page that share a paper say only that they read the same.
@@ -4674,15 +4678,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK", "OED"], database_cause: "paper_unit_misprint",
     database_line: "SABIO-RK and OED list 917.7 mM⁻¹ s⁻¹: the printed value in its printed unit. The paper prints 55.06 µM⁻¹ min⁻¹ (Table I).",
     database_evidence: "Table I, wild type: kcat/Km column prints 55.06; kcat 12.45 min⁻¹ / Km 228.78 µM = 0.0544 µM⁻¹ min⁻¹ (54.4 mM⁻¹ min⁻¹). OED and SABIO-RK list 917.7 mM⁻¹ s⁻¹" })]));
-  assert.match(html, /<details class="cmp-how"><summary>What the AI check found<\/summary><p>Table I, wild type: kcat\/Km column prints 55\.06; kcat 12\.45 min⁻¹ \/ Km 228\.78 µM = 0\.0544 µM⁻¹ min⁻¹ \(54\.4 mM⁻¹ min⁻¹\)\.<\/p><\/details>/);
+  assert.match(plainNote(html), /<details class="cmp-how"><summary>What the AI check found<\/summary><p>Table I, wild type: kcat\/Km column prints 55\.06; kcat 12\.45 min⁻¹ \/ Km 228\.78 µM = 0\.0544 µM⁻¹ min⁻¹ \(54\.4 mM⁻¹ min⁻¹\)\.<\/p><\/details>/);
   assert.equal((html.match(/917\.7/g) || []).length, 1, "the database's number once, in the line");
   html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["SABIO-RK"],
     database_line: "SABIO-RK lists 2.4 × 10⁻⁹ mM⁻¹ s⁻¹, 10¹²× lower.", database_evidence: "Table 5 prints 2.4; footnote b '(kcat/Km) x 10⁶ M⁻¹ s⁻¹'; SABIO-RK 2.4 × 10⁻⁹ mM⁻¹ s⁻¹ (=x10⁻⁶ M⁻¹ s⁻¹)" })]));
-  assert.match(html, /<p>Table 5 prints 2\.4; footnote b &#39;\(kcat\/Km\) x 10⁶ M⁻¹ s⁻¹&#39;\.<\/p><\/details>/);
+  assert.match(plainNote(html), /<p>Table 5 prints 2\.4; footnote b &#39;\(kcat\/Km\) x 10⁶ M⁻¹ s⁻¹&#39;\.<\/p><\/details>/);
   // A last part with other facts stays (BRENDA's own kcat and Km, the arithmetic).
   html = render(v2Summary, v2Detail([line("kcat/Km", { database_status: "corrected", database_sources: ["BRENDA"],
     database_line: "BRENDA lists 0.01 mM⁻¹ s⁻¹ (1.1 × 10⁴× lower than CatLog's value).", database_evidence: "Table 1 prints 105.58 ± 12.16; BRENDA lists kcat 0.042 s⁻¹, Km 4.1 mM" })]));
-  assert.match(html, /<p>Table 1 prints 105\.58 ± 12\.16; BRENDA lists kcat 0\.042 s⁻¹, Km 4\.1 mM<\/p>/);
+  assert.match(plainNote(html), /<p>Table 1 prints 105\.58 ± 12\.16; BRENDA lists kcat 0\.042 s⁻¹, Km 4\.1 mM<\/p>/);
   // A local file named as evidence is never shown.
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_evidence: "/Users/someone/papers/123.pdf p. 4" })]));
   assert.doesNotMatch(html, /Users\/someone|\.pdf|In the paper<\/dt>|What the AI check found/);
@@ -5418,7 +5422,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     kcat_over_km_display: "0.0032", condition_flags: ["km_magnitude_needs_check"] });
   api.renderDetail(bigKm, {});
   html = element("detailContent").innerHTML;
-  assert.match(html, /Km is above 10 M; the unit or the value may be wrong\./);
+  assert.match(plainNote(html), /Km is above 10 M; the unit or the value may be wrong\./);
   assert.deepEqual(approvedValues(html), ["kcat", "kcat/Km"]);
   assert.match(plainMetricNames(html), /<li><span class="value-approved-key">.*?<\/span>Approved by a human reviewer \(see <button class="text-button review-row-link" type="button" data-show-row="human-review-line">Human review<\/button> below\)\. Km has no tick: the note above questions its unit or value\.<\/li>/);
   assert.deepEqual((await recordDownloadPayload(bigKm, {})).human_approved_values, ["kcat", "kcat/Km"]);

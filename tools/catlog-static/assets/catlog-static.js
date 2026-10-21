@@ -11223,7 +11223,8 @@
 
   function flagNotesHtml(notes) {
     if (!notes.length) return "";
-    return `<ul class="flag-notes" aria-label="Notes on these values">${notes.map((note) => `<li id="${note.id}" tabindex="-1"><span class="value-flag" aria-hidden="true"></span><span>${escapeHtml(note.text)}</span></li>`).join("")}</ul>`;
+    // kcat, Km and kcat/Km as the table above and the database lines below set them, its units with <sup> (round 15 polish)
+    return `<ul class="flag-notes" aria-label="Notes on these values">${notes.map((note) => `<li id="${note.id}" tabindex="-1"><span class="value-flag" aria-hidden="true"></span><span>${superscriptsHtml(metricWordsHtml(escapeHtml(note.text)))}</span></li>`).join("")}</ul>`;
   }
 
   function showFlagNote(id) {
@@ -11447,6 +11448,13 @@
   function kineticWordsHtml(html) {
     return String(html ?? "").replace(/(^|[^\w/-])(kcat\/Km|kcat|Km)(?![\w/-])/g, (_match, lead, word) => `${lead}${METRIC_WORD_HTML[word]}`);
   }
+  // A unit's or a power of ten's Unicode superscripts (mM⁻¹ s⁻¹, 10⁴) as the Values table sets them, <sup>−1</sup>, in the
+  // record's sentences (its cautions, grey notes, database lines and Human review line; round 15 polish: the caution box
+  // had set "mM⁻¹ s⁻¹" in Unicode under a table of <sup>s). Takes escaped text; As printed keeps the paper's text.
+  const FROM_SUPERSCRIPT = { "⁻": "−", "⁺": "+", "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9" };
+  function superscriptsHtml(html) {
+    return String(html ?? "").replace(/[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (run) => `<sup>${[...run].map((character) => FROM_SUPERSCRIPT[character]).join("")}</sup>`);
+  }
   // The proof line (a record read from the paper) that gives a field's value, or -1.
   function proofLineIndex(proof, field) {
     return proof ? proof.lines.findIndex((line) => (v2MetricLabels[line.metric] || [])[0] === field) : -1;
@@ -11470,7 +11478,7 @@
       const field = (v2MetricLabels[line.metric] || [])[0];
       if (unitCautions.some((item) => item.field === field)) return;
       const readAs = String(proof.facts[index].conversion || "").match(/printed unit read as (.+)$/);
-      if (readAs) own.push(`${metricWordsHtml(escapePublic(line.metric))}: printed unit read as ${caretHtml(escapePublic(catlogUnitText(readAs[1].trim())))}.`);
+      if (readAs) own.push(`${metricWordsHtml(escapePublic(line.metric))}: printed unit read as ${superscriptsHtml(caretHtml(escapePublic(catlogUnitText(readAs[1].trim()))))}.`);
     });
     return own;
   }
@@ -12831,7 +12839,7 @@
       else lines.push({ text, metrics: [metric] });
     });
     return lines.map(({ text, metrics }) => `<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"></span>`
-      + `<span>${metricWordsHtml(escapeHtml(sentenceList(metrics)))}: ${kineticWordsHtml(caretHtml(escapePublic(text)))}</span></p>`).join("");
+      + `<span>${metricWordsHtml(escapeHtml(sentenceList(metrics)))}: ${superscriptsHtml(kineticWordsHtml(caretHtml(escapePublic(text))))}</span></p>`).join("");
   }
 
   // A kcat/Km CatLog calculated: not compared, said last (after the compared values), muted and with no square (an empty
@@ -12850,12 +12858,12 @@
       + (result ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(databaseResultWord(facts))}</strong></span>` : "");
     const lineText = facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
     const line = lineText
-      ? `<p class="cmp-line">${kineticWordsHtml(caretHtml(escapePublic(lineText)))}</p>`
+      ? `<p class="cmp-line">${superscriptsHtml(kineticWordsHtml(caretHtml(escapePublic(lineText))))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
     const cause = databaseCauseShown(facts);
     const evidence = databaseEvidenceText(facts);
-    const body = line + kvList([cause ? linkedKv("Cause", metricWordsHtml(escapePublic(cause))) : ""], "cmp-facts")
-      + (evidence ? `<details class="cmp-how"><summary>What the AI check found</summary><p>${caretHtml(escapePublic(evidence))}</p></details>` : "");
+    const body = line + kvList([cause ? linkedKv("Cause", superscriptsHtml(metricWordsHtml(escapePublic(cause)))) : ""], "cmp-facts")
+      + (evidence ? `<details class="cmp-how"><summary>What the AI check found</summary><p>${superscriptsHtml(caretHtml(escapePublic(evidence)))}</p></details>` : "");
     const attributes = `class="cmp-note" data-cmp-field="${escapeHtml(field)}"`;
     return body
       ? `<details ${attributes}${open ? " open" : ""}><summary>${summary}</summary><div class="cmp-note-body">${body}</div></details>`
@@ -13456,7 +13464,7 @@
       audit ? kv("AI audit", audit) : "",
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
-        ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${kineticWordsHtml(escapePublic(humanNote))}`, { className: "human-review-line" })
+        ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${superscriptsHtml(kineticWordsHtml(escapePublic(humanNote)))}`, { className: "human-review-line" })
         : "",
     ]) + guideLinkHtml(v2Record ? HOW_READ_LINK : HOW_EARLIER_LINK));
   }
