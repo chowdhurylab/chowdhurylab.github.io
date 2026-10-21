@@ -140,14 +140,14 @@
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
     get accepted() {
       return followsReviewRules()
-        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or approved by a human reviewer (human-checked)."
-        : "Passed review: read from the paper by CatLog or accepted by the earlier automated review (as printed or after a correction).";
+        ? "Read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or approved by a human reviewer (human-checked)."
+        : "Read from the paper by CatLog, or accepted by the earlier automated review (as printed or after a correction).";
     },
-    curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate. The record is replaced when CatLog reads its paper.",
+    curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate; replaced when CatLog reads the paper.",
     // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
     // (Stats counts them there; the record reads "Not checked" with the tag "no paper linked").
     get not_verified() {
-      return `No review result. The record names which kind: Unverified (the earlier review recorded no final check) or Not reviewed (a SKiD or BRENDA record with no PMID or DOI${followsReviewRules() ? ", including records the earlier review accepted, tagged no paper linked" : " that was never reviewed"}).`;
+      return `No review result: Unverified (the earlier review recorded no final check) or Not reviewed (a SKiD or BRENDA record with no PMID or DOI${followsReviewRules() ? "; accepted ones are tagged no paper linked" : ", never reviewed"}).`;
     },
     disputed: "A check found a problem; not accepted.",
   };
@@ -156,8 +156,8 @@
   function stateShortDescription(value) {
     if (value === "accepted") {
       return followsReviewRules()
-        ? "Passed review: read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
-        : "Passed review: read from the paper by CatLog or accepted by the earlier automated review.";
+        ? "Read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
+        : "Read from the paper by CatLog, or accepted by the earlier automated review.";
     }
     if (value === "curation_pending") return "The earlier automated review left a question open.";
     if (value === "not_verified") return "No review result.";
@@ -199,7 +199,7 @@
   // 256px width); the chips, the Guide and Stats say the label.
   const cautionFilters = [
     { value: "differs", label: "kcat/Km mismatch", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> mismatch", bit: 1, title: "The printed or listed kcat/Km differs from kcat ÷ Km" },
-    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, a kcat/Km unit that may be off by 1000×, kcat/Km above 10¹⁰ M⁻¹ s⁻¹ (faster than diffusion allows) or a printed unit that differs from the one CatLog read",
+    { value: "units", label: "Possible unit or magnitude error", bit: 2, title: "Km above 10 M or below 1 nM, kcat above 10⁸ s⁻¹, kcat/Km above the diffusion limit (10¹⁰ M⁻¹ s⁻¹) or possibly 1000× off in its unit, or a printed unit that differs from the one CatLog read",
       short: "Unit or magnitude error" },
     { value: "unit_missing", label: "No unit given", bit: 4, title: "A kcat or Km without a recorded unit" },
     { value: "temperature", label: "Temperature questionable", bit: 8, title: "A temperature value or unit that may be wrong" },
@@ -248,23 +248,23 @@
   // narrows its parent: ticking it ticks Not in the databases, and the two are one filter (databaseFilterBits).
   const databaseFilters = [
     { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
-      title: "A database lists another number for this value. CatLog's value is the one the paper prints; the record names the cause and how it was found." },
+      title: "A database lists another number; CatLog's is the paper's, and the record names the cause and how it was found." },
     { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs", ...FACTOR_ONLY_STATUSES],
       // The caveat ("A different number can mean a different measurement; ...") is said once per page, with this result
       // only (the user, 2026-10-15): Browse's "?" box and the Guide's results add it to this definition, Stats' lead says
       // it right after the different numbers; a tooltip never carries it.
-      title: "A database lists another number for this value and the cause is not yet known. Where the database's number is the paper's times an exact factor (a power of ten, 60 or 3,600) and nothing has yet checked it against the paper, the record says Different number (exact factor, not yet checked) and names the factor." },
+      title: "A database lists another number and the cause is not yet known; where it is the paper's times an exact factor (a power of ten, 60 or 3,600), the record names the factor." },
     { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
       title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
       values: ["new", "new_ratio_only", "new_paper_not_in_databases"],
-      title: "No compared database lists this value for this paper. The record says why and what they do list." },
+      title: "No compared database lists this value for this paper; the record says why and what they do list." },
     { value: "all_not_listed", bit: 16, mark: "not-listed", parent: "not_listed", records: ["records", "every_value_new"],
       title: "No compared database lists any value of the record." },
     { value: "all_same", bit: 32, mark: "same", records: ["records", "every_value_confirmed"],
       title: "Every compared value is the number a database lists for it." },
     { value: "earlier", bit: 64, optional: true, divided: true,
-      title: "Not yet re-read: CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
+      title: "On records not yet re-read, CatLog's earlier version changed these values to what the paper prints; the record lists before and after." },
   ].map((item) => {
     const label = DATABASE_RESULT_NAMES[item.value];
     // The nested option's chip and spoken name say what it narrows: "Not in the databases: every value".
@@ -294,7 +294,7 @@
   // version's help is said once per place: the Source "?", Stats' How these numbers are counted, the Guide's method section.
   // Only part of its entries were checked against their papers (most are Not confirmed or Not checked).
   const SOURCE_CATLOG_HELP = "by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "from CatLog's earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these.";
+  const SOURCE_DATABASES_HELP = "from CatLog's earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper.";
   // One line each in the 256px sidebar, also with a wide font (DejaVu Sans): the label beside its count. The help is
   // behind the group's "?" and in each radio's title.
   const sourceModes = [
@@ -1165,14 +1165,14 @@
     const tableSize = formatFileSize(manifest.table_download?.size_bytes);
     if ($("enrichedDataDescription")) {
       $("enrichedDataDescription").textContent = [
-        "Every field, including sequences, SMILES and paper links",
+        "Every field, with sequences, SMILES and paper links",
         `${total} rows`,
         enrichedSize,
       ].filter(Boolean).join(" · ");
     }
     if ($("tableIndexDescription")) {
       $("tableIndexDescription").textContent = [
-        "Table columns only: no sequences, SMILES or paper links",
+        "The table's columns; no sequences, SMILES or paper links",
         `${total} rows`,
         tableSize,
       ].filter(Boolean).join(" · ");
@@ -1194,7 +1194,7 @@
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
       $("comparisonDataDescription").textContent = [
-        "One row per value read from the paper and each database that lists its paper (CSV)",
+        "Values read from the paper, one row per database listing the paper (CSV)",
         rows ? `${formatInteger(rows)} rows` : "",
         comparisonPath ? formatFileSize(comparison.size_bytes) : "",
       ].filter(Boolean).join(" · ");
@@ -6681,7 +6681,7 @@
       { value: "mathematically_inferred", label: "Not reviewed", part: "not-reviewed", sub: true, count: counts.mathematically_inferred || 0,
         // Under the review rules, Not reviewed also holds the records accepted earlier that have no linked paper.
         note: noPaperRule && identityOnly
-          ? `${notReviewed.description} It also holds ${formatInteger(identityOnly)} records the earlier review accepted that have no PMID or DOI linked.`
+          ? `${notReviewed.description} It also holds ${formatInteger(identityOnly)} ${identityOnly === 1 ? "record" : "records"} the earlier review accepted, with no PMID or DOI linked.`
           : notReviewed.description },
       { value: "disputed", label: "Disputed", part: "disputed", count: counts.disputed || 0, params: { status: "disputed" },
         note: stateDescriptions.disputed },
@@ -7947,7 +7947,7 @@
         name: "measurement", value: item.value, labelHtml: item.labelHtml, count: `metric:${item.value}`,
       })).join("");
       if ($("aboutMeasurement")) {
-        $("aboutMeasurement").innerHTML = "<p>Records that give the value. Ticking more than one shows records with all of them.</p>";
+        $("aboutMeasurement").innerHTML = "<p>Records that give the value; ticking several shows records with all of them.</p>";
       }
       if ($("variantChecklist")) {
         $("variantChecklist").innerHTML = variantFilters.map((item) => checkRowHtml({
@@ -7955,8 +7955,8 @@
         })).join("");
       }
       if ($("aboutVariant")) {
-        $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant's mutation shows under the enzyme's name in the table.</p>
-          <p id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records do not state wild type or variant.</span></p>`;
+        $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant's mutation shows under the enzyme name.</p>
+          <p id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records state neither.</span></p>`;
       }
       // Against the databases: each result's square and name (a nested option's name is read with its parent's), its
       // definition and counts in its title; Corrected earlier under a rule.
@@ -7971,8 +7971,8 @@
       if ($("aboutDatabases")) {
         const names = databaseNamesHtml(comparedDatabases().map((item) => item.display));
         $("aboutDatabases").innerHTML = `
-          <p>CatLog compares each value it reads from a paper with the numbers ${names} list for the same paper,
-            pairing values by substrate, variant and organism.</p>
+          <p>CatLog compares each value read from a paper with what ${names} list for that paper, matched by substrate,
+            variant and organism.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
             item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${
             // ("re-read" never breaks at its hyphen, as in Stats and the Guide)
@@ -8014,9 +8014,8 @@
           <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       if ($("aboutSourceDatabases")) {
-        $("aboutSourceDatabases").innerHTML = `<p>The records not yet <span class="nowrap">re-read</span>, by the database or earlier extraction they
-          come from; ticking one selects Not yet <span class="nowrap">re-read</span>.</p>
-          <p>A merged record counts under each database it came from.</p>`;
+        $("aboutSourceDatabases").innerHTML = `<p>Records not yet <span class="nowrap">re-read</span>, by the database or earlier extraction they
+          come from; a merged record counts under each. Ticking one selects Not yet <span class="nowrap">re-read</span>.</p>`;
       }
     }
     syncDatabaseFilters();
@@ -8059,13 +8058,13 @@
       element.textContent = formatCount(count);
       element.closest?.(".check-row, .range-row")?.classList.toggle("is-zero", count === 0);
     });
-    // "N records do not state wild type or variant": shown once counted and only when some do (1 record does not).
+    // "N records state neither" (wild type nor variant): shown once counted and only when some do (1 record does not).
     const variantNote = $("variantNoneNote");
     if (variantNote) {
       const none = filterCountValue("variant:none", counts);
       variantNote.hidden = !none;
       const words = variantNote.querySelector?.("[data-variant-none-words]");
-      if (words) words.textContent = none === 1 ? "record does not state wild type or variant." : "records do not state wild type or variant.";
+      if (words) words.textContent = none === 1 ? "record states neither." : "records state neither.";
     }
   }
 

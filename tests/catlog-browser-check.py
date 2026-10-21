@@ -2520,13 +2520,13 @@ def check_filters(driver, browser, url, route_label):
         """)
         assert [row["mark"]["colour"] for row in rows[:6]] == colours and rows[6]["mark"] is None, rows
         assert all(row["mark"]["hidden"] == "true" and row["mark"]["size"] == [10, 10] for row in rows[:6]), rows
-        definitions = ("A database lists another number for this value. CatLog's value is the one the paper prints",
-                       "A database lists another number for this value and the cause is not yet known.",
+        definitions = ("A database lists another number; CatLog's is the paper's",
+                       "A database lists another number and the cause is not yet known;",
                        "A database lists this number for the paper under another substrate, variant or organism.",
-                       "No compared database lists this value for this paper.",
+                       "No compared database lists this value for this paper;",
                        "No compared database lists any value of the record.",
                        "Every compared value is the number a database lists for it.",
-                       "Not yet re-read: CatLog's earlier version changed these values")
+                       "On records not yet re-read, CatLog's earlier version changed these values")
         assert all(row["title"].startswith(text) for row, text in zip(rows, definitions)), rows
         # The counts at rest are the manifest's keys; the titles add its values and records.
         kinds, records = comparison.get("records_with_kind") or {}, comparison.get("records") or {}
@@ -5456,7 +5456,8 @@ def check(driver, browser, url):
         # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them, once (round 14): in
         # the Not reviewed row under the review rules, else in the note under the figure
         status_text = " ".join(driver.find_element(By.CLASS_NAME, "stats-status-section").text.split())
-        assert (f"It also holds {identity_only:,} records the earlier review accepted that have no PMID or DOI linked" in status_text
+        assert (f"It also holds {identity_only:,} {'record' if identity_only == 1 else 'records'} the earlier review accepted, with no PMID or DOI linked" in status_text
+                or f"It also holds {identity_only:,} records the earlier review accepted that have no PMID or DOI linked" in status_text
                 or f"{identity_only:,} accepted records have no PMID or DOI linked" in status_text), status_text
         assert status_text.count("no PMID or DOI linked") == 1, "Stats names the records without a paper once"
 

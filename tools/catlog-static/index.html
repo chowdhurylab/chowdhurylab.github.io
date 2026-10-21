@@ -55,7 +55,7 @@
                 download="catlog-enriched.jsonl.gz"
               >
                 <strong>Full data</strong>
-                <span id="enrichedDataDescription">Every field, including sequences, SMILES and paper links</span>
+                <span id="enrichedDataDescription">Every field, with sequences, SMILES and paper links</span>
               </a>
               <a
                 id="exportSnapshotButton"
@@ -63,18 +63,18 @@
                 download="catlog-table.jsonl.gz"
               >
                 <strong>Table</strong>
-                <span id="tableIndexDescription">Table columns only: no sequences, SMILES or paper links</span>
+                <span id="tableIndexDescription">The table&rsquo;s columns; no sequences, SMILES or paper links</span>
               </a>
               <a id="comparisonDataButton" href="#" download="catlog-database-comparison.csv.gz" hidden>
                 <strong>Against the databases</strong>
-                <span id="comparisonDataDescription">One row per value read from the paper and each database that lists its paper (CSV)</span>
+                <span id="comparisonDataDescription">Values read from the paper, one row per database listing the paper (CSV)</span>
               </a>
               <a
                 class="corpus-request-link"
                 href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20full%20research%20records%20request"
               >
                 <strong>Review files</strong>
-                <span>Source records and review notes. Request by email.</span>
+                <span>Source records and review notes, on request by email</span>
               </a>
               <a id="datasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener">
                 <strong>Dataset notes</strong>
@@ -167,7 +167,7 @@
                   <summary class="filter-section-title"><span><span class="group-dot tone-measurement" aria-hidden="true"></span>Assay conditions</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                   <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutConditions" title="About the assay conditions"><span aria-hidden="true">?</span><span class="visually-hidden">About the assay conditions</span></button>
                   <div class="filter-about" id="aboutConditions" hidden>
-                    <p>Records whose assay temperature or pH lies in the range; either bound may be left empty. The count beside each is the records that give one.</p>
+                    <p>Records with an assay temperature or pH in the range; either bound can stay empty. Each count is the records that give one.</p>
                   </div>
                   <div class="range-stack">
                     <div class="range-row" role="group" aria-labelledby="temperatureRangeLabel">
@@ -233,15 +233,15 @@
                   <div class="download-options export-options">
                     <button id="exportAllCsvButton" type="button">
                       <strong id="exportAllCsvLabel">All matching records (CSV)</strong>
-                      <span>The table&rsquo;s columns with units, temperature, pH, review result, source, PMID, DOI, UniProt ID and record ID</span>
+                      <span>The table&rsquo;s columns plus units, temperature, pH, source, PMID, DOI, UniProt ID and record ID</span>
                     </button>
                     <button id="exportPageCsvButton" type="button">
                       <strong>This page (CSV)</strong>
-                      <span>The same columns, for the records on this page</span>
+                      <span>The same columns, this page only</span>
                     </button>
                     <button id="downloadPageButton" type="button">
                       <strong>This page (JSON)</strong>
-                      <span>Each record on this page as Download record saves it</span>
+                      <span>Each record in full, as Download record saves it</span>
                     </button>
                   </div>
                 </details>
@@ -319,7 +319,7 @@
 
           <aside id="detailPanel" class="detail-panel" tabindex="-1" aria-label="Record details">
             <p id="detailStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
-            <div id="detailEmpty" class="detail-empty">Select a record to view its measurement and sources.</div>
+            <div id="detailEmpty" class="detail-empty">Select a record to see its values and sources.</div>
             <div id="detailContent" class="hidden"></div>
           </aside>
         </section>

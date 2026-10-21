@@ -1938,7 +1938,7 @@ function row(overrides = {}) {
     runtimeManifest.summary.distributions = { ...saved, accepted_basis: [{ label: "human review", count: 1 }] };
     api.renderStats();
     const ruled = element("statsCharts").innerHTML;
-    assert.match(ruled, /It also holds 1 records the earlier review accepted that have no PMID or DOI linked\./);
+    assert.match(ruled, /It also holds 1 record the earlier review accepted, with no PMID or DOI linked\./);
     assert.doesNotMatch(ruled, /records have no PMID or DOI linked, so their values cannot be traced/, "the Not reviewed row says it once");
     assert.doesNotMatch(ruled, /accepted records have no PMID/);
     assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer&#39;s approval\./);
@@ -2037,7 +2037,7 @@ function row(overrides = {}) {
   assert.match(chart, /data-tip="Not yet re-read, Not confirmed: 1 \(25\.0%\)"/);
   // How these numbers are counted says what each means, the earlier version once, in its help.
   assert.match(chart, /<dt>Read from the paper<\/dt><dd>Records read from the paper by an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
-  assert.match(chart, /<dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>All other records: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\.<\/dd>/);
+  assert.match(chart, /<dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>All other records: from CatLog&#39;s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\.<\/dd>/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read on Stats is kept whole");
   assert.equal((chart.match(/earlier version/g) || []).length, 1, "the earlier version is named once on Stats");
   assert.match(chart, /BRENDA, Not confirmed: 1/);
@@ -3284,12 +3284,12 @@ function row(overrides = {}) {
   assert.equal(element("guideComparisonLink").href, element("comparisonDataButton").href);
   assert.equal(element("comparisonDataButton").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
   assert.equal(element("guideComparisonLink").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
-  assert.equal(element("comparisonDataDescription").textContent, "One row per value read from the paper and each database that lists its paper (CSV) · 295,792 rows · 5.2 MB");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV) · 295,792 rows · 5.2 MB");
   delete runtimeManifest.database_comparison_download;
   api.renderDownloadMetadata();
   assert.equal(element("comparisonDataButton").hidden, true);
   assert.equal(element("guideComparisonDownload").hidden, true);
-  assert.equal(element("comparisonDataDescription").textContent, "One row per value read from the paper and each database that lists its paper (CSV)");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV)");
   if (savedComparison) runtimeManifest.database_comparison_download = savedComparison;
   assert.equal(element("guideSourceId").textContent, "14ffa6600b");
   assert.match(element("guideCitationLine").textContent, /^CatLog snapshot 2026-10-12 \(data ID 14ffa6600b\), Chowdhury Lab, /);
@@ -6112,18 +6112,20 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
   }
   // The "?" names the databases compared, from the manifest (here none listed or counted: the six fallback names).
-  assert.match(element("aboutDatabases").innerHTML, /with the numbers <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for the same paper/, "each name kept whole on one line");
+  assert.match(element("aboutDatabases").innerHTML, /with what <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for that paper/, "each name kept whole on one line");
   assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\): No compared database lists any value of the record\./);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
   // How values are paired, in words the options below do not contradict (Same, other label: another substrate, variant
   // or organism).
-  assert.match(element("aboutDatabases").innerHTML, /list for the same paper,\s+pairing values by substrate, variant and organism\.<\/p>/);
+  assert.match(element("aboutDatabases").innerHTML, /list for that paper, matched by substrate,\s+variant and organism\.<\/p>/);
   // The caveat once, under Different number only.
   assert.equal((element("aboutDatabases").innerHTML.match(/does not by itself mean a database is wrong/g) || []).length, 1);
   assert.match(element("aboutDatabases").innerHTML, /<strong>Different number<\/strong>: [^<]*it does not by itself mean a database is wrong\.<\/p>/);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\(same substrate/);
-  // "re-read" never breaks at its hyphen in the box (Corrected earlier's "Not yet re-read: ...").
-  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong>: Not yet <span class="nowrap">re-read<\/span>: /);
+  // "re-read" never breaks at its hyphen in the box (Corrected earlier's "On records not yet re-read, ..."), and no
+  // definition repeats a colon after its name's.
+  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong>: On records not yet <span class="nowrap">re-read<\/span>, /);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML, /<\/strong>[^<]*: [^<]*: /);
   assert.doesNotMatch(element("aboutDatabases").innerHTML.replace(/<span class="nowrap">re-read<\/span>/g, ""), /re-read/);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
   // database_summary number) equal the manifest's keys: records_with_kind for the first four, records.every_value_new and
@@ -6159,7 +6161,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
       assert.ok(titles.not_listed.endsWith(" 20,987 values in 14,002 records."), titles.not_listed);
       assert.equal(titles.all_not_listed, "No compared database lists any value of the record.");
       assert.equal(titles.all_same, "Every compared value is the number a database lists for it.");
-      assert.ok(titles.earlier.startsWith("Not yet re-read: ") && titles.earlier.endsWith("before and after."), titles.earlier);
+      assert.ok(titles.earlier.startsWith("On records not yet re-read, ") && titles.earlier.endsWith("before and after."), titles.earlier);
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 1 }, values: { all: { corrected: 1 } } };
       assert.ok(api.databaseOptionTitle(api.databaseFilters[0]).endsWith(" 1 value in 1 record."));
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 2 }, values: { all: { corrected: "2" } } };
@@ -7225,14 +7227,14 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.equal((sourceDatabases.match(/name="source"/g) || []).length, 8, "every database keeps its option");
   assert.doesNotMatch(sourceDatabases, /not by CatLog/);
   // Its "?" says what the group holds and that a merged record counts under each database (no longer in Source's).
-  assert.match(element("aboutSourceDatabases").innerHTML, /ticking one selects Not yet <span class="nowrap">re-read<\/span>\./);
-  assert.match(element("aboutSourceDatabases").innerHTML, /<p>A merged record counts under each database it came from\.<\/p>/);
+  assert.match(element("aboutSourceDatabases").innerHTML, /Ticking one selects Not yet <span class="nowrap">re-read<\/span>\.<\/p>/);
+  assert.match(element("aboutSourceDatabases").innerHTML, /; a merged record counts under each\. /);
   assert.doesNotMatch(element("aboutSource").innerHTML, /merged record/);
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span>Unit or magnitude error<\/span>/);
   // No help text in view (the user, 2026-10-18): the notes of Measurement type and Wild type or variant are behind their
   // "?", the cautions' definitions behind Cautions' "?" (Km and kcat keep their capitals after the dash).
   assert.doesNotMatch(element("measurementChecklist").innerHTML + element("variantChecklist").innerHTML, /filter-note|<p/);
-  assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value. Ticking more than one shows records with all of them.</p>");
+  assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value; ticking several shows records with all of them.</p>");
   assert.match(element("aboutVariant").innerHTML, /<p id="variantNoneNote" hidden><span data-count="variant:none">/);
   const aboutCautions = element("aboutCautions").innerHTML;
   assert.match(aboutCautions, /<strong><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> mismatch<\/strong> — the printed or listed kcat\/Km differs from kcat ÷ Km\.<\/p>/);
@@ -7243,8 +7245,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
   // against their papers).
   assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper<\/strong>: by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong>: from CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them against their papers; when CatLog reads a paper, its records replace these\./);
-  assert.match(source, /<label class="check-row radio-row" title="From CatLog&#39;s earlier version, which started from enzyme database entries and checked part of them/);
+  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong>: from CatLog&#39;s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\./);
+  assert.match(source, /<label class="check-row radio-row" title="From CatLog&#39;s earlier version, built from database entries and partly checked/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
@@ -7252,8 +7254,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // The Review result "?" is a short line per result and for human-checked, then the Guide (the tags are defined there),
   // so the box never pushes the options out of view.
   const aboutStatus = element("aboutStatus").innerHTML;
-  // "Accepted — passed review: ...": one dash, no double colon, the line in lower case after it.
-  assert.match(aboutStatus, /<strong>Accepted<\/strong> — passed review: read from the paper by CatLog/);
+  // "Accepted — read from the paper ...": one dash, no colon, the line in lower case after it.
+  assert.match(aboutStatus, /<strong>Accepted<\/strong> — read from the paper by CatLog/);
   assert.match(aboutStatus, /<strong>Not confirmed<\/strong> — the earlier automated review left a question open\./);
   assert.match(aboutStatus, /<strong>Not checked<\/strong> — no review result\./);
   assert.match(aboutStatus, /<strong>Disputed<\/strong> — a check found a problem; not accepted\./);
