@@ -3711,31 +3711,72 @@
     return state.records.length ? state.filtered : [];
   }
 
+  // The papers behind the current results, counted as the overview counts them (scripts/build-catlog-followup-summary.py
+  // paper_keys: a record's PMIDs, else its DOIs): all of them and those of the records read from the paper. The
+  // unfiltered view gives the snapshot's own counts (summary.overview); a filtered one counts its rows once per results
+  // list (one pass, numbers only: PMIDs as themselves, DOIs by their negative position).
+  let summaryPapersCache = { rows: null, counts: null };
+  function summaryPaperCounts(rows) {
+    const overview = statsOverview(Number(manifest.total_rows || 0));
+    const snapshot = { all: statsCount(overview?.papers), fromPaper: statsCount(overview?.from_paper?.papers) };
+    if (!state.recordsReady) return activeFilterItems().length ? { all: null, fromPaper: null } : snapshot;
+    if (rows.length === state.records.length && snapshot.all !== null && snapshot.fromPaper !== null) return snapshot;
+    if (summaryPapersCache.rows === rows) return summaryPapersCache.counts;
+    const all = new Set();
+    const fromPaper = new Set();
+    for (const row of rows) {
+      const pmids = row._pmids;
+      const dois = pmids == null ? row._dois : null;
+      const value = pmids ?? dois;
+      if (value == null) continue;
+      const paper = isV2Row(row);
+      for (const id of Array.isArray(value) ? value : [value]) {
+        const key = pmids == null ? -1 - id : id;
+        all.add(key);
+        if (paper) fromPaper.add(key);
+      }
+    }
+    summaryPapersCache = { rows, counts: { all: all.size, fromPaper: fromPaper.size } };
+    return summaryPapersCache.counts;
+  }
+
+  function paperWords(count) {
+    return `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
+  }
+
+  // The counts band (round 15): one even row of the four key numbers, each with one short line of context under it (the
+  // papers behind the records, Accepted's share of them, Read from the paper's share and papers, what Human-checked
+  // means), then the parameters, a label over each count and one line under them. The snapshot date ends the line above.
   function renderSummary() {
     const summary = manifest.summary || {};
     const coverage = summary.coverage || {};
     const rows = Array.isArray(rowsForSummary()) ? rowsForSummary() : [];
     const isLoaded = state.recordsReady;
     const totalRows = isLoaded ? rows.length : (manifest.total_rows || 0);
+    const accepted = recordStateCounts(rows).accepted || 0;
+    const papers = summaryPaperCounts(rows);
     // Each key number wears its meaning's colour (the card's records and accepted classes; the stylesheet's band).
     const cards = [
-      ["records", isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows],
-      ["accepted", "Accepted", recordStateCounts(rows).accepted || 0],
+      ["records", isLoaded && rows.length !== state.records.length ? "Matching records" : "Records", totalRows,
+        papers.all !== null ? paperWords(papers.all) : ""],
+      ["accepted", "Accepted", accepted, totalRows ? `${statsShare(accepted, totalRows)} of records` : ""],
     ];
-    const countHtml = ([key, label, value]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span><strong>${formatCount(value)}</strong></div>`;
+    const countHtml = ([key, label, value, note]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span>`
+      + `<strong>${formatCount(value)}</strong><small class="snapshot-note">${escapeHtml(note)}</small></div>`;
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
     const kmRows = isLoaded ? metricCoverage(rows, "km") : coverage.with_km;
     const efficiencyRows = isLoaded ? metricCoverage(rows, "kcat_over_km") : coverage.with_kcat_over_km;
-    // The With counts: one line each beside the key numbers (one line in all on tablets and phones), so no spaces
-    // between the lines' boxes.
+    // The parameters: each name over its count, one line under them; "With" leads them where they make one line
+    // (tablets, phones), so no spaces between the boxes.
     $("snapshotMeta").innerHTML = [
       '<span class="snapshot-title">With</span>',
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>`,
+      '<small class="snapshot-note">records with each parameter</small>',
     ].join("");
-    renderFromPaperCount(rows);
+    renderFromPaperCount(rows, totalRows, papers.fromPaper);
     renderHumanCheckedCount(rows);
     $("snapshotDate").textContent = manifest.generated_at ? `Snapshot ${formatDate(manifest.generated_at)}` : "Snapshot date unavailable";
     const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
@@ -3768,7 +3809,7 @@
     }
   }
 
-  function renderFromPaperCount(rows) {
+  function renderFromPaperCount(rows, totalRows = 0, papers = null) {
     const link = $("fromPaperLink");
     if (!link) return;
     const snapshotCount = statsCount(statsOverview(Number(manifest.total_rows || 0))?.from_paper?.records);
@@ -3782,6 +3823,10 @@
     link.hidden = false;
     setCountLink(link, count ? fromPaperHref() : "");
     if ($("fromPaperCount")) $("fromPaperCount").textContent = formatCount(count);
+    // Its share of the current results and the papers it comes from ("40.4% · 4,324 papers"); nothing for 0 or a dash.
+    const note = count && totalRows ? [`${statsShare(count, totalRows)}${papers === null ? " of records" : ""}`,
+      papers !== null ? paperWords(papers) : ""].filter(Boolean).join(" · ") : "";
+    if ($("fromPaperNote")) $("fromPaperNote").textContent = note;
   }
 
   // "Human-checked N" in the counts band links to the human-checked records among the current results. Before the
@@ -5558,23 +5603,14 @@
 
   // The Guide's and Team's leads say how far the re-reading has come (never "each" database value as if all were done):
   // " 75,000 of 185,804 records are read from the paper so far.", from the manifest; hidden without the counts. One verb
-  // everywhere (round 14): read from the paper, as the labels say; Browse's lede says how far too ("Enzyme kcat, Km and
-  // kcat/Km values; 75,000 of 185,804 read from their papers so far.", "..., being read from their papers."
-  // below 1024px), never that every value was re-checked.
+  // everywhere (round 14): read from the paper, as the labels say, never that every value was re-checked. Browse's lede
+  // says only "..., being read from their papers." (round 15): the counts band right under it gives the numbers.
   function renderRereadLines() {
     const total = Number(manifest.total_rows || 0);
     const read = statsCount(statsOverview(total)?.from_paper?.records, total || Infinity);
     document.querySelectorAll?.("[data-reread-line]").forEach((line) => {
       line.innerHTML = read !== null && total ? ` ${formatInteger(read)} of ${formatInteger(total)} records are read from the paper so far.` : "";
       line.hidden = !(read !== null && total);
-    });
-    // (the counts from 1024px, where the line has room; below that the line stays one line from 641px without them: the
-    // counts band under it gives them)
-    document.querySelectorAll?.("[data-reread-lede]").forEach((lede) => {
-      if (read !== null && total) {
-        lede.innerHTML = `<span class="lede-wide">; ${formatInteger(read)} of ${formatInteger(total)} read from their papers so far</span>`
-          + '<span class="lede-narrow">, being read from their papers</span>';
-      }
     });
   }
 
@@ -13751,7 +13787,7 @@
       setFiltersOpen(false, { focus: false });
       $("openFiltersButton")?.focus({ preventScroll: true });
     });
-    // Phones: the counts band shows the two main counts; More shows the rest.
+    // Phones: the counts band shows the four key numbers; More shows their lines of context and the parameters.
     $("snapshotMoreButton")?.addEventListener("click", (event) => {
       const band = event.currentTarget.closest(".snapshot-band");
       const expanded = !band.classList.contains("expanded");
