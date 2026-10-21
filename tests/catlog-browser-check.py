@@ -3535,9 +3535,17 @@ def check_layout(driver, browser, url, route_label):
         # The Source radios name what happened to each record, Read from the paper and Not yet re-read, one line each
         # beside its count, also in a wide font (Verdana here, DejaVu Sans on Linux) at the sidebar's 256px (1280px
         # window), with today's counts and with a six-figure count the catalog will reach; the help is behind the "?".
-        # (Source is under More filters since round 14: a visitor opens it by its title.)
+        # (Source is under More filters since round 14: a visitor opens it by its title; a scripted click in Safari,
+        # whose driver may not click a <summary>.)
         set_browse_viewport(driver, browser, 1280, 1000)
-        open_more()
+        more_title = driver.find_element(By.CSS_SELECTOR, "#moreFilters > summary")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", more_title)
+        if not driver.execute_script("return document.getElementById('moreFilters').open"):
+            if browser == "safari":
+                driver.execute_script("arguments[0].click()", more_title)
+            else:
+                more_title.click()
+        wait.until(lambda d: d.execute_script("return document.getElementById('moreFilters').open"))
         source_rows = driver.execute_script("""
             const style = document.createElement('style');
             style.id = 'wideSourceFont';
