@@ -267,7 +267,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .snapshot-checked { --key:var(--checked) }
 .snapshot-checked > span { color:var(--checked); font-weight:500 }
 .snapshot-checked .check-icon { margin-right:3px }
-.snapshot-paper[href] > span { color:var(--src-paper-ink) }
+/* Its label keeps its meaning colour at 0 too (no link then), as Human-checked's does. */
+.snapshot-paper > span { color:var(--src-paper-ink) }
 /* A linked count tints in its own colour around itself under the pointer (::before), so nothing moves. */
 .snapshot-paper[href], .snapshot-checked[href] { isolation:isolate }
 .snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:var(--radius); background:transparent; pointer-events:none }

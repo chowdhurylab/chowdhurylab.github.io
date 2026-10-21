@@ -2556,9 +2556,9 @@ def check_filters(driver, browser, url, route_label):
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
         about.click()
         about_text = driver.execute_script("return document.getElementById('aboutDatabases').innerText.trim()")
-        assert "with the numbers BRENDA" in about_text and "Every value (under Not in the databases)" in about_text, about_text
+        assert "with what BRENDA" in about_text and "Every value (under Not in the databases)" in about_text, about_text
         # Each database's name keeps one line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space).
-        compared = re.match(r"CatLog compares each value it reads from a paper with the numbers (.+?) lists? for the same paper", about_text)
+        compared = re.match(r"CatLog compares each value read from a paper with what (.+?) lists? for that paper", about_text)
         assert compared, about_text
         names = "|".join(re.escape(name) for name in re.split(r", | and ", compared.group(1)))
         split = driver.execute_script(SPLIT_WORDS_JS, driver.find_element(By.ID, "aboutDatabases"), names, False)
@@ -3628,8 +3628,8 @@ def check_layout(driver, browser, url, route_label):
         about.click()
         assert about.get_attribute("aria-expanded") == "true" and driver.find_element(By.ID, "aboutSource").is_displayed()
         about_text = driver.execute_script("return document.getElementById('aboutSource').innerText")
-        assert "a second, separate AI check" in about_text and "checked part of them against their papers" in about_text, about_text
-        assert "when CatLog reads a paper, its records replace these" in about_text and not re.search(r"\bv[12]\b", about_text), about_text
+        assert "a second, separate AI check" in about_text and "partly checked against the papers" in about_text, about_text
+        assert "replaced when CatLog reads the paper" in about_text and not re.search(r"\bv[12]\b", about_text), about_text
         about.click()
         assert about.get_attribute("aria-expanded") == "false" and not driver.find_element(By.ID, "aboutSource").is_displayed()
         driver.execute_script("document.getElementById('moreFilters').open = false")

@@ -7911,6 +7911,13 @@
   // The checklists are built once (so a ticked box keeps its focus); their counts follow the loaded records.
   let filterChecklistsBuilt = false;
 
+  // A definition after its name in a group's "?": "Name — definition", the definition in lower case after the dash
+  // unless it starts with a name (Km, kcat, CatLog, UniProt ...), as every group's "?" says it.
+  function aboutDefinition(text) {
+    const value = String(text || "");
+    return /^(?:Km|kcat|CatLog)\b|^[A-Z][A-Z0-9]/.test(value) ? value : `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
+  }
+
   function setupFilters() {
     if (!filterChecklistsBuilt) {
       filterChecklistsBuilt = true;
@@ -7966,9 +7973,9 @@
           <p>CatLog compares each value read from a paper with what ${names} list for that paper, matched by substrate,
             variant and organism.</p>
           ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
-            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""}: ${
+            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""} — ${
             // ("re-read" never breaks at its hyphen, as in Stats and the Guide)
-            escapeHtml(item.title).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
+            escapeHtml(aboutDefinition(item.title)).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
       }
       if ($("cautionChecklist")) {
         $("cautionChecklist").innerHTML = cautionFilters.map((item) => checkRowHtml({
@@ -7978,10 +7985,8 @@
       }
       if ($("aboutCautions")) {
         // Each caution's definition (its option's title), "label — definition" as in Review result's "?".
-        // (lower case after the dash, unless the definition starts with Km or kcat)
-        const definition = (title) => (/^(Km|kcat)\b/.test(title) ? title : `${title.charAt(0).toLowerCase()}${title.slice(1)}`);
         $("aboutCautions").innerHTML = cautionFilters.map((item) => `<p><strong>${item.labelHtml || escapeHtml(item.label)}</strong> — ${
-          escapeHtml(definition(item.title))}.</p>`).join("")
+          escapeHtml(aboutDefinition(item.title))}.</p>`).join("")
           + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       // Source: the three choices, the first group under More filters; the databases of Not yet re-read are their own
@@ -8002,7 +8007,7 @@
       }
       if ($("aboutSource")) {
         $("aboutSource").innerHTML = sourceModes.filter((item) => item.help).map((item) => `
-          <p><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.help)}</p>`).join("") + `
+          <p><strong>${escapeHtml(item.label)}</strong> — ${escapeHtml(item.help)}</p>`).join("") + `
           <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       if ($("aboutSourceDatabases")) {
