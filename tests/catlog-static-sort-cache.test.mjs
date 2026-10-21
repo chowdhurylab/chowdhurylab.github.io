@@ -5008,7 +5008,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.ok(text.startsWith("CatLog compares each value it reads with what BRENDA, SABIO-RK, OED, SKiD and STRENDA DB list for the same paper. This snapshot compares 126,951 values from 2,650 papers. Results"), text);
   // (the share where a database lists the same measurement is Stats' headline, not repeated in the Guide)
   assert.doesNotMatch(text, /it is the paper’s number for/);
-  assert.match(text, /Not compared: a kcat\/Km CatLog calculated \(calc\., 5,946\), a value per mg\/mL and records not yet re-read\./);
+  assert.match(text, /Not compared: a kcat\/Km CatLog calculated \(calc\., 5,946\), a value in mass units \(mg\/mL\) and records not yet re-read\./);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog calculated/);
   // The six results in Browse's order, each with the shared square of its colour (none on Corrected earlier), its values
   // and records; "every value" under Not in the databases.

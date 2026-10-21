@@ -401,7 +401,7 @@
                 </li>
                 <li class="guide-flow-step" data-step="review">
                   <strong class="guide-flow-name">Review</strong>
-                  <span class="guide-flow-text">AI audits and people re-check samples; what they find improves the next readings.</span>
+                  <span class="guide-flow-text">AI audits and people re-check samples and look for systematic errors; what they find improves the next readings.</span>
                 </li>
               </ol>
               <p class="guide-keeps">Units are converted automatically; no model types a converted number.</p>
@@ -632,9 +632,8 @@
                 <li><span class="guide-unit-name"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><span class="guide-unit-value">mM<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup></span><span class="guide-unit-what">Catalytic efficiency (&times;&nbsp;1,000 for M<sup>&minus;1</sup>&nbsp;s<sup>&minus;1</sup>)</span></li>
               </ul>
               <dl class="guide-term-list">
-                <div><dt><em>calc.</em></dt><dd><i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>, worked out where the paper prints no <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>.</dd></div>
                 <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>For numbers of 100,000 or more and below 0.001.</dd></div>
-                <div><dt>Digits</dt><dd>The paper&rsquo;s significant figures; the downloads keep every stored digit.</dd></div>
+                <div><dt>Digits</dt><dd>Values read from the paper keep its significant figures; the downloads keep every stored digit.</dd></div>
                 <div><dt>T and pH</dt><dd>In the record and the downloads, not as table columns.</dd></div>
                 <div><dt>Missing</dt><dd>A dash, used only in table cells, means no value.</dd></div>
                 <div><dt>Other units</dt><dd>A few records not yet <span class="nowrap">re-read</span> keep another unit (min<sup>&minus;1</sup>, mg/mL) or <em>no unit</em>.</dd></div>
@@ -665,7 +664,7 @@
                 <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
                 <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code><span class="guide-data-id-note">The first 10 characters of the SHA-256 of the decompressed Full data file: <code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code></span></dd></div>
               </dl>
-              <p>For one value, add its record ID. Keep the file you used: record IDs can change and older snapshots leave this site. Cite any database whose records you use (<a href="#guide-sources">Sources and licenses</a>).</p>
+              <p>For one value, add its record ID. Keep the file you used: IDs of records read from the paper can change, and older snapshots leave this site. Cite any database whose records you use (<a href="#guide-sources">Sources and licenses</a>).</p>
               <div class="guide-citation-links">
                 <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>
                 <a id="guideDatasetNotesLink" href="README_FIRST.txt" target="_blank" rel="noopener noreferrer">Dataset notes (README)</a>
@@ -691,7 +690,7 @@
             <h2 id="guide-questions-title">Questions</h2>
             <details class="guide-details">
               <summary>Why does a value differ from BRENDA?</summary>
-              <p>The database may use another unit, round it or take another table, condition or enzyme form.<span data-guide-database-section hidden> See <a href="#guide-databases">Against the databases</a>.</span></p>
+              <p>BRENDA may use another unit, round the value or take it from another table, condition or enzyme form.<span data-guide-database-section hidden> See <a href="#guide-databases">Against the databases</a>.</span></p>
             </details>
             <details class="guide-details">
               <summary>Why is a sequence or SMILES missing?</summary>

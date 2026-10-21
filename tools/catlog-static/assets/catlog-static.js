@@ -5706,7 +5706,7 @@
     const notListed = guideDatabaseNotListed(data);
     const calculated = statsCount(all.not_compared);
     const whatHtml = `${words("Values are paired by substrate, variant, organism, pH and temperature. Not compared: a kcat/Km CatLog calculated (")}<em>calc.</em>${
-      calculated ? escapeHtml(`, ${formatInteger(calculated)}`) : ""}${words("), a value per mg/mL and records not yet re-read.")}`;
+      calculated ? escapeHtml(`, ${formatInteger(calculated)}`) : ""}${words("), a value in mass units (mg/mL) and records not yet re-read.")}`;
     const versions = sources.some((item) => item.version || item.retrieved || item.rows !== null && item.rows !== undefined);
     const databasesHtml = versions
       ? `<ul class="guide-db-sources">${sources.map((item) => `<li>${nameHtml(item.name)}${escapeHtml([
