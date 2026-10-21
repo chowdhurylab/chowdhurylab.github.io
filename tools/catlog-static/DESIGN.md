@@ -284,7 +284,7 @@ opens by itself when one of its filters is set (an address, Back, a link from St
 one set opens too, and nothing in it is ever set unseen: its title (a group title in the accent colour, its chevron too,
 with a --line-soft rule under it when open) carries the count of those filters' chips in the Filters badge's look (the
 chips of source (Read from the paper, Not yet re-read or a database), variant, temperature, pH, db and caution;
-MORE_FILTER_PREFIXES), read out "More filters, 2 active", shown open or closed; its title's tooltip names the groups. A group or More filters opened by its title near
+MORE_FILTER_PREFIXES), read out "More filters, 2 active", shown open or closed; its title's tooltip names the groups, and while it is closed a muted 12px line under its title says what is inside, "Source, variant, assay and more" (round 14's fix pass: a newcomer could not see that Source had moved in; aria-hidden, as the groups follow it). A group or More filters opened by its title near
 the sidebar's foot (or the phone sheet's) scrolls just enough to show its options, as a "?" does, never taking its title
 under the sticky heading; one opened by an address leaves the sidebar where it is. No help text is in view: every
 group but the enzyme fields has a "?", and each note (Measurement type's, the records stating no form) is behind it.

@@ -2728,14 +2728,15 @@ def check_filters(driver, browser, url, route_label):
         assert rest["inputs"] == {"checkbox": 30, "radio": 3, "search": 4, "text": 4}, rest["inputs"]
         # Every group has its "?" but the enzyme fields (labelled, with examples; the EC field's title says the rest).
         assert rest["withAbout"] == [False, True, True, True, True, True, True, True, True], rest["withAbout"]
-        # At 1440 x 1000 the groups in view and More filters' title show without scrolling the sidebar.
-        assert rest["moreTitleShown"], rest
+        # At 1440 x 1000 the groups in view and More filters' title show without scrolling the sidebar; closed, a muted line
+        # under its title names what is inside, Source first (round 14: a newcomer could not see that Source moved there).
+        assert rest["moreTitleShown"] and rest["groupsLine"] == "Source, variant, assay and more", rest
         # An address that sets a filter under More filters opens it and the group (Cautions and Source database start
         # closed); closed again, its title counts them: "More filters, 3 active" (the badge 3, then hidden words).
         open_page(base + "#browse?caution=units&variant=wild&source=brenda")
         opened = driver.execute_script(SIDEBAR_GROUPS_JS)
         assert opened["moreOpen"] and opened["moreOpenInside"] == [True, True, True, False, True, True], opened
-        assert not opened["countHidden"] and opened["count"] == "3" and opened["words"] == ", 3 active", opened
+        assert not opened["countHidden"] and opened["count"] == "3" and opened["words"] == ", 3 active" and opened["groupsLine"] is None, opened
         driver.execute_script("document.getElementById('moreFilters').open = false")
         closed = driver.execute_script(SIDEBAR_GROUPS_JS)
         assert closed["count"] == "3" and closed["countShown"] and closed["name"] == "More filters, 3 active", closed
@@ -3040,7 +3041,7 @@ SIDEBAR_GROUPS_JS = """
     const rail = document.getElementById('catalogFilters');
     const more = document.getElementById('moreFilters');
     const name = (group) => [...group.querySelector(':scope > summary > span').childNodes]
-        .filter(node => node.nodeType === 3 || !node.matches('.filter-count, .visually-hidden, .group-dot')).map(node => node.textContent).join('').trim();
+        .filter(node => node.nodeType === 3 || !node.matches('.filter-count, .visually-hidden, .group-dot, .filter-more-groups')).map(node => node.textContent).join('').trim();
     const top = [...rail.querySelectorAll(':scope > :is(.filter-section, .filter-more)')].filter(group => !group.hidden).map(name);
     const inside = [...more.querySelectorAll(':scope > .filter-section')];
     const badge = document.getElementById('moreFiltersCount');
@@ -3052,11 +3053,13 @@ SIDEBAR_GROUPS_JS = """
     // the name a screen reader gives the title: its words without the aria-hidden badge
     const spoken = [...more.querySelector(':scope > summary > span').childNodes].filter(node => node.nodeType === 3 || node.getAttribute('aria-hidden') !== 'true')
         .map(node => node.textContent).join('').trim();
+    const groupsLine = more.querySelector('.filter-more-groups');
     return {top, more: inside.map(name), moreOpen: more.open, moreOpenInside: inside.map(group => group.open),
             count: badge.textContent, countHidden: badge.classList.contains('hidden'), countShown: badge.getBoundingClientRect().width > 0,
             words: document.getElementById('moreFiltersWords').textContent, name: spoken, notes, inputs,
             withAbout: [...rail.querySelectorAll('.filter-section')].map(group => Boolean(group.querySelector(':scope > .section-about'))),
-            moreTitleShown: moreTitle.bottom <= view.bottom + 0.5 && moreTitle.top >= view.top};
+            moreTitleShown: moreTitle.bottom <= view.bottom + 0.5 && moreTitle.top >= view.top,
+            groupsLine: groupsLine && groupsLine.getClientRects().length ? groupsLine.textContent : null};
 """
 CHIP_COLOURS_JS = """
     // rgb(...) or, for a tint mixed in CSS (color-mix), color(srgb r g b) with 0-1 channels.

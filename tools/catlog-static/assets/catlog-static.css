@@ -453,6 +453,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-more-title { color:var(--accent) }
 .filter-more-title .chevron { color:var(--accent) }
 .filter-more-title .filter-count { margin-left:6px; vertical-align:1px }
+/* What is inside, while closed (round 14: Source moved in here, and a newcomer could not see it): one muted line of the
+   groups' short names, Source first. */
+.filter-more-groups { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+.filter-more[open] .filter-more-groups { display:none }
 .filter-more:not([open]) > .filter-more-title .chevron { transform:rotate(180deg) }
 .filter-more[open] > .filter-more-title { border-bottom:1px solid var(--line-soft) }
 .filter-more > .filter-section:last-child { border-bottom:0 }
