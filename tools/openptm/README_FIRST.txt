@@ -65,6 +65,29 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 39
+- Four papers new to this reading record received selected relevant reads
+  on methylthiolation and S-itaconation, outside round 38's reading families.
+- The S12 study reports chemical-state masses and categorical phenotypes,
+  without a numerical functional comparison. A newer ribosomal study concerns
+  backbone thioamidation; its cited S12 occupancy and model confidence scores
+  are not new methylthiolation-state functional measurements.
+- The RhoA study distinguishes native itaconate from 4-OI adducts. Its inspected
+  functional results use 4-OI and do not print a scalar effect. The CTH study
+  prints a 5.34 micromolar binding affinity, but explicitly describes reversible
+  noncovalent binding, so that value is not an S-itaconation-state measurement.
+- One new access-only lead remains unread. A new route for a previously held
+  ATG7 paper returned a different article and was rejected after identity checks;
+  it was not counted as a recovered paper. A known plant paper was not recounted.
+- No numerical additions qualified. Data remain 253 comparisons, 307 entries,
+  92 papers and 87/111 numerical families; 24 gaps remain in this selection.
+  Independent source and custody checks passed. Existing data and the interface
+  are unchanged. Reads and downloads were bounded; no PDF rendering was needed.
+  Sources: https://doi.org/10.1128/JB.188.5.2020-2023.2006
+           https://doi.org/10.1021/acs.biochem.5c00829
+           https://doi.org/10.14336/ad.2025.1527
+           https://doi.org/10.3390/jcdd13070338
+
 Paper reading, round 38
 - Five papers new to this reading record received selected relevant reads
   outside round 37: LC3/Cx43 binding, Uba4 self-urmylation, a PAL/MIO study,
