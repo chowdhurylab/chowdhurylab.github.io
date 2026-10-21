@@ -3322,12 +3322,13 @@ function row(overrides = {}) {
   assert.equal(element("guideComparisonLink").href, element("comparisonDataButton").href);
   assert.equal(element("comparisonDataButton").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
   assert.equal(element("guideComparisonLink").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
-  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV)\n295,792 rows · 5.2 MB");
+  // Each file's facts line ends with its format (round 14): CSV (gzip) here, JSON Lines (gzip) for Full data and Table.
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper\n295,792 rows · 5.2 MB · CSV (gzip)");
   delete runtimeManifest.database_comparison_download;
   api.renderDownloadMetadata();
   assert.equal(element("comparisonDataButton").hidden, true);
   assert.equal(element("guideComparisonDownload").hidden, true);
-  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper (CSV)");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper\nCSV (gzip)");
   if (savedComparison) runtimeManifest.database_comparison_download = savedComparison;
   assert.equal(element("guideSourceId").textContent, "14ffa6600b");
   assert.match(element("guideCitationLine").textContent, /^CatLog snapshot 2026-10-12 \(data ID 14ffa6600b\), Chowdhury Lab, /);

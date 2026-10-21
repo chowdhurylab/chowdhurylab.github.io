@@ -1169,11 +1169,12 @@
     // What a file holds, then its rows and size on a line of their own (the menu's spans keep the line break), so a
     // separator never starts a line.
     const describe = (text, ...facts) => [text, facts.filter(Boolean).join(" · ")].filter(Boolean).join("\n");
+    // Each file says its format on its facts line (round 14: "Table" read like a spreadsheet; both are gzip JSON Lines).
     if ($("enrichedDataDescription")) {
-      $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} rows`, enrichedSize);
+      $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} rows`, enrichedSize, "JSON Lines (gzip)");
     }
     if ($("tableIndexDescription")) {
-      $("tableIndexDescription").textContent = describe("The table's columns; no sequences, SMILES or paper links", `${total} rows`, tableSize);
+      $("tableIndexDescription").textContent = describe("The table's columns; no sequences, SMILES or paper links", `${total} rows`, tableSize, "JSON Lines (gzip)");
     }
     if ($("datasetNotesLink")) {
       $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
@@ -1191,8 +1192,8 @@
     }
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
-      $("comparisonDataDescription").textContent = describe("Values read from the paper, one row per database listing the paper (CSV)",
-        rows ? `${formatInteger(rows)} rows` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "");
+      $("comparisonDataDescription").textContent = describe("Values read from the paper, one row per database listing the paper",
+        rows ? `${formatInteger(rows)} rows` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "", "CSV (gzip)");
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
     const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);

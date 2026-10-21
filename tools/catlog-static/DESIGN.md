@@ -1305,8 +1305,10 @@ Generated mockups guide layout only; their text is not a scientific source.
   "from CatLog's earlier version, built from database entries and partly checked against the papers; replaced when
   CatLog reads the paper.", the empty record panel "Select a record to see its values and sources." Sentences that come
   from the data (database lines, review notes, the README) are reworded where they are made, in catlog-v2.
-- The Download menu gives a file's rows and size on a line of their own under what it holds (the spans keep a line
-  break: white-space pre-line), so no line starts with " · ".
+- The Download menu gives a file's rows, size and format on a line of their own under what it holds (the spans keep a
+  line break: white-space pre-line), so no line starts with " · ": "185,804 rows · 42.6 MB · JSON Lines (gzip)" for Full
+  data and Table (fix pass: "Table" read like a spreadsheet), "CSV (gzip)" for Against the databases; a muted last line
+  under a hairline says where a filtered set goes: "The records you filtered: Export results, above the table (CSV)."
 - Every disclosure opens with a muted + (− when open): Stats' How these numbers are counted and Fields saved in records
   that are not accepted, and the Guide's Questions and evidence labels, as the supplement, the record and the Guide's
   Reference do; no triangles.
