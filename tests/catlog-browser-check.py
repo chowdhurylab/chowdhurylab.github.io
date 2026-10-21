@@ -4509,7 +4509,7 @@ def check_record_panel(driver, browser, url, route_label):
                             (panel["status"], panel["databasesText"])
                 if kind == "database-pending":
                     assert panel["status"].startswith("Not confirmed"), panel["status"]
-                    assert panel["paperCheck"] == "Not yet checked against the paper: the values are the database's.", panel["paperCheck"]
+                    assert panel["paperCheck"] == "Not yet checked; the values are the database's.", panel["paperCheck"]
                 if kind == "from-paper":
                     assert panel["paperCheck"] is None, panel["paperCheck"]
                 if kind == "from-paper":

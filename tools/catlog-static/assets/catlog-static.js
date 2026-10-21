@@ -584,11 +584,11 @@
   const KCAT_KM_FLAGS = new Set(["kcat_over_km_quotient_mismatch", "kcat_over_km_unit_mismatch"]);
   // A familiar factor, stated as a fact; "time" and "concentration" name the unit it belongs to.
   const KCAT_KM_FACTORS = [
-    [10, "The factor is close to 10, a shift of one decimal place."],
-    [60, "The factor is close to 60, the factor between per minute and per second.", "time"],
-    [100, "The factor is close to 100, a shift of two decimal places."],
-    [1000, "The factor is close to 1000, the factor between per mM and per M.", "concentration"],
-    [1e6, "The factor is close to 10⁶, the factor between per µM and per M.", "concentration"],
+    [10, "The factor is near 10, one decimal place."],
+    [60, "The factor is near 60, as between per minute and per second.", "time"],
+    [100, "The factor is near 100, two decimal places."],
+    [1000, "The factor is near 1000, as between per mM and per M.", "concentration"],
+    [1e6, "The factor is near 10⁶, as between per µM and per M.", "concentration"],
   ];
 
   // kcat/Km against kcat ÷ Km, in the units the record shows; null when a unit is not the catalog's or a value is missing.
@@ -624,8 +624,8 @@
     return numberText(display, figures ? { figures } : undefined);
   }
 
-  // "The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as the paper gives
-  // them." A familiar factor is named; for a unit factor on a record read from the paper, the printed numbers' own
+  // "The paper's kcat/Km (2.2 s⁻¹ mM⁻¹) is 1.6-fold above kcat ÷ Km (1.3 s⁻¹ mM⁻¹). All three are stored as printed." A
+  // familiar factor is named; for a unit factor on a record read from the paper, the printed numbers' own
   // arithmetic shows whether they agree in one unit.
   function kcatKmComparisonText(row, detail = null) {
     const check = kcatKmCheck(row);
@@ -635,7 +635,7 @@
       + `${foldText} ${direction} kcat ÷ Km (${quotientText} ${unit}).`];
     if (factor) sentences.push(factor[1]);
     if (v2 && factor?.[2]) sentences.push(printedQuotientText(detail, factor[2]));
-    sentences.push(v2 ? "All three are stored as the paper gives them." : "All three are stored as the source lists them.");
+    sentences.push(v2 ? "All three are stored as printed." : "All three are stored as listed.");
     return sentences.filter(Boolean).join(" ");
   }
 
@@ -11221,6 +11221,11 @@
   function metricWordsHtml(html) {
     return String(html ?? "").replace(/(^|[^\w/])(kcat\/Km|kcat|Km|Ki)(?![\w/])/g, (_match, lead, word) => `${lead}${METRIC_WORD_HTML[word]}`);
   }
+  // The same in a sentence from the data (a database line, a reviewer's note): kcat, Km and kcat/Km only, never before a
+  // hyphen, so a name such as "Ki-67" or "Km-1" stays as written.
+  function kineticWordsHtml(html) {
+    return String(html ?? "").replace(/(^|[^\w/-])(kcat\/Km|kcat|Km)(?![\w/-])/g, (_match, lead, word) => `${lead}${METRIC_WORD_HTML[word]}`);
+  }
   // The proof line (a record read from the paper) that gives a field's value, or -1.
   function proofLineIndex(proof, field) {
     return proof ? proof.lines.findIndex((line) => (v2MetricLabels[line.metric] || [])[0] === field) : -1;
@@ -11605,7 +11610,7 @@
     temperature_unit_needs_check: "the source's temperature unit is unclear",
     temperature_value_needs_check: "the source's value is questionable",
     temperature_invalid: "the source's value is not usable",
-    temperature_zero_celsius_needs_check: "recorded as exactly 0 °C, which may stand for a missing value",
+    temperature_zero_celsius_needs_check: "recorded as exactly 0 °C, which may mean none was given",
     ph_outside_0_14: "the source's value is outside 0–14",
     ph_invalid: "the source's value is not usable",
   };
@@ -12106,7 +12111,7 @@
     const organism = String(row.organism || "").trim();
     const missing = v2Record ? "not stated in the paper" : "not recorded";
     // A record read from a paper that prints no EC number: the EC the enzyme databases list for this paper's values.
-    const ecNote = ecFromDatabases ? " (from enzyme databases; not printed in the paper)" : "";
+    const ecNote = ecFromDatabases ? " (from the databases; not in the paper)" : "";
     const parts = [
       /^unknown$/i.test(ec) ? "EC unknown" : (hasDisplayValue(ec) ? escapePublic(`EC ${ec}${ecNote}`) : ""),
       /^unknown$/i.test(organism) ? `organism ${missing}` : (hasDisplayValue(organism) ? organismHtml(organism) : ""),
@@ -12274,7 +12279,7 @@
   // (The header's "not re-read" says that CatLog has not read the paper again yet.)
   const EARLIER_CORRECTIONS_INTRO = "CatLog's earlier version changed these values to what the paper prints.";
   const EARLIER_ADDITIONS_INTRO = "CatLog's earlier version added these values from the paper; the source had none.";
-  const DATABASE_VALUES_NOTE = "Not yet checked against the paper: the values are the database's.";
+  const DATABASE_VALUES_NOTE = "Not yet checked; the values are the database's.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
   // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
   // option's words): the options a record matches, by its values' results (the filter keys above) or its earlier
@@ -12581,7 +12586,7 @@
       else lines.push({ text, metrics: [metric] });
     });
     return lines.map(({ text, metrics }) => `<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"></span>`
-      + `<span>${metricWordsHtml(escapeHtml(sentenceList(metrics)))}: ${caretHtml(escapePublic(text))}</span></p>`).join("");
+      + `<span>${metricWordsHtml(escapeHtml(sentenceList(metrics)))}: ${kineticWordsHtml(caretHtml(escapePublic(text)))}</span></p>`).join("");
   }
 
   // A kcat/Km CatLog calculated: not compared, said last (after the compared values), muted and with no square (an empty
@@ -12600,7 +12605,7 @@
       + (result ? `<span class="cmp-result"><span class="cmp-mark${result.key ? ` cmp-${result.key}` : ""}" aria-hidden="true"></span><strong>${escapeHtml(databaseResultWord(facts))}</strong></span>` : "");
     const lineText = facts.sentence ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
     const line = lineText
-      ? `<p class="cmp-line">${caretHtml(escapePublic(lineText))}</p>`
+      ? `<p class="cmp-line">${kineticWordsHtml(caretHtml(escapePublic(lineText)))}</p>`
       : (facts.databases ? `<p class="cmp-line">Databases: ${caretHtml(escapePublic(facts.databases))}</p>` : "");
     const cause = databaseCauseShown(facts);
     const evidence = databaseEvidenceText(facts);
@@ -13204,7 +13209,7 @@
       audit ? kv("AI audit", audit) : "",
       // What a human reviewer found, on every record with a mark; the check only where the record shows "human-checked".
       humanNote
-        ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${escapePublic(humanNote)}`, { className: "human-review-line" })
+        ? linkedKv("Human review", `${isHumanChecked(summary) ? CHECK_ICON_HTML : ""}${kineticWordsHtml(escapePublic(humanNote))}`, { className: "human-review-line" })
         : "",
     ]) + guideLinkHtml(v2Record ? HOW_READ_LINK : HOW_EARLIER_LINK));
   }

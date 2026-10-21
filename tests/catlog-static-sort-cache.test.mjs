@@ -3489,7 +3489,7 @@ const flaggedHtml = measurementSection(row({
   condition_flags: ["kcat_over_km_quotient_mismatch"],
 }), {});
 assert.match(flaggedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"/);
-assert.match(flaggedHtml, /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as the source lists them\./);
+assert.match(flaggedHtml, /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as listed\./);
 assert.match(flaggedHtml, /aria-label="kcat\/Km mismatch\. Show the note\."/);
 assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often means|check the unit/);
 // The table's "!" states the problem in its tooltip (no order to check), its short words on phones.
@@ -3512,9 +3512,9 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     { metric: "kcat/Km", raw_value: "28.9", raw_unit: "mM−1 · s−1" },
   ] });
   assert.ok(html.includes("The paper&#39;s kcat/Km (28.9 mM⁻¹ s⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ mM⁻¹ s⁻¹). "
-    + "The factor is close to 1000, the factor between per mM and per M. "
+    + "The factor is near 1000, as between per mM and per M. "
     + "The printed numbers agree (10.7 ÷ 0.37 = 28.9) only if Km and kcat/Km share one concentration unit. "
-    + "All three are stored as the paper gives them."), html);
+    + "All three are stored as printed."), html);
   assert.match(html, /aria-label="kcat\/Km: possible 1000× unit error\. Show the note\."/);
 }
 // A magnitude caution names the bound the value passes.
@@ -3565,7 +3565,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     /^<small class="condition-note"><span class="value-flag" role="img" title="Temperature unit questionable"[^>]*><span class="visually-hidden">T questionable<\/span><\/span> <span title="\+10 mM FBP">· \+10 mM FBP<\/span><\/small>$/);
   assert.equal(api.temperatureFlagBadgeHtml(api.conditionFlags(unflaggedLow)), "", "a Km caution leaves the substrate line unmarked");
   assert.equal(api.substrateNoteHtml(unflaggedLow, noLookAlikes), "");
-  assert.match(measurementSection(zeroCelsius, {}), /<dt>Temperature<\/dt><dd>Not shown, recorded as exactly 0 °C, which may stand for a missing value/);
+  assert.match(measurementSection(zeroCelsius, {}), /<dt>Temperature<\/dt><dd>Not shown, recorded as exactly 0 °C, which may mean none was given/);
 }
 // An older record that stores no kcat/Km shows the kcat/Km its sources list even when nothing differs (3d1ca368da05740a:
 // BRENDA lists 0.5 and 50 mM⁻¹ s⁻¹, each also with no unit); one whose stored kcat/Km equals the listed one says it once.
@@ -3614,7 +3614,7 @@ const unitFlagHtml = measurementSection(row({
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
-assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is close to 1000, the factor between per mM and per M\./);
+assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
 // v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
 const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
 assert.match(lines.cosubstrate, /<dt>Cosubstrate<\/dt><dd>NAD\+<\/dd>/);
@@ -3684,7 +3684,7 @@ const withheldMeasurementHtml = measurementSection(withheldConditions, {
   condition_flags: withheldConditions.condition_flags,
 });
 // A flag on the temperature or pH is said on its row, never as a bare dash; the kinetic notes stay about the values.
-assert.ok(withheldMeasurementHtml.includes("<dt>Temperature</dt><dd>Not shown, recorded as exactly 0 °C, which may stand for a missing value</dd>"));
+assert.ok(withheldMeasurementHtml.includes("<dt>Temperature</dt><dd>Not shown, recorded as exactly 0 °C, which may mean none was given</dd>"));
 assert.ok(withheldMeasurementHtml.includes("<dt>pH</dt><dd>Not shown, the source&#39;s value is outside 0–14</dd>"));
 assert.doesNotMatch(withheldMeasurementHtml, /class="flag-notes"|<dd>—<\/dd>/);
 assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
@@ -3885,7 +3885,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The method is the Guide's, linked once under Checks; no Method line repeats it on every record.
   assert.doesNotMatch(html, /<dt>Method<\/dt>|values stored as printed|second, separate AI check/);
   assert.match(html, /<dt>Second check<\/dt><dd>All values confirmed\.<\/dd><\/div><\/dl><p class="section-link"><a class="method-link" href="#guide-how-read">/);
-  assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from enzyme databases; not printed in the paper\) &middot; Organism<\/p>/);
+  assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 \(from the databases; not in the paper\) &middot; Organism<\/p>/);
   assert.doesNotMatch(html, /<dt>Evidence<\/dt>|second, separate AI run|independent/);
   api.renderDetail(v2Summary, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [line("kcat", "converted by code"), line("Km", "", "corrected: unit used for the conversion (was none, now mM)")] });
@@ -4041,7 +4041,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const twice = measurementSection(older("twice", 4.1, 0.22, "46.067", both), { source_kcat_over_km_values: [{ value: 18.6, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(twice, /The stored kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above kcat ÷ Km \(19 mM⁻¹ s⁻¹\)\. BRENDA lists kcat\/Km 18\.6 mM⁻¹ s⁻¹ for this record, which agrees with kcat ÷ Km\./);
   assert.equal((twice.match(/<li id="detailFlagNote/g) || []).length, 1, "one note for one mismatch");
-  assert.doesNotMatch(twice, /more than 2-fold from the kcat\/Km shown|stored as the source lists them/);
+  assert.doesNotMatch(twice, /more than 2-fold from the kcat\/Km shown|stored as listed/);
   const some = measurementSection(older("some", 0.076, 1.26, "227.78", both), { source_kcat_over_km_values: [
     { value: 0.06027, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(some, /BRENDA lists 2 kcat\/Km values for this record \(0\.060–5\.0 mM⁻¹ s⁻¹\); one of them agrees with kcat ÷ Km\./);
@@ -4050,7 +4050,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A familiar factor between kcat ÷ Km and the listed kcat/Km is named (e375ce185827beeb, 3dc72daa0a20580c).
   const thousand = measurementSection(older("thousand", 3.5, 64, "0.05469", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [{ value: 55.5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
-  assert.match(thousand, /is 1,015-fold below the kcat\/Km BRENDA lists for this record \(55\.5\)\. The factor is close to 1000, the factor between per mM and per M\./);
+  assert.match(thousand, /is 1,015-fold below the kcat\/Km BRENDA lists for this record \(55\.5\)\. The factor is near 1000, as between per mM and per M\./);
   // Folds past 10,000 are not spelled out (4a0225c90ac5a298).
   const far = measurementSection(older("far", 390000, 0.0013, "3e+8", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [328, 650, 0.0042].map((value) => ({ value, unit: "s^(-1)*mM^(-1)", source_db: "sabio_rk" })) });
@@ -4235,7 +4235,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     return element("detailContent").innerHTML;
   };
   html = removedShown({}, "catlog_v2_read_and_independent_verify; ec_from_databases");
-  assert.match(html, /EC 1\.1\.1\.1 \(from enzyme databases; not printed in the paper\)/);
+  assert.match(html, /EC 1\.1\.1\.1 \(from the databases; not in the paper\)/);
   assert.match(html, /All values confirmed\. The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the enzyme databases\)\.<\/dd>/);
   assert.match(removedShown({ primary_uniprot_id: "A0A5H2WVH6" }),
     /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the UniProt entry A0A5H2WVH6\)\.<\/dd>/);
@@ -4472,7 +4472,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // number is open.
   assert.match(section, /<details class="cmp-note" data-cmp-field="km" open><summary><span class="cmp-note-head"><i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><strong>Corrects a value<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">BRENDA lists 0\.5499 mM, 1,000× lower\.<\/p><details class="cmp-how"><summary>How it was checked<\/summary><p>Table 1, row Cellobiose: 549\.9 ± 62\.5<\/p><\/details><\/div><\/details>/);
   assert.doesNotMatch(section, /<dt>Cause<\/dt>|<dt>In the paper<\/dt>|list another number/);
-  assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this kcat\/Km for this paper\.<\/p><\/div><\/details>/);
+  assert.match(section, /<details class="cmp-note" data-cmp-field="kcat_over_km"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">None of the compared databases lists this <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> for this paper\.<\/p><\/div><\/details>/);
   // The compared databases (the six fallback names: this snapshot neither lists nor counts them), each kept whole on one
   // line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space), and the caption's second sentence: said once, in
   // the "?" box, never as a footer on every record (the user, 2026-10-15). No Guide link while the Guide has no section.
@@ -4641,7 +4641,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "new", database_line: noneLine }), line("Km", { database_status: "new", database_line: noneLine })]));
   section = sectionOf(html);
   assert.equal((section.match(/<details class="cmp-note"/g) || []).length, 1, "one note for both values");
-  assert.equal(section.split(noneLine).length - 1, 1, "the line once");
+  assert.equal(plainMetricNames(section).split(noneLine).length - 1, 1, "the line once");
   assert.match(section, /<details class="cmp-note" data-cmp-field="kcat"><summary><span class="cmp-note-head"><i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub><span class="cmp-sep" aria-hidden="true"> · <\/span><\/span><span class="cmp-result"><span class="cmp-mark cmp-new" aria-hidden="true"><\/span><strong>Not in the databases<\/strong>/);
   html = render(v2Summary, v2Detail([line("kcat", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] }),
     line("Km", { database_status: "differs", database_line: "BRENDA lists 3 s⁻¹.", database_sources: ["BRENDA"] })]));
@@ -4665,8 +4665,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     const sideFile = api.databasesSection(v2Summary, {}, { v2Record: true, proof,
       check: { db: { kcat: ["same", "BRENDA,SABIO-RK"], Km: ["differs", "BRENDA,OED", 5], "kcat/Km": ["absent", ""] } } });
     assert.match(sideFile, /<i>k<\/i><sub>cat<\/sub>: Same number in BRENDA, SABIO-RK<\/span>/);
-    assert.match(sideFile, /<strong>Different number<\/strong>[\s\S]*<p class="cmp-line">Not among the 5 Km values BRENDA and OED list for this paper<\/p>/);
-    assert.match(sideFile, /<strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">No database lists a kcat\/Km for this paper<\/p>/);
+    assert.match(plainMetricNames(sideFile), /<strong>Different number<\/strong>[\s\S]*<p class="cmp-line">Not among the 5 Km values BRENDA and OED list for this paper<\/p>/);
+    assert.match(plainMetricNames(sideFile), /<strong>Not in the databases<\/strong><\/span><\/summary><div class="cmp-note-body"><p class="cmp-line">No database lists a kcat\/Km for this paper<\/p>/);
   }
 
   // The compared databases come from the manifest when it lists them (a sixth among them), in its order, with their
@@ -4925,7 +4925,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A database record the earlier review did not settle: the values are the database's, said in Checks' Paper check row,
   // never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an earlier
   // extraction: no such line.
-  const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked against the paper: the values are the database&#39;s.</dd>";
+  const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked; the values are the database&#39;s.</dd>";
   const paperCheckOf = (summary, detail = { supporting_pmids: ["1"] }) => {
     const html = render(summary, detail);
     assert.doesNotMatch(html, /Against the databases/, "no comparison, no section");
@@ -5258,7 +5258,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
   assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
-  assert.match(html, /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.<\/dd><\/div>/);
+  assert.match(plainMetricNames(html), /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.<\/dd><\/div>/);
   assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
   assert.match(api.statusBadge(accepted), /aria-label="Accepted, Not yet re-read, BRENDA, human-checked"/);
   api.renderDetail(pending, {});
@@ -5268,15 +5268,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(noted, {});
   // A note's review year is not shown (facts only), and a note that names CatLog v1 entries says the earlier version's
   // entries (CatLog is the one name, round 8).
-  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier version&#39;s entries\./);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier version&#39;s entries\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
-  assert.match(element("detailContent").innerHTML, /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version&#39;s entries; kcat\/Km was not reviewed\.<\/dd>/);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version&#39;s entries; kcat\/Km was not reviewed\.<\/dd>/);
   // The other shapes a note could take say the same.
   assert.deepEqual(["The CatLog v1 entry has no Km.", "a CatLog v1 entry", "An CatLog v1 entry", "CatLog v2 entries agree", "A CatLog v2 entry", "CatLog v2 reads"].map(api.versionWords),
     ["The earlier version's entry has no Km.", "an entry from the earlier version", "An entry from the earlier version", "records read from the paper agree", "A record read from the paper", "CatLog reads"]);
   // A correction made after human review is said as given, in the Human review line.
   api.renderDetail(row({ record_key: "hc-fixed", measurement_key: "hc-fixed", verification_status: "verified" }), {});
-  assert.match(element("detailContent").innerHTML, /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);
   // A check after each value a human reviewer approved (Values table), with its meaning once under the table: every value
   // of a checked record, the values the review's sentence names on another, the mark's own list when it has one.
   const approvedValues = (html) => [...html.matchAll(/<tr><th scope="row">(.*?)<\/th><td class="vt-value"><span class="vt-number">[^<]*(<span class="value-approved"[^>]*>)?/g)]
@@ -5328,7 +5328,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(row({ record_key: "hc-list", measurement_key: "hc-list" }), {});
   html = element("detailContent").innerHTML;
   assert.deepEqual(approvedValues(html), ["Km", "kcat/Km"]);
-  assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved the Km and kcat\/Km on this record\.<\/dd>/);
+  assert.match(plainMetricNames(html), /<dt>Human review<\/dt><dd>A human reviewer approved the Km and kcat\/Km on this record\.<\/dd>/);
   // The record download names the values that carry the check.
   assert.deepEqual((await recordDownloadPayload(row({ record_key: "hc-list", measurement_key: "hc-list" }), {})).human_approved_values, ["Km", "kcat/Km"]);
   api.renderDetail(row({ record_key: "hc-list-noted", measurement_key: "hc-list-noted" }), {});
@@ -5370,7 +5370,8 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // kcat/Km it does not have; with the mark's list, a kcat/Km that was not approved itself agrees with kcat ÷ Km.
   const humanLine = (record) => {
     api.renderDetail(record, {});
-    return element("detailContent").innerHTML.match(/<dt>Human review<\/dt><dd>(?:<svg[^>]*>.*?<\/svg>)?(.*?)<\/dd>/)?.[1];
+    // (kcat, Km and kcat/Km in italics with subscripts, as the Values table writes them: compared here as words)
+    return plainMetricNames(element("detailContent").innerHTML).match(/<dt>Human review<\/dt><dd>(?:<svg[^>]*>.*?<\/svg>)?(.*?)<\/dd>/)?.[1];
   };
   api.setHumanReviewMarks({
     "hc-km": { checked: true, approved: ["km"] },
