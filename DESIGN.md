@@ -10,10 +10,11 @@ Source database) under one "More filters", which opens by itself when one of the
 and counts them on its title; help text sits behind each group's "?", never in view; no
 option, address or chip changed (the user, 2026-10-18). Browse's active-filter chips
 wear a colour (a 3px bar and a quiet tint; the words stay): an option's own
-colour where it has one (a review result's status colour, a database result's
-square, a caution's amber), else the colour of the dot beside its group in the
-sidebar (Source purple, enzyme fields raspberry, measurement olive: colours that
-mean nothing else on the page); an option's own mark shows before its name too
+meaning colour where it has one (a review result's status colour, human-checked's
+green, Read from the paper's cyan, a database result's square, a caution's tan),
+else the accent, the colour of what a visitor picks, as the dot beside its group
+in the sidebar (round 14: one meaning per Nature BPG colour, so no hue outside the
+palette and no palette hue with a second meaning); an option's own mark shows before its name too
 (the status dot, human-checked's tick, a caution's "!", a database result's
 square), so colour is not all that tells the groups apart; and Undo,
 first in the bar (it keeps its place, dimmed with nothing to undo), restores the filter set before the last change,
@@ -36,45 +37,40 @@ Order (the user, 2026-10-13: "more stuff in Stats or make it better organized"):
 line, under it one 14px line "On this page" naming the parts as their headings number them, each a link to the part's
 own address (#stats-<key>, the part section's id: it opens Stats at that part, with the heading focused when followed
 in the page; the line wraps between parts only and is left out of print), the way to a part on a phone, where Stats
-runs 17 screens (2026-10-15); then numbered parts, each with one plain heading (20px, its number in a small accent disc) and its figures and
+runs 17 screens (2026-10-15); then numbered parts, each with one plain heading (20px, its number in plain muted figures before it: no disc, round 14) and its figures and
 tables on a 12-column grid (max 1200px, gaps 48px and 32px), two to a row from 1024px (an odd one out spans the row;
 a bar chart that spans it keeps its labels within 240px of the bars; from 1024 to 1279px Figures 1 and 2 take a row
 each, so the legend table keeps its room beside the donut), one below. Figures and tables are numbered across parts.
 
-1. At a glance, the headline band, the page's focal point (the user: "the stats bar on top - can it glow a bit or
-   more focus driving"; 2026-10-15: "can that be more focusing idk with some glow maybe?"): a card with a 1px accent
-   line (--accent-line), a gentle accent glow round it (--band-glow: a 3px ring at 4.5% and a soft 36px shadow below
-   at 34%, never neon), a 2px accent rule along its top fading to the right and a calm wash (a corner tint over a
-   top-to-bottom fade). Line 1 (40px, tabular numbers): Records, Accepted with its share, Read from the paper with its
-   papers, Human review ("99.9%", "no value disputed on 2,767 of 2,770 entries from the earlier version (431 papers)"; a
-   snapshot without the review's counts gives the share of approved values the same where CatLog has re-read the
-   paper), the numbers
-   in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from the paper --src-paper, Human
-   review the human-checked green: one meaning per colour), each over a soft radial halo of its colour (the accent's
-   for Records; its own background, 13% at the centre to 7.5% at the
-   edge, carried 24-40px out by a low-alpha box-shadow; never a text-shadow, so the digits stay crisp, and a
-   box-shadow adds nothing to the page's width); the halo grows a little under the pointer, and the item's
-   label and note then step up to --text-2 (on the tint and the larger halo, muted fell to 4.46:1; --text-2 is 7.3:1). The four numbers fade and
-   rise once (900ms, 90ms apart), the first time Stats is drawn, and only when the viewer has not asked for less
-   motion (the band drops is-entering after 1.5s, so Stats shown again does not replay it). Line 2 (20px): Papers,
+1. At a glance, the headline band, the page's focal point. Round 14 (the user's colleague: "it looks a bit AI-ish,
+   with the glow"): a plain white card with a 1px --line hairline and a 4px radius, no glow, halo, wash, gradient rule or
+   entrance motion (round 13 had an accent glow round it, a fading accent rule along its top, a corner wash and a soft
+   radial halo behind each number). Line 1 (40px, 600, tabular numbers): Records, Accepted with its share, Read from the
+   paper with its papers, Human review ("99.9%", "no value disputed on 2,767 of 2,770 entries from the earlier version
+   (431 papers)"; a snapshot without the review's counts gives the share of approved values the same where CatLog has
+   re-read the paper), the numbers in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from
+   the paper the darker BPG cyan --src-paper-ink, Human review the human-checked green: one meaning per colour), leading
+   by size, weight and whitespace alone; under the pointer a linked item takes a flat 9% tint of its colour and its
+   label and note step up to --text-2 (muted on the tint fell to 4.46:1; --text-2 is 7.3:1). The numbers stand still
+   (the band's is-entering class no longer animates anything). Line 2 (20px): Papers,
    Enzymes, EC numbers, Organisms, Substrates. Accepted and Read from the paper link into Browse: the whole item is the
    link and tints calmly under the pointer. From 721 to 1199px line 1 grows with the window from the phones' 28px to
    40px, never smaller on a wider window and with no jump at 721, 1024 or 1200px: to 30px at 1023px (the page keeps a
    760px column there, a band column about 146px, and a six-digit count in DejaVu Sans Bold at 30px is 137px), then on
    to 40px at 1200px. Phones (720px and under): 28/20px (18px
-   from 640px), two to a row, the halos a little tighter; below 360px line 1 stands one under the other, so Read from
-   the paper keeps one line in a wide font. Paper: no halo, glow or wash, and nothing moves. CatLog is the one name (round 8): records are Read from the paper or
+   from 640px), two to a row; below 360px line 1 stands one under the other, so Read from
+   the paper keeps one line in a wide font. CatLog is the one name (round 8): records are Read from the paper or
    Not yet re-read, never v1 or v2; the earlier version is named only in help (How these numbers are counted, once on
    Stats), in the human review's base and in the Guide's method section. "re-read" never breaks at its hyphen ("re-" /
    "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band is a step quieter (round 13, the user:
-   "the numbers and overall progress ... so small and colour same so it doesn't capture any attention"): a soft card
-   (a light accent line, a calm wash, a gentle glow) with the four key numbers at 28px (24px on tablets, 20px on phones),
+   "the numbers and overall progress ... so small and colour same so it doesn't capture any attention"; round 14: no
+   glow): a plain white hairline card with the four key numbers at 28px (24px on tablets, 20px on phones),
    each label over its number and each number in its meaning's colour (Records ink, Accepted navy with its status dot,
-   Read from the paper the accent, CatLog's own colour, Human-checked green with its tick) with a soft glow of that
-   colour; a linked count tints in its colour around itself without moving anything. Its With counts (kcat, Km,
+   Read from the paper the darker BPG cyan, Human-checked the darker BPG green with its tick), no text-shadow; a linked
+   count tints in its colour around itself without moving anything. Its With counts (kcat, Km,
    kcat/Km) are secondary: three 12px lines beside the key numbers, 500 in --text-2, as tall as a label and its number.
    One row from 1024px up, two rows on tablets, two by two on phones (tools/catlog-static/DESIGN.md, Layout). Nothing
-   moves when the viewer asks for less motion; print drops every glow and wash.
+   moves.
 2. Quality: the lead, then Checks on the values.
 3. What is in the catalog: Review result (the donut), Records by main source, Read from the paper and not yet re-read,
    Values per paper, then What the records contain beside Wild type and variants.
@@ -325,8 +321,8 @@ its accessible description; no figure or table has a data line. The parts' figur
     0.08-0.92 on the log of the count, bent by 1.6 so the crowded core stands out), each cell's range and count in its
     tooltip line; thin lines of equal kcat/Km every hundredfold, labelled in M⁻¹ s⁻¹ where they leave the plot (top,
     else right; "10" and a 12px `<sup>` exponent, as the axis ticks are, one exponent style per figure), the unit the diffusion limit is known in, so no label reads as the limit in another unit; the
-    diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹ (10⁵–10⁶ mM⁻¹ s⁻¹), as a light amber band with dashed amber edges and
-    "diffusion limit" along it (amber, the caution's colour: a value far beyond it, above 10¹⁰ M⁻¹ s⁻¹, carries the
+    diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹ (10⁵–10⁶ mM⁻¹ s⁻¹), as a light tan band with dashed darker-tan edges and
+    "diffusion limit" along it (tan, the caution's colour: a value far beyond it, above 10¹⁰ M⁻¹ s⁻¹, carries the
     above-diffusion-limit caution, and the facts beside the map say "(the caution marks those above 10¹⁰)"; the
     caution, its filter's title and the Guide give that limit, never "the diffusion limit" alone); each enzyme class's median kcat
     and median Km as a 16px dot in its class colour with its class number in it (ink, white on navy and brown), ringed white, the smaller classes on top; dots that would cover each other at the plot's size (EC 2 and EC 6 stand a tenth of a decade apart) are pushed apart until 20px separate their centres, each moved one with a 1px line and a 5px dot of its colour back at its own place (statsPlaceMapDots, again when the plot changes size). A legend above (records per cell 1 to the largest,
@@ -388,12 +384,12 @@ that lists its paper." (a value counts for several databases because several lis
 Round 8's binding words stay as they are (the human review's headline and side line, "among records read from the
 paper").
 
-Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette but a bit glowing"): every figure
+Figure style (the user: "some SOTA plots maybe - yeah Nature BPG colour palette"; round 14: no glow): every figure
 and table has a heading (16px; the parts' headings are 20px), the plot, then
 "Figure N." or "Table N." (numbered in reading order, figures and tables
 apart, so without figures 3-5 the next figure is 3) with a short caption (13px), its accessible description; no data
-line (the snapshot, Data ID and rules are said once, at the end). Bars 16px thick, 8px apart, their outer ends rounded 2px; fills run from the colour to its tint, top
-to bottom, with a 1px opaque outline; legends inline above the plot with 10px
+line (the snapshot, Data ID and rules are said once, at the end). Bars 16px thick, 8px apart, their outer ends rounded 2px; one flat fill, the colour at 60% (#RRGGBB99
+on white), with a 1px opaque outline (a darker ring where the colour is light: cyan, mint, salmon, tan); legends inline above the plot with 10px
 swatches in segment order (a name that wraps keeps its count right after it);
 one shared scale per chart with axis ticks of
 three to five whole steps (1, 2, 2.5, 3 or 5 × 10ⁿ), each label centred on
@@ -407,8 +403,8 @@ label of several numbers (the count, then the share; Figure 5's records, accepte
 number in its own right-aligned column 6px apart, every column after the first as wide as its widest entry in the
 chart (a hidden sizer holds the entries' shapes, digits as 0, one per line, measured in the viewer's own font at 600,
 the boldest weight in a value column), so the counts line up whatever the shares.
-Pointing at a mark, or focusing the link in its row, lights it with a soft glow in its own colour (a low-alpha
-drop-shadow), dims the other marks of its figure (bars, slices, ridges; their names and counts keep full ink, so
+Pointing at a mark, or focusing the link in its row, gives it a 2px outline in its own colour (a slice a 2px
+stroke, a ridge a thicker line, a class median a wider ring; never a glow), dims the other marks of its figure (bars, slices, ridges; their names and counts keep full ink, so
 their contrast holds) and shows its exact count in a dark tooltip line; touch shows it on a
 tap. Scrolling hides a line the pointer showed (the pointer brings it back), while a line keyboard focus showed
 follows its mark as long as the mark is in view, so Tab to a mark below the fold, which scrolls the page, keeps it.
@@ -416,19 +412,23 @@ Escape puts the line and the light out without moving the pointer or focus (WCAG
 until the pointer or focus moves on.
 Nothing eases when the viewer asks for less motion. Table rows 13px with an 80px bar (48px on phones); the counts
 right-aligned under their headings. Colours are tokens: review results
-(--st-accepted navy, --st-pending salmon with its ring, --st-unverified slate,
---st-not-reviewed tan, --st-disputed red), the comparisons of figures 3-5
-(--cmp-same green, --cmp-differs brown, --cmp-new cyan) with the kinds of
-change in figure 4 (--chg-precision mint, --chg-magnitude red), --bar-neutral for
-single-series bars and table bars (Table 1 included), amber only for
-cautions, and the enzyme classes' colours (--ec-1 to --ec-7: BPG red, cyan, green, navy, salmon, slate and brown;
+(--st-accepted navy, --st-pending salmon with its ring, --st-unverified and
+--st-not-reviewed slate, one colour for Not checked, --st-disputed deep red), the database comparison
+(--cmp-same green, --cmp-other mint, --chg-magnitude red, --cmp-differs brown, --cmp-new cyan) with the kinds of
+change on records not yet re-read (--chg-precision mint, --cmp-differs brown, --chg-magnitude red, --cmp-new cyan),
+Read from the paper's cyan (--src-paper) for every figure, bar and count of records read from the paper (Values per
+paper, Enzyme classes' stripe and From paper counts, the from-paper tables, variants against their wild type, assay
+temperature and pH, the Checks meters of the AI checks), --bar-neutral for single-series bars and table bars of all
+records (Table 1 included), tan only for cautions (the Cautions table's bars, the diffusion-limit band), and the
+enzyme classes' colours (--ec-1 to --ec-7: BPG red, cyan, green, navy, salmon, slate and brown;
 mint is too light for a line; the user, 2026-10-18, "include some more palette colors") only where a figure draws the
 classes apart (Values by enzyme class, kcat against Km) and as a 3px bar before a class's number (Enzyme classes,
 those figures' labels), always beside the class's number, so colour is never all that tells two classes apart. No gauges, completion bars or confidence scores; the review-result
-donut is the only ring; the glow stays soft (never neon) and only marks focus: at rest only the headline band's key
-numbers and the lead figure of Quality glow; a mark (bar, slice, ridge, median dot) glows only while pointed at or
-focused, so the part numbers, meters, the median dots, the ridges and the pressed switch button have plain 1px
-outlines at rest, and the read-from-the-paper stripe never glows (its accepted bar does). Markup (a deliberate change from the design spec's
+donut is the only ring; nothing glows (round 14): the headline band's key numbers and the lead figure of Quality stand
+on plain white, the part numbers are plain muted figures, the meters flat bars in their check's colour (CatLog's AI
+checks cyan, human-checked green), the median dots, the ridges and the pressed switch button have plain 1px outlines,
+and the read-from-the-paper stripe never takes the pointer's outline (its accepted bar does). The ridges fill flat
+(40%, no fade). Markup (a deliberate change from the design spec's
 inline SVG with role="img" for every figure): the donut is an SVG image
 (role="img", its summary in aria-label, a title per part), each value-range
 histogram and each class ridge an image with its summary in aria-label; bar charts and table bars
@@ -443,8 +443,8 @@ page holds the title, the lead and the headline counts, and most pages two
 figures or tables), no figure or headline count split across pages (the lead
 alone may go on between its parts; the three value-range histograms stay side
 by side on any paper size, so their caption stays with them, and the three ridgeline panels too); bars, swatches
-and columns print in their colours even with the browser's background graphics off; no glow, wash, tooltip or
-switch on paper.
+and columns print in their colours even with the browser's background graphics off; no tooltip or switch on
+paper.
 
 Review result lists each record once, in the words Browse uses: Accepted (the
 rows under it split it into the records read from the paper by CatLog and
@@ -518,7 +518,7 @@ station's key stays catlog), Human check, Rules updated and back to Cited papers
 (clockwise, small arrows), with Website and The paper branching off AI audit.
 AI agents stand above their stations (Source agents at Cited papers, "find the paper each database value cites";
 Reading agents at AI reading, "read each value in the paper"; Verification agents at AI check, "check each value
-against the paper, separately"; rectangles on the accent tint), Audit agents ("re-check samples") right of AI audit
+against the paper, separately"; rectangles in CatLog's reading colour, BPG cyan: a 12% tint and the 3:1 ring #2DA1BD, round 14), Audit agents ("re-check samples") right of AI audit
 between its two branches, their line level with it; people below
 (Supantha at Rules updated, also lighting Cited papers, AI audit and Website, "builds CatLog and its website, and
 turns findings into better rules"; Aarna and Erin at Human check; Mohammad at The paper; grey pills). Supantha stands
@@ -550,7 +550,7 @@ a focused chip gets a 2px accent ring set apart from it. Pointing at a person or
 agent, on the figure or in the legend under it (People and AI agents, one
 plain phrase each and where they work, in the loop's order), or focusing a chip, lights their stations and fades the
 rest. Each legend line starts with a filled 10px swatch in its chip's outline colour, as Stats' legends are drawn (a
-grey dot for a person, an accent square for an agent; hollow marks read as unticked radio buttons and checkboxes) and is a toggle button (aria-pressed, named by its phrase,
+grey dot for a person, a cyan square (60% fill, the 3:1 ring) for an agent; hollow marks read as unticked radio buttons and checkboxes) and is a toggle button (aria-pressed, named by its phrase,
 where they work as its description): a click, tap, Enter or
 Space keeps its stations lit until it or another line is pressed, so touch
 screens can light them too. The drawing is named by aria-label, not a <title>

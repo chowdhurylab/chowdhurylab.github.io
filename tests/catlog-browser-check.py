@@ -5027,8 +5027,8 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         """)
         # Named by its tooltip alone (role img): a title beside an aria-label is read out again as a description.
         assert marks["names"] and set(marks["names"]) == {"approved by a human reviewer"} and not marks["labels"], marks
-        # human-checked's green: the darker shade of BPG green (#007A67, round 14)
-        assert marks["colour"] == "rgb(0, 122, 103)", marks["colour"]
+        # human-checked's green: the darker shade of BPG green (#007664, round 14)
+        assert marks["colour"] == "rgb(0, 118, 100)", marks["colour"]
         assert (marks["legend"] or "").startswith("Approved by a human reviewer"), marks["legend"]
         assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
         assert marks["sideways"] <= 1, marks

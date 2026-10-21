@@ -12,24 +12,36 @@ colors:
   accent: "#245f58"
   accent-hover: "#1b4a44"
   accent-tint: "#e8f2ef"
-  source-paper: "#245f58 (the accent: Read from the paper)"
-  band-card-line: "#c9ddd6"
+  bpg-navy: "#3C5488 (Accepted)"
+  bpg-salmon: "#F39B7F (Not confirmed; ring #c4664a)"
+  bpg-slate: "#8491B4 (Not checked; tick #6a7499)"
+  bpg-deep-red: "#DC0000 (Disputed)"
+  bpg-cyan: "#4DBBD5 (CatLog's reading of the paper; ring #2DA1BD, text #207286)"
+  bpg-green: "#00A087 (agreement: Same number; human-checked text #007664)"
+  bpg-mint: "#91D1C2 (the same number in another form; ring #45A48E)"
+  bpg-brown: "#7E6148 (Different number)"
+  bpg-red: "#E64B35 (a correction: Corrects a value, unit or magnitude)"
+  bpg-tan: "#B09C85 (caution; ring #8c7a64, text #79654F)"
   status-accepted: "#3C5488"
   status-pending: "#F39B7F"
   status-pending-ring: "#c4664a"
   status-unverified: "#8491B4"
-  status-not-reviewed: "#B09C85"
-  status-not-reviewed-ring: "#8c7a64"
+  status-not-reviewed: "#8491B4 (Not checked is one colour)"
   status-disputed: "#DC0000"
-  human-checked: "#17733a"
-  caution: "#8a5a14"
-  caution-tint: "#fff6e8"
+  source-paper: "#4DBBD5 (Read from the paper; its text #207286, its 12% tint #eaf7fa)"
+  human-checked: "#007664"
+  caution: "#79654F (text); caution-mark #B09C85, caution-ring #8c7a64"
+  caution-tint: "#f8f6f4"
+  caution-line: "#dbd2c8"
+  caution-ink: "#4a3b2a"
   compare-same: "#00A087"
+  compare-other: "#91D1C2 (ring #45A48E)"
   compare-differs: "#7E6148"
-  compare-new: "#4DBBD5"
+  compare-new: "#4DBBD5 (ring #2DA1BD)"
   change-magnitude: "#E64B35"
   change-precision: "#91D1C2"
   bar-neutral: "#7d8885"
+  filter-groups: "the accent (#245f58): the filters with no meaning colour"
   enzyme-class-1: "#E64B35"
   enzyme-class-2: "#4DBBD5"
   enzyme-class-3: "#00A087"
@@ -37,15 +49,12 @@ colors:
   enzyme-class-5: "#F39B7F"
   enzyme-class-6: "#8491B4"
   enzyme-class-7: "#7E6148"
-  figure-kcat: "#E64B35"
-  figure-km: "#4DBBD5"
-  figure-kcat-km: "#00A087"
-  accent-glow: "rgba(36,95,88,0.26)"
-  accent-wash: "rgba(36,95,88,0.07)"
-  accent-halo-core: "rgba(36,95,88,0.13)"
-  accent-halo: "rgba(36,95,88,0.075)"
-  accent-halo-hover: "rgba(36,95,88,0.12)"
-  accent-wash-soft: "rgba(36,95,88,0.035)"
+  database-brenda: "#3C5488 (categorical, for a figure whose only series are the databases; none yet)"
+  database-sabio-rk: "#E64B35"
+  database-oed: "#00A087"
+  database-uniprot: "#8491B4"
+  database-skid: "#B09C85"
+  database-strenda: "#7E6148"
 typography:
   body:
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif'
@@ -60,10 +69,10 @@ typography:
   weights: 400, 500, 600
   numbers: tabular-nums lining-nums
 spacing: 4, 8, 12, 16, 24, 32, 48px
-radius: 4px (controls), 2px (Stats bars' outer ends), 0 (table bars)
+radius: 4px (controls and cards), 2px (Stats bars' outer ends), 0 (table bars)
 layout:
   header: 56px
-  counts-band: 75px (a card; 95px on tablets, 127px on phones)
+  counts-band: 75px (a hairline card; 95px on tablets, 127px on phones)
   gutter: 24px (16px below 1024px)
   sidebar: 256px (to 1439px), 288px (1440px and up); rail 48px
   record: 440px (1024-1439px), 480px (1440px and up)
@@ -76,15 +85,18 @@ layout:
 Start with the table, not a landing page. The page is one grid on a 4px spacing
 scale with 24px gutters (16px below 1024px): a 56px header, the counts band (a 75px card from 1024px),
 then [filter sidebar | table | open record]. Rules are 1px --line between regions
-and --line-soft inside them; shadows only on the phone sheet, dialogs, menus and
-Stats' tooltip line. The one exception (the user, 2026-10-13: "can it glow a bit or more focus driving"; 2026-10-18:
-"the numbers ... so small and colour same so it doesn't capture any attention"): the counts band is a soft card
-(--band-card-line, a calm accent wash, --band-card-glow) whose key numbers glow softly, each in its own colour;
-Stats' headline band, the page's focal point (the user, 2026-10-15: "more focusing ... with some
-glow"), is a card with a 1px accent line, a gentle accent glow round it and a calm wash, its key numbers in the counts
-band's meaning colours (Records ink, Accepted navy, Read from the paper --src-paper, Human review --checked) over soft
-radial halos of those colours (--accent-halo* for Records, crisp digits); Stats' figures fill from colour to tint; never neon, none in
-print.
+and --line-soft inside them; a crisp, short shadow (--shadow, 2px 8px) only where something floats above the page:
+menus, dialogs, the phone sheet, the record drawer and Stats' tooltip line. Round 14 (the user's colleague: "it looks a
+bit AI-ish, with the glow"): a calm, editorial look, like a scientific reference database (UniProt, PDB, a Nature data
+page), never a product landing page. No glow, halo, text-shadow, wash or gradient anywhere (round 13 had them on the
+counts band, Stats' headline band, its numbers, the lead of Quality, the figure fills and the marks under the pointer):
+the counts band and Stats' headline band are plain white cards with a 1px --line hairline and a 4px radius; their key
+numbers lead by size, weight, tabular figures, the whitespace round them and each number's meaning colour, and they
+never move (no fade or rise). Figures fill flat (the colour at 60% with a 1px opaque outline); a mark under the pointer
+takes a 2px outline in its own colour while the others dim. Cards have a 4px radius (no 8-10px rounding), Stats' part
+numbers are plain muted figures (no disc), and the Guide's "Then checked again" box is a hairline box (no dashed line,
+no wash). The functional patterns stay: the hatched end stubs of the value curves, the density key's ramp and the
+legend swatch that draws the read-from-the-paper stripe.
 Stats, the Guide and Team scroll inside their own view under the header; the
 document itself never scrolls (each view is positioned, so screen-reader-only
 text deep in a page cannot reach past it).
@@ -99,13 +111,13 @@ one 600 with a 2px accent rule under it.
 The counts band (round 13) is the first thing a visitor sees: a focal point like Stats' headline band, a step
 quieter. Over the card, one plain 13/18px --text-2 line says what CatLog is ("Enzyme kcat, Km and kcat/Km
 values, re-checked against their papers.") and links the Guide ("How it works →"); one line from 641px, two on
-phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a card with an 8px radius holds the four
+phones, left out on a short window wider than a phone (max-height 640px) so the table keeps its 340px. Inside the band (6px above and below, the page's gutter at the sides) a white card with a 1px --line hairline and a 4px radius (no glow, wash or shadow) holds the four
 key numbers, Records, Accepted, Read from the paper and Human-checked, each label (13/16px, --muted) over its number
 (600, tabular): 28/32px from 1024px, 24/28px on tablets (641-1023px), 20/24px on phones. Each number wears the colour
 its meaning has across the site (Type And Color, "Colour meanings"): Records the page's ink (--text), Accepted the
-status navy (--st-accepted) with the status dot before its label, Read from the paper CatLog's own colour (--src-paper,
-the accent; its label too, as a link), Human-checked its green (--checked) with the tick and a green label; each with a
-soft text glow of its own colour (Records the accent's), none on paper. Beside them, behind a 1px --line-soft rule,
+status navy (--st-accepted) with the status dot before its label, Read from the paper the darker BPG cyan
+(--src-paper-ink; its label too, as a link), Human-checked the darker BPG green (--checked) with the tick and a green
+label; no text-shadow. Beside them, behind a 1px --line-soft rule,
 the With counts: three 12/16px lines (kcat, Km, kcat/Km, each count right-aligned under the other; "With" heads the
 first line), 500 in --text-2, as tall as a label and its number, so the key numbers lead; the snapshot date (12px, its
 title the Data ID) at the card's top right. From 1024px up this is one row that never wraps or moves as the window
@@ -235,7 +247,8 @@ says so and names the factor), Same, other label, Not in the databases (a value 
 compared database lists) with "every value" nested under it (no database lists any value of the record), All
 values the same (every compared value), then under a --line-soft rule Corrected earlier (records not yet re-read
 whose earlier version changed values; shown only when a record has it). A 10px square in the result's colour
-(--chg-magnitude, --cmp-differs, --bar-neutral, --cmp-new, --cmp-same; aria-hidden) stands before each name but
+(--chg-magnitude, --cmp-differs, --cmp-other, --cmp-new, --cmp-same; the light mint and cyan with a 1px darker ring;
+aria-hidden) stands before each name but
 Corrected earlier's. The counts at rest equal the manifest's summary.database_comparison: records_with_kind
 (corrected, differs, other_label, new), records.every_value_new and records.every_value_confirmed; each option's
 title is its definition, plus "N values in M records." where the manifest counts both. Each result has one name
@@ -254,7 +267,7 @@ as Review result's does, and links to the Guide's #guide-cautions) and Source da
 tag, read out and on hover in full, UniProt, SKiD, STRENDA DB, earlier paper extractions, shown as "Earlier extractions",
 the table's tag, and read out in full, so a wide font keeps it on one line at 256px, and Source not recorded; ticking one
 selects Not yet re-read in Source, a merged record counts under each database it names, and All records or Read from the
-paper clears them; its "?" says so; its dot is Source's purple, as its chips are), these three closed. More filters
+paper clears them; its "?" says so; its dot and its chips wear the accent, as the other filters without a meaning colour do), these three closed. More filters
 opens by itself when one of its filters is set (an address, Back, a link from Stats or a record, Undo), each group with
 one set opens too, and nothing in it is ever set unseen: its title (a group title in the accent colour, its chevron too,
 with a --line-soft rule under it when open) carries the count of those filters' chips in the Filters badge's look (the
@@ -285,23 +298,24 @@ button; Undo, Clear all here and in the sidebar's heading are 24px tall targets 
 least); the count beside Filters is the number of chips. Each chip wears a colour (the user,
 2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to undo"): a 3px bar
 at its left, a quiet tint of it behind the words (12%) and a lighter line round it (45%). A chip whose option already
-has a colour on the page wears that colour, so a colour means one thing everywhere: a review result its status colour
-(Accepted navy, Not confirmed salmon, Not checked slate, Disputed dark red; a chip naming several results is neutral grey
-and names each result after its status dot, as the table does), Only human-checked green, a database result the colour
-of its square in the sidebar (Corrects a value red, Different number brown, Not in the databases cyan, All values the
-same green; Same, other label and Corrected earlier neutral grey), a caution amber. Review result and Against the
-databases therefore have no dot beside their title. The ten BPG colours all name a review result, a database result or
-a kind of change on this page, so the three groups without a colour of their own take colours that mean nothing else
-here (not BPG): Source purple, the enzyme, organism, substrate, EC number and search raspberry (the dot beside
-"Enzyme, organism, substrate"), and the measurement olive (Measurement type, Wild type or variant, Assay conditions).
+has a meaning colour wears that colour, so a colour means one thing everywhere (Type And Color, the colour table): a
+review result its status colour (Accepted navy, Not confirmed salmon, Not checked slate, Disputed deep red; a chip naming
+several results is neutral grey and names each result after its status dot, as the table does), Only human-checked the
+agreement green, Read from the paper cyan, a database result the colour of its square in the sidebar (Corrects a value
+red, Different number brown, Same, other label mint, Not in the databases cyan, All values the same green; Corrected
+earlier neutral grey), a caution tan. Review result and Against the databases therefore have no dot beside their title.
+Round 14 (one meaning per Nature BPG colour; the purple, raspberry, olive and amber of round 13 were not BPG): the other
+filters (Not yet re-read and a source database; the enzyme, organism, substrate, EC number and search; the measurement:
+Measurement type, Wild type or variant, Assay conditions) are choices with no meaning colour, so they wear the accent,
+the colour of what a visitor picks (links, buttons, the selected row), never a BPG colour that means something else.
 The 8px dot beside a group's title (aria-hidden, a faint 1px ring) is hung in the 16px gutter, so the titles keep
-their width and wrap where they did; Cautions has an amber one. Colour is never the only carrier: the chip keeps its
-words, and an option with a mark on the page shows it before its name, in its colour (a review result its status dot,
-Only human-checked its tick, a caution the table's "!" at 12px, a database result the sidebar's square at 8px; No
-cautions and Corrected earlier have none, as in the sidebar; Source, the enzyme fields and the measurement have none),
-so a group is told from another by more than its colour, also by a colour-blind reader, to whom some of the colours
-look alike (the measurement's olive and a caution's amber, Source's purple and Accepted's navy). The darker colours give the deeper
-tints; on every tint the words read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
+their width and wrap where they did: the accent for those groups, Source's turning cyan while Read from the paper is
+chosen, Cautions' tan. Colour is never the only carrier: the chip keeps its words, and an option with a mark on the page
+shows it before its name, in its colour (a review result its status dot, Only human-checked its tick, a caution the
+table's tan "!" disc at 12px, a database result the sidebar's square at 8px; No cautions and Corrected earlier have
+none, as in the sidebar; Source, the enzyme fields and the measurement have none), so a group is told from another by
+more than its colour, also by a colour-blind reader. The darker colours give the deeper tints; on every tint the words
+read 13:1 or more and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
 that change; the page keeps the last 30 sets, in this page only. Back or Forward that lands on the set Undo would bring
@@ -468,45 +482,53 @@ inside a word only as a last resort; the Organism column is at least about 13
 characters wide); only SMILES and sequences break anywhere. No serial comma;
 tags are lower case, filter labels and headings sentence case. One
 type scale (front matter) and weights 400/500/600 only; no text below 12px.
-Colours are tokens in the stylesheet's :root, the only place hex values appear
-(other areas use the tokens: --st-* for review status, which figures fill at 60%
-with a 1px opaque outline, --cmp-* and --chg-* for the database comparison and kinds
-of change, --bar-neutral for single-series bars and table bars, --caution* for cautions,
---checked for human-checked, --accent* for actions and for what CatLog itself read, --src-paper, --ec-1 to --ec-7 for
-the enzyme classes only in the Stats figures where nothing else is coloured (Values by enzyme class and kcat against
-Km: a class's curve, its median dot and the short bar before its number, always beside that number); Enzyme classes
-and the EC number tables carry no class colour, since their bars wear review-result or Read from the paper colours).
+Colours are tokens in the stylesheet's :root, the only place hex values appear (--bpg-* for the ten Nature BPG
+colours, each written once; the meaning tokens point at them: --st-* for review status, --cmp-* and --chg-* for the
+database comparison and kinds of change, --src-paper* for Read from the paper, --checked for human-checked, --caution*
+for cautions, --ec-1 to --ec-7 and --db-* for the categorical sets, --bar-neutral for counts with no meaning colour,
+--accent* for actions and selection).
 
-Colour meanings (round 13, the user: "within the Nature BPG color palette we are using - we can make things include
-some more palette colors or improve visual?"). One meaning per colour, the same meaning wherever it shows, and colour
-never alone (a dot, a square, a tick, a "!" or the words go with it); tints (the colour at 9-12% on white) for
-backgrounds, text in AA contrast (a light colour's text takes its darker ring or tick form):
-- Review result: the five status colours of the Nature BPG palette, always with the round dot: Accepted navy
-  (--st-accepted), Not confirmed salmon (--st-pending, ringed), Not checked slate (Unverified, --st-unverified) and tan
-  (Not reviewed, --st-not-reviewed, ringed), Disputed deep red (--st-disputed). They colour the table's cells, the
-  filter's ticks and chips, the record, Stats' figures, and now the counts band's Accepted (its number navy, the dot
-  before its label). No other meaning takes these five hues.
-- Database result: --cmp-same green, --cmp-differs brown, --cmp-new cyan and --chg-magnitude red (corrects a value),
-  Same, other label grey (--bar-neutral), always with the square; --chg-precision mint and the same red, brown and cyan
-  for the kinds of change on records not yet re-read (the same meanings: a different number, a unit or scale, a value
-  added).
-- Source (the round's palette decision for database sources): Read from the paper, CatLog's own reading, wears CatLog's
-  own colour, the accent (--src-paper), and only that: its count on the counts band and on Stats' headline band, its
-  link label, its filter chip (tone-paper) and the Source group's dot while it is chosen, and every from-paper mark and
-  count on Stats (Values per paper, Enzyme classes' stripe and From paper column, the bars of the tables of records read
-  from the paper), never Accepted's navy. The
-  databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB) are named, never given a colour each: every view that
-  lists them already colours its marks by review result or database result (Records by main source, Part 7's figures
-  and tables, the record's comparison, the Source filter beside Against the databases), so a hue per database would
-  give a colour a second meaning in the same view, and their names already tell them apart (colour there would be
-  decoration). Where a figure splits the two sources, Not yet re-read is neutral (--bar-neutral).
-- Human-checked: --checked green with the tick (and Human review's numbers on Stats). Cautions: amber (--caution) with
-  the "!". The sidebar's group dots (Source purple, identity raspberry, measurement olive) mean only their group; the
-  Source dot wears --src-paper while Read from the paper is chosen, as its chip does.
-- A view that colours by enzyme class gives each class its colour only where nothing else in the figure is coloured
-  (Values by enzyme class, kcat against Km: a class's curve, dot or the short bar before its number; never in Enzyme
-  classes or the EC number tables, whose bars wear review-result or Read from the paper colours), so a hue there
-  names a class alone: --ec-1 to --ec-7 (BPG red, cyan, green, navy, salmon, slate, brown; mint is too light for a line).
+Colour meanings (round 14, the user: "you keep using the same colours of the Nature BPG palette; there are some others,
+right?"). The palette is Supantha's saved Nature BPG (ggsci npg "nrc"). One meaning per colour, the same meaning on
+Browse, the record, the chips, the sidebar's dots, Stats, the Guide's legend and Team, and colour never alone (a dot, a
+square, a tick, a "!" disc or the words go with it). Marks (dots, squares, the "!" disc, ticks) are opaque; figures fill
+at 60% (#RRGGBB99 on white) with a 1px opaque outline; tints (the colour at 9-12% on white) only behind words. Text
+passes WCAG AA (4.5:1; 3:1 for large numbers and for marks): where a colour is too light for text or for a mark on white
+(cyan, mint, salmon, tan), the text takes a darker shade of the same hue and the mark a 1px ring of it, and the palette
+colour itself goes on the mark beside the words.
+
+| BPG colour | Meaning (one per colour) | Where it shows | Text / ring (AA on white) |
+|---|---|---|---|
+| navy #3C5488 | Accepted | status dot, Accepted's count (counts band, Stats band), ticks, chips, Stats bars and donut | itself, 7.5:1 |
+| salmon #F39B7F | Not confirmed | status dot (ringed), ticks, chips, Stats bars and donut | ring and tick #c4664a, 3.9:1 (the words are ink) |
+| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips, Stats bars and donut | tick #6a7499, 4.6:1 |
+| deep red #DC0000 | Disputed | status dot, ticks, chips, Stats bars | itself, 5.2:1 |
+| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds at 60/40/20%), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
+| green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
+| mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
+| brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
+| red #E64B35 | A correction: Corrects a value (CatLog's number corrects a database's); Unit or magnitude (an earlier correction by × or ÷ 10ⁿ) | square, chip, bars (how found: checked against the paper 60%, an exact factor found by code 33%) | itself 3.9:1 as a mark; text #C62E19, 5.5:1 |
+| tan #B09C85 | Caution (a value that may be wrong) | the "!" disc (tan, ring #8c7a64, ink "!" 6.2:1), the chip, Cautions' dot, caution notes (tan tint #f8f6f4, line #dbd2c8, ink #4a3b2a), Stats' Cautions bars, the diffusion-limit band of kcat against Km | caution words and lines #79654F, 5.5:1 |
+
+Not BPG, and carrying no data meaning: the ink and greys (--text, --text-2, --muted, --line; --bar-neutral #7d8885 for a
+count with no meaning colour: the value ranges of all records, the tables of all records, No cautions, Other status,
+Corrected earlier, a chip naming several results), and the accent #245f58 for what a visitor picks or can act on (links,
+buttons, the focus ring, the selected row, the current tab) and for the filters with no meaning colour (Not yet re-read,
+a source database, the enzyme fields, the measurement: their chips and their groups' dots). The round 13 purple,
+raspberry, olive and amber are gone. Not yet re-read has no colour of its own: where a figure splits the two sources
+it is neutral, and its records wear their review result's colour.
+
+Categorical sets reuse BPG colours under a stricter rule: only in a figure where no meaning colour appears, always beside
+the category's name or number, so the hue names the category alone there.
+- Enzyme classes, --ec-1 to --ec-7: BPG red, cyan, green, navy, salmon, slate, brown (mint and tan are too light for a
+  line, deep red is Disputed's alarm), in Values by enzyme class and kcat against Km only (a class's curve, its median
+  dot and the short bar before its number); never in Enzyme classes or the EC number tables, whose bars wear
+  review-result or Read from the paper colours.
+- The databases, --db-brenda, --db-sabio, --db-oed, --db-uniprot, --db-skid, --db-strenda (navy, red, green, slate, tan,
+  brown; cyan is left out, being CatLog's reading): for a figure whose only series are the databases. None exists yet:
+  every view that lists the databases colours its marks by review result or database result (Records by main source,
+  Part 7's figures and tables, the record's comparison, the Source database filter), so there the names tell them
+  apart and a hue per database would give a colour a second meaning in the same view.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
@@ -624,23 +646,25 @@ their colour's tint, line and 3px bar (Filters, above), 12px text, and wrap with
 White and neutral surfaces carry the data. One accent (--accent, 7.4:1) marks
 links, selection, buttons and the focus ring (2px, 2px offset). Status uses a
 coloured dot from the Nature BPG palette (ggsci NPG "nrc") and ink words:
-accepted navy, not confirmed salmon, not checked slate for Unverified and tan for
-Not reviewed (the word says Not checked for both; its title names which),
-disputed dark red; the light salmon and tan dots carry a 1px darker ring. The
+accepted navy, not confirmed salmon, not checked slate (one colour for Unverified and
+Not reviewed: the word says Not checked for both; its title names which),
+disputed deep red; the light salmon dot carries a 1px darker ring. The
 filter's ticks use the status colour, or a darker form where it is light
 (salmon's ring colour, a darker slate), so a ticked box stands out on white and
-does not look disabled. The filter chips reuse these colours only for the options they name (Filters, above);
-Source, the enzyme fields and the measurement take three colours outside BPG that mean nothing else on the page (--fg-*,
-chips and the sidebar's group dots only; the site has one light theme, so there are no dark-mode forms). Amber (--caution) marks cautions. Green (human-checked, 5.9:1 on white) is only for
-"human-checked": a small check drawn before the tag, weight 500, no pill or
+does not look disabled. The filter chips reuse the meaning colours only for the options they name (Filters, above);
+the other filters wear the accent (--fg-* point at it; chips and the sidebar's group dots only; the site has one light
+theme, so there are no dark-mode forms). Tan (--caution-mark, its text --caution) marks cautions. Green (human-checked,
+#007664, 5.6:1 on white and 4.7:1 on its tint, the darker shade of BPG green) is for "human-checked" and, at the colour itself, for a
+database's Same number (one meaning: agreement with a second source):
+a small check drawn before the tag, weight 500, no pill or
 background, in table badges, phone cards, the record's status line and Human
 review line, the counts band and the Guide. The tag shows on accepted records
 only; it updates in place when the marks arrive (rows are not redrawn). On a
 phone card the badge keeps its two lines; a tag
 line too long for the room left ends in an ellipsis. Use thin dividers, 4px
-control radii, and shadows only for the phone sheet, dialogs, menus and Stats' tooltip line. No
-decorative gradients, statistic cards, or hero art (the bands' wash and glow and Stats' figure fills are the
-exceptions, see Layout).
+radii for controls and cards, and a crisp short shadow only for the phone sheet, dialogs, menus, the record drawer and
+Stats' tooltip line. No glow, halo, text-shadow, wash, gradient fill or gradient text, no statistic-card styling, pills
+where plain text would do, decorative icons or hero art (round 14; see Layout).
 
 ## Record Details
 
@@ -760,7 +784,7 @@ come first, the context after.
   record's kcat/Km or the record stores none, then the empty line says "No kcat,
   Km or kcat/Km is stored for this record; BRENDA lists a kcat/Km for it
   (below)."; a number a source also gives with no unit is listed once; Download
-  record carries them as source_kcat_over_km_values), each caution once as an amber note
+  record carries them as source_kcat_over_km_values), each caution once as a tan caution note
   its value's "!" moves to, the grey notes (no line says "converted by code" on every record: As printed shows each
   printed cell beside the stored value, so a changed unit shows there, and the Guide says that code converts; a
   printed unit read in a stated way keeps its own line, "kcat/Km: printed unit read as 10³ M⁻¹
@@ -1029,7 +1053,7 @@ CatLog read it in (µM printed, mM used) is such a caution ("printed unit
 differs"), named by its value ("Km: The paper prints µM; ..."): its note says
 whether kcat ÷ Km shows the unit used is right and, when an AI audit
 re-checked the value, ends with what it found ("... and kept mM."); the note
-stays amber. CatLog's own flag for it
+stays a caution note (tan). CatLog's own flag for it
 (printed_unit_prefix_differs) counts as a possible unit error and is said once;
 with the flag the table's "!" and the Cautions filter's Possible unit or
 magnitude error find the record too (its title and the Guide's list of that
@@ -1061,7 +1085,7 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 ## Stats
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
-1 At a glance (the headline band, the page's focal point: a card with a 1px accent line and a gentle accent glow; 40px key numbers in the counts band's meaning colours, each over a soft radial halo of its colour, fading and rising once on first show unless the viewer asks for less motion (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
+1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
 2 Quality (the lead, the user's headline: "Human review", 99.9%, no value disputed on 2,767 of 2,770 entries from the
 earlier version (431 papers), the disputed values as printed and the entries whose value the reviewer could not find,
 with "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ..." and what
@@ -1076,9 +1100,9 @@ temperature, and the assay temperature and pH, each bar a link into Browse), 6 C
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
 (one or two sentences, no filler: a chart names its number columns above them instead) and no data
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
-the closed How these numbers are counted that ends the page; fills run from the colour to its tint with 1px outlines, in the
+the closed How these numbers are counted that ends the page; flat fills, the colour at 60% with 1px opaque outlines, in the
 review-result and comparison tokens, --bar-neutral for the single-series value figures and the enzyme classes' own
-colours where a figure draws the classes apart; pointing at a mark lights it with a soft glow and gives its exact count. The donut, the
+colours where a figure draws the classes apart, Read from the paper's cyan for the figures of records read from the paper; pointing at a mark gives it a 2px outline in its colour, dims the others and gives its exact count. The donut, the
 histograms and the ridges are images with a summary;
 the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
@@ -1089,7 +1113,8 @@ DESIGN.md, "Stats".
 "People behind CatLog" (#team): one line (CatLog re-verifies published enzyme kinetics), then the loop of stations
 (Cited papers, AI reading, AI check, AI audit, Human check, Rules updated) with AI agents above
 and people below by first name (Supantha also above Website), live numbers from the manifest, dots moving
-round it unless the viewer asks for less motion, and a legend whose lines
+round it unless the viewer asks for less motion, and a legend whose lines (the AI agents in CatLog's reading colour,
+BPG cyan: a 12% tint, the 3:1 ring and a 60% legend square; the people neutral)
 light their stations on hover or while pressed (toggle buttons). Upright below 960px. The full rules are
 in the site's DESIGN.md, "Team".
 

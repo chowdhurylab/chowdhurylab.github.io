@@ -56,7 +56,7 @@
   --bpg-slate:#8491B4;        /* 3.1:1  Not checked (tick 4.6:1) */
   --bpg-deep-red:#DC0000;     /* 5.2:1  Disputed */
   --bpg-cyan:#4DBBD5;         /* 2.2:1  CatLog's reading of the paper (ring 3.0:1, text 5.5:1) */
-  --bpg-green:#00A087;        /* 3.3:1  agreement: Same number, human-checked (text 5.3:1) */
+  --bpg-green:#00A087;        /* 3.3:1  agreement: Same number, human-checked (text 5.6:1) */
   --bpg-mint:#91D1C2;         /* 1.7:1  the same number in another form (ring 3.0:1) */
   --bpg-brown:#7E6148;        /* 5.7:1  Different number */
   --bpg-red:#E64B35;          /* 3.9:1  a correction: Corrects a value, unit or magnitude */
@@ -74,7 +74,7 @@
   --tick-unverified:#6a7499;  /* 4.6:1 */
   /* Agreement with a second source (BPG green): human-checked's tick and word in the darker green (a human reviewer
      approved the values), a database result's Same number at the colour itself. */
-  --checked:#007A67;          /* 5.3:1; on its 12% tint 4.6:1 */
+  --checked:#007664;          /* 5.6:1; on its 12% tint 4.7:1, on the selected row 4.9:1 */
   /* Cautions (BPG tan): the "!" disc in tan with its 1px ring and an ink "!" (6.2:1 on tan), the caution's words and
      lines in the darker tan, its notes on a tan tint with ink-brown text. */
   --caution:#79654F;          /* 5.5:1 */
