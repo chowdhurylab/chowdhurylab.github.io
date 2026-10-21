@@ -134,7 +134,7 @@
 
   // Tag definitions, said the same way in the filter, the badges and the Guide.
   const CORRECTED_DEFINITION = "Accepted after a correction in the earlier automated review; the record shows the changes when the snapshot lists them.";
-  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by CatLog's earlier version, a pipeline of AI models and automated checks.";
+  const EARLIER_EXTRACTION_DEFINITION = "Read from a paper by CatLog’s earlier version, a pipeline of AI models and automated checks.";
 
   const stateDescriptions = {
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
@@ -252,19 +252,19 @@
     { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
       title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
-      title: "A database lists another number; CatLog's is the paper's, and the record names the cause and how it was found." },
+      title: "A database lists another number; CatLog’s is the paper’s, and the record names the cause and how it was found." },
     { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs", ...FACTOR_ONLY_STATUSES],
       // The caveat ("A different number can mean a different measurement; ...") is said once per page, with this result
       // only (the user, 2026-10-15): Browse's "?" box and the Guide's results add it to this definition, Stats' lead says
       // it right after the different numbers; a tooltip never carries it.
-      title: "A database lists another number and the cause is not yet known; where it is the paper's times an exact factor (a power of ten, 60 or 3,600), the record names the factor." },
+      title: "A database lists another number and the cause is not yet known; where it is the paper’s times an exact factor (a power of ten, 60 or 3,600), the record names the factor." },
     { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
       values: ["new", "new_ratio_only", "new_paper_not_in_databases"],
       title: "No compared database lists this value for this paper; the record says why and what they do list." },
     { value: "all_not_listed", bit: 16, mark: "not-listed", parent: "not_listed", records: ["records", "every_value_new"],
       title: "No compared database lists any value of the record." },
     { value: "earlier", bit: 64, optional: true, divided: true,
-      title: "Records not yet re-read whose values CatLog's earlier version changed; the record lists before and after." },
+      title: "Records not yet re-read whose values CatLog’s earlier version changed; the record lists before and after." },
   ].map((item) => {
     const label = DATABASE_RESULT_NAMES[item.value];
     // The nested option's chip and spoken name say what it narrows: "Not in the databases: every value".
@@ -299,7 +299,7 @@
   // version's help is said once per place: the Source "?", Stats' How these numbers are counted, the Guide's method section.
   // Only part of its entries were checked against their papers (most are Not confirmed or Not checked).
   const SOURCE_CATLOG_HELP = "by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "from CatLog's earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper.";
+  const SOURCE_DATABASES_HELP = "from CatLog’s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper.";
   // One line each in the 256px sidebar, also with a wide font (DejaVu Sans): the label beside its count. The help is
   // behind the group's "?" and in each radio's title.
   const sourceModes = [
@@ -430,13 +430,13 @@
 
   // Where a record's enzyme name comes from, read after "Name from" (a CatLog v2 record's: the paper).
   const sourceLabels = {
-    source_record: "The source database's entry",
-    explicit_enzyme_name: "The source database's entry",
+    source_record: "The source database’s entry",
+    explicit_enzyme_name: "The source database’s entry",
     brenda_recommended_name: "BRENDA recommended name",
     protein_name_fallback: "Protein name",
     uniprot_name_fallback: "The UniProt entry",
-    ec_accepted_name_fallback: "The EC list's accepted name",
-    ec_name_fallback: "The EC list's accepted name",
+    ec_accepted_name_fallback: "The EC list’s accepted name",
+    ec_name_fallback: "The EC list’s accepted name",
     uniprot_fallback: "The UniProt accession (no name recorded)",
     name_not_preserved: "Not recorded",
   };
@@ -636,7 +636,7 @@
     const check = kcatKmCheck(row);
     if (!check) return "";
     const { quotientText, foldText, direction, factor, unit, v2 } = check;
-    const sentences = [`${v2 ? "The paper's kcat/Km" : "The source's kcat/Km"} (${noteValueText(row, "kcat_over_km")} ${unit}) is `
+    const sentences = [`${v2 ? "The paper’s kcat/Km" : "The source’s kcat/Km"} (${noteValueText(row, "kcat_over_km")} ${unit}) is `
       + `${foldText} ${direction} kcat ÷ Km (${quotientText} ${unit}).`];
     if (factor) sentences.push(factor[1]);
     if (v2 && factor?.[2]) sentences.push(printedQuotientText(detail, factor[2]));
@@ -1107,8 +1107,18 @@
     renderView(view, { scroll: true });
   }
 
+  // One apostrophe on the page, the typographic ’, as the Guide's text has it (round 15 polish: the page's own sentences
+  // and the data's had set ' beside the Guide's ’): an apostrophe after a letter and before an English ending (paper’s,
+  // CatLog’s, BRENDA’s, isn’t). A prime in a chemical name (2'-deoxyguanosine, 3',5'-cyclic AMP, N,N'-...) follows a digit
+  // or comes before a hyphen or comma, and stays; an address keeps its text (Browse's search reads ’ as ').
+  const TYPOGRAPHIC_APOSTROPHE = /(?<=[A-Za-z])'(?=(?:s|t|re|ll|ve|d|m)\b)/g;
+  function typographicText(value) {
+    const text = String(value == null ? "" : value);
+    return !text.includes("'") || /^(?:[a-z][a-z0-9+.-]*:|#|\/|\.\/|10\.\d)/i.test(text) ? text : text.replace(TYPOGRAPHIC_APOSTROPHE, "’");
+  }
+
   function escapeHtml(value) {
-    return String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
+    return typographicText(value).replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
@@ -1170,13 +1180,13 @@
     const tableSize = formatFileSize(manifest.table_download?.size_bytes);
     // What a file holds, then its rows and size on a line of their own (the menu's spans keep the line break), so a
     // separator never starts a line.
-    const describe = (text, ...facts) => [text, facts.filter(Boolean).join(" · ")].filter(Boolean).join("\n");
+    const describe = (text, ...facts) => typographicText([text, facts.filter(Boolean).join(" · ")].filter(Boolean).join("\n"));
     // Each file says its format on its facts line (round 14: "Table" read like a spreadsheet; both are gzip JSON Lines).
     if ($("enrichedDataDescription")) {
       $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} rows`, enrichedSize, "JSON Lines (gzip)");
     }
     if ($("tableIndexDescription")) {
-      $("tableIndexDescription").textContent = describe("The table's columns; no sequences, SMILES or paper links", `${total} rows`, tableSize, "JSON Lines (gzip)");
+      $("tableIndexDescription").textContent = describe("The table’s columns; no sequences, SMILES or paper links", `${total} rows`, tableSize, "JSON Lines (gzip)");
     }
     if ($("datasetNotesLink")) {
       $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
@@ -1297,7 +1307,7 @@
     [/\bpaper_(kcat|km)\b/gi, (_m, metric) => `paper ${metric.toLowerCase() === "km" ? "Km" : "kcat"}`],
     [/\bkcat_over_km_provenance\b/gi, "kcat/Km note"],
     [/\bkcat_over_km\b/gi, "kcat/Km"],
-    [/\bcomputed_from_table_kcat_km=\s*/gi, "computed from the table's kcat and Km as "],
+    [/\bcomputed_from_table_kcat_km=\s*/gi, "computed from the table’s kcat and Km as "],
     [/\b(?:printed_(?:raw_)?value|paper_(?:value|cell))=\s*/gi, "printed "],
     [/\s*\b(?:printed_unit|raw_unit|raw_uncertainty)=\s*/gi, " "],
     [/\b(?:[a-z]+_)*(?:raw|normali[sz]ed)_(?:value|unit|cell|segment)[=:]\s*/gi, ""],
@@ -1338,9 +1348,9 @@
   function evidenceWords(text) {
     const cased = (word, replacement) => (/^[A-Z]/.test(word) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement);
     return String(text)
-      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier version's entry has no $1")
+      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier version’s entry has no $1")
       .replace(/\b(\S+) is not populated for this row\b/g, "this record has no $1")
-      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier version's entry"))
+      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier version’s entry"))
       .replace(/\bnormali[sz]ation\b/gi, (word) => cased(word, "conversion"))
       .replace(/\bnormali[sz]ed value\b/gi, (word) => cased(word, "value in catalog units"))
       .replace(/\bnormali[sz]ed unit\b/gi, (word) => cased(word, "unit"))
@@ -1517,7 +1527,7 @@
       .replace(/\buM\b/g, "µM")
       .replace(/\s+/g, " ")
       .replace(/^(?=\d)/, (start, _at, line) => (CONVERSION_BARE_KCAT.test(line) ? "kcat " : start))
-      .replace(/\b(in|to) catalog units\b/g, "$1 the catalog's units")
+      .replace(/\b(in|to) catalog units\b/g, "$1 the catalog’s units")
       .replace(/\b(\d(?:\.\d+)?)e([+-])(\d{2,3})\b/g, (_m, digits, sign, power) => `${digits} × 10^${sign === "-" ? "-" : ""}${Number(power)}`)
       .replace(/\^\{([−-]?\d+)\.\}/g, "^{$1}")
       .replace(CONVERSION_LONG_DECIMAL, conversionRounded);
@@ -2030,9 +2040,9 @@
 
   function versionWords(text) {
     return String(text)
-      .replace(/\b([Tt]he) CatLog v1 (entry|entries)\b/g, "$1 earlier version's $2")
+      .replace(/\b([Tt]he) CatLog v1 (entry|entries)\b/g, "$1 earlier version’s $2")
       .replace(/\b([Aa]n?) CatLog v1 entry\b/g, (match, article) => `${article[0] === "A" ? "An" : "an"} entry from the earlier version`)
-      .replace(/\bCatLog v1 (entry|entries)\b/g, "the earlier version's $1")
+      .replace(/\bCatLog v1 (entry|entries)\b/g, "the earlier version’s $1")
       .replace(/\b([Aa]) CatLog v2 entry\b/g, "$1 record read from the paper")
       .replace(/\b(?:[Tt]he )?CatLog v2 entries\b/g, "records read from the paper")
       .replace(/\bCatLog v[12]\b/g, "CatLog");
@@ -2054,7 +2064,7 @@
     return note || (mark?.checked
       ? (accepted
           ? humanCheckedRecordSentence(row, mark)
-          : "A human reviewer approved these values; the record's status comes from the automated review.")
+          : "A human reviewer approved these values; the record’s status comes from the automated review.")
       : "");
   }
 
@@ -2172,7 +2182,7 @@
     if (summary.verification_status === "verified" && method.startsWith(v2Method)) return v2MethodSentence();
     if (String(detail.accepted_basis || summary.accepted_basis || "").trim() === "human review"
       && (summary._recordState || recordStateForRow(summary)) === "accepted") {
-      return "Accepted on a human reviewer's approval (human-checked); the earlier automated review had not accepted it.";
+      return "Accepted on a human reviewer’s approval (human-checked); the earlier automated review had not accepted it.";
     }
     if (isIdentityOnlyAccepted(summary)) {
       return "Accepted as listed by the source database; no paper is cited, so the value cannot be traced to a paper.";
@@ -2213,7 +2223,7 @@
     // Under the review rules a human-checked record may be accepted for that approval alone (the table does not say
     // which), so its title does not name the earlier review.
     const acceptedHow = checked && !fromPaper && row.verification_status === "verified" && humanAcceptedCount()
-      ? "Accepted as printed by the earlier automated review, or on a human reviewer's approval."
+      ? "Accepted as printed by the earlier automated review, or on a human reviewer’s approval."
       : reviewStatuses.find((item) => item.value === row.verification_status)?.description;
     const description = fromPaper
       ? v2Sentence
@@ -2235,7 +2245,7 @@
     // A record read by CatLog is human-checked for the same values of the same paper, enzyme, substrate and variant in
     // the review of the earlier version's entries.
     const fullDescription = checked
-      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version's entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
+      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version’s entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${tag === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(tag)}</span>`).join("")
@@ -3525,7 +3535,8 @@
   // Export results: the filtered records as CSV (all of them, or this page) built here from the loaded index, or this
   // page as JSON, each record as Download record saves it (publicRecordObject, from the records' detail files). The CSV
   // keeps the stored digits, the catalog units and the words the table shows.
-  const DOWNLOAD_PAGE_LABEL = "<strong>This page (JSON)</strong><span>Each record on this page as Download record saves it</span>";
+  // (each item as the Download menu's: its name, what it holds, then its format on a muted line of its own; round 15 polish)
+  const DOWNLOAD_PAGE_LABEL = "<strong>This page in full</strong><span>Each record as Download record saves it\nJSON</span>";
   // Plain-text unit for a file: s^(-1)*mM^(-1) -> s^-1 mM^-1.
   function plainUnit(value) {
     return String(value || "").replace(/\^\(([−-]?\d+(?:\.\d+)?)\)/g, "^$1").replace(/\*/g, " ").trim();
@@ -3622,7 +3633,8 @@
     }
   }
 
-  // The export choices follow the results: "All N matching records (CSV)", each disabled when it has nothing to give.
+  // The export choices follow the results: "All N matching records" (its format, CSV, on the line under it), each
+  // disabled when it has nothing to give.
   function syncExportControls(pageRows = currentPageRows()) {
     const count = state.filtered.length;
     const all = $("exportAllCsvButton");
@@ -3631,8 +3643,8 @@
       const label = $("exportAllCsvLabel");
       if (label && label.textContent !== "Preparing…") {
         label.textContent = state.recordsReady
-          ? `All ${formatInteger(count)} matching ${count === 1 ? "record" : "records"} (CSV)`
-          : "All matching records (CSV)";
+          ? `All ${formatInteger(count)} matching ${count === 1 ? "record" : "records"}`
+          : "All matching records";
       }
     }
     if ($("exportPageCsvButton")) $("exportPageCsvButton").disabled = !pageRows.length;
@@ -4681,7 +4693,7 @@
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
       caption: "One curve per enzyme class, scaled to its peak, with the median (dot) and middle 80% (line).",
-      rules: `${marks ? `${marks} ` : ""}Curves run through ${binWord} bins; n is the class's number of values. A record in several classes counts in each. The end bins hold every value beyond them, so the curve leaves them out (their counts are in the tooltip). Values without a recorded unit, or in another unit, are left out.`,
+      rules: `${marks ? `${marks} ` : ""}Curves run through ${binWord} bins; n is the class’s number of values. A record in several classes counts in each. The end bins hold every value beyond them, so the curve leaves them out (their counts are in the tooltip). Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
@@ -4847,7 +4859,7 @@
         <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classTable}</div>
       </div>`,
       caption: metricWordsHtml(escapeHtml("Records read from the paper with both kcat and Km; numbered dots are class medians.")),
-      rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns hold every value beyond them. kcat ÷ Km is each record's own kcat over its Km. A record in several classes counts in each. Values without a recorded unit, or in another unit, are left out.",
+      rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns hold every value beyond them. kcat ÷ Km is each record’s own kcat over its Km. A record in several classes counts in each. Values without a recorded unit, or in another unit, are left out.",
     };
   }
 
@@ -4918,7 +4930,7 @@
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
       // (no claim about which residues: no field marks a residue as catalytic)
-      caption: "Each variant read from the paper against its paper's wild type; papers choose which residues to change, so these are not a random sample of mutations.",
+      caption: "Each variant read from the paper against its paper’s wild type; papers choose which residues to change, so these are not a random sample of mutations.",
       rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? ` (${statsListText(left)} are left out)` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way and the end bars hold the rest. Values without a recorded unit, or in another unit, are left out.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
@@ -5076,7 +5088,7 @@
             <table class="stats-table stats-subs-top"><thead><tr><th scope="col">Substitution</th><th scope="col" class="stats-num">Variants</th><th scope="col" class="stats-num">Share</th></tr></thead><tbody>${topRows}</tbody></table></div>
         </div>`,
       caption: "Variants read from the paper with one substitution, by wild-type residue (rows) and new residue (columns).",
-      rules: "A variant is one paper's mutation of one enzyme and counts once, whatever its substrates. Only substitutions written as a residue, its position and another residue (H57A) are counted.",
+      rules: "A variant is one paper’s mutation of one enzyme and counts once, whatever its substrates. Only substitutions written as a residue, its position and another residue (H57A) are counted.",
     };
   }
 
@@ -5129,7 +5141,7 @@
     return {
       id: "statsUnitsTitle", key: "printed-units", title: "Units as printed", kind: "Table", body,
       caption: "Values read from the paper by the unit printed with them; code converts each to the unit stored.",
-      rules: "A power of ten in the unit (× 10³ s⁻¹) is set aside, and a lower-case m printed alone is read as molar. Other is a unit not read as one of these. Shares are of each parameter's values.",
+      rules: "A power of ten in the unit (× 10³ s⁻¹) is set aside, and a lower-case m printed alone is read as molar. Other is a unit not read as one of these. Shares are of each parameter’s values.",
     };
   }
 
@@ -5154,7 +5166,7 @@
       body: statsBarChart({ key: "db-classes", rows, legend: STATS_DATABASE_RESULTS.map((result) => ({ part: result.part, label: escapeHtml(result.label) })),
         percent: true, axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"] }),
       caption: "Values read from the paper by enzyme class and result against the databases.",
-      rules: `A record in several classes counts in each. Each bar is its class's compared values; the tooltip gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
+      rules: `A record in several classes counts in each. Each bar is its class’s compared values; the tooltip gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
     };
   }
 
@@ -5425,7 +5437,7 @@
   // The parts are said only when each is a whole count and they add up to the values that differ. Null without the match.
   const V2_DIFFER_PARTS = [
     ["differ_same_value_other_name", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} the same value under another name`],
-    ["differ_catlog_right", (n) => `${formatInteger(n)} ${n === 1 ? "is a value" : "are values"} the paper supports as CatLog reads ${n === 1 ? "it" : "them"} (the earlier entry's number or label was wrong)`],
+    ["differ_catlog_right", (n) => `${formatInteger(n)} ${n === 1 ? "is a value" : "are values"} the paper supports as CatLog reads ${n === 1 ? "it" : "them"} (the earlier entry’s number or label was wrong)`],
     ["differ_rounding", (n) => `${formatInteger(n)} ${n === 1 ? "differs" : "differ"} by rounding`],
     ["differ_not_comparable", (n) => `${formatInteger(n)} cannot be compared`],
     ["differ_not_adjudicated", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} not yet checked`],
@@ -5599,7 +5611,7 @@
     const match = v2MatchFacts(overview?.quality || {});
     if (!match) return null;
     const checks = v2DifferChecks(match);
-    const kinds = [["differ_same_value_other_name", "Same value, another name"], ["differ_catlog_right", "The paper supports CatLog's value"],
+    const kinds = [["differ_same_value_other_name", "Same value, another name"], ["differ_catlog_right", "The paper supports CatLog’s value"],
       ["differ_rounding", "Rounding"]];
     const items = [{ value: "same", label: "Same value", count: match.same },
       ...(checks ? [...kinds.filter(([key]) => match.breakdown[key]).map(([key, label]) => ({ value: key, label, count: match.breakdown[key] })),
@@ -5610,7 +5622,7 @@
           ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", note: "Among those not the same.", count: match.wrong, sub: true }] : [])]),
     ];
     return { id: "statsReviewMatchTitle", key: "review-match", title: "Approved values read from the paper again", kind: "Table",
-      body: statsTable(items, match.approved, { scale: match.approved, head: "CatLog's value", countHead: "Values" }),
+      body: statsTable(items, match.approved, { scale: match.approved, head: "CatLog’s value", countHead: "Values" }),
       // (re-read is kept whole by the page's own pass over Stats, keepReRead)
       caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved, where CatLog has re-read the paper${match.papers !== null ? ` (${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"})` : ""}.`) };
   }
@@ -5657,8 +5669,8 @@
     return [
       asOf ? `Counted ${asOf}.` : "",
       review ? "From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict." : "",
-      review ? `No value disputed: no reviewer disputed the entry's ${REVIEW_VALUES} number or unit.` : "",
-      review && review.notFound !== null ? "Could not find the value: the reviewer could not find the entry's value in the paper (one kind of other disagreement)." : "",
+      review ? `No value disputed: no reviewer disputed the entry’s ${REVIEW_VALUES} number or unit.` : "",
+      review && review.notFound !== null ? "Could not find the value: the reviewer could not find the entry’s value in the paper (one kind of other disagreement)." : "",
       review && review.missing !== null ? "Values missing: the reviewer says the paper prints a value the entry lacks." : "",
       match ? "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection." : "",
       match ? "The same value: the same paper, metric, protein, variant and substrate, and a value within 2%." : "",
@@ -5716,12 +5728,12 @@
   // must have one (a unit test fails on one without).
   const DATABASE_CAUSE_FAMILIES = [
     { key: "unit", label: "Unit or scale",
-      title: "The database's number is the paper's in another unit or scale: the printed unit not converted, the table header's power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, the printed number taken in another unit, or a number off by an exact power of ten, 60 or 3,600.",
+      title: "The database’s number is the paper’s in another unit or scale: the printed unit not converted, the table header’s power of ten applied the wrong way or left out, µM and mM swapped, per minute or per hour not converted, the printed number taken in another unit, or a number off by an exact power of ten, 60 or 3,600.",
       causes: ["unit_not_converted", "header_scale_inverted", "header_scale_ignored", "uM_entered_as_mM", "mM_entered_as_uM",
         "time_unit", "power_of_ten", "printed_number_unit_not_applied", "time_factor"] },
     { key: "decimal", label: "Decimal slip", title: "A decimal point or exponent slip.", causes: ["decimal_or_exponent_slip"] },
     { key: "elsewhere", label: "Another number",
-      title: "A number from another cell of the table, a number the paper does not print, or a kcat/Km worked out from the database's own kcat and Km.",
+      title: "A number from another cell of the table, a number the paper does not print, or a kcat/Km worked out from the database’s own kcat and Km.",
       causes: ["value_from_other_row", "value_not_in_paper", "recomputed_ratio"] },
     { key: "misprint", label: "Unit misprinted", title: "A unit the paper misprints.", causes: ["paper_unit_misprint"] },
   ];
@@ -5730,7 +5742,7 @@
   // (round 14, the user: a short Guide: each way and reason is a table row, its label saying it, beside its count)
   const GUIDE_DB_FOUND_BY = [
     { key: "paper_check", label: "A separate AI check of the paper" },
-    { key: "factor_cross_checked", label: "An exact factor the paper's kcat ÷ Km agrees with" },
+    { key: "factor_cross_checked", label: "An exact factor the paper’s kcat ÷ Km agrees with" },
   ];
   const GUIDE_DB_NOT_LISTED = [
     { key: "ratio_only", label: "Only its kcat and Km are listed" },
@@ -5984,7 +5996,7 @@
     const heads = rows[0]?.shares || [];
     const share = (row, index) => escapeHtml(row.count < rateBase ? formatInteger(row.shares[index].count) : statsShare(row.shares[index].count, row.count));
     const name = (item) => `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(item.label)}`;
-    const caption = '<caption class="visually-hidden">Share of each row\'s values</caption>';
+    const caption = '<caption class="visually-hidden">Share of each row’s values</caption>';
     const wide = `<table class="stats-share-table stats-share-wide">${caption}`
       + `<thead><tr><td></td>${heads.map((item) => `<th scope="col">${name(item)}</th>`).join("")}</tr></thead>`
       + `<tbody>${rows.map((row) => `<tr><th scope="row">${row.label}</th>${heads.map((_item, index) => `<td>${share(row, index)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -6030,7 +6042,7 @@
     { part: "other-label", label: "Same, other label", kinds: ["same_number_other_label"],
       title: "The database lists this number for the paper under another substrate, variant or organism." },
     { part: "corrects", db: "corrects", label: "Corrects a value", kinds: ["corrected"],
-      title: "The database lists another number for this value; CatLog's value is the one the paper prints." },
+      title: "The database lists another number for this value; CatLog’s value is the one the paper prints." },
     { part: "differs", label: "Different number", kinds: ["differs", ...FACTOR_ONLY_STATUSES, "other_number", "another_measurement"],
       title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
     // One database's own words (it lists ...), never the Why not listed labels (the Guide, Browse), which say what all
@@ -6057,7 +6069,7 @@
   const STATS_CODE_CAUSES = ["power_of_ten", "time_factor", "printed_number_unit_not_applied"];
   const STATS_FOUND_BY = [
     { key: "paper_check", part: "corrects", label: "AI check of the paper", inline: "AI check of the paper", title: "A separate AI check read the paper and named the cause" },
-    { key: "code", part: "corrects-2", label: "Exact factor found automatically", title: "An automated check found the database's number is the paper's times an exact factor" },
+    { key: "code", part: "corrects-2", label: "Exact factor found automatically", title: "An automated check found the database’s number is the paper’s times an exact factor" },
   ];
 
   function statsDatabaseComparison() {
@@ -6240,9 +6252,9 @@
     // and the different numbers, with the caveat right after them, once on the page (the user, 2026-10-15). The other
     // results (Same, other label; Not in the databases) are Figure 7's, its legend linking each into Browse; how each
     // correction was found is Figure 8's.
-    const pairedText = paired ? `; a database lists a number for the same measurement for ${formatInteger(paired)} of them, and for ${rate ? qualityShare(same, paired) : formatInteger(same)} that number is the paper's` : "";
+    const pairedText = paired ? `; a database lists a number for the same measurement for ${formatInteger(paired)} of them, and for ${rate ? qualityShare(same, paired) : formatInteger(same)} that number is the paper’s` : "";
     const changed = [
-      corrects ? link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database's number`, "corrects", corrects) : "",
+      corrects ? link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database’s number`, "corrects", corrects) : "",
       differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}, cause not yet known`, "differs", differs)}${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "",
     ].filter(Boolean);
     const sentences = [
@@ -6522,7 +6534,7 @@
       id: "statsDbFoundTitle", key: "db-found", title: split ? "Corrections by cause and how found" : "Corrections by cause",
       body: statsBarChart({ key: "db-found", rows, scale: max, step, axis: statsAxis(max, step),
         legend: split ? STATS_FOUND_BY.map((level) => ({ part: level.part, label: `<span title="${escapeHtml(level.title)}">${escapeHtml(level.label)}</span>` })) : [] }),
-      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database's number, each counted once.`,
+      caption: `The ${formatInteger(found.total)} ${found.total === 1 ? "value that corrects" : "values that correct"} a database’s number, each counted once.`,
       rules: notes,
     };
   }
@@ -6613,7 +6625,7 @@
       body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       caption: own
         // (what was changed, by kind, never "to the paper's number": a changed kcat/Km is often kcat ÷ Km, round 14)
-        ? `Changes CatLog's earlier version made to values on the ${recordsLink} that ${records === 1 ? "lists them" : "list them"}, by kind.`
+        ? `Changes CatLog’s earlier version made to values on the ${recordsLink} that ${records === 1 ? "lists them" : "list them"}, by kind.`
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
           ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
           : `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
@@ -6633,7 +6645,7 @@
       if (pair[1]) groups.push([key, html, label, [pair[0], pair[1] - pair[0]]]);
     }
     if (!groups.length) return null;
-    const names = [["same", "Same number in CatLog's reading"], ["differs", "Not found by CatLog"]];
+    const names = [["same", "Same number in CatLog’s reading"], ["differs", "Not found by CatLog"]];
     const rows = statsPercentRows(groups, (values) => names.map(([part, label], index) => ({ part, label, count: values[index] })));
     const accepted = statsCount(data.accepted, records);
     const papers = statsCount(data.papers);
@@ -6889,7 +6901,7 @@
       .filter(([, count]) => count > 0);
     // Accepted is split in the rows under it (the sentence is the row's title, for a copy of the numbers in words): read
     // from the paper, then not yet re-read as printed, after a correction or on a human reviewer's approval.
-    const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} on a human reviewer's approval` : "";
+    const afterHuman = humanAccepted ? `, ${formatInteger(humanAccepted)} on a human reviewer’s approval` : "";
     const acceptedNote = fromPaperAccepted !== null
       ? `${formatInteger(fromPaperAccepted)} read from the paper; ${formatInteger(accepted - fromPaperAccepted)} not yet re-read (${formatInteger((counts.verified || 0) - fromPaperAccepted - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}).`
       : `${formatInteger((counts.verified || 0) - humanAccepted)} as printed, ${formatInteger(counts.corrected || 0)} after a correction${afterHuman}.`;
@@ -7108,7 +7120,7 @@
     ];
     const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
-      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Each record's enzyme form, as Browse tags it." } : null;
+      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Each record’s enzyme form, as Browse tags it." } : null;
     // In the supplement: the two figures of records read from the paper, the papers by parameter and the fields; the
     // forms (wild type and variants) stand with the variants, under Organisms, enzymes and variants.
     toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsTable);
@@ -7304,12 +7316,12 @@
     const reviewRules = reviewRulesText(overview);
     const ruleRow = (term, html) => `<div><dt>${term}</dt><dd>${html}</dd></div>`;
     sections.push(`<details class="stats-explanation stats-method"><summary>How these numbers are counted</summary><dl>
-        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Counted from ${statsListText(["this snapshot's Full data download", overview ? "the human-review results" : "", audit ? "the AI audit records" : ""].filter(Boolean))}.`))}
+        ${ruleRow("Snapshot", escapeHtml(`${snapshot ? `${snapshot}. ` : ""}Counted from ${statsListText(["this snapshot’s Full data download", overview ? "the human-review results" : "", audit ? "the AI audit records" : ""].filter(Boolean))}.`))}
         ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
         ${ruleRow("Names", "Enzymes, organisms and substrates count distinct names, ignoring capitals and \"Unknown\". EC numbers are complete four-part numbers.")}
         ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).`)}
-        ${ruleRow("Main source", "Where a record came from: CatLog's reading of the paper, one database or several merged into one record.")}
+        ${ruleRow("Main source", "Where a record came from: CatLog’s reading of the paper, one database or several merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
@@ -7593,7 +7605,7 @@
     // accent means "you can act on this"); the chevrons show which way it runs.
     const [, , width, height] = layout.viewBox.split(" ");
     // Named by aria-label, not a <title>, which browsers show as a tooltip over the whole drawing.
-    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog's loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; AI critique feeds the rules, and the catalog feeds the website and the paper.">
+    return `<svg class="team-loop team-loop-${layoutKey}" viewBox="${layout.viewBox}" width="${width}" height="${height}" role="group" aria-label="CatLog’s loop: cited papers, AI reading, a separate AI check, AI audit, human check, rules updated and back to cited papers; AI critique feeds the rules, and the catalog feeds the website and the paper.">
       <path id="${trackId}" class="team-track" d="${layout.track}"/>
       ${arrows}${branches}${stations}${actors}
     </svg>`;
@@ -8200,7 +8212,7 @@
         })).join("");
       }
       if ($("aboutVariant")) {
-        $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant's mutation shows under the enzyme name.</p>
+        $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant’s mutation shows under the enzyme name.</p>
           <p id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records state neither.</span></p>`;
       }
       // Against the databases: each result's square and name (a nested option's name is read with its parent's), its
@@ -10632,7 +10644,7 @@
     uniprot_ec_organism_mutation_ranked_match: "UniProt accession inferred from EC, organism and variant",
     unresolved_ec_organism: "No sequence match from EC and organism",
     manual_literature_uniprot_resolution: "UniProt match from the cited paper",
-    manual_literature_structure_uniprot_resolution: "UniProt match from the cited paper's structure",
+    manual_literature_structure_uniprot_resolution: "UniProt match from the cited paper’s structure",
     uniprot_ec_organism_unique: "UniProt accession inferred from EC and organism",
     brenda_getsequence_unique_ec_organism: "UniProt accession inferred from BRENDA EC and organism",
     multiple: "Multiple sources",
@@ -10743,7 +10755,7 @@
       return "No sequence: the measured construct could not be matched to UniProt.";
     }
     if (/^UniProt canonical sequence shown: the sequence of this variant is not known\.?$/.test(text)) {
-      return "Wild-type sequence shown; the variant's own sequence is not known.";
+      return "Wild-type sequence shown; the variant’s own sequence is not known.";
     }
     if (/^UniProt canonical sequence shown: the measured construct could not be placed on it\.?$/.test(text)) {
       return "Full UniProt sequence shown; the measured construct could not be matched to it.";
@@ -10756,9 +10768,9 @@
     if (match) return `Measured construct: ${match[1]}`;
     // How the paper's residue numbers were matched, in fewer words.
     return text
-      .replace(/ \(the paper numbers the chain after the ([^:()]+): its residue 1 is UniProt residue (\d+)\)/, " (the paper's residue 1 is UniProt residue $2, after the $1)")
+      .replace(/ \(the paper numbers the chain after the ([^:()]+): its residue 1 is UniProt residue (\d+)\)/, " (the paper’s residue 1 is UniProt residue $2, after the $1)")
       .replace(/ \(the paper numbers residues as PDB (\S+) chain (\S+)\)/, " (numbered as in PDB $1 chain $2)")
-      .replace(/ \(positions matched through the paper's printed mutagenesis primers\)/, " (positions found from the paper's primers)");
+      .replace(/ \(positions matched through the paper's printed mutagenesis primers\)/, " (positions found from the paper’s primers)");
   }
 
   function identityResolutionLabel(row) {
@@ -10773,7 +10785,7 @@
   // the entry is simply the one the source names, or the source is a lookup trace.
   const uniprotHowTexts = {
     manual_literature_uniprot_resolution: "from the cited paper",
-    manual_literature_structure_uniprot_resolution: "from the cited paper's structure",
+    manual_literature_structure_uniprot_resolution: "from the cited paper’s structure",
     source_record: "from the source database",
     multiple: "from several sources",
     uniprot_accession_inactive_uniparc: "entry now in the UniParc archive",
@@ -11250,7 +11262,7 @@
         if (consistent && KCAT_KM_FLAGS.has(flag)) {
           const { check } = consistent;
           text = `The stored kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}) is `
-            + `${check.foldText} ${check.direction} kcat ÷ Km (${check.quotientText} ${check.unit}). The source's own kcat/Km, `
+            + `${check.foldText} ${check.direction} kcat ÷ Km (${check.quotientText} ${check.unit}). The source’s own kcat/Km, `
             + `${listedValueText(consistent.value)} ${check.unit}${summary.kcat_over_km_source_differs || detail.kcat_over_km_source_differs ? " (listed above)" : ""}, `
             + "agrees with kcat ÷ Km and is shown above."
             + (check.factor ? ` ${check.factor[1]}` : "");
@@ -11434,7 +11446,7 @@
           : `The paper prints ${printed}; CatLog uses ${used}, the unit in which the printed kcat/Km agrees with kcat ÷ Km.`;
       } else if (confirmed) {
         text = `The paper prints ${printed}; CatLog uses ${used}, the unit in which kcat ÷ Km (${check.quotientText} ${check.unit}) `
-          + `agrees with the paper's kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}).`;
+          + `agrees with the paper’s kcat/Km (${numberText(metricDisplay(summary, "kcat_over_km"))} ${check.unit}).`;
       } else {
         const verb = /converted by code/.test(fact.conversion) ? "uses" : "stores";
         text = `The paper prints ${printed}; CatLog ${verb} ${used}, ${foldWords(power)} apart, and kcat ÷ Km cannot show which is right.`;
@@ -11886,12 +11898,12 @@
   // says "Not stated in the paper", a database record "Not recorded"; a value a flag holds back says why, with what the
   // source's note gives ("Not shown, the source's temperature unit is unclear (source note: 30 °C)").
   const conditionFlagReasons = {
-    temperature_unit_needs_check: "the source's temperature unit is unclear",
-    temperature_value_needs_check: "the source's value is questionable",
-    temperature_invalid: "the source's value is not usable",
+    temperature_unit_needs_check: "the source’s temperature unit is unclear",
+    temperature_value_needs_check: "the source’s value is questionable",
+    temperature_invalid: "the source’s value is not usable",
     temperature_zero_celsius_needs_check: "recorded as exactly 0 °C, which may mean none was given",
-    ph_outside_0_14: "the source's value is outside 0–14",
-    ph_invalid: "the source's value is not usable",
+    ph_outside_0_14: "the source’s value is outside 0–14",
+    ph_invalid: "the source’s value is not usable",
   };
 
   function sourceNoteTemperatures(detail) {
@@ -12269,7 +12281,7 @@
     return sourceFilters.filter((item) => bits & item.bit).map((item) => item.name || item.label).join(", ");
   }
 
-  // A record's source as both exports name it (the "source" of Export results' CSV, This page (JSON) and Download
+  // A record's source as both exports name it (the "source" of Export results' CSV, This page in full (JSON) and Download
   // record): "CatLog (read from the paper)" for a record read from the paper by CatLog, otherwise its databases by name,
   // as the record's Source line says ("BRENDA, SABIO-RK", "Open Enzyme Database (OED)").
   function exportSourceName(row, detail = {}, v2Record = isV2Row(row)) {
@@ -12457,7 +12469,7 @@
   // One licence line: CatLog's own compilation for a CatLog v2 record, otherwise the source database's terms. A source
   // that names no licence reads as the Guide's list says it ("see the source's terms"); a record with no recorded source
   // has no source to point to.
-  const SOURCE_TERMS_TEXT = "see the source's terms";
+  const SOURCE_TERMS_TEXT = "see the source’s terms";
   function detailLicense(summary, detail, v2Record) {
     if (v2Record) return "CC BY 4.0 (CatLog compilation)";
     const license = String(sourceLicense(summary, detail) || "").trim();
@@ -12557,8 +12569,8 @@
   // The fixed cause codes (CatLog's contribution report; database_cause) in words; a phrase is shown as given, and a code
   // with no wording here is not shown (never a raw code with its underscores turned into spaces).
   const DATABASE_CAUSES = {
-    header_scale_inverted: "the table header's power of ten applied the wrong way",
-    header_scale_ignored: "the table header's power of ten left out",
+    header_scale_inverted: "the table header’s power of ten applied the wrong way",
+    header_scale_ignored: "the table header’s power of ten left out",
     unit_not_converted: "the printed unit not converted",
     uM_entered_as_mM: "a µM value entered as mM",
     mM_entered_as_uM: "an mM value entered as µM",
@@ -12568,7 +12580,7 @@
     value_from_other_row: "a value from another cell of the table",
     value_not_in_paper: "a value the paper does not print",
     paper_unit_misprint: "a unit the paper misprints",
-    recomputed_ratio: "kcat/Km worked out from the database's own kcat and Km",
+    recomputed_ratio: "kcat/Km worked out from the database’s own kcat and Km",
     different_measurement: "a different measurement",
     // Found by code (an exact factor between the two numbers).
     power_of_ten: "off by an exact power of ten",
@@ -12581,9 +12593,9 @@
   // (The header's "not re-read" says that CatLog has not read the paper again yet.)
   // A label that claims nothing about the new values (round 14: a kcat/Km "changed to what the paper prints" was often
   // kcat ÷ Km, not the printed cell).
-  const EARLIER_CORRECTIONS_INTRO = "Changed by CatLog's earlier version:";
-  const EARLIER_ADDITIONS_INTRO = "CatLog's earlier version added these values from the paper; the source had none.";
-  const DATABASE_VALUES_NOTE = "Not yet checked; the values are the database's.";
+  const EARLIER_CORRECTIONS_INTRO = "Changed by CatLog’s earlier version:";
+  const EARLIER_ADDITIONS_INTRO = "CatLog’s earlier version added these values from the paper; the source had none.";
+  const DATABASE_VALUES_NOTE = "Not yet checked; the values are the database’s.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
   // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
   // option's words): the options a record matches, by its values' results (the filter keys above) or its earlier
@@ -13259,7 +13271,7 @@
           && isCorrectionNumber(item.before) && isCorrectionNumber(item.after) && Number(item.after) !== 0
           ? databaseFactorText(Number(item.before) / Number(item.after))
           : "";
-        const before = !hasBefore ? "" : `Before: ${item.listed ? `as ${databaseDisplayName(item.listed)} lists it for this paper` : "the earlier version's value"}${factor ? ` (${factor})` : ""}`;
+        const before = !hasBefore ? "" : `Before: ${item.listed ? `as ${databaseDisplayName(item.listed)} lists it for this paper` : "the earlier version’s value"}${factor ? ` (${factor})` : ""}`;
         return comparisonItemHtml(item.name, pairHtml(correctionPair(item)),
           changeHtml(item)
           + (before ? `<small class="cmp-before">${escapePublic(before)}</small>` : "")
@@ -13389,7 +13401,7 @@
   // version, not from the database its entry names, so its Source line never names a database as the source of values
   // the same record says it never had (the user, 2026-10-15). False for a record read from the paper, one with no
   // kinetic correction, or one with a value a database had; a kcat/Km CatLog calculated is not a value to account for.
-  const EARLIER_VALUES_FROM_PAPER = "The paper (read by CatLog's earlier version)";
+  const EARLIER_VALUES_FROM_PAPER = "The paper (read by CatLog’s earlier version)";
   function earlierValuesAdded(summary, detail, { v2Record = isV2Row(summary) } = {}) {
     if (v2Record) return false;
     const shown = ["kcat", "km", "kcat_over_km"].filter((field) => metricHasValue(summary, field)

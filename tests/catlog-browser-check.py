@@ -2624,11 +2624,11 @@ def check_filters(driver, browser, url, route_label):
         assert set(pattern["boxes"]) == {pattern["accent"]} and pattern["titleDots"] == 0, pattern
         definitions = ("Every compared value is the number a database lists for it.",
                        "A database lists this number for the paper under another substrate, variant or organism.",
-                       "A database lists another number; CatLog's is the paper's",
+                       "A database lists another number; CatLog’s is the paper’s",
                        "A database lists another number and the cause is not yet known;",
                        "No compared database lists this value for this paper;",
                        "No compared database lists any value of the record.",
-                       "Records not yet re-read whose values CatLog's earlier version changed")
+                       "Records not yet re-read whose values CatLog’s earlier version changed")
         assert all(row["title"].startswith(text) for row, text in zip(rows, definitions)), rows
         # The counts at rest are the manifest's keys; the titles add its values and records.
         kinds, records = comparison.get("records_with_kind") or {}, comparison.get("records") or {}
@@ -4784,7 +4784,7 @@ def check_record_panel(driver, browser, url, route_label):
                             (panel["status"], panel["databasesText"])
                 if kind == "database-pending":
                     assert panel["status"].startswith("Not confirmed"), panel["status"]
-                    assert panel["paperCheck"] == "Not yet checked; the values are the database's.", panel["paperCheck"]
+                    assert panel["paperCheck"] == "Not yet checked; the values are the database’s.", panel["paperCheck"]
                 if kind == "from-paper":
                     assert panel["paperCheck"] is None, panel["paperCheck"]
                 if kind == "from-paper":
@@ -5114,8 +5114,8 @@ DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different numb
                          "Not in the databases")
 DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
 # (A record whose every value the earlier version added says so instead: "... added these values from the paper; ...".)
-EARLIER_CORRECTIONS_INTRO = ("Changed by CatLog's earlier version:",
-                             "CatLog's earlier version added these values from the paper; the source had none.")
+EARLIER_CORRECTIONS_INTRO = ("Changed by CatLog’s earlier version:",
+                             "CatLog’s earlier version added these values from the paper; the source had none.")
 DATABASE_SECTION_STATE = """
     const strip = (text) => (text || '').trim();
     const section = document.querySelector('#detailContent .databases-section');
@@ -5380,7 +5380,7 @@ def check_record_databases(driver, browser, base, wait):
             assert ["0.5467 mM⁻¹ s⁻¹", "As stored: 0.546667"] in state["stored"], state["stored"]
             # A database is named for the value before only when its number is that value (catlog-v2 export_site._listed,
             # 2026-10-14): a rounding correction whose database lists the corrected number reads as the earlier version's value.
-            assert any(re.match(r"Before: (as \S.* lists it for this paper|the earlier version's value)", x) for x in state["before"]), state["before"]
+            assert any(re.match(r"Before: (as \S.* lists it for this paper|the earlier version’s value)", x) for x in state["before"]), state["before"]
             assert state["sideways"] <= 1, f"The earlier corrections scroll sideways at {width}px"
             results[f"databases-earlier-{label}"] = True
     # The longest result wraps inside its note: the record never scrolls sideways on a 320 or 375px phone, and no result
@@ -5895,7 +5895,7 @@ def check(driver, browser, url):
         return {text: row ? row.querySelector('dd').textContent : null,
                 ids: (document.getElementById('statsView').textContent.match(/Data ID/g) || []).length};
     """)
-    assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Counted from this snapshot's Full data download",
+    assert provenance["ids"] == 1 and re.search(r"Data ID [0-9a-f]{10}\. Counted from this snapshot’s Full data download",
                                                 provenance["text"] or ""), provenance
     # Paper and PDF: the closed section prints open (its Data ID and rules), then closes again.
     printed = driver.execute_script("""

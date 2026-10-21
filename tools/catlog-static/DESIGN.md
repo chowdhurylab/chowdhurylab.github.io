@@ -178,7 +178,9 @@ results; measurement coverage overlaps and must not form a stacked chart. The
 count beside Filters is shown only when it says more than the page range.
 
 Export results (a menu beside Sort, "Export" on phones, opening to the right)
-offers "All N matching records (CSV)", "This page (CSV)" and "This page (JSON)".
+offers "All N matching records", "This page" and "This page in full", each in the Download menu's pattern (round 15
+polish: the Export menu had put the format in the name): the name, what it holds, then its format, CSV or JSON, on a
+muted line of its own.
 The CSV is built in the page from the loaded index, a slice at a time: the
 table's columns with their units and stored digits (the pH too: every digit the record keeps, a trailing zero
 dropped, 7.25 never 7.3, as the table note and the record show it; formatPh), the condition note under the
@@ -1410,3 +1412,7 @@ Generated mockups guide layout only; their text is not a scientific source.
   column start at one x (Tags' had started 32px left of Against the databases'); the Reference's disclosures open with
   the muted + every other disclosure has; a Results cell with no count shows the dash the Units section says marks no
   value.
+- One apostrophe, the typographic ’: escapeHtml sets it for an apostrophe after a letter and before an English ending
+  (paper’s, CatLog’s, BRENDA’s, isn’t) in the page's own sentences and in the data's, as the Guide's text has it; a prime
+  in a chemical name (2'-deoxyguanosine, 3',5'-cyclic AMP, N,N'-...) and an address keep theirs (Browse's search reads ’
+  as '). The page's own strings use ’ at their source.

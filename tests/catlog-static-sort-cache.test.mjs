@@ -1333,7 +1333,7 @@ assert.equal(document.title, "Team | CatLog");
     }
     assert.equal((loop("wide").match(/class="team-arrow"/g) || []).length, 6);
     assert.equal((loop("narrow").match(/class="team-arrow"/g) || []).length, 5);
-    for (const layout of ["wide", "narrow"]) assert.match(loop(layout), /role="group" aria-label="CatLog's loop: [^"]*; AI critique feeds the rules, [^"]*"/);
+    for (const layout of ["wide", "narrow"]) assert.match(loop(layout), /role="group" aria-label="CatLog’s loop: [^"]*; AI critique feeds the rules, [^"]*"/);
   }
   // Supantha's line meets Rules updated; pointing at him also lights Cited papers, AI audit and the website.
   assert.match(team, /data-actor="supantha" data-stations="rules papers catlog website"/);
@@ -1363,7 +1363,7 @@ assert.equal(document.title, "Team | CatLog");
   // wrapped fact as one phrase; legend lines are toggle buttons, not bare focusable list items.
   const figureHtml = element("teamFigure").innerHTML;
   assert.doesNotMatch(figureHtml, /<title/);
-  assert.equal((figureHtml.match(/role="group" aria-label="CatLog's loop: /g) || []).length, 2);
+  assert.equal((figureHtml.match(/role="group" aria-label="CatLog’s loop: /g) || []).length, 2);
   if (numbers.catlog.length) assert.match(figureHtml, /aria-label="AI audit: [\d,]+ values re-checked"/);
   assert.doesNotMatch(figureHtml, /aria-label="CatLog: /, "no station named after the whole site");
   // On the upright loop a drawn line breaks at a space after 23 characters (16 in CatLog's, inside the lower arc), so no
@@ -1863,7 +1863,7 @@ function row(overrides = {}) {
   // user, 2026-10-15: "Do we need this???"): the snapshot, its Data ID and the rules are said once, at the end.
   assert.doesNotMatch(element("statsCharts").innerHTML, /stats-fig-data|Snapshot [A-Z][a-z]{2} \d/);
   assert.equal((element("statsCharts").innerHTML.match(/Data ID/g) || []).length, 1, "The Data ID is said once");
-  assert.match(methodHtml(), /^<details class="stats-explanation stats-method"><summary>How these numbers are counted<\/summary><dl>\s*<div><dt>Snapshot<\/dt><dd>[^<]*Data ID [0-9a-f]{10}\. Counted from this snapshot&#39;s Full data download\.<\/dd><\/div>/);
+  assert.match(methodHtml(), /^<details class="stats-explanation stats-method"><summary>How these numbers are counted<\/summary><dl>\s*<div><dt>Snapshot<\/dt><dd>[^<]*Data ID [0-9a-f]{10}\. Counted from this snapshot’s Full data download\.<\/dd><\/div>/);
   // Shares say what they are out of: all records only in the figures and tables that count all records (here Figure 1
   // and Table S1); elsewhere the bar's, row's or card's own total, or the total the caption names.
   assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figure 1 and Table S1 a share is of all records; elsewhere it is of its own bar, row or card, or of the total its caption names\. One decimal place; a share above 0 but below 0\.1% is written &lt;0\.1%\.<\/dd>/);
@@ -1951,7 +1951,7 @@ function row(overrides = {}) {
     assert.match(ruled, /title="A database record with no PMID or DOI, so it cannot be checked against a paper \(1 of them the earlier review had accepted\)\."/);
     assert.doesNotMatch(ruled, /records have no PMID or DOI linked, so their values cannot be traced/, "the Not reviewed row says it once");
     assert.doesNotMatch(ruled, /accepted records have no PMID/);
-    assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer&#39;s approval\./);
+    assert.match(ruled, /1 as printed, 1 after a correction, 1 on a human reviewer’s approval\./);
     assert.match(ruled, /data-part="accepted_human" data-count="1"/);
     runtimeManifest.summary.distributions = saved;
     api.renderStats();
@@ -2017,7 +2017,7 @@ function row(overrides = {}) {
   assert.match(element("statsContents").innerHTML, /<li><a href="#stats-supplement"><span class="stats-contents-number" aria-hidden="true">S<\/span> Supplementary figures and tables<\/a><\/li><\/ul>$/);
   assert.ok(api.STATS_SECTION_HASH.test("#stats-s12") && api.STATS_SECTION_HASH.test("#stats-table-s3") && !api.STATS_SECTION_HASH.test("#stats-S1"));
   // A figure's caption ends its figcaption; its own rules stand under its number at the end of the page.
-  assert.match(chart, /<strong>Table S4\.<\/strong> Each record's enzyme form, as Browse tags it\.<\/span><\/figcaption>/);
+  assert.match(chart, /<strong>Table S4\.<\/strong> Each record’s enzyme form, as Browse tags it\.<\/span><\/figcaption>/);
   assert.match(chart, /<strong>Table S5\.<\/strong> A caution marks a value that may be wrong; one record can carry several\.<\/span><\/figcaption>/);
   // Bar charts name their number columns above them instead of saying in the caption what each number is; a share
   // column says its base (% accepted: of the bar's own records), so Accepted heads only a count (Figure 5).
@@ -2032,7 +2032,7 @@ function row(overrides = {}) {
   assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figure 1 and Tables S1–S5 a share is of all records;/);
   // The numbers come from the snapshot's Full data download and, where the page has them, the human-review results and
   // the AI audit records (dated where they are shown).
-  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Counted from this snapshot&#39;s Full data download and the human-review results\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Counted from this snapshot’s Full data download and the human-review results\.<\/dd>/);
   // Figure 2: each record once under its main source, coloured by review result; only CatLog's own records are linked.
   assert.match(chart, /data-row="brenda" data-count="3"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]+"><span>3<\/span><\/span><span class="stats-value-part stats-muted" data-sizer="[^"]+"><span>0\.0%<\/span><\/span><\/span>/);
   assert.match(chart, /data-row="catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>/);
@@ -2048,7 +2048,7 @@ function row(overrides = {}) {
   assert.match(chart, /data-tip="Not yet re-read, Not confirmed: 1 \(25\.0%\)"/);
   // How these numbers are counted says what each means, the earlier version once, in its help.
   assert.match(chart, /<dt>Read from the paper<\/dt><dd>Records read from the paper by an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
-  assert.match(chart, /<dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>All other records: from CatLog&#39;s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\.<\/dd>/);
+  assert.match(chart, /<dt>Not yet <span class="nowrap">re-read<\/span><\/dt><dd>All other records: from CatLog’s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\.<\/dd>/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read on Stats is kept whole");
   assert.equal((chart.match(/earlier version/g) || []).length, 1, "the earlier version is named once on Stats");
   assert.match(chart, /BRENDA, Not confirmed: 1/);
@@ -2092,7 +2092,7 @@ function row(overrides = {}) {
   assert.match(leadHtml(), /In entries from the earlier version, 9 of 2,431 values reviewers compared had a wrong number or unit \(99\.6% correct\), and 114 had a wrong enzyme, organism, substrate, variant or protein label\./);
   assert.doesNotMatch(qualityChart, /data-check="review"|data-check="agreement"/);
   // With the audits shown, their records are named among the sources of the page's numbers.
-  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Counted from this snapshot&#39;s Full data download, the human-review results and the AI audit records\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Counted from this snapshot’s Full data download, the human-review results and the AI audit records\.<\/dd>/);
   // v2_found of v2_approved_total: the reviewers' approved values CatLog has, read from the paper again (a snapshot
   // without quality.agreement).
   assert.match(leadHtml(), /Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,160 of 2,380 \(90\.8%\)\. Of the other 220, none has been found to be a CatLog error\./);
@@ -2133,7 +2133,7 @@ function row(overrides = {}) {
   // (no second big number: At a glance gives the share, round 14)
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>/);
   // The other values, each kind counted (the user's sentence, 2026-10-15), only when the kinds add up to them.
-  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, 128 were checked: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry&#39;s number or label was wrong\) and 3 differ by rounding; none is a CatLog error\. 24 cannot be compared and 105 are still to check\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, 128 were checked: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\) and 3 differ by rounding; none is a CatLog error\. 24 cannot be compared and 105 are still to check\.<\/p>/);
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /data-check="agreement"/, "The match is the lead's, not repeated in the checks");
@@ -2190,8 +2190,8 @@ function row(overrides = {}) {
   // What the review counts is said once, under How these numbers are counted, not under the lead.
   assert.doesNotMatch(lead, /Counted|own files|stats-fig-data/);
   // Its definitions set kcat and Km in italic as everywhere else on the page.
-  assert.match(methodHtml(), /<dt>Human review<\/dt><dd>[^<]*no reviewer disputed the entry&#39;s <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or/);
-  assert.match(metricPlain(methodHtml()), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\. No value disputed: no reviewer disputed the entry&#39;s kcat, Km or kcat\/Km number or unit\. Could not find the value: the reviewer could not find the entry&#39;s value in the paper \(one kind of other disagreement\)\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Human review<\/dt><dd>[^<]*no reviewer disputed the entry’s <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or/);
+  assert.match(metricPlain(methodHtml()), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\. No value disputed: no reviewer disputed the entry’s kcat, Km or kcat\/Km number or unit\. Could not find the value: the reviewer could not find the entry’s value in the paper \(one kind of other disagreement\)\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
   assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
   // The checks: the second AI check, the AI audits and the human-checked records; the review and the match are the
   // lead's.
@@ -2331,7 +2331,7 @@ function row(overrides = {}) {
   // Two sentences (round 14: it ran to about 110 words and 5 links): what was compared and how often a paired number is
   // the paper's, then the corrections and the different numbers with the caveat right after them; the other results
   // are Figure 7's, its legend linking each.
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers; a database lists a number for the same measurement for 100,390 of them, and for 97.4% that number is the paper's. For the rest, 1,548 correct a database's number and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error.");
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers; a database lists a number for the same measurement for 100,390 of them, and for 97.4% that number is the paper’s. For the rest, 1,548 correct a database’s number and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error.");
   // The caveat is said once in part 7, here, never under each figure.
   assert.equal((databaseSection().match(/does not by itself mean a database is wrong|rather than a database error/g) || []).length, 1);
   // Browse lists records: each link's title says how many it opens.
@@ -2440,7 +2440,7 @@ function row(overrides = {}) {
   assert.match(found, /<span title="A decimal point or exponent slip\.">Decimal slip<\/span>/);
   // Its title names both splits; the caption says each value counts once (Table 9 counts one per database).
   assert.match(found, /<h3 id="statsDbFoundTitle" class="stats-fig-title">Corrections by cause and how found<\/h3>/);
-  assert.match(plain(found), /The 1,548 values that correct a database's number, each counted once\./);
+  assert.match(plain(found), /The 1,548 values that correct a database’s number, each counted once\./);
   // Corrections by cause and database: the families by database, All counting each value once; on phones a line each.
   const causes = figureHtml("db-causes");
   assert.match(plain(causes.match(/<thead>[\s\S]*?<\/thead>/)[0]), /^Cause ?BRENDA ?SABIO-RK ?OED ?SKiD ?STRENDA DB ?All$/);
@@ -2455,7 +2455,7 @@ function row(overrides = {}) {
   assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
   // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
   const earlier = figureHtml("earlier-corrections");
-  assert.match(plain(earlier), /Changes CatLog's earlier version made to values on the 2,881 records not yet re-read that list them, by kind\./);
+  assert.match(plain(earlier), /Changes CatLog’s earlier version made to values on the 2,881 records not yet re-read that list them, by kind\./);
   assert.doesNotMatch(plain(earlier), /to the paper's number|what the paper prints/);
   // Every part-7 caption is plain, and none repeats the caveat the lead says once.
   for (const caption of databaseSection().match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g)) assertPlainCaption(caption);
@@ -2577,13 +2577,13 @@ function row(overrides = {}) {
   // Figure 10 and the All column take them out of their causes (the per-database columns keep them, said in the rule).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    /For the rest, 1,291 correct a database's number and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\), which can mean a different measurement rather than a database error\./);
+    /For the rest, 1,291 correct a database’s number and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\), which can mean a different measurement rather than a database error\./);
   assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
     /^The figures below still count 257 exact-factor values not yet checked against the paper under Corrects\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1063], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
   assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found automatically: 635"/);
-  assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database's number, each counted once\./);
+  assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database’s number, each counted once\./);
   assert.match(methodHtml(), /Corrections by cause and database\.<\/span> 257 values a database lists at an exact factor, not yet checked against the paper, are Different number, left out of All; the columns per database still hold them\.<\/dd>/);
   // With the overview's split of those values by parameter and database (counted from the Full data), the figures and
   // tables count them under Different number too, as the lead does, and the note goes.
@@ -2597,7 +2597,7 @@ function row(overrides = {}) {
     assert.match(figureHtml("db-values"), /kcat, Corrects a value: 271\b/);
     assert.match(figureHtml("db-values"), /kcat, Different number: 326\b/);
     assert.match(figureHtml("db-paired"), /<td class="stats-num" data-count="956">[\s\S]*?956/);
-    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,291 correct a database's number/);
+    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,291 correct a database’s number/);
     // A split that does not add up to the comparison's count is not used: the note stays.
     runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 250, by_parameter: { Km: 250 }, by_database: {} } };
     withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
@@ -2607,14 +2607,14 @@ function row(overrides = {}) {
   // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
   // move and no note.
   withOut((data) => { data.values.kcat.differs_factor_only = 40; data.values.all.differs_factor_only = 40; data.values.all.differs += 0; });
-  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,548 correct a database's number and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\), which/);
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,548 correct a database’s number and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\), which/);
   assert.doesNotMatch(databaseSection(), /stats-part-note/);
   assert.match(figureHtml("db-values"), /kcat, Different number: 309 \(0\.7%\)"/);
   // Small counts: no shares on a base under 1,000 values, counts under the bars, singular words.
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper; a database lists a number for the same measurement for 6 of them, and for 4 that number is the paper's. For the rest, 1 corrects a database's number and 1 differs, cause not yet known, which can mean a different measurement rather than a database error.");
+    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper; a database lists a number for the same measurement for 6 of them, and for 4 that number is the paper’s. For the rest, 1 corrects a database’s number and 1 differs, cause not yet known, which can mean a different measurement rather than a database error.");
   assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
   runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
   api.renderStats();
@@ -2763,7 +2763,7 @@ function row(overrides = {}) {
     // counted say so, with the hatched stub where an end bin holds values, the bins and the end-bin rule (round 14: one
     // short caption).
     assert.match(more, /<li class="stats-ridge-row is-few stats-ec-1" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
-    assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Hatched stubs mark values beyond the curve\. A dashed curve has fewer than 300 values\. Curves run through half-decade bins; n is the class&#39;s number of values\. A record in several classes counts in each\. The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
+    assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Hatched stubs mark values beyond the curve\. A dashed curve has fewer than 300 values\. Curves run through half-decade bins; n is the class’s number of values\. A record in several classes counts in each\. The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
     // One short sentence: what is drawn.
     assert.match(more, /<strong>Figure S3\.<\/strong> One curve per enzyme class, scaled to its peak, with the median \(dot\) and middle 80% \(line\)\.<\/span>/);
     // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
@@ -2928,7 +2928,7 @@ function row(overrides = {}) {
     assert.match(folds.body, /data-tip="kcat 1\.3 times the wild type or more: 1 variant record \(25\.0%\)"/);
     assert.match(folds.body, /<p class="stats-range-count">4 variant records; /);
     assert.match(folds.rules, /^5 variant records from 2 papers\. A variant record is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature \(3 with several and 4 with none are left out\)\./);
-    assert.match(folds.caption, /^Each variant read from the paper against its paper's wild type; papers choose which residues to change, so these are not a random sample of mutations\.$/);
+    assert.match(folds.caption, /^Each variant read from the paper against its paper’s wild type; papers choose which residues to change, so these are not a random sample of mutations\.$/);
     assert.doesNotMatch(sourceCode, /catalytic residues/, "No field marks a residue as catalytic: the caption claims nothing about it");
     assert.doesNotMatch(folds.body + folds.rules, /\d variants?\b(?! record)/, "never a variant record counted as a variant");
     // An overview that counts the variants among the records (variant_count) pairs by the cosubstrate too, and says both.
@@ -3042,7 +3042,7 @@ function row(overrides = {}) {
     assert.deepEqual(supplementTitles(), ["Figure S1 Read from the paper and not yet re-read", "Figure S2 Papers by parameter",
       "Table S1 What the records contain", "Figure S3 Single substitutions", "Table S2 Most common organisms", "Table S3 Most common EC numbers",
       "Table S4 Wild type and variants", "Table S5 Kinds of variant", "Table S6 Units as printed", "Table S7 Cautions on values"]);
-    assert.match(methodHtml(), /<dt>Figure S3<\/dt><dd><span class="stats-method-title">Single substitutions\.<\/span> A variant is one paper&#39;s mutation of one enzyme/);
+    assert.match(methodHtml(), /<dt>Figure S3<\/dt><dd><span class="stats-method-title">Single substitutions\.<\/span> A variant is one paper’s mutation of one enzyme/);
     assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figure 1 and Tables S1–S4 and S7 a share is of all records;/);
     element("statsCharts").innerHTML.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g).forEach(assertPlainCaption);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
@@ -3273,9 +3273,9 @@ function row(overrides = {}) {
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
     api.setHumanReviewMarks({ approved: { checked: true } });
     // human-checked's rule (the user, 2026-10-13): every kcat and Km, and the kcat/Km approved too or agreeing with kcat ÷ Km.
-    assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or on a human reviewer&#39;s approval\. Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
+    assert.match(api.statusBadge(approved), /title="Accepted as printed by the earlier automated review, or on a human reviewer’s approval\. Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
     assert.equal(api.reviewOutcome(approved, { accepted_basis: "human review" }),
-      "Accepted on a human reviewer's approval (human-checked); the earlier automated review had not accepted it.");
+      "Accepted on a human reviewer’s approval (human-checked); the earlier automated review had not accepted it.");
     assert.equal(api.reviewOutcome(approved, {}), "Accepted as printed in the earlier automated review.");
     api.setHumanReviewMarks({});
     runtimeManifest.summary = savedSummary;
@@ -3565,7 +3565,7 @@ const flaggedHtml = measurementSection(row({
   condition_flags: ["kcat_over_km_quotient_mismatch"],
 }), {});
 assert.match(flaggedHtml, /<button class="value-flag" type="button" data-flag-note="detailFlagNote1"/);
-assert.match(plainNote(flaggedHtml), /<li id="detailFlagNote1"[^>]*>.*The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as listed\./);
+assert.match(plainNote(flaggedHtml), /<li id="detailFlagNote1"[^>]*>.*The source’s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km \(0\.027 mM-1 s-1\)\. All three are stored as listed\./);
 assert.match(flaggedHtml, /aria-label="kcat\/Km mismatch\. Show the note\."/);
 assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often means|check the unit/);
 // The table's "!" states the problem in its tooltip (no order to check), its short words on phones.
@@ -3573,7 +3573,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   const flagged = row({ kcat: 8.5, km: 320, kcat_over_km: 0.033, kcat_display: "8.5", km_display: "320", kcat_over_km_display: "0.033",
     condition_flags: ["kcat_over_km_quotient_mismatch"] });
   const marker = api.valueFlagBadgeHtml(api.conditionFlags(flagged), "kcat_over_km", flagged);
-  assert.match(marker, /title="The source&#39;s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km/);
+  assert.match(marker, /title="The source’s kcat\/Km \(0\.033 mM-1 s-1\) is 1\.2-fold above kcat ÷ Km/);
   assert.match(marker, /<span class="visually-hidden">kcat\/Km mismatch<\/span>/);
   assert.doesNotMatch(marker, /Check against source/);
 }
@@ -3587,7 +3587,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
     { metric: "kcat", raw_value: "10.7 ± 0.0", raw_unit: "s−1" },
     { metric: "kcat/Km", raw_value: "28.9", raw_unit: "mM−1 · s−1" },
   ] });
-  assert.ok(plainNote(html).includes("The paper&#39;s kcat/Km (28.9 mM⁻¹ s⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ mM⁻¹ s⁻¹). "
+  assert.ok(plainNote(html).includes("The paper’s kcat/Km (28.9 mM⁻¹ s⁻¹) is 1,001-fold below kcat ÷ Km (2.9 × 10⁴ mM⁻¹ s⁻¹). "
     + "The factor is near 1000, as between per mM and per M. "
     + "The printed numbers agree (10.7 ÷ 0.37 = 28.9) only if Km and kcat/Km share one concentration unit. "
     + "All three are stored as printed."), html);
@@ -3690,7 +3690,7 @@ const unitFlagHtml = measurementSection(row({
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
-assert.match(plainNote(unitFlagHtml), /The stored kcat\/Km \(6\.4 × 10⁴ mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
+assert.match(plainNote(unitFlagHtml), /The stored kcat\/Km \(6\.4 × 10⁴ mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source’s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
 // The pH as stored, every digit kept (record 185f13136893d1b4 stores 5.37 and prints 5.37; 913 records carry two decimals),
 // a trailing zero dropped: the table note, the record and the CSV export all use formatPh.
 assert.deepEqual(["5.37", "7.25", 7.35, "7.50", 7, "7.0", 6.125].map((ph) => api.formatPh({ ph_display: ph })), ["5.37", "7.25", "7.35", "7.5", "7", "7", "6.125"]);
@@ -3766,14 +3766,14 @@ const withheldMeasurementHtml = measurementSection(withheldConditions, {
 });
 // A flag on the temperature or pH is said on its row, never as a bare dash; the kinetic notes stay about the values.
 assert.ok(withheldMeasurementHtml.includes("<dt>Temperature</dt><dd>Not shown, recorded as exactly 0 °C, which may mean none was given</dd>"));
-assert.ok(withheldMeasurementHtml.includes("<dt>pH</dt><dd>Not shown, the source&#39;s value is outside 0–14</dd>"));
+assert.ok(withheldMeasurementHtml.includes("<dt>pH</dt><dd>Not shown, the source’s value is outside 0–14</dd>"));
 assert.doesNotMatch(withheldMeasurementHtml, /class="flag-notes"|<dd>—<\/dd>/);
 assert.doesNotMatch(withheldMeasurementHtml, /\(stored\)|null|undefined/);
 {
   // The source's note gives the temperature it printed; a record read from the paper says what the paper does not state.
   const unitFlag = measurementSection(row({ temperature_k: null, temperature_display: "n/a", condition_flags: ["temperature_unit_needs_check"] }),
     { proof_lines: ["pH 7.4, 30°C, recombinant mutant"] });
-  assert.ok(unitFlag.includes("<dt>Temperature</dt><dd>Not shown, the source&#39;s temperature unit is unclear (source note: 30 °C)</dd>"));
+  assert.ok(unitFlag.includes("<dt>Temperature</dt><dd>Not shown, the source’s temperature unit is unclear (source note: 30 °C)</dd>"));
   const v2Missing = measurementSection(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name",
     temperature_k: null, temperature_display: "n/a", ph: null, ph_display: null, substrate_name: "NADH" }),
   { verification_method: "catlog_v2_read_and_independent_verify",
@@ -3844,7 +3844,7 @@ const pageRecordsByKey = Object.fromEntries(
 assert.equal(pageRecordsByKey["page-mixed"].source_license, mixedSourceLicenses);
 assert.equal(pageRecordsByKey["page-summary-fallback"].source_license, "CC BY 4.0");
 assert.equal(pageRecordsByKey["page-empty-summary"].source_license, "CC BY-NC-ND 4.0");
-assert.equal(pageRecordsByKey["page-missing-license"].source_license, "See the source's terms", "the license as the record shows it");
+assert.equal(pageRecordsByKey["page-missing-license"].source_license, "See the source’s terms", "the license as the record shows it");
 // Each record is the flat object Download record saves: the record's words, no internal fields.
 for (const record of pagePayload.records) {
   assert.equal(record.review_result, "Accepted");
@@ -4127,7 +4127,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { value: 0.06027, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }, { value: 5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
   assert.match(plainNote(some), /BRENDA lists 2 kcat\/Km values for this record \(0\.060–5\.0 mM⁻¹ s⁻¹\); one of them agrees with kcat ÷ Km\./);
   // Without listed values in the catalog unit the flags keep their own notes.
-  assert.match(plainNote(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {})), /The source&#39;s kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above/);
+  assert.match(plainNote(measurementSection(older("bare", 4.1, 0.22, "46.067", both), {})), /The source’s kcat\/Km \(46\.1 mM⁻¹ s⁻¹\) is 2\.5-fold above/);
   // A familiar factor between kcat ÷ Km and the listed kcat/Km is named (e375ce185827beeb, 3dc72daa0a20580c).
   const thousand = measurementSection(older("thousand", 3.5, 64, "0.05469", ["kcat_over_km_source_mismatch"]),
     { source_kcat_over_km_values: [{ value: 55.5, unit: "s^(-1)*mM^(-1)", source_db: "brenda" }] });
@@ -4374,7 +4374,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     "kcat/Km 0.0469 s-1 mM-1 (converted by code from 4.69 × 10^1 s-1 M-1).");
   assert.equal(api.conversionFacts("kcat/Km 130 s-1 mM-1 (converted by code from 13 × 10^{4.}(s-1/M))."),
     "kcat/Km 130 s-1 mM-1 (converted by code from 13 × 10^{4}(s-1/M)).");
-  assert.equal(api.conversionFacts("Central values in catalog units are Km = 0.12 mM."), "Central values in the catalog's units are Km = 0.12 mM.");
+  assert.equal(api.conversionFacts("Central values in catalog units are Km = 0.12 mM."), "Central values in the catalog’s units are Km = 0.12 mM.");
   // A converted value the source calls canonical gets no tag; a printed 5.0 x 10^3 is a number, not a conversion.
   assert.equal(api.conversionFacts("Km: printed Table 2 cell 343.3 uM; 343.3 / 1000 = 0.3433 mM is the canonical paper value."),
     "Km: printed Table 2 cell 343.3 µM; 343.3 / 1000 = 0.3433 mM.");
@@ -4402,7 +4402,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   "|Where|TABLE 4 'Steady-state kinetic constants' · TABLE 4, substrate row NADH|Conversion|kcat/Km: the paper prints the kcat/Km cell 1490 s|−1| mM|−1| for this substrate row.|");
   assert.equal(note({ table_label: "ScienceDirect HTML Table 1, Kinetic properties of I. isl MalDH", row_label: "Pyruvate",
     normalized_value_unit_evidence: "kcat=8 s^-1. No Km was populated in the expected row, and Table 1 leaves Km blank for pyruvate." }),
-  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|−1|. The earlier version's entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
+  "|Where|Table 1, Kinetic properties of I. isl MalDH · Pyruvate|Conversion|kcat=8 s|−1|. The earlier version’s entry has no Km, and Table 1 leaves Km blank for pyruvate.|");
   assert.match(note({ table_label: "Official PMC full-text Table 1", row_label: "x", normalized_value_unit_evidence: "kcat/Km 81.3 s^-1 mM^-1; current_export_kcat_over_km=86.0 s^-1 mM^-1; current_export_km=1.21 mM; kcat_over_km 0.755 s^-1 mM^-1" }),
     /^\|Where\|Table 1 · x\|Conversion\|kcat\/Km 81\.3 .*; earlier kcat\/Km 86\.0 .*; earlier Km 1\.21 mM; kcat\/Km 0\.755 /);
   assert.match(note({ table_label: "PMID 17041055 PMC full text", row_label: "Sulfolobus tokodaii reductase", raw_value_unit_evidence: "Km 0.015 mM mM; normalized to 0.015 mM" }),
@@ -4467,10 +4467,10 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<dt>Values from<\/dt><dd>BRENDA, SABIO-RK, SKiD<\/dd>/);
   assert.match(html, /<summary>Database note<\/summary><div class="evidence-note-list"><p class="evidence-note-plain">liver mevalonate kinase<\/p><\/div>/);
   assert.doesNotMatch(html, /Note from|<dt>Databases<\/dt>/);
-  assert.match(html, /<dt>Name from<\/dt><dd>The EC list&#39;s accepted name<\/dd>/);
+  assert.match(html, /<dt>Name from<\/dt><dd>The EC list’s accepted name<\/dd>/);
   html = render({ source_db: "sabio_rk", enzyme_label_source: "explicit_enzyme_name" }, { source_databases_merged: ["sabio_rk", "brenda"] });
   assert.match(html, /<dt>Databases<\/dt><dd>BRENDA, SABIO-RK<\/dd>/, "a database the Source does not name");
-  assert.match(html, /<dt>Name from<\/dt><dd>The source database&#39;s entry<\/dd>/);
+  assert.match(html, /<dt>Name from<\/dt><dd>The source database’s entry<\/dd>/);
   html = render({ source_db: "skid", proof_kind: "source_note", has_proof_excerpt: false, temperature_display: "55", ph_display: "8.9" },
     { proof_lines: ["SKiD: 37°C, pH 8.9", "SKiD: 30°C, pH 7.0"] });
   assert.match(html, /<summary>Notes from SKiD<\/summary>/);
@@ -4650,7 +4650,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /<dt>Cause<\/dt>/);
   assert.equal((html.match(/a time unit taken for another/g) || []).length, 1);
   for (const [code, words] of [["power_of_ten", "off by an exact power of ten"], ["printed_number_unit_not_applied", "the printed number taken in another unit"],
-    ["time_factor", "off by exactly 60 or 3,600"], ["header_scale_inverted", "the table header&#39;s power of ten applied the wrong way"],
+    ["time_factor", "off by exactly 60 or 3,600"], ["header_scale_inverted", "the table header’s power of ten applied the wrong way"],
     ["time_unit", "a time unit taken for another \\(seconds, minutes or hours\\)"]]) {
     html = render(v2Summary, v2Detail([line("kcat", { database_status: "corrected", database_line: "OED lists 0.5 s⁻¹.", database_cause: code, database_sources: ["OED"] })]));
     assert.match(html, new RegExp(`<dt>Cause</dt><dd>${words}</dd>`), code);
@@ -4875,9 +4875,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
       const allAdded = { supporting_pmids: ["1"], corrections: [
         { field: "kcat", before: null, after: 0.35, unit: "s-1", kind: "added" }, { field: "km", before: null, after: 0.32, unit: "mM", kind: "added" },
         { field: "kcat_over_km", before: null, after: 1.09, unit: "mM-1 s-1", kind: "added" }, { field: "doi", before: null, after: "10.1/x", kind: "added" }] };
-      assert.match(render(correctedRecord, allAdded), /<dt>Values from<\/dt><dd>The paper \(read by CatLog&#39;s earlier version\)<\/dd><\/div><div class="kv-line"><dt>Database entry<\/dt><dd>Open Enzyme Database \(OED\); its entry had none of these values<\/dd>/);
+      assert.match(render(correctedRecord, allAdded), /<dt>Values from<\/dt><dd>The paper \(read by CatLog’s earlier version\)<\/dd><\/div><div class="kv-line"><dt>Database entry<\/dt><dd>Open Enzyme Database \(OED\); its entry had none of these values<\/dd>/);
       assert.match(render(correctedRecord, { ...allAdded, corrections: allAdded.corrections.slice(0, 2) }), /<dt>Values from<\/dt><dd>Open Enzyme Database \(OED\)<\/dd>/, "a kcat/Km with no correction: the database had it");
-      assert.match(render({ ...correctedRecord, kcat_over_km_origin: "calculated" }, { ...allAdded, corrections: allAdded.corrections.slice(0, 2) }), /<dt>Values from<\/dt><dd>The paper \(read by CatLog&#39;s earlier version\)<\/dd>/, "a calculated kcat/Km is not a value to account for");
+      assert.match(render({ ...correctedRecord, kcat_over_km_origin: "calculated" }, { ...allAdded, corrections: allAdded.corrections.slice(0, 2) }), /<dt>Values from<\/dt><dd>The paper \(read by CatLog’s earlier version\)<\/dd>/, "a calculated kcat/Km is not a value to account for");
       assert.doesNotMatch(render(correctedRecord, allAdded), /<dt>Database entry<\/dt>[\s\S]*<dt>Database entry<\/dt>/);
       indexRow("corrected-explore", 0);
       assert.equal(explore(render(correctedRecord, trail)), "", "an index without the earlier changes: no link");
@@ -4941,11 +4941,11 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const trail = sectionOf(html);
   // Headed as Browse's option names it: no database is compared on an earlier record.
   // (The header's "not re-read" says CatLog has not read the paper again yet.)
-  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">Changed by CatLog&#39;s earlier version:<\/p><dl class="detail-kv cmp-list">/);
+  assert.match(trail, /<h3 id="detail-databases-title">Corrected earlier<\/h3><p class="section-text cmp-intro">Changed by CatLog’s earlier version:<\/p><dl class="detail-kv cmp-list">/);
   assert.doesNotMatch(trail, /<table|Changed in the earlier automated review|cmp-footer|Compared with the values|section-about|detail-about|cmp-caution-line/, "an earlier correction trail compares nothing: no \"?\" box");
   // "Before: as STRENDA DB lists it for this paper" with the factor between the two numbers (the database's 1,000× higher).
   assert.match(trail, /<div class="kv-line cmp-item"><dt><i>K<\/i><sub>m<\/sub><\/dt><dd><span class="cmp-value">66 mM<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-magnitude" aria-hidden="true"><\/span><span>unit or magnitude<\/span><\/span><small class="cmp-before">Before: as STRENDA DB lists it for this paper \(1,000× higher\)<\/small><small class="cmp-where">In the paper: Table 2, row 12-hydroxydodecanoic acid: Km 66 µM<\/small><\/dd><\/div>/);
-  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: the earlier version&#39;s value<\/small>/);
+  assert.match(trail, /<span class="cmp-value">2\.7 s⁻¹<span class="cmp-arrow"> → <\/span><strong>2\.67 s⁻¹<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-precision" aria-hidden="true"><\/span><span>more digits \/ rounding<\/span><\/span><small class="cmp-before">Before: the earlier version’s value<\/small>/);
   // At most 4 figures, the stored number in the title; a different number has its factor at two figures.
   assert.match(trail, /<dt><i>K<\/i><sub>i<\/sub><\/dt><dd><span class="cmp-value"><span title="As stored: 0\.546667">0\.5467 mM<\/span><span class="cmp-arrow"> → <\/span><strong>0\.002 mM<\/strong><\/span><span class="cmp-result"><span class="cmp-mark cmp-differs" aria-hidden="true"><\/span><span>different number<\/span><\/span><small class="cmp-before">Before: as BRENDA lists it for this paper \(270× higher\)<\/small>/);
   assert.equal((trail.match(/>5 s⁻¹/g) || []).length, 0, "a field whose number did not change is not listed");
@@ -4982,7 +4982,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     { field: "sequence", kind: "replaced" },
   ] });
   const addedTrail = sectionOf(html);
-  assert.match(addedTrail, /<p class="section-text cmp-intro">CatLog&#39;s earlier version added these values from the paper; the source had none\.<\/p>/);
+  assert.match(addedTrail, /<p class="section-text cmp-intro">CatLog’s earlier version added these values from the paper; the source had none\.<\/p>/);
   assert.doesNotMatch(addedTrail, /added: the source had none|cmp-result/);
   assert.match(addedTrail, /<span class="cmp-value">none<span class="cmp-arrow"> → <\/span><strong>0\.066 mM<\/strong><\/span>/);
   // A place every item shares is said once, under the list.
@@ -5006,7 +5006,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A database record the earlier review did not settle: the values are the database's, said in Checks' Paper check row,
   // never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an earlier
   // extraction: no such line.
-  const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked; the values are the database&#39;s.</dd>";
+  const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked; the values are the database’s.</dd>";
   const paperCheckOf = (summary, detail = { supporting_pmids: ["1"] }) => {
     const html = render(summary, detail);
     assert.doesNotMatch(html, /Against the databases/, "no comparison, no section");
@@ -5347,16 +5347,16 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   api.renderDetail(pending, {});
   html = element("detailContent").innerHTML;
   assert.doesNotMatch(html, /detail-status-checked/);
-  assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved these values; the record&#39;s status comes from the automated review\.<\/dd>/);
+  assert.match(html, /<dt>Human review<\/dt><dd>A human reviewer approved these values; the record’s status comes from the automated review\.<\/dd>/);
   api.renderDetail(noted, {});
   // A note's review year is not shown (facts only), and a note that names CatLog v1 entries says the earlier version's
   // entries (CatLog is the one name, round 8).
-  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog&#39;s review of the earlier version&#39;s entries\./);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog’s review of the earlier version’s entries\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
-  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version&#39;s entries; kcat\/Km was not reviewed\.<\/dd>/);
+  assert.match(plainMetricNames(element("detailContent").innerHTML), /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version’s entries; kcat\/Km was not reviewed\.<\/dd>/);
   // The other shapes a note could take say the same.
   assert.deepEqual(["The CatLog v1 entry has no Km.", "a CatLog v1 entry", "An CatLog v1 entry", "CatLog v2 entries agree", "A CatLog v2 entry", "CatLog v2 reads"].map(api.versionWords),
-    ["The earlier version's entry has no Km.", "an entry from the earlier version", "An entry from the earlier version", "records read from the paper agree", "A record read from the paper", "CatLog reads"]);
+    ["The earlier version’s entry has no Km.", "an entry from the earlier version", "An entry from the earlier version", "records read from the paper agree", "A record read from the paper", "CatLog reads"]);
   // A correction made after human review is said as given, in the Human review line.
   api.renderDetail(row({ record_key: "hc-fixed", measurement_key: "hc-fixed", verification_status: "verified" }), {});
   assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>Checked by a human reviewer\. Corrected after human review: Km unit\.<\/dd>/);
@@ -5664,7 +5664,7 @@ assert.ok(!("summary_marker" in detailPreferredPayload) && !("detail_marker" in 
 assert.equal((await recordDownloadPayload(row({ record_key: "record-summary-fallback", source_license: "CC BY 4.0" }), { source_license: "" })).source_license,
   "CC BY 4.0");
 assert.equal((await recordDownloadPayload(row({ record_key: "record-missing-license", source_license: undefined }), {})).source_license,
-  "See the source's terms");
+  "See the source’s terms");
 // A record with no recorded source has no source's terms to point to.
 assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", source_db: "unknown", source_license: "see source" }), {})).source_license,
   "Not recorded");
@@ -7403,7 +7403,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(sourceDatabases, /value="earlier_paper" \/>\s*<span>Earlier<span class="visually-hidden"> paper<\/span> extractions<\/span>/,
     "Earlier paper extractions shows as the table's tag, its name read out in full");
   // Earlier extractions are CatLog's too, from its earlier version (one CatLog, round 8): never "not by CatLog".
-  assert.match(sourceDatabases, /<label class="check-row" title="Read from a paper by CatLog&#39;s earlier version, a pipeline of AI models and automated checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
+  assert.match(sourceDatabases, /<label class="check-row" title="Read from a paper by CatLog’s earlier version, a pipeline of AI models and automated checks\.">\s*<input type="checkbox" name="source" value="earlier_paper"/);
   assert.equal((sourceDatabases.match(/name="source"/g) || []).length, 8, "every database keeps its option");
   assert.doesNotMatch(sourceDatabases, /not by CatLog/);
   // Its "?" says what the group holds and that a merged record counts under each database (no longer in Source's).
@@ -7429,8 +7429,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
   // against their papers).
   assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper<\/strong> — by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong> — from CatLog&#39;s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\./);
-  assert.match(source, /<label class="check-row radio-row" title="From CatLog&#39;s earlier version, built from database entries and partly checked/);
+  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong> — from CatLog’s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper\./);
+  assert.match(source, /<label class="check-row radio-row" title="From CatLog’s earlier version, built from database entries and partly checked/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
   assert.doesNotMatch(status, /status-guide|Review result definitions/);
