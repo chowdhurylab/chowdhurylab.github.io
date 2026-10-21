@@ -939,7 +939,7 @@ def check_quality(driver, browser, url, quality=None):
         wait.until(lambda d: d.find_elements(By.ID, "statsChecksTitle"))
         if audited:
             audit = driver.find_element(By.CSS_SELECTOR, "[data-check='audit']")
-            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText").strip() == f"{quality['audit_values']:,}"
+            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-covered").get_attribute("innerText").strip() == f"{quality['audit_values']:,} values"
             assert f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit.get_attribute("innerText"), audit.text
             assert "independent" not in audit.get_attribute("innerText").lower(), audit.text
         if compared:
@@ -951,13 +951,11 @@ def check_quality(driver, browser, url, quality=None):
                 assert correct in earlier and f"and {quality['label_or_annotation_v1']:,} had a wrong enzyme" in earlier, earlier
                 assert f"of {quality['compared_values_v1']:,} values reviewers compared" in earlier, earlier
             else:
-                assert correct in earlier and f"{quality['label_or_annotation_v1']:,} wrong label" in earlier, earlier
-                assert "approved or not" in earlier, earlier
+                assert correct in earlier and f"{quality['label_or_annotation_v1']:,} with a wrong label" in earlier, earlier
         if headline:
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            figure = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead .stats-lead-figure strong").get_attribute("innerText").strip()
-            assert figure == headline, (figure, headline)
-            # The band's Human review gives the same share.
+            # The share is At a glance's alone (round 14: stated once); Quality has no second big number.
+            assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-lead-figure"), "The headline is said once"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review'] .stats-total-value").get_attribute("innerText").strip()
             assert band == headline, (band, headline)
         else:
@@ -1008,15 +1006,14 @@ REVIEW_FIXTURE = {
 # The headline (the user's words, 2026-10-15): "Human review: 99.9%", no value disputed on 2,671 of 2,674 entries from
 # the earlier version (408 papers); the sentence under it says what a check of the paper found for the disputed values and the entries whose
 # value the reviewer could not find, never the base again.
-REVIEW_HEADLINE_NOTE = "no value disputed on 2,671 of 2,674 entries from the earlier version (408 papers)"
-REVIEW_SENTENCE = "A check of the paper found all 3 disputed values printed as the entry gives them. In 153 entries (5.7%) the reviewer could not find the value in the paper."
+# At a glance's Human review note (round 14: the headline stated once, the not-found entries beside it).
+REVIEW_HEADLINE_NOTE = "of 2,674 earlier entries people checked, 3 had a value disputed; 153 (5.7%) not found in the paper"
+REVIEW_SENTENCE = "People checked 2,674 entries from the earlier version (408 papers); a check of the paper found all 3 disputed values printed as the entry gives them."
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
     return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
         .map(e => [e.textContent, new Set([...e.getClientRects()].map(box => Math.round(box.top))).size]);
 """
-REVIEW_SIDE_LINE = ("Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,625 of 4,074 "
-                    "(89.0%). Of the other 449, none has been found to be a CatLog error.")
 
 
 # Every drawn text of one Team loop keeps clear of the texts of the other stations (2px apart at least).
@@ -1104,9 +1101,10 @@ TEAM_CRITIQUE_JS = """
 
 
 def check_review_headline(driver, browser, url):
-    """With the reviewers' own counts in the snapshot, Stats' lead says the human review of the earlier version's entries
-    (no value disputed, the disputed values as printed, the entries whose value the reviewer could not find, values
-    missing, other disagreements by kind) with the match where CatLog has re-read the paper as a side line; the Guide's
+    """With the reviewers' own counts in the snapshot, At a glance gives the human review's share once and Quality says
+    the review of the earlier version's entries in one sentence over a table of its verdicts (no value disputed, a value
+    disputed, then values missing and other disagreements with the entries whose value the reviewer could not find); the
+    kinds of disagreement and the match where CatLog has re-read the paper are the supplement's; the Guide's
     method section and Team's Human check say it shortened; the first-comparison and blind fields are never shown. The
     fixture is set in Chrome before the page starts (the data files are not changed)."""
     if browser != "chrome":
@@ -1130,24 +1128,26 @@ def check_review_headline(driver, browser, url):
             assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
             assert "99.9%" in band and REVIEW_HEADLINE_NOTE in " ".join(band.split()) and "values correct" not in band, band
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == "99.9%"
-            figure = " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure").get_attribute("innerText").split())
-            # The share never stands alone: the entries whose value the reviewer could not find are said beside it.
-            assert figure == f"99.9% {REVIEW_HEADLINE_NOTE}; 153 (5.7%) with the value not found in the paper", figure
-            assert "153 (5.7%) with the value not found in the paper" in " ".join(band.split()), band
+            # Quality has no second big number (round 14): one sentence, then the verdicts in a small table.
+            assert not lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure")
             # The base's parenthesis never breaks inside: "(408" ending one line and "papers)" starting the next.
-            parens = driver.execute_script(REVIEW_BASE_PARENS, ".stats-total[data-total='review'], #statsCharts .stats-lead-figure")
-            assert len(parens) == 2 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
+            parens = driver.execute_script(REVIEW_BASE_PARENS, "#statsCharts .stats-lead-sentence")
+            assert len(parens) == 1 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
             assert " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence").get_attribute("innerText").split()) == REVIEW_SENTENCE
-            # The lead writes kcat, Km and kcat/Km as the Values lines and the Guide do: italic, with a subscript.
-            assert len(lead.find_elements(By.CSS_SELECTOR, ".stats-lead-note i + sub")) >= 1
+            rows = driver.execute_script("""return [...arguments[0].querySelectorAll('.stats-review-table tbody tr')]
+                .map(row => [...row.children].map(cell => cell.innerText.trim()))""", lead)
+            assert rows == [["No value disputed", "2,671", "99.9%"], ["A value disputed", "3", "0.1%"], ["Also noted, with either verdict"],
+                            ["Value missing", "31", "1.2%"], ["Other disagreement", "177", "6.6%"],
+                            ["of them, value not found in the paper", "153", "5.7%"]], rows
             text = lead.get_attribute("innerText")
-            assert "31 entries (1.2%)" in text and "177 entries (6.6%)" in text and "CatLog has since read 53 of the 58 values the reviewers named" in text, text
             assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
-            # The kinds of other disagreement, counts in brackets, without the one the sentence above says.
-            assert "Other disagreements, by kind: organism name (13), DOI (5), substrate name (3)" in text, text
-            assert text.count("could not find") == 1 and "values correct" not in text, text
-            assert " ".join(lead.find_element(By.CSS_SELECTOR, ".stats-lead-side").get_attribute("innerText").split()) == REVIEW_SIDE_LINE
+            assert "could not find" not in text and "values correct" not in text, text
+            # The kinds of other disagreement and the match read from the paper again are the supplement's Quality tables.
+            open_stats_supplement(driver)
+            kinds = driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']").get_attribute("innerText")
+            assert "Organism name" in kinds and "CatLog has since read 53 of the 58 values the reviewers named" in kinds, kinds
+            match = " ".join(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']").get_attribute("innerText").split())
+            assert "3,625" in match and "4,074 values reviewers approved" in match, match
             for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
                 assert word not in text, f"The lead says {word}"
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
@@ -5546,9 +5546,9 @@ def check(driver, browser, url):
     if overview:
         human = overview.get("human_checked_accepted")
         if human is not None:
-            # Human-checked is a check under Quality, linked to those records.
+            # Human-checked is a row of Quality's checks table, its count linked to those records.
             card = driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked']")
-            assert card.find_element(By.CSS_SELECTOR, ".stats-check-number").get_attribute("innerText").strip() == f"{human:,}"
+            assert card.find_element(By.CSS_SELECTOR, ".stats-check-result a").get_attribute("innerText").strip() == f"{human:,}"
             assert any(href.endswith("#browse?checked=1") for href in hrefs)
         assert f"{overview['from_paper']['records']:,}" in headline and f"from {overview['from_paper']['papers']:,} papers" in headline
         assert any(href.endswith("#browse?source=paper") for href in hrefs)
@@ -5598,7 +5598,9 @@ def check(driver, browser, url):
         if lead_share:
             lead = driver.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead")
             assert driver.execute_script(LEAD_FIRST_JS), "The human review leads Quality, right after the headline band"
-            assert lead.find_element(By.CSS_SELECTOR, ".stats-lead-figure strong").get_attribute("innerText").strip() == lead_share
+            # (the share itself is At a glance's: Quality does not repeat it as a big number)
+            band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review'] .stats-total-value").get_attribute("innerText").strip()
+            assert band == lead_share and not lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure"), band
             for word in DROPPED_WORDING:
                 assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
@@ -5710,7 +5712,7 @@ def check(driver, browser, url):
         assert_document_stays(driver, f"Stats ({label})")
         check_panel_width()
         overflow = driver.execute_script("""
-            return [...document.querySelectorAll('.stats-chart-label, .stats-chart-value, .stats-table .stats-num, .stats-totals dd, .stats-range-numbers dd, .stats-lead-figure strong')]
+            return [...document.querySelectorAll('.stats-chart-label, .stats-chart-value, .stats-table .stats-num, .stats-totals dd, .stats-range-numbers dd')]
                 .filter(e => e.getBoundingClientRect().width && e.scrollWidth > e.clientWidth + 1)
                 .map(e => e.textContent);
         """)

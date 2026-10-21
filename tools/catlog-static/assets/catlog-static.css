@@ -1416,45 +1416,27 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-row-detail td { color:var(--text-2); font-size:var(--fs-12) }
 .stats-table .stats-row-detail th, .stats-table .stats-row-detail td { border-bottom-color:transparent }
 .stats-table tr:has(+ .stats-row-detail) > * { border-bottom-color:transparent }
-/* Checks on the values: one card per check, its number, a thin meter of what held and the result in words. */
-.stats-checks-intro { margin:0 0 16px; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-checks { display:grid; grid-template-columns:repeat(var(--stats-checks,3),minmax(0,1fr)); gap:16px; margin:0 0 12px; padding:0; list-style:none }
-.stats-check { display:grid; align-content:start; gap:4px; min-width:0; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:16px }
-.stats-check-name { color:var(--text-2); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
-.stats-check-number { color:var(--text); font-size:var(--fs-24); font-weight:600; line-height:var(--lh-24) }
-.stats-check-number .stats-link { text-decoration-thickness:1px }
-.stats-check-unit { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-meter { display:block; height:4px; margin:8px 0 6px; background:var(--line-soft) }
-.stats-meter > span { display:block; height:100%; background:var(--meter, var(--bar-neutral)) }
-/* Each check's number and meter in its meaning colour: CatLog's AI checks (the second check, the audits) the darker
-   BPG cyan of its reading, Human-checked records the agreement green. */
-.stats-check[data-check="second_check"], .stats-check[data-check="audit"] { --meter:var(--src-paper) }
-.stats-check[data-check="human_checked"] { --meter:var(--bpg-green) }
-.stats-check[data-check="second_check"] .stats-check-number :is(a, .stats-link) { color:var(--src-paper-ink) }
-.stats-check[data-check="human_checked"] .stats-check-number :is(a, .stats-link) { color:var(--checked) }
-/* A check that covers every value has no share to show (no completion bar); its place is kept, so the cards align. */
-.stats-meter.is-blank { visibility:hidden }
-.stats-check-result { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-
-/* The lead of Quality: the human review of the earlier version's entries, its share in the human-checked green, on a
-   plain card with a 1px hairline. */
-.stats-lead { border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:24px }
-.stats-lead-body { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
-.stats-lead-figure { display:grid; gap:4px }
-/* Human review's lead number: the human-checked green, as on Stats' band and Browse's. */
-.stats-lead-figure strong { color:var(--checked); font-size:var(--fs-32); font-weight:600; line-height:var(--lh-32) }
-.stats-lead-figure span { color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-lead-text { display:grid; gap:12px; min-width:0 }
-.stats-lead-text > p { margin:0 }
+/* Quality (round 14: no cards, no second big number): the human review in one sentence over a small table of its
+   verdicts, then Checks on the values as a table (check, what it covered, what it found, a small bar of the share kept
+   or approved, in its meaning colour: the audits CatLog's cyan, human-checked the agreement green). */
+.stats-lead { display:grid; gap:12px; align-content:start }
+.stats-lead > .stats-fig-title { margin-bottom:0 }
+.stats-lead > p { margin:0 }
 .stats-lead-sentence { max-width:80ch; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
-.stats-lead-facts { display:flex; flex-wrap:wrap; gap:8px 32px; margin:0 }
-.stats-lead-facts dt { color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-lead-facts dd { margin:2px 0 0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-lead-note { max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-/* Read from the paper again, against the review: a side line, set off by a rule at its left. */
-.stats-lead-side { max-width:80ch; border-left:2px solid var(--line-strong); padding-left:12px; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14) }
 .stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-13) }
 .stats-lead .stats-lead-links { margin:0 }
+.stats-table:is(.stats-review-table, .stats-checks-table) { width:auto; max-width:100%; justify-self:start }
+.stats-table.stats-review-table { min-width:min(100%, 440px) }
+.stats-review-table .stats-row-group th { padding-top:12px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+.stats-review-table .stats-row-sub th { padding-left:12px; font-weight:400 }
+.stats-review-table .stats-row-sub2 th { padding-left:24px; color:var(--text-2) }
+.stats-review-table td.stats-num { padding-left:24px }
+.stats-checks-table th[scope="row"] { font-weight:600; white-space:nowrap }
+.stats-checks-table :is(th,td) { padding-right:24px }
+.stats-checks-table .stats-check-covered { white-space:nowrap }
+.stats-checks-table .stats-check-result { color:var(--text-2) }
+.stats-checks-table td.stats-col-bar { width:96px }
 
 /* Value ranges: three small log-scale histograms. */
 .stats-ranges { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
@@ -1706,8 +1688,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-conditions { grid-template-columns:1fr; max-width:560px }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:560px }
-  .stats-lead-body { grid-template-columns:1fr; gap:12px }
-  .stats-checks { grid-template-columns:repeat(2,minmax(0,1fr)) }
   /* One panel per row, each class named. */
   .stats-ridge-panels { grid-template-columns:1fr; gap:32px; max-width:560px }
   .stats-ridges, .stats-range { --ridge-label:minmax(0,150px) }
@@ -1758,15 +1738,14 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-shell, .team-shell { padding:24px 16px 32px }
   .stats-totals .stats-totals-scope dd { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-stack { gap:40px }
-  .stats-lead { padding:16px }
   .stats-band { padding:var(--sp-3) var(--sp-2) var(--sp-1) }
   .stats-total { padding:var(--sp-2) }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-supp-number { flex-basis:5.75em }
-  .stats-checks { grid-template-columns:1fr }
-  /* One card per row: no blank meter to line the cards up, so no gap above the Second AI check's result. */
-  .stats-meter.is-blank { display:none }
+  /* Checks on the values: the result wraps under its words; the bar column narrows. */
+  .stats-checks-table .stats-check-covered { white-space:normal }
+  .stats-checks-table td.stats-col-bar { width:48px }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges, .stats-range { --ridge-label:44px }
@@ -1816,17 +1795,15 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ridges, .stats-range { --ridge-label:44px }
   .stats-ridge-name { display:none }
   .stats-totals { break-inside:avoid }
-  /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column) and
-     the lead keeps its number beside the text; the lead may continue on the next page between its parts, so page 1
-     is not the title alone. */
+  /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column); the
+     human review may continue on the next page between its parts, so page 1 is not the title alone. */
   .stats-shell { max-width:none; padding:0; zoom:0.8 }
-  .stats-lead-body { grid-template-columns:200px minmax(0,1fr); gap:24px }
-  .stats-section.stats-lead { break-inside:auto; padding:16px 24px }
+  .stats-section.stats-lead { break-inside:auto }
   /* The headline counts keep one line each, also where the browser sizes the page as a phone (A4 measured upright). */
   .stats-totals dl { grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); gap:0 }
   .stats-total:nth-child(n)::before { display:block }
   .stats-total:first-child::before { display:none }
-  .stats-lead-figure, .stats-lead-sentence, .stats-lead-facts > div, .stats-lead-note, .stats-lead-side { break-inside:avoid }
+  .stats-lead-sentence, .stats-lead-note, .stats-review-table { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }

@@ -41,9 +41,10 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    with the glow"): a plain white card with a 1px --line hairline and a 4px radius, no glow, halo, wash, gradient rule or
    entrance motion (round 13 had an accent glow round it, a fading accent rule along its top, a corner wash and a soft
    radial halo behind each number). Line 1 (40px, 600, tabular numbers): Records, Accepted with its share, Read from the
-   paper with its papers, Human review ("99.9%", "no value disputed on 2,767 of 2,770 entries from the earlier version
-   (431 papers)"; a snapshot without the review's counts gives the share of approved values the same where CatLog has
-   re-read the paper), the numbers in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from
+   paper with its papers, Human review ("99.9%", "of 2,770 earlier entries people checked, 3 had a value disputed; 153
+   (5.5%) not found in the paper": round 14 states the review's share here only, with the not-found entries beside it as
+   the user asked on 2026-10-15; a snapshot without the review's counts gives the share of approved values the same
+   where CatLog has re-read the paper), the numbers in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from
    the paper the darker BPG cyan --src-paper-ink, Human review the human-checked green: one meaning per colour), leading
    by size, weight and whitespace alone; under the pointer a linked item takes a flat 9% tint of its colour and its
    label and note step up to --text-2 (muted on the tint fell to 4.46:1; --text-2 is 7.3:1). The numbers stand still
@@ -66,7 +67,14 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    kcat/Km) are secondary: three 12px lines beside the key numbers, 500 in --text-2, as tall as a label and its number.
    One row from 1024px up, two rows on tablets, two by two on phones (tools/catlog-static/DESIGN.md, Layout). Nothing
    moves.
-2. Quality: the lead, then Checks on the values.
+2. Quality (round 14: no second big number and no dashboard cards; one answer and two small tables): Human review,
+   one sentence ("People checked 2,770 entries from the earlier version (431 papers); a check of the paper found all 3
+   disputed values printed as the entry gives them.") over a table of its verdicts (No value disputed, A value disputed,
+   then "Also noted, with either verdict": Value missing, Other disagreement and, under it, the value not found in the
+   paper; entries and share), with the links to the Guide's method and Team; then Checks on the values, a table of the
+   checks (Second AI check, AI audits, Human-checked: what each covered, what it found, a small bar of the share kept or
+   approved in its meaning colour), each row with its own base, so the counts are never read as one set. The review's
+   flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
 3. What is in the catalog: Review result (the donut) beside Records by main source, then Enzyme classes across the row.
 4. Values: Value ranges, kcat against Km and Variants against their wild type, each full width.
 5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
@@ -75,7 +83,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
 S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
    right?)"): the figures and tables that do not tell the main story, last before How these numbers are counted, in
-   four groups (What is in the catalog: Read from the paper and not yet re-read, Values per paper,
+   five groups (Quality: Human review by kind, Approved values read from the paper again; What is in the catalog: Read
+   from the paper and not yet re-read, Values per paper,
    Papers by parameter, What the records contain, Wild type and variants; Organisms, enzymes and variants (Biology
    until round 14's polish): the four top-ten tables, Single
    substitutions, Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as printed,

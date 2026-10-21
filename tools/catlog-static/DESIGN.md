@@ -90,7 +90,7 @@ and --line-soft inside them; a crisp, short shadow (--shadow, 2px 8px) only wher
 menus, dialogs, the phone sheet, the record drawer and Stats' tooltip line. Round 14 (the user's colleague: "it looks a
 bit AI-ish, with the glow"): a calm, editorial look, like a scientific reference database (UniProt, PDB, a Nature data
 page), never a product landing page. No glow, halo, text-shadow, wash or gradient anywhere (round 13 had them on the
-counts band, Stats' headline band, its numbers, the lead of Quality, the figure fills and the marks under the pointer):
+counts band, Stats' headline band, its numbers, the lead of Quality (now a sentence and a table), the figure fills and the marks under the pointer):
 the counts band and Stats' headline band are plain white cards with a 1px --line hairline and a 4px radius; their key
 numbers lead by size, weight, tabular figures, the whitespace round them and each number's meaning colour, and they
 never move (no fade or rise). Figures fill flat (the colour at 60% with a 1px opaque outline); a mark under the pointer
@@ -1106,17 +1106,18 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (the lead, the user's headline: "Human review", 99.9%, no value disputed on 2,767 of 2,770 entries from the
-earlier version (431 papers), the disputed values as printed and the entries whose value the reviewer could not find,
-with "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ..." and what
-the other values are as a side line; then the checks), 3 What is in the catalog (the review-result donut and its legend
+2 Quality (round 14: the review's 99.9% is At a glance's alone, "of 2,770 earlier entries people checked, 3 had a value
+disputed; 153 (5.5%) not found in the paper"; here no second big number and no dashboard cards: Human review in one
+sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row with what it
+covered, what it found and a small bar of the share kept or approved; the review's flags by kind and the reviewers'
+approved values read from the paper again are the supplement's Quality tables), 3 What is in the catalog (the review-result donut and its legend
 table, records by main source with a Records | Share switch, then the enzyme classes with accepted and
 read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
 the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion limit and each class's median,
 and variants against their wild type of the same paper, enzyme, substrate, pH and temperature), 5 Against the databases
 (from the manifest's database comparison: a short lead that says once that a different number can mean a different
 measurement, values against the databases, corrections by cause), then S Supplementary figures and tables (round 14):
-every other figure and table, numbered apart (Figure S1, Table S1), in four groups (What is in the catalog;
+every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
 Organisms, enzymes and variants, called Biology until round 14's polish; Values; Against the databases), each item one
 closed line (a details whose summary holds its number and title) that opens its figure, with its own address
 (#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
@@ -1294,8 +1295,7 @@ Generated mockups guide layout only; their text is not a scientific source.
 - Every disclosure opens with a muted + (− when open): Stats' How these numbers are counted and Fields saved in records
   that are not accepted, and the Guide's Questions and evidence labels, as the supplement, the record and the Guide's
   Reference do; no triangles.
-- The counts band's Read from the paper label keeps its cyan text at 0 (no link then), as Human-checked keeps its green.
-- On a phone the Checks on the values cards stand one per row without the blank meter that lines them up side by side,
-  so the Second AI check has no gap above its result.
+- The counts band's labels are all muted (fix pass: the colour sits on each label's mark and on the number).
+- Checks on the values is a table (fix pass), so no card or blank meter remains to line up.
 - kcat, Km and kcat/Km are in italics with subscripts in the database lines and the Human review line of a record too
   (kineticWordsHtml: never before or after a hyphen, so a name such as "Ki-67" stays as written).
