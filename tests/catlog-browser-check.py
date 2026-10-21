@@ -1340,6 +1340,15 @@ def check_stats_contents(driver, width):
     assert all(item["href"] == f"#stats-{driver.execute_script('return arguments[0]', item['href'])[7:]}" for item in items)
     assert all(item["box"]["left"] >= 0 and item["box"]["right"] <= width + 1 for item in items), (width, items)
     assert all(item["box"]["height"] < 40 for item in items), "a part keeps its number and name on one line"
+    # The Guide's contents look (round 15 polish): the label on its own line above the links, no "·" between them (it
+    # had ended every wrapped line on a phone).
+    look = driver.execute_script("""
+        const title = document.querySelector('#statsContents .stats-contents-title').getBoundingClientRect();
+        const first = document.querySelector('#statsContents li').getBoundingClientRect();
+        return {above: title.bottom <= first.top + 1, separators: [...document.querySelectorAll('#statsContents li')]
+            .filter(li => !['none', 'normal'].includes(getComputedStyle(li, '::after').content)).length};
+    """)
+    assert look["above"] and not look["separators"], look
     last = items[-1]["href"][1:]
     assert driver.execute_script("return !!document.getElementById(arguments[0])", last), last
     driver.find_element(By.CSS_SELECTOR, f'#statsContents a[href="#{last}"]').click()

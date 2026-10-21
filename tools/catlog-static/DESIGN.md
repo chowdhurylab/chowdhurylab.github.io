@@ -1396,3 +1396,6 @@ Generated mockups guide layout only; their text is not a scientific source.
   turn round (the results as rows, the chart's rows as four short heads), one table shown at a time. The two counts
   beside Values against the databases' bars stand under the legend's own names in two lines, "Corrects / a value" and
   "Different / number" (they had read "Corrects" and "Differs").
+- "On this page" is one component on Stats and the Guide: a 13px --muted label on its own line, then the parts as a
+  wrapped row of 14px/500 links 20px apart (28px targets), no separators; Stats' links keep their parts' numbers, muted.
+  Stats' had been one inline line whose "·" separators ended every wrapped line on a phone.

@@ -1111,14 +1111,16 @@ p.cmp-note { padding-left:16px }
 .stats-heading p { margin:var(--sp-1) 0 0; color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
 /* On this page: the parts in one line under the title, each a link to its part (#stats-<key>), wrapping between parts
    only (a part keeps its number and name together), so on a phone, where Stats runs 17 screens, a part is one tap away. */
-.stats-contents { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px var(--sp-3); margin:var(--sp-3) 0 0; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
-.stats-contents-title { font-weight:500 }
-.stats-contents ul { display:flex; flex-wrap:wrap; gap:4px 0; margin:0; padding:0; list-style:none }
-.stats-contents li { white-space:nowrap }
-.stats-contents li:not(:last-child)::after { content:"·"; margin:0 var(--sp-2); color:var(--muted) }
-.stats-contents a { color:var(--accent); text-decoration:none }
-.stats-contents a:hover, .stats-contents a:focus-visible { text-decoration:underline }
-.stats-contents-number { color:var(--muted); font-variant-numeric:tabular-nums }
+/* On this page: the Guide's contents (one component, round 15 polish: Stats' had been one inline line whose "·" separators
+   ended each wrapped line on a phone): a 13px --muted label on its own line, then the parts as a wrapped row of 14px/500
+   links 20px apart, 28px targets, no separators; Stats' links keep their parts' numbers, muted. */
+.stats-contents { display:block; margin:var(--sp-3) 0 0 }
+.stats-contents-title { display:block; margin:0 0 6px; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
+.stats-contents ul { display:flex; flex-wrap:wrap; gap:4px 20px; margin:0; padding:0; list-style:none }
+.stats-contents li { display:flex; padding:0; white-space:nowrap }
+.stats-contents a { display:inline-flex; min-height:28px; align-items:center; color:var(--accent); font-size:var(--fs-14); font-weight:500; line-height:var(--lh-14); text-decoration:none }
+.stats-contents a:hover, .stats-contents a:focus-visible { text-decoration:underline; text-underline-offset:3px }
+.stats-contents-number { margin-right:0.3em; color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums }
 /* 1. At a glance: the headline band, the page's focal point. Round 14 (the user's colleague: "a bit AI-ish, with the
    glow"): a plain white card with a 1px hairline, no glow, halo, wash, gradient rule or entrance motion. The four key
    numbers (line 1, 40px, 600, tabular figures) lead by size, weight and the whitespace round them, each in its meaning
