@@ -384,8 +384,8 @@ its accessible description; no figure or table has a data line. The parts' figur
     none, leaves its variant record unpaired: an ambiguous pairing is never made; the counts left out are said in the
     figure's rules). Every count says "variant records"; the rules add the variants among them (`variant_count`:
     paper, enzyme, organism and mutation), "17,115 variant records (7,496 variants) from 1,236 papers", and the
-    caption that the variants are those the papers chose to make, often at catalytic residues, so the spread describes
-    studied mutations, not mutations in general; per parameter (kcat, Km, kcat/Km) a histogram of log10(variant ÷ wild type) in
+    caption that papers choose which residues to change, so these are not a random sample of mutations (fix pass: no
+    claim about catalytic residues, which no field records); per parameter (kcat, Km, kcat/Km) a histogram of log10(variant ÷ wild type) in
     quarter-decade bars centred on whole quarters from 10⁻⁴ to 10³ (the bar at 1 holds changes under 1.33-fold either
     way; the end bars hold every change beyond), drawn like Value ranges (--bar-neutral) with a dashed line on the wild
     type's own bar and "wild type" above the bars; Median (×), Lower and Higher above each, the variant records and the
